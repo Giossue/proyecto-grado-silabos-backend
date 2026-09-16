@@ -16,6 +16,7 @@ use App\Modules\Syllabus\Presentation\Http\Requests\OpenConvocationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreConvocationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionConvocationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewConvocationsRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,7 +24,7 @@ use Inertia\Response;
 
 class ConvocationController extends Controller
 {
-    public function index(ViewConvocationsRequest $request, ActiveRole $roles): Response
+    public function index(ViewConvocationsRequest $request, ActiveRole $roles): Response|JsonResponse
     {
         $careerId = $roles->resolve($request)?->carrera_id;
         $filters = $request->validated();
@@ -32,7 +33,7 @@ class ConvocationController extends Controller
             ? $filters['state']
             : null;
 
-        return Inertia::render('Coordination/Convocations/Index', [
+        $payload = [
             'filters' => ['q' => $search ?: null, 'state' => $state],
             'convocations' => SyllabusProcess::query()
                 // La convocatoria se identifica por el período institucional que abarca.
@@ -68,19 +69,28 @@ class ConvocationController extends Controller
                         'syllabi_count' => $convocation->syllabi_count ?? 0,
                     ];
                 }),
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Coordination/Convocations/Index', $payload);
     }
 
-    public function store(StoreConvocationRequest $request, CreateConvocation $action): RedirectResponse
+    public function store(StoreConvocationRequest $request, CreateConvocation $action): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $convocation = $action->execute($request->convocationData(), $actor, $request);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Convocatoria iniciada: se generó un sílabo por cada paralelo.',
+                'convocation_id' => $convocation->id,
+            ], 201);
+        }
+
         return to_route('convocations.show', $convocation)->with('success', 'Convocatoria iniciada: se generó un sílabo por cada paralelo.');
     }
 
-    public function show(Convocation $convocation, Request $request): Response
+    public function show(Convocation $convocation, Request $request): Response|JsonResponse
     {
         abort_unless($request->user()?->can('view', $convocation) === true, 403);
         $convocation->load(['career', 'sources', 'deadlines', 'process.academicPeriod', 'process.template']);
@@ -88,7 +98,7 @@ class ConvocationController extends Controller
             ->with(['subject:id,nombre,codigo_asignatura', 'scopes.parallel:id,codigo', 'teachers:id,nombre'])
             ->orderBy('asignatura_id')->get();
 
-        return Inertia::render('Coordination/Convocations/Show', [
+        $payload = [
             'convocation' => [
                 'id' => $convocation->id,
                 'name' => $convocation->nombre,
@@ -119,14 +129,20 @@ class ConvocationController extends Controller
                     'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
                 ])->values(),
             ],
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Coordination/Convocations/Show', $payload);
     }
 
-    public function open(Convocation $convocation, OpenConvocationRequest $request, OpenConvocation $action): RedirectResponse
+    public function open(Convocation $convocation, OpenConvocationRequest $request, OpenConvocation $action): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($convocation->id, $actor, $request);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Convocatoria abierta y expedientes generados sin duplicados.']);
+        }
 
         return back()->with('success', 'Convocatoria abierta y expedientes generados sin duplicados.');
     }
@@ -136,14 +152,19 @@ class ConvocationController extends Controller
         string $transition,
         TransitionConvocationRequest $request,
         TransitionConvocation $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $reason = $request->filled('reason') ? $request->string('reason')->toString() : null;
         $action->execute($convocation, $transition, $reason, $actor, $request);
 
-        return back()->with('success', $transition === TransitionConvocation::PAUSE
+        $message = $transition === TransitionConvocation::PAUSE
             ? 'Convocatoria en pausa. Los docentes de la carrera no editan ni envían; la malla y las fuentes quedan editables.'
-            : 'Convocatoria reanudada. Los docentes vuelven a trabajar y la malla y las fuentes quedan protegidas.');
+            : 'Convocatoria reanudada. Los docentes vuelven a trabajar y la malla y las fuentes quedan protegidas.';
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 }
