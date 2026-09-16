@@ -47,7 +47,10 @@ class InstitutionalLogosTest extends TestCase
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'institucion.logo_actualizado']);
 
         // Sin sesión: la imagen es pública.
-        $this->get(route('logos.institution'))->assertOk()->assertHeader('Content-Type', 'image/png');
+        $this->get(route('logos.institution'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png')
+            ->assertHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     }
 
     public function test_the_university_logo_is_fitted_to_its_size_and_must_be_transparent(): void
@@ -91,7 +94,10 @@ class InstitutionalLogosTest extends TestCase
         $this->assertStringStartsWith("logos/facultades/{$faculty->id}/", $logo->ruta_interna);
         $this->assertSame('logo_facultad', $logo->clasificacion);
         $this->assertStoredPngHasSize($logo->ruta_interna, 600, 180);
-        $this->get(route('logos.faculty', $faculty))->assertOk()->assertHeader('Content-Type', 'image/png');
+        $this->get(route('logos.faculty', $faculty))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png')
+            ->assertHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
         // Sin subida propia, la facultad muestra el logo de fábrica.
         $legacy = Faculty::query()->where('codigo_facultad', '!=', 'FAC-CL')->firstOrFail();

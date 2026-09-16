@@ -133,7 +133,7 @@ HTTP de loopback. Consulte el runbook antes de ejecutarlos.
 - Verificación de release: [docs/runbooks/release-verification.md](docs/runbooks/release-verification.md)
 - Seguridad: [docs/security/principles.md](docs/security/principles.md)
 - Reglas para agentes: [AGENTS.md](AGENTS.md)
-- Separación API/SPA: [docs/plans/active/I-84-separacion-frontend-backend-api.md](docs/plans/active/I-84-separacion-frontend-backend-api.md)
+- Separación API/SPA: [docs/plans/completed/I-84-separacion-frontend-backend-api.md](docs/plans/completed/I-84-separacion-frontend-backend-api.md)
 
 Los archivos funcionales se guardan en un disco privado. Redis y el servicio de IA no
 son fuentes de verdad, y la indisponibilidad de IA nunca debe bloquear el flujo humano.

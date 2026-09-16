@@ -74,6 +74,11 @@ Espere `200`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, CSP co
 XSRF. HSTS solo aparece en una petición HTTPS de producción; el proxy debe preservar el
 esquema confiablemente. La respuesta JSON no revela versiones ni topología.
 
+Las dos rutas públicas de logos (`logos.institucion` y `logos.facultad`) son la única
+excepción: deben responder `Cross-Origin-Resource-Policy: cross-origin` para que la SPA
+independiente pueda mostrarlas desde otro origen. Esta excepción no aplica a documentos,
+descargas privadas ni respuestas JSON.
+
 ## 4. Cola Redis real
 
 Despache una clave sintética única y procese la cola correcta:

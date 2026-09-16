@@ -2,8 +2,10 @@
 
 ## Estado
 
-Implementación y verificación automatizada completas. Este repositorio es exclusivamente
-la API Laravel; el frontend independiente vive en `proyecto-grado-silabos-frontend`.
+Implementación y auditoría técnica completadas. Este repositorio es exclusivamente la API
+Laravel y el frontend independiente vive en `proyecto-grado-silabos-frontend`. La SPA no
+depende de Inertia, sus consumidores se contrastan automáticamente con OpenAPI y los tres
+roles completan recorridos autenticados reales contra Laravel y PostgreSQL de pruebas.
 El cambio de dominios en producción continúa siendo una operación de release separada y
 no se ejecuta como parte de este plan sin una orden explícita.
 
@@ -174,7 +176,7 @@ dominios y despliegue se realiza mediante el runbook como una operación explíc
 
 ## Evidencia de cierre automatizado — 2026-09-16
 
-- Backend: `composer verify` aprobó Pint, PHPStan y **258 pruebas / 3.495
+- Backend: `composer verify` aprobó Pint, PHPStan y **258 pruebas / 3.499
   aserciones** sobre PostgreSQL y Redis.
 - Frontera HTTP: `ApiBoundaryTest` exige `auth:sanctum` y correo verificado en toda ruta
   de producto; `OpenApiContractTest` mantiene sincronizado OpenAPI.
@@ -183,6 +185,12 @@ dominios y despliegue se realiza mediante el runbook como una operación explíc
 - Frontend: Vitest, `vue-tsc` y Vite verifican autenticación, paginación, tablas
   repetibles, selección múltiple, booleanos, respuestas a observaciones, chat, citas,
   decisiones y aplicación explícita de recomendaciones.
+- Contrato consumidor: el analizador AST contrastó **119 llamadas** de la SPA con las
+  **120 operaciones** publicadas en OpenAPI; ninguna llamada usa una ruta o verbo ausente.
+- Navegador real: tres recorridos Playwright aprobaron Administración, Coordinación y
+  Docencia contra Laravel/PostgreSQL aislados, con CSRF, creación y recarga, apertura de
+  proceso/convocatoria, edición de fuente, logo, autosalvado docente e imágenes, sin
+  respuestas HTTP 5xx.
 - Recuperación operativa del navegador: una mutación sin token prepara CSRF, un `419`
   renueva y reintenta una vez, y un `401` limpia la sesión y vuelve al ingreso.
 - Contenedores: ambas imágenes se construyeron. La SPA respondió liveness, inyección de
@@ -193,3 +201,32 @@ dominios y despliegue se realiza mediante el runbook como una operación explíc
 La revisión perceptiva en dispositivos reales, la fidelidad institucional del documento
 y las decisiones UEB abiertas siguen sus puertas `PV`; no son defectos de la separación
 ni se declaran resueltos aquí.
+
+## Auditoría de cierre — 2026-09-16
+
+La auditoría detectó que la evidencia anterior probaba módulos aislados y contenedores,
+pero no un navegador autenticado consumiendo Laravel. Se añadió esa prueba y se cerraron
+los estados de interfaz que faltaban.
+
+Primer resultado de la auditoría:
+
+- se incorporó ESLint 10 con reglas de Vue, TypeScript y accesibilidad; `npm run lint`
+  forma parte de la puerta frontend y pasa;
+- las mutaciones de usuarios, notificaciones, cambio de ámbito y cierre de sesión ya
+  informan fallos y bloquean duplicados en vez de dejar promesas rechazadas;
+- Playwright recorrió una SPA real contra Laravel y PostgreSQL de pruebas: ingreso,
+  cookie de sesión, CSRF con creación de cuenta, recarga, selección obligatoria de la
+  carrera coordinada, procesos, plantilla, fuentes, convocatoria, estructura académica,
+  revisiones, IA, informes, borrador docente, autosalvado y 360 px;
+- la prueba E2E rechaza URLs de API que no sean loopback para impedir que sus datos
+  sintéticos alcancen un entorno remoto;
+- un verificador basado en el AST de TypeScript impide que un consumidor de la SPA use
+  una ruta o verbo ausente en OpenAPI;
+- todas las páginas con carga inicial muestran estado de carga y los listados principales
+  muestran vacío; las mutaciones críticas bloquean duplicados y presentan sus errores;
+- la imagen Nginx exige un origen HTTP(S) válido, conserva cabeceras de seguridad en sus
+  ubicaciones y permite que la SPA cargue los logos públicos sin abrir documentos
+  privados entre orígenes.
+
+El despliegue y el corte de dominios no forman parte de esta auditoría local. Tampoco se
+cierran las validaciones perceptivas o institucionales registradas como `PV`.

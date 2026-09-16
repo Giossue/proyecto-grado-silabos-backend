@@ -17,7 +17,12 @@ class AddSecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), geolocation=(), microphone=()');
         $response->headers->set('Content-Security-Policy', "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'");
-        $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+        // Los logos son recursos institucionales públicos consumidos por la SPA en
+        // otro origen. El resto de respuestas conserva el aislamiento estricto.
+        $response->headers->set(
+            'Cross-Origin-Resource-Policy',
+            $request->routeIs('logos.*') ? 'cross-origin' : 'same-origin',
+        );
         if (app()->isProduction() && $request->isSecure()) {
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
