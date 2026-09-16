@@ -6,6 +6,7 @@ use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ApiSessionTest extends TestCase
@@ -159,5 +160,60 @@ class ApiSessionTest extends TestCase
             ->assertOk()
             ->assertJsonPath('enabled', false)
             ->assertJsonPath('confirmation_required', false);
+    }
+
+    public function test_user_can_list_and_close_an_owned_remote_session(): void
+    {
+        $user = User::factory()->create();
+        DB::table('sesiones')->insert([
+            'id' => 'remote-session',
+            'user_id' => $user->id,
+            'ip_address' => '192.0.2.10',
+            'user_agent' => 'Mozilla/5.0 (X11; Linux x86_64) Chrome/120.0',
+            'payload' => '',
+            'last_activity' => now()->subMinute()->timestamp,
+        ]);
+
+        $this->actingAs($user)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.authentication.sessions.index'))
+            ->assertOk()
+            ->assertJsonPath('sessions.0.id', 'remote-session')
+            ->assertJsonPath('sessions.0.device', 'Chrome en Linux')
+            ->assertJsonPath('sessions.0.current', false);
+
+        $this->deleteJson(route('api.v1.authentication.sessions.destroy', ['session' => 'remote-session']))
+            ->assertOk();
+
+        $this->assertDatabaseMissing('sesiones', ['id' => 'remote-session']);
+    }
+
+    public function test_closing_all_other_sessions_requires_the_current_password(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->deleteJson(route('api.v1.authentication.sessions.destroy-others'), [
+                'current_password' => 'incorrecta',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('current_password');
+    }
+
+    public function test_user_can_regenerate_recovery_codes_with_the_current_password(): void
+    {
+        $user = User::factory()->withTwoFactor()->create();
+        $before = $user->recoveryCodes();
+
+        $this->actingAs($user)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.authentication.two-factor.recovery-codes.regenerate'), [
+                'current_password' => 'password',
+            ])
+            ->assertOk()
+            ->assertJsonCount(8, 'recovery_codes');
+
+        $this->assertNotSame($before, $user->fresh()->recoveryCodes());
     }
 }

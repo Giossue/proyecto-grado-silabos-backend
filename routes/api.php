@@ -10,6 +10,7 @@ use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
+use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionManagementController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\TwoFactorController;
 use App\Modules\Identity\Presentation\Http\Controllers\ManagedUserController;
 use App\Modules\Operations\Presentation\Http\Controllers\AuditEventController;
@@ -52,8 +53,16 @@ Route::prefix('v1')->group(function (): void {
             ->name('api.v1.authentication.two-factor.enable');
         Route::post('authentication/two-factor/confirm', [TwoFactorController::class, 'confirm'])
             ->name('api.v1.authentication.two-factor.confirm');
+        Route::post('authentication/two-factor/recovery-codes', [TwoFactorController::class, 'regenerateRecoveryCodes'])
+            ->name('api.v1.authentication.two-factor.recovery-codes.regenerate');
         Route::delete('authentication/two-factor', [TwoFactorController::class, 'disable'])
             ->name('api.v1.authentication.two-factor.disable');
+        Route::get('authentication/sessions', [SessionManagementController::class, 'index'])
+            ->name('api.v1.authentication.sessions.index');
+        Route::delete('authentication/sessions/others', [SessionManagementController::class, 'destroyOthers'])
+            ->name('api.v1.authentication.sessions.destroy-others');
+        Route::delete('authentication/sessions/{session}', [SessionManagementController::class, 'destroy'])
+            ->name('api.v1.authentication.sessions.destroy');
         Route::put('active-role', [SessionController::class, 'selectActiveRole'])
             ->name('api.v1.active-role.update');
         Route::get('dashboard', [DashboardController::class, 'index'])

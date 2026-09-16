@@ -96,8 +96,9 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    convocatorias, fuentes, revisión/aprobación, estructura académica de Coordinación,
    plantilla, documentos privados, auditoría, trabajos e informes ya dispone de contrato
    JSON y pantalla SPA.
-3. Notificaciones están disponibles; faltan preferencias, contador global y selector de
-   ámbito desde un encabezado compartido.
+3. El armazón autenticado común, navegación por rol, selector de ámbito, contador de
+   notificaciones, tema claro/oscuro, perfil, contraseña, segundo factor y administración
+   de sesiones están disponibles en la SPA.
 4. Completar la paridad funcional de los módulos administrativos: edición detallada de
    usuarios y roles, operaciones completas de estructura académica y el constructor
    visual de plantilla sin depender de editores JSON.
@@ -105,8 +106,8 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    tablas complejas, historial/comparación, estados de conflicto, avisos y accesibilidad.
 6. Incorporar el chat de IA con conversaciones, alcance explícito de fuentes y citas;
    conservarlo separado de la validación determinística y de la revisión global de IA.
-7. Crear el armazón compartido de la aplicación, guardas de rol y contraseña temporal,
-   preferencias, seguridad de sesión, pruebas frontend y documentación OpenAPI.
+7. Ampliar las pruebas frontend y documentar el contrato OpenAPI; las guardas de rol y
+   contraseña temporal ya se aplican en navegador y servidor.
 8. Ejecutar la verificación integral y realizar un corte único; solo entonces retirar
    Inertia, Wayfinder, Vite Laravel y las rutas web de producto de este repositorio.
 

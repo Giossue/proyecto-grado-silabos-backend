@@ -4,6 +4,7 @@ namespace App\Modules\Identity\Presentation\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Identity\Presentation\Http\Requests\Api\ConfirmCurrentPasswordRequest;
 use App\Modules\Identity\Presentation\Http\Requests\Api\ConfirmTwoFactorRequest;
 use App\Modules\Identity\Presentation\Http\Requests\Api\TwoFactorChallengeRequest;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -15,6 +16,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\ConfirmTwoFactorAuthentication;
 use Laravel\Fortify\Actions\DisableTwoFactorAuthentication;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
+use Laravel\Fortify\Actions\GenerateNewRecoveryCodes;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 use Laravel\Fortify\Fortify;
 
@@ -60,6 +62,21 @@ class TwoFactorController extends Controller
         $disable($user);
 
         return response()->json($this->statusPayload($user->fresh()));
+    }
+
+    public function regenerateRecoveryCodes(
+        ConfirmCurrentPasswordRequest $request,
+        GenerateNewRecoveryCodes $generate,
+    ): JsonResponse {
+        $user = $this->authenticatedUser($request);
+        abort_unless($user->hasEnabledTwoFactorAuthentication(), 422, 'Active primero la verificación en dos pasos.');
+        $generate($user);
+        $user->refresh();
+
+        return response()->json([
+            ...$this->statusPayload($user),
+            'recovery_codes' => $user->recoveryCodes(),
+        ]);
     }
 
     public function challenge(TwoFactorChallengeRequest $request, TwoFactorAuthenticationProvider $provider): JsonResponse
