@@ -25,7 +25,9 @@ use App\Modules\Academic\Presentation\Http\Requests\UpdateSubjectLayoutRequest;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\Actions\RelieveTeacher;
 use App\Modules\Syllabus\Presentation\Http\Requests\RelieveTeacherRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,69 +48,66 @@ class CareerAcademicStructureController extends Controller
         ManageCareerAcademicStructureRequest $request,
         ActiveRole $roles,
         AcademicStructureViewData $viewData,
-    ): Response {
-        return Inertia::render(
-            'Coordination/Academic/CurriculumBuilder',
-            $viewData->curriculumBuilder($this->careerId($request, $roles), $curriculum),
-        );
+    ): Response|JsonResponse {
+        $payload = $viewData->curriculumBuilder($this->careerId($request, $roles), $curriculum);
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Coordination/Academic/CurriculumBuilder', $payload);
     }
 
     public function scheduledSubjects(
         ManageCareerAcademicStructureRequest $request,
         ActiveRole $roles,
         AcademicStructureViewData $viewData,
-    ): Response {
-        return Inertia::render(
-            'Coordination/Academic/ScheduledSubjects',
-            $viewData->scheduledSubjects(
-                $this->careerId($request, $roles),
-                $request->string('period')->toString() ?: null,
-            ),
+    ): Response|JsonResponse {
+        $payload = $viewData->scheduledSubjects(
+            $this->careerId($request, $roles),
+            $request->string('period')->toString() ?: null,
         );
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Coordination/Academic/ScheduledSubjects', $payload);
     }
 
     public function teacherAssignments(
         ManageCareerAcademicStructureRequest $request,
         ActiveRole $roles,
         AcademicStructureViewData $viewData,
-    ): Response {
-        return Inertia::render(
-            'Coordination/Academic/TeacherAssignments',
-            [
-                ...$viewData->teacherAssignments($this->careerId($request, $roles)),
-                'canCreateTeacher' => $request->user()?->can('createCareerTeacher', User::class) === true,
-            ],
-        );
+    ): Response|JsonResponse {
+        $payload = [
+            ...$viewData->teacherAssignments($this->careerId($request, $roles)),
+            'canCreateTeacher' => $request->user()?->can('createCareerTeacher', User::class) === true,
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Coordination/Academic/TeacherAssignments', $payload);
     }
 
     public function store(
         string $entity,
         StoreAcademicRecordRequest $request,
         CreateAcademicRecord $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($entity, $request->validated(), $actor, $request);
 
-        return back()->with('success', 'Registro académico creado dentro de su carrera.');
+        return $this->success($request, 'Registro académico creado dentro de su carrera.');
     }
 
     /** Crea varios paralelos de una misma programación de asignatura en una operación atómica (I-40). */
     public function storeParallels(
         StoreParallelsRequest $request,
         CreateParallels $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         /** @var array{scheduled_subject_id: string, codes: list<string>, shift?: string|null} $data */
         $data = $request->validated();
         $created = $action->execute($data, $actor, $request);
 
-        return back()->with('success', "{$created} paralelos creados dentro de su carrera.");
+        return $this->success($request, "{$created} paralelos creados dentro de su carrera.");
     }
 
     /** Relevo de un docente en todos sus paralelos y sílabos de la carrera (I-39). */
-    public function relieveTeacher(RelieveTeacherRequest $request, RelieveTeacher $action): RedirectResponse
+    public function relieveTeacher(RelieveTeacherRequest $request, RelieveTeacher $action): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
@@ -120,14 +119,14 @@ class CareerAcademicStructureController extends Controller
             $request,
         );
 
-        return back()->with('success', "Relevo aplicado en {$summary['parallels']} paralelos; {$summary['syllabi']} sílabos pasaron al docente entrante.");
+        return $this->success($request, "Relevo aplicado en {$summary['parallels']} paralelos; {$summary['syllabi']} sílabos pasaron al docente entrante.");
     }
 
     /** Prepara de forma atómica las materias y paralelos seleccionados para un período. */
     public function preparePeriod(
         PreparePeriodRequest $request,
         PreparePeriod $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         /** @var array{period_id: string, subjects: list<array{id: string, parallels: list<array{code: string, shift?: string|null}>}>} $data */
@@ -144,7 +143,7 @@ class CareerAcademicStructureController extends Controller
             $result['subjects'] === 1 ? 'materia' : 'materias',
         );
 
-        return back()->with('success', $message);
+        return $this->success($request, $message);
     }
 
     public function setStatus(
@@ -152,13 +151,13 @@ class CareerAcademicStructureController extends Controller
         string $record,
         SetAcademicRecordStatusRequest $request,
         SetAcademicRecordStatus $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $active = $request->boolean('active');
         $action->execute($entity, $record, $active, $actor, $request);
 
-        return back()->with('success', $active
+        return $this->success($request, $active
             ? 'Registro activado.'
             : 'Registro desactivado sin borrar su historial.');
     }
@@ -168,24 +167,24 @@ class CareerAcademicStructureController extends Controller
         string $record,
         UpdateCareerAcademicRecordRequest $request,
         UpdateCareerAcademicRecord $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($entity, $record, $request->validated(), $actor, $request);
 
-        return back()->with('success', 'Registro académico actualizado.');
+        return $this->success($request, 'Registro académico actualizado.');
     }
 
     public function destroyScheduledSubject(
         string $scheduledSubject,
         ManageCareerAcademicStructureRequest $request,
         DeleteScheduledSubject $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($scheduledSubject, $actor, $request);
 
-        return back()->with('success', 'Materia programada eliminada junto con sus paralelos y asignaciones sin historial.');
+        return $this->success($request, 'Materia programada eliminada junto con sus paralelos y asignaciones sin historial.');
     }
 
     public function destroy(
@@ -193,19 +192,19 @@ class CareerAcademicStructureController extends Controller
         string $record,
         ManageCareerAcademicStructureRequest $request,
         DeleteAcademicRecord $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($entity, $record, $actor, $request);
 
-        return back()->with('success', 'Registro académico eliminado.');
+        return $this->success($request, 'Registro académico eliminado.');
     }
 
     public function updateCurriculumConfiguration(
         string $curriculum,
         UpdateCurriculumConfigurationRequest $request,
         MutateCurriculumBuilder $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         /** @var array{code: string, cycle_count: int|string} $data */
         $data = $request->validated();
         $action->updateConfiguration(
@@ -215,17 +214,17 @@ class CareerAcademicStructureController extends Controller
             $request,
         );
 
-        return back()->with('success', 'Configuración de la malla actualizada.');
+        return $this->success($request, 'Configuración de la malla actualizada.');
     }
 
     public function storeSubjectRequirement(
         string $curriculum,
         StoreSubjectRequirementRequest $request,
         MutateCurriculumBuilder $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $action->createRequirement($curriculum, $request->validated(), $this->actor($request), $request);
 
-        return back()->with('success', 'Relación académica agregada.');
+        return $this->success($request, 'Relación académica agregada.');
     }
 
     public function destroySubjectRequirement(
@@ -233,10 +232,10 @@ class CareerAcademicStructureController extends Controller
         string $requirement,
         ManageCareerAcademicStructureRequest $request,
         MutateCurriculumBuilder $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $action->deleteRequirement($curriculum, $requirement, $this->actor($request), $request);
 
-        return back()->with('success', 'Relación académica eliminada.');
+        return $this->success($request, 'Relación académica eliminada.');
     }
 
     public function destroySubject(
@@ -244,20 +243,20 @@ class CareerAcademicStructureController extends Controller
         string $subject,
         ManageCareerAcademicStructureRequest $request,
         MutateCurriculumBuilder $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $action->deleteSubject($curriculum, $subject, $this->actor($request), $request);
 
-        return back()->with('success', 'Materia eliminada de la malla.');
+        return $this->success($request, 'Materia eliminada de la malla.');
     }
 
     public function updateSubjectLayout(
         string $curriculum,
         UpdateSubjectLayoutRequest $request,
         MutateCurriculumBuilder $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $action->updateSubjectLayout($curriculum, $request->validated(), $this->actor($request), $request);
 
-        return back()->with('success', 'Posición de la materia actualizada.');
+        return $this->success($request, 'Posición de la materia actualizada.');
     }
 
     private function careerId(
@@ -276,5 +275,10 @@ class CareerAcademicStructureController extends Controller
         abort_unless($actor instanceof User, 401);
 
         return $actor;
+    }
+
+    private function success(Request $request, string $message): RedirectResponse|JsonResponse
+    {
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 }

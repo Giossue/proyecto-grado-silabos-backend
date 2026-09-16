@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
+use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
 use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
@@ -130,6 +131,38 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('active-role')->name('api.v1.coordination.sources.update');
         Route::put('coordination/sources/{source}/content', [AcademicSourceController::class, 'updateContent'])
             ->middleware('active-role')->name('api.v1.coordination.sources.content.update');
+        Route::get('coordination/academic/curriculum/{curriculum}', [CareerAcademicStructureController::class, 'curriculumBuilder'])
+            ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.show');
+        Route::get('coordination/academic/scheduled-subjects', [CareerAcademicStructureController::class, 'scheduledSubjects'])
+            ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-subjects.index');
+        Route::get('coordination/academic/teacher-assignments', [CareerAcademicStructureController::class, 'teacherAssignments'])
+            ->middleware('active-role')->name('api.v1.coordination.academic.teacher-assignments.index');
+        Route::post('coordination/academic/prepare-period', [CareerAcademicStructureController::class, 'preparePeriod'])
+            ->middleware('active-role')->name('api.v1.coordination.academic.period.prepare');
+        Route::post('coordination/academic/parallels', [CareerAcademicStructureController::class, 'storeParallels'])
+            ->middleware('active-role')->name('api.v1.coordination.academic.parallels.store');
+        Route::post('coordination/academic/relieve-teacher', [CareerAcademicStructureController::class, 'relieveTeacher'])
+            ->middleware('active-role')->name('api.v1.coordination.academic.teachers.relieve');
+        Route::post('coordination/academic/{entity}', [CareerAcademicStructureController::class, 'store'])
+            ->middleware('active-role')->name('api.v1.coordination.academic.store');
+        Route::patch('coordination/academic/{entity}/{record}', [CareerAcademicStructureController::class, 'update'])
+            ->middleware('active-role')->whereUuid('record')->name('api.v1.coordination.academic.update');
+        Route::patch('coordination/academic/{entity}/{record}/status', [CareerAcademicStructureController::class, 'setStatus'])
+            ->middleware('active-role')->whereUuid('record')->name('api.v1.coordination.academic.status');
+        Route::delete('coordination/academic/{entity}/{record}', [CareerAcademicStructureController::class, 'destroy'])
+            ->middleware('active-role')->whereUuid('record')->name('api.v1.coordination.academic.destroy');
+        Route::delete('coordination/academic/scheduled-subjects/{scheduledSubject}', [CareerAcademicStructureController::class, 'destroyScheduledSubject'])
+            ->middleware('active-role')->whereUuid('scheduledSubject')->name('api.v1.coordination.academic.scheduled-subjects.destroy');
+        Route::patch('coordination/academic/curriculum/{curriculum}/configuration', [CareerAcademicStructureController::class, 'updateCurriculumConfiguration'])
+            ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.configuration.update');
+        Route::post('coordination/academic/curriculum/{curriculum}/requirements', [CareerAcademicStructureController::class, 'storeSubjectRequirement'])
+            ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.requirements.store');
+        Route::delete('coordination/academic/curriculum/{curriculum}/requirements/{requirement}', [CareerAcademicStructureController::class, 'destroySubjectRequirement'])
+            ->middleware('active-role')->whereUuid(['curriculum', 'requirement'])->name('api.v1.coordination.academic.curriculum.requirements.destroy');
+        Route::delete('coordination/academic/curriculum/{curriculum}/subjects/{subject}', [CareerAcademicStructureController::class, 'destroySubject'])
+            ->middleware('active-role')->whereUuid(['curriculum', 'subject'])->name('api.v1.coordination.academic.curriculum.subjects.destroy');
+        Route::patch('coordination/academic/curriculum/{curriculum}/subject-layout', [CareerAcademicStructureController::class, 'updateSubjectLayout'])
+            ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.layout.update');
         Route::get('teacher/syllabi', [SyllabusController::class, 'index'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.index');
