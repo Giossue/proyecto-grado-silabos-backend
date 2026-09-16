@@ -40,7 +40,7 @@ use Inertia\Response;
 
 class SyllabusController extends Controller
 {
-    public function index(ViewSyllabiRequest $request, ActiveRole $roles): Response
+    public function index(ViewSyllabiRequest $request, ActiveRole $roles): Response|JsonResponse
     {
         $activeRole = $roles->resolve($request);
         $user = $request->user();
@@ -52,37 +52,43 @@ class SyllabusController extends Controller
             'sin_iniciar', 'borrador', 'en_revision', 'correccion_solicitada', 'aprobado',
         ], true) ? $filters['state'] : null;
 
-        return Inertia::render('Teacher/Syllabi/Index', [
-            'filters' => ['q' => $search ?: null, 'state' => $state],
-            'syllabi' => Syllabus::query()
-                ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $activeRole?->carrera_id))
-                ->whereHas('collaborators', fn ($query) => $query->where('usuario_id', $user->id))
+        $syllabi = Syllabus::query()
+            ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $activeRole?->carrera_id))
+            ->whereHas('collaborators', fn ($query) => $query->where('usuario_id', $user->id))
                 // La búsqueda mira la asignatura y la convocatoria, que es como se
                 // recuerda un expediente: por la materia y por el periodo en que se pidió.
-                ->when($search, fn ($query, string $term) => $query->where(
-                    fn ($outer) => $outer
-                        ->whereRaw("contexto_academico_silabo->'subject'->>'name' ILIKE ?", ["%{$term}%"])
-                        ->orWhereRaw("contexto_academico_silabo->'subject'->>'code' ILIKE ?", ["%{$term}%"])
-                        ->orWhereHas('convocation.process.academicPeriod', fn ($period) => $period
-                            ->whereRaw('codigo_periodo_academico ILIKE ?', ["%{$term}%"])),
-                ))
-                ->when($state, fn ($query, string $value) => $query->where('estado', $value))
-                ->with(['convocation:id,carrera_id,proceso_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'subject:id,nombre,codigo_asignatura', 'scopes.parallel:id,codigo'])
-                ->orderByRaw('guardado_en DESC NULLS LAST')
-                ->paginate(15)
-                ->withQueryString()
-                ->through(fn (Syllabus $syllabus) => [
-                    'id' => $syllabus->id,
-                    'subject' => $syllabus->academicSubjectName(),
-                    'code' => $syllabus->academicSubjectCode(),
-                    'convocation' => $syllabus->convocation->nombre,
-                    'period' => $syllabus->convocation->process->academicPeriod->codigo,
-                    'state' => $syllabus->estado,
-                    'completion' => (float) $syllabus->porcentaje_completitud,
-                    'parallels' => $syllabus->scopes->pluck('parallel.codigo')->unique()->values(),
-                    'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
-                ]),
-        ]);
+            ->when($search, fn ($query, string $term) => $query->where(
+                fn ($outer) => $outer
+                    ->whereRaw("contexto_academico_silabo->'subject'->>'name' ILIKE ?", ["%{$term}%"])
+                    ->orWhereRaw("contexto_academico_silabo->'subject'->>'code' ILIKE ?", ["%{$term}%"])
+                    ->orWhereHas('convocation.process.academicPeriod', fn ($period) => $period
+                        ->whereRaw('codigo_periodo_academico ILIKE ?', ["%{$term}%"])),
+            ))
+            ->when($state, fn ($query, string $value) => $query->where('estado', $value))
+            ->with(['convocation:id,carrera_id,proceso_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'subject:id,nombre,codigo_asignatura', 'scopes.parallel:id,codigo'])
+            ->orderByRaw('guardado_en DESC NULLS LAST')
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (Syllabus $syllabus) => [
+                'id' => $syllabus->id,
+                'subject' => $syllabus->academicSubjectName(),
+                'code' => $syllabus->academicSubjectCode(),
+                'convocation' => $syllabus->convocation->nombre,
+                'period' => $syllabus->convocation->process->academicPeriod->codigo,
+                'state' => $syllabus->estado,
+                'completion' => (float) $syllabus->porcentaje_completitud,
+                'parallels' => $syllabus->scopes->pluck('parallel.codigo')->unique()->values(),
+                'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
+            ]);
+
+        $payload = [
+            'filters' => ['q' => $search ?: null, 'state' => $state],
+            'syllabi' => $syllabi,
+        ];
+
+        return $request->expectsJson()
+            ? response()->json($payload)
+            : Inertia::render('Teacher/Syllabi/Index', $payload);
     }
 
     public function show(Syllabus $syllabus, Request $request): Response
