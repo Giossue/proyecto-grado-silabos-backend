@@ -11,7 +11,11 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        $this->withoutVite();
+        config([
+            'sanctum.stateful' => ['localhost:5173'],
+            'sanctum.middleware.authenticate_session' => null,
+        ]);
+        $this->withHeader('Origin', 'http://localhost:5173');
     }
 
     protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void

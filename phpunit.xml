@@ -25,6 +25,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_KEY" value="base64:7H8P2+emTjoHN4+y1WWGLef6m9jg3wBj2Vx5C4QF1Dk="/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="AI_DRIVER" value="baseline"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
@@ -40,6 +41,9 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="FILESYSTEM_DISK" value="private"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="REDIS_CLIENT" value="predis"/>
+        <env name="REDIS_HOST" value="127.0.0.1"/>
+        <env name="REDIS_PORT" value="56379"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>

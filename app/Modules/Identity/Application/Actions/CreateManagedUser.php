@@ -57,7 +57,7 @@ class CreateManagedUser
                     email: $user->correo_electronico,
                     temporaryPassword: $data['password'],
                     roleName: $assignment->role->nombre_rol,
-                    loginUrl: route('login'),
+                    loginUrl: rtrim((string) config('app.frontend_url'), '/').'/ingresar',
                 ));
             });
 

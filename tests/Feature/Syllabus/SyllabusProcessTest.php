@@ -7,6 +7,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
@@ -16,8 +17,8 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Illuminate\Testing\TestResponse;
-use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\TestCase;
 
@@ -78,23 +79,23 @@ class SyllabusProcessTest extends TestCase
     {
         $template = $this->publishedTemplate();
 
-        $this->actingAsCoordinator()->post(route('admin.processes.store'), $this->processPayload($template))
+        $this->actingAsCoordinator()->postJson(route('api.v1.admin.processes.store'), $this->processPayload($template))
             ->assertForbidden();
-        $this->actingAsCoordinator()->get(route('admin.processes.index'))->assertForbidden();
+        $this->actingAsCoordinator()->getJson(route('api.v1.admin.processes.index'))->assertForbidden();
 
-        $this->actingAsAdministrator()->post(route('admin.processes.store'), $this->processPayload($template))
-            ->assertRedirect()
-            ->assertSessionHas('success');
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), $this->processPayload($template))
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $process = SyllabusProcess::query()->firstOrFail();
         $this->assertSame('preparacion', $process->estado);
         $this->assertSame($process->academicPeriod->codigo, $process->nombre);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'proceso_silabos.creado', 'recurso_id' => $process->id]);
 
-        $this->actingAsAdministrator()->get(route('admin.processes.index'))
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.index'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Processes/Index')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->has('processes', 1)
                 ->where('processes.0.state', 'preparacion'));
     }
@@ -106,14 +107,14 @@ class SyllabusProcessTest extends TestCase
         $due = now()->addMonth()->toDateString();
 
         $this->actingAsAdministrator()
-            ->post(route('admin.processes.store'), [
+            ->postJson(route('api.v1.admin.processes.store'), [
                 ...$this->processPayload($template),
                 'nombre' => 'Proceso por días',
                 'starts_at' => $start,
                 'due_at' => $due,
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $process = SyllabusProcess::query()->firstOrFail();
         $this->assertSame("{$start} 00:00:00", $process->inicia_en->format('Y-m-d H:i:s'));
@@ -125,8 +126,8 @@ class SyllabusProcessTest extends TestCase
         $payload = $this->processPayload($this->publishedTemplate());
         unset($payload['period_id']);
 
-        $this->actingAsAdministrator()->post(route('admin.processes.store'), $payload)
-            ->assertSessionHasErrors('period_id');
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), $payload)
+            ->assertJsonValidationErrors('period_id');
     }
 
     public function test_coordination_lists_the_institutional_process_before_and_after_starting_its_career(): void
@@ -134,8 +135,8 @@ class SyllabusProcessTest extends TestCase
         $process = $this->openProcess();
         $source = $this->coordinatorSource();
 
-        $this->actingAsCoordinator()->get(route('convocations.index', ['state' => 'sin_iniciar']))
-            ->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.convocations.index', ['state' => 'sin_iniciar']))
+            ->assertOk()->assertJson(fn (Assert $page) => $page->etc()
             ->has('convocations.data', 1)
             ->where('convocations.data.0.process_id', $process->id)
             ->where('convocations.data.0.id', null)
@@ -148,21 +149,21 @@ class SyllabusProcessTest extends TestCase
             ->assertJsonPath('available_sources.0.id', $source->id)
             ->assertJsonPath('available_sources.0.name', $source->nombre);
 
-        $this->actingAsCoordinator()->post(route('convocations.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
             'source_ids' => [$source->id],
         ])
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful();
         $convocation = Convocation::query()->where('proceso_id', $process->id)->firstOrFail();
 
-        $this->actingAsCoordinator()->get(route('convocations.index', ['state' => 'abierta']))
-            ->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.convocations.index', ['state' => 'abierta']))
+            ->assertOk()->assertJson(fn (Assert $page) => $page->etc()
             ->has('convocations.data', 1)
             ->where('convocations.data.0.process_id', $process->id)
             ->where('convocations.data.0.id', $convocation->id)
             ->where('convocations.data.0.syllabi_count', 1));
-        $this->actingAsCoordinator()->get(route('convocations.index', ['state' => 'sin_iniciar']))
-            ->assertOk()->assertInertia(fn (Assert $page) => $page->has('convocations.data', 0));
+        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.convocations.index', ['state' => 'sin_iniciar']))
+            ->assertOk()->assertJson(fn (Assert $page) => $page->etc()->has('convocations.data', 0));
     }
 
     public function test_only_one_process_can_be_in_progress(): void
@@ -171,10 +172,10 @@ class SyllabusProcessTest extends TestCase
         $first = $this->preparedProcess($template, 'Primero');
 
         // Un período institucional identifica un único proceso, aun antes de abrirlo.
-        $this->actingAsAdministrator()->post(route('admin.processes.store'), [
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             ...$this->processPayload($template),
             'nombre' => 'Duplicado del período',
-        ])->assertSessionHasErrors('period_id');
+        ])->assertJsonValidationErrors('period_id');
 
         $otherPeriod = AcademicPeriod::query()->create([
             'codigo' => 'I-46-ALTERNO',
@@ -183,33 +184,33 @@ class SyllabusProcessTest extends TestCase
         ]);
         $second = $this->preparedProcess($template, 'Segundo', $otherPeriod->id);
 
-        $this->transition($first, 'abrir')->assertRedirect()->assertSessionHas('success');
+        $this->transition($first, 'abrir')->assertSuccessful()->assertSuccessful();
         $this->assertSame('abierto', $first->fresh()->estado);
 
-        $this->actingAsAdministrator()->post(route('admin.processes.store'), [
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             ...$this->processPayload($template),
             'period_id' => $second->periodo_academico_id,
-        ])->assertSessionHasErrors('process');
+        ])->assertJsonValidationErrors('process');
 
-        $this->transition($second, 'abrir')->assertSessionHasErrors('process');
+        $this->transition($second, 'abrir')->assertJsonValidationErrors('process');
         $this->assertSame('preparacion', $second->fresh()->estado);
 
         // En pausa sigue ocupando el lugar: pausar no es cerrar.
-        $this->transition($first, 'pausar', 'Corrección de la sección de evaluación.')->assertRedirect();
-        $this->transition($second, 'abrir')->assertSessionHasErrors('process');
+        $this->transition($first, 'pausar', 'Corrección de la sección de evaluación.')->assertSuccessful();
+        $this->transition($second, 'abrir')->assertJsonValidationErrors('process');
 
-        $this->transition($first, 'cerrar')->assertRedirect();
-        $this->transition($second, 'abrir')->assertRedirect()->assertSessionHas('success');
+        $this->transition($first, 'cerrar')->assertSuccessful();
+        $this->transition($second, 'abrir')->assertSuccessful()->assertSuccessful();
     }
 
     public function test_pausing_requires_a_written_reason_and_is_audited(): void
     {
         $process = $this->openProcess();
 
-        $this->transition($process, 'pausar', null)->assertSessionHasErrors('reason');
-        $this->transition($process, 'pausar', 'Corto')->assertSessionHasErrors('reason');
+        $this->transition($process, 'pausar', null)->assertJsonValidationErrors('reason');
+        $this->transition($process, 'pausar', 'Corto')->assertJsonValidationErrors('reason');
         $this->transition($process, 'pausar', 'Ajuste de la plantilla tras la observación del vicerrectorado.')
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $this->assertSame('pausado', $process->fresh()->estado);
         $this->assertDatabaseHas('eventos_auditoria', [
@@ -243,13 +244,13 @@ class SyllabusProcessTest extends TestCase
             'fecha_fin' => '2027-05-31',
         ]);
 
-        $this->actingAsCoordinator()->post(route('convocations.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
             'source_ids' => [$source->id],
-        ])->assertSessionHasErrors('process_id');
+        ])->assertJsonValidationErrors('process_id');
         $this->assertDatabaseCount('convocatorias_carreras', 0);
 
-        $this->transition($process, 'abrir')->assertRedirect();
+        $this->transition($process, 'abrir')->assertSuccessful();
         $this->actingAsCoordinator()->withHeader('Origin', 'http://localhost:5173')
             ->postJson(route('api.v1.coordination.convocations.store'), [
                 'process_id' => $process->id,
@@ -305,31 +306,30 @@ class SyllabusProcessTest extends TestCase
             'first_field_content_type' => 'text',
         ];
 
-        $this->actingAsAdministrator()->post(route('admin.templates.sections.store', $template), $sectionPayload)
-            ->assertSessionHasErrors('process');
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $sectionPayload)
+            ->assertJsonValidationErrors('process');
         $this->assertSame(12, $template->sections()->count());
 
-        $this->actingAsAdministrator()->get(route('admin.templates.show', $template))
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.show', $template))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->whereNot('processLock', null));
-        $this->actingAsAdministrator()->get(route('admin.templates.edit', $template))
-            ->assertRedirect(route('admin.templates.show', $template))
-            ->assertSessionHas('error');
+            ->assertJson(fn (Assert $page) => $page->etc()->whereNot('processLock', null));
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.show', $template))
+            ->assertSuccessful();
 
-        $this->transition($process, 'pausar', 'Hay que corregir el bloque de bibliografía.')->assertRedirect();
+        $this->transition($process, 'pausar', 'Hay que corregir el bloque de bibliografía.')->assertSuccessful();
 
-        $this->actingAsAdministrator()->post(route('admin.templates.sections.store', $template), $sectionPayload)
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $sectionPayload)
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertSame(13, $template->sections()->count());
-        $this->actingAsAdministrator()->get(route('admin.templates.index'))
-            ->assertRedirect(route('admin.templates.show', $template));
-        $this->actingAsAdministrator()->get(route('admin.templates.show', $template))
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.index'))
+            ->assertSuccessful();
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.show', $template))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->where('processLock', null));
-        $this->actingAsAdministrator()->get(route('admin.templates.edit', $template))
+            ->assertJson(fn (Assert $page) => $page->etc()->where('processLock', null));
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.show', $template))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->component('Admin/Templates/Edit'));
+            ->assertJson(fn (Assert $page) => $page->etc());
     }
 
     public function test_changing_the_template_during_a_pause_asks_before_deleting_unsent_syllabi(): void
@@ -338,8 +338,8 @@ class SyllabusProcessTest extends TestCase
         $process = $convocation->process()->firstOrFail();
         $template = $process->template;
         $syllabus = Syllabus::query()->firstOrFail();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus))->assertRedirect();
-        $this->transition($process, 'pausar', 'Ajuste de la plantilla con expedientes abiertos.')->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $this->transition($process, 'pausar', 'Ajuste de la plantilla con expedientes abiertos.')->assertSuccessful();
         $sectionPayload = [
             'title' => 'Anexos',
             'key' => 'anexos',
@@ -349,16 +349,16 @@ class SyllabusProcessTest extends TestCase
         ];
 
         // Sin confirmar: nada cambia y el servidor devuelve la cifra.
-        $this->actingAsAdministrator()->post(route('admin.templates.sections.store', $template), $sectionPayload)
-            ->assertSessionHasErrors(['purge_required', 'purge_count']);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $sectionPayload)
+            ->assertJsonValidationErrors(['purge_required', 'purge_count']);
         $this->assertDatabaseCount('silabos', 1);
         $this->assertSame(12, $template->sections()->count());
 
         // Confirmado: el borrador sin enviar se borra y el cambio se aplica.
         $this->actingAsAdministrator()
-            ->post(route('admin.templates.sections.store', $template), [...$sectionPayload, 'confirm_purge' => 1])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->postJson(route('api.v1.admin.template.sections.store', $template), [...$sectionPayload, 'confirm_purge' => 1])
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertDatabaseCount('silabos', 0);
         $this->assertSame(13, $template->sections()->count());
     }
@@ -368,25 +368,25 @@ class SyllabusProcessTest extends TestCase
         $convocation = $this->openedConvocation();
         $career = Career::query()->firstOrFail();
         $this->actingAsCoordinator()
-            ->post(route('convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección de la malla con expedientes abiertos.'])
-            ->assertRedirect();
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección de la malla con expedientes abiertos.'])
+            ->assertSuccessful();
 
         $this->actingAsCoordinator()
-            ->patch(route('coordination.academic.curricula.configuration.update', $career->id), [
+            ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
                 'code' => 'MALLA-NUEVA',
                 'cycle_count' => $career->cantidad_ciclos_malla,
             ])
-            ->assertSessionHasErrors('purge_required');
+            ->assertJsonValidationErrors('purge_required');
         $this->assertDatabaseCount('silabos', 1);
 
         $this->actingAsCoordinator()
-            ->patch(route('coordination.academic.curricula.configuration.update', $career->id), [
+            ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
                 'code' => 'MALLA-NUEVA',
                 'cycle_count' => $career->cantidad_ciclos_malla,
                 'confirm_purge' => 1,
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertDatabaseCount('silabos', 0);
         $this->assertSame('MALLA-NUEVA', $career->fresh()->codigo_malla);
     }
@@ -398,60 +398,60 @@ class SyllabusProcessTest extends TestCase
         $source = AcademicSource::query()->firstOrFail();
 
         $this->actingAsCoordinator()
-            ->patch(route('coordination.academic.curricula.configuration.update', $career->id), [
+            ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
                 'code' => 'MALLA-BLOQUEADA',
                 'cycle_count' => $career->cantidad_ciclos_malla,
             ])
-            ->assertSessionHasErrors('process');
+            ->assertJsonValidationErrors('process');
         $this->assertSame('MALLA-SW-2024', $career->fresh()->codigo_malla);
 
         $this->actingAsCoordinator()
-            ->patch(route('sources.update', $source), [
+            ->patchJson(route('api.v1.coordination.sources.update', $source), [
                 'nombre' => 'Fuente renombrada',
                 'description' => null,
             ])
-            ->assertSessionHasErrors('process');
+            ->assertJsonValidationErrors('process');
         $this->assertNotSame('Fuente renombrada', $source->fresh()->nombre);
 
         $this->actingAsCoordinator()
-            ->get(route('coordination.academic.curricula.show', $career))
+            ->getJson(route('api.v1.coordination.academic.curriculum.show', $career))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('curriculum.editable', false)
                 ->whereNot('curriculum.lock_reason', null));
 
         // Pausar la convocatoria de la carrera libera su malla y sus fuentes.
         $this->actingAsCoordinator()
-            ->post(route('convocations.transition', [$convocation, 'pausar']), [
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), [
                 'reason' => 'Corrección de las horas de dos materias antes de continuar.',
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertSame('pausada', $convocation->fresh()->estado);
 
         // Con la convocatoria pausada la malla se edita; como hay un expediente sin
         // enviar, el cambio pide confirmación y lo borra (I-32).
         $this->actingAsCoordinator()
-            ->patch(route('coordination.academic.curricula.configuration.update', $career->id), [
+            ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
                 'code' => 'MALLA-CORREGIDA',
                 'cycle_count' => $career->cantidad_ciclos_malla,
                 'confirm_purge' => 1,
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertSame('MALLA-CORREGIDA', $career->fresh()->codigo_malla);
 
         $this->actingAsCoordinator()
-            ->patch(route('sources.update', $source), [
+            ->patchJson(route('api.v1.coordination.sources.update', $source), [
                 'nombre' => 'Fuente renombrada',
                 'description' => null,
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->actingAsCoordinator()
-            ->post(route('convocations.transition', [$convocation, 'reanudar']))
-            ->assertRedirect();
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))
+            ->assertSuccessful();
         $this->assertSame('abierta', $convocation->fresh()->estado);
     }
 
@@ -463,46 +463,46 @@ class SyllabusProcessTest extends TestCase
         // Una convocatoria abierta no admite alterar su programación ni añadir paralelos:
         // los docentes ya recibieron los alcances generados al abrirla.
         $this->actingAsCoordinator()
-            ->post(route('coordination.academic.parallels.store'), [
+            ->postJson(route('api.v1.coordination.academic.parallels.store'), [
                 'scheduled_subject_id' => $scheduledSubject->id,
                 'codes' => ['B'],
                 'shift' => 'matutina',
             ])
-            ->assertSessionHasErrors('process');
+            ->assertJsonValidationErrors('process');
 
         // El proceso abierto protege también los catálogos institucionales.
         $this->actingAsAdministrator()
-            ->post(route('admin.academic.store', 'campus'), [
+            ->postJson(route('api.v1.admin.academic.store', 'campus'), [
                 'code' => 'NUEVO-EN-CURSO',
                 'nombre' => 'Campus no permitido durante el proceso',
             ])
-            ->assertSessionHasErrors('process');
+            ->assertJsonValidationErrors('process');
         $this->assertDatabaseMissing('campus', ['codigo_campus' => 'NUEVO-EN-CURSO']);
 
         // Pausar solo la convocatoria libera exclusivamente a esa carrera.
         $this->actingAsCoordinator()
-            ->post(route('convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección controlada de paralelos.'])
-            ->assertRedirect();
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección controlada de paralelos.'])
+            ->assertSuccessful();
         $this->actingAsCoordinator()
-            ->post(route('coordination.academic.parallels.store'), [
+            ->postJson(route('api.v1.coordination.academic.parallels.store'), [
                 'scheduled_subject_id' => $scheduledSubject->id,
                 'codes' => ['B'],
                 'shift' => 'matutina',
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         // La estructura institucional sigue congelada hasta que Administración pause
         // su proceso global.
         $process = $convocation->process()->firstOrFail();
-        $this->transition($process, 'pausar', 'Corrección institucional autorizada.')->assertRedirect();
+        $this->transition($process, 'pausar', 'Corrección institucional autorizada.')->assertSuccessful();
         $this->actingAsAdministrator()
-            ->post(route('admin.academic.store', 'campus'), [
+            ->postJson(route('api.v1.admin.academic.store', 'campus'), [
                 'code' => 'NUEVO-EN-PAUSA',
                 'nombre' => 'Campus creado durante la pausa',
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertDatabaseHas('campus', ['codigo_campus' => 'NUEVO-EN-PAUSA']);
     }
 
@@ -511,36 +511,46 @@ class SyllabusProcessTest extends TestCase
         $convocation = $this->openedConvocation();
         $syllabus = Syllabus::query()->firstOrFail();
 
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
+        $editableField = FieldDefinition::query()
+            ->where('plantilla_id', $syllabus->plantilla_id)
+            ->where('editable_docente', true)
+            ->firstOrFail();
 
         $this->actingAsCoordinator()
-            ->post(route('convocations.transition', [$convocation, 'pausar']), [
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), [
                 'reason' => 'Corrección de la malla antes de seguir elaborando.',
             ])
-            ->assertRedirect();
-        $this->actingAsTeacher()->get(route('syllabi.edit', $syllabus))->assertForbidden();
+            ->assertSuccessful();
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $editableField]), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+            'value' => 'No debe guardarse durante una pausa.',
+        ])->assertForbidden();
 
-        $this->actingAsCoordinator()->post(route('convocations.transition', [$convocation, 'reanudar']))->assertRedirect();
-        $this->actingAsTeacher()->get(route('syllabi.edit', $syllabus))->assertOk();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))->assertSuccessful();
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
 
         // La pausa institucional detiene también a una convocatoria que sigue abierta.
         $process = $convocation->process()->firstOrFail();
-        $this->transition($process, 'pausar', 'Ajuste institucional de la plantilla.')->assertRedirect();
+        $this->transition($process, 'pausar', 'Ajuste institucional de la plantilla.')->assertSuccessful();
         $this->assertSame('abierta', $convocation->fresh()->estado);
-        $this->actingAsTeacher()->get(route('syllabi.edit', $syllabus))->assertForbidden();
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $editableField]), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+            'value' => 'Tampoco debe guardarse durante la pausa institucional.',
+        ])->assertForbidden();
 
         // Y mientras dure, la carrera no puede reanudar por su cuenta.
         $this->actingAsCoordinator()
-            ->post(route('convocations.transition', [$convocation, 'pausar']), ['reason' => 'Pausa propia mientras tanto.'])
-            ->assertRedirect();
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Pausa propia mientras tanto.'])
+            ->assertSuccessful();
         $this->actingAsCoordinator()
-            ->post(route('convocations.transition', [$convocation, 'reanudar']))
-            ->assertSessionHasErrors('convocation');
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))
+            ->assertJsonValidationErrors('convocation');
 
-        $this->transition($process, 'reanudar')->assertRedirect();
-        $this->actingAsCoordinator()->post(route('convocations.transition', [$convocation, 'reanudar']))->assertRedirect();
-        $this->actingAsTeacher()->get(route('syllabi.edit', $syllabus))->assertOk();
+        $this->transition($process, 'reanudar')->assertSuccessful();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))->assertSuccessful();
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
     }
 
     public function test_coordinator_cannot_edit_a_convocation_and_only_administration_closes_the_process(): void
@@ -549,20 +559,20 @@ class SyllabusProcessTest extends TestCase
         $source = AcademicSource::query()->firstOrFail();
         $payload = ['source_ids' => [$source->id]];
 
-        $this->actingAsCoordinator()->patch('/coordinacion/convocatorias/'.$convocation->id, $payload)->assertMethodNotAllowed();
+        $this->actingAsCoordinator()->patch('/coordinacion/convocatorias/'.$convocation->id, $payload)->assertNotFound();
 
         $this->actingAsCoordinator()
-            ->post(route('convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección de la malla antes de continuar.'])
-            ->assertRedirect();
-        $this->actingAsCoordinator()->patch('/coordinacion/convocatorias/'.$convocation->id, $payload)->assertMethodNotAllowed();
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección de la malla antes de continuar.'])
+            ->assertSuccessful();
+        $this->actingAsCoordinator()->patch('/coordinacion/convocatorias/'.$convocation->id, $payload)->assertNotFound();
         $this->assertSame($convocation->career->nombre.' · '.$convocation->process->academicPeriod->codigo, $convocation->fresh()->nombre);
 
         // Cerrar no es de la carrera: lo decide Administración cerrando el proceso.
-        $this->actingAsCoordinator()->post(route('convocations.transition', [$convocation, 'cerrar']))->assertNotFound();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'cerrar']))->assertNotFound();
         $syllabus = Syllabus::query()->firstOrFail();
-        $this->transition($convocation->process()->firstOrFail(), 'cerrar')->assertRedirect();
+        $this->transition($convocation->process()->firstOrFail(), 'cerrar')->assertSuccessful();
         $this->assertSame('pausada', $convocation->fresh()->estado);
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus))->assertForbidden();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertForbidden();
     }
 
     public function test_process_configuration_changes_only_in_preparation_or_pause(): void
@@ -570,13 +580,13 @@ class SyllabusProcessTest extends TestCase
         $process = $this->openProcess();
         $payload = $this->processPayload($process->template);
 
-        $this->actingAsAdministrator()->patch(route('admin.processes.update', $process), $payload)
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.processes.update', $process), $payload)
             ->assertForbidden();
 
-        $this->transition($process, 'pausar', 'Se corrige la fecha de entrega.')->assertRedirect();
-        $this->actingAsAdministrator()->patch(route('admin.processes.update', $process), $payload)
-            ->assertRedirect()
-            ->assertSessionHas('success');
+        $this->transition($process, 'pausar', 'Se corrige la fecha de entrega.')->assertSuccessful();
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.processes.update', $process), $payload)
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertSame($process->academicPeriod->codigo, $process->fresh()->nombre);
     }
 
@@ -584,22 +594,22 @@ class SyllabusProcessTest extends TestCase
     {
         $process = $this->preparedProcess($this->publishedTemplate(), 'Proceso con convocatoria');
         $source = $this->coordinatorSource();
-        $this->transition($process, 'abrir')->assertRedirect();
-        $this->actingAsCoordinator()->post(route('convocations.store'), [
+        $this->transition($process, 'abrir')->assertSuccessful();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
             'source_ids' => [$source->id],
-        ])->assertRedirect();
-        $this->transition($process, 'pausar', 'El período no puede reasignarse tras iniciar convocatorias.')->assertRedirect();
+        ])->assertSuccessful();
+        $this->transition($process, 'pausar', 'El período no puede reasignarse tras iniciar convocatorias.')->assertSuccessful();
         $otherPeriod = AcademicPeriod::query()->create([
             'codigo' => 'I-41-NO-CAMBIAR',
             'fecha_inicio' => '2027-06-01',
             'fecha_fin' => '2027-10-31',
         ]);
 
-        $this->actingAsAdministrator()->patch(route('admin.processes.update', $process), [
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.processes.update', $process), [
             ...$this->processPayload($process->template),
             'period_id' => $otherPeriod->id,
-        ])->assertSessionHasErrors('period_id');
+        ])->assertJsonValidationErrors('period_id');
     }
 
     /** @return array{period_id: string, starts_at: string, due_at: string} */
@@ -615,8 +625,8 @@ class SyllabusProcessTest extends TestCase
     private function preparedProcess(SyllabusTemplate $template, string $name, ?string $periodId = null): SyllabusProcess
     {
         $this->actingAsAdministrator()
-            ->post(route('admin.processes.store'), [...$this->processPayload($template), 'nombre' => $name, ...($periodId === null ? [] : ['period_id' => $periodId])])
-            ->assertRedirect();
+            ->postJson(route('api.v1.admin.processes.store'), [...$this->processPayload($template), 'nombre' => $name, ...($periodId === null ? [] : ['period_id' => $periodId])])
+            ->assertSuccessful();
 
         return SyllabusProcess::query()->where('periodo_academico_id', $periodId ?? $this->processPayload($template)['period_id'])->firstOrFail();
     }
@@ -624,7 +634,7 @@ class SyllabusProcessTest extends TestCase
     private function openProcess(): SyllabusProcess
     {
         $process = $this->preparedProcess($this->publishedTemplate(), 'Proceso abierto');
-        $this->transition($process, 'abrir')->assertRedirect();
+        $this->transition($process, 'abrir')->assertSuccessful();
 
         return $process->fresh();
     }
@@ -634,10 +644,10 @@ class SyllabusProcessTest extends TestCase
         $process = $this->openProcess();
         $source = $this->coordinatorSource();
 
-        $this->actingAsCoordinator()->post(route('convocations.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
             'source_ids' => [$source->id],
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $convocation = Convocation::query()->where('proceso_id', $process->id)->firstOrFail();
 
         return $convocation->fresh();
@@ -646,14 +656,14 @@ class SyllabusProcessTest extends TestCase
     private function transition(SyllabusProcess $process, string $transition, ?string $reason = null): TestResponse
     {
         return $this->actingAsAdministrator()->post(
-            route('admin.processes.transition', [$process, $transition]),
+            route('api.v1.admin.processes.transition', [$process, $transition]),
             $reason === null ? [] : ['reason' => $reason],
         );
     }
 
     private function publishedTemplate(): SyllabusTemplate
     {
-        $this->actingAsAdministrator()->post(route('admin.templates.store'), ['nombre' => 'Plantilla I-31']);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-31']);
         $template = SyllabusTemplate::query()->firstOrFail();
 
         return $template->fresh();
@@ -661,14 +671,14 @@ class SyllabusProcessTest extends TestCase
 
     private function coordinatorSource(): AcademicSource
     {
-        $this->actingAsCoordinator()->post(route('sources.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.sources.store'), [
             'nombre' => 'Fuente I-31',
             'description' => 'Documento de apoyo del periodo.',
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $source = AcademicSource::query()->firstOrFail();
-        $this->actingAsCoordinator()->put(route('sources.content.update', $source), [
+        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.sources.content.update', $source), [
             'content' => "## Perfil\n\nEvidencia académica autorizada.",
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         return $source->fresh();
     }

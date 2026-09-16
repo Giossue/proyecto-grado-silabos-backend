@@ -66,7 +66,7 @@ class TeacherTransferTest extends TestCase
     {
         $syllabus = $this->openedSyllabus();
 
-        $this->transfer($syllabus)->assertRedirect()->assertSessionHas('success');
+        $this->transfer($syllabus)->assertSuccessful()->assertSuccessful();
 
         // El expediente es el mismo: no se creó otro.
         $this->assertDatabaseCount('silabos', 1);
@@ -97,7 +97,7 @@ class TeacherTransferTest extends TestCase
         $this->assertGreaterThan(0, (float) $syllabus->porcentaje_completitud);
         $this->assertGreaterThan(0, $syllabus->values()->where('heredado', false)->count());
 
-        $this->transfer($syllabus)->assertRedirect();
+        $this->transfer($syllabus)->assertSuccessful();
 
         $syllabus->refresh();
         $this->assertSame('sin_iniciar', $syllabus->estado);
@@ -115,7 +115,7 @@ class TeacherTransferTest extends TestCase
         $syllabus = $this->approvedSyllabus();
         $revisionCount = $syllabus->revisions()->count();
 
-        $this->transfer($syllabus)->assertRedirect();
+        $this->transfer($syllabus)->assertSuccessful();
 
         $syllabus->refresh();
         $this->assertSame('correccion_solicitada', $syllabus->estado);
@@ -147,7 +147,7 @@ class TeacherTransferTest extends TestCase
             'fecha_fin' => '2026-03-31',
         ]);
 
-        $this->transfer($syllabus)->assertSessionHasErrors('syllabus');
+        $this->transfer($syllabus)->assertJsonValidationErrors('syllabus');
 
         $this->assertDatabaseHas('colaboradores_silabo', [
             'silabo_id' => $syllabus->id,
@@ -169,14 +169,14 @@ class TeacherTransferTest extends TestCase
             'activo' => true,
         ]);
 
-        $this->transfer($syllabus, $outsider->id)->assertSessionHasErrors('incoming_user_id');
+        $this->transfer($syllabus, $outsider->id)->assertJsonValidationErrors('incoming_user_id');
     }
 
     public function test_only_the_coordinator_of_the_career_transfers(): void
     {
         $syllabus = $this->openedSyllabus();
 
-        $this->actingAsTeacher()->post(route('reviews.teacher.transfer', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.teacher.transfer', $syllabus), [
             'outgoing_user_id' => $this->teacher->id,
             'incoming_user_id' => $this->replacement->id,
             'idempotency_key' => (string) Str::uuid(),
@@ -185,7 +185,7 @@ class TeacherTransferTest extends TestCase
 
     private function transfer(Syllabus $syllabus, ?string $incomingId = null): TestResponse
     {
-        return $this->actingAsCoordinator()->post(route('reviews.teacher.transfer', $syllabus), [
+        return $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.teacher.transfer', $syllabus), [
             'outgoing_user_id' => $this->teacher->id,
             'incoming_user_id' => $incomingId ?? $this->replacement->id,
             'idempotency_key' => (string) Str::uuid(),
@@ -215,9 +215,9 @@ class TeacherTransferTest extends TestCase
     {
         $syllabus = $this->submittedSyllabus();
         $revision = $syllabus->revisions()->orderByDesc('numero_revision')->firstOrFail();
-        $this->actingAsCoordinator()->post(route('reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         return $syllabus->fresh();
     }
@@ -225,10 +225,10 @@ class TeacherTransferTest extends TestCase
     private function submittedSyllabus(): Syllabus
     {
         $syllabus = $this->validDraft();
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         return $syllabus->fresh();
     }
@@ -236,7 +236,7 @@ class TeacherTransferTest extends TestCase
     private function validDraft(): Syllabus
     {
         $syllabus = $this->openedSyllabus();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $fields = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('obligatorio', true)
@@ -244,7 +244,7 @@ class TeacherTransferTest extends TestCase
             ->get();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(
-                route('syllabi.fields.update', [$syllabus, $field]),
+                route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
                 $this->validFieldPayload($field, $syllabus->fresh()->version_bloqueo),
             )->assertOk();
         }
@@ -255,10 +255,10 @@ class TeacherTransferTest extends TestCase
     private function openedSyllabus(): Syllabus
     {
         [$template, $source] = $this->publishedConfiguration();
-        $this->actingAsCoordinator()->post(route('convocations.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id, now()->subDay()->toIso8601String(), now()->addMonth()->toIso8601String())->id,
             'source_ids' => [$source->id],
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $convocation = Convocation::query()->firstOrFail();
 
         return Syllabus::query()->firstOrFail();
@@ -290,15 +290,15 @@ class TeacherTransferTest extends TestCase
     /** @return array{SyllabusTemplate, AcademicSource} */
     private function publishedConfiguration(): array
     {
-        $this->actingAsAdministrator()->post(route('admin.templates.store'), ['nombre' => 'Plantilla relevo']);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla relevo']);
         $template = SyllabusTemplate::query()->firstOrFail();
 
-        $this->actingAsCoordinator()->post(route('sources.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.sources.store'), [
             'nombre' => 'Fuente relevo',
             'description' => 'Documento de apoyo del periodo.',
         ]);
         $source = AcademicSource::query()->firstOrFail();
-        $this->actingAsCoordinator()->put(route('sources.content.update', $source), [
+        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.sources.content.update', $source), [
             'content' => '## Perfil base
 
 Evidencia académica autorizada.',

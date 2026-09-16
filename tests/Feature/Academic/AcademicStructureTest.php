@@ -15,7 +15,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Tests\TestCase;
 
 class AcademicStructureTest extends TestCase
@@ -78,14 +78,10 @@ class AcademicStructureTest extends TestCase
         $career = Career::query()->findOrFail($this->coordinatorContext->carrera_id);
 
         $this->actingAsCoordinator()
-            ->get(route('coordination.academic.curricula.index'))
-            ->assertRedirect(route('coordination.academic.curricula.show', $career->id));
-
-        $this->actingAsCoordinator()
-            ->get(route('coordination.academic.curricula.show', $career->id))
+            ->getJson(route('api.v1.coordination.academic.curriculum.show', $career->id))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Coordination/Academic/CurriculumBuilder')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('career.id', $career->id)
                 ->where('curriculum.id', $career->id)
                 ->where('curriculum.code', $career->codigo_malla)
@@ -99,7 +95,7 @@ class AcademicStructureTest extends TestCase
         $campus = Campus::query()->firstOrFail();
 
         $this->actingAsAdministrator()
-            ->post(route('admin.academic.store', 'carrera'), [
+            ->postJson(route('api.v1.admin.academic.store', 'carrera'), [
                 'faculty_id' => $faculty->id,
                 'campus_id' => $campus->id,
                 'modality' => StudyModality::Hibrida->value,
@@ -108,7 +104,7 @@ class AcademicStructureTest extends TestCase
                 'curriculum_code' => 'PLAN-DEMO-2026',
                 'cycle_count' => 9,
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $this->assertDatabaseHas('carreras', [
             'codigo_carrera' => 'CARR-DEMO',
@@ -120,14 +116,14 @@ class AcademicStructureTest extends TestCase
     public function test_administrator_cannot_create_a_career_without_curricular_code_or_cycle_count(): void
     {
         $this->actingAsAdministrator()
-            ->post(route('admin.academic.store', 'carrera'), [
+            ->postJson(route('api.v1.admin.academic.store', 'carrera'), [
                 'faculty_id' => Faculty::query()->firstOrFail()->id,
                 'campus_id' => Campus::query()->firstOrFail()->id,
                 'modality' => StudyModality::Presencial->value,
                 'code' => 'CARR-INCOMPLETA',
                 'nombre' => 'Carrera incompleta',
             ])
-            ->assertSessionHasErrors(['curriculum_code', 'cycle_count']);
+            ->assertJsonValidationErrors(['curriculum_code', 'cycle_count']);
     }
 
     public function test_coordinator_configures_own_career_structure_and_creates_subjects_directly_in_it(): void
@@ -135,14 +131,14 @@ class AcademicStructureTest extends TestCase
         $career = Career::query()->findOrFail($this->coordinatorContext->carrera_id);
 
         $this->actingAsCoordinator()
-            ->patch(route('coordination.academic.curricula.configuration.update', $career->id), [
+            ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
                 'code' => 'PLAN-SW-2027',
                 'cycle_count' => 10,
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $this->actingAsCoordinator()
-            ->post(route('coordination.academic.store', 'asignatura'), [
+            ->postJson(route('api.v1.coordination.academic.store', 'asignatura'), [
                 'code' => 'SW-701',
                 'nombre' => 'Arquitectura Empresarial',
                 'cycle' => 7,
@@ -152,7 +148,7 @@ class AcademicStructureTest extends TestCase
                 'horas_aa' => 64,
                 'creditos' => 4,
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $this->assertDatabaseHas('carreras', [
             'id' => $career->id,
@@ -225,7 +221,7 @@ class AcademicStructureTest extends TestCase
         $otherCareer = $this->createCareer('OTRA');
 
         $this->actingAsCoordinator()
-            ->get(route('coordination.academic.curricula.show', $otherCareer->id))
+            ->getJson(route('api.v1.coordination.academic.curriculum.show', $otherCareer->id))
             ->assertNotFound();
 
         $otherSubject = Subject::query()->create([
@@ -236,7 +232,7 @@ class AcademicStructureTest extends TestCase
             'activo' => true,
         ]);
         $this->actingAsCoordinator()
-            ->patch(route('coordination.academic.status.update', [
+            ->patchJson(route('api.v1.coordination.academic.status', [
                 'entity' => 'asignatura',
                 'record' => $otherSubject->id,
             ]), ['active' => false])
@@ -248,10 +244,10 @@ class AcademicStructureTest extends TestCase
         $scheduledSubject = ScheduledSubject::query()->firstOrFail();
 
         $this->actingAsCoordinator()
-            ->get(route('coordination.academic.scheduled-subjects.index'))
+            ->getJson(route('api.v1.coordination.academic.scheduled-subjects.index'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Coordination/Academic/ScheduledSubjects')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('scheduledSubjects.0.subject_code', $scheduledSubject->subject->codigo_asignatura));
     }
 

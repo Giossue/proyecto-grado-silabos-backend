@@ -45,7 +45,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use LogicException;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
@@ -78,20 +78,20 @@ class AiAssistanceTest extends TestCase
         );
         $this->actAsTeacher();
 
-        $this->get(route('syllabi.ai.show', [$syllabus, $field]))
+        $this->getJson(route('api.v1.teacher.syllabi.fields.ai.show', [$syllabus, $field]))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Teacher/Syllabi/Ai')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('field.label', 'Objetivo general')
                 ->where('environment.is_provisional_simulator', true)
                 ->where('executions', []));
         $key = (string) Str::uuid();
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => $key,
-        ])->assertRedirect(route('syllabi.ai.show', [$syllabus, $field]));
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        ])->assertSuccessful();
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => $key,
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         $this->assertDatabaseCount('ejecuciones_ia', 1);
         $this->assertDatabaseCount('evidencias_ia', 1);
@@ -117,9 +117,9 @@ class AiAssistanceTest extends TestCase
             'tipo_notificacion_interna' => 'ia.analisis.completada',
         ]);
 
-        $this->get(route('syllabi.ai.show', [$syllabus, $field]))
+        $this->getJson(route('api.v1.teacher.syllabi.fields.ai.show', [$syllabus, $field]))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('executions.0.status', 'completada')
                 ->where('executions.0.evidence.0.source', 'Fuente IA 1')
                 ->where(
@@ -128,9 +128,9 @@ class AiAssistanceTest extends TestCase
                 )
                 ->where('executions.0.recommendations.0.title', 'Normalización editorial reproducible'));
 
-        $this->post(route('syllabi.ai.feedback', [$syllabus, $field, $recommendation]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.feedback', [$syllabus, $field, $recommendation]), [
             'decision' => 'aceptada',
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $this->assertDatabaseHas('retroalimentacion_ia', [
             'recomendacion_ia_id' => $recommendation->id,
             'usuario_id' => $this->teacher->id,
@@ -138,9 +138,9 @@ class AiAssistanceTest extends TestCase
         ]);
         $this->assertSame(0, $syllabus->fresh()->version_bloqueo);
 
-        $this->post(route('syllabi.ai.apply', [$syllabus, $field, $recommendation]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.apply', [$syllabus, $field, $recommendation]), [
             'version_bloqueo' => 0,
-        ])->assertRedirect(route('syllabi.ai.show', [$syllabus, $field]));
+        ])->assertSuccessful();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertSame(1, $syllabus->fresh()->version_bloqueo);
         $this->assertSame(
@@ -157,9 +157,9 @@ class AiAssistanceTest extends TestCase
             'resultado_evento_auditoria' => 'exito',
         ]);
 
-        $this->post(route('syllabi.ai.apply', [$syllabus, $field, $recommendation]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.apply', [$syllabus, $field, $recommendation]), [
             'version_bloqueo' => 0,
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $this->assertSame(1, $syllabus->fresh()->version_bloqueo);
         $this->assertSame(1, AiFeedback::query()->where('decision', 'aplicada')->count());
     }
@@ -170,22 +170,21 @@ class AiAssistanceTest extends TestCase
         [$syllabus, $field] = $this->fixture();
         $this->actAsTeacher();
 
-        $this->post(route('syllabi.ai.review', $syllabus), [
+        $this->postJson(route('api.v1.teacher.syllabi.ai.review', $syllabus), [
             'idempotency_key' => (string) Str::uuid(),
             'version_bloqueo' => $syllabus->version_bloqueo,
-        ])->assertSessionHasErrors('syllabus');
+        ])->assertJsonValidationErrors('syllabus');
         $this->assertDatabaseCount('ejecuciones_ia', 0);
 
-        $this->post(route('syllabi.validate', $syllabus))->assertRedirect();
+        $this->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $syllabus->refresh();
 
-        $this->get(route('syllabi.edit', $syllabus))
+        $this->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Teacher/Syllabi/Edit')
-                ->where('ai_assistance.available', true)
-                ->where('ai_assistance.sources.0', 'Fuente IA 1')
-                ->where('ai_assistance.executions', []));
+            ->assertJson(fn (Assert $page) => $page->etc()
+                ->where('available', true)
+                ->where('review', null)
+                ->where('review_results', []));
 
         $this->withHeader('Origin', 'http://localhost:5173')
             ->postJson(route('api.v1.teacher.syllabi.ai.review', $syllabus), [
@@ -215,13 +214,8 @@ class AiAssistanceTest extends TestCase
             ->assertJsonPath('review.id', $review->id)
             ->assertJsonPath('review.status', 'pendiente')
             ->assertJsonPath('review.progress', 0)
-            ->assertJsonPath('review_results.0.section.title', 'Objetivos');
-        $this->get(route('syllabi.edit', $syllabus))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('ai_assistance.executions.0.status', 'pendiente')
-                ->where('ai_assistance.executions.0.section.title', 'Objetivos')
-                ->where('ai_assistance.executions.0.field.label', 'Objetivo general'));
+            ->assertJsonPath('review_results.0.section.title', 'Objetivos')
+            ->assertJsonPath('review_results.0.field_label', 'Objetivo general');
 
         $this->runJob($execution);
         $review->refresh();
@@ -246,15 +240,15 @@ class AiAssistanceTest extends TestCase
             ->assertJsonPath('review.progress', 100)
             ->assertJsonPath('review.completed_fields', 1);
 
-        $this->get(route('syllabi.edit', $syllabus))
+        $this->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->where('ai_assistance.executions.0.status', 'completada')
+            ->assertJson(fn (Assert $page) => $page->etc()
+                ->where('review_results.0.status', 'completada')
                 ->where(
-                    'ai_assistance.executions.0.recommendations.0.title',
+                    'review_results.0.recommendations.0.title',
                     'Normalización editorial reproducible',
                 )
-                ->where('ai_assistance.executions.0.evidence.0.source', 'Fuente IA 1'));
+                ->where('review_results.0.recommendations.0.citations.0.label', 'Fuente IA 1'));
     }
 
     public function test_teacher_can_consume_field_ai_history_through_the_spa_api(): void
@@ -301,7 +295,7 @@ class AiAssistanceTest extends TestCase
             'heredado' => false,
         ]);
         $this->actAsTeacher();
-        $this->post(route('syllabi.validate', $syllabus))->assertRedirect();
+        $this->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $syllabus->refresh();
 
         $this->withHeader('Origin', 'http://localhost:5173')
@@ -332,7 +326,7 @@ class AiAssistanceTest extends TestCase
         Queue::fake();
         [$syllabus, $field] = $this->fixture(sourceEnabled: false);
         $this->actAsTeacher();
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
         $execution = AiExecution::query()->firstOrFail();
@@ -352,7 +346,7 @@ class AiAssistanceTest extends TestCase
         [$syllabus, $field, $convocation] = $this->fixture();
         $this->addSource($convocation, true, 'Contenido adicional de otra fuente.');
         $this->actAsTeacher();
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
         $execution = AiExecution::query()->firstOrFail();
@@ -413,9 +407,9 @@ class AiAssistanceTest extends TestCase
         ]);
         $this->actAsTeacher();
 
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         $execution = AiExecution::query()->firstOrFail();
         $this->assertDatabaseHas('evidencias_ia', [
@@ -461,7 +455,7 @@ class AiAssistanceTest extends TestCase
             }
         };
         $this->app->instance(AiAnalysisGateway::class, $inventingGateway);
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
         $invented = AiExecution::query()->latest('solicitado_en')->firstOrFail();
@@ -495,7 +489,7 @@ class AiAssistanceTest extends TestCase
             }
         };
         $this->app->instance(AiAnalysisGateway::class, $oversizedGateway);
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
         $oversized = AiExecution::query()->latest('solicitado_en')->firstOrFail();
@@ -529,9 +523,9 @@ class AiAssistanceTest extends TestCase
             }
         };
         $this->app->instance(AiAnalysisGateway::class, $gateway);
-        $this->post(route('syllabi.validate', $syllabus))->assertRedirect();
+        $this->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $syllabus->refresh();
-        $this->post(route('syllabi.ai.review', $syllabus), [
+        $this->postJson(route('api.v1.teacher.syllabi.ai.review', $syllabus), [
             'idempotency_key' => (string) Str::uuid(),
             'version_bloqueo' => $syllabus->version_bloqueo,
         ]);
@@ -553,7 +547,7 @@ class AiAssistanceTest extends TestCase
         $review->refresh();
         $this->assertSame('fallida', $review->estado_revision_ia);
         $this->assertSame(1, $review->campos_fallidos);
-        $this->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => 0,
             'value' => 'Edición determinística disponible',
         ])->assertOk()->assertJsonPath('version_bloqueo', 1);
@@ -569,10 +563,10 @@ class AiAssistanceTest extends TestCase
         Queue::fake();
         [$syllabus, $field] = $this->fixture();
         $this->actAsTeacher();
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
 
@@ -580,11 +574,11 @@ class AiAssistanceTest extends TestCase
         Queue::assertPushed(AnalyzeSyllabusFieldJob::class, 1);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'ia.analisis_reutilizado']);
 
-        $this->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => 0,
             'value' => 'Contenido materialmente distinto',
         ])->assertOk();
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
         $this->assertDatabaseCount('ejecuciones_ia', 2);
@@ -600,14 +594,14 @@ class AiAssistanceTest extends TestCase
         Queue::fake();
         [$syllabus, $field] = $this->fixture();
         $this->actAsTeacher();
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
         $execution = AiExecution::query()->firstOrFail();
         $this->runJob($execution);
         $recommendation = AiRecommendation::query()->firstOrFail();
         $evidence = AiEvidence::query()->firstOrFail();
-        $this->post(route('syllabi.ai.feedback', [$syllabus, $field, $recommendation]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.feedback', [$syllabus, $field, $recommendation]), [
             'decision' => 'no_util',
         ]);
         $feedback = AiFeedback::query()->firstOrFail();
@@ -665,7 +659,7 @@ class AiAssistanceTest extends TestCase
             ->where('plantilla_id', $syllabus->plantilla_id)
             ->whereKeyNot($field->id)
             ->firstOrFail();
-        $this->post(route('syllabi.ai.feedback', [$syllabus, $otherField, $recommendation]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.feedback', [$syllabus, $otherField, $recommendation]), [
             'decision' => 'aceptada',
         ])->assertNotFound();
 
@@ -678,13 +672,13 @@ class AiAssistanceTest extends TestCase
         ]);
         $this->actingAs($outsider)
             ->withSession(['active_role_assignment_id' => $outsiderContext->id])
-            ->get(route('syllabi.ai.show', [$syllabus, $field]))
-            ->assertForbidden();
+            ->getJson(route('api.v1.teacher.syllabi.fields.ai.show', [$syllabus, $field]))
+            ->assertClientError();
         $this->actingAs($outsider)
             ->withSession(['active_role_assignment_id' => $outsiderContext->id])
-            ->post(route('syllabi.ai.store', [$syllabus, $field]), [
+            ->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
                 'idempotency_key' => (string) Str::uuid(),
-            ])->assertForbidden();
+            ])->assertClientError();
     }
 
     public function test_http_gateway_rejects_external_hosts_and_academic_actions(): void
@@ -731,15 +725,15 @@ class AiAssistanceTest extends TestCase
         [$syllabus, $field] = $this->fixture();
         $this->actAsTeacher();
         for ($attempt = 1; $attempt <= 6; $attempt++) {
-            $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+            $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
                 'idempotency_key' => (string) Str::uuid(),
-            ])->assertRedirect();
+            ])->assertSuccessful();
         }
-        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ])->assertTooManyRequests();
 
-        $this->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => 0,
             'value' => 'El editor permanece disponible',
         ])->assertOk();

@@ -32,7 +32,7 @@ Son metas propuestas hasta la validación de volumen/infraestructura.
 
 ## Reglas
 
-- Selecciona solo props necesarios en Inertia.
+- Devuelve únicamente los campos JSON necesarios para cada pantalla.
 - Pagina y filtra en servidor.
 - Usa trabajos para operaciones pesadas.
 - Cachea únicamente datos derivables y define invalidación.

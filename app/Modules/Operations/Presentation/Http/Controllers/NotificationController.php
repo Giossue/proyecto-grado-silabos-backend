@@ -12,13 +12,10 @@ use App\Modules\Operations\Presentation\Http\Requests\MarkNotificationReadReques
 use App\Modules\Operations\Presentation\Http\Requests\ViewNotificationsRequest;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class NotificationController extends Controller
 {
-    public function index(ViewNotificationsRequest $request): Response|JsonResponse
+    public function index(ViewNotificationsRequest $request): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
@@ -39,27 +36,21 @@ class NotificationController extends Controller
                 ->count(),
         ];
 
-        return $request->expectsJson()
-            ? response()->json($payload)
-            : Inertia::render('Notifications/Index', $payload);
+        return response()->json($payload);
     }
 
     public function markRead(
         InternalNotification $notification,
         MarkNotificationReadRequest $request,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         if ($notification->leido_en === null) {
             $notification->update(['leido_en' => now()]);
         }
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Notificación marcada como leída.']);
-        }
-
-        return back()->with('success', 'Notificación marcada como leída.');
+        return response()->json(['message' => 'Notificación marcada como leída.']);
     }
 
-    public function markAllRead(MarkAllNotificationsReadRequest $request): RedirectResponse|JsonResponse
+    public function markAllRead(MarkAllNotificationsReadRequest $request): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
@@ -68,11 +59,7 @@ class NotificationController extends Controller
             ->whereNull('leido_en')
             ->update(['leido_en' => now()]);
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Todas las notificaciones quedaron marcadas como leídas.']);
-        }
-
-        return back()->with('success', 'Todas las notificaciones quedaron marcadas como leídas.');
+        return response()->json(['message' => 'Todas las notificaciones quedaron marcadas como leídas.']);
     }
 
     /** @return array{id: string, tipo: string, titulo: string, mensaje: string, leido_en: string|null, notificado_en: string, resource_path: string|null} */

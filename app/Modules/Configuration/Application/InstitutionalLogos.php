@@ -144,7 +144,7 @@ class InstitutionalLogos
     {
         $logo = $faculty?->logoObject;
         $path = $logo?->ruta_interna;
-        $disk = Storage::disk($logo?->disco ?? self::DISK);
+        $disk = Storage::disk($logo === null ? self::DISK : $logo->disco);
 
         return is_string($path) && $path !== '' && $disk->exists($path)
             ? $disk->path($path)

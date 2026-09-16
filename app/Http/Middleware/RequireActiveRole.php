@@ -14,13 +14,7 @@ class RequireActiveRole
     public function handle(Request $request, Closure $next): Response
     {
         if ($this->roles->resolve($request) === null) {
-            if ($request->expectsJson()) {
-                abort(Response::HTTP_CONFLICT, 'Seleccione un rol vigente.');
-            }
-
-            return to_route('role.index')->withErrors([
-                'role' => 'Seleccione un rol vigente para continuar.',
-            ]);
+            abort(Response::HTTP_CONFLICT, 'Seleccione un rol vigente.');
         }
 
         return $next($request);

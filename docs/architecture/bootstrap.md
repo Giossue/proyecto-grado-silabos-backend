@@ -5,8 +5,8 @@ pendientes.
 
 ## Resultado esperado de I-00
 
-- aplicación Laravel 13 con starter Vue oficial;
-- Inertia 3, Vue 3, TypeScript, Tailwind y shadcn-vue funcionando;
+- API Laravel 13 y SPA Vue 3 en repositorios independientes;
+- contrato JSON versionado y autenticación Sanctum stateful;
 - PostgreSQL y Redis configurados por ambiente;
 - sesiones y página autenticada base;
 - estructura de módulos y pruebas de dependencia;
@@ -18,8 +18,8 @@ pendientes.
 
 ## Secuencia
 
-1. Crear el proyecto con `laravel new` y seleccionar Vue, autenticación Laravel y el
-   runner de pruebas acordado.
+1. Crear la API Laravel y la SPA Vue como proyectos independientes, con el runner de
+   pruebas acordado en cada repositorio.
 2. Confirmar las versiones generadas en lockfiles y actualizar `stack.md` si difieren.
 3. Desactivar registro público si no fue autorizado; no inventar SSO.
 4. Configurar conexiones PostgreSQL y Redis; no usar SQLite como sustituto silencioso.
@@ -51,6 +51,8 @@ QUEUE_CONNECTION=redis
 FILESYSTEM_DISK=private
 AI_SERVICE_BASE_URL
 AI_SERVICE_TIMEOUT_SECONDS
+FRONTEND_URL
+SANCTUM_STATEFUL_DOMAINS
 ```
 
 El arranque falla con un mensaje seguro si falta configuración obligatoria. Nunca se
@@ -65,4 +67,3 @@ incluyen valores productivos en el repositorio.
 - codificar excepciones de permisos todavía abiertas;
 - tomar SQLite como prueba de comportamiento PostgreSQL;
 - añadir microservicios para módulos internos.
-

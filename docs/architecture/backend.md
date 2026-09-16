@@ -12,7 +12,7 @@ Route
       → transacción
       → repositorios/Eloquent
       → auditoría/outbox
-  → redirect Inertia + feedback
+  → respuesta JSON versionada
 ```
 
 ## Responsabilidades
@@ -70,4 +70,3 @@ académicos localizables para la interfaz.
 - Propaga un `correlacion_id` por petición/trabajo.
 - Registra identificadores internos y metadatos mínimos, no contenido completo.
 - Distingue error esperado de dominio, entrada inválida, permiso y fallo inesperado.
-

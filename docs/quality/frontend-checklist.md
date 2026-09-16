@@ -55,14 +55,13 @@
 
 - [ ] Props/emit/contratos TypeScript sin `any` evasivo.
 - [ ] Componentes existentes reutilizados.
-- [ ] No hay llamadas manuales paralelas que dupliquen comportamiento Inertia.
+- [ ] Toda llamada usa el cliente HTTP compartido y respeta CSRF, cookies y errores.
 - [ ] Pruebas cubren estados y acciones críticas.
 - [ ] Build, lint, tipos y pruebas pasan.
 
 ## Automatización disponible
 
-La puerta `composer verify` ejecuta ESLint con el preset recomendado de
-`eslint-plugin-vuejs-accessibility`. Verifica, entre otras reglas, asociación explícita de
-etiquetas, ausencia de `autofocus` y ausencia de `tabindex` positivo. Esto reduce
-regresiones estáticas, pero todos los puntos manuales anteriores permanecen abiertos hasta
-registrar evidencia en `acceptance-status.md` con la matriz real de `PV-19`.
+La puerta del repositorio frontend ejecuta `npm test`, `npm run typecheck` y
+`npm run build`. Las comprobaciones automatizadas reducen regresiones, pero los puntos
+manuales anteriores permanecen abiertos hasta registrar evidencia en
+`acceptance-status.md` con la matriz real de `PV-19`.

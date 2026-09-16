@@ -16,7 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Tests\TestCase;
 
 class ManagedUserTest extends TestCase
@@ -39,10 +39,10 @@ class ManagedUserTest extends TestCase
     public function test_administrator_can_list_and_filter_managed_users(): void
     {
         $this->actingAsAdministrator()
-            ->get(route('admin.users.index', ['status' => 'all', 'q' => 'Docente']))
+            ->getJson(route('api.v1.admin.users.index', ['status' => 'all', 'q' => 'Docente']))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Users/Index')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->has('users.data', 1)
                 ->where('users.data.0.correo_electronico', 'docente@silabos.test')
                 // Las cuentas sembradas ya tienen contraseña propia; una recién creada
@@ -55,7 +55,7 @@ class ManagedUserTest extends TestCase
     public function test_administrator_enters_without_selecting_its_only_role(): void
     {
         $this->actingAs($this->administrator)
-            ->get(route('admin.users.index'))
+            ->getJson(route('api.v1.admin.users.index'))
             ->assertOk();
     }
 
@@ -64,7 +64,7 @@ class ManagedUserTest extends TestCase
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
 
         $this->actingAs($teacher)
-            ->get(route('admin.users.index'))
+            ->getJson(route('api.v1.admin.users.index'))
             ->assertForbidden();
     }
 
@@ -78,10 +78,10 @@ class ManagedUserTest extends TestCase
         $archived->save();
 
         $this->actingAsAdministrator()
-            ->get(route('admin.users.show', $teacher))
+            ->getJson(route('api.v1.admin.users.show', $teacher))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Users/Show')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('managedUser.correo_electronico', 'docente@silabos.test')
                 ->has('managedUser.assignments', 2)
                 ->where('managedUser.assignments.0.effective', true)
@@ -108,54 +108,54 @@ class ManagedUserTest extends TestCase
 
         // Por rol: solo quien lo tenga vigente.
         $this->actingAsAdministrator()
-            ->get(route('admin.users.index', ['role' => RoleCode::Coordinator->value]))
+            ->getJson(route('api.v1.admin.users.index', ['role' => RoleCode::Coordinator->value]))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->has('users.data', 1)
                 ->where('users.data.0.correo_electronico', 'coordinador@silabos.test')
                 ->where('filters.role', RoleCode::Coordinator->value));
 
         // Por carrera: la administración no cuelga de ninguna, así que queda fuera.
         $this->actingAsAdministrator()
-            ->get(route('admin.users.index', ['career' => $career->id]))
+            ->getJson(route('api.v1.admin.users.index', ['career' => $career->id]))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->has('users.data', 2));
+            ->assertJson(fn (Assert $page) => $page->etc()->has('users.data', 2));
 
         // «Pendiente de activación» es distinto de «activo»: las cuentas sembradas ya se usaron.
         $this->actingAsAdministrator()
-            ->get(route('admin.users.index', ['status' => 'pending']))
+            ->getJson(route('api.v1.admin.users.index', ['status' => 'pending']))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->has('users.data', 0));
+            ->assertJson(fn (Assert $page) => $page->etc()->has('users.data', 0));
 
         $this->actingAsAdministrator()
-            ->post(route('admin.users.store'), [
+            ->postJson(route('api.v1.admin.users.store'), [
                 'nombre' => 'Docente Sin Estrenar',
                 'correo_electronico' => 'sin.estrenar@silabos.test',
                 'password' => 'Temporal-2026!',
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
-            ])->assertRedirect();
+            ])->assertSuccessful();
 
         $this->actingAsAdministrator()
-            ->get(route('admin.users.index', ['status' => 'pending']))
+            ->getJson(route('api.v1.admin.users.index', ['status' => 'pending']))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->has('users.data', 1)
                 ->where('users.data.0.correo_electronico', 'sin.estrenar@silabos.test'));
 
         // Y deja de contarse entre las activas, que es lo que dice su insignia.
         $this->actingAsAdministrator()
-            ->get(route('admin.users.index', ['status' => 'active']))
+            ->getJson(route('api.v1.admin.users.index', ['status' => 'active']))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->has('users.data', 3));
+            ->assertJson(fn (Assert $page) => $page->etc()->has('users.data', 3));
     }
 
     public function test_the_list_separates_the_role_from_its_career(): void
     {
         $this->actingAsAdministrator()
-            ->get(route('admin.users.index', ['q' => 'Administrador']))
+            ->getJson(route('api.v1.admin.users.index', ['q' => 'Administrador']))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('users.data.0.roles.0.name', 'Administrador')
                 // La administración gobierna el sistema entero: su rol no tiene carrera.
                 ->where('users.data.0.careers.0', null));
@@ -169,9 +169,9 @@ class ManagedUserTest extends TestCase
         $archived->update(['activo' => false]);
 
         $this->actingAsAdministrator()
-            ->get(route('admin.users.index', ['q' => 'docente@silabos.test']))
+            ->getJson(route('api.v1.admin.users.index', ['q' => 'docente@silabos.test']))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->has('users.data', 1)
                 ->missing('users.data.0.created_at')
                 ->where('users.data.0.two_factor_enabled', false)
@@ -188,7 +188,7 @@ class ManagedUserTest extends TestCase
 
         $this->actingAs($teacher)
             ->withSession(['active_role_assignment_id' => $teacherContext->id])
-            ->get(route('admin.users.index'))
+            ->getJson(route('api.v1.admin.users.index'))
             ->assertForbidden();
     }
 
@@ -197,15 +197,15 @@ class ManagedUserTest extends TestCase
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
 
         $this->actingAsAdministrator()
-            ->post(route('admin.users.store'), [
+            ->postJson(route('api.v1.admin.users.store'), [
                 'nombre' => 'Nueva Docente',
                 'correo_electronico' => 'nueva.docente@silabos.test',
                 'password' => 'Temporal-2026!',
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $created = User::query()->where('correo_electronico', 'nueva.docente@silabos.test')->firstOrFail();
         $this->assertDatabaseHas('asignaciones_rol', [
@@ -226,13 +226,13 @@ class ManagedUserTest extends TestCase
     public function test_scoped_role_requires_an_active_career(): void
     {
         $this->actingAsAdministrator()
-            ->post(route('admin.users.store'), [
+            ->postJson(route('api.v1.admin.users.store'), [
                 'nombre' => 'Docente sin carrera',
                 'correo_electronico' => 'sin.carrera@silabos.test',
                 'password' => 'Temporal-2026!',
                 'role_code' => RoleCode::Teacher->value,
             ])
-            ->assertSessionHasErrors('career_id');
+            ->assertJsonValidationErrors('career_id');
 
         $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'sin.carrera@silabos.test']);
     }
@@ -244,15 +244,15 @@ class ManagedUserTest extends TestCase
 
         // Con la carrera ya coordinada, la concesión se rechaza y lo dice.
         $this->actingAsAdministrator()
-            ->post(route('admin.users.roles.store', $teacher), [
+            ->postJson(route('api.v1.admin.users.roles.store', $teacher), [
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $career->id,
             ])
-            ->assertSessionHasErrors('role_code');
+            ->assertJsonValidationErrors('role_code');
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.status.update', $this->coordinatorHolder()), ['active' => false])
-            ->assertRedirect();
+            ->patchJson(route('api.v1.admin.users.status.update', $this->coordinatorHolder()), ['active' => false])
+            ->assertSuccessful();
 
         // Al retirarse quien la ejercía, el rol queda como historial; la cuenta inactiva
         // ya no puede bloquear una coordinación nueva.
@@ -262,12 +262,12 @@ class ManagedUserTest extends TestCase
             ->exists());
 
         $this->actingAsAdministrator()
-            ->post(route('admin.users.roles.store', $teacher), [
+            ->postJson(route('api.v1.admin.users.roles.store', $teacher), [
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $career->id,
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->assertTrue(CoordinatorAssignment::query()
             ->effective()
@@ -290,16 +290,16 @@ class ManagedUserTest extends TestCase
         // Conceder la coordinación abre el nombramiento, y la base no admite dos activos
         // en la misma carrera: primero se retira a quien la ejerce.
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.status.update', $this->coordinatorHolder()), ['active' => false])
-            ->assertRedirect();
+            ->patchJson(route('api.v1.admin.users.status.update', $this->coordinatorHolder()), ['active' => false])
+            ->assertSuccessful();
 
         $this->actingAsAdministrator()
-            ->post(route('admin.users.roles.store', $teacher), [
+            ->postJson(route('api.v1.admin.users.roles.store', $teacher), [
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $career->id,
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->assertDatabaseHas('asignaciones_rol', ['id' => $previousAssignmentId, 'asignacion_rol_activa' => true]);
         $this->assertDatabaseHas('asignaciones_rol', [
@@ -328,12 +328,12 @@ class ManagedUserTest extends TestCase
         ]);
 
         $this->actingAsAdministrator()
-            ->post(route('admin.users.roles.store', $coordinator), [
+            ->postJson(route('api.v1.admin.users.roles.store', $coordinator), [
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $secondCareer->id,
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->assertDatabaseHas('asignaciones_rol', [
             'id' => $originalAssignment->id,
@@ -366,9 +366,9 @@ class ManagedUserTest extends TestCase
         ]);
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.status.update', $teacher), ['active' => false])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->patchJson(route('api.v1.admin.users.status.update', $teacher), ['active' => false])
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->assertDatabaseHas('usuarios', ['id' => $teacher->id, 'usuario_activo' => false]);
         $this->assertDatabaseMissing('sesiones', ['id' => 'teacher-session-to-revoke']);
@@ -383,7 +383,7 @@ class ManagedUserTest extends TestCase
     public function test_administrator_cannot_deactivate_own_account(): void
     {
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.status.update', $this->administrator), ['active' => false])
+            ->patchJson(route('api.v1.admin.users.status.update', $this->administrator), ['active' => false])
             ->assertForbidden();
 
         $this->assertTrue($this->administrator->fresh()->activo);
@@ -397,9 +397,9 @@ class ManagedUserTest extends TestCase
         $previous = $pending->contrasena;
 
         $this->actingAsAdministrator()
-            ->post(route('admin.users.credentials.resend', $pending))
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->postJson(route('api.v1.admin.users.credentials.resend', $pending))
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $pending->refresh();
         $this->assertNotSame($previous, $pending->contrasena);
@@ -412,7 +412,7 @@ class ManagedUserTest extends TestCase
         // Activada por su titular: ya no se reenvía nada.
         $pending->forceFill(['debe_cambiar_contrasena' => false])->save();
         $this->actingAsAdministrator()
-            ->post(route('admin.users.credentials.resend', $pending))
+            ->postJson(route('api.v1.admin.users.credentials.resend', $pending))
             ->assertForbidden();
     }
 
@@ -422,23 +422,23 @@ class ManagedUserTest extends TestCase
         $pending = $this->pendingTeacher();
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $pending), [
+            ->patchJson(route('api.v1.admin.users.update', $pending), [
                 'nombre' => $pending->nombre,
                 'correo_electronico' => 'corregido@silabos.test',
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         Mail::assertQueued(ManagedUserCredentialsMail::class, fn (ManagedUserCredentialsMail $mail): bool => $mail->hasTo('corregido@silabos.test'));
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.acceso_reenviado', 'recurso_id' => $pending->id]);
 
         // Solo cambiar el nombre no reenvía nada.
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $pending), [
+            ->patchJson(route('api.v1.admin.users.update', $pending), [
                 'nombre' => 'Nombre Corregido',
                 'correo_electronico' => 'corregido@silabos.test',
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
         Mail::assertQueuedCount(2);
     }
 
@@ -447,8 +447,8 @@ class ManagedUserTest extends TestCase
         $pending = $this->pendingTeacher();
 
         $this->actingAsAdministrator()
-            ->delete(route('admin.users.destroy', $pending))
-            ->assertRedirect(route('admin.users.index'));
+            ->deleteJson(route('api.v1.admin.users.destroy', $pending))
+            ->assertSuccessful();
         $this->assertDatabaseMissing('usuarios', ['id' => $pending->id]);
         $this->assertDatabaseMissing('asignaciones_rol', ['usuario_id' => $pending->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.eliminado', 'recurso_id' => $pending->id]);
@@ -456,7 +456,7 @@ class ManagedUserTest extends TestCase
         // Una cuenta activada no se borra.
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->actingAsAdministrator()
-            ->delete(route('admin.users.destroy', $teacher))
+            ->deleteJson(route('api.v1.admin.users.destroy', $teacher))
             ->assertForbidden();
         $this->assertDatabaseHas('usuarios', ['id' => $teacher->id]);
 
@@ -469,9 +469,8 @@ class ManagedUserTest extends TestCase
             'activo' => true,
         ]);
         $this->actingAsAdministrator()
-            ->from(route('admin.users.index'))
-            ->delete(route('admin.users.destroy', $assigned))
-            ->assertSessionHasErrors('user');
+            ->deleteJson(route('api.v1.admin.users.destroy', $assigned))
+            ->assertJsonValidationErrors('user');
         $this->assertDatabaseHas('usuarios', ['id' => $assigned->id]);
     }
 
@@ -479,14 +478,14 @@ class ManagedUserTest extends TestCase
     {
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
         $this->actingAsAdministrator()
-            ->post(route('admin.users.store'), [
+            ->postJson(route('api.v1.admin.users.store'), [
                 'nombre' => 'Docente Pendiente',
                 'correo_electronico' => $email,
                 'password' => 'Temporal-2026!',
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         return User::query()->where('correo_electronico', $email)->firstOrFail();
     }
@@ -505,9 +504,9 @@ class ManagedUserTest extends TestCase
 
         // Con dos administraciones, archivar la segunda es válido…
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $secondAdmin), ['nombre' => $secondAdmin->nombre, 'correo_electronico' => $secondAdmin->correo_electronico, 'active' => 0])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->patchJson(route('api.v1.admin.users.update', $secondAdmin), ['nombre' => $secondAdmin->nombre, 'correo_electronico' => $secondAdmin->correo_electronico, 'active' => 0])
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertFalse($secondAdmin->fresh()->activo);
 
         // Con la segunda archivada, la primera es la única administración: ni siquiera el
@@ -528,9 +527,9 @@ class ManagedUserTest extends TestCase
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->assertTrue(TeacherAssignment::query()->forUser($teacher->id)->where('activo', true)->exists());
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $teacher), ['nombre' => $teacher->nombre, 'correo_electronico' => $teacher->correo_electronico, 'active' => 0])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->patchJson(route('api.v1.admin.users.update', $teacher), ['nombre' => $teacher->nombre, 'correo_electronico' => $teacher->correo_electronico, 'active' => 0])
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertFalse($teacher->fresh()->activo);
         $this->assertFalse(TeacherAssignment::query()->forUser($teacher->id)->where('activo', true)->exists());
         $this->assertSame($career->id, RoleAssignment::query()->where('usuario_id', $teacher->id)->value('carrera_id'));

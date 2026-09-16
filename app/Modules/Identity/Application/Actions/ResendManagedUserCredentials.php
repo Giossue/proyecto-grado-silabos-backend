@@ -59,7 +59,7 @@ class ResendManagedUserCredentials
                     email: $locked->correo_electronico,
                     temporaryPassword: $password,
                     roleName: $roleName,
-                    loginUrl: route('login'),
+                    loginUrl: rtrim((string) config('app.frontend_url'), '/').'/ingresar',
                 ));
             });
 

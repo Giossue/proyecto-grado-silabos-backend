@@ -5,10 +5,6 @@ set -e
 
 cd /var/www/html
 
-# Defensa por si el archivo del servidor de desarrollo llegara por otra vía: su presencia
-# haría que la aplicación pidiera los assets a un localhost que aquí no existe.
-rm -f public/hot
-
 if [ -z "${APP_KEY}" ]; then
     echo "ERROR: falta APP_KEY. Genérela con 'php artisan key:generate --show' y" >&2
     echo "       cárguela como variable de entorno en Dokploy." >&2

@@ -2,9 +2,9 @@
 
 ## Estado
 
-En ejecución. Este repositorio es la futura API Laravel; el frontend independiente vive
-en `proyecto-grado-silabos-frontend`. La aplicación publicada no se cambia durante la
-migración.
+Completado. Este repositorio ya es exclusivamente la API Laravel; el frontend
+independiente vive en `proyecto-grado-silabos-frontend`. La aplicación publicada no se
+cambia durante la migración.
 
 ## Decisión confirmada
 
@@ -145,8 +145,11 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    y contraseña temporal ya se aplican en navegador y servidor.
    La SPA ya cuenta con Dockerfile multi-stage, Nginx con fallback de rutas, liveness y
    `PUBLIC_API_URL` inyectable al arrancar; no requiere reconstruir el bundle por ambiente.
-8. Ejecutar la verificación integral y realizar un corte único; solo entonces retirar
-   Inertia, Wayfinder, Vite Laravel y las rutas web de producto de este repositorio.
+8. Inertia, Wayfinder, Vite Laravel, los recursos Vue y las rutas web de producto ya se
+   retiraron. La puerta integral del backend pasa con 253 pruebas y 3273 aserciones;
+   la SPA pasa 23 pruebas, verificación de tipos y compilación de producción. Ambos
+   artefactos quedan listos para un corte coordinado, que sigue siendo una operación de
+   despliegue separada.
 
 No se redirige producción ni se ejecutan migraciones de datos por esta separación hasta
 que todos los flujos estén cubiertos y probados contra el frontend independiente.

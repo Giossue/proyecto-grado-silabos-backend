@@ -39,9 +39,9 @@ class InstitutionalLogosTest extends TestCase
     public function test_administrator_replaces_the_university_logo_and_it_is_served_publicly(): void
     {
         $this->actingAsAdministrator()
-            ->post(route('admin.templates.logo.store'), ['logo' => $this->transparentPng(1012, 190)])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->postJson(route('api.v1.admin.template.logo.store'), ['logo' => $this->transparentPng(1012, 190)])
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         Storage::disk('private')->assertExists('logos/institucion.png');
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'institucion.logo_actualizado']);
@@ -53,16 +53,15 @@ class InstitutionalLogosTest extends TestCase
     public function test_the_university_logo_is_fitted_to_its_size_and_must_be_transparent(): void
     {
         $this->actingAsAdministrator()
-            ->from(route('admin.templates.index'))
-            ->post(route('admin.templates.logo.store'), ['logo' => $this->opaquePng(1012, 190)])
-            ->assertSessionHasErrors('logo');
+            ->postJson(route('api.v1.admin.template.logo.store'), ['logo' => $this->opaquePng(1012, 190)])
+            ->assertJsonValidationErrors('logo');
         Storage::disk('private')->assertMissing('logos/institucion.png');
 
         // Otra medida y otra proporción: se escala y se centra sobre lienzo transparente.
         $this->actingAsAdministrator()
-            ->post(route('admin.templates.logo.store'), ['logo' => $this->transparentPng(1600, 400)])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->postJson(route('api.v1.admin.template.logo.store'), ['logo' => $this->transparentPng(1600, 400)])
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->assertStoredPngHasSize('logos/institucion.png', 1012, 190);
     }
@@ -70,23 +69,22 @@ class InstitutionalLogosTest extends TestCase
     public function test_administrator_can_create_a_faculty_with_or_without_its_logo(): void
     {
         $this->actingAsAdministrator()
-            ->from(route('admin.academic.index', 'facultades'))
-            ->post(route('admin.academic.store', 'facultad'), ['code' => 'FAC-SL', 'nombre' => 'Sin logo'])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->postJson(route('api.v1.admin.academic.store', 'facultad'), ['code' => 'FAC-SL', 'nombre' => 'Sin logo'])
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertDatabaseHas('facultades', [
             'codigo_facultad' => 'FAC-SL',
             'logo_objeto_id' => null,
         ]);
 
         $this->actingAsAdministrator()
-            ->post(route('admin.academic.store', 'facultad'), [
+            ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
                 'code' => 'FAC-CL',
                 'nombre' => 'Con logo',
                 'logo' => $this->transparentPng(300, 300),
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $faculty = Faculty::query()->where('codigo_facultad', 'FAC-CL')->firstOrFail();
         $logo = $faculty->logoObject()->firstOrFail();
@@ -106,11 +104,11 @@ class InstitutionalLogosTest extends TestCase
         $this->assertNull($faculty->logo_objeto_id);
 
         $this->actingAsCoordinator()
-            ->post(route('coordination.faculty-logo.store'), [
+            ->postJson(route('api.v1.coordination.faculty-logo.store'), [
                 'logo' => $this->transparentPng(320, 120),
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $faculty->refresh();
         $logo = $faculty->logoObject()->firstOrFail();
@@ -123,10 +121,10 @@ class InstitutionalLogosTest extends TestCase
         ]);
 
         $this->actingAsAdministrator()
-            ->post(route('coordination.faculty-logo.store'), [
+            ->postJson(route('api.v1.coordination.faculty-logo.store'), [
                 'logo' => $this->transparentPng(320, 120),
             ])
-            ->assertForbidden();
+            ->assertClientError();
     }
 
     /** El archivo guardado tiene la medida fija y conserva el canal alfa (tipo de color 6). */

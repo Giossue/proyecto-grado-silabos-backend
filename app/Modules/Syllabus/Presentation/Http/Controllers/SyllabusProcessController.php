@@ -17,13 +17,10 @@ use App\Modules\Syllabus\Presentation\Http\Requests\StoreSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\UpdateSyllabusProcessRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class SyllabusProcessController extends Controller
 {
-    public function index(ManageSyllabusProcessesRequest $request): Response|JsonResponse
+    public function index(ManageSyllabusProcessesRequest $request): JsonResponse
     {
         $activeProcess = SyllabusProcess::query()->inProgress()
             ->with('academicPeriod:id,codigo')
@@ -61,43 +58,35 @@ class SyllabusProcessController extends Controller
             ],
         ];
 
-        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Admin/Processes/Index', $payload);
+        return response()->json($payload);
     }
 
-    public function store(StoreSyllabusProcessRequest $request, CreateSyllabusProcess $action): RedirectResponse|JsonResponse
+    public function store(StoreSyllabusProcessRequest $request, CreateSyllabusProcess $action): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($request->processData(), $actor, $request);
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Proceso preparado. Ábralo cuando el calendario institucional lo indique.'], 201);
-        }
-
-        return back()->with('success', 'Proceso preparado. Ábralo cuando el calendario institucional lo indique.');
+        return response()->json(['message' => 'Proceso preparado. Ábralo cuando el calendario institucional lo indique.'], 201);
     }
 
     public function update(
         SyllabusProcess $process,
         UpdateSyllabusProcessRequest $request,
         UpdateSyllabusProcess $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($process, $request->processData(), $actor, $request);
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Proceso actualizado. Las convocatorias que se abran desde ahora toman esta configuración.']);
-        }
-
-        return back()->with('success', 'Proceso actualizado. Las convocatorias que se abran desde ahora toman esta configuración.');
+        return response()->json(['message' => 'Proceso actualizado. Las convocatorias que se abran desde ahora toman esta configuración.']);
     }
 
     public function extendDeadline(
         SyllabusProcess $process,
         ExtendProcessDeadlineRequest $request,
         ExtendProcessDeadline $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -109,11 +98,7 @@ class SyllabusProcessController extends Controller
             $request,
         );
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Plazo prorrogado para todas las convocatorias del proceso. El motivo queda registrado en auditoría.']);
-        }
-
-        return back()->with('success', 'Plazo prorrogado para todas las convocatorias del proceso. El motivo queda registrado en auditoría.');
+        return response()->json(['message' => 'Plazo prorrogado para todas las convocatorias del proceso. El motivo queda registrado en auditoría.']);
     }
 
     public function transition(
@@ -121,7 +106,7 @@ class SyllabusProcessController extends Controller
         string $transition,
         TransitionSyllabusProcessRequest $request,
         TransitionSyllabusProcess $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $reason = $request->filled('reason') ? $request->string('reason')->toString() : null;
@@ -133,10 +118,7 @@ class SyllabusProcessController extends Controller
             TransitionSyllabusProcess::RESUME => 'Proceso reanudado. Los envíos vuelven a admitirse.',
             default => 'Proceso cerrado.',
         };
-        if ($request->expectsJson()) {
-            return response()->json(['message' => $message]);
-        }
 
-        return back()->with('success', $message);
+        return response()->json(['message' => $message]);
     }
 }

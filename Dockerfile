@@ -1,8 +1,7 @@
 # Imagen de producción de Sílabos UEB.
 #
-# Construye los assets con Node, resuelve dependencias PHP sin las de desarrollo y sirve
-# con Nginx y PHP-FPM en un solo contenedor. PostgreSQL y Redis viven fuera: la imagen se
-# conecta a los que ya existen en el servidor mediante variables de entorno.
+# Resuelve dependencias PHP sin las de desarrollo y sirve la API con Nginx y PHP-FPM.
+# PostgreSQL y Redis viven fuera: la imagen se conecta mediante variables de entorno.
 
 # --- Etapa 1: dependencias PHP --------------------------------------------------------
 # Se instalan sin scripts y se genera el autoload aparte: `package:discover` arrancaría
@@ -21,41 +20,7 @@ RUN composer install \
         --ignore-platform-req=ext-gd \
     && composer dump-autoload --optimize --classmap-authoritative --no-dev
 
-# --- Etapa 2: assets del navegador ----------------------------------------------------
-# Wayfinder genera los helpers de rutas ejecutando `php artisan`, así que esta etapa
-# necesita PHP además de Node. Solo se instalan las extensiones que Laravel exige para
-# arrancar la consola; nada de esto viaja a la imagen final.
-FROM docker.io/library/node:24-alpine AS assets
-RUN apk add --no-cache \
-        php84 \
-        php84-phar \
-        php84-mbstring \
-        php84-tokenizer \
-        php84-xml \
-        php84-xmlwriter \
-        php84-simplexml \
-        php84-dom \
-        php84-ctype \
-        php84-openssl \
-        php84-fileinfo \
-        php84-session \
-        php84-iconv \
-        php84-pdo \
-        php84-pdo_pgsql \
-        php84-curl \
-    && ln -sf /usr/bin/php84 /usr/bin/php
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-COPY --from=php-deps /app/vendor ./vendor
-COPY . .
-# `.dockerignore` deja fuera los directorios de trabajo de Laravel, y `artisan` los exige
-# aunque este comando no escriba en ellos.
-RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views \
-        storage/logs bootstrap/cache \
-    && npm run build
-
-# --- Etapa 3: imagen final ----------------------------------------------------------
+# --- Etapa 2: imagen final ----------------------------------------------------------
 # Se fija la rama de Alpine para que la etiqueta móvil de PHP no cambie de distribución
 # silenciosamente entre despliegues. Los parches de PHP 8.4 siguen llegando dentro de ella.
 FROM docker.io/library/php:8.4-fpm-alpine3.23 AS runtime
@@ -87,7 +52,6 @@ WORKDIR /var/www/html
 
 COPY --from=php-deps /app/vendor ./vendor
 COPY . .
-COPY --from=assets /app/public/build ./public/build
 
 COPY docker/app/nginx.conf /etc/nginx/nginx.conf
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/silabos.ini

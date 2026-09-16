@@ -18,21 +18,17 @@ use App\Modules\Identity\Presentation\Http\Requests\CreateManagedUserRequest;
 use App\Modules\Identity\Presentation\Http\Requests\IndexUsersRequest;
 use App\Modules\Identity\Presentation\Http\Requests\SetUserStatusRequest;
 use App\Modules\Identity\Presentation\Http\Requests\ShowManagedUserRequest;
-use App\Modules\Identity\Presentation\Http\Requests\UpdateManagedUserProfileRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateManagedUserRequest;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class ManagedUserController extends Controller
 {
-    public function index(IndexUsersRequest $request): Response|JsonResponse
+    public function index(IndexUsersRequest $request): JsonResponse
     {
         $filters = $request->validated();
         $search = is_string($filters['q'] ?? null) ? trim($filters['q']) : null;
@@ -131,12 +127,10 @@ class ManagedUserController extends Controller
             'careers' => Career::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
         ];
 
-        return $request->expectsJson()
-            ? response()->json($payload)
-            : Inertia::render('Admin/Users/Index', $payload);
+        return response()->json($payload);
     }
 
-    public function store(CreateManagedUserRequest $request, CreateManagedUser $action): RedirectResponse|JsonResponse
+    public function store(CreateManagedUserRequest $request, CreateManagedUser $action): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
@@ -148,17 +142,13 @@ class ManagedUserController extends Controller
             'career_id' => $request->filled('career_id') ? $request->string('career_id')->toString() : null,
         ], $actor, $request);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'message' => 'Cuenta creada con su rol inicial.',
-                'user' => ['id' => $created->id, 'nombre' => $created->nombre, 'correo_electronico' => $created->correo_electronico],
-            ], 201);
-        }
-
-        return back()->with('success', 'Cuenta creada con su rol inicial.');
+        return response()->json([
+            'message' => 'Cuenta creada con su rol inicial.',
+            'user' => ['id' => $created->id, 'nombre' => $created->nombre, 'correo_electronico' => $created->correo_electronico],
+        ], 201);
     }
 
-    public function show(User $user, ShowManagedUserRequest $request): Response|JsonResponse
+    public function show(User $user, ShowManagedUserRequest $request): JsonResponse
     {
         $user->load(['roleAssignments' => fn ($query) => $query
             ->with(['career:id,nombre'])
@@ -184,12 +174,10 @@ class ManagedUserController extends Controller
             'careers' => Career::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
         ];
 
-        return $request->expectsJson()
-            ? response()->json($payload)
-            : Inertia::render('Admin/Users/Show', $payload);
+        return response()->json($payload);
     }
 
-    public function assignRole(User $user, AssignRoleRequest $request, AssignRole $action): RedirectResponse|JsonResponse
+    public function assignRole(User $user, AssignRoleRequest $request, AssignRole $action): JsonResponse
     {
         Gate::authorize('update', $user);
         $actor = $request->user();
@@ -199,11 +187,7 @@ class ManagedUserController extends Controller
             'career_id' => $request->filled('career_id') ? $request->string('career_id')->toString() : null,
         ], $actor, $request);
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Rol asignado con su alcance.']);
-        }
-
-        return back()->with('success', 'Rol asignado con su alcance.');
+        return response()->json(['message' => 'Rol asignado con su alcance.']);
     }
 
     /** @return list<array{codigo: string, nombre: string}> */
@@ -215,7 +199,7 @@ class ManagedUserController extends Controller
         );
     }
 
-    public function setStatus(User $user, SetUserStatusRequest $request, SetUserStatus $action): RedirectResponse|JsonResponse
+    public function setStatus(User $user, SetUserStatusRequest $request, SetUserStatus $action): JsonResponse
     {
         Gate::authorize('update', $user);
         $actor = $request->user();
@@ -223,15 +207,12 @@ class ManagedUserController extends Controller
         $action->execute($user, $request->boolean('active'), $actor, $request);
 
         $message = $user->fresh()?->activo ? 'Cuenta activada.' : 'Cuenta desactivada y sesiones revocadas.';
-        if ($request->expectsJson()) {
-            return response()->json(['message' => $message]);
-        }
 
-        return back()->with('success', $message);
+        return response()->json(['message' => $message]);
     }
 
     /** Nueva contraseña temporal al correo actual; solo cuentas pendientes de activación. */
-    public function resendCredentials(User $user, Request $request, ResendManagedUserCredentials $action): RedirectResponse|JsonResponse
+    public function resendCredentials(User $user, Request $request, ResendManagedUserCredentials $action): JsonResponse
     {
         Gate::authorize('managePending', $user);
         $actor = $request->user();
@@ -239,26 +220,19 @@ class ManagedUserController extends Controller
         $action->execute($user, $actor, $request);
 
         $message = "Acceso reenviado a {$user->correo_electronico}.";
-        if ($request->expectsJson()) {
-            return response()->json(['message' => $message]);
-        }
 
-        return back()->with('success', $message);
+        return response()->json(['message' => $message]);
     }
 
     /** Borra una cuenta pendiente de activación sin actividad; con historia, se desactiva. */
-    public function destroy(User $user, Request $request, DeleteManagedUser $action): RedirectResponse|JsonResponse
+    public function destroy(User $user, Request $request, DeleteManagedUser $action): JsonResponse
     {
         Gate::authorize('managePending', $user);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($user, $actor, $request);
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Cuenta eliminada.']);
-        }
-
-        return redirect()->route('admin.users.index')->with('success', 'Cuenta eliminada.');
+        return response()->json(['message' => 'Cuenta eliminada.']);
     }
 
     /**
@@ -270,7 +244,7 @@ class ManagedUserController extends Controller
         UpdateManagedUserProfile $updateProfile,
         AssignRole $assignRole,
         SetUserStatus $setStatus,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $validated = $request->validated();
@@ -294,22 +268,6 @@ class ManagedUserController extends Controller
             }
         });
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Cuenta actualizada.']);
-        }
-
-        return back()->with('success', 'Cuenta actualizada.');
-    }
-
-    public function updateProfile(
-        User $user,
-        UpdateManagedUserProfileRequest $request,
-        UpdateManagedUserProfile $action,
-    ): RedirectResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($user, $request->profileData(), $actor, $request);
-
-        return back()->with('success', 'Datos de la cuenta actualizados.');
+        return response()->json(['message' => 'Cuenta actualizada.']);
     }
 }

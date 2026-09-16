@@ -106,6 +106,8 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('active-role')->name('api.v1.admin.academic.index');
         Route::post('admin/academic/{entity}', [AcademicGovernanceController::class, 'store'])
             ->middleware('active-role')->name('api.v1.admin.academic.store');
+        Route::post('admin/academic/careers/{career}/coordinator', [AcademicGovernanceController::class, 'replaceCoordinator'])
+            ->middleware('active-role')->whereUuid('career')->name('api.v1.admin.academic.careers.coordinator.replace');
         Route::patch('admin/academic/{entity}/{record}', [AcademicGovernanceController::class, 'update'])
             ->middleware('active-role')->name('api.v1.admin.academic.update');
         Route::patch('admin/academic/{entity}/{record}/status', [AcademicGovernanceController::class, 'setStatus'])

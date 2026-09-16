@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use LogicException;
 use RuntimeException;
 use Tests\Support\CreatesSyllabusProcess;
@@ -79,19 +79,19 @@ class DocumentOperationsTest extends TestCase
         $key = (string) Str::uuid();
 
         $this->actingAsTeacher()
-            ->followingRedirects()
-            ->get(route('documents.show', $revision))
+
+            ->getJson(route('api.v1.documents.show', $revision))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Syllabi/Documents')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('revision.number', 1)
                 ->where('artifacts', []));
-        $this->actingAsTeacher()->post(route('documents.store', $revision), [
+        $this->actingAsTeacher()->postJson(route('api.v1.documents.store', $revision), [
             'idempotency_key' => $key,
-        ])->assertRedirect(route('documents.show', $revision));
-        $this->actingAsTeacher()->post(route('documents.store', $revision), [
+        ])->assertSuccessful();
+        $this->actingAsTeacher()->postJson(route('api.v1.documents.store', $revision), [
             'idempotency_key' => $key,
-        ])->assertRedirect(route('documents.show', $revision));
+        ])->assertSuccessful();
 
         $this->assertDatabaseCount('artefactos_exportacion', 1);
         $this->assertDatabaseCount('ejecuciones_trabajo', 1);
@@ -109,10 +109,10 @@ class DocumentOperationsTest extends TestCase
         ]);
         $this->actingAs($outsider)
             ->withSession(['active_role_assignment_id' => $outsiderContext->id])
-            ->followingRedirects()
-            ->get(route('documents.show', $revision))
+
+            ->getJson(route('api.v1.documents.show', $revision))
             ->assertForbidden();
-        $this->actingAsAdministrator()->get(route('documents.show', $revision))->assertForbidden();
+        $this->actingAsAdministrator()->getJson(route('api.v1.documents.show', $revision))->assertForbidden();
 
         $unapproved = SyllabusRevision::query()->create([
             'silabo_id' => $syllabus->id,
@@ -125,9 +125,9 @@ class DocumentOperationsTest extends TestCase
             'enviado_por' => $this->teacher->id,
             'enviado_en' => now(),
         ]);
-        $this->actingAsTeacher()->post(route('documents.store', $unapproved), [
+        $this->actingAsTeacher()->postJson(route('api.v1.documents.store', $unapproved), [
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertSessionHasErrors('revision');
+        ])->assertJsonValidationErrors('revision');
         $this->assertDatabaseCount('artefactos_exportacion', 1);
     }
 
@@ -135,7 +135,7 @@ class DocumentOperationsTest extends TestCase
     {
         Queue::fake();
         [$syllabus, $revision] = $this->approvedRevision();
-        $this->actingAsTeacher()->post(route('documents.store', $revision), [
+        $this->actingAsTeacher()->postJson(route('api.v1.documents.store', $revision), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
         $artifact = ExportArtifact::query()->firstOrFail();
@@ -206,14 +206,14 @@ class DocumentOperationsTest extends TestCase
         ]);
 
         $this->actingAsTeacher()
-            ->get(route('exports.download', [$artifact, 'docx']))
+            ->getJson(route('api.v1.documents.download', [$artifact, 'docx']))
             ->assertOk()
             ->assertDownload('silabo-sw-601-revision-1.docx');
         $this->actingAsCoordinator()
-            ->get(route('exports.download', [$artifact, 'pdf']))
+            ->getJson(route('api.v1.documents.download', [$artifact, 'pdf']))
             ->assertOk()
             ->assertDownload('silabo-sw-601-revision-1.pdf');
-        $this->actingAsAdministrator()->get(route('exports.download', [$artifact, 'pdf']))->assertForbidden();
+        $this->actingAsAdministrator()->getJson(route('api.v1.documents.download', [$artifact, 'pdf']))->assertForbidden();
 
         try {
             $artifact->update(['estado' => 'fallido']);
@@ -234,7 +234,7 @@ class DocumentOperationsTest extends TestCase
     {
         Queue::fake();
         [, $revision] = $this->approvedRevision();
-        $this->actingAsTeacher()->post(route('documents.store', $revision), [
+        $this->actingAsTeacher()->postJson(route('api.v1.documents.store', $revision), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
         $artifact = ExportArtifact::query()->firstOrFail();
@@ -254,16 +254,16 @@ class DocumentOperationsTest extends TestCase
             'resultado_evento_auditoria' => 'fallido',
         ]);
         $this->actingAsAdministrator()
-            ->get(route('admin.jobs.index', ['q' => 'Generación documental']))
+            ->getJson(route('api.v1.admin.job-executions.index', ['q' => 'Generación documental']))
             ->assertOk()
             ->assertDontSee($secret)
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Operations/Jobs')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('filters.q', 'Generación documental')
                 ->where('executions.total', 1)
                 ->where('executions.data.0.reintentable', true));
-        $this->actingAsTeacher()->post(route('admin.jobs.retry', $execution))->assertForbidden();
-        $this->actingAsAdministrator()->post(route('admin.jobs.retry', $execution))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.admin.job-executions.retry', $execution))->assertForbidden();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.job-executions.retry', $execution))->assertSuccessful();
 
         $this->assertSame('pendiente', $artifact->fresh()->estado);
         $this->assertSame('pendiente', $execution->fresh()->estado);
@@ -308,14 +308,14 @@ class DocumentOperationsTest extends TestCase
         $this->assertSame($this->coordinator->id, $notification->usuario_id);
         $this->assertSame('procesado', $first->fresh()->estado);
         $this->actingAsCoordinator()
-            ->followingRedirects()
-            ->get(route('notifications.index'))
+
+            ->getJson(route('api.v1.notifications.index'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Notifications/Index')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('notifications.total', 1));
-        $this->actingAsTeacher()->post(route('notifications.read', $notification))->assertForbidden();
-        $this->actingAsCoordinator()->post(route('notifications.read', $notification))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.notifications.read', $notification))->assertForbidden();
+        $this->actingAsCoordinator()->postJson(route('api.v1.notifications.read', $notification))->assertSuccessful();
         $this->assertNotNull($notification->fresh()->leido_en);
         Mail::assertNothingSent();
 
@@ -341,22 +341,22 @@ class DocumentOperationsTest extends TestCase
         $other = $this->otherCareerSyllabus($syllabus->template);
 
         $this->actingAsCoordinator()
-            ->get(route('reports.index'))
+            ->getJson(route('api.v1.coordination.reports.index'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Coordination/Reports/Index')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('indicators.total', 1)
                 ->where('indicators.approved', 1)
                 ->where('syllabi.total', 1)
                 ->where('syllabi.data.0.id', $syllabus->id));
         $this->actingAsCoordinator()
-            ->get(route('reports.index', ['convocation' => $other->convocatoria_id]))
+            ->getJson(route('api.v1.coordination.reports.index', ['convocation' => $other->convocatoria_id]))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('indicators.total', 0)
                 ->where('syllabi.total', 0));
-        $this->actingAsTeacher()->get(route('reports.index'))->assertForbidden();
-        $this->actingAsAdministrator()->get(route('reports.index'))->assertForbidden();
+        $this->actingAsTeacher()->getJson(route('api.v1.coordination.reports.index'))->assertForbidden();
+        $this->actingAsAdministrator()->getJson(route('api.v1.coordination.reports.index'))->assertForbidden();
     }
 
     public function test_cp_f_only_administrator_reads_safe_append_only_audit(): void
@@ -379,17 +379,17 @@ class DocumentOperationsTest extends TestCase
         ]);
 
         $this->actingAsAdministrator()
-            ->get(route('admin.audit.index', ['search' => 'syllabus.approved']))
+            ->getJson(route('api.v1.admin.audit-events.index', ['search' => 'syllabus.approved']))
             ->assertOk()
             ->assertDontSee($fingerprint)
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Operations/Audit')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('filters.search', 'syllabus.approved')
                 ->where('events.total', 1)
                 ->where('events.data.0.details.0.label', 'Número de revisión')
                 ->where('events.data.0.details.0.value', 2));
-        $this->actingAsTeacher()->get(route('admin.audit.index'))->assertForbidden();
-        $this->actingAsCoordinator()->get(route('admin.audit.index'))->assertForbidden();
+        $this->actingAsTeacher()->getJson(route('api.v1.admin.audit-events.index'))->assertForbidden();
+        $this->actingAsCoordinator()->getJson(route('api.v1.admin.audit-events.index'))->assertForbidden();
 
         AuditEvent::query()->create([
             'actor_usuario_id' => $this->coordinator->id,
@@ -402,9 +402,9 @@ class DocumentOperationsTest extends TestCase
             'ocurrido_en' => now(),
         ]);
         $this->actingAsAdministrator()
-            ->get(route('admin.audit.index', ['action' => 'academico.oferta.creacion']))
+            ->getJson(route('api.v1.admin.audit-events.index', ['action' => 'academico.oferta.creacion']))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('events.total', 1)
                 ->where('events.data.0.action', 'Materia programada')
                 ->where('events.data.0.resource', 'Programación de asignatura'));

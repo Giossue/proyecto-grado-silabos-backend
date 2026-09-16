@@ -101,7 +101,7 @@ class TemplateDocumentTest extends TestCase
         $block = $template->fields()->where('clave', 'objetivo_general')->firstOrFail()->block;
         $doc = $this->document();
         $fingerprint = SaveTemplateDocument::fingerprint($block);
-        $url = route('admin.templates.blocks.document', [$template, $block]);
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
         $this->patch($url, [
             'document' => $doc,
             'fingerprint' => $fingerprint,
@@ -113,7 +113,7 @@ class TemplateDocumentTest extends TestCase
                 'ai_enabled' => true,
             ]],
         ])
-            ->assertRedirect()->assertSessionHasNoErrors();
+            ->assertSuccessful()->assertSuccessful();
         $new = $block->fields()->where('clave', 'respuesta_extra')->firstOrFail();
         $this->assertTrue($new->editable_docente);
         $this->assertFalse($new->heredado);
@@ -122,14 +122,14 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame('Cantidad configurada', $new->etiqueta);
         $this->assertSame('Indique una cantidad.', $new->ayuda);
         $this->assertTrue($new->ia_habilitada);
-        $this->patch(route('admin.templates.fields.update', [$template, $new]), [
+        $this->patchJson(route('api.v1.admin.template.fields.update', [$template, $new]), [
             'block_id' => $block->id, 'key' => $new->clave, 'label' => $new->etiqueta,
             'content_type' => 'text', 'help' => 'Indique una cantidad.', 'ai_enabled' => false,
-        ])->assertSessionHasNoErrors();
+        ])->assertSuccessful();
         $this->assertSame('numero', $new->fresh()->tipo);
         $saved = $block->fresh()->configuracion['document'];
         $this->patch($url, ['document' => $doc, 'fingerprint' => $fingerprint])
-            ->assertSessionHasErrors('fingerprint');
+            ->assertJsonValidationErrors('fingerprint');
         $this->assertSame($saved, $block->fresh()->configuracion['document']);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'plantilla.diseno_actualizado', 'recurso_id' => $block->id]);
     }
@@ -157,11 +157,11 @@ class TemplateDocumentTest extends TestCase
             ]],
         ]]];
 
-        $url = route('admin.templates.blocks.document', [$template, $block]);
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
         $this->patch($url, [
             'document' => $document,
             'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertSessionHasNoErrors();
+        ])->assertSuccessful();
 
         $created = $block->fields()->where('clave', 'campo_requiere_adaptacion')->firstOrFail();
         $this->assertSame('seleccion_unica', $created->tipo);
@@ -180,7 +180,7 @@ class TemplateDocumentTest extends TestCase
         $this->patch($url, [
             'document' => $document,
             'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
-        ])->assertSessionHasErrors('document');
+        ])->assertJsonValidationErrors('document');
     }
 
     public function test_teacher_and_coordinator_cannot_change_the_design(): void
@@ -190,7 +190,7 @@ class TemplateDocumentTest extends TestCase
         foreach (['docente@silabos.test', 'coordinador@silabos.test'] as $email) {
             $user = User::query()->where('correo_electronico', $email)->firstOrFail();
             $this->actingAs($user)->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id])
-                ->patch(route('admin.templates.blocks.document', [$template, $block]), ['document' => $this->document(), 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
+                ->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), ['document' => $this->document(), 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
                 ->assertForbidden();
         }
         $this->assertArrayNotHasKey('document', $block->fresh()->configuracion);
@@ -200,7 +200,7 @@ class TemplateDocumentTest extends TestCase
     {
         $template = $this->template();
         $block = $template->fields()->where('clave', 'objetivo_general')->firstOrFail()->block;
-        $url = route('admin.templates.blocks.document', [$template, $block]);
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
         foreach ([
             ['type' => 'paragraph', 'content' => [['type' => 'variable', 'attrs' => ['id' => 'secreto_inexistente']]]],
             ['type' => 'paragraph', 'content' => [['type' => 'field', 'attrs' => ['key' => 'descripcion', 'label' => 'Ajeno', 'kind' => 'texto_largo']]]],
@@ -209,7 +209,7 @@ class TemplateDocumentTest extends TestCase
             ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Texto', 'marks' => [['type' => 'textStyle', 'attrs' => ['color' => 'url(https://example.com)']]]]]],
         ] as $node) {
             $this->patch($url, ['document' => ['type' => 'doc', 'content' => [$node]], 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
-                ->assertSessionHasErrors('document');
+                ->assertJsonValidationErrors('document');
             $this->assertArrayNotHasKey('document', $block->fresh()->configuracion);
         }
     }
@@ -312,10 +312,10 @@ class TemplateDocumentTest extends TestCase
             ]],
         ]]];
 
-        $this->patch(route('admin.templates.blocks.document', [$template, $block]), [
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
             'document' => $document,
             'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertSessionHasNoErrors();
+        ])->assertSuccessful();
 
         $repeatField = $block->fresh()->fields()->where('clave', $repeatKey)->firstOrFail();
         $this->assertSame('repetible', $repeatField->tipo);
@@ -370,10 +370,10 @@ class TemplateDocumentTest extends TestCase
             ],
         ]]];
 
-        $this->patch(route('admin.templates.blocks.document', [$template, $block]), [
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
             'document' => $document,
             'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertSessionHasNoErrors();
+        ])->assertSuccessful();
 
         $saved = $block->fresh()->configuracion['document'];
         $this->assertNull($saved['content'][0]['attrs']['repeatKey']);
@@ -398,8 +398,8 @@ class TemplateDocumentTest extends TestCase
         $doc = ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [[
             'type' => 'field', 'attrs' => ['key' => $field->clave, 'label' => 'Resultados esperados', 'kind' => $field->tipo, 'listStyle' => 'bullet'],
         ]]]]];
-        $this->patch(route('admin.templates.blocks.document', [$template, $block]), ['document' => $doc, 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
-            ->assertSessionHasNoErrors();
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), ['document' => $doc, 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
+            ->assertSuccessful();
         $this->assertSame('Resultados esperados', $field->fresh()->etiqueta);
         $this->assertSame($field->tipo, $field->fresh()->tipo);
         foreach (['bullet' => 'bulletList', 'number' => 'orderedList'] as $style => $type) {
@@ -415,14 +415,14 @@ class TemplateDocumentTest extends TestCase
         $template = $this->template();
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $block = $field->block;
-        $url = route('admin.templates.blocks.document', [$template, $block]);
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
         $this->patch($url, ['title' => 'Objetivo institucional', 'document' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]], 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful();
         $this->assertFalse($field->fresh()->obligatorio);
         $this->assertFalse($field->fresh()->editable_docente);
         $this->assertSame('Objetivo institucional', $block->fresh()->titulo);
         $this->patch($url, ['document' => $this->document(), 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh())])
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful();
         $this->assertTrue($field->fresh()->obligatorio);
         $this->assertTrue($field->fresh()->editable_docente);
         $this->assertArrayNotHasKey($field->clave, $block->fresh()->configuracion['detached_fields']);
@@ -489,15 +489,15 @@ class TemplateDocumentTest extends TestCase
             $row('record', [$cell([$column('acd', 'numero')])]),
             $row('total', [$cell([['type' => 'text', 'text' => 'Total']]), $cell([$column('acd', 'numero')])]),
         ]]]];
-        $this->patch(route('admin.templates.blocks.document', [$template, $block]), ['document' => $doc, 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
-            ->assertSessionHasNoErrors();
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), ['document' => $doc, 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
+            ->assertSuccessful();
         $configuration = $block->fresh()->configuracion;
         $layoutPayload = [
             ...$configuration['table'],
             'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
         ];
-        $this->patch(route('admin.templates.blocks.table', [$template, $block]), $layoutPayload)
-            ->assertSessionHasNoErrors();
+        $this->patchJson(route('api.v1.admin.template.blocks.table.update', [$template, $block]), $layoutPayload)
+            ->assertSuccessful();
         $rebuiltConfiguration = $block->fresh()->configuracion;
         $this->assertArrayNotHasKey('document', $rebuiltConfiguration);
         $this->assertSame(
@@ -507,8 +507,8 @@ class TemplateDocumentTest extends TestCase
         $this->assertCount(2, $configuration['table']['columns']);
         $this->assertSame('number', $configuration['table']['columns'][1]['type']);
         $this->assertTrue($configuration['table']['columns'][1]['sum']);
-        $this->patch(route('admin.templates.blocks.table', [$template, $block]), $layoutPayload)
-            ->assertSessionHasErrors('fingerprint');
+        $this->patchJson(route('api.v1.admin.template.blocks.table.update', [$template, $block]), $layoutPayload)
+            ->assertJsonValidationErrors('fingerprint');
         $fields = [['key' => 'unidades', 'rows' => [
             ['data' => ['_unit' => 1, 'contenido' => 'Tema A', 'acd' => 2]],
             ['data' => ['_unit' => 1, 'contenido' => 'Tema B', 'acd' => 3]],
@@ -522,8 +522,8 @@ class TemplateDocumentTest extends TestCase
             $this->assertContains($expected, $texts);
         }
         $doc['content'][0]['content'][0]['content'][0]['attrs']['rowspan'] = 2;
-        $this->patch(route('admin.templates.blocks.document', [$template, $block]), ['document' => $doc, 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh())])
-            ->assertSessionHasErrors('document');
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), ['document' => $doc, 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh())])
+            ->assertJsonValidationErrors('document');
     }
 
     public function test_visual_table_save_preserves_custom_semantic_column_roles(): void
@@ -539,10 +539,10 @@ class TemplateDocumentTest extends TestCase
         $layout['groups'] = [];
         $layout['bands'] = [];
 
-        $this->patch(route('admin.templates.blocks.table', [$template, $block]), [
+        $this->patchJson(route('api.v1.admin.template.blocks.table.update', [$template, $block]), [
             ...$layout,
             'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertSessionHasNoErrors();
+        ])->assertSuccessful();
 
         $column = ['type' => 'column', 'attrs' => [
             'key' => 'horas_clase', 'label' => 'Horas de clase', 'kind' => 'numero',
@@ -556,10 +556,10 @@ class TemplateDocumentTest extends TestCase
                 ]],
             ]],
         ]]];
-        $this->patch(route('admin.templates.blocks.document', [$template, $block]), [
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
             'document' => $document,
             'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
-        ])->assertSessionHasNoErrors();
+        ])->assertSuccessful();
 
         $savedColumn = $block->fresh()->configuracion['table']['columns'][0];
         $this->assertSame('hours_acd', $savedColumn['role']);
@@ -600,10 +600,10 @@ class TemplateDocumentTest extends TestCase
             ],
         ]]];
 
-        $this->patch(route('admin.templates.blocks.document', [$template, $block]), [
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
             'document' => $document,
             'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertSessionHasNoErrors();
+        ])->assertSuccessful();
 
         $layout = $block->fresh()->configuracion['table'];
         $this->assertTrue($layout['repeat']['enabled']);
@@ -619,7 +619,7 @@ class TemplateDocumentTest extends TestCase
         $template = $this->template();
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $block = $field->block;
-        $url = route('admin.templates.blocks.document', [$template, $block]);
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
         $fingerprint = SaveTemplateDocument::fingerprint($block);
         $payload = ['document' => $this->document(), 'fingerprint' => $fingerprint, 'title' => 'Nuevo título',
             'properties' => [[
@@ -630,12 +630,12 @@ class TemplateDocumentTest extends TestCase
                 'ai_coordinator_configurable' => false,
             ]]];
         $this->patch($url, [...$payload, 'properties' => [...$payload['properties'], ['key' => 'descripcion', 'label' => 'Campo ajeno', 'help' => 'No debe guardarse.']]])
-            ->assertSessionHasErrors('properties.1.key');
+            ->assertJsonValidationErrors('properties.1.key');
         $this->assertSame($fingerprint, SaveTemplateDocument::fingerprint($block->fresh()));
         $this->patch($url, [...$payload, 'properties' => [['key' => $field->clave, 'label' => 'Objetivo actualizado', 'help' => str_repeat('x', 2001)]]])
-            ->assertSessionHasErrors('properties.0.help');
+            ->assertJsonValidationErrors('properties.0.help');
         $this->assertSame($fingerprint, SaveTemplateDocument::fingerprint($block->fresh()));
-        $this->patch($url, $payload)->assertSessionHasNoErrors();
+        $this->patch($url, $payload)->assertSuccessful();
         $this->assertSame('Nuevo título', $block->fresh()->titulo);
         $this->assertSame('Ayuda actualizada.', $field->fresh()->ayuda);
         $this->assertSame('Objetivo actualizado', $field->fresh()->etiqueta);
@@ -644,7 +644,7 @@ class TemplateDocumentTest extends TestCase
         $this->assertTrue($field->fresh()->ia_habilitada);
         $this->assertFalse($field->fresh()->ia_coordinacion_configurable);
         $this->assertSame($field->tipo, $field->fresh()->tipo);
-        $this->patch($url, [...$payload, 'title' => 'Cambio obsoleto'])->assertSessionHasErrors('fingerprint');
+        $this->patch($url, [...$payload, 'title' => 'Cambio obsoleto'])->assertJsonValidationErrors('fingerprint');
         $this->assertSame('Nuevo título', $block->fresh()->titulo);
     }
 
@@ -653,15 +653,15 @@ class TemplateDocumentTest extends TestCase
         $template = $this->template();
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $block = $field->block;
-        $url = route('admin.templates.blocks.document', [$template, $block]);
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
         $field->update(['heredado' => true]);
         $payload = ['document' => $this->document(), 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
             'properties' => [['key' => $field->clave, 'label' => $field->etiqueta, 'help' => null, 'ai_enabled' => true]]];
-        $this->patch($url, $payload)->assertSessionHasErrors('properties.0.ai_enabled');
+        $this->patch($url, $payload)->assertJsonValidationErrors('properties.0.ai_enabled');
         $field->update(['heredado' => false]);
         $payload['fingerprint'] = SaveTemplateDocument::fingerprint($block->fresh());
         $payload['document'] = ['type' => 'doc', 'content' => [['type' => 'paragraph']]];
-        $this->patch($url, $payload)->assertSessionHasNoErrors();
+        $this->patch($url, $payload)->assertSuccessful();
         $this->assertFalse($field->fresh()->ia_habilitada);
         $this->assertFalse($field->fresh()->editable_docente);
         $this->assertTrue($block->fresh()->configuracion['detached_fields'][$field->clave]['ia_habilitada']);
@@ -673,11 +673,11 @@ class TemplateDocumentTest extends TestCase
         $block = $template->sections()->with('blocks')->get()->flatMap->blocks->first(fn ($block) => $block->configuredContentType() === 'flow');
         $this->assertNotNull($block);
         $field = $block->fields()->firstOrFail();
-        $url = route('admin.templates.blocks.document', [$template, $block]);
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
         $payload = ['document' => null, 'fingerprint' => SaveTemplateDocument::fingerprint($block),
             'properties' => [['key' => $field->clave, 'label' => $field->etiqueta, 'help' => 'Estado determinado por el sistema.']]];
-        $this->patch($url, [...$payload, 'document' => $this->document()])->assertSessionHasErrors('document');
-        $this->patch($url, $payload)->assertSessionHasNoErrors();
+        $this->patch($url, [...$payload, 'document' => $this->document()])->assertJsonValidationErrors('document');
+        $this->patch($url, $payload)->assertSuccessful();
         $this->assertSame('Estado determinado por el sistema.', $field->fresh()->ayuda);
         $this->assertArrayNotHasKey('document', $block->fresh()->configuracion);
     }
@@ -687,7 +687,7 @@ class TemplateDocumentTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $user = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
         $this->actingAs($user)->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id]);
-        $this->post(route('admin.templates.store'))->assertRedirect();
+        $this->postJson(route('api.v1.admin.template.store'))->assertSuccessful();
 
         return SyllabusTemplate::query()->firstOrFail();
     }

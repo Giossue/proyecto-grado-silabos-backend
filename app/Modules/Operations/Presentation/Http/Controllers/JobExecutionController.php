@@ -9,13 +9,10 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Operations\Presentation\Http\Requests\RetryJobExecutionRequest;
 use App\Modules\Operations\Presentation\Http\Requests\ViewJobExecutionsRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class JobExecutionController extends Controller
 {
-    public function index(ViewJobExecutionsRequest $request): Response|JsonResponse
+    public function index(ViewJobExecutionsRequest $request): JsonResponse
     {
         $search = trim($request->string('q')->toString());
         $status = $request->string('status')->toString();
@@ -68,21 +65,21 @@ class JobExecutionController extends Controller
                 ]),
         ];
 
-        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Admin/Operations/Jobs', $payload);
+        return response()->json($payload);
     }
 
     public function retry(
         JobExecution $execution,
         RetryJobExecutionRequest $request,
         RetryJobExecution $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($execution, $actor, $request);
 
         $message = 'El trabajo fallido quedó en cola para un nuevo ciclo de intentos.';
 
-        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
+        return response()->json(['message' => $message]);
     }
 
     private function typeLabel(string $type): string

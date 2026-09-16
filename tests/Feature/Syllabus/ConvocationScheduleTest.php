@@ -76,22 +76,22 @@ class ConvocationScheduleTest extends TestCase
         // convocatoria las hereda y solo puede prorrogarlas hacia adelante.
         [$template] = $this->publishedConfiguration();
 
-        $this->actingAsAdministrator()->post(route('admin.processes.store'), [
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             'nombre' => 'Proceso invertido',
             'template_id' => $template->id,
             'starts_at' => now()->addMonths(2)->toIso8601String(),
             'due_at' => now()->addMonth()->toIso8601String(),
-        ])->assertSessionHasErrors('due_at');
+        ])->assertJsonValidationErrors('due_at');
     }
 
     public function test_a_teacher_cannot_submit_before_the_convocation_starts(): void
     {
         $syllabus = $this->createValidDraft(startsAt: now()->addWeek());
 
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertSessionHasErrors('deadline');
+        ])->assertJsonValidationErrors('deadline');
 
         $this->assertDatabaseCount('revisiones_silabo', 0);
     }
@@ -101,10 +101,10 @@ class ConvocationScheduleTest extends TestCase
         $syllabus = $this->createValidDraft();
         $this->expireDeadline($syllabus);
 
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertSessionHasErrors('deadline');
+        ])->assertJsonValidationErrors('deadline');
 
         $this->assertDatabaseCount('revisiones_silabo', 0);
         $this->assertSame('borrador', $syllabus->fresh()->estado);
@@ -119,11 +119,11 @@ class ConvocationScheduleTest extends TestCase
         // La fecha del proceso también venció: la prórroga es institucional (I-32).
         $convocation->process()->update(['inicia_en' => $previous->subDay(), 'entrega_en' => $previous]);
 
-        $this->actingAsAdministrator()->post(route('admin.processes.deadline.extend', $convocation->proceso_id), [
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
             'stage' => 'borrador',
             'due_at' => now()->addWeek()->toIso8601String(),
             'reason' => 'Relevo de docente por licencia médica del titular.',
-        ])->assertRedirect()->assertSessionHas('success');
+        ])->assertSuccessful()->assertSuccessful();
 
         $event = AuditEvent::query()
             ->where('accion', 'proceso_silabos.plazo_extendido')
@@ -134,10 +134,10 @@ class ConvocationScheduleTest extends TestCase
         $this->assertStringContainsString('licencia', $event->metadatos['reason']);
 
         // Con el plazo movido, el envío que antes rebotaba ahora entra.
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $this->assertDatabaseCount('revisiones_silabo', 1);
     }
 
@@ -145,22 +145,22 @@ class ConvocationScheduleTest extends TestCase
     {
         $convocation = $this->prepareConvocation();
 
-        $this->actingAsAdministrator()->post(route('admin.processes.deadline.extend', $convocation->proceso_id), [
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
             'stage' => 'borrador',
             'due_at' => now()->addDay()->toIso8601String(),
             'reason' => 'Quiero adelantar el cierre porque ya casi todos entregaron.',
-        ])->assertSessionHasErrors('due_at');
+        ])->assertJsonValidationErrors('due_at');
     }
 
     public function test_the_extension_requires_a_written_reason(): void
     {
         $convocation = $this->prepareConvocation();
 
-        $this->actingAsAdministrator()->post(route('admin.processes.deadline.extend', $convocation->proceso_id), [
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
             'stage' => 'borrador',
             'due_at' => now()->addMonths(2)->toIso8601String(),
             'reason' => 'porque sí',
-        ])->assertSessionHasErrors('reason');
+        ])->assertJsonValidationErrors('reason');
     }
 
     public function test_only_administration_extends_a_deadline(): void
@@ -174,10 +174,10 @@ class ConvocationScheduleTest extends TestCase
         ];
 
         $this->actingAsTeacher()
-            ->post(route('admin.processes.deadline.extend', $convocation->proceso_id), $payload)
+            ->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), $payload)
             ->assertForbidden();
         $this->actingAsCoordinator()
-            ->post(route('admin.processes.deadline.extend', $convocation->proceso_id), $payload)
+            ->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), $payload)
             ->assertForbidden();
     }
 
@@ -196,7 +196,7 @@ class ConvocationScheduleTest extends TestCase
     {
         $convocation = $this->prepareConvocation($startsAt);
         $syllabus = Syllabus::query()->firstOrFail();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
 
         $fields = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
@@ -205,7 +205,7 @@ class ConvocationScheduleTest extends TestCase
             ->get();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(
-                route('syllabi.fields.update', [$syllabus, $field]),
+                route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
                 $this->validFieldPayload($field, $syllabus->fresh()->version_bloqueo),
             )->assertOk();
         }
@@ -217,10 +217,10 @@ class ConvocationScheduleTest extends TestCase
     {
         [$template, $source] = $this->publishedConfiguration();
 
-        $this->actingAsCoordinator()->post(route('convocations.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id, $startsAt ?? now()->subDay(), now()->addMonth())->id,
             'source_ids' => [$source->id],
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         return Convocation::query()->firstOrFail();
     }
@@ -251,15 +251,15 @@ class ConvocationScheduleTest extends TestCase
     /** @return array{SyllabusTemplate, AcademicSource} */
     private function publishedConfiguration(): array
     {
-        $this->actingAsAdministrator()->post(route('admin.templates.store'), ['nombre' => 'Plantilla I-15']);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-15']);
         $template = SyllabusTemplate::query()->firstOrFail();
 
-        $this->actingAsCoordinator()->post(route('sources.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.sources.store'), [
             'nombre' => 'Fuente I-15',
             'description' => 'Documento de apoyo del periodo.',
         ]);
         $source = AcademicSource::query()->firstOrFail();
-        $this->actingAsCoordinator()->put(route('sources.content.update', $source), [
+        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.sources.content.update', $source), [
             'content' => '## Perfil base
 
 Evidencia académica autorizada.',

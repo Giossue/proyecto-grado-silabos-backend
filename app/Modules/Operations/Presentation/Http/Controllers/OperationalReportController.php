@@ -10,15 +10,13 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class OperationalReportController extends Controller
 {
     /** @var list<string> */
     private const STATES = ['sin_iniciar', 'borrador', 'en_revision', 'correccion_solicitada', 'aprobado'];
 
-    public function index(ViewOperationalReportsRequest $request, ActiveRole $roles): Response|JsonResponse
+    public function index(ViewOperationalReportsRequest $request, ActiveRole $roles): JsonResponse
     {
         $careerId = $roles->resolve($request)?->carrera_id;
         abort_unless(is_string($careerId), 403);
@@ -116,7 +114,7 @@ class OperationalReportController extends Controller
             'syllabi' => $detail,
         ];
 
-        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Coordination/Reports/Index', $payload);
+        return response()->json($payload);
     }
 
     /** @return Builder<Syllabus> */

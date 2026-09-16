@@ -17,20 +17,6 @@ class RequirePasswordChange
      * @var list<string>
      */
     private const ALLOWED_ROUTES = [
-        'dashboard',
-        // El panel de cada área es el mismo panel: la dirección corta redirige a él.
-        'admin.dashboard',
-        'coordination.dashboard',
-        'teacher.dashboard',
-        // Coordinación debe elegir carrera antes de que exista un panel donde mostrar el
-        // diálogo; si se bloqueara esta pantalla, panel y elección se rebotarían sin fin.
-        'role.index',
-        'role.store',
-        'user-password.update',
-        'logout',
-        // Contrato equivalente para la SPA separada. La sesión debe poder explicar el
-        // bloqueo, cambiar la clave y terminarse; ninguna operación de producto queda
-        // disponible mientras siga vigente la contraseña temporal.
         'api.v1.session.show',
         'api.v1.authentication.password.update',
         'api.v1.authentication.logout',
@@ -55,10 +41,6 @@ class RequirePasswordChange
             return $next($request);
         }
 
-        if ($request->expectsJson() && ! $request->header('X-Inertia')) {
-            abort(Response::HTTP_FORBIDDEN, 'Cambie la contraseña temporal antes de continuar.');
-        }
-
-        return redirect()->route('dashboard');
+        abort(Response::HTTP_FORBIDDEN, 'Cambie la contraseña temporal antes de continuar.');
     }
 }

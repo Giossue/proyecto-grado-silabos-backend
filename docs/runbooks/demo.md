@@ -16,10 +16,16 @@ que no contiene datos reales.
 ```bash
 cp .env.example .env
 composer install
-npm ci
 docker compose up -d
 php artisan key:generate
 php artisan migrate:fresh --seed --force
+```
+
+Prepare la SPA desde el repositorio `proyecto-grado-silabos-frontend`:
+
+```bash
+cp .env.example .env
+npm ci
 npm run build
 ```
 

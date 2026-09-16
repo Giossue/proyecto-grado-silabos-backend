@@ -67,14 +67,14 @@ class SetupChecklist
             'Puesta en marcha de la institución',
             'En este orden. Cada paso habilita el siguiente; las coordinaciones no pueden empezar hasta que termine.',
             [
-                $this->step('faculties', 'Registrar las facultades', 'Cada facultad agrupa sus carreras; el logo puede completarlo su Coordinación.', Faculty::query()->where('activo', true)->exists(), route('admin.academic.index', 'facultades')),
-                $this->step('campus', 'Registrar los campus', 'Matriz, Laguacoto, CENI, San Miguel… donde se dictan clases.', Campus::query()->where('activo', true)->exists(), route('admin.academic.index', 'campus')),
-                $this->step('careers', 'Registrar las carreras', 'Cada carrera cuelga de una facultad, con su campus y su modalidad aprobados.', $careerCount > 0, route('admin.academic.index', 'carreras')),
-                $this->step('periods', 'Registrar el periodo académico', 'El periodo que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists(), route('admin.academic.index', 'periodos-academicos')),
-                $this->step('accounts', 'Crear las cuentas de coordinadores y docentes', 'Con su rol; el docente se asigna a paralelos desde Coordinación.', $accounts > 0, route('admin.users.index')),
-                $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0, route('admin.academic.index', 'carreras')),
-                $this->step('template', 'Crear la plantilla de sílabo', 'Trae el formato oficial completo; solo hay que revisarla.', SyllabusTemplate::query()->where('activo', true)->exists(), route('admin.templates.index')),
-                $this->step('process', 'Crear y abrir el proceso de sílabos', 'Fechas de inicio y entrega; al abrirlo, las coordinaciones pueden convocar.', SyllabusProcess::query()->exists(), route('admin.processes.index')),
+                $this->step('faculties', 'Registrar las facultades', 'Cada facultad agrupa sus carreras; el logo puede completarlo su Coordinación.', Faculty::query()->where('activo', true)->exists(), '/administracion/estructura-academica'),
+                $this->step('campus', 'Registrar los campus', 'Matriz, Laguacoto, CENI, San Miguel… donde se dictan clases.', Campus::query()->where('activo', true)->exists(), '/administracion/estructura-academica'),
+                $this->step('careers', 'Registrar las carreras', 'Cada carrera cuelga de una facultad, con su campus y su modalidad aprobados.', $careerCount > 0, '/administracion/estructura-academica'),
+                $this->step('periods', 'Registrar el periodo académico', 'El periodo que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists(), '/administracion/estructura-academica'),
+                $this->step('accounts', 'Crear las cuentas de coordinadores y docentes', 'Con su rol; el docente se asigna a paralelos desde Coordinación.', $accounts > 0, '/administracion/usuarios'),
+                $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0, '/administracion/estructura-academica'),
+                $this->step('template', 'Crear la plantilla de sílabo', 'Trae el formato oficial completo; solo hay que revisarla.', SyllabusTemplate::query()->where('activo', true)->exists(), '/administracion/plantilla'),
+                $this->step('process', 'Crear y abrir el proceso de sílabos', 'Fechas de inicio y entrega; al abrirlo, las coordinaciones pueden convocar.', SyllabusProcess::query()->exists(), '/administracion/procesos'),
             ],
         );
     }
@@ -102,15 +102,15 @@ class SetupChecklist
                     'Cargar el logo de la facultad',
                     'Aparecerá junto al logo de la universidad en todos los sílabos de la carrera.',
                     $this->logos->facultyIsConfigured($faculty),
-                    route('coordination.dashboard'),
+                    '/panel',
                     'faculty_logo',
                 ),
-                $this->step('curriculum', 'Armar la malla con sus materias', 'Ciclos, materias, horas, créditos y prerrequisitos.', $career->subjects_count > 0, route('coordination.academic.curricula.index')),
-                $this->step('scheduled_subjects', 'Programar las materias del período', 'Materia, período, campus y modalidad.', (clone $scheduledSubjects)->exists(), route('coordination.academic.scheduled-subjects.index')),
-                $this->step('parallels', 'Crear los paralelos', 'Desde Materias y paralelos, con su jornada: matutina, vespertina o nocturna.', (clone $parallels)->exists(), route('coordination.academic.scheduled-subjects.index')),
-                $this->step('teachers', 'Asignar un docente a cada paralelo', 'Los docentes ya deben tener cuenta (los crea Administración).', (clone $assignments)->exists(), route('coordination.academic.teacher-assignments.index')),
-                $this->step('sources', 'Registrar al menos una fuente académica', 'Documento de apoyo que la convocatoria fija para los docentes.', AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)->exists(), route('sources.index')),
-                $this->step('convocation', 'Crear y abrir la convocatoria', $processOpen ? 'El proceso institucional está abierto: ya puede convocar.' : 'Espera a que Administración abra el proceso de sílabos.', Convocation::query()->where('carrera_id', $careerId)->exists(), route('convocations.index')),
+                $this->step('curriculum', 'Armar la malla con sus materias', 'Ciclos, materias, horas, créditos y prerrequisitos.', $career->subjects_count > 0, '/coordinacion/estructura-academica'),
+                $this->step('scheduled_subjects', 'Programar las materias del período', 'Materia, período, campus y modalidad.', (clone $scheduledSubjects)->exists(), '/coordinacion/estructura-academica'),
+                $this->step('parallels', 'Crear los paralelos', 'Desde Materias y paralelos, con su jornada: matutina, vespertina o nocturna.', (clone $parallels)->exists(), '/coordinacion/estructura-academica'),
+                $this->step('teachers', 'Asignar un docente a cada paralelo', 'Los docentes ya deben tener cuenta (los crea Administración).', (clone $assignments)->exists(), '/coordinacion/estructura-academica'),
+                $this->step('sources', 'Registrar al menos una fuente académica', 'Documento de apoyo que la convocatoria fija para los docentes.', AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)->exists(), '/coordinacion/fuentes'),
+                $this->step('convocation', 'Crear y abrir la convocatoria', $processOpen ? 'El proceso institucional está abierto: ya puede convocar.' : 'Espera a que Administración abra el proceso de sílabos.', Convocation::query()->where('carrera_id', $careerId)->exists(), '/coordinacion/convocatorias'),
             ],
         );
     }
@@ -124,7 +124,7 @@ class SetupChecklist
         $total = (clone $own)->count();
         $started = (clone $own)->where('estado', '!=', 'sin_iniciar')->count();
         $submitted = (clone $own)->whereIn('estado', ['en_revision', 'aprobado'])->count();
-        $index = route('syllabi.index');
+        $index = '/mis-silabos';
 
         return $this->build(
             'Sus sílabos, paso a paso',

@@ -8,12 +8,10 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Presentation\Http\Requests\ViewAuditEventsRequest;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class AuditEventController extends Controller
 {
-    public function index(ViewAuditEventsRequest $request): Response|JsonResponse
+    public function index(ViewAuditEventsRequest $request): JsonResponse
     {
         $action = $request->string('action')->toString();
         $result = $request->string('result')->toString();
@@ -69,7 +67,7 @@ class AuditEventController extends Controller
                 ]),
         ];
 
-        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Admin/Operations/Audit', $payload);
+        return response()->json($payload);
     }
 
     /** @return list<array{value: string, label: string}> */

@@ -20,7 +20,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\Support\MakesTransparentPng;
 use Tests\TestCase;
@@ -62,9 +62,9 @@ class ConvocationAndDraftTest extends TestCase
         $convocation = $this->createPreparedConvocation();
 
         $this->actingAsCoordinator()
-            ->post(route('convocations.open', $convocation))
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->postJson(route('api.v1.coordination.convocations.open', $convocation))
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $convocation->refresh();
         $syllabus = Syllabus::query()->firstOrFail();
@@ -82,15 +82,15 @@ class ConvocationAndDraftTest extends TestCase
         ]);
 
         $this->actingAsCoordinator()
-            ->get(route('convocations.show', $convocation))
+            ->getJson(route('api.v1.coordination.convocations.show', $convocation))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Coordination/Convocations/Show')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('convocation.counts.total', 1)
                 ->has('convocation.syllabi', 1));
 
         $this->actingAsCoordinator()
-            ->post(route('convocations.open', $convocation))
+            ->postJson(route('api.v1.coordination.convocations.open', $convocation))
             ->assertForbidden();
         $this->assertDatabaseCount('silabos', 1);
     }
@@ -100,8 +100,8 @@ class ConvocationAndDraftTest extends TestCase
         $convocation = $this->createPreparedConvocation(withFacultyLogo: false);
 
         $this->actingAsCoordinator()
-            ->post(route('convocations.open', $convocation))
-            ->assertSessionHasErrors([
+            ->postJson(route('api.v1.coordination.convocations.open', $convocation))
+            ->assertJsonValidationErrors([
                 'convocation' => 'Cargue el logo de la facultad desde Puesta en marcha del Panel antes de abrir la convocatoria.',
             ]);
 
@@ -132,7 +132,7 @@ class ConvocationAndDraftTest extends TestCase
         ]);
         $convocation = $this->createPreparedConvocation();
 
-        $this->actingAsCoordinator()->post(route('convocations.open', $convocation))->assertRedirect();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.open', $convocation))->assertSuccessful();
 
         $this->assertSame(2, Syllabus::query()->count());
         $this->assertSame([1, 1], Syllabus::query()->withCount('scopes')->pluck('scopes_count')->all());
@@ -145,8 +145,8 @@ class ConvocationAndDraftTest extends TestCase
         $convocation = $this->createPreparedConvocation();
 
         $this->actingAsCoordinator()
-            ->post(route('convocations.open', $convocation))
-            ->assertSessionHasErrors('convocation');
+            ->postJson(route('api.v1.coordination.convocations.open', $convocation))
+            ->assertJsonValidationErrors('convocation');
 
         $this->assertSame('preparacion', $convocation->fresh()->estado);
         $this->assertDatabaseCount('silabos', 0);
@@ -161,8 +161,8 @@ class ConvocationAndDraftTest extends TestCase
             ->update(['activo' => false]);
 
         $this->actingAsCoordinator()
-            ->post(route('convocations.open', $convocation))
-            ->assertSessionHasErrors('convocation');
+            ->postJson(route('api.v1.coordination.convocations.open', $convocation))
+            ->assertJsonValidationErrors('convocation');
 
         $this->assertDatabaseCount('silabos', 0);
         $this->assertSame('preparacion', $convocation->fresh()->estado);
@@ -172,13 +172,13 @@ class ConvocationAndDraftTest extends TestCase
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
 
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus))->assertRedirect(route('syllabi.edit', $syllabus));
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $syllabus->refresh();
         $field = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('clave', 'descripcion')->firstOrFail();
 
-        $response = $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $response = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => 1,
             'value' => 'Descripción académica verificable.',
         ])->assertOk();
@@ -186,7 +186,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame(2, $response->json('version_bloqueo'));
         $this->assertDatabaseHas('valores_campo', ['silabo_id' => $syllabus->id, 'definicion_campo_id' => $field->id]);
 
-        $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => 1,
             'value' => 'Escritura obsoleta.',
         ])->assertConflict()
@@ -220,19 +220,19 @@ class ConvocationAndDraftTest extends TestCase
     public function test_inherited_field_and_coordinator_edit_are_denied(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus));
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
         $inherited = FieldDefinition::query()->where('plantilla_id', $syllabus->plantilla_id)
             ->where('heredado', true)->firstOrFail();
 
-        $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $inherited]), [
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $inherited]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'value' => 'Intento de sobrescritura',
         ])->assertUnprocessable()->assertJsonValidationErrors('field');
 
         $editable = FieldDefinition::query()->where('plantilla_id', $syllabus->plantilla_id)
             ->where('editable_docente', true)->firstOrFail();
-        $this->actingAsCoordinator()->patchJson(route('syllabi.fields.update', [$syllabus, $editable]), [
+        $this->actingAsCoordinator()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $editable]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'value' => 'PV-16 no autorizado',
         ])->assertForbidden();
@@ -241,14 +241,14 @@ class ConvocationAndDraftTest extends TestCase
     public function test_autosave_enforces_template_type_and_rejects_html_in_markdown(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus));
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
         $field = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('tipo', 'markdown')
             ->firstOrFail();
 
-        $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'value' => '<script>contenido no permitido</script>',
         ])->assertUnprocessable()->assertJsonValidationErrors('value');
@@ -263,10 +263,10 @@ class ConvocationAndDraftTest extends TestCase
     public function test_deterministic_validation_tracks_required_fields_without_ai(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus));
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
 
-        $this->actingAsTeacher()->post(route('syllabi.validate', $syllabus))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $firstRun = ValidationRun::query()->latest('completado_en')->firstOrFail();
         $this->assertSame('planning-v2', $firstRun->version_reglas);
         $this->assertGreaterThan(0, $firstRun->errores_bloqueantes);
@@ -286,10 +286,10 @@ class ConvocationAndDraftTest extends TestCase
                 $field->tipo === 'seleccion_unica' => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => (string) ($field->opciones[0] ?? '')],
                 default => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => "Contenido {$field->clave}"],
             };
-            $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), $payload)->assertOk();
+            $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), $payload)->assertOk();
         }
 
-        $this->actingAsTeacher()->post(route('syllabi.validate', $syllabus))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $lastRun = ValidationRun::query()->whereKeyNot($firstRun->id)->firstOrFail();
         $this->assertSame(0, $lastRun->errores_bloqueantes);
         $this->assertSame('100.00', $lastRun->porcentaje_completitud);
@@ -298,7 +298,7 @@ class ConvocationAndDraftTest extends TestCase
     public function test_planning_with_wrong_hours_can_be_saved_but_fails_deterministic_validation(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus));
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $field = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('clave', 'unidades')
@@ -306,12 +306,12 @@ class ConvocationAndDraftTest extends TestCase
         $rows = $this->validPlanningRows();
         $rows[1]['data']['acd'] = 2;
 
-        $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'rows' => $rows,
         ])->assertOk();
 
-        $this->actingAsTeacher()->post(route('syllabi.validate', $syllabus))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $run = ValidationRun::query()->latest('completado_en')->firstOrFail();
 
         $this->assertGreaterThan(0, $run->errores_bloqueantes);
@@ -326,14 +326,14 @@ class ConvocationAndDraftTest extends TestCase
     public function test_repeatable_rows_keep_identity_when_an_earlier_row_is_removed(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus));
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
         $field = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('tipo', 'repetible')
             ->firstOrFail();
 
-        $created = $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $created = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'rows' => [
                 ['data' => ['texto' => 'Primera fila']],
@@ -342,7 +342,7 @@ class ConvocationAndDraftTest extends TestCase
         ])->assertOk();
         $secondRowId = $created->json('rows.1.id');
 
-        $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $created->json('version_bloqueo'),
             'rows' => [
                 ['id' => $secondRowId, 'data' => ['texto' => 'Segunda fila ajustada']],
@@ -363,7 +363,7 @@ class ConvocationAndDraftTest extends TestCase
     public function test_teacher_fills_table_cells_by_column_and_unit(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus));
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
         $field = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
@@ -371,7 +371,7 @@ class ConvocationAndDraftTest extends TestCase
             ->firstOrFail();
 
         // I-34: una celda por columna, unidad y fila de cabecera de la unidad.
-        $saved = $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $saved = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'rows' => [
                 ['data' => ['_unit' => 1, '_kind' => 'unit', 'nombre' => 'Fundamentos']],
@@ -384,7 +384,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame(1.5, $saved->json('rows.1.datos.ape'));
 
         // Una celda no puede ser una estructura anidada.
-        $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $saved->json('version_bloqueo'),
             'rows' => [['data' => ['contenidos' => ['no' => 'permitido']]]],
         ])->assertUnprocessable()->assertJsonValidationErrors(['rows.0.data.contenidos']);
@@ -392,8 +392,8 @@ class ConvocationAndDraftTest extends TestCase
 
     public function test_role_navigation_endpoints_do_not_mix_coordinator_and_teacher_privileges(): void
     {
-        $this->actingAsTeacher()->get(route('convocations.index'))->assertForbidden();
-        $this->actingAsCoordinator()->get(route('syllabi.index'))->assertForbidden();
+        $this->actingAsTeacher()->getJson(route('api.v1.coordination.convocations.index'))->assertForbidden();
+        $this->actingAsCoordinator()->getJson(route('api.v1.teacher.syllabi.index'))->assertForbidden();
     }
 
     private function createPreparedConvocation(?string $periodId = null, bool $withFacultyLogo = true): Convocation
@@ -433,15 +433,15 @@ class ConvocationAndDraftTest extends TestCase
     /** @return array{SyllabusTemplate, AcademicSource} */
     private function publishedConfiguration(): array
     {
-        $this->actingAsAdministrator()->post(route('admin.templates.store'), ['nombre' => 'Plantilla I-03']);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-03']);
         $template = SyllabusTemplate::query()->firstOrFail();
 
-        $this->actingAsCoordinator()->post(route('sources.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.sources.store'), [
             'nombre' => 'Fuente I-03',
             'description' => 'Documento de apoyo del periodo.',
         ]);
         $source = AcademicSource::query()->firstOrFail();
-        $this->actingAsCoordinator()->put(route('sources.content.update', $source), [
+        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.sources.content.update', $source), [
             'content' => "## Perfil base\n\nEvidencia académica autorizada.",
         ]);
 
@@ -451,7 +451,7 @@ class ConvocationAndDraftTest extends TestCase
     private function openConvocationAndGetSyllabus(): Syllabus
     {
         $convocation = $this->createPreparedConvocation();
-        $this->actingAsCoordinator()->post(route('convocations.open', $convocation))->assertRedirect();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.open', $convocation))->assertSuccessful();
 
         return Syllabus::query()->firstOrFail();
     }

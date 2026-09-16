@@ -131,6 +131,7 @@ class StoreAcademicRecordRequest extends FormRequest
                 'facultades' => 'codigo_facultad',
                 'campus' => 'codigo_campus',
                 'carreras' => 'codigo_carrera',
+                default => throw new \LogicException('Catálogo académico no admitido.'),
             })],
             'nombre' => ['required', 'string', "max:{$nameLength}"],
         ];

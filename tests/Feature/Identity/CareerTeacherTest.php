@@ -10,7 +10,7 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Tests\TestCase;
 
 class CareerTeacherTest extends TestCase
@@ -38,7 +38,7 @@ class CareerTeacherTest extends TestCase
 
     public function test_creates_only_a_teacher_in_current_career_and_is_idempotent(): void
     {
-        $this->post(route('coordination.teachers.store'), $this->payload())->assertRedirect()->assertSessionHasNoErrors();
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful()->assertSuccessful();
         $user = User::query()->where('correo_electronico', 'nuevo@silabos.test')->firstOrFail();
         $this->assertTrue(Hash::check($this->payload()['password'], $user->contrasena));
         $this->assertTrue($user->debe_cambiar_contrasena);
@@ -46,12 +46,12 @@ class CareerTeacherTest extends TestCase
         $assignment = $user->roleAssignments()->firstOrFail();
         $this->assertSame('docente', $assignment->role->codigo_rol);
         $this->assertSame($this->context->carrera_id, $assignment->carrera_id);
-        $this->get(route('coordination.academic.teacher-assignments.index'))->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+        $this->getJson(route('api.v1.coordination.academic.teacher-assignments.index'))->assertOk()
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('canCreateTeacher', true)
                 ->where('career.id', $this->context->carrera_id)
                 ->where('options.teacherUsers', fn ($users) => collect($users)->contains('id', $user->id)));
-        $this->post(route('coordination.teachers.store'), [...$this->payload(), 'correo_electronico' => ' NUEVO@silabos.test ', 'nombre' => 'Otro nombre'])->assertSessionHasNoErrors();
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => ' NUEVO@silabos.test ', 'nombre' => 'Otro nombre'])->assertSuccessful();
         $this->assertSame($user->nombre, $user->fresh()->nombre);
         $this->assertSame(1, $user->roleAssignments()->count());
         Mail::assertQueued(ManagedUserCredentialsMail::class, 1);
@@ -74,7 +74,7 @@ class CareerTeacherTest extends TestCase
     {
         $user = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
         $original = $user->getAttributes();
-        $this->post(route('coordination.teachers.store'), [...$this->payload(), 'correo_electronico' => $user->correo_electronico])->assertSessionHasNoErrors();
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => $user->correo_electronico])->assertSuccessful();
         $this->assertSame($original, $user->fresh()->getAttributes());
         $this->assertSame(2, $user->roleAssignments()->count());
         Mail::assertNothingQueued();
@@ -85,11 +85,11 @@ class CareerTeacherTest extends TestCase
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $teacher->update(['activo' => false]);
         $data = [...$this->payload(), 'correo_electronico' => $teacher->correo_electronico];
-        $this->postJson(route('coordination.teachers.store'), $data)->assertUnprocessable()->assertJsonValidationErrors('correo_electronico');
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $data)->assertUnprocessable()->assertJsonValidationErrors('correo_electronico');
         $this->assertFalse($teacher->fresh()->activo);
         $teacher->update(['activo' => true]);
         $teacher->roleAssignments()->update(['activo' => false]);
-        $this->postJson(route('coordination.teachers.store'), $data)->assertUnprocessable()->assertJsonValidationErrors('correo_electronico');
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $data)->assertUnprocessable()->assertJsonValidationErrors('correo_electronico');
         $this->assertFalse($teacher->roleAssignments()->firstOrFail()->activo);
         Mail::assertNothingQueued();
     }
@@ -97,10 +97,10 @@ class CareerTeacherTest extends TestCase
     public function test_cannot_choose_role_career_or_global_account_state(): void
     {
         foreach (['role_code' => 'administrador', 'career_id' => $this->context->carrera_id, 'user_id' => $this->coordinator->id, 'active' => true, 'activo' => true] as $field => $value) {
-            $this->postJson(route('coordination.teachers.store'), [...$this->payload(), $field => $value])->assertUnprocessable()->assertJsonValidationErrors($field);
+            $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), $field => $value])->assertUnprocessable()->assertJsonValidationErrors($field);
         }
         $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'nuevo@silabos.test']);
-        $this->postJson(route('admin.users.store'), [...$this->payload(), 'role_code' => 'administrador'])->assertForbidden();
+        $this->postJson(route('api.v1.admin.users.store'), [...$this->payload(), 'role_code' => 'administrador'])->assertForbidden();
         Mail::assertNothingQueued();
     }
 
@@ -109,7 +109,7 @@ class CareerTeacherTest extends TestCase
         foreach (['admin@silabos.test', 'docente@silabos.test'] as $email) {
             $user = User::query()->where('correo_electronico', $email)->firstOrFail();
             $this->actingAs($user)->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id])
-                ->postJson(route('coordination.teachers.store'), $this->payload())->assertForbidden();
+                ->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertForbidden();
         }
         Mail::assertNothingQueued();
     }
@@ -117,13 +117,13 @@ class CareerTeacherTest extends TestCase
     public function test_inactive_career_cannot_create_teachers(): void
     {
         $this->context->career->update(['activo' => false]);
-        $this->postJson(route('coordination.teachers.store'), $this->payload())->assertForbidden();
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertForbidden();
         $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'nuevo@silabos.test']);
     }
 
     public function test_invalid_identity_and_weak_password_are_rejected(): void
     {
-        $this->postJson(route('coordination.teachers.store'), ['nombre' => '', 'correo_electronico' => 'invalid', 'password' => '123'])
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), ['nombre' => '', 'correo_electronico' => 'invalid', 'password' => '123'])
             ->assertUnprocessable()->assertJsonValidationErrors(['nombre', 'correo_electronico', 'password']);
         Mail::assertNothingQueued();
     }
@@ -137,7 +137,7 @@ class CareerTeacherTest extends TestCase
         $before = RoleAssignment::query()->count();
         $this->withoutExceptionHandling();
         try {
-            $this->post(route('coordination.teachers.store'), $this->payload());
+            $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload());
             $this->fail('Expected audit failure');
         } catch (\RuntimeException $exception) {
             $this->assertSame('Synthetic audit failure', $exception->getMessage());
@@ -153,7 +153,7 @@ class CareerTeacherTest extends TestCase
         $historic = $teacher->roleAssignments()->firstOrFail()->replicate();
         $historic->activo = false;
         $historic->save();
-        $this->post(route('coordination.teachers.store'), [...$this->payload(), 'correo_electronico' => $teacher->correo_electronico])->assertSessionHasNoErrors();
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => $teacher->correo_electronico])->assertSuccessful();
         $this->assertSame(2, $teacher->roleAssignments()->count());
         Mail::assertNothingQueued();
     }

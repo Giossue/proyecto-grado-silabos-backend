@@ -45,7 +45,7 @@ class AcademicStructureViewData
                     ->get(['id', 'codigo_facultad', 'nombre', 'logo_objeto_id', 'activo'])
                     ->map(fn (Faculty $faculty): array => [
                         'id' => $faculty->id,
-                        'codigo_facultad' => $faculty->codigo_facultad,
+                        'codigo_facultad' => $faculty->getAttribute('codigo_facultad'),
                         'nombre' => $faculty->nombre,
                         'activo' => $faculty->activo,
                         'logo_url' => route('logos.faculty', ['faculty' => $faculty->id, 'v' => $this->logos->version($this->logos->facultyPath($faculty))]),

@@ -47,13 +47,13 @@ class ManagedUserUpdateTest extends TestCase
     public function test_an_administrator_edits_identity_and_status_in_one_save(): void
     {
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $this->teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
                 'nombre' => 'Docente Corregida',
                 'correo_electronico' => 'docente.corregida@silabos.test',
                 'active' => false,
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->teacher->refresh();
         $this->assertSame('DOCENTE CORREGIDA', $this->teacher->nombre);
@@ -75,15 +75,15 @@ class ManagedUserUpdateTest extends TestCase
         $previousAssignmentId = $this->coordinator->roleAssignments()->firstOrFail()->id;
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $this->coordinator), [
+            ->patchJson(route('api.v1.admin.users.update', $this->coordinator), [
                 'nombre' => $this->coordinator->nombre,
                 'correo_electronico' => $this->coordinator->correo_electronico,
                 'active' => true,
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->assertDatabaseHas('asignaciones_rol', ['id' => $previousAssignmentId, 'asignacion_rol_activa' => true]);
         $this->assertDatabaseHas('asignaciones_rol', [
@@ -103,12 +103,12 @@ class ManagedUserUpdateTest extends TestCase
         $assignmentsBefore = $this->teacher->roleAssignments()->count();
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $this->teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
                 'nombre' => 'Docente Renombrada',
                 'correo_electronico' => $this->teacher->correo_electronico,
                 'active' => true,
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $this->teacher->refresh();
         $this->assertSame('DOCENTE RENOMBRADA', $this->teacher->nombre);
@@ -124,18 +124,18 @@ class ManagedUserUpdateTest extends TestCase
     public function test_the_own_account_only_corrects_its_identity(): void
     {
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $this->administrator), [
+            ->patchJson(route('api.v1.admin.users.update', $this->administrator), [
                 'nombre' => 'Administración Renombrada',
                 'correo_electronico' => 'admin@silabos.test',
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $this->assertSame('ADMINISTRACIÓN RENOMBRADA', $this->administrator->fresh()->nombre);
 
         // Tocar el propio estado o concederse un rol se rechaza completo: la
         // desactivación y los privilegios de la propia cuenta son de otra administración.
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $this->administrator), [
+            ->patchJson(route('api.v1.admin.users.update', $this->administrator), [
                 'nombre' => 'Administración Renombrada',
                 'correo_electronico' => 'admin@silabos.test',
                 'active' => false,
@@ -143,7 +143,7 @@ class ManagedUserUpdateTest extends TestCase
             ->assertForbidden();
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $this->administrator), [
+            ->patchJson(route('api.v1.admin.users.update', $this->administrator), [
                 'nombre' => 'Administración Renombrada',
                 'correo_electronico' => 'admin@silabos.test',
                 'role_code' => RoleCode::Administrator->value,
@@ -156,7 +156,7 @@ class ManagedUserUpdateTest extends TestCase
     public function test_a_coordinator_cannot_use_the_unified_edit(): void
     {
         $this->actingAsCoordinator()
-            ->patch(route('admin.users.update', $this->teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
                 'nombre' => 'Intento',
                 'correo_electronico' => 'intento@silabos.test',
             ])
@@ -168,13 +168,13 @@ class ManagedUserUpdateTest extends TestCase
     public function test_a_scoped_role_requires_its_career(): void
     {
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $this->teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
                 'nombre' => $this->teacher->nombre,
                 'correo_electronico' => $this->teacher->correo_electronico,
                 'active' => true,
                 'role_code' => RoleCode::Teacher->value,
             ])
-            ->assertSessionHasErrors('career_id');
+            ->assertJsonValidationErrors('career_id');
     }
 
     public function test_a_deactivation_closes_a_mandate_granted_in_the_same_save(): void
@@ -183,19 +183,19 @@ class ManagedUserUpdateTest extends TestCase
 
         // La carrera solo admite una coordinación activa: se retira antes a quien la ejerce.
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.status.update', $this->coordinator), ['active' => false])
-            ->assertRedirect();
+            ->patchJson(route('api.v1.admin.users.status.update', $this->coordinator), ['active' => false])
+            ->assertSuccessful();
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $this->teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
                 'nombre' => $this->teacher->nombre,
                 'correo_electronico' => $this->teacher->correo_electronico,
                 'active' => false,
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $career->id,
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         // El estado de cuenta es la puerta exterior: el rol queda como historial, pero
         // una cuenta inactiva no puede ejercerlo ni bloquear la futura coordinación.

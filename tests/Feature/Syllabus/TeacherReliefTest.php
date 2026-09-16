@@ -68,8 +68,7 @@ class TeacherReliefTest extends TestCase
         // Un segundo paralelo del mismo docente, abierto después de la convocatoria: sin sílabo.
         $extra = $this->extraParallelFor($this->teacher);
 
-        $this->relieve()->assertRedirect()->assertSessionHasNoErrors()
-            ->assertSessionHas('success', 'Relevo aplicado en 2 paralelos; 1 sílabos pasaron al docente entrante.');
+        $this->relieve()->assertSuccessful();
 
         $this->assertDatabaseHas('colaboradores_silabo', ['silabo_id' => $syllabus->id, 'usuario_id' => $this->replacement->id]);
         $this->assertDatabaseMissing('colaboradores_silabo', ['silabo_id' => $syllabus->id, 'usuario_id' => $this->teacher->id]);
@@ -83,7 +82,7 @@ class TeacherReliefTest extends TestCase
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'silabo.docente_transferido', 'recurso_id' => $syllabus->id]);
 
         // Repetirlo ya no encuentra paralelos: se dice, no se duplica.
-        $this->relieve()->assertSessionHasErrors('outgoing_user_id');
+        $this->relieve()->assertJsonValidationErrors('outgoing_user_id');
     }
 
     public function test_a_syllabus_under_review_blocks_the_whole_relief_and_names_the_subject(): void
@@ -91,7 +90,7 @@ class TeacherReliefTest extends TestCase
         $syllabus = $this->submittedSyllabus();
         $extra = $this->extraParallelFor($this->teacher);
 
-        $this->relieve()->assertSessionHasErrors('outgoing_user_id');
+        $this->relieve()->assertJsonValidationErrors('outgoing_user_id');
 
         $this->assertDatabaseHas('colaboradores_silabo', ['silabo_id' => $syllabus->id, 'usuario_id' => $this->teacher->id]);
         $this->assertTrue(TeacherAssignment::query()->forUser($this->teacher->id)->where('paralelo_id', $extra->id)->where('activo', true)->exists());
@@ -106,7 +105,7 @@ class TeacherReliefTest extends TestCase
             'fecha_fin' => '2026-03-31',
         ]);
 
-        $this->relieve()->assertSessionHasErrors('outgoing_user_id');
+        $this->relieve()->assertJsonValidationErrors('outgoing_user_id');
 
         $this->assertDatabaseHas('colaboradores_silabo', [
             'silabo_id' => $syllabus->id,
@@ -123,10 +122,10 @@ class TeacherReliefTest extends TestCase
         $this->openedSyllabus();
         $outsider = User::query()->create(['nombre' => 'Docente ajeno', 'correo_electronico' => 'ajeno@silabos.test', 'contrasena' => 'Temporal-2026!', 'activo' => true]);
 
-        $this->relieve($outsider->id)->assertSessionHasErrors('incoming_user_id');
+        $this->relieve($outsider->id)->assertJsonValidationErrors('incoming_user_id');
 
         $this->actingAs($this->teacher)->withSession(['active_role_assignment_id' => $this->teacherContext->id])
-            ->post(route('coordination.academic.teachers.relieve'), $this->payload())
+            ->postJson(route('api.v1.coordination.academic.teachers.relieve'), $this->payload())
             ->assertForbidden();
     }
 
@@ -135,32 +134,31 @@ class TeacherReliefTest extends TestCase
         $this->validDraft();
 
         $this->actingAsAdministrator()
-            ->from(route('admin.users.index'))
-            ->patch(route('admin.users.update', $this->teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
                 'nombre' => $this->teacher->nombre,
                 'correo_electronico' => $this->teacher->correo_electronico,
                 'active' => 0,
             ])
-            ->assertSessionHasErrors('active');
+            ->assertJsonValidationErrors('active');
         $this->assertTrue($this->teacher->fresh()->activo);
 
-        $this->relieve()->assertRedirect()->assertSessionHasNoErrors();
+        $this->relieve()->assertSuccessful()->assertSuccessful();
 
         // Sin sílabos en curso, archivar cierra lo que quedara vigente.
         $this->actingAsAdministrator()
-            ->patch(route('admin.users.update', $this->teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
                 'nombre' => $this->teacher->nombre,
                 'correo_electronico' => $this->teacher->correo_electronico,
                 'active' => 0,
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertFalse($this->teacher->fresh()->activo);
     }
 
     private function relieve(?string $incomingId = null): TestResponse
     {
-        return $this->actingAsCoordinator()->post(route('coordination.academic.teachers.relieve'), $this->payload($incomingId));
+        return $this->actingAsCoordinator()->postJson(route('api.v1.coordination.academic.teachers.relieve'), $this->payload($incomingId));
     }
 
     /** @return array<string, string> */
@@ -203,10 +201,10 @@ class TeacherReliefTest extends TestCase
     private function submittedSyllabus(): Syllabus
     {
         $syllabus = $this->validDraft();
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         return $syllabus->fresh();
     }
@@ -214,7 +212,7 @@ class TeacherReliefTest extends TestCase
     private function validDraft(): Syllabus
     {
         $syllabus = $this->openedSyllabus();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $fields = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('obligatorio', true)
@@ -222,7 +220,7 @@ class TeacherReliefTest extends TestCase
             ->get();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(
-                route('syllabi.fields.update', [$syllabus, $field]),
+                route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
                 $this->validFieldPayload($field, $syllabus->fresh()->version_bloqueo),
             )->assertOk();
         }
@@ -233,10 +231,10 @@ class TeacherReliefTest extends TestCase
     private function openedSyllabus(): Syllabus
     {
         [$template, $source] = $this->publishedConfiguration();
-        $this->actingAsCoordinator()->post(route('convocations.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id, now()->subDay()->toIso8601String(), now()->addMonth()->toIso8601String())->id,
             'source_ids' => [$source->id],
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $convocation = Convocation::query()->firstOrFail();
 
         return Syllabus::query()->firstOrFail();
@@ -262,11 +260,11 @@ class TeacherReliefTest extends TestCase
     /** @return array{SyllabusTemplate, AcademicSource} */
     private function publishedConfiguration(): array
     {
-        $this->actingAsAdministrator()->post(route('admin.templates.store'), ['nombre' => 'Plantilla relevo']);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla relevo']);
         $template = SyllabusTemplate::query()->firstOrFail();
-        $this->actingAsCoordinator()->post(route('sources.store'), ['nombre' => 'Fuente relevo', 'description' => 'Documento de apoyo del periodo.']);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.sources.store'), ['nombre' => 'Fuente relevo', 'description' => 'Documento de apoyo del periodo.']);
         $source = AcademicSource::query()->firstOrFail();
-        $this->actingAsCoordinator()->put(route('sources.content.update', $source), ['content' => "## Perfil base\n\nEvidencia académica autorizada."]);
+        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.sources.content.update', $source), ['content' => "## Perfil base\n\nEvidencia académica autorizada."]);
 
         return [$template->fresh(), $source->fresh()];
     }

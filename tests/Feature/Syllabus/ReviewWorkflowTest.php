@@ -24,7 +24,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use LogicException;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
@@ -69,36 +69,36 @@ class ReviewWorkflowTest extends TestCase
         $this->useCustomDesign = true;
         $syllabus = $this->createValidDraft();
         $block = $syllabus->template->fields()->where('clave', 'asignatura')->firstOrFail()->block;
-        $this->actingAsTeacher()->get(route('syllabi.edit', $syllabus))->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('syllabus.template_variables.nombre_asignatura', 'Arquitectura de Software')
                 ->where('syllabus.template_variables.correo_docente', 'docente@silabos.test')
                 ->has('syllabus.sections.0.blocks.0.document'));
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo, 'idempotency_key' => (string) Str::uuid(),
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $revision = SyllabusRevision::query()->firstOrFail();
         $snapshot = $revision->fotografia;
         $this->assertSame($block->configuracion['document'], $snapshot['sections'][0]['blocks'][0]['document']);
         $this->assertSame('Arquitectura de Software', $snapshot['template_variables']['nombre_asignatura']);
         $this->assertSame('docente@silabos.test', $snapshot['template_variables']['correo_docente']);
         $fingerprint = $revision->huella_sha256;
-        $this->actingAsAdministrator()->post(route('admin.processes.transition', [$syllabus->convocation->process, 'cerrar']))
-            ->assertSessionHasNoErrors();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'cerrar']))
+            ->assertSuccessful();
         $changed = TemplateDocumentDefaults::identification();
         $changed['content'][] = ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Cambio futuro']]];
-        $this->actingAsAdministrator()->patch(route('admin.templates.blocks.document', [$syllabus->template, $block]), [
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.template.blocks.document.update', [$syllabus->template, $block]), [
             'document' => $changed, 'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertSessionHasNoErrors();
+        ])->assertSuccessful();
         $this->assertSame($snapshot, $revision->fresh()->fotografia);
         $this->assertSame($fingerprint, $revision->fresh()->huella_sha256);
         // Retirar un campo tampoco borra sus valores ni sus referencias históricas.
         $objective = $syllabus->template->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $objectiveBlock = $objective->block;
-        $this->patch(route('admin.templates.blocks.document', [$syllabus->template, $objectiveBlock]), [
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$syllabus->template, $objectiveBlock]), [
             'document' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Texto fijo futuro']]]]],
             'fingerprint' => SaveTemplateDocument::fingerprint($objectiveBlock),
-        ])->assertSessionHasNoErrors();
+        ])->assertSuccessful();
         $this->assertFalse($objective->fresh()->obligatorio);
         $this->assertFalse($objective->fresh()->editable_docente);
         $this->assertTrue($syllabus->values()->where('definicion_campo_id', $objective->id)->exists());
@@ -110,16 +110,16 @@ class ReviewWorkflowTest extends TestCase
         $this->useCustomDesign = true;
         $syllabus = $this->createValidDraft();
         $block = $syllabus->template->fields()->where('clave', 'asignatura')->firstOrFail()->block;
-        $url = route('admin.templates.blocks.document', [$syllabus->template, $block]);
+        $url = route('api.v1.admin.template.blocks.document.update', [$syllabus->template, $block]);
         $document = $block->configuracion['document'];
         $document['content'][] = ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Nueva instrucción']]];
         $payload = ['document' => $document, 'fingerprint' => SaveTemplateDocument::fingerprint($block)];
-        $this->actingAsAdministrator()->patch($url, $payload)->assertSessionHasErrors('process');
-        $this->post(route('admin.processes.transition', [$syllabus->convocation->process, 'pausar']), ['reason' => 'Ajustar el diseño de la plantilla'])->assertSessionHasNoErrors();
-        $this->patch($url, $payload)->assertSessionHasErrors('purge_required');
+        $this->actingAsAdministrator()->patch($url, $payload)->assertJsonValidationErrors('process');
+        $this->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'pausar']), ['reason' => 'Ajustar el diseño de la plantilla'])->assertSuccessful();
+        $this->patch($url, $payload)->assertJsonValidationErrors('purge_required');
         $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
         $this->assertSame($block->configuracion['document'], $block->fresh()->configuracion['document']);
-        $this->patch($url, [...$payload, 'confirm_purge' => true])->assertSessionHasNoErrors();
+        $this->patch($url, [...$payload, 'confirm_purge' => true])->assertSuccessful();
         $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
     }
 
@@ -130,15 +130,15 @@ class ReviewWorkflowTest extends TestCase
         $key = (string) Str::uuid();
 
         $this->actingAsTeacher()
-            ->get(route('syllabi.submit.confirm', $syllabus))
+            ->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Teacher/Syllabi/Submit')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('syllabus.version_bloqueo', $lockVersion));
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $lockVersion,
             'idempotency_key' => $key,
-        ])->assertRedirect(route('syllabi.show', $syllabus));
+        ])->assertSuccessful();
 
         $revision = SyllabusRevision::query()->firstOrFail();
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
@@ -158,15 +158,15 @@ class ReviewWorkflowTest extends TestCase
             'tipo_evento' => 'silabo.enviado',
         ]);
 
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $lockVersion,
             'idempotency_key' => $key,
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $this->assertDatabaseCount('revisiones_silabo', 1);
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertSessionHasErrors('syllabus');
+        ])->assertJsonValidationErrors('syllabus');
         $this->assertDatabaseCount('revisiones_silabo', 1);
 
         $originalFingerprint = $revision->huella_sha256;
@@ -191,10 +191,10 @@ class ReviewWorkflowTest extends TestCase
     {
         $syllabus = $this->createStartedDraft();
 
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertSessionHasErrors('validation');
+        ])->assertJsonValidationErrors('validation');
 
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('revisiones_silabo', 0);
@@ -209,12 +209,12 @@ class ReviewWorkflowTest extends TestCase
         $syllabus->increment('version_bloqueo');
 
         $this->actingAsTeacher()
-            ->from(route('syllabi.submit.confirm', $syllabus))
-            ->post(route('syllabi.submit.store', $syllabus), [
+            ->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
                 'version_bloqueo' => $staleVersion,
                 'idempotency_key' => (string) Str::uuid(),
-            ])->assertRedirect(route('syllabi.submit.confirm', $syllabus))
-            ->assertSessionHasErrors('version_bloqueo');
+            ])
+            ->assertConflict()
+            ->assertJsonPath('code', 'conflicto_version_borrador');
 
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('revisiones_silabo', 0);
@@ -226,10 +226,10 @@ class ReviewWorkflowTest extends TestCase
         [$syllabus, $revision] = $this->submitValidDraft();
 
         $this->actingAsCoordinator()
-            ->get(route('reviews.show', $revision))
+            ->getJson(route('api.v1.coordination.reviews.show', $revision))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Coordination/Reviews/Show')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('revision.number', 1)
                 ->where('syllabus.id', $syllabus->id));
         config(['sanctum.stateful' => ['localhost:5173']]);
@@ -243,8 +243,8 @@ class ReviewWorkflowTest extends TestCase
                 'presentation' => ['logos' => ['institution', 'faculty']],
                 'revision' => ['identification', 'snapshot' => ['sections']],
             ]);
-        $this->actingAsTeacher()->get(route('reviews.show', $revision))->assertForbidden();
-        $this->actingAsAdministrator()->get(route('reviews.show', $revision))->assertForbidden();
+        $this->actingAsTeacher()->getJson(route('api.v1.coordination.reviews.show', $revision))->assertForbidden();
+        $this->actingAsAdministrator()->getJson(route('api.v1.coordination.reviews.show', $revision))->assertForbidden();
 
         $career = Career::query()->create([
             'facultad_id' => Career::query()->firstOrFail()->facultad_id,
@@ -255,7 +255,7 @@ class ReviewWorkflowTest extends TestCase
             'activo' => true,
         ]);
         $this->coordinatorContext->update(['carrera_id' => $career->id]);
-        $this->actingAsCoordinator()->get(route('reviews.show', $revision))->assertForbidden();
+        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))->assertForbidden();
     }
 
     public function test_cp_f_correction_preserves_first_snapshot_and_links_response_to_resubmission(): void
@@ -272,14 +272,14 @@ class ReviewWorkflowTest extends TestCase
             ->id;
         $firstSnapshot = $firstRevision->fotografia;
 
-        $this->actingAsCoordinator()->post(route('reviews.observations.store', $firstRevision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $firstRevision), [
             'content' => 'Precise la descripción y explique el ajuste realizado.',
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $observation = ReviewObservation::query()->firstOrFail();
-        $this->actingAsCoordinator()->post(route('reviews.correction.store', $firstRevision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $firstRevision), [
             'observation_ids' => [$observation->id],
             'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         $syllabus->refresh();
         $this->assertSame('correccion_solicitada', $syllabus->estado);
@@ -287,31 +287,31 @@ class ReviewWorkflowTest extends TestCase
             'agregado_id' => $syllabus->id,
             'tipo_evento' => 'silabo.correccion_solicitada',
         ]);
-        $this->actingAsCoordinator()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->actingAsCoordinator()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'value' => 'PV-16 continúa denegada.',
         ])->assertForbidden();
         $this->actingAsTeacher()
-            ->get(route('syllabi.edit', $syllabus))
+            ->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Teacher/Syllabi/Edit')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('syllabus.observations.0.requested', true));
 
-        $this->actingAsTeacher()->post(route('syllabi.observations.respond', [$syllabus, $observation]), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.observations.respond', [$syllabus, $observation]), [
             'content' => 'Se amplió la descripción según la observación.',
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $this->actingAsCoordinator()
-            ->post(route('reviews.observations.verify', $observation))
-            ->assertSessionHasErrors('syllabus');
+            ->postJson(route('api.v1.coordination.reviews.observations.verify', $observation))
+            ->assertJsonValidationErrors('syllabus');
 
         $syllabus->refresh();
-        $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'value' => 'Descripción corregida con evidencia académica.',
         ])->assertOk();
         $syllabus->refresh();
-        $rowUpdate = $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $repeatableField]), [
+        $rowUpdate = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $repeatableField]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'rows' => [
                 ['id' => $stableRowId, 'data' => ['texto' => 'Fila corregida y estable']],
@@ -320,10 +320,10 @@ class ReviewWorkflowTest extends TestCase
         ])->assertOk();
         $newRowId = $rowUpdate->json('rows.1.id');
         $syllabus->refresh();
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         $secondRevision = SyllabusRevision::query()->where('numero_revision', 2)->firstOrFail();
         $this->assertSame($firstSnapshot, $firstRevision->fresh()->fotografia);
@@ -338,7 +338,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame($stableRowId, $repeatableChange['after']['rows'][0]['id'], 'La fila estable no coincide en el snapshot posterior.');
         $this->assertSame($newRowId, $repeatableChange['after']['rows'][1]['id'], 'La fila nueva no coincide en el snapshot posterior.');
 
-        $this->actingAsCoordinator()->post(route('reviews.observations.verify', $observation))->assertRedirect();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.verify', $observation))->assertSuccessful();
         $this->assertSame('verificada', $observation->fresh()->estado);
         try {
             DB::transaction(fn () => DB::table('respuestas_observacion')
@@ -352,10 +352,10 @@ class ReviewWorkflowTest extends TestCase
             );
         }
         $this->actingAsTeacher()
-            ->get(route('reviews.compare', [$firstRevision, $secondRevision]))
+            ->getJson(route('api.v1.coordination.reviews.compare', [$firstRevision, $secondRevision]))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Syllabi/Compare')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('comparison.before_revision', 1)
                 ->where('comparison.after_revision', 2));
     }
@@ -363,22 +363,22 @@ class ReviewWorkflowTest extends TestCase
     public function test_cp_f_approval_requires_verified_observations_and_is_idempotent(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();
-        $this->actingAsCoordinator()->post(route('reviews.observations.store', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $revision), [
             'content' => 'Confirme que el contenido actual satisface el criterio.',
         ]);
         $observation = ReviewObservation::query()->firstOrFail();
         $key = (string) Str::uuid();
 
-        $this->actingAsCoordinator()->post(route('reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => $key,
-        ])->assertSessionHasErrors('observations');
+        ])->assertJsonValidationErrors('observations');
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('aprobaciones', 0);
 
-        $this->actingAsCoordinator()->post(route('reviews.observations.verify', $observation))->assertRedirect();
-        $this->actingAsCoordinator()->post(route('reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.verify', $observation))->assertSuccessful();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => $key,
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $approval = Approval::query()->firstOrFail();
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
         $this->assertSame($revision->id, $approval->revision_silabo_id);
@@ -388,22 +388,22 @@ class ReviewWorkflowTest extends TestCase
             'tipo_evento' => 'silabo.aprobado',
         ]);
 
-        $this->actingAsCoordinator()->post(route('reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => $key,
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $this->assertDatabaseCount('aprobaciones', 1);
 
-        $this->actingAsCoordinator()->post(route('reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertSessionHasErrors('revision');
+        ])->assertJsonValidationErrors('revision');
     }
 
     public function test_cp_f_reopening_preserves_approval_restores_snapshot_and_links_next_revision(): void
     {
         [$syllabus, $approvedRevision] = $this->submitValidDraft();
-        $this->actingAsCoordinator()->post(route('reviews.approve', $approvedRevision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $approvedRevision), [
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $approval = Approval::query()->firstOrFail();
         $field = $this->editableScalarField($syllabus);
         $approvedValue = $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor;
@@ -412,10 +412,10 @@ class ReviewWorkflowTest extends TestCase
         ]);
         $key = (string) Str::uuid();
 
-        $this->actingAsCoordinator()->post(route('reviews.reopen', $syllabus), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reopen', $syllabus), [
             'idempotency_key' => $key,
             'cause' => 'Se detectó una actualización académica posterior a la aprobación.',
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $syllabus->refresh();
         $reopening = $syllabus->reopenings()->firstOrFail();
         $this->assertSame('correccion_solicitada', $syllabus->estado);
@@ -428,25 +428,25 @@ class ReviewWorkflowTest extends TestCase
             'tipo_evento' => 'silabo.reabierto',
         ]);
 
-        $this->actingAsCoordinator()->post(route('reviews.reopen', $syllabus), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reopen', $syllabus), [
             'idempotency_key' => $key,
             'cause' => 'Se detectó una actualización académica posterior a la aprobación.',
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $this->assertDatabaseCount('reaperturas', 1);
 
-        $this->actingAsCoordinator()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->actingAsCoordinator()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'value' => 'Coordinación no puede editar mientras PV-16 esté pendiente.',
         ])->assertForbidden();
-        $this->actingAsTeacher()->patchJson(route('syllabi.fields.update', [$syllabus, $field]), [
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'value' => 'Cambio posterior a la reapertura.',
         ])->assertOk();
         $syllabus->refresh();
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         $newRevision = SyllabusRevision::query()->where('numero_revision', 2)->firstOrFail();
         $this->assertSame($reopening->id, $newRevision->reapertura_id);
@@ -480,10 +480,8 @@ class ReviewWorkflowTest extends TestCase
         ]);
 
         $this->actingAsCoordinator()
-            ->from(route('reviews.show', $revision))
-            ->get(route('reviews.compare', [$revision, $otherRevision]))
-            ->assertRedirect(route('reviews.show', $revision))
-            ->assertSessionHasErrors('revisions');
+            ->getJson(route('api.v1.coordination.reviews.compare', [$revision, $otherRevision]))
+            ->assertJsonValidationErrors('revisions');
 
         try {
             DB::transaction(fn () => SyllabusTransition::query()->create([
@@ -524,10 +522,10 @@ class ReviewWorkflowTest extends TestCase
     private function submitValidDraft(): array
     {
         $syllabus = $this->createValidDraft();
-        $this->actingAsTeacher()->post(route('syllabi.submit.store', $syllabus), [
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         return [$syllabus->fresh(), SyllabusRevision::query()->latest('enviado_en')->firstOrFail()];
     }
@@ -542,7 +540,7 @@ class ReviewWorkflowTest extends TestCase
             ->get();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(
-                route('syllabi.fields.update', [$syllabus, $field]),
+                route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
                 $this->validFieldPayload($field, $syllabus->fresh()->version_bloqueo),
             )->assertOk();
         }
@@ -579,13 +577,13 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame('en_revision', $syllabus->estado);
 
         $this->actingAsCoordinator()
-            ->post(route('reviews.reset', $syllabus), ['reason' => 'Corto'])
-            ->assertSessionHasErrors('reason');
+            ->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Corto'])
+            ->assertJsonValidationErrors('reason');
 
         $this->actingAsCoordinator()
-            ->post(route('reviews.reset', $syllabus), ['reason' => 'La malla cambió las horas de la materia después de la entrega.'])
-            ->assertRedirect(route('reviews.index'))
-            ->assertSessionHas('success');
+            ->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'La malla cambió las horas de la materia después de la entrega.'])
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $fresh = $syllabus->fresh();
         $this->assertSame('sin_iniciar', $fresh->estado);
@@ -600,23 +598,23 @@ class ReviewWorkflowTest extends TestCase
         $this->assertDatabaseHas('eventos_salientes', ['tipo_evento' => 'silabo.reiniciado']);
 
         // El docente vuelve a empezar de cero.
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
 
         // Sin trabajo que descartar no hay nada que reiniciar; y el docente nunca puede.
-        $this->actingAsTeacher()->post(route('reviews.reset', $syllabus), ['reason' => 'Intento no autorizado.'])->assertForbidden();
+        $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Intento no autorizado.'])->assertForbidden();
     }
 
     private function createStartedDraft(): Syllabus
     {
         [$template, $source] = $this->publishedConfiguration();
-        $this->actingAsCoordinator()->post(route('convocations.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id, now()->subDay()->toIso8601String(), now()->addMonth()->toIso8601String())->id,
             'source_ids' => [$source->id],
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $convocation = Convocation::query()->firstOrFail();
         $syllabus = Syllabus::query()->firstOrFail();
-        $this->actingAsTeacher()->post(route('syllabi.start', $syllabus))->assertRedirect();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
 
         return $syllabus->fresh();
     }
@@ -624,25 +622,25 @@ class ReviewWorkflowTest extends TestCase
     /** @return array{SyllabusTemplate, AcademicSource} */
     private function publishedConfiguration(): array
     {
-        $this->actingAsAdministrator()->post(route('admin.templates.store'), ['nombre' => 'Plantilla I-04']);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-04']);
         $template = SyllabusTemplate::query()->firstOrFail();
 
         if ($this->useCustomDesign) {
             $block = $template->fields()->where('clave', 'asignatura')->firstOrFail()->block;
-            $this->actingAsAdministrator()->patch(route('admin.templates.blocks.document', [$template, $block]), [
+            $this->actingAsAdministrator()->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
                 'document' => TemplateDocumentDefaults::identification(),
                 'fingerprint' => SaveTemplateDocument::fingerprint($block),
-            ])->assertSessionHasNoErrors();
+            ])->assertSuccessful();
         }
 
-        $this->actingAsCoordinator()->post(route('sources.store'), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.sources.store'), [
             'nombre' => 'Fuente I-04',
             'description' => 'Documento de apoyo del periodo.',
-        ])->assertRedirect();
+        ])->assertSuccessful();
         $source = AcademicSource::query()->firstOrFail();
-        $this->actingAsCoordinator()->put(route('sources.content.update', $source), [
+        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.sources.content.update', $source), [
             'content' => "## Perfil I-04\n\nEvidencia I-04.",
-        ])->assertRedirect();
+        ])->assertSuccessful();
 
         return [$template->fresh(), $source->fresh()];
     }

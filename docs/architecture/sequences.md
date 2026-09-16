@@ -9,7 +9,7 @@ efectos posteriores al commit.
 ```mermaid
 sequenceDiagram
     actor D as Docente
-    participant UI as Inertia/Vue
+    participant UI as SPA Vue
     participant C as SubmitSyllabusController
     participant A as SubmitSyllabus Action
     participant P as SyllabusPolicy
@@ -35,7 +35,7 @@ sequenceDiagram
         A->>DB: insertar transición y auditoría
         A->>O: insertar evento silabo.enviado
         A->>DB: commit
-        C-->>UI: redirect con número de revisión
+        C-->>UI: JSON con número de revisión
         O-->>W: entregar después del commit
         W->>W: notificar de forma idempotente
     end
@@ -70,7 +70,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor Coo as Coordinador
-    participant UI as Inertia/Vue
+    participant UI as SPA Vue
     participant A as Approval Actions
     participant DB as PostgreSQL
     participant O as Outbox
@@ -98,7 +98,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor D as Docente
-    participant UI as Inertia/Vue
+    participant UI as SPA Vue
     participant A as RequestAiAnalysis
     participant DB as PostgreSQL
     participant Q as Redis/Worker

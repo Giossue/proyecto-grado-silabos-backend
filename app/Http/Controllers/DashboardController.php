@@ -13,15 +13,11 @@ use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
-use App\Support\RoleArea;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
  * El panel resume el trabajo con el alcance del rol activo. Ninguna métrica cruza ese
@@ -35,20 +31,9 @@ class DashboardController extends Controller
         SetupChecklist $setup,
         ConvocationSchedule $schedule,
         InstitutionalLogos $logos,
-    ): Response|RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $activeRole = $roles->resolve($request);
         $user = $request->user();
-
-        /*
-         * El panel es la misma pantalla para los tres roles, pero cada uno tiene la suya
-         * en su área. La dirección corta, protegida por `active-role`, llega con el rol
-         * resuelto y lleva a la copia que corresponde.
-         */
-        $area = $activeRole === null ? null : RoleArea::routePrefix();
-
-        if ($area !== null && $request->route()?->getName() === 'dashboard') {
-            return redirect()->route("{$area}.dashboard");
-        }
 
         $metrics = match (true) {
             $activeRole === null || ! $user instanceof User => [],
@@ -77,11 +62,7 @@ class DashboardController extends Controller
             'facultyLogo' => $facultyLogo,
         ];
 
-        if ($request->expectsJson()) {
-            return response()->json($this->apiPayload($payload));
-        }
-
-        return Inertia::render('Dashboard', $payload);
+        return response()->json($this->apiPayload($payload));
     }
 
     /**

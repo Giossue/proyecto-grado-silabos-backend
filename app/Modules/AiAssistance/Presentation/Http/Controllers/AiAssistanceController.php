@@ -20,16 +20,13 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class AiAssistanceController extends Controller
 {
     public function __construct(private readonly ResolveEffectiveAiConfiguration $effectiveAi) {}
 
-    public function show(Syllabus $syllabus, FieldDefinition $field, Request $request): Response|JsonResponse
+    public function show(Syllabus $syllabus, FieldDefinition $field, Request $request): JsonResponse
     {
         abort_unless($request->user()?->can('edit', $syllabus) === true, 403);
         $this->assertField($syllabus, $field);
@@ -97,9 +94,7 @@ class AiAssistanceController extends Controller
             ])->values(),
         ];
 
-        return $request->expectsJson()
-            ? response()->json($payload)
-            : Inertia::render('Teacher/Syllabi/Ai', $payload);
+        return response()->json($payload);
     }
 
     private function nullableIdentifier(mixed $value): ?string
@@ -127,7 +122,7 @@ class AiAssistanceController extends Controller
         FieldDefinition $field,
         RequestAiAnalysisRequest $request,
         RequestAiAnalysis $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -138,21 +133,16 @@ class AiAssistanceController extends Controller
             $request,
         );
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'message' => 'La solicitud quedó registrada. Puede continuar editando mientras se procesa.',
-            ], 202);
-        }
-
-        return to_route('syllabi.ai.show', [$syllabus, $field])
-            ->with('success', 'La solicitud quedó registrada. Puede continuar editando mientras se procesa.');
+        return response()->json([
+            'message' => 'La solicitud quedó registrada. Puede continuar editando mientras se procesa.',
+        ], 202);
     }
 
     public function review(
         Syllabus $syllabus,
         RequestSyllabusAiReviewRequest $request,
         RequestSyllabusAiReview $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $review = $action->execute(
@@ -163,23 +153,19 @@ class AiAssistanceController extends Controller
             $request,
         );
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'message' => "Revisión de IA iniciada para {$review->total_campos} campo(s)",
-                'review' => [
-                    'id' => $review->id,
-                    'status' => $review->estado_revision_ia,
-                    'draft_version' => $review->version_bloqueo_origen,
-                    'total_fields' => $review->total_campos,
-                    'completed_fields' => $review->campos_finalizados,
-                    'progress' => $review->total_campos === 0
-                        ? 0
-                        : (int) floor(($review->campos_finalizados / $review->total_campos) * 100),
-                ],
-            ], 202);
-        }
-
-        return back()->with('success', "Revisión de IA iniciada para {$review->total_campos} campo(s)");
+        return response()->json([
+            'message' => "Revisión de IA iniciada para {$review->total_campos} campo(s)",
+            'review' => [
+                'id' => $review->id,
+                'status' => $review->estado_revision_ia,
+                'draft_version' => $review->version_bloqueo_origen,
+                'total_fields' => $review->total_campos,
+                'completed_fields' => $review->campos_finalizados,
+                'progress' => $review->total_campos === 0
+                    ? 0
+                    : (int) floor(($review->campos_finalizados / $review->total_campos) * 100),
+            ],
+        ], 202);
     }
 
     public function feedback(
@@ -188,7 +174,7 @@ class AiAssistanceController extends Controller
         AiRecommendation $recommendation,
         RecordAiFeedbackRequest $request,
         RecordAiFeedback $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $this->assertField($syllabus, $field);
@@ -201,11 +187,7 @@ class AiAssistanceController extends Controller
             $request,
         );
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Decisión registrada sin modificar el borrador.']);
-        }
-
-        return back()->with('success', 'Decisión registrada sin modificar el borrador.');
+        return response()->json(['message' => 'Decisión registrada sin modificar el borrador.']);
     }
 
     public function apply(
@@ -214,7 +196,7 @@ class AiAssistanceController extends Controller
         AiRecommendation $recommendation,
         ApplyAiRecommendationRequest $request,
         ApplyAiRecommendation $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $this->assertField($syllabus, $field);
@@ -227,20 +209,12 @@ class AiAssistanceController extends Controller
             $request,
         );
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'message' => 'La recomendación se aplicó al campo después de verificar la versión del borrador.',
-                'version_bloqueo' => $updated->version_bloqueo,
-                'completion' => (float) $updated->porcentaje_completitud,
-                'value' => $recommendation->texto_sugerido,
-            ]);
-        }
-
-        $redirect = $request->boolean('return_to_editor')
-            ? to_route('syllabi.edit', $syllabus)
-            : to_route('syllabi.ai.show', [$syllabus, $field]);
-
-        return $redirect->with('success', 'La recomendación se aplicó al campo después de verificar la versión del borrador');
+        return response()->json([
+            'message' => 'La recomendación se aplicó al campo después de verificar la versión del borrador.',
+            'version_bloqueo' => $updated->version_bloqueo,
+            'completion' => (float) $updated->porcentaje_completitud,
+            'value' => $recommendation->texto_sugerido,
+        ]);
     }
 
     private function assertField(Syllabus $syllabus, FieldDefinition $field): void

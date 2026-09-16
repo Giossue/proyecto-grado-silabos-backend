@@ -15,7 +15,7 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Tests\TestCase;
 
 class TemplateAndSourceTest extends TestCase
@@ -44,11 +44,11 @@ class TemplateAndSourceTest extends TestCase
     public function test_administrator_creates_baseline_template_with_twelve_areas(): void
     {
         $this->actingAsAdministrator()
-            ->post(route('admin.templates.store'), [
+            ->postJson(route('api.v1.admin.template.store'), [
                 'nombre' => 'Plantilla Software',
                 'description' => 'Prototipo estructurado para validación.',
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $template = SyllabusTemplate::query()->firstOrFail();
         $this->assertFalse(Schema::hasColumn('plantillas_silabo', 'es_institucional'));
@@ -78,10 +78,10 @@ class TemplateAndSourceTest extends TestCase
         );
 
         $this->actingAsAdministrator()
-            ->get(route('admin.templates.show', $template))
+            ->getJson(route('api.v1.admin.template.show', $template))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Templates/Show')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->has('template.sections', 12)
                 ->where('template.appearance.font_family', 'Arial')
                 ->where('template.titleBlock.text', TemplateTitleBlock::DEFAULT_TEXT)
@@ -91,10 +91,10 @@ class TemplateAndSourceTest extends TestCase
                 ->where('processLock', null));
 
         $this->actingAsAdministrator()
-            ->get(route('admin.templates.edit', $template))
+            ->getJson(route('api.v1.admin.template.show', $template))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Admin/Templates/Edit')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->has('template.sections', 12)
                 ->where('template.id', $template->id)
                 ->where('processLock', null));
@@ -105,7 +105,7 @@ class TemplateAndSourceTest extends TestCase
         $template = $this->createTemplate();
 
         $this->actingAsAdministrator()
-            ->post(route('admin.templates.sections.store', $template), [
+            ->postJson(route('api.v1.admin.template.sections.store', $template), [
                 'title' => 'Resultados y evidencias',
                 'key' => 'bloque_resultados',
                 'position' => 2,
@@ -132,8 +132,8 @@ class TemplateAndSourceTest extends TestCase
                     ],
                 ],
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $section = $template->fresh()->sections()
             ->where('clave', 'bloque_resultados')
@@ -178,26 +178,25 @@ class TemplateAndSourceTest extends TestCase
             ]);
 
         $this->actingAsAdministrator()
-            ->from(route('admin.templates.show', $template))
-            ->post(route('admin.templates.sections.store', $template), [
+            ->postJson(route('api.v1.admin.template.sections.store', $template), [
                 'title' => 'Bloque inválido',
                 'key' => 'bloque_invalido',
                 'fields' => [
                     ['key' => 'resumen_resultados', 'label' => 'Clave repetida', 'content_type' => 'text'],
                 ],
             ])
-            ->assertSessionHasErrors('fields.0.key');
+            ->assertJsonValidationErrors('fields.0.key');
 
         $this->assertDatabaseMissing('secciones_plantilla', ['clave_seccion_plantilla' => 'bloque_invalido']);
 
         $this->actingAsAdministrator()
-            ->post(route('admin.templates.fields.store', $template), [
+            ->postJson(route('api.v1.admin.template.fields.store', $template), [
                 'section_id' => $section->id,
                 'key' => 'seleccion_sin_opciones',
                 'label' => 'Selección sin opciones',
                 'content_type' => 'multiple_choice',
             ])
-            ->assertSessionHasErrors('options');
+            ->assertJsonValidationErrors('options');
     }
 
     public function test_only_administrator_updates_controlled_template_appearance(): void
@@ -222,9 +221,9 @@ class TemplateAndSourceTest extends TestCase
         ];
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.templates.appearance.update', $template), $appearance)
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->patchJson(route('api.v1.admin.template.appearance.update', $template), $appearance)
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $expected = [
             ...TemplateAppearance::defaults(),
@@ -242,17 +241,16 @@ class TemplateAndSourceTest extends TestCase
         ]);
 
         $this->actingAsAdministrator()
-            ->from(route('admin.templates.show', $template))
-            ->patch(route('admin.templates.appearance.update', $template), [
+            ->patchJson(route('api.v1.admin.template.appearance.update', $template), [
                 ...$appearance,
                 'font_family' => 'Comic Sans MS',
                 'accent_color' => 'url(https://example.com)',
             ])
-            ->assertSessionHasErrors(['font_family', 'accent_color']);
+            ->assertJsonValidationErrors(['font_family', 'accent_color']);
         $this->assertEquals($expected, $template->fresh()->mapeo_documento['appearance']);
 
         $this->actingAsCoordinator()
-            ->patch(route('admin.templates.appearance.update', $template), TemplateAppearance::defaults())
+            ->patchJson(route('api.v1.admin.template.appearance.update', $template), TemplateAppearance::defaults())
             ->assertForbidden();
     }
 
@@ -265,11 +263,11 @@ class TemplateAndSourceTest extends TestCase
         $template = $this->createTemplate();
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.templates.title.update', $template), [
+            ->patchJson(route('api.v1.admin.template.title.update', $template), [
                 'title' => 'PROGRAMA INSTITUCIONAL DE ASIGNATURA',
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $template->refresh();
         $this->assertSame(
@@ -282,18 +280,18 @@ class TemplateAndSourceTest extends TestCase
         ]);
 
         $this->actingAsAdministrator()
-            ->get(route('admin.templates.edit', $template))
+            ->getJson(route('api.v1.admin.template.show', $template))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('template.titleBlock.text', 'PROGRAMA INSTITUCIONAL DE ASIGNATURA')
                 ->has('template.sections', 12));
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.templates.title.update', $template), ['title' => ''])
-            ->assertSessionHasErrors('title');
+            ->patchJson(route('api.v1.admin.template.title.update', $template), ['title' => ''])
+            ->assertJsonValidationErrors('title');
 
         $this->actingAsCoordinator()
-            ->patch(route('admin.templates.title.update', $template), [
+            ->patchJson(route('api.v1.admin.template.title.update', $template), [
                 'title' => 'Cambio no autorizado',
             ])
             ->assertForbidden();
@@ -307,14 +305,12 @@ class TemplateAndSourceTest extends TestCase
     public function test_administrator_can_only_create_one_institutional_template(): void
     {
         $this->actingAsAdministrator()
-            ->post(route('admin.templates.store'), ['nombre' => 'Plantilla institucional'])
-            ->assertRedirect();
+            ->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla institucional'])
+            ->assertSuccessful();
 
         $this->actingAsAdministrator()
-            ->from(route('admin.templates.index'))
-            ->post(route('admin.templates.store'), ['nombre' => 'Otra plantilla'])
-            ->assertRedirect(route('admin.templates.index'))
-            ->assertSessionHasErrors('template');
+            ->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Otra plantilla'])
+            ->assertJsonValidationErrors('template');
 
         $this->assertSame(1, SyllabusTemplate::query()->count());
     }
@@ -332,11 +328,11 @@ class TemplateAndSourceTest extends TestCase
         $template = $this->createTemplate();
 
         $this->actingAsCoordinator()
-            ->get(route('admin.templates.index'))
+            ->getJson(route('api.v1.admin.template.index'))
             ->assertForbidden();
 
         $this->actingAsCoordinator()
-            ->get(route('admin.templates.edit', $template))
+            ->getJson(route('api.v1.admin.template.show', $template))
             ->assertForbidden();
     }
 
@@ -348,14 +344,14 @@ class TemplateAndSourceTest extends TestCase
         $field = $template->fields()->firstOrFail();
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.templates.fields.update', [$template, $field]), [
+            ->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [
                 'block_id' => $field->bloque_plantilla_id,
                 'key' => $field->clave,
                 'label' => 'Etiqueta corregida',
                 'content_type' => 'text',
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->assertSame('Etiqueta corregida', $field->fresh()->etiqueta);
         $this->assertSame(1, SyllabusTemplate::query()->count());
@@ -369,7 +365,7 @@ class TemplateAndSourceTest extends TestCase
 
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $this->actingAsAdministrator()
-            ->patch(route('admin.templates.fields.update', [$template, $field]), [
+            ->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [
                 'block_id' => $field->bloque_plantilla_id,
                 'key' => $field->clave,
                 'label' => $field->etiqueta,
@@ -382,8 +378,8 @@ class TemplateAndSourceTest extends TestCase
                 'inherited' => 1,
                 'master_source' => 'invento',
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
         $field->refresh();
         $this->assertSame('Redáctelo en infinitivo.', $field->ayuda);
         $this->assertTrue($field->ia_habilitada);
@@ -396,7 +392,7 @@ class TemplateAndSourceTest extends TestCase
         // La ficha de identificación es un bloque fijo: admite ayuda y conserva su origen.
         $identification = $template->fields()->where('clave', 'asignatura')->firstOrFail();
         $this->actingAsAdministrator()
-            ->patch(route('admin.templates.fields.update', [$template, $identification]), [
+            ->patchJson(route('api.v1.admin.template.fields.update', [$template, $identification]), [
                 'block_id' => $identification->bloque_plantilla_id,
                 'key' => $identification->clave,
                 'label' => $identification->etiqueta,
@@ -405,8 +401,8 @@ class TemplateAndSourceTest extends TestCase
                 'ai_enabled' => 1,
                 'ai_coordinator_configurable' => 1,
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
         $identification->refresh();
         $this->assertSame('Se llena sola desde la malla y la programación de asignatura.', $identification->ayuda);
         $this->assertTrue($identification->heredado);
@@ -421,7 +417,7 @@ class TemplateAndSourceTest extends TestCase
         $section = $version->sections()->where('clave', 'objetivos')->firstOrFail();
 
         $this->actingAsAdministrator()
-            ->post(route('admin.templates.fields.store', $version), [
+            ->postJson(route('api.v1.admin.template.fields.store', $version), [
                 'section_id' => $section->id,
                 'key' => 'estrategias_aprendizaje',
                 'label' => 'Estrategias de aprendizaje',
@@ -429,7 +425,7 @@ class TemplateAndSourceTest extends TestCase
                 'teacher_editable' => true,
                 'position' => 1,
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $block = $version->fresh()->sections()->whereKey($section->id)->firstOrFail()
             ->blocks()->where('titulo', 'Estrategias de aprendizaje')->firstOrFail();
@@ -446,29 +442,34 @@ class TemplateAndSourceTest extends TestCase
         $first = $section->blocks()->firstOrFail();
 
         $this->actingAsAdministrator()
-            ->post(route('admin.templates.fields.store', $version), [
+            ->postJson(route('api.v1.admin.template.fields.store', $version), [
                 'section_id' => $section->id,
-                'key' => 'objetivos_especificos',
+                'key' => 'objetivos_especificos_reorden',
                 'label' => 'Objetivos específicos',
                 'content_type' => 'numbered_list',
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $second = $section->blocks()->where('titulo', 'Objetivos específicos')->firstOrFail();
+        $remainingBlockIds = $section->blocks()
+            ->whereNotIn('id', [$first->id, $second->id])
+            ->orderBy('posicion')
+            ->pluck('id')
+            ->all();
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.templates.blocks.reorder', $version), [
+            ->patchJson(route('api.v1.admin.template.blocks.reorder', $version), [
                 'section_id' => $section->id,
-                'block_ids' => [$second->id, $first->id],
+                'block_ids' => [$second->id, $first->id, ...$remainingBlockIds],
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $this->assertSame(1, $second->fresh()->posicion);
         $this->assertSame(2, $first->fresh()->posicion);
 
         $this->actingAsAdministrator()
-            ->delete(route('admin.templates.blocks.destroy', ['template' => $version, 'block' => $second]))
-            ->assertRedirect();
+            ->deleteJson(route('api.v1.admin.template.blocks.destroy', ['template' => $version, 'block' => $second]))
+            ->assertSuccessful();
 
         $this->assertDatabaseMissing('bloques_plantilla', ['id' => $second->id]);
         $this->assertDatabaseMissing('definiciones_campo', ['bloque_plantilla_id' => $second->id]);
@@ -484,16 +485,16 @@ class TemplateAndSourceTest extends TestCase
         $sectionIndex = $section->posicion - 1;
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.templates.fields.update', ['template' => $version, 'field' => $field]), [
+            ->patchJson(route('api.v1.admin.template.fields.update', ['template' => $version, 'field' => $field]), [
                 'block_id' => $block->id,
                 'key' => $field->clave,
                 'label' => $field->etiqueta,
                 'content_type' => 'table',
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
         $this->actingAsAdministrator()
-            ->get(route('admin.templates.show', $version))
-            ->assertInertia(fn (Assert $page) => $page
+            ->getJson(route('api.v1.admin.template.show', $version))
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->where("template.sections.$sectionIndex.blocks.0.table.columns.0.key", 'texto'));
 
         $layout = [
@@ -510,12 +511,12 @@ class TemplateAndSourceTest extends TestCase
             'repeat' => ['enabled' => true, 'label' => 'Unidad'],
         ];
         $this->actingAsAdministrator()
-            ->patch(route('admin.templates.blocks.table', ['template' => $version, 'block' => $block]), [
+            ->patchJson(route('api.v1.admin.template.blocks.table.update', ['template' => $version, 'block' => $block]), [
                 ...$layout,
                 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
             ])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $saved = $block->fresh()->configuracion['table'];
         $this->assertSame('table', $block->fresh()->configuracion['content_type']);
@@ -532,19 +533,17 @@ class TemplateAndSourceTest extends TestCase
         $broken['columns'][3]['group'] = 'estudiante';
         $broken['fingerprint'] = SaveTemplateDocument::fingerprint($block->fresh());
         $this->actingAsAdministrator()
-            ->from(route('admin.templates.show', $version))
-            ->patch(route('admin.templates.blocks.table', ['template' => $version, 'block' => $block]), $broken)
-            ->assertSessionHasErrors('groups');
+            ->patchJson(route('api.v1.admin.template.blocks.table.update', ['template' => $version, 'block' => $block]), $broken)
+            ->assertJsonValidationErrors('groups');
 
         // Un campo de texto no acepta esquema de tabla.
         $textBlock = $version->sections()->where('clave', 'habilidades')->firstOrFail()->blocks()->firstOrFail();
         $this->actingAsAdministrator()
-            ->from(route('admin.templates.show', $version))
-            ->patch(route('admin.templates.blocks.table', ['template' => $version, 'block' => $textBlock]), [
+            ->patchJson(route('api.v1.admin.template.blocks.table.update', ['template' => $version, 'block' => $textBlock]), [
                 ...$layout,
                 'fingerprint' => SaveTemplateDocument::fingerprint($textBlock),
             ])
-            ->assertSessionHasErrors('table');
+            ->assertJsonValidationErrors('table');
     }
 
     public function test_administrator_manages_template_blocks_separately_from_their_fields(): void
@@ -553,7 +552,7 @@ class TemplateAndSourceTest extends TestCase
         $first = $version->sections()->firstOrFail();
 
         $this->actingAsAdministrator()
-            ->post(route('admin.templates.sections.store', $version), [
+            ->postJson(route('api.v1.admin.template.sections.store', $version), [
                 'title' => 'Recursos y materiales',
                 'key' => 'recursos_materiales',
                 'first_field_label' => 'Recursos principales',
@@ -561,7 +560,7 @@ class TemplateAndSourceTest extends TestCase
                 'first_field_content_type' => 'table',
                 'position' => 2,
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         $created = $version->fresh()->sections()
             ->where('titulo', 'Recursos y materiales')
@@ -573,15 +572,15 @@ class TemplateAndSourceTest extends TestCase
         $orderedIds = [$created->id, ...array_values(array_filter($sectionIds, fn (string $id): bool => $id !== $created->id))];
 
         $this->actingAsAdministrator()
-            ->patch(route('admin.templates.sections.reorder', $version), ['section_ids' => $orderedIds])
-            ->assertRedirect();
+            ->patchJson(route('api.v1.admin.template.sections.reorder', $version), ['section_ids' => $orderedIds])
+            ->assertSuccessful();
 
         $this->assertSame(1, $created->fresh()->posicion);
         $this->assertSame(2, $first->fresh()->posicion);
 
         $this->actingAsAdministrator()
-            ->delete(route('admin.templates.sections.destroy', ['template' => $version, 'section' => $created]))
-            ->assertRedirect();
+            ->deleteJson(route('api.v1.admin.template.sections.destroy', ['template' => $version, 'section' => $created]))
+            ->assertSuccessful();
 
         $this->assertDatabaseMissing('secciones_plantilla', ['id' => $created->id]);
         $this->assertDatabaseMissing('bloques_plantilla', ['seccion_plantilla_id' => $created->id]);
@@ -594,22 +593,22 @@ class TemplateAndSourceTest extends TestCase
         $this->assertFalse(Schema::hasColumn('fuentes_academicas', 'notas_internas'));
 
         $this->actingAsCoordinator()
-            ->patch(route('sources.update', $source), [
+            ->patchJson(route('api.v1.coordination.sources.update', $source), [
                 'nombre' => 'Perfil de egreso 2026',
                 'description' => 'Versión socializada con docentes.',
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $updated = $source->fresh();
         $this->assertSame('Perfil de egreso 2026', $updated->nombre);
 
         $this->actingAsCoordinator()
-            ->put(route('sources.content.update', $source), [
+            ->putJson(route('api.v1.coordination.sources.content.update', $source), [
                 'content' => "## Resultado\n\nDiseña software seguro.",
             ])
-            ->assertRedirect()
-            ->assertSessionHas('success');
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->assertSame("## Resultado\n\nDiseña software seguro.", $source->fresh()->contenido);
         $this->assertDatabaseHas('fragmentos_fuente_academica', [
@@ -624,11 +623,11 @@ class TemplateAndSourceTest extends TestCase
         ]);
 
         $this->actingAsCoordinator()
-            ->followingRedirects()
-            ->get(route('sources.show', $source))
+
+            ->getJson(route('api.v1.coordination.sources.show', $source))
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Sources/Show')
+            ->assertJson(fn (Assert $page) => $page->etc()
+
                 ->where('source.name', 'Perfil de egreso 2026')
                 ->where('source.content', "## Resultado\n\nDiseña software seguro."));
     }
@@ -638,10 +637,8 @@ class TemplateAndSourceTest extends TestCase
         $this->createSourceAsCoordinator('Reglamento académico');
 
         $this->actingAsCoordinator()
-            ->from(route('coordination.sources.index'))
-            ->post(route('sources.store'), ['nombre' => 'Reglamento académico'])
-            ->assertRedirect(route('coordination.sources.index'))
-            ->assertSessionHasErrors('nombre');
+            ->postJson(route('api.v1.coordination.sources.store'), ['nombre' => 'Reglamento académico'])
+            ->assertJsonValidationErrors('nombre');
 
         $this->assertSame(1, AcademicSource::query()->where('nombre', 'Reglamento académico')->count());
     }
@@ -651,15 +648,15 @@ class TemplateAndSourceTest extends TestCase
         $source = $this->createSourceAsCoordinator('Fuente de coordinación');
 
         $this->actingAsAdministrator()
-            ->get(route('sources.index'))
+            ->getJson(route('api.v1.coordination.sources.index'))
             ->assertForbidden();
 
         $this->actingAsAdministrator()
-            ->post(route('sources.store'), ['nombre' => 'Fuente administrativa'])
+            ->postJson(route('api.v1.coordination.sources.store'), ['nombre' => 'Fuente administrativa'])
             ->assertForbidden();
 
         $this->actingAsAdministrator()
-            ->put(route('sources.content.update', $source), ['content' => 'Edición indebida'])
+            ->putJson(route('api.v1.coordination.sources.content.update', $source), ['content' => 'Edición indebida'])
             ->assertForbidden();
     }
 
@@ -681,18 +678,18 @@ class TemplateAndSourceTest extends TestCase
         ]);
 
         $this->actingAsCoordinator()
-            ->followingRedirects()
-            ->get(route('sources.show', $source))
+
+            ->getJson(route('api.v1.coordination.sources.show', $source))
             ->assertForbidden();
 
         $this->actingAsCoordinator()
-            ->put(route('sources.content.update', $source), ['content' => 'Edición fuera de alcance'])
+            ->putJson(route('api.v1.coordination.sources.content.update', $source), ['content' => 'Edición fuera de alcance'])
             ->assertForbidden();
     }
 
     private function createTemplate(): SyllabusTemplate
     {
-        $this->actingAsAdministrator()->post(route('admin.templates.store'), ['nombre' => 'Plantilla verificable']);
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla verificable']);
 
         return SyllabusTemplate::query()->firstOrFail();
     }
@@ -700,11 +697,11 @@ class TemplateAndSourceTest extends TestCase
     private function createSourceAsCoordinator(string $name): AcademicSource
     {
         $this->actingAsCoordinator()
-            ->post(route('sources.store'), [
+            ->postJson(route('api.v1.coordination.sources.store'), [
                 'nombre' => $name,
                 'description' => 'Documento de referencia.',
             ])
-            ->assertRedirect();
+            ->assertSuccessful();
 
         return AcademicSource::query()->where('nombre', $name)->firstOrFail();
     }

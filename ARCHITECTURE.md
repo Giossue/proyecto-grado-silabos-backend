@@ -2,15 +2,19 @@
 
 ## Vista ejecutiva
 
-La solución es un **monolito modular Laravel** con interfaz Inertia/Vue. PostgreSQL
-conserva el estado académico y la trazabilidad; Redis coordina trabajos; los archivos se
-guardan de forma privada; la IA y la importación institucional son adaptadores externos.
+La solución se distribuye en dos artefactos: una **SPA Vue** y una **API Laravel modular**.
+PostgreSQL conserva el estado académico y la trazabilidad; Redis coordina trabajos; los
+archivos se guardan de forma privada; la IA y la importación institucional son adaptadores
+externos. No se divide el dominio en microservicios ni se duplica la base de datos.
 
 ```text
 Navegador
-  │ HTTPS + sesión + Inertia
+  │ HTTPS
   ▼
-Aplicación Laravel 13
+SPA Vue 3 (repositorio frontend)
+  │ JSON /api/v1 + Sanctum cookie/CSRF
+  ▼
+API Laravel 13 (este repositorio)
   ├─ Identidad y acceso
   ├─ Estructura académica
   ├─ Plantillas y fuentes
@@ -35,7 +39,7 @@ Aplicación Laravel 13
 ## Dirección de dependencias
 
 ```text
-Presentación HTTP/Inertia
+Presentación HTTP JSON
         ↓
 Aplicación (casos de uso, transacciones, DTO)
         ↓
@@ -44,7 +48,7 @@ Dominio (reglas, estados, políticas invariantes)
 Infraestructura (Eloquent, Redis, archivos, HTTP, documentos)
 ```
 
-El dominio no importa Vue, Inertia, Redis, clientes HTTP ni detalles de almacenamiento.
+El dominio no importa Vue, Redis, clientes HTTP ni detalles de almacenamiento.
 La infraestructura implementa puertos definidos por los módulos. Laravel puede unirlos
 en proveedores de servicio sin convertir cada módulo en un microservicio.
 
@@ -101,18 +105,9 @@ app/
 │       └── Presentation/
 ├── Providers/
 └── Support/
-resources/js/
-├── components/
-│   ├── ui/
-│   └── domain/
-├── composables/
-├── layouts/
-├── lib/
-├── pages/
-│   ├── Admin/
-│   ├── Coordinator/
-│   └── Teacher/
-└── types/
+routes/
+├── api.php
+└── web.php        # salud y logos públicos; no contiene pantallas
 database/
 ├── factories/
 ├── migrations/
@@ -132,5 +127,7 @@ mejor, registra el cambio en ADR y conserva los límites de dependencia.
 - `ADR-0002`: historial mediante revisiones y versiones inmutables.
 - `ADR-0003`: IA desacoplada y bajo control humano.
 - `ADR-0004`: starter Vue vigente de Laravel 13 con Inertia 3.
+- `ADR-0008`: separar SPA Vue y API Laravel; sustituye la decisión de entrega conjunta
+  de `ADR-0001` y `ADR-0004`, que se conservan como historial.
 
 Los detalles están en `docs/architecture/adr/`.

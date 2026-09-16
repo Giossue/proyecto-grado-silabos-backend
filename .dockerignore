@@ -2,15 +2,9 @@
 .github
 .env
 .env.*
-node_modules
-public/build
-# `public/hot` lo escribe el servidor de desarrollo. Si viaja a la imagen, `@vite` sirve
-# URLs de localhost:5173 y la aplicación desplegada se queda sin assets.
-public/hot
 public/storage
 public/fonts-manifest.dev.json
 storage/logs/*.log
-storage/inertia-devtools
 storage/framework/cache/data
 storage/framework/sessions
 storage/framework/views

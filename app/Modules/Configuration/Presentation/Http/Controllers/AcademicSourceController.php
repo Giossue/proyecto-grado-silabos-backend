@@ -16,13 +16,10 @@ use App\Modules\Configuration\Presentation\Http\Requests\ViewSourcesRequest;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class AcademicSourceController extends Controller
 {
-    public function index(ViewSourcesRequest $request, ActiveRole $roles, ProcessLocks $locks): Response|JsonResponse
+    public function index(ViewSourcesRequest $request, ActiveRole $roles, ProcessLocks $locks): JsonResponse
     {
         $activeRole = $roles->resolve($request);
 
@@ -40,23 +37,19 @@ class AcademicSourceController extends Controller
                 ]),
         ];
 
-        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Sources/Index', $payload);
+        return response()->json($payload);
     }
 
-    public function store(CreateSourceRequest $request, CreateAcademicSource $action): RedirectResponse|JsonResponse
+    public function store(CreateSourceRequest $request, CreateAcademicSource $action): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $source = $action->execute($request->validated(), $actor, $request);
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Fuente creada. Ya puede redactar su contenido.', 'source_id' => $source->id], 201);
-        }
-
-        return to_route('sources.show', $source)->with('success', 'Fuente creada. Ya puede redactar su contenido.');
+        return response()->json(['message' => 'Fuente creada. Ya puede redactar su contenido.', 'source_id' => $source->id], 201);
     }
 
-    public function show(AcademicSource $source, ManageAcademicSourceRequest $request, ProcessLocks $locks): Response|JsonResponse
+    public function show(AcademicSource $source, ManageAcademicSourceRequest $request, ProcessLocks $locks): JsonResponse
     {
         $payload = [
             'processLock' => $locks->careerLockReason($source->carrera_id),
@@ -68,28 +61,28 @@ class AcademicSourceController extends Controller
             ],
         ];
 
-        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Sources/Show', $payload);
+        return response()->json($payload);
     }
 
     public function update(
         AcademicSource $source,
         UpdateSourceRequest $request,
         UpdateAcademicSource $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($source, $request->validated(), $actor, $request);
 
         $message = 'Fuente actualizada.';
 
-        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
+        return response()->json(['message' => $message]);
     }
 
     public function updateContent(
         AcademicSource $source,
         UpdateSourceContentRequest $request,
         UpdateAcademicSourceContent $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $content = $request->validated('content');
@@ -97,6 +90,6 @@ class AcademicSourceController extends Controller
 
         $message = 'Contenido guardado.';
 
-        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
+        return response()->json(['message' => $message]);
     }
 }

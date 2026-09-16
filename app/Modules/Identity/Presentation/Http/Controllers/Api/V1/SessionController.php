@@ -161,9 +161,9 @@ class SessionController extends Controller
                 'must_change_password' => $user->debe_cambiar_contrasena,
             ],
             'active_role' => $activeRole === null ? null : $this->rolePayload($activeRole),
-            'available_roles' => $this->roles->eligible($user)
+            'available_roles' => array_values($this->roles->eligible($user)
                 ->map(fn (RoleAssignment $assignment): array => $this->rolePayload($assignment))
-                ->all(),
+                ->all()),
         ];
     }
 

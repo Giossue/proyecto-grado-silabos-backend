@@ -9,7 +9,7 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Tests\TestCase;
 
 /** I-39: cambiar quién coordina una carrera es un solo paso; la carrera no pierde nada. */
@@ -38,8 +38,8 @@ class CoordinatorReplacementTest extends TestCase
     public function test_the_careers_table_shows_who_coordinates_today(): void
     {
         $this->actingAsAdministrator()
-            ->get(route('admin.academic.index', 'carreras'))
-            ->assertInertia(fn (Assert $page) => $page
+            ->getJson(route('api.v1.admin.academic.index', 'carreras'))
+            ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('catalogs.careers.0.coordinator.id', $this->coordinator->id)
                 ->has('options.coordinatorUsers'));
     }
@@ -49,10 +49,10 @@ class CoordinatorReplacementTest extends TestCase
         $incoming = $this->activeTeacher('entrante@silabos.test');
 
         $this->actingAsAdministrator()
-            ->post(route('admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors()
-            ->assertSessionHas('success');
+            ->postJson(route('api.v1.admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id])
+            ->assertSuccessful()
+            ->assertSuccessful()
+            ->assertSuccessful();
 
         $this->assertTrue(CoordinatorAssignment::query()->effective()->where('carrera_id', $this->career->id)->where('usuario_id', $incoming->id)->exists());
         // Rol de coordinación: cerrado para quien sale, concedido a quien entra; el de docente del entrante sigue.
@@ -65,9 +65,8 @@ class CoordinatorReplacementTest extends TestCase
 
         // La misma persona no se reemplaza a sí misma.
         $this->actingAsAdministrator()
-            ->from(route('admin.academic.index', 'carreras'))
-            ->post(route('admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id])
-            ->assertSessionHasErrors('incoming_user_id');
+            ->postJson(route('api.v1.admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id])
+            ->assertJsonValidationErrors('incoming_user_id');
     }
 
     public function test_deactivating_the_outgoing_coordinator_only_happens_when_no_other_role_remains(): void
@@ -77,18 +76,17 @@ class CoordinatorReplacementTest extends TestCase
         RoleAssignment::query()->create(['usuario_id' => $this->coordinator->id, 'rol' => RoleCode::Teacher->value, 'carrera_id' => $this->career->id, 'activo' => true]);
 
         $this->actingAsAdministrator()
-            ->post(route('admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id, 'deactivate_outgoing' => 1])
-            ->assertRedirect()
-            ->assertSessionHasNoErrors();
+            ->postJson(route('api.v1.admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id, 'deactivate_outgoing' => 1])
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertTrue($this->coordinator->fresh()->activo);
 
         // Ahora sale el entrante, que solo coordina: sí se desactiva.
         $third = $this->activeTeacher('tercero@silabos.test');
         RoleAssignment::query()->where('usuario_id', $incoming->id)->where('rol', RoleCode::Teacher->value)->update(['activo' => false]);
         $this->actingAsAdministrator()
-            ->post(route('admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $third->id, 'deactivate_outgoing' => 1])
-            ->assertRedirect()
-            ->assertSessionHas('success', 'Coordinación de Software reemplazada; la cuenta saliente quedó desactivada.');
+            ->postJson(route('api.v1.admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $third->id, 'deactivate_outgoing' => 1])
+            ->assertSuccessful();
         $this->assertFalse($incoming->fresh()->activo);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.desactivado', 'recurso_id' => $incoming->id]);
     }
@@ -99,9 +97,9 @@ class CoordinatorReplacementTest extends TestCase
         $incoming = $this->activeTeacher('primera@silabos.test');
 
         $this->actingAsAdministrator()
-            ->post(route('admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id])
-            ->assertRedirect()
-            ->assertSessionHas('success', 'Coordinación de Software asignada.');
+            ->postJson(route('api.v1.admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id])
+            ->assertSuccessful()
+            ->assertSuccessful();
         $this->assertTrue(CoordinatorAssignment::query()->effective()->where('carrera_id', $this->career->id)->where('usuario_id', $incoming->id)->exists());
     }
 
@@ -112,7 +110,7 @@ class CoordinatorReplacementTest extends TestCase
 
         $this->actingAs($this->coordinator)
             ->withSession(['active_role_assignment_id' => $context->id])
-            ->post(route('admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id])
+            ->postJson(route('api.v1.admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id])
             ->assertForbidden();
     }
 

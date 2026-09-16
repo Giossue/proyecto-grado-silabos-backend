@@ -48,23 +48,19 @@ fuente transaccional; Redis se usa para colas, caché y coordinación descartabl
 ## Requisitos locales
 
 - PHP 8.3 o superior y Composer 2.
-- Node.js 24 y npm (el repositorio no mezcla gestores).
 - Docker Compose o un proveedor compatible con Compose.
 - Extensiones PHP usuales de Laravel y `pdo_pgsql`.
 
-Las versiones exactas de paquetes están fijadas por `composer.lock` y
-`package-lock.json`.
+Las versiones exactas de paquetes están fijadas por `composer.lock`.
 
 ## Puesta en marcha
 
 ```bash
 cp .env.example .env
 composer install
-npm ci
 docker compose up -d
 php artisan key:generate
 php artisan migrate:fresh --seed
-npm run build
 php artisan serve
 ```
 
@@ -100,9 +96,9 @@ Con PostgreSQL y Redis activos:
 composer verify
 ```
 
-Este comando comprueba ESLint, Prettier, TypeScript, Pint, Larastan nivel 7, pruebas Pest
-contra PostgreSQL y el build de producción. ESLint incluye reglas estáticas de
-accesibilidad. La integración Redis es una suite separada dentro de la misma ejecución.
+Este comando comprueba Pint, Larastan nivel 7 y las pruebas Pest contra PostgreSQL. La
+integración Redis es una suite separada dentro de la misma ejecución. La verificación de
+Vue, TypeScript y del bundle se ejecuta en el repositorio frontend.
 
 Smoke operacional de una cola real:
 
@@ -118,7 +114,6 @@ Comprobaciones de release adicionales:
 
 ```bash
 composer audit --locked --no-interaction
-npm audit --audit-level=high
 composer security:scan
 composer verify:restore
 composer benchmark:readiness

@@ -6,14 +6,15 @@
 |---|---|---|
 | Lenguaje backend | PHP 8.3+ | Confirmado/propuesto como mínimo |
 | Framework | Laravel 13 | Confirmado |
-| Interfaz | Inertia 3 + Vue 3 Composition API | Actualizado al starter oficial vigente |
+| Contrato HTTP | JSON `/api/v1` + OpenAPI 3.1 | ADR-0008 |
+| Interfaz | SPA Vue 3 Composition API en repositorio independiente | ADR-0008 |
 | Tipos frontend | TypeScript | Confirmado |
 | Estilos/componentes | Tailwind + shadcn-vue | Confirmado en diagnóstico y starter oficial |
 | Lienzo de mallas | Vue Flow | Confirmado para presentación; ADR-0006 |
 | Diseño de plantilla | Tiptap 3 para Vue, núcleo/extensiones MIT | I-56; ADR-0007; sin servicios ni extensiones comerciales |
-| Compilación | Vite del starter Laravel | Base oficial |
-| Rutas tipadas | Wayfinder del starter oficial | Mantener salvo ADR |
-| Autenticación | Laravel Fortify mediante starter | Base técnica; política de cuentas por validar |
+| Compilación frontend | Vite en `proyecto-grado-silabos-frontend` | Artefacto independiente |
+| Rutas frontend | Vue Router | ADR-0008 |
+| Autenticación | Laravel Fortify + Sanctum stateful SPA | Cookie HttpOnly y CSRF |
 | Datos | PostgreSQL | Confirmado |
 | Acceso a datos | Eloquent + Query Builder | Base Laravel |
 | Colas/caché | Redis + workers | Confirmado |
@@ -22,8 +23,8 @@
 | IA | Servicio local por HTTP | Confirmado como frontera; runtime/modelo por validar |
 | Despliegue | Linux + contenedores | Confirmado |
 
-Las versiones exactas quedan fijadas por `composer.lock` y `package-lock.json`. No
-actualices dependencias principales de forma incidental dentro de una feature.
+Las versiones backend quedan fijadas por `composer.lock`; las frontend, por el lockfile
+del repositorio SPA. No actualices dependencias principales de forma incidental.
 
 ## Línea exacta verificada el 2026-08-14
 
@@ -31,7 +32,6 @@ actualices dependencias principales de forma incidental dentro de una feature.
 |---|---:|
 | Laravel | 13.25.0 |
 | PHP local de verificación | 8.5.8 (mínimo del proyecto: 8.3) |
-| Inertia Laravel / Vue | 3.3.1 / 3.6.1 |
 | Vue | 3.5.41 |
 | Vite | 8.2.1 |
 | Tailwind CSS | 4.3.3 |
@@ -75,10 +75,7 @@ No se agregan SDK específicos de proveedores al dominio. Se encapsulan en adapt
 ## Comandos objetivo
 
 ```bash
-# desarrollo
-composer run dev
-
-# puerta canónica (formato, lint, tipos, análisis, pruebas y build)
+# puerta canónica del backend
 composer verify
 ```
 
@@ -89,7 +86,6 @@ agente debe leer los archivos de proyecto; este documento no reemplaza sus scrip
 
 - Laravel 13 starter kits: `https://laravel.com/docs/13.x/starter-kits`
 - Laravel 13: `https://laravel.com/docs/13.x`
-- Inertia 3: `https://inertiajs.com/docs/v3`
 - Vue 3: `https://vuejs.org/guide/typescript/overview.html`
 - Vue Flow: `https://vueflow.dev/`
 - PostgreSQL: `https://www.postgresql.org/docs/`

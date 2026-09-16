@@ -124,7 +124,8 @@ desplegar: un `POST /login` con un cuerpo de 16 KB debe devolver 419, no 500.
 - HTTPS y redirección segura en ambientes expuestos.
 - HSTS cuando el dominio/operación lo permitan.
 - CSP, `frame-ancestors`, `nosniff`, referrer policy y permisos evaluados/probados.
-- CORS cerrado; Inertia normalmente comparte origen.
+- CORS limitado al origen configurado de la SPA; Sanctum sólo considera stateful los
+  dominios explícitos del frontend.
 
 ## Verificación de release
 

@@ -3,15 +3,12 @@
 use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\AssignCorrelationId;
 use App\Http\Middleware\EnsureActiveUser;
-use App\Http\Middleware\HandleAppearance;
-use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireActiveRole;
 use App\Http\Middleware\RequirePasswordChange;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -44,15 +41,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // esos dos hosts exactos no se exponen como hosts públicos válidos.
         $middleware->trustHosts(at: ['^127\\.0\\.0\\.1$', '^localhost$']);
 
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
-
         $middleware->web(append: [
             AssignCorrelationId::class,
             EnsureActiveUser::class,
-            RequirePasswordChange::class,
-            HandleAppearance::class,
-            HandleInertiaRequests::class,
-            AddLinkHeadersForPreloadedAssets::class,
             AddSecurityHeaders::class,
         ]);
 
@@ -71,9 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     'code' => 'conflicto_version_borrador',
                     'version_bloqueo_actual' => $exception->currentVersion,
                 ], 409)
-                : back()->withErrors([
-                    'version_bloqueo' => $exception->getMessage(),
-                ]),
+                : response()->json(['message' => $exception->getMessage()], 409),
         );
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),

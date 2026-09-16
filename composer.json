@@ -10,13 +10,11 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
-        "inertiajs/inertia-laravel": "^3.0",
         "laravel/chisel": "^0.1.0",
         "laravel/fortify": "^1.37.2",
         "laravel/framework": "^13.17",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
-        "laravel/wayfinder": "^0.1.14",
         "phpoffice/phpword": "^1.4",
         "predis/predis": "^3.0",
         "resend/resend-php": "^1.11"
@@ -52,8 +50,7 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
             "@php artisan migrate:fresh --seed --force",
-            "npm ci",
-            "npm run build"
+            "@php artisan optimize:clear"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
@@ -68,15 +65,11 @@
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",
             "@security:scan",
-            "npm run lint:check",
-            "npm run format:check",
-            "npm run types:check",
             "@test"
         ],
         "verify": [
             "Composer\\Config::disableProcessTimeout",
-            "@ci:check",
-            "npm run build"
+            "@ci:check"
         ],
         "verify:restore": [
             "Composer\\Config::disableProcessTimeout",

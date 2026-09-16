@@ -19,7 +19,7 @@ No necesitan Laravel completo si la regla puede probarse aisladamente.
 
 ### Feature Laravel
 
-- rutas Inertia/HTTP, Form Requests y Policies;
+- rutas JSON, Form Requests y Policies;
 - transacciones y persistencia;
 - filtros/paginación/alcance;
 - revisión, observación, aprobación y reapertura;
@@ -42,65 +42,15 @@ No necesitan Laravel completo si la regla puede probarse aisladamente.
 - teclado, responsive y accesibilidad automatizada + manual;
 - estados de red, conflicto, sesión revocada y proveedor caído.
 
-`ManagementCreationUiTest` cubre estáticamente las superficies de alta de gestión de
-Administrador y Coordinador, además de confirmar que Docente no recibe altas maestras.
-Verifica que la página monte el componente de dominio, que la mutación viva dentro del
-`FormSheet`, que el panel salga desde la derecha, tenga título accesible, conserve los
-errores y se cierre solo después del éxito. También mantiene una lista explícita de
-mutaciones `store` que sí pertenecen a flujos de página completa. La misma suite
-inventaría las 24 tablas, exige un `TablePagination` por cada una y protege los patrones
-compartidos de filtros, submenús, superficies temáticas y menús de acciones en 17
-superficies operativas. Además inventaría las 29 páginas operativas y el layout de
-Configuración, exige un único `PageFrame` con icono, título y descripción, e impide que
-las subsecciones de ajustes dupliquen el `h1` principal.
+Las pruebas de componentes y flujos de navegador viven en el repositorio frontend. Allí
+`npm test`, `npm run typecheck` y `npm run build` cubren el contrato del cliente, los
+editores documentales, tablas repetibles, selección múltiple, booleanos, observaciones e
+IA. La aceptación con documentos y dispositivos reales continúa registrada en PV-19.
 
-## Regresión de paginación en navegador
-
-La regresión de paginación ADM-06 vive en `tests/Browser/document-pagination.mjs` y se
-ejecuta con `node --test tests/Browser/document-pagination.mjs`. Requiere Playwright y
-Chromium disponibles en la estación; una instalación externa puede indicarse mediante
-`PLAYWRIGHT_MODULE` (ruta a `playwright/index.mjs`) y `CHROMIUM_PATH` (ejecutable).
-Levanta Vite en loopback con un puerto efímero y monta el componente real con datos
-sintéticos, sin Laravel ni base de datos. Comprueba aumento/reducción de páginas,
-márgenes, renombrado con Escape/foco, zonas de arrastre, menú y reordenamiento reactivo,
-solo lectura, scroll local a 360 px, un campo textual mayor que una hoja, un bloque con
-varios campos y una tabla de 120 filas con celdas combinadas y cabecera repetida.
-`PAGINATION_SCREENSHOT` permite guardar una captura
-de esa muestra. El mismo caso cubre arrastre nativo con orden previo al drop,
-cancelación sin petición, recuperación ante rechazo y elección del primer campo antes
-del alta; sustituye el transporte Inertia con un registro de peticiones sintéticas.
-`TemplateAndSourceTest` comprueba el alta y reordenamiento en el servidor.
-Esta prueba de navegador complementa `composer verify` y no forma
-parte de esa puerta; la aceptación con documentos/dispositivos reales sigue pendiente.
-
-La suite también lee los diseños iniciales de PHP con el autoloader y un contenedor
-de configuración aislado (sin arrancar Laravel, leer `.env` ni consultar bases).
-Comprueba que la ficha institucional use las hojas necesarias sin forzar una cantidad,
-muestras breves y tipadas, una fila de
-planificación con encabezado/totales y las cabeceras de ambos parciales. Revisa que
-ningún ancestro del separador pinte un rectángulo entre hojas, en claro y oscuro.
-`PAGINATION_REFERENCE_SCREENSHOT` guarda la ficha y `PAGINATION_GAP_SCREENSHOT`
-es el prefijo de las capturas `-light.png`/`-dark.png` del corte de tabla.
-
-## Regresión del editor de plantilla
-
-`node --test tests/Browser/template-document-editor.mjs` usa la misma instalación de
-Playwright/Chromium indicada arriba, sin aplicación ni base real. Prueba Tiptap y los
-componentes compartidos: familia/tamaño/color, marcas, alineación, mención con teclado,
-combinación horizontal/vertical y separación, serialización, formulario docente sin
-diseño, guardado/reapertura y errores conservados. El transporte sintético dispara
-eventos Inertia para comprobar que la edición directa conserva el borrador y que su
-confirmación local es la única que gestiona reinicios. También prueba el menú de clic
-derecho por contexto, el modo global de edición, el panel lateral de Propiedades y que
-los ciclos de paginación no agreguen filas a una tabla Tiptap activa ni se reconstruyan
-al seleccionar un campo sin alterar contenido.
-`TEMPLATE_DOCUMENT_SCREENSHOT` guarda una captura de la muestra. Las dos suites de
-navegador tienen cachés Vite separadas para no interferir al ejecutarse en paralelo.
-
-La persistencia real se verifica con `TemplateDocumentTest` y `ReviewWorkflowTest`
-sobre PostgreSQL: permisos, fingerprint, saneamiento, spans completos, datos tipados,
-reinicio de borradores, retiro/restauración de campos e historia inmutable. La prueba
-de exportación inspecciona OOXML generado; no certifica visualmente Microsoft Word.
+La persistencia se verifica aquí con `TemplateDocumentTest` y `ReviewWorkflowTest` sobre
+PostgreSQL: permisos, huellas, saneamiento, datos tipados, reinicio de borradores,
+retiro/restauración de campos e historia inmutable. La prueba de exportación inspecciona
+OOXML generado; no certifica visualmente Microsoft Word.
 
 ## Base de datos de prueba
 

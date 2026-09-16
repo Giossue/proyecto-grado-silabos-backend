@@ -5,9 +5,6 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\AiAssistance\Application\ResolveEffectiveAiConfiguration;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiEvidence;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiRecommendation;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TableLayout;
@@ -36,11 +33,8 @@ use App\Modules\Syllabus\Presentation\Http\Requests\UpdateDraftFieldRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewSyllabiRequest;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class SyllabusController extends Controller
 {
@@ -49,7 +43,7 @@ class SyllabusController extends Controller
         private readonly InstitutionalLogos $logos,
     ) {}
 
-    public function index(ViewSyllabiRequest $request, ActiveRole $roles): Response|JsonResponse
+    public function index(ViewSyllabiRequest $request, ActiveRole $roles): JsonResponse
     {
         $activeRole = $roles->resolve($request);
         $user = $request->user();
@@ -95,57 +89,27 @@ class SyllabusController extends Controller
             'syllabi' => $syllabi,
         ];
 
-        return $request->expectsJson()
-            ? response()->json($payload)
-            : Inertia::render('Teacher/Syllabi/Index', $payload);
+        return response()->json($payload);
     }
 
-    public function show(Syllabus $syllabus, Request $request): Response|JsonResponse
+    public function show(Syllabus $syllabus, Request $request): JsonResponse
     {
         abort_unless($request->user()?->can('view', $syllabus) === true, 403);
 
         $payload = ['syllabus' => $this->syllabusPayload($syllabus)];
 
-        return $request->expectsJson()
-            ? response()->json($payload)
-            : Inertia::render('Teacher/Syllabi/Show', $payload);
+        return response()->json($payload);
     }
 
-    public function start(Syllabus $syllabus, Request $request, StartDraft $action): RedirectResponse|JsonResponse
+    public function start(Syllabus $syllabus, Request $request, StartDraft $action): JsonResponse
     {
         abort_unless($request->user()?->can('start', $syllabus) === true, 403);
         $actor = $request->user();
         $started = $action->execute($syllabus->id, $actor, $request);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'message' => 'Borrador iniciado con la plantilla y los datos maestros fijados.',
-                'syllabus' => $this->syllabusPayload($started),
-            ]);
-        }
-
-        return to_route('syllabi.edit', $syllabus)->with('success', 'Borrador iniciado con la plantilla y los datos maestros fijados.');
-    }
-
-    public function edit(Syllabus $syllabus, Request $request): Response
-    {
-        abort_unless($request->user()?->can('edit', $syllabus) === true, 403);
-
-        $actor = $request->user();
-
-        return Inertia::render('Teacher/Syllabi/Edit', [
-            'syllabus' => $this->syllabusPayload($syllabus),
-            'ai_assistance' => $this->aiAssistancePayload($syllabus, $actor),
-        ]);
-    }
-
-    public function submitConfirmation(Syllabus $syllabus, Request $request): Response
-    {
-        abort_unless($request->user()?->can('submit', $syllabus) === true, 403);
-        abort_unless(in_array($syllabus->estado, ['borrador', 'correccion_solicitada'], true), 404);
-
-        return Inertia::render('Teacher/Syllabi/Submit', [
-            'syllabus' => $this->syllabusPayload($syllabus),
+        return response()->json([
+            'message' => 'Borrador iniciado con la plantilla y los datos maestros fijados.',
+            'syllabus' => $this->syllabusPayload($started),
         ]);
     }
 
@@ -153,7 +117,7 @@ class SyllabusController extends Controller
         Syllabus $syllabus,
         SubmitSyllabusRequest $request,
         SubmitSyllabus $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $revision = $action->execute(
@@ -164,15 +128,10 @@ class SyllabusController extends Controller
             $request,
         );
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'message' => "Revisión {$revision->numero_revision} enviada y fijada correctamente.",
-                'syllabus' => $this->syllabusPayload($syllabus->fresh() ?? $syllabus),
-            ]);
-        }
-
-        return to_route('syllabi.show', $syllabus)
-            ->with('success', "Revisión {$revision->numero_revision} enviada y fijada correctamente.");
+        return response()->json([
+            'message' => "Revisión {$revision->numero_revision} enviada y fijada correctamente.",
+            'syllabus' => $this->syllabusPayload($syllabus->fresh() ?? $syllabus),
+        ]);
     }
 
     public function respondObservation(
@@ -180,7 +139,7 @@ class SyllabusController extends Controller
         ReviewObservation $observation,
         RespondObservationRequest $request,
         RespondToObservation $action,
-    ): RedirectResponse|JsonResponse {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -191,11 +150,7 @@ class SyllabusController extends Controller
             $request,
         );
 
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Respuesta guardada. Se incluirá al reenviar la corrección.']);
-        }
-
-        return back()->with('success', 'Respuesta guardada. Se incluirá al reenviar la corrección.');
+        return response()->json(['message' => 'Respuesta guardada. Se incluirá al reenviar la corrección.']);
     }
 
     public function updateField(
@@ -218,7 +173,7 @@ class SyllabusController extends Controller
         ]);
     }
 
-    public function validateDraft(Syllabus $syllabus, Request $request, ValidateDraft $action): RedirectResponse|JsonResponse
+    public function validateDraft(Syllabus $syllabus, Request $request, ValidateDraft $action): JsonResponse
     {
         abort_unless($request->user()?->can('edit', $syllabus) === true, 403);
         $actor = $request->user();
@@ -228,24 +183,20 @@ class SyllabusController extends Controller
             ? 'Validación completada sin errores bloqueantes.'
             : 'Validación completada. Revisa los campos señalados.';
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'message' => $message,
-                'validation' => [
-                    'version_bloqueo' => $run->version_bloqueo,
-                    'blocking_errors' => $run->errores_bloqueantes,
-                    'warnings' => $run->advertencias,
-                    'results' => $run->results->map(fn ($result): array => [
-                        'field_id' => $result->definicion_campo_id,
-                        'code' => $result->codigo,
-                        'severity' => $result->severidad,
-                        'message' => $result->mensaje,
-                    ])->values(),
-                ],
-            ]);
-        }
-
-        return back()->with('success', $message);
+        return response()->json([
+            'message' => $message,
+            'validation' => [
+                'version_bloqueo' => $run->version_bloqueo,
+                'blocking_errors' => $run->errores_bloqueantes,
+                'warnings' => $run->advertencias,
+                'results' => $run->results->map(fn ($result): array => [
+                    'field_id' => $result->definicion_campo_id,
+                    'code' => $result->codigo,
+                    'severity' => $result->severidad,
+                    'message' => $result->mensaje,
+                ])->values(),
+            ],
+        ]);
     }
 
     /** @return array<string, mixed> */
@@ -327,124 +278,6 @@ class SyllabusController extends Controller
                 'reopened_by' => $syllabus->reopenings->first()->reopener->nombre,
             ],
         ];
-    }
-
-    /** @return array<string, mixed> */
-    private function aiAssistancePayload(Syllabus $syllabus, User $actor): array
-    {
-        $enabledFields = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
-            ->where('editable_docente', true)
-            ->where('heredado', false)
-            ->whereIn('tipo', ['texto_corto', 'texto_largo', 'markdown'])
-            ->get()
-            ->filter(fn (FieldDefinition $field): bool => $this->effectiveAi->enabled($syllabus->carrera_id, $field))
-            ->pluck('id');
-
-        $executions = AiExecution::query()
-            ->where('silabo_id', $syllabus->id)
-            ->whereIn('definicion_campo_id', $enabledFields)
-            ->with([
-                'field.block.section',
-                'evidence',
-                'recommendations.evidence',
-                'recommendations.feedback',
-            ])
-            ->latest('solicitado_en')
-            ->get()
-            ->unique('definicion_campo_id')
-            ->values();
-
-        return [
-            'available' => $enabledFields->isNotEmpty(),
-            'is_provisional_simulator' => (string) config('ai.driver') === 'baseline',
-            'review_url' => route('syllabi.ai.review', $syllabus),
-            'sources' => $syllabus->convocation->sources()
-                ->where('fuentes_academicas.activo', true)
-                ->orderBy('fuentes_academicas.nombre')
-                ->pluck('fuentes_academicas.nombre')
-                ->values(),
-            'executions' => $executions->map(function (AiExecution $execution) use ($actor, $syllabus): array {
-                return [
-                    'id' => $execution->id,
-                    'status' => $execution->estado,
-                    'requested_at' => $execution->solicitado_en->toIso8601String(),
-                    'completed_at' => $execution->completado_en?->toIso8601String(),
-                    'stale' => $execution->version_bloqueo_origen !== $syllabus->version_bloqueo,
-                    'section' => [
-                        'id' => $execution->field->block->section->id,
-                        'title' => $execution->field->block->section->titulo,
-                    ],
-                    'field' => [
-                        'id' => $execution->field->id,
-                        'label' => $execution->field->etiqueta,
-                    ],
-                    'input_content' => $execution->contenido_entrada,
-                    'reason' => $this->aiReasonLabel($execution->motivo_no_concluyente),
-                    'error_message' => $execution->mensaje_error,
-                    'evidence' => $execution->evidence
-                        ->map(fn (AiEvidence $evidence): array => $this->aiEvidencePayload($evidence))
-                        ->values()
-                        ->all(),
-                    'recommendations' => $execution->recommendations->map(
-                        fn (AiRecommendation $recommendation): array => [
-                            'id' => $recommendation->id,
-                            'title' => $recommendation->titulo,
-                            'explanation' => $recommendation->explicacion,
-                            'suggested_text' => $recommendation->texto_sugerido,
-                            'evidence_ids' => $recommendation->evidence->pluck('id')->values(),
-                            'my_decisions' => $recommendation->feedback
-                                ->where('usuario_id', $actor->id)
-                                ->pluck('decision')
-                                ->values(),
-                            'applied' => $recommendation->feedback->contains('decision', 'aplicada'),
-                            'feedback_url' => route('syllabi.ai.feedback', [
-                                $syllabus,
-                                $execution->field,
-                                $recommendation,
-                            ]),
-                            'apply_url' => route('syllabi.ai.apply', [
-                                $syllabus,
-                                $execution->field,
-                                $recommendation,
-                            ]),
-                        ],
-                    )->values(),
-                ];
-            }),
-        ];
-    }
-
-    private function nullableIdentifier(mixed $value): ?string
-    {
-        return is_string($value) && $value !== '' ? $value : null;
-    }
-
-    /**
-     * @return array{id: string, type: string, field_id: string|null, source_id: string|null, source: string, excerpt: string}
-     */
-    private function aiEvidencePayload(AiEvidence $evidence): array
-    {
-        return [
-            'id' => $evidence->id,
-            'type' => $evidence->tipo_evidencia_ia,
-            'field_id' => $this->nullableIdentifier($evidence->definicion_campo_id),
-            'source_id' => $this->nullableIdentifier($evidence->fuente_academica_id),
-            'source' => $evidence->etiqueta_evidencia_ia,
-            'excerpt' => $evidence->extracto,
-        ];
-    }
-
-    private function aiReasonLabel(?string $reason): ?string
-    {
-        return match ($reason) {
-            'limite_evidencia_excedido' => 'El conjunto de evidencia excede el límite técnico seguro',
-            'evidencia_insuficiente' => 'No hay evidencia activa suficiente para analizar',
-            'contenido_vacio' => 'El campo todavía no contiene texto para analizar',
-            'sin_cambio_editorial' => 'No se identificó un cambio editorial verificable',
-            null => null,
-            default => 'La evidencia disponible no permite producir una recomendación verificable',
-        };
     }
 
     /** @return list<array<string, mixed>> */

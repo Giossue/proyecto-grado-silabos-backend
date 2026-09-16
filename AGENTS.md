@@ -8,8 +8,8 @@ la Carrera de Software de la Universidad Estatal de Bolívar.
 Stack base:
 
 - Laravel 13 y PHP 8.3 o superior.
-- Starter oficial Vue: Inertia 3, Vue 3 Composition API y TypeScript.
-- Tailwind y shadcn-vue con componentes compartidos.
+- API JSON versionada bajo `/api/v1`; este repositorio no contiene interfaz web.
+- SPA Vue 3 + TypeScript en el repositorio hermano `proyecto-grado-silabos-frontend`.
 - PostgreSQL como fuente transaccional.
 - Redis para colas, caché y coordinación; nunca como fuente de verdad.
 - Almacenamiento privado local o compatible con S3, según entorno.
@@ -71,10 +71,8 @@ starter previsto, los comandos base son:
 
 ```bash
 composer install
-npm install
 ./vendor/bin/pint --test
 php artisan test
-npm run build
 ```
 
 Ejecuta también `lint`, `typecheck`, pruebas frontend y análisis estático cuando esos
@@ -136,13 +134,9 @@ Antes de modificar una pantalla, lee `docs/product/screens.md`,
 documentación del módulo afectado. Esas fuentes definen los patrones visuales,
 composición, estados y criterios de revisión; este archivo solo indica dónde encontrarlos.
 
-Antes de buscar documentación externa o añadir un componente, revisa primero los
-componentes reutilizables ya presentes en `resources/js/components/`, especialmente
-`components/ui/` y los componentes de dominio. Si el componente necesario existe y su
-API se puede determinar leyendo su implementación y usos locales, reutilízalo sin
-consultar la documentación de shadcn/u otra fuente externa. Consulta esa documentación
-solo si el componente no existe, su API es ambigua o hace falta incorporar/actualizar un
-componente.
+Este repositorio no contiene pantallas. Cualquier cambio de interfaz se realiza en
+`proyecto-grado-silabos-frontend`; el backend debe exponer primero un contrato JSON
+estable y mantener sincronizado `docs/architecture/openapi.json`.
 
 ## Trabajo con bases de datos
 

@@ -65,6 +65,7 @@ class UpdateAcademicRecordRequest extends FormRequest
                     'facultades' => 'codigo_facultad',
                     'campus' => 'codigo_campus',
                     'carreras' => 'codigo_carrera',
+                    default => throw new \LogicException('Catálogo académico no admitido.'),
                 })->ignore($this->recordId()),
             ],
             'nombre' => ['required', 'string', "max:{$nameLength}"],
