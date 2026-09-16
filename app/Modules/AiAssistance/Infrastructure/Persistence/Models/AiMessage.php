@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
  * @property string $contenido_mensaje_ia
  * @property int $version_bloqueo_origen
  * @property string|null $mensaje_error
- * @property CarbonImmutable $created_at
+ * @property CarbonImmutable $enviado_en
  * @property-read AiConversation $conversation
  * @property-read JobExecution|null $jobExecution
  * @property-read Collection<int, AiMessageEvidence> $evidence
@@ -32,6 +32,8 @@ class AiMessage extends Model
 {
     use HasUuids;
 
+    public $timestamps = false;
+
     protected $table = 'mensajes_ia';
 
     /** @var list<string> */
@@ -39,7 +41,7 @@ class AiMessage extends Model
         'conversacion_ia_id', 'respuesta_a_id', 'ejecucion_trabajo_id', 'clave_idempotencia',
         'rol_mensaje_ia', 'estado_mensaje_ia', 'contenido_mensaje_ia',
         'version_bloqueo_origen', 'version_pasarela_ejecutada', 'codigo_error',
-        'mensaje_error', 'completado_en',
+        'mensaje_error', 'completado_en', 'enviado_en',
     ];
 
     protected function casts(): array
@@ -47,6 +49,7 @@ class AiMessage extends Model
         return [
             'version_bloqueo_origen' => 'integer',
             'completado_en' => 'immutable_datetime',
+            'enviado_en' => 'immutable_datetime',
         ];
     }
 

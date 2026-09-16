@@ -25,7 +25,10 @@ class SpanishModelColumnsTest extends TestCase
 
     public function test_los_modelos_solo_automatizan_fechas_funcionales_explicitas(): void
     {
-        $fechasFuncionales = ['asignado_en', 'encolado_en', 'notificado_en', 'almacenado_en', 'observado_en'];
+        $fechasFuncionales = [
+            'asignado_en', 'encolado_en', 'notificado_en', 'almacenado_en', 'observado_en',
+            'iniciada_en', 'enviado_en', 'fijada_en',
+        ];
 
         foreach ($this->modelos() as $modelo) {
             $instancia = $modelo->newInstanceWithoutConstructor();

@@ -125,7 +125,7 @@ class AiChatController extends Controller
             'content' => $message->contenido_mensaje_ia,
             'draft_version' => $message->version_bloqueo_origen,
             'error' => $message->mensaje_error,
-            'created_at' => $message->created_at->toIso8601String(),
+            'created_at' => $message->enviado_en->toIso8601String(),
             'citations' => $this->citationPayloads($message),
         ];
     }

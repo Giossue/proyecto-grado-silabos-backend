@@ -28,7 +28,7 @@ class SendSyllabusAiMessage
             $locked = Syllabus::query()->lockForUpdate()->findOrFail($syllabus->id);
             $conversation = AiConversation::query()->firstOrCreate(
                 ['silabo_id' => $locked->id, 'usuario_id' => $actor->id],
-                ['ocultada_en' => null],
+                ['ocultada_en' => null, 'iniciada_en' => now()],
             );
             $existing = AiMessage::query()
                 ->where('conversacion_ia_id', $conversation->id)
@@ -46,6 +46,7 @@ class SendSyllabusAiMessage
                 'contenido_mensaje_ia' => trim($content),
                 'version_bloqueo_origen' => $locked->version_bloqueo,
                 'completado_en' => now(),
+                'enviado_en' => now(),
             ]);
             $answer = AiMessage::query()->create([
                 'conversacion_ia_id' => $conversation->id,
@@ -54,6 +55,7 @@ class SendSyllabusAiMessage
                 'estado_mensaje_ia' => 'pendiente',
                 'contenido_mensaje_ia' => '',
                 'version_bloqueo_origen' => $locked->version_bloqueo,
+                'enviado_en' => now(),
             ]);
             foreach ($this->context->build($locked, $content) as $evidence) {
                 AiMessageEvidence::query()->create([
@@ -65,7 +67,7 @@ class SendSyllabusAiMessage
                     'etiqueta_evidencia_mensaje_ia' => $evidence['label'],
                     'extracto_evidencia_mensaje_ia' => $evidence['excerpt'],
                     'huella_evidencia_mensaje_ia' => $evidence['fingerprint'],
-                    'created_at' => now(),
+                    'fijada_en' => now(),
                 ]);
             }
             $correlationId = $request->attributes->getString('correlation_id');

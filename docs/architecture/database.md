@@ -153,6 +153,9 @@ Cada docente conserva una conversación por sílabo. Limpiar el panel marca
 pregunta y la respuesta son mensajes separados, la respuesta referencia su ejecución de
 trabajo y la versión del borrador, y sus citas solo pueden apuntar a fotografías de
 secciones habilitadas o fuentes seleccionadas guardadas para ese mismo mensaje.
+`iniciada_en`, `enviado_en` y `fijada_en` expresan los momentos funcionales de la
+conversación, el mensaje y su evidencia; estas tablas no usan timestamps técnicos
+genéricos.
 `plantillas_silabo.revision_configuracion` aumenta ante cualquier cambio de estructura,
 contenido o apariencia. Una preferencia de carrera solo es efectiva si el campo permite
 la decisión de Coordinación y su `revision_plantilla_origen` coincide; de otro modo rige

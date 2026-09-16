@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $silabo_id
  * @property string $usuario_id
  * @property CarbonImmutable|null $ocultada_en
+ * @property CarbonImmutable $iniciada_en
  * @property-read Syllabus $syllabus
  * @property-read User $user
  * @property-read Collection<int, AiMessage> $messages
@@ -24,14 +25,16 @@ class AiConversation extends Model
 {
     use HasUuids;
 
+    public $timestamps = false;
+
     protected $table = 'conversaciones_ia';
 
     /** @var list<string> */
-    protected $fillable = ['silabo_id', 'usuario_id', 'ocultada_en'];
+    protected $fillable = ['silabo_id', 'usuario_id', 'ocultada_en', 'iniciada_en'];
 
     protected function casts(): array
     {
-        return ['ocultada_en' => 'immutable_datetime'];
+        return ['ocultada_en' => 'immutable_datetime', 'iniciada_en' => 'immutable_datetime'];
     }
 
     /** @return BelongsTo<Syllabus, $this> */
@@ -49,6 +52,6 @@ class AiConversation extends Model
     /** @return HasMany<AiMessage, $this> */
     public function messages(): HasMany
     {
-        return $this->hasMany(AiMessage::class, 'conversacion_ia_id')->orderBy('created_at');
+        return $this->hasMany(AiMessage::class, 'conversacion_ia_id')->orderBy('enviado_en');
     }
 }

@@ -20,14 +20,12 @@ class AiMessageEvidence extends Model
 
     public $timestamps = false;
 
-    public const CREATED_AT = 'created_at';
-
     protected $table = 'evidencias_mensaje_ia';
 
     /** @var list<string> */
     protected $fillable = [
         'mensaje_ia_id', 'tipo_evidencia_mensaje_ia', 'definicion_campo_id',
         'fuente_academica_id', 'etiqueta_evidencia_mensaje_ia',
-        'extracto_evidencia_mensaje_ia', 'huella_evidencia_mensaje_ia', 'created_at',
+        'extracto_evidencia_mensaje_ia', 'huella_evidencia_mensaje_ia', 'fijada_en',
     ];
 }
