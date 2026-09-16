@@ -30,6 +30,17 @@ rol activo y los ámbitos elegibles. Coordinación nunca se activa automáticame
 elegir explícitamente la carrera. La contraseña temporal se cambia sin solicitarla de
 nuevo, pero la nueva no puede repetirla.
 
+También están disponibles el resumen de panel por rol y el primer listado docente:
+
+```text
+GET /api/v1/dashboard
+GET /api/v1/teacher/syllabi?q=&state=&page=
+```
+
+El panel conserva sus métricas y checklist calculados en el servidor. El listado filtra
+por usuario, carrera y rol activo antes de paginar; no expone las rutas web heredadas al
+cliente nuevo.
+
 El navegador debe configurar por ambiente:
 
 ```text
@@ -44,10 +55,11 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
 ## Siguientes unidades
 
 1. Recuperación, verificación y segundo factor de autenticación.
-2. Shell, paneles, notificaciones y preferencias del frontend.
+2. Notificaciones, preferencias y selector de ámbito desde el encabezado.
 3. Identidad y estructura académica.
-4. Plantilla, convocatorias, editor docente, revisión, documentos e IA.
-5. Corte único, luego retiro de Inertia, Wayfinder, Vite Laravel y las rutas web de
+4. Detalle/editor docente, autoguardado, validación y envío.
+5. Plantilla, convocatorias, revisión, documentos e IA.
+6. Corte único, luego retiro de Inertia, Wayfinder, Vite Laravel y las rutas web de
    producto de este repositorio.
 
 No se redirige producción ni se ejecutan migraciones de datos por esta separación hasta
