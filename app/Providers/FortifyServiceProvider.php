@@ -5,10 +5,12 @@ namespace App\Providers;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
+use Illuminate\Auth\Notifications\VerifyEmail as VerifyEmailNotification;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
@@ -40,6 +42,16 @@ class FortifyServiceProvider extends ServiceProvider
 
             return $frontend.'/restablecer-contrasena?token='.urlencode($token)
                 .'&email='.urlencode($user->getEmailForPasswordReset());
+        });
+        VerifyEmailNotification::createUrlUsing(function (User $user): string {
+            $relative = URL::temporarySignedRoute(
+                'api.v1.authentication.email-verification.verify',
+                now()->addMinutes(60),
+                ['user' => $user->id, 'hash' => sha1($user->getEmailForVerification())],
+                absolute: false,
+            );
+
+            return rtrim((string) config('app.frontend_url'), '/').$relative;
         });
     }
 

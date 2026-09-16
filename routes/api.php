@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
+use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
@@ -17,12 +18,17 @@ Route::prefix('v1')->group(function (): void {
     Route::post('authentication/password-reset', [PasswordRecoveryController::class, 'reset'])
         ->middleware('throttle:password-recovery')
         ->name('api.v1.authentication.password-recovery.reset');
+    Route::post('authentication/email-verification/{user}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->name('api.v1.authentication.email-verification.verify');
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('session', [SessionController::class, 'show'])->name('api.v1.session.show');
         Route::post('authentication/logout', [SessionController::class, 'logout'])->name('api.v1.authentication.logout');
         Route::put('authentication/password', [SessionController::class, 'updatePassword'])
             ->name('api.v1.authentication.password.update');
+        Route::post('authentication/email-verification/resend', [EmailVerificationController::class, 'resend'])
+            ->middleware('throttle:password-recovery')
+            ->name('api.v1.authentication.email-verification.resend');
         Route::put('active-role', [SessionController::class, 'selectActiveRole'])
             ->name('api.v1.active-role.update');
         Route::get('dashboard', [DashboardController::class, 'index'])

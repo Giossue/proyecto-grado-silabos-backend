@@ -138,7 +138,7 @@ class SessionController extends Controller
         return $user;
     }
 
-    /** @return array{user: array{id: string, name: string, email: string, must_change_password: bool}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>} */
+    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, must_change_password: bool}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>} */
     private function sessionPayload(User $user, Request $request): array
     {
         $activeRole = $this->roles->resolve($request);
@@ -148,6 +148,7 @@ class SessionController extends Controller
                 'id' => $user->id,
                 'name' => $user->nombre,
                 'email' => $user->correo_electronico,
+                'email_verified' => $user->hasVerifiedEmail(),
                 'must_change_password' => $user->debe_cambiar_contrasena,
             ],
             'active_role' => $activeRole === null ? null : $this->rolePayload($activeRole),

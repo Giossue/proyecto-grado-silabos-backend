@@ -4,8 +4,10 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Laravel\Fortify\Features;
 use Tests\TestCase;
@@ -114,6 +116,29 @@ class EmailVerificationTest extends TestCase
             ->assertRedirect(route('dashboard', absolute: false).'?verified=1');
 
         Event::assertNotDispatched(Verified::class);
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_spa_can_verify_a_mail_address_from_a_relative_signed_link(): void
+    {
+        Notification::fake();
+        config(['app.frontend_url' => 'https://silabos.example.edu.ec']);
+        $user = User::factory()->unverified()->create();
+
+        $user->sendEmailVerificationNotification();
+
+        Notification::assertSentTo($user, VerifyEmail::class, function (VerifyEmail $notification) use ($user): bool {
+            $url = $notification->toMail($user)->actionUrl;
+            $this->assertStringStartsWith('https://silabos.example.edu.ec/api/v1/authentication/email-verification/', $url);
+            $parts = parse_url($url);
+
+            $this->postJson($parts['path'].'?'.$parts['query'])
+                ->assertOk()
+                ->assertJsonPath('message', 'Correo electrónico verificado. Ya puede ingresar.');
+
+            return true;
+        });
+
         $this->assertTrue($user->fresh()->hasVerifiedEmail());
     }
 }

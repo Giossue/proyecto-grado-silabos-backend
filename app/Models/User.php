@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Support\Database\MapsLegacyColumnNames;
 use Database\Factories\UserFactory;
+use Illuminate\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -40,10 +41,10 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  */
 #[Fillable(['nombre', 'correo_electronico', 'contrasena', 'activo', 'debe_cambiar_contrasena'])]
 #[Hidden(['contrasena', 'secreto_dos_factores', 'codigos_recuperacion_dos_factores', 'codigo_recordarme'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmailContract
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasUuids, MapsLegacyColumnNames, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, HasUuids, MapsLegacyColumnNames, MustVerifyEmail, Notifiable, TwoFactorAuthenticatable;
 
     protected const LEGACY_COLUMN_ALIASES = [
         'nombre' => 'nombre_usuario',
