@@ -13,6 +13,7 @@ use App\Modules\Documents\Presentation\Http\Requests\ViewRevisionDocumentsReques
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -22,7 +23,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
-    public function show(SyllabusRevision $revision, ViewRevisionDocumentsRequest $request): Response
+    public function show(SyllabusRevision $revision, ViewRevisionDocumentsRequest $request): Response|JsonResponse
     {
         $revision->load([
             'approval.approver:id,nombre',
@@ -36,7 +37,7 @@ class DocumentController extends Controller
             ->latest('solicitado_en')
             ->get();
 
-        return Inertia::render('Syllabi/Documents', [
+        $payload = [
             'syllabus' => [
                 'id' => $revision->syllabus->id,
                 'subject' => $revision->syllabus->academicSubjectName(),
@@ -65,14 +66,16 @@ class DocumentController extends Controller
                     'pdf_size' => $artifact->pdfObject?->tamano_bytes,
                 ],
             ])->values(),
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Syllabi/Documents', $payload);
     }
 
     public function store(
         SyllabusRevision $revision,
         RequestSyllabusExportRequest $request,
         RequestSyllabusExport $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $artifact = $action->execute(
@@ -82,10 +85,14 @@ class DocumentController extends Controller
             $request,
         );
 
-        return to_route('documents.show', $revision)
-            ->with('success', $artifact->estado === 'completado'
-                ? 'Los documentos de esta solicitud ya estaban disponibles.'
-                : 'La generación de DOCX y PDF quedó en cola.');
+        $message = $artifact->estado === 'completado'
+            ? 'Los documentos de esta solicitud ya estaban disponibles.'
+            : 'La generación de DOCX y PDF quedó en cola.';
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message, 'artifact_id' => $artifact->id], 202);
+        }
+
+        return to_route('documents.show', $revision)->with('success', $message);
     }
 
     public function download(

@@ -6,6 +6,7 @@ use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureCo
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
 use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
+use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
@@ -232,5 +233,11 @@ Route::prefix('v1')->group(function (): void {
         Route::post('teacher/syllabi/{syllabus}/observations/{observation}/response', [SyllabusController::class, 'respondObservation'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.observations.respond');
+        Route::get('revisions/{revision}/documents', [DocumentController::class, 'show'])
+            ->middleware('active-role')->name('api.v1.documents.show');
+        Route::post('revisions/{revision}/documents', [DocumentController::class, 'store'])
+            ->middleware('active-role')->name('api.v1.documents.store');
+        Route::get('exports/{artifact}/{format}', [DocumentController::class, 'download'])
+            ->middleware('active-role')->whereIn('format', ['docx', 'pdf'])->name('api.v1.documents.download');
     });
 });
