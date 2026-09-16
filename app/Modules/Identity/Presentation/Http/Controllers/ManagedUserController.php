@@ -21,6 +21,7 @@ use App\Modules\Identity\Presentation\Http\Requests\ShowManagedUserRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateManagedUserProfileRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateManagedUserRequest;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,7 @@ use Inertia\Response;
 
 class ManagedUserController extends Controller
 {
-    public function index(IndexUsersRequest $request): Response
+    public function index(IndexUsersRequest $request): Response|JsonResponse
     {
         $filters = $request->validated();
         $search = is_string($filters['q'] ?? null) ? trim($filters['q']) : null;
@@ -118,7 +119,7 @@ class ManagedUserController extends Controller
                 ];
             });
 
-        return Inertia::render('Admin/Users/Index', [
+        $payload = [
             'users' => $users,
             'filters' => [
                 'q' => $search,
@@ -128,20 +129,31 @@ class ManagedUserController extends Controller
             ],
             'roles' => $this->fixedRoles(),
             'careers' => Career::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
-        ]);
+        ];
+
+        return $request->expectsJson()
+            ? response()->json($payload)
+            : Inertia::render('Admin/Users/Index', $payload);
     }
 
-    public function store(CreateManagedUserRequest $request, CreateManagedUser $action): RedirectResponse
+    public function store(CreateManagedUserRequest $request, CreateManagedUser $action): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute([
+        $created = $action->execute([
             'nombre' => $request->string('nombre')->toString(),
             'correo_electronico' => $request->string('correo_electronico')->toString(),
             'password' => $request->string('password')->toString(),
             'role_code' => $request->string('role_code')->toString(),
             'career_id' => $request->filled('career_id') ? $request->string('career_id')->toString() : null,
         ], $actor, $request);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Cuenta creada con su rol inicial.',
+                'user' => ['id' => $created->id, 'nombre' => $created->nombre, 'correo_electronico' => $created->correo_electronico],
+            ], 201);
+        }
 
         return back()->with('success', 'Cuenta creada con su rol inicial.');
     }
