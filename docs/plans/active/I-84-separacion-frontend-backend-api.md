@@ -104,6 +104,8 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
 3. El armazón autenticado común, navegación por rol, selector de ámbito, contador de
    notificaciones, tema claro/oscuro, perfil, contraseña, segundo factor y administración
    de sesiones están disponibles en la SPA.
+   Las fuentes académicas se redactan en una hoja visual con cinta de formato; Markdown
+   permanece como contrato interno y ya no se expone a Coordinación.
 4. La edición detallada de usuarios y roles, la incorporación/relevo de docentes y la
    carga del logo de facultad ya están integradas. Faltan las operaciones visuales
    completas de estructura académica y la composición visual avanzada de bloques de la
