@@ -144,7 +144,7 @@ class SyllabusController extends Controller
         Syllabus $syllabus,
         SubmitSyllabusRequest $request,
         SubmitSyllabus $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $revision = $action->execute(
@@ -154,6 +154,13 @@ class SyllabusController extends Controller
             $actor,
             $request,
         );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => "Revisión {$revision->numero_revision} enviada y fijada correctamente.",
+                'syllabus' => $this->syllabusPayload($syllabus->fresh() ?? $syllabus),
+            ]);
+        }
 
         return to_route('syllabi.show', $syllabus)
             ->with('success', "Revisión {$revision->numero_revision} enviada y fijada correctamente.");
@@ -198,15 +205,34 @@ class SyllabusController extends Controller
         ]);
     }
 
-    public function validateDraft(Syllabus $syllabus, Request $request, ValidateDraft $action): RedirectResponse
+    public function validateDraft(Syllabus $syllabus, Request $request, ValidateDraft $action): RedirectResponse|JsonResponse
     {
         abort_unless($request->user()?->can('edit', $syllabus) === true, 403);
         $actor = $request->user();
         $run = $action->execute($syllabus, $actor, $request);
 
-        return back()->with('success', $run->errores_bloqueantes === 0
+        $message = $run->errores_bloqueantes === 0
             ? 'Validación completada sin errores bloqueantes.'
-            : 'Validación completada. Revisa los campos señalados.');
+            : 'Validación completada. Revisa los campos señalados.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'validation' => [
+                    'version_bloqueo' => $run->version_bloqueo,
+                    'blocking_errors' => $run->errores_bloqueantes,
+                    'warnings' => $run->advertencias,
+                    'results' => $run->results->map(fn ($result): array => [
+                        'field_id' => $result->definicion_campo_id,
+                        'code' => $result->codigo,
+                        'severity' => $result->severidad,
+                        'message' => $result->mensaje,
+                    ])->values(),
+                ],
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 
     /** @return array<string, mixed> */

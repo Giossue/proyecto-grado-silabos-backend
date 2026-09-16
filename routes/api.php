@@ -32,5 +32,11 @@ Route::prefix('v1')->group(function (): void {
         Route::patch('teacher/syllabi/{syllabus}/fields/{field}', [SyllabusController::class, 'updateField'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.fields.update');
+        Route::post('teacher/syllabi/{syllabus}/validate', [SyllabusController::class, 'validateDraft'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.validate');
+        Route::post('teacher/syllabi/{syllabus}/submit', [SyllabusController::class, 'submit'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.submit');
     });
 });
