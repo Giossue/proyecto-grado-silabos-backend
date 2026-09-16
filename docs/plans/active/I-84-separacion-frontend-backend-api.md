@@ -99,9 +99,9 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
 3. El armazón autenticado común, navegación por rol, selector de ámbito, contador de
    notificaciones, tema claro/oscuro, perfil, contraseña, segundo factor y administración
    de sesiones están disponibles en la SPA.
-4. Completar la paridad funcional de los módulos administrativos: edición detallada de
-   usuarios y roles, operaciones completas de estructura académica y el constructor
-   visual de plantilla sin depender de editores JSON.
+4. La edición detallada de usuarios y roles, la incorporación/relevo de docentes y la
+   carga del logo de facultad ya están integradas. Faltan las operaciones visuales
+   completas de estructura académica y el constructor de plantilla sin editores JSON.
 5. Completar el editor docente y la revisión con representación fiel de documentos y
    tablas complejas, historial/comparación, estados de conflicto, avisos y accesibilidad.
 6. Incorporar el chat de IA con conversaciones, alcance explícito de fuentes y citas;

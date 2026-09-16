@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Identity\Application\Actions\CreateCareerTeacher;
 use App\Modules\Identity\Presentation\Http\Requests\CreateCareerTeacherRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
 class CareerTeacherController extends Controller
 {
-    public function store(CreateCareerTeacherRequest $request, CreateCareerTeacher $action): RedirectResponse
+    public function store(CreateCareerTeacherRequest $request, CreateCareerTeacher $action): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
@@ -22,6 +23,8 @@ class CareerTeacherController extends Controller
                 ? 'Docente incorporado a su carrera. Conserva su nombre y acceso actuales.'
                 : 'El docente ya está disponible en su carrera. Conserva su nombre y acceso actuales.');
 
-        return back()->with('success', $message);
+        return $request->expectsJson()
+            ? response()->json(['message' => $message])
+            : back()->with('success', $message);
     }
 }

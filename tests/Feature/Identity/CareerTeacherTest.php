@@ -58,6 +58,18 @@ class CareerTeacherTest extends TestCase
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.docente_incorporado', 'actor_usuario_id' => $this->coordinator->id, 'recurso_id' => $user->id]);
     }
 
+    public function test_coordinator_can_create_a_teacher_through_the_api_contract(): void
+    {
+        config(['sanctum.stateful' => ['localhost:5173']]);
+
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())
+            ->assertOk()
+            ->assertJsonPath('message', 'Docente creado para su carrera. Recibirá las credenciales por correo.');
+
+        $this->assertDatabaseHas('usuarios', ['correo_electronico' => 'nuevo@silabos.test']);
+    }
+
     public function test_existing_identity_and_other_roles_are_preserved_without_sending_credentials(): void
     {
         $user = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();

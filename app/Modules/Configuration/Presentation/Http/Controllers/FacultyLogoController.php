@@ -5,12 +5,13 @@ namespace App\Modules\Configuration\Presentation\Http\Controllers;
 use App\Models\User;
 use App\Modules\Configuration\Application\Actions\SaveFacultyLogo;
 use App\Modules\Configuration\Presentation\Http\Requests\StoreFacultyLogoRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 
 final class FacultyLogoController
 {
-    public function store(StoreFacultyLogoRequest $request, SaveFacultyLogo $action): RedirectResponse
+    public function store(StoreFacultyLogoRequest $request, SaveFacultyLogo $action): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         $file = $request->file('logo');
@@ -18,6 +19,8 @@ final class FacultyLogoController
 
         $action->execute($actor, $file, $request);
 
-        return back()->with('success', 'Logo de la facultad actualizado.');
+        return $request->expectsJson()
+            ? response()->json(['message' => 'Logo de la facultad actualizado.'])
+            : back()->with('success', 'Logo de la facultad actualizado.');
     }
 }

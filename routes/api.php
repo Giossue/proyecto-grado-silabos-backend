@@ -5,6 +5,7 @@ use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceControl
 use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
 use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceController;
+use App\Modules\Configuration\Presentation\Http\Controllers\FacultyLogoController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
@@ -12,6 +13,7 @@ use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryCo
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionManagementController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\TwoFactorController;
+use App\Modules\Identity\Presentation\Http\Controllers\CareerTeacherController;
 use App\Modules\Identity\Presentation\Http\Controllers\ManagedUserController;
 use App\Modules\Operations\Presentation\Http\Controllers\AuditEventController;
 use App\Modules\Operations\Presentation\Http\Controllers\JobExecutionController;
@@ -193,6 +195,10 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-subjects.index');
         Route::get('coordination/academic/teacher-assignments', [CareerAcademicStructureController::class, 'teacherAssignments'])
             ->middleware('active-role')->name('api.v1.coordination.academic.teacher-assignments.index');
+        Route::post('coordination/academic/teachers', [CareerTeacherController::class, 'store'])
+            ->middleware('active-role')->name('api.v1.coordination.academic.teachers.store');
+        Route::post('coordination/faculty-logo', [FacultyLogoController::class, 'store'])
+            ->middleware('active-role')->name('api.v1.coordination.faculty-logo.store');
         Route::post('coordination/academic/prepare-period', [CareerAcademicStructureController::class, 'preparePeriod'])
             ->middleware('active-role')->name('api.v1.coordination.academic.period.prepare');
         Route::post('coordination/academic/parallels', [CareerAcademicStructureController::class, 'storeParallels'])
