@@ -27,6 +27,7 @@ use App\Modules\Syllabus\Presentation\Http\Requests\StoreObservationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransferSyllabusTeacherRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\VerifyObservationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewReviewsRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -35,7 +36,7 @@ use Inertia\Response;
 
 class ReviewController extends Controller
 {
-    public function index(ViewReviewsRequest $request, ActiveRole $roles): Response
+    public function index(ViewReviewsRequest $request, ActiveRole $roles): Response|JsonResponse
     {
         $activeRole = $roles->resolve($request);
         $state = $request->string('state')->toString();
@@ -65,7 +66,7 @@ class ReviewController extends Controller
                 ->orWhere('codigo_asignatura', 'ilike', "%{$escaped}%"));
         }
 
-        return Inertia::render('Coordination/Reviews/Index', [
+        $payload = [
             'filters' => ['state' => $state, 'search' => $search],
             'syllabi' => $query->orderByRaw('guardado_en DESC NULLS LAST')->paginate(15)->withQueryString()
                 ->through(function (Syllabus $syllabus): array {
@@ -84,21 +85,25 @@ class ReviewController extends Controller
                         'submitted_at' => $revision?->enviado_en->toIso8601String(),
                     ];
                 }),
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Coordination/Reviews/Index', $payload);
     }
 
-    public function show(SyllabusRevision $revision, Request $request): Response
+    public function show(SyllabusRevision $revision, Request $request): Response|JsonResponse
     {
         abort_unless($request->user()?->can('review', $revision) === true, 403);
 
-        return Inertia::render('Coordination/Reviews/Show', $this->reviewPayload($revision));
+        $payload = $this->reviewPayload($revision);
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Coordination/Reviews/Show', $payload);
     }
 
     public function storeObservation(
         SyllabusRevision $revision,
         StoreObservationRequest $request,
         AddReviewObservation $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -110,14 +115,16 @@ class ReviewController extends Controller
             $request,
         );
 
-        return back()->with('success', 'Observación registrada en esta revisión.');
+        $message = 'Observación registrada en esta revisión.';
+
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 
     public function requestCorrection(
         SyllabusRevision $revision,
         StoreCorrectionRequest $request,
         RequestSyllabusCorrection $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $validated = $request->validated();
@@ -132,26 +139,30 @@ class ReviewController extends Controller
             $request,
         );
 
-        return back()->with('success', 'Corrección solicitada; el docente ya puede editar una nueva versión de trabajo.');
+        $message = 'Corrección solicitada; el docente ya puede editar una nueva versión de trabajo.';
+
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 
     public function verifyObservation(
         ReviewObservation $observation,
         VerifyObservationRequest $request,
         VerifyObservation $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($observation, $actor, $request);
 
-        return back()->with('success', 'Observación verificada como resuelta.');
+        $message = 'Observación verificada como resuelta.';
+
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 
     public function approve(
         SyllabusRevision $revision,
         ApproveSyllabusRequest $request,
         ApproveSyllabus $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -161,14 +172,16 @@ class ReviewController extends Controller
             $request,
         );
 
-        return back()->with('success', "Revisión {$revision->numero_revision} aprobada y fijada.");
+        $message = "Revisión {$revision->numero_revision} aprobada y fijada.";
+
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 
     public function reopen(
         Syllabus $syllabus,
         ReopenSyllabusRequest $request,
         ReopenSyllabus $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -179,7 +192,9 @@ class ReviewController extends Controller
             $request,
         );
 
-        return back()->with('success', 'Sílabo reabierto. La aprobación anterior permanece intacta.');
+        $message = 'Sílabo reabierto. La aprobación anterior permanece intacta.';
+
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 
     public function compare(
@@ -187,7 +202,7 @@ class ReviewController extends Controller
         SyllabusRevision $after,
         Request $request,
         RevisionDiff $diff,
-    ): Response {
+    ): Response|JsonResponse {
         abort_unless($request->user()?->can('view', $before) === true, 403);
         abort_unless($request->user()->can('view', $after) === true, 403);
         if ($before->silabo_id !== $after->silabo_id) {
@@ -198,7 +213,7 @@ class ReviewController extends Controller
         }
         $syllabus = $before->syllabus()->with(['subject', 'convocation.process.academicPeriod'])->firstOrFail();
 
-        return Inertia::render('Syllabi/Compare', [
+        $payload = [
             'syllabus' => [
                 'id' => $syllabus->id,
                 'subject' => $syllabus->academicSubjectName(),
@@ -206,7 +221,9 @@ class ReviewController extends Controller
                 'period' => $syllabus->convocation->process->academicPeriod->codigo,
             ],
             'comparison' => $diff->compare($before, $after),
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Syllabi/Compare', $payload);
     }
 
     /** @return array<string, mixed> */
@@ -350,19 +367,23 @@ class ReviewController extends Controller
         Syllabus $syllabus,
         ResetSyllabusRequest $request,
         ResetSyllabus $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($syllabus, $request->string('reason')->toString(), $actor, $request);
 
-        return to_route('reviews.index')->with('success', 'Sílabo reiniciado. El docente empieza de cero con la malla y la plantilla actuales; el historial se conserva.');
+        $message = 'Sílabo reiniciado. El docente empieza de cero con la malla y la plantilla actuales; el historial se conserva.';
+
+        return $request->expectsJson()
+            ? response()->json(['message' => $message])
+            : to_route('reviews.index')->with('success', $message);
     }
 
     public function transferTeacher(
         Syllabus $syllabus,
         TransferSyllabusTeacherRequest $request,
         TransferSyllabusTeacher $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -374,6 +395,8 @@ class ReviewController extends Controller
             $request,
         );
 
-        return back()->with('success', 'Relevo registrado. El expediente queda a cargo del docente entrante.');
+        $message = 'Relevo registrado. El expediente queda a cargo del docente entrante.';
+
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 }

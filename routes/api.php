@@ -10,6 +10,7 @@ use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\TwoFactorControlle
 use App\Modules\Identity\Presentation\Http\Controllers\ManagedUserController;
 use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ConvocationController;
+use App\Modules\Syllabus\Presentation\Http\Controllers\ReviewController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusProcessController;
 use Illuminate\Support\Facades\Route;
@@ -98,6 +99,26 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('active-role')->name('api.v1.coordination.convocations.open');
         Route::post('coordination/convocations/{convocation}/{transition}', [ConvocationController::class, 'transition'])
             ->middleware('active-role')->whereIn('transition', ['pausar', 'reanudar'])->name('api.v1.coordination.convocations.transition');
+        Route::get('coordination/reviews', [ReviewController::class, 'index'])
+            ->middleware('active-role')->name('api.v1.coordination.reviews.index');
+        Route::get('coordination/reviews/{before}/compare/{after}', [ReviewController::class, 'compare'])
+            ->middleware('active-role')->name('api.v1.coordination.reviews.compare');
+        Route::get('coordination/reviews/{revision}', [ReviewController::class, 'show'])
+            ->middleware('active-role')->name('api.v1.coordination.reviews.show');
+        Route::post('coordination/reviews/{revision}/observations', [ReviewController::class, 'storeObservation'])
+            ->middleware('active-role')->name('api.v1.coordination.reviews.observations.store');
+        Route::post('coordination/reviews/{revision}/request-correction', [ReviewController::class, 'requestCorrection'])
+            ->middleware('active-role')->name('api.v1.coordination.reviews.correction.store');
+        Route::post('coordination/observations/{observation}/verify', [ReviewController::class, 'verifyObservation'])
+            ->middleware('active-role')->name('api.v1.coordination.reviews.observations.verify');
+        Route::post('coordination/reviews/{revision}/approve', [ReviewController::class, 'approve'])
+            ->middleware('active-role')->name('api.v1.coordination.reviews.approve');
+        Route::post('coordination/syllabi/{syllabus}/reopen', [ReviewController::class, 'reopen'])
+            ->middleware('active-role')->name('api.v1.coordination.reviews.reopen');
+        Route::post('coordination/syllabi/{syllabus}/reset', [ReviewController::class, 'reset'])
+            ->middleware('active-role')->name('api.v1.coordination.reviews.reset');
+        Route::post('coordination/syllabi/{syllabus}/teacher-transfer', [ReviewController::class, 'transferTeacher'])
+            ->middleware('active-role')->name('api.v1.coordination.reviews.teacher.transfer');
         Route::get('teacher/syllabi', [SyllabusController::class, 'index'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.index');
