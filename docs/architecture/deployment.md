@@ -4,7 +4,8 @@
 
 ```text
 reverse proxy / TLS
-├── web Laravel + Inertia assets
+├── SPA Vue/Nginx (repositorio frontend)
+├── API Laravel/PHP-FPM (este repositorio)
 ├── worker Laravel (colas)
 ├── scheduler Laravel
 ├── servicio local IA (opcional/degradable)
@@ -13,9 +14,13 @@ reverse proxy / TLS
 └── almacenamiento privado / S3 compatible
 ```
 
-El monolito web, workers y scheduler comparten el mismo artefacto/versionado, con procesos
-distintos. La plataforma concreta puede ser Docker Compose, Dokploy u otra; el producto
-no depende de una interfaz de despliegue.
+La SPA y Laravel son artefactos y repositorios independientes. API, workers y scheduler
+sí comparten el artefacto backend, con procesos distintos. La plataforma concreta puede
+ser Docker Compose, Dokploy u otra; el producto no depende de una interfaz de despliegue.
+
+Durante I-84 el despliegue publicado conserva temporalmente el monolito anterior. El
+corte a las dos aplicaciones solo se realiza cuando la matriz de paridad y los smoke
+tests estén completos; esta coexistencia no cambia la arquitectura objetivo.
 
 ## Ambientes
 
@@ -33,7 +38,8 @@ No se copian bases productivas a desarrollo sin proceso de anonimización y auto
 3. migraciones revisadas y compatibles con despliegue gradual cuando aplique.
 4. modo mantenimiento solo si es necesario y comunicado.
 5. ejecutar migraciones una vez.
-6. desplegar web/workers/scheduler de versión compatible.
+6. desplegar API/workers/scheduler de versión compatible y luego la SPA configurada con
+   la URL pública de esa API.
 7. comprobar readiness, migraciones, colas, archivos y smoke tests.
 8. observar errores/latencia y ejecutar rollback/forward fix según runbook.
 

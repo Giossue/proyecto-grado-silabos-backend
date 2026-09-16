@@ -1,5 +1,10 @@
 # Despliegue en Dokploy
 
+> Transición I-84: esta guía describe la aplicación Laravel publicada mientras se
+> completa el corte. La arquitectura objetivo usa dos aplicaciones: este repositorio
+> para API/workers/scheduler y `proyecto-grado-silabos-frontend` para la SPA Nginx.
+> No se cambia el dominio productivo hasta completar la verificación de paridad.
+
 La aplicación se despliega como **una sola imagen** construida desde este repositorio.
 PostgreSQL y Redis no viajan en ella: la imagen se conecta a los que ya existen en el
 servidor mediante variables de entorno.
@@ -7,6 +12,12 @@ servidor mediante variables de entorno.
 Dentro del contenedor conviven cuatro procesos bajo `supervisord`: Nginx, PHP-FPM, el
 worker de colas y el planificador. Escalar la aplicación escala el conjunto; separar el
 worker exigiría otra aplicación en Dokploy apuntando a la misma imagen con otro comando.
+
+La SPA independiente expone el puerto `8080`, `GET /health/live` y recibe
+`PUBLIC_API_URL=https://<dominio-api>` en tiempo de ejecución. Laravel debe recibir el
+origen completo de la SPA en `FRONTEND_URL`, su host sin esquema en
+`SANCTUM_STATEFUL_DOMAINS` y el dominio compartido en `SESSION_DOMAIN`. No se usa token
+personal: Sanctum autentica con cookie `HttpOnly`, credenciales CORS y CSRF.
 
 ## 1. Crear la aplicación
 

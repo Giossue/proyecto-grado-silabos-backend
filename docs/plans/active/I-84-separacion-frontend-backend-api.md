@@ -123,6 +123,8 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    excepciones mediante la revisión de configuración.
 7. Ampliar las pruebas frontend y documentar el contrato OpenAPI; las guardas de rol y
    contraseña temporal ya se aplican en navegador y servidor.
+   La SPA ya cuenta con Dockerfile multi-stage, Nginx con fallback de rutas, liveness y
+   `PUBLIC_API_URL` inyectable al arrancar; no requiere reconstruir el bundle por ambiente.
 8. Ejecutar la verificación integral y realizar un corte único; solo entonces retirar
    Inertia, Wayfinder, Vite Laravel y las rutas web de producto de este repositorio.
 
