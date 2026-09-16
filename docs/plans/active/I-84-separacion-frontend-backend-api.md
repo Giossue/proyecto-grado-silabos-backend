@@ -115,8 +115,13 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    varios campos, reordenarlos y configurar texto, listas, tablas, booleanos y selección
    múltiple. El esquema de tablas usa un diseñador estructurado —columnas, grupos,
    bandas, cabeceras, totales y repetición— y no expone JSON al usuario.
-5. Completar el editor docente y la revisión con representación fiel de documentos y
-   tablas complejas, historial/comparación, estados de conflicto, avisos y accesibilidad.
+5. El editor docente y la revisión usan una hoja documental con la apariencia de la
+   plantilla, logos, título y ficha institucional. Las tablas conservan bandas, grupos,
+   cabeceras y unidades repetibles; los booleanos distinguen Sí, No y pendiente. El
+   autoguardado se vacía antes de validar/enviar y un conflicto de versión detiene nuevas
+   escrituras hasta recargar. Coordinación ve la apariencia congelada de cada revisión,
+   tablas estructuradas, historial, comparación y observaciones vinculadas. Queda la
+   validación manual de accesibilidad y dispositivos reales en PV-19.
 6. El chat de IA ya dispone de conversación persistente por docente/sílabo, trabajo en
    cola, contexto del borrador, fuentes seleccionadas, citas verificadas y limpieza no
    destructiva. La SPA lo presenta en un único panel derecho junto con la revisión

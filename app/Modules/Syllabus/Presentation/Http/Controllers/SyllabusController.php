@@ -8,8 +8,11 @@ use App\Modules\AiAssistance\Application\ResolveEffectiveAiConfiguration;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiEvidence;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiRecommendation;
+use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TableLayout;
+use App\Modules\Configuration\Domain\TemplateAppearance;
+use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
@@ -41,7 +44,10 @@ use Inertia\Response;
 
 class SyllabusController extends Controller
 {
-    public function __construct(private readonly ResolveEffectiveAiConfiguration $effectiveAi) {}
+    public function __construct(
+        private readonly ResolveEffectiveAiConfiguration $effectiveAi,
+        private readonly InstitutionalLogos $logos,
+    ) {}
 
     public function index(ViewSyllabiRequest $request, ActiveRole $roles): Response|JsonResponse
     {
@@ -271,6 +277,14 @@ class SyllabusController extends Controller
             'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
             'parallels' => $syllabus->scopes->pluck('parallel.codigo')->unique()->values(),
             'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
+            'presentation' => [
+                'appearance' => TemplateAppearance::fromMapping($syllabus->template->mapeo_documento),
+                'title' => TemplateTitleBlock::fromMapping($syllabus->template->mapeo_documento)['text'],
+                'logos' => [
+                    'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
+                    'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
+                ],
+            ],
             'identification' => IdentificationCard::grid(IdentificationCard::fromSyllabus($syllabus)),
             'template_variables' => TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($syllabus), 'academic_context' => $syllabus->contexto_academico]),
             'planning_expectations' => [

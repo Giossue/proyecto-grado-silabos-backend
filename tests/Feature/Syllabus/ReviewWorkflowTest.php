@@ -232,6 +232,17 @@ class ReviewWorkflowTest extends TestCase
                 ->component('Coordination/Reviews/Show')
                 ->where('revision.number', 1)
                 ->where('syllabus.id', $syllabus->id));
+        config(['sanctum.stateful' => ['localhost:5173']]);
+        $this->actingAsCoordinator()
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.coordination.reviews.show', $revision))
+            ->assertOk()
+            ->assertJsonPath('presentation.title', 'PROGRAMA DE ASIGNATURA (SÍLABO)')
+            ->assertJsonPath('presentation.appearance.font_family', 'Arial')
+            ->assertJsonStructure([
+                'presentation' => ['logos' => ['institution', 'faculty']],
+                'revision' => ['identification', 'snapshot' => ['sections']],
+            ]);
         $this->actingAsTeacher()->get(route('reviews.show', $revision))->assertForbidden();
         $this->actingAsAdministrator()->get(route('reviews.show', $revision))->assertForbidden();
 

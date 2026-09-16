@@ -4,6 +4,9 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Configuration\Application\InstitutionalLogos;
+use App\Modules\Configuration\Domain\TemplateAppearance;
+use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -36,6 +39,8 @@ use Inertia\Response;
 
 class ReviewController extends Controller
 {
+    public function __construct(private readonly InstitutionalLogos $logos) {}
+
     public function index(ViewReviewsRequest $request, ActiveRole $roles): Response|JsonResponse
     {
         $activeRole = $roles->resolve($request);
@@ -244,6 +249,9 @@ class ReviewController extends Controller
         $syllabus = $revision->syllabus;
         $latest = $syllabus->revisions->sortByDesc('numero_revision')->first();
         $latestReopening = $syllabus->reopenings->sortByDesc('reabierto_en')->first();
+        $documentMapping = is_array($revision->fotografia['document_mapping'] ?? null)
+            ? $revision->fotografia['document_mapping']
+            : [];
 
         return [
             'syllabus' => [
@@ -253,6 +261,14 @@ class ReviewController extends Controller
                 'period' => $syllabus->convocation->process->academicPeriod->codigo,
                 'state' => $syllabus->estado,
                 'teachers' => $syllabus->teachers->pluck('nombre')->values(),
+            ],
+            'presentation' => [
+                'appearance' => TemplateAppearance::fromMapping($documentMapping),
+                'title' => TemplateTitleBlock::fromMapping($documentMapping)['text'],
+                'logos' => [
+                    'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
+                    'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
+                ],
             ],
             'revision' => [
                 'id' => $revision->id,
