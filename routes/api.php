@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
+use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +11,12 @@ Route::prefix('v1')->group(function (): void {
     Route::post('authentication/login', [SessionController::class, 'login'])
         ->middleware('throttle:login')
         ->name('api.v1.authentication.login');
+    Route::post('authentication/password-recovery', [PasswordRecoveryController::class, 'sendLink'])
+        ->middleware('throttle:password-recovery')
+        ->name('api.v1.authentication.password-recovery.send');
+    Route::post('authentication/password-reset', [PasswordRecoveryController::class, 'reset'])
+        ->middleware('throttle:password-recovery')
+        ->name('api.v1.authentication.password-recovery.reset');
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('session', [SessionController::class, 'show'])->name('api.v1.session.show');

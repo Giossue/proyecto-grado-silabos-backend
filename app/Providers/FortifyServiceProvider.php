@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\ResetUserPassword;
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -34,6 +35,12 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureAuthentication();
         $this->configureViews();
         $this->configureRateLimiting();
+        ResetPasswordNotification::createUrlUsing(function (User $user, string $token): string {
+            $frontend = rtrim((string) config('app.frontend_url'), '/');
+
+            return $frontend.'/restablecer-contrasena?token='.urlencode($token)
+                .'&email='.urlencode($user->getEmailForPasswordReset());
+        });
     }
 
     /**
@@ -109,6 +116,12 @@ class FortifyServiceProvider extends ServiceProvider
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
             return Limit::perMinute(5)->by($throttleKey);
+        });
+
+        RateLimiter::for('password-recovery', function (Request $request) {
+            $email = Str::lower($request->string('email')->toString());
+
+            return Limit::perMinute(3)->by(Str::transliterate($email.'|'.$request->ip()));
         });
 
     }
