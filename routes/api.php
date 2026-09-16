@@ -60,6 +60,16 @@ Route::prefix('v1')->group(function (): void {
         Route::post('admin/users', [ManagedUserController::class, 'store'])
             ->middleware('active-role')
             ->name('api.v1.admin.users.store');
+        Route::patch('admin/users/{user}', [ManagedUserController::class, 'update'])
+            ->middleware('active-role')->name('api.v1.admin.users.update');
+        Route::post('admin/users/{user}/roles', [ManagedUserController::class, 'assignRole'])
+            ->middleware('active-role')->name('api.v1.admin.users.roles.store');
+        Route::patch('admin/users/{user}/status', [ManagedUserController::class, 'setStatus'])
+            ->middleware('active-role')->name('api.v1.admin.users.status.update');
+        Route::post('admin/users/{user}/resend-access', [ManagedUserController::class, 'resendCredentials'])
+            ->middleware('active-role')->name('api.v1.admin.users.credentials.resend');
+        Route::delete('admin/users/{user}', [ManagedUserController::class, 'destroy'])
+            ->middleware('active-role')->name('api.v1.admin.users.destroy');
         Route::get('teacher/syllabi', [SyllabusController::class, 'index'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.index');

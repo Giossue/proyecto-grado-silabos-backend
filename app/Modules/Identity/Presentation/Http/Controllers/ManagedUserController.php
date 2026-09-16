@@ -183,7 +183,7 @@ class ManagedUserController extends Controller
         ]);
     }
 
-    public function assignRole(User $user, AssignRoleRequest $request, AssignRole $action): RedirectResponse
+    public function assignRole(User $user, AssignRoleRequest $request, AssignRole $action): RedirectResponse|JsonResponse
     {
         Gate::authorize('update', $user);
         $actor = $request->user();
@@ -192,6 +192,10 @@ class ManagedUserController extends Controller
             'role_code' => $request->string('role_code')->toString(),
             'career_id' => $request->filled('career_id') ? $request->string('career_id')->toString() : null,
         ], $actor, $request);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Rol asignado con su alcance.']);
+        }
 
         return back()->with('success', 'Rol asignado con su alcance.');
     }
@@ -205,34 +209,48 @@ class ManagedUserController extends Controller
         );
     }
 
-    public function setStatus(User $user, SetUserStatusRequest $request, SetUserStatus $action): RedirectResponse
+    public function setStatus(User $user, SetUserStatusRequest $request, SetUserStatus $action): RedirectResponse|JsonResponse
     {
         Gate::authorize('update', $user);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($user, $request->boolean('active'), $actor, $request);
 
-        return back()->with('success', $user->activo ? 'Cuenta activada.' : 'Cuenta desactivada y sesiones revocadas.');
+        $message = $user->fresh()?->activo ? 'Cuenta activada.' : 'Cuenta desactivada y sesiones revocadas.';
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 
     /** Nueva contraseña temporal al correo actual; solo cuentas pendientes de activación. */
-    public function resendCredentials(User $user, Request $request, ResendManagedUserCredentials $action): RedirectResponse
+    public function resendCredentials(User $user, Request $request, ResendManagedUserCredentials $action): RedirectResponse|JsonResponse
     {
         Gate::authorize('managePending', $user);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($user, $actor, $request);
 
-        return back()->with('success', "Acceso reenviado a {$user->correo_electronico}.");
+        $message = "Acceso reenviado a {$user->correo_electronico}.";
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 
     /** Borra una cuenta pendiente de activación sin actividad; con historia, se desactiva. */
-    public function destroy(User $user, Request $request, DeleteManagedUser $action): RedirectResponse
+    public function destroy(User $user, Request $request, DeleteManagedUser $action): RedirectResponse|JsonResponse
     {
         Gate::authorize('managePending', $user);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($user, $actor, $request);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Cuenta eliminada.']);
+        }
 
         return redirect()->route('admin.users.index')->with('success', 'Cuenta eliminada.');
     }
@@ -246,7 +264,7 @@ class ManagedUserController extends Controller
         UpdateManagedUserProfile $updateProfile,
         AssignRole $assignRole,
         SetUserStatus $setStatus,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $validated = $request->validated();
@@ -269,6 +287,10 @@ class ManagedUserController extends Controller
                 $setStatus->execute($user, (bool) $validated['active'], $actor, $request);
             }
         });
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Cuenta actualizada.']);
+        }
 
         return back()->with('success', 'Cuenta actualizada.');
     }
