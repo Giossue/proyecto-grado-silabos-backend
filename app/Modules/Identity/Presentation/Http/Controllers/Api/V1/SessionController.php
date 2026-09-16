@@ -59,6 +59,7 @@ class SessionController extends Controller
         RateLimiter::clear($throttleKey);
         if ($user->hasEnabledTwoFactorAuthentication()) {
             $request->session()->put('login.id', $user->id);
+            $request->session()->put('login.remember', $request->boolean('remember'));
 
             return response()->json([
                 'two_factor_required' => true,
@@ -66,7 +67,7 @@ class SessionController extends Controller
             ], 202);
         }
 
-        Auth::guard('web')->login($user);
+        Auth::guard('web')->login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
         $this->audit->execute(

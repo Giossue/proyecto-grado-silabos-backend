@@ -4,6 +4,13 @@ Corte histórico del 30 de agosto de 2026, con actualización I-56 a continuaci�
 Este documento separa lo que falta según de quién
 depende, porque son cosas de naturaleza distinta y no se resuelven igual.
 
+## Corrección de paridad visual distribuida, 2026-09-16 (I-85)
+
+I-84 separó correctamente la frontera API/SPA, pero sustituyó la interfaz Vue original
+por una versión simplificada. I-85 porta la presentación canónica del monolito a la SPA
+sin recuperar Inertia ni alterar la separación. El plan, matriz de pantallas y puertas de
+aceptación están en `active/I-85-paridad-visual-spa-distribuida.md`.
+
 ## Actualización de separación distribuida, 2026-09-16 (I-84)
 
 El código vigente ya no usa Inertia ni contiene frontend dentro de Laravel. La API vive

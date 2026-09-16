@@ -60,6 +60,23 @@ class ApiSessionTest extends TestCase
         $this->assertAuthenticatedAs($teacher);
     }
 
+    public function test_login_can_request_a_persistent_remember_cookie(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+
+        $this->withoutMiddleware(ValidateCsrfToken::class)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.authentication.login'), [
+                'email' => $teacher->correo_electronico,
+                'password' => 'Demo-2026!',
+                'remember' => true,
+            ])
+            ->assertOk();
+
+        $this->assertNotNull($teacher->fresh()->codigo_recordarme);
+    }
+
     public function test_login_throttle_is_scoped_by_email_and_not_only_by_shared_ip(): void
     {
         $this->withoutMiddleware(ValidateCsrfToken::class);

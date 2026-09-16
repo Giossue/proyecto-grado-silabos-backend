@@ -110,8 +110,9 @@ class TwoFactorController extends Controller
         }
 
         RateLimiter::clear($throttleKey);
+        $remember = (bool) $request->session()->pull('login.remember', false);
         $request->session()->forget('login.id');
-        Auth::guard('web')->login($user);
+        Auth::guard('web')->login($user, $remember);
         $request->session()->regenerate();
         $this->audit->execute(
             actorId: $user->id,

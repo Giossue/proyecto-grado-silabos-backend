@@ -355,6 +355,10 @@ class DocumentOperationsTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('indicators.total', 0)
                 ->where('syllabi.total', 0));
+        $this->actingAsCoordinator()
+            ->getJson(route('api.v1.coordination.reports.index', ['state' => 'aprobado']))
+            ->assertOk()
+            ->assertJsonPath('indicators.approved', 1);
         $this->actingAsTeacher()->getJson(route('api.v1.coordination.reports.index'))->assertForbidden();
         $this->actingAsAdministrator()->getJson(route('api.v1.coordination.reports.index'))->assertForbidden();
     }

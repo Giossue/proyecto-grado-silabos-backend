@@ -22,7 +22,7 @@ class ViewOperationalReportsRequest extends FormRequest
     {
         return [
             'convocation' => ['nullable', 'uuid'],
-            'state' => ['nullable', 'string', 'in:not_started,draft,in_review,correction_requested,approved'],
+            'state' => ['nullable', 'string', 'in:sin_iniciar,borrador,en_revision,correccion_solicitada,aprobado'],
             'search' => ['nullable', 'string', 'max:100'],
         ];
     }
