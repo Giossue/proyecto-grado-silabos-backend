@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
@@ -70,6 +71,16 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('active-role')->name('api.v1.admin.users.credentials.resend');
         Route::delete('admin/users/{user}', [ManagedUserController::class, 'destroy'])
             ->middleware('active-role')->name('api.v1.admin.users.destroy');
+        Route::get('admin/academic/{section?}', [AcademicGovernanceController::class, 'index'])
+            ->middleware('active-role')->name('api.v1.admin.academic.index');
+        Route::post('admin/academic/{entity}', [AcademicGovernanceController::class, 'store'])
+            ->middleware('active-role')->name('api.v1.admin.academic.store');
+        Route::patch('admin/academic/{entity}/{record}', [AcademicGovernanceController::class, 'update'])
+            ->middleware('active-role')->name('api.v1.admin.academic.update');
+        Route::patch('admin/academic/{entity}/{record}/status', [AcademicGovernanceController::class, 'setStatus'])
+            ->middleware('active-role')->name('api.v1.admin.academic.status');
+        Route::delete('admin/academic/{entity}/{record}', [AcademicGovernanceController::class, 'destroy'])
+            ->middleware('active-role')->name('api.v1.admin.academic.destroy');
         Route::get('teacher/syllabi', [SyllabusController::class, 'index'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.index');

@@ -16,6 +16,7 @@ use App\Modules\Academic\Presentation\Http\Requests\ReplaceCoordinatorRequest;
 use App\Modules\Academic\Presentation\Http\Requests\SetAcademicRecordStatusRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreAcademicRecordRequest;
 use App\Modules\Academic\Presentation\Http\Requests\UpdateAcademicRecordRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,7 +26,7 @@ class AcademicGovernanceController extends Controller
     public function index(
         ManageAcademicGovernanceRequest $request,
         AcademicStructureViewData $viewData,
-    ): Response {
+    ): Response|JsonResponse {
         $routeSection = $request->route('section');
         $section = match ($routeSection) {
             null, 'facultades' => 'faculties',
@@ -35,20 +36,28 @@ class AcademicGovernanceController extends Controller
             default => abort(404),
         };
 
-        return Inertia::render('Admin/Academic/Index', [
+        $payload = [
             ...$viewData->governance(),
             'section' => $section,
-        ]);
+        ];
+
+        return $request->expectsJson()
+            ? response()->json($payload)
+            : Inertia::render('Admin/Academic/Index', $payload);
     }
 
     public function store(
         string $entity,
         StoreAcademicRecordRequest $request,
         CreateAcademicRecord $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($entity, $request->validated(), $actor, $request);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Registro institucional creado.'], 201);
+        }
 
         return back()->with('success', 'Registro institucional creado.');
     }
@@ -58,7 +67,7 @@ class AcademicGovernanceController extends Controller
         Career $career,
         ReplaceCoordinatorRequest $request,
         ReplaceCoordinator $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         /** @var array{incoming_user_id: string, deactivate_outgoing?: bool} $data */
@@ -71,6 +80,10 @@ class AcademicGovernanceController extends Controller
                 ? "Coordinación de {$career->nombre} reemplazada; la cuenta saliente quedó desactivada."
                 : "Coordinación de {$career->nombre} reemplazada.");
 
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
         return back()->with('success', $message);
     }
 
@@ -79,15 +92,20 @@ class AcademicGovernanceController extends Controller
         string $record,
         SetAcademicRecordStatusRequest $request,
         SetAcademicRecordStatus $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $active = $request->boolean('active');
         $action->execute($entity, $record, $active, $actor, $request);
 
-        return back()->with('success', $active
+        $message = $active
             ? 'Registro reactivado.'
-            : 'Registro desactivado sin borrar su historial.');
+            : 'Registro desactivado sin borrar su historial.';
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 
     public function update(
@@ -95,10 +113,14 @@ class AcademicGovernanceController extends Controller
         string $record,
         UpdateAcademicRecordRequest $request,
         UpdateAcademicRecord $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($entity, $record, $request->validated(), $actor, $request);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Datos institucionales actualizados y auditados.']);
+        }
 
         return back()->with('success', 'Datos institucionales actualizados y auditados.');
     }
@@ -108,10 +130,14 @@ class AcademicGovernanceController extends Controller
         string $record,
         ManageAcademicGovernanceRequest $request,
         DeleteAcademicRecord $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($entity, $record, $actor, $request);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Registro institucional eliminado.']);
+        }
 
         return back()->with('success', 'Registro institucional eliminado.');
     }
