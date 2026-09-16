@@ -15,17 +15,18 @@ use App\Modules\Configuration\Presentation\Http\Requests\UpdateSourceRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ViewSourcesRequest;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\ProcessLocks;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AcademicSourceController extends Controller
 {
-    public function index(ViewSourcesRequest $request, ActiveRole $roles, ProcessLocks $locks): Response
+    public function index(ViewSourcesRequest $request, ActiveRole $roles, ProcessLocks $locks): Response|JsonResponse
     {
         $activeRole = $roles->resolve($request);
 
-        return Inertia::render('Sources/Index', [
+        $payload = [
             'processLock' => $locks->careerLockReason($activeRole?->carrera_id),
             'sources' => AcademicSource::query()
                 ->where('carrera_id', $activeRole?->carrera_id)
@@ -37,21 +38,27 @@ class AcademicSourceController extends Controller
                     'description' => $source->descripcion,
                     'has_content' => is_string($source->contenido) && trim($source->contenido) !== '',
                 ]),
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Sources/Index', $payload);
     }
 
-    public function store(CreateSourceRequest $request, CreateAcademicSource $action): RedirectResponse
+    public function store(CreateSourceRequest $request, CreateAcademicSource $action): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $source = $action->execute($request->validated(), $actor, $request);
 
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Fuente creada. Ya puede redactar su contenido.', 'source_id' => $source->id], 201);
+        }
+
         return to_route('sources.show', $source)->with('success', 'Fuente creada. Ya puede redactar su contenido.');
     }
 
-    public function show(AcademicSource $source, ManageAcademicSourceRequest $request, ProcessLocks $locks): Response
+    public function show(AcademicSource $source, ManageAcademicSourceRequest $request, ProcessLocks $locks): Response|JsonResponse
     {
-        return Inertia::render('Sources/Show', [
+        $payload = [
             'processLock' => $locks->careerLockReason($source->carrera_id),
             'source' => [
                 'id' => $source->id,
@@ -59,31 +66,37 @@ class AcademicSourceController extends Controller
                 'description' => $source->descripcion,
                 'content' => $source->contenido,
             ],
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Sources/Show', $payload);
     }
 
     public function update(
         AcademicSource $source,
         UpdateSourceRequest $request,
         UpdateAcademicSource $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($source, $request->validated(), $actor, $request);
 
-        return back()->with('success', 'Fuente actualizada.');
+        $message = 'Fuente actualizada.';
+
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 
     public function updateContent(
         AcademicSource $source,
         UpdateSourceContentRequest $request,
         UpdateAcademicSourceContent $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $content = $request->validated('content');
         $action->execute($source, is_string($content) ? $content : null, $actor, $request);
 
-        return back()->with('success', 'Contenido guardado.');
+        $message = 'Contenido guardado.';
+
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 }

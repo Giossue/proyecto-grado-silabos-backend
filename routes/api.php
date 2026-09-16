@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
+use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
@@ -119,6 +120,16 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('active-role')->name('api.v1.coordination.reviews.reset');
         Route::post('coordination/syllabi/{syllabus}/teacher-transfer', [ReviewController::class, 'transferTeacher'])
             ->middleware('active-role')->name('api.v1.coordination.reviews.teacher.transfer');
+        Route::get('coordination/sources', [AcademicSourceController::class, 'index'])
+            ->middleware('active-role')->name('api.v1.coordination.sources.index');
+        Route::post('coordination/sources', [AcademicSourceController::class, 'store'])
+            ->middleware('active-role')->name('api.v1.coordination.sources.store');
+        Route::get('coordination/sources/{source}', [AcademicSourceController::class, 'show'])
+            ->middleware('active-role')->name('api.v1.coordination.sources.show');
+        Route::patch('coordination/sources/{source}', [AcademicSourceController::class, 'update'])
+            ->middleware('active-role')->name('api.v1.coordination.sources.update');
+        Route::put('coordination/sources/{source}/content', [AcademicSourceController::class, 'updateContent'])
+            ->middleware('active-role')->name('api.v1.coordination.sources.content.update');
         Route::get('teacher/syllabi', [SyllabusController::class, 'index'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.index');
