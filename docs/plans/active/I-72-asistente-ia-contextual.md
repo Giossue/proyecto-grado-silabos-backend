@@ -4,9 +4,10 @@
 
 En curso desde el 14 de septiembre de 2026. La revisión global y el chat funcional ya
 comparten el panel docente, conservan mensajes y fotografías de evidencia y validan las
-citas en servidor. Las fuentes Markdown ya se indexan por encabezados y fragmentos y se
-recuperan mediante búsqueda textual PostgreSQL; falta incorporar las secciones
-relacionadas del propio borrador a la revisión por campo y cerrar la evaluación integral.
+citas en servidor. Las fuentes Markdown se indexan por encabezados y fragmentos y se
+recuperan mediante búsqueda textual PostgreSQL. La revisión por campo ya contrasta el
+objetivo con secciones habilitadas del borrador y fragmentos externos mediante evidencia
+tipada; falta cerrar la ejecución padre de la evaluación integral.
 
 ## Trazabilidad
 
@@ -216,10 +217,11 @@ PV-13 y PV-14 definan hardware y modelo; no se añade una base vectorial por ant
       invalidación.
 - [x] **I-72.3 — Fuentes elegidas:** retirar sincronización automática, selector previo
       al inicio, congelación, auditoría y pruebas de pertenencia/actividad.
-- [ ] **I-72.4 — Contexto trazable:** fragmentación Markdown y búsqueda textual ya
-      implementadas; el chat ensambla el sílabo con citas tipadas y existen pruebas
-      contra instrucciones incrustadas. Falta contrastar cada revisión por campo con
-      secciones relacionadas del borrador antes de cerrar la rebanada.
+- [x] **I-72.4 — Contexto trazable:** fragmentación Markdown, búsqueda textual y
+      ensamblaje canónico del borrador implementados. Chat y revisión por campo reciben
+      únicamente secciones habilitadas y fragmentos seleccionados, conservan fotografías
+      tipadas y validan las citas; las pruebas cubren instrucciones incrustadas y el
+      contraste simultáneo de evidencia interna y externa.
 - [ ] **I-72.5 — Revisión integral:** ejecución padre, trabajos hijos, progreso,
       idempotencia, integración con validación y sugerencias agrupadas por sección.
 - [x] **I-72.6 — Chat único:** persistencia, endpoint, cola/sondeo elegido, panel

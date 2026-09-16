@@ -309,6 +309,49 @@ class AiAssistanceTest extends TestCase
         );
     }
 
+    public function test_field_review_contrasts_typed_internal_and_external_evidence(): void
+    {
+        Queue::fake();
+        config()->set('ai.limits.evidence_items', 2);
+        [$syllabus, $field] = $this->fixture(evidenceContent: <<<'MARKDOWN'
+            # Coherencia
+
+            Los resultados y objetivos deben mantener consistencia curricular.
+            MARKDOWN);
+        $related = FieldDefinition::query()
+            ->where('plantilla_id', $syllabus->plantilla_id)
+            ->where('id', '!=', $field->id)
+            ->firstOrFail();
+        FieldValue::query()->create([
+            'silabo_id' => $syllabus->id,
+            'definicion_campo_id' => $related->id,
+            'valor' => 'Aplicar fundamentos de software en un caso verificable.',
+            'heredado' => false,
+        ]);
+        $this->actAsTeacher();
+
+        $this->post(route('syllabi.ai.store', [$syllabus, $field]), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertRedirect();
+
+        $execution = AiExecution::query()->firstOrFail();
+        $this->assertDatabaseHas('evidencias_ia', [
+            'ejecucion_ia_id' => $execution->id,
+            'tipo_evidencia_ia' => 'seccion_silabo',
+            'definicion_campo_id' => $related->id,
+            'fuente_academica_id' => null,
+            'extracto_evidencia_ia' => 'Aplicar fundamentos de software en un caso verificable.',
+        ]);
+        $this->assertDatabaseHas('evidencias_ia', [
+            'ejecucion_ia_id' => $execution->id,
+            'tipo_evidencia_ia' => 'fuente_academica',
+            'definicion_campo_id' => null,
+        ]);
+
+        $this->runJob($execution);
+        $this->assertSame('completada', $execution->fresh()->estado);
+    }
+
     public function test_ia_neg_05_and_06_invented_references_and_oversized_outputs_fail_closed(): void
     {
         Queue::fake();
@@ -501,8 +544,11 @@ class AiAssistanceTest extends TestCase
         try {
             DB::transaction(fn () => AiEvidence::query()->create([
                 'ejecucion_ia_id' => $execution->id,
+                'tipo_evidencia_ia' => $evidence->tipo_evidencia_ia,
+                'definicion_campo_id' => $evidence->definicion_campo_id,
                 'fuente_academica_id' => $evidence->fuente_academica_id,
-                'nombre_fuente' => $evidence->nombre_fuente,
+                'fragmento_fuente_academica_id' => $evidence->fragmento_fuente_academica_id,
+                'etiqueta_evidencia_ia' => $evidence->etiqueta_evidencia_ia,
                 'extracto' => $evidence->extracto,
                 'huella_contenido' => $evidence->huella_contenido,
             ]));

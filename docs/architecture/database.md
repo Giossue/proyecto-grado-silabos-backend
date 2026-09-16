@@ -156,6 +156,11 @@ secciones habilitadas o fuentes seleccionadas guardadas para ese mismo mensaje.
 `iniciada_en`, `enviado_en` y `fijada_en` expresan los momentos funcionales de la
 conversación, el mensaje y su evidencia; estas tablas no usan timestamps técnicos
 genéricos.
+`evidencias_ia` conserva una fotografía tipada de cada entrada usada por una revisión de
+campo. `fuente_academica` referencia la fuente seleccionada y, cuando corresponde, su
+fragmento derivado; `seccion_silabo` referencia la definición del campo relacionado del
+mismo borrador. En ambos casos etiqueta, extracto y huella permanecen inmutables aunque
+cambie luego el documento o el borrador.
 `plantillas_silabo.revision_configuracion` aumenta ante cualquier cambio de estructura,
 contenido o apariencia. Una preferencia de carrera solo es efectiva si el campo permite
 la decisión de Coordinación y su `revision_plantilla_origen` coincide; de otro modo rige
@@ -236,8 +241,10 @@ seeder dos veces. Las asignaciones activas se reutilizan para conservar la idemp
 - la ejecución, el campo y la versión de plantilla pertenecen al mismo sílabo;
 - una clave funcional activa es única por sílabo/campo, y una ejecución fallida permite
   una solicitud nueva sin reescribir historia;
-- evidencia solo se fija mientras la ejecución está pendiente y debe provenir de una
-  fuente activa, de igual carrera y fijada por la convocatoria;
+- evidencia solo se fija mientras la ejecución está pendiente; la externa debe provenir
+  de una fuente activa, de igual carrera y fijada por la convocatoria, y la interna debe
+  pertenecer a la plantilla del sílabo. El tipo determina de forma excluyente qué FK se
+  admite y una fotografía nunca se reescribe;
 - una conversación es única por docente y sílabo; una clave idempotente no crea dos
   preguntas dentro de la misma conversación;
 - cada respuesta conversacional conserva evidencia propia y únicamente puede citar IDs

@@ -20,19 +20,22 @@ class BuildSyllabusChatContext
     /**
      * @return list<array{
      *   id: string, type: string, label: string, excerpt: string, fingerprint: string,
-     *   field_id: string|null, source_id: string|null
+     *   field_id: string|null, source_id: string|null, fragment_id: string|null
      * }>
      */
-    public function build(Syllabus $syllabus, ?string $query = null): array
+    public function build(Syllabus $syllabus, ?string $query = null, ?string $excludeFieldId = null): array
     {
         $syllabus->loadMissing(['template.sections.blocks.fields', 'values', 'rows', 'convocation']);
         $values = $syllabus->values->keyBy('definicion_campo_id');
         $rows = $syllabus->rows->groupBy('definicion_campo_id');
-        $items = [];
+        $fieldItems = [];
 
         foreach ($syllabus->template->sections->sortBy('posicion') as $section) {
             foreach ($section->blocks->sortBy('posicion') as $block) {
                 foreach ($block->fields->sortBy('posicion') as $field) {
+                    if ($field->id === $excludeFieldId) {
+                        continue;
+                    }
                     if (! $this->effectiveAi->enabled($syllabus->carrera_id, $field)) {
                         continue;
                     }
@@ -41,7 +44,7 @@ class BuildSyllabusChatContext
                         continue;
                     }
                     $excerpt = mb_substr($excerpt, 0, (int) config('ai.limits.evidence_excerpt_characters'));
-                    $items[] = [
+                    $fieldItems[] = [
                         'id' => (string) Str::uuid(),
                         'type' => 'seccion_silabo',
                         'label' => "{$section->titulo} · {$field->etiqueta}",
@@ -49,13 +52,15 @@ class BuildSyllabusChatContext
                         'fingerprint' => $this->hasher->hash($excerpt),
                         'field_id' => $field->id,
                         'source_id' => null,
+                        'fragment_id' => null,
                     ];
                 }
             }
         }
 
+        $sourceItems = [];
         foreach ($this->sources->collect($syllabus, $query)['items'] as $source) {
-            $items[] = [
+            $sourceItems[] = [
                 'id' => (string) Str::uuid(),
                 'type' => 'fuente_academica',
                 'label' => $source['source_name'],
@@ -63,10 +68,22 @@ class BuildSyllabusChatContext
                 'fingerprint' => $source['fingerprint'],
                 'field_id' => null,
                 'source_id' => $source['source_id'],
+                'fragment_id' => $source['fragment_id'],
             ];
         }
 
-        return array_slice($items, 0, (int) config('ai.limits.evidence_items'));
+        $limit = max(1, (int) config('ai.limits.evidence_items'));
+        $sourceQuota = $sourceItems === [] ? 0 : min(count($sourceItems), max(1, intdiv($limit, 2)));
+        $fieldQuota = min(count($fieldItems), $limit - $sourceQuota);
+        $remaining = $limit - $sourceQuota - $fieldQuota;
+        $sourceQuota += min($remaining, count($sourceItems) - $sourceQuota);
+        $remaining = $limit - $sourceQuota - $fieldQuota;
+        $fieldQuota += min($remaining, count($fieldItems) - $fieldQuota);
+
+        return array_merge(
+            array_slice($fieldItems, 0, $fieldQuota),
+            array_slice($sourceItems, 0, $sourceQuota),
+        );
     }
 
     /** @param Collection<int, RepeatableRow>|null $rows */

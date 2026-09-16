@@ -77,11 +77,10 @@ class AiAssistanceController extends Controller
                 'input_content' => $execution->contenido_entrada,
                 'reason' => $this->reasonLabel($execution->motivo_no_concluyente),
                 'mensaje_error' => $execution->mensaje_error,
-                'evidence' => $execution->evidence->map(fn (AiEvidence $evidence): array => [
-                    'id' => $evidence->id,
-                    'source' => $evidence->nombre_fuente,
-                    'excerpt' => $evidence->extracto,
-                ])->values(),
+                'evidence' => $execution->evidence
+                    ->map(fn (AiEvidence $evidence): array => $this->evidencePayload($evidence))
+                    ->values()
+                    ->all(),
                 'recommendations' => $execution->recommendations->map(fn (AiRecommendation $recommendation): array => [
                     'id' => $recommendation->id,
                     'type' => $recommendation->tipo,
@@ -101,6 +100,26 @@ class AiAssistanceController extends Controller
         return $request->expectsJson()
             ? response()->json($payload)
             : Inertia::render('Teacher/Syllabi/Ai', $payload);
+    }
+
+    private function nullableIdentifier(mixed $value): ?string
+    {
+        return is_string($value) && $value !== '' ? $value : null;
+    }
+
+    /**
+     * @return array{id: string, type: string, field_id: string|null, source_id: string|null, source: string, excerpt: string}
+     */
+    private function evidencePayload(AiEvidence $evidence): array
+    {
+        return [
+            'id' => $evidence->id,
+            'type' => $evidence->tipo_evidencia_ia,
+            'field_id' => $this->nullableIdentifier($evidence->definicion_campo_id),
+            'source_id' => $this->nullableIdentifier($evidence->fuente_academica_id),
+            'source' => $evidence->etiqueta_evidencia_ia,
+            'excerpt' => $evidence->extracto,
+        ];
     }
 
     public function store(

@@ -36,7 +36,14 @@ class AiChatController extends Controller
             foreach ($execution->recommendations as $recommendation) {
                 $citations = [];
                 foreach ($recommendation->evidence as $evidence) {
-                    $citations[] = ['id' => $evidence->id, 'label' => $evidence->nombre_fuente, 'excerpt' => $evidence->extracto];
+                    $citations[] = [
+                        'id' => $evidence->id,
+                        'type' => $evidence->tipo_evidencia_ia,
+                        'field_id' => $evidence->definicion_campo_id,
+                        'source_id' => $evidence->fuente_academica_id,
+                        'label' => $evidence->etiqueta_evidencia_ia,
+                        'excerpt' => $evidence->extracto,
+                    ];
                 }
                 $recommendations[] = [
                     'id' => $recommendation->id,

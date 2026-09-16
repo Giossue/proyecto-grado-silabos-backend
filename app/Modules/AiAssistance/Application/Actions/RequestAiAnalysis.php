@@ -3,7 +3,7 @@
 namespace App\Modules\AiAssistance\Application\Actions;
 
 use App\Models\User;
-use App\Modules\AiAssistance\Application\AiEvidenceCollector;
+use App\Modules\AiAssistance\Application\BuildSyllabusChatContext;
 use App\Modules\AiAssistance\Application\ResolveEffectiveAiConfiguration;
 use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Jobs\AnalyzeSyllabusFieldJob;
@@ -25,7 +25,7 @@ class RequestAiAnalysis
 {
     public function __construct(
         private readonly AiAnalysisGateway $gateway,
-        private readonly AiEvidenceCollector $evidenceCollector,
+        private readonly BuildSyllabusChatContext $contextBuilder,
         private readonly CanonicalHasher $hasher,
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
@@ -63,12 +63,22 @@ class RequestAiAnalysis
                 ]);
             }
 
-            $evidenceSet = $this->evidenceCollector->collect($locked, implode(' ', array_filter([
+            $context = $this->contextBuilder->build($locked, implode(' ', array_filter([
                 $field->etiqueta,
                 $field->clave,
                 $content,
                 json_encode($field->reglas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            ], 'is_string')));
+            ], 'is_string')), $field->id);
+            $evidenceSet = [
+                'items' => $context,
+                'fingerprint' => $this->hasher->hash(array_map(fn (array $item): array => [
+                    'type' => $item['type'],
+                    'field_id' => $item['field_id'],
+                    'source_id' => $item['source_id'],
+                    'fingerprint' => $item['fingerprint'],
+                ], $context)),
+                'too_many' => false,
+            ];
             $contentFingerprint = $this->hasher->hash($content);
             $functionalKey = $this->hasher->hash([
                 'content_fingerprint' => $contentFingerprint,
@@ -101,8 +111,9 @@ class RequestAiAnalysis
                 $evidenceMetadata[] = [
                     'evidence_id' => $evidenceId,
                     'source_id' => $item['source_id'],
+                    'field_id' => $item['field_id'],
+                    'type' => $item['type'],
                     'fragment_id' => $item['fragment_id'],
-                    'heading_path' => $item['heading_path'],
                     'fingerprint' => $item['fingerprint'],
                 ];
             }
@@ -142,8 +153,11 @@ class RequestAiAnalysis
                 AiEvidence::query()->create([
                     'id' => $item['id'],
                     'ejecucion_ia_id' => $execution->id,
+                    'tipo_evidencia_ia' => $item['type'],
+                    'definicion_campo_id' => $item['field_id'],
                     'fuente_academica_id' => $item['source_id'],
-                    'nombre_fuente' => $item['source_name'],
+                    'fragmento_fuente_academica_id' => $item['fragment_id'],
+                    'etiqueta_evidencia_ia' => $item['label'],
                     'extracto' => $item['excerpt'],
                     'huella_contenido' => $item['fingerprint'],
                 ]);

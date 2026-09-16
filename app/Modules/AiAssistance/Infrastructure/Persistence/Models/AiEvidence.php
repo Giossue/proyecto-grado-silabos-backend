@@ -14,8 +14,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property string $id
  * @property string $ejecucion_ia_id
- * @property string $fuente_academica_id
- * @property string $nombre_fuente
+ * @property string $tipo_evidencia_ia
+ * @property string|null $definicion_campo_id
+ * @property string|null $fuente_academica_id
+ * @property string|null $fragmento_fuente_academica_id
+ * @property string $etiqueta_evidencia_ia
  * @property string $extracto
  * @property string $huella_contenido
  */
@@ -33,7 +36,9 @@ class AiEvidence extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'ejecucion_ia_id', 'fuente_academica_id', 'nombre_fuente', 'extracto', 'huella_contenido',
+        'ejecucion_ia_id', 'tipo_evidencia_ia', 'definicion_campo_id',
+        'fuente_academica_id', 'fragmento_fuente_academica_id',
+        'etiqueta_evidencia_ia', 'extracto', 'huella_contenido',
     ];
 
     /** @return BelongsTo<AiExecution, $this> */

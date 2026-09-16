@@ -275,10 +275,13 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
         foreach ($execution->evidence as $item) {
             $evidence[] = new AiEvidenceInput(
                 $item->id,
-                $item->fuente_academica_id,
-                $item->nombre_fuente,
+                $item->tipo_evidencia_ia === 'seccion_silabo'
+                    ? (string) $item->definicion_campo_id
+                    : (string) $item->fuente_academica_id,
+                $item->etiqueta_evidencia_ia,
                 $item->extracto,
                 $item->huella_contenido,
+                $item->tipo_evidencia_ia,
             );
         }
 
