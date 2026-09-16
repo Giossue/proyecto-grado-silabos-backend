@@ -96,11 +96,11 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    ámbito desde un encabezado compartido.
 3. Administración de usuarios, estructura académica y procesos institucionales están
    disponibles; faltan programación de materias, paralelos y asignaciones docentes.
-4. Convocatorias están disponibles; faltan fuentes, malla y demás configuración de
-   Coordinación.
+4. Convocatorias, fuentes académicas y revisión/aprobación están disponibles; faltan
+   malla, programación, paralelos y asignaciones docentes de Coordinación.
 5. Completar el editor docente: representación fiel de tablas complejas, estados de
    conflicto, avisos y accesibilidad.
-6. Plantilla, revisión, documentos, auditoría e IA restante.
+6. Plantilla, documentos, auditoría e IA restante.
 7. Corte único, luego retiro de Inertia, Wayfinder, Vite Laravel y las rutas web de
    producto de este repositorio.
 
