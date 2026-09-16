@@ -29,5 +29,8 @@ Route::prefix('v1')->group(function (): void {
         Route::post('teacher/syllabi/{syllabus}/start', [SyllabusController::class, 'start'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.start');
+        Route::patch('teacher/syllabi/{syllabus}/fields/{field}', [SyllabusController::class, 'updateField'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.fields.update');
     });
 });
