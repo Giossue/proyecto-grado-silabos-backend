@@ -23,5 +23,11 @@ Route::prefix('v1')->group(function (): void {
         Route::get('teacher/syllabi', [SyllabusController::class, 'index'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.index');
+        Route::get('teacher/syllabi/{syllabus}', [SyllabusController::class, 'show'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.show');
+        Route::post('teacher/syllabi/{syllabus}/start', [SyllabusController::class, 'start'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.start');
     });
 });

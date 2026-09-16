@@ -91,18 +91,29 @@ class SyllabusController extends Controller
             : Inertia::render('Teacher/Syllabi/Index', $payload);
     }
 
-    public function show(Syllabus $syllabus, Request $request): Response
+    public function show(Syllabus $syllabus, Request $request): Response|JsonResponse
     {
         abort_unless($request->user()?->can('view', $syllabus) === true, 403);
 
-        return Inertia::render('Teacher/Syllabi/Show', ['syllabus' => $this->syllabusPayload($syllabus)]);
+        $payload = ['syllabus' => $this->syllabusPayload($syllabus)];
+
+        return $request->expectsJson()
+            ? response()->json($payload)
+            : Inertia::render('Teacher/Syllabi/Show', $payload);
     }
 
-    public function start(Syllabus $syllabus, Request $request, StartDraft $action): RedirectResponse
+    public function start(Syllabus $syllabus, Request $request, StartDraft $action): RedirectResponse|JsonResponse
     {
         abort_unless($request->user()?->can('start', $syllabus) === true, 403);
         $actor = $request->user();
-        $action->execute($syllabus->id, $actor, $request);
+        $started = $action->execute($syllabus->id, $actor, $request);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Borrador iniciado con la plantilla y los datos maestros fijados.',
+                'syllabus' => $this->syllabusPayload($started),
+            ]);
+        }
 
         return to_route('syllabi.edit', $syllabus)->with('success', 'Borrador iniciado con la plantilla y los datos maestros fijados.');
     }
