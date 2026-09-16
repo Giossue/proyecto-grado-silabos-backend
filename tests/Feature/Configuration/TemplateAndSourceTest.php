@@ -110,9 +110,26 @@ class TemplateAndSourceTest extends TestCase
                 'key' => 'bloque_resultados',
                 'position' => 2,
                 'fields' => [
-                    ['key' => 'resumen_resultados', 'label' => 'Resumen', 'content_type' => 'text'],
+                    [
+                        'key' => 'resumen_resultados',
+                        'label' => 'Resumen',
+                        'help' => 'Sintetice los resultados esperados.',
+                        'content_type' => 'text',
+                        'ai_enabled' => true,
+                        'ai_coordinator_configurable' => false,
+                    ],
                     ['key' => 'matriz_evidencias', 'label' => 'Matriz de evidencias', 'content_type' => 'table'],
                     ['key' => 'acciones_mejora', 'label' => 'Acciones de mejora', 'content_type' => 'numbered_list'],
+                    ['key' => 'requiere_adaptacion', 'label' => 'Requiere adaptación', 'content_type' => 'boolean'],
+                    [
+                        'key' => 'modalidades_evaluacion',
+                        'label' => 'Modalidades de evaluación',
+                        'content_type' => 'multiple_choice',
+                        'options' => [
+                            ['value' => 'proyecto', 'label' => 'Proyecto'],
+                            ['value' => 'examen', 'label' => 'Examen'],
+                        ],
+                    ],
                 ],
             ])
             ->assertRedirect()
@@ -125,16 +142,40 @@ class TemplateAndSourceTest extends TestCase
 
         $this->assertSame(2, $section->posicion);
         $this->assertSame(
-            ['Resumen', 'Matriz de evidencias', 'Acciones de mejora'],
+            ['Resumen', 'Matriz de evidencias', 'Acciones de mejora', 'Requiere adaptación', 'Modalidades de evaluación'],
             $blocks->pluck('titulo')->all(),
         );
         $this->assertSame(
-            ['text', 'table', 'numbered_list'],
+            ['text', 'table', 'numbered_list', 'boolean', 'multiple_choice'],
             $blocks->pluck('configuracion')->map(fn (array $configuration): string => $configuration['content_type'])->all(),
         );
-        $this->assertSame(['resumen_resultados', 'matriz_evidencias', 'acciones_mejora'], $blocks->pluck('clave')->all());
+        $this->assertSame(
+            ['resumen_resultados', 'matriz_evidencias', 'acciones_mejora', 'requiere_adaptacion', 'modalidades_evaluacion'],
+            $blocks->pluck('clave')->all(),
+        );
         $this->assertSame('texto', $blocks[1]->configuracion['table']['columns'][0]['key']);
         $this->assertTrue($blocks->every(fn ($block): bool => $block->fields->firstOrFail()->obligatorio));
+        $this->assertSame('booleano', $blocks[3]->fields->firstOrFail()->tipo);
+        $this->assertSame('seleccion_multiple', $blocks[4]->fields->firstOrFail()->tipo);
+        $this->assertSame('proyecto', $blocks[4]->fields->firstOrFail()->opciones[0]['value']);
+        $this->assertSame('Sintetice los resultados esperados.', $blocks[0]->fields->firstOrFail()->ayuda);
+        $this->assertTrue($blocks[0]->fields->firstOrFail()->ia_habilitada);
+        $this->assertFalse($blocks[0]->fields->firstOrFail()->ia_coordinacion_configurable);
+
+        config(['sanctum.stateful' => ['localhost:5173']]);
+        $this->actingAsAdministrator()
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.admin.template.index'))
+            ->assertOk()
+            ->assertJsonPath('template.titleBlock.text', TemplateTitleBlock::DEFAULT_TEXT)
+            ->assertJsonFragment(['value' => 'boolean', 'label' => 'Sí / No'])
+            ->assertJsonFragment(['value' => 'multiple_choice', 'label' => 'Selección múltiple'])
+            ->assertJsonFragment([
+                'key' => 'modalidades_evaluacion',
+                'content_type' => 'multiple_choice',
+                'ai_enabled' => false,
+                'ai_coordinator_configurable' => true,
+            ]);
 
         $this->actingAsAdministrator()
             ->from(route('admin.templates.show', $template))
@@ -148,6 +189,15 @@ class TemplateAndSourceTest extends TestCase
             ->assertSessionHasErrors('fields.0.key');
 
         $this->assertDatabaseMissing('secciones_plantilla', ['clave_seccion_plantilla' => 'bloque_invalido']);
+
+        $this->actingAsAdministrator()
+            ->post(route('admin.templates.fields.store', $template), [
+                'section_id' => $section->id,
+                'key' => 'seleccion_sin_opciones',
+                'label' => 'Selección sin opciones',
+                'content_type' => 'multiple_choice',
+            ])
+            ->assertSessionHasErrors('options');
     }
 
     public function test_only_administrator_updates_controlled_template_appearance(): void

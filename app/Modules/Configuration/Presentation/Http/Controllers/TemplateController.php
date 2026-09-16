@@ -177,6 +177,8 @@ class TemplateController extends Controller
                 ['value' => 'table', 'label' => 'Tabla'],
                 ['value' => 'bulleted_list', 'label' => 'Lista con viñetas'],
                 ['value' => 'numbered_list', 'label' => 'Lista numerada'],
+                ['value' => 'boolean', 'label' => 'Sí / No'],
+                ['value' => 'multiple_choice', 'label' => 'Selección múltiple'],
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
         ];

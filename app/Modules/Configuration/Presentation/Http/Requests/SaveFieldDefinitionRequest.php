@@ -5,6 +5,7 @@ namespace App\Modules\Configuration\Presentation\Http\Requests;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class SaveFieldDefinitionRequest extends ManageTemplatesRequest
 {
@@ -13,6 +14,8 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
         'table',
         'bulleted_list',
         'numbered_list',
+        'boolean',
+        'multiple_choice',
     ];
 
     /** @return array<string, list<mixed>> */
@@ -59,8 +62,22 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'ai_enabled' => ['nullable', 'boolean'],
             'ai_coordinator_configurable' => ['nullable', 'boolean'],
             'rules' => ['nullable', 'array'],
-            'options' => ['nullable', 'array'],
+            'options' => ['nullable', 'array', 'min:2', 'max:50'],
+            'options.*' => ['required', 'array:value,label'],
+            'options.*.value' => ['required', 'string', 'max:120', 'distinct'],
+            'options.*.label' => ['required', 'string', 'max:180'],
             'document_marker' => ['nullable', 'string', 'max:160'],
         ];
+    }
+
+    /** @return array<callable(Validator): void> */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            if ($this->input('content_type') === 'multiple_choice'
+                && count((array) $this->input('options', [])) < 2) {
+                $validator->errors()->add('options', 'Agregue al menos dos opciones.');
+            }
+        }];
     }
 }

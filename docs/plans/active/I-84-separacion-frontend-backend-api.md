@@ -110,7 +110,10 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    carga del logo de facultad ya están integradas. La estructura académica permite crear,
    editar, activar, eliminar y ordenar materias por ciclo; configurar la malla; mantener
    requisitos; preparar períodos y paralelos; asignar, incorporar y relevar docentes.
-   Falta la composición visual avanzada de bloques de la plantilla. El esquema de tablas ya usa un diseñador estructurado —columnas, grupos,
+   La plantilla se presenta como documento y separa lectura de edición. El modo edición
+   usa cinta fija, selección contextual e inspector lateral; permite crear bloques con
+   varios campos, reordenarlos y configurar texto, listas, tablas, booleanos y selección
+   múltiple. El esquema de tablas usa un diseñador estructurado —columnas, grupos,
    bandas, cabeceras, totales y repetición— y no expone JSON al usuario.
 5. Completar el editor docente y la revisión con representación fiel de documentos y
    tablas complejas, historial/comparación, estados de conflicto, avisos y accesibilidad.

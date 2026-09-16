@@ -70,6 +70,7 @@ class SaveFieldDefinition
                 // Las propiedades no convierten un número o fecha en texto ni alteran su referencia.
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
+                    'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                     'ia_habilitada' => ! $field->heredado && (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
                     'ia_coordinacion_configurable' => ! $field->heredado
                         && (bool) ($data['ai_coordinator_configurable'] ?? $field->ia_coordinacion_configurable),
@@ -110,7 +111,7 @@ class SaveFieldDefinition
                 'ia_coordinacion_configurable' => ! $inherited
                     && (bool) ($data['ai_coordinator_configurable'] ?? ($field !== null ? $field->ia_coordinacion_configurable : true)),
                 'reglas' => $data['rules'] ?? ($field !== null ? $field->reglas : null),
-                'opciones' => $data['options'] ?? ($field !== null ? $field->opciones : null),
+                'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                 'marcador_documento' => $field !== null ? $field->marcador_documento : null,
             ];
 
@@ -227,7 +228,7 @@ class SaveFieldDefinition
     {
         return $contentType === 'institutional'
             ? 'flujo'
-            : ($contentType === 'text' ? 'narrativa' : 'repetible');
+            : (in_array($contentType, ['table', 'bulleted_list', 'numbered_list'], true) ? 'repetible' : 'narrativa');
     }
 
     private function fieldType(string $contentType): string
@@ -235,6 +236,8 @@ class SaveFieldDefinition
         return match ($contentType) {
             'text' => 'markdown',
             'institutional' => 'referencia_maestra',
+            'boolean' => 'booleano',
+            'multiple_choice' => 'seleccion_multiple',
             default => 'repetible',
         };
     }

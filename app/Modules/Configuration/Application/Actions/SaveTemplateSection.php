@@ -79,7 +79,9 @@ class SaveTemplateSection
                     // La clave del campo ya es única dentro de la plantilla y cabe en
                     // la columna de 100 caracteres de bloques_plantilla.
                     'clave' => $fieldKey,
-                    'tipo' => $contentType === 'text' ? 'narrativa' : 'repetible',
+                    'tipo' => in_array($contentType, ['table', 'bulleted_list', 'numbered_list'], true)
+                        ? 'repetible'
+                        : 'narrativa',
                     'titulo' => $fieldLabel,
                     'configuracion' => $configuration,
                     'posicion' => $fieldPosition + 1,
@@ -89,12 +91,19 @@ class SaveTemplateSection
                     'bloque_plantilla_id' => $block->id,
                     'clave' => $fieldKey,
                     'etiqueta' => $fieldLabel,
-                    'tipo' => $contentType === 'text' ? 'markdown' : 'repetible',
+                    'tipo' => match ($contentType) {
+                        'text' => 'markdown',
+                        'boolean' => 'booleano',
+                        'multiple_choice' => 'seleccion_multiple',
+                        default => 'repetible',
+                    },
+                    'ayuda' => $fieldData['help'] ?? null,
                     'obligatorio' => true,
                     'heredado' => false,
                     'editable_docente' => true,
-                    'ia_habilitada' => false,
-                    'ia_coordinacion_configurable' => true,
+                    'ia_habilitada' => (bool) ($fieldData['ai_enabled'] ?? false),
+                    'ia_coordinacion_configurable' => (bool) ($fieldData['ai_coordinator_configurable'] ?? true),
+                    'opciones' => $fieldData['options'] ?? null,
                     'posicion' => 1,
                 ]);
             }
