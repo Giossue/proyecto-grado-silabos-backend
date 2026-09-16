@@ -3,6 +3,7 @@
 namespace App\Modules\AiAssistance\Infrastructure\Jobs;
 
 use App\Modules\AiAssistance\Application\AiResultContract;
+use App\Modules\AiAssistance\Application\RefreshSyllabusAiReview;
 use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
 use App\Modules\AiAssistance\Domain\Data\AiAnalysisInput;
 use App\Modules\AiAssistance\Domain\Data\AiEvidenceInput;
@@ -62,22 +63,25 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
         AiAnalysisGateway $gateway,
         AiResultContract $contract,
         RecordAuditEvent $audit,
+        ?RefreshSyllabusAiReview $refreshReview = null,
     ): void {
+        $refreshReview ??= app(RefreshSyllabusAiReview::class);
         if (! $this->markRunning()) {
             return;
         }
+        $refreshReview->forExecution($this->executionId);
 
         $execution = AiExecution::query()
             ->with(['field', 'evidence'])
             ->findOrFail($this->executionId);
         $metadata = $execution->metadatos_entrada;
         if (($metadata['too_many_evidence'] ?? false) === true) {
-            $this->finishInconclusive('evidence_limit_exceeded', $gateway->version(), $audit);
+            $this->finishInconclusive('evidence_limit_exceeded', $gateway->version(), $audit, $refreshReview);
 
             return;
         }
         if ($execution->evidence->isEmpty()) {
-            $this->finishInconclusive('insufficient_evidence', $gateway->version(), $audit);
+            $this->finishInconclusive('insufficient_evidence', $gateway->version(), $audit, $refreshReview);
 
             return;
         }
@@ -91,6 +95,7 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
                 'contrato_ia_invalido',
                 'El servicio devolvió una respuesta que no pudo verificarse. El borrador no fue modificado.',
                 $audit,
+                $refreshReview,
             );
 
             return;
@@ -103,6 +108,7 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
                 $result->inconclusiveReason ?? 'insufficient_evidence',
                 $result->gatewayVersion,
                 $audit,
+                $refreshReview,
             );
 
             return;
@@ -158,6 +164,7 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
                 correlationId: $job->correlacion_id,
             );
         });
+        $refreshReview->forExecution($this->executionId);
     }
 
     public function failed(Throwable $exception): void
@@ -168,7 +175,12 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
         $message = $exception instanceof AiGatewayUnavailable
             ? 'La ayuda de IA no está disponible por el momento. Puede continuar editando y volver a solicitarla.'
             : 'No fue posible completar la ayuda de IA. El borrador no fue modificado.';
-        $this->finishFailed($code, $message, app(RecordAuditEvent::class));
+        $this->finishFailed(
+            $code,
+            $message,
+            app(RecordAuditEvent::class),
+            app(RefreshSyllabusAiReview::class),
+        );
     }
 
     private function markRunning(): bool
@@ -194,8 +206,12 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
         });
     }
 
-    private function finishInconclusive(string $reason, string $gatewayVersion, RecordAuditEvent $audit): void
-    {
+    private function finishInconclusive(
+        string $reason,
+        string $gatewayVersion,
+        RecordAuditEvent $audit,
+        RefreshSyllabusAiReview $refreshReview,
+    ): void {
         DB::transaction(function () use ($audit, $gatewayVersion, $reason): void {
             $execution = AiExecution::query()->lockForUpdate()->findOrFail($this->executionId);
             if (in_array($execution->estado, ['completada', 'no_concluyente', 'fallida'], true)) {
@@ -230,10 +246,15 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
                 correlationId: $job->correlacion_id,
             );
         });
+        $refreshReview->forExecution($this->executionId);
     }
 
-    private function finishFailed(string $code, string $message, RecordAuditEvent $audit): void
-    {
+    private function finishFailed(
+        string $code,
+        string $message,
+        RecordAuditEvent $audit,
+        RefreshSyllabusAiReview $refreshReview,
+    ): void {
         DB::transaction(function () use ($audit, $code, $message): void {
             $execution = AiExecution::query()->lockForUpdate()->find($this->executionId);
             if ($execution === null || in_array($execution->estado, ['completada', 'no_concluyente', 'fallida'], true)) {
@@ -267,6 +288,7 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
                 );
             }
         });
+        $refreshReview->forExecution($this->executionId);
     }
 
     private function input(AiExecution $execution): AiAnalysisInput
@@ -318,6 +340,9 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
 
     private function notify(AiExecution $execution, string $estado): void
     {
+        if ($execution->revision_ia_silabo_id !== null) {
+            return;
+        }
         InternalNotification::query()->firstOrCreate(
             [
                 'usuario_id' => $execution->solicitado_por,

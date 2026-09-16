@@ -146,7 +146,7 @@ detienen el trabajo docente sin borrar nada.
 `resultados_validacion`, `ejecuciones_ia`, `evidencias_ia`, `recomendaciones_ia`,
 `recomendacion_evidencias_ia`, `retroalimentacion_ia`, `conversaciones_ia`,
 `mensajes_ia`, `evidencias_mensaje_ia`, `citas_mensaje_ia`,
-`preferencias_ia_carrera`.
+`preferencias_ia_carrera`, `revisiones_ia_silabo`.
 
 Cada docente conserva una conversación por sílabo. Limpiar el panel marca
 `conversaciones_ia.ocultada_en`; no elimina mensajes ni fotografías de evidencia. La
@@ -161,6 +161,11 @@ campo. `fuente_academica` referencia la fuente seleccionada y, cuando correspond
 fragmento derivado; `seccion_silabo` referencia la definición del campo relacionado del
 mismo borrador. En ambos casos etiqueta, extracto y huella permanecen inmutables aunque
 cambie luego el documento o el borrador.
+`revisiones_ia_silabo` es la ejecución padre de una evaluación integral y es única por
+sílabo y `version_bloqueo_origen`. Sus conteos y estado se agregan a partir de las
+`ejecuciones_ia` hijas; una repetición sin cambios reutiliza la misma revisión, mientras
+una edición obliga a validar y crea otra para la nueva versión. Los estados terminales y
+sus entradas son inmutables.
 `plantillas_silabo.revision_configuracion` aumenta ante cualquier cambio de estructura,
 contenido o apariencia. Una preferencia de carrera solo es efectiva si el campo permite
 la decisión de Coordinación y su `revision_plantilla_origen` coincide; de otro modo rige
@@ -241,6 +246,8 @@ seeder dos veces. Las asignaciones activas se reutilizan para conservar la idemp
 - la ejecución, el campo y la versión de plantilla pertenecen al mismo sílabo;
 - una clave funcional activa es única por sílabo/campo, y una ejecución fallida permite
   una solicitud nueva sin reescribir historia;
+- una revisión integral es única por sílabo/versión; cada campo aparece como máximo una
+  vez dentro de ella y toda ejecución hija debe compartir sílabo y versión de bloqueo;
 - evidencia solo se fija mientras la ejecución está pendiente; la externa debe provenir
   de una fuente activa, de igual carrera y fijada por la convocatoria, y la interna debe
   pertenecer a la plantilla del sílabo. El tipo determina de forma excluyente qué FK se

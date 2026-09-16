@@ -19,6 +19,7 @@ use LogicException;
  * @property string $silabo_id
  * @property string $definicion_campo_id
  * @property string $plantilla_id
+ * @property string|null $revision_ia_silabo_id
  * @property string|null $ejecucion_trabajo_id
  * @property string $clave_idempotencia
  * @property string $clave_funcional
@@ -60,6 +61,7 @@ class AiExecution extends Model
     /** @var list<string> */
     protected $fillable = [
         'silabo_id', 'definicion_campo_id', 'plantilla_id', 'ejecucion_trabajo_id',
+        'revision_ia_silabo_id',
         'clave_idempotencia', 'clave_funcional', 'estado', 'version_contrato',
         'version_instruccion', 'version_pasarela_solicitada', 'version_pasarela_ejecutada',
         'idioma', 'contenido_entrada', 'huella_contenido', 'huella_conjunto_fuentes',
@@ -96,6 +98,12 @@ class AiExecution extends Model
     public function jobExecution(): BelongsTo
     {
         return $this->belongsTo(JobExecution::class, 'ejecucion_trabajo_id');
+    }
+
+    /** @return BelongsTo<SyllabusAiReview, $this> */
+    public function syllabusReview(): BelongsTo
+    {
+        return $this->belongsTo(SyllabusAiReview::class, 'revision_ia_silabo_id');
     }
 
     /** @return BelongsTo<User, $this> */

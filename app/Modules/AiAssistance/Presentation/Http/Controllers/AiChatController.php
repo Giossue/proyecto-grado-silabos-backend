@@ -8,6 +8,7 @@ use App\Modules\AiAssistance\Application\Actions\SendSyllabusAiMessage;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiConversation;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiMessage;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\SyllabusAiReview;
 use App\Modules\AiAssistance\Presentation\Http\Requests\SendAiChatMessageRequest;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\JsonResponse;
@@ -24,9 +25,17 @@ class AiChatController extends Controller
             ->where('usuario_id', $actor->id)
             ->with(['messages.citations'])
             ->first();
+        $review = SyllabusAiReview::query()
+            ->where('silabo_id', $syllabus->id)
+            ->latest('solicitado_en')
+            ->first();
         $executions = AiExecution::query()
             ->where('silabo_id', $syllabus->id)
-            ->with(['field', 'recommendations.evidence', 'recommendations.feedback'])
+            ->when(
+                $review !== null,
+                fn ($query) => $query->where('revision_ia_silabo_id', $review->id),
+            )
+            ->with(['field.block.section', 'recommendations.evidence', 'recommendations.feedback'])
             ->latest('solicitado_en')
             ->limit(25)
             ->get();
@@ -59,6 +68,10 @@ class AiChatController extends Controller
                 'id' => $execution->id,
                 'field_id' => $execution->definicion_campo_id,
                 'field_label' => $execution->field->etiqueta,
+                'section' => [
+                    'id' => $execution->field->block->section->id,
+                    'title' => $execution->field->block->section->titulo,
+                ],
                 'status' => $execution->estado,
                 'stale' => $execution->version_bloqueo_origen !== $syllabus->version_bloqueo,
                 'reason' => $execution->motivo_no_concluyente,
@@ -85,6 +98,19 @@ class AiChatController extends Controller
                 '¿Qué debería revisar antes de enviarlo?',
             ],
             'available' => (string) config('ai.driver') !== 'disabled',
+            'review' => $review === null ? null : [
+                'id' => $review->id,
+                'status' => $review->estado_revision_ia,
+                'draft_version' => $review->version_bloqueo_origen,
+                'stale' => $review->version_bloqueo_origen !== $syllabus->version_bloqueo,
+                'total_fields' => $review->total_campos,
+                'completed_fields' => $review->campos_finalizados,
+                'fields_with_recommendations' => $review->campos_con_recomendaciones,
+                'failed_fields' => $review->campos_fallidos,
+                'progress' => (int) floor(($review->campos_finalizados / $review->total_campos) * 100),
+                'requested_at' => $review->solicitado_en->toIso8601String(),
+                'completed_at' => $review->completado_en?->toIso8601String(),
+            ],
             'review_results' => $reviewResults,
         ]);
     }

@@ -123,6 +123,10 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    pregunta o el campo, conservando ruta y huella como evidencia no confiable. La
    revisión de cada campo ya reserva contexto para fuentes externas y lo contrasta con
    campos habilitados del mismo borrador mediante fotografías tipadas e inmutables.
+   La revisión integral se representa mediante una ejecución padre única por versión,
+   agrega el progreso de sus trabajos por campo y entrega resultados agrupados por
+   sección. La SPA la inicia al terminar una validación determinística limpia y no trata
+   una indisponibilidad de IA como impedimento para enviar.
    La configuración efectiva también está disponible por API y pantalla: Administración
    fija el valor predeterminado y el bloqueo; Coordinación solo sustituye campos
    permitidos, y cualquier cambio posterior de plantilla invalida automáticamente esas

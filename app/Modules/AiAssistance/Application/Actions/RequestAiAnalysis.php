@@ -38,15 +38,28 @@ class RequestAiAnalysis
         string $idempotencyKey,
         User $actor,
         Request $request,
+        ?string $syllabusReviewId = null,
     ): AiExecution {
-        $existing = $this->existingIdempotent($syllabus->id, $field->id, $idempotencyKey, $actor);
+        $existing = $this->existingIdempotent(
+            $syllabus->id,
+            $field->id,
+            $idempotencyKey,
+            $actor,
+            $syllabusReviewId,
+        );
         if ($existing !== null) {
             return $existing;
         }
 
-        return DB::transaction(function () use ($actor, $field, $idempotencyKey, $request, $syllabus): AiExecution {
+        return DB::transaction(function () use ($actor, $field, $idempotencyKey, $request, $syllabus, $syllabusReviewId): AiExecution {
             $locked = Syllabus::query()->with('convocation')->lockForUpdate()->findOrFail($syllabus->id);
-            $existing = $this->existingIdempotent($locked->id, $field->id, $idempotencyKey, $actor);
+            $existing = $this->existingIdempotent(
+                $locked->id,
+                $field->id,
+                $idempotencyKey,
+                $actor,
+                $syllabusReviewId,
+            );
             if ($existing !== null) {
                 return $existing;
             }
@@ -90,6 +103,7 @@ class RequestAiAnalysis
                 'instruction_version' => (string) config('ai.instruction_version'),
                 'contract_version' => (string) config('ai.contract_version'),
                 'locale' => 'es-EC',
+                'syllabus_review_id' => $syllabusReviewId,
             ]);
             $reusable = AiExecution::query()
                 ->where('silabo_id', $locked->id)
@@ -123,6 +137,7 @@ class RequestAiAnalysis
                 'silabo_id' => $locked->id,
                 'definicion_campo_id' => $field->id,
                 'plantilla_id' => $locked->plantilla_id,
+                'revision_ia_silabo_id' => $syllabusReviewId,
                 'clave_idempotencia' => $idempotencyKey,
                 'clave_funcional' => $functionalKey,
                 'estado' => 'pendiente',
@@ -220,11 +235,13 @@ class RequestAiAnalysis
         string $fieldId,
         string $key,
         User $actor,
+        ?string $syllabusReviewId,
     ): ?AiExecution {
         $execution = AiExecution::query()
             ->where('silabo_id', $syllabusId)
             ->where('definicion_campo_id', $fieldId)
             ->where('clave_idempotencia', $key)
+            ->where('revision_ia_silabo_id', $syllabusReviewId)
             ->first();
         if ($execution !== null && $execution->solicitado_por !== $actor->id) {
             abort(403);

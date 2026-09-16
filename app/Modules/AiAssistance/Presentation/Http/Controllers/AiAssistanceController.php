@@ -155,7 +155,7 @@ class AiAssistanceController extends Controller
     ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $count = $action->execute(
+        $review = $action->execute(
             $syllabus,
             $request->integer('version_bloqueo'),
             $request->string('idempotency_key')->toString(),
@@ -164,10 +164,22 @@ class AiAssistanceController extends Controller
         );
 
         if ($request->expectsJson()) {
-            return response()->json(['message' => "Revisión de IA iniciada para {$count} campo(s)", 'fields_requested' => $count], 202);
+            return response()->json([
+                'message' => "Revisión de IA iniciada para {$review->total_campos} campo(s)",
+                'review' => [
+                    'id' => $review->id,
+                    'status' => $review->estado_revision_ia,
+                    'draft_version' => $review->version_bloqueo_origen,
+                    'total_fields' => $review->total_campos,
+                    'completed_fields' => $review->campos_finalizados,
+                    'progress' => $review->total_campos === 0
+                        ? 0
+                        : (int) floor(($review->campos_finalizados / $review->total_campos) * 100),
+                ],
+            ], 202);
         }
 
-        return back()->with('success', "Revisión de IA iniciada para {$count} campo(s)");
+        return back()->with('success', "Revisión de IA iniciada para {$review->total_campos} campo(s)");
     }
 
     public function feedback(

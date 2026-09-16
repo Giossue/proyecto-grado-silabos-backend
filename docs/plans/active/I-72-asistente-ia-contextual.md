@@ -7,7 +7,9 @@ comparten el panel docente, conservan mensajes y fotografías de evidencia y val
 citas en servidor. Las fuentes Markdown se indexan por encabezados y fragmentos y se
 recuperan mediante búsqueda textual PostgreSQL. La revisión por campo ya contrasta el
 objetivo con secciones habilitadas del borrador y fragmentos externos mediante evidencia
-tipada; falta cerrar la ejecución padre de la evaluación integral.
+tipada. La evaluación integral ya tiene ejecución padre, progreso agregado, idempotencia
+por versión y resultados agrupados por sección; resta la comprobación de producción y
+la evaluación experta.
 
 ## Trazabilidad
 
@@ -222,8 +224,10 @@ PV-13 y PV-14 definan hardware y modelo; no se añade una base vectorial por ant
       únicamente secciones habilitadas y fragmentos seleccionados, conservan fotografías
       tipadas y validan las citas; las pruebas cubren instrucciones incrustadas y el
       contraste simultáneo de evidencia interna y externa.
-- [ ] **I-72.5 — Revisión integral:** ejecución padre, trabajos hijos, progreso,
-      idempotencia, integración con validación y sugerencias agrupadas por sección.
+- [x] **I-72.5 — Revisión integral:** ejecución padre única por versión, trabajos hijos,
+      progreso y estados agregados, idempotencia, inicio después de una validación limpia
+      y sugerencias agrupadas por sección. Una falla parcial o total de IA se informa sin
+      bloquear el envío.
 - [x] **I-72.6 — Chat único:** persistencia, endpoint, cola/sondeo elegido, panel
       derecho persistente, citas navegables, sugerencias y experiencia responsive/accesible.
 - [ ] **I-72.7 — Producción y evaluación:** comprobar servicio y worker, completar
@@ -249,9 +253,9 @@ documentación antes de empezar la siguiente. I-72.2 e I-72.3 no dependen del mo
 - [x] Puerta `composer verify` aprobada: seguridad, ESLint, Prettier, TypeScript,
       PHPStan, build y 420 pruebas con 6.388 aserciones.
 
-Esta rebanada reutiliza las ejecuciones por campo existentes y todavía no crea la
-ejecución padre prevista en I-72.5. Tampoco presenta una caja de chat falsa: la
-conversación libre se añadirá en I-72.6 cuando exista su contrato y persistencia.
+El avance inicial reutilizaba únicamente las ejecuciones por campo. I-72.5 añadió la
+ejecución padre y su agregación sin reemplazar ese historial, e I-72.6 añadió la
+conversación libre con contrato y persistencia propios.
 
 ## Pruebas
 
