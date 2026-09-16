@@ -10,6 +10,7 @@ use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\TwoFactorControlle
 use App\Modules\Identity\Presentation\Http\Controllers\ManagedUserController;
 use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
+use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusProcessController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
@@ -81,6 +82,11 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('active-role')->name('api.v1.admin.academic.status');
         Route::delete('admin/academic/{entity}/{record}', [AcademicGovernanceController::class, 'destroy'])
             ->middleware('active-role')->name('api.v1.admin.academic.destroy');
+        Route::get('admin/processes', [SyllabusProcessController::class, 'index'])->middleware('active-role')->name('api.v1.admin.processes.index');
+        Route::post('admin/processes', [SyllabusProcessController::class, 'store'])->middleware('active-role')->name('api.v1.admin.processes.store');
+        Route::patch('admin/processes/{process}', [SyllabusProcessController::class, 'update'])->middleware('active-role')->name('api.v1.admin.processes.update');
+        Route::post('admin/processes/{process}/deadline', [SyllabusProcessController::class, 'extendDeadline'])->middleware('active-role')->name('api.v1.admin.processes.deadline.extend');
+        Route::post('admin/processes/{process}/{transition}', [SyllabusProcessController::class, 'transition'])->middleware('active-role')->whereIn('transition', ['abrir', 'pausar', 'reanudar', 'cerrar'])->name('api.v1.admin.processes.transition');
         Route::get('teacher/syllabi', [SyllabusController::class, 'index'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.index');

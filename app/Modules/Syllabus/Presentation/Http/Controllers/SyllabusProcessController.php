@@ -16,19 +16,20 @@ use App\Modules\Syllabus\Presentation\Http\Requests\ManageSyllabusProcessesReque
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\UpdateSyllabusProcessRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SyllabusProcessController extends Controller
 {
-    public function index(ManageSyllabusProcessesRequest $request): Response
+    public function index(ManageSyllabusProcessesRequest $request): Response|JsonResponse
     {
         $activeProcess = SyllabusProcess::query()->inProgress()
             ->with('academicPeriod:id,codigo')
             ->first(['id', 'periodo_academico_id', 'estado']);
 
-        return Inertia::render('Admin/Processes/Index', [
+        $payload = [
             'processes' => SyllabusProcess::query()
                 ->with(['template:id,nombre', 'academicPeriod:id,codigo'])
                 ->withCount('convocations')
@@ -58,14 +59,20 @@ class SyllabusProcessController extends Controller
                 'period' => $activeProcess->academicPeriod->codigo,
                 'state' => $activeProcess->estado,
             ],
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Admin/Processes/Index', $payload);
     }
 
-    public function store(StoreSyllabusProcessRequest $request, CreateSyllabusProcess $action): RedirectResponse
+    public function store(StoreSyllabusProcessRequest $request, CreateSyllabusProcess $action): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($request->processData(), $actor, $request);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Proceso preparado. Ábralo cuando el calendario institucional lo indique.'], 201);
+        }
 
         return back()->with('success', 'Proceso preparado. Ábralo cuando el calendario institucional lo indique.');
     }
@@ -74,10 +81,14 @@ class SyllabusProcessController extends Controller
         SyllabusProcess $process,
         UpdateSyllabusProcessRequest $request,
         UpdateSyllabusProcess $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($process, $request->processData(), $actor, $request);
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Proceso actualizado. Las convocatorias que se abran desde ahora toman esta configuración.']);
+        }
 
         return back()->with('success', 'Proceso actualizado. Las convocatorias que se abran desde ahora toman esta configuración.');
     }
@@ -86,7 +97,7 @@ class SyllabusProcessController extends Controller
         SyllabusProcess $process,
         ExtendProcessDeadlineRequest $request,
         ExtendProcessDeadline $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -98,6 +109,10 @@ class SyllabusProcessController extends Controller
             $request,
         );
 
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Plazo prorrogado para todas las convocatorias del proceso. El motivo queda registrado en auditoría.']);
+        }
+
         return back()->with('success', 'Plazo prorrogado para todas las convocatorias del proceso. El motivo queda registrado en auditoría.');
     }
 
@@ -106,17 +121,22 @@ class SyllabusProcessController extends Controller
         string $transition,
         TransitionSyllabusProcessRequest $request,
         TransitionSyllabusProcess $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $reason = $request->filled('reason') ? $request->string('reason')->toString() : null;
         $action->execute($process, $transition, $reason, $actor, $request);
 
-        return back()->with('success', match ($transition) {
+        $message = match ($transition) {
             TransitionSyllabusProcess::OPEN => 'Proceso abierto. Las coordinaciones ya pueden abrir sus convocatorias.',
             TransitionSyllabusProcess::PAUSE => 'Proceso en pausa. Los envíos se detienen y la plantilla queda editable.',
             TransitionSyllabusProcess::RESUME => 'Proceso reanudado. Los envíos vuelven a admitirse.',
             default => 'Proceso cerrado.',
-        });
+        };
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 }
