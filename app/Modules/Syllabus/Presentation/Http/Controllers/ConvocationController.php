@@ -35,6 +35,10 @@ class ConvocationController extends Controller
 
         $payload = [
             'filters' => ['q' => $search ?: null, 'state' => $state],
+            'available_sources' => AcademicSource::query()
+                ->where('carrera_id', $careerId)->where('activo', true)
+                ->orderBy('nombre')->get(['id', 'nombre'])
+                ->map(fn (AcademicSource $source): array => ['id' => $source->id, 'name' => $source->nombre])->values(),
             'convocations' => SyllabusProcess::query()
                 // La convocatoria se identifica por el período institucional que abarca.
                 ->when($search, fn ($query, string $term) => $query->where(

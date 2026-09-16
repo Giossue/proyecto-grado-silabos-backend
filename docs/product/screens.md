@@ -311,7 +311,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   pausado y muestra el aviso enlazado a Convocatorias; el servidor rechaza igualmente
   un alta forzada. COR-03 muestra las convocatorias institucionales visibles y
   permite iniciar únicamente el alcance de su carrera desde una abierta; hereda plantilla,
-  período, fechas y todas las fuentes activas, sin campos de configuración. COR-02 lista
+  período y fechas, y exige seleccionar al menos una fuente activa de la carrera antes de
+  iniciar. Esa selección queda congelada durante el alcance. COR-02 lista
   los procesos institucionales desde antes de iniciar la carrera, con estado institucional
   y estado de carrera separados; no tiene aviso ni botón de alta independientes. El menú
   de tres puntos de cada fila reúne iniciar, ver seguimiento, pausar y reanudar, con el mismo diálogo de

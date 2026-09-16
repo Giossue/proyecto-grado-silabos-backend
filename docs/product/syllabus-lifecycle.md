@@ -65,13 +65,13 @@ ya estaba dentro. La fecha anterior se conserva en el evento de auditoría.
 
 Administración prepara una sola convocatoria institucional por período académico y la
 abre para la universidad. Cada coordinador la ve en su área y solo puede iniciar el
-alcance de su carrera: no define nombre, plantilla, período, modo de agrupación ni un
-subconjunto de fuentes. El inicio comprueba logo propio de la facultad, malla activa,
+alcance de su carrera: no define nombre, plantilla, período ni modo de agrupación, pero
+debe elegir un subconjunto no vacío de las fuentes activas de su carrera. El inicio comprueba logo propio de la facultad, malla activa,
 materias programadas con paralelos, docente vigente en cada paralelo y al menos una
 fuente académica activa; si todo pasa,
 crea la convocatoria de carrera y exactamente un sílabo por paralelo en una transacción.
-Las fuentes activas de la carrera se fijan completas al inicio y se incorporan al
-reanudar tras una pausa. La base impide repetir proceso por período o alcance por
+Solo las fuentes elegidas se fijan al inicio; esa selección queda congelada y al
+reanudar se comprueba que continúen activas, sin incorporar otras automáticamente. La base impide repetir proceso por período o alcance por
 carrera/período.
 
 ## Pausas
@@ -80,7 +80,8 @@ Una pausa detiene el reloj para el alcance que la decide. Administración pausa 
 proceso y ningún docente de la universidad edita ni envía hasta que lo reanude; entre
 tanto la plantilla vuelve a ser editable. Coordinación pausa su convocatoria y solo los
 docentes de esa carrera se detienen; entre tanto la malla y las fuentes de la carrera
-vuelven a ser editables. Los borradores se conservan tal cual. Ambas pausas exigen
+vuelven a ser editables, pero no cambia el conjunto de fuentes ya fijado para el alcance.
+Los borradores se conservan tal cual. Ambas pausas exigen
 motivo y quedan en auditoría; reanudar una convocatoria requiere que el proceso esté
 abierto. Cerrar el proceso es definitivo: los expedientes se conservan y ya no admiten
 envíos.

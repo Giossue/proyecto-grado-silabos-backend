@@ -62,6 +62,7 @@ class SyllabusProcessTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['sanctum.stateful' => ['localhost:5173']]);
         $this->seed(DatabaseSeeder::class);
         $this->configureFacultyLogos();
 
@@ -131,7 +132,7 @@ class SyllabusProcessTest extends TestCase
     public function test_coordination_lists_the_institutional_process_before_and_after_starting_its_career(): void
     {
         $process = $this->openProcess();
-        $this->coordinatorSource();
+        $source = $this->coordinatorSource();
 
         $this->actingAsCoordinator()->get(route('convocations.index', ['state' => 'sin_iniciar']))
             ->assertOk()->assertInertia(fn (Assert $page) => $page
@@ -141,7 +142,16 @@ class SyllabusProcessTest extends TestCase
             ->where('convocations.data.0.state', 'sin_iniciar')
             ->where('convocations.data.0.process_state', 'abierto'));
 
-        $this->actingAsCoordinator()->post(route('convocations.store'), ['process_id' => $process->id])
+        $this->actingAsCoordinator()->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.coordination.convocations.index'))
+            ->assertOk()
+            ->assertJsonPath('available_sources.0.id', $source->id)
+            ->assertJsonPath('available_sources.0.name', $source->nombre);
+
+        $this->actingAsCoordinator()->post(route('convocations.store'), [
+            'process_id' => $process->id,
+            'source_ids' => [$source->id],
+        ])
             ->assertSessionHasNoErrors();
         $convocation = Convocation::query()->where('proceso_id', $process->id)->firstOrFail();
 
@@ -213,6 +223,20 @@ class SyllabusProcessTest extends TestCase
         $template = $this->publishedTemplate();
         $process = $this->preparedProcess($template, 'Elaboración 2026-2027');
         $source = $this->coordinatorSource();
+        $unselectedSource = AcademicSource::query()->create([
+            'carrera_id' => $this->coordinatorContext->carrera_id,
+            'nombre' => 'Fuente activa no elegida',
+            'descripcion' => 'No debe incorporarse implícitamente.',
+            'contenido' => 'Contenido fuera de la selección de esta convocatoria.',
+            'activo' => true,
+        ]);
+        $inactiveSource = AcademicSource::query()->create([
+            'carrera_id' => $this->coordinatorContext->carrera_id,
+            'nombre' => 'Fuente inactiva',
+            'descripcion' => 'No puede incorporarse a una convocatoria nueva.',
+            'contenido' => 'Contenido inactivo.',
+            'activo' => false,
+        ]);
         $otherPeriod = AcademicPeriod::query()->create([
             'codigo' => 'I-41-ALTERNO',
             'fecha_inicio' => '2027-01-01',
@@ -221,16 +245,24 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()->post(route('convocations.store'), [
             'process_id' => $process->id,
+            'source_ids' => [$source->id],
         ])->assertSessionHasErrors('process_id');
         $this->assertDatabaseCount('convocatorias_carreras', 0);
 
         $this->transition($process, 'abrir')->assertRedirect();
-        $this->actingAsCoordinator()->post(route('convocations.store'), [
-            // El cliente no puede sustituir el período ni las fuentes fijadas por el flujo.
-            'process_id' => $process->id,
-            'period_id' => $otherPeriod->id,
-            'source_ids' => [$source->id],
-        ])->assertRedirect();
+        $this->actingAsCoordinator()->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.coordination.convocations.store'), [
+                'process_id' => $process->id,
+                'source_ids' => [$inactiveSource->id],
+            ])->assertUnprocessable()->assertJsonValidationErrors('source_ids');
+
+        $this->actingAsCoordinator()->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.coordination.convocations.store'), [
+                // El cliente no puede sustituir el período; sí elige las fuentes de su carrera.
+                'process_id' => $process->id,
+                'period_id' => $otherPeriod->id,
+                'source_ids' => [$source->id],
+            ])->assertCreated()->assertJsonStructure(['message', 'convocation_id']);
 
         $convocation = Convocation::query()->firstOrFail();
         $this->assertSame($process->id, $convocation->proceso_id);
@@ -238,6 +270,7 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame($template->id, $convocation->process->plantilla_id);
         $this->assertSame('abierta', $convocation->estado);
         $this->assertTrue($convocation->sources()->whereKey($source->id)->exists());
+        $this->assertFalse($convocation->sources()->whereKey($unselectedSource->id)->exists());
         $this->assertDatabaseHas('fechas_limite_convocatoria', [
             'convocatoria_id' => $convocation->id,
             'etapa_fecha_limite_convocatoria' => 'inicio',
@@ -554,6 +587,7 @@ class SyllabusProcessTest extends TestCase
         $this->transition($process, 'abrir')->assertRedirect();
         $this->actingAsCoordinator()->post(route('convocations.store'), [
             'process_id' => $process->id,
+            'source_ids' => [$source->id],
         ])->assertRedirect();
         $this->transition($process, 'pausar', 'El período no puede reasignarse tras iniciar convocatorias.')->assertRedirect();
         $otherPeriod = AcademicPeriod::query()->create([
@@ -602,6 +636,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()->post(route('convocations.store'), [
             'process_id' => $process->id,
+            'source_ids' => [$source->id],
         ])->assertRedirect();
         $convocation = Convocation::query()->where('proceso_id', $process->id)->firstOrFail();
 

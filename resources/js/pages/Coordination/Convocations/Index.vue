@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import ConvocationController from '@/actions/App/Modules/Syllabus/Presentation/Http/Controllers/ConvocationController';
 import FilterToolbar from '@/components/domain/FilterToolbar.vue';
 import PageFrame from '@/components/domain/PageFrame.vue';
 import ConvocationActions from '@/components/domain/syllabus/ConvocationActions.vue';
@@ -25,8 +24,9 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { index as convocationsIndex } from '@/routes/convocations';
 import type { Paginated } from '@/types/pagination';
+import ConvocationController from '@/actions/App/Modules/Syllabus/Presentation/Http/Controllers/ConvocationController';
+import { index as convocationsIndex } from '@/routes/convocations';
 
 type ConvocationRow = {
     id: string | null;
@@ -42,6 +42,7 @@ type ConvocationRow = {
 defineProps<{
     convocations: Paginated<ConvocationRow>;
     filters: { q: string | null; state: string | null };
+    available_sources: Array<{ id: string; name: string }>;
 }>();
 
 defineOptions({
@@ -178,6 +179,7 @@ const stateLabel = (state: string): string =>
                             <TableCell class="text-right">
                                 <ConvocationActions
                                     :convocation="convocation"
+                                    :available-sources="available_sources"
                                 />
                             </TableCell>
                         </TableRow>

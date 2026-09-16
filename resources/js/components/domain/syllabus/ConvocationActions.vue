@@ -2,7 +2,6 @@
 import { Form, Link } from '@inertiajs/vue3';
 import { Eye, Lock, Pause, Play } from '@lucide/vue';
 import { ref } from 'vue';
-import ConvocationController from '@/actions/App/Modules/Syllabus/Presentation/Http/Controllers/ConvocationController';
 import TableActionsMenu from '@/components/domain/TableActionsMenu.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +17,7 @@ import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import ConvocationController from '@/actions/App/Modules/Syllabus/Presentation/Http/Controllers/ConvocationController';
 
 type Transition = 'iniciar' | 'abrir' | 'pausar' | 'reanudar';
 
@@ -35,9 +35,11 @@ const props = defineProps<{
         state: string;
         process_state: string;
     };
+    availableSources: Array<{ id: string; name: string }>;
 }>();
 
 const pending = ref<Transition | null>(null);
+const selectedSources = ref<string[]>([]);
 
 const dialogs: Record<
     Transition,
@@ -151,7 +153,10 @@ const transitionForm = (transition: Transition) => {
         :open="pending !== null"
         @update:open="
             (isOpen) => {
-                if (!isOpen) pending = null;
+                if (!isOpen) {
+                    pending = null;
+                    selectedSources = [];
+                }
             }
         "
     >
@@ -174,6 +179,40 @@ const transitionForm = (transition: Transition) => {
                     name="process_id"
                     :value="convocation.process_id"
                 />
+                <Field
+                    v-if="pending === 'iniciar'"
+                    :data-invalid="Boolean(errors.source_ids)"
+                >
+                    <p class="text-sm font-medium">
+                        Fuentes para la IA <span aria-hidden="true">*</span>
+                    </p>
+                    <p class="text-sm text-muted-foreground">
+                        Elija al menos una. La selección quedará fija durante
+                        esta convocatoria.
+                    </p>
+                    <label
+                        v-for="source in availableSources"
+                        :key="source.id"
+                        :for="`convocation-source-${convocation.process_id}-${source.id}`"
+                        class="flex items-center gap-2 text-sm"
+                    >
+                        <input
+                            :id="`convocation-source-${convocation.process_id}-${source.id}`"
+                            v-model="selectedSources"
+                            type="checkbox"
+                            name="source_ids[]"
+                            :value="source.id"
+                        />
+                        {{ source.name }}
+                    </label>
+                    <p
+                        v-if="availableSources.length === 0"
+                        class="text-sm text-destructive"
+                    >
+                        Primero cree y active una fuente académica.
+                    </p>
+                    <FieldError :errors="[errors.source_ids]" />
+                </Field>
                 <Field
                     v-if="pending === 'pausar'"
                     :data-invalid="Boolean(errors.reason)"
@@ -213,7 +252,11 @@ const transitionForm = (transition: Transition) => {
                                 ? 'destructive'
                                 : 'default'
                         "
-                        :disabled="processing"
+                        :disabled="
+                            processing ||
+                            (pending === 'iniciar' &&
+                                selectedSources.length === 0)
+                        "
                     >
                         <Spinner v-if="processing" data-icon="inline-start" />
                         <Pause

@@ -208,12 +208,12 @@ PV-13 y PV-14 definan hardware y modelo; no se añade una base vectorial por ant
 
 ## Rebanadas verticales
 
-- [ ] **I-72.1 — Decisión y contrato:** actualizar decisiones, dominio, ciclo de vida,
+- [x] **I-72.1 — Decisión y contrato:** actualizar decisiones, dominio, ciclo de vida,
       pantallas y arquitectura; corregir `estado/status` y añadir prueba Inertia.
 - [x] **I-72.2 — Herencia configurable:** migración, revisión de plantilla, preferencias
       por carrera, resolvedor, UI Admin/Coordinación, autorización, auditoría y pruebas de
       invalidación.
-- [ ] **I-72.3 — Fuentes elegidas:** retirar sincronización automática, selector previo
+- [x] **I-72.3 — Fuentes elegidas:** retirar sincronización automática, selector previo
       al inicio, congelación, auditoría y pruebas de pertenencia/actividad.
 - [ ] **I-72.4 — Contexto trazable:** fragmentación Markdown, búsqueda textual,
       ensamblador del sílabo, contrato de citas tipadas y pruebas contra inyección.

@@ -105,11 +105,12 @@ institucional, fecha de inicio, fecha de entrega y estado (`preparacion`, `abier
 a todas las facultades. La base impone un solo proceso abierto o pausado a la vez.
 
 `Convocatoria` cuelga de un proceso obligatorio y vincula carrera, período heredado del
-proceso, fuentes
-activas, agrupación, fechas y estado (`preparacion`, `abierta`, `pausada`, `cerrada`).
+proceso, el subconjunto no vacío de fuentes activas elegido por Coordinación, agrupación,
+fechas y estado (`preparacion`, `abierta`, `pausada`, `cerrada`).
 Hereda la plantilla, el período y las fechas del proceso al prepararse; las fechas se
 copian, no se referencian, porque la carrera puede prorrogar las suyas. Solo se abre con el proceso
-abierto; al abrirla, la plantilla debe estar completa y las fuentes activas.
+abierto; al abrirla, la plantilla debe estar completa y las fuentes elegidas activas.
+La selección queda congelada al iniciar el alcance y no se amplía al reanudarlo.
 
 Una convocatoria está **en curso** cuando ella está abierta y su proceso también. Esa
 condición habilita a los docentes y, por lo mismo, congela lo que sostiene su trabajo:

@@ -3,11 +3,11 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
-use App\Modules\Syllabus\Application\SyncConvocationSources;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\Request;
@@ -22,10 +22,9 @@ class CreateConvocation
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly OpenConvocation $open,
-        private readonly SyncConvocationSources $sources,
     ) {}
 
-    /** @param array{process_id: string} $data */
+    /** @param array{process_id: string, source_ids: list<string>} $data */
     public function execute(array $data, User $actor, Request $request): Convocation
     {
         $activeRole = $this->roles->resolve($request);
@@ -41,13 +40,24 @@ class CreateConvocation
             if (Convocation::query()->where('carrera_id', $activeRole->carrera_id)->where('proceso_id', $process->id)->exists()) {
                 throw ValidationException::withMessages(['process_id' => 'Esta carrera ya tiene una convocatoria para el período institucional.']);
             }
+            $sourceIds = array_values(array_unique($data['source_ids']));
+            $sources = AcademicSource::query()->whereIn('id', $sourceIds)->get();
+            if ($sources->count() !== count($sourceIds)
+                || $sources->contains(fn (AcademicSource $source): bool => ! $source->activo || $source->carrera_id !== $activeRole->carrera_id)) {
+                throw ValidationException::withMessages(['source_ids' => 'Seleccione fuentes activas pertenecientes a su carrera.']);
+            }
 
             $convocation = Convocation::query()->create([
                 'carrera_id' => $activeRole->carrera_id,
                 'proceso_id' => $process->id,
                 'estado' => Convocation::STATE_PREPARATION,
             ]);
-            $sourceCount = $this->sources->execute($convocation);
+            foreach ($sourceIds as $sourceId) {
+                DB::table('fuentes_convocatoria')->insert([
+                    'id' => (string) Str::uuid(), 'convocatoria_id' => $convocation->id,
+                    'fuente_academica_id' => $sourceId,
+                ]);
+            }
             foreach ([ConvocationSchedule::STAGE_START => $process->inicia_en, ConvocationSchedule::STAGE_DRAFT => $process->entrega_en] as $stage => $dueAt) {
                 DB::table('fechas_limite_convocatoria')->insert([
                     'id' => (string) Str::uuid(), 'convocatoria_id' => $convocation->id, 'etapa_fecha_limite_convocatoria' => $stage,
@@ -58,7 +68,7 @@ class CreateConvocation
                 actorId: $actor->id, roleAssignmentId: $activeRole->id,
                 action: 'convocatoria.iniciada', resourceType: 'convocatoria', resourceId: $convocation->id,
                 result: 'exito',
-                metadata: ['process_id' => $process->id, 'period_id' => $process->periodo_academico_id, 'source_count' => $sourceCount],
+                metadata: ['process_id' => $process->id, 'period_id' => $process->periodo_academico_id, 'source_count' => count($sourceIds)],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 

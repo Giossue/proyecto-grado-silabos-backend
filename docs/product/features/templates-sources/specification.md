@@ -29,8 +29,10 @@
   opciones (encabezados, énfasis, listas, cita, tabla con selector de tamaño, código,
   enlace y divisor). Se guarda como Markdown seguro, pero la Coordinación no ve ni
   alterna a sintaxis Markdown: el formato se aplica y se renderiza en tiempo real.
-- Una convocatoria fija fuentes activas de la carrera; al abrirla deben continuar
-  activas. La evidencia de IA guarda su propia fotografía (nombre, extracto y huella del
+- Antes de iniciar su alcance, Coordinación elige un subconjunto no vacío de las fuentes
+  activas de su carrera. La convocatoria fija exactamente esa selección, que no puede
+  cambiarse después de iniciada; al reanudar, todas deben continuar activas. La evidencia
+  de IA guarda su propia fotografía (nombre, extracto y huella del
   contenido), por lo que editar la fuente después no reescribe análisis pasados.
 - En ADM-05 y COR-11, el listado es la vista inicial y la creación se abre desde
   una acción principal en un panel lateral derecho; los errores permanecen visibles

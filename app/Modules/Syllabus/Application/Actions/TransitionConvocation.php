@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\SyncConvocationSources;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\Request;
@@ -28,7 +27,6 @@ class TransitionConvocation
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
-        private readonly SyncConvocationSources $sources,
     ) {}
 
     public function execute(
@@ -65,7 +63,12 @@ class TransitionConvocation
                 ]);
             }
             if ($to === Convocation::STATE_OPEN) {
-                $this->sources->execute($locked);
+                $locked->load('sources');
+                if ($locked->sources->isEmpty() || $locked->sources->contains(fn ($source): bool => ! $source->activo)) {
+                    throw ValidationException::withMessages([
+                        'convocation' => 'Revise la selección: la convocatoria necesita al menos una fuente activa antes de reanudarse.',
+                    ]);
+                }
             }
 
             $locked->update(['estado' => $to]);

@@ -43,8 +43,10 @@ cliente nuevo.
 
 La administración institucional ya puede gestionar usuarios, estructura académica y el
 calendario de procesos. Coordinación puede consultar su alcance por período, abrir la
-convocatoria de su carrera y pausar o reanudar el trabajo. La creación sigue usando las
-acciones de dominio existentes: al abrirse se generan los expedientes sin duplicarlos.
+convocatoria de su carrera y pausar o reanudar el trabajo. Antes de abrir debe elegir un
+subconjunto no vacío de sus fuentes activas; la API valida carrera y actividad, fija solo
+esa selección y no la modifica al reanudar. Al abrirse se generan los expedientes sin
+duplicarlos.
 
 ```text
 GET|POST|PATCH /api/v1/admin/users
