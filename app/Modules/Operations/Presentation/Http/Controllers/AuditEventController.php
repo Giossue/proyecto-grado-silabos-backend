@@ -7,12 +7,13 @@ use App\Models\User;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Presentation\Http\Requests\ViewAuditEventsRequest;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AuditEventController extends Controller
 {
-    public function index(ViewAuditEventsRequest $request): Response
+    public function index(ViewAuditEventsRequest $request): Response|JsonResponse
     {
         $action = $request->string('action')->toString();
         $result = $request->string('result')->toString();
@@ -45,7 +46,7 @@ class AuditEventController extends Controller
                 ->endOfDay()->utc());
         }
 
-        return Inertia::render('Admin/Operations/Audit', [
+        $payload = [
             'filters' => [
                 'action' => $action,
                 'result' => $result,
@@ -66,7 +67,9 @@ class AuditEventController extends Controller
                     'details' => $this->safeDetails($event->metadatos),
                     'occurred_at' => $event->ocurrido_en->toIso8601String(),
                 ]),
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Admin/Operations/Audit', $payload);
     }
 
     /** @return list<array{value: string, label: string}> */

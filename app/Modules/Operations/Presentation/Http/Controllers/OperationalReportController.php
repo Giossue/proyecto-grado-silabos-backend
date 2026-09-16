@@ -9,6 +9,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,7 +18,7 @@ class OperationalReportController extends Controller
     /** @var list<string> */
     private const STATES = ['sin_iniciar', 'borrador', 'en_revision', 'correccion_solicitada', 'aprobado'];
 
-    public function index(ViewOperationalReportsRequest $request, ActiveRole $roles): Response
+    public function index(ViewOperationalReportsRequest $request, ActiveRole $roles): Response|JsonResponse
     {
         $careerId = $roles->resolve($request)?->carrera_id;
         abort_unless(is_string($careerId), 403);
@@ -95,7 +96,7 @@ class OperationalReportController extends Controller
                 'latest_revision_id' => $syllabus->revisions->first()?->id,
             ]);
 
-        return Inertia::render('Coordination/Reports/Index', [
+        $payload = [
             'filters' => ['convocation' => $convocationId, 'state' => $state, 'search' => $search],
             'convocations' => $convocations->map(fn (Convocation $convocation): array => [
                 'id' => $convocation->id,
@@ -113,7 +114,9 @@ class OperationalReportController extends Controller
             ],
             'convocation_breakdown' => $convocationBreakdown,
             'syllabi' => $detail,
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Coordination/Reports/Index', $payload);
     }
 
     /** @return Builder<Syllabus> */

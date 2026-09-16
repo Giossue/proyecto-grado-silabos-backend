@@ -8,13 +8,14 @@ use App\Modules\Operations\Application\Actions\RetryJobExecution;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Operations\Presentation\Http\Requests\RetryJobExecutionRequest;
 use App\Modules\Operations\Presentation\Http\Requests\ViewJobExecutionsRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class JobExecutionController extends Controller
 {
-    public function index(ViewJobExecutionsRequest $request): Response
+    public function index(ViewJobExecutionsRequest $request): Response|JsonResponse
     {
         $search = trim($request->string('q')->toString());
         $status = $request->string('status')->toString();
@@ -45,7 +46,7 @@ class JobExecutionController extends Controller
             $query->where('cola', $queue);
         }
 
-        return Inertia::render('Admin/Operations/Jobs', [
+        $payload = [
             'filters' => ['q' => $search, 'status' => $status, 'type' => $type, 'queue' => $queue],
             'type_options' => $this->typeOptions(),
             'queue_options' => $this->queueOptions(),
@@ -65,19 +66,23 @@ class JobExecutionController extends Controller
                     'reintentable' => $execution->estado === 'fallida'
                         && in_array($execution->tipo, ['documento.exportacion', 'notificacion.interna'], true),
                 ]),
-        ]);
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Admin/Operations/Jobs', $payload);
     }
 
     public function retry(
         JobExecution $execution,
         RetryJobExecutionRequest $request,
         RetryJobExecution $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($execution, $actor, $request);
 
-        return back()->with('success', 'El trabajo fallido quedó en cola para un nuevo ciclo de intentos.');
+        $message = 'El trabajo fallido quedó en cola para un nuevo ciclo de intentos.';
+
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 
     private function typeLabel(string $type): string
