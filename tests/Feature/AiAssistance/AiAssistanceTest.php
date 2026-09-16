@@ -58,6 +58,7 @@ class AiAssistanceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['sanctum.stateful' => ['localhost:5173']]);
         $this->seed(DatabaseSeeder::class);
         $this->teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->teacherContext = $this->teacher->roleAssignments()->firstOrFail();
@@ -207,6 +208,35 @@ class AiAssistanceTest extends TestCase
                     'Normalización editorial reproducible',
                 )
                 ->where('ai_assistance.executions.0.evidence.0.source', 'Fuente IA 1'));
+    }
+
+    public function test_teacher_can_consume_field_ai_history_through_the_spa_api(): void
+    {
+        Queue::fake();
+        [$syllabus, $field] = $this->fixture();
+        $this->actAsTeacher();
+
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.teacher.syllabi.fields.ai.show', [$syllabus, $field]))
+            ->assertOk()
+            ->assertJsonPath('field.id', $field->id)
+            ->assertJsonPath('executions', []);
+
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
+                'idempotency_key' => (string) Str::uuid(),
+            ])->assertAccepted()
+            ->assertJsonPath('message', 'La solicitud quedó registrada. Puede continuar editando mientras se procesa.');
+
+        $execution = AiExecution::query()->firstOrFail();
+        $this->runJob($execution);
+
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.teacher.syllabi.fields.ai.show', [$syllabus, $field]))
+            ->assertOk()
+            ->assertJsonPath('executions.0.status', 'completada')
+            ->assertJsonPath('executions.0.evidence.0.source', 'Fuente IA 1')
+            ->assertJsonPath('executions.0.recommendations.0.title', 'Normalización editorial reproducible');
     }
 
     public function test_ia_neg_01_inactive_sources_are_excluded_and_missing_evidence_is_inconclusive(): void

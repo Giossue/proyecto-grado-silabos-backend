@@ -41,6 +41,25 @@ El panel conserva sus métricas y checklist calculados en el servidor. El listad
 por usuario, carrera y rol activo antes de paginar; no expone las rutas web heredadas al
 cliente nuevo.
 
+El editor docente ya expone su unidad vertical inicial: consulta e inicio de borrador,
+autoguardado de campos y tablas repetibles, validación determinística, envío y respuesta
+a observaciones. La IA conserva la decisión humana y ahora expone por campo el historial,
+evidencias citadas, recomendaciones y operaciones explícitas para registrar una decisión
+o aplicar el texto sugerido:
+
+```text
+GET   /api/v1/teacher/syllabi/{syllabus}
+POST  /api/v1/teacher/syllabi/{syllabus}/start
+PATCH /api/v1/teacher/syllabi/{syllabus}/fields/{field}
+POST  /api/v1/teacher/syllabi/{syllabus}/validate
+POST  /api/v1/teacher/syllabi/{syllabus}/submit
+POST  /api/v1/teacher/syllabi/{syllabus}/observations/{observation}/response
+GET   /api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai
+POST  /api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai
+POST  /api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/decision
+POST  /api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/apply
+```
+
 El navegador debe configurar por ambiente:
 
 ```text
@@ -57,8 +76,9 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
 1. Recuperación, verificación y segundo factor de autenticación.
 2. Notificaciones, preferencias y selector de ámbito desde el encabezado.
 3. Identidad y estructura académica.
-4. Detalle/editor docente, autoguardado, validación y envío.
-5. Plantilla, convocatorias, revisión, documentos e IA.
+4. Completar el editor docente: representación fiel de tablas complejas, estados de
+   conflicto, avisos y accesibilidad.
+5. Plantilla, convocatorias, revisión, documentos e IA restante.
 6. Corte único, luego retiro de Inertia, Wayfinder, Vite Laravel y las rutas web de
    producto de este repositorio.
 

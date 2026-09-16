@@ -42,6 +42,18 @@ Route::prefix('v1')->group(function (): void {
         Route::post('teacher/syllabi/{syllabus}/ai-review', [AiAssistanceController::class, 'review'])
             ->middleware(['active-role', 'throttle:ai-analysis'])
             ->name('api.v1.teacher.syllabi.ai.review');
+        Route::get('teacher/syllabi/{syllabus}/fields/{field}/ai', [AiAssistanceController::class, 'show'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.fields.ai.show');
+        Route::post('teacher/syllabi/{syllabus}/fields/{field}/ai', [AiAssistanceController::class, 'store'])
+            ->middleware(['active-role', 'throttle:ai-analysis'])
+            ->name('api.v1.teacher.syllabi.fields.ai.store');
+        Route::post('teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/decision', [AiAssistanceController::class, 'feedback'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.fields.ai.feedback');
+        Route::post('teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/apply', [AiAssistanceController::class, 'apply'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.fields.ai.apply');
         Route::post('teacher/syllabi/{syllabus}/observations/{observation}/response', [SyllabusController::class, 'respondObservation'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.observations.respond');

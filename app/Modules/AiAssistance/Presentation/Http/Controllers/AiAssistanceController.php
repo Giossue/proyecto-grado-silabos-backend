@@ -26,7 +26,7 @@ use Inertia\Response;
 
 class AiAssistanceController extends Controller
 {
-    public function show(Syllabus $syllabus, FieldDefinition $field, Request $request): Response
+    public function show(Syllabus $syllabus, FieldDefinition $field, Request $request): Response|JsonResponse
     {
         abort_unless($request->user()?->can('edit', $syllabus) === true, 403);
         $this->assertField($syllabus, $field);
@@ -49,7 +49,7 @@ class AiAssistanceController extends Controller
             ->limit(10)
             ->get();
 
-        return Inertia::render('Teacher/Syllabi/Ai', [
+        $payload = [
             'syllabus' => [
                 'id' => $syllabus->id,
                 'subject' => $syllabus->subject()->valueOrFail('nombre'),
@@ -93,7 +93,11 @@ class AiAssistanceController extends Controller
                     'applied' => $recommendation->feedback->contains('decision', 'aplicada'),
                 ])->values(),
             ])->values(),
-        ]);
+        ];
+
+        return $request->expectsJson()
+            ? response()->json($payload)
+            : Inertia::render('Teacher/Syllabi/Ai', $payload);
     }
 
     public function store(
@@ -112,6 +116,12 @@ class AiAssistanceController extends Controller
             $request,
         );
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'La solicitud quedó registrada. Puede continuar editando mientras se procesa.',
+            ], 202);
+        }
+
         return to_route('syllabi.ai.show', [$syllabus, $field])
             ->with('success', 'La solicitud quedó registrada. Puede continuar editando mientras se procesa.');
     }
@@ -120,7 +130,7 @@ class AiAssistanceController extends Controller
         Syllabus $syllabus,
         RequestSyllabusAiReviewRequest $request,
         RequestSyllabusAiReview $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $count = $action->execute(
@@ -144,7 +154,7 @@ class AiAssistanceController extends Controller
         AiRecommendation $recommendation,
         RecordAiFeedbackRequest $request,
         RecordAiFeedback $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $this->assertField($syllabus, $field);
@@ -157,6 +167,10 @@ class AiAssistanceController extends Controller
             $request,
         );
 
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Decisión registrada sin modificar el borrador.']);
+        }
+
         return back()->with('success', 'Decisión registrada sin modificar el borrador.');
     }
 
@@ -166,18 +180,27 @@ class AiAssistanceController extends Controller
         AiRecommendation $recommendation,
         ApplyAiRecommendationRequest $request,
         ApplyAiRecommendation $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $this->assertField($syllabus, $field);
         abort_unless($recommendation->definicion_campo_id === $field->id, 404);
-        $action->execute(
+        $updated = $action->execute(
             $syllabus,
             $recommendation,
             $request->integer('version_bloqueo'),
             $actor,
             $request,
         );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'La recomendación se aplicó al campo después de verificar la versión del borrador.',
+                'version_bloqueo' => $updated->version_bloqueo,
+                'completion' => (float) $updated->porcentaje_completitud,
+                'value' => $recommendation->texto_sugerido,
+            ]);
+        }
 
         $redirect = $request->boolean('return_to_editor')
             ? to_route('syllabi.edit', $syllabus)
