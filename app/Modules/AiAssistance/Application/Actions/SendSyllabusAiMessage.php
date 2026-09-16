@@ -55,7 +55,7 @@ class SendSyllabusAiMessage
                 'contenido_mensaje_ia' => '',
                 'version_bloqueo_origen' => $locked->version_bloqueo,
             ]);
-            foreach ($this->context->build($locked) as $evidence) {
+            foreach ($this->context->build($locked, $content) as $evidence) {
                 AiMessageEvidence::query()->create([
                     'id' => $evidence['id'],
                     'mensaje_ia_id' => $answer->id,

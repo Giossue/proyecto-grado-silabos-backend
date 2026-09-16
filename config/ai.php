@@ -22,6 +22,7 @@ return [
         'input_characters' => 50000,
         'evidence_items' => 50,
         'evidence_excerpt_characters' => 12000,
+        'source_fragment_characters' => 4000,
         'recommendations' => 5,
         'explanation_characters' => 4000,
         'suggested_text_characters' => 50000,

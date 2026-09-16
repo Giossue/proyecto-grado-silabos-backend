@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\AiAssistance\Application\IndexAcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -18,6 +19,7 @@ class UpdateAcademicSourceContent
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
         private readonly CanonicalHasher $hasher,
+        private readonly IndexAcademicSource $indexer,
     ) {}
 
     public function execute(AcademicSource $source, ?string $content, User $actor, Request $request): AcademicSource
@@ -29,6 +31,7 @@ class UpdateAcademicSourceContent
         return DB::transaction(function () use ($actor, $activeRole, $content, $request, $source): AcademicSource {
             $locked = AcademicSource::query()->whereKey($source->id)->lockForUpdate()->firstOrFail();
             $locked->update(['contenido' => $content]);
+            $fragmentCount = $this->indexer->execute($locked);
 
             // La auditoría registra la huella, no el documento: basta para probar qué
             // contenido regía sin copiar la fuente completa al historial.
@@ -39,7 +42,10 @@ class UpdateAcademicSourceContent
                 resourceType: 'fuente_academica',
                 resourceId: $locked->id,
                 result: 'exito',
-                metadata: ['fingerprint' => $content === null ? null : $this->hasher->hash($content)],
+                metadata: [
+                    'fingerprint' => $content === null ? null : $this->hasher->hash($content),
+                    'fragment_count' => $fragmentCount,
+                ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 

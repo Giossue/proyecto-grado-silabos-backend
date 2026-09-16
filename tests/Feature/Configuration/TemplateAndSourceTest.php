@@ -562,6 +562,12 @@ class TemplateAndSourceTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSame("## Resultado\n\nDiseña software seguro.", $source->fresh()->contenido);
+        $this->assertDatabaseHas('fragmentos_fuente_academica', [
+            'fuente_academica_id' => $source->id,
+            'titulo_fragmento' => 'Resultado',
+            'posicion_fragmento' => 0,
+            'contenido_fragmento' => 'Diseña software seguro.',
+        ]);
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion_evento_auditoria' => 'fuente.contenido_actualizado',
             'recurso_id' => $source->id,

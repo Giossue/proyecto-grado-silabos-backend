@@ -23,7 +23,7 @@ class BuildSyllabusChatContext
      *   field_id: string|null, source_id: string|null
      * }>
      */
-    public function build(Syllabus $syllabus): array
+    public function build(Syllabus $syllabus, ?string $query = null): array
     {
         $syllabus->loadMissing(['template.sections.blocks.fields', 'values', 'rows', 'convocation']);
         $values = $syllabus->values->keyBy('definicion_campo_id');
@@ -54,7 +54,7 @@ class BuildSyllabusChatContext
             }
         }
 
-        foreach ($this->sources->collect($syllabus)['items'] as $source) {
+        foreach ($this->sources->collect($syllabus, $query)['items'] as $source) {
             $items[] = [
                 'id' => (string) Str::uuid(),
                 'type' => 'fuente_academica',

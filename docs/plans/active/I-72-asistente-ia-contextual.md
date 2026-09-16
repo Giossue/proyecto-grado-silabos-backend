@@ -4,8 +4,9 @@
 
 En curso desde el 14 de septiembre de 2026. La revisión global y el chat funcional ya
 comparten el panel docente, conservan mensajes y fotografías de evidencia y validan las
-citas en servidor. La fragmentación/búsqueda textual de fuentes y la herencia efectiva
-de configuración por carrera continúan pendientes.
+citas en servidor. Las fuentes Markdown ya se indexan por encabezados y fragmentos y se
+recuperan mediante búsqueda textual PostgreSQL; falta incorporar las secciones
+relacionadas del propio borrador a la revisión por campo y cerrar la evaluación integral.
 
 ## Trazabilidad
 
@@ -215,8 +216,10 @@ PV-13 y PV-14 definan hardware y modelo; no se añade una base vectorial por ant
       invalidación.
 - [x] **I-72.3 — Fuentes elegidas:** retirar sincronización automática, selector previo
       al inicio, congelación, auditoría y pruebas de pertenencia/actividad.
-- [ ] **I-72.4 — Contexto trazable:** fragmentación Markdown, búsqueda textual,
-      ensamblador del sílabo, contrato de citas tipadas y pruebas contra inyección.
+- [ ] **I-72.4 — Contexto trazable:** fragmentación Markdown y búsqueda textual ya
+      implementadas; el chat ensambla el sílabo con citas tipadas y existen pruebas
+      contra instrucciones incrustadas. Falta contrastar cada revisión por campo con
+      secciones relacionadas del borrador antes de cerrar la rebanada.
 - [ ] **I-72.5 — Revisión integral:** ejecución padre, trabajos hijos, progreso,
       idempotencia, integración con validación y sugerencias agrupadas por sección.
 - [x] **I-72.6 — Chat único:** persistencia, endpoint, cola/sondeo elegido, panel

@@ -118,6 +118,9 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    cola, contexto del borrador, fuentes seleccionadas, citas verificadas y limpieza no
    destructiva. La SPA lo presenta en un único panel derecho junto con la revisión
    global y conserva separada la validación determinística.
+   Las fuentes Markdown se dividen por encabezados en fragmentos acotados y la API
+   recupera por búsqueda textual PostgreSQL solo los extractos pertinentes para la
+   pregunta o el campo, conservando ruta y huella como evidencia no confiable.
    La configuración efectiva también está disponible por API y pantalla: Administración
    fija el valor predeterminado y el bloqueo; Coordinación solo sustituye campos
    permitidos, y cualquier cambio posterior de plantilla invalida automáticamente esas

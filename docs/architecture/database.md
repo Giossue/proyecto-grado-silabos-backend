@@ -101,7 +101,7 @@ sustituye las relaciones transaccionales ni permite reconstruir autorizaciones.
 ### Plantillas y fuentes
 
 `plantillas_silabo`, `secciones_plantilla`, `bloques_plantilla`,
-`definiciones_campo`, `fuentes_academicas`.
+`definiciones_campo`, `fuentes_academicas`, `fragmentos_fuente_academica`.
 
 `plantillas_silabo` no referencia una carrera y solo admite una fila. El índice único
 `plantillas_silabo_unica` aplica esa cardinalidad directamente, sin un booleano
@@ -112,7 +112,12 @@ y cada revisión enviada conserva su propia fotografía inmutable (I-32, I-52).
 descripción y `contenido` Markdown editable. La migración `000054` retira
 `notas_internas`; las tablas
 `versiones_fuente`, `fragmentos_fuente` y `conflictos_fuente` se retiraron en la
-migración `000020`; la evidencia de IA conserva su propia copia del contenido citado.
+migración `000020`; no eran compatibles con el documento único editable. La migración
+`000078` incorpora `fragmentos_fuente_academica` como índice derivado y reemplazable del
+Markdown actual: conserva ruta de encabezados, posición, extracto y huella, pero nunca
+es fuente de verdad ni una versión publicable. Su índice GIN permite recuperación
+textual en español. La evidencia de IA conserva su propia fotografía del contenido
+citado aunque este índice se reconstruya.
 
 ### Convocatorias y sílabos
 

@@ -63,7 +63,12 @@ class RequestAiAnalysis
                 ]);
             }
 
-            $evidenceSet = $this->evidenceCollector->collect($locked);
+            $evidenceSet = $this->evidenceCollector->collect($locked, implode(' ', array_filter([
+                $field->etiqueta,
+                $field->clave,
+                $content,
+                json_encode($field->reglas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ], 'is_string')));
             $contentFingerprint = $this->hasher->hash($content);
             $functionalKey = $this->hasher->hash([
                 'content_fingerprint' => $contentFingerprint,
@@ -96,6 +101,8 @@ class RequestAiAnalysis
                 $evidenceMetadata[] = [
                     'evidence_id' => $evidenceId,
                     'source_id' => $item['source_id'],
+                    'fragment_id' => $item['fragment_id'],
+                    'heading_path' => $item['heading_path'],
                     'fingerprint' => $item['fingerprint'],
                 ];
             }
