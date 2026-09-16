@@ -72,7 +72,8 @@ Consulta `docs/architecture/modules.md` para límites y dependencias permitidas.
 
 ## Invariantes arquitectónicos
 
-- El monolito es la unidad de despliegue; los módulos son límites de código y datos.
+- El backend Laravel es un monolito modular y una unidad de despliegue distinta de la
+  SPA; los módulos son límites de código y datos, no microservicios.
 - PostgreSQL es la única fuente de verdad transaccional.
 - Redis puede vaciarse sin perder información académica.
 - Las revisiones y versiones publicadas se insertan; no se sobrescriben.

@@ -2,9 +2,28 @@
 
 ## Estado
 
-Completado. Este repositorio ya es exclusivamente la API Laravel; el frontend
-independiente vive en `proyecto-grado-silabos-frontend`. La aplicación publicada no se
-cambia durante la migración.
+Implementación y verificación automatizada completas. Este repositorio es exclusivamente
+la API Laravel; el frontend independiente vive en `proyecto-grado-silabos-frontend`.
+El cambio de dominios en producción continúa siendo una operación de release separada y
+no se ejecuta como parte de este plan sin una orden explícita.
+
+## Bloques de cierre
+
+- [x] **B1 — Contrato y seguridad:** proteger toda operación de producto por sesión,
+      correo verificado, contraseña definitiva, rol y alcance; contrastar las llamadas
+      de la SPA con OpenAPI.
+- [x] **B2 — Identidad:** probar ingreso repetido en una misma pestaña, segundo factor,
+      recuperación, verificación, cambio de contraseña, sesiones y cambio de ámbito.
+- [x] **B3 — Administración:** completar usuarios, catálogos académicos, procesos,
+      plantilla, auditoría y trabajos, incluidos estados vacíos y paginación.
+- [x] **B4 — Coordinación:** completar convocatorias, fuentes, malla, docentes,
+      revisiones, informes, configuración de IA, documentos y paginación.
+- [x] **B5 — Docencia e IA:** demostrar borrador, tipos de campo, tablas repetibles,
+      autoguardado, conflicto, validación, chat, recomendaciones, observaciones y envío.
+- [x] **B6 — Operación distribuida:** validar imágenes independientes, configuración
+      CORS/Sanctum/cookies, salud, colas, archivos privados y procedimiento de corte.
+- [x] **B7 — Evidencia final:** puertas completas desde ambos repositorios, recorrido
+      HTTP real SPA→API y documentación/trazabilidad sincronizadas.
 
 ## Decisión confirmada
 
@@ -146,10 +165,31 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    La SPA ya cuenta con Dockerfile multi-stage, Nginx con fallback de rutas, liveness y
    `PUBLIC_API_URL` inyectable al arrancar; no requiere reconstruir el bundle por ambiente.
 8. Inertia, Wayfinder, Vite Laravel, los recursos Vue y las rutas web de producto ya se
-   retiraron. La puerta integral del backend pasa con 253 pruebas y 3273 aserciones;
-   la SPA pasa 23 pruebas, verificación de tipos y compilación de producción. Ambos
-   artefactos quedan listos para un corte coordinado, que sigue siendo una operación de
-   despliegue separada.
+   retiraron. Las puertas automáticas pasan, pero no constituyen por sí solas la prueba
+   de equivalencia funcional distribuida; los bloques anteriores deben cerrarse antes
+   de declarar el corte listo.
 
-No se redirige producción ni se ejecutan migraciones de datos por esta separación hasta
-que todos los flujos estén cubiertos y probados contra el frontend independiente.
+Esta implementación no redirigió producción ni ejecutó migraciones de datos: el corte de
+dominios y despliegue se realiza mediante el runbook como una operación explícita.
+
+## Evidencia de cierre automatizado — 2026-09-16
+
+- Backend: `composer verify` aprobó Pint, PHPStan y **258 pruebas / 3.495
+  aserciones** sobre PostgreSQL y Redis.
+- Frontera HTTP: `ApiBoundaryTest` exige `auth:sanctum` y correo verificado en toda ruta
+  de producto; `OpenApiContractTest` mantiene sincronizado OpenAPI.
+- Identidad distribuida: `ApiSessionTest` cubre sesión, acceso repetido, segundo factor,
+  verificación, contraseña temporal, sesiones de dispositivo y limitación por correo.
+- Frontend: Vitest, `vue-tsc` y Vite verifican autenticación, paginación, tablas
+  repetibles, selección múltiple, booleanos, respuestas a observaciones, chat, citas,
+  decisiones y aplicación explícita de recomendaciones.
+- Recuperación operativa del navegador: una mutación sin token prepara CSRF, un `419`
+  renueva y reintenta una vez, y un `401` limpia la sesión y vuelve al ingreso.
+- Contenedores: ambas imágenes se construyeron. La SPA respondió liveness, inyección de
+  `PUBLIC_API_URL` y fallback de rutas; la API respondió readiness, CORS con credenciales
+  y `/sanctum/csrf-cookie`. Supervisor inicia un solo contenedor sin duplicar cada línea
+  de actividad.
+
+La revisión perceptiva en dispositivos reales, la fidelidad institucional del documento
+y las decisiones UEB abiertas siguen sus puertas `PV`; no son defectos de la separación
+ni se declaran resueltos aquí.

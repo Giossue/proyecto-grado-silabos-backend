@@ -18,9 +18,9 @@ La SPA y Laravel son artefactos y repositorios independientes. API, workers y sc
 sí comparten el artefacto backend, con procesos distintos. La plataforma concreta puede
 ser Docker Compose, Dokploy u otra; el producto no depende de una interfaz de despliegue.
 
-Durante I-84 el despliegue publicado conserva temporalmente el monolito anterior. El
-corte a las dos aplicaciones solo se realiza cuando la matriz de paridad y los smoke
-tests estén completos; esta coexistencia no cambia la arquitectura objetivo.
+El despliegue requiere dos aplicaciones apuntando a repositorios distintos. No debe
+publicarse la SPA nueva contra una API anterior ni la API nueva contra una interfaz
+Inertia retirada: el corte coordina versiones compatibles de ambos artefactos.
 
 ## Ambientes
 

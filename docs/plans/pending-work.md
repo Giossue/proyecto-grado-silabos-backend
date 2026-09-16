@@ -4,6 +4,15 @@ Corte histórico del 30 de agosto de 2026, con actualización I-56 a continuaci�
 Este documento separa lo que falta según de quién
 depende, porque son cosas de naturaleza distinta y no se resuelven igual.
 
+## Actualización de separación distribuida, 2026-09-16 (I-84)
+
+El código vigente ya no usa Inertia ni contiene frontend dentro de Laravel. La API vive
+en `proyecto-grado-silabos-backend` y la SPA en `proyecto-grado-silabos-frontend`, con
+contrato `/api/v1`, OpenAPI, Sanctum/CSRF e imágenes independientes. Las cifras de
+archivos, pruebas, páginas y CI que aparecen más abajo son cortes históricos del
+monolito y no deben interpretarse como inventario del código actual. El estado de cierre
+y su evidencia se mantienen en `active/I-84-separacion-frontend-backend-api.md`.
+
 ## Actualización del editor, 2026-09-06 (I-56)
 
 Implementado el editor acotado de plantilla: formato, celdas combinadas, variables,

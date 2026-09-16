@@ -106,9 +106,10 @@ Fecha de corte: **30 de agosto de 2026**.
   Reemplazo de coordinación y relevo docente en un paso; la desactivación se bloquea con
   sílabos en curso (I-38, I-39, I-44, 3 de septiembre de 2026).
 - La IA es asistencia explicable; no toma decisiones académicas ni bloquea el flujo.
-- Stack base: Laravel 13, Vue/Inertia, TypeScript, PostgreSQL y Redis.
-- Monolito modular y servicio de IA desacoplado por HTTP, local o alojado según el
-  adaptador autorizado por el despliegue.
+- Stack base vigente: API Laravel 13, SPA Vue 3/TypeScript/Vite en repositorio separado,
+  PostgreSQL y Redis. Inertia dejó de formar parte de la arquitectura objetivo en I-84.
+- Backend monolítico modular, SPA desplegable por separado y servicio de IA desacoplado
+  por HTTP, local o alojado según el adaptador autorizado por el despliegue.
 - Integración institucional sin escritura directa en la base de la UEB.
 - Gobierno académico distribuido: Administrador mantiene facultades, carreras, cuentas y
   coordinaciones; Coordinador gestiona mallas, materias programadas, paralelos y asignaciones
@@ -147,9 +148,10 @@ otros roles, reactivaciones ni gestión global de cuentas. La incorporación reu
 cuentas activas por correo, sin sobrescribir identidad o acceso; asignar paralelos sigue
 siendo otra operación con sus bloqueos académicos.
 
-El starter oficial vigente de Laravel 13 usa Inertia 3, Vue 3 Composition API,
-TypeScript, Tailwind y shadcn-vue. Esta entrega adopta esa línea base para no iniciar el
-proyecto con instrucciones obsoletas.
+I-84 (16 de septiembre de 2026) reemplaza la entrega conjunta basada en Inertia: Laravel
+expone JSON versionado y conserva dominio, políticas, colas y persistencia; la interfaz
+es una SPA Vue independiente que usa Sanctum con cookie y CSRF. Las decisiones del
+starter Inertia se conservan únicamente como historial en ADR-0001 y ADR-0004.
 
 I-06 implementa el contrato, persistencia, cola y control humano de IA con un simulador
 técnico determinista y un cliente HTTP exclusivamente local. Esto demuestra integración

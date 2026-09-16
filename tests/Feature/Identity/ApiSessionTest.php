@@ -4,9 +4,12 @@ namespace Tests\Feature\Identity;
 
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class ApiSessionTest extends TestCase
@@ -55,6 +58,20 @@ class ApiSessionTest extends TestCase
             ->assertJsonMissingPath('user.contrasena');
 
         $this->assertAuthenticatedAs($teacher);
+    }
+
+    public function test_login_throttle_is_scoped_by_email_and_not_only_by_shared_ip(): void
+    {
+        $this->withoutMiddleware(ValidateCsrfToken::class);
+
+        foreach (range(1, 6) as $attempt) {
+            $this->withHeader('Origin', 'http://localhost:5173')
+                ->postJson(route('api.v1.authentication.login'), [
+                    'email' => "persona{$attempt}@silabos.test",
+                    'password' => 'incorrecta',
+                ])
+                ->assertUnprocessable();
+        }
     }
 
     public function test_coordinator_must_select_a_career_explicitly(): void
@@ -112,6 +129,58 @@ class ApiSessionTest extends TestCase
             ->getJson(route('api.v1.notifications.index'))
             ->assertForbidden()
             ->assertJsonPath('message', 'Cambie la contraseña temporal antes de continuar.');
+    }
+
+    public function test_unverified_email_can_manage_verification_but_cannot_enter_product_api(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $teacher->markEmailAsUnverified();
+
+        $this->actingAs($teacher)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.session.show'))
+            ->assertOk()
+            ->assertJsonPath('user.email_verified', false);
+
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.notifications.index'))
+            ->assertForbidden();
+
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.authentication.email-verification.resend'))
+            ->assertAccepted();
+    }
+
+    public function test_signed_api_link_verifies_an_email_without_an_existing_session(): void
+    {
+        $user = User::factory()->create();
+        $user->markEmailAsUnverified();
+        $url = URL::temporarySignedRoute(
+            'api.v1.authentication.email-verification.verify',
+            now()->addMinute(),
+            ['user' => $user->id, 'hash' => sha1($user->getEmailForVerification())],
+            absolute: false,
+        );
+
+        $this->postJson($url)
+            ->assertOk()
+            ->assertJsonPath('message', 'Correo electrónico verificado. Ya puede ingresar.');
+
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_resending_verification_dispatches_only_for_an_unverified_account(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create();
+        $user->markEmailAsUnverified();
+
+        $this->actingAs($user)
+            ->postJson(route('api.v1.authentication.email-verification.resend'))
+            ->assertAccepted();
+
+        Notification::assertSentTo($user, VerifyEmail::class);
     }
 
     public function test_login_requires_a_second_factor_before_creating_the_authenticated_session(): void
