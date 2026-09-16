@@ -40,7 +40,9 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\ProcessLocks;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -51,40 +53,53 @@ class TemplateController extends Controller
      * Una sola plantilla (I-32): si existe se abre directo, como la malla de una
      * carrera. La lista solo aparece cuando todavía no hay nada que abrir.
      */
-    public function index(ManageTemplatesRequest $request, ProcessLocks $locks): Response|RedirectResponse
+    public function index(ManageTemplatesRequest $request, ProcessLocks $locks, InstitutionalLogos $logos): Response|RedirectResponse|JsonResponse
     {
         $template = SyllabusTemplate::query()->first();
         if ($template !== null) {
+            if ($request->expectsJson()) {
+                return response()->json($this->builderProps($template, $locks, $logos));
+            }
+
             return to_route('admin.templates.show', $template);
         }
 
-        return Inertia::render('Admin/Templates/Index', [
+        $payload = [
             'processLock' => $locks->templateLockReason(),
-        ]);
+            'template' => null,
+        ];
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Admin/Templates/Index', $payload);
     }
 
-    public function updateDocument(SyllabusTemplate $template, TemplateBlock $block, SaveTemplateDocumentRequest $request, SaveTemplateDocument $action): RedirectResponse
+    public function updateDocument(SyllabusTemplate $template, TemplateBlock $block, SaveTemplateDocumentRequest $request, SaveTemplateDocument $action): RedirectResponse|JsonResponse
     {
         abort_unless($block->plantilla_id === $template->id, 404);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($block, $request->validated('document'), $request->validated('fingerprint'), $actor, $request);
 
-        return back()->with('success', 'Diseño de la plantilla guardado.');
+        return $this->success($request, 'Diseño de la plantilla guardado.');
     }
 
-    public function store(CreateTemplateRequest $request, CreateSyllabusTemplate $action): RedirectResponse
+    public function store(CreateTemplateRequest $request, CreateSyllabusTemplate $action): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $template = $action->execute($actor, $request);
 
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Plantilla creada con las doce áreas base.', 'template_id' => $template->id], 201);
+        }
+
         return to_route('admin.templates.show', $template)->with('success', 'Plantilla creada con las doce áreas base.');
     }
 
-    public function show(SyllabusTemplate $template, ManageTemplatesRequest $request, ProcessLocks $locks, InstitutionalLogos $logos): Response
+    public function show(SyllabusTemplate $template, ManageTemplatesRequest $request, ProcessLocks $locks, InstitutionalLogos $logos): Response|JsonResponse
     {
-        return Inertia::render('Admin/Templates/Show', $this->builderProps($template, $locks, $logos));
+        $payload = $this->builderProps($template, $locks, $logos);
+
+        return $request->expectsJson() ? response()->json($payload) : Inertia::render('Admin/Templates/Show', $payload);
     }
 
     public function edit(SyllabusTemplate $template, ManageTemplatesRequest $request, ProcessLocks $locks, InstitutionalLogos $logos): Response|RedirectResponse
@@ -171,24 +186,24 @@ class TemplateController extends Controller
         SyllabusTemplate $template,
         SaveTemplateAppearanceRequest $request,
         SaveTemplateAppearance $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($template, $request->safe()->except('confirm_purge'), $actor, $request);
 
-        return back()->with('success', 'Apariencia de la plantilla guardada.');
+        return $this->success($request, 'Apariencia de la plantilla guardada.');
     }
 
     public function updateTitle(
         SyllabusTemplate $template,
         SaveTemplateTitleRequest $request,
         SaveTemplateTitle $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($template, $request->string('title')->toString(), $actor, $request);
 
-        return back()->with('success', 'Título de la plantilla actualizado.');
+        return $this->success($request, 'Título de la plantilla actualizado.');
     }
 
     private function contentType(TemplateBlock $block, ?FieldDefinition $field): string
@@ -234,12 +249,12 @@ class TemplateController extends Controller
         SyllabusTemplate $template,
         SaveFieldDefinitionRequest $request,
         SaveFieldDefinition $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->create($template->id, $request->validated(), $actor, $request);
 
-        return back()->with('success', 'Campo agregado al bloque.');
+        return $this->success($request, 'Campo agregado al bloque.');
     }
 
     public function updateField(
@@ -247,25 +262,25 @@ class TemplateController extends Controller
         FieldDefinition $field,
         SaveFieldDefinitionRequest $request,
         SaveFieldDefinition $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         abort_unless($field->plantilla_id === $template->id, 404);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->update($field, $request->validated(), $actor, $request);
 
-        return back()->with('success', 'Campo actualizado.');
+        return $this->success($request, 'Campo actualizado.');
     }
 
     public function storeSection(
         SyllabusTemplate $template,
         SaveTemplateSectionRequest $request,
         SaveTemplateSection $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->create($template->id, $request->validated(), $actor, $request);
 
-        return back()->with('success', 'Bloque agregado al borrador.');
+        return $this->success($request, 'Bloque agregado al borrador.');
     }
 
     public function updateSection(
@@ -273,20 +288,20 @@ class TemplateController extends Controller
         TemplateSection $section,
         SaveTemplateSectionRequest $request,
         SaveTemplateSection $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         abort_unless($section->plantilla_id === $template->id, 404);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->update($section, $request->validated(), $actor, $request);
 
-        return back()->with('success', 'Bloque actualizado.');
+        return $this->success($request, 'Bloque actualizado.');
     }
 
     public function reorderBlocks(
         SyllabusTemplate $template,
         ReorderTemplateBlocksRequest $request,
         ReorderTemplateBlocks $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -297,14 +312,14 @@ class TemplateController extends Controller
             $request,
         );
 
-        return back()->with('success', 'Orden de campos actualizado.');
+        return $this->success($request, 'Orden de campos actualizado.');
     }
 
     public function reorderSections(
         SyllabusTemplate $template,
         ReorderTemplateSectionsRequest $request,
         ReorderTemplateSections $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -314,11 +329,11 @@ class TemplateController extends Controller
             $request,
         );
 
-        return back()->with('success', 'Orden de bloques actualizado.');
+        return $this->success($request, 'Orden de bloques actualizado.');
     }
 
     /** Reemplaza el logo de la universidad que encabeza todos los sílabos. */
-    public function storeLogo(StoreInstitutionLogoRequest $request, InstitutionalLogos $logos, RecordAuditEvent $audit, ActiveRole $roles): RedirectResponse
+    public function storeLogo(StoreInstitutionLogoRequest $request, InstitutionalLogos $logos, RecordAuditEvent $audit, ActiveRole $roles): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
@@ -336,7 +351,7 @@ class TemplateController extends Controller
             correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
 
-        return back()->with('success', 'Logo de la universidad actualizado.');
+        return $this->success($request, 'Logo de la universidad actualizado.');
     }
 
     public function updateTableLayout(
@@ -344,13 +359,13 @@ class TemplateController extends Controller
         TemplateBlock $block,
         UpdateTableLayoutRequest $request,
         UpdateTableLayout $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         abort_unless($block->plantilla_id === $template->id, 404);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($block, $request->validated(), $actor, $request);
 
-        return back()->with('success', 'Tabla actualizada.');
+        return $this->success($request, 'Tabla actualizada.');
     }
 
     public function destroyBlock(
@@ -358,13 +373,13 @@ class TemplateController extends Controller
         TemplateBlock $block,
         ManageTemplatesRequest $request,
         DeleteTemplateBlock $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         abort_unless($block->plantilla_id === $template->id, 404);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($block, $actor, $request);
 
-        return back()->with('success', 'Campo eliminado.');
+        return $this->success($request, 'Campo eliminado.');
     }
 
     public function destroySection(
@@ -372,12 +387,17 @@ class TemplateController extends Controller
         TemplateSection $section,
         ManageTemplatesRequest $request,
         DeleteTemplateSection $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         abort_unless($section->plantilla_id === $template->id, 404);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($section, $actor, $request);
 
-        return back()->with('success', 'Bloque eliminado.');
+        return $this->success($request, 'Bloque eliminado.');
+    }
+
+    private function success(Request $request, string $message): RedirectResponse|JsonResponse
+    {
+        return $request->expectsJson() ? response()->json(['message' => $message]) : back()->with('success', $message);
     }
 }
