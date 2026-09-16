@@ -16,6 +16,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Support\RoleArea;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -34,7 +35,7 @@ class DashboardController extends Controller
         SetupChecklist $setup,
         ConvocationSchedule $schedule,
         InstitutionalLogos $logos,
-    ): Response|RedirectResponse {
+    ): Response|RedirectResponse|JsonResponse {
         $activeRole = $roles->resolve($request);
         $user = $request->user();
 
@@ -70,11 +71,48 @@ class DashboardController extends Controller
             ? $this->facultyLogo($activeRole->carrera_id, $logos)
             : null;
 
-        return Inertia::render('Dashboard', [
+        $payload = [
             'metrics' => $metrics,
             'setup' => $checklist,
             'facultyLogo' => $facultyLogo,
-        ]);
+        ];
+
+        if ($request->expectsJson()) {
+            return response()->json($this->apiPayload($payload));
+        }
+
+        return Inertia::render('Dashboard', $payload);
+    }
+
+    /**
+     * Los enlaces de puesta en marcha pertenecían a las rutas web/Inertia. La SPA recibe
+     * solo información de dominio y decide una ruta propia cuando ese módulo exista.
+     *
+     * @param  array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null, facultyLogo: array<string, mixed>|null}  $payload
+     * @return array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null, faculty_logo: array<string, mixed>|null}
+     */
+    private function apiPayload(array $payload): array
+    {
+        $setup = $payload['setup'];
+
+        if (is_array($setup) && is_array($setup['steps'] ?? null)) {
+            $setup['steps'] = array_map(
+                fn (array $step): array => [
+                    'key' => $step['key'],
+                    'label' => $step['label'],
+                    'hint' => $step['hint'],
+                    'done' => $step['done'],
+                    'action' => $step['action'],
+                ],
+                $setup['steps'],
+            );
+        }
+
+        return [
+            'metrics' => $payload['metrics'],
+            'setup' => $setup,
+            'faculty_logo' => $payload['facultyLogo'],
+        ];
     }
 
     /** @return array{name: string, current_url: string, configured: bool, size: array{width: int, height: int}}|null */

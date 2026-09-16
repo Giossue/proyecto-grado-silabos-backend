@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,5 +16,8 @@ Route::prefix('v1')->group(function (): void {
             ->name('api.v1.authentication.password.update');
         Route::put('active-role', [SessionController::class, 'selectActiveRole'])
             ->name('api.v1.active-role.update');
+        Route::get('dashboard', [DashboardController::class, 'index'])
+            ->middleware('active-role')
+            ->name('api.v1.dashboard.show');
     });
 });
