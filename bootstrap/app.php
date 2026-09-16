@@ -59,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             AssignCorrelationId::class,
             EnsureActiveUser::class,
+            RequirePasswordChange::class,
             AddSecurityHeaders::class,
         ]);
     })

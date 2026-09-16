@@ -92,17 +92,23 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
 
 1. Identidad de acceso (sesión, contraseña temporal, recuperación, verificación de
    correo y segundo factor) está disponible en la SPA.
-2. Notificaciones están disponibles; faltan preferencias, contador global y selector de
+2. Administración de usuarios, gobierno académico, procesos institucionales,
+   convocatorias, fuentes, revisión/aprobación, estructura académica de Coordinación,
+   plantilla, documentos privados, auditoría, trabajos e informes ya dispone de contrato
+   JSON y pantalla SPA.
+3. Notificaciones están disponibles; faltan preferencias, contador global y selector de
    ámbito desde un encabezado compartido.
-3. Administración de usuarios, estructura académica y procesos institucionales están
-   disponibles; faltan programación de materias, paralelos y asignaciones docentes.
-4. Convocatorias, fuentes académicas y revisión/aprobación están disponibles; faltan
-   malla, programación, paralelos y asignaciones docentes de Coordinación.
-5. Completar el editor docente: representación fiel de tablas complejas, estados de
-   conflicto, avisos y accesibilidad.
-6. Plantilla, documentos, auditoría e IA restante.
-7. Corte único, luego retiro de Inertia, Wayfinder, Vite Laravel y las rutas web de
-   producto de este repositorio.
+4. Completar la paridad funcional de los módulos administrativos: edición detallada de
+   usuarios y roles, operaciones completas de estructura académica y el constructor
+   visual de plantilla sin depender de editores JSON.
+5. Completar el editor docente y la revisión con representación fiel de documentos y
+   tablas complejas, historial/comparación, estados de conflicto, avisos y accesibilidad.
+6. Incorporar el chat de IA con conversaciones, alcance explícito de fuentes y citas;
+   conservarlo separado de la validación determinística y de la revisión global de IA.
+7. Crear el armazón compartido de la aplicación, guardas de rol y contraseña temporal,
+   preferencias, seguridad de sesión, pruebas frontend y documentación OpenAPI.
+8. Ejecutar la verificación integral y realizar un corte único; solo entonces retirar
+   Inertia, Wayfinder, Vite Laravel y las rutas web de producto de este repositorio.
 
 No se redirige producción ni se ejecutan migraciones de datos por esta separación hasta
 que todos los flujos estén cubiertos y probados contra el frontend independiente.

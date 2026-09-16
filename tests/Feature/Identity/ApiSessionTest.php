@@ -95,6 +95,24 @@ class ApiSessionTest extends TestCase
         $this->assertFalse($teacher->fresh()->debe_cambiar_contrasena);
     }
 
+    public function test_temporary_password_blocks_product_api_but_keeps_session_and_change_available(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $teacher->update(['debe_cambiar_contrasena' => true]);
+
+        $this->actingAs($teacher)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.session.show'))
+            ->assertOk()
+            ->assertJsonPath('user.must_change_password', true);
+
+        $this->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.notifications.index'))
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Cambie la contraseña temporal antes de continuar.');
+    }
+
     public function test_login_requires_a_second_factor_before_creating_the_authenticated_session(): void
     {
         $user = User::factory()->withTwoFactor()->create();

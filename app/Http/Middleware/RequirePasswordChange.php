@@ -28,6 +28,13 @@ class RequirePasswordChange
         'role.store',
         'user-password.update',
         'logout',
+        // Contrato equivalente para la SPA separada. La sesión debe poder explicar el
+        // bloqueo, cambiar la clave y terminarse; ninguna operación de producto queda
+        // disponible mientras siga vigente la contraseña temporal.
+        'api.v1.session.show',
+        'api.v1.authentication.password.update',
+        'api.v1.authentication.logout',
+        'api.v1.authentication.email-verification.resend',
     ];
 
     /**
