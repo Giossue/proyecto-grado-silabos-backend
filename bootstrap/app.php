@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/health/live',
     )
@@ -24,6 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'active-role' => RequireActiveRole::class,
         ]);
+
+        // El frontend separado usa la sesión de primera parte de Sanctum. Las cookies
+        // siguen siendo HttpOnly; el navegador obtiene antes el token CSRF de Sanctum.
+        $middleware->statefulApi();
 
         // Traefik descifra el TLS y entrega la petición por HTTP dentro de la red de
         // Docker. Sin esto Laravel cree que la conexión es insegura y genera todas las
@@ -48,6 +53,12 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            AddSecurityHeaders::class,
+        ]);
+
+        $middleware->api(append: [
+            AssignCorrelationId::class,
+            EnsureActiveUser::class,
             AddSecurityHeaders::class,
         ]);
     })

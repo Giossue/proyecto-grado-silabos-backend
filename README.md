@@ -3,7 +3,8 @@
 Sistema web para centralizar, configurar y auditar el ciclo completo de los sílabos de
 la Carrera de Software de la Universidad Estatal de Bolívar.
 
-La aplicación usa Laravel 13, Inertia 3, Vue 3 y TypeScript. PostgreSQL es la única
+Este repositorio evoluciona hacia Laravel 13 como API JSON. El frontend Vue 3 vive en
+el repositorio independiente `proyecto-grado-silabos-frontend`. PostgreSQL es la única
 fuente transaccional; Redis se usa para colas, caché y coordinación descartable.
 
 ## Estado
@@ -137,6 +138,7 @@ HTTP de loopback. Consulte el runbook antes de ejecutarlos.
 - Verificación de release: [docs/runbooks/release-verification.md](docs/runbooks/release-verification.md)
 - Seguridad: [docs/security/principles.md](docs/security/principles.md)
 - Reglas para agentes: [AGENTS.md](AGENTS.md)
+- Separación API/SPA: [docs/plans/active/I-84-separacion-frontend-backend-api.md](docs/plans/active/I-84-separacion-frontend-backend-api.md)
 
 Los archivos funcionales se guardan en un disco privado. Redis y el servicio de IA no
 son fuentes de verdad, y la indisponibilidad de IA nunca debe bloquear el flujo humano.
