@@ -57,6 +57,15 @@ class SessionController extends Controller
         }
 
         RateLimiter::clear($throttleKey);
+        if ($user->hasEnabledTwoFactorAuthentication()) {
+            $request->session()->put('login.id', $user->id);
+
+            return response()->json([
+                'two_factor_required' => true,
+                'message' => 'Ingrese el código de su aplicación de autenticación.',
+            ], 202);
+        }
+
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
 

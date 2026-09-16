@@ -5,6 +5,7 @@ use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceControlle
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
+use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\TwoFactorController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,9 @@ Route::prefix('v1')->group(function (): void {
         ->name('api.v1.authentication.password-recovery.reset');
     Route::post('authentication/email-verification/{user}/{hash}', [EmailVerificationController::class, 'verify'])
         ->name('api.v1.authentication.email-verification.verify');
+    Route::post('authentication/two-factor/challenge', [TwoFactorController::class, 'challenge'])
+        ->middleware('throttle:two-factor')
+        ->name('api.v1.authentication.two-factor.challenge');
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('session', [SessionController::class, 'show'])->name('api.v1.session.show');
@@ -29,6 +33,14 @@ Route::prefix('v1')->group(function (): void {
         Route::post('authentication/email-verification/resend', [EmailVerificationController::class, 'resend'])
             ->middleware('throttle:password-recovery')
             ->name('api.v1.authentication.email-verification.resend');
+        Route::get('authentication/two-factor', [TwoFactorController::class, 'status'])
+            ->name('api.v1.authentication.two-factor.status');
+        Route::post('authentication/two-factor', [TwoFactorController::class, 'enable'])
+            ->name('api.v1.authentication.two-factor.enable');
+        Route::post('authentication/two-factor/confirm', [TwoFactorController::class, 'confirm'])
+            ->name('api.v1.authentication.two-factor.confirm');
+        Route::delete('authentication/two-factor', [TwoFactorController::class, 'disable'])
+            ->name('api.v1.authentication.two-factor.disable');
         Route::put('active-role', [SessionController::class, 'selectActiveRole'])
             ->name('api.v1.active-role.update');
         Route::get('dashboard', [DashboardController::class, 'index'])

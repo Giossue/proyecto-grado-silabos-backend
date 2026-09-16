@@ -73,8 +73,8 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
 
 ## Siguientes unidades
 
-1. Recuperación de contraseña y verificación de correo están disponibles en la SPA;
-   falta segundo factor.
+1. Identidad de acceso (sesión, contraseña temporal, recuperación, verificación de
+   correo y segundo factor) está disponible en la SPA.
 2. Notificaciones, preferencias y selector de ámbito desde el encabezado.
 3. Identidad y estructura académica.
 4. Completar el editor docente: representación fiel de tablas complejas, estados de

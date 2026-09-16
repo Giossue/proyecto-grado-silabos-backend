@@ -94,4 +94,52 @@ class ApiSessionTest extends TestCase
 
         $this->assertFalse($teacher->fresh()->debe_cambiar_contrasena);
     }
+
+    public function test_login_requires_a_second_factor_before_creating_the_authenticated_session(): void
+    {
+        $user = User::factory()->withTwoFactor()->create();
+
+        $this->withoutMiddleware(ValidateCsrfToken::class)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.authentication.login'), [
+                'email' => $user->correo_electronico,
+                'password' => 'password',
+            ])
+            ->assertAccepted()
+            ->assertJsonPath('two_factor_required', true)
+            ->assertSessionHas('login.id', $user->id);
+
+        $this->assertGuest();
+    }
+
+    public function test_authenticated_user_can_read_two_factor_status_through_api(): void
+    {
+        $user = User::factory()->withTwoFactor()->create();
+
+        $this->actingAs($user)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.authentication.two-factor.status'))
+            ->assertOk()
+            ->assertJsonPath('enabled', true)
+            ->assertJsonPath('confirmation_required', false);
+    }
+
+    public function test_authenticated_user_can_begin_and_cancel_two_factor_setup_through_api(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->withoutMiddleware(ValidateCsrfToken::class)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.authentication.two-factor.enable'))
+            ->assertOk()
+            ->assertJsonPath('enabled', false)
+            ->assertJsonPath('confirmation_required', true)
+            ->assertJsonStructure(['qr_code_svg']);
+
+        $this->deleteJson(route('api.v1.authentication.two-factor.disable'))
+            ->assertOk()
+            ->assertJsonPath('enabled', false)
+            ->assertJsonPath('confirmation_required', false);
+    }
 }
