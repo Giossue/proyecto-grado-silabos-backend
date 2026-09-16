@@ -33,6 +33,7 @@ class AcademicStructureTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['sanctum.stateful' => ['localhost:5173']]);
         $this->seed(DatabaseSeeder::class);
         $this->administrator = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
         $this->administratorContext = $this->administrator->roleAssignments()->firstOrFail();
@@ -164,6 +165,59 @@ class AcademicStructureTest extends TestCase
             'ciclo_asignatura' => 7,
             'total_horas_asignatura' => 144,
         ]);
+    }
+
+    public function test_spa_reads_and_repositions_a_subject_through_the_api_contract(): void
+    {
+        $career = Career::query()->findOrFail($this->coordinatorContext->carrera_id);
+        $subject = Subject::query()->where('carrera_id', $career->id)->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson("/api/v1/coordination/academic/curriculum/{$career->id}")
+            ->assertOk()
+            ->assertJsonPath('career.id', $career->id)
+            ->assertJsonPath('curriculum.id', $career->id)
+            ->assertJsonFragment([
+                'id' => $subject->id,
+                'code' => $subject->codigo_asignatura,
+            ]);
+
+        $this->actingAsCoordinator()
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->patchJson("/api/v1/coordination/academic/curriculum/{$career->id}/subject-layout", [
+                'subject_id' => $subject->id,
+                'cycle' => 2,
+                'position' => 4,
+            ])
+            ->assertOk()
+            ->assertJsonPath('message', 'Posición de la materia actualizada.');
+
+        $this->assertDatabaseHas('asignaturas', [
+            'id' => $subject->id,
+            'ciclo_asignatura' => 2,
+            'orden_asignatura_en_ciclo' => 4,
+        ]);
+    }
+
+    public function test_spa_deletes_an_unused_subject_with_the_curriculum_operation(): void
+    {
+        $career = Career::query()->findOrFail($this->coordinatorContext->carrera_id);
+        $subject = Subject::query()->create([
+            'carrera_id' => $career->id,
+            'codigo_asignatura' => 'SW-TEMP',
+            'nombre' => 'Materia temporal',
+            'ciclo' => 1,
+            'activo' => true,
+        ]);
+
+        $this->actingAsCoordinator()
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->deleteJson("/api/v1/coordination/academic/curriculum/{$career->id}/subjects/{$subject->id}")
+            ->assertOk()
+            ->assertJsonPath('message', 'Materia eliminada de la malla.');
+
+        $this->assertDatabaseMissing('asignaturas', ['id' => $subject->id]);
     }
 
     public function test_coordinator_cannot_access_another_careers_curricular_structure_or_subjects(): void

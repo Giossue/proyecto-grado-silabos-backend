@@ -107,9 +107,10 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    Las fuentes académicas se redactan en una hoja visual con cinta de formato; Markdown
    permanece como contrato interno y ya no se expone a Coordinación.
 4. La edición detallada de usuarios y roles, la incorporación/relevo de docentes y la
-   carga del logo de facultad ya están integradas. Faltan las operaciones visuales
-   completas de estructura académica y la composición visual avanzada de bloques de la
-   plantilla. El esquema de tablas ya usa un diseñador estructurado —columnas, grupos,
+   carga del logo de facultad ya están integradas. La estructura académica permite crear,
+   editar, activar, eliminar y ordenar materias por ciclo; configurar la malla; mantener
+   requisitos; preparar períodos y paralelos; asignar, incorporar y relevar docentes.
+   Falta la composición visual avanzada de bloques de la plantilla. El esquema de tablas ya usa un diseñador estructurado —columnas, grupos,
    bandas, cabeceras, totales y repetición— y no expone JSON al usuario.
 5. Completar el editor docente y la revisión con representación fiel de documentos y
    tablas complejas, historial/comparación, estados de conflicto, avisos y accesibilidad.
