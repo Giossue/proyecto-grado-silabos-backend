@@ -4,7 +4,9 @@ namespace Tests\Feature\AiAssistance;
 
 use App\Modules\AiAssistance\Application\AiResultContract;
 use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
+use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Domain\Data\AiAnalysisInput;
+use App\Modules\AiAssistance\Domain\Data\AiChatInput;
 use App\Modules\AiAssistance\Domain\Data\AiEvidenceInput;
 use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAnalysisGateway;
@@ -138,6 +140,33 @@ class HostedAiAnalysisGatewayTest extends TestCase
             $this->assertStringNotContainsString('secret-test-key', $exception->getMessage());
             $this->assertStringNotContainsString('rejected', $exception->getMessage());
         }
+    }
+
+    public function test_hosted_chat_returns_only_citations_from_the_authorized_context(): void
+    {
+        $this->configure('openai', 'https://api.openai.com/v1', 'gpt-test');
+        Http::fake([
+            'https://api.openai.com/v1/responses' => Http::response([
+                'output_text' => json_encode([
+                    'answer' => 'El objetivo debe usar un verbo observable.',
+                    'citation_ids' => ['evidence-1'],
+                ], JSON_THROW_ON_ERROR),
+            ]),
+        ]);
+        $input = new AiChatInput(
+            (string) Str::uuid(),
+            '¿Qué debo mejorar?',
+            'es-EC',
+            [['role' => 'user', 'content' => 'Analiza el objetivo.']],
+            [['id' => 'evidence-1', 'type' => 'seccion_silabo', 'label' => 'Objetivo', 'excerpt' => 'Comprender los fundamentos.']],
+        );
+
+        $result = app(AiChatGateway::class)->reply($input);
+
+        $this->assertSame(['evidence-1'], $result->citationIds);
+        $this->assertSame('openai:gpt-test', $result->gatewayVersion);
+        Http::assertSent(fn (Request $request): bool => data_get($request->data(), 'text.format.name') === 'syllabus_chat'
+            && ! array_key_exists('reasoning', $request->data()));
     }
 
     private function configure(string $driver, string $baseUrl, string $model): void

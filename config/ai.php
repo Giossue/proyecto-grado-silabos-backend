@@ -27,5 +27,8 @@ return [
         'suggested_text_characters' => 50000,
         'response_bytes' => 262144,
         'requests_per_minute' => 6,
+        'chat_message_characters' => 4000,
+        'chat_answer_characters' => 12000,
+        'chat_history_messages' => 12,
     ],
 ];

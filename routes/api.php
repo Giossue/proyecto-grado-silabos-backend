@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
 use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
+use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceController;
 use App\Modules\Configuration\Presentation\Http\Controllers\FacultyLogoController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
@@ -246,6 +247,15 @@ Route::prefix('v1')->group(function (): void {
         Route::post('teacher/syllabi/{syllabus}/ai-review', [AiAssistanceController::class, 'review'])
             ->middleware(['active-role', 'throttle:ai-analysis'])
             ->name('api.v1.teacher.syllabi.ai.review');
+        Route::get('teacher/syllabi/{syllabus}/ai-chat', [AiChatController::class, 'show'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.ai-chat.show');
+        Route::post('teacher/syllabi/{syllabus}/ai-chat/messages', [AiChatController::class, 'store'])
+            ->middleware(['active-role', 'throttle:ai-analysis'])
+            ->name('api.v1.teacher.syllabi.ai-chat.messages.store');
+        Route::delete('teacher/syllabi/{syllabus}/ai-chat', [AiChatController::class, 'clear'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.ai-chat.clear');
         Route::get('teacher/syllabi/{syllabus}/fields/{field}/ai', [AiAssistanceController::class, 'show'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.fields.ai.show');

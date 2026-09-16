@@ -75,6 +75,9 @@ GET   /api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai
 POST  /api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai
 POST  /api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/decision
 POST  /api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/apply
+GET   /api/v1/teacher/syllabi/{syllabus}/ai-chat
+POST  /api/v1/teacher/syllabi/{syllabus}/ai-chat/messages
+DELETE /api/v1/teacher/syllabi/{syllabus}/ai-chat
 ```
 
 El navegador debe configurar por ambiente:
@@ -104,8 +107,10 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    completas de estructura académica y el constructor de plantilla sin editores JSON.
 5. Completar el editor docente y la revisión con representación fiel de documentos y
    tablas complejas, historial/comparación, estados de conflicto, avisos y accesibilidad.
-6. Incorporar el chat de IA con conversaciones, alcance explícito de fuentes y citas;
-   conservarlo separado de la validación determinística y de la revisión global de IA.
+6. El chat de IA ya dispone de conversación persistente por docente/sílabo, trabajo en
+   cola, contexto del borrador, fuentes seleccionadas, citas verificadas y limpieza no
+   destructiva. La SPA lo presenta en un único panel derecho junto con la revisión
+   global y conserva separada la validación determinística.
 7. Ampliar las pruebas frontend y documentar el contrato OpenAPI; las guardas de rol y
    contraseña temporal ya se aplican en navegador y servidor.
 8. Ejecutar la verificación integral y realizar un corte único; solo entonces retirar

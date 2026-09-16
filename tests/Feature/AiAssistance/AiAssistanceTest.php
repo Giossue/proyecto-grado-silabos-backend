@@ -9,6 +9,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\AiAssistance\Application\AiResultContract;
 use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
+use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Domain\Data\AiAnalysisInput;
 use App\Modules\AiAssistance\Domain\Data\AiAnalysisResult;
 use App\Modules\AiAssistance\Domain\Data\AiRecommendationOutput;
@@ -16,9 +17,11 @@ use App\Modules\AiAssistance\Domain\Exceptions\AiContractException;
 use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HttpAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Jobs\AnalyzeSyllabusFieldJob;
+use App\Modules\AiAssistance\Infrastructure\Jobs\AnswerSyllabusChatJob;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiEvidence;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiFeedback;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiMessage;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiRecommendation;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -576,6 +579,48 @@ class AiAssistanceTest extends TestCase
             'value' => 'El editor permanece disponible',
         ])->assertOk();
         $this->assertDatabaseCount('ejecuciones_ia', 1);
+    }
+
+    public function test_teacher_chats_with_the_syllabus_and_receives_verifiable_citations(): void
+    {
+        Queue::fake();
+        [$syllabus, $field] = $this->fixture(evidenceContent: 'Lineamiento institucional verificable.');
+        $this->actAsTeacher();
+        $this->withHeader('Origin', 'http://localhost:5173');
+
+        $this->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
+            ->assertOk()
+            ->assertJsonPath('conversation', null)
+            ->assertJsonPath('available', true);
+
+        $key = (string) Str::uuid();
+        $this->postJson(route('api.v1.teacher.syllabi.ai-chat.messages.store', $syllabus), [
+            'message' => '¿Qué debería revisar?',
+            'idempotency_key' => $key,
+        ])->assertAccepted()->assertJsonStructure(['assistant_message_id']);
+        $this->postJson(route('api.v1.teacher.syllabi.ai-chat.messages.store', $syllabus), [
+            'message' => '¿Qué debería revisar?',
+            'idempotency_key' => $key,
+        ])->assertAccepted();
+
+        $this->assertDatabaseCount('conversaciones_ia', 1);
+        $this->assertDatabaseCount('mensajes_ia', 2);
+        Queue::assertPushed(AnswerSyllabusChatJob::class, 1);
+
+        $answer = AiMessage::query()->where('rol_mensaje_ia', 'asistente')->firstOrFail();
+        (new AnswerSyllabusChatJob($answer->id))->handle(app(AiChatGateway::class));
+
+        $this->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
+            ->assertOk()
+            ->assertJsonPath('conversation.messages.1.status', 'completado')
+            ->assertJsonPath('conversation.messages.1.citations.0.field_id', $field->id)
+            ->assertJsonPath('conversation.messages.1.citations.0.type', 'seccion_silabo');
+
+        $this->deleteJson(route('api.v1.teacher.syllabi.ai-chat.clear', $syllabus))
+            ->assertOk();
+        $this->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
+            ->assertJsonPath('conversation.hidden', true);
+        $this->assertDatabaseCount('mensajes_ia', 2);
     }
 
     /** @return array{Syllabus, FieldDefinition, Convocation, AcademicSource} */

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Access\AcademicRoleEligibility;
 use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
+use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAnalysisGateway;
@@ -50,6 +51,13 @@ class AppServiceProvider extends ServiceProvider
             return match ((string) config('ai.driver')) {
                 'baseline' => app(BaselineAiAnalysisGateway::class),
                 'http' => app(HttpAiAnalysisGateway::class),
+                'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiAnalysisGateway::class),
+                default => app(DisabledAiAnalysisGateway::class),
+            };
+        });
+        $this->app->bind(AiChatGateway::class, function (): AiChatGateway {
+            return match ((string) config('ai.driver')) {
+                'baseline' => app(BaselineAiAnalysisGateway::class),
                 'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiAnalysisGateway::class),
                 default => app(DisabledAiAnalysisGateway::class),
             };

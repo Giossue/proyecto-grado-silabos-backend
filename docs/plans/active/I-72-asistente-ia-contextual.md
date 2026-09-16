@@ -2,10 +2,10 @@
 
 ## Estado
 
-En curso desde el 14 de septiembre de 2026. La primera rebanada visible integra la
-revisión global con el editor docente y sus resultados usan conversación, mensajes,
-fuentes y citas de AI Elements Vue. El chat funcional, el contexto cruzado y la herencia
-de configuración continúan pendientes.
+En curso desde el 14 de septiembre de 2026. La revisión global y el chat funcional ya
+comparten el panel docente, conservan mensajes y fotografías de evidencia y validan las
+citas en servidor. La fragmentación/búsqueda textual de fuentes y la herencia efectiva
+de configuración por carrera continúan pendientes.
 
 ## Trazabilidad
 
@@ -219,7 +219,7 @@ PV-13 y PV-14 definan hardware y modelo; no se añade una base vectorial por ant
       ensamblador del sílabo, contrato de citas tipadas y pruebas contra inyección.
 - [ ] **I-72.5 — Revisión integral:** ejecución padre, trabajos hijos, progreso,
       idempotencia, integración con validación y sugerencias agrupadas por sección.
-- [ ] **I-72.6 — Chat único:** persistencia, endpoint, cola/streaming elegido, panel
+- [x] **I-72.6 — Chat único:** persistencia, endpoint, cola/sondeo elegido, panel
       derecho persistente, citas navegables, sugerencias y experiencia responsive/accesible.
 - [ ] **I-72.7 — Producción y evaluación:** comprobar servicio y worker, completar
       corpus de prueba, medir calidad/latencia y cerrar o mantener explícitamente PV-13,

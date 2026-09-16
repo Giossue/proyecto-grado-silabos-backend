@@ -139,7 +139,14 @@ detienen el trabajo docente sin borrar nada.
 `solicitud_correccion_observaciones`, `respuestas_observacion`, `aprobaciones`,
 `reaperturas`, `transiciones_silabo`, `ejecuciones_validacion`,
 `resultados_validacion`, `ejecuciones_ia`, `evidencias_ia`, `recomendaciones_ia`,
-`recomendacion_evidencias_ia`, `retroalimentacion_ia`.
+`recomendacion_evidencias_ia`, `retroalimentacion_ia`, `conversaciones_ia`,
+`mensajes_ia`, `evidencias_mensaje_ia`, `citas_mensaje_ia`.
+
+Cada docente conserva una conversación por sílabo. Limpiar el panel marca
+`conversaciones_ia.ocultada_en`; no elimina mensajes ni fotografías de evidencia. La
+pregunta y la respuesta son mensajes separados, la respuesta referencia su ejecución de
+trabajo y la versión del borrador, y sus citas solo pueden apuntar a fotografías de
+secciones habilitadas o fuentes seleccionadas guardadas para ese mismo mensaje.
 
 ### Operación e integración
 
@@ -218,6 +225,10 @@ seeder dos veces. Las asignaciones activas se reutilizan para conservar la idemp
   una solicitud nueva sin reescribir historia;
 - evidencia solo se fija mientras la ejecución está pendiente y debe provenir de una
   fuente activa, de igual carrera y fijada por la convocatoria;
+- una conversación es única por docente y sílabo; una clave idempotente no crea dos
+  preguntas dentro de la misma conversación;
+- cada respuesta conversacional conserva evidencia propia y únicamente puede citar IDs
+  de ese conjunto; limpiar la vista no borra el historial auditable;
 - recomendaciones y sus citas solo se insertan mientras la ejecución está corriendo y
   deben pertenecer al mismo análisis/campo;
 - una ejecución terminal y todos sus hijos son append-only; no admite evidencia o salida
