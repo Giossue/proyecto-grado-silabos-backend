@@ -26,6 +26,8 @@ class UpdateTableLayoutRequest extends ManageTemplatesRequest
             'columns.*.group' => ['nullable', 'string', 'max:60'],
             'columns.*.band' => ['nullable', 'string', 'max:60'],
             'columns.*.role' => ['nullable', Rule::in(TableLayout::COLUMN_ROLES)],
+            'columns.*.sum' => ['nullable', 'boolean'],
+            'columns.*.width' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'groups' => ['nullable', 'array', 'max:24'],
             'groups.*.key' => $key,
             'groups.*.label' => $label,

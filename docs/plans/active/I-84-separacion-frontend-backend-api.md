@@ -106,7 +106,9 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    de sesiones están disponibles en la SPA.
 4. La edición detallada de usuarios y roles, la incorporación/relevo de docentes y la
    carga del logo de facultad ya están integradas. Faltan las operaciones visuales
-   completas de estructura académica y el constructor de plantilla sin editores JSON.
+   completas de estructura académica y la composición visual avanzada de bloques de la
+   plantilla. El esquema de tablas ya usa un diseñador estructurado —columnas, grupos,
+   bandas, cabeceras, totales y repetición— y no expone JSON al usuario.
 5. Completar el editor docente y la revisión con representación fiel de documentos y
    tablas complejas, historial/comparación, estados de conflicto, avisos y accesibilidad.
 6. El chat de IA ya dispone de conversación persistente por docente/sílabo, trabajo en

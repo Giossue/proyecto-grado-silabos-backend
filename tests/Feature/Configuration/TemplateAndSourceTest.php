@@ -448,8 +448,8 @@ class TemplateAndSourceTest extends TestCase
 
         $layout = [
             'columns' => [
-                ['key' => 'contenidos', 'label' => 'Contenidos temáticos', 'type' => 'text'],
-                ['key' => 'acd', 'label' => 'ACD', 'type' => 'number', 'group' => 'docencia', 'band' => 'horas'],
+                ['key' => 'contenidos', 'label' => 'Contenidos temáticos', 'type' => 'text', 'width' => 320],
+                ['key' => 'acd', 'label' => 'ACD', 'type' => 'number', 'group' => 'docencia', 'band' => 'horas', 'sum' => false],
                 ['key' => 'ape', 'label' => 'APE', 'type' => 'number', 'group' => 'estudiante', 'band' => 'horas'],
                 ['key' => 'aa', 'label' => 'AA', 'type' => 'number', 'group' => 'estudiante', 'band' => 'horas'],
             ],
@@ -470,6 +470,8 @@ class TemplateAndSourceTest extends TestCase
         $saved = $block->fresh()->configuracion['table'];
         $this->assertSame('table', $block->fresh()->configuracion['content_type']);
         $this->assertSame(['contenidos', 'acd', 'ape', 'aa'], array_column($saved['columns'], 'key'));
+        $this->assertSame(320, $saved['columns'][0]['width']);
+        $this->assertFalse($saved['columns'][1]['sum']);
         $this->assertTrue($saved['repeat']['enabled']);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'plantilla.tabla_actualizada', 'recurso_id' => $block->id]);
 
