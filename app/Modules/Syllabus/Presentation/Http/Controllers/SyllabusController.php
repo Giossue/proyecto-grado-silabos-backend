@@ -171,7 +171,7 @@ class SyllabusController extends Controller
         ReviewObservation $observation,
         RespondObservationRequest $request,
         RespondToObservation $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -181,6 +181,10 @@ class SyllabusController extends Controller
             $actor,
             $request,
         );
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Respuesta guardada. Se incluirá al reenviar la corrección.']);
+        }
 
         return back()->with('success', 'Respuesta guardada. Se incluirá al reenviar la corrección.');
     }

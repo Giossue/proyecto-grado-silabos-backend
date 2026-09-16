@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
 use Illuminate\Support\Facades\Route;
@@ -38,5 +39,11 @@ Route::prefix('v1')->group(function (): void {
         Route::post('teacher/syllabi/{syllabus}/submit', [SyllabusController::class, 'submit'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.submit');
+        Route::post('teacher/syllabi/{syllabus}/ai-review', [AiAssistanceController::class, 'review'])
+            ->middleware(['active-role', 'throttle:ai-analysis'])
+            ->name('api.v1.teacher.syllabi.ai.review');
+        Route::post('teacher/syllabi/{syllabus}/observations/{observation}/response', [SyllabusController::class, 'respondObservation'])
+            ->middleware('active-role')
+            ->name('api.v1.teacher.syllabi.observations.respond');
     });
 });

@@ -18,6 +18,7 @@ use App\Modules\AiAssistance\Presentation\Http\Requests\RequestSyllabusAiReviewR
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -100,7 +101,7 @@ class AiAssistanceController extends Controller
         FieldDefinition $field,
         RequestAiAnalysisRequest $request,
         RequestAiAnalysis $action,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute(
@@ -129,6 +130,10 @@ class AiAssistanceController extends Controller
             $actor,
             $request,
         );
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => "Revisión de IA iniciada para {$count} campo(s)", 'fields_requested' => $count], 202);
+        }
 
         return back()->with('success', "Revisión de IA iniciada para {$count} campo(s)");
     }
