@@ -210,7 +210,7 @@ PV-13 y PV-14 definan hardware y modelo; no se añade una base vectorial por ant
 
 - [ ] **I-72.1 — Decisión y contrato:** actualizar decisiones, dominio, ciclo de vida,
       pantallas y arquitectura; corregir `estado/status` y añadir prueba Inertia.
-- [ ] **I-72.2 — Herencia configurable:** migración, revisión de plantilla, preferencias
+- [x] **I-72.2 — Herencia configurable:** migración, revisión de plantilla, preferencias
       por carrera, resolvedor, UI Admin/Coordinación, autorización, auditoría y pruebas de
       invalidación.
 - [ ] **I-72.3 — Fuentes elegidas:** retirar sincronización automática, selector previo

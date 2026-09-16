@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $activo
  * @property array<string, mixed>|null $mapeo_documento
  * @property int $sections_count
+ * @property int $revision_configuracion
  */
 class SyllabusTemplate extends Model
 {
@@ -42,7 +43,7 @@ class SyllabusTemplate extends Model
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['activo' => 'boolean', 'mapeo_documento' => 'array'];
+        return ['activo' => 'boolean', 'mapeo_documento' => 'array', 'revision_configuracion' => 'integer'];
     }
 
     /** @return HasMany<TemplateSection, $this> */

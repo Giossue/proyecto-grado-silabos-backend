@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\AiAssistance\Application\ResolveEffectiveAiConfiguration;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiEvidence;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiRecommendation;
@@ -40,6 +41,8 @@ use Inertia\Response;
 
 class SyllabusController extends Controller
 {
+    public function __construct(private readonly ResolveEffectiveAiConfiguration $effectiveAi) {}
+
     public function index(ViewSyllabiRequest $request, ActiveRole $roles): Response|JsonResponse
     {
         $activeRole = $roles->resolve($request);
@@ -282,7 +285,7 @@ class SyllabusController extends Controller
                 'hours_aa' => data_get($syllabus->contexto_academico, 'subject.hours_aa'),
             ],
             'sections' => $syllabus->template->sections
-                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, $rows))
+                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, $rows, $syllabus->carrera_id))
                 ->values(),
             'validation' => $lastValidation instanceof ValidationRun ? [
                 'completed_at' => $lastValidation->completado_en->toIso8601String(),
@@ -317,10 +320,11 @@ class SyllabusController extends Controller
     {
         $enabledFields = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
-            ->where('ia_habilitada', true)
             ->where('editable_docente', true)
             ->where('heredado', false)
             ->whereIn('tipo', ['texto_corto', 'texto_largo', 'markdown'])
+            ->get()
+            ->filter(fn (FieldDefinition $field): bool => $this->effectiveAi->enabled($syllabus->carrera_id, $field))
             ->pluck('id');
 
         $executions = AiExecution::query()
@@ -442,11 +446,11 @@ class SyllabusController extends Controller
      * @param  Collection<string, EloquentCollection<int, RepeatableRow>>  $rows
      * @return array<string, mixed>
      */
-    private function sectionPayload(TemplateSection $section, $values, $rows): array
+    private function sectionPayload(TemplateSection $section, $values, $rows, string $careerId): array
     {
         $blocks = [];
         foreach ($section->blocks as $block) {
-            $blocks[] = $this->blockPayload($block, $values, $rows);
+            $blocks[] = $this->blockPayload($block, $values, $rows, $careerId);
         }
 
         return [
@@ -463,7 +467,7 @@ class SyllabusController extends Controller
      * @param  Collection<string, EloquentCollection<int, RepeatableRow>>  $rows
      * @return array<string, mixed>
      */
-    private function blockPayload(TemplateBlock $block, Collection $values, Collection $rows): array
+    private function blockPayload(TemplateBlock $block, Collection $values, Collection $rows, string $careerId): array
     {
         $fields = [];
         foreach ($block->fields as $field) {
@@ -485,7 +489,7 @@ class SyllabusController extends Controller
                 'required' => $field->obligatorio,
                 'inherited' => $field->heredado,
                 'teacher_editable' => $field->editable_docente,
-                'ai_enabled' => $field->ia_habilitada
+                'ai_enabled' => $this->effectiveAi->enabled($careerId, $field)
                     && in_array($field->tipo, ['texto_corto', 'texto_largo', 'markdown'], true),
                 'value' => $values->get($field->id)?->valor,
                 'rows' => $fieldRows,

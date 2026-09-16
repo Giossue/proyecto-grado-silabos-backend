@@ -3,6 +3,7 @@
 namespace App\Modules\AiAssistance\Application\Actions;
 
 use App\Models\User;
+use App\Modules\AiAssistance\Application\ResolveEffectiveAiConfiguration;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -13,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class RequestSyllabusAiReview
 {
-    public function __construct(private readonly RequestAiAnalysis $requestAnalysis) {}
+    public function __construct(
+        private readonly RequestAiAnalysis $requestAnalysis,
+        private readonly ResolveEffectiveAiConfiguration $effectiveAi,
+    ) {}
 
     public function execute(
         Syllabus $syllabus,
@@ -57,16 +61,16 @@ class RequestSyllabusAiReview
                 ->keyBy('definicion_campo_id');
             $fields = FieldDefinition::query()
                 ->where('plantilla_id', $locked->plantilla_id)
-                ->where('ia_habilitada', true)
                 ->where('editable_docente', true)
                 ->where('heredado', false)
                 ->whereIn('tipo', ['texto_corto', 'texto_largo', 'markdown'])
                 ->orderBy('posicion')
                 ->get()
-                ->filter(function (FieldDefinition $field) use ($values): bool {
+                ->filter(function (FieldDefinition $field) use ($locked, $values): bool {
                     $value = $values->get($field->id)?->valor;
 
-                    return is_string($value) && trim($value) !== '';
+                    return $this->effectiveAi->enabled($locked->carrera_id, $field)
+                        && is_string($value) && trim($value) !== '';
                 });
 
             if ($fields->isEmpty()) {

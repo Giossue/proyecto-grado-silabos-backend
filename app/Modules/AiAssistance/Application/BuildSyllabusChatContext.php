@@ -14,6 +14,7 @@ class BuildSyllabusChatContext
     public function __construct(
         private readonly AiEvidenceCollector $sources,
         private readonly CanonicalHasher $hasher,
+        private readonly ResolveEffectiveAiConfiguration $effectiveAi,
     ) {}
 
     /**
@@ -32,7 +33,7 @@ class BuildSyllabusChatContext
         foreach ($syllabus->template->sections->sortBy('posicion') as $section) {
             foreach ($section->blocks->sortBy('posicion') as $block) {
                 foreach ($block->fields->sortBy('posicion') as $field) {
-                    if (! $field->ia_habilitada) {
+                    if (! $this->effectiveAi->enabled($syllabus->carrera_id, $field)) {
                         continue;
                     }
                     $excerpt = $this->fieldContent($field, $values->get($field->id)?->valor, $rows->get($field->id));

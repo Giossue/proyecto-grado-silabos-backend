@@ -4,6 +4,7 @@ namespace App\Modules\AiAssistance\Application\Actions;
 
 use App\Models\User;
 use App\Modules\AiAssistance\Application\AiEvidenceCollector;
+use App\Modules\AiAssistance\Application\ResolveEffectiveAiConfiguration;
 use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Jobs\AnalyzeSyllabusFieldJob;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiEvidence;
@@ -28,6 +29,7 @@ class RequestAiAnalysis
         private readonly CanonicalHasher $hasher,
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly ResolveEffectiveAiConfiguration $effectiveAi,
     ) {}
 
     public function execute(
@@ -182,7 +184,7 @@ class RequestAiAnalysis
             throw ValidationException::withMessages(['syllabus' => 'El sílabo no está en estado editable.']);
         }
         if ($field->plantilla_id !== $syllabus->plantilla_id
-            || ! $field->ia_habilitada
+            || ! $this->effectiveAi->enabled($syllabus->carrera_id, $field)
             || ! $field->editable_docente
             || $field->heredado
             || ! in_array($field->tipo, ['texto_corto', 'texto_largo', 'markdown'], true)) {

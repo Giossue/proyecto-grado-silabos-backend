@@ -140,13 +140,18 @@ detienen el trabajo docente sin borrar nada.
 `reaperturas`, `transiciones_silabo`, `ejecuciones_validacion`,
 `resultados_validacion`, `ejecuciones_ia`, `evidencias_ia`, `recomendaciones_ia`,
 `recomendacion_evidencias_ia`, `retroalimentacion_ia`, `conversaciones_ia`,
-`mensajes_ia`, `evidencias_mensaje_ia`, `citas_mensaje_ia`.
+`mensajes_ia`, `evidencias_mensaje_ia`, `citas_mensaje_ia`,
+`preferencias_ia_carrera`.
 
 Cada docente conserva una conversación por sílabo. Limpiar el panel marca
 `conversaciones_ia.ocultada_en`; no elimina mensajes ni fotografías de evidencia. La
 pregunta y la respuesta son mensajes separados, la respuesta referencia su ejecución de
 trabajo y la versión del borrador, y sus citas solo pueden apuntar a fotografías de
 secciones habilitadas o fuentes seleccionadas guardadas para ese mismo mensaje.
+`plantillas_silabo.revision_configuracion` aumenta ante cualquier cambio de estructura,
+contenido o apariencia. Una preferencia de carrera solo es efectiva si el campo permite
+la decisión de Coordinación y su `revision_plantilla_origen` coincide; de otro modo rige
+inmediatamente el valor de Administración sin depender de una limpieza posterior.
 
 ### Operación e integración
 

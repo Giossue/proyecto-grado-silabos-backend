@@ -111,6 +111,10 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    cola, contexto del borrador, fuentes seleccionadas, citas verificadas y limpieza no
    destructiva. La SPA lo presenta en un único panel derecho junto con la revisión
    global y conserva separada la validación determinística.
+   La configuración efectiva también está disponible por API y pantalla: Administración
+   fija el valor predeterminado y el bloqueo; Coordinación solo sustituye campos
+   permitidos, y cualquier cambio posterior de plantilla invalida automáticamente esas
+   excepciones mediante la revisión de configuración.
 7. Ampliar las pruebas frontend y documentar el contrato OpenAPI; las guardas de rol y
    contraseña temporal ya se aplican en navegador y servidor.
 8. Ejecutar la verificación integral y realizar un corte único; solo entonces retirar
