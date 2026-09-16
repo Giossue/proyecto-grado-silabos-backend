@@ -139,8 +139,10 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
    fija el valor predeterminado y el bloqueo; Coordinación solo sustituye campos
    permitidos, y cualquier cambio posterior de plantilla invalida automáticamente esas
    excepciones mediante la revisión de configuración.
-7. Ampliar las pruebas frontend y documentar el contrato OpenAPI; las guardas de rol y
-   contraseña temporal ya se aplican en navegador y servidor.
+7. Las pruebas frontend cubren los flujos críticos y el contrato OpenAPI 3.1 se exporta
+   desde todas las rutas `api.v1.*`. `OpenApiContractTest` obliga a regenerar
+   `docs/architecture/openapi.json` cuando cambia la superficie HTTP; las guardas de rol
+   y contraseña temporal ya se aplican en navegador y servidor.
    La SPA ya cuenta con Dockerfile multi-stage, Nginx con fallback de rutas, liveness y
    `PUBLIC_API_URL` inyectable al arrancar; no requiere reconstruir el bundle por ambiente.
 8. Ejecutar la verificación integral y realizar un corte único; solo entonces retirar

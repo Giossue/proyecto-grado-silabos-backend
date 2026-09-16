@@ -6,6 +6,7 @@
 |---|---|
 | Crear el repositorio | `stack.md`, `bootstrap.md`, `deployment.md` |
 | Implementar un caso de uso | `modules.md`, `backend.md`, especificación de producto |
+| Consumir o cambiar la API | `openapi.json`, `backend.md` y el plan de separación activo |
 | Cambiar el esquema | `database.md` y skill `create-migration` |
 | Crear una pantalla | `frontend.md`, `../product/screens.md` y checklist frontend |
 | Crear un trabajo | `queues-and-jobs.md`, `observability.md` |
