@@ -158,13 +158,13 @@ class ManagedUserController extends Controller
         return back()->with('success', 'Cuenta creada con su rol inicial.');
     }
 
-    public function show(User $user, ShowManagedUserRequest $request): Response
+    public function show(User $user, ShowManagedUserRequest $request): Response|JsonResponse
     {
         $user->load(['roleAssignments' => fn ($query) => $query
             ->with(['career:id,nombre'])
             ->orderByDesc('asignado_en')]);
 
-        return Inertia::render('Admin/Users/Show', [
+        $payload = [
             'managedUser' => [
                 'id' => $user->id,
                 'nombre' => $user->nombre,
@@ -172,7 +172,9 @@ class ManagedUserController extends Controller
                 'active' => $user->activo,
                 'assignments' => $user->roleAssignments->map(fn ($assignment) => [
                     'id' => $assignment->id,
+                    'role_code' => $assignment->rol,
                     'role_name' => $assignment->role->nombre_rol,
+                    'career_id' => $assignment->carrera_id,
                     'career_name' => $assignment->career?->nombre,
                     'active' => $assignment->activo,
                     'effective' => $assignment->activo,
@@ -180,7 +182,11 @@ class ManagedUserController extends Controller
             ],
             'roles' => $this->fixedRoles(),
             'careers' => Career::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
-        ]);
+        ];
+
+        return $request->expectsJson()
+            ? response()->json($payload)
+            : Inertia::render('Admin/Users/Show', $payload);
     }
 
     public function assignRole(User $user, AssignRoleRequest $request, AssignRole $action): RedirectResponse|JsonResponse

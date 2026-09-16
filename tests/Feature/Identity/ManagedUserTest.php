@@ -88,6 +88,20 @@ class ManagedUserTest extends TestCase
                 ->where('managedUser.assignments.1.effective', false));
     }
 
+    public function test_administrator_reads_user_detail_through_the_api_contract(): void
+    {
+        config(['sanctum.stateful' => ['localhost:5173']]);
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+
+        $this->actingAsAdministrator()
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.admin.users.show', $teacher))
+            ->assertOk()
+            ->assertJsonPath('managedUser.correo_electronico', 'docente@silabos.test')
+            ->assertJsonPath('managedUser.assignments.0.role_code', RoleCode::Teacher->value)
+            ->assertJsonStructure(['roles', 'careers']);
+    }
+
     public function test_the_list_filters_by_role_career_and_state(): void
     {
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();

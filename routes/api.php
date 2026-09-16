@@ -80,6 +80,8 @@ Route::prefix('v1')->group(function (): void {
         Route::post('admin/users', [ManagedUserController::class, 'store'])
             ->middleware('active-role')
             ->name('api.v1.admin.users.store');
+        Route::get('admin/users/{user}', [ManagedUserController::class, 'show'])
+            ->middleware('active-role')->name('api.v1.admin.users.show');
         Route::patch('admin/users/{user}', [ManagedUserController::class, 'update'])
             ->middleware('active-role')->name('api.v1.admin.users.update');
         Route::post('admin/users/{user}/roles', [ManagedUserController::class, 'assignRole'])
