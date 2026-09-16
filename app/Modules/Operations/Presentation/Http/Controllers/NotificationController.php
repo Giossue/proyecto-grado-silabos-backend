@@ -11,13 +11,14 @@ use App\Modules\Operations\Presentation\Http\Requests\MarkAllNotificationsReadRe
 use App\Modules\Operations\Presentation\Http\Requests\MarkNotificationReadRequest;
 use App\Modules\Operations\Presentation\Http\Requests\ViewNotificationsRequest;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class NotificationController extends Controller
 {
-    public function index(ViewNotificationsRequest $request): Response
+    public function index(ViewNotificationsRequest $request): Response|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
@@ -27,33 +28,38 @@ class NotificationController extends Controller
             $query->whereNull('leido_en');
         }
 
-        return Inertia::render('Notifications/Index', [
+        $notifications = $query->latest('notificado_en')->paginate(20)->withQueryString()
+            ->through(fn (InternalNotification $notification): array => $this->notificationPayload($notification, $actor));
+        $payload = [
             'filters' => ['status' => $status],
-            'notifications' => $query->latest('notificado_en')->paginate(20)->withQueryString()
-                ->through(fn (InternalNotification $notification): array => [
-                    'id' => $notification->id,
-                    'tipo' => $notification->tipo,
-                    'titulo' => $notification->titulo,
-                    'mensaje' => $notification->mensaje,
-                    'leido_en' => $notification->leido_en?->toIso8601String(),
-                    'notificado_en' => $notification->notificado_en->toIso8601String(),
-                    'url_recurso' => $this->resourceUrl($notification, $actor),
-                ]),
-        ]);
+            'notifications' => $notifications,
+            'unread_count' => InternalNotification::query()
+                ->where('usuario_id', $actor->id)
+                ->whereNull('leido_en')
+                ->count(),
+        ];
+
+        return $request->expectsJson()
+            ? response()->json($payload)
+            : Inertia::render('Notifications/Index', $payload);
     }
 
     public function markRead(
         InternalNotification $notification,
         MarkNotificationReadRequest $request,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         if ($notification->leido_en === null) {
             $notification->update(['leido_en' => now()]);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Notificación marcada como leída.']);
         }
 
         return back()->with('success', 'Notificación marcada como leída.');
     }
 
-    public function markAllRead(MarkAllNotificationsReadRequest $request): RedirectResponse
+    public function markAllRead(MarkAllNotificationsReadRequest $request): RedirectResponse|JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
@@ -62,38 +68,49 @@ class NotificationController extends Controller
             ->whereNull('leido_en')
             ->update(['leido_en' => now()]);
 
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Todas las notificaciones quedaron marcadas como leídas.']);
+        }
+
         return back()->with('success', 'Todas las notificaciones quedaron marcadas como leídas.');
     }
 
-    private function resourceUrl(InternalNotification $notification, User $actor): ?string
+    /** @return array{id: string, tipo: string, titulo: string, mensaje: string, leido_en: string|null, notificado_en: string, resource_path: string|null} */
+    private function notificationPayload(InternalNotification $notification, User $actor): array
+    {
+        return [
+            'id' => $notification->id,
+            'tipo' => $notification->tipo,
+            'titulo' => $notification->titulo,
+            'mensaje' => $notification->mensaje,
+            'leido_en' => $notification->leido_en?->toIso8601String(),
+            'notificado_en' => $notification->notificado_en->toIso8601String(),
+            'resource_path' => $this->resourcePath($notification, $actor),
+        ];
+    }
+
+    private function resourcePath(InternalNotification $notification, User $actor): ?string
     {
         if ($notification->recurso_id === null) {
             return null;
         }
         if ($notification->tipo_recurso === 'silabo') {
             $syllabus = Syllabus::query()->find($notification->recurso_id);
-            if ($syllabus !== null && $actor->can('review', $syllabus)) {
-                $revision = $syllabus->revisions()->latest('numero_revision')->first();
-
-                return $revision === null ? null : route('reviews.show', $revision);
-            }
 
             return $syllabus !== null && $actor->can('view', $syllabus)
-                ? route('syllabi.show', $syllabus)
+                ? "/mis-silabos/{$syllabus->id}"
                 : null;
         }
         if ($notification->tipo_recurso === 'artefacto_exportacion') {
             $artifact = ExportArtifact::query()->with('revision')->find($notification->recurso_id);
 
-            return $artifact !== null && $actor->can('view', $artifact)
-                ? route('documents.show', $artifact->revision)
-                : null;
+            return null;
         }
         if ($notification->tipo_recurso === 'ejecucion_ia') {
             $execution = AiExecution::query()->with(['syllabus', 'field'])->find($notification->recurso_id);
 
             return $execution !== null && $actor->can('edit', $execution->syllabus)
-                ? route('syllabi.ai.show', [$execution->syllabus, $execution->field])
+                ? "/mis-silabos/{$execution->syllabus->id}"
                 : null;
         }
 

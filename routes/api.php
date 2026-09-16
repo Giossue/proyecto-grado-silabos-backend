@@ -6,6 +6,7 @@ use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationC
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\TwoFactorController;
+use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
 use Illuminate\Support\Facades\Route;
 
@@ -46,6 +47,12 @@ Route::prefix('v1')->group(function (): void {
         Route::get('dashboard', [DashboardController::class, 'index'])
             ->middleware('active-role')
             ->name('api.v1.dashboard.show');
+        Route::get('notifications', [NotificationController::class, 'index'])
+            ->name('api.v1.notifications.index');
+        Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])
+            ->name('api.v1.notifications.read-all');
+        Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])
+            ->name('api.v1.notifications.read');
         Route::get('teacher/syllabi', [SyllabusController::class, 'index'])
             ->middleware('active-role')
             ->name('api.v1.teacher.syllabi.index');
