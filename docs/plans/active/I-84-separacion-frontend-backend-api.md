@@ -41,6 +41,23 @@ El panel conserva sus métricas y checklist calculados en el servidor. El listad
 por usuario, carrera y rol activo antes de paginar; no expone las rutas web heredadas al
 cliente nuevo.
 
+La administración institucional ya puede gestionar usuarios, estructura académica y el
+calendario de procesos. Coordinación puede consultar su alcance por período, abrir la
+convocatoria de su carrera y pausar o reanudar el trabajo. La creación sigue usando las
+acciones de dominio existentes: al abrirse se generan los expedientes sin duplicarlos.
+
+```text
+GET|POST|PATCH /api/v1/admin/users
+POST|PATCH|DELETE /api/v1/admin/users/{user}/…
+GET|POST|PATCH|DELETE /api/v1/admin/academic/{entity}/…
+GET|POST|PATCH /api/v1/admin/processes
+POST /api/v1/admin/processes/{process}/deadline
+POST /api/v1/admin/processes/{process}/{abrir|pausar|reanudar|cerrar}
+GET|POST /api/v1/coordination/convocations
+GET /api/v1/coordination/convocations/{convocation}
+POST /api/v1/coordination/convocations/{convocation}/{pausar|reanudar}
+```
+
 El editor docente ya expone su unidad vertical inicial: consulta e inicio de borrador,
 autoguardado de campos y tablas repetibles, validación determinística, envío y respuesta
 a observaciones. La IA conserva la decisión humana y ahora expone por campo el historial,
@@ -75,12 +92,16 @@ cliente previsto es la SPA de primera parte y usa cookie HttpOnly más CSRF.
 
 1. Identidad de acceso (sesión, contraseña temporal, recuperación, verificación de
    correo y segundo factor) está disponible en la SPA.
-2. Notificaciones, preferencias y selector de ámbito desde el encabezado.
-3. Identidad y estructura académica.
-4. Completar el editor docente: representación fiel de tablas complejas, estados de
+2. Notificaciones están disponibles; faltan preferencias, contador global y selector de
+   ámbito desde un encabezado compartido.
+3. Administración de usuarios, estructura académica y procesos institucionales están
+   disponibles; faltan programación de materias, paralelos y asignaciones docentes.
+4. Convocatorias están disponibles; faltan fuentes, malla y demás configuración de
+   Coordinación.
+5. Completar el editor docente: representación fiel de tablas complejas, estados de
    conflicto, avisos y accesibilidad.
-5. Plantilla, convocatorias, revisión, documentos e IA restante.
-6. Corte único, luego retiro de Inertia, Wayfinder, Vite Laravel y las rutas web de
+6. Plantilla, revisión, documentos, auditoría e IA restante.
+7. Corte único, luego retiro de Inertia, Wayfinder, Vite Laravel y las rutas web de
    producto de este repositorio.
 
 No se redirige producción ni se ejecutan migraciones de datos por esta separación hasta
