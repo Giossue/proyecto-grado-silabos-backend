@@ -75,4 +75,23 @@ class ApiSessionTest extends TestCase
             ->assertJsonPath('active_role.id', $assignment->id)
             ->assertJsonPath('active_role.code', 'coordinador');
     }
+
+    public function test_temporary_password_is_changed_without_repeating_the_temporary_value(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $teacher->update(['debe_cambiar_contrasena' => true]);
+
+        $this->actingAs($teacher)
+            ->withoutMiddleware(ValidateCsrfToken::class)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->putJson(route('api.v1.authentication.password.update'), [
+                'password' => 'Nueva-clave-2026!',
+                'password_confirmation' => 'Nueva-clave-2026!',
+            ])
+            ->assertOk()
+            ->assertJsonPath('user.must_change_password', false);
+
+        $this->assertFalse($teacher->fresh()->debe_cambiar_contrasena);
+    }
 }
