@@ -3,8 +3,12 @@
 ## Estado
 
 Implementación en curso. Los bloques se ejecutan por rebanadas verificables; no se
-modifica la base de datos ni se ejecutan despliegues. Los bloques 3 y 4 ya tienen una
-primera implementación verificada en la SPA; los bloques 1, 2 y 5–8 continúan abiertos.
+modifica la base de datos ni se ejecutan despliegues. El auditor versionado, el registro
+tipado de rutas (incluidos estados lógicos de páginas consolidadas), la recuperación de destino previsto y la base de skeletons ya están
+verificados en la SPA. Se añadió un estado reutilizable de error con reintento a los
+listados, paneles, comparación y estructura académica, además de una matriz inicial de
+navegación por rol; la revisión página por página, DTO, deep links y pruebas exhaustivas
+de estados continúan abiertos.
 
 Este incremento corrige navegación, redirecciones, estados de carga y adaptaciones de
 las páginas de la SPA. No autoriza despliegue, cambios de base de datos, recuperación de
@@ -103,9 +107,9 @@ amplía la definición de paridad desde la captura final hacia el comportamiento
 
 ## Bloque 1 — Convertir la comparación en una puerta permanente
 
-- [ ] Mover la lógica útil de `temp/analyze-monolith-spa.mjs` a un auditor versionado en
+- [x] Mover la lógica útil de `temp/analyze-monolith-spa.mjs` a un auditor versionado en
   `scripts/`, manteniendo `temp` únicamente como evidencia exploratoria.
-- [ ] Fijar el commit `4e33b6d` en un manifiesto único con página fuente, página SPA,
+- [x] Fijar el commit `4e33b6d` en un manifiesto único con página fuente, página SPA,
   layout, ruta canónica, roles, acciones visibles y endpoints consumidos.
 - [ ] Corregir el inventario para distinguir archivo físico, superficie lógica y estado
   de una misma página; una página consolidada no puede ocultar vistas faltantes.
@@ -123,14 +127,15 @@ porque existe un archivo con nombre equivalente.
 
 - [ ] Extraer exclusivamente las rutas GET visibles de `routes/web.php` y
   `routes/settings.php`, expandiendo los grupos `admin`, `coordinacion` y `docente`.
-- [ ] Crear un registro tipado único en el frontend con:
+- [x] Crear un registro tipado único en el frontend con:
   `path`, nombre lógico, rol permitido, componente, alias, breadcrumb y destino seguro.
 - [x] Restaurar como canónicas las rutas visibles del monolito, incluidas autenticación,
   selección de ámbito, panel, notificaciones, fuentes, documentos y configuración.
 - [x] Mantener las URLs ya publicadas por la SPA como alias temporales mediante
   `replace`, sin duplicar historial ni llamadas API.
-- [ ] Sustituir strings de rutas dentro de páginas y componentes por helpers del registro
-  tipado.
+- [x] Sustituir strings de destinos visibles dentro de páginas y componentes por helpers
+  del registro tipado. Las cadenas que permanecen en `router.ts` describen el mapa de
+  Vue Router y las cadenas bajo `src/api/` son endpoints HTTP, no URLs de navegador.
 - [x] Preservar query de filtros, búsqueda, orden, paginación y modo cuando la ruta
   canónica lo admita.
 - [x] Resolver rutas dinámicas sin perder parámetros de sílabo, revisión, convocatoria,
@@ -168,7 +173,7 @@ mismo contrato y no existen decisiones de ruta repartidas entre páginas.
 - [x] Si el destino pertenece a otro rol, descartarlo y abrir el panel del rol real.
 - [x] Limpiar el destino al cerrar sesión, cambiar de cuenta o completar
   la navegación.
-- [ ] Mantener `419` como renovación CSRF/reintento seguro y `403` como denegación; no
+- [x] Mantener `419` como renovación CSRF/reintento seguro y `403` como denegación; no
   confundirlos con pérdida de sesión.
 - [x] Usar `replace` en login, alias y recuperaciones para impedir ciclos del historial.
 
@@ -195,6 +200,17 @@ monolito, pero dentro de la arquitectura SPA y sin open redirects.
   operación sea segura; vacío y error permanecen diferenciados.
 
 ### Aplicación por familia
+
+Implementación parcial verificada: `LoadErrorState.vue` ya se utiliza en panel,
+listados de administración y coordinación, fuentes, convocatorias, revisiones,
+notificaciones, comparación, estructura académica, detalle de revisión, detalle de
+fuente, detalle de usuario, plantilla, trabajos, documentos y selector de ámbito. Estas superficies separan
+ahora el fallo de carga del error de mutación y ofrecen reintento sin inventar una acción
+adicional. Las superficies con errores de mutación aún mezclados con la carga conservan
+su alerta contextual hasta separar ambos estados.
+
+El auditor ahora falla si una página que declara carga asíncrona no ofrece ese estado de
+error reutilizable; la comprobación actual queda en 18/18 páginas asíncronas.
 
 | Familia | Skeleton esperado |
 | --- | --- |
@@ -284,12 +300,16 @@ monolito, aunque su transporte sea JSON.
 
 ### Router y sesión — Vitest con memoria
 
+Cobertura inicial verificada: rutas propias y ajenas de los tres roles, parámetros y
+query, alias, 404, destino intended desconocido/externo y sesión sin ámbito. La tabla
+completa de 401/2FA/cambio de contraseña y cambio de cuenta sigue pendiente.
+
 - [ ] Tabla completa para sin sesión, sin ámbito, Administrador, Coordinador y Docente.
 - [ ] Acceso directo, recarga simulada, alias, parámetros, query, 404 y rol incorrecto.
 - [ ] Login → destino previsto; login → selector → destino; 2FA → destino.
 - [ ] Logout/login de otra cuenta en la misma pestaña sin heredar ruta o rol.
-- [ ] Rechazo de open redirects y destinos no autorizados.
-- [ ] Historial con `replace` sin bucles.
+- [x] Rechazo de open redirects y destinos no autorizados.
+- [x] Historial con `replace` en login, alias y recuperación sin bucles conocidos.
 
 ### Componentes — Vue Test Utils
 
@@ -302,10 +322,10 @@ monolito, aunque su transporte sea JSON.
 
 ### Contratos y calidad
 
-- [ ] Auditor de paridad: 38/38 superficies, 452/452 componentes, 9/9 layouts, cero
+- [x] Auditor de paridad: 38/38 superficies, 452/452 componentes, 9/9 layouts, cero
   diferencias sin clasificar.
 - [ ] Verificador SPA–OpenAPI sin consumidores o operaciones huérfanas injustificadas.
-- [ ] `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build` y
+- [x] `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build` y
   `npm run audit:visual-parity`.
 - [ ] Si cambia backend: pruebas Feature de sesión/rol/API y `composer verify`.
 - [ ] `git diff --check` en ambos repositorios.
@@ -375,7 +395,7 @@ El plan podrá pasar a verificación cuando existan:
 - informe de rutas con 100 % de destinos clasificados;
 - matriz 38/38 de superficies y estados;
 - informe de cero diferencias no justificadas;
-- inventario de los 22 loaders reemplazados por skeletons;
+- inventario de los loaders detectados reemplazados por skeletons y estados de error;
 - resultados verdes de lint, tipos, Vitest, build, paridad y contrato API;
 - revisión manual dirigida firmada en `acceptance-status.md`;
 - documentación y trazabilidad actualizadas.
