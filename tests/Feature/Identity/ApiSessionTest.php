@@ -151,7 +151,7 @@ class ApiSessionTest extends TestCase
 
         $this->assertDatabaseHas('usuarios', [
             'id' => $administrator->id,
-            'nombre' => 'MARÍA JOSÉ PÉREZ LÓPEZ',
+            'nombre_usuario' => 'MARÍA JOSÉ PÉREZ LÓPEZ',
             'correo_electronico' => 'maria.perez@silabos.test',
             'correo_verificado_en' => null,
         ]);
