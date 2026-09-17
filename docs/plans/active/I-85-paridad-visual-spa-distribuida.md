@@ -115,9 +115,9 @@ preview.
   dinámicos quedan pendientes de aceptación visual en preview.
 - Playwright SPA→API: cinco recorridos aprobados para Administración, Coordinación,
   Docencia, foco en overlays y ausencia de overflow móvil; ninguna respuesta `5xx`.
-- Frontend: ESLint, TypeScript, 20 pruebas Vitest, build Vite y contrato de 118
-  consumidores frente a 120 operaciones OpenAPI aprobados.
-- Backend: `composer verify` aprobado con Pint, PHPStan y 259 pruebas/3.503 aserciones.
+- Frontend: ESLint, TypeScript, 20 pruebas Vitest, build Vite y contrato de 119
+  consumidores frente a 121 operaciones OpenAPI aprobados.
+- Backend: `composer verify` aprobado con Pint, PHPStan y 261 pruebas/3.511 aserciones.
 - Imágenes OCI construidas con Podman. Smoke aprobado para runtime config del frontend,
   ruta profunda, CSP/cabeceras, salud del backend, CORS con credenciales y cookie CSRF.
 - No se publicó preview ni producción: ambas acciones requieren autorización explícita.
