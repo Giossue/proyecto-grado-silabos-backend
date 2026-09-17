@@ -269,30 +269,26 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   de sus fechas en `America/Guayaquil`. Los períodos finalizados permanecen como historial:
   sus materias, paralelos, responsables y sílabos se consultan, pero no se preparan, crean,
   editan, deshabilitan, eliminan ni relevan.
-- COR-13 usa una única entrada **Malla**. Si existe, la ruta abre directamente la página
-  completa con **Interactivo** (pestaña principal, decisión de los coordinadores) y
-  **Desglose académico** (`?modo=desglose`); si no existe, muestra el
-  estado vacío universal y la acción para crearla. No presenta buscador, filtros, cards,
-  paginación, publicación ni número de versión. Materias, campos y relaciones se
-  consultan y mantienen dentro de esa malla. COR-14 conserva una única entrada
+- COR-13 usa una única entrada **Malla**. Si existe, la ruta abre directamente el
+  constructor **Interactivo**; si no existe, muestra el estado vacío universal y la acción
+  para crearla. No presenta pestañas de modo, buscador, filtros, cards, paginación,
+  publicación ni número de versión. Materias, campos y relaciones se consultan y mantienen
+  dentro de esa malla. COR-14 conserva una única entrada
   **Materias y paralelos**; los paralelos se agregan desde las acciones de cada materia.
-- COR-13 agrupa **Editar**, **Deshabilitar/Reactivar**, **Eliminar** y **Configurar** en un
-  menú de tres puntos, con el mismo patrón de la columna de acciones de las tablas. La
-  malla activa o inactiva sigue siendo editable; eliminar se rechaza cuando existen
-  materias programadas o sílabos y explica que debe deshabilitarse. Editar una asignación cambia
-  docente o paralelo; la vigencia laboral se gestiona en la cuenta, nunca nombre o correo
-  desde esta pantalla.
+- COR-13 presenta **Configurar malla** como acción primaria del encabezado. La malla activa
+  o inactiva sigue siendo editable; eliminar se rechaza cuando existen materias programadas
+  o sílabos y explica que debe deshabilitarse. Editar una asignación cambia docente o
+  paralelo; la vigencia laboral se gestiona en la cuenta, nunca nombre o correo desde esta
+  pantalla.
 - COR-13 abre la malla en una página completa con ciclos, tarjetas, totales y relaciones.
   El lienzo permite zoom, desplazamiento, conexión y reubicación, además de crear una
   materia en su ciclo y editarla directamente desde su tarjeta. El desplazamiento se
   limita al ancho del ciclo con más asignaturas y a la altura de los ciclos configurados,
   conservando solo un margen breve alrededor del contenido. En escritorio, la leyenda y
   los totales flotantes inician visibles y se pueden contraer temporalmente; en móvil se
-  consultan desde su botón. El desglose académico
-  ofrece las mismas operaciones mediante formularios y tablas accesibles; su alta y
-  edición manual sí usan Sheet. «Configurar malla» solo edita código y cantidad de
-  ciclos; los campos de la tarjeta (ACD, APE, AA, CRED, TOTAL) los fija el reglamento y
-  nacen con la malla. Al crear o editar una materia, todos los
+  consultan desde su botón. «Configurar malla» es la acción primaria del encabezado y solo
+  edita código y cantidad de ciclos; los campos de la tarjeta (ACD, APE, AA, CRED, TOTAL)
+  los fija el reglamento y nacen con la malla. Al crear o editar una materia, todos los
   campos activos son obligatorios, las magnitudes se presentan en una fila compacta y
   **TOTAL** se calcula con la suma de los componentes de horas, sin incluir créditos. La
   unidad de organización curricular sugiere valores ya usados y admite escribir uno
