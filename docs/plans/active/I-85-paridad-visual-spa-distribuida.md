@@ -390,7 +390,9 @@ estructurado. `AdminTemplatePage` ahora lo utiliza como única superficie activa
 editor Tiptap dedicado continúa cargándose bajo demanda para el diseño de cada campo.
 La prueba de plantilla, las 38 pruebas Vitest, ESLint, TypeScript y la compilación
 volvieron a pasar. `PaginatedDocument` también tolera entornos de prueba sin
-`document.fonts`.
+`document.fonts`. Se retiraron los botones duplicados del encabezado de edición; las
+acciones quedan concentradas en la cinta contextual y el control de inserción del
+constructor, como en la referencia.
 
 El recorrido Playwright distribuido también terminó con salida `0` contra esa API local:
 3 de 3 escenarios cubrieron Administración, Coordinación y Docencia. Comprueba sesión y
@@ -420,6 +422,13 @@ mantiene 84 pares; la ejecución actual informa 17 diferencias de altura. Las nu
 diferencias de plantilla (52 px en escritorio y 140 px en 360 px) corresponden a la
 fotografía de datos/paginación del documento local y quedan pendientes de confirmación
 manual; no se ocultan ni se convierten en una aprobación automática.
+
+Actualización posterior al reinicio: la prueba de accesibilidad quedó integrada en el
+recorrido administrativo existente para no introducir un sexto inicio de sesión frente
+al rate limiter de desarrollo. La puerta completa `VITE_API_URL=http://127.0.0.1:8000
+npm run test:e2e` terminó nuevamente con 5 pruebas y 5 pasadas; incluye foco de hojas,
+overflow móvil y presencia del constructor de plantilla paginado. La prueba unitaria de
+`AdminTemplatePage` también valida selección de campo y apertura del editor de diseño.
 La imagen frontend se construyó con Podman y se probó con Nginx: `/health/live` respondió
 200, `config.js` inyectó `PUBLIC_API_URL`, las rutas SPA devolvieron 200 y las cabeceras de
 seguridad estuvieron presentes. Tras el reinicio del equipo, ambas comprobaciones se
