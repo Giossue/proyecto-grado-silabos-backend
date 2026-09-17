@@ -38,7 +38,7 @@ class TransitionConvocationRequest extends FormRequest
     {
         return [
             'reason.required' => 'Indique el motivo de la pausa.',
-            'reason.min' => 'El motivo debe explicar la pausa, no solo nombrarla.',
+            'reason.min' => 'Escriba al menos 10 caracteres para explicar la pausa.',
         ];
     }
 
