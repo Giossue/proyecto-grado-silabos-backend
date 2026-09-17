@@ -150,6 +150,55 @@
             }
         },
         "/api/v1/admin/academic/{entity}": {
+            "get": {
+                "tags": [
+                    "Administración"
+                ],
+                "operationId": "api_v1_admin_academic_section",
+                "summary": "api.v1.admin.academic.index por sección",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "entity",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "faculties",
+                                "campuses",
+                                "careers",
+                                "academic-periods"
+                            ]
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Administración"
