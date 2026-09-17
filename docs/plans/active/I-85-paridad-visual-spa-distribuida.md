@@ -84,8 +84,14 @@ No se prevén migraciones ni cambios del modelo de datos en este incremento.
       documentos y overlays; enmascarar solo horas, UUID y cursores dinámicos.
 - [x] Probar teclado, foco, cierre y devolución de foco en diálogos/sheets, navegación
       móvil y ausencia de overflow global.
-- [ ] Corregir o registrar para aceptación explícita toda diferencia visual; el modo
+- [x] Corregir o registrar para aceptación explícita toda diferencia visual; el modo
       informativo del comparador no constituye aprobación.
+
+La revisión humana de los 99 pares dejó 96 capturas idénticas píxel por píxel. Las tres
+restantes corresponden a la misma pantalla de Auditoría en claro, oscuro y móvil: la
+SPA registra el inicio de sesión realizado por la prueba API y la referencia monolítica
+queda vacía. La composición, controles y estados visuales coinciden; se conserva esta
+diferencia de datos porque eliminar el evento debilitaría la auditoría de autenticación.
 
 ## Bloque 4 — Limpieza, puertas finales y preview
 
@@ -97,6 +103,15 @@ No se prevén migraciones ni cambios del modelo de datos en este incremento.
       rutas profundas, archivos privados y cabeceras.
 - [ ] Publicar primero en preview y completar revisión manual.
 - [ ] Pasar a producción únicamente con autorización explícita posterior.
+
+### Preflight de publicación
+
+El runbook vigente de Dokploy solo define las aplicaciones productivas de frontend y
+backend, ambas vinculadas a la rama `main`. No hay aplicaciones, dominios ni ramas de
+preview documentados. Por tanto, el siguiente paso no puede reutilizar los recursos
+actuales sin convertir el preview en un despliegue productivo: requiere autorización
+explícita para crear y configurar dos recursos aislados de preview o, en su defecto, una
+decisión expresa de omitir ese ambiente.
 
 ## Criterio de finalización
 
@@ -110,9 +125,10 @@ preview.
 - `npm run audit:visual-parity`: 38/38 páginas declaradas, 400/400 componentes
   canónicos presentes, 9/9 layouts presentes, 252/252 primitivas UI idénticas, cero
   rutas, componentes o dependencias prohibidas sin justificar.
-- Captura determinista: 99 pares en claro/oscuro a 1440 px y claro a 360 px; ninguna
-  superficie sin contraparte y cero dimensiones incompatibles. Las diferencias de datos
-  dinámicos quedan pendientes de aceptación visual en preview.
+- Captura determinista: 99 pares en claro/oscuro a 1440 px y claro a 360 px; 96 son
+  idénticos píxel por píxel, ninguna superficie carece de contraparte y no hay dimensiones
+  incompatibles. Los tres pares de Auditoría difieren únicamente por el evento de acceso
+  que genera la API separada y quedan registrados para aceptación visual en preview.
 - Playwright SPA→API: cinco recorridos aprobados para Administración, Coordinación,
   Docencia, foco en overlays y ausencia de overflow móvil; ninguna respuesta `5xx`.
 - Frontend: ESLint, TypeScript, 20 pruebas Vitest, build Vite y contrato de 119
