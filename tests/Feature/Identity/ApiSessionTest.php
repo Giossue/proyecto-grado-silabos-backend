@@ -36,6 +36,7 @@ class ApiSessionTest extends TestCase
             ->assertJsonPath('user.id', $teacher->id)
             ->assertJsonPath('user.name', $teacher->nombre)
             ->assertJsonPath('user.email', $teacher->correo_electronico)
+            ->assertJsonPath('user.can_edit_identity', false)
             ->assertJsonPath('active_role.id', $assignment->id)
             ->assertJsonPath('active_role.code', 'docente')
             ->assertJsonCount(1, 'available_roles');
@@ -128,6 +129,47 @@ class ApiSessionTest extends TestCase
             ->assertJsonPath('user.must_change_password', false);
 
         $this->assertFalse($teacher->fresh()->debe_cambiar_contrasena);
+    }
+
+    public function test_administrator_can_update_own_profile_through_the_api(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $administrator = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
+
+        $this->actingAs($administrator)
+            ->withoutMiddleware(ValidateCsrfToken::class)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->putJson(route('api.v1.authentication.profile.update'), [
+                'nombre' => 'María José Pérez López',
+                'correo_electronico' => 'maria.perez@silabos.test',
+            ])
+            ->assertOk()
+            ->assertJsonPath('user.name', 'MARÍA JOSÉ PÉREZ LÓPEZ')
+            ->assertJsonPath('user.email', 'maria.perez@silabos.test')
+            ->assertJsonPath('user.email_verified', false)
+            ->assertJsonPath('user.can_edit_identity', true);
+
+        $this->assertDatabaseHas('usuarios', [
+            'id' => $administrator->id,
+            'nombre' => 'MARÍA JOSÉ PÉREZ LÓPEZ',
+            'correo_electronico' => 'maria.perez@silabos.test',
+            'correo_verificado_en' => null,
+        ]);
+    }
+
+    public function test_teacher_cannot_update_own_profile_through_the_api(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+
+        $this->actingAs($teacher)
+            ->withoutMiddleware(ValidateCsrfToken::class)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->putJson(route('api.v1.authentication.profile.update'), [
+                'nombre' => 'Nombre no autorizado',
+                'correo_electronico' => 'otro@silabos.test',
+            ])
+            ->assertForbidden();
     }
 
     public function test_temporary_password_blocks_product_api_but_keeps_session_and_change_available(): void

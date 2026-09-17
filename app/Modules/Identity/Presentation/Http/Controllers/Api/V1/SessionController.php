@@ -4,7 +4,9 @@ namespace App\Modules\Identity\Presentation\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
+use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\User;
+use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
 use App\Modules\Identity\Application\Actions\SelectActiveRole;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -131,6 +133,19 @@ class SessionController extends Controller
         return response()->json($this->sessionPayload($user->fresh(), $request));
     }
 
+    public function updateProfile(
+        ProfileUpdateRequest $request,
+        UpdateManagedUserProfile $action,
+    ): JsonResponse {
+        $user = $this->authenticatedUser($request);
+        $updated = $action->execute($user, [
+            'nombre' => $request->string('nombre')->toString(),
+            'correo_electronico' => $request->string('correo_electronico')->toString(),
+        ], $user, $request);
+
+        return response()->json($this->sessionPayload($updated, $request));
+    }
+
     public function selectActiveRole(SelectActiveRoleRequest $request, SelectActiveRole $action): JsonResponse
     {
         $user = $this->authenticatedUser($request);
@@ -148,7 +163,7 @@ class SessionController extends Controller
         return $user;
     }
 
-    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, must_change_password: bool}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>} */
+    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, must_change_password: bool, can_edit_identity: bool}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>} */
     private function sessionPayload(User $user, Request $request): array
     {
         $activeRole = $this->roles->resolve($request);
@@ -160,6 +175,7 @@ class SessionController extends Controller
                 'email' => $user->correo_electronico,
                 'email_verified' => $user->hasVerifiedEmail(),
                 'must_change_password' => $user->debe_cambiar_contrasena,
+                'can_edit_identity' => $user->can('updateProfileData', $user),
             ],
             'active_role' => $activeRole === null ? null : $this->rolePayload($activeRole),
             'available_roles' => array_values($this->roles->eligible($user)
