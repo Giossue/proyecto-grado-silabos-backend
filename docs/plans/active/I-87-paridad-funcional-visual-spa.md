@@ -175,6 +175,13 @@ mismo contrato y no existen decisiones de ruta repartidas entre páginas.
 **Aceptación:** cambiar un filtro server-side actualiza la consulta y la tabla sin
 recargar manualmente la página, igual que en la interfaz monolítica.
 
+### Toasts consistentes — 2026-09-17
+
+- [x] El contenedor visual de `vue-sonner` se adapta al contenido, con un límite
+  responsive para no desbordar la ventana.
+- [x] La fachada compartida `src/lib/toast.ts` elimina el punto final de los mensajes
+  de éxito, información, advertencia, error y carga.
+
 ## Bloque 3 — Reproducir la redirección “intended” sin exponerla en la URL
 
 - [x] Eliminar `?redirect=...` como mecanismo principal visible.
