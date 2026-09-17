@@ -2,9 +2,8 @@
 
 ## Estado
 
-Plan activo. Ningún bloque se considera terminado hasta contar con evidencia contra la
-fuente canónica. Se descartan las marcas de finalización del plan anterior porque
-mezclaban equivalencia funcional con paridad real de interfaz.
+Implementación y verificación automática completadas. El plan permanece activo hasta
+publicar un preview y obtener la aceptación visual manual contra la fuente canónica.
 
 ## Trazabilidad
 
@@ -38,20 +37,20 @@ materializa una pantalla que no exista en la referencia.
 
 ## Bloque 1 — Analizar y corregir inconsistencias
 
-- [ ] Construir una matriz completa entre las 38 páginas de referencia y las rutas de la
+- [x] Construir una matriz completa entre las 38 páginas de referencia y las rutas de la
       SPA, incluyendo navegación, layouts, componentes, textos, estados y acciones.
-- [ ] Clasificar cada artefacto como `identico`, `adaptado_api`, `faltante`, `alterado` o
+- [x] Clasificar cada artefacto como `identico`, `adaptado_api`, `faltante`, `alterado` o
       `extra`, con una justificación versionada para toda adaptación.
-- [ ] Comparar automáticamente `<template>`, estilos, componentes utilizados y rutas
+- [x] Comparar automáticamente `<template>`, estilos, componentes utilizados y rutas
       contra un manifiesto fijado al commit `4e33b6d`.
-- [ ] Portar los componentes originales faltantes y sustituir toda reconstrucción por la
+- [x] Portar los componentes originales faltantes y sustituir toda reconstrucción por la
       fuente canónica, modificando solo la frontera API.
-- [ ] Retirar rutas, enlaces, pantallas, controles y pruebas añadidos sin referencia.
-- [ ] Restaurar estructura, orden, textos, estados, responsive y composición originales
+- [x] Retirar rutas, enlaces, pantallas, controles y pruebas añadidos sin referencia.
+- [x] Restaurar estructura, orden, textos, estados, responsive y composición originales
       en autenticación, superficies globales, Administración, Coordinación y Docencia.
-- [ ] Auditar editor de plantilla, editor de sílabo e IA por separado debido a su tamaño
+- [x] Auditar editor de plantilla, editor de sílabo e IA por separado debido a su tamaño
       y conservar sus componentes canónicos sin sustitutos activos.
-- [ ] Confirmar cero dependencias productivas de Inertia/Wayfinder y cero elementos
+- [x] Confirmar cero dependencias productivas de Inertia/Wayfinder y cero elementos
       visibles sin correspondencia.
 
 La ruta añadida `/coordinacion/configuracion-ia` no pertenece a la interfaz restaurada
@@ -64,37 +63,37 @@ o adaptador de datos y documentada.
 
 ## Bloque 2 — Verificar paridad funcional distribuida
 
-- [ ] Ejecutar recorridos completos de Administrador, Coordinador y Docente contra
+- [x] Ejecutar recorridos completos de Administrador, Coordinador y Docente contra
       Laravel, PostgreSQL y Redis aislados.
-- [ ] Verificar sesión, selección de ámbito, permisos, formularios, tablas, hojas,
+- [x] Verificar sesión, selección de ámbito, permisos, formularios, tablas, hojas,
       diálogos, autoguardado, observaciones, revisiones, documentos e IA.
-- [ ] Cubrir carga, vacío, error, `422`, `409`, `401`, `419`, reintentos y ausencia de
+- [x] Cubrir carga, vacío, error, `422`, `409`, `401`, `419`, reintentos y ausencia de
       respuestas `5xx`.
-- [ ] Comparar todas las acciones visibles con la referencia: ninguna faltante y ninguna
+- [x] Comparar todas las acciones visibles con la referencia: ninguna faltante y ninguna
       adicional.
-- [ ] Mantener OpenAPI y `src/api/*` sincronizados; cualquier ajuste backend alimenta la
+- [x] Mantener OpenAPI y `src/api/*` sincronizados; cualquier ajuste backend alimenta la
       interfaz canónica y no la redefine.
 
 No se prevén migraciones ni cambios del modelo de datos en este incremento.
 
 ## Bloque 3 — Verificar paridad visual y accesibilidad
 
-- [ ] Preparar datos deterministas equivalentes para referencia y SPA.
-- [ ] Capturar todas las rutas en claro a 1440 px, oscuro a 1440 px y claro a 360 px.
-- [ ] Comparar estructura, dimensiones, tipografía, colores, espaciado, iconos, tablas,
+- [x] Preparar datos deterministas equivalentes para referencia y SPA.
+- [x] Capturar todas las rutas en claro a 1440 px, oscuro a 1440 px y claro a 360 px.
+- [x] Comparar estructura, dimensiones, tipografía, colores, espaciado, iconos, tablas,
       documentos y overlays; enmascarar solo horas, UUID y cursores dinámicos.
-- [ ] Probar teclado, foco, cierre y devolución de foco en diálogos/sheets, navegación
+- [x] Probar teclado, foco, cierre y devolución de foco en diálogos/sheets, navegación
       móvil y ausencia de overflow global.
 - [ ] Corregir o registrar para aceptación explícita toda diferencia visual; el modo
       informativo del comparador no constituye aprobación.
 
 ## Bloque 4 — Limpieza, puertas finales y preview
 
-- [ ] Eliminar código, pruebas, capturas y dependencias huérfanas de la interfaz
+- [x] Eliminar código, pruebas, capturas y dependencias huérfanas de la interfaz
       sustituta.
-- [ ] Ejecutar ESLint, TypeScript, Vitest, build, contrato SPA–OpenAPI, Playwright de los
+- [x] Ejecutar ESLint, TypeScript, Vitest, build, contrato SPA–OpenAPI, Playwright de los
       tres roles, `composer verify` y `git diff --check`.
-- [ ] Construir y probar las imágenes frontend/backend, runtime config, CORS, CSRF,
+- [x] Construir y probar las imágenes frontend/backend, runtime config, CORS, CSRF,
       rutas profundas, archivos privados y cabeceras.
 - [ ] Publicar primero en preview y completar revisión manual.
 - [ ] Pasar a producción únicamente con autorización explícita posterior.
@@ -105,3 +104,20 @@ I-85 termina solamente cuando la SPA conserva la separación por API y reproduce
 monolito en rutas, componentes, comportamiento y presentación para todos los roles, sin
 superficies inventadas, con todas las puertas automáticas verdes y aceptación visual del
 preview.
+
+## Evidencia de implementación — 2026-09-16
+
+- `npm run audit:visual-parity`: 38/38 páginas declaradas, 400/400 componentes
+  canónicos presentes, 9/9 layouts presentes, 252/252 primitivas UI idénticas, cero
+  rutas, componentes o dependencias prohibidas sin justificar.
+- Captura determinista: 99 pares en claro/oscuro a 1440 px y claro a 360 px; ninguna
+  superficie sin contraparte y cero dimensiones incompatibles. Las diferencias de datos
+  dinámicos quedan pendientes de aceptación visual en preview.
+- Playwright SPA→API: cinco recorridos aprobados para Administración, Coordinación,
+  Docencia, foco en overlays y ausencia de overflow móvil; ninguna respuesta `5xx`.
+- Frontend: ESLint, TypeScript, 20 pruebas Vitest, build Vite y contrato de 118
+  consumidores frente a 120 operaciones OpenAPI aprobados.
+- Backend: `composer verify` aprobado con Pint, PHPStan y 259 pruebas/3.503 aserciones.
+- Imágenes OCI construidas con Podman. Smoke aprobado para runtime config del frontend,
+  ruta profunda, CSP/cabeceras, salud del backend, CORS con credenciales y cookie CSRF.
+- No se publicó preview ni producción: ambas acciones requieren autorización explícita.
