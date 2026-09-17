@@ -4,6 +4,16 @@ Corte histórico del 30 de agosto de 2026, con actualización I-56 a continuaci�
 Este documento separa lo que falta según de quién
 depende, porque son cosas de naturaleza distinta y no se resuelven igual.
 
+## Paridad funcional y visual de la SPA, 2026-09-17 (I-87)
+
+La auditoría posterior a I-85/I-86 confirmó que los componentes canónicos están
+presentes, pero la adaptación distribuida todavía difiere en estados de carga,
+redirección posterior al acceso, rutas históricas y composición de algunas páginas
+consolidadas. I-87 establece la corrección página por página, skeletons basados en la
+geometría final y un contrato único de navegación, sin recuperar Inertia ni ejecutar
+Playwright local/preview. El plan está en
+`active/I-87-paridad-funcional-visual-spa.md`.
+
 ## Corrección de paridad visual distribuida, 2026-09-16 (I-85)
 
 I-84 separó correctamente la frontera API/SPA, pero sustituyó la interfaz Vue original
