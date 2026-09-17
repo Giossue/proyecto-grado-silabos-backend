@@ -160,6 +160,21 @@ Endpoint API de otro rol         → 403 del backend, sin redirección cosmétic
 **Aceptación:** navegación, breadcrumbs, recarga, marcador y Atrás/Adelante usan el
 mismo contrato y no existen decisiones de ruta repartidas entre páginas.
 
+### Filtros server-side alineados con el monolito — 2026-09-17
+
+- [x] Los `Select` de las páginas que usan `FilterToolbar` exponen su atributo `name`.
+  Reka UI puede así emitir el `change` nativo burbujeado que el toolbar utiliza para
+  enviar automáticamente el formulario y conservar el valor seleccionado en la
+  consulta API.
+- [x] Se cubrieron convocatorias, usuarios, revisiones, sílabos docentes, procesos,
+  auditoría e informes; los filtros locales de `ClientFilterBar` no se modificaron.
+- [x] Las tablas con `ClientFilterBar` muestran el estado vacío de la página filtrada
+  (no el de la colección completa), incluyendo catálogo académico, asignaciones,
+  seguimiento de convocatorias y documentos.
+
+**Aceptación:** cambiar un filtro server-side actualiza la consulta y la tabla sin
+recargar manualmente la página, igual que en la interfaz monolítica.
+
 ## Bloque 3 — Reproducir la redirección “intended” sin exponerla en la URL
 
 - [x] Eliminar `?redirect=...` como mecanismo principal visible.
