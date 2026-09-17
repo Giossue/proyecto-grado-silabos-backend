@@ -202,6 +202,19 @@ monolito, pero dentro de la arquitectura SPA y sin open redirects.
 - [ ] Los errores sustituyen solo el cuerpo que falló y ofrecen reintento cuando la
   operación sea segura; vacío y error permanecen diferenciados.
 
+### Rebanada de geometrías alineadas aplicada — 2026-09-17
+
+- [x] `LoadingSkeleton.vue` conserva un único primitive de shadcn-vue y expone variantes
+  por superficie, no un placeholder genérico para todas las pantallas.
+- [x] Los listados distinguen una tabla autónoma (`table`) de una tabla dentro de una
+  `Card` con filtros ya visibles (`table-body`); historiales y auditoría conservan sus
+  encabezados, pestañas, filtros y paginación.
+- [x] Las vistas de sílabo, revisión, convocatoria, comparación, documentos, fuentes,
+  plantilla, informes, notificaciones, panel y selección de ámbito tienen skeletons con
+  la misma grilla y jerarquía de tarjetas que su contenido cargado.
+- [x] Las páginas SPA usan la variante correspondiente sin cambiar contratos API ni
+  introducir controles de producto durante la carga.
+
 ### Aplicación por familia
 
 Implementación parcial verificada: `LoadErrorState.vue` ya se utiliza en panel,
