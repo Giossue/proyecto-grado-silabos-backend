@@ -20,6 +20,8 @@ use Illuminate\Validation\ValidationException;
  */
 class ProcessLocks
 {
+    private const EDITING_LOCK_REASON = 'Edición bloqueada. Primero debe pausar la convocatoria desde Convocatorias.';
+
     public function templateLockReason(): ?string
     {
         $process = SyllabusProcess::query()
@@ -31,8 +33,7 @@ class ProcessLocks
             return null;
         }
 
-        return "El proceso «{$process->nombre}» está abierto y los docentes trabajan con esta plantilla."
-            .' Pause el proceso desde Convocatorias para modificarla.';
+        return self::EDITING_LOCK_REASON;
     }
 
     public function assertTemplateEditable(): void
@@ -65,9 +66,7 @@ class ProcessLocks
             ->with('academicPeriod:id,codigo')
             ->first(['id', 'periodo_academico_id']);
 
-        return $process === null
-            ? null
-            : "El proceso institucional «{$process->nombre}» está abierto. Pause el proceso desde Convocatorias antes de modificar la estructura institucional.";
+        return $process === null ? null : self::EDITING_LOCK_REASON;
     }
 
     public function careerLockReason(?string $careerId): ?string
@@ -86,8 +85,7 @@ class ProcessLocks
             return null;
         }
 
-        return "La convocatoria «{$convocation->nombre}» está en curso y los sílabos se apoyan en esta información."
-            .' Pause la convocatoria desde Convocatorias para modificarla; las demás carreras no se ven afectadas.';
+        return self::EDITING_LOCK_REASON;
     }
 
     public function assertCareerEditable(?string $careerId): void
