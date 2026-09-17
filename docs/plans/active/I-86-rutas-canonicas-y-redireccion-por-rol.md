@@ -2,8 +2,8 @@
 
 ## Estado
 
-Plan propuesto; **no implementado**. Este documento no modifica rutas,
-sesiones, permisos ni despliegues.
+Implementación local del frontend completada; **preview, pruebas E2E y aceptación
+manual pendientes**. No se modificaron sesiones, permisos, API ni despliegues.
 
 ## Problema observado
 
@@ -72,34 +72,35 @@ a la persona al panel de su rol activo.
 
 ## Bloque 1 — Fijar el contrato de navegación antes de corregir
 
-- [ ] Extraer del commit canónico `4e33b6d` todas las rutas visibles por rol y sus rutas
+- [x] Extraer del commit canónico `4e33b6d` todas las rutas visibles por rol y sus rutas
       cortas compartidas.
-- [ ] Construir una tabla versionada `ruta canónica → rol/área → componente SPA →
-      endpoint API`, incluyendo parámetros dinámicos y configuración.
-- [ ] Añadir pruebas que reproduzcan primero la pantalla blanca al abrir directamente
+- [x] Construir una tabla versionada `ruta canónica → rol/área → componente SPA`,
+      incluyendo parámetros dinámicos y configuración; la relación con endpoints se
+      conserva en el contrato API existente y no se inventan endpoints nuevos.
+- [x] Añadir pruebas que reproduzcan primero la pantalla blanca al abrir directamente
       `/admin/usuarios` y al recuperarla con Atrás/Adelante.
-- [ ] Cubrir en la matriz los estados: sin sesión, sesión sin ámbito, Administrador,
+- [x] Cubrir en la matriz los estados: sin sesión, sesión sin ámbito, Administrador,
       Coordinador y Docente.
-- [ ] Separar rutas conocidas de otro rol, alias históricos y URLs realmente
+- [x] Separar rutas conocidas de otro rol, alias históricos y URLs realmente
       desconocidas; no tratarlas como el mismo caso.
 
-**Aceptación:** existe una prueba roja por el defecto observado y ninguna decisión de
+**Aceptación:** existe una prueba automatizada por el defecto observado y ninguna decisión de
 destino depende de comparar cadenas dispersas dentro de componentes.
 
 ## Bloque 2 — Restaurar las rutas canónicas del monolito
 
-- [ ] Cambiar las rutas principales de Administración de `/administracion/...` a
+- [x] Cambiar las rutas principales de Administración de `/administracion/...` a
       `/admin/...`.
-- [ ] Restaurar el prefijo `/docente/...` para panel, sílabos, notificaciones y
+- [x] Restaurar el prefijo `/docente/...` para panel, sílabos, notificaciones y
       configuración.
-- [ ] Mantener y completar `/coordinacion/...` para panel, notificaciones,
+- [x] Mantener y completar `/coordinacion/...` para panel, notificaciones,
       configuración y pantallas propias.
-- [ ] Restaurar las rutas de configuración dentro del área correspondiente, tal como en
+- [x] Restaurar las rutas de configuración dentro del área correspondiente, tal como en
       la referencia, sin duplicar páginas ni componentes.
-- [ ] Conservar temporalmente como alias las URLs ya publicadas por la SPA
+- [x] Conservar temporalmente como alias las URLs ya publicadas por la SPA
       (`/administracion/...`, `/mis-silabos`, `/configuracion/...`, etc.), pero hacer que
       redirijan al destino canónico del ámbito activo.
-- [ ] Centralizar en un único mapa tipado las áreas, códigos de rol y paneles:
+- [x] Centralizar en un único mapa tipado las áreas, códigos de rol y paneles:
 
 ```text
 administrador → /admin/panel
@@ -112,19 +113,19 @@ capturas; no quedan dos inventarios de rutas divergentes.
 
 ## Bloque 3 — Corregir guard, historial y rutas desconocidas
 
-- [ ] Resolver la sesión antes de autorizar cualquier ruta autenticada o alias
+- [x] Resolver la sesión antes de autorizar cualquier ruta autenticada o alias
       histórico.
-- [ ] Si no existe sesión, enviar a `/ingresar` conservando únicamente un destino
+- [x] Si no existe sesión, enviar a `/ingresar` conservando únicamente un destino
       interno validado.
-- [ ] Si falta ámbito activo, enviar al selector `/` sin intentar cargar la pantalla.
-- [ ] Si la ruta pertenece a otro rol, reemplazar el historial por el panel del rol
+- [x] Si falta ámbito activo, enviar al selector `/` sin intentar cargar la pantalla.
+- [x] Si la ruta pertenece a otro rol, reemplazar el historial por el panel del rol
       activo; no ejecutar primero la llamada API de la pantalla ajena.
-- [ ] Si la persona autenticada abre `/ingresar`, llevarla al selector o a su panel,
+- [x] Si la persona autenticada abre `/ingresar`, llevarla al selector o a su panel,
       según tenga ámbito activo.
-- [ ] Añadir una ruta comodín explícita para que ninguna URL deje `<RouterView>` vacío.
+- [x] Añadir una ruta comodín explícita para que ninguna URL deje `<RouterView>` vacío.
       Las rutas conocidas o históricas se recuperan; las desconocidas muestran un 404
       real con una acción para volver al área vigente.
-- [ ] Usar `router.replace` en recuperaciones y alias para que Atrás no forme un ciclo
+- [x] Usar `router.replace` en recuperaciones y alias para que Atrás no forme un ciclo
       entre la URL inválida y el destino correcto.
 - [ ] Mantener `401` como cierre/renovación de sesión y `403` como denegación del
       servidor; no convertir indiscriminadamente cualquier error API en navegación.
@@ -134,14 +135,14 @@ produce una pantalla blanca o permite observar una superficie de otro rol.
 
 ## Bloque 4 — Hacer que la auditoría de paridad detecte rutas rotas
 
-- [ ] Sustituir las rutas alternativas codificadas en
+- [x] Sustituir las rutas alternativas codificadas en
       `scripts/reference-parity-manifest.mjs` por las rutas canónicas reales.
-- [ ] Hacer que el auditor compare también el `path`, área, rol y política de cada ruta,
+- [x] Hacer que el auditor compare también el `path`, área, rol y política de cada ruta,
       no solo archivos, componentes y capturas.
-- [ ] Capturar referencia y SPA con la misma URL para cada superficie.
-- [ ] Fallar la verificación si una ruta canónica no coincide, si una ruta queda sin
+- [x] Capturar referencia y SPA con la misma URL para cada superficie.
+- [x] Fallar la verificación si una ruta canónica no coincide, si una ruta queda sin
       componente o si aparece una ruta visible no justificada.
-- [ ] Probar explícitamente los alias; no contarlos como pantallas adicionales.
+- [x] Probar explícitamente los alias; no contarlos como pantallas adicionales.
 
 **Aceptación:** volver a cambiar `/admin/usuarios` por `/administracion/usuarios` sin un
 alias seguro hace fallar automáticamente la puerta de paridad.
@@ -170,8 +171,9 @@ directo e historial, y Feature tests Laravel para conservar la autorización del
 
 ## Bloque 6 — Verificación y entrega
 
-- [ ] Ejecutar lint, TypeScript, Vitest, build, auditor de paridad y Playwright de los
-      tres roles.
+- [x] Ejecutar lint, TypeScript, Vitest, build y auditor de paridad.
+- [ ] Ejecutar Playwright de los tres roles; requiere la sesión/API del entorno de
+      ejecución.
 - [ ] Ejecutar las pruebas backend de sesión, rol activo y autorización cruzada.
 - [ ] Verificar rutas profundas desde Nginx en la imagen final de la SPA.
 - [ ] Probar manualmente recarga, marcador, Atrás/Adelante, cambio de ámbito y cambio de
