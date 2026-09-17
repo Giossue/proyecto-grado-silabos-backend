@@ -7,8 +7,11 @@ modifica la base de datos ni se ejecutan despliegues. El auditor versionado, el 
 tipado de rutas (incluidos estados lógicos de páginas consolidadas), la recuperación de destino previsto y la base de skeletons ya están
 verificados en la SPA. Se añadió un estado reutilizable de error con reintento a los
 listados, paneles, comparación y estructura académica, además de una matriz inicial de
-navegación por rol; la revisión página por página, DTO, deep links y pruebas exhaustivas
-de estados continúan abiertos.
+navegación por rol. En el backend se corrigieron los enlaces de recurso que entrega la
+API de notificaciones para usar destinos canónicos de la SPA según el rol activo y se
+añadieron regresiones para revisión, documentos exportados y sílabos docentes. La
+revisión página por página, DTO, deep links y pruebas exhaustivas de estados continúan
+abiertos.
 
 Este incremento corrige navegación, redirecciones, estados de carga y adaptaciones de
 las páginas de la SPA. No autoriza despliegue, cambios de base de datos, recuperación de
@@ -296,6 +299,19 @@ fuente canónica o decisión confirmada posterior.
 **Aceptación:** los componentes reciben el mismo modelo de presentación que en el
 monolito, aunque su transporte sea JSON.
 
+### Rebanada backend aplicada
+
+- [x] Enlazar notificaciones de sílabo de coordinación con la revisión más reciente en
+  `/coordinacion/revisiones/{revision}`.
+- [x] Enlazar notificaciones de sílabo docente con `/docente/mis-silabos/{syllabus}`;
+  no se emite el alias histórico `/mis-silabos`.
+- [x] Enlazar notificaciones de exportación con la superficie común de documentos en
+  `/revisiones/{revision}/documentos` y comprobar la autorización del artefacto.
+- [x] Mantener la ayuda de IA dentro del detalle docente canónico, sin inventar una
+  ruta de navegador que la SPA no registra.
+- [x] Verificar que el contrato OpenAPI no cambia: el ajuste solo corrige valores de
+  `resource_path` y no agrega operaciones ni payloads.
+
 ## Bloque 7 — Pruebas sin Playwright
 
 ### Router y sesión — Vitest con memoria
@@ -327,8 +343,8 @@ completa de 401/2FA/cambio de contraseña y cambio de cuenta sigue pendiente.
 - [ ] Verificador SPA–OpenAPI sin consumidores o operaciones huérfanas injustificadas.
 - [x] `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build` y
   `npm run audit:visual-parity`.
-- [ ] Si cambia backend: pruebas Feature de sesión/rol/API y `composer verify`.
-- [ ] `git diff --check` en ambos repositorios.
+- [x] Si cambia backend: pruebas Feature de notificaciones/API y `composer verify`.
+- [x] `git diff --check` en ambos repositorios.
 
 ### Revisión manual dirigida
 

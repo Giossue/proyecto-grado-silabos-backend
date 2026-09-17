@@ -83,21 +83,30 @@ class NotificationController extends Controller
         }
         if ($notification->tipo_recurso === 'silabo') {
             $syllabus = Syllabus::query()->find($notification->recurso_id);
+            if ($syllabus !== null && $actor->can('review', $syllabus)) {
+                $revision = $syllabus->revisions()->latest('numero_revision')->first();
+
+                return $revision === null
+                    ? null
+                    : "/coordinacion/revisiones/{$revision->id}";
+            }
 
             return $syllabus !== null && $actor->can('view', $syllabus)
-                ? "/mis-silabos/{$syllabus->id}"
+                ? "/docente/mis-silabos/{$syllabus->id}"
                 : null;
         }
         if ($notification->tipo_recurso === 'artefacto_exportacion') {
             $artifact = ExportArtifact::query()->with('revision')->find($notification->recurso_id);
 
-            return null;
+            return $artifact !== null && $actor->can('view', $artifact)
+                ? "/revisiones/{$artifact->revision->id}/documentos"
+                : null;
         }
         if ($notification->tipo_recurso === 'ejecucion_ia') {
             $execution = AiExecution::query()->with(['syllabus', 'field'])->find($notification->recurso_id);
 
             return $execution !== null && $actor->can('edit', $execution->syllabus)
-                ? "/mis-silabos/{$execution->syllabus->id}"
+                ? "/docente/mis-silabos/{$execution->syllabus->id}"
                 : null;
         }
 

@@ -313,7 +313,8 @@ class DocumentOperationsTest extends TestCase
             ->assertOk()
             ->assertJson(fn (Assert $page) => $page->etc()
 
-                ->where('notifications.total', 1));
+                ->where('notifications.total', 1)
+                ->where('notifications.data.0.resource_path', "/coordinacion/revisiones/{$syllabus->revisions()->latest('numero_revision')->value('id')}"));
         $this->actingAsTeacher()->postJson(route('api.v1.notifications.read', $notification))->assertForbidden();
         $this->actingAsCoordinator()->postJson(route('api.v1.notifications.read', $notification))->assertSuccessful();
         $this->assertNotNull($notification->fresh()->leido_en);
@@ -333,6 +334,57 @@ class DocumentOperationsTest extends TestCase
         } catch (QueryException) {
             $this->assertSame([$this->coordinator->id], $first->fresh()->contenido['recipient_ids']);
         }
+    }
+
+    public function test_cp_f_notifications_link_export_artifacts_to_the_documents_surface(): void
+    {
+        [$syllabus, $revision] = $this->approvedRevision();
+        $artifact = ExportArtifact::query()->create([
+            'silabo_id' => $syllabus->id,
+            'revision_silabo_id' => $revision->id,
+            'plantilla_id' => $syllabus->plantilla_id,
+            'version_renderizador' => 'test',
+            'idioma' => 'es-EC',
+            'clave_idempotencia' => (string) Str::uuid(),
+            'estado' => 'pendiente',
+            'solicitado_por' => $this->coordinator->id,
+            'solicitado_en' => now(),
+        ]);
+        InternalNotification::query()->create([
+            'usuario_id' => $this->coordinator->id,
+            'clave_deduplicacion' => "documento.exportacion.completada:{$artifact->id}",
+            'tipo' => 'documento.exportacion.completada',
+            'titulo' => 'Documentos listos para descargar',
+            'mensaje' => 'Los documentos están disponibles.',
+            'tipo_recurso' => 'artefacto_exportacion',
+            'recurso_id' => $artifact->id,
+            'notificado_en' => now(),
+        ]);
+
+        $this->actingAsCoordinator()
+            ->getJson(route('api.v1.notifications.index'))
+            ->assertOk()
+            ->assertJsonPath('notifications.data.0.resource_path', "/revisiones/{$revision->id}/documentos");
+    }
+
+    public function test_cp_f_teacher_syllabus_notifications_use_the_canonical_teacher_path(): void
+    {
+        [$syllabus] = $this->approvedRevision();
+        InternalNotification::query()->create([
+            'usuario_id' => $this->teacher->id,
+            'clave_deduplicacion' => "silabo.aprobado:{$syllabus->id}:teacher",
+            'tipo' => 'silabo.aprobado',
+            'titulo' => 'Sílabo aprobado',
+            'mensaje' => 'El sílabo fue aprobado.',
+            'tipo_recurso' => 'silabo',
+            'recurso_id' => $syllabus->id,
+            'notificado_en' => now(),
+        ]);
+
+        $this->actingAsTeacher()
+            ->getJson(route('api.v1.notifications.index'))
+            ->assertOk()
+            ->assertJsonPath('notifications.data.0.resource_path', "/docente/mis-silabos/{$syllabus->id}");
     }
 
     public function test_cp_f_reports_apply_career_scope_to_indicators_and_detail(): void
