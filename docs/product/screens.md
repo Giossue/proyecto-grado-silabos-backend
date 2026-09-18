@@ -314,7 +314,7 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   iniciar. Esa selección queda congelada durante el alcance. COR-02 lista
   los procesos institucionales desde antes de iniciar la carrera, con estado institucional
   y estado de carrera separados; el filtro muestra solo convocatorias iniciadas, pausadas y
-  cerradas, y el seguimiento de expedientes se consulta dentro de cada convocatoria. No tiene
+  cerradas, y el seguimiento de expedientes se consulta en un `Sheet` lateral dentro de cada convocatoria. No tiene
   aviso ni botón de alta independientes. El menú de tres puntos de cada fila reúne iniciar,
   ver seguimiento, pausar y reanudar, con el mismo diálogo de
   confirmación que ADM-12; COR-04 es solo seguimiento y avisa cuando la convocatoria o

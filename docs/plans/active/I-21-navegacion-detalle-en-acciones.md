@@ -15,13 +15,15 @@ En curso.
 ## Resultado demostrable
 
 Los nombres y versiones de las filas no navegan al detalle. Cada tabla presenta la
-navegación aplicable dentro de su menú `TableActionsMenu` de tres puntos.
+acción aplicable dentro de su menú `TableActionsMenu` de tres puntos. El seguimiento de
+convocatorias se abre en un `Sheet` lateral, sin una página de detalle separada.
 
 ## Cambios previstos
 
 - Frontend: agregar la columna Acciones a Convocatorias, Mis sílabos y Plantillas;
-  conservar los enlaces tipados dentro de su menú compartido.
-- Pruebas: proteger que los detalles se abran desde Acciones.
+  conservar los enlaces tipados dentro de su menú compartido y abrir el seguimiento de
+  convocatorias en un `Sheet` lateral.
+- Pruebas: proteger que las acciones aplicables se abran desde Acciones.
 - Datos, backend, seguridad/auditoría y trabajos: sin cambios.
 
 ## Pruebas
@@ -33,10 +35,12 @@ navegación aplicable dentro de su menú `TableActionsMenu` de tres puntos.
 ## Pasos
 
 - [x] Inventariar las tablas con navegación directa a detalle.
-- [ ] Mover los enlaces de detalle al menú Acciones compartido.
-- [ ] Cubrir la regresión, actualizar trazabilidad y verificar.
+- [x] Mover las acciones de detalle al menú Acciones compartido.
+- [x] Sustituir el detalle de convocatoria por un `Sheet` de seguimiento y retirar su ruta.
+- [ ] Actualizar trazabilidad y verificar.
 
 ## Riesgos y reversión
 
-- La ruta conserva la misma autorización de servidor; solo cambia su disparador.
-- Revertir restaura el enlace visual, sin migraciones ni efectos persistentes.
+- El `Sheet` conserva la misma consulta y autorización de servidor; solo cambia la
+  presentación y el disparador.
+- Revertir restaura la página de detalle, sin migraciones ni efectos persistentes.
