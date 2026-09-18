@@ -312,7 +312,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.show', $template))
             ->assertOk()
-            ->assertJson(fn (Assert $page) => $page->etc()->where('processLock', 'Proceso activo.'));
+            ->assertJson(fn (Assert $page) => $page->etc()->where('processLock', 'Proceso activo'));
         $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.show', $template))
             ->assertSuccessful();
 
@@ -418,7 +418,7 @@ class SyllabusProcessTest extends TestCase
             ->assertOk()
             ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('curriculum.editable', false)
-                ->where('curriculum.lock_reason', 'Convocatoria activa.'));
+                ->where('curriculum.lock_reason', 'Convocatoria activa'));
 
         // Pausar la convocatoria de la carrera libera su malla y sus fuentes.
         $this->actingAsCoordinator()

@@ -20,9 +20,9 @@ use Illuminate\Validation\ValidationException;
  */
 class ProcessLocks
 {
-    private const PROCESS_LOCK_REASON = 'Proceso activo.';
+    private const PROCESS_LOCK_REASON = 'Proceso activo';
 
-    private const CONVOCATION_LOCK_REASON = 'Convocatoria activa.';
+    private const CONVOCATION_LOCK_REASON = 'Convocatoria activa';
 
     public function templateLockReason(): ?string
     {
