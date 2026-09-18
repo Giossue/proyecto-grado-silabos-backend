@@ -3,6 +3,8 @@
 namespace Tests\Feature\Identity;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Mail\ManagedUserCredentialsMail;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -72,11 +74,42 @@ class CareerTeacherTest extends TestCase
 
     public function test_existing_identity_and_other_roles_are_preserved_without_sending_credentials(): void
     {
-        $user = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
-        $original = $user->getAttributes();
+        $secondCareer = Career::query()->firstOrFail()->replicate();
+        $secondCareer->codigo_carrera = 'SOFTWARE-SEGUNDA';
+        $secondCareer->nombre = 'Software Segunda';
+        $secondCareer->save();
+        $user = User::query()->create([
+            'nombre' => 'Segundo Coordinador',
+            'correo_electronico' => 'segundo.coordinador@silabos.test',
+            'contrasena' => Hash::make('Demo-2026!'),
+            'correo_verificado_en' => now(),
+            'activo' => true,
+        ]);
+        RoleAssignment::query()->create([
+            'usuario_id' => $user->id,
+            'rol' => RoleCode::Coordinator->value,
+            'carrera_id' => $secondCareer->id,
+            'activo' => true,
+        ]);
+        $original = $user->fresh()->getAttributes();
         $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => $user->correo_electronico])->assertSuccessful();
         $this->assertSame($original, $user->fresh()->getAttributes());
         $this->assertSame(2, $user->roleAssignments()->count());
+        Mail::assertNothingQueued();
+    }
+
+    public function test_an_administrator_cannot_be_incorporated_as_a_teacher(): void
+    {
+        $administrator = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
+
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), [
+            ...$this->payload(),
+            'correo_electronico' => $administrator->correo_electronico,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('correo_electronico');
+
+        $this->assertSame(1, $administrator->fresh()->roleAssignments()->where('activo', true)->count());
         Mail::assertNothingQueued();
     }
 

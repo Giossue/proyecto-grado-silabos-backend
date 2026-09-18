@@ -314,6 +314,57 @@ class ManagedUserTest extends TestCase
         ]);
     }
 
+    public function test_administrator_cannot_receive_another_active_role(): void
+    {
+        $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
+        $target = User::query()->create([
+            'nombre' => 'Segundo Administrador',
+            'correo_electronico' => 'segundo.admin@silabos.test',
+            'contrasena' => Hash::make('Demo-2026!'),
+            'activo' => true,
+        ]);
+        RoleAssignment::query()->create([
+            'usuario_id' => $target->id,
+            'rol' => RoleCode::Administrator->value,
+            'carrera_id' => null,
+            'activo' => true,
+        ]);
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.users.roles.store', $target), [
+                'role_code' => RoleCode::Teacher->value,
+                'career_id' => $career->id,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('role_code');
+
+        $this->assertSame(1, $target->fresh()->roleAssignments()->where('activo', true)->count());
+        $this->assertDatabaseMissing('asignaciones_rol', [
+            'usuario_id' => $target->id,
+            'rol' => RoleCode::Teacher->value,
+            'carrera_id' => $career->id,
+            'asignacion_rol_activa' => true,
+        ]);
+    }
+
+    public function test_administrator_role_cannot_be_added_to_a_user_with_another_active_role(): void
+    {
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.users.roles.store', $teacher), [
+                'role_code' => RoleCode::Administrator->value,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('role_code');
+
+        $this->assertDatabaseMissing('asignaciones_rol', [
+            'usuario_id' => $teacher->id,
+            'rol' => RoleCode::Administrator->value,
+            'asignacion_rol_activa' => true,
+        ]);
+    }
+
     public function test_administrator_can_assign_the_same_coordinator_to_another_career(): void
     {
         $coordinator = $this->coordinatorHolder();
@@ -546,6 +597,34 @@ class ManagedUserTest extends TestCase
             'usuario_id' => $teacher->id,
             'rol' => $existing->rol,
             'carrera_id' => $existing->carrera_id,
+            'activo' => true,
+        ]);
+    }
+
+    public function test_postgresql_rejects_a_scoped_role_for_an_administrator(): void
+    {
+        $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
+
+        $this->expectException(QueryException::class);
+
+        RoleAssignment::query()->create([
+            'usuario_id' => $this->administrator->id,
+            'rol' => RoleCode::Teacher->value,
+            'carrera_id' => $career->id,
+            'activo' => true,
+        ]);
+    }
+
+    public function test_postgresql_rejects_an_administrator_for_a_scoped_user(): void
+    {
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+
+        $this->expectException(QueryException::class);
+
+        RoleAssignment::query()->create([
+            'usuario_id' => $teacher->id,
+            'rol' => RoleCode::Administrator->value,
+            'carrera_id' => null,
             'activo' => true,
         ]);
     }

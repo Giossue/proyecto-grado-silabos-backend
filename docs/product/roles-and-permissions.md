@@ -65,9 +65,13 @@ no concede al Administrador permisos sobre mallas, materias o contenido docente.
 ## Acumulación de roles
 
 Una persona puede ser coordinadora de varias carreras y también docente. Cada asignación
-de rol conserva su propia carrera y se retira manualmente al finalizarla. Al iniciar como
-Coordinador debe elegir una carrera incluso si solo tiene una coordinación activa; durante la sesión puede cambiar
-de carrera o rol desde el menú de usuario. Solo existe un ámbito activo a la vez.
+de rol conserva su propia carrera y se retira manualmente al finalizarla. Administración
+es una excepción exclusiva: una cuenta con el rol `administrador` activo no puede tener
+`coordinador` ni `docente` activos, y tampoco se puede conceder `administrador` mientras
+conserve otro rol activo. Las asignaciones finalizadas se conservan como historial.
+Al iniciar como Coordinador debe elegir una carrera incluso si solo tiene una coordinación
+activa; durante la sesión puede cambiar de carrera o rol desde el menú de usuario. Solo
+existe un ámbito activo a la vez.
 
 Una carrera solo puede tener una coordinación ejercible: una asignación de rol
 `coordinador` activa cuya cuenta también está activa. Para cambiarla, Administración usa

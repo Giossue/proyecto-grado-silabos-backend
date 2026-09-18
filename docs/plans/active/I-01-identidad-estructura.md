@@ -10,6 +10,11 @@ El 2026-08-26 se añadió la contraseña temporal de un solo uso: la interfaz la
 cuenta nace marcada y `RequirePasswordChange` bloquea toda ruta salvo el panel, el cambio
 y el cierre de sesión hasta que su titular la sustituya.
 
+El 2026-09-18 se hizo explícita la separación de responsabilidades para Administración:
+una cuenta con `administrador` activo no puede ejercer además `coordinador` o `docente`.
+La acción transaccional y PostgreSQL validan la misma regla; los roles finalizados siguen
+siendo visibles como historial.
+
 La distribución de responsabilidades descrita originalmente en este incremento fue
 reemplazada por I-09: Administración conserva gobierno global y Coordinación gestiona la de responsabilidades descrita originalmente en este incremento fue
 reemplazada por I-09: Administración conserva gobierno global y Coordinación gestiona la
@@ -48,8 +53,9 @@ operación académica dentro de su carrera.
 
 Un administrador, dentro de un rol explícito, gestiona cuentas, roles, facultades,
 carreras y coordinaciones. Un Coordinador gestiona la estructura operativa de su carrera.
-Una persona con varios roles cambia de rol sin acumular privilegios. PostgreSQL
-conserva historial y rechaza vigencias incompatibles.
+Una persona con varios roles cambia de rol sin acumular privilegios. Administración es
+exclusiva; Coordinación y Docencia sí pueden acumularse según alcance. PostgreSQL conserva
+historial y rechaza vigencias incompatibles.
 
 ## Casos de uso
 

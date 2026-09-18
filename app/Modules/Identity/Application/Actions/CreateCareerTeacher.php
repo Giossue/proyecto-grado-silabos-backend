@@ -61,6 +61,16 @@ class CreateCareerTeacher
                 ]);
             }
 
+            if (RoleAssignment::query()
+                ->where('usuario_id', $user->id)
+                ->effective()
+                ->where('rol', RoleCode::Administrator->value)
+                ->exists()) {
+                throw ValidationException::withMessages([
+                    'correo_electronico' => 'No se puede incorporar como docente una cuenta con el rol Administrador.',
+                ]);
+            }
+
             $identity = [
                 'usuario_id' => $user->id,
                 'rol' => RoleCode::Teacher->value,

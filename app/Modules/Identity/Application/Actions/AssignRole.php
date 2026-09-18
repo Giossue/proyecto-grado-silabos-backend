@@ -28,6 +28,30 @@ class AssignRole
             if ($role === null) {
                 throw ValidationException::withMessages(['role_code' => 'El rol indicado no es válido.']);
             }
+
+            // Administración es una asignación exclusiva. Se bloquean las filas
+            // actuales para que la validación de aplicación sea consistente dentro
+            // de esta transacción; el trigger de PostgreSQL cubre escrituras directas
+            // y carreras que lleguen desde otra transacción.
+            $activeRoles = RoleAssignment::query()
+                ->where('usuario_id', $target->id)
+                ->effective()
+                ->lockForUpdate()
+                ->pluck('rol');
+            $hasAdministrator = $activeRoles->contains(RoleCode::Administrator->value);
+            $hasScopedRole = $activeRoles->contains(
+                fn (mixed $assignedRole): bool => $assignedRole !== RoleCode::Administrator->value,
+            );
+
+            if (($role === RoleCode::Administrator && $hasScopedRole)
+                || ($role !== RoleCode::Administrator && $hasAdministrator)) {
+                throw ValidationException::withMessages([
+                    'role_code' => $role === RoleCode::Administrator
+                        ? 'El rol Administrador es exclusivo y no puede agregarse mientras la cuenta conserve otro rol activo.'
+                        : 'Una cuenta con el rol Administrador solo puede conservar ese rol.',
+                ]);
+            }
+
             $careerId = $data['role_code'] === RoleCode::Administrator->value
                 ? null
                 : ($data['career_id'] ?? null);
