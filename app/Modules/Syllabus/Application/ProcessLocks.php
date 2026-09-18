@@ -20,7 +20,9 @@ use Illuminate\Validation\ValidationException;
  */
 class ProcessLocks
 {
-    private const EDITING_LOCK_REASON = 'Edición bloqueada. Primero debe pausar la convocatoria desde Convocatorias.';
+    private const PROCESS_LOCK_REASON = 'Proceso activo.';
+
+    private const CONVOCATION_LOCK_REASON = 'Convocatoria activa.';
 
     public function templateLockReason(): ?string
     {
@@ -33,7 +35,7 @@ class ProcessLocks
             return null;
         }
 
-        return self::EDITING_LOCK_REASON;
+        return self::PROCESS_LOCK_REASON;
     }
 
     public function assertTemplateEditable(): void
@@ -66,7 +68,7 @@ class ProcessLocks
             ->with('academicPeriod:id,codigo')
             ->first(['id', 'periodo_academico_id']);
 
-        return $process === null ? null : self::EDITING_LOCK_REASON;
+        return $process === null ? null : self::PROCESS_LOCK_REASON;
     }
 
     public function careerLockReason(?string $careerId): ?string
@@ -85,7 +87,7 @@ class ProcessLocks
             return null;
         }
 
-        return self::EDITING_LOCK_REASON;
+        return self::CONVOCATION_LOCK_REASON;
     }
 
     public function assertCareerEditable(?string $careerId): void
