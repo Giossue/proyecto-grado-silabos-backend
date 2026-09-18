@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
+use Symfony\Component\Mime\Email as SymfonyEmail;
 use Tests\TestCase;
 
 class ManagedUserTest extends TestCase
@@ -608,6 +609,20 @@ class ManagedUserTest extends TestCase
             'carrera_id' => $existing->carrera_id,
             'activo' => true,
         ]);
+    }
+
+    public function test_activation_mail_requests_high_priority_headers(): void
+    {
+        $mail = new ManagedUserActivationMail('Docente', 'Docente', 'https://frontend.test/activar-cuenta?token=abc');
+        $message = new SymfonyEmail;
+
+        foreach ($mail->envelope()->using as $customizer) {
+            $customizer($message);
+        }
+
+        $this->assertSame('high', $message->getHeaders()->getHeaderBody('Importance'));
+        $this->assertSame('1', $message->getHeaders()->getHeaderBody('X-Priority'));
+        $this->assertSame('urgent', $message->getHeaders()->getHeaderBody('Priority'));
     }
 
     public function test_postgresql_rejects_a_scoped_role_for_an_administrator(): void
