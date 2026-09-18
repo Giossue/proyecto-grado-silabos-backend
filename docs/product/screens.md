@@ -76,11 +76,12 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   la opción «Sistema». Sin preferencia guardada, la aplicación arranca en claro.
 - UI-03 se abre desde el acceso de **Notificaciones** situado junto al selector de tema en
   el encabezado autenticado común. El acceso conserva el contador de pendientes para los
-  tres roles y no ocupa una entrada del menú lateral.
+  tres roles y no ocupa una entrada del menú lateral. El tema visual también se cambia
+  desde ese encabezado; Configuración solo conserva Perfil y Seguridad.
 - Todo módulo autenticado presenta el mismo encabezado mediante `PageFrame`: icono,
   título principal único, descripción y espaciado responsive. Regreso, estado y acciones
   ocupan posiciones estables; Configuración comparte el encabezado en su layout y trata
-  Perfil, Seguridad y Apariencia como subsecciones.
+  Perfil y Seguridad como subsecciones.
 - Las cards y los resúmenes métricos independientes se reservan exclusivamente para la
   pantalla Dashboard de cada rol. Fuera del Dashboard no se presentan bloques de
   conteos, totales, promedios o porcentajes; un valor solo permanece cuando forma parte
@@ -312,8 +313,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   período y fechas, y exige seleccionar al menos una fuente activa de la carrera antes de
   iniciar. Esa selección queda congelada durante el alcance. COR-02 lista
   los procesos institucionales desde antes de iniciar la carrera, con estado institucional
-  y estado de carrera separados; no tiene aviso ni botón de alta independientes. El menú
-  de tres puntos de cada fila reúne iniciar, ver seguimiento, pausar y reanudar, con el mismo diálogo de
+  y estado de carrera separados; el filtro muestra solo convocatorias iniciadas, pausadas y
+  cerradas, y el seguimiento de expedientes se consulta dentro de cada convocatoria. No tiene
+  aviso ni botón de alta independientes. El menú de tres puntos de cada fila reúne iniciar,
+  ver seguimiento, pausar y reanudar, con el mismo diálogo de
   confirmación que ADM-12; COR-04 es solo seguimiento y avisa cuando la convocatoria o
   el proceso institucional están en pausa o cerrados. ADM-05,
   ADM-06, COR-11 y COR-13 muestran un aviso con la razón del bloqueo y ocultan las
