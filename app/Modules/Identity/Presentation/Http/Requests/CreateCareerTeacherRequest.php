@@ -5,7 +5,6 @@ namespace App\Modules\Identity\Presentation\Http\Requests;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rules\Password;
 
 class CreateCareerTeacherRequest extends FormRequest
 {
@@ -27,7 +26,7 @@ class CreateCareerTeacherRequest extends FormRequest
         return [
             'nombre' => ['required', 'string', 'max:180'],
             'correo_electronico' => ['required', 'string', 'email', 'max:255'],
-            'password' => ['required', Password::min(12)->letters()->mixedCase()->numbers()->symbols()],
+            'password' => ['prohibited'],
             'role_code' => ['prohibited'],
             'career_id' => ['prohibited'],
             'user_id' => ['prohibited'],
@@ -36,13 +35,12 @@ class CreateCareerTeacherRequest extends FormRequest
         ];
     }
 
-    /** @return array{nombre: string, correo_electronico: string, password: string} */
+    /** @return array{nombre: string, correo_electronico: string} */
     public function teacherData(): array
     {
         return [
             'nombre' => $this->string('nombre')->toString(),
             'correo_electronico' => $this->string('correo_electronico')->toString(),
-            'password' => $this->string('password')->toString(),
         ];
     }
 }

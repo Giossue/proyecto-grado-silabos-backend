@@ -111,24 +111,19 @@ class SessionController extends Controller
     public function updatePassword(PasswordUpdateRequest $request): JsonResponse
     {
         $user = $this->authenticatedUser($request);
-        $wasTemporary = $user->debe_cambiar_contrasena;
-
         $user->update([
             'contrasena' => $request->string('password')->toString(),
-            'debe_cambiar_contrasena' => false,
         ]);
 
-        if ($wasTemporary) {
-            $this->audit->execute(
-                actorId: $user->id,
-                roleAssignmentId: $this->roles->resolve($request)?->id,
-                action: 'usuario.contrasena_temporal_cambiada',
-                resourceType: 'usuario',
-                resourceId: $user->id,
-                result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
-            );
-        }
+        $this->audit->execute(
+            actorId: $user->id,
+            roleAssignmentId: $this->roles->resolve($request)?->id,
+            action: 'usuario.contrasena_actualizada',
+            resourceType: 'usuario',
+            resourceId: $user->id,
+            result: 'exito',
+            correlationId: $request->attributes->getString('correlation_id') ?: null,
+        );
 
         return response()->json($this->sessionPayload($user->fresh(), $request));
     }
@@ -163,7 +158,7 @@ class SessionController extends Controller
         return $user;
     }
 
-    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, must_change_password: bool, can_edit_identity: bool}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>} */
+    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, can_edit_identity: bool}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>} */
     private function sessionPayload(User $user, Request $request): array
     {
         $activeRole = $this->roles->resolve($request);
@@ -174,7 +169,6 @@ class SessionController extends Controller
                 'name' => $user->nombre,
                 'email' => $user->correo_electronico,
                 'email_verified' => $user->hasVerifiedEmail(),
-                'must_change_password' => $user->debe_cambiar_contrasena,
                 'can_edit_identity' => $user->can('updateProfileData', $user),
             ],
             'active_role' => $activeRole === null ? null : $this->rolePayload($activeRole),

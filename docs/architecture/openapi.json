@@ -1904,13 +1904,13 @@
                 ]
             }
         },
-        "/api/v1/admin/users/{user}/resend-access": {
+        "/api/v1/admin/users/{user}/resend-activation": {
             "post": {
                 "tags": [
                     "Administración"
                 ],
-                "operationId": "api_v1_admin_users_credentials_resend",
-                "summary": "api.v1.admin.users.credentials.resend",
+                "operationId": "api_v1_admin_users_activation_resend",
+                "summary": "api.v1.admin.users.activation.resend",
                 "responses": {
                     "200": {
                         "description": "Operación completada.",
@@ -2070,6 +2070,47 @@
                         "sanctumCookie": []
                     }
                 ]
+            }
+        },
+        "/api/v1/authentication/account-activation": {
+            "post": {
+                "tags": [
+                    "Identidad"
+                ],
+                "operationId": "api_v1_authentication_account-activation",
+                "summary": "api.v1.authentication.account-activation",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                }
             }
         },
         "/api/v1/authentication/email-verification/resend": {
@@ -3464,6 +3505,62 @@
                         "$ref": "#/components/responses/ValidationError"
                     }
                 },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/coordination/academic/teachers/{user}/resend-activation": {
+            "post": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_academic_teachers_activation_resend",
+                "summary": "api.v1.coordination.academic.teachers.activation.resend",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "requestBody": {
                     "required": false,
                     "content": {

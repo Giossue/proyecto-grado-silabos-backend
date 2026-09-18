@@ -10,6 +10,7 @@ use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceContro
 use App\Modules\Configuration\Presentation\Http\Controllers\FacultyLogoController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
+use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\ActivationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionController;
@@ -37,6 +38,9 @@ Route::prefix('v1')->group(function (): void {
     Route::post('authentication/password-reset', [PasswordRecoveryController::class, 'reset'])
         ->middleware('throttle:password-recovery')
         ->name('api.v1.authentication.password-recovery.reset');
+    Route::post('authentication/account-activation', [ActivationController::class, 'activate'])
+        ->middleware('throttle:password-recovery')
+        ->name('api.v1.authentication.account-activation');
     Route::post('authentication/email-verification/{user}/{hash}', [EmailVerificationController::class, 'verify'])
         ->name('api.v1.authentication.email-verification.verify');
     Route::post('authentication/two-factor/challenge', [TwoFactorController::class, 'challenge'])
@@ -100,8 +104,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.users.roles.store');
             Route::patch('admin/users/{user}/status', [ManagedUserController::class, 'setStatus'])
                 ->middleware('active-role')->name('api.v1.admin.users.status.update');
-            Route::post('admin/users/{user}/resend-access', [ManagedUserController::class, 'resendCredentials'])
-                ->middleware('active-role')->name('api.v1.admin.users.credentials.resend');
+            Route::post('admin/users/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
+                ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.admin.users.activation.resend');
             Route::delete('admin/users/{user}', [ManagedUserController::class, 'destroy'])
                 ->middleware('active-role')->name('api.v1.admin.users.destroy');
             Route::get('admin/audit-events', [AuditEventController::class, 'index'])
@@ -215,6 +219,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.academic.teacher-assignments.index');
             Route::post('coordination/academic/teachers', [CareerTeacherController::class, 'store'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.store');
+            Route::post('coordination/academic/teachers/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
+                ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.coordination.academic.teachers.activation.resend');
             Route::post('coordination/faculty-logo', [FacultyLogoController::class, 'store'])
                 ->middleware('active-role')->name('api.v1.coordination.faculty-logo.store');
             Route::post('coordination/academic/prepare-period', [CareerAcademicStructureController::class, 'preparePeriod'])

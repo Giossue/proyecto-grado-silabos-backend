@@ -5,7 +5,8 @@ namespace Tests\Feature\Identity;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Identity\Domain\Enums\RoleCode;
-use App\Modules\Identity\Infrastructure\Mail\ManagedUserCredentialsMail;
+use App\Modules\Identity\Infrastructure\Mail\ManagedUserActivationMail;
+use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use Database\Seeders\DatabaseSeeder;
@@ -35,15 +36,14 @@ class CareerTeacherTest extends TestCase
 
     private function payload(): array
     {
-        return ['nombre' => 'Nuevo Docente', 'correo_electronico' => 'nuevo@silabos.test', 'password' => 'Temporal-Segura2026!'];
+        return ['nombre' => 'Nuevo Docente', 'correo_electronico' => 'nuevo@silabos.test'];
     }
 
     public function test_creates_only_a_teacher_in_current_career_and_is_idempotent(): void
     {
         $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful()->assertSuccessful();
         $user = User::query()->where('correo_electronico', 'nuevo@silabos.test')->firstOrFail();
-        $this->assertTrue(Hash::check($this->payload()['password'], $user->contrasena));
-        $this->assertTrue($user->debe_cambiar_contrasena);
+        $this->assertNull($user->correo_verificado_en);
         $this->assertSame(1, $user->roleAssignments()->count());
         $assignment = $user->roleAssignments()->firstOrFail();
         $this->assertSame('docente', $assignment->role->codigo_rol);
@@ -56,7 +56,7 @@ class CareerTeacherTest extends TestCase
         $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => ' NUEVO@silabos.test ', 'nombre' => 'Otro nombre'])->assertSuccessful();
         $this->assertSame($user->nombre, $user->fresh()->nombre);
         $this->assertSame(1, $user->roleAssignments()->count());
-        Mail::assertQueued(ManagedUserCredentialsMail::class, 1);
+        Mail::assertQueued(ManagedUserActivationMail::class, 1);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.docente_incorporado', 'actor_usuario_id' => $this->coordinator->id, 'recurso_id' => $user->id]);
     }
 
@@ -67,9 +67,24 @@ class CareerTeacherTest extends TestCase
         $this->withHeader('Origin', 'http://localhost:5173')
             ->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())
             ->assertOk()
-            ->assertJsonPath('message', 'Docente creado para su carrera. Recibirá las credenciales por correo.');
+            ->assertJsonPath('message', 'Docente creado para su carrera. Recibirá un enlace de activación por correo.');
 
         $this->assertDatabaseHas('usuarios', ['correo_electronico' => 'nuevo@silabos.test']);
+    }
+
+    public function test_coordinator_can_resend_a_pending_teacher_activation_for_its_career(): void
+    {
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful();
+        $user = User::query()->where('correo_electronico', 'nuevo@silabos.test')->firstOrFail();
+        $invitation = ActivationInvitation::query()->where('usuario_id', $user->id)->firstOrFail();
+        $invitation->update(['expira_en' => now()->subMinute()]);
+
+        $this->postJson(route('api.v1.coordination.academic.teachers.activation.resend', $user))
+            ->assertSuccessful()
+            ->assertJsonPath('message', 'Invitación de activación enviada a nuevo@silabos.test.');
+
+        $this->assertDatabaseCount('invitaciones_activacion', 2);
+        Mail::assertQueued(ManagedUserActivationMail::class, 2);
     }
 
     public function test_existing_identity_and_other_roles_are_preserved_without_sending_credentials(): void
@@ -154,7 +169,7 @@ class CareerTeacherTest extends TestCase
         $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'nuevo@silabos.test']);
     }
 
-    public function test_invalid_identity_and_weak_password_are_rejected(): void
+    public function test_invalid_identity_and_client_password_are_rejected(): void
     {
         $this->postJson(route('api.v1.coordination.academic.teachers.store'), ['nombre' => '', 'correo_electronico' => 'invalid', 'password' => '123'])
             ->assertUnprocessable()->assertJsonValidationErrors(['nombre', 'correo_electronico', 'password']);

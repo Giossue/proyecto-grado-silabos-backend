@@ -6,9 +6,9 @@ Implementado y verificado automáticamente. En espera de la revisión manual de 
 para cerrar; ver `docs/plans/pending-work.md`. `composer verify` en verde el 2026-08-26:
 204 pruebas y 2148 aserciones.
 
-El 2026-08-26 se añadió la contraseña temporal de un solo uso: la interfaz la genera, la
-cuenta nace marcada y `RequirePasswordChange` bloquea toda ruta salvo el panel, el cambio
-y el cierre de sesión hasta que su titular la sustituya.
+El flujo histórico de contraseña temporal fue reemplazado por I-88 el 2026-09-18:
+las cuentas nuevas reciben una invitación de activación de un solo uso, verifican el
+correo y definen su contraseña sin que otra persona pueda verla.
 
 El 2026-09-18 se hizo explícita la separación de responsabilidades para Administración:
 una cuenta con `administrador` activo no puede ejercer además `coordinador` o `docente`.
@@ -29,23 +29,17 @@ operación académica dentro de su carrera.
   institucional final de I-07, no el catálogo local con identificadores externos opcionales.
 - La política de cuentas usa el valor temporal reversible DT-01: cuentas administradas
   y registro público desactivado.
-- La contraseña temporal la genera la interfaz con `crypto.getRandomValues` cumpliendo la
-  política del servidor, se muestra en claro para entregarla y no se confirma: nadie la
-  escribe. No se guarda en auditoría ni en logs.
-- Las credenciales se envían por correo al crear la cuenta, en cola y después del commit:
-  crear una cuenta no espera al servidor de correo ni falla si está caído. El transporte
-  sigue en `log` mientras `PV-15` esté abierta, así que nada sale del sistema todavía.
+- La invitación se emite en cola después del commit; el token se conserva únicamente
+  como hash en `invitaciones_activacion`, caduca en 24 horas y no aparece en auditoría
+  ni logs.
 - Corregir el nombre y el correo de una cuenta es `updateProfileData`, distinto de
   `update`, que gobierna estado y roles. Solo la Administración alcanza a las cuentas;
   Coordinadores y Docentes solicitan la corrección, incluso para su propio perfil. El
   valor anterior del correo queda en auditoría porque es la identidad con la que se
   inicia sesión.
-- Esa contraseña es de un solo uso. La cuenta nace marcada y `RequirePasswordChange`
-  rechaza toda ruta salvo el panel, el propio cambio y el cierre de sesión; sobre el
-  panel aparece un diálogo que no se descarta. El bloqueo es del servidor: un diálogo que
-  solo viviera en el navegador se esquivaría escribiendo la URL a mano. El primer cambio
-  apaga la marca y deja el evento `user.temporary_password_changed` en auditoría, sin el
-  valor.
+- La cuenta permanece no verificada hasta consumir la invitación; el endpoint público
+  establece la contraseña y verifica el correo en una transacción. Los enlaces usados,
+  invalidados o vencidos no pueden reutilizarse.
 - La cuenta administradora sembrada no nace marcada: si lo estuviera, una instalación
   nueva no tendría por dónde crear la primera cuenta.
 

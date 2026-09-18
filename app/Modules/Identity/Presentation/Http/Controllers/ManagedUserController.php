@@ -8,7 +8,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Identity\Application\Actions\AssignRole;
 use App\Modules\Identity\Application\Actions\CreateManagedUser;
 use App\Modules\Identity\Application\Actions\DeleteManagedUser;
-use App\Modules\Identity\Application\Actions\ResendManagedUserCredentials;
+use App\Modules\Identity\Application\Actions\ResendManagedUserActivation;
 use App\Modules\Identity\Application\Actions\SetUserStatus;
 use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -47,7 +47,7 @@ class ManagedUserController extends Controller
                 'nombre',
                 'correo_electronico',
                 'activo',
-                'debe_cambiar_contrasena',
+                'correo_verificado_en',
                 'dos_factores_confirmado_en',
             ])
             ->when($search, fn (Builder $query, string $term) => $query->where(
@@ -55,12 +55,12 @@ class ManagedUserController extends Controller
                     ->whereRaw('nombre_usuario ILIKE ?', ["%{$term}%"])
                     ->orWhereRaw('correo_electronico ILIKE ?', ["%{$term}%"]),
             ))
-            // Los tres estados de la lista, y cada uno significa lo mismo que su insignia:
-            // «activo» es una cuenta en uso, no una recién creada que nadie ha estrenado.
+            // Una cuenta pendiente aún no ha demostrado que controla su correo y no puede
+            // entrar al producto hasta completar la invitación.
             ->when($status === 'active', fn (Builder $query) => $query
-                ->where('activo', true)->where('debe_cambiar_contrasena', false))
+                ->where('activo', true)->whereNotNull('correo_verificado_en'))
             ->when($status === 'pending', fn (Builder $query) => $query
-                ->where('activo', true)->where('debe_cambiar_contrasena', true))
+                ->where('activo', true)->whereNull('correo_verificado_en'))
             ->when($status === 'inactive', fn (Builder $query) => $query->where('activo', false))
             // El alcance efectivo vive en `RoleAssignment`, así que se resuelve allí y
             // aquí solo se compara con la lista de identidades que devuelve.
@@ -94,10 +94,7 @@ class ManagedUserController extends Controller
                     'nombre' => $user->nombre,
                     'correo_electronico' => $user->correo_electronico,
                     'active' => $user->activo,
-                    // Una cuenta con la contraseña temporal todavía puesta no ha entrado
-                    // nunca. Sin esto se ve igual que una en uso y nadie sabe a quién
-                    // recordarle que revise su correo.
-                    'pending_first_login' => $user->debe_cambiar_contrasena,
+                    'pending_activation' => $user->correo_verificado_en === null,
                     'two_factor_enabled' => $user->dos_factores_confirmado_en !== null,
                     'roles' => $effective->map(fn ($assignment) => [
                         'name' => $assignment->role->nombre_rol,
@@ -137,7 +134,6 @@ class ManagedUserController extends Controller
         $created = $action->execute([
             'nombre' => $request->string('nombre')->toString(),
             'correo_electronico' => $request->string('correo_electronico')->toString(),
-            'password' => $request->string('password')->toString(),
             'role_code' => $request->string('role_code')->toString(),
             'career_id' => $request->filled('career_id') ? $request->string('career_id')->toString() : null,
         ], $actor, $request);
@@ -211,15 +207,15 @@ class ManagedUserController extends Controller
         return response()->json(['message' => $message]);
     }
 
-    /** Nueva contraseña temporal al correo actual; solo cuentas pendientes de activación. */
-    public function resendCredentials(User $user, Request $request, ResendManagedUserCredentials $action): JsonResponse
+    /** Reemite una invitación; el alcance de la policy permite Administración o su carrera. */
+    public function resendActivation(User $user, Request $request, ResendManagedUserActivation $action): JsonResponse
     {
         Gate::authorize('managePending', $user);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($user, $actor, $request);
 
-        $message = "Acceso reenviado a {$user->correo_electronico}.";
+        $message = "Invitación de activación enviada a {$user->correo_electronico}.";
 
         return response()->json(['message' => $message]);
     }

@@ -112,25 +112,6 @@ class ApiSessionTest extends TestCase
             ->assertJsonPath('active_role.code', 'coordinador');
     }
 
-    public function test_temporary_password_is_changed_without_repeating_the_temporary_value(): void
-    {
-        $this->seed(DatabaseSeeder::class);
-        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
-        $teacher->update(['debe_cambiar_contrasena' => true]);
-
-        $this->actingAs($teacher)
-            ->withoutMiddleware(ValidateCsrfToken::class)
-            ->withHeader('Origin', 'http://localhost:5173')
-            ->putJson(route('api.v1.authentication.password.update'), [
-                'password' => 'Nueva-clave-2026!',
-                'password_confirmation' => 'Nueva-clave-2026!',
-            ])
-            ->assertOk()
-            ->assertJsonPath('user.must_change_password', false);
-
-        $this->assertFalse($teacher->fresh()->debe_cambiar_contrasena);
-    }
-
     public function test_administrator_can_update_own_profile_through_the_api(): void
     {
         $this->seed(DatabaseSeeder::class);
@@ -170,24 +151,6 @@ class ApiSessionTest extends TestCase
                 'correo_electronico' => 'otro@silabos.test',
             ])
             ->assertForbidden();
-    }
-
-    public function test_temporary_password_blocks_product_api_but_keeps_session_and_change_available(): void
-    {
-        $this->seed(DatabaseSeeder::class);
-        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
-        $teacher->update(['debe_cambiar_contrasena' => true]);
-
-        $this->actingAs($teacher)
-            ->withHeader('Origin', 'http://localhost:5173')
-            ->getJson(route('api.v1.session.show'))
-            ->assertOk()
-            ->assertJsonPath('user.must_change_password', true);
-
-        $this->withHeader('Origin', 'http://localhost:5173')
-            ->getJson(route('api.v1.notifications.index'))
-            ->assertForbidden()
-            ->assertJsonPath('message', 'Cambie la contraseña temporal antes de continuar.');
     }
 
     public function test_unverified_email_can_manage_verification_but_cannot_enter_product_api(): void

@@ -132,8 +132,9 @@ solo deshabilita temporalmente las recomendaciones; no bloquea el flujo del síl
 
 ### Correo
 
-El envío de credenciales usa el sistema de correo de Laravel, así que el proveedor se
-cambia con variables y no tocando código.
+El envío de invitaciones de activación usa el sistema de correo de Laravel, así que el
+proveedor se cambia con variables y no tocando código. El enlace usa `FRONTEND_URL` y
+caduca en 24 horas.
 
 Mientras `PV-15` —correo institucional y contenido de avisos— siga abierta, se deja en
 `log`: los mensajes se escriben en los registros de Dokploy tal como se enviarían, sin
@@ -197,7 +198,8 @@ orquestador. `GET /health/ready` verifica base y Redis, y responde `{"status":"r
 
 El seeder de demostración **no** se ejecuta en producción. Crea la primera cuenta desde la
 consola del contenedor con `php artisan tinker`, o ejecuta el seeder solo si el entorno es
-de prueba. Las cuentas creadas desde el panel nacen con contraseña temporal de un solo uso
+de prueba. Las cuentas creadas desde el panel nacen pendientes de activación y reciben un
+enlace de un solo uso para definir su contraseña
 y su titular debe cambiarla antes de operar.
 
 ## 6. Almacenamiento persistente

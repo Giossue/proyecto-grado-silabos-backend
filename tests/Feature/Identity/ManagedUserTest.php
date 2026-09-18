@@ -8,7 +8,8 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\Actions\SetUserStatus;
 use App\Modules\Identity\Domain\Enums\RoleCode;
-use App\Modules\Identity\Infrastructure\Mail\ManagedUserCredentialsMail;
+use App\Modules\Identity\Infrastructure\Mail\ManagedUserActivationMail;
+use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
@@ -45,9 +46,7 @@ class ManagedUserTest extends TestCase
 
                 ->has('users.data', 1)
                 ->where('users.data.0.correo_electronico', 'docente@silabos.test')
-                // Las cuentas sembradas ya tienen contraseña propia; una recién creada
-                // no, y la lista tiene que distinguirlas.
-                ->where('users.data.0.pending_first_login', false)
+                ->where('users.data.0.pending_activation', false)
                 ->where('filters.q', 'Docente')
                 ->where('filters.status', null));
     }
@@ -131,7 +130,6 @@ class ManagedUserTest extends TestCase
             ->postJson(route('api.v1.admin.users.store'), [
                 'nombre' => 'Docente Sin Estrenar',
                 'correo_electronico' => 'sin.estrenar@silabos.test',
-                'password' => 'Temporal-2026!',
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
             ])->assertSuccessful();
@@ -200,7 +198,6 @@ class ManagedUserTest extends TestCase
             ->postJson(route('api.v1.admin.users.store'), [
                 'nombre' => 'Nueva Docente',
                 'correo_electronico' => 'nueva.docente@silabos.test',
-                'password' => 'Temporal-2026!',
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
             ])
@@ -229,7 +226,6 @@ class ManagedUserTest extends TestCase
             ->postJson(route('api.v1.admin.users.store'), [
                 'nombre' => 'Docente sin carrera',
                 'correo_electronico' => 'sin.carrera@silabos.test',
-                'password' => 'Temporal-2026!',
                 'role_code' => RoleCode::Teacher->value,
             ])
             ->assertJsonValidationErrors('career_id');
@@ -440,30 +436,44 @@ class ManagedUserTest extends TestCase
         $this->assertTrue($this->administrator->fresh()->activo);
     }
 
-    /** I-38: una cuenta que nadie estrenó puede recibir otro acceso o borrarse. */
-    public function test_a_pending_account_gets_its_access_resent_with_a_new_temporary_password(): void
+    /** Una cuenta no verificada puede recibir una invitación nueva, invalidando la anterior. */
+    public function test_a_pending_account_gets_a_new_activation_invitation(): void
     {
         Mail::fake();
         $pending = $this->pendingTeacher();
-        $previous = $pending->contrasena;
+        $previous = ActivationInvitation::query()->where('usuario_id', $pending->id)->firstOrFail();
 
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.users.credentials.resend', $pending))
+            ->postJson(route('api.v1.admin.users.activation.resend', $pending))
             ->assertSuccessful()
             ->assertSuccessful();
 
-        $pending->refresh();
-        $this->assertNotSame($previous, $pending->contrasena);
-        $this->assertTrue($pending->debe_cambiar_contrasena);
+        $invitations = ActivationInvitation::query()->where('usuario_id', $pending->id)->orderBy('creada_en')->orderBy('id')->get();
+        $previous = $invitations->firstOrFail();
+        $current = $invitations->last();
+        $this->assertCount(2, $invitations);
+        $this->assertNotSame($previous->id, $current->id);
+        $this->assertNotNull($previous->invalidada_en);
+        $this->assertNull($current->usada_en);
         Mail::assertQueuedCount(2);
-        Mail::assertQueued(ManagedUserCredentialsMail::class, fn (ManagedUserCredentialsMail $mail): bool => $mail->hasTo('pendiente@silabos.test')
-            && Hash::check($mail->temporaryPassword, $pending->contrasena));
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.acceso_reenviado', 'recurso_id' => $pending->id]);
+        Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo('pendiente@silabos.test'));
+        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.invitacion_activacion_enviada', 'recurso_id' => $pending->id]);
 
         // Activada por su titular: ya no se reenvía nada.
-        $pending->forceFill(['debe_cambiar_contrasena' => false])->save();
+        $activationUrl = '';
+        Mail::assertQueued(ManagedUserActivationMail::class, function (ManagedUserActivationMail $mail) use (&$activationUrl): bool {
+            $activationUrl = $mail->activationUrl;
+
+            return $mail->hasTo('pendiente@silabos.test');
+        });
+        parse_str((string) parse_url($activationUrl, PHP_URL_QUERY), $query);
+        $this->postJson(route('api.v1.authentication.account-activation'), [
+            'token' => $query['token'],
+            'password' => 'Nueva-clave-2026!',
+            'password_confirmation' => 'Nueva-clave-2026!',
+        ])->assertOk();
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.users.credentials.resend', $pending))
+            ->postJson(route('api.v1.admin.users.activation.resend', $pending))
             ->assertForbidden();
     }
 
@@ -480,8 +490,8 @@ class ManagedUserTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
 
-        Mail::assertQueued(ManagedUserCredentialsMail::class, fn (ManagedUserCredentialsMail $mail): bool => $mail->hasTo('corregido@silabos.test'));
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.acceso_reenviado', 'recurso_id' => $pending->id]);
+        Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo('corregido@silabos.test'));
+        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.invitacion_activacion_enviada', 'recurso_id' => $pending->id]);
 
         // Solo cambiar el nombre no reenvía nada.
         $this->actingAsAdministrator()
@@ -532,7 +542,6 @@ class ManagedUserTest extends TestCase
             ->postJson(route('api.v1.admin.users.store'), [
                 'nombre' => 'Docente Pendiente',
                 'correo_electronico' => $email,
-                'password' => 'Temporal-2026!',
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
             ])

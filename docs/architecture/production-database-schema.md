@@ -19,7 +19,25 @@ codigo_recordarme VARCHAR NULL
 secreto_dos_factores TEXT NULL
 codigos_recuperacion_dos_factores TEXT NULL
 dos_factores_confirmado_en TIMESTAMPTZ NULL
-debe_cambiar_contrasena BOOLEAN NOT NULL
+
+La bandera histórica `debe_cambiar_contrasena` fue retirada por I-88. Las invitaciones
+pendientes viven en `invitaciones_activacion` y conservan solo el hash del token, su
+caducidad, uso e invalidación.
+
+## invitaciones_activacion
+
+**Contexto:** enlaces de activación emitidos para cuentas aún no verificadas.
+
+~~~text
+id UUID (PK)
+usuario_id UUID (FK → usuarios.id) NOT NULL
+huella_activacion CHAR(64) NOT NULL UNIQUE
+expira_en TIMESTAMPTZ NOT NULL
+usada_en TIMESTAMPTZ NULL
+invalidada_en TIMESTAMPTZ NULL
+emitida_por_usuario_id UUID (FK → usuarios.id) NULL
+creada_en TIMESTAMPTZ NOT NULL
+~~~
 ~~~
 
 ## asignaciones_rol

@@ -25,8 +25,11 @@
   asigna coordinaciones.
 - Coordinación puede crear/incorporar únicamente docentes en su carrera activa (I-54).
   Un correo existente conserva los datos y credenciales de la cuenta; una cuenta inactiva
-  o un acceso docente retirado requiere Administración. Solo las cuentas nuevas reciben
-  contraseña temporal y correo después del commit. Repetir el alta no duplica rol ni correo.
+  o un acceso docente retirado requiere Administración. Una cuenta nueva recibe, después
+  del commit, una invitación de activación de un solo uso; la persona define su contraseña
+  y verifica el correo desde el enlace. Repetir el alta no duplica rol ni correo. Si el
+  docente sigue pendiente y su invitación venció, Coordinación puede emitir otra solo
+  dentro de su carrera activa.
   La operación es transaccional y auditada, no asigna paralelos ni altera los permisos
   administrativos. Puede realizarse con convocatoria en curso sin levantar el bloqueo
   de las asignaciones académicas.

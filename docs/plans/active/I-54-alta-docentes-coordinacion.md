@@ -5,7 +5,7 @@
 Solicitud explícita del responsable del producto, 2026-09-06: Coordinación puede crear
 docentes para su carrera activa; Administración conserva sus capacidades actuales.
 Amplía exclusivamente el alta/incorporación con rol Docente. La corrección de identidad,
-otros roles, reenvío de credenciales y desactivación global siguen bajo Administración.
+otros roles y desactivación global siguen bajo Administración.
 
 RF-003..007, RF-008..016; RN-001..008; CU-02, CU-03; COR-15 y ADM-02;
 RNF-001..010 y RNF-018..023; CP-F identidad/alcance/atomicidad y CP-N seguridad/UX.
@@ -17,7 +17,8 @@ usan datos sintéticos y correo falso. No afecta PV-16 ni autoriza envío manual
 - El servidor deriva la carrera de la coordinación efectiva en sesión y fija Docente;
   rechaza campos que pretendan elegir carrera, rol, identidad objetivo o estado.
 - Reutiliza el formulario y el caso de uso administrativo para cuentas nuevas, con
-  contraseña temporal, cambio obligatorio, auditoría y correo después del commit.
+  invitación de activación de un solo uso, auditoría y correo después del commit. El
+  titular define la contraseña; nunca se transporta una contraseña temporal.
 - Un correo existente incorpora la misma cuenta activa a la carrera; conserva nombre,
   correo, contraseña, sesiones y roles previos. Sin directorio global de cuentas.
 - La repetición no duplica cuenta/rol, auditoría de incorporación ni correo.
@@ -33,7 +34,7 @@ usan datos sintéticos y correo falso. No afecta PV-16 ni autoriza envío manual
 ## Plan y aceptación
 
 - [x] Permiso dedicado, Form Request, acción transaccional y endpoint de Coordinación.
-- [x] Formulario compartido que solo solicita nombre, correo y contraseña temporal;
+- [x] Formulario compartido que solo solicita nombre y correo;
       rol/carrera se derivan del contexto sin mostrarse como campos; errores y
       confirmación visibles.
 - [x] Pruebas de creación/reutilización, repetición, correo, rollback, alcance, roles

@@ -17,7 +17,7 @@ class CareerTeacherController extends Controller
         $result = $action->execute($request->teacherData(), $actor, $request);
 
         $message = $result['created']
-            ? 'Docente creado para su carrera. Recibirá las credenciales por correo.'
+            ? 'Docente creado para su carrera. Recibirá un enlace de activación por correo.'
             : ($result['attached']
                 ? 'Docente incorporado a su carrera. Conserva su nombre y acceso actuales.'
                 : 'El docente ya está disponible en su carrera. Conserva su nombre y acceso actuales.');

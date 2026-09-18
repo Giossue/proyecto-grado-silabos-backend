@@ -57,7 +57,8 @@ del componente compartido, sin migraciones ni cambios de datos.
 
 ## Evidencia de cierre
 
-- `DialogConventionTest` y `TemporaryPasswordDialogTest`: 5 pruebas y 32 aserciones.
+- `DialogConventionTest` y las pruebas focalizadas de formularios: 5 pruebas y 32
+  aserciones. El diálogo histórico de contraseña temporal fue retirado por I-88.
 - ESLint focalizado y `vue-tsc --noEmit`: aprobados.
 - `vite build`: aprobado.
 - `dialog-convention.mjs` en Chromium: confirma ausencia de cierre implícito por fondo

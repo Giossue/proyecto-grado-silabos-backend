@@ -39,7 +39,7 @@ class DeleteManagedUser
 
         DB::transaction(function () use ($activeRole, $actor, $request, $target): void {
             $locked = User::query()->lockForUpdate()->findOrFail($target->id);
-            if (! $locked->debe_cambiar_contrasena) {
+            if ($locked->hasVerifiedEmail()) {
                 throw ValidationException::withMessages([
                     'user' => 'La cuenta ya fue activada por su titular. Desactívela en lugar de eliminarla.',
                 ]);

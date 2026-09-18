@@ -30,7 +30,6 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $correo_verificado_en
  * @property string $contrasena
  * @property bool $activo
- * @property bool $debe_cambiar_contrasena
  * @property string|null $secreto_dos_factores
  * @property string|null $codigos_recuperacion_dos_factores
  * @property Carbon|null $dos_factores_confirmado_en
@@ -39,7 +38,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string|null $two_factor_recovery_codes
  * @property mixed $two_factor_confirmed_at
  */
-#[Fillable(['nombre', 'correo_electronico', 'contrasena', 'activo', 'debe_cambiar_contrasena'])]
+#[Fillable(['nombre', 'correo_electronico', 'correo_verificado_en', 'contrasena', 'activo'])]
 #[Hidden(['contrasena', 'secreto_dos_factores', 'codigos_recuperacion_dos_factores', 'codigo_recordarme'])]
 class User extends Authenticatable implements MustVerifyEmailContract
 {
@@ -139,7 +138,6 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'correo_verificado_en' => 'datetime',
             'contrasena' => 'hashed',
             'activo' => 'boolean',
-            'debe_cambiar_contrasena' => 'boolean',
             'dos_factores_confirmado_en' => 'datetime',
         ];
     }

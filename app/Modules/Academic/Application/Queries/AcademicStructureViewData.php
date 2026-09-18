@@ -420,6 +420,22 @@ class AcademicStructureViewData
                         && $lockReason === null
                         && ! $usedAssignmentIds->has($assignment->id),
                 ]),
+            'pendingTeachers' => RoleAssignment::query()
+                ->effective()
+                ->where('carrera_id', $careerId)
+                ->where('rol', RoleCode::Teacher->value)
+                ->whereHas('user', fn ($query) => $query
+                    ->where('activo', true)
+                    ->whereNull('correo_verificado_en'))
+                ->with('user:id,nombre,correo_electronico')
+                ->get()
+                ->map(fn (RoleAssignment $assignment): array => [
+                    'id' => $assignment->user->id,
+                    'name' => $assignment->user->nombre,
+                    'email' => $assignment->user->correo_electronico,
+                ])
+                ->unique('id')
+                ->values(),
             'options' => [
                 ...$this->emptyOptions(),
                 'parallels' => Parallel::query()

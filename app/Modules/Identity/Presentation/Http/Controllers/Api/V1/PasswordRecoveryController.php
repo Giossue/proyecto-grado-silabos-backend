@@ -34,7 +34,6 @@ class PasswordRecoveryController extends Controller
         ], function (User $user, string $password): void {
             $user->forceFill([
                 'contrasena' => $password,
-                'debe_cambiar_contrasena' => false,
             ])->setRememberToken(Str::random(60));
             $user->save();
         });

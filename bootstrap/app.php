@@ -4,7 +4,6 @@ use App\Http\Middleware\AddSecurityHeaders;
 use App\Http\Middleware\AssignCorrelationId;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\RequireActiveRole;
-use App\Http\Middleware\RequirePasswordChange;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -50,7 +49,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             AssignCorrelationId::class,
             EnsureActiveUser::class,
-            RequirePasswordChange::class,
             AddSecurityHeaders::class,
         ]);
     })

@@ -25,7 +25,7 @@ class PasswordResetTest extends TestCase
     {
         Notification::fake();
         config(['app.frontend_url' => 'https://silabos.example.edu.ec']);
-        $user = User::factory()->create(['debe_cambiar_contrasena' => true]);
+        $user = User::factory()->create();
 
         $this->postJson(route('api.v1.authentication.password-recovery.send'), [
             'email' => $user->correo_electronico,
@@ -51,6 +51,5 @@ class PasswordResetTest extends TestCase
 
         $user->refresh();
         $this->assertTrue(Hash::check('Josue123456*', $user->contrasena));
-        $this->assertFalse($user->debe_cambiar_contrasena);
     }
 }

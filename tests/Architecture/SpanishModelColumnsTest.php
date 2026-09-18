@@ -27,7 +27,7 @@ class SpanishModelColumnsTest extends TestCase
     {
         $fechasFuncionales = [
             'asignado_en', 'encolado_en', 'notificado_en', 'almacenado_en', 'observado_en',
-            'iniciada_en', 'enviado_en', 'fijada_en',
+            'iniciada_en', 'enviado_en', 'fijada_en', 'creada_en',
         ];
 
         foreach ($this->modelos() as $modelo) {

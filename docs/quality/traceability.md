@@ -19,8 +19,8 @@ identidad ni credenciales, repetición, rechazo de roles/carreras manipulados y 
 retirados. `ManagedUserTest`, `ManagedUserProfileTest` y `ManagedUserUpdateTest`
 conservan la regresión administrativa. `ManagementCreationUiTest` cubre el formulario
 compartido de alta y la acción única **Gestionar docente**, que abre alta o asignación;
-en el alta delegada solo se solicitan nombre, correo y contraseña temporal porque rol y
-carrera se derivan del alcance activo.
+en el alta delegada solo se solicitan nombre y correo; la invitación de activación y la
+contraseña se resuelven por el titular porque rol y carrera se derivan del alcance activo.
 Sin cambios de esquema ni permisos sobre asignaciones académicas.
 
 COR-02 (I-46): el listado institucional incluye el alcance de la carrera activa y permite
@@ -65,6 +65,13 @@ IA permanece fijo a la derecha en escritorio y vuelve al flujo en pantallas estr
 - Código/pruebas: implementación y evidencia derivada.
 
 Esta documentación no renumera los IDs formales.
+
+I-88 sustituye la contraseña temporal y `RequirePasswordChange` por la invitación de
+activación: `invitaciones_activacion`, `IssueActivationInvitation`, `ActivateManagedUser`,
+`ResendManagedUserActivation` y `ManagedUserActivationMail`. La cuenta queda pendiente
+mientras `correo_verificado_en` sea nulo; Administración puede reenviar globalmente y
+Coordinación solo dentro de su carrera activa. La fila histórica de usuarios debe leerse
+con esta corrección cuando mencione el mecanismo anterior.
 
 ## Matriz por feature
 

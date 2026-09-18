@@ -8,20 +8,23 @@ la tabla completa de casos.
 
 ## Parte 1: cuentas que nadie ha estrenado
 
-Una cuenta «pendiente de activación» es la que conserva su contraseña temporal
-(`usuarios.debe_cambiar_contrasena`). Mientras esté así, Administración puede:
+Una cuenta «pendiente de activación» es la que aún no verificó su correo y conserva una
+invitación activa o vencida en `invitaciones_activacion`. El flujo fue reemplazado por
+I-88: la persona define su contraseña desde el enlace, sin recibir una contraseña
+temporal. Mientras esté pendiente, Administración puede:
 
-- **Reenviar acceso** (`POST admin/usuarios/{user}/reenviar-acceso`,
-  `ResendManagedUserCredentials`): nueva contraseña temporal generada en el servidor
-  (`TemporaryPassword`, misma política que el navegador), sesiones fuera, correo
-  `ManagedUserCredentialsMail` al correo actual, auditoría `usuario.acceso_reenviado`.
-- **Corregir el correo** y que el acceso viaje solo al nuevo (`UpdateManagedUserProfile`
-  llama al reenvío cuando cambia el correo de una cuenta pendiente).
+- **Reenviar invitación** (`POST admin/users/{user}/resend-activation`,
+  `ResendManagedUserActivation`): invalida el token anterior, emite uno de un solo uso,
+  envía `ManagedUserActivationMail` al correo actual y audita
+  `usuario.invitacion_activacion_enviada`. Coordinación tiene la misma acción solo para
+  docentes pendientes de su carrera activa.
+- **Corregir el correo** y que la invitación viaje solo al nuevo (`UpdateManagedUserProfile`
+  invalida el token anterior y emite otro cuando cambia el correo de una cuenta pendiente).
 - **Eliminar** (`DELETE admin/usuarios/{user}`, `DeleteManagedUser`): solo si la cuenta no
   dejó rastro (`DeleteManagedUser::TRACES`: asignaciones docentes, sílabos, revisiones,
   auditoría como actor…). Borra rol, nombramiento y notificaciones; audita
   `usuario.eliminado` con correo y nombre. Con historia, el mensaje remite a archivar.
-- Política `UserPolicy::managePending`; ambas acciones aparecen en el menú de la fila
+- Política `UserPolicy::managePending`; el reenvío aparece en el menú de la fila
   (`ManagedUserPendingActions`) solo para cuentas pendientes.
 
 ## Parte 2: cuando alguien deja de formar parte (análisis)
@@ -67,6 +70,6 @@ sin rastro de la Parte 1).
 
 ## Verificación
 
-`ManagedUserTest` (reenvío con nueva contraseña, reenvío al corregir el correo,
+`ManagedUserTest` (reenvío con nueva invitación, reenvío al corregir el correo,
 eliminación de pendiente sin rastro, rechazo de cuenta activada o con asignación);
 suite de identidad y arquitectura en verde, phpstan, eslint, vue-tsc y build.

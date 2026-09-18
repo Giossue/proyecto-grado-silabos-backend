@@ -40,10 +40,25 @@ class UserPolicy
         return $this->viewAny($actor) && $actor->id !== $target->id;
     }
 
-    /** Reenviar el acceso o borrar: solo cuentas que nadie ha estrenado (I-38). */
+    /** Reenviar la invitación o borrar: solo cuentas que aún no verificaron el correo. */
     public function managePending(User $actor, User $target): bool
     {
-        return $this->update($actor, $target) && $target->debe_cambiar_contrasena;
+        if (! $actor->activo || $actor->id === $target->id || ! $target->activo || $target->hasVerifiedEmail()) {
+            return false;
+        }
+
+        $activeRole = $this->roles->resolve(request());
+        if ($activeRole?->role->codigo_rol === RoleCode::Administrator->value) {
+            return true;
+        }
+
+        return $activeRole?->role->codigo_rol === RoleCode::Coordinator->value
+            && $activeRole->carrera_id !== null
+            && $target->roleAssignments()
+                ->effective()
+                ->where('rol', RoleCode::Teacher->value)
+                ->where('carrera_id', $activeRole->carrera_id)
+                ->exists();
     }
 
     /**

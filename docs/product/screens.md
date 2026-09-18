@@ -46,8 +46,9 @@
 
 En COR-15, una sola acción **Gestionar docente** reúne **Crear docente** y **Asignar
 docente**. Crear abre el formulario compartido de cuentas en modo docente de la carrera
-activa (I-54): solo solicita nombre, correo y contraseña temporal; el rol y la carrera se
-derivan del contexto y no se muestran como campos. Un correo existente se incorpora sin
+activa (I-54): solo solicita nombre y correo; la persona recibe un enlace de activación
+para verificar su correo y definir su contraseña. El rol y la carrera se derivan del
+contexto y no se muestran como campos. Un correo existente se incorpora sin
 cambiar su identidad ni contraseña. Asignar vincula una cuenta docente existente con un
 paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 
@@ -231,10 +232,11 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   Las fuentes son documentos editables: COR-11 abre el contenido como una hoja visual
   con cinta de opciones; el formato se aplica en tiempo real y el sistema conserva el
   resultado como Markdown seguro sin mostrar su sintaxis.
-- ADM-02: una cuenta «Pendiente de activación» (contraseña temporal sin cambiar) tiene en
-  su menú **Reenviar acceso** (nueva contraseña temporal al correo actual) y
-  **Eliminar** (solo sin actividad; con historia, desactivar). Corregir su correo reenvía
-  el acceso al nuevo correo sin pedirlo (I-38).
+- ADM-02: una cuenta «Pendiente de activación» (correo aún no verificado) tiene en su
+  menú **Reenviar invitación** (nuevo enlace de un solo uso al correo actual) y
+  **Eliminar** (solo sin actividad; con historia, desactivar). Corregir su correo invalida
+  la invitación anterior y emite otra al nuevo correo (I-38, I-88). COR-15 muestra la
+  misma acción para docentes pendientes de la carrera activa.
 - Salida de personas (I-39): en ADM-04 Carreras muestra la coordinación activa y su menú
   tiene **Reemplazar coordinador** (o **Asignar coordinador** si no hay): cierra
   nombramiento y rol de quien sale, abre los de quien entra y, si se marca y no le

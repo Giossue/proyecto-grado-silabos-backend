@@ -5,6 +5,7 @@ namespace App\Modules\Identity\Application\Actions;
 use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -22,7 +23,7 @@ class CreateCareerTeacher
     ) {}
 
     /**
-     * @param  array{nombre: string, correo_electronico: string, password: string}  $data
+     * @param  array{nombre: string, correo_electronico: string}  $data
      * @return array{created: bool, attached: bool}
      */
     public function execute(array $data, User $actor, Request $request): array
@@ -100,6 +101,17 @@ class CreateCareerTeacher
                     metadata: ['carrera_id' => $careerId, 'cuenta_creada' => $created],
                     correlationId: $request->attributes->getString('correlation_id') ?: null,
                 );
+            }
+
+            // Una identidad pendiente que se incorpora desde Coordinación puede
+            // necesitar una nueva invitación si la anterior ya venció.
+            if (! $user->hasVerifiedEmail() && ! ActivationInvitation::query()
+                ->where('usuario_id', $user->id)
+                ->whereNull('usada_en')
+                ->whereNull('invalidada_en')
+                ->where('expira_en', '>', now())
+                ->exists()) {
+                app(IssueActivationInvitation::class)->execute($user, $actor, $request, 'alta_coordinacion');
             }
 
             return ['created' => $created, 'attached' => $attached];
