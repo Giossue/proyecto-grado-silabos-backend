@@ -235,8 +235,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 - ADM-02: una cuenta «Pendiente de activación» (correo aún no verificado) tiene en su
   menú **Reenviar invitación** (nuevo enlace de un solo uso al correo actual) y
   **Eliminar** (solo sin actividad; con historia, desactivar). Corregir su correo invalida
-  la invitación anterior y emite otra al nuevo correo (I-38, I-88). COR-15 muestra la
-  misma acción para docentes pendientes de la carrera activa.
+  la invitación anterior y emite otra al nuevo correo (I-38, I-88). COR-15 muestra las
+  cuentas pendientes dentro de la tabla de docentes y asignaciones, con estado «Pendiente
+  de activación» y la misma acción de reenvío para la carrera activa.
 - Salida de personas (I-39): en ADM-04 Carreras muestra la coordinación activa y su menú
   tiene **Reemplazar coordinador** (o **Asignar coordinador** si no hay): cierra
   nombramiento y rol de quien sale, abre los de quien entra y, si se marca y no le
