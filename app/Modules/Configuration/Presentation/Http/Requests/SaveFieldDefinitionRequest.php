@@ -34,14 +34,20 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
                 Rule::requiredIf($fieldId === null),
                 'nullable',
                 'uuid',
-                Rule::exists('secciones_plantilla', 'id')->where('plantilla_id', $templateId),
+                Rule::exists('componentes_plantilla', 'id')
+                    ->where('plantilla_id', $templateId)
+                    ->where('tipo_componente_plantilla', 'seccion')
+                    ->whereNull('componente_padre_id'),
             ],
             'position' => ['nullable', 'integer', 'min:0'],
             'block_id' => [
                 Rule::requiredIf($fieldId !== null),
                 'nullable',
                 'uuid',
-                Rule::exists('bloques_plantilla', 'id')->where('plantilla_id', $templateId),
+                Rule::exists('componentes_plantilla', 'id')
+                    ->where('plantilla_id', $templateId)
+                    ->where('tipo_componente_plantilla', '!=', 'seccion')
+                    ->whereNotNull('componente_padre_id'),
             ],
             'key' => [
                 'required',
@@ -55,7 +61,6 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'label' => ['required', 'string', 'max:180'],
             'help' => ['nullable', 'string', 'max:2000'],
             'content_type' => ['required', Rule::in($types)],
-            'required' => ['nullable', 'boolean'],
             'inherited' => ['nullable', 'boolean'],
             'master_source' => ['nullable', 'required_if:inherited,true', 'string', 'max:100'],
             'teacher_editable' => ['nullable', 'boolean'],

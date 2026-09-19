@@ -133,9 +133,10 @@ del expediente, reinicio explícito e historia intacta tras cambiar la base futu
 abiertas; PV-08 fue cerrada por I-57 y la evidencia detallada queda en su plan activo.
 
 El ajuste del 2026-09-07 reemplaza la edición documental de ADM-06 por
-`TemplateVisualBuilder`: `TemplateSection` es el bloque visible y cada `TemplateBlock`
-representa un campo tipado. `TemplateAndSourceTest` verifica alta atómica de varios
-campos, tabla mínima, obligatoriedad, autorización y rechazo de claves repetidas.
+`TemplateVisualBuilder`: `componentes_plantilla` conserva la jerarquía de secciones y
+bloques, y `definiciones_campo` representa cada campo tipado. `TemplateAndSourceTest`
+verifica alta atómica de varios campos, tabla mínima, obligatoriedad en validación,
+autorización y rechazo de claves repetidas.
 `TemplateAppearance` limita los valores que acepta el servidor y fija la identidad
 institucional; `TemplateAppearanceSheet` previsualiza orientación, márgenes y las tres
 escalas editables. `TemplateDocumentTest` verifica que las tablas descarten tamaños

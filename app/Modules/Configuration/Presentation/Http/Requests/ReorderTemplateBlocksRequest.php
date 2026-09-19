@@ -17,14 +17,20 @@ class ReorderTemplateBlocksRequest extends ManageTemplatesRequest
             'section_id' => [
                 'required',
                 'uuid',
-                Rule::exists('secciones_plantilla', 'id')->where('plantilla_id', $templateId),
+                Rule::exists('componentes_plantilla', 'id')
+                    ->where('plantilla_id', $templateId)
+                    ->where('tipo_componente_plantilla', 'seccion')
+                    ->whereNull('componente_padre_id'),
             ],
             'block_ids' => ['required', 'array', 'min:1'],
             'block_ids.*' => [
                 'required',
                 'uuid',
                 'distinct',
-                Rule::exists('bloques_plantilla', 'id')->where('plantilla_id', $templateId),
+                Rule::exists('componentes_plantilla', 'id')
+                    ->where('plantilla_id', $templateId)
+                    ->where('tipo_componente_plantilla', '!=', 'seccion')
+                    ->whereNotNull('componente_padre_id'),
             ],
         ];
     }

@@ -100,13 +100,16 @@ sustituye las relaciones transaccionales ni permite reconstruir autorizaciones.
 
 ### Plantillas y fuentes
 
-`plantillas_silabo`, `secciones_plantilla`, `bloques_plantilla`,
+`plantillas_silabo`, `componentes_plantilla`,
 `definiciones_campo`, `fuentes_academicas`, `fragmentos_fuente_academica`.
 
 `plantillas_silabo` no referencia una carrera y solo admite una fila. El índice único
 `plantillas_silabo_unica` aplica esa cardinalidad directamente, sin un booleano
 `es_institucional` que siempre tendría el mismo valor. La plantilla se edita en el sitio
 y cada revisión enviada conserva su propia fotografía inmutable (I-32, I-52).
+`componentes_plantilla` reúne las secciones raíz y los bloques hijos; las definiciones de
+campo apuntan al componente que las contiene. Todos los campos se validan como
+obligatorios al enviar, pero el estado `borrador` puede permanecer incompleto.
 
 `fuentes_academicas` es un documento por fila (I-26): nombre único por carrera,
 descripción y `contenido` Markdown editable. La migración `000054` retira

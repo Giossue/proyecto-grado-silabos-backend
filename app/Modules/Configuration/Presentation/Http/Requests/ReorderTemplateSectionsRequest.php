@@ -19,7 +19,10 @@ class ReorderTemplateSectionsRequest extends ManageTemplatesRequest
                 'required',
                 'uuid',
                 'distinct',
-                Rule::exists('secciones_plantilla', 'id')->where('plantilla_id', $templateId),
+                Rule::exists('componentes_plantilla', 'id')
+                    ->where('plantilla_id', $templateId)
+                    ->where('tipo_componente_plantilla', 'seccion')
+                    ->whereNull('componente_padre_id'),
             ],
         ];
     }

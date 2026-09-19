@@ -288,12 +288,7 @@ class AiAssistanceTest extends TestCase
             ->where('plantilla_id', $syllabus->plantilla_id)
             ->whereKeyNot($field->id)
             ->firstOrFail();
-        FieldValue::query()->create([
-            'silabo_id' => $syllabus->id,
-            'definicion_campo_id' => $related->id,
-            'valor' => 'Aplicar fundamentos en un resultado verificable.',
-            'heredado' => false,
-        ]);
+        $related->update(['ia_habilitada' => true]);
         $this->actAsTeacher();
         $this->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $syllabus->refresh();
@@ -399,12 +394,12 @@ class AiAssistanceTest extends TestCase
             ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('id', '!=', $field->id)
             ->firstOrFail();
-        FieldValue::query()->create([
-            'silabo_id' => $syllabus->id,
-            'definicion_campo_id' => $related->id,
-            'valor' => 'Aplicar fundamentos de software en un caso verificable.',
-            'heredado' => false,
-        ]);
+        $related->update(['ia_habilitada' => true]);
+        FieldValue::query()
+            ->where('silabo_id', $syllabus->id)
+            ->where('definicion_campo_id', $related->id)
+            ->firstOrFail()
+            ->update(['valor' => 'Aplicar fundamentos de software en un caso verificable.']);
         $this->actAsTeacher();
 
         $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
@@ -814,7 +809,6 @@ class AiAssistanceTest extends TestCase
             'clave' => 'objetivo_general',
             'etiqueta' => 'Objetivo general',
             'tipo' => 'texto_largo',
-            'obligatorio' => false,
             'heredado' => false,
             'editable_docente' => true,
             'ia_habilitada' => true,
@@ -827,10 +821,9 @@ class AiAssistanceTest extends TestCase
             'clave' => 'resultado_aprendizaje',
             'etiqueta' => 'Resultado de aprendizaje',
             'tipo' => 'texto_largo',
-            'obligatorio' => false,
             'heredado' => false,
             'editable_docente' => true,
-            'ia_habilitada' => true,
+            'ia_habilitada' => false,
             'reglas' => ['max' => 50000],
             'posicion' => 2,
         ]);
@@ -846,7 +839,6 @@ class AiAssistanceTest extends TestCase
             'plantilla_id' => $templateVersion->id,
             'estado' => 'borrador',
             'version_bloqueo' => 0,
-            'porcentaje_completitud' => 0,
             'iniciado_en' => now(),
         ]);
         SyllabusCollaborator::query()->create([
@@ -860,6 +852,15 @@ class AiAssistanceTest extends TestCase
             'silabo_id' => $syllabus->id,
             'definicion_campo_id' => $field->id,
             'valor' => '  Formular   objetivos claros',
+            'heredado' => false,
+        ]);
+        FieldValue::query()->create([
+            'silabo_id' => $syllabus->id,
+            'definicion_campo_id' => FieldDefinition::query()
+                ->where('plantilla_id', $templateVersion->id)
+                ->where('clave', 'resultado_aprendizaje')
+                ->valueOrFail('id'),
+            'valor' => 'Aplicar fundamentos en un resultado verificable.',
             'heredado' => false,
         ]);
         $source = $this->addSource($convocation, $sourceEnabled, $evidenceContent);

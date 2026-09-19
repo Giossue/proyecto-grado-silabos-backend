@@ -79,7 +79,7 @@ class SyllabusController extends Controller
                 'convocation' => $syllabus->convocation->nombre,
                 'period' => $syllabus->convocation->process->academicPeriod->codigo,
                 'state' => $syllabus->estado,
-                'completion' => (float) $syllabus->porcentaje_completitud,
+                'iniciado_en' => $syllabus->iniciado_en?->toIso8601String(),
                 'parallels' => $syllabus->scopes->pluck('parallel.codigo')->unique()->values(),
                 'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
             ]);
@@ -165,7 +165,6 @@ class SyllabusController extends Controller
         return response()->json([
             'message' => 'Borrador guardado.',
             'version_bloqueo' => $updated->version_bloqueo,
-            'completion' => (float) $updated->porcentaje_completitud,
             'guardado_en' => $updated->guardado_en?->toIso8601String(),
             'rows' => $field->tipo === 'repetible'
                 ? $updated->rows()->where('definicion_campo_id', $field->id)->orderBy('posicion')->get(['id', 'datos', 'posicion'])
@@ -223,8 +222,8 @@ class SyllabusController extends Controller
             'convocation' => $syllabus->convocation->nombre,
             'period' => $syllabus->convocation->process->academicPeriod->codigo,
             'state' => $syllabus->estado,
+            'iniciado_en' => $syllabus->iniciado_en?->toIso8601String(),
             'version_bloqueo' => $syllabus->version_bloqueo,
-            'completion' => (float) $syllabus->porcentaje_completitud,
             'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
             'parallels' => $syllabus->scopes->pluck('parallel.codigo')->unique()->values(),
             'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
@@ -352,7 +351,7 @@ class SyllabusController extends Controller
                 'help' => $field->ayuda,
                 'type' => $field->tipo,
                 'options' => $this->fieldOptions($field),
-                'required' => $field->obligatorio,
+                'required' => true,
                 'inherited' => $field->heredado,
                 'teacher_editable' => $field->editable_docente,
                 'ai_enabled' => $this->effectiveAi->enabled($careerId, $field)

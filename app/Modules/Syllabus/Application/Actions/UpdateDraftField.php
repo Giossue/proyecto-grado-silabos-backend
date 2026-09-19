@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\DraftCompleteness;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
@@ -18,7 +17,6 @@ use Illuminate\Validation\ValidationException;
 class UpdateDraftField
 {
     public function __construct(
-        private readonly DraftCompleteness $completeness,
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
     ) {}
@@ -48,10 +46,8 @@ class UpdateDraftField
                 ], ['valor' => $data['value'] ?? null, 'heredado' => false, 'origen' => null]);
             }
 
-            $result = $this->completeness->calculate($locked);
             $locked->update([
                 'version_bloqueo' => $locked->version_bloqueo + 1,
-                'porcentaje_completitud' => $result['percentage'],
                 'guardado_en' => now(),
             ]);
             $activeRole = $this->roles->resolve($request);

@@ -212,7 +212,6 @@ class AiAssistanceController extends Controller
         return response()->json([
             'message' => 'La recomendación se aplicó al campo después de verificar la versión del borrador.',
             'version_bloqueo' => $updated->version_bloqueo,
-            'completion' => (float) $updated->porcentaje_completitud,
             'value' => $recommendation->texto_sugerido,
         ]);
     }

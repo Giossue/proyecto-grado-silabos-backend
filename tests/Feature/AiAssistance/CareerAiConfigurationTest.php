@@ -76,7 +76,7 @@ class CareerAiConfigurationTest extends TestCase
         $field = FieldDefinition::query()->create([
             'plantilla_id' => $template->id, 'bloque_plantilla_id' => $block->id,
             'clave' => 'ia_test', 'etiqueta' => 'Campo IA', 'tipo' => 'texto_largo',
-            'obligatorio' => false, 'heredado' => false, 'editable_docente' => true,
+            'heredado' => false, 'editable_docente' => true,
             'ia_habilitada' => true, 'ia_coordinacion_configurable' => $configurable, 'posicion' => 1,
         ]);
 

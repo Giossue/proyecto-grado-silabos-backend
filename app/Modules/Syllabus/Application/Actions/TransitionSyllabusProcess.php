@@ -70,11 +70,6 @@ class TransitionSyllabusProcess
             }
 
             if ($rule['to'] === SyllabusProcess::STATE_OPEN) {
-                if (! $locked->template->activo) {
-                    throw ValidationException::withMessages([
-                        'process' => 'La plantilla institucional está inactiva. Reactívela antes de abrir.',
-                    ]);
-                }
                 // Lo que antes garantizaba «publicar»: la plantilla se usa completa o no se usa.
                 $this->templateStructure->assertUsable($locked->template, 'process');
                 $careers = Career::query()->where('activo', true);

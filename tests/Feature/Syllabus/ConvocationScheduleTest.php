@@ -200,7 +200,6 @@ class ConvocationScheduleTest extends TestCase
 
         $fields = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
-            ->where('obligatorio', true)
             ->where('heredado', false)
             ->get();
         foreach ($fields as $field) {

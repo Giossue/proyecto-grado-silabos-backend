@@ -44,13 +44,13 @@ it('conserva la fecha anterior y el motivo al prorrogar', function (): void {
         ->toContain('lessThanOrEqualTo');
 });
 
-it('deja rastro del avance descartado en un relevo', function (): void {
+it('descarta el borrador en un relevo sin guardar porcentaje de llenado', function (): void {
     $transfer = (string) file_get_contents(
         dirname(__DIR__, 2).'/app/Modules/Syllabus/Application/Actions/TransferSyllabusTeacher.php',
     );
 
     expect($transfer)
-        ->toContain("'discarded_completion'")
+        ->not->toContain("'discarded_completion'")
         ->toContain('silabo.docente_transferido')
         // Un expediente en revisión no se traspasa: el revisor quedaría sin interlocutor.
         ->toContain("=== 'en_revision'")

@@ -91,23 +91,21 @@ class TeacherTransferTest extends TestCase
         ]);
     }
 
-    public function test_an_unsubmitted_draft_is_discarded_and_the_lost_progress_stays_in_the_audit_trail(): void
+    public function test_an_unsubmitted_draft_is_discarded_without_completion_percentage(): void
     {
         $syllabus = $this->validDraft();
-        $this->assertGreaterThan(0, (float) $syllabus->porcentaje_completitud);
         $this->assertGreaterThan(0, $syllabus->values()->where('heredado', false)->count());
 
         $this->transfer($syllabus)->assertSuccessful();
 
         $syllabus->refresh();
         $this->assertSame('sin_iniciar', $syllabus->estado);
-        $this->assertSame(0.0, (float) $syllabus->porcentaje_completitud);
         $this->assertSame(0, $syllabus->values()->count());
         $this->assertSame(0, $syllabus->rows()->count());
 
         $event = AuditEvent::query()->where('accion', 'silabo.docente_transferido')->firstOrFail();
         $this->assertSame('borrador', $event->metadatos['previous_state']);
-        $this->assertGreaterThan(0, $event->metadatos['discarded_completion']);
+        $this->assertArrayNotHasKey('discarded_completion', $event->metadatos);
     }
 
     public function test_an_approved_syllabus_is_reopened_and_keeps_the_approved_revision_intact(): void
@@ -239,7 +237,6 @@ class TeacherTransferTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $fields = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
-            ->where('obligatorio', true)
             ->where('heredado', false)
             ->get();
         foreach ($fields as $field) {

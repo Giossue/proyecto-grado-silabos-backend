@@ -29,8 +29,10 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
                 'string',
                 'regex:/^[a-z][a-z0-9_]*$/',
                 'max:100',
-                Rule::unique('secciones_plantilla', 'clave_seccion_plantilla')
+                Rule::unique('componentes_plantilla', 'clave_componente_plantilla')
                     ->where('plantilla_id', $templateId)
+                    ->where('tipo_componente_plantilla', 'seccion')
+                    ->whereNull('componente_padre_id')
                     ->ignore($sectionId),
             ],
             'fields' => [Rule::requiredIf($sectionId === null && ! $this->filled('first_field_label')), 'nullable', 'array', 'min:1', 'max:20'],

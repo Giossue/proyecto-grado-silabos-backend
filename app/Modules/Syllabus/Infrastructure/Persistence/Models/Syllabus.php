@@ -21,7 +21,6 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property string $convocatoria_id
  * @property string $estado
  * @property int $version_bloqueo
- * @property string $porcentaje_completitud
  * @property int $unresolved_observations_count
  * @property array<string, mixed> $contexto_academico
  * @property CarbonImmutable|null $guardado_en
@@ -48,7 +47,7 @@ class Syllabus extends Model
     /** @var list<string> */
     protected $fillable = [
         'convocatoria_id', 'asignatura_id', 'carrera_id', 'plantilla_id', 'estado',
-        'contexto_academico', 'version_bloqueo', 'porcentaje_completitud', 'iniciado_en', 'guardado_en',
+        'contexto_academico', 'version_bloqueo', 'iniciado_en', 'guardado_en',
     ];
 
     /** @return array<string, string> */
@@ -57,7 +56,6 @@ class Syllabus extends Model
         return [
             'version_bloqueo' => 'integer',
             'contexto_academico' => 'array',
-            'porcentaje_completitud' => 'decimal:2',
             'iniciado_en' => 'immutable_datetime',
             'guardado_en' => 'immutable_datetime',
         ];

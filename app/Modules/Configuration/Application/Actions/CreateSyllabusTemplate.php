@@ -26,64 +26,64 @@ class CreateSyllabusTemplate
 {
     /**
      * Sección => [título, campos]. Campo => [clave, etiqueta, tipo de contenido,
-     * obligatorio (siempre: todo el formato se llena), preset de tabla]. Los tipos `institutional` y `flow` son bloques
+     * preset de tabla]. Los tipos `institutional` y `flow` son bloques
      * fijos: ficha de identificación (más lo que llena el docente dentro de ella) y
      * estado de revisión.
      */
     private const BASELINE = [
         ['identificacion', 'Identificación institucional', [
-            ['asignatura', 'Identificación institucional', 'institutional', true, null],
+            ['asignatura', 'Identificación institucional', 'institutional', null],
         ]],
         ['descripcion', 'Descripción de la asignatura', [
-            ['descripcion', 'Descripción de la asignatura', 'text', true, null],
+            ['descripcion', 'Descripción de la asignatura', 'text', null],
         ]],
         ['objetivos', 'Objetivo(s) de la asignatura', [
-            ['objetivo_general', 'Objetivo general', 'text', true, null],
-            ['objetivos_especificos', 'Objetivos específicos', 'bulleted_list', true, null],
+            ['objetivo_general', 'Objetivo general', 'text', null],
+            ['objetivos_especificos', 'Objetivos específicos', 'bulleted_list', null],
         ]],
         ['resultados', 'Resultados de aprendizaje de la asignatura', [
-            ['resultados_aprendizaje', 'Resultados de aprendizaje', 'bulleted_list', true, null],
+            ['resultados_aprendizaje', 'Resultados de aprendizaje', 'bulleted_list', null],
         ]],
         ['habilidades', 'Habilidades blandas de la asignatura', [
-            ['habilidades_blandas', 'Habilidades blandas', 'text', true, null],
+            ['habilidades_blandas', 'Habilidades blandas', 'text', null],
         ]],
         ['planificacion', 'Distribución y planificación de las unidades curriculares', [
-            ['unidades', 'Planificación de unidades', 'table', true, 'planificacion'],
+            ['unidades', 'Planificación de unidades', 'table', 'planificacion'],
         ]],
         ['metodologia', 'Metodología y ambientes de aprendizaje', [
-            ['metodologia', 'Métodos de enseñanza-aprendizaje', 'bulleted_list', true, null],
-            ['tecnicas_ensenanza', 'Técnicas de enseñanza', 'bulleted_list', true, null],
-            ['recursos_medios', 'Recursos y medios didácticos', 'text', true, null],
-            ['herramientas_tic', 'Herramientas pedagógicas, TAC e inteligencia artificial', 'bulleted_list', true, null],
-            ['ambientes_aprendizaje', 'Ambientes o escenarios de aprendizaje', 'text', true, null],
+            ['metodologia', 'Métodos de enseñanza-aprendizaje', 'bulleted_list', null],
+            ['tecnicas_ensenanza', 'Técnicas de enseñanza', 'bulleted_list', null],
+            ['recursos_medios', 'Recursos y medios didácticos', 'text', null],
+            ['herramientas_tic', 'Herramientas pedagógicas, TAC e inteligencia artificial', 'bulleted_list', null],
+            ['ambientes_aprendizaje', 'Ambientes o escenarios de aprendizaje', 'text', null],
         ]],
         ['evaluacion', 'Evaluación de los aprendizajes', [
-            ['indicadores_evaluacion', 'Indicadores de evaluación', 'table', true, 'indicadores'],
-            ['componentes_evaluacion', 'Escala de valoración', 'table', true, 'escala'],
-            ['recuperacion', 'Recuperación y aprobación', 'text', true, null],
+            ['indicadores_evaluacion', 'Indicadores de evaluación', 'table', 'indicadores'],
+            ['componentes_evaluacion', 'Escala de valoración', 'table', 'escala'],
+            ['recuperacion', 'Recuperación y aprobación', 'text', null],
         ]],
         ['perfil_egreso', 'Relación de la asignatura con los resultados de aprendizaje del perfil de egreso', [
-            ['contribucion_perfil', 'Contribución al perfil de egreso', 'table', true, 'perfil'],
+            ['contribucion_perfil', 'Contribución al perfil de egreso', 'table', 'perfil'],
         ]],
         ['etica', 'Conducta y comportamiento ético', [
-            ['compromisos', 'El docente', 'bulleted_list', true, null],
-            ['compromisos_estudiantes', 'Los estudiantes', 'bulleted_list', true, null],
+            ['compromisos', 'El docente', 'bulleted_list', null],
+            ['compromisos_estudiantes', 'Los estudiantes', 'bulleted_list', null],
         ]],
         ['bibliografia', 'Bibliografía', [
-            ['bibliografia', 'Bibliografía básica', 'table', true, 'bibliografia'],
-            ['bibliografia_complementaria', 'Bibliografía complementaria', 'table', true, 'bibliografia'],
+            ['bibliografia', 'Bibliografía básica', 'table', 'bibliografia'],
+            ['bibliografia_complementaria', 'Bibliografía complementaria', 'table', 'bibliografia'],
         ]],
         ['revision', 'Revisión y aprobación', [
-            ['estado_revision', 'Estado de revisión', 'flow', true, null],
+            ['estado_revision', 'Estado de revisión', 'flow', null],
         ]],
     ];
 
     /** Lo que el docente llena dentro de la ficha de identificación (I-34). */
     private const IDENTIFICATION_INPUTS = [
-        ['discapacidad_tiene', 'Estudiantes con discapacidad', 'seleccion_unica', true, ['Sí', 'No']],
-        ['discapacidad_tipo', 'Tipo de discapacidad', 'texto_corto', false, null],
-        ['discapacidad_adaptacion', 'Descripción de la adaptación curricular', 'texto_corto', false, null],
-        ['formacion_experiencia', 'Formación y experiencia académica-investigativa', 'markdown', true, null],
+        ['discapacidad_tiene', 'Estudiantes con discapacidad', 'seleccion_unica', ['Sí', 'No']],
+        ['discapacidad_tipo', 'Tipo de discapacidad', 'texto_corto', null],
+        ['discapacidad_adaptacion', 'Descripción de la adaptación curricular', 'texto_corto', null],
+        ['formacion_experiencia', 'Formación y experiencia académica-investigativa', 'markdown', null],
     ];
 
     public function __construct(
@@ -106,9 +106,6 @@ class CreateSyllabusTemplate
             }
 
             $template = SyllabusTemplate::query()->create([
-                'nombre' => SyllabusTemplate::INSTITUTIONAL_NAME,
-                'descripcion' => null,
-                'activo' => true,
                 'mapeo_documento' => [
                     'appearance' => TemplateAppearance::defaults(),
                     'title_block' => TemplateTitleBlock::defaults(),
@@ -123,7 +120,7 @@ class CreateSyllabusTemplate
                     'posicion' => $sectionPosition + 1,
                 ]);
 
-                foreach ($fields as $blockPosition => [$fieldKey, $label, $contentType, $required, $preset]) {
+                foreach ($fields as $blockPosition => [$fieldKey, $label, $contentType, $preset]) {
                     $configuration = ['content_type' => $contentType];
                     if ($preset !== null) {
                         $configuration['table'] = TablePresets::layout($preset);
@@ -151,7 +148,6 @@ class CreateSyllabusTemplate
                         'clave' => $fieldKey,
                         'etiqueta' => $label,
                         'tipo' => $this->fieldType($contentType),
-                        'obligatorio' => $required,
                         'heredado' => $origin !== null,
                         'origen_maestro' => $origin,
                         'editable_docente' => $origin === null,
@@ -161,14 +157,13 @@ class CreateSyllabusTemplate
                     ]);
 
                     if ($contentType === 'institutional') {
-                        foreach (self::IDENTIFICATION_INPUTS as $inputPosition => [$inputKey, $inputLabel, $inputType, $inputRequired, $options]) {
+                        foreach (self::IDENTIFICATION_INPUTS as $inputPosition => [$inputKey, $inputLabel, $inputType, $options]) {
                             FieldDefinition::query()->create([
                                 'plantilla_id' => $template->id,
                                 'bloque_plantilla_id' => $block->id,
                                 'clave' => $inputKey,
                                 'etiqueta' => $inputLabel,
                                 'tipo' => $inputType,
-                                'obligatorio' => $inputRequired,
                                 'heredado' => false,
                                 'origen_maestro' => null,
                                 'editable_docente' => true,

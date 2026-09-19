@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use App\Support\Database\MapsLegacyColumnNames;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,18 +23,31 @@ class TemplateSection extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'clave' => 'clave_seccion_plantilla',
-        'titulo' => 'titulo_seccion_plantilla',
-        'descripcion' => 'descripcion_seccion_plantilla',
-        'posicion' => 'posicion_seccion_plantilla',
+        'clave' => 'clave_componente_plantilla',
+        'titulo' => 'titulo_componente_plantilla',
+        'descripcion' => 'descripcion_componente_plantilla',
+        'posicion' => 'posicion_componente_plantilla',
     ];
 
     public $timestamps = false;
 
-    protected $table = 'secciones_plantilla';
+    protected $table = 'componentes_plantilla';
 
     /** @var list<string> */
     protected $fillable = ['plantilla_id', 'clave', 'titulo', 'descripcion', 'posicion'];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('seccion', function (Builder $builder): void {
+            $table = $builder->getModel()->getTable();
+            $builder->where("{$table}.tipo_componente_plantilla", 'seccion')
+                ->whereNull("{$table}.componente_padre_id");
+        });
+
+        static::creating(function (self $section): void {
+            $section->setAttribute('tipo_componente_plantilla', 'seccion');
+        });
+    }
 
     /** @return BelongsTo<SyllabusTemplate, $this> */
     public function template(): BelongsTo
@@ -44,6 +58,6 @@ class TemplateSection extends Model
     /** @return HasMany<TemplateBlock, $this> */
     public function blocks(): HasMany
     {
-        return $this->hasMany(TemplateBlock::class, 'seccion_plantilla_id')->orderBy('posicion');
+        return $this->hasMany(TemplateBlock::class, 'componente_padre_id')->orderBy('posicion');
     }
 }

@@ -502,7 +502,6 @@ class DocumentOperationsTest extends TestCase
             'plantilla_id' => $version->id,
             'estado' => 'aprobado',
             'version_bloqueo' => 2,
-            'porcentaje_completitud' => 100,
             'iniciado_en' => now()->subDay(),
             'guardado_en' => now(),
         ]);
@@ -584,7 +583,6 @@ class DocumentOperationsTest extends TestCase
             'plantilla_id' => $template->id,
             'estado' => 'aprobado',
             'version_bloqueo' => 2,
-            'porcentaje_completitud' => 100,
             'iniciado_en' => now(),
             'guardado_en' => now(),
         ]);

@@ -1,7 +1,5 @@
 # Base de datos actual de producción — Sílabos UEB
 
-**Fotografía verificada:** 15 de septiembre de 2026, migraciones hasta
-`2026_09_15_000074_remove_curricula_as_a_separate_entity` (lote 47).
 # 1. Identidad y acceso
 
 ## usuarios
@@ -19,10 +17,7 @@ codigo_recordarme VARCHAR NULL
 secreto_dos_factores TEXT NULL
 codigos_recuperacion_dos_factores TEXT NULL
 dos_factores_confirmado_en TIMESTAMPTZ NULL
-
-La bandera histórica `debe_cambiar_contrasena` fue retirada por I-88. Las invitaciones
-pendientes viven en `invitaciones_activacion` y conservan solo el hash del token, su
-caducidad, uso e invalidación.
+~~~
 
 ## invitaciones_activacion
 
@@ -37,7 +32,6 @@ usada_en TIMESTAMPTZ NULL
 invalidada_en TIMESTAMPTZ NULL
 emitida_por_usuario_id UUID (FK → usuarios.id) NULL
 creada_en TIMESTAMPTZ NOT NULL
-~~~
 ~~~
 
 ## asignaciones_rol
@@ -56,9 +50,6 @@ CHECK (rol IN ('administrador', 'coordinador', 'docente'))
 CHECK (administrador sin carrera; coordinador/docente con carrera)
 UNIQUE parcial: usuario_id, rol y carrera_id cuando asignacion_rol_activa
 ~~~
-
-**Regla adicional:** un trigger de PostgreSQL permite una sola coordinación ejercible
-por carrera: rol `coordinador` activo y cuenta activa.
 
 ## asignaciones_paralelo
 
@@ -224,7 +215,6 @@ UNIQUE (periodo_academico_id, asignatura_id)
 id UUID (PK)
 programacion_asignatura_id UUID (FK → programaciones_asignatura.id) NOT NULL
 codigo_paralelo VARCHAR NOT NULL
-paralelo_activo BOOLEAN NOT NULL
 jornada_paralelo VARCHAR NULL
 
 UNIQUE (programacion_asignatura_id, codigo_paralelo)
@@ -253,46 +243,31 @@ programaciones_asignatura 1:N paralelos
 
 ~~~text
 id UUID (PK)
-nombre_plantilla_silabo VARCHAR NOT NULL
-descripcion_plantilla_silabo TEXT NULL
-plantilla_silabo_activa BOOLEAN NOT NULL
 mapeo_documento_plantilla JSONB NULL
+revision_configuracion BIGINT NOT NULL DEFAULT 1
 
 UNIQUE constante: existe solo una plantilla
 ~~~
 
-## secciones_plantilla
+## componentes_plantilla
 
-**Contexto:** secciones principales de la plantilla.
-
-~~~text
-id UUID (PK)
-clave_seccion_plantilla VARCHAR NOT NULL
-titulo_seccion_plantilla VARCHAR NOT NULL
-descripcion_seccion_plantilla TEXT NULL
-posicion_seccion_plantilla SMALLINT NOT NULL
-plantilla_id UUID (FK → plantillas_silabo.id) NOT NULL
-
-UNIQUE (plantilla_id, clave_seccion_plantilla)
-UNIQUE (plantilla_id, posicion_seccion_plantilla)
-~~~
-
-## bloques_plantilla
-
-**Contexto:** agrupaciones de campos dentro de una sección.
+**Contexto:** secciones y bloques de la plantilla en una sola jerarquía.
 
 ~~~text
 id UUID (PK)
-seccion_plantilla_id UUID (FK → secciones_plantilla.id) NOT NULL
-clave_bloque_plantilla VARCHAR NOT NULL
-tipo_bloque_plantilla VARCHAR NOT NULL
-titulo_bloque_plantilla VARCHAR NOT NULL
-configuracion_bloque_plantilla JSONB NULL
-posicion_bloque_plantilla SMALLINT NOT NULL
 plantilla_id UUID (FK → plantillas_silabo.id) NOT NULL
+componente_padre_id UUID (FK → componentes_plantilla.id) NULL
+clave_componente_plantilla VARCHAR NOT NULL
+tipo_componente_plantilla VARCHAR NOT NULL
+titulo_componente_plantilla VARCHAR NOT NULL
+descripcion_componente_plantilla TEXT NULL
+configuracion_componente_plantilla JSONB NULL
+posicion_componente_plantilla SMALLINT NOT NULL
 
-UNIQUE (plantilla_id, clave_bloque_plantilla)
-UNIQUE (seccion_plantilla_id, posicion_bloque_plantilla)
+UNIQUE parcial (plantilla_id, clave_componente_plantilla) para raíces
+UNIQUE parcial (plantilla_id, clave_componente_plantilla) para hijos
+UNIQUE parcial (plantilla_id, posicion_componente_plantilla) para raíces
+UNIQUE parcial (componente_padre_id, posicion_componente_plantilla) para hijos
 ~~~
 
 ## definiciones_campo
@@ -301,16 +276,16 @@ UNIQUE (seccion_plantilla_id, posicion_bloque_plantilla)
 
 ~~~text
 id UUID (PK)
-bloque_plantilla_id UUID (FK → bloques_plantilla.id) NOT NULL
+componente_plantilla_id UUID (FK → componentes_plantilla.id) NOT NULL
 clave_definicion_campo VARCHAR NOT NULL
 etiqueta_definicion_campo VARCHAR NOT NULL
 ayuda_definicion_campo TEXT NULL
 tipo_definicion_campo VARCHAR NOT NULL
-obligatorio BOOLEAN NOT NULL
 heredado BOOLEAN NOT NULL
 origen_maestro VARCHAR NULL
 editable_docente BOOLEAN NOT NULL
 ia_habilitada BOOLEAN NOT NULL
+ia_coordinacion_configurable BOOLEAN NOT NULL DEFAULT true
 reglas_definicion_campo JSONB NULL
 opciones_definicion_campo JSONB NULL
 marcador_documento VARCHAR NULL
@@ -318,7 +293,7 @@ posicion_definicion_campo SMALLINT NOT NULL
 plantilla_id UUID (FK → plantillas_silabo.id) NOT NULL
 
 UNIQUE (plantilla_id, clave_definicion_campo)
-UNIQUE (bloque_plantilla_id, posicion_definicion_campo)
+UNIQUE (componente_plantilla_id, posicion_definicion_campo)
 ~~~
 
 ## fuentes_academicas
@@ -336,18 +311,51 @@ contenido_fuente_academica TEXT NULL
 UNIQUE (carrera_id, nombre_fuente_academica)
 ~~~
 
+## preferencias_ia_carrera
+
+**Contexto:** excepción de Coordinación sobre la configuración IA de un campo.
+
+~~~text
+id UUID (PK)
+carrera_id UUID (FK → carreras.id) NOT NULL
+definicion_campo_id UUID (FK → definiciones_campo.id) NOT NULL
+ia_habilitada BOOLEAN NOT NULL
+revision_plantilla_origen BIGINT NOT NULL
+configurado_por UUID (FK → usuarios.id) NOT NULL
+configurado_en TIMESTAMPTZ NOT NULL
+
+UNIQUE (carrera_id, definicion_campo_id)
+~~~
+
+## fragmentos_fuente_academica
+
+**Contexto:** índice derivado y reemplazable del contenido Markdown de una fuente.
+
+~~~text
+id UUID (PK)
+fuente_academica_id UUID (FK → fuentes_academicas.id) NOT NULL
+ruta_encabezados JSONB NOT NULL
+titulo_fragmento VARCHAR NULL
+posicion_fragmento SMALLINT NOT NULL
+contenido_fragmento TEXT NOT NULL
+huella_fragmento CHAR(64) NOT NULL
+
+UNIQUE (fuente_academica_id, posicion_fragmento)
+Índice GIN de búsqueda textual en español sobre título y contenido
+~~~
+
 ### Cardinalidades
 
 ~~~text
-plantillas_silabo 1:N secciones_plantilla
-plantillas_silabo 1:N bloques_plantilla
-secciones_plantilla 1:N bloques_plantilla
+plantillas_silabo 1:N componentes_plantilla
+componentes_plantilla 1:N componentes_plantilla
 plantillas_silabo 1:N definiciones_campo
-bloques_plantilla 1:N definiciones_campo
+componentes_plantilla 1:N definiciones_campo
 carreras 1:N fuentes_academicas
+fuentes_academicas 1:N fragmentos_fuente_academica
+carreras 1:N preferencias_ia_carrera
+definiciones_campo 1:N preferencias_ia_carrera
 ~~~
-
-Las dependencias desde plantilla, sección y bloque se eliminan en cascada.
 
 ---
 
@@ -418,7 +426,6 @@ asignatura_id UUID (FK → asignaturas.id) NOT NULL
 carrera_id UUID (FK → carreras.id) NOT NULL
 estado_silabo VARCHAR NOT NULL
 version_bloqueo INTEGER NOT NULL
-porcentaje_completitud NUMERIC NOT NULL
 iniciado_en TIMESTAMPTZ NULL
 guardado_en TIMESTAMPTZ NULL
 contexto_academico_silabo JSONB NOT NULL
@@ -495,7 +502,6 @@ estado_ejecucion_validacion VARCHAR NOT NULL
 version_bloqueo INTEGER NOT NULL
 errores_bloqueantes SMALLINT NOT NULL
 cantidad_advertencias_validacion SMALLINT NOT NULL
-porcentaje_completitud NUMERIC NOT NULL
 completado_en TIMESTAMPTZ NOT NULL
 ~~~
 
@@ -529,9 +535,6 @@ silabos 1:N filas_repetibles
 silabos 1:N ejecuciones_validacion
 ejecuciones_validacion 1:N resultados_validacion
 ~~~
-
-Los hijos directos de sílabo (alcances, colaboradores, valores, filas y validaciones)
-tienen borrado en cascada.
 
 ---
 
@@ -592,9 +595,35 @@ solicitado_en TIMESTAMPTZ NOT NULL
 iniciado_en TIMESTAMPTZ NULL
 completado_en TIMESTAMPTZ NULL
 plantilla_id UUID (FK → plantillas_silabo.id) NOT NULL
+revision_ia_silabo_id UUID (FK → revisiones_ia_silabo.id) NULL
 
 UNIQUE (silabo_id, definicion_campo_id, clave_idempotencia)
 UNIQUE parcial sobre clave_funcional
+UNIQUE (revision_ia_silabo_id, definicion_campo_id)
+~~~
+
+## revisiones_ia_silabo
+
+**Contexto:** ejecución padre de una revisión integral de IA sobre una versión del sílabo.
+
+~~~text
+id UUID (PK)
+silabo_id UUID (FK → silabos.id) NOT NULL
+version_bloqueo_origen INTEGER NOT NULL
+clave_idempotencia UUID NOT NULL
+estado_revision_ia VARCHAR NOT NULL DEFAULT 'pendiente'
+total_campos SMALLINT NOT NULL
+campos_finalizados SMALLINT NOT NULL DEFAULT 0
+campos_con_recomendaciones SMALLINT NOT NULL DEFAULT 0
+campos_fallidos SMALLINT NOT NULL DEFAULT 0
+solicitado_por UUID (FK → usuarios.id) NOT NULL
+asignacion_rol_id UUID (FK → asignaciones_rol.id) NULL
+solicitado_en TIMESTAMPTZ NOT NULL
+iniciado_en TIMESTAMPTZ NULL
+completado_en TIMESTAMPTZ NULL
+
+UNIQUE (silabo_id, version_bloqueo_origen)
+UNIQUE (silabo_id, clave_idempotencia)
 ~~~
 
 ## evidencias_ia
@@ -604,10 +633,17 @@ UNIQUE parcial sobre clave_funcional
 ~~~text
 id UUID (PK)
 ejecucion_ia_id UUID (FK → ejecuciones_ia.id) NOT NULL
-fuente_academica_id UUID (FK → fuentes_academicas.id) NOT NULL
-nombre_fuente VARCHAR NOT NULL
+fuente_academica_id UUID (FK → fuentes_academicas.id) NULL
+etiqueta_evidencia_ia VARCHAR NOT NULL
 extracto_evidencia_ia TEXT NOT NULL
 huella_contenido CHAR(64) NOT NULL
+tipo_evidencia_ia VARCHAR NOT NULL DEFAULT 'fuente_academica'
+definicion_campo_id UUID (FK → definiciones_campo.id) NULL
+fragmento_fuente_academica_id UUID (FK → fragmentos_fuente_academica.id) NULL
+
+CHECK (tipo_evidencia_ia IN ('fuente_academica', 'seccion_silabo'))
+CHECK: fuente académica referencia fuente y opcionalmente fragmento; sección de sílabo
+referencia definición de campo sin fuente ni fragmento
 ~~~
 
 ## recomendaciones_ia
@@ -659,6 +695,78 @@ UNIQUE (recomendacion_ia_id, usuario_id, decision_retroalimentacion_ia)
 UNIQUE parcial: una sola decisión aplicada por recomendación
 ~~~
 
+## conversaciones_ia
+
+**Contexto:** conversación contextual de un docente sobre un sílabo.
+
+~~~text
+id UUID (PK)
+silabo_id UUID (FK → silabos.id) NOT NULL
+usuario_id UUID (FK → usuarios.id) NOT NULL
+ocultada_en TIMESTAMPTZ NULL
+iniciada_en TIMESTAMPTZ NOT NULL
+
+UNIQUE (silabo_id, usuario_id)
+~~~
+
+## mensajes_ia
+
+**Contexto:** pregunta o respuesta persistida dentro de una conversación IA.
+
+~~~text
+id UUID (PK)
+conversacion_ia_id UUID (FK → conversaciones_ia.id) NOT NULL
+respuesta_a_id UUID (FK → mensajes_ia.id) NULL
+ejecucion_trabajo_id UUID (FK → ejecuciones_trabajo.id) NULL UNIQUE
+clave_idempotencia UUID NULL
+rol_mensaje_ia VARCHAR NOT NULL
+estado_mensaje_ia VARCHAR NOT NULL
+contenido_mensaje_ia TEXT NOT NULL
+version_bloqueo_origen INTEGER NOT NULL
+version_pasarela_ejecutada VARCHAR NULL
+codigo_error VARCHAR NULL
+mensaje_error TEXT NULL
+completado_en TIMESTAMPTZ NULL
+enviado_en TIMESTAMPTZ NOT NULL
+
+CHECK (rol_mensaje_ia IN ('usuario', 'asistente'))
+CHECK (estado_mensaje_ia IN ('completado', 'pendiente', 'en_ejecucion', 'fallido'))
+UNIQUE (conversacion_ia_id, clave_idempotencia)
+~~~
+
+## evidencias_mensaje_ia
+
+**Contexto:** fotografía de la evidencia usada por una respuesta del chat.
+
+~~~text
+id UUID (PK)
+mensaje_ia_id UUID (FK → mensajes_ia.id) NOT NULL
+tipo_evidencia_mensaje_ia VARCHAR NOT NULL
+definicion_campo_id UUID (FK → definiciones_campo.id) NULL
+fuente_academica_id UUID (FK → fuentes_academicas.id) NULL
+etiqueta_evidencia_mensaje_ia VARCHAR NOT NULL
+extracto_evidencia_mensaje_ia TEXT NOT NULL
+huella_evidencia_mensaje_ia CHAR(64) NOT NULL
+fijada_en TIMESTAMPTZ NOT NULL
+
+CHECK (tipo_evidencia_mensaje_ia IN ('seccion_silabo', 'fuente_academica'))
+CHECK: sección referencia definición de campo; fuente referencia fuente académica
+UNIQUE (mensaje_ia_id, huella_evidencia_mensaje_ia)
+~~~
+
+## citas_mensaje_ia
+
+**Contexto:** evidencias citadas por una respuesta del chat, en orden de presentación.
+
+~~~text
+mensaje_ia_id UUID (FK → mensajes_ia.id) NOT NULL
+evidencia_mensaje_ia_id UUID (FK → evidencias_mensaje_ia.id) NOT NULL
+ordinal_cita_mensaje_ia SMALLINT NOT NULL
+
+PRIMARY KEY (mensaje_ia_id, evidencia_mensaje_ia_id)
+UNIQUE (mensaje_ia_id, ordinal_cita_mensaje_ia)
+~~~
+
 ### Cardinalidades
 
 ~~~text
@@ -670,6 +778,17 @@ fuentes_academicas 1:N evidencias_ia
 ejecuciones_ia 1:N recomendaciones_ia
 recomendaciones_ia N:M evidencias_ia mediante recomendacion_evidencias_ia
 recomendaciones_ia 1:N retroalimentacion_ia
+revisiones_ia_silabo 1:N ejecuciones_ia
+silabos 1:N revisiones_ia_silabo
+usuarios 1:N revisiones_ia_silabo
+asignaciones_rol 1:N revisiones_ia_silabo
+fragmentos_fuente_academica 1:N evidencias_ia
+silabos 1:N conversaciones_ia
+usuarios 1:N conversaciones_ia
+conversaciones_ia 1:N mensajes_ia
+mensajes_ia 1:N mensajes_ia mediante respuesta_a_id
+mensajes_ia 1:N evidencias_mensaje_ia
+mensajes_ia N:M evidencias_mensaje_ia mediante citas_mensaje_ia
 ~~~
 
 ---
@@ -961,24 +1080,3 @@ usuarios 1:N eventos_auditoria
 ~~~
 
 ---
-
-# 8. Resumen de relaciones N:M
-
-~~~text
-usuarios N:M carreras por roles con alcance en asignaciones_rol
-asignaciones_rol (docente) 1:N asignaciones_paralelo
-paralelos 1:N asignaciones_paralelo
-convocatorias_carreras N:M fuentes_academicas mediante fuentes_convocatoria
-silabos N:M paralelos mediante alcances_silabo
-silabos N:M usuarios colaboradores mediante colaboradores_silabo
-silabos N:M definiciones_campo mediante valores_campo
-solicitudes_correccion N:M observaciones_revision
-  mediante solicitud_correccion_observaciones
-recomendaciones_ia N:M evidencias_ia mediante recomendacion_evidencias_ia
-~~~
-
-# 9. Configuración IA disponible en producción
-
-La decisión de habilitar IA por campo y la posibilidad de que Coordinación la cambie
-se almacenan en `definiciones_campo` mediante `ia_habilitada` e
-`ia_coordinacion_configurable`.

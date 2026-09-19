@@ -103,7 +103,6 @@ class SaveFieldDefinition
                 'etiqueta' => $data['label'],
                 'ayuda' => $data['help'] ?? null,
                 'tipo' => $this->fieldType($contentType),
-                'obligatorio' => true,
                 'heredado' => $inherited,
                 'origen_maestro' => $field !== null && $field->heredado ? $field->origen_maestro : null,
                 'editable_docente' => ! $inherited,

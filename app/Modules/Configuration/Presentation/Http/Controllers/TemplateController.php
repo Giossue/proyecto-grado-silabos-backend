@@ -109,8 +109,8 @@ class TemplateController extends Controller
             ],
             'template' => [
                 'id' => $template->id,
-                'name' => $template->nombre,
-                'description' => $template->descripcion,
+                'name' => SyllabusTemplate::INSTITUTIONAL_NAME,
+                'description' => null,
                 'appearance' => TemplateAppearance::fromMapping($template->mapeo_documento),
                 'titleBlock' => TemplateTitleBlock::fromMapping($template->mapeo_documento),
                 'sections' => $template->sections->map(fn (TemplateSection $section) => [
@@ -138,7 +138,7 @@ class TemplateController extends Controller
                                 'help' => $field->ayuda,
                                 'type' => $field->tipo,
                                 'options' => $this->fieldOptions($field),
-                                'required' => $field->obligatorio,
+                                'required' => true,
                                 'inherited' => $field->heredado,
                                 'master_source' => $field->origen_maestro,
                                 'teacher_editable' => $field->editable_docente,

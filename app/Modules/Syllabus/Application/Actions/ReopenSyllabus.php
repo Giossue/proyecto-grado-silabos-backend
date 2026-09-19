@@ -70,7 +70,6 @@ class ReopenSyllabus
             $locked->update([
                 'estado' => 'correccion_solicitada',
                 'version_bloqueo' => $locked->version_bloqueo + 1,
-                'porcentaje_completitud' => 100,
                 'guardado_en' => now(),
             ]);
             $activeRole = $this->roles->resolve($request);

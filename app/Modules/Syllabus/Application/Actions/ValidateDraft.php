@@ -8,7 +8,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\AcademicContextValues;
-use App\Modules\Syllabus\Application\DraftCompleteness;
 use App\Modules\Syllabus\Domain\PlanningTable;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationResult;
@@ -21,7 +20,6 @@ class ValidateDraft
     public const RULE_VERSION = 'planning-v2';
 
     public function __construct(
-        private readonly DraftCompleteness $completeness,
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
     ) {}
@@ -47,10 +45,14 @@ class ValidateDraft
             $issues = [];
 
             foreach ($fields as $field) {
+                $detached = $field->block?->configuracion['detached_fields'] ?? [];
+                if (is_array($detached) && array_key_exists($field->clave, $detached)) {
+                    continue;
+                }
                 $fieldRows = $rows->get($field->id, collect());
-                $missing = $field->obligatorio && ($field->tipo === 'repetible'
+                $missing = $field->tipo === 'repetible'
                     ? $fieldRows->isEmpty()
-                    : ! $this->filled($values->get($field->id)?->valor));
+                    : ! $this->filled($values->get($field->id)?->valor);
                 if ($missing) {
                     $issues[] = [
                         'field_id' => $field->id,
@@ -75,7 +77,6 @@ class ValidateDraft
                 }
             }
 
-            $summary = $this->completeness->calculate($locked);
             $run = ValidationRun::query()->create([
                 'silabo_id' => $locked->id,
                 'ejecutado_por' => $actor->id,
@@ -84,7 +85,6 @@ class ValidateDraft
                 'version_bloqueo' => $locked->version_bloqueo,
                 'errores_bloqueantes' => count($issues),
                 'advertencias' => 0,
-                'porcentaje_completitud' => $summary['percentage'],
                 'completado_en' => now(),
             ]);
             foreach ($issues as $issue) {
@@ -96,7 +96,6 @@ class ValidateDraft
                     'mensaje' => $issue['message'],
                 ]);
             }
-            $locked->update(['porcentaje_completitud' => $summary['percentage']]);
             $activeRole = $this->roles->resolve($request);
             $this->audit->execute(
                 actorId: $actor->id,

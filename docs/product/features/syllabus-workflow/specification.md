@@ -17,10 +17,12 @@
 - COR-02 prioriza el listado de convocatorias y abre su formulario de preparación desde una
   acción principal en un panel lateral derecho; conserva allí los errores hasta corregirlos.
 - El sistema genera el conjunto esperado de sílabos sin duplicar el canónico.
-- El docente edita por secciones, hereda datos maestros y ve completitud/errores.
+- El docente edita por secciones, hereda datos maestros y ve los errores de validación.
 - El autoguardado y el guardado explícito evitan pérdida y muestran su estado.
 - La concurrencia no sobrescribe silenciosamente trabajo de otro colaborador.
 - Enviar/reenviar ejecuta validaciones obligatorias y crea una revisión inmutable.
+- `borrador` identifica el trabajo editable e `iniciado_en` conserva cuándo comenzó;
+  un borrador puede estar incompleto hasta la validación de envío.
 - El coordinador observa una revisión concreta, solicita corrección o aprueba.
 - COR-06 mantiene la revisión como página completa, pero abre el alta de observaciones
   desde una acción principal en un panel lateral derecho.
@@ -33,6 +35,7 @@
 - Una transición no permitida falla sin cambios parciales.
 - Abrir sin un logo propio de la facultad falla sin crear sílabos.
 - Repetir una petición con la misma clave idempotente no crea dos revisiones.
-- El porcentaje y los conteos de convocatoria coinciden con los expedientes filtrados.
+- Los conteos de convocatoria coinciden con los expedientes filtrados; no se calcula
+  porcentaje de llenado por cantidad de campos.
 - Un borrador no puede cambiar su versión de plantilla después de creado.
 - Ningún rol puede editar una revisión enviada o aprobada.

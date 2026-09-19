@@ -62,9 +62,6 @@ class OpenConvocation
                 }]);
             }
             $template = $convocation->process->template;
-            if (! $template->activo) {
-                throw ValidationException::withMessages(['convocation' => 'La plantilla institucional está inactiva.']);
-            }
             $this->templateStructure->assertUsable($template, 'convocation');
             if ($convocation->sources->isEmpty()
                 || $convocation->sources->contains(fn ($source): bool => ! $source->activo)) {

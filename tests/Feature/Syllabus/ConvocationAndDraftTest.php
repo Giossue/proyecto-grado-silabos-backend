@@ -273,7 +273,6 @@ class ConvocationAndDraftTest extends TestCase
 
         $requiredEditable = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
-            ->where('obligatorio', true)
             ->where('heredado', false)
             ->get();
         foreach ($requiredEditable as $field) {
@@ -292,7 +291,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $lastRun = ValidationRun::query()->whereKeyNot($firstRun->id)->firstOrFail();
         $this->assertSame(0, $lastRun->errores_bloqueantes);
-        $this->assertSame('100.00', $lastRun->porcentaje_completitud);
     }
 
     public function test_planning_with_wrong_hours_can_be_saved_but_fails_deterministic_validation(): void

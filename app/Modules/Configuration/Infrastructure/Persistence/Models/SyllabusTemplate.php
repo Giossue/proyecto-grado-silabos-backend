@@ -12,9 +12,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * enviada conserva su propia copia de la estructura, así que aquí no hay versiones.
  *
  * @property string $id
- * @property string $nombre
- * @property string|null $descripcion
- * @property bool $activo
  * @property array<string, mixed>|null $mapeo_documento
  * @property int $sections_count
  * @property int $revision_configuracion
@@ -24,13 +21,9 @@ class SyllabusTemplate extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'nombre' => 'nombre_plantilla_silabo',
-        'descripcion' => 'descripcion_plantilla_silabo',
-        'activo' => 'plantilla_silabo_activa',
         'mapeo_documento' => 'mapeo_documento_plantilla',
     ];
 
-    /** Nombre universal: no se elige ni se cambia, porque solo hay una. */
     public const INSTITUTIONAL_NAME = 'Plantilla institucional de sílabo';
 
     public $timestamps = false;
@@ -38,18 +31,20 @@ class SyllabusTemplate extends Model
     protected $table = 'plantillas_silabo';
 
     /** @var list<string> */
-    protected $fillable = ['nombre', 'descripcion', 'activo', 'mapeo_documento'];
+    protected $fillable = ['mapeo_documento'];
 
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['activo' => 'boolean', 'mapeo_documento' => 'array', 'revision_configuracion' => 'integer'];
+        return ['mapeo_documento' => 'array', 'revision_configuracion' => 'integer'];
     }
 
     /** @return HasMany<TemplateSection, $this> */
     public function sections(): HasMany
     {
-        return $this->hasMany(TemplateSection::class, 'plantilla_id')->orderBy('posicion');
+        return $this->hasMany(TemplateSection::class, 'plantilla_id')
+            ->whereNull('componente_padre_id')
+            ->orderBy('posicion');
     }
 
     /** @return HasMany<TemplateBlock, $this> */

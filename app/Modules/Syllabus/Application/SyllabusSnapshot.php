@@ -5,6 +5,7 @@ namespace App\Modules\Syllabus\Application;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -32,7 +33,7 @@ class SyllabusSnapshot
         return [
             'schema_version' => 4,
             'template_id' => $syllabus->plantilla_id,
-            'template_name' => $syllabus->template->nombre,
+            'template_name' => SyllabusTemplate::INSTITUTIONAL_NAME,
             // La copia lleva también el mapa del documento: la revisión se exporta desde
             // sí misma aunque la plantilla haya cambiado después.
             'document_mapping' => $syllabus->template->mapeo_documento,

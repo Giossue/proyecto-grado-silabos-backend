@@ -80,13 +80,11 @@ class CreateSyllabusProcess
     /** La plantilla es una sola (I-32): el proceso la toma tal como está. */
     public static function institutionalTemplate(): SyllabusTemplate
     {
-        $template = SyllabusTemplate::query()
-            ->where('activo', true)
-            ->first();
+        $template = SyllabusTemplate::query()->first();
 
         if ($template === null) {
             throw ValidationException::withMessages([
-                'process' => 'No existe una plantilla institucional activa. Créela en Plantillas antes de preparar el proceso.',
+                'process' => 'No existe una plantilla institucional. Créela en Plantillas antes de preparar el proceso.',
             ]);
         }
 

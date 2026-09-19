@@ -215,7 +215,6 @@ class TeacherReliefTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $fields = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
-            ->where('obligatorio', true)
             ->where('heredado', false)
             ->get();
         foreach ($fields as $field) {

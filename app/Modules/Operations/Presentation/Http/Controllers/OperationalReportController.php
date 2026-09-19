@@ -32,7 +32,6 @@ class OperationalReportController extends Controller
             }
         }
         $total = array_sum($counts);
-        $averageCompletion = (float) ((clone $query)->avg('porcentaje_completitud') ?? 0);
         $convocations = Convocation::query()
             ->where('carrera_id', $careerId)
             ->with(['career:id,nombre', 'process.academicPeriod:id,codigo'])
@@ -87,7 +86,7 @@ class OperationalReportController extends Controller
                 'convocation' => $syllabus->convocation->nombre,
                 'period' => $syllabus->convocation->process->academicPeriod->codigo,
                 'state' => $syllabus->estado,
-                'completion' => (float) $syllabus->porcentaje_completitud,
+                'iniciado_en' => $syllabus->iniciado_en?->toIso8601String(),
                 'teachers' => $syllabus->teachers->pluck('nombre')->values(),
                 'unresolved_observations' => (int) $syllabus->unresolved_observations_count,
                 'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
@@ -107,7 +106,6 @@ class OperationalReportController extends Controller
                 'teacher_action' => $counts['sin_iniciar'] + $counts['borrador'] + $counts['correccion_solicitada'],
                 'coordination_action' => $counts['en_revision'],
                 'approved' => $counts['aprobado'],
-                'average_completion' => round($averageCompletion, 1),
                 'states' => $counts,
             ],
             'convocation_breakdown' => $convocationBreakdown,

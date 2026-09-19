@@ -79,7 +79,6 @@ class ResetSyllabus
 
             $discarded = [
                 'previous_state' => $locked->estado,
-                'discarded_completion' => (float) $locked->porcentaje_completitud,
                 'discarded_values' => $locked->values()->count(),
                 'discarded_rows' => $locked->rows()->count(),
             ];
@@ -93,7 +92,6 @@ class ResetSyllabus
             $locked->update([
                 'estado' => 'sin_iniciar',
                 'version_bloqueo' => 0,
-                'porcentaje_completitud' => 0,
                 'iniciado_en' => null,
                 'guardado_en' => null,
                 'contexto_academico' => $this->academicContext->build($scheduledSubject),

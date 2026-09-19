@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $etiqueta
  * @property string|null $ayuda
  * @property string $tipo
- * @property bool $obligatorio
  * @property bool $heredado
  * @property string|null $origen_maestro
  * @property bool $editable_docente
@@ -38,6 +37,7 @@ class FieldDefinition extends Model
         'reglas' => 'reglas_definicion_campo',
         'opciones' => 'opciones_definicion_campo',
         'posicion' => 'posicion_definicion_campo',
+        'bloque_plantilla_id' => 'componente_plantilla_id',
     ];
 
     public $timestamps = false;
@@ -52,7 +52,6 @@ class FieldDefinition extends Model
         'etiqueta',
         'ayuda',
         'tipo',
-        'obligatorio',
         'heredado',
         'origen_maestro',
         'editable_docente',
@@ -68,7 +67,6 @@ class FieldDefinition extends Model
     protected function casts(): array
     {
         return [
-            'obligatorio' => 'boolean',
             'heredado' => 'boolean',
             'editable_docente' => 'boolean',
             'ia_habilitada' => 'boolean',
@@ -88,6 +86,6 @@ class FieldDefinition extends Model
     /** @return BelongsTo<TemplateBlock, $this> */
     public function block(): BelongsTo
     {
-        return $this->belongsTo(TemplateBlock::class, 'bloque_plantilla_id');
+        return $this->belongsTo(TemplateBlock::class, 'componente_plantilla_id');
     }
 }

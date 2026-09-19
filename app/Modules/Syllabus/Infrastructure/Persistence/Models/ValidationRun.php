@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $version_bloqueo
  * @property int $errores_bloqueantes
  * @property int $advertencias
- * @property string $porcentaje_completitud
  * @property CarbonImmutable $completado_en
  */
 class ValidationRun extends Model
@@ -33,7 +32,7 @@ class ValidationRun extends Model
     /** @var list<string> */
     protected $fillable = [
         'silabo_id', 'ejecutado_por', 'version_reglas', 'estado', 'version_bloqueo',
-        'errores_bloqueantes', 'advertencias', 'porcentaje_completitud', 'completado_en',
+        'errores_bloqueantes', 'advertencias', 'completado_en',
     ];
 
     /** @return array<string, string> */
@@ -43,7 +42,6 @@ class ValidationRun extends Model
             'version_bloqueo' => 'integer',
             'errores_bloqueantes' => 'integer',
             'advertencias' => 'integer',
-            'porcentaje_completitud' => 'decimal:2',
             'completado_en' => 'immutable_datetime',
         ];
     }

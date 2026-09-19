@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Support\Database\MapsLegacyColumnNames;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,19 +27,29 @@ class TemplateBlock extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'clave' => 'clave_bloque_plantilla',
-        'tipo' => 'tipo_bloque_plantilla',
-        'titulo' => 'titulo_bloque_plantilla',
-        'configuracion' => 'configuracion_bloque_plantilla',
-        'posicion' => 'posicion_bloque_plantilla',
+        'seccion_plantilla_id' => 'componente_padre_id',
+        'clave' => 'clave_componente_plantilla',
+        'tipo' => 'tipo_componente_plantilla',
+        'titulo' => 'titulo_componente_plantilla',
+        'configuracion' => 'configuracion_componente_plantilla',
+        'posicion' => 'posicion_componente_plantilla',
     ];
 
     public $timestamps = false;
 
-    protected $table = 'bloques_plantilla';
+    protected $table = 'componentes_plantilla';
 
     /** @var list<string> */
     protected $fillable = ['plantilla_id', 'seccion_plantilla_id', 'clave', 'tipo', 'titulo', 'configuracion', 'posicion'];
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('bloque', function (Builder $builder): void {
+            $table = $builder->getModel()->getTable();
+            $builder->where("{$table}.tipo_componente_plantilla", '<>', 'seccion')
+                ->whereNotNull("{$table}.componente_padre_id");
+        });
+    }
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -55,13 +66,13 @@ class TemplateBlock extends Model
     /** @return BelongsTo<TemplateSection, $this> */
     public function section(): BelongsTo
     {
-        return $this->belongsTo(TemplateSection::class, 'seccion_plantilla_id');
+        return $this->belongsTo(TemplateSection::class, 'componente_padre_id');
     }
 
     /** @return HasMany<FieldDefinition, $this> */
     public function fields(): HasMany
     {
-        return $this->hasMany(FieldDefinition::class, 'bloque_plantilla_id')->orderBy('posicion');
+        return $this->hasMany(FieldDefinition::class, 'componente_plantilla_id')->orderBy('posicion');
     }
 
     public function configuredContentType(): ?string

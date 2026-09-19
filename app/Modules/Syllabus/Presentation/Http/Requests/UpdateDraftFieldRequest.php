@@ -82,7 +82,9 @@ class UpdateDraftFieldRequest extends FormRequest
     /** @return list<mixed> */
     private function valueRules(FieldDefinition $field): array
     {
-        $presence = $field->obligatorio ? 'required' : 'nullable';
+        // El borrador puede guardarse incompleto; la obligatoriedad se comprueba al
+        // validar o enviar el sílabo.
+        $presence = 'nullable';
 
         return match ($field->tipo) {
             'texto_corto' => [$presence, 'string', 'max:1000'],

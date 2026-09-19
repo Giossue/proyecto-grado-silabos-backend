@@ -216,7 +216,6 @@ class DashboardController extends Controller
             ->filter()
             ->sort()
             ->first();
-        $completion = (float) ($own()->whereIn('estado', ['borrador', 'correccion_solicitada'])->avg('porcentaje_completitud') ?? 0);
 
         return [
             [
@@ -227,13 +226,6 @@ class DashboardController extends Controller
                 'hint' => $pending === 0 ? 'Nada pendiente por ahora' : 'Aún no enviados a revisión',
             ],
             $this->daysLeftMetric($deadline, $pending === 0 ? 'Sin entregas pendientes' : null),
-            [
-                'key' => 'completion',
-                'label' => 'Avance de sus borradores',
-                'value' => (int) round($completion),
-                'suffix' => '%',
-                'hint' => 'Promedio de los campos completados',
-            ],
             [
                 'key' => 'correction_requested',
                 'label' => 'Por corregir',

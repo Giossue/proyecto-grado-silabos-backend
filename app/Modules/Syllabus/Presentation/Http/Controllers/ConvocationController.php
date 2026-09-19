@@ -5,6 +5,7 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\Actions\CreateConvocation;
 use App\Modules\Syllabus\Application\Actions\OpenConvocation;
@@ -50,7 +51,7 @@ class ConvocationController extends Controller
                     }
                 })
                 ->with([
-                    'academicPeriod:id,codigo', 'template:id,nombre',
+                    'academicPeriod:id,codigo', 'template:id',
                     'convocations' => fn ($career) => $career->where('carrera_id', $careerId)->withCount('syllabi'),
                 ])
                 ->orderByDesc('inicia_en')
@@ -66,7 +67,7 @@ class ConvocationController extends Controller
                         'state' => $convocation->estado ?? 'sin_iniciar',
                         'process_state' => $process->estado,
                         'period' => $process->academicPeriod->codigo,
-                        'template' => $process->template->nombre,
+                        'template' => SyllabusTemplate::INSTITUTIONAL_NAME,
                         'syllabi_count' => $convocation->syllabi_count ?? 0,
                     ];
                 }),
@@ -105,7 +106,7 @@ class ConvocationController extends Controller
                     'state' => $convocation->process->estado,
                 ],
                 'period' => $convocation->process->academicPeriod->codigo,
-                'template' => $convocation->process->template->nombre,
+                'template' => SyllabusTemplate::INSTITUTIONAL_NAME,
                 'sources' => $convocation->sources->map(fn (AcademicSource $source) => $source->nombre)->values(),
                 'start_date' => $convocation->deadlines->firstWhere('etapa', 'inicio')?->vence_en->toIso8601String(),
                 'draft_deadline' => $convocation->deadlines->firstWhere('etapa', 'borrador')?->vence_en->toIso8601String(),
@@ -121,7 +122,7 @@ class ConvocationController extends Controller
                     'subject' => $syllabus->academicSubjectName(),
                     'code' => $syllabus->academicSubjectCode(),
                     'state' => $syllabus->estado,
-                    'completion' => (float) $syllabus->porcentaje_completitud,
+                    'iniciado_en' => $syllabus->iniciado_en?->toIso8601String(),
                     'parallels' => $syllabus->scopes->pluck('parallel.codigo')->unique()->values(),
                     'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
                 ])->values(),

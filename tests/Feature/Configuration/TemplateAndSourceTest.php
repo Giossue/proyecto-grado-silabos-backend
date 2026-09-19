@@ -154,7 +154,7 @@ class TemplateAndSourceTest extends TestCase
             $blocks->pluck('clave')->all(),
         );
         $this->assertSame('texto', $blocks[1]->configuracion['table']['columns'][0]['key']);
-        $this->assertTrue($blocks->every(fn ($block): bool => $block->fields->firstOrFail()->obligatorio));
+        $this->assertFalse(Schema::hasColumn('definiciones_campo', 'obligatorio'));
         $this->assertSame('booleano', $blocks[3]->fields->firstOrFail()->tipo);
         $this->assertSame('seleccion_multiple', $blocks[4]->fields->firstOrFail()->tipo);
         $this->assertSame('proyecto', $blocks[4]->fields->firstOrFail()->opciones[0]['value']);
@@ -187,7 +187,7 @@ class TemplateAndSourceTest extends TestCase
             ])
             ->assertJsonValidationErrors('fields.0.key');
 
-        $this->assertDatabaseMissing('secciones_plantilla', ['clave_seccion_plantilla' => 'bloque_invalido']);
+        $this->assertDatabaseMissing('componentes_plantilla', ['clave_componente_plantilla' => 'bloque_invalido']);
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.template.fields.store', $template), [
@@ -361,7 +361,7 @@ class TemplateAndSourceTest extends TestCase
     public function test_field_properties_are_help_and_ai_only_and_every_field_stays_required(): void
     {
         $template = $this->createTemplate();
-        $this->assertSame(0, $template->fields()->where('obligatorio', false)->whereNotIn('clave', ['discapacidad_tipo', 'discapacidad_adaptacion'])->count());
+        $this->assertFalse(Schema::hasColumn('definiciones_campo', 'obligatorio'));
 
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $this->actingAsAdministrator()
@@ -384,7 +384,6 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame('Redáctelo en infinitivo.', $field->ayuda);
         $this->assertTrue($field->ia_habilitada);
         $this->assertFalse($field->ia_coordinacion_configurable);
-        $this->assertTrue($field->obligatorio);
         $this->assertTrue($field->editable_docente);
         $this->assertFalse($field->heredado);
         $this->assertNull($field->origen_maestro);
@@ -471,8 +470,8 @@ class TemplateAndSourceTest extends TestCase
             ->deleteJson(route('api.v1.admin.template.blocks.destroy', ['template' => $version, 'block' => $second]))
             ->assertSuccessful();
 
-        $this->assertDatabaseMissing('bloques_plantilla', ['id' => $second->id]);
-        $this->assertDatabaseMissing('definiciones_campo', ['bloque_plantilla_id' => $second->id]);
+        $this->assertDatabaseMissing('componentes_plantilla', ['id' => $second->id]);
+        $this->assertDatabaseMissing('definiciones_campo', ['componente_plantilla_id' => $second->id]);
     }
 
     public function test_administrator_designs_a_complex_table_on_a_block(): void
@@ -582,8 +581,8 @@ class TemplateAndSourceTest extends TestCase
             ->deleteJson(route('api.v1.admin.template.sections.destroy', ['template' => $version, 'section' => $created]))
             ->assertSuccessful();
 
-        $this->assertDatabaseMissing('secciones_plantilla', ['id' => $created->id]);
-        $this->assertDatabaseMissing('bloques_plantilla', ['seccion_plantilla_id' => $created->id]);
+        $this->assertDatabaseMissing('componentes_plantilla', ['id' => $created->id]);
+        $this->assertDatabaseMissing('componentes_plantilla', ['componente_padre_id' => $created->id]);
     }
 
     public function test_coordinator_creates_and_edits_source_document(): void

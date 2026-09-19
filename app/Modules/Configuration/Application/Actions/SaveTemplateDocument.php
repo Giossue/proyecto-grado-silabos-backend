@@ -263,7 +263,7 @@ final class SaveTemplateDocument
                     'plantilla_id' => $block->plantilla_id, 'clave' => $key,
                     'etiqueta' => $attrs['label'], 'tipo' => $attrs['kind'],
                     'opciones' => $attrs['options'],
-                    'obligatorio' => true, 'heredado' => false, 'editable_docente' => true,
+                    'heredado' => false, 'editable_docente' => true,
                     'ia_habilitada' => false, 'ia_coordinacion_configurable' => true,
                     'posicion' => ++$position,
                 ]);
@@ -279,12 +279,11 @@ final class SaveTemplateDocument
                     }
                 } else {
                     $detached[$field->clave] ??= $field->only([
-                        'obligatorio',
                         'editable_docente',
                         'ia_habilitada',
                         'ia_coordinacion_configurable',
                     ]);
-                    $field->update(['obligatorio' => false, 'editable_docente' => false, 'ia_habilitada' => false]);
+                    $field->update(['editable_docente' => false, 'ia_habilitada' => false]);
                 }
             }
             $configuration['detached_fields'] = $detached;

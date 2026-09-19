@@ -69,8 +69,7 @@ class RequestSyllabusAiReview
                 ->latest('completado_en')
                 ->first();
 
-            if ((float) $locked->porcentaje_completitud < 100
-                || $validation === null
+            if ($validation === null
                 || $validation->errores_bloqueantes > 0) {
                 throw ValidationException::withMessages([
                     'syllabus' => 'Complete y valide el sílabo sin errores antes de solicitar la revisión de IA',

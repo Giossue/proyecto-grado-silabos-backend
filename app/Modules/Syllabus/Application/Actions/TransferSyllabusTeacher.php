@@ -114,8 +114,6 @@ class TransferSyllabusTeacher
             }
 
             $previousState = $locked->estado;
-            $discardedCompletion = null;
-
             if ($previousState === 'aprobado') {
                 // Se reabre después de mover a los colaboradores, para que el aviso de
                 // reapertura llegue a quien entra y no a quien acaba de salir. La revisión
@@ -131,14 +129,11 @@ class TransferSyllabusTeacher
             }
 
             if ($previousState === 'borrador') {
-                // DT-08: el borrador sin enviar no es evidencia institucional. Se conserva
-                // el porcentaje perdido en auditoría para que el descarte sea rastreable.
-                $discardedCompletion = (float) $locked->porcentaje_completitud;
+                // DT-08: el borrador sin enviar no es evidencia institucional.
                 FieldValue::query()->where('silabo_id', $locked->id)->delete();
                 RepeatableRow::query()->where('silabo_id', $locked->id)->delete();
                 $locked->update([
                     'estado' => 'sin_iniciar',
-                    'porcentaje_completitud' => 0,
                     'version_bloqueo' => $locked->version_bloqueo + 1,
                     'iniciado_en' => null,
                     'guardado_en' => null,
@@ -157,7 +152,6 @@ class TransferSyllabusTeacher
                     'incoming_user_id' => $incomingUserId,
                     'previous_state' => $previousState,
                     'parallels_moved' => $collaborations->count(),
-                    'discarded_completion' => $discardedCompletion,
                 ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );

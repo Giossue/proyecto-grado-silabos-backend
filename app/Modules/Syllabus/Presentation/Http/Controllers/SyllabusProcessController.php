@@ -28,7 +28,7 @@ class SyllabusProcessController extends Controller
 
         $payload = [
             'processes' => SyllabusProcess::query()
-                ->with(['template:id,nombre', 'academicPeriod:id,codigo'])
+                ->with(['template:id', 'academicPeriod:id,codigo'])
                 ->withCount('convocations')
                 ->orderByDesc('inicia_en')
                 ->get()
@@ -36,7 +36,7 @@ class SyllabusProcessController extends Controller
                     'id' => $process->id,
                     'name' => $process->nombre,
                     'state' => $process->estado,
-                    'template' => $process->template->nombre,
+                    'template' => SyllabusTemplate::INSTITUTIONAL_NAME,
                     'period_id' => $process->periodo_academico_id,
                     'period_name' => $process->academicPeriod->codigo,
                     'starts_at' => $process->inicia_en->toIso8601String(),
@@ -45,9 +45,9 @@ class SyllabusProcessController extends Controller
                     'configurable' => $process->isConfigurable(),
                 ]),
             // La plantilla es una sola: se informa cuál es, no se elige.
-            'template' => SyllabusTemplate::query()
-                ->where('activo', true)
-                ->value('nombre'),
+            'template' => SyllabusTemplate::query()->exists()
+                ? SyllabusTemplate::INSTITUTIONAL_NAME
+                : null,
             'periods' => AcademicPeriod::query()
                 ->orderByDesc('fecha_inicio')
                 ->get(['id', 'codigo']),

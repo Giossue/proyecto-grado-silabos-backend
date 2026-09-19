@@ -99,7 +99,6 @@ class ReviewWorkflowTest extends TestCase
             'document' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Texto fijo futuro']]]]],
             'fingerprint' => SaveTemplateDocument::fingerprint($objectiveBlock),
         ])->assertSuccessful();
-        $this->assertFalse($objective->fresh()->obligatorio);
         $this->assertFalse($objective->fresh()->editable_docente);
         $this->assertTrue($syllabus->values()->where('definicion_campo_id', $objective->id)->exists());
         $this->assertSame($snapshot, $revision->fresh()->fotografia);
@@ -464,7 +463,6 @@ class ReviewWorkflowTest extends TestCase
             'plantilla_id' => $syllabus->plantilla_id,
             'estado' => 'en_revision',
             'version_bloqueo' => 1,
-            'porcentaje_completitud' => 100,
             'iniciado_en' => now(),
             'guardado_en' => now(),
         ]);
@@ -535,7 +533,6 @@ class ReviewWorkflowTest extends TestCase
         $syllabus = $this->createStartedDraft();
         $fields = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
-            ->where('obligatorio', true)
             ->where('heredado', false)
             ->get();
         foreach ($fields as $field) {
@@ -588,7 +585,6 @@ class ReviewWorkflowTest extends TestCase
         $fresh = $syllabus->fresh();
         $this->assertSame('sin_iniciar', $fresh->estado);
         $this->assertSame(0, $fresh->version_bloqueo);
-        $this->assertSame(0.0, (float) $fresh->porcentaje_completitud);
         // Solo quedan los valores heredados de la malla; lo escrito se descartó.
         $this->assertSame(0, $fresh->values()->where('heredado', false)->count());
         $this->assertSame(0, $fresh->rows()->count());

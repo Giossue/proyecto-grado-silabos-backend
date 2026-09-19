@@ -117,7 +117,6 @@ class TemplateDocumentTest extends TestCase
         $new = $block->fields()->where('clave', 'respuesta_extra')->firstOrFail();
         $this->assertTrue($new->editable_docente);
         $this->assertFalse($new->heredado);
-        $this->assertTrue($new->obligatorio);
         $this->assertSame('numero', $new->tipo);
         $this->assertSame('Cantidad configurada', $new->etiqueta);
         $this->assertSame('Indique una cantidad.', $new->ayuda);
@@ -382,7 +381,6 @@ class TemplateDocumentTest extends TestCase
             'Ejemplo',
             $saved['content'][0]['content'][1]['content'][0]['content'][0]['content'][0]['text'],
         );
-        $this->assertFalse($field->fresh()->obligatorio);
         $this->assertFalse($field->fresh()->editable_docente);
         $this->assertArrayHasKey(
             $field->clave,
@@ -418,12 +416,10 @@ class TemplateDocumentTest extends TestCase
         $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
         $this->patch($url, ['title' => 'Objetivo institucional', 'document' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]], 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
             ->assertSuccessful();
-        $this->assertFalse($field->fresh()->obligatorio);
         $this->assertFalse($field->fresh()->editable_docente);
         $this->assertSame('Objetivo institucional', $block->fresh()->titulo);
         $this->patch($url, ['document' => $this->document(), 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh())])
             ->assertSuccessful();
-        $this->assertTrue($field->fresh()->obligatorio);
         $this->assertTrue($field->fresh()->editable_docente);
         $this->assertArrayNotHasKey($field->clave, $block->fresh()->configuracion['detached_fields']);
     }

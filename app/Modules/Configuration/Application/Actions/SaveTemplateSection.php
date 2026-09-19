@@ -77,7 +77,7 @@ class SaveTemplateSection
                     'plantilla_id' => $template->id,
                     'seccion_plantilla_id' => $section->id,
                     // La clave del campo ya es única dentro de la plantilla y cabe en
-                    // la columna de 100 caracteres de bloques_plantilla.
+                    // la columna de 120 caracteres de componentes_plantilla.
                     'clave' => $fieldKey,
                     'tipo' => in_array($contentType, ['table', 'bulleted_list', 'numbered_list'], true)
                         ? 'repetible'
@@ -98,7 +98,6 @@ class SaveTemplateSection
                         default => 'repetible',
                     },
                     'ayuda' => $fieldData['help'] ?? null,
-                    'obligatorio' => true,
                     'heredado' => false,
                     'editable_docente' => true,
                     'ia_habilitada' => (bool) ($fieldData['ai_enabled'] ?? false),
