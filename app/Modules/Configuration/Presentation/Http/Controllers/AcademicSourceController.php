@@ -5,6 +5,7 @@ namespace App\Modules\Configuration\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Application\Actions\CreateAcademicSource;
+use App\Modules\Configuration\Application\Actions\DeleteAcademicSource;
 use App\Modules\Configuration\Application\Actions\RequestAcademicSourceOcr;
 use App\Modules\Configuration\Application\Actions\UpdateAcademicSource;
 use App\Modules\Configuration\Application\Actions\UpdateAcademicSourceContent;
@@ -30,6 +31,7 @@ class AcademicSourceController extends Controller
             'processLock' => $locks->careerLockReason($activeRole?->carrera_id),
             'sources' => AcademicSource::query()
                 ->where('carrera_id', $activeRole?->carrera_id)
+                ->where('activo', true)
                 ->orderBy('nombre')
                 ->with('latestExtraction')
                 ->get()
@@ -92,6 +94,18 @@ class AcademicSourceController extends Controller
         $message = 'Fuente actualizada.';
 
         return response()->json(['message' => $message]);
+    }
+
+    public function destroy(
+        AcademicSource $source,
+        ManageAcademicSourceRequest $request,
+        DeleteAcademicSource $action,
+    ): JsonResponse {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $action->execute($source, $actor, $request);
+
+        return response()->json(['message' => 'Fuente eliminada.']);
     }
 
     public function updateContent(

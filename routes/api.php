@@ -207,6 +207,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.sources.show');
             Route::patch('coordination/sources/{source}', [AcademicSourceController::class, 'update'])
                 ->middleware('active-role')->name('api.v1.coordination.sources.update');
+            Route::delete('coordination/sources/{source}', [AcademicSourceController::class, 'destroy'])
+                ->middleware('active-role')->name('api.v1.coordination.sources.destroy');
             Route::put('coordination/sources/{source}/content', [AcademicSourceController::class, 'updateContent'])
                 ->middleware('active-role')->name('api.v1.coordination.sources.content.update');
             Route::post('coordination/sources/{source}/pdf', [AcademicSourceController::class, 'ingestPdf'])

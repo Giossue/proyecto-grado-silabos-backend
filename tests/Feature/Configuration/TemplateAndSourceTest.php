@@ -642,6 +642,26 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame(1, AcademicSource::query()->where('nombre', 'Reglamento académico')->count());
     }
 
+    public function test_coordinator_can_remove_a_source_without_erasing_its_history(): void
+    {
+        $source = $this->createSourceAsCoordinator('Fuente para retirar');
+
+        $this->actingAsCoordinator()
+            ->deleteJson(route('api.v1.coordination.sources.destroy', $source))
+            ->assertOk()
+            ->assertJsonPath('message', 'Fuente eliminada.');
+
+        $this->assertFalse($source->fresh()->activo);
+        $this->actingAsCoordinator()
+            ->getJson(route('api.v1.coordination.sources.index'))
+            ->assertOk()
+            ->assertJsonCount(0, 'sources');
+        $this->assertDatabaseHas('eventos_auditoria', [
+            'accion_evento_auditoria' => 'fuente.eliminada',
+            'recurso_id' => $source->id,
+        ]);
+    }
+
     public function test_administrator_cannot_access_sources(): void
     {
         $source = $this->createSourceAsCoordinator('Fuente de coordinación');
@@ -656,6 +676,10 @@ class TemplateAndSourceTest extends TestCase
 
         $this->actingAsAdministrator()
             ->putJson(route('api.v1.coordination.sources.content.update', $source), ['content' => 'Edición indebida'])
+            ->assertForbidden();
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.coordination.sources.destroy', $source))
             ->assertForbidden();
     }
 

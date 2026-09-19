@@ -25,6 +25,9 @@
 - Una fuente académica es un documento de la Coordinación de la carrera (I-26): nombre,
   descripción y un contenido en Markdown. No tiene versiones ni conflictos; sus
   fragmentos de búsqueda son un índice derivado, y Administración no participa.
+- Eliminar una fuente la desactiva y la retira del listado y de futuras convocatorias;
+  conserva el contenido, el PDF y las referencias históricas para no romper sílabos ni
+  evidencias de IA existentes.
 - El contenido se redacta en COR-11 como una hoja de documento visual con cinta de
   opciones (encabezados, énfasis, listas, cita, tabla con selector de tamaño, código,
   enlace y divisor). Se guarda como Markdown seguro, pero la Coordinación no ve ni
