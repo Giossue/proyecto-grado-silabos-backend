@@ -75,10 +75,9 @@ No expone consultas ad hoc sobre sus tablas, modelos Eloquent mutables ni lógic
 - `ImportCompleted`
 
 Los nombres representan hechos ya confirmados. Efectos externos se procesan después del
-commit y pueden usar outbox.
+commit y pueden registrarse como `ejecuciones_trabajo` pendientes.
 
 ## Soporte común
 
 `app/Support` solo contiene preocupaciones verdaderamente transversales: UUID, reloj,
 idempotencia, paginación, trazas y resultados. No se convierte en un módulo “cajón”.
-

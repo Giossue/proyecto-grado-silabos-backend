@@ -37,9 +37,10 @@
 - Solicitud, ejecución y publicación son idempotentes; ambos objetos privados conservan
   revisión, plantilla, renderizador, idioma, fecha, tamaño y huella. Cada descarga vuelve a
   autorizar por registro.
-- Los eventos de envío, reenvío, corrección, aprobación y reapertura insertan un outbox
-  dentro de la transacción. El consumidor entrega una sola notificación interna. No se
-  activa correo mientras `PV-15` continúe abierto.
+- Los eventos de envío, reenvío, corrección, aprobación y reapertura crean una
+  `ejecucion_trabajo` pendiente dentro de la transacción. El consumidor entrega una sola
+  notificación interna y permite reintento idempotente. No se activa correo mientras
+  `PV-15` continúe abierto.
 - COR-12 define sus indicadores en pantalla y aplica el alcance de carrera a agregados y
   detalle. No codifica metas institucionales.
 - ADM-09 expone estado, progreso, conteo acumulado y causa segura; el reintento conserva

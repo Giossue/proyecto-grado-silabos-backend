@@ -5,7 +5,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\RecordWorkflowOutbox;
+use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\CorrectionRequest;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
@@ -22,7 +22,7 @@ class RequestSyllabusCorrection
         private readonly ActiveRole $roles,
         private readonly RecordSyllabusTransition $transitions,
         private readonly RecordAuditEvent $audit,
-        private readonly RecordWorkflowOutbox $outbox,
+        private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
     ) {}
 
@@ -103,7 +103,7 @@ class RequestSyllabusCorrection
                 metadata: ['revision_number' => $revision->numero_revision, 'observation_count' => $observations->count()],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
-            $this->outbox->execute(
+            $this->notifications->execute(
                 syllabus: $syllabus,
                 eventType: 'silabo.correccion_solicitada',
                 deduplicationKey: "silabo.correccion_solicitada:{$correction->id}",

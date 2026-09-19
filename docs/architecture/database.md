@@ -177,7 +177,8 @@ inmediatamente el valor de Administración sin depender de una limpieza posterio
 ### Operación e integración
 
 `objetos_almacenados`, `artefactos_exportacion`, `notificaciones_internas`,
-`eventos_auditoria`, `eventos_salientes` (outbox transaccional), `ejecuciones_trabajo`.
+`eventos_auditoria` y `ejecuciones_trabajo`. La entrada del trabajo se guarda en la
+misma transacción que el cambio funcional; después del commit se despacha el job.
 Los archivos persistentes se describen mediante `objetos_almacenados`: por ejemplo,
 `facultades.logo_objeto_id` referencia el objeto privado de su logo. La tabla de
 dominio nunca almacena una ruta del disco como dato de negocio.
@@ -236,7 +237,7 @@ Como mínimo, prueba/define:
 - búsquedas de auditoría por recurso/actor/tiempo;
 - una estructura curricular única como atributos obligatorios de cada carrera;
 - código de asignatura único dentro de su carrera y datos académicos tipados por asignatura;
-- colas/outbox por estado y próximo intento.
+- colas y trabajos por estado, idempotencia y próximo intento.
 
 Usa índices parciales o constraints de exclusión PostgreSQL cuando expresen mejor la
 regla. Acompáñalos con pruebas en PostgreSQL real.

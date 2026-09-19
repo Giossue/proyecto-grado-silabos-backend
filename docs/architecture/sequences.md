@@ -78,7 +78,7 @@ sequenceDiagram
     Coo->>UI: Confirma aprobación de revisión N
     UI->>A: approve(revision N, idempotency_key)
     A->>DB: autorizar + validar estado/reglas/observaciones
-    A->>DB: transacción: Aprobacion(N) + estado Aprobado + auditoría + outbox
+    A->>DB: transacción: Aprobacion(N) + estado Aprobado + auditoría + ejecución pendiente
     A-->>UI: Aprobado; revisión N bloqueada
     O-->>O: habilita notificación/exportación después del commit
 
@@ -88,7 +88,7 @@ sequenceDiagram
         A->>DB: autorizar + transacción
         A->>DB: insertar Reapertura y nueva revisión de trabajo enlazada
         A->>DB: conservar Aprobacion(N) y revisión N intactas
-        A->>DB: transición + auditoría + outbox
+        A->>DB: transición + auditoría + ejecución pendiente
         A-->>UI: nueva revisión editable identificada
     end
 ```

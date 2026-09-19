@@ -16,7 +16,7 @@ $partesInglesas = [
     'snapshot', 'lock', 'token', 'key', 'value', 'owner', 'expiration', 'user', 'agent',
     'activity', 'connection', 'exception', 'failed', 'batch', 'migration', 'remember',
     'secret', 'recovery', 'must', 'change', 'resource', 'correlation', 'gateway',
-    'renderer', 'message', 'jobs', 'job', 'cache', 'sessions', 'outbox',
+    'renderer', 'message', 'jobs', 'job', 'cache', 'sessions',
 ];
 
 $tablasDeFramework = ['sesiones', 'trabajos_fallidos', 'restablecimientos_contrasena', 'migraciones'];

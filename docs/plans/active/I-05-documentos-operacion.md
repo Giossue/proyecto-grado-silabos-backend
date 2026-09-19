@@ -18,7 +18,7 @@ aprobada. Un trabajo idempotente genera ambos artefactos desde la misma entrada,
 guarda en almacenamiento privado, publica estado observable y reautoriza cada descarga.
 Coordinación consulta indicadores filtrados por carrera. Administración diagnostica
 trabajos y consulta auditoría append-only. Los eventos humanos producen notificaciones
-internas mediante outbox sin depender de correo.
+internas mediante ejecuciones persistidas sin depender de correo.
 
 ## Decisiones y puertas
 
@@ -27,8 +27,8 @@ internas mediante outbox sin depender de correo.
   coherentes para demostrar el flujo, pero la interfaz y documentación lo identifican
   como formato provisional hasta el spike con la plantilla autorizada.
 - PV-15 mantiene desactivado el correo institucional. I-05 entrega notificación interna
-  durable; el outbox conserva el punto de extensión sin inventar destinatarios externos
-  ni textos institucionales.
+  durable; `ejecuciones_trabajo` conserva la entrada, estado e idempotencia sin inventar
+  destinatarios externos ni textos institucionales.
 - PV-11 y PV-12 bloquean borrado/retención definitiva. No se implementa purga; objetos,
   artefactos, auditoría y notificaciones se conservan.
 - DT-04 usa el disco privado de Laravel y nombres físicos generados. Ninguna ruta interna
@@ -59,10 +59,10 @@ internas mediante outbox sin depender de correo.
 
 ## Pasos
 
-- [x] Crear esquema de objetos, artefactos, notificaciones y outbox.
+- [x] Crear esquema de objetos, artefactos, notificaciones y trabajos persistidos.
 - [x] Implementar puerto y renderer documental técnico provisional.
 - [x] Implementar solicitud, job idempotente, almacenamiento y descarga privada.
-- [x] Conectar outbox y notificaciones internas a transiciones críticas.
+- [x] Conectar trabajos persistidos y notificaciones internas a transiciones críticas.
 - [x] Construir UI-03, DOC-10, COR-12, ADM-09 y ADM-10.
 - [x] Probar autorización lateral, retry, fallos, huellas y consistencia DOCX/PDF.
 - [x] Actualizar trazabilidad y ejecutar `composer verify`.
@@ -75,8 +75,8 @@ internas mediante outbox sin depender de correo.
 - Escrituras de archivo usan rutas determinísticas e idempotentes. Un fallo deja, como
   máximo, un archivo privado no publicado que el reintento sobrescribe; no se borra hasta
   resolver retención.
-- Redis no es fuente de verdad: ejecución, outbox y artefacto permanecen en PostgreSQL y
-  pueden reencolarse.
+- Redis no es fuente de verdad: ejecución, entrada del trabajo y artefacto permanecen en
+  PostgreSQL y pueden reencolarse.
 - Descargar vuelve a autorizar el artefacto y nunca acepta una ruta suministrada por el
   cliente.
 
@@ -85,7 +85,7 @@ internas mediante outbox sin depender de correo.
 - Migración `2026_08_14_000007_create_document_and_operation_tables.php` y constraints
   PostgreSQL para relaciones, completitud e inmutabilidad.
 - `DocumentOperationsTest`: 6 casos y 152 aserciones; `ReviewWorkflowTest` protege además
-  la inserción del outbox en las cuatro transiciones humanas críticas.
+  la creación de trabajos en las cuatro transiciones humanas críticas.
 - Análisis focalizado de PHP/Larastan, tipado Vue y ESLint aprobados durante el desarrollo.
 - `composer verify`: ESLint, Prettier, TypeScript, Pint, Larastan nivel 7, 105 pruebas
   con 853 aserciones y build Vite aprobados el 2026-08-14.

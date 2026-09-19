@@ -34,7 +34,7 @@
 | URL de descarga filtrada | enlace entrega documento después | expiración corta y reautorización |
 | Revisión manipulada | aprobado se sobrescribe | append-only, constraints, huella, auditoría |
 | Carrera/reintento | dos envíos/aprobaciones | lock/versión, idempotencia, transacción |
-| Job replay | trabajo duplica efectos | clave única, estado persistido, outbox |
+| Job replay | trabajo duplica efectos | clave única, entrada y estado persistidos, idempotencia |
 | Prompt injection | fuente ordena exfiltrar/ignorar reglas | datos delimitados, sin tools/red, simulador independiente del contenido y salida validada |
 | Referencia inventada | IA cita fuente inexistente | snapshot de IDs autorizados, contrato y vínculo PostgreSQL |
 | SSRF/proveedor externo | una URL manipulada desvía contenido o la clave de IA | URL definida solo por operación, HTTPS obligatorio, sin credenciales embebidas ni redirecciones; clave en secreto de despliegue |

@@ -194,7 +194,6 @@ class AuditEventController extends Controller
             'version_plantilla' => 'Versión de plantilla',
             'plantilla_silabo' => 'Plantilla de sílabo',
             'ejecucion_ia' => 'Análisis de IA',
-            'evento_saliente' => 'Evento saliente',
             'asignacion_rol' => 'Asignación de rol',
             'usuario' => 'Usuario',
             default => 'Recurso del sistema',

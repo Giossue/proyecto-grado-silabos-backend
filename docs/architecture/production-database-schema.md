@@ -542,7 +542,8 @@ ejecuciones_validacion 1:N resultados_validacion
 
 ## ejecuciones_trabajo
 
-**Contexto:** seguimiento asíncrono genérico de IA, exportaciones y otros trabajos.
+**Contexto:** única tabla funcional para trabajos asíncronos y notificaciones; conserva
+la entrada, idempotencia, estado, progreso, intentos, resultado y error.
 
 ~~~text
 id UUID (PK)
@@ -561,6 +562,7 @@ encolado_en TIMESTAMPTZ NULL
 cola VARCHAR NOT NULL
 tipo_recurso VARCHAR NULL
 recurso_id UUID NULL
+entrada_ejecucion_trabajo JSONB NULL
 intentos_maximos SMALLINT NOT NULL
 ~~~
 
@@ -1020,29 +1022,10 @@ correlacion_id UUID NULL
 ocurrido_en TIMESTAMPTZ NOT NULL
 ~~~
 
-## eventos_salientes
-
-**Contexto:** outbox transaccional para publicar eventos de dominio.
-
-~~~text
-id UUID (PK)
-tipo_agregado VARCHAR NOT NULL
-agregado_id UUID NOT NULL
-tipo_evento VARCHAR NOT NULL
-clave_deduplicacion VARCHAR NOT NULL UNIQUE
-contenido_evento_saliente JSONB NOT NULL
-estado_evento_saliente VARCHAR NOT NULL
-intentos SMALLINT NOT NULL
-disponible_en TIMESTAMPTZ NOT NULL
-procesado_en TIMESTAMPTZ NULL
-codigo_error VARCHAR NULL
-mensaje_error TEXT NULL
-ocurrido_en TIMESTAMPTZ NOT NULL
-~~~
-
 ## trabajos_fallidos
 
-**Contexto:** trabajos fallidos de la cola Laravel.
+**Contexto:** registro técnico de Laravel para trabajos agotados; no es una tabla
+funcional del dominio.
 
 ~~~text
 id BIGINT (PK)

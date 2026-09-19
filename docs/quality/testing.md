@@ -24,7 +24,7 @@ No necesitan Laravel completo si la regla puede probarse aisladamente.
 - filtros/paginación/alcance;
 - revisión, observación, aprobación y reapertura;
 - carga/descarga privada;
-- eventos, outbox y dispatch después del commit.
+- eventos, trabajos persistidos y dispatch después del commit.
 
 ### Integración
 
@@ -132,7 +132,7 @@ manual de accesibilidad, previstas para I-08.
 - estructura, contenido, huellas y determinismo de DOCX/PDF desde la misma entrada;
 - descarga reautorizada y denegación lateral;
 - fallo seguro, conteo de intentos y reintento administrativo auditado;
-- outbox/notificación única, propiedad de lectura e inmutabilidad en PostgreSQL;
+- trabajo/notificación única, propiedad de lectura e inmutabilidad en PostgreSQL;
 - indicadores y detalle con el mismo alcance de carrera;
 - consulta administrativa y protección append-only de auditoría.
 

@@ -11,7 +11,7 @@ Route
       → regla de dominio
       → transacción
       → repositorios/Eloquent
-      → auditoría/outbox
+      → auditoría/trabajo persistido
   → respuesta JSON versionada
 ```
 
@@ -34,7 +34,7 @@ Envío, corrección, aprobación, reapertura, publicación y activación usan:
 3. validación de transición;
 4. transacción PostgreSQL;
 5. cambio + fotografía/revisión + evento de auditoría;
-6. outbox/trabajo después del commit;
+6. trabajo persistido y dispatch después del commit;
 7. respuesta idempotente.
 
 ## Validación

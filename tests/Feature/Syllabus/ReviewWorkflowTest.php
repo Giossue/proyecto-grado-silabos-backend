@@ -10,6 +10,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Application\RevisionDiff;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
@@ -152,10 +153,7 @@ class ReviewWorkflowTest extends TestCase
             'estado_origen' => 'borrador',
             'estado_destino' => 'en_revision',
         ]);
-        $this->assertDatabaseHas('eventos_salientes', [
-            'agregado_id' => $syllabus->id,
-            'tipo_evento' => 'silabo.enviado',
-        ]);
+        $this->assertWorkflowNotification($syllabus->id, 'silabo.enviado');
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $lockVersion,
@@ -282,10 +280,7 @@ class ReviewWorkflowTest extends TestCase
 
         $syllabus->refresh();
         $this->assertSame('correccion_solicitada', $syllabus->estado);
-        $this->assertDatabaseHas('eventos_salientes', [
-            'agregado_id' => $syllabus->id,
-            'tipo_evento' => 'silabo.correccion_solicitada',
-        ]);
+        $this->assertWorkflowNotification($syllabus->id, 'silabo.correccion_solicitada');
         $this->actingAsCoordinator()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'value' => 'PV-16 continúa denegada.',
@@ -382,10 +377,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
         $this->assertSame($revision->id, $approval->revision_silabo_id);
         $this->assertSame(64, strlen($approval->huella_sha256));
-        $this->assertDatabaseHas('eventos_salientes', [
-            'agregado_id' => $syllabus->id,
-            'tipo_evento' => 'silabo.aprobado',
-        ]);
+        $this->assertWorkflowNotification($syllabus->id, 'silabo.aprobado');
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => $key,
@@ -422,10 +414,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame($approval->id, $reopening->aprobacion_id);
         $this->assertDatabaseCount('aprobaciones', 1);
         $this->assertDatabaseCount('revisiones_silabo', 1);
-        $this->assertDatabaseHas('eventos_salientes', [
-            'agregado_id' => $syllabus->id,
-            'tipo_evento' => 'silabo.reabierto',
-        ]);
+        $this->assertWorkflowNotification($syllabus->id, 'silabo.reabierto');
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reopen', $syllabus), [
             'idempotency_key' => $key,
@@ -591,7 +580,7 @@ class ReviewWorkflowTest extends TestCase
         // La revisión enviada es historial y sigue ahí.
         $this->assertDatabaseHas('revisiones_silabo', ['id' => $revision->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
-        $this->assertDatabaseHas('eventos_salientes', ['tipo_evento' => 'silabo.reiniciado']);
+        $this->assertWorkflowNotification($syllabus->id, 'silabo.reiniciado');
 
         // El docente vuelve a empezar de cero.
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
@@ -599,6 +588,16 @@ class ReviewWorkflowTest extends TestCase
 
         // Sin trabajo que descartar no hay nada que reiniciar; y el docente nunca puede.
         $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Intento no autorizado.'])->assertForbidden();
+    }
+
+    private function assertWorkflowNotification(string $syllabusId, string $eventType): void
+    {
+        $this->assertTrue(JobExecution::query()
+            ->where('tipo', 'notificacion.interna')
+            ->where('tipo_recurso', 'silabo')
+            ->where('recurso_id', $syllabusId)
+            ->whereJsonContains('entrada_ejecucion_trabajo', ['tipo_evento' => $eventType])
+            ->exists());
     }
 
     private function createStartedDraft(): Syllabus

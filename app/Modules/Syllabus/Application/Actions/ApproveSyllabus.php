@@ -5,7 +5,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\RecordWorkflowOutbox;
+use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
@@ -23,7 +23,7 @@ class ApproveSyllabus
         private readonly ActiveRole $roles,
         private readonly RecordSyllabusTransition $transitions,
         private readonly RecordAuditEvent $audit,
-        private readonly RecordWorkflowOutbox $outbox,
+        private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
     ) {}
 
@@ -97,7 +97,7 @@ class ApproveSyllabus
                 ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
-            $this->outbox->execute(
+            $this->notifications->execute(
                 syllabus: $syllabus,
                 eventType: 'silabo.aprobado',
                 deduplicationKey: "silabo.aprobado:{$approval->id}",

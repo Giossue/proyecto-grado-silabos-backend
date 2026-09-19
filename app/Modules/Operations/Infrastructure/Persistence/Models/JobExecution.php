@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $correlacion_id
  * @property string|null $tipo_recurso
  * @property string|null $recurso_id
+ * @property array<string, mixed>|null $entrada
  * @property int $intentos
  * @property int $intentos_maximos
  * @property int $progreso
@@ -34,6 +35,7 @@ class JobExecution extends Model
         'tipo' => 'tipo_ejecucion_trabajo',
         'estado' => 'estado_ejecucion_trabajo',
         'resultado' => 'resultado_ejecucion_trabajo',
+        'entrada' => 'entrada_ejecucion_trabajo',
     ];
 
     public const CREATED_AT = 'encolado_en';
@@ -51,6 +53,7 @@ class JobExecution extends Model
         'correlacion_id',
         'tipo_recurso',
         'recurso_id',
+        'entrada',
         'intentos',
         'intentos_maximos',
         'progreso',
@@ -69,6 +72,7 @@ class JobExecution extends Model
             'intentos_maximos' => 'integer',
             'progreso' => 'integer',
             'resultado' => 'array',
+            'entrada' => 'array',
             'iniciado_en' => 'immutable_datetime',
             'finalizado_en' => 'immutable_datetime',
             'encolado_en' => 'immutable_datetime',

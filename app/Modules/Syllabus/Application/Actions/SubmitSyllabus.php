@@ -5,7 +5,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\RecordWorkflowOutbox;
+use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
@@ -29,7 +29,7 @@ class SubmitSyllabus
         private readonly ActiveRole $roles,
         private readonly RecordSyllabusTransition $transitions,
         private readonly RecordAuditEvent $audit,
-        private readonly RecordWorkflowOutbox $outbox,
+        private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
     ) {}
 
@@ -129,7 +129,7 @@ class SubmitSyllabus
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $eventType = $action === 'enviar' ? 'silabo.enviado' : 'silabo.reenviado';
-            $this->outbox->execute(
+            $this->notifications->execute(
                 syllabus: $locked,
                 eventType: $eventType,
                 deduplicationKey: "{$eventType}:{$revision->id}",

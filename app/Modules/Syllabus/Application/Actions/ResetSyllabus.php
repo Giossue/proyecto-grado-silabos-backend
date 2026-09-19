@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\RecordWorkflowOutbox;
+use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\AcademicContextSnapshot;
 use App\Modules\Syllabus\Application\InheritMasterValues;
@@ -39,7 +39,7 @@ class ResetSyllabus
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
-        private readonly RecordWorkflowOutbox $outbox,
+        private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
         private readonly AcademicContextSnapshot $academicContext,
         private readonly InheritMasterValues $inherit,
@@ -113,7 +113,7 @@ class ResetSyllabus
                 metadata: [...$discarded, 'reason' => $reason],
                 correlationId: $correlationId,
             );
-            $this->outbox->execute(
+            $this->notifications->execute(
                 syllabus: $locked,
                 eventType: 'silabo.reiniciado',
                 deduplicationKey: 'silabo.reiniciado:'.$locked->id.':'.now()->timestamp,

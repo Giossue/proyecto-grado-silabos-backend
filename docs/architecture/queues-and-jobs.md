@@ -30,8 +30,9 @@ El payload contiene IDs y versiones, no objetos enormes ni secretos.
 ## Consistencia
 
 - Despacha después del commit (`after_commit` o equivalente explícito).
-- Para efectos que no se pueden perder, inserta outbox dentro de la misma transacción.
-- El consumidor marca la entrega de forma idempotente.
+- Para efectos que no se pueden perder, inserta la `ejecuciones_trabajo` pendiente y su
+  entrada dentro de la misma transacción.
+- El consumidor marca la ejecución de forma idempotente.
 - Reintentar no crea otra revisión, aprobación, notificación o artefacto lógico.
 - PostgreSQL conserva el estado funcional; Redis puede vaciarse/reconstruirse.
 
@@ -65,4 +66,3 @@ Los errores de contrato no se reintentan: terminan con `contrato_ia_invalido`. U
 timeout del gateway usa los reintentos del worker y, al agotarlos, guarda
 `servicio_ia_no_disponible` sin copiar el mensaje técnico. Conflicto, evidencia vacía o
 exceso de evidencia son resultados no concluyentes, no fallos de la cola.
-

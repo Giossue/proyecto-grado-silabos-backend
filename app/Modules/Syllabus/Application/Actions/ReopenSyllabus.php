@@ -5,7 +5,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\RecordWorkflowOutbox;
+use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
@@ -22,7 +22,7 @@ class ReopenSyllabus
         private readonly ActiveRole $roles,
         private readonly RecordSyllabusTransition $transitions,
         private readonly RecordAuditEvent $audit,
-        private readonly RecordWorkflowOutbox $outbox,
+        private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
     ) {}
 
@@ -93,7 +93,7 @@ class ReopenSyllabus
                 metadata: ['revision_number' => $approval->revision->numero_revision, 'approval_id' => $approval->id],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
-            $this->outbox->execute(
+            $this->notifications->execute(
                 syllabus: $locked,
                 eventType: 'silabo.reabierto',
                 deduplicationKey: "silabo.reabierto:{$reopening->id}",

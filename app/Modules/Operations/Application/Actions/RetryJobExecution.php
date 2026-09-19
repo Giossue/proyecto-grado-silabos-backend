@@ -8,7 +8,6 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Infrastructure\Jobs\DeliverInternalNotificationJob;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
-use App\Modules\Operations\Infrastructure\Persistence\Models\OutboxEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -57,27 +56,18 @@ class RetryJobExecution
     private function retryNotification(JobExecution $execution, User $actor, Request $request): JobExecution
     {
         return DB::transaction(function () use ($actor, $execution, $request): JobExecution {
-            $event = OutboxEvent::query()->lockForUpdate()->find($execution->recurso_id);
             $locked = JobExecution::query()->lockForUpdate()->findOrFail($execution->id);
-            if ($event === null
-                || $locked->tipo !== 'notificacion.interna'
-                || $locked->tipo_recurso !== 'evento_saliente'
-                || $locked->recurso_id !== $event->id) {
-                throw ValidationException::withMessages(['execution' => 'El evento del trabajo ya no es válido.']);
+            if ($locked->tipo !== 'notificacion.interna'
+                || $locked->tipo_recurso !== 'silabo'
+                || ! is_array($locked->entrada)) {
+                throw ValidationException::withMessages(['execution' => 'La notificación del trabajo ya no es válida.']);
             }
-            if ($locked->estado !== 'fallida' || $event->estado !== 'fallido') {
+            if ($locked->estado !== 'fallida') {
                 throw ValidationException::withMessages(['execution' => 'Solo puede reintentarse un trabajo fallido.']);
             }
 
             $this->resetExecution($locked, $actor, $request);
-            $event->update([
-                'estado' => 'pendiente',
-                'disponible_en' => now(),
-                'procesado_en' => null,
-                'codigo_error' => null,
-                'mensaje_error' => null,
-            ]);
-            DeliverInternalNotificationJob::dispatch($event->id)->afterCommit();
+            DeliverInternalNotificationJob::dispatch($locked->id)->afterCommit();
 
             return $locked->refresh();
         });

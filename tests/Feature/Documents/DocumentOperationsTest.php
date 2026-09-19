@@ -16,7 +16,7 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\RecordWorkflowOutbox;
+use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Infrastructure\Jobs\DeliverInternalNotificationJob;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
@@ -273,12 +273,12 @@ class DocumentOperationsTest extends TestCase
         $this->assertSame(3, $retryAudit->metadatos['previous_attempts']);
     }
 
-    public function test_cp_f_outbox_delivers_one_internal_notification_and_enforces_ownership(): void
+    public function test_cp_f_workflow_job_delivers_one_internal_notification_and_enforces_ownership(): void
     {
         Queue::fake();
         Mail::fake();
         [$syllabus] = $this->approvedRevision();
-        $recorder = app(RecordWorkflowOutbox::class);
+        $recorder = app(ScheduleWorkflowNotification::class);
         $key = "syllabus.approved:{$syllabus->id}";
 
         $first = $recorder->execute(
@@ -306,7 +306,7 @@ class DocumentOperationsTest extends TestCase
         $this->assertDatabaseCount('notificaciones_internas', 1);
         $notification = InternalNotification::query()->firstOrFail();
         $this->assertSame($this->coordinator->id, $notification->usuario_id);
-        $this->assertSame('procesado', $first->fresh()->estado);
+        $this->assertSame('completada', $first->fresh()->estado);
         $this->actingAsCoordinator()
 
             ->getJson(route('api.v1.notifications.index'))
@@ -328,11 +328,12 @@ class DocumentOperationsTest extends TestCase
             $this->assertSame('Sílabo aprobado', $notification->fresh()->titulo);
         }
         try {
-            DB::transaction(fn () => DB::table('eventos_salientes')
-                ->where('id', $first->id)->update(['contenido_evento_saliente' => ['recipient_ids' => []]]));
-            $this->fail('PostgreSQL permitió alterar el payload del outbox.');
+            DB::transaction(fn () => DB::table('ejecuciones_trabajo')
+                ->where('id', $first->id)
+                ->update(['entrada_ejecucion_trabajo' => json_encode(['destinatarios_ids' => []])]));
+            $this->fail('PostgreSQL permitió alterar la entrada del trabajo.');
         } catch (QueryException) {
-            $this->assertSame([$this->coordinator->id], $first->fresh()->contenido['recipient_ids']);
+            $this->assertSame([$this->coordinator->id], $first->fresh()->entrada['destinatarios_ids']);
         }
     }
 
