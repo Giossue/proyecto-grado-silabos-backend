@@ -11,6 +11,8 @@ use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HttpAiAnalysisGateway;
+use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
+use App\Modules\Configuration\Infrastructure\Gateways\MistralAcademicSourceOcrGateway;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Policies\ExportArtifactPolicy;
@@ -62,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
                 default => app(DisabledAiAnalysisGateway::class),
             };
         });
+        $this->app->bind(AcademicSourceOcrGateway::class, MistralAcademicSourceOcrGateway::class);
     }
 
     /**
@@ -130,6 +133,14 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute((int) config('ai.limits.requests_per_minute'))
                 ->by("ai-analysis:{$actorKey}:{$syllabusKey}");
+        });
+        RateLimiter::for('source-ocr', function (Request $request): Limit {
+            $user = $request->user();
+            $source = $request->route('source');
+            $actorKey = $user instanceof User ? $user->id : (string) $request->ip();
+            $sourceKey = $source instanceof AcademicSource ? $source->id : 'unknown';
+
+            return Limit::perMinute(3)->by("source-ocr:{$actorKey}:{$sourceKey}");
         });
 
         DB::prohibitDestructiveCommands(

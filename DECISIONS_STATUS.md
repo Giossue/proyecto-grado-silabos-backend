@@ -180,6 +180,13 @@ defecto y no cambia el control humano, por lo que `PV-13`, `PV-14` y `PV-18` con
 estado `POR VALIDAR`. La activación con datos institucionales requiere además resolver
 el tratamiento externo aplicable bajo `PV-12`.
 
+I-91 (19 de septiembre de 2026) implementa la ingesta de fuentes PDF con Mistral OCR 4.1:
+PDF privado → Markdown estructurado por página → índice derivado de fragmentos. No se usa
+`pdfplumber`, DeepSeek ni otro LLM en esa etapa, ni hay fallback silencioso para páginas
+sin contenido. La activación del proveedor en un entorno real continúa condicionada al
+tratamiento externo de documentos (`PV-12`) y a la evaluación definitiva de proveedor y
+modelo (`PV-14`); la migración de persistencia es `000086`.
+
 I-74 (14 de septiembre de 2026) normaliza roles y responsabilidades académicas: la
 única relación RBAC es `asignaciones_rol(usuario_id, rol, carrera_id)`. Se elimina
 `asignaciones_coordinador`, porque duplicaba el rol `coordinador` con alcance de carrera.

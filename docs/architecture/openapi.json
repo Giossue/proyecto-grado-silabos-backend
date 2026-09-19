@@ -4864,6 +4864,70 @@
                 ]
             }
         },
+        "/api/v1/coordination/sources/{source}/pdf": {
+            "post": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_sources_pdf_ingest",
+                "summary": "api.v1.coordination.sources.pdf.ingest",
+                "responses": {
+                    "202": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "source",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "pdf"
+                                ],
+                                "properties": {
+                                    "pdf": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/coordination/syllabi/{syllabus}/reopen": {
             "post": {
                 "tags": [

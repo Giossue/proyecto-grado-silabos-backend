@@ -12,6 +12,7 @@
 | Crear un trabajo | `queues-and-jobs.md`, `observability.md` |
 | Generar Word/PDF | `files-and-documents.md` |
 | Trabajar con IA | `ai-service.md`, especificación de IA y threat model |
+| Ingerir fuentes PDF | `academic-source-ingestion.md`, `files-and-documents.md`, `queues-and-jobs.md` |
 | Importar datos | pendientes PV-09/PV-10 |
 | Cambiar despliegue | `deployment.md`, seguridad y un ADR |
 | Adoptar una dependencia | `stack.md`, plan activo y ADR si es duradera |

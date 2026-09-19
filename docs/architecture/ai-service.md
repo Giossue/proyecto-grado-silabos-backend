@@ -14,6 +14,18 @@ Job → AiAnalysisGateway → servicio local u hospedado de IA
 Job → valida contrato → persiste recomendaciones/evidencias → notifica
 ```
 
+## OCR de fuentes académicas
+
+La extracción de fuentes PDF es un flujo separado de AiAnalysisGateway. I-91 usa
+Mistral OCR 4.1 como único adaptador PDF → Markdown y después reconstruye el índice de
+fragmentos para búsqueda. No usa DeepSeek ni otro LLM para reescribir el resultado;
+DeepSeek solo permanece disponible para la asistencia IA general de I-73.
+
+El flujo completo, el contrato por página, la política de imágenes y los pendientes de
+persistencia están en [academic-source-ingestion.md](academic-source-ingestion.md).
+La salida OCR no toma decisiones académicas. Una ejecución correcta reemplaza el
+contenido de la fuente y la Coordinación conserva la revisión y edición humana.
+
 ## Contrato lógico
 
 La petición incluye solo lo necesario:

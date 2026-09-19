@@ -45,6 +45,8 @@ Estas no reemplazan los PV de la SRS:
 | DT-11 | Destino del modo `por_oferta` tras cerrar PV-06 | Conservado; `por_paralelo` es el valor por defecto | Cerrada el 2026-08-26 en I-15 |
 | DT-12 | Efecto de alcanzar la fecha de fin de un período sobre sus ofertas, paralelos, asignaciones y sílabos | Por ahora, la fecha es informativa: no hay cierre ni eliminación automática. Coordinación elimina, tras confirmación, solo ofertas que no tengan dependencias; un período con ofertas, procesos o convocatorias no se elimina. Definir si se automatiza un cierre futuro sin alterar la historia. | Antes de automatizar el cierre de período |
 
+| DT-13 | Ingesta de fuentes PDF | Mistral OCR 4.1 como adaptador único PDF → Markdown, sin pdfplumber, DeepSeek ni fallback; ejecución asíncrona y PDF privado | Implementación I-91; requiere PV-12/PV-14 |
+
 ## Entrevistas pendientes
 
 Las entrevistas no se falsifican ni se completan con supuestos. Cuando los participantes

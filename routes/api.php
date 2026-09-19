@@ -209,6 +209,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.sources.update');
             Route::put('coordination/sources/{source}/content', [AcademicSourceController::class, 'updateContent'])
                 ->middleware('active-role')->name('api.v1.coordination.sources.content.update');
+            Route::post('coordination/sources/{source}/pdf', [AcademicSourceController::class, 'ingestPdf'])
+                ->middleware(['active-role', 'throttle:source-ocr'])->name('api.v1.coordination.sources.pdf.ingest');
             Route::get('coordination/reports', [OperationalReportController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.coordination.reports.index');
             Route::get('coordination/academic/curriculum/{curriculum}', [CareerAcademicStructureController::class, 'curriculumBuilder'])

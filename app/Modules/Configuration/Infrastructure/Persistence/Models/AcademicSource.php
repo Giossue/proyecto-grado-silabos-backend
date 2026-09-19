@@ -3,10 +3,13 @@
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Support\Database\MapsLegacyColumnNames;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Documento de apoyo que la Coordinación entrega a los docentes de su carrera.
@@ -17,6 +20,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $descripcion
  * @property string|null $contenido
  * @property bool $activo
+ * @property string|null $objeto_pdf_id
+ * @property string $estado_ingesta
+ * @property CarbonImmutable|null $ingesta_actualizada_en
  */
 class AcademicSource extends Model
 {
@@ -27,6 +33,8 @@ class AcademicSource extends Model
         'descripcion' => 'descripcion_fuente_academica',
         'contenido' => 'contenido_fuente_academica',
         'activo' => 'fuente_academica_activa',
+        'estado_ingesta' => 'estado_ingesta_fuente',
+        'ingesta_actualizada_en' => 'ingesta_actualizada_en',
     ];
 
     public $timestamps = false;
@@ -34,11 +42,46 @@ class AcademicSource extends Model
     protected $table = 'fuentes_academicas';
 
     /** @var list<string> */
-    protected $fillable = ['carrera_id', 'nombre', 'descripcion', 'contenido', 'activo'];
+    protected $fillable = [
+        'carrera_id',
+        'nombre',
+        'descripcion',
+        'contenido',
+        'activo',
+        'objeto_pdf_id',
+        'estado_ingesta',
+        'ingesta_actualizada_en',
+    ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'activo' => 'boolean',
+            'ingesta_actualizada_en' => 'immutable_datetime',
+        ];
+    }
 
     /** @return BelongsTo<Career, $this> */
     public function career(): BelongsTo
     {
         return $this->belongsTo(Career::class, 'carrera_id');
+    }
+
+    /** @return BelongsTo<StoredObject, $this> */
+    public function pdfObject(): BelongsTo
+    {
+        return $this->belongsTo(StoredObject::class, 'objeto_pdf_id');
+    }
+
+    /** @return HasOne<AcademicSourceExtraction, $this> */
+    public function latestExtraction(): HasOne
+    {
+        // PostgreSQL no admite MAX(uuid), que Eloquent usa internamente en
+        // latestOfMany(). El orden descendente conserva el mismo resultado sin
+        // agregar una función no soportada al SQL de eager loading.
+        return $this->hasOne(AcademicSourceExtraction::class, 'fuente_academica_id')
+            ->orderByDesc('solicitada_en')
+            ->orderByDesc('id');
     }
 }

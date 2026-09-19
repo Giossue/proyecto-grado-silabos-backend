@@ -121,6 +121,10 @@ Markdown actual: conserva ruta de encabezados, posición, extracto y huella, per
 es fuente de verdad ni una versión publicable. Su índice GIN permite recuperación
 textual en español. La evidencia de IA conserva su propia fotografía del contenido
 citado aunque este índice se reconstruya.
+I-91 incorpora además un PDF privado y produce ese Markdown con Mistral OCR 4.1. La
+migración `000086` agrega la referencia al objeto privado, el estado de ingesta y
+`extracciones_fuente_academica`, relacionada con `ejecuciones_trabajo`; el proveedor
+continúa desactivado por defecto en configuración.
 
 ### Convocatorias y sílabos
 

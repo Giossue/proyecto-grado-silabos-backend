@@ -23,8 +23,8 @@
 - Publicar crea una versión inmutable con identidad y vigencia.
 - Clonar crea otra identidad; desactivar solo impide usos futuros.
 - Una fuente académica es un documento de la Coordinación de la carrera (I-26): nombre,
-  descripción y un contenido en Markdown. No tiene versiones, fragmentos
-  ni conflictos, y Administración no participa.
+  descripción y un contenido en Markdown. No tiene versiones ni conflictos; sus
+  fragmentos de búsqueda son un índice derivado, y Administración no participa.
 - El contenido se redacta en COR-11 como una hoja de documento visual con cinta de
   opciones (encabezados, énfasis, listas, cita, tabla con selector de tamaño, código,
   enlace y divisor). Se guarda como Markdown seguro, pero la Coordinación no ve ni
@@ -34,6 +34,15 @@
   cambiarse después de iniciada; al reanudar, todas deben continuar activas. La evidencia
   de IA guarda su propia fotografía (nombre, extracto y huella del
   contenido), por lo que editar la fuente después no reescribe análisis pasados.
+- Coordinación puede cargar un PDF privado para obtener el contenido Markdown mediante
+  Mistral OCR 4.1. La ruta devuelve `202`, el resultado se conserva por página y luego
+  se indexa en fragmentos_fuente_academica para búsqueda y citas.
+- Esta ingesta no usa pdfplumber, DeepSeek ni un fallback para páginas vacías. Las
+  imágenes y diagramas se conservan como referencias cuando Mistral los devuelva, pero
+  no se promete interpretar su significado visual.
+- La ingesta no sustituye el editor Markdown: una extracción correcta actualiza el
+  contenido y la Coordinación puede revisarlo o corregirlo; una extracción fallida
+  conserva el contenido anterior.
 - En ADM-05 y COR-11, el listado es la vista inicial y la creación se abre desde
   una acción principal en un panel lateral derecho; los errores permanecen visibles
   hasta corregirse y el panel solo se cierra después de una respuesta exitosa.

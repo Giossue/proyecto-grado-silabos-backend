@@ -30,7 +30,11 @@ class UpdateAcademicSourceContent
 
         return DB::transaction(function () use ($actor, $activeRole, $content, $request, $source): AcademicSource {
             $locked = AcademicSource::query()->whereKey($source->id)->lockForUpdate()->firstOrFail();
-            $locked->update(['contenido' => $content]);
+            $locked->update([
+                'contenido' => $content,
+                'estado_ingesta' => 'manual',
+                'ingesta_actualizada_en' => now(),
+            ]);
             $fragmentCount = $this->indexer->execute($locked);
 
             // La auditoría registra la huella, no el documento: basta para probar qué

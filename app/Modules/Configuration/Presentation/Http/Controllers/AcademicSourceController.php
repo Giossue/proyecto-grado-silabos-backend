@@ -5,10 +5,12 @@ namespace App\Modules\Configuration\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Application\Actions\CreateAcademicSource;
+use App\Modules\Configuration\Application\Actions\RequestAcademicSourceOcr;
 use App\Modules\Configuration\Application\Actions\UpdateAcademicSource;
 use App\Modules\Configuration\Application\Actions\UpdateAcademicSourceContent;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Presentation\Http\Requests\CreateSourceRequest;
+use App\Modules\Configuration\Presentation\Http\Requests\IngestAcademicSourcePdfRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ManageAcademicSourceRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\UpdateSourceContentRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\UpdateSourceRequest;
@@ -16,6 +18,7 @@ use App\Modules\Configuration\Presentation\Http\Requests\ViewSourcesRequest;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\UploadedFile;
 
 class AcademicSourceController extends Controller
 {
@@ -28,12 +31,15 @@ class AcademicSourceController extends Controller
             'sources' => AcademicSource::query()
                 ->where('carrera_id', $activeRole?->carrera_id)
                 ->orderBy('nombre')
+                ->with('latestExtraction')
                 ->get()
                 ->map(fn (AcademicSource $source) => [
                     'id' => $source->id,
                     'name' => $source->nombre,
                     'description' => $source->descripcion,
                     'has_content' => is_string($source->contenido) && trim($source->contenido) !== '',
+                    'ingestion_status' => $source->estado_ingesta,
+                    'extraction_id' => $source->latestExtraction?->id,
                 ]),
         ];
 
@@ -51,6 +57,7 @@ class AcademicSourceController extends Controller
 
     public function show(AcademicSource $source, ManageAcademicSourceRequest $request, ProcessLocks $locks): JsonResponse
     {
+        $source->load('latestExtraction.execution');
         $payload = [
             'processLock' => $locks->careerLockReason($source->carrera_id),
             'source' => [
@@ -58,6 +65,15 @@ class AcademicSourceController extends Controller
                 'name' => $source->nombre,
                 'description' => $source->descripcion,
                 'content' => $source->contenido,
+                'ingestion' => [
+                    'status' => $source->estado_ingesta,
+                    'extraction_id' => $source->latestExtraction?->id,
+                    'execution_id' => $source->latestExtraction?->ejecucion_trabajo_id,
+                    'model' => $source->latestExtraction?->modelo_ocr,
+                    'requested_at' => $source->latestExtraction?->solicitada_en?->toIso8601String(),
+                    'completed_at' => $source->latestExtraction?->completada_en?->toIso8601String(),
+                    'error_code' => $source->latestExtraction?->codigo_error,
+                ],
             ],
         ];
 
@@ -91,5 +107,23 @@ class AcademicSourceController extends Controller
         $message = 'Contenido guardado.';
 
         return response()->json(['message' => $message]);
+    }
+
+    public function ingestPdf(
+        AcademicSource $source,
+        IngestAcademicSourcePdfRequest $request,
+        RequestAcademicSourceOcr $action,
+    ): JsonResponse {
+        $actor = $request->user();
+        $file = $request->file('pdf');
+        abort_unless($actor instanceof User && $file instanceof UploadedFile, 422);
+        $extraction = $action->execute($source, $file, $actor, $request);
+
+        return response()->json([
+            'message' => 'PDF recibido. La extracción Markdown se ejecutará en segundo plano.',
+            'extraction_id' => $extraction->id,
+            'execution_id' => $extraction->ejecucion_trabajo_id,
+            'status' => $extraction->estado,
+        ], 202);
     }
 }

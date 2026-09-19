@@ -111,6 +111,7 @@ class ExportOpenApi extends Command
         };
         $isDownload = $name === 'api.v1.documents.download';
         $isLogoUpload = str_ends_with($name, '.logo.store');
+        $isSourcePdfUpload = $name === 'api.v1.coordination.sources.pdf.ingest';
         $successContent = $isDownload
             ? ['application/octet-stream' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
             : ['application/json' => ['schema' => ['type' => 'object']]];
@@ -119,7 +120,7 @@ class ExportOpenApi extends Command
             'operationId' => str_replace('.', '_', $name),
             'summary' => $name,
             'responses' => [
-                '200' => [
+                ($isSourcePdfUpload ? '202' : '200') => [
                     'description' => 'Operación completada.',
                     'content' => $successContent,
                 ],
@@ -132,15 +133,22 @@ class ExportOpenApi extends Command
             $operation['parameters'] = $parameters;
         }
         if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
-            $content = $isLogoUpload
-                ? ['multipart/form-data' => ['schema' => [
+            $content = ['application/json' => ['schema' => ['type' => 'object', 'additionalProperties' => true]]];
+            if ($isLogoUpload) {
+                $content = ['multipart/form-data' => ['schema' => [
                     'type' => 'object',
                     'required' => ['logo'],
                     'properties' => ['logo' => ['type' => 'string', 'format' => 'binary']],
-                ]]]
-                : ['application/json' => ['schema' => ['type' => 'object', 'additionalProperties' => true]]];
+                ]]];
+            } elseif ($isSourcePdfUpload) {
+                $content = ['multipart/form-data' => ['schema' => [
+                    'type' => 'object',
+                    'required' => ['pdf'],
+                    'properties' => ['pdf' => ['type' => 'string', 'format' => 'binary']],
+                ]]];
+            }
             $operation['requestBody'] = [
-                'required' => false,
+                'required' => $isSourcePdfUpload,
                 'content' => $content,
             ];
         }
