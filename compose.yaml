@@ -2,7 +2,7 @@ name: silabos-ueb
 
 services:
   postgres:
-    image: postgres:18-alpine
+    image: docker.io/pgvector/pgvector:0.8.6-pg18-trixie
     environment:
       POSTGRES_DB: silabos_ueb
       POSTGRES_USER: silabos_ueb
@@ -38,4 +38,5 @@ services:
 
 volumes:
   postgres-data:
+    name: silabos-ueb-postgres-data
   redis-data:

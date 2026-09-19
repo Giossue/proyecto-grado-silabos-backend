@@ -119,8 +119,10 @@ migración `000020`; no eran compatibles con el documento único editable. La mi
 `000078` incorpora `fragmentos_fuente_academica` como índice derivado y reemplazable del
 Markdown actual: conserva ruta de encabezados, posición, extracto y huella, pero nunca
 es fuente de verdad ni una versión publicable. Su índice GIN permite recuperación
-textual en español. La evidencia de IA conserva su propia fotografía del contenido
-citado aunque este índice se reconstruya.
+textual en español. La migración `000087` añade a esa misma tabla el embedding
+`vector(1536)` de `text-embedding-3-small` y un índice HNSW por distancia coseno. La
+evidencia de IA conserva su propia fotografía del contenido citado aunque este índice se
+reconstruya. Si el proveedor de embeddings falla, la recuperación textual continúa.
 I-91 incorpora además un PDF privado y produce ese Markdown con Mistral OCR 4.1. La
 migración `000086` agrega la referencia al objeto privado, el estado de ingesta y
 `extracciones_fuente_academica`, relacionada con `ejecuciones_trabajo`; el proveedor

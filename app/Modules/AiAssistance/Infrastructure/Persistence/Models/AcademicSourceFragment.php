@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $posicion_fragmento
  * @property string $contenido_fragmento
  * @property string $huella_fragmento
+ * @property string|null $embedding
  * @property-read AcademicSource $source
  */
 class AcademicSourceFragment extends Model

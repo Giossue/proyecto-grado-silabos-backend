@@ -21,6 +21,13 @@ Mistral OCR 4.1 como único adaptador PDF → Markdown y después reconstruye el
 fragmentos para búsqueda. No usa DeepSeek ni otro LLM para reescribir el resultado;
 DeepSeek solo permanece disponible para la asistencia IA general de I-73.
 
+Después de reconstruir `fragmentos_fuente_academica`, el trabajo de la cola `ia` puede
+generar embeddings con `text-embedding-3-small` y guardarlos en la columna vectorial de
+esa misma tabla. No existe una tabla separada de embeddings. La consulta del asistente
+vectoriza la pregunta con el mismo modelo, filtra las fuentes autorizadas y ordena por
+distancia coseno; si el proveedor está desactivado o indisponible, usa el índice textual
+GIN existente.
+
 El flujo completo, el contrato por página, la política de imágenes y los pendientes de
 persistencia están en [academic-source-ingestion.md](academic-source-ingestion.md).
 La salida OCR no toma decisiones académicas. Una ejecución correcta reemplaza el
@@ -81,6 +88,11 @@ sin límite.
 
 `PV-13`, `PV-14` y `PV-18` impiden elegir hardware, modelos y umbrales finales. El
 contrato y sus fakes sí pueden implementarse antes.
+
+La decisión técnica inicial de I-92 fija provisionalmente `text-embedding-3-small` con
+1536 dimensiones para las fuentes académicas. Cambiar a `text-embedding-3-large` exige
+una migración porque la dimensión física de `vector(1536)` no puede mezclarse con
+embeddings de 3072 dimensiones.
 
 ## Implementación reversible I-06
 

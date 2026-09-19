@@ -130,6 +130,32 @@ seleccionadas a ese tercero. Antes de hacerlo con información institucional deb
 acordados el proveedor, región, retención y tratamiento de datos. Un error del proveedor
 solo deshabilita temporalmente las recomendaciones; no bloquea el flujo del sílabo.
 
+### Embeddings de fuentes académicas
+
+Los embeddings se guardan en la columna vectorial de
+`fragmentos_fuente_academica`; no se crea una tabla adicional. El valor seguro por
+defecto mantiene este proceso desactivado:
+
+```text
+EMBEDDINGS_DRIVER=disabled
+EMBEDDINGS_BASE_URL=https://api.openai.com/v1
+EMBEDDINGS_MODEL=text-embedding-3-small
+EMBEDDINGS_API_KEY=<secreto de embeddings>
+EMBEDDINGS_CONNECT_TIMEOUT=5
+EMBEDDINGS_TIMEOUT=60
+```
+
+Para activarlo con OpenAI, cambia `EMBEDDINGS_DRIVER=openai` y configura la clave como
+secreto. La migración `000087` requiere la extensión `vector` de pgvector; la imagen
+local del repositorio ya usa `docker.io/pgvector/pgvector:0.8.6-pg18-trixie`. En PostgreSQL
+administrado hay que habilitar pgvector antes de migrar. Tras activar el driver,
+redespliega para que la caché de configuración y el worker de la cola `ia` reciban el
+cambio.
+
+Mistral OCR sigue siendo el paso anterior para convertir cada PDF en Markdown. El
+Markdown ordenado permanece en `fuentes_academicas`; los fragmentos derivados y sus
+vectores se reconstruyen en `fragmentos_fuente_academica`.
+
 ### Correo
 
 El envío de invitaciones de activación usa el sistema de correo de Laravel, así que el

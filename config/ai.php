@@ -18,6 +18,16 @@ return [
         'timeout_seconds' => (int) env('AI_TIMEOUT', 20),
         'max_output_tokens' => 4096,
     ],
+    'embeddings' => [
+        'driver' => env('EMBEDDINGS_DRIVER', 'disabled'),
+        'base_url' => env('EMBEDDINGS_BASE_URL', 'https://api.openai.com/v1'),
+        'model' => env('EMBEDDINGS_MODEL', 'text-embedding-3-small'),
+        'api_key' => env('EMBEDDINGS_API_KEY', env('AI_API_KEY')),
+        'dimensions' => 1536,
+        'connect_timeout_seconds' => (int) env('EMBEDDINGS_CONNECT_TIMEOUT', 5),
+        'timeout_seconds' => (int) env('EMBEDDINGS_TIMEOUT', 60),
+        'batch_size' => 32,
+    ],
     'limits' => [
         'input_characters' => 50000,
         'evidence_items' => 50,

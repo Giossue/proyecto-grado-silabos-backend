@@ -5,12 +5,15 @@ namespace App\Providers;
 use App\Models\User;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Access\AcademicRoleEligibility;
+use App\Modules\AiAssistance\Domain\Contracts\AcademicSourceEmbeddingGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiAnalysisGateway;
+use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAcademicSourceEmbeddingGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HttpAiAnalysisGateway;
+use App\Modules\AiAssistance\Infrastructure\Gateways\OpenAiAcademicSourceEmbeddingGateway;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
 use App\Modules\Configuration\Infrastructure\Gateways\MistralAcademicSourceOcrGateway;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
@@ -62,6 +65,12 @@ class AppServiceProvider extends ServiceProvider
                 'baseline' => app(BaselineAiAnalysisGateway::class),
                 'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiAnalysisGateway::class),
                 default => app(DisabledAiAnalysisGateway::class),
+            };
+        });
+        $this->app->bind(AcademicSourceEmbeddingGateway::class, function (): AcademicSourceEmbeddingGateway {
+            return match ((string) config('ai.embeddings.driver')) {
+                'openai' => app(OpenAiAcademicSourceEmbeddingGateway::class),
+                default => app(DisabledAcademicSourceEmbeddingGateway::class),
             };
         });
         $this->app->bind(AcademicSourceOcrGateway::class, MistralAcademicSourceOcrGateway::class);

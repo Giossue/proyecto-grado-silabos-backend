@@ -375,9 +375,11 @@ titulo_fragmento VARCHAR NULL
 posicion_fragmento SMALLINT NOT NULL
 contenido_fragmento TEXT NOT NULL
 huella_fragmento CHAR(64) NOT NULL
+embedding VECTOR(1536) NULL
 
 UNIQUE (fuente_academica_id, posicion_fragmento)
 Índice GIN de búsqueda textual en español sobre título y contenido
+Índice HNSW parcial de `embedding` con `vector_cosine_ops`
 ~~~
 
 ### Cardinalidades
@@ -393,6 +395,7 @@ fuentes_academicas 1:N extracciones_fuente_academica
 extracciones_fuente_academica 1:0..1 ejecuciones_trabajo
 objetos_almacenados 1:N extracciones_fuente_academica como PDF de entrada
 fuentes_academicas 1:N fragmentos_fuente_academica
+fragmentos_fuente_academica 0..1 embedding vectorial por fragmento
 carreras 1:N preferencias_ia_carrera
 definiciones_campo 1:N preferencias_ia_carrera
 ~~~

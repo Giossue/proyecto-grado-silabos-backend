@@ -2,9 +2,11 @@
 
 namespace App\Modules\AiAssistance\Application;
 
+use App\Modules\AiAssistance\Infrastructure\Jobs\EmbedAcademicSourceJob;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AcademicSourceFragment;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Support\CanonicalHasher;
+use Illuminate\Support\Facades\DB;
 
 class IndexAcademicSource
 {
@@ -32,6 +34,12 @@ class IndexAcademicSource
                     'content' => $fragment['content'],
                 ]),
             ]);
+        }
+
+        if (config('ai.embeddings.driver') === 'openai') {
+            DB::afterCommit(function () use ($source): void {
+                EmbedAcademicSourceJob::dispatch($source->id);
+            });
         }
 
         return count($fragments);
