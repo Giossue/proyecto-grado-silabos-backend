@@ -287,12 +287,14 @@ class UpdateCareerAcademicRecord
             ->where('usuario_id', $userId)
             ->where('carrera_id', $careerId)
             ->where('rol', RoleCode::Teacher->value)
-            ->whereHas('user', fn ($query) => $query->where('activo', true))
+            ->whereHas('user', fn ($query) => $query
+                ->where('activo', true)
+                ->whereNotNull('correo_verificado_en'))
             ->first();
 
         if (! $roleAssignment instanceof RoleAssignment) {
             throw ValidationException::withMessages([
-                'user_id' => 'La persona no tiene un rol Docente vigente en esta carrera.',
+                'user_id' => 'El docente debe verificar su correo antes de recibir una asignación.',
             ]);
         }
 

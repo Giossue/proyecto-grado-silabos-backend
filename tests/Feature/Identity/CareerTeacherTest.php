@@ -4,6 +4,8 @@ namespace Tests\Feature\Identity;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
+use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Mail\ManagedUserActivationMail;
 use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
@@ -52,7 +54,8 @@ class CareerTeacherTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('canCreateTeacher', true)
                 ->where('career.id', $this->context->carrera_id)
-                ->where('options.teacherUsers', fn ($users) => collect($users)->contains('id', $user->id)));
+                ->where('options.teacherUsers', fn ($users) => collect($users)->doesntContain('id', $user->id)
+                    && collect($users)->contains('id', User::query()->where('correo_electronico', 'docente@silabos.test')->value('id'))));
         $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => ' NUEVO@silabos.test ', 'nombre' => 'Otro nombre'])->assertSuccessful();
         $this->assertSame($user->nombre, $user->fresh()->nombre);
         $this->assertSame(1, $user->roleAssignments()->count());
@@ -85,6 +88,25 @@ class CareerTeacherTest extends TestCase
 
         $this->assertDatabaseCount('invitaciones_activacion', 2);
         Mail::assertQueued(ManagedUserActivationMail::class, 2);
+    }
+
+    public function test_pending_teacher_cannot_be_assigned_until_email_is_verified(): void
+    {
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful();
+        $user = User::query()->where('correo_electronico', 'nuevo@silabos.test')->firstOrFail();
+        $parallel = Parallel::query()->firstOrFail();
+
+        $this->postJson(route('api.v1.coordination.academic.store', 'asignacion_docente'), [
+            'user_id' => $user->id,
+            'parallel_id' => $parallel->id,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('user_id');
+
+        $this->assertFalse(TeacherAssignment::query()
+            ->where('asignacion_rol_id', $user->roleAssignments()->firstOrFail()->id)
+            ->where('paralelo_id', $parallel->id)
+            ->exists());
     }
 
     public function test_existing_identity_and_other_roles_are_preserved_without_sending_credentials(): void

@@ -27,6 +27,8 @@ usan datos sintéticos y correo falso. No afecta PV-16 ni autoriza envío manual
 - Crear/incorporar no asigna paralelos ni modifica sílabos: está disponible durante el
   proceso, igual que las altas administrativas. Las asignaciones académicas mantienen
   sus bloqueos de convocatoria. Se conservan los endpoints administrativos.
+- Una cuenta docente pendiente de activación no puede recibir una asignación de paralelo;
+  solo las cuentas con correo verificado aparecen como disponibles para asignar.
 - COR-15 presenta una sola acción **Gestionar docente**. Su menú abre el alta o la
   asignación en hojas independientes, sin mezclar sus permisos ni transacciones.
 - Sin migraciones: se reutilizan identidad y rol por carrera con sus constraints.

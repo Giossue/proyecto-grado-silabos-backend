@@ -108,7 +108,13 @@ class StoreAcademicRecordRequest extends FormRequest
                 ...$this->assignmentRules('carreras', 'career_id'),
             ],
             'asignacion_docente' => [
-                'user_id' => ['required', 'uuid', Rule::exists('usuarios', 'id')->where('usuario_activo', true)],
+                'user_id' => [
+                    'required',
+                    'uuid',
+                    Rule::exists('usuarios', 'id')->where(fn ($query) => $query
+                        ->where('usuario_activo', true)
+                        ->whereNotNull('correo_verificado_en')),
+                ],
                 'parallel_id' => [
                     'required',
                     'uuid',

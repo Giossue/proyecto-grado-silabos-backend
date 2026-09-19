@@ -455,6 +455,7 @@ class AcademicStructureViewData
                     ]),
                 'teacherUsers' => User::query()
                     ->where('activo', true)
+                    ->whereNotNull('correo_verificado_en')
                     ->whereIn('id', RoleAssignment::query()
                         ->select('usuario_id')
                         ->effective()

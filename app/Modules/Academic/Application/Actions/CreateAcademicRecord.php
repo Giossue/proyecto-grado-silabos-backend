@@ -256,12 +256,14 @@ class CreateAcademicRecord
             ->where('usuario_id', $userId)
             ->where('carrera_id', $careerId)
             ->where('rol', $role->value)
-            ->whereHas('user', fn ($query) => $query->where('activo', true))
+            ->whereHas('user', fn ($query) => $query
+                ->where('activo', true)
+                ->whereNotNull('correo_verificado_en'))
             ->first();
 
         if (! $assignment instanceof RoleAssignment) {
             throw ValidationException::withMessages([
-                'user_id' => 'La persona no tiene el rol vigente requerido en esta carrera.',
+                'user_id' => 'El docente debe verificar su correo antes de recibir una asignación.',
             ]);
         }
 

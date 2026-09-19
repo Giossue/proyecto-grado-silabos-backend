@@ -82,7 +82,13 @@ class UpdateCareerAcademicRecordRequest extends FormRequest
                 'shift' => ['nullable', 'string', Rule::in(Parallel::SHIFTS)],
             ],
             'asignacion_docente' => [
-                'user_id' => ['required', 'uuid', Rule::exists('usuarios', 'id')->where('usuario_activo', true)],
+                'user_id' => [
+                    'required',
+                    'uuid',
+                    Rule::exists('usuarios', 'id')->where(fn ($query) => $query
+                        ->where('usuario_activo', true)
+                        ->whereNotNull('correo_verificado_en')),
+                ],
                 'parallel_id' => [
                     'required',
                     'uuid',
