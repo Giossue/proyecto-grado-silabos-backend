@@ -43,6 +43,12 @@ por líneas visuales, tablas por grupos de filas y repiten cabeceras de continua
 `document-pagination.mjs` cubre texto mayor que una hoja, varios campos y 120 filas con
 `rowspan`; `WordRendererTest` conserva `keepNext` y `tblHeader` en DOCX.
 
+I-89 — RF-027..033, RN-013..016, CU-05 y COR-11: `MarkdownEditor` reutiliza la
+`PaginatedDocument` y `documentPagination` para mostrar fuentes en A4 vertical, separar
+contenido por párrafos, listas y filas de tablas, y mantener los saltos fuera del Markdown
+guardado. La suite frontend (21 archivos, 81 pruebas), lint, typecheck y build pasan; la
+revisión visual en Chromium queda pendiente de PV-19.
+
 I-71 — RF-037..044, RN-020..024, CU-07 y DOC-04:
 `SyllabusAcademicContext` separa los datos maestros de la ficha imprimible; el editor
 usa controles de formulario para prosa y listas, y reserva `TemplateDocumentView` para
