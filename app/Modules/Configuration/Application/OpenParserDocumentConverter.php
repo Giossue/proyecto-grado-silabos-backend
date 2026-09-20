@@ -8,7 +8,7 @@ use DOMDocument;
 use DOMElement;
 use DOMXPath;
 
-final class PaddleOcrDocumentConverter
+final class OpenParserDocumentConverter
 {
     /**
      * @param  callable(AcademicSourceOcrPage, string, string): ?string  $imageResolver

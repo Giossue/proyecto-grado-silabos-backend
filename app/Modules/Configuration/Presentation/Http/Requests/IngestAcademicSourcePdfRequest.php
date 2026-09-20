@@ -12,7 +12,7 @@ final class IngestAcademicSourcePdfRequest extends ManageAcademicSourceRequest
         return [
             'pdf' => [
                 'required',
-                File::types(['pdf'])->max((int) ceil((int) config('paddleocr.max_upload_bytes') / 1024)),
+                File::types(['pdf'])->max((int) ceil((int) config('openparser.max_upload_bytes') / 1024)),
             ],
         ];
     }

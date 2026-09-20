@@ -152,10 +152,12 @@ administrado hay que habilitar pgvector antes de migrar. Tras activar el driver,
 redespliega para que la caché de configuración y el worker de la cola `ia` reciban el
 cambio.
 
-PaddleOCR-VL 1.6 es el paso anterior para convertir cada PDF en un documento JSON
-estructurado. El documento ordenado permanece en `fuentes_academicas`; los fragmentos
-derivados y sus vectores se reconstruyen en `fragmentos_fuente_academica`. Configura
-`PADDLEOCR_ENABLED=true` y `PADDLEOCR_ACCESS_TOKEN` solo después de resolver PV-12/PV-14.
+OpenParser es el paso anterior para convertir cada PDF en un documento JSON estructurado;
+se usa `paddleocr-vl-1.6` y la salida `openparser@1`. El documento ordenado permanece en
+`fuentes_academicas`; los fragmentos derivados y sus vectores se reconstruyen en
+`fragmentos_fuente_academica`. Configura `OPENPARSER_ENABLED=true` y
+`OPENPARSER_API_KEY` solo después de resolver PV-12/PV-14. La imagen necesita
+`poppler-utils` para recortar del PDF privado las figuras que solo traigan coordenadas.
 
 ### Correo
 

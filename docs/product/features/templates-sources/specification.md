@@ -36,7 +36,8 @@
   cambiarse después de iniciada; al reanudar, todas deben continuar activas. La evidencia
   de IA guarda su propia fotografía (nombre, extracto y huella del
   contenido), por lo que editar la fuente después no reescribe análisis pasados.
-- Coordinación carga un PDF privado para obtener el documento mediante PaddleOCR-VL 1.6.
+- Coordinación carga un PDF privado para obtener el documento mediante OpenParser con
+  `paddleocr-vl-1.6` y salida `openparser@1`.
   La ruta devuelve `202`, el resultado conserva procedencia por página y luego
   se indexa en fragmentos_fuente_academica para búsqueda y citas.
 - Esta ingesta no usa Mistral, DeepSeek ni un fallback para páginas vacías. Las tablas

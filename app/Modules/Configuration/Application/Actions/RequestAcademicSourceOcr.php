@@ -38,7 +38,7 @@ final class RequestAcademicSourceOcr
         );
         $this->locks->assertCareerEditable($source->carrera_id);
         $pathInfo = $this->storePdf($source, $file);
-        $model = (string) config('paddleocr.model');
+        $model = (string) config('openparser.ocr_model');
         $adapterVersion = $this->gateway->version();
         $dispatch = false;
 
@@ -65,12 +65,12 @@ final class RequestAcademicSourceOcr
             }
 
             $requestFingerprint = hash('sha256', "{$pathInfo['hash']}:{$model}:{$adapterVersion}");
-            $key = "fuente.paddleocr:{$lockedSource->id}:{$requestFingerprint}";
+            $key = "fuente.openparser:{$lockedSource->id}:{$requestFingerprint}";
             $correlationId = $request->attributes->getString('correlation_id');
             $execution = JobExecution::query()->where('clave_idempotencia', $key)->lockForUpdate()->first();
             if ($execution === null) {
                 $execution = JobExecution::query()->create([
-                    'tipo' => 'fuente_academica.paddleocr',
+                    'tipo' => 'fuente_academica.openparser',
                     'cola' => 'integraciones',
                     'estado' => 'pendiente',
                     'clave_idempotencia' => $key,
@@ -141,7 +141,7 @@ final class RequestAcademicSourceOcr
         if (! is_int($size) || ! is_string($hash)) {
             throw ValidationException::withMessages(['pdf' => 'No se pudo calcular la huella del PDF.']);
         }
-        if ($size > (int) config('paddleocr.max_upload_bytes')) {
+        if ($size > (int) config('openparser.max_upload_bytes')) {
             throw ValidationException::withMessages(['pdf' => 'El PDF supera el tamaño máximo permitido.']);
         }
         $path = "academic-sources/{$source->id}/{$hash}.pdf";

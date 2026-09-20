@@ -182,7 +182,7 @@ estado `POR VALIDAR`. La activación con datos institucionales requiere además 
 el tratamiento externo aplicable bajo `PV-12`.
 
 I-95 (19 de septiembre de 2026) reemplaza I-26, I-49, I-91 e I-94 en el formato de las
-fuentes: PDF privado → API oficial PaddleOCR-VL 1.6 → documento JSON ProseMirror/Tiptap →
+fuentes: PDF privado → OpenParser (`paddleocr-vl-1.6`, `openparser@1`) → documento JSON ProseMirror/Tiptap →
 fragmentos y embeddings. Las tablas conservan combinaciones y las imágenes se insertan
 en su orden como objetos privados. `ejecuciones_trabajo` sustituye la tabla especializada
 de extracciones. No se usa Mistral, DeepSeek ni fallback silencioso. La activación real

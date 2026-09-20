@@ -40,7 +40,7 @@ final class SubmitAcademicSourceOcrJob implements ShouldQueue
         }
         $existingJob = $execution->resultado['provider_job_id'] ?? null;
         if (is_string($existingJob) && $existingJob !== '') {
-            PollAcademicSourceOcrJob::dispatch($execution->id)->delay(now()->addSeconds((int) config('paddleocr.poll_delay_seconds')));
+            PollAcademicSourceOcrJob::dispatch($execution->id)->delay(now()->addSeconds((int) config('openparser.poll_delay_seconds')));
 
             return;
         }
@@ -69,7 +69,7 @@ final class SubmitAcademicSourceOcrJob implements ShouldQueue
             $pdf = StoredObject::query()->whereKey($pdfObjectId)->firstOrFail();
             $providerJobId = $gateway->submit($pdf);
         } catch (AcademicSourceOcrContractException $exception) {
-            $finalizer->fail($execution->id, 'contrato_paddleocr_invalido', 'PaddleOCR rechazó el documento o devolvió una respuesta inválida.');
+            $finalizer->fail($execution->id, 'contrato_openparser_invalido', 'OpenParser rechazó el documento o devolvió una respuesta inválida.');
 
             return;
         }
@@ -81,15 +81,15 @@ final class SubmitAcademicSourceOcrJob implements ShouldQueue
                 'progreso' => 20,
             ]);
         });
-        PollAcademicSourceOcrJob::dispatch($execution->id)->delay(now()->addSeconds((int) config('paddleocr.poll_delay_seconds')));
+        PollAcademicSourceOcrJob::dispatch($execution->id)->delay(now()->addSeconds((int) config('openparser.poll_delay_seconds')));
     }
 
     public function failed(Throwable $exception): void
     {
         app(AcademicSourceOcrExecutionFinalizer::class)->fail(
             $this->executionId,
-            'paddleocr_no_disponible',
-            'No fue posible enviar el PDF a PaddleOCR. Puede reintentarlo.',
+            'openparser_no_disponible',
+            'No fue posible enviar el PDF a OpenParser. Puede reintentarlo.',
         );
     }
 }

@@ -26,7 +26,7 @@ final class AcademicSourceOcrExecutionFinalizer
         $document = $this->documents->normalize($materialized['document']);
         $text = $this->documents->text($document);
         if (trim($text) === '') {
-            throw new AcademicSourceOcrContractException('PaddleOCR no devolvió contenido utilizable.');
+            throw new AcademicSourceOcrContractException('OpenParser no devolvió contenido utilizable.');
         }
 
         DB::transaction(function () use ($document, $execution, $materialized, $result, $text): void {

@@ -3,7 +3,7 @@
 ## Estado
 
 Reemplazado por I-95 el 19 de septiembre de 2026. Sus garantías de recursos privados se
-mantienen, ahora sobre el documento JSON generado por PaddleOCR.
+mantienen, ahora sobre el documento JSON generado por OpenParser.
 
 ## Objetivo
 

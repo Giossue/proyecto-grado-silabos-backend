@@ -124,7 +124,8 @@ textual en español. La migración `000087` añade a esa misma tabla el embeddin
 `vector(1536)` de `text-embedding-3-small` y un índice HNSW por distancia coseno. La
 evidencia de IA conserva su propia fotografía del contenido citado aunque este índice se
 reconstruya. Si el proveedor de embeddings falla, la recuperación textual continúa.
-I-95 incorpora el PDF privado y produce el documento JSON con PaddleOCR-VL 1.6. La
+I-95/I-96 incorporan el PDF privado y producen el documento JSON con OpenParser sobre
+`paddleocr-vl-1.6`. La
 migración `000089` agrega el documento versionado, procedencia por fragmento y retira
 `extracciones_fuente_academica`; el estado remoto vive en `ejecuciones_trabajo`. Las
 tablas conservan `rowspan`/`colspan` y las imágenes raster se guardan como objetos

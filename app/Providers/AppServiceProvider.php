@@ -14,8 +14,10 @@ use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HttpAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\OpenAiAcademicSourceEmbeddingGateway;
+use App\Modules\Configuration\Application\Contracts\AcademicSourceFigureCropper;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
-use App\Modules\Configuration\Infrastructure\Gateways\PaddleOcrAcademicSourceGateway;
+use App\Modules\Configuration\Infrastructure\Documents\PopplerAcademicSourceFigureCropper;
+use App\Modules\Configuration\Infrastructure\Gateways\OpenParserAcademicSourceGateway;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Policies\ExportArtifactPolicy;
@@ -73,7 +75,8 @@ class AppServiceProvider extends ServiceProvider
                 default => app(DisabledAcademicSourceEmbeddingGateway::class),
             };
         });
-        $this->app->bind(AcademicSourceOcrGateway::class, PaddleOcrAcademicSourceGateway::class);
+        $this->app->bind(AcademicSourceOcrGateway::class, OpenParserAcademicSourceGateway::class);
+        $this->app->bind(AcademicSourceFigureCropper::class, PopplerAcademicSourceFigureCropper::class);
     }
 
     /**

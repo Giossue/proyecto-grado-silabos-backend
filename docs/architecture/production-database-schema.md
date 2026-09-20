@@ -299,7 +299,7 @@ UNIQUE (componente_plantilla_id, posicion_definicion_campo)
 ## fuentes_academicas
 
 **Contexto:** documento académico estructurado de una carrera, editable y seleccionable
-para IA; puede provenir del editor o de PaddleOCR.
+para IA; puede provenir del editor o de OpenParser.
 
 ~~~text
 id UUID (PK)

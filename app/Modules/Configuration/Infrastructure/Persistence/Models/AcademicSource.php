@@ -88,7 +88,7 @@ class AcademicSource extends Model
     {
         return $this->hasOne(JobExecution::class, 'recurso_id')
             ->where('tipo_recurso', 'fuente_academica')
-            ->where('tipo', 'fuente_academica.paddleocr')
+            ->whereIn('tipo', ['fuente_academica.openparser', 'fuente_academica.paddleocr'])
             ->orderByDesc('encolado_en')
             ->orderByDesc('id');
     }

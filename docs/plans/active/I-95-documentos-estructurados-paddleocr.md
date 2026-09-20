@@ -3,7 +3,8 @@
 ## Estado
 
 Implementado y verificado el 19 de septiembre de 2026. Sustituye I-26, I-49, I-91 e
-I-94 en lo relativo al formato canónico y al proveedor de extracción.
+I-94 en lo relativo al formato canónico. I-96 sustituyó posteriormente la conexión
+directa al proveedor por OpenParser sin cambiar ese formato.
 
 ## Objetivo
 

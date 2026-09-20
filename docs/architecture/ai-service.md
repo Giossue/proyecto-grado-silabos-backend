@@ -17,7 +17,7 @@ Job → valida contrato → persiste recomendaciones/evidencias → notifica
 ## OCR de fuentes académicas
 
 La extracción de fuentes PDF es un flujo separado de AiAnalysisGateway. I-95 usa la API
-oficial de PaddleOCR-VL 1.6 como único adaptador PDF → documento JSON y después
+de OpenParser con `paddleocr-vl-1.6` como único adaptador PDF → documento JSON y después
 reconstruye el índice de fragmentos. No usa Mistral, DeepSeek ni otro LLM para reescribir
 el resultado; DeepSeek solo permanece disponible para la asistencia general de I-73.
 

@@ -37,12 +37,12 @@ final class PollAcademicSourceOcrJob implements ShouldQueue
         }
         $providerJobId = $execution->resultado['provider_job_id'] ?? null;
         if (! is_string($providerJobId) || $providerJobId === '') {
-            $finalizer->fail($execution->id, 'paddleocr_sin_trabajo', 'No se encontró el identificador del trabajo externo.');
+            $finalizer->fail($execution->id, 'openparser_sin_trabajo', 'No se encontró el identificador del trabajo externo.');
 
             return;
         }
-        if ($execution->encolado_en?->lt(now()->subMinutes((int) config('paddleocr.max_poll_minutes')))) {
-            $finalizer->fail($execution->id, 'paddleocr_tiempo_agotado', 'PaddleOCR excedió el tiempo máximo de procesamiento.');
+        if ($execution->encolado_en?->lt(now()->subMinutes((int) config('openparser.max_poll_minutes')))) {
+            $finalizer->fail($execution->id, 'openparser_tiempo_agotado', 'OpenParser excedió el tiempo máximo de procesamiento.');
 
             return;
         }
@@ -50,13 +50,13 @@ final class PollAcademicSourceOcrJob implements ShouldQueue
         try {
             $status = $gateway->status($providerJobId);
             if ($status->state === 'failed') {
-                $finalizer->fail($execution->id, 'paddleocr_trabajo_fallido', 'PaddleOCR no pudo procesar el PDF.');
+                $finalizer->fail($execution->id, 'openparser_trabajo_fallido', 'OpenParser no pudo procesar el PDF.');
 
                 return;
             }
             if ($status->state !== 'done') {
                 $execution->update(['estado' => 'en_ejecucion', 'progreso' => $status->progress]);
-                self::dispatch($execution->id)->delay(now()->addSeconds((int) config('paddleocr.poll_delay_seconds')));
+                self::dispatch($execution->id)->delay(now()->addSeconds((int) config('openparser.poll_delay_seconds')));
 
                 return;
             }
@@ -65,7 +65,7 @@ final class PollAcademicSourceOcrJob implements ShouldQueue
             }
             $finalizer->complete($execution, $gateway->result($providerJobId, $status->result));
         } catch (AcademicSourceOcrContractException $exception) {
-            $finalizer->fail($execution->id, 'contrato_paddleocr_invalido', 'PaddleOCR devolvió un resultado que no se pudo interpretar.');
+            $finalizer->fail($execution->id, 'contrato_openparser_invalido', 'OpenParser devolvió un resultado que no se pudo interpretar.');
         }
     }
 
@@ -73,8 +73,8 @@ final class PollAcademicSourceOcrJob implements ShouldQueue
     {
         app(AcademicSourceOcrExecutionFinalizer::class)->fail(
             $this->executionId,
-            'paddleocr_no_disponible',
-            'No fue posible consultar el resultado de PaddleOCR. Puede reintentarlo.',
+            'openparser_no_disponible',
+            'No fue posible consultar el resultado de OpenParser. Puede reintentarlo.',
         );
     }
 }

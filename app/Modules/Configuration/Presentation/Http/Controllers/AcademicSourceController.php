@@ -148,7 +148,7 @@ class AcademicSourceController extends Controller
         $execution = $action->execute($source, $file, $actor, $request);
 
         return response()->json([
-            'message' => 'PDF recibido. PaddleOCR estructurará el documento en segundo plano.',
+            'message' => 'PDF recibido. OpenParser estructurará el documento en segundo plano.',
             'execution_id' => $execution->id,
             'status' => $execution->estado,
         ], 202);

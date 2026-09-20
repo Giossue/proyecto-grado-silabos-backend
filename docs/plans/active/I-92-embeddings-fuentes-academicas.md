@@ -15,7 +15,7 @@ tabla independiente de embeddings.
 - Cada fragmento conserva texto, ruta de encabezados, posición y embedding.
 - La búsqueda conserva el índice GIN en español y añade recuperación semántica por
   distancia coseno; si embeddings está desactivado o indisponible, se degrada a texto.
-- PaddleOCR-VL 1.6 produce el documento JSON canónico. Después se reconstruyen los
+- OpenParser con `paddleocr-vl-1.6` produce el documento JSON canónico. Después se reconstruyen los
   fragmentos estructurados y se generan embeddings en la cola `ia`.
 
 ## Alcance
@@ -29,7 +29,7 @@ tabla independiente de embeddings.
 ## Flujo
 
 ```text
-PDF → PaddleOCR → documento JSON → fragmentos ordenados → embeddings → pgvector
+PDF → OpenParser/PaddleOCR → documento JSON → fragmentos ordenados → embeddings → pgvector
 ```
 
 El coordinador ve el documento estructurado completo. La búsqueda vectorial devuelve fragmentos por
