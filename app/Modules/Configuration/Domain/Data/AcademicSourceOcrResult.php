@@ -14,27 +14,4 @@ final readonly class AcademicSourceOcrResult
         public array $usage,
         public ?string $requestId,
     ) {}
-
-    /**
-     * @param  null|callable(string, array<string, mixed>): ?string  $imageUrlResolver
-     */
-    public function markdown(?callable $imageUrlResolver = null): string
-    {
-        return implode(
-            "\n\n",
-            array_map(
-                static fn (AcademicSourceOcrPage $page): string => trim($page->renderMarkdown($imageUrlResolver)),
-                $this->pages,
-            ),
-        );
-    }
-
-    /** @return list<array<string, mixed>> */
-    public function pagesForStorage(): array
-    {
-        return array_map(
-            static fn (AcademicSourceOcrPage $page): array => $page->toArray(),
-            $this->pages,
-        );
-    }
 }

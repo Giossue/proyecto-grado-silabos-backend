@@ -2,6 +2,9 @@
 
 ## Estado
 
+Reemplazado por I-95 el 19 de septiembre de 2026. Mistral OCR y Markdown dejaron de
+formar parte de la ingesta canónica.
+
 Backend implementado y verificado localmente el 19 de septiembre de 2026. La activación
 del proveedor en un entorno real continúa bloqueada por PV-12/PV-14.
 

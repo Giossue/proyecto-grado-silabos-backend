@@ -29,13 +29,20 @@ class AcademicSourceFragment extends Model
     /** @var list<string> */
     protected $fillable = [
         'fuente_academica_id', 'ruta_encabezados', 'titulo_fragmento',
+        'pagina_inicio', 'pagina_fin', 'bloques_origen',
         'posicion_fragmento', 'contenido_fragmento', 'huella_fragmento',
     ];
 
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['ruta_encabezados' => 'array', 'posicion_fragmento' => 'integer'];
+        return [
+            'ruta_encabezados' => 'array',
+            'bloques_origen' => 'array',
+            'posicion_fragmento' => 'integer',
+            'pagina_inicio' => 'integer',
+            'pagina_fin' => 'integer',
+        ];
     }
 
     /** @return BelongsTo<AcademicSource, $this> */

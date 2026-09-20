@@ -21,9 +21,10 @@ Fecha de corte: **30 de agosto de 2026**.
 - La plantilla institucional es única y se edita en el sitio; no hay versiones ni
   publicación (I-32, 2 de septiembre de 2026). Cada revisión enviada conserva su copia
   completa de la estructura y del mapa de exportación, que es lo que la protege.
-- Las fuentes académicas son documentos de la Coordinación (I-26, ajustada el 10 de septiembre
-  de 2026): nombre, descripción y contenido Markdown editable, sin
-  versiones, fragmentos ni conflictos. Administración no participa. La evidencia de IA
+- Las fuentes académicas son documentos de la Coordinación (I-95, 19 de septiembre de
+  2026): nombre, descripción y documento JSON estructurado editable, sin versiones ni
+  conflictos. Los fragmentos son un índice reemplazable, no otra fuente de verdad.
+  Administración no participa. La evidencia de IA
   conserva nombre, extracto y huella del contenido en el momento del análisis.
 - La plantilla de sílabo es única e institucional: no pertenece a una carrera y la usan
   las convocatorias de cualquier carrera tal como esté al abrir el proceso.
@@ -180,12 +181,12 @@ defecto y no cambia el control humano, por lo que `PV-13`, `PV-14` y `PV-18` con
 estado `POR VALIDAR`. La activación con datos institucionales requiere además resolver
 el tratamiento externo aplicable bajo `PV-12`.
 
-I-91 (19 de septiembre de 2026) implementa la ingesta de fuentes PDF con Mistral OCR 4.1:
-PDF privado → Markdown estructurado por página → índice derivado de fragmentos. No se usa
-`pdfplumber`, DeepSeek ni otro LLM en esa etapa, ni hay fallback silencioso para páginas
-sin contenido. La activación del proveedor en un entorno real continúa condicionada al
-tratamiento externo de documentos (`PV-12`) y a la evaluación definitiva de proveedor y
-modelo (`PV-14`); la migración de persistencia es `000086`.
+I-95 (19 de septiembre de 2026) reemplaza I-26, I-49, I-91 e I-94 en el formato de las
+fuentes: PDF privado → API oficial PaddleOCR-VL 1.6 → documento JSON ProseMirror/Tiptap →
+fragmentos y embeddings. Las tablas conservan combinaciones y las imágenes se insertan
+en su orden como objetos privados. `ejecuciones_trabajo` sustituye la tabla especializada
+de extracciones. No se usa Mistral, DeepSeek ni fallback silencioso. La activación real
+continúa condicionada a PV-12 y PV-14; la migración es `000089`.
 
 I-74 (14 de septiembre de 2026) normaliza roles y responsabilidades académicas: la
 única relación RBAC es `asignaciones_rol(usuario_id, rol, carrera_id)`. Se elimina

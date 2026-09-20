@@ -15,8 +15,8 @@ tabla independiente de embeddings.
 - Cada fragmento conserva texto, ruta de encabezados, posición y embedding.
 - La búsqueda conserva el índice GIN en español y añade recuperación semántica por
   distancia coseno; si embeddings está desactivado o indisponible, se degrada a texto.
-- Mistral OCR sigue siendo únicamente PDF → Markdown. Después se reconstruyen los
-  fragmentos y se generan embeddings en la cola `ia`.
+- PaddleOCR-VL 1.6 produce el documento JSON canónico. Después se reconstruyen los
+  fragmentos estructurados y se generan embeddings en la cola `ia`.
 
 ## Alcance
 
@@ -29,9 +29,9 @@ tabla independiente de embeddings.
 ## Flujo
 
 ```text
-PDF → Mistral OCR → Markdown canónico → fragmentos ordenados → embeddings → pgvector
+PDF → PaddleOCR → documento JSON → fragmentos ordenados → embeddings → pgvector
 ```
 
-El coordinador ve el Markdown completo. La búsqueda vectorial devuelve fragmentos por
+El coordinador ve el documento estructurado completo. La búsqueda vectorial devuelve fragmentos por
 similitud; la posición persistida permite reconstruir el orden original cuando se
 necesite presentar el documento o la evidencia.

@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
 use App\Modules\AiAssistance\Application\IndexAcademicSource;
+use App\Modules\Configuration\Application\AcademicSourceDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -20,18 +21,25 @@ class UpdateAcademicSourceContent
         private readonly ProcessLocks $locks,
         private readonly CanonicalHasher $hasher,
         private readonly IndexAcademicSource $indexer,
+        private readonly AcademicSourceDocument $documents,
     ) {}
 
-    public function execute(AcademicSource $source, ?string $content, User $actor, Request $request): AcademicSource
+    /** @param array<string, mixed> $document */
+    public function execute(AcademicSource $source, array $document, User $actor, Request $request): AcademicSource
     {
         $activeRole = $this->roles->resolve($request);
         // Con una convocatoria en curso los sílabos se apoyan en las fuentes: se pausa antes.
         $this->locks->assertCareerEditable($source->carrera_id);
 
-        return DB::transaction(function () use ($actor, $activeRole, $content, $request, $source): AcademicSource {
+        $document = $this->documents->normalize($document);
+        $content = $this->documents->text($document);
+
+        return DB::transaction(function () use ($actor, $activeRole, $content, $document, $request, $source): AcademicSource {
             $locked = AcademicSource::query()->whereKey($source->id)->lockForUpdate()->firstOrFail();
             $locked->update([
                 'contenido' => $content,
+                'documento' => $document,
+                'version_documento' => 1,
                 'estado_ingesta' => 'manual',
                 'ingesta_actualizada_en' => now(),
             ]);
@@ -47,7 +55,7 @@ class UpdateAcademicSourceContent
                 resourceId: $locked->id,
                 result: 'exito',
                 metadata: [
-                    'fingerprint' => $content === null ? null : $this->hasher->hash($content),
+                    'fingerprint' => $this->hasher->hash($document),
                     'fragment_count' => $fragmentCount,
                 ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,

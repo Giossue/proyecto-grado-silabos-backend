@@ -3,15 +3,13 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\User;
-use App\Modules\AiAssistance\Application\IndexAcademicSource;
-use App\Modules\Configuration\Application\AcademicSourceOcrAssetStore;
+use App\Modules\Configuration\Application\AcademicSourceOcrExecutionFinalizer;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
-use App\Modules\Configuration\Infrastructure\Jobs\ExtractAcademicSourceJob;
+use App\Modules\Configuration\Infrastructure\Jobs\PollAcademicSourceOcrJob;
+use App\Modules\Configuration\Infrastructure\Jobs\SubmitAcademicSourceOcrJob;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSourceExtraction;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
-use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,148 +34,132 @@ final class AcademicSourceOcrTest extends TestCase
         $this->coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
         $this->coordinatorContext = $this->coordinator->roleAssignments()->firstOrFail();
         config([
-            'mistral.enabled' => true,
-            'mistral.base_url' => 'https://api.mistral.test/v1',
-            'mistral.api_key' => 'test-key',
+            'paddleocr.enabled' => true,
+            'paddleocr.base_url' => 'https://paddleocr.test',
+            'paddleocr.access_token' => 'test-token',
+            'paddleocr.model' => 'PaddleOCR-VL-1.6',
+            'ai.embeddings.driver' => 'disabled',
         ]);
         Storage::fake('private');
         Queue::fake();
     }
 
-    public function test_coordinator_uploads_a_pdf_and_job_persists_mistral_markdown(): void
+    public function test_coordinator_uploads_pdf_and_persists_structured_document(): void
     {
-        Http::fake([
-            'https://api.mistral.test/v1/files' => Http::response(['id' => 'file-1'], 200),
-            'https://api.mistral.test/v1/ocr' => Http::response([
-                'model' => 'mistral-ocr-4-1',
-                'pages' => [
-                    ['index' => 0, 'markdown' => '# Marco institucional'],
-                    ['index' => 1, 'markdown' => "## Resultado\n\nDiseña software seguro."],
-                ],
-                'usage_info' => ['pages_processed' => 2],
-            ], 200, ['x-request-id' => 'request-1']),
-            'https://api.mistral.test/v1/files/file-1' => Http::response([], 204),
-        ]);
+        $this->fakeCompletedJob("# Marco institucional\n\n## Resultado\n\nDiseña software seguro.");
         $source = $this->createSource();
 
         $response = $this->actingAsCoordinator()->post(
             route('api.v1.coordination.sources.pdf.ingest', $source),
             ['pdf' => UploadedFile::fake()->create('reglamento.pdf', 20, 'application/pdf')],
         );
-        $response->assertStatus(202)->assertJsonStructure(['extraction_id', 'execution_id', 'status']);
+        $response->assertStatus(202)->assertJsonStructure(['execution_id', 'status']);
+        $execution = JobExecution::query()->firstOrFail();
+        Queue::assertPushed(SubmitAcademicSourceOcrJob::class, fn (SubmitAcademicSourceOcrJob $job): bool => $job->executionId === $execution->id);
 
-        $extraction = AcademicSourceExtraction::query()->firstOrFail();
-        $this->assertDatabaseHas('objetos_almacenados', [
-            'id' => $extraction->objeto_pdf_id,
-            'clasificacion' => 'academic_source_pdf',
-        ]);
-        Queue::assertPushed(ExtractAcademicSourceJob::class, fn (ExtractAcademicSourceJob $job): bool => $job->extractionId === $extraction->id);
-
-        (new ExtractAcademicSourceJob($extraction->id))->handle(
-            app(AcademicSourceOcrGateway::class),
-            app(IndexAcademicSource::class),
-            app(AcademicSourceOcrAssetStore::class),
-            app(RecordAuditEvent::class),
-        );
+        $this->runJobs($execution);
 
         $source = $source->fresh();
-        $this->assertSame("# Marco institucional\n\n## Resultado\n\nDiseña software seguro.", $source->contenido);
         $this->assertSame('completada', $source->estado_ingesta);
-        $this->assertNotNull($source->objeto_pdf_id);
-        $this->assertSame('completada', $extraction->fresh()->estado);
-        $this->assertSame('completada', JobExecution::query()->firstOrFail()->estado);
+        $this->assertSame('doc', $source->documento['type']);
+        $this->assertSame('heading', $source->documento['content'][0]['type']);
+        $this->assertStringContainsString('Diseña software seguro.', (string) $source->contenido);
+        $this->assertSame('completada', $execution->fresh()->estado);
         $this->assertDatabaseHas('fragmentos_fuente_academica', [
             'fuente_academica_id' => $source->id,
             'titulo_fragmento' => 'Resultado',
         ]);
-        Http::assertSentCount(3);
     }
 
-    public function test_ocr_inlines_tables_and_persists_private_images(): void
+    public function test_tables_with_spans_and_images_keep_their_logical_order(): void
     {
         $image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
-        Http::fake([
-            'https://api.mistral.test/v1/files' => Http::response(['id' => 'file-3'], 200),
-            'https://api.mistral.test/v1/ocr' => Http::response([
-                'model' => 'mistral-ocr-4-1',
-                'pages' => [[
-                    'index' => 0,
-                    'markdown' => "Texto previo\n\n![img-1.jpeg](img-1.jpeg)\n\n[tbl-1.md](tbl-1.md)",
-                    'images' => [['id' => 'img-1.jpeg', 'image_base64' => $image]],
-                    'tables' => [[
-                        'id' => 'tbl-1.md',
-                        'format' => 'markdown',
-                        'content' => "| Campo | Valor |\n| --- | --- |\n| Modalidad | Presencial |",
-                    ]],
-                ]],
-            ], 200, ['x-request-id' => 'request-3']),
-            'https://api.mistral.test/v1/files/file-3' => Http::response([], 204),
-        ]);
-        $source = $this->createSource();
+        $markdown = <<<'MARKDOWN'
+Texto previo
 
+<table><tr><th rowspan="2">Campo</th><th colspan="2">Valores</th></tr><tr><td>A</td><td>B</td></tr></table>
+
+![Sello institucional](img-1.png)
+MARKDOWN;
+        $this->fakeCompletedJob($markdown, ['img-1.png' => $image]);
+        $source = $this->createSource();
         $this->actingAsCoordinator()->post(
             route('api.v1.coordination.sources.pdf.ingest', $source),
             ['pdf' => UploadedFile::fake()->create('recursos.pdf', 20, 'application/pdf')],
         )->assertStatus(202);
-        $extraction = AcademicSourceExtraction::query()->firstOrFail();
 
-        (new ExtractAcademicSourceJob($extraction->id))->handle(
-            app(AcademicSourceOcrGateway::class),
-            app(IndexAcademicSource::class),
-            app(AcademicSourceOcrAssetStore::class),
-            app(RecordAuditEvent::class),
-        );
+        $execution = JobExecution::query()->firstOrFail();
+        $this->runJobs($execution);
 
         $source = $source->fresh();
+        $types = array_column($source->documento['content'], 'type');
+        $this->assertSame(['paragraph', 'table', 'sourceImage'], $types);
+        $table = $source->documento['content'][1];
+        $this->assertSame(2, $table['content'][0]['content'][0]['attrs']['rowspan']);
+        $this->assertSame(2, $table['content'][0]['content'][1]['attrs']['colspan']);
         $asset = StoredObject::query()->where('clasificacion', 'academic_source_image')->firstOrFail();
-        $content = (string) $source->contenido;
-        $this->assertStringContainsString('| Campo | Valor |', $content);
-        $this->assertStringContainsString('Presencial', $content);
-        $this->assertStringContainsString(route('api.v1.coordination.sources.assets.show', [
-            'source' => $source->id,
-            'asset' => $asset->id,
-        ]), $content);
-        $this->assertArrayNotHasKey('image_base64', $extraction->fresh()->paginas[0]['images'][0]);
+        $this->assertSame($asset->id, $source->documento['content'][2]['attrs']['objectId']);
         Storage::disk('private')->assertExists($asset->ruta_interna);
 
-        $this->actingAsCoordinator()
-            ->get(route('api.v1.coordination.sources.assets.show', [
-                'source' => $source->id,
-                'asset' => $asset->id,
-            ]))
-            ->assertOk()
-            ->assertHeader('Content-Type', 'image/png');
+        $detail = $this->actingAsCoordinator()->getJson(route('api.v1.coordination.sources.show', $source));
+        $detail->assertOk()->assertJsonPath('source.document.content.2.attrs.src', route('api.v1.coordination.sources.assets.show', [
+            'source' => $source->id,
+            'asset' => $asset->id,
+        ]));
     }
 
-    public function test_empty_ocr_markdown_fails_without_fallback_content(): void
+    public function test_empty_result_fails_without_replacing_previous_document(): void
     {
-        Http::fake([
-            'https://api.mistral.test/v1/files' => Http::response(['id' => 'file-2'], 200),
-            'https://api.mistral.test/v1/ocr' => Http::response([
-                'model' => 'mistral-ocr-4-1',
-                'pages' => [['index' => 0, 'markdown' => '']],
-            ], 200),
-            'https://api.mistral.test/v1/files/file-2' => Http::response([], 204),
-        ]);
+        $this->fakeCompletedJob('');
         $source = $this->createSource();
-
+        $original = $source->documento;
         $this->actingAsCoordinator()->post(
             route('api.v1.coordination.sources.pdf.ingest', $source),
             ['pdf' => UploadedFile::fake()->create('vacio.pdf', 20, 'application/pdf')],
         )->assertStatus(202);
-        $extraction = AcademicSourceExtraction::query()->firstOrFail();
 
-        (new ExtractAcademicSourceJob($extraction->id))->handle(
-            app(AcademicSourceOcrGateway::class),
-            app(IndexAcademicSource::class),
-            app(AcademicSourceOcrAssetStore::class),
-            app(RecordAuditEvent::class),
-        );
+        $execution = JobExecution::query()->firstOrFail();
+        $this->runJobs($execution);
 
-        $this->assertSame('fallida', $extraction->fresh()->estado);
+        $this->assertSame('fallida', $execution->fresh()->estado);
         $this->assertSame('fallida', $source->fresh()->estado_ingesta);
-        $this->assertNull($source->fresh()->contenido);
-        $this->assertSame(1, StoredObject::query()->count(), 'El PDF recibido se conserva privado aunque OCR falle.');
+        $this->assertSame($original, $source->fresh()->documento);
+        $this->assertSame(1, StoredObject::query()->count());
+    }
+
+    /** @param array<string, string> $images */
+    private function fakeCompletedJob(string $markdown, array $images = []): void
+    {
+        $jsonl = json_encode([
+            'result' => [
+                'dataInfo' => ['numPages' => 1],
+                'layoutParsingResults' => [[
+                    'markdown' => ['text' => $markdown, 'images' => $images],
+                    'prunedResult' => ['parsing_res_list' => []],
+                    'outputImages' => [],
+                ]],
+            ],
+        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        Http::fake([
+            'https://paddleocr.test/api/v2/ocr/jobs' => Http::response(['code' => 0, 'data' => ['jobId' => 'job-1']], 200),
+            'https://paddleocr.test/api/v2/ocr/jobs/job-1' => Http::response([
+                'code' => 0,
+                'data' => ['state' => 'done', 'resultUrl' => ['jsonUrl' => 'https://results.test/job-1.jsonl']],
+            ], 200),
+            'https://results.test/job-1.jsonl' => Http::response($jsonl, 200, ['Content-Type' => 'application/x-ndjson']),
+        ]);
+    }
+
+    private function runJobs(JobExecution $execution): void
+    {
+        (new SubmitAcademicSourceOcrJob($execution->id))->handle(
+            app(AcademicSourceOcrGateway::class),
+            app(AcademicSourceOcrExecutionFinalizer::class),
+        );
+        (new PollAcademicSourceOcrJob($execution->id))->handle(
+            app(AcademicSourceOcrGateway::class),
+            app(AcademicSourceOcrExecutionFinalizer::class),
+        );
     }
 
     private function createSource(): AcademicSource

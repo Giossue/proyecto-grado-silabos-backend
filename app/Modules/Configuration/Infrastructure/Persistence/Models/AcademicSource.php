@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
+use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -19,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $nombre
  * @property string|null $descripcion
  * @property string|null $contenido
+ * @property array<string, mixed> $documento
+ * @property int $version_documento
  * @property bool $activo
  * @property string|null $objeto_pdf_id
  * @property string $estado_ingesta
@@ -32,6 +35,8 @@ class AcademicSource extends Model
         'nombre' => 'nombre_fuente_academica',
         'descripcion' => 'descripcion_fuente_academica',
         'contenido' => 'contenido_fuente_academica',
+        'documento' => 'documento_fuente_academica',
+        'version_documento' => 'version_documento_fuente',
         'activo' => 'fuente_academica_activa',
         'estado_ingesta' => 'estado_ingesta_fuente',
         'ingesta_actualizada_en' => 'ingesta_actualizada_en',
@@ -47,6 +52,8 @@ class AcademicSource extends Model
         'nombre',
         'descripcion',
         'contenido',
+        'documento',
+        'version_documento',
         'activo',
         'objeto_pdf_id',
         'estado_ingesta',
@@ -58,6 +65,8 @@ class AcademicSource extends Model
     {
         return [
             'activo' => 'boolean',
+            'documento' => 'array',
+            'version_documento' => 'integer',
             'ingesta_actualizada_en' => 'immutable_datetime',
         ];
     }
@@ -74,14 +83,13 @@ class AcademicSource extends Model
         return $this->belongsTo(StoredObject::class, 'objeto_pdf_id');
     }
 
-    /** @return HasOne<AcademicSourceExtraction, $this> */
-    public function latestExtraction(): HasOne
+    /** @return HasOne<JobExecution, $this> */
+    public function latestExecution(): HasOne
     {
-        // PostgreSQL no admite MAX(uuid), que Eloquent usa internamente en
-        // latestOfMany(). El orden descendente conserva el mismo resultado sin
-        // agregar una función no soportada al SQL de eager loading.
-        return $this->hasOne(AcademicSourceExtraction::class, 'fuente_academica_id')
-            ->orderByDesc('solicitada_en')
+        return $this->hasOne(JobExecution::class, 'recurso_id')
+            ->where('tipo_recurso', 'fuente_academica')
+            ->where('tipo', 'fuente_academica.paddleocr')
+            ->orderByDesc('encolado_en')
             ->orderByDesc('id');
     }
 }

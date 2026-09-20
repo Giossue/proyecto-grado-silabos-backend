@@ -66,6 +66,31 @@ class ExportOpenApi extends Command
                             ],
                         ],
                     ],
+                    'SourceDocumentNode' => [
+                        'type' => 'object',
+                        'required' => ['type'],
+                        'properties' => [
+                            'type' => ['type' => 'string'],
+                            'text' => ['type' => 'string'],
+                            'attrs' => ['type' => 'object', 'additionalProperties' => true],
+                            'marks' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => true]],
+                            'content' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/SourceDocumentNode']],
+                        ],
+                    ],
+                    'SourceDocument' => [
+                        'allOf' => [
+                            ['$ref' => '#/components/schemas/SourceDocumentNode'],
+                            [
+                                'type' => 'object',
+                                'required' => ['schemaVersion', 'type', 'content'],
+                                'properties' => [
+                                    'schemaVersion' => ['type' => 'integer', 'const' => 1],
+                                    'type' => ['type' => 'string', 'const' => 'doc'],
+                                    'content' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/SourceDocumentNode']],
+                                ],
+                            ],
+                        ],
+                    ],
                 ],
                 'responses' => [
                     'Unauthorized' => $this->errorResponse('Sesión no autenticada.'),
@@ -112,9 +137,13 @@ class ExportOpenApi extends Command
         $isDownload = $name === 'api.v1.documents.download';
         $isLogoUpload = str_ends_with($name, '.logo.store');
         $isSourcePdfUpload = $name === 'api.v1.coordination.sources.pdf.ingest';
+        $isSourceAsset = $name === 'api.v1.coordination.sources.assets.show';
+        $isSourceContent = $name === 'api.v1.coordination.sources.content.update';
         $successContent = $isDownload
             ? ['application/octet-stream' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
-            : ['application/json' => ['schema' => ['type' => 'object']]];
+            : ($isSourceAsset
+                ? ['image/*' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
+                : ['application/json' => ['schema' => ['type' => 'object']]]);
         $operation = [
             'tags' => [$tag],
             'operationId' => str_replace('.', '_', $name),
@@ -145,6 +174,12 @@ class ExportOpenApi extends Command
                     'type' => 'object',
                     'required' => ['pdf'],
                     'properties' => ['pdf' => ['type' => 'string', 'format' => 'binary']],
+                ]]];
+            } elseif ($isSourceContent) {
+                $content = ['application/json' => ['schema' => [
+                    'type' => 'object',
+                    'required' => ['document'],
+                    'properties' => ['document' => ['$ref' => '#/components/schemas/SourceDocument']],
                 ]]];
             }
             $operation['requestBody'] = [

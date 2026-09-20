@@ -152,9 +152,10 @@ administrado hay que habilitar pgvector antes de migrar. Tras activar el driver,
 redespliega para que la caché de configuración y el worker de la cola `ia` reciban el
 cambio.
 
-Mistral OCR sigue siendo el paso anterior para convertir cada PDF en Markdown. El
-Markdown ordenado permanece en `fuentes_academicas`; los fragmentos derivados y sus
-vectores se reconstruyen en `fragmentos_fuente_academica`.
+PaddleOCR-VL 1.6 es el paso anterior para convertir cada PDF en un documento JSON
+estructurado. El documento ordenado permanece en `fuentes_academicas`; los fragmentos
+derivados y sus vectores se reconstruyen en `fragmentos_fuente_academica`. Configura
+`PADDLEOCR_ENABLED=true` y `PADDLEOCR_ACCESS_TOKEN` solo después de resolver PV-12/PV-14.
 
 ### Correo
 

@@ -604,12 +604,20 @@ class TemplateAndSourceTest extends TestCase
 
         $this->actingAsCoordinator()
             ->putJson(route('api.v1.coordination.sources.content.update', $source), [
-                'content' => "## Resultado\n\nDiseña software seguro.",
+                'document' => [
+                    'schemaVersion' => 1,
+                    'type' => 'doc',
+                    'content' => [
+                        ['type' => 'heading', 'attrs' => ['level' => 2], 'content' => [['type' => 'text', 'text' => 'Resultado']]],
+                        ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Diseña software seguro.']]],
+                    ],
+                ],
             ])
             ->assertSuccessful()
             ->assertSuccessful();
 
-        $this->assertSame("## Resultado\n\nDiseña software seguro.", $source->fresh()->contenido);
+        $this->assertSame("Resultado\n\nDiseña software seguro.", $source->fresh()->contenido);
+        $this->assertSame('doc', $source->fresh()->documento['type']);
         $this->assertDatabaseHas('fragmentos_fuente_academica', [
             'fuente_academica_id' => $source->id,
             'titulo_fragmento' => 'Resultado',
@@ -628,7 +636,8 @@ class TemplateAndSourceTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
 
                 ->where('source.name', 'Perfil de egreso 2026')
-                ->where('source.content', "## Resultado\n\nDiseña software seguro."));
+                ->where('source.document.type', 'doc')
+                ->missing('source.content'));
     }
 
     public function test_source_name_is_unique_per_career(): void
@@ -642,7 +651,7 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame(1, AcademicSource::query()->where('nombre', 'Reglamento académico')->count());
     }
 
-    public function test_coordinator_can_remove_a_source_without_erasing_its_history(): void
+    public function test_coordinator_can_physically_remove_an_unused_source(): void
     {
         $source = $this->createSourceAsCoordinator('Fuente para retirar');
 
@@ -651,7 +660,7 @@ class TemplateAndSourceTest extends TestCase
             ->assertOk()
             ->assertJsonPath('message', 'Fuente eliminada.');
 
-        $this->assertFalse($source->fresh()->activo);
+        $this->assertNull($source->fresh());
         $this->actingAsCoordinator()
             ->getJson(route('api.v1.coordination.sources.index'))
             ->assertOk()

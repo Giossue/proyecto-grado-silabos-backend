@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Configuration\Application\AcademicSourceDocument;
 use App\Modules\Configuration\Application\Actions\CreateAcademicSource;
 use App\Modules\Configuration\Application\Actions\DeleteAcademicSource;
 use App\Modules\Configuration\Application\Actions\RequestAcademicSourceOcr;
@@ -36,15 +37,15 @@ class AcademicSourceController extends Controller
                 ->where('carrera_id', $activeRole?->carrera_id)
                 ->where('activo', true)
                 ->orderBy('nombre')
-                ->with('latestExtraction')
+                ->with('latestExecution')
                 ->get()
                 ->map(fn (AcademicSource $source) => [
                     'id' => $source->id,
                     'name' => $source->nombre,
                     'description' => $source->descripcion,
-                    'has_content' => is_string($source->contenido) && trim($source->contenido) !== '',
+                    'has_content' => ($source->documento['content'] ?? []) !== [],
                     'ingestion_status' => $source->estado_ingesta,
-                    'extraction_id' => $source->latestExtraction?->id,
+                    'execution_id' => $source->latestExecution?->id,
                 ]),
         ];
 
@@ -60,24 +61,29 @@ class AcademicSourceController extends Controller
         return response()->json(['message' => 'Fuente creada. Ya puede redactar su contenido.', 'source_id' => $source->id], 201);
     }
 
-    public function show(AcademicSource $source, ManageAcademicSourceRequest $request, ProcessLocks $locks): JsonResponse
-    {
-        $source->load('latestExtraction.execution');
+    public function show(
+        AcademicSource $source,
+        ManageAcademicSourceRequest $request,
+        ProcessLocks $locks,
+        AcademicSourceDocument $documents,
+    ): JsonResponse {
+        $source->load('latestExecution');
+        $execution = $source->latestExecution;
         $payload = [
             'processLock' => $locks->careerLockReason($source->carrera_id),
             'source' => [
                 'id' => $source->id,
                 'name' => $source->nombre,
                 'description' => $source->descripcion,
-                'content' => $source->contenido,
+                'document' => $documents->withAssetUrls($source, $source->documento ?? ['schemaVersion' => 1, 'type' => 'doc', 'content' => []]),
+                'document_schema_version' => $source->version_documento,
                 'ingestion' => [
                     'status' => $source->estado_ingesta,
-                    'extraction_id' => $source->latestExtraction?->id,
-                    'execution_id' => $source->latestExtraction?->ejecucion_trabajo_id,
-                    'model' => $source->latestExtraction?->modelo_ocr,
-                    'requested_at' => $source->latestExtraction?->solicitada_en?->toIso8601String(),
-                    'completed_at' => $source->latestExtraction?->completada_en?->toIso8601String(),
-                    'error_code' => $source->latestExtraction?->codigo_error,
+                    'execution_id' => $execution?->id,
+                    'model' => is_string($execution?->entrada['model'] ?? null) ? $execution->entrada['model'] : null,
+                    'requested_at' => $execution?->encolado_en?->toIso8601String(),
+                    'completed_at' => $execution?->finalizado_en?->toIso8601String(),
+                    'error_code' => $execution?->codigo_error,
                 ],
             ],
         ];
@@ -115,11 +121,16 @@ class AcademicSourceController extends Controller
         AcademicSource $source,
         UpdateSourceContentRequest $request,
         UpdateAcademicSourceContent $action,
+        AcademicSourceDocument $documents,
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $content = $request->validated('content');
-        $action->execute($source, is_string($content) ? $content : null, $actor, $request);
+        $document = $request->validated('document');
+        if (! is_array($document)) {
+            $content = $request->validated('content');
+            $document = $documents->fromLegacyText(is_string($content) ? $content : null);
+        }
+        $action->execute($source, $document, $actor, $request);
 
         $message = 'Contenido guardado.';
 
@@ -134,13 +145,12 @@ class AcademicSourceController extends Controller
         $actor = $request->user();
         $file = $request->file('pdf');
         abort_unless($actor instanceof User && $file instanceof UploadedFile, 422);
-        $extraction = $action->execute($source, $file, $actor, $request);
+        $execution = $action->execute($source, $file, $actor, $request);
 
         return response()->json([
-            'message' => 'PDF recibido. La extracción Markdown se ejecutará en segundo plano.',
-            'extraction_id' => $extraction->id,
-            'execution_id' => $extraction->ejecucion_trabajo_id,
-            'status' => $extraction->estado,
+            'message' => 'PDF recibido. PaddleOCR estructurará el documento en segundo plano.',
+            'execution_id' => $execution->id,
+            'status' => $execution->estado,
         ], 202);
     }
 

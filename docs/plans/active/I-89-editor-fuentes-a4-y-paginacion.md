@@ -2,8 +2,8 @@
 
 ## Estado
 
-Verificado localmente por solicitud explícita del responsable del producto el 18 de
-septiembre de 2026.
+Su paginación A4 se conserva dentro de I-95; la persistencia Markdown fue reemplazada
+por el documento JSON estructurado el 19 de septiembre de 2026.
 
 ## Trazabilidad
 

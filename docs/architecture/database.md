@@ -111,24 +111,24 @@ y cada revisión enviada conserva su propia fotografía inmutable (I-32, I-52).
 campo apuntan al componente que las contiene. Todos los campos se validan como
 obligatorios al enviar, pero el estado `borrador` puede permanecer incompleto.
 
-`fuentes_academicas` es un documento por fila (I-26): nombre único por carrera,
-descripción y `contenido` Markdown editable. La migración `000054` retira
+`fuentes_academicas` es un documento por fila (I-95): nombre único por carrera,
+descripción y `documento_fuente_academica` JSON editable. `contenido_fuente_academica`
+es una proyección textual para búsqueda y compatibilidad. La migración `000054` retira
 `notas_internas`; las tablas
 `versiones_fuente`, `fragmentos_fuente` y `conflictos_fuente` se retiraron en la
 migración `000020`; no eran compatibles con el documento único editable. La migración
 `000078` incorpora `fragmentos_fuente_academica` como índice derivado y reemplazable del
-Markdown actual: conserva ruta de encabezados, posición, extracto y huella, pero nunca
+documento actual: conserva ruta de encabezados, posición, extracto y huella, pero nunca
 es fuente de verdad ni una versión publicable. Su índice GIN permite recuperación
 textual en español. La migración `000087` añade a esa misma tabla el embedding
 `vector(1536)` de `text-embedding-3-small` y un índice HNSW por distancia coseno. La
 evidencia de IA conserva su propia fotografía del contenido citado aunque este índice se
 reconstruya. Si el proveedor de embeddings falla, la recuperación textual continúa.
-I-91 incorpora además un PDF privado y produce ese Markdown con Mistral OCR 4.1. La
-migración `000086` agrega la referencia al objeto privado, el estado de ingesta y
-`extracciones_fuente_academica`, relacionada con `ejecuciones_trabajo`; el proveedor
-continúa desactivado por defecto en configuración. Las tablas se inlinéan en el Markdown
-canónico y las imágenes raster derivadas se guardan como objetos privados clasificados
-`academic_source_image`; su Base64 no se persiste en el resultado JSON.
+I-95 incorpora el PDF privado y produce el documento JSON con PaddleOCR-VL 1.6. La
+migración `000089` agrega el documento versionado, procedencia por fragmento y retira
+`extracciones_fuente_academica`; el estado remoto vive en `ejecuciones_trabajo`. Las
+tablas conservan `rowspan`/`colspan` y las imágenes raster se guardan como objetos
+privados `academic_source_image`; Base64 y URLs firmadas no se persisten.
 
 ### Convocatorias y sílabos
 

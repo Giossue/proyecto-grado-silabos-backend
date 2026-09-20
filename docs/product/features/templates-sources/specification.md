@@ -22,29 +22,28 @@
 - La previsualización usa datos de prueba antes de publicar.
 - Publicar crea una versión inmutable con identidad y vigencia.
 - Clonar crea otra identidad; desactivar solo impide usos futuros.
-- Una fuente académica es un documento de la Coordinación de la carrera (I-26): nombre,
-  descripción y un contenido en Markdown. No tiene versiones ni conflictos; sus
+- Una fuente académica es un documento de la Coordinación de la carrera (I-95): nombre,
+  descripción y contenido JSON estructurado. No tiene versiones ni conflictos; sus
   fragmentos de búsqueda son un índice derivado, y Administración no participa.
-- Eliminar una fuente la desactiva y la retira del listado y de futuras convocatorias;
-  conserva el contenido, el PDF y las referencias históricas para no romper sílabos ni
-  evidencias de IA existentes.
+- Eliminar una fuente sin referencias la borra físicamente. Si forma parte de una
+  convocatoria o evidencia histórica, la operación se rechaza para no romperla.
 - El contenido se redacta en COR-11 como una hoja de documento visual con cinta de
   opciones (encabezados, énfasis, listas, cita, tabla con selector de tamaño, código,
-  enlace y divisor). Se guarda como Markdown seguro, pero la Coordinación no ve ni
-  alterna a sintaxis Markdown: el formato se aplica y se renderiza en tiempo real.
+  enlace, divisor y operaciones de tabla). Se guarda como JSON ProseMirror/Tiptap; el
+  formato se aplica y se renderiza en tiempo real.
 - Antes de iniciar su alcance, Coordinación elige un subconjunto no vacío de las fuentes
   activas de su carrera. La convocatoria fija exactamente esa selección, que no puede
   cambiarse después de iniciada; al reanudar, todas deben continuar activas. La evidencia
   de IA guarda su propia fotografía (nombre, extracto y huella del
   contenido), por lo que editar la fuente después no reescribe análisis pasados.
-- Coordinación puede cargar un PDF privado para obtener el contenido Markdown mediante
-  Mistral OCR 4.1. La ruta devuelve `202`, el resultado se conserva por página y luego
+- Coordinación carga un PDF privado para obtener el documento mediante PaddleOCR-VL 1.6.
+  La ruta devuelve `202`, el resultado conserva procedencia por página y luego
   se indexa en fragmentos_fuente_academica para búsqueda y citas.
-- Esta ingesta no usa pdfplumber, DeepSeek ni un fallback para páginas vacías. Las tablas
-  se incorporan al Markdown y las imágenes raster se conservan como recursos privados
+- Esta ingesta no usa Mistral, DeepSeek ni un fallback para páginas vacías. Las tablas
+  conservan combinaciones y las imágenes raster se conservan como recursos privados
   referenciados desde la fuente; no se promete interpretar el significado visual de
   diagramas, gráficos, fórmulas o fotografías.
-- La ingesta no sustituye el editor Markdown: una extracción correcta actualiza el
+- La ingesta alimenta el editor estructurado: una extracción correcta actualiza el
   contenido y la Coordinación puede revisarlo o corregirlo; una extracción fallida
   conserva el contenido anterior.
 - En ADM-05 y COR-11, el listado es la vista inicial y la creación se abre desde

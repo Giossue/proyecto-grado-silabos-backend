@@ -1,5 +1,8 @@
 # I-26 — Fuentes académicas como documentos de coordinación
 
+> Reemplazado parcialmente por I-95 el 19 de septiembre de 2026: se conserva la fuente
+> única de Coordinación, pero el formato canónico ya no es Markdown.
+
 ## Decisión de producto
 
 Las fuentes académicas dejan de ser expedientes versionados del Administrador y pasan a

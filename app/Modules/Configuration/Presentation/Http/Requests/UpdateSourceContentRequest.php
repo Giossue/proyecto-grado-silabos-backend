@@ -8,7 +8,11 @@ class UpdateSourceContentRequest extends ManageAcademicSourceRequest
     public function rules(): array
     {
         return [
-            'content' => ['nullable', 'string', 'max:100000'],
+            'document' => ['required_without:content', 'array'],
+            'document.type' => ['required_with:document', 'in:doc'],
+            'document.schemaVersion' => ['nullable', 'integer', 'in:1'],
+            'document.content' => ['required_with:document', 'array', 'max:20000'],
+            'content' => ['required_without:document', 'nullable', 'string', 'max:100000'],
         ];
     }
 }

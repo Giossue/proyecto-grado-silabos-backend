@@ -4873,9 +4873,10 @@
                     "200": {
                         "description": "Operación completada.",
                         "content": {
-                            "application/json": {
+                            "image/*": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "string",
+                                    "format": "binary"
                                 }
                             }
                         }
@@ -4959,7 +4960,14 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "additionalProperties": true
+                                "required": [
+                                    "document"
+                                ],
+                                "properties": {
+                                    "document": {
+                                        "$ref": "#/components/schemas/SourceDocument"
+                                    }
+                                }
                             }
                         }
                     }
@@ -6450,6 +6458,68 @@
                         }
                     }
                 }
+            },
+            "SourceDocumentNode": {
+                "type": "object",
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string"
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "attrs": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "marks": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SourceDocumentNode"
+                        }
+                    }
+                }
+            },
+            "SourceDocument": {
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/SourceDocumentNode"
+                    },
+                    {
+                        "type": "object",
+                        "required": [
+                            "schemaVersion",
+                            "type",
+                            "content"
+                        ],
+                        "properties": {
+                            "schemaVersion": {
+                                "type": "integer",
+                                "const": 1
+                            },
+                            "type": {
+                                "type": "string",
+                                "const": "doc"
+                            },
+                            "content": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/SourceDocumentNode"
+                                }
+                            }
+                        }
+                    }
+                ]
             }
         },
         "responses": {

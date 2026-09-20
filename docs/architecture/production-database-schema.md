@@ -298,8 +298,8 @@ UNIQUE (componente_plantilla_id, posicion_definicion_campo)
 
 ## fuentes_academicas
 
-**Contexto:** fuentes de una carrera, almacenadas como Markdown y seleccionables para IA.
-El Markdown puede provenir del editor o de una extracción PDF asíncrona con Mistral OCR.
+**Contexto:** documento académico estructurado de una carrera, editable y seleccionable
+para IA; puede provenir del editor o de PaddleOCR.
 
 ~~~text
 id UUID (PK)
@@ -308,6 +308,8 @@ nombre_fuente_academica VARCHAR NOT NULL
 descripcion_fuente_academica TEXT NULL
 fuente_academica_activa BOOLEAN NOT NULL
 contenido_fuente_academica TEXT NULL
+documento_fuente_academica JSONB NOT NULL
+version_documento_fuente SMALLINT NOT NULL DEFAULT 1
 objeto_pdf_id UUID (FK → objetos_almacenados.id) NULL UNIQUE
 estado_ingesta_fuente VARCHAR(24) NOT NULL DEFAULT 'manual'
 ingesta_actualizada_en TIMESTAMPTZ NULL
@@ -315,36 +317,7 @@ ingesta_actualizada_en TIMESTAMPTZ NULL
 UNIQUE (carrera_id, nombre_fuente_academica)
 
 CHECK estado_ingesta_fuente IN ('manual', 'pendiente', 'en_ejecucion', 'completada', 'fallida')
-~~~
-
-## extracciones_fuente_academica
-
-**Contexto:** ejecución OCR de un PDF de fuente; conserva el resultado por página y el
-vínculo con el trabajo asíncrono.
-
-~~~text
-id UUID (PK)
-fuente_academica_id UUID (FK → fuentes_academicas.id) NOT NULL
-objeto_pdf_id UUID (FK → objetos_almacenados.id) NOT NULL
-ejecucion_trabajo_id UUID (FK → ejecuciones_trabajo.id) NULL UNIQUE
-solicitada_por UUID (FK → usuarios.id) NOT NULL
-estado_extraccion_fuente VARCHAR(24) NOT NULL DEFAULT 'pendiente'
-modelo_ocr VARCHAR(100) NOT NULL
-version_adaptador VARCHAR(80) NOT NULL
-huella_pdf CHAR(64) NOT NULL
-opciones_extraccion JSONB NULL
-paginas_extraidas JSONB NULL
-metadatos_respuesta JSONB NULL
-huella_contenido CHAR(64) NULL
-codigo_error VARCHAR(100) NULL
-mensaje_error TEXT NULL
-solicitada_en TIMESTAMPTZ NOT NULL
-iniciada_en TIMESTAMPTZ NULL
-completada_en TIMESTAMPTZ NULL
-fallida_en TIMESTAMPTZ NULL
-
-UNIQUE (fuente_academica_id, huella_pdf, modelo_ocr)
-CHECK estado_extraccion_fuente IN ('pendiente', 'en_ejecucion', 'completada', 'fallida')
+CHECK documento_fuente_academica es un objeto doc con content como arreglo
 ~~~
 
 ## preferencias_ia_carrera
@@ -365,13 +338,16 @@ UNIQUE (carrera_id, definicion_campo_id)
 
 ## fragmentos_fuente_academica
 
-**Contexto:** índice derivado y reemplazable del contenido Markdown de una fuente.
+**Contexto:** índice derivado y reemplazable del documento estructurado de una fuente.
 
 ~~~text
 id UUID (PK)
 fuente_academica_id UUID (FK → fuentes_academicas.id) NOT NULL
 ruta_encabezados JSONB NOT NULL
 titulo_fragmento VARCHAR NULL
+pagina_inicio SMALLINT NULL
+pagina_fin SMALLINT NULL
+bloques_origen JSONB NULL
 posicion_fragmento SMALLINT NOT NULL
 contenido_fragmento TEXT NOT NULL
 huella_fragmento CHAR(64) NOT NULL
@@ -391,9 +367,7 @@ plantillas_silabo 1:N definiciones_campo
 componentes_plantilla 1:N definiciones_campo
 carreras 1:N fuentes_academicas
 fuentes_academicas 1:0..1 objetos_almacenados como PDF vigente
-fuentes_academicas 1:N extracciones_fuente_academica
-extracciones_fuente_academica 1:0..1 ejecuciones_trabajo
-objetos_almacenados 1:N extracciones_fuente_academica como PDF de entrada
+fuentes_academicas 1:N ejecuciones_trabajo por recurso lógico
 fuentes_academicas 1:N fragmentos_fuente_academica
 fragmentos_fuente_academica 0..1 embedding vectorial por fragmento
 carreras 1:N preferencias_ia_carrera

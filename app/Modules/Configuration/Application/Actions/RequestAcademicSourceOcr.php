@@ -4,9 +4,8 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
-use App\Modules\Configuration\Infrastructure\Jobs\ExtractAcademicSourceJob;
+use App\Modules\Configuration\Infrastructure\Jobs\SubmitAcademicSourceOcrJob;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSourceExtraction;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -29,12 +28,8 @@ final class RequestAcademicSourceOcr
         private readonly ProcessLocks $locks,
     ) {}
 
-    public function execute(
-        AcademicSource $source,
-        UploadedFile $file,
-        User $actor,
-        Request $request,
-    ): AcademicSourceExtraction {
+    public function execute(AcademicSource $source, UploadedFile $file, User $actor, Request $request): JobExecution
+    {
         $activeRole = $this->roles->resolve($request);
         abort_unless(
             $activeRole?->role->codigo_rol === RoleCode::Coordinator->value
@@ -42,22 +37,14 @@ final class RequestAcademicSourceOcr
             403,
         );
         $this->locks->assertCareerEditable($source->carrera_id);
-
         $pathInfo = $this->storePdf($source, $file);
-        $model = (string) config('mistral.model');
+        $model = (string) config('paddleocr.model');
         $adapterVersion = $this->gateway->version();
-        $shouldDispatch = false;
+        $dispatch = false;
 
-        $extraction = DB::transaction(function () use (
-            $activeRole,
-            $actor,
-            $adapterVersion,
-            $model,
-            $pathInfo,
-            $request,
-            $source,
-            &$shouldDispatch,
-        ): AcademicSourceExtraction {
+        $execution = DB::transaction(function () use (
+            $activeRole, $actor, $adapterVersion, $model, $pathInfo, $request, $source, &$dispatch,
+        ): JobExecution {
             $lockedSource = AcademicSource::query()->lockForUpdate()->findOrFail($source->id);
             $object = StoredObject::query()->firstOrCreate(
                 ['disco' => 'private', 'ruta_interna' => $pathInfo['path']],
@@ -73,80 +60,37 @@ final class RequestAcademicSourceOcr
                     'almacenado_en' => now(),
                 ],
             );
-            if ($object->mime !== 'application/pdf'
-                || $object->tamano_bytes !== $pathInfo['size']
-                || ! hash_equals($object->huella_sha256, $pathInfo['hash'])) {
-                throw ValidationException::withMessages([
-                    'pdf' => 'El archivo privado existente no coincide con el PDF recibido.',
-                ]);
+            if ($object->mime !== 'application/pdf' || $object->tamano_bytes !== $pathInfo['size'] || ! hash_equals($object->huella_sha256, $pathInfo['hash'])) {
+                throw ValidationException::withMessages(['pdf' => 'El archivo privado existente no coincide con el PDF recibido.']);
             }
 
-            $extraction = AcademicSourceExtraction::query()
-                ->where('fuente_academica_id', $lockedSource->id)
-                ->where('huella_pdf', $pathInfo['hash'])
-                ->where('modelo_ocr', $model)
-                ->lockForUpdate()
-                ->first();
-            if ($extraction !== null) {
-                if (in_array($extraction->estado, ['pendiente', 'en_ejecucion'], true)
-                    || ($extraction->estado === 'completada' && $extraction->version_adaptador === $adapterVersion)) {
-                    return $extraction->load('execution');
-                }
-
-                $extraction->update([
-                    'objeto_pdf_id' => $object->id,
-                    'solicitada_por' => $actor->id,
-                    'estado' => 'pendiente',
-                    'version_adaptador' => $adapterVersion,
-                    'opciones' => $this->options(),
-                    'paginas' => null,
-                    'metadatos' => null,
-                    'huella_contenido' => null,
-                    'codigo_error' => null,
-                    'mensaje_error' => null,
-                    'solicitada_en' => now(),
-                    'iniciada_en' => null,
-                    'completada_en' => null,
-                    'fallida_en' => null,
-                ]);
-            } else {
-                $extraction = AcademicSourceExtraction::query()->create([
-                    'fuente_academica_id' => $lockedSource->id,
-                    'objeto_pdf_id' => $object->id,
-                    'solicitada_por' => $actor->id,
-                    'estado' => 'pendiente',
-                    'modelo_ocr' => $model,
-                    'version_adaptador' => $adapterVersion,
-                    'huella_pdf' => $pathInfo['hash'],
-                    'opciones' => $this->options(),
-                    'solicitada_en' => now(),
-                ]);
-            }
-
+            $requestFingerprint = hash('sha256', "{$pathInfo['hash']}:{$model}:{$adapterVersion}");
+            $key = "fuente.paddleocr:{$lockedSource->id}:{$requestFingerprint}";
             $correlationId = $request->attributes->getString('correlation_id');
-            $execution = $extraction->execution()->lockForUpdate()->first();
+            $execution = JobExecution::query()->where('clave_idempotencia', $key)->lockForUpdate()->first();
             if ($execution === null) {
                 $execution = JobExecution::query()->create([
-                    'tipo' => 'fuente_academica.ocr',
+                    'tipo' => 'fuente_academica.paddleocr',
                     'cola' => 'integraciones',
                     'estado' => 'pendiente',
-                    'clave_idempotencia' => "fuente_academica.ocr:{$lockedSource->id}:{$pathInfo['hash']}:{$model}",
+                    'clave_idempotencia' => $key,
                     'correlacion_id' => Str::isUuid($correlationId) ? $correlationId : (string) Str::uuid(),
                     'tipo_recurso' => 'fuente_academica',
                     'recurso_id' => $lockedSource->id,
                     'entrada' => [
                         'source_id' => $lockedSource->id,
-                        'extraction_id' => $extraction->id,
                         'pdf_object_id' => $object->id,
                         'pdf_hash' => $pathInfo['hash'],
                         'model' => $model,
+                        'adapter_version' => $adapterVersion,
+                        'requested_by' => $actor->id,
                     ],
                     'intentos' => 0,
                     'intentos_maximos' => 3,
                     'progreso' => 0,
                 ]);
-                $extraction->update(['ejecucion_trabajo_id' => $execution->id]);
-            } else {
+                $dispatch = true;
+            } elseif ($execution->estado === 'fallida') {
                 $execution->update([
                     'estado' => 'pendiente',
                     'progreso' => 0,
@@ -156,10 +100,12 @@ final class RequestAcademicSourceOcr
                     'iniciado_en' => null,
                     'finalizado_en' => null,
                 ]);
+                $dispatch = true;
             }
 
             $lockedSource->update([
-                'estado_ingesta' => 'pendiente',
+                'objeto_pdf_id' => $object->id,
+                'estado_ingesta' => $execution->estado === 'completada' ? 'completada' : 'pendiente',
                 'ingesta_actualizada_en' => now(),
             ]);
             $this->audit->execute(
@@ -169,23 +115,18 @@ final class RequestAcademicSourceOcr
                 resourceType: 'fuente_academica',
                 resourceId: $lockedSource->id,
                 result: 'exito',
-                metadata: [
-                    'pdf_hash' => $pathInfo['hash'],
-                    'pdf_size' => $pathInfo['size'],
-                    'model' => $model,
-                ],
+                metadata: ['pdf_hash' => $pathInfo['hash'], 'pdf_size' => $pathInfo['size'], 'model' => $model],
                 correlationId: $execution->correlacion_id,
             );
-            $shouldDispatch = true;
 
-            return $extraction->load('execution');
+            return $execution;
         });
 
-        if ($shouldDispatch) {
-            ExtractAcademicSourceJob::dispatch($extraction->id)->afterCommit();
+        if ($dispatch) {
+            SubmitAcademicSourceOcrJob::dispatch($execution->id)->afterCommit();
         }
 
-        return $extraction;
+        return $execution;
     }
 
     /** @return array{path: string, name: string, size: int, hash: string} */
@@ -200,12 +141,11 @@ final class RequestAcademicSourceOcr
         if (! is_int($size) || ! is_string($hash)) {
             throw ValidationException::withMessages(['pdf' => 'No se pudo calcular la huella del PDF.']);
         }
-        if ($size > (int) config('mistral.max_upload_bytes')) {
+        if ($size > (int) config('paddleocr.max_upload_bytes')) {
             throw ValidationException::withMessages(['pdf' => 'El PDF supera el tamaño máximo permitido.']);
         }
-
-        $disk = Storage::disk('private');
         $path = "academic-sources/{$source->id}/{$hash}.pdf";
+        $disk = Storage::disk('private');
         if (! $disk->exists($path)) {
             $stream = fopen($realPath, 'rb');
             if ($stream === false || ! $disk->put($path, $stream)) {
@@ -222,17 +162,6 @@ final class RequestAcademicSourceOcr
             'name' => Str::limit($file->getClientOriginalName() ?: 'fuente-academica.pdf', 255, ''),
             'size' => $size,
             'hash' => $hash,
-        ];
-    }
-
-    /** @return array<string, bool|string> */
-    private function options(): array
-    {
-        return [
-            'table_format' => (string) config('mistral.table_format'),
-            'include_blocks' => (bool) config('mistral.include_blocks'),
-            'confidence_scores_granularity' => (string) config('mistral.confidence_scores_granularity'),
-            'include_image_base64' => (bool) config('mistral.include_image_base64'),
         ];
     }
 }

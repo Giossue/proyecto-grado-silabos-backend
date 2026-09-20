@@ -2,9 +2,7 @@
 
 ## Estado
 
-Implementado localmente — 5 de septiembre de 2026. Queda la revisión manual de la
-hoja en teclado, lector de pantalla, 360 px, zoom y ambos temas, exigida por la
-Definition of Done.
+Reemplazado por el editor Tiptap estructurado de I-95 el 19 de septiembre de 2026.
 
 ## Trazabilidad
 

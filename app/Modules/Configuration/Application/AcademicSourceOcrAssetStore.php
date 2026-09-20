@@ -2,118 +2,95 @@
 
 namespace App\Modules\Configuration\Application;
 
+use App\Modules\Configuration\Domain\Data\AcademicSourceOcrPage;
 use App\Modules\Configuration\Domain\Data\AcademicSourceOcrResult;
 use App\Modules\Configuration\Domain\Exceptions\AcademicSourceOcrContractException;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSourceExtraction;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
+use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 final class AcademicSourceOcrAssetStore
 {
-    /**
-     * @return array{markdown: string, image_count: int}
-     */
-    public function materialize(
-        AcademicSource $source,
-        AcademicSourceExtraction $extraction,
-        AcademicSourceOcrResult $result,
-    ): array {
+    public function __construct(private readonly PaddleOcrDocumentConverter $converter) {}
+
+    /** @return array{document: array<string, mixed>, image_count: int} */
+    public function materialize(AcademicSource $source, JobExecution $execution, AcademicSourceOcrResult $result): array
+    {
         $objects = [];
+        $document = $this->converter->convert(
+            $result,
+            function (AcademicSourceOcrPage $page, string $imageId, string $resource) use (&$objects, $execution, $source): ?string {
+                $key = $page->index.':'.$imageId;
+                if (! array_key_exists($key, $objects)) {
+                    $objects[$key] = $this->storeImage($source, $execution, $imageId, $resource);
+                }
 
-        $markdown = $result->markdown(function (string $imageId, array $image) use (&$objects, $source, $extraction): ?string {
-            if (! array_key_exists($imageId, $objects)) {
-                $objects[$imageId] = $this->storeImage($source, $extraction, $imageId, $image);
-            }
+                return $objects[$key]?->id;
+            },
+        );
 
-            $object = $objects[$imageId];
-
-            return $object instanceof StoredObject
-                ? route('api.v1.coordination.sources.assets.show', [
-                    'source' => $source->id,
-                    'asset' => $object->id,
-                ])
-                : null;
-        });
-
-        return [
-            'markdown' => $markdown,
-            'image_count' => count(array_filter($objects, static fn (mixed $object): bool => $object instanceof StoredObject)),
-        ];
+        return ['document' => $document, 'image_count' => count(array_filter($objects))];
     }
 
-    /**
-     * @param  array<string, mixed>  $image
-     */
-    private function storeImage(
-        AcademicSource $source,
-        AcademicSourceExtraction $extraction,
-        string $imageId,
-        array $image,
-    ): ?StoredObject {
-        $encoded = $image['image_base64'] ?? $image['image_data'] ?? null;
-        if (! is_string($encoded) || trim($encoded) === '') {
+    private function storeImage(AcademicSource $source, JobExecution $execution, string $imageId, string $resource): ?StoredObject
+    {
+        [$bytes, $declaredMime] = $this->bytes($resource);
+        if ($bytes === '') {
             return null;
         }
-
-        [$mime, $encoded] = $this->splitDataUrl($encoded, $image);
-        $bytes = base64_decode((string) preg_replace('/\s+/', '', $encoded), true);
-        if (! is_string($bytes) || $bytes === '') {
-            throw new AcademicSourceOcrContractException('Mistral OCR devolvió una imagen inválida.');
+        if (strlen($bytes) > (int) config('paddleocr.max_image_bytes')) {
+            throw new AcademicSourceOcrContractException('PaddleOCR devolvió una imagen demasiado grande.');
         }
-
-        $maxBytes = (int) config('mistral.max_image_bytes');
-        if ($maxBytes > 0 && strlen($bytes) > $maxBytes) {
-            throw new AcademicSourceOcrContractException('Mistral OCR devolvió una imagen demasiado grande.');
-        }
-
-        $detectedMime = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) ?: '';
-        if (isset(self::IMAGE_EXTENSIONS[$detectedMime])) {
-            $mime = $detectedMime;
-        }
+        $mime = (new \finfo(FILEINFO_MIME_TYPE))->buffer($bytes) ?: $declaredMime;
         if (! isset(self::IMAGE_EXTENSIONS[$mime])) {
-            throw new AcademicSourceOcrContractException('Mistral OCR devolvió un formato de imagen no permitido.');
+            throw new AcademicSourceOcrContractException('PaddleOCR devolvió un formato de imagen no permitido.');
         }
-
         $hash = hash('sha256', $bytes);
-        $extension = self::IMAGE_EXTENSIONS[$mime];
-        $path = "academic-sources/{$source->id}/assets/{$hash}.{$extension}";
+        $path = "academic-sources/{$source->id}/assets/{$hash}.".self::IMAGE_EXTENSIONS[$mime];
         $disk = Storage::disk('private');
         if (! $disk->exists($path) && ! $disk->put($path, $bytes)) {
-            throw new AcademicSourceOcrContractException('No se pudo guardar una imagen OCR privada.');
+            throw new AcademicSourceOcrContractException('No se pudo guardar una imagen privada de la fuente.');
         }
 
-        $object = StoredObject::query()->firstOrCreate(
+        return StoredObject::query()->firstOrCreate(
             ['disco' => 'private', 'ruta_interna' => $path],
             [
-                'nombre_logico' => basename($imageId),
+                'nombre_logico' => mb_substr(basename($imageId) ?: "imagen-{$hash}", 0, 255),
                 'mime' => $mime,
                 'tamano_bytes' => strlen($bytes),
                 'huella_sha256' => $hash,
                 'clasificacion' => 'academic_source_image',
                 'estado' => 'activo',
-                'propietario_usuario_id' => $extraction->solicitada_por,
+                'propietario_usuario_id' => is_string($execution->entrada['requested_by'] ?? null) ? $execution->entrada['requested_by'] : null,
                 'carrera_id' => $source->carrera_id,
                 'almacenado_en' => now(),
             ],
         );
-
-        return $object;
     }
 
-    /**
-     * @param  array<string, mixed>  $image
-     * @return array{0: string, 1: string}
-     */
-    private function splitDataUrl(string $encoded, array $image): array
+    /** @return array{0: string, 1: string} */
+    private function bytes(string $resource): array
     {
-        $mime = strtolower(trim((string) ($image['mime_type'] ?? $image['mime'] ?? '')));
-        if (preg_match('/^data:([^;,]+);base64,(.*)$/s', trim($encoded), $matches) === 1) {
-            $mime = strtolower($matches[1]);
-            $encoded = $matches[2];
+        if (preg_match('/^data:([^;,]+);base64,(.*)$/s', trim($resource), $match) === 1) {
+            $bytes = base64_decode((string) preg_replace('/\s+/', '', $match[2]), true);
+
+            return [is_string($bytes) ? $bytes : '', strtolower($match[1])];
+        }
+        $parts = parse_url($resource);
+        if (! is_array($parts) || ($parts['scheme'] ?? null) !== 'https' || ! is_string($parts['host'] ?? null) || isset($parts['user'], $parts['pass'], $parts['fragment'])) {
+            throw new AcademicSourceOcrContractException('PaddleOCR devolvió una URL de imagen inválida.');
+        }
+        $response = Http::withoutRedirecting()
+            ->connectTimeout((int) config('paddleocr.connect_timeout_seconds'))
+            ->timeout((int) config('paddleocr.timeout_seconds'))
+            ->get($resource);
+        if (! $response->successful()) {
+            throw new AcademicSourceOcrContractException('No se pudo descargar una imagen de PaddleOCR.');
         }
 
-        return [$mime, $encoded];
+        return [$response->body(), strtolower(trim(explode(';', $response->header('Content-Type'))[0]))];
     }
 
     /** @var array<string, string> */

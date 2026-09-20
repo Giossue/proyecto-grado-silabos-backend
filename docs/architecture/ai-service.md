@@ -16,10 +16,10 @@ Job → valida contrato → persiste recomendaciones/evidencias → notifica
 
 ## OCR de fuentes académicas
 
-La extracción de fuentes PDF es un flujo separado de AiAnalysisGateway. I-91 usa
-Mistral OCR 4.1 como único adaptador PDF → Markdown y después reconstruye el índice de
-fragmentos para búsqueda. No usa DeepSeek ni otro LLM para reescribir el resultado;
-DeepSeek solo permanece disponible para la asistencia IA general de I-73.
+La extracción de fuentes PDF es un flujo separado de AiAnalysisGateway. I-95 usa la API
+oficial de PaddleOCR-VL 1.6 como único adaptador PDF → documento JSON y después
+reconstruye el índice de fragmentos. No usa Mistral, DeepSeek ni otro LLM para reescribir
+el resultado; DeepSeek solo permanece disponible para la asistencia general de I-73.
 
 Después de reconstruir `fragmentos_fuente_academica`, el trabajo de la cola `ia` puede
 generar embeddings con `text-embedding-3-small` y guardarlos en la columna vectorial de
@@ -28,8 +28,8 @@ vectoriza la pregunta con el mismo modelo, filtra las fuentes autorizadas y orde
 distancia coseno; si el proveedor está desactivado o indisponible, usa el índice textual
 GIN existente.
 
-El flujo completo, el contrato por página, la política de imágenes y los pendientes de
-persistencia están en [academic-source-ingestion.md](academic-source-ingestion.md).
+El flujo completo, el contrato por página y la política de imágenes están en
+[academic-source-ingestion.md](academic-source-ingestion.md).
 La salida OCR no toma decisiones académicas. Una ejecución correcta reemplaza el
 contenido de la fuente y la Coordinación conserva la revisión y edición humana.
 
