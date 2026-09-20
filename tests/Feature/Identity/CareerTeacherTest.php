@@ -131,6 +131,37 @@ class CareerTeacherTest extends TestCase
             ->count());
     }
 
+    public function test_a_parallel_cannot_have_two_active_teachers(): void
+    {
+        $parallel = Parallel::query()->firstOrFail();
+        $career = Career::query()->whereKey($this->context->carrera_id)->firstOrFail();
+        $secondTeacher = User::query()->create([
+            'nombre' => 'Segundo docente',
+            'correo_electronico' => 'segundo.docente@silabos.test',
+            'contrasena' => Hash::make('Demo-2026!'),
+            'correo_verificado_en' => now(),
+            'activo' => true,
+        ]);
+        RoleAssignment::query()->create([
+            'usuario_id' => $secondTeacher->id,
+            'rol' => RoleCode::Teacher->value,
+            'carrera_id' => $career->id,
+            'activo' => true,
+        ]);
+
+        $this->postJson(route('api.v1.coordination.academic.store', 'asignacion_docente'), [
+            'user_id' => $secondTeacher->id,
+            'parallel_id' => $parallel->id,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('user_id');
+
+        $this->assertSame(1, TeacherAssignment::query()
+            ->where('paralelo_id', $parallel->id)
+            ->where('activo', true)
+            ->count());
+    }
+
     public function test_a_previous_inactive_assignment_can_be_reopened_as_new_history(): void
     {
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();

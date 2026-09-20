@@ -309,7 +309,6 @@ class UpdateCareerAcademicRecord
         }
 
         $alreadyAssigned = TeacherAssignment::query()
-            ->where('asignacion_rol_id', $roleAssignment->id)
             ->where('paralelo_id', $parallel->id)
             ->where('activo', true)
             ->where('id', '!=', $record->id)
@@ -317,7 +316,7 @@ class UpdateCareerAcademicRecord
 
         if ($alreadyAssigned) {
             throw ValidationException::withMessages([
-                'user_id' => 'El docente ya está asignado a este paralelo.',
+                'user_id' => 'El paralelo ya tiene un docente asignado.',
             ]);
         }
 

@@ -2,8 +2,8 @@
 
 ## Estado
 
-En curso — reglas comprobables implementadas el 20 de septiembre de 2026; pendiente de
-confirmar la política de co-docencia (DT-14).
+Implementado localmente el 20 de septiembre de 2026; pendiente de aplicar la migración
+`000091` en la base remota.
 
 ## Trazabilidad
 
@@ -19,16 +19,12 @@ interfaz las oculte. El servidor y PostgreSQL deben responder de forma comprensi
 cuando se repite una asignación, se usa una carrera ajena, se intenta tocar un período
 finalizado, se reactiva una relación histórica o se modifica una relación ya incorporada
 a un sílabo. La preparación repetida de un período tampoco duplica materias ni
-paralelos, y un relevo no puede producir dos responsabilidades activas para la misma
-persona y el mismo paralelo.
+paralelos, y un relevo no puede producir dos responsabilidades docentes activas para el
+mismo paralelo.
 
 ## Decisiones y supuestos
 
-- La misma combinación docente–paralelo no puede tener dos asignaciones activas.
-- Dos docentes distintos en un mismo paralelo se conservan como comportamiento vigente:
-  la apertura genera un sílabo y registra ambos como colaboradores. El producto todavía
-  no confirma si esto representa co-docencia válida o si debe limitarse a uno; este plan
-  no cambia esa regla sin esa decisión.
+- Un paralelo no puede tener más de una asignación docente activa, sin importar la persona.
 - Las asignaciones históricas inactivas deben poder coexistir con una nueva asignación
   posterior del mismo docente al mismo paralelo; de lo contrario un relevo de ida y
   vuelta rompe la operación.
@@ -57,8 +53,8 @@ persona y el mismo paralelo.
 - Un docente puede conservar asignaciones en varios paralelos.
 - Un relevo puede volver a asignar al docente anterior sin colisión con su historial.
 - Una asignación vinculada a un sílabo no puede desactivarse/reactivarse por estado.
-- Dos docentes en un paralelo conservan el comportamiento actual hasta resolver la
-  decisión de co-docencia.
+- Dos docentes en un paralelo son rechazados por la aplicación y por la restricción
+  parcial de PostgreSQL.
 - La preparación repetida y los códigos duplicados después de normalizar espacios no
   crean registros parciales.
 - Se mantienen las pruebas de alcance, período finalizado, convocatoria abierta y relevo.
@@ -73,7 +69,7 @@ persona y el mismo paralelo.
 - [x] Cubrir los casos con pruebas de integración.
 - [x] Revisar y documentar los casos restantes de estructura, convocatoria y ciclo de
       vida.
-- [ ] Confirmar si dos docentes distintos pueden compartir un paralelo (DT-14).
+- [x] Confirmar que un paralelo admite como máximo un docente activo (DT-14).
 
 ## Riesgos y reversión
 
@@ -86,6 +82,6 @@ persona y el mismo paralelo.
 ## Evidencia de cierre
 
 `php artisan test --filter='(AcademicStructureTest|CareerTeacherTest|TeacherReliefTest|TeacherTransferTest)'`
-verifica 44 pruebas y 379 aserciones. La suite completa local pasó 293 pruebas y 3.726
-aserciones. La migración `000091` aún no se ha ejecutado en la
-base remota; antes de aplicarla debe comprobar que no existan duplicados activos.
+verifica las pruebas de estructura, asignación y relevo. La migración `000091` debe
+comprobar que no existan paralelos con más de un docente activo antes de crear la
+restricción remota.

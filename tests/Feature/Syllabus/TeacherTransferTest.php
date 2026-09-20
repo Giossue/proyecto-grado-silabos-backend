@@ -171,25 +171,6 @@ class TeacherTransferTest extends TestCase
         $this->transfer($syllabus, $outsider->id)->assertJsonValidationErrors('incoming_user_id');
     }
 
-    public function test_transfer_rejects_a_replacement_already_assigned_to_the_same_parallel(): void
-    {
-        $syllabus = $this->openedSyllabus();
-        $parallel = Parallel::query()->firstOrFail();
-        TeacherAssignment::query()->create([
-            'asignacion_rol_id' => $this->replacement->roleAssignments()->firstOrFail()->id,
-            'paralelo_id' => $parallel->id,
-            'activo' => true,
-        ]);
-
-        $this->transfer($syllabus)->assertJsonValidationErrors('incoming_user_id');
-
-        $this->assertDatabaseHas('colaboradores_silabo', [
-            'silabo_id' => $syllabus->id,
-            'usuario_id' => $this->teacher->id,
-        ]);
-        $this->assertTrue(TeacherAssignment::query()->forUser($this->teacher->id)->where('activo', true)->exists());
-    }
-
     public function test_only_the_coordinator_of_the_career_transfers(): void
     {
         $syllabus = $this->openedSyllabus();

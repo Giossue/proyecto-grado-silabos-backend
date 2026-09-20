@@ -99,10 +99,10 @@ class OpenConvocation
             }
             foreach ($scheduledSubjects as $scheduledSubject) {
                 if ($scheduledSubject->parallels->isEmpty() || $scheduledSubject->parallels->contains(
-                    fn (Parallel $parallel): bool => $parallel->teacherAssignments->isEmpty(),
+                    fn (Parallel $parallel): bool => $parallel->teacherAssignments->count() !== 1,
                 )) {
                     throw ValidationException::withMessages([
-                        'convocation' => "La materia {$scheduledSubject->subject->nombre} tiene un paralelo sin docente vigente.",
+                        'convocation' => "La materia {$scheduledSubject->subject->nombre} debe tener exactamente un docente vigente por paralelo.",
                     ]);
                 }
             }

@@ -175,22 +175,6 @@ class TeacherReliefTest extends TestCase
         $this->assertFalse($historical->fresh()->activo);
     }
 
-    public function test_relief_rejects_an_incoming_teacher_already_assigned_to_an_affected_parallel(): void
-    {
-        $this->openedSyllabus();
-        $parallel = Parallel::query()->firstOrFail();
-        TeacherAssignment::query()->create([
-            'asignacion_rol_id' => $this->replacement->roleAssignments()->firstOrFail()->id,
-            'paralelo_id' => $parallel->id,
-            'activo' => true,
-        ]);
-
-        $this->relieve()->assertJsonValidationErrors('incoming_user_id');
-
-        $this->assertTrue(TeacherAssignment::query()->forUser($this->teacher->id)->where('activo', true)->exists());
-        $this->assertTrue(TeacherAssignment::query()->forUser($this->replacement->id)->where('activo', true)->exists());
-    }
-
     public function test_the_replacement_must_teach_in_the_career_and_only_coordination_relieves(): void
     {
         $this->openedSyllabus();

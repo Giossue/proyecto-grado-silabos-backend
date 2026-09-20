@@ -64,12 +64,9 @@ el error de negocio antes de llegar a la restricción.
 
 `asignaciones_paralelo` vincula una asignación de rol `docente` con un paralelo, conserva
 `asignado_en`; no tiene intervalo de vigencia laboral. Su identidad activa única es
-`asignacion_rol_id + paralelo_id`: un mismo docente no puede ocupar dos veces el mismo
-paralelo. Las filas inactivas se conservan como historial y pueden coexistir con una
-nueva asignación posterior; un relevo finaliza la relación anterior y crea otra.
-Actualmente se permiten varios docentes distintos en un mismo paralelo: al abrir la
-convocatoria quedan como colaboradores del mismo sílabo. Si el producto decide que la
-co-docencia no es válida, deberá cambiarse esa regla y el índice antes de limitarla.
+`paralelo_id`: un paralelo solo puede tener un docente activo, sin importar la persona.
+Las filas inactivas se conservan como historial y pueden coexistir con una nueva
+asignación posterior; un relevo finaliza la relación anterior y crea otra.
 
 Estos catálogos no comparten una tabla polimórfica. `carreras.facultad_id` implementa la
 relación uno-a-muchos Facultad → Carreras con clave foránea y borrado restringido.

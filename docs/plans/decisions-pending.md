@@ -44,9 +44,8 @@ Estas no reemplazan los PV de la SRS:
 | DT-10 | Autoaprobación del sílabo por quien lo redactó | Permitida, marcada de forma distinguible en auditoría | Cerrada el 2026-08-26 |
 | DT-11 | Destino del modo `por_oferta` tras cerrar PV-06 | Conservado; `por_paralelo` es el valor por defecto | Cerrada el 2026-08-26 en I-15 |
 | DT-12 | Efecto de alcanzar la fecha de fin de un período sobre sus ofertas, paralelos, asignaciones y sílabos | Por ahora, la fecha es informativa: no hay cierre ni eliminación automática. Coordinación elimina, tras confirmación, solo ofertas que no tengan dependencias; un período con ofertas, procesos o convocatorias no se elimina. Definir si se automatiza un cierre futuro sin alterar la historia. | Antes de automatizar el cierre de período |
-
 | DT-13 | Ingesta de fuentes PDF | OpenParser con `paddleocr-vl-1.6` y `openparser@1` como adaptador PDF → documento JSON; `deepseek-flash` puede normalizar la salida por lotes cuando `AI_SOURCE_NORMALIZATION_ENABLED=true`, sin fallback silencioso; ejecución asíncrona y PDF privado | Implementaciones I-95/I-96/I-99; requiere PV-12/PV-14 |
-| DT-14 | Más de un docente activo en el mismo paralelo | Valor temporal: se permiten docentes distintos y se genera un solo sílabo con ambos como colaboradores; la misma persona no puede duplicarse. Si la coordinación académica exige un único docente, cambiar la regla de dominio, el índice y el flujo de apertura antes de activar esa restricción | Confirmar con Coordinación antes de cerrar I-100 |
+| DT-14 | Más de un docente activo en el mismo paralelo | No permitido: cada paralelo tiene como máximo una asignación docente activa; el relevo conserva la historia en filas inactivas | Cerrada el 2026-09-20 |
 
 ## Entrevistas pendientes
 

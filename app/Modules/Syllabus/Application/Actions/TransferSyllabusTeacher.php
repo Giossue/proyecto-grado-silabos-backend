@@ -100,8 +100,8 @@ class TransferSyllabusTeacher
                 ->whereIn('paralelo_id', $collaborations->map(
                     fn (SyllabusCollaborator $collaboration): string => $collaboration->teacherAssignment->paralelo_id,
                 ))
-                ->where('asignacion_rol_id', $incomingRole->id)
                 ->where('activo', true)
+                ->whereNotIn('id', $collaborations->pluck('docente_paralelo_id'))
                 ->lockForUpdate()
                 ->pluck('paralelo_id');
             if ($incomingConflicts->isNotEmpty()) {

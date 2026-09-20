@@ -8,21 +8,21 @@ return new class extends Migration
     public function up(): void
     {
         $duplicates = DB::table('asignaciones_paralelo')
-            ->select('asignacion_rol_id', 'paralelo_id')
+            ->select('paralelo_id')
             ->where('docente_paralelo_activo', true)
-            ->groupBy('asignacion_rol_id', 'paralelo_id')
+            ->groupBy('paralelo_id')
             ->havingRaw('COUNT(*) > 1')
             ->exists();
 
         if ($duplicates) {
             throw new RuntimeException(
-                'No se puede restringir la identidad activa de asignaciones_paralelo: existen asignaciones activas duplicadas.',
+                'No se puede restringir la responsabilidad activa de asignaciones_paralelo: existen paralelos con más de un docente activo.',
             );
         }
 
         DB::statement('DROP INDEX IF EXISTS asignaciones_paralelo_identidad_unica');
         DB::statement(
-            'CREATE UNIQUE INDEX asignaciones_paralelo_identidad_activa_unica ON asignaciones_paralelo (asignacion_rol_id, paralelo_id) WHERE docente_paralelo_activo',
+            'CREATE UNIQUE INDEX asignaciones_paralelo_paralelo_activo_unico ON asignaciones_paralelo (paralelo_id) WHERE docente_paralelo_activo',
         );
     }
 
@@ -40,7 +40,7 @@ return new class extends Migration
             );
         }
 
-        DB::statement('DROP INDEX IF EXISTS asignaciones_paralelo_identidad_activa_unica');
+        DB::statement('DROP INDEX IF EXISTS asignaciones_paralelo_paralelo_activo_unico');
         DB::statement(
             'CREATE UNIQUE INDEX asignaciones_paralelo_identidad_unica ON asignaciones_paralelo (asignacion_rol_id, paralelo_id)',
         );

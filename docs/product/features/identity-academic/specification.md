@@ -64,7 +64,9 @@
   elimina; una asignación histórica tampoco se edita ni se reactiva. Para sustituir un
   responsable existente se usa el relevo auditado. El relevo
   global desde la asignación no exige sustento documental; la transferencia individual de
-  un sílabo conserva esa referencia cuando se registra desde revisión.
+  un sílabo conserva esa referencia cuando se registra desde revisión. Cada paralelo
+  admite como máximo una asignación docente activa; el relevo cierra la anterior antes de
+  crear la nueva.
 - La navegación del Coordinador concentra Materias dentro de **Malla**. La ruta abre el
   agregado actual directamente o muestra su estado vacío; no usa buscador, filtros,
   cards, paginación, publicación ni número de versión. **Materias y paralelos** conserva

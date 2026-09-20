@@ -46,14 +46,13 @@ paralelo_id UUID (FK → paralelos.id) NOT NULL
 docente_paralelo_activo BOOLEAN NOT NULL DEFAULT TRUE
 asignado_en TIMESTAMPTZ NULL
 
-UNIQUE parcial (asignacion_rol_id, paralelo_id) WHEN docente_paralelo_activo
+UNIQUE parcial (paralelo_id) WHEN docente_paralelo_activo
 ```
 
 La aplicación verifica que la asignación de rol sea `docente`, esté activa y pertenezca a
-la carrera del paralelo antes de crear o modificar la responsabilidad. Una misma persona
-no se repite en el mismo paralelo mientras su asignación esté activa; personas distintas
-pueden compartirlo y aparecen como colaboradores del mismo sílabo. Las filas inactivas
-son historia: no se reactivan ni se editan, y un relevo siempre crea una fila nueva.
+la carrera del paralelo antes de crear o modificar la responsabilidad. Un paralelo solo
+puede tener una responsabilidad docente activa. Las filas inactivas son historia: no se
+reactivan ni se editan, y un relevo siempre crea una fila nueva.
 
 ## 3. Colaboradores del sílabo
 

@@ -76,8 +76,8 @@ class RelieveTeacher
 
             $incomingConflicts = TeacherAssignment::query()
                 ->whereIn('paralelo_id', $assignments->pluck('paralelo_id'))
-                ->where('asignacion_rol_id', $incomingRole->id)
                 ->where('activo', true)
+                ->whereNotIn('id', $assignments->pluck('id'))
                 ->lockForUpdate()
                 ->pluck('paralelo_id');
             if ($incomingConflicts->isNotEmpty()) {
