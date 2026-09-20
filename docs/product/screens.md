@@ -132,7 +132,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   del flujo, después del formulario. Muestra las fuentes disponibles y los resultados
   agrupados por sección/campo. **Revisar sílabo** solo se habilita después de una
   validación limpia; la edición y el envío continúan disponibles mientras la IA procesa
-  o falla.
+  o falla. La ruta de detalle docente usa una superficie documental sin sidebar ni
+  encabezado autenticado global; conserva únicamente el cambio de tema y el formulario
+  mantiene sus propias acciones operativas.
 - I-60 separa los dos estados de ADM-06. `/admin/plantilla/{id}` presenta la plantilla
   completa en solo lectura y ofrece **Editar**. `/admin/plantilla/{id}/editar` conserva
   la hoja y añade una cinta contextual: al seleccionar un bloque, campo o tabla muestra

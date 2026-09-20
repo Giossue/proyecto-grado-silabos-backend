@@ -59,8 +59,10 @@ puede cambiarla desde el menú de usuario.
 - Una entrada con subopciones se despliega y contrae, y con el menú reducido a iconos
   las muestra en un menú flotante sin expandir la barra.
 - El control de tema pasa al encabezado compartido, así que alcanza a los tres roles sin
-  declararlo por pantalla. Conserva las tres opciones de Configuración y las recorre en
-  ciclo —claro, oscuro, sistema— con una sola pulsación, sin abrir un menú.
+  declararlo por pantalla. En la excepción de DOC-04, que usa una superficie documental
+  sin encabezado global, se conserva el mismo control reutilizable en posición flotante.
+  Conserva las tres opciones de Configuración y las recorre en ciclo —claro, oscuro,
+  sistema— con una sola pulsación, sin abrir un menú.
 - Las tablas dejan de repetir en su tarjeta el título y la descripción de la página: 14
   cabeceras retiradas en 10 archivos.
 
