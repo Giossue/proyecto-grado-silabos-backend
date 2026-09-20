@@ -84,7 +84,9 @@ class AcademicSourceController extends Controller
                     'model' => is_string($execution?->entrada['model'] ?? null) ? $execution->entrada['model'] : null,
                     'requested_at' => $execution?->encolado_en?->toIso8601String(),
                     'completed_at' => $execution?->finalizado_en?->toIso8601String(),
+                    'progress' => $execution === null ? 0 : $execution->progreso,
                     'error_code' => $execution?->codigo_error,
+                    'error_message' => $execution?->mensaje_error,
                 ],
             ],
         ];

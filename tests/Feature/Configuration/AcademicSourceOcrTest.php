@@ -65,6 +65,13 @@ final class AcademicSourceOcrTest extends TestCase
         $this->assertSame('fuente_academica.openparser', $execution->tipo);
         Queue::assertPushed(SubmitAcademicSourceOcrJob::class, fn (SubmitAcademicSourceOcrJob $job): bool => $job->executionId === $execution->id);
 
+        $this->actingAsCoordinator()
+            ->getJson(route('api.v1.coordination.sources.show', $source))
+            ->assertOk()
+            ->assertJsonPath('source.ingestion.status', 'pendiente')
+            ->assertJsonPath('source.ingestion.progress', 0)
+            ->assertJsonPath('source.ingestion.error_message', null);
+
         $this->runJobs($execution);
 
         $source = $source->fresh();
@@ -77,6 +84,9 @@ final class AcademicSourceOcrTest extends TestCase
         $this->assertSame('Resultado', $source->documento['content'][1]['content'][0]['text']);
         $this->assertStringContainsString('Diseña software seguro.', (string) $source->contenido);
         $this->assertSame('completada', $execution->fresh()->estado);
+        $this->actingAsCoordinator()
+            ->getJson(route('api.v1.coordination.sources.show', $source))
+            ->assertJsonPath('source.ingestion.progress', 100);
         $this->assertDatabaseHas('fragmentos_fuente_academica', [
             'fuente_academica_id' => $source->id,
             'titulo_fragmento' => 'Resultado',

@@ -43,11 +43,13 @@ por líneas visuales, tablas por grupos de filas y repiten cabeceras de continua
 `document-pagination.mjs` cubre texto mayor que una hoja, varios campos y 120 filas con
 `rowspan`; `WordRendererTest` conserva `keepNext` y `tblHeader` en DOCX.
 
-I-95/I-97 — RF-027..033, RN-013..016, CU-05 y COR-11: `AcademicSourceDocumentEditor` usa
+I-95/I-97/I-98 — RF-027..033, RN-013..016, CU-05 y COR-11: `AcademicSourceDocumentEditor` usa
 Tiptap en un documento continuo con vista privada del PDF original; `OpenParserAcademicSourceGateway` y los trabajos de
 envío/sondeo reciben el PDF privado, materializan tablas combinadas e imágenes en orden,
-y persisten el documento JSON más fragmentos derivados. `AcademicSourceOcrTest` cubre
-éxito, recursos visuales, celdas combinadas y resultado vacío sin fallback. PV-12/PV-14
+y persisten el documento JSON más fragmentos derivados. La creación bloquea la interfaz,
+muestra el progreso real y navega al editor únicamente al completarse; el detalle no
+reprocesa archivos. `AcademicSourceOcrTest` y `AcademicSourceCreationSheet.test.ts` cubren
+éxito, progreso, recursos visuales, celdas combinadas y resultado vacío sin fallback. PV-12/PV-14
 siguen bloqueando la activación del proveedor externo.
 
 I-71 — RF-037..044, RN-020..024, CU-07 y DOC-04:

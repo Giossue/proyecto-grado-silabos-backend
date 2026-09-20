@@ -29,7 +29,9 @@ COR-11 usa Tiptap sobre el documento JSON canónico de la fuente y lo presenta c
 continuo, sin `PaginatedDocument`. Las tablas permiten agregar filas/columnas, combinar
 y separar celdas, y se desplazan dentro del editor si exceden el ancho disponible. Las
 imágenes y el PDF original usan rutas privadas emitidas por la API. La SPA nunca
-convierte el documento a Markdown.
+convierte el documento a Markdown. La creación consulta el estado de ingesta y el
+porcentaje de `ejecuciones_trabajo` dentro de un `Dialog` modal; no navega al editor
+hasta recibir `completada`. La carga PDF no se repite desde la pantalla de detalle.
 
 ## Despliegue
 

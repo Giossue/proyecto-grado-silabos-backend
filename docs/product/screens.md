@@ -233,7 +233,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   continuo con cinta de opciones; el formato se aplica en tiempo real y el sistema
   conserva un documento JSON estructurado. Tablas combinadas e imágenes mantienen su
   orden. Una pestaña separada muestra el PDF original privado para contrastar la
-  extracción; el editor no intenta reproducir sus páginas físicas.
+  extracción; el editor no intenta reproducir sus páginas físicas. La fuente se crea
+  una sola vez con nombre, descripción y PDF. Durante la ingesta, un diálogo modal
+  bloquea el resto del flujo, muestra el avance real y abre COR-11 automáticamente solo
+  al finalizar; el detalle no ofrece carga ni reprocesamiento del PDF.
 - ADM-02: una cuenta «Pendiente de activación» (correo aún no verificado) tiene en su
   menú **Reenviar invitación** (nuevo enlace de un solo uso al correo actual) y
   **Eliminar** (solo sin actividad; con historia, desactivar). Corregir su correo invalida
