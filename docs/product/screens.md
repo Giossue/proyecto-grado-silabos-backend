@@ -229,9 +229,11 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   solo lectura; una incoherencia con 48 horas por crédito se reporta como configuración.
   En ADM-06 aún no existe una materia contra la cual comparar, por lo que el resumen no
   se muestra. Aparece únicamente dentro de un sílabo real con contexto de malla.
-  Las fuentes son documentos editables: COR-11 abre el contenido como una hoja visual
-  con cinta de opciones; el formato se aplica en tiempo real y el sistema conserva un
-  documento JSON estructurado. Tablas combinadas e imágenes mantienen su orden.
+  Las fuentes son documentos editables: COR-11 abre el contenido como un documento
+  continuo con cinta de opciones; el formato se aplica en tiempo real y el sistema
+  conserva un documento JSON estructurado. Tablas combinadas e imágenes mantienen su
+  orden. Una pestaña separada muestra el PDF original privado para contrastar la
+  extracción; el editor no intenta reproducir sus páginas físicas.
 - ADM-02: una cuenta «Pendiente de activación» (correo aún no verificado) tiene en su
   menú **Reenviar invitación** (nuevo enlace de un solo uso al correo actual) y
   **Eliminar** (solo sin actividad; con historia, desactivar). Corregir su correo invalida

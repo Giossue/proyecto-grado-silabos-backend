@@ -138,6 +138,69 @@ final class AcademicSourceOcrTest extends TestCase
         ]));
     }
 
+    public function test_structured_table_cells_take_precedence_over_provider_html(): void
+    {
+        $table = [
+            'id' => 'table', 'kind' => 'table', 'locations' => [],
+            'row_count' => 1, 'column_count' => 2,
+            'html' => '<table><tr><td></td><td></td></tr></table>',
+            'cells' => [
+                $this->tableCell('c1', 0, 0, 'Habilidad'),
+                $this->tableCell('c2', 0, 1, 'Trabajo en equipo'),
+            ],
+        ];
+        $this->fakeCompletedJob([$table]);
+        $source = $this->createSource();
+        $this->actingAsCoordinator()->post(
+            route('api.v1.coordination.sources.pdf.ingest', $source),
+            ['pdf' => UploadedFile::fake()->create('tabla.pdf', 20, 'application/pdf')],
+        )->assertStatus(202);
+
+        $this->runJobs(JobExecution::query()->firstOrFail());
+
+        $document = $source->fresh()->documento;
+        $this->assertSame('Habilidad', $document['content'][0]['content'][0]['content'][0]['content'][0]['content'][0]['text']);
+        $this->assertSame('Trabajo en equipo', $document['content'][0]['content'][0]['content'][1]['content'][0]['content'][0]['text']);
+    }
+
+    public function test_provider_markdown_is_used_when_the_document_graph_has_no_elements(): void
+    {
+        $this->fakeCompletedJob([], [], "## Contenido recuperado\n\nTexto ordenado.");
+        $source = $this->createSource();
+        $this->actingAsCoordinator()->post(
+            route('api.v1.coordination.sources.pdf.ingest', $source),
+            ['pdf' => UploadedFile::fake()->create('markdown.pdf', 20, 'application/pdf')],
+        )->assertStatus(202);
+
+        $this->runJobs(JobExecution::query()->firstOrFail());
+
+        $document = $source->fresh()->documento;
+        $this->assertSame('heading', $document['content'][0]['type']);
+        $this->assertSame('Contenido recuperado', $document['content'][0]['content'][0]['text']);
+        $this->assertSame('Texto ordenado.', $document['content'][1]['content'][0]['text']);
+    }
+
+    public function test_coordinator_can_view_the_private_original_pdf(): void
+    {
+        $this->fakeCompletedJob([$this->textElement('paragraph', 'paragraph', 'Contenido')]);
+        $source = $this->createSource();
+        $this->actingAsCoordinator()->post(
+            route('api.v1.coordination.sources.pdf.ingest', $source),
+            ['pdf' => UploadedFile::fake()->create('original.pdf', 20, 'application/pdf')],
+        )->assertStatus(202);
+        $this->runJobs(JobExecution::query()->firstOrFail());
+        $source->refresh();
+
+        $this->actingAsCoordinator()
+            ->get(route('api.v1.coordination.sources.pdf.original', $source))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+
+        $this->actingAsCoordinator()
+            ->getJson(route('api.v1.coordination.sources.show', $source))
+            ->assertJsonPath('source.has_original_pdf', true);
+    }
+
     public function test_empty_text_nodes_are_removed_before_persisting_a_source_document(): void
     {
         $source = $this->createSource();
@@ -247,7 +310,7 @@ final class AcademicSourceOcrTest extends TestCase
      * @param  list<array<string, mixed>>  $elements
      * @param  list<array<string, mixed>>  $assets
      */
-    private function fakeCompletedJob(array $elements, array $assets = []): void
+    private function fakeCompletedJob(array $elements, array $assets = [], string $markdown = ''): void
     {
         $elementIds = array_values(array_map(static fn (array $element): string => (string) $element['id'], $elements));
         $document = [
@@ -258,7 +321,7 @@ final class AcademicSourceOcrTest extends TestCase
                 static fn (array $element): ?string => is_string($element['text'] ?? null) ? $element['text'] : null,
                 $elements,
             )))),
-            'markdown' => '',
+            'markdown' => $markdown,
             'pages' => [[
                 'number' => 1, 'width' => 100, 'height' => 100, 'unit' => 'pixel',
                 'rotation_degrees' => 0, 'languages' => [],

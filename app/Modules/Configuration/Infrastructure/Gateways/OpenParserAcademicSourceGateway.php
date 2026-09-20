@@ -190,6 +190,17 @@ final class OpenParserAcademicSourceGateway implements AcademicSourceOcrGateway
             );
         }
 
+        if ($this->pagesAreEmpty($ocrPages) && is_string($document['markdown'] ?? null) && trim($document['markdown']) !== '') {
+            $firstPage = $ocrPages[0];
+            $ocrPages[0] = new AcademicSourceOcrPage(
+                index: $firstPage->index,
+                markdown: trim($document['markdown']),
+                images: $firstPage->images,
+                structured: $firstPage->structured,
+                metadata: $firstPage->metadata,
+            );
+        }
+
         $provenance = is_array($document['provenance'] ?? null) ? $document['provenance'] : [];
         $model = is_string($provenance['model'] ?? null) ? $provenance['model'] : (string) config('openparser.ocr_model');
 
@@ -308,13 +319,14 @@ final class OpenParserAcademicSourceGateway implements AcademicSourceOcrGateway
     /** @param array<string, mixed> $table */
     private function tableHtml(array $table): string
     {
-        if (is_string($table['html'] ?? null) && preg_match('/<table\b/i', $table['html']) === 1) {
-            return trim($table['html']);
-        }
         $cells = is_array($table['cells'] ?? null) ? $table['cells'] : [];
         $rowCount = max(0, (int) ($table['row_count'] ?? 0));
         if ($cells === [] || $rowCount === 0) {
-            return '';
+            if (is_string($table['html'] ?? null) && preg_match('/<table\b/i', $table['html']) === 1) {
+                return trim($table['html']);
+            }
+
+            return is_string($table['markdown'] ?? null) ? trim($table['markdown']) : '';
         }
         $rows = array_fill(0, $rowCount, []);
         foreach ($cells as $cell) {
@@ -342,6 +354,18 @@ final class OpenParserAcademicSourceGateway implements AcademicSourceOcrGateway
         }
 
         return $html.'</table>';
+    }
+
+    /** @param list<AcademicSourceOcrPage> $pages */
+    private function pagesAreEmpty(array $pages): bool
+    {
+        foreach ($pages as $page) {
+            if (trim($page->markdown) !== '' || $page->images !== []) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function imageId(string $nativeId): string

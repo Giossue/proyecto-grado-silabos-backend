@@ -30,8 +30,9 @@ por defecto (`OPENPARSER_ENABLED=false`) hasta resolver PV-12 y PV-14.
    Ningún worker queda ocupado haciendo espera activa.
 5. Al terminar, el adaptador obtiene `GET /jobs/{id}/result?format=openparser@1` y valida
    páginas, orden de lectura, elementos, tablas, figuras y recursos.
-6. El conversor genera bloques Tiptap ordenados. Las celdas estructuradas o tablas HTML
-   conservan combinaciones. Las figuras con recurso se materializan directamente; si
+6. El conversor genera bloques Tiptap ordenados. Prioriza las celdas estructuradas para
+   conservar combinaciones; HTML y Markdown son respaldos. Si el grafo no contiene
+   elementos usa la proyección Markdown canónica del proveedor. Las figuras con recurso se materializan directamente; si
    solo tienen coordenadas, Poppler renderiza la página y el backend recorta la figura
    desde el PDF privado.
 7. Las imágenes se validan y guardan como objetos privados `academic_source_image` en su
@@ -41,6 +42,10 @@ por defecto (`OPENPARSER_ENABLED=false`) hasta resolver PV-12 y PV-14.
 9. Si `EMBEDDINGS_DRIVER=openai`, la cola `ia` genera embeddings
    `text-embedding-3-small` de 1536 dimensiones. Un fallo de embeddings no altera el
    documento canónico.
+
+COR-11 presenta el documento resultante como flujo continuo. El PDF privado vigente se
+puede consultar mediante una ruta autenticada para verificar las páginas físicas sin
+introducir saltos artificiales en el documento editable.
 
 ## Persistencia
 

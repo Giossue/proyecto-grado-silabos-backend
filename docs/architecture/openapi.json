@@ -5043,6 +5043,52 @@
                 ]
             }
         },
+        "/api/v1/coordination/sources/{source}/pdf-original": {
+            "get": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_sources_pdf_original",
+                "summary": "api.v1.coordination.sources.pdf.original",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "source",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/coordination/syllabi/{syllabus}/reopen": {
             "post": {
                 "tags": [

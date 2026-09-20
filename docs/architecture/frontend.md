@@ -25,10 +25,11 @@ Los componentes reutilizables, pruebas Vitest, estilos, Dockerfile y configuraci
 Nginx pertenecen al repositorio frontend. Sus variables públicas se inyectan en el
 arranque para que el mismo bundle apunte al backend de cada ambiente.
 
-COR-11 usa Tiptap sobre el documento JSON canónico de la fuente. `PaginatedDocument`
-presenta la hoja A4; las tablas permiten agregar filas/columnas, combinar y separar
-celdas, y las imágenes usan rutas privadas emitidas por la API. La SPA nunca convierte
-el documento a Markdown.
+COR-11 usa Tiptap sobre el documento JSON canónico de la fuente y lo presenta como flujo
+continuo, sin `PaginatedDocument`. Las tablas permiten agregar filas/columnas, combinar
+y separar celdas, y se desplazan dentro del editor si exceden el ancho disponible. Las
+imágenes y el PDF original usan rutas privadas emitidas por la API. La SPA nunca
+convierte el documento a Markdown.
 
 ## Despliegue
 

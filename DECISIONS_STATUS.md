@@ -188,6 +188,12 @@ en su orden como objetos privados. `ejecuciones_trabajo` sustituye la tabla espe
 de extracciones. No se usa Mistral, DeepSeek ni fallback silencioso. La activación real
 continúa condicionada a PV-12 y PV-14; la migración es `000089`.
 
+I-97 (20 de septiembre de 2026) presenta COR-11 como documento editable continuo, sin
+simular hojas A4 ni saltos físicos. El JSON ProseMirror/Tiptap sigue siendo canónico;
+las celdas estructuradas de OpenParser tienen prioridad sobre sus proyecciones HTML y
+Markdown, y el PDF original se conserva como vista privada de contraste. La paginación
+queda reservada para el archivo original, las plantillas y las exportaciones.
+
 I-74 (14 de septiembre de 2026) normaliza roles y responsabilidades académicas: la
 única relación RBAC es `asignaciones_rol(usuario_id, rol, carrera_id)`. Se elimina
 `asignaciones_coordinador`, porque duplicaba el rol `coordinador` con alcance de carrera.

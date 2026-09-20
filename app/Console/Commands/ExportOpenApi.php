@@ -137,13 +137,16 @@ class ExportOpenApi extends Command
         $isDownload = $name === 'api.v1.documents.download';
         $isLogoUpload = str_ends_with($name, '.logo.store');
         $isSourcePdfUpload = $name === 'api.v1.coordination.sources.pdf.ingest';
+        $isSourceOriginalPdf = $name === 'api.v1.coordination.sources.pdf.original';
         $isSourceAsset = $name === 'api.v1.coordination.sources.assets.show';
         $isSourceContent = $name === 'api.v1.coordination.sources.content.update';
         $successContent = $isDownload
             ? ['application/octet-stream' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
-            : ($isSourceAsset
+            : ($isSourceOriginalPdf
+                ? ['application/pdf' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
+                : ($isSourceAsset
                 ? ['image/*' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
-                : ['application/json' => ['schema' => ['type' => 'object']]]);
+                : ['application/json' => ['schema' => ['type' => 'object']]]));
         $operation = [
             'tags' => [$tag],
             'operationId' => str_replace('.', '_', $name),

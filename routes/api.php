@@ -213,6 +213,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.sources.content.update');
             Route::post('coordination/sources/{source}/pdf', [AcademicSourceController::class, 'ingestPdf'])
                 ->middleware(['active-role', 'throttle:source-ocr'])->name('api.v1.coordination.sources.pdf.ingest');
+            Route::get('coordination/sources/{source}/pdf-original', [AcademicSourceController::class, 'originalPdf'])
+                ->middleware('active-role')->whereUuid('source')->name('api.v1.coordination.sources.pdf.original');
             Route::get('coordination/sources/{source}/assets/{asset}', [AcademicSourceController::class, 'asset'])
                 ->middleware('active-role')->whereUuid(['source', 'asset'])->name('api.v1.coordination.sources.assets.show');
             Route::get('coordination/reports', [OperationalReportController::class, 'index'])

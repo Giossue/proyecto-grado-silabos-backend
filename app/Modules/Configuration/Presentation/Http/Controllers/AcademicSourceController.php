@@ -77,6 +77,7 @@ class AcademicSourceController extends Controller
                 'description' => $source->descripcion,
                 'document' => $documents->withAssetUrls($source, $source->documento ?? ['schemaVersion' => 1, 'type' => 'doc', 'content' => []]),
                 'document_schema_version' => $source->version_documento,
+                'has_original_pdf' => $source->objeto_pdf_id !== null,
                 'ingestion' => [
                     'status' => $source->estado_ingesta,
                     'execution_id' => $execution?->id,
@@ -172,6 +173,31 @@ class AcademicSourceController extends Controller
             $object->nombre_logico,
             [
                 'Content-Type' => $object->mime,
+                'Cache-Control' => 'private, max-age=300',
+                'X-Content-Type-Options' => 'nosniff',
+            ],
+        );
+    }
+
+    public function originalPdf(
+        AcademicSource $source,
+        ManageAcademicSourceRequest $request,
+    ): Response {
+        $object = StoredObject::query()
+            ->whereKey($source->objeto_pdf_id)
+            ->where('carrera_id', $source->carrera_id)
+            ->where('clasificacion', 'academic_source_pdf')
+            ->where('estado', 'activo')
+            ->where('mime', 'application/pdf')
+            ->where('ruta_interna', 'like', "academic-sources/{$source->id}/%")
+            ->firstOrFail();
+
+        return Storage::disk($object->disco)->response(
+            $object->ruta_interna,
+            $object->nombre_logico,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.addcslashes($object->nombre_logico, '"\\').'"',
                 'Cache-Control' => 'private, max-age=300',
                 'X-Content-Type-Options' => 'nosniff',
             ],

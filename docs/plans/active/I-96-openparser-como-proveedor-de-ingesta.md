@@ -44,3 +44,5 @@ contrato versionado `openparser@1`.
 - [x] Corrección visual del 20 de septiembre de 2026: los niveles Markdown que ya
   entrega OpenParser se conservan sin duplicar `#`; la hoja A4 pagina todos los bloques
   Tiptap y las celdas fijan texto oscuro sobre el papel blanco.
+- [x] I-97 reemplaza la hoja A4 de COR-11 por un documento continuo, prioriza celdas
+  estructuradas sobre HTML auxiliar y añade la vista privada del PDF original.
