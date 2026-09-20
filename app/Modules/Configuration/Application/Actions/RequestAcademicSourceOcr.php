@@ -88,7 +88,8 @@ final class RequestAcademicSourceOcr
                 ->lockForUpdate()
                 ->first();
             if ($extraction !== null) {
-                if (in_array($extraction->estado, ['pendiente', 'en_ejecucion', 'completada'], true)) {
+                if (in_array($extraction->estado, ['pendiente', 'en_ejecucion'], true)
+                    || ($extraction->estado === 'completada' && $extraction->version_adaptador === $adapterVersion)) {
                     return $extraction->load('execution');
                 }
 
@@ -231,7 +232,7 @@ final class RequestAcademicSourceOcr
             'table_format' => (string) config('mistral.table_format'),
             'include_blocks' => (bool) config('mistral.include_blocks'),
             'confidence_scores_granularity' => (string) config('mistral.confidence_scores_granularity'),
-            'include_image_base64' => false,
+            'include_image_base64' => (bool) config('mistral.include_image_base64'),
         ];
     }
 }

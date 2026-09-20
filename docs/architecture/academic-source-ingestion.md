@@ -36,10 +36,11 @@ identificador fijo en producción para evitar cambios silenciosos.
 4. La petición solicita table_format='markdown', bloques estructurales y confianza
    por bloque. La primera versión procesa el PDF completo en una ejecución.
 5. Laravel conserva el Markdown y los metadatos de cada página en la extracción, y une
-   sus páginas ordenadas en el contenido Markdown de la fuente.
-6. Se conservan los marcadores de tablas e imágenes que entregue Mistral. Sus recursos
-   se relacionan con la página y el bloque; no se inventa una descripción para un
-   diagrama o imagen cuyo significado no haya sido extraído.
+   sus páginas ordenadas en el contenido Markdown de la fuente. Los marcadores de tabla
+   se reemplazan por el Markdown de la tabla devuelto por Mistral.
+6. Las imágenes se solicitan con `include_image_base64`, se validan como raster y se
+   guardan como objetos privados inmutables. El Markdown referencia una ruta autenticada
+   de la fuente; no se guarda Base64 en PostgreSQL ni en los fragmentos vectoriales.
 7. Al finalizar correctamente, se reconstruye fragmentos_fuente_academica. Los
    fragmentos son un índice derivado y reemplazable para búsquedas y evidencias; el
    Markdown generado/revisado y el PDF original no dependen de ellos.
@@ -66,11 +67,13 @@ el modelo de fuentes.
 ## Tablas, imágenes y páginas sin contenido
 
 - table_format='markdown' permite que las tablas entren en el mismo documento que el
-  texto. Si Mistral devuelve un archivo/representación asociada, se conserva su vínculo
-  privado junto con la página.
-- Las imágenes se preservan como referencia y ubicación. OCR puede leer texto que forme
-  parte de una imagen, pero no garantiza interpretar correctamente diagramas, gráficos,
-  fórmulas o el significado visual de una fotografía.
+  texto. Los marcadores que devuelve Mistral se sustituyen por su contenido antes de
+  indexar la fuente.
+- Las imágenes raster se guardan en `objetos_almacenados` con clasificación
+  `academic_source_image` y solo se sirven a Coordinación dentro del alcance de la
+  fuente. OCR puede leer texto que forme parte de una imagen, pero no garantiza
+  interpretar correctamente diagramas, gráficos, fórmulas o el significado visual de
+  una fotografía.
 - No habrá fallback para una página sin texto o con respuesta vacía. La ejecución se
   marca para revisión/reintento controlado con la misma integración; no se sustituye
   silenciosamente por otra librería o modelo.
@@ -86,6 +89,11 @@ ejecución OCR mediante:
 - huella, modelo, opciones y versión del adaptador;
 - resultado por página y causa segura de fallo;
 - relación con `ejecuciones_trabajo` para observar la cola y el resultado.
+
+Las imágenes extraídas reutilizan `objetos_almacenados`; su ruta contiene la fuente y su
+clasificación permite autorizarlas sin crear una tabla de recursos visuales separada.
+El Base64 solo vive durante la ejecución del trabajo y no se persiste en
+`paginas_extraidas`.
 
 La ruta `POST /api/v1/coordination/sources/{source}/pdf` acepta el PDF, devuelve `202`
 y despacha `ExtractAcademicSourceJob` en la cola `integraciones`. El archivo nunca se

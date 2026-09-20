@@ -4,6 +4,7 @@ namespace Tests\Feature\Configuration;
 
 use App\Models\User;
 use App\Modules\AiAssistance\Application\IndexAcademicSource;
+use App\Modules\Configuration\Application\AcademicSourceOcrAssetStore;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
 use App\Modules\Configuration\Infrastructure\Jobs\ExtractAcademicSourceJob;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
@@ -75,6 +76,7 @@ final class AcademicSourceOcrTest extends TestCase
         (new ExtractAcademicSourceJob($extraction->id))->handle(
             app(AcademicSourceOcrGateway::class),
             app(IndexAcademicSource::class),
+            app(AcademicSourceOcrAssetStore::class),
             app(RecordAuditEvent::class),
         );
 
@@ -89,6 +91,62 @@ final class AcademicSourceOcrTest extends TestCase
             'titulo_fragmento' => 'Resultado',
         ]);
         Http::assertSentCount(3);
+    }
+
+    public function test_ocr_inlines_tables_and_persists_private_images(): void
+    {
+        $image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
+        Http::fake([
+            'https://api.mistral.test/v1/files' => Http::response(['id' => 'file-3'], 200),
+            'https://api.mistral.test/v1/ocr' => Http::response([
+                'model' => 'mistral-ocr-4-1',
+                'pages' => [[
+                    'index' => 0,
+                    'markdown' => "Texto previo\n\n![img-1.jpeg](img-1.jpeg)\n\n[tbl-1.md](tbl-1.md)",
+                    'images' => [['id' => 'img-1.jpeg', 'image_base64' => $image]],
+                    'tables' => [[
+                        'id' => 'tbl-1.md',
+                        'format' => 'markdown',
+                        'content' => "| Campo | Valor |\n| --- | --- |\n| Modalidad | Presencial |",
+                    ]],
+                ]],
+            ], 200, ['x-request-id' => 'request-3']),
+            'https://api.mistral.test/v1/files/file-3' => Http::response([], 204),
+        ]);
+        $source = $this->createSource();
+
+        $this->actingAsCoordinator()->post(
+            route('api.v1.coordination.sources.pdf.ingest', $source),
+            ['pdf' => UploadedFile::fake()->create('recursos.pdf', 20, 'application/pdf')],
+        )->assertStatus(202);
+        $extraction = AcademicSourceExtraction::query()->firstOrFail();
+
+        (new ExtractAcademicSourceJob($extraction->id))->handle(
+            app(AcademicSourceOcrGateway::class),
+            app(IndexAcademicSource::class),
+            app(AcademicSourceOcrAssetStore::class),
+            app(RecordAuditEvent::class),
+        );
+
+        $source = $source->fresh();
+        $asset = StoredObject::query()->where('clasificacion', 'academic_source_image')->firstOrFail();
+        $content = (string) $source->contenido;
+        $this->assertStringContainsString('| Campo | Valor |', $content);
+        $this->assertStringContainsString('Presencial', $content);
+        $this->assertStringContainsString(route('api.v1.coordination.sources.assets.show', [
+            'source' => $source->id,
+            'asset' => $asset->id,
+        ]), $content);
+        $this->assertArrayNotHasKey('image_base64', $extraction->fresh()->paginas[0]['images'][0]);
+        Storage::disk('private')->assertExists($asset->ruta_interna);
+
+        $this->actingAsCoordinator()
+            ->get(route('api.v1.coordination.sources.assets.show', [
+                'source' => $source->id,
+                'asset' => $asset->id,
+            ]))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png');
     }
 
     public function test_empty_ocr_markdown_fails_without_fallback_content(): void
@@ -112,6 +170,7 @@ final class AcademicSourceOcrTest extends TestCase
         (new ExtractAcademicSourceJob($extraction->id))->handle(
             app(AcademicSourceOcrGateway::class),
             app(IndexAcademicSource::class),
+            app(AcademicSourceOcrAssetStore::class),
             app(RecordAuditEvent::class),
         );
 

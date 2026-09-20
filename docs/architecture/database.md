@@ -126,7 +126,9 @@ reconstruya. Si el proveedor de embeddings falla, la recuperación textual conti
 I-91 incorpora además un PDF privado y produce ese Markdown con Mistral OCR 4.1. La
 migración `000086` agrega la referencia al objeto privado, el estado de ingesta y
 `extracciones_fuente_academica`, relacionada con `ejecuciones_trabajo`; el proveedor
-continúa desactivado por defecto en configuración.
+continúa desactivado por defecto en configuración. Las tablas se inlinéan en el Markdown
+canónico y las imágenes raster derivadas se guardan como objetos privados clasificados
+`academic_source_image`; su Base64 no se persiste en el resultado JSON.
 
 ### Convocatorias y sílabos
 

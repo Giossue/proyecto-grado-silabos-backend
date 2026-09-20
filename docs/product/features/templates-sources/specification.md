@@ -40,9 +40,10 @@
 - Coordinación puede cargar un PDF privado para obtener el contenido Markdown mediante
   Mistral OCR 4.1. La ruta devuelve `202`, el resultado se conserva por página y luego
   se indexa en fragmentos_fuente_academica para búsqueda y citas.
-- Esta ingesta no usa pdfplumber, DeepSeek ni un fallback para páginas vacías. Las
-  imágenes y diagramas se conservan como referencias cuando Mistral los devuelva, pero
-  no se promete interpretar su significado visual.
+- Esta ingesta no usa pdfplumber, DeepSeek ni un fallback para páginas vacías. Las tablas
+  se incorporan al Markdown y las imágenes raster se conservan como recursos privados
+  referenciados desde la fuente; no se promete interpretar el significado visual de
+  diagramas, gráficos, fórmulas o fotografías.
 - La ingesta no sustituye el editor Markdown: una extracción correcta actualiza el
   contenido y la Coordinación puede revisarlo o corregirlo; una extracción fallida
   conserva el contenido anterior.

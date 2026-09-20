@@ -16,10 +16,13 @@ use App\Modules\Configuration\Presentation\Http\Requests\ManageAcademicSourceReq
 use App\Modules\Configuration\Presentation\Http\Requests\UpdateSourceContentRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\UpdateSourceRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ViewSourcesRequest;
+use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 
 class AcademicSourceController extends Controller
 {
@@ -139,5 +142,29 @@ class AcademicSourceController extends Controller
             'execution_id' => $extraction->ejecucion_trabajo_id,
             'status' => $extraction->estado,
         ], 202);
+    }
+
+    public function asset(
+        AcademicSource $source,
+        string $asset,
+        ManageAcademicSourceRequest $request,
+    ): Response {
+        $object = StoredObject::query()
+            ->whereKey($asset)
+            ->where('carrera_id', $source->carrera_id)
+            ->where('clasificacion', 'academic_source_image')
+            ->where('estado', 'activo')
+            ->where('ruta_interna', 'like', "academic-sources/{$source->id}/assets/%")
+            ->firstOrFail();
+
+        return Storage::disk($object->disco)->response(
+            $object->ruta_interna,
+            $object->nombre_logico,
+            [
+                'Content-Type' => $object->mime,
+                'Cache-Control' => 'private, max-age=300',
+                'X-Content-Type-Options' => 'nosniff',
+            ],
+        );
     }
 }

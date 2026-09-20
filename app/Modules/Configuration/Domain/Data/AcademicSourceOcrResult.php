@@ -15,12 +15,15 @@ final readonly class AcademicSourceOcrResult
         public ?string $requestId,
     ) {}
 
-    public function markdown(): string
+    /**
+     * @param  null|callable(string, array<string, mixed>): ?string  $imageUrlResolver
+     */
+    public function markdown(?callable $imageUrlResolver = null): string
     {
         return implode(
             "\n\n",
             array_map(
-                static fn (AcademicSourceOcrPage $page): string => trim($page->markdown),
+                static fn (AcademicSourceOcrPage $page): string => trim($page->renderMarkdown($imageUrlResolver)),
                 $this->pages,
             ),
         );

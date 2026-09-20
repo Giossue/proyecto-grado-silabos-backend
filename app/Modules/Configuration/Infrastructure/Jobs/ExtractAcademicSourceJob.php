@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Infrastructure\Jobs;
 
 use App\Modules\AiAssistance\Application\IndexAcademicSource;
+use App\Modules\Configuration\Application\AcademicSourceOcrAssetStore;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
 use App\Modules\Configuration\Domain\Data\AcademicSourceOcrResult;
 use App\Modules\Configuration\Domain\Exceptions\AcademicSourceOcrContractException;
@@ -39,6 +40,7 @@ final class ExtractAcademicSourceJob implements ShouldQueue
     public function handle(
         AcademicSourceOcrGateway $gateway,
         IndexAcademicSource $indexer,
+        AcademicSourceOcrAssetStore $assetStore,
         RecordAuditEvent $audit,
     ): void {
         if (! $this->markRunning()) {
@@ -50,7 +52,7 @@ final class ExtractAcademicSourceJob implements ShouldQueue
                 ->with(['source', 'pdfObject', 'execution'])
                 ->findOrFail($this->extractionId);
             $result = $gateway->extract($extraction->pdfObject);
-            $this->complete($extraction, $result, $indexer, $audit);
+            $this->complete($extraction, $result, $indexer, $assetStore, $audit);
         } catch (AcademicSourceOcrContractException $exception) {
             $this->finishFailed('contrato_fuente_ocr_invalido', 'La respuesta de OCR no cumplió el contrato.', $audit);
         } catch (AcademicSourceOcrUnavailable $exception) {
@@ -112,16 +114,18 @@ final class ExtractAcademicSourceJob implements ShouldQueue
         AcademicSourceExtraction $extraction,
         AcademicSourceOcrResult $result,
         IndexAcademicSource $indexer,
+        AcademicSourceOcrAssetStore $assetStore,
         RecordAuditEvent $audit,
     ): void {
-        DB::transaction(function () use ($audit, $extraction, $indexer, $result): void {
+        DB::transaction(function () use ($assetStore, $audit, $extraction, $indexer, $result): void {
             $locked = AcademicSourceExtraction::query()->lockForUpdate()->findOrFail($extraction->id);
             if ($locked->estado === 'completada') {
                 return;
             }
             $source = AcademicSource::query()->lockForUpdate()->findOrFail($locked->fuente_academica_id);
             $execution = JobExecution::query()->lockForUpdate()->findOrFail($locked->ejecucion_trabajo_id);
-            $content = $result->markdown();
+            $materialized = $assetStore->materialize($source, $locked, $result);
+            $content = $materialized['markdown'];
             if (trim($content) === '') {
                 throw new AcademicSourceOcrContractException('OCR no devolvió contenido Markdown.');
             }
@@ -154,6 +158,7 @@ final class ExtractAcademicSourceJob implements ShouldQueue
                     'model' => $result->model,
                     'page_count' => count($result->pages),
                     'fragment_count' => $fragmentCount,
+                    'image_count' => $materialized['image_count'],
                 ],
                 'finalizado_en' => now(),
                 'codigo_error' => null,
@@ -170,6 +175,7 @@ final class ExtractAcademicSourceJob implements ShouldQueue
                     'model' => $result->model,
                     'page_count' => count($result->pages),
                     'fragment_count' => $fragmentCount,
+                    'image_count' => $materialized['image_count'],
                 ],
                 correlationId: $execution->correlacion_id,
             );

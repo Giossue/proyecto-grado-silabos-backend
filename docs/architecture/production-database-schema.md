@@ -986,7 +986,9 @@ silabos 1:N transiciones_silabo
 
 ## objetos_almacenados
 
-**Contexto:** metadatos de archivos privados; su contenido no está en la BD.
+**Contexto:** metadatos de archivos privados; su contenido no está en la BD. Además del
+PDF original y los artefactos exportados, clasificaciones como
+`academic_source_image` identifican imágenes raster derivadas de una fuente académica.
 
 ~~~text
 id UUID (PK)

@@ -173,28 +173,11 @@ final class MistralAcademicSourceOcrGateway implements AcademicSourceOcrGateway
         $metadata = [];
         foreach (['images', 'tables', 'hyperlinks', 'header', 'footer', 'dimensions', 'confidence_scores', 'blocks'] as $key) {
             if (array_key_exists($key, $page) && (is_array($page[$key]) || is_string($page[$key]) || $page[$key] === null)) {
-                $metadata[$key] = $this->removeInlineImageData($page[$key]);
+                $metadata[$key] = $page[$key];
             }
         }
 
         return $metadata;
-    }
-
-    private function removeInlineImageData(mixed $value): mixed
-    {
-        if (is_array($value)) {
-            $clean = [];
-            foreach ($value as $key => $item) {
-                if (in_array((string) $key, ['image_base64', 'image_data'], true)) {
-                    continue;
-                }
-                $clean[$key] = $this->removeInlineImageData($item);
-            }
-
-            return $clean;
-        }
-
-        return $value;
     }
 
     private function deleteRemoteFile(string $remoteFileId): void
