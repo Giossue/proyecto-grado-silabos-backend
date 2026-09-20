@@ -5,6 +5,7 @@ namespace Tests\Feature\Configuration;
 use App\Models\User;
 use App\Modules\Configuration\Application\AcademicSourceOcrExecutionFinalizer;
 use App\Modules\Configuration\Application\Contracts\AcademicSourceFigureCropper;
+use App\Modules\Configuration\Domain\Contracts\AcademicSourceDocumentNormalizer;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
 use App\Modules\Configuration\Infrastructure\Jobs\PollAcademicSourceOcrJob;
 use App\Modules\Configuration\Infrastructure\Jobs\SubmitAcademicSourceOcrJob;
@@ -41,6 +42,7 @@ final class AcademicSourceOcrTest extends TestCase
             'openparser.base_url' => 'https://openparser.test',
             'openparser.api_key' => 'test-token',
             'openparser.ocr_model' => 'paddleocr-vl-1.6',
+            'ai.driver' => 'disabled',
             'ai.embeddings.driver' => 'disabled',
         ]);
         Storage::fake('private');
@@ -418,6 +420,7 @@ final class AcademicSourceOcrTest extends TestCase
         );
         (new PollAcademicSourceOcrJob($execution->id))->handle(
             app(AcademicSourceOcrGateway::class),
+            app(AcademicSourceDocumentNormalizer::class),
             app(AcademicSourceOcrExecutionFinalizer::class),
         );
     }

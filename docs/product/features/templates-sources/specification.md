@@ -40,10 +40,15 @@
   `paddleocr-vl-1.6` y salida `openparser@1`.
   La ruta devuelve `202`, el resultado conserva procedencia por página y luego
   se indexa en fragmentos_fuente_academica para búsqueda y citas.
-- Esta ingesta no usa Mistral, DeepSeek ni un fallback para páginas vacías. Las tablas
-  conservan combinaciones y las imágenes raster se conservan como recursos privados
-  referenciados desde la fuente; no se promete interpretar el significado visual de
-  diagramas, gráficos, fórmulas o fotografías.
+- OpenParser realiza la extracción OCR y de layout. Cuando
+  `AI_SOURCE_NORMALIZATION_ENABLED=true` usa el driver `deepseek`, la
+  salida se normaliza después con `deepseek-flash` por lotes y mediante un prompt que
+  conserva el texto, el idioma, el orden y los saltos de página sin resumir ni inventar.
+  Las tablas conservan combinaciones y las imágenes raster se conservan como recursos
+  privados referenciados desde la fuente; no se promete interpretar el significado
+  visual de diagramas, gráficos, fórmulas o fotografías. Si la respuesta del
+  normalizador es incompleta o altera sus marcadores protegidos, la ingesta falla sin
+  fallback silencioso.
 - La ingesta alimenta el editor estructurado: una extracción correcta actualiza el
   contenido y la Coordinación puede revisarlo o corregirlo; una extracción fallida
   conserva el contenido anterior.

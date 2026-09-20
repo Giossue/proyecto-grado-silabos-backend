@@ -16,10 +16,13 @@ Job → valida contrato → persiste recomendaciones/evidencias → notifica
 
 ## OCR de fuentes académicas
 
-La extracción de fuentes PDF es un flujo separado de AiAnalysisGateway. I-95 usa la API
-de OpenParser con `paddleocr-vl-1.6` como único adaptador PDF → documento JSON y después
-reconstruye el índice de fragmentos. No usa Mistral, DeepSeek ni otro LLM para reescribir
-el resultado; DeepSeek solo permanece disponible para la asistencia general de I-73.
+La extracción de fuentes PDF es un flujo separado de AiAnalysisGateway. OpenParser usa
+`paddleocr-vl-1.6` para producir el documento JSON y, cuando
+`AI_SOURCE_NORMALIZATION_ENABLED=true` con driver `deepseek`, un adaptador específico
+envía sus páginas por lotes a `deepseek-flash` para normalizar el
+orden de lectura y el Markdown. Las tablas HTML y las imágenes se protegen como bloques
+opacos y se restauran después; DeepSeek no reemplaza el OCR ni puede quitar esos
+recursos. Luego se reconstruye el índice de fragmentos.
 
 Después de reconstruir `fragmentos_fuente_academica`, el trabajo de la cola `ia` puede
 generar embeddings con `text-embedding-3-small` y guardarlos en la columna vectorial de

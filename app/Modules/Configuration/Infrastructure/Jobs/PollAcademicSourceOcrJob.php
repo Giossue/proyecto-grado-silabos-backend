@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Infrastructure\Jobs;
 
 use App\Modules\Configuration\Application\AcademicSourceOcrExecutionFinalizer;
+use App\Modules\Configuration\Domain\Contracts\AcademicSourceDocumentNormalizer;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
 use App\Modules\Configuration\Domain\Exceptions\AcademicSourceOcrContractException;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
@@ -29,8 +30,11 @@ final class PollAcademicSourceOcrJob implements ShouldQueue
         $this->onQueue('integraciones');
     }
 
-    public function handle(AcademicSourceOcrGateway $gateway, AcademicSourceOcrExecutionFinalizer $finalizer): void
-    {
+    public function handle(
+        AcademicSourceOcrGateway $gateway,
+        AcademicSourceDocumentNormalizer $normalizer,
+        AcademicSourceOcrExecutionFinalizer $finalizer,
+    ): void {
         $execution = JobExecution::query()->find($this->executionId);
         if ($execution === null || in_array($execution->estado, ['completada', 'fallida'], true)) {
             return;
@@ -63,9 +67,11 @@ final class PollAcademicSourceOcrJob implements ShouldQueue
             if ($status->result === null) {
                 throw new AcademicSourceOcrContractException('El trabajo terminó sin URL de resultado.');
             }
-            $finalizer->complete($execution, $gateway->result($providerJobId, $status->result));
+            $execution->update(['estado' => 'en_ejecucion', 'progreso' => 96]);
+            $ocrResult = $gateway->result($providerJobId, $status->result);
+            $finalizer->complete($execution, $normalizer->normalize($ocrResult));
         } catch (AcademicSourceOcrContractException $exception) {
-            $finalizer->fail($execution->id, 'contrato_openparser_invalido', 'OpenParser devolvió un resultado que no se pudo interpretar.');
+            $finalizer->fail($execution->id, 'contrato_ingesta_invalido', $exception->getMessage());
         }
     }
 
@@ -73,8 +79,8 @@ final class PollAcademicSourceOcrJob implements ShouldQueue
     {
         app(AcademicSourceOcrExecutionFinalizer::class)->fail(
             $this->executionId,
-            'openparser_no_disponible',
-            'No fue posible consultar el resultado de OpenParser. Puede reintentarlo.',
+            'proveedor_ingesta_no_disponible',
+            'No fue posible completar el procesamiento del PDF. Puede reintentarlo.',
         );
     }
 }

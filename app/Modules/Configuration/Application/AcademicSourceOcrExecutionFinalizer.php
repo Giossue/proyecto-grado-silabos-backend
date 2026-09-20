@@ -51,6 +51,7 @@ final class AcademicSourceOcrExecutionFinalizer
                     'source_id' => $source->id,
                     'provider_job_id' => $lockedExecution->resultado['provider_job_id'] ?? null,
                     'model' => $result->model,
+                    'normalization' => $result->usage['normalization'] ?? null,
                     'page_count' => count($result->pages),
                     'fragment_count' => $fragmentCount,
                     'image_count' => $materialized['image_count'],
@@ -69,6 +70,7 @@ final class AcademicSourceOcrExecutionFinalizer
                 result: 'exito',
                 metadata: [
                     'model' => $result->model,
+                    'normalization' => $result->usage['normalization'] ?? null,
                     'page_count' => count($result->pages),
                     'fragment_count' => $fragmentCount,
                     'image_count' => $materialized['image_count'],

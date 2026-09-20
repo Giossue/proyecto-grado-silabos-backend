@@ -15,8 +15,11 @@ use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HttpAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\OpenAiAcademicSourceEmbeddingGateway;
 use App\Modules\Configuration\Application\Contracts\AcademicSourceFigureCropper;
+use App\Modules\Configuration\Domain\Contracts\AcademicSourceDocumentNormalizer;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
 use App\Modules\Configuration\Infrastructure\Documents\PopplerAcademicSourceFigureCropper;
+use App\Modules\Configuration\Infrastructure\Gateways\DeepSeekAcademicSourceDocumentNormalizer;
+use App\Modules\Configuration\Infrastructure\Gateways\DisabledAcademicSourceDocumentNormalizer;
 use App\Modules\Configuration\Infrastructure\Gateways\OpenParserAcademicSourceGateway;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
@@ -74,6 +77,12 @@ class AppServiceProvider extends ServiceProvider
                 'openai' => app(OpenAiAcademicSourceEmbeddingGateway::class),
                 default => app(DisabledAcademicSourceEmbeddingGateway::class),
             };
+        });
+        $this->app->bind(AcademicSourceDocumentNormalizer::class, function (): AcademicSourceDocumentNormalizer {
+            return (bool) config('ai.source_normalization.enabled')
+                && strtolower((string) config('ai.source_normalization.driver')) === 'deepseek'
+                ? app(DeepSeekAcademicSourceDocumentNormalizer::class)
+                : app(DisabledAcademicSourceDocumentNormalizer::class);
         });
         $this->app->bind(AcademicSourceOcrGateway::class, OpenParserAcademicSourceGateway::class);
         $this->app->bind(AcademicSourceFigureCropper::class, PopplerAcademicSourceFigureCropper::class);

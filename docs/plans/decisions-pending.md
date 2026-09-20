@@ -45,7 +45,7 @@ Estas no reemplazan los PV de la SRS:
 | DT-11 | Destino del modo `por_oferta` tras cerrar PV-06 | Conservado; `por_paralelo` es el valor por defecto | Cerrada el 2026-08-26 en I-15 |
 | DT-12 | Efecto de alcanzar la fecha de fin de un período sobre sus ofertas, paralelos, asignaciones y sílabos | Por ahora, la fecha es informativa: no hay cierre ni eliminación automática. Coordinación elimina, tras confirmación, solo ofertas que no tengan dependencias; un período con ofertas, procesos o convocatorias no se elimina. Definir si se automatiza un cierre futuro sin alterar la historia. | Antes de automatizar el cierre de período |
 
-| DT-13 | Ingesta de fuentes PDF | OpenParser con `paddleocr-vl-1.6` y `openparser@1` como adaptador único PDF → documento JSON, sin Mistral, DeepSeek ni fallback; ejecución asíncrona y PDF privado | Implementaciones I-95/I-96; requiere PV-12/PV-14 |
+| DT-13 | Ingesta de fuentes PDF | OpenParser con `paddleocr-vl-1.6` y `openparser@1` como adaptador PDF → documento JSON; `deepseek-flash` puede normalizar la salida por lotes cuando `AI_SOURCE_NORMALIZATION_ENABLED=true`, sin fallback silencioso; ejecución asíncrona y PDF privado | Implementaciones I-95/I-96/I-99; requiere PV-12/PV-14 |
 
 ## Entrevistas pendientes
 

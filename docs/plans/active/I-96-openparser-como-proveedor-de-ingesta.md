@@ -2,9 +2,9 @@
 
 ## Estado
 
-Implementado y verificado el 19 de septiembre de 2026. Modifica I-95 únicamente en la
-frontera del proveedor alojado; el documento JSON, la persistencia y los embeddings no
-cambian.
+Implementado y verificado el 19 de septiembre de 2026. El 20 de septiembre se añadió
+una normalización editorial opcional posterior a OpenParser; el documento JSON, la
+persistencia y los embeddings no cambian.
 
 ## Objetivo
 
@@ -20,8 +20,14 @@ contrato versionado `openparser@1`.
 - Las figuras con recurso se materializan en almacenamiento privado. Si OpenParser solo
   entrega coordenadas, el recorte se obtiene del PDF privado y se inserta en el mismo
   orden lógico.
-- No se usa `/extract` ni otro LLM: OpenParser aloja PaddleOCR-VL 1.6 y normaliza su
-  salida.
+- No se usa `/extract`, Mistral, Docling ni otro proveedor OCR. Si
+  `AI_SOURCE_NORMALIZATION_ENABLED=true` con driver `deepseek`, `deepseek-flash` recibe
+  las páginas OCR en lotes mediante `chat/completions` y solo normaliza el Markdown de
+  cada página; no resume, traduce ni inventa contenido.
+- Las tablas HTML y las imágenes se reemplazan por marcadores protegidos antes de llamar
+  a DeepSeek y se restauran después en el mismo lugar. Si la respuesta omite, duplica o
+  altera un marcador, la ingesta falla de forma explícita y no se aplica un fallback
+  silencioso.
 - No se requiere una migración de base de datos.
 
 ## Alcance
@@ -37,6 +43,8 @@ contrato versionado `openparser@1`.
 - [x] Conversión de `openparser@1` con tablas e imágenes en orden.
 - [x] Recorte privado de figuras cuando no exista un recurso remoto.
 - [x] Pruebas de envío, sondeo, estructura, tablas, imágenes y fallos.
+- [x] Normalizador DeepSeek por lotes, con prompt editorial y preservación verificada de
+  páginas, tablas, imágenes y su posición.
 - [x] Interfaz, despliegue, trazabilidad y decisiones actualizadas.
 - [x] Corrección del 20 de septiembre de 2026: las celdas vacías se representan como
   párrafos sin nodos de texto, la normalización elimina entradas vacías y la migración

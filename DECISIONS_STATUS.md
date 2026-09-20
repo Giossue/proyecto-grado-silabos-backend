@@ -185,8 +185,9 @@ I-95 (19 de septiembre de 2026) reemplaza I-26, I-49, I-91 e I-94 en el formato 
 fuentes: PDF privado → OpenParser (`paddleocr-vl-1.6`, `openparser@1`) → documento JSON ProseMirror/Tiptap →
 fragmentos y embeddings. Las tablas conservan combinaciones y las imágenes se insertan
 en su orden como objetos privados. `ejecuciones_trabajo` sustituye la tabla especializada
-de extracciones. No se usa Mistral, DeepSeek ni fallback silencioso. La activación real
-continúa condicionada a PV-12 y PV-14; la migración es `000089`.
+de extracciones. La etapa OCR no usa Mistral; la normalización posterior opcional de
+DeepSeek queda definida por I-99. La activación real continúa condicionada a PV-12 y
+PV-14; la migración es `000089`.
 
 I-97 (20 de septiembre de 2026) presenta COR-11 como documento editable continuo, sin
 simular hojas A4 ni saltos físicos. El JSON ProseMirror/Tiptap sigue siendo canónico;
@@ -200,6 +201,13 @@ diálogo bloqueante muestra el progreso real de `ejecuciones_trabajo` y abre el 
 automáticamente únicamente cuando OpenParser termina. Un fallo conserva reintento y
 salida explícitos. El documento conserva un separador horizontal entre páginas del PDF;
 PV-12 y PV-14 siguen condicionando la activación externa.
+
+I-99 (20 de septiembre de 2026) añade una normalización editorial posterior a OpenParser.
+Cuando `AI_SOURCE_NORMALIZATION_ENABLED=true` con driver `deepseek`, `deepseek-flash` recibe
+las páginas OCR en lotes y devuelve Markdown por página mediante JSON. Tablas HTML e imágenes se envían como marcadores
+protegidos y se restauran en el mismo lugar; una respuesta incompleta o que altere esos
+marcadores hace fallar la ingesta, sin fallback silencioso. El normalizador no reemplaza
+al OCR ni cambia el contrato de persistencia o embeddings.
 
 I-74 (14 de septiembre de 2026) normaliza roles y responsabilidades académicas: la
 única relación RBAC es `asignaciones_rol(usuario_id, rol, carrera_id)`. Se elimina

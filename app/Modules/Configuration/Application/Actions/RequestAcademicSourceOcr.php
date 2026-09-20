@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Domain\Contracts\AcademicSourceDocumentNormalizer;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
 use App\Modules\Configuration\Infrastructure\Jobs\SubmitAcademicSourceOcrJob;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
@@ -23,6 +24,7 @@ final class RequestAcademicSourceOcr
 {
     public function __construct(
         private readonly ActiveRole $roles,
+        private readonly AcademicSourceDocumentNormalizer $normalizer,
         private readonly AcademicSourceOcrGateway $gateway,
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
@@ -39,11 +41,12 @@ final class RequestAcademicSourceOcr
         $this->locks->assertCareerEditable($source->carrera_id);
         $pathInfo = $this->storePdf($source, $file);
         $model = (string) config('openparser.ocr_model');
-        $adapterVersion = $this->gateway->version();
+        $adapterVersion = $this->gateway->version().'+'.$this->normalizer->version();
+        $normalizerVersion = $this->normalizer->version();
         $dispatch = false;
 
         $execution = DB::transaction(function () use (
-            $activeRole, $actor, $adapterVersion, $model, $pathInfo, $request, $source, &$dispatch,
+            $activeRole, $actor, $adapterVersion, $model, $normalizerVersion, $pathInfo, $request, $source, &$dispatch,
         ): JobExecution {
             $lockedSource = AcademicSource::query()->lockForUpdate()->findOrFail($source->id);
             $object = StoredObject::query()->firstOrCreate(
@@ -83,6 +86,7 @@ final class RequestAcademicSourceOcr
                         'pdf_hash' => $pathInfo['hash'],
                         'model' => $model,
                         'adapter_version' => $adapterVersion,
+                        'normalizer' => $normalizerVersion,
                         'requested_by' => $actor->id,
                     ],
                     'intentos' => 0,
@@ -115,7 +119,12 @@ final class RequestAcademicSourceOcr
                 resourceType: 'fuente_academica',
                 resourceId: $lockedSource->id,
                 result: 'exito',
-                metadata: ['pdf_hash' => $pathInfo['hash'], 'pdf_size' => $pathInfo['size'], 'model' => $model],
+                metadata: [
+                    'pdf_hash' => $pathInfo['hash'],
+                    'pdf_size' => $pathInfo['size'],
+                    'model' => $model,
+                    'normalizer' => $normalizerVersion,
+                ],
                 correlationId: $execution->correlacion_id,
             );
 

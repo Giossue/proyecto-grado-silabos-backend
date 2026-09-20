@@ -115,15 +115,30 @@ DeepSeek:
 ```text
 AI_DRIVER=deepseek
 AI_BASE_URL=https://api.deepseek.com
-AI_MODEL=<modelo elegido>
+AI_MODEL=deepseek-flash
 AI_API_KEY=<secreto de DeepSeek>
 ```
 
-`AI_API_KEY` se configura como secreto en Dokploy: no se escribe en el repositorio, la
-base, logs ni comandos de diagnóstico. Tras cambiar estas variables hay que redesplegar
-o reiniciar el contenedor completo para reconstruir la caché de configuración y para que
-el worker de la cola `ia` use el proveedor nuevo. La URL y el modelo deben corresponder
-al mismo proveedor seleccionado por `AI_DRIVER`.
+Con `AI_SOURCE_NORMALIZATION_ENABLED=true`, la ingesta PDF usa DeepSeek de forma
+independiente del proveedor configurado en `AI_DRIVER` para normalizar por lotes el
+resultado de OpenParser. Puede ajustar sus límites sin cambiar el contrato:
+
+```text
+AI_SOURCE_NORMALIZATION_ENABLED=true
+AI_SOURCE_NORMALIZATION_DRIVER=deepseek
+AI_SOURCE_NORMALIZATION_BASE_URL=https://api.deepseek.com
+AI_SOURCE_NORMALIZATION_MODEL=deepseek-flash
+AI_SOURCE_NORMALIZATION_API_KEY=<secreto de DeepSeek>
+AI_SOURCE_NORMALIZATION_BATCH_INPUT_CHARACTERS=100000
+AI_SOURCE_NORMALIZATION_MAX_OUTPUT_TOKENS=20000
+AI_SOURCE_NORMALIZATION_TIMEOUT=120
+```
+
+`AI_API_KEY` y `AI_SOURCE_NORMALIZATION_API_KEY` se configuran como secretos en Dokploy:
+no se escriben en el repositorio, la base, logs ni comandos de diagnóstico. Tras cambiar
+estas variables hay que redesplegar o reiniciar el contenedor completo para reconstruir
+la caché de configuración y para que los workers usen el proveedor nuevo. Cada URL y
+modelo debe corresponder al proveedor de su bloque de configuración.
 
 Activar un proveedor alojado envía el campo del sílabo y los extractos de las fuentes
 seleccionadas a ese tercero. Antes de hacerlo con información institucional deben estar
