@@ -28,6 +28,11 @@ contrato versionado `openparser@1`.
   a DeepSeek y se restauran después en el mismo lugar. Si la respuesta omite, duplica o
   altera un marcador, la ingesta falla de forma explícita y no se aplica un fallback
   silencioso.
+- La ingesta es idempotente por huella SHA-256: la solicitud interna se deduplica por
+  fuente, archivo, modelo y versiones, mientras que el `Idempotency-Key` enviado a
+  OpenParser deduplica el job externo por archivo y adaptador OCR. Por eso dos
+  ejecuciones internas pueden compartir un único job `Parse`; DeepSeek se ejecuta después
+  y puede volver a normalizar el resultado sin repetir el OCR.
 - No se requiere una migración de base de datos.
 
 ## Alcance

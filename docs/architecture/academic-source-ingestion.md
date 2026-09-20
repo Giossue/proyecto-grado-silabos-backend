@@ -51,6 +51,26 @@ por defecto (`OPENPARSER_ENABLED=false`) hasta resolver PV-12 y PV-14.
    `text-embedding-3-small` de 1536 dimensiones. Un fallo de embeddings no altera el
    documento canónico.
 
+### Idempotencia y reprocesamiento
+
+Laravel calcula la huella SHA-256 del PDF antes de enviarlo. La ejecución interna usa
+una clave compuesta por la fuente, la huella, el modelo OCR y la versión del adaptador y
+normalizador; repetir la misma solicitud con esa combinación devuelve la ejecución
+existente y no despacha otro trabajo.
+
+Además, `SubmitAcademicSourceOcrJob` envía a OpenParser un `Idempotency-Key` derivado
+de la huella del PDF y de la versión del adaptador OCR. Por eso, si el mismo archivo se
+sube otra vez —incluso desde otra ejecución interna causada por cambiar el normalizador—
+OpenParser devuelve el mismo job `opj_...` en lugar de crear otro Parse. El dashboard de
+OpenParser muestra entonces un solo job aunque PostgreSQL pueda conservar varias
+ejecuciones internas.
+
+La normalización DeepSeek ocurre después de recuperar el resultado de OpenParser y no
+forma parte de ese job externo; puede ejecutarse nuevamente en una ejecución interna
+nueva. Su proveedor, modelo, versión, páginas y lotes quedan en
+`ejecuciones_trabajo.resultado_ejecucion_trabajo.normalization`. Un PDF con bytes
+distintos produce otra huella y otro job de OpenParser.
+
 COR-11 presenta el documento resultante como flujo continuo. El PDF privado vigente se
 puede consultar mediante una ruta autenticada para verificar las páginas físicas sin
 introducir saltos artificiales en el documento editable.

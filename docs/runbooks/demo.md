@@ -127,8 +127,8 @@ Las cuentas creadas por el seeder usan exclusivamente datos sintéticos:
 
 ### 3. Docente: borrador, IA y primer envío
 
-1. Ingrese como Docente, seleccione **Docente · Software** y abra **Mis sílabos**. Confirme
-   que aparecen únicamente las materias asignadas e inicie el expediente de Arquitectura
+1. Ingrese como Docente. Si aparece `/rol`, seleccione **Docencia · Software**; el sistema
+   abrirá directamente **Mis sílabos**. Confirme que aparecen únicamente las materias asignadas e inicie el expediente de Arquitectura
    de Software (`CU-07`).
 2. Abra el editor, escriba en **Objetivo general** y espere la confirmación **Guardado**.
    Ejecute **Validar**; las validaciones determinísticas deben aparecer separadas de la

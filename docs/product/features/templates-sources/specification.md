@@ -40,6 +40,10 @@
   `paddleocr-vl-1.6` y salida `openparser@1`.
   La ruta devuelve `202`, el resultado conserva procedencia por página y luego
   se indexa en fragmentos_fuente_academica para búsqueda y citas.
+- La ingesta calcula una huella SHA-256 y es idempotente. Repetir el mismo PDF no crea
+  otro job Parse en OpenParser: se reutiliza el trabajo externo existente. PostgreSQL
+  puede registrar una nueva ejecución interna cuando cambia la versión del normalizador,
+  y DeepSeek puede volver a procesar el resultado sin repetir el OCR.
 - OpenParser realiza la extracción OCR y de layout. Cuando
   `AI_SOURCE_NORMALIZATION_ENABLED=true` usa el driver `deepseek`, la
   salida se normaliza después con `deepseek-flash` por lotes y mediante un prompt que

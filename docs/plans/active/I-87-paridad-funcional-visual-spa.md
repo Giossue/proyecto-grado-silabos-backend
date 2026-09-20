@@ -11,7 +11,8 @@ navegación por rol. En el backend se corrigieron los enlaces de recurso que ent
 API de notificaciones para usar destinos canónicos de la SPA según el rol activo y se
 añadieron regresiones para revisión, documentos exportados y sílabos docentes. La
 revisión página por página, DTO, deep links y pruebas exhaustivas de estados continúan
-abiertos.
+abiertos. La entrada docente queda alineada con UI-02: una tarjeta por carrera/rol cuando
+hay más de un ámbito y acceso directo a DOC-02 cuando solo existe una asignación.
 
 Este incremento corrige navegación, redirecciones, estados de carga y adaptaciones de
 las páginas de la SPA. No autoriza despliegue, cambios de base de datos, recuperación de

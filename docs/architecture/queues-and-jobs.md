@@ -36,6 +36,16 @@ El payload contiene IDs y versiones, no objetos enormes ni secretos.
 - Reintentar no crea otra revisión, aprobación, notificación o artefacto lógico.
 - PostgreSQL conserva el estado funcional; Redis puede vaciarse/reconstruirse.
 
+### Idempotencia de ingesta PDF
+
+La ingesta de fuentes usa dos niveles de idempotencia. La ejecución de PostgreSQL se
+deduplica por fuente, huella SHA-256 del PDF, modelo OCR y versiones de adaptadores. El
+envío a OpenParser usa un `Idempotency-Key` derivado de la huella y del adaptador OCR;
+reintentar o volver a subir los mismos bytes devuelve el mismo job externo en vez de
+crear otro Parse. Una nueva ejecución interna puede reutilizar ese resultado y ejecutar
+otra vez la normalización DeepSeek, que es una etapa posterior e independiente del job
+de OpenParser.
+
 ## Colas sugeridas
 
 `critica`, `documentos`, `integraciones`, `ia` y `notificaciones`. La prioridad y cantidad
