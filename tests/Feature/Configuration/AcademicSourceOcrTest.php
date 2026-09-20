@@ -50,8 +50,8 @@ final class AcademicSourceOcrTest extends TestCase
     public function test_coordinator_uploads_pdf_and_persists_structured_document(): void
     {
         $this->fakeCompletedJob([
-            $this->textElement('title', 'document_title', 'Marco institucional'),
-            $this->textElement('heading', 'heading', 'Resultado'),
+            $this->textElement('title', 'document_title', '# Marco institucional'),
+            $this->textElement('heading', 'heading', '### Resultado'),
             $this->textElement('paragraph', 'paragraph', 'Diseña software seguro.'),
         ]);
         $source = $this->createSource();
@@ -71,6 +71,10 @@ final class AcademicSourceOcrTest extends TestCase
         $this->assertSame('completada', $source->estado_ingesta);
         $this->assertSame('doc', $source->documento['type']);
         $this->assertSame('heading', $source->documento['content'][0]['type']);
+        $this->assertSame(1, $source->documento['content'][0]['attrs']['level']);
+        $this->assertSame('Marco institucional', $source->documento['content'][0]['content'][0]['text']);
+        $this->assertSame(3, $source->documento['content'][1]['attrs']['level']);
+        $this->assertSame('Resultado', $source->documento['content'][1]['content'][0]['text']);
         $this->assertStringContainsString('Diseña software seguro.', (string) $source->contenido);
         $this->assertSame('completada', $execution->fresh()->estado);
         $this->assertDatabaseHas('fragmentos_fuente_academica', [

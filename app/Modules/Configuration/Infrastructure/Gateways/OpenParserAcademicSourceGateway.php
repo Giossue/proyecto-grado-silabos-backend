@@ -273,8 +273,8 @@ final class OpenParserAcademicSourceGateway implements AcademicSourceOcrGateway
             $role = $element['role'] ?? null;
 
             return match ($role) {
-                'document_title' => $text === '' ? '' : '# '.$text,
-                'heading' => $text === '' ? '' : '## '.$text,
+                'document_title' => $this->markdownHeading($text, 1),
+                'heading' => $this->markdownHeading($text, 2),
                 'list', 'list_item' => $text === '' ? '' : '- '.$text,
                 default => $text,
             };
@@ -285,7 +285,7 @@ final class OpenParserAcademicSourceGateway implements AcademicSourceOcrGateway
         if ($kind === 'section') {
             $title = is_string($element['title'] ?? null) ? trim($element['title']) : '';
 
-            return $title === '' ? '' : '## '.$title;
+            return $this->markdownHeading($title, 2);
         }
         if ($kind === 'formula') {
             return is_string($element['value'] ?? null) ? trim($element['value']) : '';
@@ -352,6 +352,19 @@ final class OpenParserAcademicSourceGateway implements AcademicSourceOcrGateway
     private function markdownText(string $value): string
     {
         return str_replace(["\r", "\n", '[', ']'], [' ', ' ', '(', ')'], trim($value));
+    }
+
+    private function markdownHeading(string $value, int $fallbackLevel): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        if (preg_match('/^\s{0,3}(#{1,6})\s+(.+)$/us', $value, $match) === 1) {
+            return $match[1].' '.trim($match[2]);
+        }
+
+        return str_repeat('#', $fallbackLevel).' '.$value;
     }
 
     private function assertConfigured(): void

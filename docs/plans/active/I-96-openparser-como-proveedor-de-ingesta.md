@@ -41,3 +41,6 @@ contrato versionado `openparser@1`.
 - [x] Corrección del 20 de septiembre de 2026: las celdas vacías se representan como
   párrafos sin nodos de texto, la normalización elimina entradas vacías y la migración
   `000090` repara documentos ya procesados sin alterar su texto, fragmentos o embeddings.
+- [x] Corrección visual del 20 de septiembre de 2026: los niveles Markdown que ya
+  entrega OpenParser se conservan sin duplicar `#`; la hoja A4 pagina todos los bloques
+  Tiptap y las celdas fijan texto oscuro sobre el papel blanco.
