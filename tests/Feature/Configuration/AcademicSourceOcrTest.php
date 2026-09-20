@@ -103,7 +103,7 @@ final class AcademicSourceOcrTest extends TestCase
             ],
             [
                 'id' => 'figure', 'kind' => 'figure', 'locations' => [],
-                'asset_id' => 'asset-1', 'caption' => 'Sello institucional', 'caption_spans' => [],
+                'asset_id' => 'asset-1', 'caption' => '<div><img src="images/sello.jpg" alt="Image" /></div>', 'caption_spans' => [],
             ],
         ], [[
             'id' => 'asset-1', 'kind' => 'figure', 'data_base64' => $png, 'mime_type' => 'image/png',
@@ -129,7 +129,13 @@ final class AcademicSourceOcrTest extends TestCase
         );
         $asset = StoredObject::query()->where('clasificacion', 'academic_source_image')->firstOrFail();
         $this->assertSame($asset->id, $source->documento['content'][2]['attrs']['objectId']);
+        $this->assertSame('Imagen', $source->documento['content'][2]['attrs']['alt']);
         Storage::disk('private')->assertExists($asset->ruta_interna);
+
+        $this->actingAsCoordinator()
+            ->get(route('api.v1.coordination.sources.assets.show', ['source' => $source, 'asset' => $asset]))
+            ->assertOk()
+            ->assertHeader('content-type', 'image/png');
 
         $detail = $this->actingAsCoordinator()->getJson(route('api.v1.coordination.sources.show', $source));
         $detail->assertOk()->assertJsonPath('source.document.content.2.attrs.src', route('api.v1.coordination.sources.assets.show', [
@@ -161,6 +167,27 @@ final class AcademicSourceOcrTest extends TestCase
         $document = $source->fresh()->documento;
         $this->assertSame('Habilidad', $document['content'][0]['content'][0]['content'][0]['content'][0]['content'][0]['text']);
         $this->assertSame('Trabajo en equipo', $document['content'][0]['content'][0]['content'][1]['content'][0]['content'][0]['text']);
+    }
+
+    public function test_escaped_line_breaks_become_structured_breaks_inside_table_cells(): void
+    {
+        $this->fakeCompletedJob([[
+            'id' => 'table', 'kind' => 'table', 'locations' => [],
+            'row_count' => 1, 'column_count' => 1,
+            'cells' => [$this->tableCell('c1', 0, 0, 'Liderazgo\\nAutocontrol\\nToma de decisiones')],
+        ]]);
+        $source = $this->createSource();
+        $this->actingAsCoordinator()->post(
+            route('api.v1.coordination.sources.pdf.ingest', $source),
+            ['pdf' => UploadedFile::fake()->create('saltos.pdf', 20, 'application/pdf')],
+        )->assertStatus(202);
+
+        $this->runJobs(JobExecution::query()->firstOrFail());
+
+        $source->refresh();
+        $content = $source->documento['content'][0]['content'][0]['content'][0]['content'][0]['content'];
+        $this->assertSame(['text', 'hardBreak', 'text', 'hardBreak', 'text'], array_column($content, 'type'));
+        $this->assertSame("Liderazgo\nAutocontrol\nToma de decisiones", $source->contenido);
     }
 
     public function test_provider_markdown_is_used_when_the_document_graph_has_no_elements(): void

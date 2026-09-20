@@ -220,9 +220,10 @@ final class OpenParserAcademicSourceGateway implements AcademicSourceOcrGateway
     private function figure(array $element, array $assets, int $pageNumber, float $pageWidth, float $pageHeight): ?array
     {
         $elementId = is_string($element['id'] ?? null) ? $element['id'] : '';
-        $alt = is_string($element['alt_text'] ?? null)
+        $rawAlt = is_string($element['alt_text'] ?? null)
             ? $element['alt_text']
             : (is_string($element['caption'] ?? null) ? $element['caption'] : 'Figura');
+        $alt = $this->figureAlt($rawAlt);
         $assetId = is_string($element['asset_id'] ?? null) ? $element['asset_id'] : null;
         if ($assetId !== null && is_array($assets[$assetId] ?? null)) {
             $resource = $this->assetResource($assets[$assetId]);
@@ -376,6 +377,20 @@ final class OpenParserAcademicSourceGateway implements AcademicSourceOcrGateway
     private function markdownText(string $value): string
     {
         return str_replace(["\r", "\n", '[', ']'], [' ', ' ', '(', ')'], trim($value));
+    }
+
+    private function figureAlt(string $value): string
+    {
+        $value = trim($value);
+        if (preg_match('/<img\b[^>]*\balt=["\']([^"\']*)["\']/iu', $value, $match) === 1) {
+            $candidate = trim(html_entity_decode($match[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            if ($candidate !== '' && ! in_array(mb_strtolower($candidate), ['image', 'imagen'], true)) {
+                return mb_substr($candidate, 0, 500);
+            }
+        }
+        $plain = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($value), ENT_QUOTES | ENT_HTML5, 'UTF-8')) ?? '');
+
+        return $plain !== '' ? mb_substr($plain, 0, 500) : 'Imagen';
     }
 
     private function markdownHeading(string $value, int $fallbackLevel): string

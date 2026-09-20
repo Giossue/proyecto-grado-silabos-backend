@@ -227,7 +227,9 @@ final class AcademicSourceDocument
             }
         }
 
-        return implode($separator, array_filter($values, static fn (string $value): bool => $value !== ''));
+        $text = implode($separator, array_filter($values, static fn (string $value): bool => $value !== ''));
+
+        return preg_replace('/[ \t]*\n[ \t]*/u', "\n", $text) ?? $text;
     }
 
     /**

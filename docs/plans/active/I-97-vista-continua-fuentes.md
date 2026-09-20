@@ -38,3 +38,5 @@ PDF original para contrastar el resultado.
 - [x] Vista autenticada del PDF original.
 - [x] Pruebas de interfaz, conversión y autorización.
 - [x] Contrato OpenAPI y documentación actualizados.
+- [x] Normalización de `\\n` escapados y metadatos HTML de figuras; la SPA carga las
+  imágenes privadas mediante una petición autenticada y una URL local revocable.

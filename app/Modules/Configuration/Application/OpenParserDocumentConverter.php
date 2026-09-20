@@ -137,11 +137,29 @@ final class OpenParserDocumentConverter
 
         // ProseMirror rejects text nodes whose value is an empty string. Empty table
         // cells are valid, but they must contain an empty paragraph instead.
-        if ($text !== '') {
-            $node['content'] = [['type' => 'text', 'text' => $text]];
+        $inline = $this->inlineContent($text);
+        if ($inline !== []) {
+            $node['content'] = $inline;
         }
 
         return $node;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function inlineContent(string $text): array
+    {
+        $normalized = preg_replace('/\\\\r\\\\n|\\\\n|\\\\r|\r\n|\r|\n/u', "\n", $text) ?? $text;
+        $content = [];
+        foreach (explode("\n", $normalized) as $index => $part) {
+            if ($index > 0) {
+                $content[] = ['type' => 'hardBreak'];
+            }
+            if ($part !== '') {
+                $content[] = ['type' => 'text', 'text' => $part];
+            }
+        }
+
+        return $content;
     }
 
     /** @return array<string, mixed>|null */
@@ -166,7 +184,12 @@ final class OpenParserDocumentConverter
                 if (! $cell instanceof DOMElement) {
                     continue;
                 }
-                $text = trim(preg_replace('/\s+/u', ' ', $cell->textContent) ?? '');
+                foreach ($xpath->query('.//br', $cell) ?: [] as $break) {
+                    if ($break instanceof DOMElement && $break->parentNode !== null) {
+                        $break->parentNode->insertBefore($dom->createTextNode("\n"), $break);
+                    }
+                }
+                $text = trim(preg_replace('/[^\S\r\n]+/u', ' ', $cell->textContent) ?? '');
                 $cells[] = [
                     'type' => strtolower($cell->tagName) === 'th' ? 'tableHeader' : 'tableCell',
                     'attrs' => [
