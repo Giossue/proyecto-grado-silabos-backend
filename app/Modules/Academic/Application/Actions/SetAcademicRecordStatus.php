@@ -18,6 +18,7 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -82,6 +83,15 @@ class SetAcademicRecordStatus
                 $this->periodPlanning->assertScheduledSubjectMayChange($record);
             } elseif ($record instanceof TeacherAssignment) {
                 $this->periodPlanning->assertTeacherAssignmentMayChange($record);
+                if ($record->activo !== $active) {
+                    $this->assertTeacherAssignmentMayChange($record->id);
+
+                    if ($active) {
+                        throw ValidationException::withMessages([
+                            'record' => 'Una asignación histórica no se reactiva. Cree una nueva asignación o use el relevo docente para conservar el historial.',
+                        ]);
+                    }
+                }
             }
 
             if (! $active) {
@@ -144,5 +154,16 @@ class SetAcademicRecordStatus
                 'record' => 'Elimine primero los registros activos que dependen de este elemento.',
             ]);
         }
+    }
+
+    private function assertTeacherAssignmentMayChange(string $assignmentId): void
+    {
+        if (! SyllabusCollaborator::query()->where('docente_paralelo_id', $assignmentId)->exists()) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'record' => 'Esta asignación ya forma parte de un sílabo. Use el relevo docente para cambiarla y conservar el historial.',
+        ]);
     }
 }

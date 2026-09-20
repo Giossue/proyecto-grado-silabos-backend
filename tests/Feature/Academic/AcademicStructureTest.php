@@ -4,9 +4,11 @@ namespace Tests\Feature\Academic;
 
 use App\Models\User;
 use App\Modules\Academic\Domain\StudyModality;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Campus;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -249,6 +251,95 @@ class AcademicStructureTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
 
                 ->where('scheduledSubjects.0.subject_code', $scheduledSubject->subject->codigo_asignatura));
+    }
+
+    public function test_preparing_a_period_again_does_not_duplicate_existing_records(): void
+    {
+        $source = Subject::query()->firstOrFail();
+        $subject = $source->replicate();
+        $subject->codigo_asignatura = 'SW-602';
+        $subject->nombre = 'Seguridad de Software';
+        $subject->save();
+        $period = AcademicPeriod::query()->firstOrFail();
+
+        $payload = [
+            'period_id' => $period->id,
+            'subjects' => [[
+                'id' => $subject->id,
+                'parallels' => [['code' => 'A', 'shift' => 'matutina']],
+            ]],
+        ];
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.period.prepare'), $payload)
+            ->assertSuccessful();
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.period.prepare'), $payload)
+            ->assertSuccessful();
+
+        $scheduled = ScheduledSubject::query()->where('asignatura_id', $subject->id)->get();
+        $this->assertCount(1, $scheduled);
+        $this->assertSame(1, Parallel::query()
+            ->where('programacion_asignatura_id', $scheduled->firstOrFail()->id)
+            ->count());
+    }
+
+    public function test_preparing_a_period_rejects_duplicate_parallel_codes_after_normalization(): void
+    {
+        $source = Subject::query()->firstOrFail();
+        $subject = $source->replicate();
+        $subject->codigo_asignatura = 'SW-603';
+        $subject->nombre = 'Pruebas de Software';
+        $subject->save();
+        $period = AcademicPeriod::query()->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
+                'period_id' => $period->id,
+                'subjects' => [[
+                    'id' => $subject->id,
+                    'parallels' => [
+                        ['code' => 'A'],
+                        ['code' => ' A '],
+                    ],
+                ]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('subjects.0.parallels.1.code');
+
+        $this->assertDatabaseMissing('programaciones_asignatura', ['asignatura_id' => $subject->id]);
+    }
+
+    public function test_preparing_a_period_does_not_reuse_an_inactive_scheduled_subject(): void
+    {
+        $source = Subject::query()->firstOrFail();
+        $subject = $source->replicate();
+        $subject->codigo_asignatura = 'SW-604';
+        $subject->nombre = 'Materia inactiva';
+        $subject->save();
+        $period = AcademicPeriod::query()->firstOrFail();
+        $career = Career::query()->findOrFail($subject->carrera_id);
+        $scheduled = ScheduledSubject::query()->create([
+            'periodo_academico_id' => $period->id,
+            'asignatura_id' => $subject->id,
+            'campus_id' => $career->campus_id,
+            'modalidad' => StudyModality::Presencial,
+            'activo' => false,
+        ]);
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
+                'period_id' => $period->id,
+                'subjects' => [[
+                    'id' => $subject->id,
+                    'parallels' => [['code' => 'A']],
+                ]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('subjects');
+
+        $this->assertFalse($scheduled->fresh()->activo);
+        $this->assertDatabaseMissing('paralelos', ['programacion_asignatura_id' => $scheduled->id]);
     }
 
     private function createCareer(string $code): Career

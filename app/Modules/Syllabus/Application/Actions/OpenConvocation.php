@@ -9,6 +9,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
 use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\AcademicContextSnapshot;
 use App\Modules\Syllabus\Application\InheritMasterValues;
@@ -78,7 +79,13 @@ class OpenConvocation
                     'parallels' => fn ($query) => $query->lockForUpdate()->with([
                         'teacherAssignments' => fn ($assignmentQuery) => $assignmentQuery
                             ->where('asignaciones_paralelo.docente_paralelo_activo', true)
-                            ->whereHas('roleAssignment.user', fn ($userQuery) => $userQuery->where('usuarios.usuario_activo', true))
+                            ->whereHas('roleAssignment', fn ($roleQuery) => $roleQuery
+                                ->where('asignaciones_rol.asignacion_rol_activa', true)
+                                ->where('asignaciones_rol.rol', RoleCode::Teacher->value)
+                                ->where('asignaciones_rol.carrera_id', $convocation->carrera_id)
+                                ->whereHas('user', fn ($userQuery) => $userQuery
+                                    ->where('usuarios.usuario_activo', true)
+                                    ->whereNotNull('usuarios.correo_verificado_en')))
                             ->with('roleAssignment')
                             ->lockForUpdate(),
                     ]),

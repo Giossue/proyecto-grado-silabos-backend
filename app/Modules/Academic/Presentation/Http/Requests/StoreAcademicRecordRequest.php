@@ -121,6 +121,7 @@ class StoreAcademicRecordRequest extends FormRequest
                     Rule::exists('paralelos', 'id')->where(fn ($query) => $query
                         ->whereIn('programacion_asignatura_id', ScheduledSubject::query()
                             ->select('id')
+                            ->where('programacion_asignatura_activa', true)
                             ->whereHas('subject', fn ($subject) => $subject
                                 ->where('carrera_id', $this->careerId())))),
                 ],

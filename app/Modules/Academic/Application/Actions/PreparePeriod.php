@@ -77,17 +77,17 @@ class PreparePeriod
                 ->whereIn('asignatura_id', $subjects->pluck('id'))
                 ->get()
                 ->keyBy('asignatura_id');
-            if ($existing->isNotEmpty()) {
-                throw ValidationException::withMessages([
-                    'subjects' => 'Las materias ya programadas no se pueden volver a incluir. Agregue sus paralelos desde Materias y paralelos.',
-                ]);
-            }
             $correlationId = $request->attributes->getString('correlation_id') ?: null;
             $scheduledSubjects = 0;
             $parallels = 0;
 
             foreach ($subjects as $subject) {
                 $scheduledSubject = $existing->get($subject->id);
+                if ($scheduledSubject !== null && ! $scheduledSubject->activo) {
+                    throw ValidationException::withMessages([
+                        'subjects' => "La materia {$subject->nombre} tiene una programación inactiva. Actívela o elimínela antes de preparar el período.",
+                    ]);
+                }
                 if ($scheduledSubject === null) {
                     $scheduledSubject = ScheduledSubject::query()->create([
                         'periodo_academico_id' => $period->id,
@@ -111,6 +111,15 @@ class PreparePeriod
                 /** @var array{parallels: list<array{code: string, shift?: string|null}>} $setting */
                 $setting = $settingsBySubject->get($subject->id);
                 foreach ($setting['parallels'] as $parallelSetting) {
+                    $parallelExists = Parallel::query()
+                        ->where('programacion_asignatura_id', $scheduledSubject->id)
+                        ->where('codigo', $parallelSetting['code'])
+                        ->exists();
+
+                    if ($parallelExists) {
+                        continue;
+                    }
+
                     $parallel = Parallel::query()->create([
                         'programacion_asignatura_id' => $scheduledSubject->id,
                         'codigo' => $parallelSetting['code'],

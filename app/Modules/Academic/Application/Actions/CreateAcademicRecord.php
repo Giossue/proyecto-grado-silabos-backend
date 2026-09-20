@@ -177,6 +177,7 @@ class CreateAcademicRecord
         $subject = Subject::query()
             ->with('career:id,campus_id')
             ->whereKey($this->stringValue($data, 'subject_id'))
+            ->where('activo', true)
             ->where('carrera_id', $careerId)
             ->lockForUpdate()
             ->firstOrFail();
@@ -202,6 +203,7 @@ class CreateAcademicRecord
     {
         $scheduledSubject = ScheduledSubject::query()
             ->whereKey($this->stringValue($data, 'scheduled_subject_id'))
+            ->where('activo', true)
             ->whereHas(
                 'subject',
                 fn ($query) => $query->where('carrera_id', $careerId),
@@ -223,6 +225,7 @@ class CreateAcademicRecord
         $parallel = Parallel::query()
             ->with('scheduledSubject.subject.career:id')
             ->whereKey($this->stringValue($data, 'parallel_id'))
+            ->whereHas('scheduledSubject', fn ($query) => $query->where('activo', true))
             ->whereHas(
                 'scheduledSubject.subject',
                 fn ($query) => $query->where('carrera_id', $careerId),
@@ -232,6 +235,18 @@ class CreateAcademicRecord
         $this->periodPlanning->assertParallelMayChange($parallel, 'parallel_id');
         $userId = $this->stringValue($data, 'user_id');
         $roleAssignment = $this->scopedRole($userId, $careerId, RoleCode::Teacher);
+
+        $alreadyAssigned = TeacherAssignment::query()
+            ->where('asignacion_rol_id', $roleAssignment->id)
+            ->where('paralelo_id', $parallel->id)
+            ->where('activo', true)
+            ->exists();
+
+        if ($alreadyAssigned) {
+            throw ValidationException::withMessages([
+                'user_id' => 'El docente ya está asignado a este paralelo.',
+            ]);
+        }
 
         return TeacherAssignment::query()->create([
             'asignacion_rol_id' => $roleAssignment->id,

@@ -117,6 +117,80 @@ class TeacherReliefTest extends TestCase
             ->count());
     }
 
+    public function test_a_syllabus_assignment_cannot_be_closed_through_the_generic_status_endpoint(): void
+    {
+        $this->openedSyllabus();
+        $convocation = Convocation::query()->firstOrFail();
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), [
+                'reason' => 'Validar que el historial siga protegido.',
+            ])
+            ->assertSuccessful();
+        $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.status', [
+                'entity' => 'asignacion_docente',
+                'record' => $assignment->id,
+            ]), ['active' => false])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('record');
+
+        $this->assertTrue($assignment->fresh()->activo);
+    }
+
+    public function test_a_historical_assignment_cannot_be_reactivated_or_edited(): void
+    {
+        $this->openedSyllabus();
+        $this->relieve()->assertSuccessful();
+        $convocation = Convocation::query()->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), [
+                'reason' => 'Proteger el historial de la asignación relevada.',
+            ])
+            ->assertSuccessful();
+
+        $historical = TeacherAssignment::query()->forUser($this->teacher->id)->where('activo', false)->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.status', [
+                'entity' => 'asignacion_docente',
+                'record' => $historical->id,
+            ]), ['active' => true])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('record');
+
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.update', [
+                'entity' => 'asignacion_docente',
+                'record' => $historical->id,
+            ]), [
+                'user_id' => $this->replacement->id,
+                'parallel_id' => $historical->paralelo_id,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('record');
+
+        $this->assertFalse($historical->fresh()->activo);
+    }
+
+    public function test_relief_rejects_an_incoming_teacher_already_assigned_to_an_affected_parallel(): void
+    {
+        $this->openedSyllabus();
+        $parallel = Parallel::query()->firstOrFail();
+        TeacherAssignment::query()->create([
+            'asignacion_rol_id' => $this->replacement->roleAssignments()->firstOrFail()->id,
+            'paralelo_id' => $parallel->id,
+            'activo' => true,
+        ]);
+
+        $this->relieve()->assertJsonValidationErrors('incoming_user_id');
+
+        $this->assertTrue(TeacherAssignment::query()->forUser($this->teacher->id)->where('activo', true)->exists());
+        $this->assertTrue(TeacherAssignment::query()->forUser($this->replacement->id)->where('activo', true)->exists());
+    }
+
     public function test_the_replacement_must_teach_in_the_career_and_only_coordination_relieves(): void
     {
         $this->openedSyllabus();
@@ -187,7 +261,13 @@ class TeacherReliefTest extends TestCase
     private function createTeacher(string $email): User
     {
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
-        $user = User::query()->create(['nombre' => 'Docente Suplente', 'correo_electronico' => $email, 'contrasena' => 'Temporal-2026!', 'activo' => true]);
+        $user = User::query()->create([
+            'nombre' => 'Docente Suplente',
+            'correo_electronico' => $email,
+            'correo_verificado_en' => now(),
+            'contrasena' => 'Temporal-2026!',
+            'activo' => true,
+        ]);
         RoleAssignment::query()->create([
             'usuario_id' => $user->id,
             'rol' => RoleCode::Teacher->value,

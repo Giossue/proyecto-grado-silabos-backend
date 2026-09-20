@@ -61,7 +61,8 @@
 - Cada carrera tiene cero o una malla actual, editable activa o inactiva. Coordinación
   puede deshabilitarla/reactivarla y solo eliminarla cuando no tiene programaciones ni sílabos.
   Una programación, paralelo o asignación ya incorporada a un sílabo queda protegida y no se
-  elimina; para sustituir un responsable existente se usa el relevo auditado. El relevo
+  elimina; una asignación histórica tampoco se edita ni se reactiva. Para sustituir un
+  responsable existente se usa el relevo auditado. El relevo
   global desde la asignación no exige sustento documental; la transferencia individual de
   un sílabo conserva esa referencia cuando se registra desde revisión.
 - La navegación del Coordinador concentra Materias dentro de **Malla**. La ruta abre el

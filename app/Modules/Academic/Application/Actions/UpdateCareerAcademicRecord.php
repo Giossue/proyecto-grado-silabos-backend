@@ -168,6 +168,12 @@ class UpdateCareerAcademicRecord
 
     private function ensureMutable(string $entity, Model $record): void
     {
+        if ($record instanceof TeacherAssignment && ! $record->activo) {
+            throw ValidationException::withMessages([
+                'record' => 'Las asignaciones históricas no se editan. Cree una nueva asignación o use el relevo docente.',
+            ]);
+        }
+
         $usedBySyllabus = match ($entity) {
             'asignatura' => false,
             'programacion_asignatura' => SyllabusScope::query()->where('programacion_asignatura_id', $record->getKey())->exists(),
@@ -194,7 +200,7 @@ class UpdateCareerAcademicRecord
             'asignatura' => $this->subjectAttributes($data, $record),
             'programacion_asignatura' => $this->scheduledSubjectAttributes($data, $careerId),
             'paralelo' => $this->parallelAttributes($data, $careerId),
-            'asignacion_docente' => $this->teacherAssignmentAttributes($data, $careerId),
+            'asignacion_docente' => $this->teacherAssignmentAttributes($data, $careerId, $record),
             default => throw ValidationException::withMessages(['entity' => 'El tipo de registro no admite edición.']),
         };
     }
@@ -276,8 +282,12 @@ class UpdateCareerAcademicRecord
     /** @param array<string, mixed> $data
      * @return array<string, mixed>
      */
-    private function teacherAssignmentAttributes(array $data, string $careerId): array
+    private function teacherAssignmentAttributes(array $data, string $careerId, Model $record): array
     {
+        if (! $record instanceof TeacherAssignment) {
+            throw new \LogicException('El registro esperado debe ser una asignación docente.');
+        }
+
         $parallel = Parallel::query()->whereKey($this->stringValue($data, 'parallel_id'))
             ->whereHas('scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $careerId))
             ->lockForUpdate()->firstOrFail();
@@ -295,6 +305,19 @@ class UpdateCareerAcademicRecord
         if (! $roleAssignment instanceof RoleAssignment) {
             throw ValidationException::withMessages([
                 'user_id' => 'El docente debe verificar su correo antes de recibir una asignación.',
+            ]);
+        }
+
+        $alreadyAssigned = TeacherAssignment::query()
+            ->where('asignacion_rol_id', $roleAssignment->id)
+            ->where('paralelo_id', $parallel->id)
+            ->where('activo', true)
+            ->where('id', '!=', $record->id)
+            ->exists();
+
+        if ($alreadyAssigned) {
+            throw ValidationException::withMessages([
+                'user_id' => 'El docente ya está asignado a este paralelo.',
             ]);
         }
 

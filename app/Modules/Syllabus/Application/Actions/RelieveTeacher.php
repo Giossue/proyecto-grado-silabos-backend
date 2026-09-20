@@ -74,6 +74,18 @@ class RelieveTeacher
                 throw ValidationException::withMessages(['outgoing_user_id' => 'Ese docente no tiene paralelos vigentes en la carrera.']);
             }
 
+            $incomingConflicts = TeacherAssignment::query()
+                ->whereIn('paralelo_id', $assignments->pluck('paralelo_id'))
+                ->where('asignacion_rol_id', $incomingRole->id)
+                ->where('activo', true)
+                ->lockForUpdate()
+                ->pluck('paralelo_id');
+            if ($incomingConflicts->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'incoming_user_id' => 'El docente entrante ya está asignado a uno de los paralelos que se intentan relevar.',
+                ]);
+            }
+
             $collaborations = SyllabusCollaborator::query()
                 ->whereIn('docente_paralelo_id', $assignments->pluck('id'))
                 ->with('syllabus:id,estado,asignatura_id')
@@ -130,7 +142,9 @@ class RelieveTeacher
             ->where('usuario_id', $userId)
             ->where('carrera_id', $careerId)
             ->where('rol', RoleCode::Teacher->value)
-            ->whereHas('user', fn (Builder $query) => $query->where('activo', true))
+            ->whereHas('user', fn (Builder $query) => $query
+                ->where('activo', true)
+                ->whereNotNull('correo_verificado_en'))
             ->first();
     }
 }

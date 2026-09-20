@@ -96,6 +96,20 @@ class TransferSyllabusTeacher
                 ]);
             }
 
+            $incomingConflicts = TeacherAssignment::query()
+                ->whereIn('paralelo_id', $collaborations->map(
+                    fn (SyllabusCollaborator $collaboration): string => $collaboration->teacherAssignment->paralelo_id,
+                ))
+                ->where('asignacion_rol_id', $incomingRole->id)
+                ->where('activo', true)
+                ->lockForUpdate()
+                ->pluck('paralelo_id');
+            if ($incomingConflicts->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'incoming_user_id' => 'El docente entrante ya está asignado a uno de los paralelos de este sílabo.',
+                ]);
+            }
+
             foreach ($collaborations as $collaboration) {
                 $previous = $collaboration->teacherAssignment;
                 $this->periodPlanning->assertTeacherAssignmentMayChange($previous, 'syllabus');
@@ -166,7 +180,9 @@ class TransferSyllabusTeacher
             ->where('usuario_id', $userId)
             ->where('carrera_id', $careerId)
             ->where('rol', RoleCode::Teacher->value)
-            ->whereHas('user', fn (Builder $query) => $query->where('activo', true))
+            ->whereHas('user', fn (Builder $query) => $query
+                ->where('activo', true)
+                ->whereNotNull('correo_verificado_en'))
             ->effective()
             ->first();
     }

@@ -109,6 +109,55 @@ class CareerTeacherTest extends TestCase
             ->exists());
     }
 
+    public function test_same_teacher_cannot_be_assigned_twice_to_the_same_parallel(): void
+    {
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $parallel = Parallel::query()->firstOrFail();
+        $assignmentCount = TeacherAssignment::query()
+            ->where('paralelo_id', $parallel->id)
+            ->where('activo', true)
+            ->count();
+
+        $this->postJson(route('api.v1.coordination.academic.store', 'asignacion_docente'), [
+            'user_id' => $teacher->id,
+            'parallel_id' => $parallel->id,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('user_id');
+
+        $this->assertSame($assignmentCount, TeacherAssignment::query()
+            ->where('paralelo_id', $parallel->id)
+            ->where('activo', true)
+            ->count());
+    }
+
+    public function test_a_previous_inactive_assignment_can_be_reopened_as_new_history(): void
+    {
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $role = $teacher->roleAssignments()->where('rol', RoleCode::Teacher->value)->firstOrFail();
+        $parallel = Parallel::query()->firstOrFail();
+        $previous = TeacherAssignment::query()
+            ->where('asignacion_rol_id', $role->id)
+            ->where('paralelo_id', $parallel->id)
+            ->firstOrFail();
+        $previous->update(['activo' => false]);
+
+        $this->postJson(route('api.v1.coordination.academic.store', 'asignacion_docente'), [
+            'user_id' => $teacher->id,
+            'parallel_id' => $parallel->id,
+        ])->assertSuccessful();
+
+        $this->assertSame(2, TeacherAssignment::query()
+            ->where('asignacion_rol_id', $role->id)
+            ->where('paralelo_id', $parallel->id)
+            ->count());
+        $this->assertSame(1, TeacherAssignment::query()
+            ->where('asignacion_rol_id', $role->id)
+            ->where('paralelo_id', $parallel->id)
+            ->where('activo', true)
+            ->count());
+    }
+
     public function test_existing_identity_and_other_roles_are_preserved_without_sending_credentials(): void
     {
         $secondCareer = Career::query()->firstOrFail()->replicate();

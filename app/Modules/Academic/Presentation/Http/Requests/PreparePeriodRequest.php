@@ -41,7 +41,6 @@ class PreparePeriodRequest extends FormRequest
                                 'shift' => $parallel['shift'] ?? null,
                             ])
                             ->filter(fn (array $parallel): bool => $parallel['code'] !== '')
-                            ->unique('code')
                             ->values()
                             ->all(),
                     ];
@@ -72,7 +71,7 @@ class PreparePeriodRequest extends FormRequest
             'subjects' => ['required', 'array', 'min:1', 'max:200'],
             'subjects.*.id' => ['required', 'uuid', 'distinct'],
             'subjects.*.parallels' => ['required', 'array', 'min:1', 'max:50'],
-            'subjects.*.parallels.*.code' => ['required', 'string', 'max:30'],
+            'subjects.*.parallels.*.code' => ['required', 'string', 'max:30', 'distinct'],
             'subjects.*.parallels.*.shift' => ['nullable', 'string', Rule::in(Parallel::SHIFTS)],
         ];
     }
