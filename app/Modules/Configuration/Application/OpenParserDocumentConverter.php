@@ -133,7 +133,15 @@ final class OpenParserDocumentConverter
             $attrs['sourceOrder'] = $order;
         }
 
-        return ['type' => $type, 'attrs' => $attrs, 'content' => [['type' => 'text', 'text' => $text]]];
+        $node = ['type' => $type, 'attrs' => $attrs];
+
+        // ProseMirror rejects text nodes whose value is an empty string. Empty table
+        // cells are valid, but they must contain an empty paragraph instead.
+        if ($text !== '') {
+            $node['content'] = [['type' => 'text', 'text' => $text]];
+        }
+
+        return $node;
     }
 
     /** @return array<string, mixed>|null */

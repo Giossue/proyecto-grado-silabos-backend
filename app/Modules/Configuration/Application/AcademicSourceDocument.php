@@ -34,7 +34,10 @@ final class AcademicSourceDocument
         $characters = 0;
         $normalized = [];
         foreach ($content as $node) {
-            $normalized[] = $this->normalizeNode($node, 1, $nodes, $characters);
+            $normalizedNode = $this->normalizeNode($node, 1, $nodes, $characters);
+            if ($normalizedNode !== null) {
+                $normalized[] = $normalizedNode;
+            }
         }
         if ($nodes > 20000 || $characters > 1000000) {
             throw ValidationException::withMessages(['document' => 'El documento supera el tamaño permitido.']);
@@ -96,8 +99,8 @@ final class AcademicSourceDocument
         return $document;
     }
 
-    /** @return array<string, mixed> */
-    private function normalizeNode(mixed $node, int $depth, int &$nodes, int &$characters): array
+    /** @return array<string, mixed>|null */
+    private function normalizeNode(mixed $node, int $depth, int &$nodes, int &$characters): ?array
     {
         if (! is_array($node) || array_is_list($node) || $depth > 20) {
             throw ValidationException::withMessages(['document' => 'El documento contiene un bloque inválido.']);
@@ -109,7 +112,14 @@ final class AcademicSourceDocument
         $nodes++;
         $result = ['type' => $type];
         if ($type === 'text') {
-            $text = $node['text'] ?? null;
+            if (! array_key_exists('text', $node)) {
+                throw ValidationException::withMessages(['document' => 'El documento contiene texto inválido.']);
+            }
+            $text = $node['text'];
+            // Laravel converts empty request strings to null before validation.
+            if ($text === '' || $text === null) {
+                return null;
+            }
             if (! is_string($text)) {
                 throw ValidationException::withMessages(['document' => 'El documento contiene texto inválido.']);
             }
@@ -146,7 +156,10 @@ final class AcademicSourceDocument
         if (is_array($children) && array_is_list($children)) {
             $normalizedChildren = [];
             foreach ($children as $child) {
-                $normalizedChildren[] = $this->normalizeNode($child, $depth + 1, $nodes, $characters);
+                $normalizedChild = $this->normalizeNode($child, $depth + 1, $nodes, $characters);
+                if ($normalizedChild !== null) {
+                    $normalizedChildren[] = $normalizedChild;
+                }
             }
             if ($normalizedChildren !== []) {
                 $result['content'] = $normalizedChildren;

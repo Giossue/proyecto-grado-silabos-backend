@@ -318,6 +318,7 @@ UNIQUE (carrera_id, nombre_fuente_academica)
 
 CHECK estado_ingesta_fuente IN ('manual', 'pendiente', 'en_ejecucion', 'completada', 'fallida')
 CHECK documento_fuente_academica es un objeto doc con content como arreglo
+CHECK documento_fuente_academica no contiene nodos de texto vacíos
 ~~~
 
 ## preferencias_ia_carrera

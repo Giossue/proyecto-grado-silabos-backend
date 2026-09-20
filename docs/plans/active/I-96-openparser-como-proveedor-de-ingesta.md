@@ -38,3 +38,6 @@ contrato versionado `openparser@1`.
 - [x] Recorte privado de figuras cuando no exista un recurso remoto.
 - [x] Pruebas de envío, sondeo, estructura, tablas, imágenes y fallos.
 - [x] Interfaz, despliegue, trazabilidad y decisiones actualizadas.
+- [x] Corrección del 20 de septiembre de 2026: las celdas vacías se representan como
+  párrafos sin nodos de texto, la normalización elimina entradas vacías y la migración
+  `000090` repara documentos ya procesados sin alterar su texto, fragmentos o embeddings.

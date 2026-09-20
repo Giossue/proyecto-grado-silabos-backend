@@ -13,8 +13,10 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -92,7 +94,7 @@ final class AcademicSourceOcrTest extends TestCase
                     $this->tableCell('c1', 0, 0, 'Campo', 2, 1, 'column_header'),
                     $this->tableCell('c2', 0, 1, 'Valores', 1, 2, 'column_header'),
                     $this->tableCell('c3', 1, 1, 'A'),
-                    $this->tableCell('c4', 1, 2, 'B'),
+                    $this->tableCell('c4', 1, 2, ''),
                 ],
             ],
             [
@@ -116,6 +118,11 @@ final class AcademicSourceOcrTest extends TestCase
         $table = $source->documento['content'][1];
         $this->assertSame(2, $table['content'][0]['content'][0]['attrs']['rowspan']);
         $this->assertSame(2, $table['content'][0]['content'][1]['attrs']['colspan']);
+        $this->assertSame(
+            ['type' => 'paragraph'],
+            $table['content'][1]['content'][1]['content'][0],
+            'Una celda vacía debe ser un párrafo válido, nunca un nodo de texto vacío.',
+        );
         $asset = StoredObject::query()->where('clasificacion', 'academic_source_image')->firstOrFail();
         $this->assertSame($asset->id, $source->documento['content'][2]['attrs']['objectId']);
         Storage::disk('private')->assertExists($asset->ruta_interna);
@@ -125,6 +132,52 @@ final class AcademicSourceOcrTest extends TestCase
             'source' => $source->id,
             'asset' => $asset->id,
         ]));
+    }
+
+    public function test_empty_text_nodes_are_removed_before_persisting_a_source_document(): void
+    {
+        $source = $this->createSource();
+
+        $this->actingAsCoordinator()->putJson(
+            route('api.v1.coordination.sources.content.update', $source),
+            ['document' => [
+                'schemaVersion' => 1,
+                'type' => 'doc',
+                'content' => [[
+                    'type' => 'table',
+                    'content' => [[
+                        'type' => 'tableRow',
+                        'content' => [[
+                            'type' => 'tableCell',
+                            'content' => [[
+                                'type' => 'paragraph',
+                                'content' => [['type' => 'text', 'text' => '']],
+                            ]],
+                        ]],
+                    ]],
+                ]],
+            ]],
+        )->assertOk();
+
+        $paragraph = $source->fresh()->documento['content'][0]['content'][0]['content'][0]['content'][0];
+        $this->assertSame(['type' => 'paragraph'], $paragraph);
+    }
+
+    public function test_database_rejects_empty_text_nodes_in_source_documents(): void
+    {
+        $source = $this->createSource();
+
+        $this->expectException(QueryException::class);
+        DB::table('fuentes_academicas')->where('id', $source->id)->update([
+            'documento_fuente_academica' => json_encode([
+                'schemaVersion' => 1,
+                'type' => 'doc',
+                'content' => [[
+                    'type' => 'paragraph',
+                    'content' => [['type' => 'text', 'text' => '']],
+                ]],
+            ], JSON_THROW_ON_ERROR),
+        ]);
     }
 
     public function test_figure_without_asset_is_cropped_from_private_pdf_in_order(): void
