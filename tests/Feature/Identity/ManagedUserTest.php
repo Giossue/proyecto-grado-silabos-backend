@@ -5,6 +5,8 @@ namespace Tests\Feature\Identity;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
+use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\Actions\SetUserStatus;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -524,7 +526,10 @@ class ManagedUserTest extends TestCase
 
         // Pendiente pero con huella (asignación docente): tampoco.
         $assigned = $this->pendingTeacher('asignado@silabos.test');
-        $parallel = DB::table('paralelos')->first();
+        $parallel = Parallel::query()->create([
+            'programacion_asignatura_id' => ScheduledSubject::query()->firstOrFail()->id,
+            'codigo' => 'Z',
+        ]);
         TeacherAssignment::query()->create([
             'usuario_id' => $assigned->id,
             'paralelo_id' => $parallel->id,

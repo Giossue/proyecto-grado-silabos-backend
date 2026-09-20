@@ -63,7 +63,7 @@ paralelo_id UUID (FK → paralelos.id) NOT NULL
 docente_paralelo_activo BOOLEAN NOT NULL
 asignado_en TIMESTAMPTZ NULL
 
-UNIQUE (asignacion_rol_id, paralelo_id)
+UNIQUE parcial (paralelo_id) WHERE docente_paralelo_activo
 ~~~
 
 ## sesiones
@@ -94,7 +94,7 @@ created_at TIMESTAMPTZ NULL
 ~~~text
 usuarios N:M carreras por roles con alcance en asignaciones_rol
 asignaciones_rol (docente) 1:N asignaciones_paralelo
-paralelos 1:N asignaciones_paralelo
+paralelos 1:N asignaciones_paralelo históricas; máximo 1 asignación activa
 usuarios 1:N sesiones
 ~~~
 

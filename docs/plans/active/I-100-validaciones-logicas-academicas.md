@@ -2,8 +2,8 @@
 
 ## Estado
 
-Implementado localmente el 20 de septiembre de 2026; pendiente de aplicar la migración
-`000091` en la base remota.
+Implementado localmente y aplicado en producción el 20 de septiembre de 2026 mediante
+la migración `000091`.
 
 ## Trazabilidad
 
@@ -82,6 +82,6 @@ mismo paralelo.
 ## Evidencia de cierre
 
 `php artisan test --filter='(AcademicStructureTest|CareerTeacherTest|TeacherReliefTest|TeacherTransferTest)'`
-verifica las pruebas de estructura, asignación y relevo. La migración `000091` debe
-comprobar que no existan paralelos con más de un docente activo antes de crear la
-restricción remota.
+verifica 45 pruebas y 435 aserciones. La suite completa local pasó 292 pruebas y 3.720
+aserciones. La migración `000091` se aplicó en producción después de conservar la
+asignación de `docente@mail.com` y desactivar la de `http.ssjo@gmail.com` como historial.
