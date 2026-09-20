@@ -198,7 +198,8 @@ I-98 (20 de septiembre de 2026) concentra la ingesta PDF en la creación de la f
 COR-11 ya no permite cargar ni reprocesar archivos: después de crear los metadatos, un
 diálogo bloqueante muestra el progreso real de `ejecuciones_trabajo` y abre el documento
 automáticamente únicamente cuando OpenParser termina. Un fallo conserva reintento y
-salida explícitos; PV-12 y PV-14 siguen condicionando la activación externa.
+salida explícitos. El documento conserva un separador horizontal entre páginas del PDF;
+PV-12 y PV-14 siguen condicionando la activación externa.
 
 I-74 (14 de septiembre de 2026) normaliza roles y responsabilidades académicas: la
 única relación RBAC es `asignaciones_rol(usuario_id, rol, carrera_id)`. Se elimina

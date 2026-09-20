@@ -17,7 +17,16 @@ final class OpenParserDocumentConverter
     public function convert(AcademicSourceOcrResult $result, callable $imageResolver): array
     {
         $content = [];
-        foreach ($result->pages as $page) {
+        foreach ($result->pages as $pagePosition => $page) {
+            if ($pagePosition > 0) {
+                $content[] = [
+                    'type' => 'horizontalRule',
+                    'attrs' => [
+                        'sourcePage' => $page->index,
+                        'sourceOrder' => 0,
+                    ],
+                ];
+            }
             $order = 0;
             $parts = preg_split(
                 '~(<table\b[^>]*>.*?</table>|!\[[^\]]*\]\([^\)]+\))~isu',

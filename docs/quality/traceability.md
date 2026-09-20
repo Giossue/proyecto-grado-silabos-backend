@@ -48,8 +48,9 @@ Tiptap en un documento continuo con vista privada del PDF original; `OpenParserA
 envío/sondeo reciben el PDF privado, materializan tablas combinadas e imágenes en orden,
 y persisten el documento JSON más fragmentos derivados. La creación bloquea la interfaz,
 muestra el progreso real y navega al editor únicamente al completarse; el detalle no
-reprocesa archivos. `AcademicSourceOcrTest` y `AcademicSourceCreationSheet.test.ts` cubren
-éxito, progreso, recursos visuales, celdas combinadas y resultado vacío sin fallback. PV-12/PV-14
+reprocesa archivos y el conversor inserta separadores entre páginas. `AcademicSourceOcrTest`,
+`OpenParserDocumentConverterTest` y `AcademicSourceCreationSheet.test.ts` cubren éxito,
+progreso, recursos visuales, celdas combinadas y resultado vacío sin fallback. PV-12/PV-14
 siguen bloqueando la activación del proveedor externo.
 
 I-71 — RF-037..044, RN-020..024, CU-07 y DOC-04:

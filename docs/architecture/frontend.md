@@ -31,7 +31,8 @@ y separar celdas, y se desplazan dentro del editor si exceden el ancho disponibl
 imágenes y el PDF original usan rutas privadas emitidas por la API. La SPA nunca
 convierte el documento a Markdown. La creación consulta el estado de ingesta y el
 porcentaje de `ejecuciones_trabajo` dentro de un `Dialog` modal; no navega al editor
-hasta recibir `completada`. La carga PDF no se repite desde la pantalla de detalle.
+hasta recibir `completada`. El documento incluye separadores horizontales entre páginas
+del PDF; la carga no se repite desde la pantalla de detalle.
 
 ## Despliegue
 
