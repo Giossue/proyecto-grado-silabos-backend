@@ -479,7 +479,7 @@ class TemplateDocumentTest extends TestCase
             foreach (['Carrera congelada', 'Contenido &lt;docente&gt; &amp; aprobado', 'w:gridSpan w:val="2"', 'w:vMerge w:val="restart"', 'w:vMerge w:val="continue"', 'w:fill="E7E6E6"', 'w:color w:val="FFFFFF"', 'w:color w:val="CC0000"', 'w:jc w:val="center"', '<w:tcBorders>', 'w:sz="12"'] as $expected) {
                 $this->assertStringContainsString($expected, $xml);
             }
-            $this->assertStringContainsString('w:sz w:val="18"', $xml);
+            $this->assertStringNotContainsString('w:sz w:val="18"', $xml);
             $this->assertStringNotContainsString('w:sz w:val="28"', $xml);
             $this->assertStringNotContainsString('w:jc w:val="both"', $xml);
             $this->assertStringNotContainsString('Times New Roman', $xml);

@@ -33,8 +33,8 @@ una cinta contextual sin encerrar el documento en un modal.
       la tabla.
 - [x] El modo de edición aprovecha todo el viewport y no monta el sidebar administrativo.
 - [x] Una tabla se edita directamente sobre la hoja, con formato y guardado en la cinta.
-- [x] La cinta de tabla permite cambiar el tamaño de fuente de una o varias celdas y
-      restablecerlo al tamaño general del contenido.
+- [x] La cinta de tabla conserva la escala global del contenido y no permite tamaños
+      independientes por celda (I-105 reemplaza la ampliación histórica).
 - [x] La configuración estructural se despliega bajo la cinta, sin modal (reemplazada
       después por la edición directa de I-66).
 - [x] Los bloqueos de proceso impiden entrar al modo de edición.
@@ -71,8 +71,8 @@ Los separadores de paginación que preceden al primer contenido visible de una s
 campo se elevan fuera de ese contenedor. De esta forma, el contorno de selección rodea
 solo el contenido real y no incluye el espacio artificial hasta la hoja siguiente.
 
-## Ampliación — tamaño de fuente por celda (2026-09-10)
+## Ampliación histórica — tamaño de fuente por celda (2026-09-10)
 
-Al editar una tabla, el selector contextual de tamaño aplica entre 7 y 24 pt a las
-celdas seleccionadas o permite volver al tamaño heredado del contenido. El atributo se
-valida en el contrato documental, se previsualiza en la hoja y se conserva en DOCX/PDF.
+Esta ampliación queda reemplazada por I-105: el tamaño por celda no forma parte del
+contrato vigente. La escala del campo se configura globalmente y se aplica también
+dentro de las tablas.

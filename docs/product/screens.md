@@ -161,7 +161,7 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   Las hojas se muestran directamente sobre el fondo de la pantalla, sin panel gris;
   los controles de alta aparecen en el punto del documento donde actuarán.
 - «Personalizar plantilla» permite ajustar orientación, márgenes y tres tamaños:
-  título, bloques y contenido. El tamaño de contenido se aplica uniformemente a texto,
+  título, bloque y campo. El tamaño de campo se aplica uniformemente a texto,
   variables y campos dentro de cualquier tabla. La fuente Arial, los colores globales,
   las alineaciones y los énfasis institucionales son fijos y no aparecen como controles.
 - La ficha institucional parte del formato oficial y conserva su diseño al mostrarse en

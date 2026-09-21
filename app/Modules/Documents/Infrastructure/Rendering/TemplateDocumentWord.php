@@ -282,5 +282,4 @@ final class TemplateDocumentWord
 
         return $node;
     }
-
 }
