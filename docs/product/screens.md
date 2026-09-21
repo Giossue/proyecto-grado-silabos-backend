@@ -184,9 +184,11 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   y paralelos, docentes, fuentes, convocatoria; Docencia: recibir, iniciar, enviar). El
   logo se carga en un `Dialog` desde el propio paso, sin opción en el sidebar. Cada paso
   se calcula con datos reales; el siguiente lleva su botón y la tarjeta desaparece al
-  completarse. El encabezado repite el avance en miniatura (barra con color y «n/m», tooltip
-  «Configuración del sistema») y lleva al Panel; se recalcula en cada petición, así
-  que reaparece si algo se borra.
+  completarse. Administración conserva «Panel» en el sidebar; Coordinación y Docencia
+  conservan la pantalla y el checklist, pero no tienen esa entrada lateral ni un atajo
+  desde la marca del sidebar. El encabezado repite el avance en miniatura (barra con color
+  y «n/m», tooltip «Configuración del sistema») y lleva al Panel; se recalcula en cada
+  petición, así que reaparece si algo se borra.
 - Encabezado del sílabo: logo de la universidad a la izquierda y logo de la facultad de la
   carrera a la derecha, dentro del ancho útil de los márgenes y antes del bloque de título.
   Administración reemplaza el logo institucional desde la hoja «Personalizar plantilla»
