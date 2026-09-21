@@ -6,7 +6,7 @@ como mínimo las doce áreas identificadas en la línea base.
 | N.º | Sección | Contenido esperado | Tratamiento preferido |
 |---:|---|---|---|
 | 1 | Identificación institucional | carrera, periodo, asignatura, código, ciclo, créditos, horas, docentes | referencias maestras bloqueadas y datos estructurados |
-| 2 | Descripción de la asignatura | propósito, alcance y relación curricular | narrativa Markdown segura con ayudas/fuentes |
+| 2 | Descripción de la asignatura | propósito, alcance y relación curricular | texto largo con diseño JSON y ayudas/fuentes |
 | 3 | Objetivos | objetivo general y específicos | lista estructurada + narrativa |
 | 4 | Resultados de aprendizaje | resultados y relación con asignatura/programa | referencias estructuradas, orden y trazabilidad |
 | 5 | Habilidades blandas | habilidades y forma de desarrollo | catálogo/selección + justificación |
@@ -39,7 +39,8 @@ son una cantidad fija del formato.
 - Datos heredados muestran la fuente y se bloquean para el docente.
 - Cálculos guardan la regla/versión utilizada y se vuelven a validar en servidor.
 - Tablas/listas repetibles usan IDs de fila estables para diff y concurrencia.
-- Campos narrativos usan Markdown seguro; no HTML arbitrario.
+- Campos narrativos usan el diseño JSON validado de la plantilla; no aceptan HTML arbitrario
+  ni obligan al docente a escribir una sintaxis de marcado.
 - Resultados, habilidades, horas, créditos, TIC/TAC/IA y bibliografía se estructuran si
   deben buscarse, calcularse o verificarse.
 - La sección 6 admite cualquier cantidad de unidades y distribuye las semanas lectivas

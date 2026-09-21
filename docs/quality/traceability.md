@@ -144,6 +144,12 @@ del expediente, reinicio explícito e historia intacta tras cambiar la base futu
 `document-pagination.mjs` conserva la regresión de hojas. PV-07/PV-19 permanecen
 abiertas; PV-08 fue cerrada por I-57 y la evidencia detallada queda en su plan activo.
 
+La definición inicial no vive en la acción HTTP: `config/syllabus_template.php`,
+`SyllabusTemplateProvisioner` y `SyllabusTemplateSeeder` la instalan una sola vez;
+los campos narrativos se materializan como `texto_largo` y el diseño institucional se
+guarda como JSON visual. La migración `000092` convierte el alias histórico `markdown`
+sin borrar valores ni revisiones.
+
 El ajuste del 2026-09-07 reemplaza la edición documental de ADM-06 por
 `TemplateVisualBuilder`: `componentes_plantilla` conserva la jerarquía de secciones y
 bloques, y `definiciones_campo` representa cada campo tipado. `TemplateAndSourceTest`

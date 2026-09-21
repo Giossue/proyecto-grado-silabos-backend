@@ -355,7 +355,7 @@ class SyllabusController extends Controller
                 'inherited' => $field->heredado,
                 'teacher_editable' => $field->editable_docente,
                 'ai_enabled' => $this->effectiveAi->enabled($careerId, $field)
-                    && in_array($field->tipo, ['texto_corto', 'texto_largo', 'markdown'], true),
+                    && in_array($field->tipo, ['texto_corto', 'texto_largo'], true),
                 'value' => $values->get($field->id)?->valor,
                 'rows' => $fieldRows,
             ];

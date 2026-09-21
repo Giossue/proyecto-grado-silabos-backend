@@ -24,7 +24,7 @@ final class TemplateDocumentDefaults
             'discapacidad_tiene' => ['Estudiantes con discapacidad', 'seleccion_unica'],
             'discapacidad_tipo' => ['Tipo de discapacidad', 'texto_corto'],
             'discapacidad_adaptacion' => ['Adaptación curricular', 'texto_corto'],
-            'formacion_experiencia' => ['Formación y experiencia', 'markdown'],
+            'formacion_experiencia' => ['Formación y experiencia', 'texto_largo'],
         ];
         $rows = [];
         foreach ($grid as $r => $cells) {

@@ -223,7 +223,7 @@ class AiAssistanceController extends Controller
             && $this->effectiveAi->enabled($syllabus->carrera_id, $field)
             && $field->editable_docente
             && ! $field->heredado
-            && in_array($field->tipo, ['texto_corto', 'texto_largo', 'markdown'], true),
+            && in_array($field->tipo, ['texto_corto', 'texto_largo'], true),
             404,
         );
     }

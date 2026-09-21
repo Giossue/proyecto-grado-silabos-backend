@@ -228,6 +228,10 @@ crea la base.
    migraciones se aplican a mano con el procedimiento de `docs/security/hardening.md`;
 6. crea el enlace de almacenamiento público.
 
+En una instalación nueva, instala además la única plantilla institucional una sola vez
+con `php artisan db:seed --class=SyllabusTemplateSeeder --force`. El seed es idempotente
+y no sobrescribe una plantilla ya editada; no se ejecuta automáticamente en cada release.
+
 Desde I-28 los nombres de cola son `critica`, `notificaciones`, `documentos`, `ia`,
 `integraciones` y `general`; el worker de `supervisord` ya los escucha y tras aplicar
 las migraciones en remoto hay que redesplegar (o reiniciar el contenedor) para que el

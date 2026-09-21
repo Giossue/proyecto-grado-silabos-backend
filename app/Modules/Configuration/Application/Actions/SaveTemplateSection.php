@@ -92,7 +92,7 @@ class SaveTemplateSection
                     'clave' => $fieldKey,
                     'etiqueta' => $fieldLabel,
                     'tipo' => match ($contentType) {
-                        'text' => 'markdown',
+                        'text' => 'texto_largo',
                         'boolean' => 'booleano',
                         'multiple_choice' => 'seleccion_multiple',
                         default => 'repetible',

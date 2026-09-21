@@ -239,7 +239,7 @@ class WordRendererTest extends TestCase
                             'title' => 'Descripción',
                             'content_type' => 'text',
                             'table' => null,
-                            'fields' => [['key' => 'descripcion', 'label' => 'Descripción', 'type' => 'markdown', 'value' => "Descripción libre\n- Punto uno", 'rows' => []]],
+                            'fields' => [['key' => 'descripcion', 'label' => 'Descripción', 'type' => 'texto_largo', 'value' => "Descripción libre\n- Punto uno", 'rows' => []]],
                         ],
                         [
                             'key' => 'objetivos',

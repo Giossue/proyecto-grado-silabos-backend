@@ -1,0 +1,63 @@
+<?php
+
+return [
+    /*
+     * Datos iniciales de la única plantilla institucional. Se mantienen fuera de
+     * las acciones HTTP para que el formato inicial se pueda instalar con un seed
+     * idempotente y no quede acoplado al controlador.
+     */
+    'baseline' => [
+        ['identificacion', 'Identificación institucional', [
+            ['asignatura', 'Identificación institucional', 'institutional', null],
+        ]],
+        ['descripcion', 'Descripción de la asignatura', [
+            ['descripcion', 'Descripción de la asignatura', 'text', null],
+        ]],
+        ['objetivos', 'Objetivo(s) de la asignatura', [
+            ['objetivo_general', 'Objetivo general', 'text', null],
+            ['objetivos_especificos', 'Objetivos específicos', 'bulleted_list', null],
+        ]],
+        ['resultados', 'Resultados de aprendizaje de la asignatura', [
+            ['resultados_aprendizaje', 'Resultados de aprendizaje', 'bulleted_list', null],
+        ]],
+        ['habilidades', 'Habilidades blandas de la asignatura', [
+            ['habilidades_blandas', 'Habilidades blandas', 'text', null],
+        ]],
+        ['planificacion', 'Distribución y planificación de las unidades curriculares', [
+            ['unidades', 'Planificación de unidades', 'table', 'planificacion'],
+        ]],
+        ['metodologia', 'Metodología y ambientes de aprendizaje', [
+            ['metodologia', 'Métodos de enseñanza-aprendizaje', 'bulleted_list', null],
+            ['tecnicas_ensenanza', 'Técnicas de enseñanza', 'bulleted_list', null],
+            ['recursos_medios', 'Recursos y medios didácticos', 'text', null],
+            ['herramientas_tic', 'Herramientas pedagógicas, TAC e inteligencia artificial', 'bulleted_list', null],
+            ['ambientes_aprendizaje', 'Ambientes o escenarios de aprendizaje', 'text', null],
+        ]],
+        ['evaluacion', 'Evaluación de los aprendizajes', [
+            ['indicadores_evaluacion', 'Indicadores de evaluación', 'table', 'indicadores'],
+            ['componentes_evaluacion', 'Escala de valoración', 'table', 'escala'],
+            ['recuperacion', 'Recuperación y aprobación', 'text', null],
+        ]],
+        ['perfil_egreso', 'Relación de la asignatura con los resultados de aprendizaje del perfil de egreso', [
+            ['contribucion_perfil', 'Contribución al perfil de egreso', 'table', 'perfil'],
+        ]],
+        ['etica', 'Conducta y comportamiento ético', [
+            ['compromisos', 'El docente', 'bulleted_list', null],
+            ['compromisos_estudiantes', 'Los estudiantes', 'bulleted_list', null],
+        ]],
+        ['bibliografia', 'Bibliografía', [
+            ['bibliografia', 'Bibliografía básica', 'table', 'bibliografia'],
+            ['bibliografia_complementaria', 'Bibliografía complementaria', 'table', 'bibliografia'],
+        ]],
+        ['revision', 'Revisión y aprobación', [
+            ['estado_revision', 'Estado de revisión', 'flow', null],
+        ]],
+    ],
+
+    'identification_inputs' => [
+        ['discapacidad_tiene', 'Estudiantes con discapacidad', 'seleccion_unica', ['Sí', 'No']],
+        ['discapacidad_tipo', 'Tipo de discapacidad', 'texto_corto', null],
+        ['discapacidad_adaptacion', 'Descripción de la adaptación curricular', 'texto_corto', null],
+        ['formacion_experiencia', 'Formación y experiencia académica-investigativa', 'texto_largo', null],
+    ],
+];

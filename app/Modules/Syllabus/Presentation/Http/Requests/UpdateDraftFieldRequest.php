@@ -88,13 +88,13 @@ class UpdateDraftFieldRequest extends FormRequest
 
         return match ($field->tipo) {
             'texto_corto' => [$presence, 'string', 'max:1000'],
-            'texto_largo', 'markdown' => [
+            'texto_largo' => [
                 $presence,
                 'string',
                 'max:50000',
                 function (string $attribute, mixed $value, Closure $fail): void {
                     if (is_string($value) && preg_match('/<\/?[a-z][^>]*>/i', $value) === 1) {
-                        $fail('Use texto o Markdown; el HTML no está permitido.');
+                        $fail('Use texto; el HTML no está permitido.');
                     }
                 },
             ],

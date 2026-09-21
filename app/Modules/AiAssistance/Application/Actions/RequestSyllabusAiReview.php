@@ -84,7 +84,7 @@ class RequestSyllabusAiReview
                 ->where('plantilla_id', $locked->plantilla_id)
                 ->where('editable_docente', true)
                 ->where('heredado', false)
-                ->whereIn('tipo', ['texto_corto', 'texto_largo', 'markdown'])
+                ->whereIn('tipo', ['texto_corto', 'texto_largo'])
                 ->orderBy('posicion')
                 ->get()
                 ->filter(function (FieldDefinition $field) use ($locked, $values): bool {

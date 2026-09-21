@@ -46,7 +46,7 @@ class TemplateDocumentTest extends TestCase
                 'attrs' => [
                     'key' => 'formacion_experiencia',
                     'label' => 'Formación y experiencia',
-                    'kind' => 'markdown',
+                    'kind' => 'texto_largo',
                     'options' => [],
                 ],
             ]],
@@ -55,6 +55,25 @@ class TemplateDocumentTest extends TestCase
         $normalized = TemplateDocument::normalize($document, []);
 
         $this->assertNull(TemplateDocument::nodes($normalized, 'field')[0]['attrs']['options']);
+    }
+
+    public function test_legacy_markdown_field_kind_is_canonicalized_to_long_text(): void
+    {
+        $document = ['type' => 'doc', 'content' => [[
+            'type' => 'paragraph',
+            'content' => [[
+                'type' => 'field',
+                'attrs' => [
+                    'key' => 'descripcion',
+                    'label' => 'Descripción',
+                    'kind' => 'markdown',
+                ],
+            ]],
+        ]]];
+
+        $normalized = TemplateDocument::normalize($document, []);
+
+        $this->assertSame('texto_largo', TemplateDocument::nodes($normalized, 'field')[0]['attrs']['kind']);
     }
 
     public function test_table_text_uses_the_global_content_size(): void
@@ -698,7 +717,7 @@ class TemplateDocumentTest extends TestCase
         $document = ['type' => 'doc', 'content' => [['type' => 'table', 'content' => [
             ['type' => 'tableRow', 'attrs' => ['rowRole' => 'fixed'], 'content' => [
                 $cell([['type' => 'variable', 'attrs' => ['id' => 'nombre_carrera'], 'marks' => [['type' => 'bold'], ['type' => 'italic'], ['type' => 'underline'], ['type' => 'textStyle', 'attrs' => ['fontFamily' => 'Times New Roman', 'fontSize' => '14pt', 'color' => '#CC0000']]]]], 2),
-                $cell([$field('objetivo_general', 'Objetivo general', 'markdown')], 1, 2),
+                $cell([$field('objetivo_general', 'Objetivo general', 'texto_largo')], 1, 2),
             ]],
             ['type' => 'tableRow', 'content' => [
                 $cell([['type' => 'text', 'text' => 'Texto fijo']]),

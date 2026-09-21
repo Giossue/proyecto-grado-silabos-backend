@@ -192,7 +192,7 @@ establece; una recomendación de IA nunca bloquea por sí sola.
 
 - grupo/sección;
 - texto corto;
-- texto largo o Markdown seguro;
+- texto largo con presentación estructurada;
 - número;
 - fecha;
 - selección única o múltiple;
@@ -210,6 +210,7 @@ La cobertura funcional de las doce secciones se detalla en `syllabus-sections.md
 ## Datos estructurados frente a narrativa
 
 Códigos, horas, créditos, resultados, habilidades, TIC/TAC/IA y bibliografía se guardan
-de forma estructurada cuando requieran cálculo, validación o referencia. Markdown seguro
-se reserva para narrativa. Nunca se extrae un dato exacto desde texto libre si existe una
-fuente estructurada.
+de forma estructurada cuando requieran cálculo, validación o referencia. La plantilla
+persiste la composición visual de la narrativa, listas y tablas como JSON validado; el
+docente no escribe ese JSON a mano ni se usa Markdown como tipo de campo. Nunca se
+extrae un dato exacto desde texto libre si existe una fuente estructurada.

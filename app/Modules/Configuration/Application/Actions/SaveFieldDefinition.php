@@ -233,7 +233,7 @@ class SaveFieldDefinition
     private function fieldType(string $contentType): string
     {
         return match ($contentType) {
-            'text' => 'markdown',
+            'text' => 'texto_largo',
             'institutional' => 'referencia_maestra',
             'boolean' => 'booleano',
             'multiple_choice' => 'seleccion_multiple',

@@ -238,14 +238,14 @@ class ConvocationAndDraftTest extends TestCase
         ])->assertForbidden();
     }
 
-    public function test_autosave_enforces_template_type_and_rejects_html_in_markdown(): void
+    public function test_autosave_enforces_template_type_and_rejects_html_in_long_text(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
         $field = FieldDefinition::query()
             ->where('plantilla_id', $syllabus->plantilla_id)
-            ->where('tipo', 'markdown')
+            ->where('tipo', 'texto_largo')
             ->firstOrFail();
 
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
