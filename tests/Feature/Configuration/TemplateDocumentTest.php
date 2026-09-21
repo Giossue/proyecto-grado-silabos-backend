@@ -257,7 +257,7 @@ class TemplateDocumentTest extends TestCase
         $this->assertCount(2, TemplateDocument::nodes($resolved, 'listItem'));
     }
 
-    public function test_cell_style_accepts_only_the_editor_catalog(): void
+    public function test_cell_style_uses_global_typography_and_ignores_legacy_cell_size(): void
     {
         $document = $this->document();
         $cell = TemplateDocument::normalize(
@@ -268,7 +268,7 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame('#E7E6E6', $cell['attrs']['backgroundColor']);
         $this->assertSame('#FFFFFF', $cell['attrs']['textColor']);
         $this->assertSame('center', $cell['attrs']['textAlign']);
-        $this->assertSame('9pt', $cell['attrs']['fontSize']);
+        $this->assertArrayNotHasKey('fontSize', $cell['attrs']);
         $this->assertTrue($cell['attrs']['bold']);
         $this->assertFalse($cell['attrs']['italic']);
         $this->assertSame('thick', $cell['attrs']['borderStyle']);
@@ -277,7 +277,6 @@ class TemplateDocumentTest extends TestCase
             'backgroundColor' => 'url(https://example.com)',
             'textColor' => 'red',
             'textAlign' => 'diagonal',
-            'fontSize' => '100vw',
             'bold' => 'yes',
             'italic' => 1,
             'borderStyle' => 'javascript',

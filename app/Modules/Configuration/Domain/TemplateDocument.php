@@ -183,10 +183,6 @@ final class TemplateDocument
                 if ($textAlign !== null && ! in_array($textAlign, self::CELL_ALIGNMENTS, true)) {
                     self::fail('Alineación de celda no permitida.');
                 }
-                $fontSize = $attrs['fontSize'] ?? null;
-                if ($fontSize !== null && (! is_string($fontSize) || ! preg_match('/^(?:[7-9]|[12][0-9]|3[0-6])pt$/D', $fontSize))) {
-                    self::fail('Tamaño de fuente de celda no permitido.');
-                }
                 $borderStyle = $attrs['borderStyle'] ?? null;
                 if ($borderStyle !== null && ! in_array($borderStyle, self::CELL_BORDER_STYLES, true)) {
                     self::fail('Borde de celda no permitido.');
@@ -207,9 +203,6 @@ final class TemplateDocument
                     'italic' => $italic,
                     'borderStyle' => $borderStyle,
                 ];
-                if ($fontSize !== null) {
-                    $node['attrs']['fontSize'] = $fontSize;
-                }
             }
             if (isset($raw['marks'])) {
                 if (! in_array($type, ['text', 'variable', 'field', 'column'], true) || ! is_array($raw['marks']) || count($raw['marks']) > 4) {

@@ -235,9 +235,6 @@ final class TemplateDocumentWord
             if (is_string($attrs['textColor'] ?? null)) {
                 $node = $this->withTextColor($node, ltrim($attrs['textColor'], '#'));
             }
-            if (is_string($attrs['fontSize'] ?? null)) {
-                $node = $this->withFontSize($node, $attrs['fontSize']);
-            }
         }
 
         if (is_array($node['content'] ?? null)) {
@@ -286,39 +283,4 @@ final class TemplateDocumentWord
         return $node;
     }
 
-    /**
-     * @param  array<string, mixed>  $node
-     * @return array<string, mixed>
-     */
-    private function withFontSize(array $node, string $fontSize): array
-    {
-        if ($node['type'] === 'text') {
-            $marks = $node['marks'] ?? [];
-            $hasTextStyle = false;
-            foreach ($marks as $index => $mark) {
-                if ($mark['type'] !== 'textStyle') {
-                    continue;
-                }
-
-                $marks[$index]['attrs'] = [
-                    ...($mark['attrs'] ?? []),
-                    'fontSize' => $fontSize,
-                ];
-                $hasTextStyle = true;
-            }
-            if (! $hasTextStyle) {
-                $marks[] = ['type' => 'textStyle', 'attrs' => ['fontSize' => $fontSize]];
-            }
-            $node['marks'] = $marks;
-        }
-
-        if (is_array($node['content'] ?? null)) {
-            $node['content'] = array_map(
-                fn (array $child): array => $this->withFontSize($child, $fontSize),
-                $node['content'],
-            );
-        }
-
-        return $node;
-    }
 }
