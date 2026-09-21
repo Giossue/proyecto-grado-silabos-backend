@@ -76,7 +76,7 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame('texto_largo', TemplateDocument::nodes($normalized, 'field')[0]['attrs']['kind']);
     }
 
-    public function test_table_text_uses_the_global_content_size(): void
+    public function test_text_uses_the_global_content_size(): void
     {
         $text = fn (string $value): array => [
             'type' => 'text',
@@ -108,7 +108,7 @@ class TemplateDocumentTest extends TestCase
         $texts = TemplateDocument::nodes($normalized, 'text');
 
         $this->assertSame('Times New Roman', $texts[0]['marks'][0]['attrs']['fontFamily']);
-        $this->assertSame('7pt', $texts[0]['marks'][0]['attrs']['fontSize']);
+        $this->assertArrayNotHasKey('fontSize', $texts[0]['marks'][0]['attrs']);
         $this->assertArrayNotHasKey('fontSize', $texts[1]['marks'][0]['attrs']);
         $this->assertArrayNotHasKey('fontFamily', $texts[1]['marks'][0]['attrs']);
         $this->assertSame('#000000', $texts[1]['marks'][0]['attrs']['color']);
@@ -476,7 +476,7 @@ class TemplateDocumentTest extends TestCase
             $this->assertTrue($zip->open($path));
             $xml = $zip->getFromName('word/document.xml');
             $zip->close();
-            foreach (['Carrera congelada', 'Contenido &lt;docente&gt; &amp; aprobado', 'w:gridSpan w:val="2"', 'w:vMerge w:val="restart"', 'w:vMerge w:val="continue"', 'w:fill="E7E6E6"', 'w:color w:val="FFFFFF"', 'w:color w:val="CC0000"', 'w:jc w:val="center"', '<w:tcBorders>', 'w:sz="12"'] as $expected) {
+            foreach (['Carrera congelada', 'Contenido &lt;docente&gt; &amp; aprobado', 'w:gridSpan w:val="2"', 'w:vMerge w:val="restart"', 'w:vMerge w:val="continue"', 'w:fill="E7E6E6"', 'w:color w:val="FFFFFF"', 'w:color w:val="CC0000"', 'w:color w:val="000000"', 'w:jc w:val="center"', '<w:tcBorders>', 'w:sz="12"'] as $expected) {
                 $this->assertStringContainsString($expected, $xml);
             }
             $this->assertStringNotContainsString('w:sz w:val="18"', $xml);

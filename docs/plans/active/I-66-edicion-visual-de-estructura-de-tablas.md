@@ -34,6 +34,8 @@ claves técnicas sin pedirlas. El formulario extenso «Configurar estructura» d
       independiente a su fondo.
 - [x] Convertir una tabla repetible en estática al retirar su último dato de fila, sin
       exigir un `$dato` inexistente ni desplazarla al espacio entre hojas.
+- [x] Renderizar las líneas de las tablas en negro, conservando los grosores
+      institucionales existentes.
 
 ## Riesgos
 

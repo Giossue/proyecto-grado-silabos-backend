@@ -8,6 +8,8 @@ use PhpOffice\PhpWord\SimpleType\TblWidth;
 /** Renderiza el contrato validado; no importa HTML, recursos remotos ni estilos arbitrarios. */
 final class TemplateDocumentWord
 {
+    private const TABLE_BORDER = '000000';
+
     public function __construct(
         private readonly ?string $paragraphAlignment = null,
         private readonly ?string $tableHeaderBackground = null,
@@ -61,9 +63,6 @@ final class TemplateDocumentWord
                         if (isset($attrs['fontFamily']) && ! $insideTable) {
                             $font['name'] = $attrs['fontFamily'];
                         }
-                        if (isset($attrs['fontSize'])) {
-                            $font['size'] = (int) $attrs['fontSize'];
-                        }
                     }
                 }
                 $lines = explode("\n", $text['text'] ?? '');
@@ -111,7 +110,7 @@ final class TemplateDocumentWord
             }
         }
         $widths = array_map(fn ($weight) => (int) round($width * $weight / array_sum($weights)), $weights);
-        $table = $target->addTable(['borderSize' => 4, 'borderColor' => '7F7F7F', 'cellMargin' => 50, 'width' => 5000, 'unit' => TblWidth::PERCENT]);
+        $table = $target->addTable(['borderSize' => 4, 'borderColor' => self::TABLE_BORDER, 'cellMargin' => 50, 'width' => 5000, 'unit' => TblWidth::PERCENT]);
         $merged = [];
         foreach ($rows as $rowIndex => $source) {
             $role = $source['attrs']['rowRole'] ?? null;
@@ -195,8 +194,8 @@ final class TemplateDocumentWord
     {
         return match ($attrs['borderStyle'] ?? null) {
             'none' => ['borderSize' => 0, 'borderStyle' => 'none'],
-            'thick' => ['borderSize' => 12, 'borderStyle' => 'single', 'borderColor' => '7F7F7F'],
-            'thin' => ['borderSize' => 4, 'borderStyle' => 'single', 'borderColor' => '7F7F7F'],
+            'thick' => ['borderSize' => 12, 'borderStyle' => 'single', 'borderColor' => self::TABLE_BORDER],
+            'thin' => ['borderSize' => 4, 'borderStyle' => 'single', 'borderColor' => self::TABLE_BORDER],
             default => [],
         };
     }

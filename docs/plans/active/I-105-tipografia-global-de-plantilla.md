@@ -12,8 +12,8 @@ un tamaño de fuente independiente.
 - Mantener fondo, color y alineación con un valor visual predeterminado, sin exponer
   la palabra «heredado».
 - Etiquetar la escala de contenido como «Campo», porque aplica al campo completo.
-- Ignorar y retirar al normalizar el atributo histórico `fontSize` de las celdas,
-  para que las plantillas existentes adopten la escala global.
+- Ignorar y retirar al normalizar los atributos históricos `fontSize` de celdas y
+  marcas de texto, para que las plantillas existentes adopten la escala global.
 - Evitar que la exportación DOCX vuelva a aplicar tamaños por celda.
 
 ## Criterios de aceptación
@@ -23,9 +23,15 @@ un tamaño de fuente independiente.
 - Los valores predeterminados visibles son «Sin fondo», «Predeterminado» y
   «Predeterminada»; no aparece «heredado» en esos controles.
 - La vista y DOCX usan la escala global de campo dentro de las tablas.
+- Los tamaños inline históricos también se eliminan al normalizar y exportar.
 
 ## Verificación
 
 - Pruebas de normalización documental y exportación DOCX.
 - Typecheck, lint, pruebas y build del frontend.
 
+## Resultado
+
+- `TemplateDocumentTest`: 22 pruebas y 200 aserciones aprobadas.
+- Pint focalizado, typecheck, lint, pruebas frontend (27 archivos / 99 pruebas) y
+  build de producción aprobados.

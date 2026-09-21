@@ -33,7 +33,7 @@ class SyllabusWordDocument
 
     private const HEADER_TEXT = '365F91';
 
-    private const BORDER = '7F7F7F';
+    private const TABLE_BORDER = '000000';
 
     /** @var array<string, mixed> */
     private array $paragraph = ['spaceAfter' => 120, 'spaceBefore' => 0, 'lineHeight' => 1.15];
@@ -244,7 +244,7 @@ class SyllabusWordDocument
     {
         $table = $section->addTable([
             'borderSize' => 4,
-            'borderColor' => self::BORDER,
+            'borderColor' => self::TABLE_BORDER,
             'cellMargin' => 50,
             'width' => 100 * 50,
             'unit' => TblWidth::PERCENT,
@@ -422,7 +422,7 @@ class SyllabusWordDocument
             }
             $table = $section->addTable([
                 'borderSize' => 4,
-                'borderColor' => self::BORDER,
+                'borderColor' => self::TABLE_BORDER,
                 'cellMargin' => 60,
                 'width' => 100 * 50,
                 'unit' => TblWidth::PERCENT,
@@ -553,7 +553,7 @@ class SyllabusWordDocument
         $section->addText('Resumen general de planificación', ['bold' => true], ['spaceBefore' => 160, 'spaceAfter' => 60, 'keepNext' => true]);
         $table = $section->addTable([
             'borderSize' => 4,
-            'borderColor' => self::BORDER,
+            'borderColor' => self::TABLE_BORDER,
             'cellMargin' => 50,
             'width' => 100 * 50,
             'unit' => TblWidth::PERCENT,

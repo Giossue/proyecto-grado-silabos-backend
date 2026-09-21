@@ -219,7 +219,7 @@ final class TemplateDocument
                         $style = is_array($mark['attrs'] ?? null) ? $mark['attrs'] : [];
                         $clean['attrs'] = [];
                         foreach (['fontFamily', 'fontSize', 'color'] as $property) {
-                            if ($insideTable && in_array($property, ['fontFamily', 'fontSize'], true)) {
+                            if ($property === 'fontSize' || ($insideTable && $property === 'fontFamily')) {
                                 continue;
                             }
                             $value = $style[$property] ?? null;
