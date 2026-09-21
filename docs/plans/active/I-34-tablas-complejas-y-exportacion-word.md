@@ -69,12 +69,11 @@ defecto de las tablas sin esquema y de las listas.
       medidas con python-docx del sílabo IA-SW-2026); el mapa celda → columna de la base
       está en `docs/product/identificacion-institucional.md` y
       `IdentificationCardTest` fija la cuadrícula.
-- [x] Plantilla por defecto = formato oficial: «Nueva plantilla» crea las doce secciones
-      con sus campos, las tablas ya armadas (`TablePresets`, espejo PHP de
-      `tablePresets.ts`) y la ficha de identificación con lo que llena el docente
-      (`CreateSyllabusTemplate::BASELINE`) de inmediato, sin `Sheet`, y abre el
-      constructor. Las bases local y de producción se dejaron solo con el administrador
-      y el catálogo de roles (`temp/limpiar_bd.php`, con respaldo previo) el 2026-09-02.
+- [x] El formato oficial se conserva como configuración declarativa y se instala de
+      forma explícita con `SyllabusTemplateSeeder` o `POST admin/template/{template}/format`.
+      «Nueva plantilla» crea solo el contenedor vacío; el formato cargado incluye las
+      doce secciones, las tablas `TablePresets` y la ficha de identificación. La acción
+      solo acepta contenedores sin secciones, bloques ni campos.
 - [x] Logos del encabezado (`InstitutionalLogos`): el de la universidad se reemplaza
       desde la plantilla (`POST admin/plantilla/logo`); desde I-68 el de cada facultad es
       opcional para Administración al crearla o editarla y obligatorio para Coordinación

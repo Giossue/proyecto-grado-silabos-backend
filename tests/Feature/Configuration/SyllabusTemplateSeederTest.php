@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Configuration;
 
+use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\SyllabusTemplateSeeder;
@@ -34,5 +35,17 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->assertSame($sectionCount, SyllabusTemplate::query()->firstOrFail()->sections()->count());
         $this->assertSame($blockCount, SyllabusTemplate::query()->firstOrFail()->blocks()->count());
         $this->assertSame($fieldCount, SyllabusTemplate::query()->firstOrFail()->fields()->count());
+    }
+
+    public function test_it_formats_an_existing_empty_container_without_creating_another_template(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $template = app(SyllabusTemplateProvisioner::class)->createEmpty();
+
+        $this->seed(SyllabusTemplateSeeder::class);
+
+        $this->assertSame(1, SyllabusTemplate::query()->count());
+        $this->assertCount(12, $template->fresh()->sections()->get());
+        $this->assertGreaterThan(0, $template->fresh()->fields()->count());
     }
 }

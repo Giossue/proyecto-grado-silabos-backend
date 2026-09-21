@@ -149,6 +149,7 @@ class AuditEventController extends Controller
             'silabo.docente_transferido' => 'Docente transferido',
             'silabo.validado' => 'Borrador validado',
             'plantilla.creada' => 'Plantilla creada',
+            'plantilla.formateada' => 'Formato oficial aplicado a la plantilla',
             'plantilla.version_publicada' => 'Plantilla publicada',
             'plantilla.version_clonada' => 'Versión de plantilla clonada',
             'usuario.creado' => 'Usuario creado',

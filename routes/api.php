@@ -135,6 +135,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.index');
             Route::post('admin/template', [TemplateController::class, 'store'])
                 ->middleware('active-role')->name('api.v1.admin.template.store');
+            Route::post('admin/template/{template}/format', [TemplateController::class, 'format'])
+                ->middleware('active-role')->name('api.v1.admin.template.format');
             Route::post('admin/template/logo', [TemplateController::class, 'storeLogo'])
                 ->middleware('active-role')->name('api.v1.admin.template.logo.store');
             Route::get('admin/template/{template}', [TemplateController::class, 'show'])

@@ -703,8 +703,10 @@ class TemplateDocumentTest extends TestCase
         $user = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
         $this->actingAs($user)->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id]);
         $this->postJson(route('api.v1.admin.template.store'))->assertSuccessful();
+        $template = SyllabusTemplate::query()->firstOrFail();
+        $this->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
 
-        return SyllabusTemplate::query()->firstOrFail();
+        return $template->fresh();
     }
 
     /** @return array<string, mixed> */

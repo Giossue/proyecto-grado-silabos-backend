@@ -22,6 +22,7 @@ class SyllabusProcessController extends Controller
 {
     public function index(ManageSyllabusProcessesRequest $request): JsonResponse
     {
+        $template = SyllabusTemplate::query()->first();
         $activeProcess = SyllabusProcess::query()->inProgress()
             ->with('academicPeriod:id,codigo')
             ->first(['id', 'periodo_academico_id', 'estado']);
@@ -45,7 +46,7 @@ class SyllabusProcessController extends Controller
                     'configurable' => $process->isConfigurable(),
                 ]),
             // La plantilla es una sola: se informa cuál es, no se elige.
-            'template' => SyllabusTemplate::query()->exists()
+            'template' => $template?->hasStructure()
                 ? SyllabusTemplate::INSTITUTIONAL_NAME
                 : null,
             'periods' => AcademicPeriod::query()

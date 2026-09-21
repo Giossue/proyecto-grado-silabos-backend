@@ -41,19 +41,34 @@ class TemplateAndSourceTest extends TestCase
         $this->coordinatorContext = $this->coordinator->roleAssignments()->firstOrFail();
     }
 
-    public function test_administrator_creates_baseline_template_with_twelve_areas(): void
+    public function test_administrator_creates_an_empty_template_and_can_apply_the_official_format(): void
     {
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.template.store'), [
                 'nombre' => 'Plantilla Software',
                 'description' => 'Prototipo estructurado para validación.',
             ])
-            ->assertSuccessful();
+            ->assertCreated()
+            ->assertJsonPath('message', 'Plantilla vacía creada.');
 
         $template = SyllabusTemplate::query()->firstOrFail();
         $this->assertFalse(Schema::hasColumn('plantillas_silabo', 'es_institucional'));
+        $this->assertCount(0, $template->sections()->get());
+        $this->assertCount(0, $template->blocks()->get());
+        $this->assertCount(0, $template->fields()->get());
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.template.format', $template))
+            ->assertSuccessful()
+            ->assertJsonPath('message', 'Formato oficial aplicado.');
+
+        $template->refresh();
         $this->assertCount(12, $template->sections()->get());
-        $this->assertCount(25, $template->fields()->get(), 'Incluye la ficha y las dos tablas de evaluación del PDF de referencia.');
+        $this->assertCount(24, $template->fields()->get(), 'Incluye la ficha, las tablas complejas y los campos del PDF de referencia.');
+        $this->assertDatabaseHas('eventos_auditoria', [
+            'accion_evento_auditoria' => 'plantilla.formateada',
+            'recurso_id' => $template->id,
+        ]);
 
         $evaluation = $template->sections()->where('clave', 'evaluacion')->firstOrFail();
         $blocks = $evaluation->blocks()->orderBy('posicion')->get();
@@ -89,6 +104,10 @@ class TemplateAndSourceTest extends TestCase
                 ->where('logos.faculty', fn (string $url): bool => str_contains($url, '/images/silabo/facultad.jpeg'))
                 ->has('appearanceOptions.colors', count(TemplateAppearance::COLORS))
                 ->where('processLock', null));
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.template.format', $template))
+            ->assertJsonValidationErrors('template');
 
         $this->actingAsAdministrator()
             ->getJson(route('api.v1.admin.template.show', $template))
@@ -722,8 +741,12 @@ class TemplateAndSourceTest extends TestCase
     private function createTemplate(): SyllabusTemplate
     {
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla verificable']);
+        $template = SyllabusTemplate::query()->firstOrFail();
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.template.format', $template))
+            ->assertSuccessful();
 
-        return SyllabusTemplate::query()->firstOrFail();
+        return $template->fresh();
     }
 
     private function createSourceAsCoordinator(string $name): AcademicSource

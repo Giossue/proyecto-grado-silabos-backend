@@ -82,9 +82,9 @@ class CreateSyllabusProcess
     {
         $template = SyllabusTemplate::query()->first();
 
-        if ($template === null) {
+        if ($template === null || ! $template->hasStructure()) {
             throw ValidationException::withMessages([
-                'process' => 'No existe una plantilla institucional. Créela en Plantillas antes de preparar el proceso.',
+                'process' => 'La plantilla institucional está vacía. Aplique el formato oficial o configure sus bloques antes de preparar el proceso.',
             ]);
         }
 

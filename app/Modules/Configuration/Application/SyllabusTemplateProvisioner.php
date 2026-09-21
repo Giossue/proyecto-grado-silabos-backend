@@ -12,104 +12,148 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/** Instala el formato inicial sin mezclar datos de seed con autorización HTTP. */
+/**
+ * Gestiona el contenedor único de la plantilla y la instalación explícita de su
+ * formato oficial, sin mezclar datos de seed con autorización HTTP.
+ */
 final class SyllabusTemplateProvisioner
 {
-    public function create(): SyllabusTemplate
+    public function createEmpty(): SyllabusTemplate
+    {
+        return DB::transaction(fn (): SyllabusTemplate => $this->newTemplate());
+    }
+
+    /** Instala el formato oficial al crear una plantilla desde un seed explícito. */
+    public function createWithOfficialFormat(): SyllabusTemplate
     {
         return DB::transaction(function (): SyllabusTemplate {
-            if (SyllabusTemplate::query()->lockForUpdate()->exists()) {
-                throw ValidationException::withMessages([
-                    'template' => 'La plantilla institucional ya existe. Edítela en lugar de crear otra.',
-                ]);
-            }
-
-            $template = SyllabusTemplate::query()->create([
-                'mapeo_documento' => [
-                    'appearance' => TemplateAppearance::defaults(),
-                    'title_block' => TemplateTitleBlock::defaults(),
-                ],
-            ]);
-
-            /** @var list<array{0: string, 1: string, 2: list<array{0: string, 1: string, 2: string, 3: string|null}>}> $baseline */
-            $baseline = config('syllabus_template.baseline', []);
-            /** @var list<array{0: string, 1: string, 2: string, 3: list<string>|null}> $identificationInputs */
-            $identificationInputs = config('syllabus_template.identification_inputs', []);
-
-            foreach ($baseline as $sectionPosition => [$sectionKey, $sectionTitle, $fields]) {
-                $section = TemplateSection::query()->create([
-                    'plantilla_id' => $template->id,
-                    'clave' => $sectionKey,
-                    'titulo' => $sectionTitle,
-                    'posicion' => $sectionPosition + 1,
-                ]);
-
-                foreach ($fields as $blockPosition => [$fieldKey, $label, $contentType, $preset]) {
-                    $configuration = ['content_type' => $contentType];
-                    if ($preset !== null) {
-                        $configuration['table'] = TablePresets::layout($preset);
-                    }
-                    if ($preset === 'planificacion') {
-                        $configuration['page_orientation'] = 'landscape';
-                    }
-                    if ($contentType === 'institutional') {
-                        $configuration['document'] = TemplateDocumentDefaults::identification();
-                    }
-
-                    $block = TemplateBlock::query()->create([
-                        'plantilla_id' => $template->id,
-                        'seccion_plantilla_id' => $section->id,
-                        'clave' => $blockPosition === 0 ? "{$sectionKey}_principal" : "{$sectionKey}_{$fieldKey}",
-                        'tipo' => $this->blockType($contentType),
-                        'titulo' => $label,
-                        'configuracion' => $configuration,
-                        'posicion' => $blockPosition + 1,
-                    ]);
-                    $origin = match ($contentType) {
-                        'institutional' => 'asignaturas',
-                        'flow' => 'flujo',
-                        default => null,
-                    };
-
-                    FieldDefinition::query()->create([
-                        'plantilla_id' => $template->id,
-                        'bloque_plantilla_id' => $block->id,
-                        'clave' => $fieldKey,
-                        'etiqueta' => $label,
-                        'tipo' => $this->fieldType($contentType),
-                        'heredado' => $origin !== null,
-                        'origen_maestro' => $origin,
-                        'editable_docente' => $origin === null,
-                        'ia_habilitada' => $contentType === 'text',
-                        'ia_coordinacion_configurable' => $origin === null,
-                        'posicion' => 1,
-                    ]);
-
-                    if ($contentType !== 'institutional') {
-                        continue;
-                    }
-
-                    foreach ($identificationInputs as $inputPosition => [$inputKey, $inputLabel, $inputType, $options]) {
-                        FieldDefinition::query()->create([
-                            'plantilla_id' => $template->id,
-                            'bloque_plantilla_id' => $block->id,
-                            'clave' => $inputKey,
-                            'etiqueta' => $inputLabel,
-                            'tipo' => $inputType,
-                            'heredado' => false,
-                            'origen_maestro' => null,
-                            'editable_docente' => true,
-                            'ia_habilitada' => $inputType === 'texto_largo',
-                            'ia_coordinacion_configurable' => true,
-                            'opciones' => $options,
-                            'posicion' => $inputPosition + 2,
-                        ]);
-                    }
-                }
-            }
+            $template = $this->newTemplate();
+            $this->populateOfficialFormat($template);
 
             return $template;
         });
+    }
+
+    /**
+     * Aplica el formato oficial únicamente a un contenedor que todavía está vacío.
+     * Así el botón no puede sobrescribir una plantilla que el administrador ya editó.
+     */
+    public function format(SyllabusTemplate $template): SyllabusTemplate
+    {
+        return DB::transaction(function () use ($template): SyllabusTemplate {
+            $lockedTemplate = SyllabusTemplate::query()
+                ->whereKey($template->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedTemplate->sections()->exists()
+                || $lockedTemplate->blocks()->exists()
+                || $lockedTemplate->fields()->exists()) {
+                throw ValidationException::withMessages([
+                    'template' => 'Solo se puede aplicar el formato oficial a una plantilla vacía.',
+                ]);
+            }
+
+            $this->populateOfficialFormat($lockedTemplate);
+
+            return $lockedTemplate->fresh(['sections.blocks.fields']);
+        });
+    }
+
+    private function newTemplate(): SyllabusTemplate
+    {
+        if (SyllabusTemplate::query()->lockForUpdate()->exists()) {
+            throw ValidationException::withMessages([
+                'template' => 'La plantilla institucional ya existe. Edítela en lugar de crear otra.',
+            ]);
+        }
+
+        return SyllabusTemplate::query()->create([
+            'mapeo_documento' => [
+                'appearance' => TemplateAppearance::defaults(),
+                'title_block' => TemplateTitleBlock::defaults(),
+            ],
+        ]);
+    }
+
+    private function populateOfficialFormat(SyllabusTemplate $template): void
+    {
+        /** @var list<array{0: string, 1: string, 2: list<array{0: string, 1: string, 2: string, 3: string|null}>}> $baseline */
+        $baseline = config('syllabus_template.baseline', []);
+        /** @var list<array{0: string, 1: string, 2: string, 3: list<string>|null}> $identificationInputs */
+        $identificationInputs = config('syllabus_template.identification_inputs', []);
+
+        foreach ($baseline as $sectionPosition => [$sectionKey, $sectionTitle, $fields]) {
+            $section = TemplateSection::query()->create([
+                'plantilla_id' => $template->id,
+                'clave' => $sectionKey,
+                'titulo' => $sectionTitle,
+                'posicion' => $sectionPosition + 1,
+            ]);
+
+            foreach ($fields as $blockPosition => [$fieldKey, $label, $contentType, $preset]) {
+                $configuration = ['content_type' => $contentType];
+                if ($preset !== null) {
+                    $configuration['table'] = TablePresets::layout($preset);
+                }
+                if ($preset === 'planificacion') {
+                    $configuration['page_orientation'] = 'landscape';
+                }
+                if ($contentType === 'institutional') {
+                    $configuration['document'] = TemplateDocumentDefaults::identification();
+                }
+
+                $block = TemplateBlock::query()->create([
+                    'plantilla_id' => $template->id,
+                    'seccion_plantilla_id' => $section->id,
+                    'clave' => $blockPosition === 0 ? "{$sectionKey}_principal" : "{$sectionKey}_{$fieldKey}",
+                    'tipo' => $this->blockType($contentType),
+                    'titulo' => $label,
+                    'configuracion' => $configuration,
+                    'posicion' => $blockPosition + 1,
+                ]);
+                $origin = match ($contentType) {
+                    'institutional' => 'asignaturas',
+                    'flow' => 'flujo',
+                    default => null,
+                };
+
+                FieldDefinition::query()->create([
+                    'plantilla_id' => $template->id,
+                    'bloque_plantilla_id' => $block->id,
+                    'clave' => $fieldKey,
+                    'etiqueta' => $label,
+                    'tipo' => $this->fieldType($contentType),
+                    'heredado' => $origin !== null,
+                    'origen_maestro' => $origin,
+                    'editable_docente' => $origin === null,
+                    'ia_habilitada' => $contentType === 'text',
+                    'ia_coordinacion_configurable' => $origin === null,
+                    'posicion' => 1,
+                ]);
+
+                if ($contentType !== 'institutional') {
+                    continue;
+                }
+
+                foreach ($identificationInputs as $inputPosition => [$inputKey, $inputLabel, $inputType, $options]) {
+                    FieldDefinition::query()->create([
+                        'plantilla_id' => $template->id,
+                        'bloque_plantilla_id' => $block->id,
+                        'clave' => $inputKey,
+                        'etiqueta' => $inputLabel,
+                        'tipo' => $inputType,
+                        'heredado' => false,
+                        'origen_maestro' => null,
+                        'editable_docente' => true,
+                        'ia_habilitada' => $inputType === 'texto_largo',
+                        'ia_coordinacion_configurable' => true,
+                        'opciones' => $options,
+                        'posicion' => $inputPosition + 2,
+                    ]);
+                }
+            }
+        }
     }
 
     private function blockType(string $contentType): string

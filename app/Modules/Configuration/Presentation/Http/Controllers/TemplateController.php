@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Configuration\Application\Actions\CreateSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\DeleteTemplateBlock;
 use App\Modules\Configuration\Application\Actions\DeleteTemplateSection;
+use App\Modules\Configuration\Application\Actions\FormatSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\ReorderTemplateBlocks;
 use App\Modules\Configuration\Application\Actions\ReorderTemplateSections;
 use App\Modules\Configuration\Application\Actions\SaveFieldDefinition;
@@ -81,7 +82,16 @@ class TemplateController extends Controller
         abort_unless($actor instanceof User, 401);
         $template = $action->execute($actor, $request);
 
-        return response()->json(['message' => 'Plantilla creada con las doce áreas base.', 'template_id' => $template->id], 201);
+        return response()->json(['message' => 'Plantilla vacía creada.', 'template_id' => $template->id], 201);
+    }
+
+    public function format(SyllabusTemplate $template, ManageTemplatesRequest $request, FormatSyllabusTemplate $action): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $action->execute($template, $actor, $request);
+
+        return response()->json(['message' => 'Formato oficial aplicado.']);
     }
 
     public function show(SyllabusTemplate $template, ManageTemplatesRequest $request, ProcessLocks $locks, InstitutionalLogos $logos): JsonResponse

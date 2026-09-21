@@ -27,11 +27,11 @@ return [
             ['unidades', 'Planificación de unidades', 'table', 'planificacion'],
         ]],
         ['metodologia', 'Metodología y ambientes de aprendizaje', [
-            ['metodologia', 'Métodos de enseñanza-aprendizaje', 'bulleted_list', null],
-            ['tecnicas_ensenanza', 'Técnicas de enseñanza', 'bulleted_list', null],
-            ['recursos_medios', 'Recursos y medios didácticos', 'text', null],
+            ['metodologia', 'Métodos de enseñanza-aprendizaje', 'numbered_list', null],
+            ['tecnicas_ensenanza', 'Técnicas de enseñanza', 'text', null],
+            ['recursos_medios', 'Recursos y medios didácticos', 'bulleted_list', null],
             ['herramientas_tic', 'Herramientas pedagógicas, TAC e inteligencia artificial', 'bulleted_list', null],
-            ['ambientes_aprendizaje', 'Ambientes o escenarios de aprendizaje', 'text', null],
+            ['ambientes_aprendizaje', 'Ambientes o escenarios de aprendizaje', 'bulleted_list', null],
         ]],
         ['evaluacion', 'Evaluación de los aprendizajes', [
             ['indicadores_evaluacion', 'Indicadores de evaluación', 'table', 'indicadores'],
@@ -42,8 +42,7 @@ return [
             ['contribucion_perfil', 'Contribución al perfil de egreso', 'table', 'perfil'],
         ]],
         ['etica', 'Conducta y comportamiento ético', [
-            ['compromisos', 'El docente', 'bulleted_list', null],
-            ['compromisos_estudiantes', 'Los estudiantes', 'bulleted_list', null],
+            ['conducta_etica', 'Conducta y comportamiento ético', 'text', null],
         ]],
         ['bibliografia', 'Bibliografía', [
             ['bibliografia', 'Bibliografía básica', 'table', 'bibliografia'],

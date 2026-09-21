@@ -100,6 +100,18 @@ class SyllabusProcessTest extends TestCase
                 ->where('processes.0.state', 'preparacion'));
     }
 
+    public function test_an_empty_template_cannot_prepare_an_institutional_process(): void
+    {
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Contenedor vacío'])
+            ->assertCreated();
+        $template = SyllabusTemplate::query()->firstOrFail();
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.store'), $this->processPayload($template))
+            ->assertJsonValidationErrors(['process' => 'La plantilla institucional está vacía. Aplique el formato oficial o configure sus bloques antes de preparar el proceso.']);
+    }
+
     public function test_process_dates_arrive_as_days_and_cover_the_whole_deadline_day(): void
     {
         $template = $this->publishedTemplate();
@@ -665,6 +677,7 @@ class SyllabusProcessTest extends TestCase
     {
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-31']);
         $template = SyllabusTemplate::query()->firstOrFail();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
 
         return $template->fresh();
     }

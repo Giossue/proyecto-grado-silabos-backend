@@ -10,10 +10,18 @@ class SyllabusTemplateSeeder extends Seeder
 {
     public function run(SyllabusTemplateProvisioner $provisioner): void
     {
-        if (SyllabusTemplate::query()->exists()) {
+        $template = SyllabusTemplate::query()->first();
+
+        if ($template === null) {
+            $provisioner->createWithOfficialFormat();
+
             return;
         }
 
-        $provisioner->create();
+        if ($template->sections()->exists() || $template->blocks()->exists() || $template->fields()->exists()) {
+            return;
+        }
+
+        $provisioner->format($template);
     }
 }

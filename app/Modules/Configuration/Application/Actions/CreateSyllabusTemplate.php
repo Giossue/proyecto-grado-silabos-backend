@@ -10,7 +10,7 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
 
-/** Compatibilidad del endpoint histórico; la definición inicial vive en el seed. */
+/** Crea únicamente el contenedor vacío de la plantilla institucional. */
 class CreateSyllabusTemplate
 {
     public function __construct(
@@ -24,7 +24,7 @@ class CreateSyllabusTemplate
     {
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
-        $template = $this->provisioner->create();
+        $template = $this->provisioner->createEmpty();
 
         $this->audit->execute(
             actorId: $actor->id,

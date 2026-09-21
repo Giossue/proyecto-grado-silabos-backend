@@ -21,13 +21,14 @@ como mínimo las doce áreas identificadas en la línea base.
 ## Reglas de modelado
 
 La referencia visual aportada el 2026-09-06 (`temp/silabo.pdf`) conserva estas doce
-áreas. La plantilla inicial incluye en Evaluación una tabla de indicadores con
+áreas. El formato oficial instalable incluye en Evaluación una tabla de indicadores con
 puntos y ponderación para cada uno de los dos parciales, seguida de la escala de
 valoración y la recuperación. Son campos que llena el docente: no se precargan
 notas ni se incorporan fórmulas o porcentajes del PDF. PV-07 sigue abierta; PV-08 se
 cerró en I-57 para horas y créditos, sin afectar los porcentajes de evaluación.
-Este ajuste se aplica al crear la plantilla, no sobrescribe diseños guardados ni
-altera revisiones enviadas.
+Este ajuste se aplica al ejecutar el formato oficial sobre un contenedor vacío, no
+sobrescribe diseños guardados ni altera revisiones enviadas. Crear una plantilla por sí
+solo deja el contenedor sin secciones, bloques ni campos.
 
 La vista administrativa usa ejemplos sintéticos breves, separados de los datos
 reales: una frase por campo y una fila por tabla. En planificación se muestran

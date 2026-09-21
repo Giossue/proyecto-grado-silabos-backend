@@ -58,4 +58,11 @@ class SyllabusTemplate extends Model
     {
         return $this->hasMany(FieldDefinition::class, 'plantilla_id');
     }
+
+    public function hasStructure(): bool
+    {
+        return $this->sections()->exists()
+            && $this->blocks()->exists()
+            && $this->fields()->exists();
+    }
 }

@@ -1,5 +1,9 @@
 # I-59 — Hoja de plantilla vacía
 
+> Esta decisión queda supersedida por I-103. La hoja inicial sigue siendo vacía, pero
+> ahora conserva el contenedor editable y ofrece una acción explícita para cargar el
+> formato oficial.
+
 ## Estado
 
 Implementación verificada localmente el 2026-09-08 por decisión explícita del
@@ -7,10 +11,10 @@ responsable del producto. Permanece activo hasta la revisión visual de la hoja.
 
 ## Decisión
 
-ADM-06 muestra únicamente una hoja carta blanca y vacía. Se retiran de esa superficie
-el constructor, bloques, campos, tablas, menús y personalización. El servidor deja de
-enviar esas estructuras al navegador. No se borran registros de la base ni revisiones:
-esa eliminación sería destructiva y no es necesaria para dejar limpia la pantalla.
+ADM-06 muestra un contenedor carta blanco y vacío al crearlo. No se instalan bloques ni
+campos automáticamente. La pantalla ofrece «Editar» para construirlo manualmente y
+«Formatear» para cargar de forma explícita la estructura oficial mediante la seed
+compartida. No se borran registros de la base ni revisiones.
 
 ## Alcance
 
@@ -21,9 +25,9 @@ esa eliminación sería destructiva y no es necesaria para dejar limpia la panta
 ## Criterios
 
 - [x] La hoja permanece visible con orientación, tamaño y márgenes.
-- [x] La hoja no muestra contenido ni controles.
-- [x] La respuesta Inertia no contiene secciones, bloques, campos ni catálogos del
-      constructor.
+- [x] La plantilla recién creada persiste sin secciones, bloques ni campos.
+- [x] El formato oficial se instala solo desde la acción explícita «Formatear» o el
+      seed idempotente.
 - [x] Los datos persistidos no se eliminan.
 - [x] Verificar tipos, formato, pruebas focalizadas y compilación.
 

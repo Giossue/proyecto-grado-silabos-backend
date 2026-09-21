@@ -325,6 +325,7 @@ class TeacherReliefTest extends TestCase
     {
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla relevo']);
         $template = SyllabusTemplate::query()->firstOrFail();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.sources.store'), ['nombre' => 'Fuente relevo', 'description' => 'Documento de apoyo del periodo.']);
         $source = AcademicSource::query()->firstOrFail();
         $this->actingAsCoordinator()->putJson(route('api.v1.coordination.sources.content.update', $source), ['content' => "## Perfil base\n\nEvidencia académica autorizada."]);
