@@ -17,10 +17,10 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * La prórroga es de Administración porque el calendario es de la universidad, no de
- * cada carrera. Se mueve la fecha del proceso y, con ella, la misma etapa de todas sus
- * convocatorias; es una excepción, así que exige motivo y conserva la fecha anterior en
- * auditoría. Solo hacia adelante: adelantar dejaría fuera de plazo a quien ya estaba
- * dentro.
+ * cada carrera. Se mueve la entrega del proceso y, con ella, la etapa de borrador de
+ * todas sus convocatorias; es una excepción, así que exige motivo y conserva la fecha
+ * anterior en auditoría. Solo hacia adelante: adelantar dejaría fuera de plazo a quien
+ * ya estaba dentro. El inicio se corrige al editar un proceso en preparación o pausa.
  */
 class ExtendProcessDeadline
 {
@@ -31,7 +31,6 @@ class ExtendProcessDeadline
 
     public function execute(
         SyllabusProcess $process,
-        string $stage,
         string $newDueAt,
         string $reason,
         User $actor,
@@ -44,13 +43,9 @@ class ExtendProcessDeadline
         if ($process->estado === SyllabusProcess::STATE_CLOSED) {
             throw ValidationException::withMessages(['process' => 'Un proceso cerrado ya no admite prórrogas.']);
         }
-        if (! in_array($stage, [ConvocationSchedule::STAGE_START, ConvocationSchedule::STAGE_DRAFT], true)) {
-            throw ValidationException::withMessages(['stage' => 'El proceso no tiene esa etapa.']);
-        }
-
-        $column = $stage === ConvocationSchedule::STAGE_START ? 'inicia_en' : 'entrega_en';
+        $stage = ConvocationSchedule::STAGE_DRAFT;
         $requested = CarbonImmutable::parse($newDueAt);
-        $previous = $process->{$column};
+        $previous = $process->entrega_en;
 
         if ($requested->lessThanOrEqualTo($previous)) {
             throw ValidationException::withMessages([
@@ -61,13 +56,9 @@ class ExtendProcessDeadline
         if ($requested->isPast()) {
             throw ValidationException::withMessages(['due_at' => 'La nueva fecha ya pasó.']);
         }
-        if ($stage === ConvocationSchedule::STAGE_START && $requested->greaterThanOrEqualTo($process->entrega_en)) {
-            throw ValidationException::withMessages(['due_at' => 'El inicio no puede quedar después de la fecha de entrega.']);
-        }
-
-        return DB::transaction(function () use ($activeRole, $actor, $column, $previous, $process, $reason, $request, $requested, $stage): SyllabusProcess {
+        return DB::transaction(function () use ($activeRole, $actor, $previous, $process, $reason, $request, $requested, $stage): SyllabusProcess {
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
-            $locked->update([$column => $requested]);
+            $locked->update(['entrega_en' => $requested]);
 
             // Las convocatorias copiaron la fecha al prepararse; la prórroga las alcanza a
             // todas, pero nunca les quita tiempo si alguna ya tenía una fecha mayor.

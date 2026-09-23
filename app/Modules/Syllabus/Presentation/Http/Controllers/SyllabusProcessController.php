@@ -106,7 +106,6 @@ class SyllabusProcessController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->execute(
             $process,
-            $request->string('stage')->toString(),
             $request->string('due_at')->toString(),
             $request->string('reason')->toString(),
             $actor,

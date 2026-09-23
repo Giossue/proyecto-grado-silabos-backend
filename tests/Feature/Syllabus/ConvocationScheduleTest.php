@@ -120,7 +120,6 @@ class ConvocationScheduleTest extends TestCase
         $convocation->process()->update(['inicia_en' => $previous->subDay(), 'entrega_en' => $previous]);
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
-            'stage' => 'borrador',
             'due_at' => now()->addWeek()->toIso8601String(),
             'reason' => 'Relevo de docente por licencia médica del titular.',
         ])->assertSuccessful()->assertSuccessful();
@@ -146,7 +145,6 @@ class ConvocationScheduleTest extends TestCase
         $convocation = $this->prepareConvocation();
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
-            'stage' => 'borrador',
             'due_at' => now()->addDay()->toIso8601String(),
             'reason' => 'Quiero adelantar el cierre porque ya casi todos entregaron.',
         ])->assertJsonValidationErrors('due_at');
@@ -157,7 +155,6 @@ class ConvocationScheduleTest extends TestCase
         $convocation = $this->prepareConvocation();
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
-            'stage' => 'borrador',
             'due_at' => now()->addMonths(2)->toIso8601String(),
             'reason' => 'porque sí',
         ])->assertJsonValidationErrors('reason');
@@ -168,7 +165,6 @@ class ConvocationScheduleTest extends TestCase
         // El calendario es de la universidad: ni la coordinación ni un docente lo mueven.
         $convocation = $this->prepareConvocation();
         $payload = [
-            'stage' => 'borrador',
             'due_at' => now()->addMonths(2)->toIso8601String(),
             'reason' => 'Ampliación por relevo docente en dos paralelos.',
         ];
@@ -179,6 +175,26 @@ class ConvocationScheduleTest extends TestCase
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), $payload)
             ->assertForbidden();
+    }
+
+    public function test_an_extension_cannot_target_the_start_date(): void
+    {
+        $convocation = $this->prepareConvocation();
+        $process = $convocation->process;
+        $previousStart = $process->inicia_en;
+        $previousDue = $process->entrega_en;
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $process), [
+            'stage' => 'inicio',
+            'due_at' => now()->addMonths(2)->toIso8601String(),
+            'reason' => 'Se intenta retrasar el inicio desde un cliente desactualizado.',
+        ])->assertJsonValidationErrors([
+            'stage' => 'La prórroga solo modifica la fecha límite de entrega.',
+        ]);
+
+        $process->refresh();
+        $this->assertTrue($process->inicia_en->equalTo($previousStart));
+        $this->assertTrue($process->entrega_en->equalTo($previousDue));
     }
 
     private function expireDeadline(Syllabus $syllabus): Convocation
