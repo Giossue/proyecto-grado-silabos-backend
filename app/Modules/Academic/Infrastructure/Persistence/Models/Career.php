@@ -13,10 +13,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property string $id
  * @property string $nombre
- * @property string|null $codigo_carrera
+ * @property string $codigo_carrera
  * @property string $facultad_id
  * @property StudyModality|null $modalidad
- * @property string $codigo_malla
  * @property int $cantidad_ciclos_malla
  * @property bool $activo
  */
@@ -37,7 +36,7 @@ class Career extends Model
     /** @var list<string> */
     protected $fillable = [
         'facultad_id', 'modalidad', 'codigo_carrera', 'nombre', 'activo',
-        'codigo_malla', 'cantidad_ciclos_malla',
+        'cantidad_ciclos_malla',
     ];
 
     /** @return array<string, string> */

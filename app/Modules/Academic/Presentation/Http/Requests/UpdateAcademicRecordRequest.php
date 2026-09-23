@@ -29,14 +29,20 @@ class UpdateAcademicRecordRequest extends FormRequest
     {
         return match ($this->route('entity')) {
             'facultad' => [
-                ...$this->namedCatalogRules('facultades', 180),
+                'nombre' => ['required', 'string', 'max:180'],
                 'campus' => ['required', Rule::enum(CampusLocation::class)],
                 'logo' => ['nullable', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
             ],
             'carrera' => [
                 'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'id')],
                 'modality' => ['required', 'string', Rule::in(StudyModality::values())],
-                ...$this->namedCatalogRules('carreras', 180),
+                'code' => [
+                    'required',
+                    'string',
+                    'max:80',
+                    Rule::unique('carreras', 'codigo_carrera')->ignore($this->recordId()),
+                ],
+                'nombre' => ['required', 'string', 'max:180'],
             ],
             'periodo' => [
                 'code' => [
@@ -51,24 +57,6 @@ class UpdateAcademicRecordRequest extends FormRequest
             ],
             default => [],
         };
-    }
-
-    /** @return array<string, list<mixed>> */
-    private function namedCatalogRules(string $table, int $nameLength): array
-    {
-        return [
-            'code' => [
-                'nullable',
-                'string',
-                'max:80',
-                Rule::unique($table, match ($table) {
-                    'facultades' => 'codigo_facultad',
-                    'carreras' => 'codigo_carrera',
-                    default => throw new \LogicException('Catálogo académico no admitido.'),
-                })->ignore($this->recordId()),
-            ],
-            'nombre' => ['required', 'string', "max:{$nameLength}"],
-        ];
     }
 
     private function recordId(): string

@@ -181,8 +181,9 @@ establece; una recomendación de IA nunca bloquea por sí sola.
    evidencia es una fotografía inmutable del contenido citado.
 10. Word y PDF se generan desde la copia que guarda la propia revisión.
 11. Redis y el servicio de IA pueden fallar sin corromper el expediente.
-12. La estructura curricular única de una carrera se guarda en sus atributos
-    `codigo_malla` y `cantidad_ciclos_malla`; no tiene versiones ni estado propio.
+12. La estructura curricular única de una carrera se define por
+    `cantidad_ciclos_malla`; `codigo_carrera` es obligatorio y único, y no existe código
+    de malla ni estado propio de esa estructura (I-107).
 13. Una materia o relación de requisito pertenece a una única carrera mediante la
     asignatura.
 14. Programar materias y abrir procesos exige asignaturas activas, programadas con sus

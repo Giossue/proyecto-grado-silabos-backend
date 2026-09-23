@@ -266,8 +266,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 - Los IDs internos y detalles de infraestructura no se muestran.
 - ADM-04 usa el submenú **Estructura académica** con rutas independientes para Facultades,
   Carreras y Periodos académicos. El formulario de facultad exige elegir uno de los cinco
-  campus institucionales; la tabla de facultades lo muestra. Carreras muestra su Facultad,
-  Modalidad y campus heredado. No hay una pantalla o catálogo de campus.
+  campus institucionales y no solicita código; la tabla de facultades muestra su campus.
+  Carreras exige el código de carrera y muestra su Facultad, Modalidad y campus heredado.
+  La configuración de malla solo edita la cantidad de ciclos. No hay una pantalla o
+  catálogo de campus ni un código de facultad o malla (I-107).
 - La modalidad base se fija por carrera (obligatoria al crearla; la aprueba el CES) y
   no por programación. No hay catálogo: son las del reglamento (presencial, semipresencial, en
   línea, a distancia). Cualquier materia puede apartarse en COR-13 («Igual que la
@@ -306,7 +308,7 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   conservando solo un margen breve alrededor del contenido. En escritorio, la leyenda y
   los totales flotantes inician visibles y se pueden contraer temporalmente; en móvil se
   consultan desde su botón. «Configurar malla» es la acción primaria del encabezado y solo
-  edita código y cantidad de ciclos; los campos de la tarjeta (ACD, APE, AA, CRED, TOTAL)
+  edita la cantidad de ciclos; los campos de la tarjeta (ACD, APE, AA, CRED, TOTAL)
   los fija el reglamento y nacen con la malla. Al crear o editar una materia, todos los
   campos activos son obligatorios, las magnitudes se presentan en una fila compacta y
   **TOTAL** se calcula con la suma de los componentes de horas, sin incluir créditos. La

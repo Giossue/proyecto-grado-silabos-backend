@@ -73,17 +73,16 @@ class InstitutionalLogosTest extends TestCase
     public function test_administrator_can_create_a_faculty_with_or_without_its_logo(): void
     {
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.academic.store', 'facultad'), ['code' => 'FAC-SL', 'nombre' => 'Sin logo', 'campus' => CampusLocation::Matriz->value])
+            ->postJson(route('api.v1.admin.academic.store', 'facultad'), ['nombre' => 'Sin logo', 'campus' => CampusLocation::Matriz->value])
             ->assertSuccessful()
             ->assertSuccessful();
         $this->assertDatabaseHas('facultades', [
-            'codigo_facultad' => 'FAC-SL',
+            'nombre_facultad' => 'Sin logo',
             'logo_objeto_id' => null,
         ]);
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
-                'code' => 'FAC-CL',
                 'nombre' => 'Con logo',
                 'campus' => CampusLocation::Laguacoto->value,
                 'logo' => $this->transparentPng(300, 300),
@@ -91,7 +90,7 @@ class InstitutionalLogosTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
 
-        $faculty = Faculty::query()->where('codigo_facultad', 'FAC-CL')->firstOrFail();
+        $faculty = Faculty::query()->where('nombre', 'Con logo')->firstOrFail();
         $logo = $faculty->logoObject()->firstOrFail();
         $this->assertStringStartsWith("logos/facultades/{$faculty->id}/", $logo->ruta_interna);
         $this->assertSame('logo_facultad', $logo->clasificacion);
@@ -102,7 +101,7 @@ class InstitutionalLogosTest extends TestCase
             ->assertHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
         // Sin subida propia, la facultad muestra el logo de fábrica.
-        $legacy = Faculty::query()->where('codigo_facultad', '!=', 'FAC-CL')->firstOrFail();
+        $legacy = Faculty::query()->where('nombre', '!=', 'Con logo')->firstOrFail();
         $this->get(route('logos.faculty', $legacy))->assertOk();
     }
 

@@ -83,7 +83,6 @@ class CreateAcademicRecord
     private function createFaculty(array $data): Faculty
     {
         $faculty = Faculty::query()->create([
-            'codigo_facultad' => $data['code'] ?? null,
             'nombre' => $data['nombre'],
             'campus' => CampusLocation::from($data['campus']),
             'activo' => true,
@@ -103,10 +102,9 @@ class CreateAcademicRecord
             'carrera' => Career::query()->create([
                 'facultad_id' => $data['faculty_id'],
                 'modalidad' => $data['modality'],
-                'codigo_carrera' => $data['code'] ?? null,
+                'codigo_carrera' => $data['code'],
                 'nombre' => $data['nombre'],
                 'activo' => true,
-                'codigo_malla' => $data['curriculum_code'],
                 'cantidad_ciclos_malla' => $data['cycle_count'],
             ]),
             'periodo' => AcademicPeriod::query()->create([

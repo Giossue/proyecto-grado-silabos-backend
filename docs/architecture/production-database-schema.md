@@ -111,7 +111,6 @@ usuarios 1:N sesiones
 
 ~~~text
 id UUID (PK)
-codigo_facultad VARCHAR NULL UNIQUE
 nombre_facultad VARCHAR NOT NULL
 facultad_activa BOOLEAN NOT NULL
 campus_facultad VARCHAR NOT NULL CHECK (campus_facultad IN (
@@ -131,11 +130,10 @@ logo_objeto_id UUID (FK → objetos_almacenados.id) NULL UNIQUE
 ~~~text
 id UUID (PK)
 facultad_id UUID (FK → facultades.id) NOT NULL
-codigo_carrera VARCHAR NULL UNIQUE
+codigo_carrera VARCHAR NOT NULL UNIQUE
 nombre_carrera VARCHAR NOT NULL
 carrera_activa BOOLEAN NOT NULL
 modalidad_carrera VARCHAR NULL
-codigo_malla VARCHAR NOT NULL
 cantidad_ciclos_malla SMALLINT NOT NULL
 ~~~
 

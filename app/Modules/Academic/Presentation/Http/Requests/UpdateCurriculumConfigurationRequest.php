@@ -16,7 +16,6 @@ class UpdateCurriculumConfigurationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => ['required', 'string', 'max:80'],
             'cycle_count' => ['required', 'integer', 'min:1', 'max:30'],
         ];
     }

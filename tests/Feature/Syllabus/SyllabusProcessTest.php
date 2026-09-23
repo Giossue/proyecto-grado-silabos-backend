@@ -387,22 +387,20 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
-                'code' => 'MALLA-NUEVA',
-                'cycle_count' => $career->cantidad_ciclos_malla,
+                'cycle_count' => 9,
             ])
             ->assertJsonValidationErrors('purge_required');
         $this->assertDatabaseCount('silabos', 1);
 
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
-                'code' => 'MALLA-NUEVA',
-                'cycle_count' => $career->cantidad_ciclos_malla,
+                'cycle_count' => 9,
                 'confirm_purge' => 1,
             ])
             ->assertSuccessful()
             ->assertSuccessful();
         $this->assertDatabaseCount('silabos', 0);
-        $this->assertSame('MALLA-NUEVA', $career->fresh()->codigo_malla);
+        $this->assertSame(9, $career->fresh()->cantidad_ciclos_malla);
     }
 
     public function test_a_running_convocation_freezes_curriculum_and_sources_of_its_career_only(): void
@@ -413,11 +411,10 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
-                'code' => 'MALLA-BLOQUEADA',
-                'cycle_count' => $career->cantidad_ciclos_malla,
+                'cycle_count' => 9,
             ])
             ->assertJsonValidationErrors('process');
-        $this->assertSame('MALLA-SW-2024', $career->fresh()->codigo_malla);
+        $this->assertSame(8, $career->fresh()->cantidad_ciclos_malla);
 
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.sources.update', $source), [
@@ -447,13 +444,12 @@ class SyllabusProcessTest extends TestCase
         // enviar, el cambio pide confirmación y lo borra (I-32).
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
-                'code' => 'MALLA-CORREGIDA',
-                'cycle_count' => $career->cantidad_ciclos_malla,
+                'cycle_count' => 10,
                 'confirm_purge' => 1,
             ])
             ->assertSuccessful()
             ->assertSuccessful();
-        $this->assertSame('MALLA-CORREGIDA', $career->fresh()->codigo_malla);
+        $this->assertSame(10, $career->fresh()->cantidad_ciclos_malla);
 
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.sources.update', $source), [
@@ -489,7 +485,6 @@ class SyllabusProcessTest extends TestCase
         $originalScheduledCampus = $scheduledSubject->campus_programacion;
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.academic.update', ['facultad', $faculty->id]), [
-                'code' => $faculty->codigo_facultad,
                 'nombre' => $faculty->nombre,
                 'campus' => CampusLocation::Chimbo->value,
             ])
@@ -515,7 +510,6 @@ class SyllabusProcessTest extends TestCase
         $this->transition($process, 'pausar', 'Corrección institucional autorizada.')->assertSuccessful();
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.academic.update', ['facultad', $faculty->id]), [
-                'code' => $faculty->codigo_facultad,
                 'nombre' => $faculty->nombre,
                 'campus' => CampusLocation::Chimbo->value,
             ])

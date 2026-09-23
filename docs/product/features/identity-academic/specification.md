@@ -43,11 +43,15 @@
   (Centro de Eventos Nacionales e Internacionales), Extensión San Miguel y Sede Chimbo.
   Carreras muestra el campus heredado de su facultad; no hay catálogo, código ni ruta de
   administración de campus.
+- Facultad se identifica por nombre, campus obligatorio y logo opcional; no tiene código.
+  Carrera requiere un código único, nombre, modalidad y cantidad de ciclos; no tiene
+  código de malla (I-107).
 - Cada fila de ADM-04 permite editar sus datos en un `Sheet` y eliminarla únicamente
   cuando no tiene dependencias ni historia. Un proceso institucional abierto congela
   esas acciones hasta que Administración lo pause. La carrera permite cambiar de
-  facultad únicamente hacia otra activa; los códigos conservan unicidad y las fechas de
-  periodo deben mantener un intervalo válido.
+  facultad únicamente hacia otra activa; el código de carrera es obligatorio y único y
+  los códigos de período conservan unicidad. Las fechas de período mantienen un intervalo
+  válido.
 - La actualización se autoriza y valida en servidor, se ejecuta dentro de una transacción
   y registra campos modificados y valores anterior/nuevo en auditoría. Un envío sin cambios
   no inventa un evento.

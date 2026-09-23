@@ -54,7 +54,9 @@ class AcademicStructureTest extends TestCase
         $this->assertFalse(Schema::hasColumn('carreras', 'campus_id'));
         $this->assertTrue(Schema::hasColumn('programaciones_asignatura', 'campus_programacion'));
         $this->assertFalse(Schema::hasColumn('programaciones_asignatura', 'campus_id'));
-        $this->assertTrue(Schema::hasColumn('carreras', 'codigo_malla'));
+        $this->assertFalse(Schema::hasColumn('facultades', 'codigo_facultad'));
+        $this->assertFalse(Schema::hasColumn('carreras', 'codigo_malla'));
+        $this->assertTrue(Schema::hasColumn('carreras', 'codigo_carrera'));
         $this->assertTrue(Schema::hasColumn('carreras', 'cantidad_ciclos_malla'));
         $this->assertTrue(Schema::hasColumn('asignaturas', 'carrera_id'));
         $this->assertTrue(Schema::hasColumn('silabos', 'carrera_id'));
@@ -62,7 +64,7 @@ class AcademicStructureTest extends TestCase
         $this->assertFalse(Schema::hasColumn('silabos', 'malla_id'));
         $this->assertFalse(Schema::hasColumn('paralelos', 'paralelo_activo'));
         $this->assertSame($career->id, $subject->carrera_id);
-        $this->assertSame('MALLA-SW-2024', $career->codigo_malla);
+        $this->assertSame('SOFTWARE', $career->codigo_carrera);
         $this->assertSame(8, $career->cantidad_ciclos_malla);
     }
 
@@ -74,7 +76,6 @@ class AcademicStructureTest extends TestCase
             'facultad_id' => (string) Str::uuid(),
             'codigo_carrera' => 'CARR-SIN-FACULTAD',
             'nombre' => 'Carrera sin facultad',
-            'codigo_malla' => 'PLAN-SIN-FACULTAD',
             'cantidad_ciclos_malla' => 8,
             'activo' => true,
         ]);
@@ -91,12 +92,12 @@ class AcademicStructureTest extends TestCase
 
                 ->where('career.id', $career->id)
                 ->where('curriculum.id', $career->id)
-                ->where('curriculum.code', $career->codigo_malla)
                 ->where('curriculum.cycle_count', $career->cantidad_ciclos_malla)
+                ->missing('curriculum.code')
                 ->has('subjects', 1));
     }
 
-    public function test_administrator_creates_a_career_with_its_fixed_curricular_structure(): void
+    public function test_administrator_creates_a_career_with_required_code_and_cycle_count(): void
     {
         $faculty = Faculty::query()->firstOrFail();
 
@@ -106,28 +107,25 @@ class AcademicStructureTest extends TestCase
                 'modality' => StudyModality::Hibrida->value,
                 'code' => 'CARR-DEMO',
                 'nombre' => 'Carrera de demostración',
-                'curriculum_code' => 'PLAN-DEMO-2026',
                 'cycle_count' => 9,
             ])
             ->assertSuccessful();
 
         $this->assertDatabaseHas('carreras', [
             'codigo_carrera' => 'CARR-DEMO',
-            'codigo_malla' => 'PLAN-DEMO-2026',
             'cantidad_ciclos_malla' => 9,
         ]);
     }
 
-    public function test_administrator_cannot_create_a_career_without_curricular_code_or_cycle_count(): void
+    public function test_administrator_cannot_create_a_career_without_career_code_or_cycle_count(): void
     {
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'carrera'), [
                 'faculty_id' => Faculty::query()->firstOrFail()->id,
                 'modality' => StudyModality::Presencial->value,
-                'code' => 'CARR-INCOMPLETA',
                 'nombre' => 'Carrera incompleta',
             ])
-            ->assertJsonValidationErrors(['curriculum_code', 'cycle_count']);
+            ->assertJsonValidationErrors(['code', 'cycle_count']);
     }
 
     public function test_coordinator_configures_own_career_structure_and_creates_subjects_directly_in_it(): void
@@ -136,7 +134,6 @@ class AcademicStructureTest extends TestCase
 
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
-                'code' => 'PLAN-SW-2027',
                 'cycle_count' => 10,
             ])
             ->assertSuccessful();
@@ -156,7 +153,6 @@ class AcademicStructureTest extends TestCase
 
         $this->assertDatabaseHas('carreras', [
             'id' => $career->id,
-            'codigo_malla' => 'PLAN-SW-2027',
             'cantidad_ciclos_malla' => 10,
         ]);
         $this->assertDatabaseHas('asignaturas', [
@@ -347,7 +343,6 @@ class AcademicStructureTest extends TestCase
     private function createCareer(string $code): Career
     {
         $faculty = Faculty::query()->create([
-            'codigo_facultad' => "FAC-{$code}",
             'nombre' => "Facultad {$code}",
             'campus' => CampusLocation::Matriz,
             'activo' => true,
@@ -358,7 +353,6 @@ class AcademicStructureTest extends TestCase
             'modalidad' => StudyModality::Presencial,
             'codigo_carrera' => $code,
             'nombre' => "Carrera {$code}",
-            'codigo_malla' => "PLAN-{$code}",
             'cantidad_ciclos_malla' => 8,
             'activo' => true,
         ]);

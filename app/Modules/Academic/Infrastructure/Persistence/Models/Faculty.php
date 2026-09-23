@@ -26,7 +26,7 @@ class Faculty extends Model
     protected $table = 'facultades';
 
     /** @var list<string> */
-    protected $fillable = ['codigo_facultad', 'nombre', 'campus', 'logo_objeto_id', 'activo'];
+    protected $fillable = ['nombre', 'campus', 'logo_objeto_id', 'activo'];
 
     /** @return array<string, string> */
     protected function casts(): array

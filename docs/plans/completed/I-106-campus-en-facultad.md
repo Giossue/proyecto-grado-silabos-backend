@@ -2,8 +2,9 @@
 
 ## Estado
 
-Completado localmente el 2026-09-22. La migración `000093` se aplicó a la base local
-`silabos_ueb`; los demás entornos siguen su procedimiento de release.
+Completado el 2026-09-22. La migración `000093` se aplicó a `silabos_ueb` local y a la
+base remota `silabos_ueb_db`, siguiendo el procedimiento de `hardening.md`. Antes del
+cambio remoto se creó una copia cifrada y se validó con `pg_restore -l`.
 
 ## Trazabilidad
 
@@ -31,8 +32,7 @@ pantallas, rutas y claves foráneas dejan de existir.
   de retirar datos si hay cualquier fila de campus ajena a las opciones confirmadas,
   una referencia inválida, una facultad sin carreras con campus o carreras de una misma
   facultad con ubicaciones distintas; primero se concilian esos casos.
-- La migración remota requiere respaldo y comprobación previa según el runbook; este plan
-  no aplica DDL a producción.
+- La migración remota requiere respaldo y comprobación previa según el runbook.
 
 ## Cambios previstos
 
@@ -55,6 +55,15 @@ pantallas, rutas y claves foráneas dejan de existir.
   `campus_id`; se adaptaron los contratos académicos, de logo y de pausa del proceso.
 - Se aplicó la migración local: tabla y FKs anteriores ausentes, columnas nuevas sin
   nulos y el campus de las programaciones existentes conservado.
+- La migración remota `000093` quedó aplicada en `silabos_ueb_db` (lote 59). El estado
+  previo mostraba solo esa migración pendiente; las tablas de facultades, campus,
+  carreras y programaciones estaban vacías. Después se verificaron la ausencia de
+  `campus` y de ambos `campus_id`, las columnas nuevas `NOT NULL`, sus dos restricciones
+  `CHECK`, cero valores nulos y el registro de migración aplicado.
+- El respaldo remoto cifrado quedó fuera del repositorio y se validó mediante listado
+  de `pg_restore` sin guardar una copia en claro.
+- No se reinició ni redesplegó el contenedor desde esta estación. El runbook de Dokploy
+  indica redesplegar o reiniciar tras las migraciones remotas.
 - `composer lint:check`, `npm run typecheck`, `npm run lint` y
   `npm run contract:check` pasaron; el contrato OpenAPI se regeneró sin cambios de rutas.
 - `composer types:check` aún reporta 14 errores en archivos ajenos a este cambio. No se
@@ -80,7 +89,8 @@ pantallas, rutas y claves foráneas dejan de existir.
 
 ## Evidencia de cierre
 
-En `silabos_ueb` la tabla `campus`, `carreras.campus_id` y
-`programaciones_asignatura.campus_id` ya no existen. No quedan campus nulos en
-facultades ni programaciones y la programación existente conserva `Campus Matriz Dr.
-Gabriel Galarza López`. Ninguna base productiva se modificó.
+En `silabos_ueb` y `silabos_ueb_db` la tabla `campus`, `carreras.campus_id` y
+`programaciones_asignatura.campus_id` ya no existen. Ambas columnas nuevas son
+obligatorias y tienen `CHECK` con las cinco opciones. No quedan campus nulos. La base
+remota tenía vacías las tablas académicas afectadas; su copia cifrada previa fue
+validada antes de aplicar el DDL.

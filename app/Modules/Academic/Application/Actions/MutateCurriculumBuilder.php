@@ -27,7 +27,7 @@ class MutateCurriculumBuilder
         private readonly InProgressWork $work,
     ) {}
 
-    /** @param array{code: string, cycle_count: int|string} $data */
+    /** @param array{cycle_count: int|string} $data */
     public function updateConfiguration(
         string $curriculumId,
         array $data,
@@ -46,15 +46,11 @@ class MutateCurriculumBuilder
                 ]);
             }
 
-            $beforeCode = $career->codigo_malla;
             $beforeCycleCount = $career->cantidad_ciclos_malla;
             $career->update([
-                'codigo_malla' => $data['code'],
                 'cantidad_ciclos_malla' => $cycleCount,
             ]);
             $this->record($actor, $role, $request, 'academico.carrera.plan_curricular_actualizado', 'carrera', $career->id, [
-                'before_code' => $beforeCode,
-                'after_code' => $career->codigo_malla,
                 'before_cycle_count' => $beforeCycleCount,
                 'after_cycle_count' => $cycleCount,
             ]);

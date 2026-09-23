@@ -561,7 +561,6 @@ class DocumentOperationsTest extends TestCase
             'facultad_id' => $faculty->id,
             'codigo_carrera' => 'OTRA-CP-F',
             'nombre' => 'Otra carrera CP-F',
-            'codigo_malla' => 'OTRA-MALLA-CP-F',
             'cantidad_ciclos_malla' => 8,
             'activo' => true,
         ]);

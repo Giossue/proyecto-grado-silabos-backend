@@ -45,7 +45,7 @@ class StoreAcademicRecordRequest extends FormRequest
     {
         return match ($this->route('entity')) {
             'facultad' => [
-                ...$this->namedCatalogRules('facultades', 180),
+                'nombre' => ['required', 'string', 'max:180'],
                 'campus' => ['required', Rule::enum(CampusLocation::class)],
                 // Administración puede adelantarlo; Coordinación lo completa desde su Panel.
                 'logo' => ['nullable', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
@@ -54,8 +54,8 @@ class StoreAcademicRecordRequest extends FormRequest
                 'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'id')->where('facultad_activa', true)],
                 // La modalidad la aprueba el CES por carrera; las programaciones la heredan (I-35).
                 'modality' => ['required', 'string', Rule::in(StudyModality::values())],
-                ...$this->namedCatalogRules('carreras', 180),
-                'curriculum_code' => ['required', 'string', 'max:80'],
+                'code' => ['required', 'string', 'max:80', Rule::unique('carreras', 'codigo_carrera')],
+                'nombre' => ['required', 'string', 'max:180'],
                 'cycle_count' => ['required', 'integer', 'min:1', 'max:30'],
             ],
             'periodo' => [
@@ -128,19 +128,6 @@ class StoreAcademicRecordRequest extends FormRequest
             ],
             default => [],
         };
-    }
-
-    /** @return array<string, list<mixed>> */
-    private function namedCatalogRules(string $table, int $nameLength): array
-    {
-        return [
-            'code' => ['nullable', 'string', 'max:80', Rule::unique($table, match ($table) {
-                'facultades' => 'codigo_facultad',
-                'carreras' => 'codigo_carrera',
-                default => throw new \LogicException('Catálogo académico no admitido.'),
-            })],
-            'nombre' => ['required', 'string', "max:{$nameLength}"],
-        ];
     }
 
     private function uniqueWithin(

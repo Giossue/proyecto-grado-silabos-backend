@@ -158,14 +158,21 @@ it('I-81 referencia el logo de facultad como objeto almacenado', function () {
     expect($restricciones)->toContain('facultades_logo_objeto_id_foreign');
 });
 
-it('I-82 guarda la estructura curricular en la carrera sin una entidad mallas', function () {
+it('I-107 guarda ciclos en la carrera y retira códigos de facultad y malla', function () {
     expect(Schema::hasTable('mallas'))->toBeFalse()
-        ->and(Schema::hasColumn('carreras', 'codigo_malla'))->toBeTrue()
+        ->and(Schema::hasColumn('facultades', 'codigo_facultad'))->toBeFalse()
+        ->and(Schema::hasColumn('carreras', 'codigo_malla'))->toBeFalse()
+        ->and(Schema::hasColumn('carreras', 'codigo_carrera'))->toBeTrue()
         ->and(Schema::hasColumn('carreras', 'cantidad_ciclos_malla'))->toBeTrue()
         ->and(Schema::hasColumn('asignaturas', 'carrera_id'))->toBeTrue()
         ->and(Schema::hasColumn('asignaturas', 'malla_id'))->toBeFalse()
         ->and(Schema::hasColumn('silabos', 'carrera_id'))->toBeTrue()
         ->and(Schema::hasColumn('silabos', 'malla_id'))->toBeFalse();
+
+    $careerCode = collect(DB::select(
+        "SELECT is_nullable FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'carreras' AND column_name = 'codigo_carrera'",
+    ))->first();
+    expect($careerCode?->is_nullable)->toBe('NO');
 
     $restricciones = collect(DB::select(
         "SELECT conname

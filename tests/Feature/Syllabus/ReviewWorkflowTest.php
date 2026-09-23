@@ -247,7 +247,6 @@ class ReviewWorkflowTest extends TestCase
             'facultad_id' => Career::query()->firstOrFail()->facultad_id,
             'codigo_carrera' => 'OTRA-CARRERA',
             'nombre' => 'Otra carrera',
-            'codigo_malla' => 'PLAN-OTRA-CARRERA',
             'cantidad_ciclos_malla' => 8,
             'activo' => true,
         ]);

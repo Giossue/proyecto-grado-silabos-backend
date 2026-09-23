@@ -25,7 +25,7 @@ class AcademicContextSnapshot
             ->all();
 
         return [
-            'schema_version' => 2,
+            'schema_version' => 3,
             // La ficha de identificación (I-34) sale de aquí: carrera, facultad y requisitos.
             'career' => [
                 'id' => $career->id,
@@ -36,7 +36,6 @@ class AcademicContextSnapshot
             ],
             'curriculum' => [
                 'id' => $career->id,
-                'code' => $career->codigo_malla,
                 'cycle_count' => $career->cantidad_ciclos_malla,
             ],
             'subject' => [

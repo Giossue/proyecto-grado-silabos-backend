@@ -128,8 +128,9 @@ Fecha de corte: **30 de agosto de 2026**.
   edición conserva valores anterior/nuevo en auditoría.
 - La posición curricular visible de una materia se denomina ciclo; periodo académico
   continúa siendo la ventana temporal con fechas.
-- Cada carrera tiene una sola estructura curricular, configurada por su código y número
-  de ciclos; no existe la entidad, versión ni estado propio `mallas`. El documento de
+- Cada carrera tiene una sola estructura curricular, configurada por su cantidad de
+  ciclos; su `codigo_carrera` es obligatorio y único, no existe código de malla ni la
+  entidad, versión o estado propio `mallas`. El documento de
   Software es una referencia visual, no una plantilla universal; Coordinación edita esa
   estructura mediante constructor y formulario. Los sílabos conservan una fotografía de
   su contexto académico y las revisiones siguen siendo inmutables aunque cambie.
@@ -255,6 +256,13 @@ versiones, activación, desactivación ni agrupación de varias mallas por carre
 `carreras.codigo_malla` y `carreras.cantidad_ciclos_malla` guardan la única estructura
 curricular; `asignaturas.carrera_id` y `silabos.carrera_id` sustituyen sus antiguas
 claves foráneas. El nombre visible **Malla** se conserva solo para el editor curricular.
+
+I-107 (22 de septiembre de 2026), por instrucción explícita del responsable del
+producto, reemplaza los códigos opcionales de facultad y el código obligatorio de malla:
+se elimina `facultades.codigo_facultad` y `carreras.codigo_malla`; `carreras.codigo_carrera`
+es obligatorio y único. La estructura curricular conserva su cantidad de ciclos además
+de las materias y relaciones asociadas. Los sílabos existentes conservan su contexto
+inmutable; los nuevos ya no incluyen código de malla.
 
 I-07 implementa un puerto de lectura, fixture sintético versionado, staging inmutable,
 simulación y exclusión humana. Demuestra idempotencia, conflicto y cero mutación del

@@ -192,7 +192,7 @@ class CareerAcademicStructureController extends Controller
         UpdateCurriculumConfigurationRequest $request,
         MutateCurriculumBuilder $action,
     ): JsonResponse {
-        /** @var array{code: string, cycle_count: int|string} $data */
+        /** @var array{cycle_count: int|string} $data */
         $data = $request->validated();
         $action->updateConfiguration(
             $curriculum,

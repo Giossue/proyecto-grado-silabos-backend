@@ -32,7 +32,6 @@ class UpdateCareerAcademicRecord
 {
     /** @var array<string, string> */
     private const FIELD_LABELS = [
-        'codigo' => 'Código de malla',
         'codigo_asignatura' => 'Código de asignatura',
         'codigo_paralelo' => 'Código de paralelo',
         'nombre' => 'Nombre',

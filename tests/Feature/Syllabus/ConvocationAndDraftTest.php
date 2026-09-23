@@ -71,7 +71,8 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('abierta', $convocation->estado);
         $this->assertSame('sin_iniciar', $syllabus->estado);
         $this->assertSame('Arquitectura de Software', data_get($syllabus->contexto_academico, 'subject.name'));
-        $this->assertSame('MALLA-SW-2024', data_get($syllabus->contexto_academico, 'curriculum.code'));
+        $this->assertSame(8, data_get($syllabus->contexto_academico, 'curriculum.cycle_count'));
+        $this->assertArrayNotHasKey('code', data_get($syllabus->contexto_academico, 'curriculum'));
         $this->assertCount(1, $syllabus->scopes()->get());
         $this->assertCount(1, $syllabus->collaborators()->get());
         $master = $syllabus->values()->where('heredado', true)->firstOrFail();

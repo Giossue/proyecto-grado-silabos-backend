@@ -28,9 +28,8 @@ class DatabaseSeeder extends Seeder
     {
         DB::transaction(function (): void {
             $faculty = Faculty::query()->firstOrCreate(
-                ['codigo_facultad' => 'FICAYA'],
+                ['nombre' => 'Facultad de Ciencias de la Ingeniería'],
                 [
-                    'nombre' => 'Facultad de Ciencias de la Ingeniería',
                     'campus' => CampusLocation::Matriz,
                     'activo' => true,
                 ],
@@ -42,7 +41,6 @@ class DatabaseSeeder extends Seeder
                     'modalidad' => StudyModality::Presencial,
                     'nombre' => 'Software',
                     'activo' => true,
-                    'codigo_malla' => 'MALLA-SW-2024',
                     'cantidad_ciclos_malla' => 8,
                 ],
             );

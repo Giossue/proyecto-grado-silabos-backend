@@ -42,10 +42,9 @@ class AcademicStructureViewData
                 'faculties' => Faculty::query()
                     ->with('logoObject')
                     ->orderBy('nombre')
-                    ->get(['id', 'codigo_facultad', 'nombre', 'campus_facultad', 'logo_objeto_id', 'activo'])
+                    ->get(['id', 'nombre', 'campus_facultad', 'logo_objeto_id', 'activo'])
                     ->map(fn (Faculty $faculty): array => [
                         'id' => $faculty->id,
-                        'codigo_facultad' => $faculty->getAttribute('codigo_facultad'),
                         'nombre' => $faculty->nombre,
                         'campus' => $faculty->campus->value,
                         'activo' => $faculty->activo,
@@ -179,7 +178,6 @@ class AcademicStructureViewData
             ],
             'curriculum' => [
                 'id' => $career->id,
-                'code' => $career->codigo_malla,
                 'cycle_count' => $career->cantidad_ciclos_malla,
                 'editable' => $lockReason === null,
                 'lock_reason' => $lockReason,

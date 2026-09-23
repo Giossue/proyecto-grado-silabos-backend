@@ -19,9 +19,10 @@
   futuro una auditoría automática mediante triggers requiere una decisión y migración
   separadas.
 - tablas/columnas: plural y `snake_case`;
-- los códigos de negocio que se repiten entre entidades se nombran con la entidad que
-  identifican: `codigo_facultad`, `codigo_carrera` y `codigo_asignatura`. El campus no
-  tiene código ni entidad independiente (I-106);
+- los códigos de negocio se nombran con la entidad que identifican:
+  `codigo_carrera`, `codigo_asignatura` y `codigo_periodo_academico`. Facultades se
+  identifican por nombre y campus; el campus no tiene código ni entidad independiente
+  (I-106, I-107);
 - claves primarias internas: UUID generados por aplicación;
 - claves foráneas e índices explícitos;
 - tiempo: `timestamptz` en UTC; la conexión fija `DB_TIMEZONE=UTC` y la conversión a
@@ -88,9 +89,10 @@ persistencia.
 participa en un sílabo, se conserva. Su operatividad se deriva del período y de su
 programación, sin duplicar un booleano individual.
 
-La estructura curricular no es una entidad separada: `carreras.codigo_malla` y
-`carreras.cantidad_ciclos_malla` definen el código y la cantidad de ciclos de la única
-estructura de esa carrera. `asignaturas.carrera_id` las relaciona directamente. Los
+La estructura curricular no es una entidad separada: `carreras.cantidad_ciclos_malla`
+define la cantidad de ciclos de la única estructura de esa carrera. El código obligatorio
+de identidad es `carreras.codigo_carrera`; no existe código de malla.
+`asignaturas.carrera_id` las relaciona directamente. Los
 atributos académicos de `asignaturas` son fijos y tipados: ninguna carrera agrega
 columnas, valores EAV o campos arbitrarios. ACD, APE, AA, créditos y total son un
 conjunto fijo; el total se deriva de ACD + APE + AA.

@@ -33,7 +33,6 @@ class UpdateAcademicRecord
     /** @var array<string, string> */
     private const FIELD_LABELS = [
         'facultad_id' => 'Facultad',
-        'codigo_facultad' => 'Código de facultad',
         'campus_facultad' => 'Campus',
         'codigo_carrera' => 'Código de carrera',
         'codigo_periodo_academico' => 'Código de período',
@@ -46,7 +45,6 @@ class UpdateAcademicRecord
 
     /** @var array<string, string> */
     private const AUDIT_KEYS = [
-        'codigo_facultad' => 'code',
         'campus_facultad' => 'campus',
         'codigo_carrera' => 'code',
         'codigo_periodo_academico' => 'code',
@@ -126,14 +124,13 @@ class UpdateAcademicRecord
     {
         return match ($entity) {
             'facultad' => [
-                'codigo_facultad' => $data['code'] ?? null,
                 'nombre' => $data['nombre'],
                 'campus' => $data['campus'],
             ],
             'carrera' => [
                 'facultad_id' => $data['faculty_id'],
                 'modalidad' => $data['modality'],
-                'codigo_carrera' => $data['code'] ?? null,
+                'codigo_carrera' => $data['code'],
                 'nombre' => $data['nombre'],
             ],
             'periodo' => [

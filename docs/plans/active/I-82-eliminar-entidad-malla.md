@@ -19,7 +19,8 @@ la carrera mediante `carrera_id`.
 
 ## Invariantes
 
-- El código de malla es único y obligatorio por carrera.
+- El código de malla era único y obligatorio por carrera; I-107 reemplaza esa regla y
+  retira el campo.
 - La cantidad de ciclos es obligatoria y está entre 1 y 30.
 - Una asignatura pertenece a una sola carrera; su código es único dentro de ella.
 - Una programación puede usar únicamente una asignatura de la carrera en alcance.
@@ -37,3 +38,4 @@ esquema remoto.
 - Implementación y migración local verificadas el 15 de septiembre de 2026.
 - Pendiente de publicación y despliegue para aplicar la migración remota y actualizar la
   fotografía de producción.
+- I-107 retira `codigo_malla` y conserva la cantidad obligatoria de ciclos.
