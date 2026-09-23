@@ -178,8 +178,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   avance del proceso (% aprobados), días para la entrega, carreras sin convocar y sílabos
   sin iniciar; Coordinación, avance, días, por revisar y sin iniciar; Docencia, sílabos
   por entregar, días, avance de sus borradores y por corregir. Sin conteos de catálogo.
-- El Panel de cada rol abre con «Puesta en marcha»: barra de progreso y los pasos en
-  orden (Administración: facultades, carreras, modalidades, periodo, cuentas,
+- El Panel de cada rol muestra primero sus indicadores y debajo «Puesta en marcha»:
+  barra de progreso y los pasos en orden (Administración: facultades, carreras,
+  modalidades, periodo, cuentas,
   coordinadores, plantilla, proceso; Coordinación: logo de la facultad, malla, materias
   y paralelos, docentes, fuentes, convocatoria; Docencia: recibir, iniciar, enviar). El
   logo se carga en un `Dialog` desde el propio paso, sin opción en el sidebar. Cada paso
