@@ -128,6 +128,7 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.academic.destroy');
             Route::get('admin/processes', [SyllabusProcessController::class, 'index'])->middleware('active-role')->name('api.v1.admin.processes.index');
             Route::post('admin/processes', [SyllabusProcessController::class, 'store'])->middleware('active-role')->name('api.v1.admin.processes.store');
+            Route::post('admin/processes/prepare-and-open', [SyllabusProcessController::class, 'prepareAndOpen'])->middleware('active-role')->name('api.v1.admin.processes.prepare-and-open');
             Route::patch('admin/processes/{process}', [SyllabusProcessController::class, 'update'])->middleware('active-role')->name('api.v1.admin.processes.update');
             Route::post('admin/processes/{process}/deadline', [SyllabusProcessController::class, 'extendDeadline'])->middleware('active-role')->name('api.v1.admin.processes.deadline.extend');
             Route::post('admin/processes/{process}/{transition}', [SyllabusProcessController::class, 'transition'])->middleware('active-role')->whereIn('transition', ['abrir', 'pausar', 'reanudar', 'cerrar'])->name('api.v1.admin.processes.transition');

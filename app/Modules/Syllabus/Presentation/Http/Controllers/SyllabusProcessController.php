@@ -8,6 +8,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Application\Actions\CreateSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\ExtendProcessDeadline;
+use App\Modules\Syllabus\Application\Actions\PrepareAndOpenSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\TransitionSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\UpdateSyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -69,6 +70,19 @@ class SyllabusProcessController extends Controller
         $action->execute($request->processData(), $actor, $request);
 
         return response()->json(['message' => 'Proceso preparado. Ábralo cuando el calendario institucional lo indique.'], 201);
+    }
+
+    public function prepareAndOpen(
+        StoreSyllabusProcessRequest $request,
+        PrepareAndOpenSyllabusProcess $action,
+    ): JsonResponse {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $action->execute($request->processData(), $actor, $request);
+
+        return response()->json([
+            'message' => 'Convocatoria institucional abierta. Las coordinaciones ya pueden iniciar sus convocatorias.',
+        ], 201);
     }
 
     public function update(

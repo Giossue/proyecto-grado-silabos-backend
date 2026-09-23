@@ -21,6 +21,7 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 
 class AcademicStructureViewData
@@ -35,6 +36,9 @@ class AcademicStructureViewData
     public function governance(): array
     {
         $lockReason = $this->locks->institutionalStructureLockReason();
+        $processesByPeriod = SyllabusProcess::query()
+            ->get(['id', 'periodo_academico_id', 'estado'])
+            ->keyBy('periodo_academico_id');
 
         return [
             'lock_reason' => $lockReason,
@@ -74,15 +78,23 @@ class AcademicStructureViewData
                 'periods' => AcademicPeriod::query()
                     ->orderByDesc('fecha_inicio')
                     ->get()
-                    ->map(fn (AcademicPeriod $period) => [
-                        'id' => $period->id,
-                        'code' => $period->codigo,
-                        'starts_on' => $period->fecha_inicio->toDateString(),
-                        'ends_on' => $period->fecha_fin->toDateString(),
-                        'teaching_weeks' => $period->semanas_lectivas,
-                        'status' => $this->periodPlanning->status($period),
-                        'status_label' => $this->periodPlanning->label($period),
-                    ]),
+                    ->map(function (AcademicPeriod $period) use ($processesByPeriod): array {
+                        $process = $processesByPeriod->get($period->id);
+
+                        return [
+                            'id' => $period->id,
+                            'code' => $period->codigo,
+                            'starts_on' => $period->fecha_inicio->toDateString(),
+                            'ends_on' => $period->fecha_fin->toDateString(),
+                            'teaching_weeks' => $period->semanas_lectivas,
+                            'status' => $this->periodPlanning->status($period),
+                            'status_label' => $this->periodPlanning->label($period),
+                            'institutional_process' => $process instanceof SyllabusProcess ? [
+                                'id' => $process->id,
+                                'state' => $process->estado,
+                            ] : null,
+                        ];
+                    }),
             ],
             'options' => [
                 ...$this->emptyOptions(),
