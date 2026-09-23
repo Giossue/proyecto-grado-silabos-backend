@@ -5,8 +5,13 @@ namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 use App\Modules\Configuration\Domain\TableLayout;
 use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
-/** Bloque embebido dentro de `plantilla_silabo.documento_plantilla`. */
+/**
+ * Bloque embebido dentro de `plantilla_silabo.documento_plantilla`.
+ *
+ * @property-read Collection<int, FieldDefinition> $fields
+ */
 final class TemplateBlock implements UrlRoutable
 {
     public string $id;
@@ -148,11 +153,6 @@ final class TemplateBlock implements UrlRoutable
     }
 
     public function resolveChildRouteBinding($childType, $value, $field): mixed
-    {
-        return null;
-    }
-
-    public function resolveSoftDeletableRouteBinding($value, $field = null): mixed
     {
         return null;
     }

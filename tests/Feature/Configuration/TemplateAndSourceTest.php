@@ -57,8 +57,8 @@ class TemplateAndSourceTest extends TestCase
         $this->assertTrue(Schema::hasTable('plantilla_silabo'));
         $this->assertFalse(Schema::hasTable('plantillas_silabo'));
         $this->assertFalse(Schema::hasTable('componentes_plantilla'));
-        $this->assertCount(0, $template->sections()->get());
-        $this->assertCount(0, $template->blocks()->get());
+        $this->assertCount(0, $template->sections());
+        $this->assertCount(0, $template->blocks());
         $this->assertCount(0, $template->fields()->get());
 
         $this->actingAsAdministrator()
@@ -67,7 +67,7 @@ class TemplateAndSourceTest extends TestCase
             ->assertJsonPath('message', 'Formato oficial aplicado.');
 
         $template->refresh();
-        $this->assertCount(12, $template->sections()->get());
+        $this->assertCount(12, $template->sections());
         $this->assertCount(24, $template->fields()->get(), 'Incluye la ficha, las tablas complejas y los campos del PDF de referencia.');
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion_evento_auditoria' => 'plantilla.formateada',
@@ -75,7 +75,7 @@ class TemplateAndSourceTest extends TestCase
         ]);
 
         $evaluation = $template->sections()->where('clave', 'evaluacion')->firstOrFail();
-        $blocks = $evaluation->blocks()->orderBy('posicion')->get();
+        $blocks = $evaluation->blocks()->orderBy('posicion');
         $this->assertSame(['Indicadores de evaluación', 'Escala de valoración', 'Recuperación y aprobación'], $blocks->pluck('titulo')->all());
         $indicators = $blocks->first()->configuracion['table'];
         $this->assertSame(['indicador', 'primer_parcial', 'ponderacion_primer_parcial', 'segundo_parcial', 'ponderacion_segundo_parcial'], array_column($indicators['columns'], 'key'));
@@ -161,7 +161,7 @@ class TemplateAndSourceTest extends TestCase
         $section = $template->fresh()->sections()
             ->where('clave', 'bloque_resultados')
             ->firstOrFail();
-        $blocks = $section->blocks()->with('fields')->orderBy('posicion')->get();
+        $blocks = $section->blocks()->orderBy('posicion');
 
         $this->assertSame(2, $section->posicion);
         $this->assertSame(

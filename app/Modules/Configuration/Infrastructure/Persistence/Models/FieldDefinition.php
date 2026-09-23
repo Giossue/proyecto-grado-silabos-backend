@@ -3,7 +3,6 @@
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use App\Support\Database\MapsLegacyColumnNames;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -25,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property list<mixed>|null $opciones
  * @property string|null $marcador_documento
  * @property int $posicion
+ * @property-read TemplateBlock|null $block
  */
 class FieldDefinition extends Model
 {
@@ -83,17 +83,14 @@ class FieldDefinition extends Model
         return $this->belongsTo(SyllabusTemplate::class, 'plantilla_id');
     }
 
-    /** @return Attribute<TemplateBlock|null, never> */
-    protected function block(): Attribute
+    public function getBlockAttribute(): ?TemplateBlock
     {
-        return Attribute::get(function (): ?TemplateBlock {
-            $template = $this->relationLoaded('template')
-                ? $this->getRelation('template')
-                : $this->template()->first();
+        $template = $this->relationLoaded('template')
+            ? $this->getRelation('template')
+            : $this->template()->first();
 
-            return $template instanceof SyllabusTemplate
-                ? $template->block($this->bloque_plantilla_id)
-                : null;
-        });
+        return $template instanceof SyllabusTemplate
+            ? $template->block($this->bloque_plantilla_id)
+            : null;
     }
 }

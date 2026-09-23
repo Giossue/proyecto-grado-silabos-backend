@@ -228,7 +228,6 @@ final class TemplateDocument
                             }
                             $valid = match ($property) {
                                 'fontFamily' => in_array($value, self::FONTS, true),
-                                'fontSize' => is_string($value) && preg_match('/^(?:[7-9]|[12][0-9]|3[0-6])pt$/D', $value),
                                 'color' => self::color($value),
                             };
                             if (! $valid) {

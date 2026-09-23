@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property int $version_bloqueo
  * @property int $unresolved_observations_count
  * @property array<string, mixed> $contexto_academico
+ * @property CarbonImmutable|null $iniciado_en
  * @property CarbonImmutable|null $guardado_en
  * @property-read Convocation $convocation
  * @property-read Subject $subject

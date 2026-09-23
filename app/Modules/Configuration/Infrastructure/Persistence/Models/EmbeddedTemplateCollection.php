@@ -20,21 +20,11 @@ final class EmbeddedTemplateCollection extends Collection
         return $this->isNotEmpty();
     }
 
-    public function get($key = null, $default = null): mixed
-    {
-        return func_num_args() === 0 ? $this : parent::get($key, $default);
-    }
-
-    public function with($relations): static
-    {
-        return $this;
-    }
-
     public function orderBy(string $key, string $direction = 'asc'): static
     {
         $sorted = $direction === 'desc' ? $this->sortByDesc($key) : $this->sortBy($key);
 
-        return new static($sorted->values()->all());
+        return new self($sorted->values()->all());
     }
 
     public function whereKey(mixed $id): static

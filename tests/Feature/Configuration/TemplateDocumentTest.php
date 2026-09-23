@@ -684,7 +684,7 @@ class TemplateDocumentTest extends TestCase
     public function test_flow_accepts_only_properties_and_never_a_document(): void
     {
         $template = $this->template();
-        $block = $template->sections()->with('blocks')->get()->flatMap->blocks->first(fn ($block) => $block->configuredContentType() === 'flow');
+        $block = $template->sections()->flatMap->blocks->first(fn ($block) => $block->configuredContentType() === 'flow');
         $this->assertNotNull($block);
         $field = $block->fields()->firstOrFail();
         $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);

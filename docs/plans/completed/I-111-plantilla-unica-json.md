@@ -36,15 +36,24 @@ el editor JSON de I-56/I-102 y las fotografías inmutables de cada revisión.
 
 ## Trabajo
 
-- [ ] Migración forward/backfill/down con tabla singleton singular.
-- [ ] Modelo de documento embebido y compatibilidad de campos.
-- [ ] Casos de uso administrativos y lectores de sílabo/IA/documentos.
-- [ ] Pruebas de migración, autorización, edición, snapshots y exportación.
-- [ ] Documentación, esquema productivo, trazabilidad y OpenAPI.
-- [ ] Verificaciones backend/frontend, commit y push.
+- [x] Migración forward/backfill/down con tabla singleton singular.
+- [x] Modelo de documento embebido y compatibilidad de campos.
+- [x] Casos de uso administrativos y lectores de sílabo/IA/documentos.
+- [x] Pruebas de migración, autorización, edición, snapshots y exportación.
+- [x] Documentación, esquema productivo, trazabilidad y OpenAPI.
+- [x] Verificaciones backend/frontend, commit y push.
 
 ## Recuperación
 
 El `down` reconstruye `componentes_plantilla` con los mismos UUID, posiciones y
 configuraciones conservados en el documento JSON. No modifica fotografías de revisiones
 ni respuestas docentes.
+
+## Resultado
+
+- La migración `000094` preserva UUID y contenido al convertir filas a JSONB y al
+  ejecutar su `down`/`up`.
+- PostgreSQL impide definiciones que apunten a un bloque ausente y evita retirar del
+  documento un bloque todavía referenciado.
+- `composer verify`: 304 pruebas, 3.846 aserciones, Pint, PHPStan y escaneo de secretos.
+- SPA: contrato OpenAPI (126 consumidores/129 operaciones), TypeScript y ESLint pasan.

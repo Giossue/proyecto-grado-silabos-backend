@@ -41,7 +41,7 @@ class ReorderTemplateBlocks
                 throw ValidationException::withMessages(['blocks' => 'El orden de bloques no es válido.']);
             }
 
-            $lockedTemplate->reorderBlocks($sectionId, $blockIds);
+            $lockedTemplate->reorderBlocks($sectionId, array_values($blockIds));
 
             $this->audit->execute(
                 actorId: $actor->id,

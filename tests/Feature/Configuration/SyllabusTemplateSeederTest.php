@@ -45,7 +45,7 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->seed(SyllabusTemplateSeeder::class);
 
         $this->assertSame(1, SyllabusTemplate::query()->count());
-        $this->assertCount(12, $template->fresh()->sections()->get());
+        $this->assertCount(12, $template->fresh()->sections());
         $this->assertGreaterThan(0, $template->fresh()->fields()->count());
     }
 }

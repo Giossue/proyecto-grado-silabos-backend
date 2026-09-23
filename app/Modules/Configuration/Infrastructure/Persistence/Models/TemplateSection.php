@@ -4,7 +4,11 @@ namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use Illuminate\Contracts\Routing\UrlRoutable;
 
-/** Sección embebida dentro de `plantilla_silabo.documento_plantilla`. */
+/**
+ * Sección embebida dentro de `plantilla_silabo.documento_plantilla`.
+ *
+ * @property-read EmbeddedTemplateCollection<int, TemplateBlock> $blocks
+ */
 final class TemplateSection implements UrlRoutable
 {
     public string $id;
@@ -82,11 +86,6 @@ final class TemplateSection implements UrlRoutable
     }
 
     public function resolveChildRouteBinding($childType, $value, $field): mixed
-    {
-        return null;
-    }
-
-    public function resolveSoftDeletableRouteBinding($value, $field = null): mixed
     {
         return null;
     }

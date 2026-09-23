@@ -375,7 +375,7 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $sectionPayload)
             ->assertSuccessful()
             ->assertSuccessful();
-        $this->assertSame(13, $template->sections()->count());
+        $this->assertSame(13, $template->fresh()->sections()->count());
         $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.index'))
             ->assertSuccessful();
         $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.show', $template))
@@ -414,7 +414,7 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
         $this->assertDatabaseCount('silabos', 0);
-        $this->assertSame(13, $template->sections()->count());
+        $this->assertSame(13, $template->fresh()->sections()->count());
     }
 
     public function test_changing_the_career_structure_during_a_pause_asks_before_deleting_unsent_syllabi(): void

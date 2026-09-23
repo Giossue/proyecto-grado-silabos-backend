@@ -28,9 +28,11 @@ final class SaveTemplateDocument
 
     public static function fingerprint(TemplateBlock $block): string
     {
-        $block->loadMissing('fields');
-
-        return hash('sha256', json_encode([$block->titulo, $block->configuracion, $block->fields->toArray()], JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode([
+            $block->titulo,
+            $block->configuracion,
+            $block->fields()->get()->toArray(),
+        ], JSON_THROW_ON_ERROR));
     }
 
     /** @param array<string, mixed>|null $document */

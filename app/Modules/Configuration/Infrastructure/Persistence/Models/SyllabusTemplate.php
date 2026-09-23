@@ -96,7 +96,7 @@ class SyllabusTemplate extends Model
 
     public function sectionOrFail(string $id): TemplateSection
     {
-        return $this->section($id) ?? throw (new ModelNotFoundException)->setModel(TemplateSection::class, [$id]);
+        return $this->section($id) ?? throw (new ModelNotFoundException)->setModel(self::class, [$id]);
     }
 
     public function block(string $id): ?TemplateBlock
@@ -106,7 +106,7 @@ class SyllabusTemplate extends Model
 
     public function blockOrFail(string $id): TemplateBlock
     {
-        return $this->block($id) ?? throw (new ModelNotFoundException)->setModel(TemplateBlock::class, [$id]);
+        return $this->block($id) ?? throw (new ModelNotFoundException)->setModel(self::class, [$id]);
     }
 
     /** @param array<string, mixed> $section */
@@ -132,7 +132,7 @@ class SyllabusTemplate extends Model
             }
         }
 
-        throw (new ModelNotFoundException)->setModel(TemplateSection::class, [$sectionId]);
+        throw (new ModelNotFoundException)->setModel(self::class, [$sectionId]);
     }
 
     /** @param array<string, mixed> $attributes */
@@ -148,7 +148,7 @@ class SyllabusTemplate extends Model
             }
         }
 
-        throw (new ModelNotFoundException)->setModel(TemplateSection::class, [$sectionId]);
+        throw (new ModelNotFoundException)->setModel(self::class, [$sectionId]);
     }
 
     /** @param array<string, mixed> $attributes */
@@ -166,7 +166,7 @@ class SyllabusTemplate extends Model
             }
         }
 
-        throw (new ModelNotFoundException)->setModel(TemplateBlock::class, [$blockId]);
+        throw (new ModelNotFoundException)->setModel(self::class, [$blockId]);
     }
 
     public function removeSectionDocument(string $sectionId): void
@@ -212,7 +212,8 @@ class SyllabusTemplate extends Model
             if (($section['id'] ?? null) !== $sectionId) {
                 continue;
             }
-            $byId = collect($section['bloques'])->keyBy('id');
+            $blocks = is_array($section['bloques'] ?? null) ? $section['bloques'] : [];
+            $byId = collect($blocks)->keyBy('id');
             $section['bloques'] = array_map(
                 fn (string $id, int $position): array => [...$byId->get($id), 'posicion' => $position + 1],
                 $blockIds,
@@ -223,7 +224,7 @@ class SyllabusTemplate extends Model
             return;
         }
 
-        throw (new ModelNotFoundException)->setModel(TemplateSection::class, [$sectionId]);
+        throw (new ModelNotFoundException)->setModel(self::class, [$sectionId]);
     }
 
     /** @return array{version_esquema: int, secciones: list<array<string, mixed>>} */
