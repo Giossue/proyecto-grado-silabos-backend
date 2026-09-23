@@ -50,8 +50,9 @@
   cuando no tiene dependencias ni historia. Un proceso institucional abierto congela
   esas acciones hasta que Administración lo pause. La carrera permite cambiar de
   facultad únicamente hacia otra activa; el código de carrera es obligatorio y único y
-  los códigos de período conservan unicidad. Las fechas de período mantienen un intervalo
-  válido.
+  los códigos de período conservan unicidad. Al crear un período, su fecha inicial es hoy
+  en `America/Guayaquil` o una fecha posterior, y la fecha final es igual o posterior a
+  la inicial. La edición conserva la corrección de períodos históricos.
 - La actualización se autoriza y valida en servidor, se ejecuta dentro de una transacción
   y registra campos modificados y valores anterior/nuevo en auditoría. Un envío sin cambios
   no inventa un evento.

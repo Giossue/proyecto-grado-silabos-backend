@@ -12,6 +12,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -130,6 +131,8 @@ class AcademicStructureTest extends TestCase
 
     public function test_administrator_creates_a_period_without_manual_code_or_weeks(): void
     {
+        $this->travelTo(CarbonImmutable::parse('2026-08-16 12:00:00', 'America/Guayaquil'));
+
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'periodo'), [
                 'starts_on' => '2026-08-17',
@@ -155,8 +158,33 @@ class AcademicStructureTest extends TestCase
         $this->assertSame(14, $period->fresh()->semanas_lectivas);
     }
 
+    public function test_period_start_date_must_be_today_or_later(): void
+    {
+        // En Ecuador todavía es 23 de septiembre aunque la aplicación opere en UTC.
+        $this->travelTo(CarbonImmutable::parse('2026-09-24 03:00:00', 'UTC'));
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.academic.store', 'periodo'), [
+                'starts_on' => '2026-09-22',
+                'ends_on' => '2026-12-18',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'starts_on' => 'La fecha de inicio debe ser hoy o una fecha posterior.',
+            ]);
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.academic.store', 'periodo'), [
+                'starts_on' => '2026-09-23',
+                'ends_on' => '2026-12-18',
+            ])
+            ->assertCreated();
+    }
+
     public function test_period_rejects_a_range_longer_than_52_calendar_weeks(): void
     {
+        $this->travelTo(CarbonImmutable::parse('2025-12-31 12:00:00', 'America/Guayaquil'));
+
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'periodo'), [
                 'starts_on' => '2026-01-01',

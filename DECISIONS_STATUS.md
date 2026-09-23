@@ -523,6 +523,11 @@ embebido y PostgreSQL verifica su pertenencia al documento. Cada revisión envia
 continúa guardando su fotografía completa e inmutable. Esta decisión reemplaza la
 persistencia de componentes de I-85, sin cambiar la plantilla única definida en I-32.
 
+I-112 (23 de septiembre de 2026), por instrucción explícita del responsable del
+producto, exige que un período académico nuevo empiece hoy o en una fecha posterior,
+tomando `America/Guayaquil` como día visible. La fecha final permanece igual o posterior
+a la inicial. La regla se aplica al alta y conserva la edición de períodos históricos.
+
 ## Propuesto
 
 I-52, actualización del 6 de septiembre: se retira `calidad` de las asignaciones de

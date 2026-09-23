@@ -61,7 +61,7 @@ class StoreAcademicRecordRequest extends FormRequest
                 'cycle_count' => ['required', 'integer', 'min:1', 'max:30'],
             ],
             'periodo' => [
-                'starts_on' => ['required', 'date'],
+                'starts_on' => ['required', 'date', 'after_or_equal:'.$this->localToday()],
                 'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
             ],
             'asignatura' => $this->subjectRules(),
@@ -123,6 +123,14 @@ class StoreAcademicRecordRequest extends FormRequest
             ],
             default => [],
         };
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'starts_on.after_or_equal' => 'La fecha de inicio debe ser hoy o una fecha posterior.',
+        ];
     }
 
     /** @return array<callable(Validator): void> */
@@ -198,5 +206,10 @@ class StoreAcademicRecordRequest extends FormRequest
     private function careerId(): ?string
     {
         return app(ActiveRole::class)->resolve($this)?->carrera_id;
+    }
+
+    private function localToday(): string
+    {
+        return now((string) config('app.display_timezone'))->toDateString();
     }
 }
