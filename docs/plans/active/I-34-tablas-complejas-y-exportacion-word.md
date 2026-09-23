@@ -75,10 +75,10 @@ defecto de las tablas sin esquema y de las listas.
       doce secciones, las tablas `TablePresets` y la ficha de identificación. La acción
       solo acepta contenedores sin secciones, bloques ni campos.
 - [x] Logos del encabezado (`InstitutionalLogos`): el de la universidad se reemplaza
-      desde la plantilla (`POST admin/plantilla/logo`); desde I-68 el de cada facultad es
-      opcional para Administración al crearla o editarla y obligatorio para Coordinación
-      antes de abrir su convocatoria. Se carga en el paso del Panel, sin entrada de
-      sidebar. PNG sin fondo (regla `TransparentPng`, canal alfa); la medida no se
+      desde la plantilla (`POST admin/plantilla/logo`); desde I-123 solo Administración
+      carga o reemplaza el de cada facultad al crearla o editarla. Puede omitirlo al
+      guardar, pero Coordinación no puede iniciar su convocatoria mientras falte. PNG sin
+      fondo (regla `TransparentPng`, canal alfa); la medida no se
       exige: `InstitutionalLogos::fit` escala conservando la proporción y centra sobre
       lienzo transparente de 1012 × 190 o 600 × 180 (decisión del responsable del
       producto, 2026-09-03: mejor ajustar que rechazar). Se sirven en `logos/institucion` y

@@ -32,8 +32,23 @@ class ApiDashboardTest extends TestCase
             ->assertJsonPath('metrics.0.key', 'pending')
             ->assertJsonPath('setup.title', 'Sus sílabos, paso a paso')
             ->assertJsonCount(3, 'setup.steps')
-            ->assertJsonPath('faculty_logo', null)
+            ->assertJsonMissingPath('faculty_logo')
             ->assertJsonMissingPath('setup.steps.0.href');
+    }
+
+    public function test_coordinator_dashboard_does_not_offer_faculty_logo_management(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
+
+        $this->actingAs($coordinator)
+            ->withSession(['active_role_assignment_id' => $coordinator->roleAssignments()->firstOrFail()->id])
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.dashboard.show'))
+            ->assertOk()
+            ->assertJsonMissingPath('faculty_logo')
+            ->assertJsonMissing(['key' => 'faculty_logo'])
+            ->assertJsonCount(6, 'setup.steps');
     }
 
     public function test_dashboard_requires_an_active_role(): void

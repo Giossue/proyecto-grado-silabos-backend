@@ -6,7 +6,6 @@ use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureCo
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceController;
-use App\Modules\Configuration\Presentation\Http\Controllers\FacultyLogoController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\ActivationController;
@@ -222,8 +221,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.store');
             Route::post('coordination/academic/teachers/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
                 ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.coordination.academic.teachers.activation.resend');
-            Route::post('coordination/faculty-logo', [FacultyLogoController::class, 'store'])
-                ->middleware('active-role')->name('api.v1.coordination.faculty-logo.store');
             Route::post('coordination/academic/prepare-period', [CareerAcademicStructureController::class, 'preparePeriod'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.period.prepare');
             Route::post('coordination/academic/parallels', [CareerAcademicStructureController::class, 'storeParallels'])

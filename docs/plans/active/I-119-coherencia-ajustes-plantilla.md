@@ -38,5 +38,5 @@ variables o de la malla. La IA solo sugiere y el docente decide.
   `test_total_rows_only_accept_numeric_data`,
   `test_administration_decides_whether_the_agent_reads_the_identification_card`.
 - PHPStan sin errores en `AiAssistance`, `Configuration` y `Syllabus/Presentation`,
-  salvo `SaveFacultyLogo.php`, ajeno a este cambio.
+  salvo la antigua acción `SaveFacultyLogo.php`, retirada posteriormente por I-123.
 - SPA: typecheck, 117 pruebas, lint de los archivos tocados y `contract:check`.

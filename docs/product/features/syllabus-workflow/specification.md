@@ -11,7 +11,8 @@
 ## Comportamiento
 
 - El coordinador prepara una convocatoria con periodo, plantilla, fuentes, asignaciones y plazos.
-  Antes de abrirla debe cargar desde el Panel el logo de la facultad de su carrera.
+  Antes de abrirla, el logo de la facultad de su carrera debe haber sido cargado por
+  Administración desde ADM-04.
 - Cada paralelo genera su propio sílabo y `por_paralelo` es la agrupación predeterminada;
   `por_oferta` se conserva como alternativa registrada conforme a DT-11.
 - COR-02 prioriza el listado de convocatorias y abre su formulario de preparación desde una

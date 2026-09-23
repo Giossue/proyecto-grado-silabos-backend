@@ -52,9 +52,10 @@ Fecha de corte: **23 de septiembre de 2026**.
   reciben el título institucional predeterminado.
 - I-68 (10 de septiembre de 2026) fija los dos logos antes del título: la plantilla
   muestra el logo UEB y una muestra de facultad, mientras cada sílabo resuelve el logo de
-  la facultad de su carrera. Administración puede omitirlo al registrar la facultad;
-  Coordinación lo carga desde «Puesta en marcha» de su Panel y no puede abrir la
-  convocatoria hasta que exista. No se añade una opción al menú lateral.
+  la facultad de su carrera. I-123 reemplaza la autoridad de carga definida originalmente:
+  solo Administración puede cargarlo o reemplazarlo desde la gestión de Facultades. Si
+  falta, Coordinación no puede iniciar la convocatoria y debe solicitar la corrección a
+  Administración.
 - I-69 (10 de septiembre de 2026) pagina la hoja por unidades semánticas: una tabla
   puede ocupar varias hojas, se corta entre grupos completos de filas y repite su
   cabecera; los títulos acompañan el inicio del primer campo, pero un bloque con varios
@@ -590,6 +591,13 @@ I-112 (23 de septiembre de 2026), por instrucción explícita del responsable de
 producto, exige que un período académico nuevo empiece hoy o en una fecha posterior,
 tomando `America/Guayaquil` como día visible. La fecha final permanece igual o posterior
 a la inicial. La regla se aplica al alta y conserva la edición de períodos históricos.
+
+I-123 (23 de septiembre de 2026), por corrección explícita del responsable del producto,
+establece que el logo de una facultad es un dato de administración institucional. Solo el
+Administrador puede cargarlo o reemplazarlo al crear o editar la facultad en ADM-04.
+Coordinación deja de tener el paso, diálogo, dato de Panel y endpoint de carga que había
+introducido I-68. La existencia del logo continúa siendo requisito para iniciar el alcance
+de la carrera; si falta, Coordinación recibe una validación que remite a Administración.
 
 ## Propuesto
 

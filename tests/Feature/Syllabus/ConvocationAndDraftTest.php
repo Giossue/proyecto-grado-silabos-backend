@@ -103,7 +103,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.open', $convocation))
             ->assertJsonValidationErrors([
-                'convocation' => 'Cargue el logo de la facultad desde Puesta en marcha del Panel antes de abrir la convocatoria.',
+                'convocation' => 'Administración debe cargar el logo de la facultad antes de que Coordinación abra la convocatoria.',
             ]);
 
         $this->assertSame('preparacion', $convocation->fresh()->estado);

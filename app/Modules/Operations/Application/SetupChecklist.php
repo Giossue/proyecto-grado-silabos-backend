@@ -10,7 +10,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
-use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -30,8 +29,6 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class SetupChecklist
 {
-    public function __construct(private readonly InstitutionalLogos $logos) {}
-
     /**
      * Resumen para el encabezado: cuánto falta según el rol activo.
      *
@@ -68,7 +65,7 @@ class SetupChecklist
             'Puesta en marcha de la institución',
             'En este orden. Cada paso habilita el siguiente; las coordinaciones no pueden empezar hasta que termine.',
             [
-                $this->step('faculties', 'Registrar las facultades', 'Elija el campus de cada facultad; el logo puede completarlo su Coordinación.', Faculty::query()->where('activo', true)->exists(), '/administracion/estructura-academica'),
+                $this->step('faculties', 'Registrar las facultades', 'Elija el campus y, cuando corresponda, cargue el logo de cada facultad.', Faculty::query()->where('activo', true)->exists(), '/administracion/estructura-academica'),
                 $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada.', $careerCount > 0, '/administracion/estructura-academica'),
                 $this->step('periods', 'Registrar el periodo académico', 'El periodo que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists(), '/administracion/estructura-academica'),
                 $this->step('accounts', 'Crear las cuentas de coordinadores y docentes', 'Con su rol; el docente se asigna a paralelos desde Coordinación.', $accounts > 0, '/administracion/usuarios'),
@@ -86,8 +83,7 @@ class SetupChecklist
             return $this->build('Puesta en marcha de la carrera', '', []);
         }
 
-        $career = Career::query()->with(['faculty'])->withCount('subjects')->findOrFail($careerId);
-        $faculty = $career->faculty;
+        $career = Career::query()->withCount('subjects')->findOrFail($careerId);
         $scheduledSubjects = ScheduledSubject::query()->whereHas('subject', fn (Builder $query) => $query->where('carrera_id', $careerId));
         $parallels = Parallel::query()->whereHas('scheduledSubject.subject', fn (Builder $query) => $query->where('carrera_id', $careerId));
         $assignments = TeacherAssignment::query()->where('activo', true)->whereHas('parallel.scheduledSubject.subject', fn (Builder $query) => $query->where('carrera_id', $careerId));
@@ -97,14 +93,6 @@ class SetupChecklist
             'Puesta en marcha de la carrera',
             'En este orden. Al abrir la convocatoria se crea un sílabo por paralelo con su docente.',
             [
-                $this->step(
-                    'faculty_logo',
-                    'Cargar el logo de la facultad',
-                    'Aparecerá junto al logo de la universidad en todos los sílabos de la carrera.',
-                    $this->logos->facultyIsConfigured($faculty),
-                    '/panel',
-                    'faculty_logo',
-                ),
                 $this->step('curriculum', 'Armar la malla con sus materias', 'Ciclos, materias, horas, créditos y prerrequisitos.', $career->subjects_count > 0, '/coordinacion/estructura-academica'),
                 $this->step('scheduled_subjects', 'Programar las materias del período', 'Materia, período y modalidad; el campus viene de la facultad.', (clone $scheduledSubjects)->exists(), '/coordinacion/estructura-academica'),
                 $this->step('parallels', 'Crear los paralelos', 'Desde Materias y paralelos, con su jornada: matutina, vespertina o nocturna.', (clone $parallels)->exists(), '/coordinacion/estructura-academica'),

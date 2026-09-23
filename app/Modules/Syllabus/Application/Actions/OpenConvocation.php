@@ -47,7 +47,7 @@ class OpenConvocation
             }
             if (! $this->logos->facultyIsConfigured($convocation->career->faculty)) {
                 throw ValidationException::withMessages([
-                    'convocation' => 'Cargue el logo de la facultad desde Puesta en marcha del Panel antes de abrir la convocatoria.',
+                    'convocation' => 'Administración debe cargar el logo de la facultad antes de que Coordinación abra la convocatoria.',
                 ]);
             }
             // El calendario lo marca Administración: sin proceso abierto no hay a qué convocar.

@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
-use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\SetupChecklist;
@@ -30,7 +28,6 @@ class DashboardController extends Controller
         ActiveRole $roles,
         SetupChecklist $setup,
         ConvocationSchedule $schedule,
-        InstitutionalLogos $logos,
     ): JsonResponse {
         $activeRole = $roles->resolve($request);
         $user = $request->user();
@@ -52,14 +49,9 @@ class DashboardController extends Controller
             default => null,
         };
 
-        $facultyLogo = $activeRole?->role->codigo_rol === RoleCode::Coordinator->value
-            ? $this->facultyLogo($activeRole->carrera_id, $logos)
-            : null;
-
         $payload = [
             'metrics' => $metrics,
             'setup' => $checklist,
-            'facultyLogo' => $facultyLogo,
         ];
 
         return response()->json($this->apiPayload($payload));
@@ -69,8 +61,8 @@ class DashboardController extends Controller
      * Los enlaces de puesta en marcha pertenecían a las rutas web/Inertia. La SPA recibe
      * solo información de dominio y decide una ruta propia cuando ese módulo exista.
      *
-     * @param  array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null, facultyLogo: array<string, mixed>|null}  $payload
-     * @return array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null, faculty_logo: array<string, mixed>|null}
+     * @param  array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null}  $payload
+     * @return array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null}
      */
     private function apiPayload(array $payload): array
     {
@@ -92,31 +84,6 @@ class DashboardController extends Controller
         return [
             'metrics' => $payload['metrics'],
             'setup' => $setup,
-            'faculty_logo' => $payload['facultyLogo'],
-        ];
-    }
-
-    /** @return array{name: string, current_url: string, configured: bool, size: array{width: int, height: int}}|null */
-    private function facultyLogo(?string $careerId, InstitutionalLogos $logos): ?array
-    {
-        $faculty = is_string($careerId)
-            ? Career::query()->with('faculty')->find($careerId)?->faculty
-            : null;
-
-        if (! $faculty instanceof Faculty) {
-            return null;
-        }
-
-        $path = $logos->facultyPath($faculty);
-
-        return [
-            'name' => $faculty->nombre,
-            'current_url' => route('logos.faculty', [
-                'faculty' => $faculty->id,
-                'v' => $logos->version($path),
-            ]),
-            'configured' => $logos->facultyIsConfigured($faculty),
-            'size' => InstitutionalLogos::FACULTY,
         ];
     }
 

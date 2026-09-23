@@ -111,16 +111,29 @@ class InstitutionalLogosTest extends TestCase
         $this->get(route('logos.faculty', $legacy))->assertOk();
     }
 
-    public function test_coordinator_configures_only_the_faculty_of_the_active_career_from_the_dashboard(): void
+    public function test_only_an_administrator_can_replace_a_faculty_logo(): void
     {
         $faculty = $this->coordinatorContext->career()->firstOrFail()->faculty()->firstOrFail();
         $this->assertNull($faculty->logo_objeto_id);
 
         $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.faculty-logo.store'), [
+            ->patchJson(route('api.v1.admin.academic.update', ['entity' => 'facultad', 'record' => $faculty]), [
+                'nombre' => $faculty->nombre,
+                'campus' => $faculty->campus->value,
                 'logo' => $this->transparentPng(320, 120),
             ])
-            ->assertSuccessful()
+            ->assertForbidden();
+
+        $this->postJson('/api/v1/coordination/faculty-logo', [
+            'logo' => $this->transparentPng(320, 120),
+        ])->assertNotFound();
+
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.academic.update', ['entity' => 'facultad', 'record' => $faculty]), [
+                'nombre' => $faculty->nombre,
+                'campus' => $faculty->campus->value,
+                'logo' => $this->transparentPng(320, 120),
+            ])
             ->assertSuccessful();
 
         $faculty->refresh();
@@ -128,16 +141,10 @@ class InstitutionalLogosTest extends TestCase
         $this->assertStringStartsWith("logos/facultades/{$faculty->id}/", $logo->ruta_interna);
         $this->assertStoredPngHasSize($logo->ruta_interna, 600, 180);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'facultad.logo_actualizado',
+            'accion_evento_auditoria' => 'academico.facultad.actualizacion',
             'recurso_id' => $faculty->id,
-            'asignacion_rol_id' => $this->coordinatorContext->id,
+            'asignacion_rol_id' => $this->administratorContext->id,
         ]);
-
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.coordination.faculty-logo.store'), [
-                'logo' => $this->transparentPng(320, 120),
-            ])
-            ->assertClientError();
     }
 
     /** El archivo guardado tiene la medida fija y conserva el canal alfa (tipo de color 6). */

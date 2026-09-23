@@ -30,10 +30,10 @@ comprueba la fila antes/después de iniciar y los filtros por estado de carrera;
 `ConvocationActions` conserva las validaciones del
 inicio atómico y las acciones de seguimiento, pausa y reanudación.
 
-I-68 — RF-017..045, RN-009..024, CU-04/06/07, ADM-04/06 y COR-01/02:
-`InstitutionalLogosTest` verifica el alta administrativa opcional, la carga de
-Coordinación limitada a la facultad de su carrera y el archivo normalizado;
-`DashboardMetricsTest` fija el paso modal sin navegación lateral;
+I-68/I-123 — RF-008..045, RN-005..024, CU-03/04/06/07, ADM-04/06 y COR-01/02:
+`InstitutionalLogosTest` verifica el alta administrativa opcional, el reemplazo exclusivo
+por Administración, el rechazo a Coordinación y el archivo normalizado;
+`ApiDashboardTest` comprueba que el Panel de Coordinación no exponga gestión del logo;
 `ConvocationAndDraftTest` comprueba que no se abra ni se creen sílabos sin logo; y
 `TemplateAndSourceTest` conserva ambos logos antes del título en la proyección.
 

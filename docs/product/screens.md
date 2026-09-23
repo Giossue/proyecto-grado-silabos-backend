@@ -185,9 +185,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 - El Panel de cada rol muestra primero sus indicadores y debajo «Puesta en marcha»:
   barra de progreso y los pasos en orden (Administración: facultades, carreras,
   modalidades, periodo, cuentas,
-  coordinadores, plantilla, proceso; Coordinación: logo de la facultad, malla, materias
-  y paralelos, docentes, fuentes, convocatoria; Docencia: recibir, iniciar, enviar). El
-  logo se carga en un `Dialog` desde el propio paso, sin opción en el sidebar. Cada paso
+  coordinadores, plantilla, proceso; Coordinación: malla, materias y paralelos, docentes,
+  fuentes, convocatoria; Docencia: recibir, iniciar, enviar). Cada paso
   se calcula con datos reales; el siguiente lleva su botón y la tarjeta desaparece al
   completarse. Administración conserva «Panel» en el sidebar; Coordinación y Docencia
   conservan la pantalla y el checklist, pero no tienen esa entrada lateral ni un atajo
@@ -197,9 +196,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 - Encabezado del sílabo: logo de la universidad a la izquierda y logo de la facultad de la
   carrera a la derecha, dentro del ancho útil de los márgenes y antes del bloque de título.
   Administración reemplaza el logo institucional desde la hoja «Personalizar plantilla»
-  de ADM-06 y puede cargar el logo de facultad al
-  crearla o editarla, pero es opcional en ADM-04. Si falta, Coordinación debe cargarlo
-  desde «Puesta en marcha» del Panel antes de abrir su convocatoria. ADM-04 solo muestra
+  de ADM-06 y es la única que puede cargar o reemplazar el logo de facultad al
+  crearla o editarla en ADM-04. El archivo es opcional al guardar la facultad, pero debe
+  existir antes de que Coordinación inicie su convocatoria. Si falta, la validación remite
+  a Administración. ADM-04 solo muestra
   una vista previa al editar cuando la facultad tiene un logo propio. Ambos son PNG sin
   fondo; el sistema los ajusta a la medida fija (universidad 1012 × 190 px, facultad
   600 × 180 px) conservando la proporción y centrando sobre transparente. La plantilla

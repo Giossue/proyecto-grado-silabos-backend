@@ -24,6 +24,7 @@ el permiso, pero no lo sustituyen.
 | Crear/incorporar docentes (I-54) y reenviar su invitación pendiente | Sí, sin cambios | Solo rol Docente pendiente de su carrera activa | No |
 | Corregir nombre o correo de una cuenta | Sí | No | No |
 | Crear, editar y eliminar sin dependencias facultades, carreras y catálogos globales | Sí | Consulta de alcance | Consulta asignada |
+| Cargar o reemplazar el logo de una facultad (I-123) | Sí, desde Facultades | No | No |
 | Asignar coordinación a una carrera | Sí | No | No |
 | Gestionar mallas y materias | No por defecto | Sí, en su carrera, salvo con convocatoria en curso | Consulta asignada |
 | Gestionar materias programadas y paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta asignada |

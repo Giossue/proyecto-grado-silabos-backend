@@ -13,8 +13,8 @@ objeto anterior ni inventa sus metadatos; la facultad solo cambia su referencia 
 ## Trazabilidad
 
 - RN-001: archivos privados y autorizados.
-- ADM-04 / COR-01: registro y puesta en marcha de logo de facultad.
-- I-68: logo de facultad previo al título del sílabo.
+- ADM-04: carga y reemplazo administrativo del logo de facultad.
+- I-68/I-123: logo previo al título del sílabo y gestión exclusiva de Administración.
 
 ## Migración y recuperación
 
