@@ -47,8 +47,8 @@
   Carrera requiere un código único, nombre, modalidad y cantidad de ciclos; no tiene
   código de malla (I-107).
 - Cada fila de ADM-04 permite editar sus datos en un `Sheet` y eliminarla únicamente
-  cuando no tiene dependencias ni historia. Un proceso institucional abierto congela
-  esas acciones hasta que Administración lo pause. La carrera permite cambiar de
+  cuando no tiene dependencias ni historia. Un proceso institucional abierto no congela
+  estas acciones administrativas. La carrera permite cambiar de
   facultad únicamente hacia otra activa; el código de carrera es obligatorio y único y
   los códigos de período conservan unicidad. Al crear un período, su fecha inicial es hoy
   en `America/Guayaquil` o una fecha posterior, y la fecha final es igual o posterior a

@@ -53,9 +53,6 @@ class CreateAcademicRecord
         if (! $activeRole instanceof RoleAssignment || ! AcademicStructurePermissions::mayCreate($activeRole, $entity)) {
             throw new AuthorizationException('No puede gestionar este tipo de registro con el rol activo.');
         }
-        if (AcademicStructurePermissions::isGovernanceContext($activeRole)) {
-            $this->locks->assertInstitutionalStructureEditable();
-        }
         // Una convocatoria en curso ya fijó sus materias programadas, paralelos y colaboradores. El
         // relevo docente es la única excepción y usa su propio caso de uso atómico.
         if (AcademicStructurePermissions::isCareerContext($activeRole)) {

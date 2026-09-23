@@ -35,13 +35,12 @@ class AcademicStructureViewData
     /** @return array<string, mixed> */
     public function governance(): array
     {
-        $lockReason = $this->locks->institutionalStructureLockReason();
         $processesByPeriod = SyllabusProcess::query()
             ->get(['id', 'periodo_academico_id', 'estado'])
             ->keyBy('periodo_academico_id');
 
         return [
-            'lock_reason' => $lockReason,
+            'lock_reason' => null,
             'catalogs' => [
                 'faculties' => Faculty::query()
                     ->with('logoObject')

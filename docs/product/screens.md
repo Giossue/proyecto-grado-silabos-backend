@@ -345,12 +345,15 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   cerradas, y el seguimiento de expedientes se consulta en un `Sheet` lateral dentro de cada convocatoria. No tiene
   aviso ni botón de alta independientes. El menú de tres puntos de cada fila reúne iniciar,
   ver seguimiento, pausar y reanudar, con el mismo diálogo de
-  confirmación que ADM-12; COR-04 es solo seguimiento y avisa cuando la convocatoria o
+  confirmación que ADM-12. ADM-12 no muestra un aviso de edición bloqueada porque desde
+  esa misma pantalla se pausa, reanuda o cierra el proceso. COR-04 es solo seguimiento y
+  avisa cuando la convocatoria o
   el proceso institucional están en pausa o cerrados. ADM-05,
   ADM-06, COR-11 y COR-13 muestran un aviso con la razón del bloqueo y ocultan las
   acciones de edición mientras dure; el servidor rechaza igual aunque se fuerce la
-  petición. I-44 extiende ese candado a catálogos institucionales, programaciones, paralelos y
-  asignaciones genéricas: solo el relevo docente sigue disponible durante la convocatoria.
+  petición. I-44 limita ese candado a la plantilla institucional y, por carrera, a la
+  malla, fuentes, programaciones, paralelos y asignaciones genéricas. Facultades, carreras,
+  períodos, cuentas y roles continúan administrables durante el proceso abierto.
 - El menú de acciones de ADM-04 distingue edición y eliminación: **Editar** abre un
   `Sheet` precargado; **Eliminar** pide confirmación y explica si una dependencia o
   historial institucional protege el registro.

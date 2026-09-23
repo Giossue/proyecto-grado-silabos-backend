@@ -10,10 +10,9 @@ use Illuminate\Validation\ValidationException;
  * Qué se congela mientras el trabajo docente avanza.
  *
  * Con el proceso institucional abierto, la plantilla no cambia: los docentes están
- * llenando ese formato. Con una convocatoria en curso, la malla y las fuentes de esa
- * carrera no cambian: los sílabos se apoyan en ellas. Para editar, primero se pausa —
- * Administración el proceso, Coordinación su convocatoria— y el bloqueo se levanta solo
- * en ese alcance.
+ * llenando ese formato. Los catálogos institucionales y las cuentas siguen operativos.
+ * Con una convocatoria en curso, la malla y las fuentes de esa carrera no cambian: los
+ * sílabos se apoyan en ellas. Para editar esas bases se pausa el alcance correspondiente.
  *
  * Las razones se devuelven como texto para que la interfaz explique el bloqueo con las
  * mismas palabras con las que el servidor lo rechaza.
@@ -45,30 +44,6 @@ class ProcessLocks
         if ($reason !== null) {
             throw ValidationException::withMessages(['process' => $reason]);
         }
-    }
-
-    /**
-     * Los catálogos institucionales también quedan congelados mientras la universidad
-     * trabaja con un proceso abierto. Sus cambios no deben aparecer a mitad del ciclo.
-     * Al pausar el proceso, Administración vuelve a tener el espacio de corrección.
-     */
-    public function assertInstitutionalStructureEditable(): void
-    {
-        $reason = $this->institutionalStructureLockReason();
-
-        if ($reason !== null) {
-            throw ValidationException::withMessages(['process' => $reason]);
-        }
-    }
-
-    public function institutionalStructureLockReason(): ?string
-    {
-        $process = SyllabusProcess::query()
-            ->where('estado', SyllabusProcess::STATE_OPEN)
-            ->with('academicPeriod:id,codigo')
-            ->first(['id', 'periodo_academico_id']);
-
-        return $process === null ? null : self::PROCESS_LOCK_REASON;
     }
 
     public function careerLockReason(?string $careerId): ?string

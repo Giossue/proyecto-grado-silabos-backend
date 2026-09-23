@@ -122,7 +122,8 @@ La selección queda congelada al iniciar el alcance y no se amplía al reanudarl
 
 Una convocatoria está **en curso** cuando ella está abierta y su proceso también. Esa
 condición habilita a los docentes y, por lo mismo, congela lo que sostiene su trabajo:
-con el proceso abierto no se edita la plantilla ni la estructura institucional; con una
+con el proceso abierto no se edita la plantilla; los catálogos institucionales, cuentas
+y roles continúan administrables. Con una
 convocatoria en curso no se edita la estructura curricular, las fuentes, programaciones, paralelos ni asignaciones
 genéricas de esa carrera. En un período que aún no finaliza, el relevo docente es la
 única excepción, porque traslada de forma atómica la responsabilidad y el historial.

@@ -49,7 +49,6 @@ class DeleteAcademicRecord
             if (! in_array($entity, ['facultad', 'carrera', 'periodo'], true)) {
                 throw new AuthorizationException('Este registro no pertenece a la estructura institucional.');
             }
-            $this->locks->assertInstitutionalStructureEditable();
         } elseif (AcademicStructurePermissions::isCareerContext($role) && $role->carrera_id !== null) {
             if (! in_array($entity, ['paralelo', 'asignacion_docente'], true)) {
                 throw new AuthorizationException('Este registro no admite eliminación desde Coordinación.');

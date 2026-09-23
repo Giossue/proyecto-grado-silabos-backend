@@ -62,9 +62,6 @@ class SetAcademicRecordStatus
         if (! $activeRole instanceof RoleAssignment || ! AcademicStructurePermissions::mayChangeStatus($activeRole, $entity)) {
             throw new AuthorizationException('No puede cambiar este registro con el rol activo.');
         }
-        if (AcademicStructurePermissions::isGovernanceContext($activeRole)) {
-            $this->locks->assertInstitutionalStructureEditable();
-        }
         if (AcademicStructurePermissions::isCareerContext($activeRole)) {
             $this->locks->assertCareerEditable($activeRole->carrera_id);
         }

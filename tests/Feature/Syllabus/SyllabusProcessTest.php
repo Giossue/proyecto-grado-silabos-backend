@@ -505,7 +505,7 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame('abierta', $convocation->fresh()->estado);
     }
 
-    public function test_an_open_cycle_freezes_every_structure_change_until_its_scope_is_paused(): void
+    public function test_an_open_cycle_only_freezes_the_template_and_the_active_careers_structure(): void
     {
         $convocation = $this->openedConvocation();
         $scheduledSubject = ScheduledSubject::query()->firstOrFail();
@@ -520,7 +520,14 @@ class SyllabusProcessTest extends TestCase
             ])
             ->assertJsonValidationErrors('process');
 
-        // El proceso abierto también protege el campus obligatorio de la facultad.
+        // El proceso institucional abierto no congela los catálogos administrativos.
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
+                'nombre' => 'Facultad creada durante el proceso',
+                'campus' => CampusLocation::Laguacoto->value,
+            ])
+            ->assertCreated();
+
         $faculty = Faculty::query()->findOrFail($scheduledSubject->subject->career->facultad_id);
         $originalScheduledCampus = $scheduledSubject->campus_programacion;
         $this->actingAsAdministrator()
@@ -528,8 +535,9 @@ class SyllabusProcessTest extends TestCase
                 'nombre' => $faculty->nombre,
                 'campus' => CampusLocation::Chimbo->value,
             ])
-            ->assertJsonValidationErrors('process');
-        $this->assertSame(CampusLocation::Matriz, $faculty->fresh()->campus);
+            ->assertSuccessful();
+        $this->assertSame(CampusLocation::Chimbo, $faculty->fresh()->campus);
+        $this->assertSame($originalScheduledCampus, $scheduledSubject->fresh()->campus_programacion);
 
         // Pausar solo la convocatoria libera exclusivamente a esa carrera.
         $this->actingAsCoordinator()
@@ -544,19 +552,6 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
 
-        // La estructura institucional sigue congelada hasta que Administración pause
-        // su proceso global.
-        $process = $convocation->process()->firstOrFail();
-        $this->transition($process, 'pausar', 'Corrección institucional autorizada.')->assertSuccessful();
-        $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.academic.update', ['facultad', $faculty->id]), [
-                'nombre' => $faculty->nombre,
-                'campus' => CampusLocation::Chimbo->value,
-            ])
-            ->assertSuccessful()
-            ->assertSuccessful();
-        $this->assertSame(CampusLocation::Chimbo, $faculty->fresh()->campus);
-        $this->assertSame($originalScheduledCampus, $scheduledSubject->fresh()->campus_programacion);
     }
 
     public function test_teachers_stop_working_while_the_career_or_the_institution_is_paused(): void

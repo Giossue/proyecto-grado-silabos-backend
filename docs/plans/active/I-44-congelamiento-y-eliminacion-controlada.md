@@ -11,10 +11,11 @@ ADM-04, ADM-12, COR-02, COR-03, COR-11, COR-13, COR-14, COR-15.
 
 ## Decisión del responsable del producto
 
-Mientras el proceso institucional y la convocatoria de una carrera están abiertos,
-la configuración que sostiene los sílabos queda congelada. Administración solo puede
-gestionar operación personal imprescindible; Coordinación solo puede aplicar el relevo
-controlado de docentes. Para cambiar la base se pausa el alcance correspondiente. Los
+Mientras el proceso institucional está abierto, solo la plantilla queda congelada;
+facultades, carreras, períodos, cuentas y roles continúan administrables. Cuando la
+convocatoria de una carrera está abierta, su malla, fuentes, programaciones, paralelos y
+asignaciones quedan congelados, salvo el relevo controlado de docentes. Para cambiar esa
+base se pausa el alcance correspondiente. Los
 cambios estructurales entonces muestran el impacto y eliminan, solo tras confirmación,
 los sílabos sin envío ni evidencia de IA. Revisiones, aprobaciones, auditoría y evidencia
 de IA nunca se eliminan.
@@ -26,7 +27,7 @@ de vigencia, no un archivo ni un borrado histórico.
 
 ## Pasos
 
-- [x] Congelar en servidor la estructura institucional y de carrera durante una convocatoria en curso.
+- [x] Congelar la plantilla con el proceso abierto y la estructura de carrera durante su convocatoria.
 - [x] Mantener el relevo docente como la única modificación operativa controlada.
 - [x] Reemplazar acciones visibles de archivo por eliminación o por estados de vigencia claros.
 - [x] Cubrir límites, confirmaciones, auditoría y regresiones con pruebas.
