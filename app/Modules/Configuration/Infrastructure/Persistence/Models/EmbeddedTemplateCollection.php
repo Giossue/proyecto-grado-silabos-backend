@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
  *
  * @template TKey of array-key
  * @template TValue
+ *
  * @extends Collection<TKey, TValue>
  */
 final class EmbeddedTemplateCollection extends Collection
@@ -19,19 +20,16 @@ final class EmbeddedTemplateCollection extends Collection
         return $this->isNotEmpty();
     }
 
-    /** @return static */
-    public function get($columns = ['*']): static
+    public function get($key = null, $default = null): mixed
     {
-        return $this;
+        return func_num_args() === 0 ? $this : parent::get($key, $default);
     }
 
-    /** @return static */
     public function with($relations): static
     {
         return $this;
     }
 
-    /** @return static */
     public function orderBy(string $key, string $direction = 'asc'): static
     {
         $sorted = $direction === 'desc' ? $this->sortByDesc($key) : $this->sortBy($key);
@@ -39,7 +37,6 @@ final class EmbeddedTemplateCollection extends Collection
         return new static($sorted->values()->all());
     }
 
-    /** @return static */
     public function whereKey(mixed $id): static
     {
         return $this->where('id', $id);

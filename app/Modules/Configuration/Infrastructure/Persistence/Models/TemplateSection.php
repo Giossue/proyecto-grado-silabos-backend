@@ -81,6 +81,11 @@ final class TemplateSection implements UrlRoutable
         return null;
     }
 
+    public function resolveChildRouteBinding($childType, $value, $field): mixed
+    {
+        return null;
+    }
+
     public function resolveSoftDeletableRouteBinding($value, $field = null): mixed
     {
         return null;

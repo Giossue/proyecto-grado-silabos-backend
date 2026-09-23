@@ -18,7 +18,7 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->seed(SyllabusTemplateSeeder::class);
-        $template = SyllabusTemplate::query()->with('sections.blocks.fields')->firstOrFail();
+        $template = SyllabusTemplate::query()->firstOrFail();
         $sectionCount = $template->sections->count();
         $blockCount = $template->blocks()->count();
         $fieldCount = $template->fields()->count();

@@ -40,12 +40,14 @@ return new class extends Migration
             )
             SQL);
 
+        $this->createDocumentIntegrityTriggers();
         $this->createRevisionTriggers('plantilla_silabo');
     }
 
     public function down(): void
     {
         $this->dropRevisionTriggers('plantilla_silabo');
+        $this->dropDocumentIntegrityTriggers();
         DB::statement('ALTER TABLE plantilla_silabo DROP CONSTRAINT IF EXISTS plantilla_silabo_documento_check');
         Schema::rename('plantilla_silabo', 'plantillas_silabo');
         DB::statement('ALTER INDEX IF EXISTS plantilla_silabo_unica RENAME TO plantillas_silabo_unica');
@@ -201,6 +203,68 @@ return new class extends Migration
         DB::unprepared(<<<'SQL'
             DROP FUNCTION IF EXISTS tocar_revision_configuracion_plantilla_directa();
             DROP FUNCTION IF EXISTS tocar_revision_configuracion_plantilla();
+            SQL);
+    }
+
+    private function createDocumentIntegrityTriggers(): void
+    {
+        DB::unprepared(<<<'SQL'
+            CREATE OR REPLACE FUNCTION validar_bloque_definicion_campo()
+            RETURNS trigger AS $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM plantilla_silabo p
+                    CROSS JOIN LATERAL jsonb_array_elements(p.documento_plantilla->'secciones') seccion
+                    CROSS JOIN LATERAL jsonb_array_elements(seccion->'bloques') bloque
+                    WHERE p.id = NEW.plantilla_id
+                      AND bloque->>'id' = NEW.bloque_plantilla_id::text
+                ) THEN
+                    RAISE EXCEPTION 'El bloque % no pertenece a la plantilla %', NEW.bloque_plantilla_id, NEW.plantilla_id
+                        USING ERRCODE = 'foreign_key_violation';
+                END IF;
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+
+            CREATE TRIGGER validar_bloque_definicion_campo
+            BEFORE INSERT OR UPDATE OF plantilla_id, bloque_plantilla_id ON definiciones_campo
+            FOR EACH ROW EXECUTE FUNCTION validar_bloque_definicion_campo();
+
+            CREATE OR REPLACE FUNCTION validar_bloques_documento_plantilla()
+            RETURNS trigger AS $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM definiciones_campo campo
+                    WHERE campo.plantilla_id = NEW.id
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM jsonb_array_elements(NEW.documento_plantilla->'secciones') seccion
+                          CROSS JOIN LATERAL jsonb_array_elements(seccion->'bloques') bloque
+                          WHERE bloque->>'id' = campo.bloque_plantilla_id::text
+                      )
+                ) THEN
+                    RAISE EXCEPTION 'El documento no contiene todos los bloques referenciados por sus campos'
+                        USING ERRCODE = 'foreign_key_violation';
+                END IF;
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
+
+            CREATE TRIGGER validar_bloques_documento_plantilla
+            BEFORE UPDATE OF documento_plantilla ON plantilla_silabo
+            FOR EACH ROW EXECUTE FUNCTION validar_bloques_documento_plantilla();
+            SQL);
+    }
+
+    private function dropDocumentIntegrityTriggers(): void
+    {
+        DB::statement('DROP TRIGGER IF EXISTS validar_bloque_definicion_campo ON definiciones_campo');
+        DB::statement('DROP TRIGGER IF EXISTS validar_bloques_documento_plantilla ON plantilla_silabo');
+        DB::unprepared(<<<'SQL'
+            DROP FUNCTION IF EXISTS validar_bloque_definicion_campo();
+            DROP FUNCTION IF EXISTS validar_bloques_documento_plantilla();
             SQL);
     }
 

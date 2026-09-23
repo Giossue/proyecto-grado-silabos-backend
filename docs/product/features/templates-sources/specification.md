@@ -11,17 +11,15 @@
 
 - La UEB mantiene una sola plantilla institucional de sílabo, común a todas las carreras.
   La carrera se fija en la convocatoria y en sus fuentes académicas, no en la estructura
-  del documento. Solo sus versiones publicadas pueden seleccionarse para convocatorias
-  nuevas.
+  del documento. No existen catálogo, versiones ni publicación de plantillas.
 - Una plantilla borrador se compone de bloques y campos tipados. En la interfaz, un
   **bloque** es una parte principal del documento (por ejemplo, «Evaluación») y un
   **campo** es un contenido dentro de ese bloque (por ejemplo, «Criterios de
   evaluación»). Las entidades de persistencia conservan su estructura interna sin
   exponerla a quien configura la plantilla.
 - Las definiciones dinámicas nunca crean o eliminan tablas físicas.
-- La previsualización usa datos de prueba antes de publicar.
-- Publicar crea una versión inmutable con identidad y vigencia.
-- Clonar crea otra identidad; desactivar solo impide usos futuros.
+- La previsualización usa datos de prueba. Cada revisión enviada conserva una fotografía
+  inmutable del documento, sus campos y valores.
 - Una fuente académica es un documento de la Coordinación de la carrera (I-95): nombre,
   descripción y contenido JSON estructurado. No tiene versiones ni conflictos; sus
   fragmentos de búsqueda son un índice derivado, y Administración no participa.
@@ -59,16 +57,14 @@
 - En ADM-05 y COR-11, el listado es la vista inicial y la creación se abre desde
   una acción principal en un panel lateral derecho; los errores permanecen visibles
   hasta corregirse y el panel solo se cierra después de una respuesta exitosa.
-- I-59 deja ADM-06 como una hoja vacía sin constructor, bloques, campos, tablas ni
-  personalización. La ruta no serializa esas estructuras. La persistencia anterior se
-  conserva para no alterar sílabos o revisiones existentes mientras se define el nuevo
-  modelo de edición. COR-11 mantiene su editor independiente.
+- ADM-06 edita la única plantilla mediante un constructor visual. Su composición se
+  guarda en `plantilla_silabo.documento_plantilla`; las definiciones de campo permanecen
+  en `definiciones_campo` y conservan los UUID de sus bloques embebidos (I-111).
 
 ## Criterios críticos
 
-- No se publica una plantilla con marcador DOCX obligatorio sin mapeo.
-- Un sílabo histórico sigue renderizando aunque la plantilla se desactive.
+- No se abre un proceso con marcador DOCX obligatorio sin mapeo.
+- Un sílabo histórico sigue renderizando después de editar la plantilla viva.
 - La evidencia de IA nunca usa una fuente inactiva ni ajena a la convocatoria.
-- Modificar una versión publicada de plantilla falla en servidor, aunque se fuerce la
-  petición.
+- Modificar la plantilla con un proceso institucional abierto falla en servidor.
 - Solo la Coordinación de la carrera crea o edita sus fuentes; otro rol recibe 403.

@@ -5,10 +5,10 @@ namespace Tests\Feature\AiAssistance;
 use App\Models\User;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class CareerAiConfigurationTest extends TestCase
@@ -66,12 +66,13 @@ class CareerAiConfigurationTest extends TestCase
     private function field(bool $configurable): array
     {
         $template = SyllabusTemplate::query()->create(['nombre' => 'Plantilla IA', 'activo' => true]);
-        $section = TemplateSection::query()->create([
-            'plantilla_id' => $template->id, 'clave' => 'ia_test', 'titulo' => 'IA', 'posicion' => 999,
+        $section = $template->appendSection([
+            'id' => (string) Str::uuid(), 'clave' => 'ia_test', 'titulo' => 'IA',
+            'descripcion' => null, 'posicion' => 999, 'bloques' => [],
         ]);
-        $block = TemplateBlock::query()->create([
-            'plantilla_id' => $template->id, 'seccion_plantilla_id' => $section->id,
-            'clave' => 'ia_test', 'tipo' => 'campos', 'titulo' => 'IA', 'posicion' => 1,
+        $block = $template->appendBlock($section->id, [
+            'id' => (string) Str::uuid(), 'clave' => 'ia_test', 'tipo' => 'campos',
+            'titulo' => 'IA', 'configuracion' => [], 'posicion' => 1,
         ]);
         $field = FieldDefinition::query()->create([
             'plantilla_id' => $template->id, 'bloque_plantilla_id' => $block->id,

@@ -29,8 +29,6 @@ use App\Modules\AiAssistance\Infrastructure\Persistence\Models\SyllabusAiReview;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
@@ -789,18 +787,20 @@ class AiAssistanceTest extends TestCase
             'nombre' => 'Plantilla IA',
             'activo' => true,
         ]);
-        $section = TemplateSection::query()->create([
-            'plantilla_id' => $templateVersion->id,
+        $section = $templateVersion->appendSection([
+            'id' => (string) Str::uuid(),
             'clave' => 'objetivos',
             'titulo' => 'Objetivos',
+            'descripcion' => null,
             'posicion' => 1,
+            'bloques' => [],
         ]);
-        $block = TemplateBlock::query()->create([
-            'plantilla_id' => $templateVersion->id,
-            'seccion_plantilla_id' => $section->id,
+        $block = $templateVersion->appendBlock($section->id, [
+            'id' => (string) Str::uuid(),
             'clave' => 'objetivo-general',
             'tipo' => 'narrativa',
             'titulo' => 'Objetivo general',
+            'configuracion' => [],
             'posicion' => 1,
         ]);
         $field = FieldDefinition::query()->create([

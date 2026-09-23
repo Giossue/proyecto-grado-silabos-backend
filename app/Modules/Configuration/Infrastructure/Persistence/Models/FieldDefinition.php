@@ -3,9 +3,9 @@
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use App\Support\Database\MapsLegacyColumnNames;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**

@@ -9,12 +9,14 @@ use App\Modules\Configuration\Application\Actions\SaveTemplateDocument;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Tests\TestCase;
 
@@ -52,7 +54,9 @@ class TemplateAndSourceTest extends TestCase
             ->assertJsonPath('message', 'Plantilla vacía creada.');
 
         $template = SyllabusTemplate::query()->firstOrFail();
-        $this->assertFalse(Schema::hasColumn('plantillas_silabo', 'es_institucional'));
+        $this->assertTrue(Schema::hasTable('plantilla_silabo'));
+        $this->assertFalse(Schema::hasTable('plantillas_silabo'));
+        $this->assertFalse(Schema::hasTable('componentes_plantilla'));
         $this->assertCount(0, $template->sections()->get());
         $this->assertCount(0, $template->blocks()->get());
         $this->assertCount(0, $template->fields()->get());
@@ -206,7 +210,7 @@ class TemplateAndSourceTest extends TestCase
             ])
             ->assertJsonValidationErrors('fields.0.key');
 
-        $this->assertDatabaseMissing('componentes_plantilla', ['clave_componente_plantilla' => 'bloque_invalido']);
+        $this->assertNull($template->fresh()->sections()->firstWhere('clave', 'bloque_invalido'));
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.template.fields.store', $template), [
@@ -342,6 +346,25 @@ class TemplateAndSourceTest extends TestCase
         SyllabusTemplate::query()->create(['nombre' => 'Plantilla duplicada', 'activo' => true]);
     }
 
+    public function test_database_rejects_a_field_for_a_block_absent_from_the_template_document(): void
+    {
+        $template = $this->createTemplate();
+
+        $this->expectException(QueryException::class);
+        FieldDefinition::query()->create([
+            'plantilla_id' => $template->id,
+            'bloque_plantilla_id' => (string) Str::uuid(),
+            'clave' => 'campo_huerfano',
+            'etiqueta' => 'Campo huérfano',
+            'tipo' => 'texto_largo',
+            'heredado' => false,
+            'editable_docente' => true,
+            'ia_habilitada' => false,
+            'ia_coordinacion_configurable' => true,
+            'posicion' => 1,
+        ]);
+    }
+
     public function test_non_administrator_cannot_manage_templates(): void
     {
         $template = $this->createTemplate();
@@ -468,7 +491,8 @@ class TemplateAndSourceTest extends TestCase
             ])
             ->assertSuccessful();
 
-        $second = $section->blocks()->where('titulo', 'Objetivos específicos')->firstOrFail();
+        $section = $section->fresh();
+        $second = $section->blocks()->where('clave', 'objetivos_especificos_reorden')->firstOrFail();
         $remainingBlockIds = $section->blocks()
             ->whereNotIn('id', [$first->id, $second->id])
             ->orderBy('posicion')
@@ -489,8 +513,8 @@ class TemplateAndSourceTest extends TestCase
             ->deleteJson(route('api.v1.admin.template.blocks.destroy', ['template' => $version, 'block' => $second]))
             ->assertSuccessful();
 
-        $this->assertDatabaseMissing('componentes_plantilla', ['id' => $second->id]);
-        $this->assertDatabaseMissing('definiciones_campo', ['componente_plantilla_id' => $second->id]);
+        $this->assertNull($version->fresh()->block($second->id));
+        $this->assertDatabaseMissing('definiciones_campo', ['bloque_plantilla_id' => $second->id]);
     }
 
     public function test_administrator_designs_a_complex_table_on_a_block(): void
@@ -600,8 +624,10 @@ class TemplateAndSourceTest extends TestCase
             ->deleteJson(route('api.v1.admin.template.sections.destroy', ['template' => $version, 'section' => $created]))
             ->assertSuccessful();
 
-        $this->assertDatabaseMissing('componentes_plantilla', ['id' => $created->id]);
-        $this->assertDatabaseMissing('componentes_plantilla', ['componente_padre_id' => $created->id]);
+        $this->assertNull($version->fresh()->section($created->id));
+        foreach ($created->blocks()->pluck('id') as $blockId) {
+            $this->assertDatabaseMissing('definiciones_campo', ['bloque_plantilla_id' => $blockId]);
+        }
     }
 
     public function test_coordinator_creates_and_edits_source_document(): void

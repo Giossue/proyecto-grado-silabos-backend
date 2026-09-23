@@ -108,15 +108,17 @@ sustituye las relaciones transaccionales ni permite reconstruir autorizaciones.
 
 ### Plantillas y fuentes
 
-`plantillas_silabo`, `componentes_plantilla`,
-`definiciones_campo`, `fuentes_academicas`, `fragmentos_fuente_academica`.
+`plantilla_silabo`, `definiciones_campo`, `fuentes_academicas`,
+`fragmentos_fuente_academica`.
 
-`plantillas_silabo` no referencia una carrera y solo admite una fila. El índice único
-`plantillas_silabo_unica` aplica esa cardinalidad directamente, sin un booleano
+`plantilla_silabo` no referencia una carrera y solo admite una fila. El índice único
+`plantilla_silabo_unica` aplica esa cardinalidad directamente, sin un booleano
 `es_institucional` que siempre tendría el mismo valor. La plantilla se edita en el sitio
 y cada revisión enviada conserva su propia fotografía inmutable (I-32, I-52).
-`componentes_plantilla` reúne las secciones raíz y los bloques hijos; las definiciones de
-campo apuntan al componente que las contiene. Todos los campos se validan como
+`plantilla_silabo.documento_plantilla` guarda en JSONB versionado la composición visual
+de secciones, bloques y tablas (I-111). Las definiciones de campo siguen en filas y
+`bloque_plantilla_id` apunta al UUID estable del bloque embebido; triggers de PostgreSQL
+impiden referencias huérfanas en ambas direcciones. Todos los campos se validan como
 obligatorios al enviar, pero el estado `borrador` puede permanecer incompleto.
 
 `fuentes_academicas` es un documento por fila (I-95): nombre único por carrera,
@@ -186,7 +188,7 @@ sílabo y `version_bloqueo_origen`. Sus conteos y estado se agregan a partir de 
 `ejecuciones_ia` hijas; una repetición sin cambios reutiliza la misma revisión, mientras
 una edición obliga a validar y crea otra para la nueva versión. Los estados terminales y
 sus entradas son inmutables.
-`plantillas_silabo.revision_configuracion` aumenta ante cualquier cambio de estructura,
+`plantilla_silabo.revision_configuracion` aumenta ante cualquier cambio de estructura,
 contenido o apariencia. Una preferencia de carrera solo es efectiva si el campo permite
 la decisión de Coordinación y su `revision_plantilla_origen` coincide; de otro modo rige
 inmediatamente el valor de Administración sin depender de una limpieza posterior.

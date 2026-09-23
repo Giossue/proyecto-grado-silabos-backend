@@ -513,6 +513,16 @@ migración mapea el catálogo existente y falla de forma íntegra si una faculta
 campus distintos o una referencia no puede mapearse, para permitir su conciliación antes
 de retirar los datos originales.
 
+I-111 (23 de septiembre de 2026) confirma que la plantilla institucional es siempre un
+único recurso y simplifica su persistencia. La tabla física pasa a llamarse
+`plantilla_silabo`; `documento_plantilla` JSONB guarda la composición visual completa
+de secciones, bloques y tablas. `componentes_plantilla` se retira. Las
+`definiciones_campo` permanecen relacionales porque valores, validaciones, IA y
+evidencia histórica las referencian; `bloque_plantilla_id` conserva el UUID del bloque
+embebido y PostgreSQL verifica su pertenencia al documento. Cada revisión enviada
+continúa guardando su fotografía completa e inmutable. Esta decisión reemplaza la
+persistencia de componentes de I-85, sin cambiar la plantilla única definida en I-32.
+
 ## Propuesto
 
 I-52, actualización del 6 de septiembre: se retira `calidad` de las asignaciones de

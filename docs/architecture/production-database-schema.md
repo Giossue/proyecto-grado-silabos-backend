@@ -237,37 +237,18 @@ programaciones_asignatura 1:N paralelos
 
 # 3. Plantilla institucional y fuentes
 
-## plantillas_silabo
+## plantilla_silabo
 
 **Contexto:** plantilla institucional que define el documento de sílabo.
 
 ~~~text
 id UUID (PK)
+documento_plantilla JSONB NOT NULL
 mapeo_documento_plantilla JSONB NULL
 revision_configuracion BIGINT NOT NULL DEFAULT 1
 
 UNIQUE constante: existe solo una plantilla
-~~~
-
-## componentes_plantilla
-
-**Contexto:** secciones y bloques de la plantilla en una sola jerarquía.
-
-~~~text
-id UUID (PK)
-plantilla_id UUID (FK → plantillas_silabo.id) NOT NULL
-componente_padre_id UUID (FK → componentes_plantilla.id) NULL
-clave_componente_plantilla VARCHAR NOT NULL
-tipo_componente_plantilla VARCHAR NOT NULL
-titulo_componente_plantilla VARCHAR NOT NULL
-descripcion_componente_plantilla TEXT NULL
-configuracion_componente_plantilla JSONB NULL
-posicion_componente_plantilla SMALLINT NOT NULL
-
-UNIQUE parcial (plantilla_id, clave_componente_plantilla) para raíces
-UNIQUE parcial (plantilla_id, clave_componente_plantilla) para hijos
-UNIQUE parcial (plantilla_id, posicion_componente_plantilla) para raíces
-UNIQUE parcial (componente_padre_id, posicion_componente_plantilla) para hijos
+CHECK: versión de esquema 1 y `secciones` es un arreglo
 ~~~
 
 ## definiciones_campo
@@ -276,7 +257,7 @@ UNIQUE parcial (componente_padre_id, posicion_componente_plantilla) para hijos
 
 ~~~text
 id UUID (PK)
-componente_plantilla_id UUID (FK → componentes_plantilla.id) NOT NULL
+bloque_plantilla_id UUID NOT NULL
 clave_definicion_campo VARCHAR NOT NULL
 etiqueta_definicion_campo VARCHAR NOT NULL
 ayuda_definicion_campo TEXT NULL
@@ -290,10 +271,11 @@ reglas_definicion_campo JSONB NULL
 opciones_definicion_campo JSONB NULL
 marcador_documento VARCHAR NULL
 posicion_definicion_campo SMALLINT NOT NULL
-plantilla_id UUID (FK → plantillas_silabo.id) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
 
 UNIQUE (plantilla_id, clave_definicion_campo)
-UNIQUE (componente_plantilla_id, posicion_definicion_campo)
+UNIQUE (bloque_plantilla_id, posicion_definicion_campo)
+TRIGGER: bloque_plantilla_id debe existir dentro de documento_plantilla
 ~~~
 
 ## fuentes_academicas
@@ -362,10 +344,7 @@ UNIQUE (fuente_academica_id, posicion_fragmento)
 ### Cardinalidades
 
 ~~~text
-plantillas_silabo 1:N componentes_plantilla
-componentes_plantilla 1:N componentes_plantilla
-plantillas_silabo 1:N definiciones_campo
-componentes_plantilla 1:N definiciones_campo
+plantilla_silabo 1:N definiciones_campo
 carreras 1:N fuentes_academicas
 fuentes_academicas 1:0..1 objetos_almacenados como PDF vigente
 fuentes_academicas 1:N ejecuciones_trabajo por recurso lógico
@@ -388,7 +367,7 @@ id UUID (PK)
 inicia_en TIMESTAMPTZ NOT NULL
 entrega_en TIMESTAMPTZ NOT NULL
 estado_convocatoria_universidad VARCHAR NOT NULL
-plantilla_id UUID (FK → plantillas_silabo.id) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
 periodo_academico_id UUID (FK → periodos_academicos.id) NOT NULL
 
 UNIQUE (periodo_academico_id)
@@ -447,7 +426,7 @@ version_bloqueo INTEGER NOT NULL
 iniciado_en TIMESTAMPTZ NULL
 guardado_en TIMESTAMPTZ NULL
 contexto_academico_silabo JSONB NOT NULL
-plantilla_id UUID (FK → plantillas_silabo.id) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
 ~~~
 
 ## alcances_silabo
@@ -540,7 +519,7 @@ mensaje_resultado_validacion VARCHAR NOT NULL
 
 ~~~text
 periodos_academicos 1:0..1 convocatorias_universidad
-plantillas_silabo 1:N convocatorias_universidad
+plantilla_silabo 1:N convocatorias_universidad
 convocatorias_universidad 1:N convocatorias_carreras
 carreras 1:N convocatorias_carreras
 convocatorias_carreras N:M fuentes_academicas mediante fuentes_convocatoria
@@ -614,7 +593,7 @@ asignacion_rol_id UUID (FK → asignaciones_rol.id) NULL
 solicitado_en TIMESTAMPTZ NOT NULL
 iniciado_en TIMESTAMPTZ NULL
 completado_en TIMESTAMPTZ NULL
-plantilla_id UUID (FK → plantillas_silabo.id) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
 revision_ia_silabo_id UUID (FK → revisiones_ia_silabo.id) NULL
 
 UNIQUE (silabo_id, definicion_campo_id, clave_idempotencia)
@@ -1001,7 +980,7 @@ solicitado_por UUID (FK → usuarios.id) NOT NULL
 asignacion_rol_id UUID (FK → asignaciones_rol.id) NULL
 solicitado_en TIMESTAMPTZ NOT NULL
 completado_en TIMESTAMPTZ NULL
-plantilla_id UUID (FK → plantillas_silabo.id) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
 
 UNIQUE (revision_silabo_id, clave_idempotencia)
 ~~~

@@ -85,6 +85,7 @@ final class SyllabusTemplateProvisioner
         $identificationInputs = config('syllabus_template.identification_inputs', []);
 
         $sections = [];
+        $fieldDefinitions = [];
         foreach ($baseline as $sectionPosition => [$sectionKey, $sectionTitle, $fields]) {
             $sectionId = (string) Str::uuid();
             $blocks = [];
@@ -116,7 +117,7 @@ final class SyllabusTemplateProvisioner
                     default => null,
                 };
 
-                FieldDefinition::query()->create([
+                $fieldDefinitions[] = [
                     'plantilla_id' => $template->id,
                     'bloque_plantilla_id' => $blockId,
                     'clave' => $fieldKey,
@@ -128,14 +129,14 @@ final class SyllabusTemplateProvisioner
                     'ia_habilitada' => $contentType === 'text',
                     'ia_coordinacion_configurable' => $origin === null,
                     'posicion' => 1,
-                ]);
+                ];
 
                 if ($contentType !== 'institutional') {
                     continue;
                 }
 
                 foreach ($identificationInputs as $inputPosition => [$inputKey, $inputLabel, $inputType, $options]) {
-                    FieldDefinition::query()->create([
+                    $fieldDefinitions[] = [
                         'plantilla_id' => $template->id,
                         'bloque_plantilla_id' => $blockId,
                         'clave' => $inputKey,
@@ -148,7 +149,7 @@ final class SyllabusTemplateProvisioner
                         'ia_coordinacion_configurable' => true,
                         'opciones' => $options,
                         'posicion' => $inputPosition + 2,
-                    ]);
+                    ];
                 }
             }
 
@@ -166,6 +167,10 @@ final class SyllabusTemplateProvisioner
             'version_esquema' => 1,
             'secciones' => $sections,
         ]]);
+
+        foreach ($fieldDefinitions as $fieldDefinition) {
+            FieldDefinition::query()->create($fieldDefinition);
+        }
     }
 
     private function blockType(string $contentType): string

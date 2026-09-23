@@ -87,9 +87,9 @@ relevos aplican la misma protección en el servidor (I-64).
 
 ### Configuración
 
-- `PlantillaSilabo` institucional única, sin versiones (I-32): contiene directamente
-  secciones, bloques, definiciones de campo y el mapa de exportación. Se edita en el
-  sitio.
+- `PlantillaSilabo` institucional única, sin versiones (I-32/I-111): su documento JSON
+  contiene secciones, bloques, tablas y configuración visual. Las definiciones de campo
+  permanecen relacionales por sus referencias transaccionales. Se edita en el sitio.
 - `FuenteAcademica` es un documento de la Coordinación de la carrera: nombre,
   descripción y contenido JSON estructurado editable. No tiene versiones; sus
   fragmentos son un índice reemplazable y la evidencia de IA conserva su propia
