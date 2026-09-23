@@ -44,6 +44,7 @@ final class SaveTemplateDocument
             : $this->demoteEmptyRepeatedTables(
                 TemplateDocument::normalize($document, array_keys(TemplateVariables::definitions())),
             );
+        $this->locks->assertTemplateEditable();
         $this->work->replace($request, function () use ($block, $normalized, $fingerprint, $actor, $request): void {
             $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
             $this->locks->assertTemplateEditable();

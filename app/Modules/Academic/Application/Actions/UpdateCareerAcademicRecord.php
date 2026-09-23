@@ -95,12 +95,9 @@ class UpdateCareerAcademicRecord
         // Toda la estructura de carrera queda congelada mientras sus docentes trabajan.
         // Un relevo no pasa por esta edición genérica: conserva el sílabo y su auditoría.
         $this->locks->assertCareerEditable($activeRole->carrera_id);
-        if ($entity === 'asignatura') {
-            // Lo que el sílabo copia de la malla cambia: el trabajo en curso se borra, con confirmación.
-            $this->work->requireConfirmation($request, $activeRole->carrera_id);
-        }
+        $careerScope = $entity === 'asignatura' ? $activeRole->carrera_id : [];
 
-        return DB::transaction(function () use ($actor, $activeRole, $data, $entity, $recordId, $request): Model {
+        return $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity, $recordId, $request): Model {
             $record = $this->scopedRecord($entity, $recordId, $activeRole->carrera_id);
             $this->assertPeriodMayChange($record);
             $this->ensureMutable($entity, $record);
@@ -137,7 +134,7 @@ class UpdateCareerAcademicRecord
             );
 
             return $record;
-        });
+        }, $careerScope);
     }
 
     private function scopedRecord(string $entity, string $recordId, string $careerId): Model

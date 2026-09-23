@@ -299,6 +299,13 @@ sugerencia. Se eliminan `preferencias_ia_carrera`,
 `definiciones_campo.ia_coordinacion_configurable` y las rutas
 `/coordination/ai-configuration`; sustituye las decisiones 1 a 3 de I-72.
 
+I-117 (23 de septiembre de 2026), por instrucción explícita del responsable del
+producto, permite a Administración eliminar una convocatoria institucional solo cuando
+ningún docente inició uno de sus sílabos. La comprobación incluye el evento inmutable
+`silabo.borrador_iniciado`, incluso si el expediente volvió después a «Sin iniciar».
+El borrado transaccional retira los sílabos sin actividad y los alcances asociados, y
+conserva su propio evento de auditoría; no requiere migración.
+
 I-07 implementa un puerto de lectura, fixture sintético versionado, staging inmutable,
 simulación y exclusión humana. Demuestra idempotencia, conflicto y cero mutación del
 catálogo, pero no incorpora esquema, credenciales, red, reglas de identidad ni aplicador:

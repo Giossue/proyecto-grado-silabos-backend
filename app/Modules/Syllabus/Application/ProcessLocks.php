@@ -73,4 +73,25 @@ class ProcessLocks
             throw ValidationException::withMessages(['process' => $reason]);
         }
     }
+
+    /** @param list<string> $careerIds */
+    public function assertInstitutionalRecordEditable(array $careerIds = [], ?string $periodId = null): void
+    {
+        if ($careerIds === [] && $periodId === null) {
+            return;
+        }
+
+        $running = Convocation::query()
+            ->running()
+            ->when($careerIds !== [], fn ($query) => $query->whereIn('carrera_id', $careerIds))
+            ->when($periodId !== null, fn ($query) => $query->whereHas(
+                'process',
+                fn ($process) => $process->where('periodo_academico_id', $periodId),
+            ))
+            ->exists();
+
+        if ($running) {
+            throw ValidationException::withMessages(['process' => self::CONVOCATION_LOCK_REASON]);
+        }
+    }
 }

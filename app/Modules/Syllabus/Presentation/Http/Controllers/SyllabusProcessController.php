@@ -27,8 +27,7 @@ class SyllabusProcessController extends Controller
     public function index(
         ManageSyllabusProcessesRequest $request,
         DeleteSyllabusProcess $deleteProcess,
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $template = SyllabusTemplate::query()->first();
         $activeProcess = SyllabusProcess::query()->inProgress()
             ->with('academicPeriod:id,codigo')

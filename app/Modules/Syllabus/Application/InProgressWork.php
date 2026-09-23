@@ -26,9 +26,9 @@ final class InProgressWork
     public function __construct(private readonly GenerateConvocationSyllabi $generator) {}
 
     /** @param string|list<string>|null $careerIds */
-    public function count(string|array|null $careerIds = null): int
+    public function count(string|array|null $careerIds = null, ?string $periodId = null): int
     {
-        return $this->inProgress($careerIds)->count();
+        return $this->inProgress($careerIds, $periodId)->count();
     }
 
     /**
@@ -37,9 +37,9 @@ final class InProgressWork
      *
      * @param string|list<string>|null $careerIds
      */
-    public function requireConfirmation(Request $request, string|array|null $careerIds = null): int
+    public function requireConfirmation(Request $request, string|array|null $careerIds = null, ?string $periodId = null): int
     {
-        $count = $this->count($careerIds);
+        $count = $this->count($careerIds, $periodId);
         if ($count === 0) {
             return 0;
         }
@@ -62,13 +62,18 @@ final class InProgressWork
      * @param string|list<string>|null $careerIds
      * @return TResult
      */
-    public function replace(Request $request, Closure $change, string|array|null $careerIds = null): mixed
+    public function replace(
+        Request $request,
+        Closure $change,
+        string|array|null $careerIds = null,
+        ?string $periodId = null,
+    ): mixed
     {
-        return DB::transaction(function () use ($careerIds, $change, $request): mixed {
-            $count = $this->requireConfirmation($request, $careerIds);
+        return DB::transaction(function () use ($careerIds, $change, $periodId, $request): mixed {
+            $count = $this->requireConfirmation($request, $careerIds, $periodId);
             $result = $change();
             if ($count > 0) {
-                $this->regenerate($careerIds);
+                $this->regenerate($careerIds, $periodId);
             }
 
             return $result;
@@ -82,9 +87,9 @@ final class InProgressWork
      * @param string|list<string>|null $careerIds
      * @return array{deleted: int, generated: int}
      */
-    public function regenerate(string|array|null $careerIds = null): array
+    public function regenerate(string|array|null $careerIds = null, ?string $periodId = null): array
     {
-        $syllabi = $this->inProgress($careerIds)->lockForUpdate()->get(['id', 'convocatoria_id']);
+        $syllabi = $this->inProgress($careerIds, $periodId)->lockForUpdate()->get(['id', 'convocatoria_id']);
         if ($syllabi->isEmpty()) {
             return ['deleted' => 0, 'generated' => 0];
         }
@@ -170,13 +175,17 @@ final class InProgressWork
     /** @param string|list<string>|null $careerIds
      * @return Builder<Syllabus>
      */
-    private function inProgress(string|array|null $careerIds): Builder
+    private function inProgress(string|array|null $careerIds, ?string $periodId = null): Builder
     {
         return Syllabus::query()->whereHas('convocation', fn (Builder $query) => $query
             ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
             ->whereHas('process', fn (Builder $process) => $process
                 ->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))
             ->when(is_string($careerIds), fn (Builder $scoped) => $scoped->where('carrera_id', $careerIds))
-            ->when(is_array($careerIds), fn (Builder $scoped) => $scoped->whereIn('carrera_id', $careerIds)));
+            ->when(is_array($careerIds), fn (Builder $scoped) => $scoped->whereIn('carrera_id', $careerIds))
+            ->when($periodId !== null, fn (Builder $scoped) => $scoped->whereHas(
+                'process',
+                fn (Builder $process) => $process->where('periodo_academico_id', $periodId),
+            )));
     }
 }

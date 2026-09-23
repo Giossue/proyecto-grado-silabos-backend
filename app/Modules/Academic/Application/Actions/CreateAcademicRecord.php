@@ -58,12 +58,9 @@ class CreateAcademicRecord
         if (AcademicStructurePermissions::isCareerContext($activeRole)) {
             $this->locks->assertCareerEditable($activeRole->carrera_id);
         }
-        if ($entity === 'asignatura') {
-            // Lo que el sílabo copia de la malla cambia: el trabajo en curso se borra, con confirmación.
-            $this->work->requireConfirmation($request, $activeRole->carrera_id);
-        }
+        $careerScope = $entity === 'asignatura' ? $activeRole->carrera_id : [];
 
-        return DB::transaction(function () use ($actor, $activeRole, $data, $entity, $request): Model {
+        return $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity, $request): Model {
             $record = $this->create($entity, $data, $activeRole);
 
             $this->audit->execute(
@@ -77,7 +74,7 @@ class CreateAcademicRecord
             );
 
             return $record;
-        });
+        }, $careerScope);
     }
 
     /** @param array<string, mixed> $data */

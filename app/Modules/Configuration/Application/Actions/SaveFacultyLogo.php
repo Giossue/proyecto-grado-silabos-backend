@@ -9,6 +9,8 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\InProgressWork;
+use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +21,8 @@ final class SaveFacultyLogo
         private readonly ActiveRole $roles,
         private readonly InstitutionalLogos $logos,
         private readonly RecordAuditEvent $audit,
+        private readonly ProcessLocks $locks,
+        private readonly InProgressWork $work,
     ) {}
 
     public function execute(User $actor, UploadedFile $file, Request $request): Faculty
@@ -29,8 +33,9 @@ final class SaveFacultyLogo
                 && is_string($activeRole->carrera_id),
             403,
         );
+        $this->locks->assertCareerEditable($activeRole->carrera_id);
 
-        return DB::transaction(function () use ($activeRole, $actor, $file, $request): Faculty {
+        return $this->work->replace($request, function () use ($activeRole, $actor, $file, $request): Faculty {
             $career = Career::query()
                 ->with('faculty')
                 ->lockForUpdate()
@@ -50,6 +55,6 @@ final class SaveFacultyLogo
             );
 
             return $faculty->refresh();
-        });
+        }, $activeRole->carrera_id);
     }
 }

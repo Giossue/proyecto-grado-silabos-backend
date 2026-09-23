@@ -127,6 +127,84 @@ class SyllabusProcessTest extends TestCase
         ]);
     }
 
+    public function test_administration_can_delete_a_process_without_teacher_activity(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+        $syllabusIds = Syllabus::query()->where('convocatoria_id', $convocation->id)->pluck('id');
+        $this->assertNotEmpty($syllabusIds);
+        $this->transition($process, 'cerrar')->assertSuccessful();
+
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.index'))
+            ->assertOk()
+            ->assertJsonPath('processes.0.deletable', true);
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process))
+            ->assertOk()
+            ->assertJsonPath('message', 'Convocatoria institucional eliminada.');
+
+        $this->assertDatabaseMissing('convocatorias_universidad', ['id' => $process->id]);
+        $this->assertDatabaseMissing('convocatorias_carreras', ['id' => $convocation->id]);
+        $this->assertDatabaseCount('alcances_silabo', 0);
+        $this->assertDatabaseCount('colaboradores_silabo', 0);
+        $this->assertDatabaseCount('fechas_limite_convocatoria', 0);
+        $this->assertDatabaseCount('fuentes_convocatoria', 0);
+        foreach ($syllabusIds as $syllabusId) {
+            $this->assertDatabaseMissing('silabos', ['id' => $syllabusId]);
+        }
+        $this->assertDatabaseHas('eventos_auditoria', [
+            'accion_evento_auditoria' => 'proceso_silabos.eliminado',
+            'recurso_id' => $process->id,
+        ]);
+    }
+
+    public function test_a_process_is_never_deletable_after_a_teacher_started_a_syllabus(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+        $syllabus = Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail();
+
+        $this->actingAsTeacher()
+            ->postJson(route('api.v1.teacher.syllabi.start', $syllabus))
+            ->assertSuccessful();
+
+        // Aunque un reinicio devuelva el expediente al estado inicial, el evento
+        // inmutable de inicio conserva la actividad docente y protege el proceso.
+        $syllabus->update([
+            'estado' => 'sin_iniciar',
+            'version_bloqueo' => 0,
+            'iniciado_en' => null,
+            'guardado_en' => null,
+        ]);
+        $this->transition($process, 'cerrar')->assertSuccessful();
+
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.index'))
+            ->assertOk()
+            ->assertJsonPath('processes.0.deletable', false);
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'process' => 'No se puede eliminar porque al menos un docente ya inició un sílabo. El historial académico debe conservarse.',
+            ]);
+
+        $this->assertDatabaseHas('convocatorias_universidad', ['id' => $process->id]);
+        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+    }
+
+    public function test_coordination_cannot_delete_an_institutional_process(): void
+    {
+        $process = $this->preparedProcess($this->publishedTemplate(), 'Proceso protegido');
+
+        $this->actingAsCoordinator()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('convocatorias_universidad', ['id' => $process->id]);
+    }
+
     public function test_administration_must_choose_process_dates_explicitly(): void
     {
         $this->publishedTemplate();
@@ -400,7 +478,7 @@ class SyllabusProcessTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc());
     }
 
-    public function test_changing_the_template_during_a_pause_asks_before_deleting_unsent_syllabi(): void
+    public function test_changing_the_template_during_a_pause_replaces_the_affected_syllabi(): void
     {
         $convocation = $this->openedConvocation();
         $process = $convocation->process()->firstOrFail();
@@ -422,16 +500,18 @@ class SyllabusProcessTest extends TestCase
         $this->assertDatabaseCount('silabos', 1);
         $this->assertSame(12, $template->sections()->count());
 
-        // Confirmado: el borrador sin enviar se borra y el cambio se aplica.
+        // Confirmado: el expediente anterior se reemplaza y el cambio se aplica.
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.template.sections.store', $template), [...$sectionPayload, 'confirm_purge' => 1])
             ->assertSuccessful()
             ->assertSuccessful();
-        $this->assertDatabaseCount('silabos', 0);
+        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseCount('silabos', 1);
+        $this->assertDatabaseHas('silabos', ['estado_silabo' => 'sin_iniciar']);
         $this->assertSame(13, $template->fresh()->sections()->count());
     }
 
-    public function test_changing_the_career_structure_during_a_pause_asks_before_deleting_unsent_syllabi(): void
+    public function test_changing_the_career_structure_during_a_pause_regenerates_the_affected_syllabi(): void
     {
         $convocation = $this->openedConvocation();
         $career = Career::query()->firstOrFail();
@@ -453,7 +533,8 @@ class SyllabusProcessTest extends TestCase
             ])
             ->assertSuccessful()
             ->assertSuccessful();
-        $this->assertDatabaseCount('silabos', 0);
+        $this->assertDatabaseCount('silabos', 1);
+        $this->assertSame(9, data_get(Syllabus::query()->firstOrFail()->contexto_academico, 'curriculum.cycle_count'));
         $this->assertSame(9, $career->fresh()->cantidad_ciclos_malla);
     }
 
@@ -534,7 +615,7 @@ class SyllabusProcessTest extends TestCase
             ])
             ->assertJsonValidationErrors('process');
 
-        // El proceso institucional abierto no congela los catálogos administrativos.
+        // Los registros nuevos siguen disponibles durante el proceso.
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
                 'nombre' => 'Facultad creada durante el proceso',
@@ -549,14 +630,23 @@ class SyllabusProcessTest extends TestCase
                 'nombre' => $faculty->nombre,
                 'campus' => CampusLocation::Chimbo->value,
             ])
-            ->assertSuccessful();
-        $this->assertSame(CampusLocation::Chimbo, $faculty->fresh()->campus);
+            ->assertJsonValidationErrors('process');
         $this->assertSame($originalScheduledCampus, $scheduledSubject->fresh()->campus_programacion);
 
-        // Pausar solo la convocatoria libera exclusivamente a esa carrera.
         $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección controlada de paralelos.'])
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección institucional del campus.'])
             ->assertSuccessful();
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.academic.update', ['facultad', $faculty->id]), [
+                'nombre' => $faculty->nombre,
+                'campus' => CampusLocation::Chimbo->value,
+                'confirm_purge' => 1,
+            ])
+            ->assertSuccessful();
+        $this->assertSame(CampusLocation::Chimbo, $faculty->fresh()->campus);
+        $this->assertSame(CampusLocation::Chimbo->value, $scheduledSubject->fresh()->campus_programacion->value);
+
+        // La convocatoria ya pausada permite completar su programación.
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.parallels.store'), [
                 'scheduled_subject_id' => $scheduledSubject->id,

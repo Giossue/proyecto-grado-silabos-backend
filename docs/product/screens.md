@@ -336,6 +336,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   en pausa; **Abrir**, **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
   explica la consecuencia y **Pausar** exige motivo. **Prorrogar plazo** solicita
   únicamente una nueva fecha límite de entrega y el motivo; no permite cambiar el inicio.
+  **Eliminar** aparece cuando ningún docente ha iniciado un sílabo y confirma que se
+  retirarán la convocatoria institucional, sus alcances y los expedientes sin iniciar.
+  Si hubo cualquier inicio docente, el menú informa que el proceso se conserva por
+  actividad docente y el servidor rechaza igualmente un borrado forzado.
   El nombre se genera al crear o guardar
   como «Convocatoria {nombre del período}»; el formulario no pide nombre ni muestra una
   etiqueta de plantilla vacía. La plantilla institucional se sigue heredando. El alta exige elegir el período

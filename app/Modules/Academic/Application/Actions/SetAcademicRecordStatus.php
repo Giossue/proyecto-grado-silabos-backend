@@ -65,11 +65,11 @@ class SetAcademicRecordStatus
         if (AcademicStructurePermissions::isCareerContext($activeRole)) {
             $this->locks->assertCareerEditable($activeRole->carrera_id);
         }
-        if ($entity === 'asignatura' && AcademicStructurePermissions::isCareerContext($activeRole)) {
-            $this->work->requireConfirmation($request, $activeRole->carrera_id);
-        }
+        $careerScope = $entity === 'asignatura' && AcademicStructurePermissions::isCareerContext($activeRole)
+            ? $activeRole->carrera_id
+            : [];
 
-        return DB::transaction(function () use ($active, $actor, $activeRole, $entity, $modelClass, $recordId, $request): Model {
+        return $this->work->replace($request, function () use ($active, $actor, $activeRole, $entity, $modelClass, $recordId, $request): Model {
             $record = AcademicStructurePermissions::isCareerContext($activeRole)
                 ? $this->findCareerRecord($entity, $recordId, $activeRole->carrera_id)
                 : $modelClass::query()->lockForUpdate()->findOrFail($recordId);
@@ -107,7 +107,7 @@ class SetAcademicRecordStatus
             );
 
             return $record;
-        });
+        }, $careerScope);
     }
 
     private function findCareerRecord(string $entity, string $recordId, ?string $careerId): Model

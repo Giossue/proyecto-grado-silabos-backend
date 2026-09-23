@@ -1,4 +1,4 @@
-# I-116: Eliminación de convocatoria institucional sin actividad docente
+# I-117: Eliminación de convocatoria institucional sin actividad docente
 
 ## Estado
 
@@ -19,7 +19,7 @@ registros sin actividad en el orden de sus dependencias.
 ## Trazabilidad
 
 - RF-008..016, RF-034..036; RN-005..019; CU-03..06; ADM-12.
-- I-116 amplía la administración de I-31, I-46 e I-110 sin alterar la inmutabilidad de
+- I-117 amplía la administración de I-31, I-46 e I-110 sin alterar la inmutabilidad de
   revisiones ni la evidencia docente.
 - Solicitud explícita del responsable del producto del 2026-09-23.
 

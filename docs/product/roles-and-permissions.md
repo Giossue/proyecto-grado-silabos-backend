@@ -36,6 +36,7 @@ el permiso, pero no lo sustituyen.
 | Pausar/reanudar convocatoria | No | Sí, en su carrera | No |
 | Cerrar (sobre el proceso; detiene a todas las convocatorias) | Sí | No | No |
 | Prorrogar fecha límite de entrega (sobre el proceso; alcanza a todas las convocatorias) | Sí | No | No |
+| Eliminar convocatoria institucional sin actividad docente | Sí | No | No |
 | Elaborar contenido | No por defecto | No por defecto | Sí, asignado y editable |
 | Solicitar análisis de IA | No por defecto | Consulta de resultados | Sí, si el campo lo permite |
 | Enviar/reenviar | No | No | Sí, asignado |

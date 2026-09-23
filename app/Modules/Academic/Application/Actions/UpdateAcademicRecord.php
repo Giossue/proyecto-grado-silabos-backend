@@ -5,14 +5,18 @@ namespace App\Modules\Academic\Application\Actions;
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodLabel;
 use App\Modules\Academic\Application\AcademicPeriodWeeks;
+use App\Modules\Academic\Application\ScheduledSubjectInheritance;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
+use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\InProgressWork;
+use App\Modules\Syllabus\Application\ProcessLocks;
 use BackedEnum;
 use DateTimeInterface;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -62,6 +66,9 @@ class UpdateAcademicRecord
         private readonly InstitutionalLogos $logos,
         private readonly AcademicPeriodLabel $periodLabel,
         private readonly AcademicPeriodWeeks $periodWeeks,
+        private readonly InProgressWork $work,
+        private readonly ScheduledSubjectInheritance $inheritance,
+        private readonly ProcessLocks $locks,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -83,37 +90,66 @@ class UpdateAcademicRecord
 
         return DB::transaction(function () use ($actor, $activeRole, $data, $entity, $modelClass, $recordId, $request): Model {
             $record = $modelClass::query()->lockForUpdate()->findOrFail($recordId);
-            $attributes = $this->attributes($entity, $data);
-
-            if ($entity === 'carrera') {
-                $this->ensureActiveFacultyWhenChanging($record, (string) $attributes['facultad_id']);
-            }
-
-            $record->fill($attributes);
-            if ($record instanceof Faculty && ($data['logo'] ?? null) instanceof UploadedFile) {
-                $this->logos->storeFaculty($record, $data['logo']);
-            }
-            $dirty = $record->getDirty();
-
-            if ($dirty === []) {
-                return $record;
-            }
-
-            $auditMetadata = $this->auditContext($record, $dirty, $entity);
-            $record->save();
-
-            $this->audit->execute(
-                actorId: $actor->id,
-                roleAssignmentId: $activeRole->id,
-                action: "academico.{$entity}.actualizacion",
-                resourceType: $entity,
-                resourceId: (string) $record->getKey(),
-                result: 'exito',
-                metadata: $auditMetadata,
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
+            $careerIds = $record instanceof Faculty
+                ? Career::query()->where('facultad_id', $record->id)->pluck('id')->all()
+                : ($record instanceof Career ? $record->id : null);
+            $periodId = $record instanceof AcademicPeriod ? $record->id : null;
+            $this->locks->assertInstitutionalRecordEditable(
+                is_array($careerIds) ? $careerIds : (is_string($careerIds) ? [$careerIds] : []),
+                $periodId,
             );
 
-            return $record;
+            return $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity, $record, $request): Model {
+                $attributes = $this->attributes($entity, $data);
+
+                if ($entity === 'carrera') {
+                    $this->ensureActiveFacultyWhenChanging($record, (string) $attributes['facultad_id']);
+                }
+
+                $record->fill($attributes);
+                if ($record instanceof Faculty && ($data['logo'] ?? null) instanceof UploadedFile) {
+                    $this->logos->storeFaculty($record, $data['logo']);
+                }
+                $dirty = $record->getDirty();
+
+                if ($dirty === [] && ! (($data['logo'] ?? null) instanceof UploadedFile)) {
+                    return $record;
+                }
+
+                $auditMetadata = $this->auditContext($record, $dirty, $entity);
+                $record->save();
+                if ($record instanceof Faculty || $record instanceof Career) {
+                    $this->refreshScheduledInheritance($record);
+                }
+
+                $this->audit->execute(
+                    actorId: $actor->id,
+                    roleAssignmentId: $activeRole->id,
+                    action: "academico.{$entity}.actualizacion",
+                    resourceType: $entity,
+                    resourceId: (string) $record->getKey(),
+                    result: 'exito',
+                    metadata: $auditMetadata,
+                    correlationId: $request->attributes->getString('correlation_id') ?: null,
+                );
+
+                return $record;
+            }, $careerIds, $periodId);
+        });
+    }
+
+    private function refreshScheduledInheritance(Faculty|Career $record): void
+    {
+        $query = ScheduledSubject::query()->with('subject.career.faculty');
+        $record instanceof Faculty
+            ? $query->whereHas('subject.career', fn ($career) => $career->where('facultad_id', $record->id))
+            : $query->whereHas('subject', fn ($subject) => $subject->where('carrera_id', $record->id));
+
+        $query->lockForUpdate()->get()->each(function (ScheduledSubject $scheduled): void {
+            $scheduled->update([
+                'campus_programacion' => $this->inheritance->campusFor($scheduled->subject->career),
+                'modalidad' => $this->inheritance->modalityFor($scheduled->subject),
+            ]);
         });
     }
 

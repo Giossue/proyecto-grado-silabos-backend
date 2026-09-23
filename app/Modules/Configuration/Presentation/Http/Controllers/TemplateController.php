@@ -41,6 +41,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\ProcessLocks;
+use App\Modules\Syllabus\Application\InProgressWork;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -324,23 +325,33 @@ class TemplateController extends Controller
     }
 
     /** Reemplaza el logo de la universidad que encabeza todos los sílabos. */
-    public function storeLogo(StoreInstitutionLogoRequest $request, InstitutionalLogos $logos, RecordAuditEvent $audit, ActiveRole $roles): JsonResponse
+    public function storeLogo(
+        StoreInstitutionLogoRequest $request,
+        InstitutionalLogos $logos,
+        RecordAuditEvent $audit,
+        ActiveRole $roles,
+        ProcessLocks $locks,
+        InProgressWork $work,
+    ): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $file = $request->file('logo');
         abort_unless($file instanceof UploadedFile, 422);
-        $logos->storeInstitution($file);
-        $template = SyllabusTemplate::query()->first();
-        $audit->execute(
-            actorId: $actor->id,
-            roleAssignmentId: $roles->resolve($request)?->id,
-            action: 'institucion.logo_actualizado',
-            resourceType: 'plantilla_silabo',
-            resourceId: $template?->id,
-            result: 'exito',
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
-        );
+        $locks->assertTemplateEditable();
+        $work->replace($request, function () use ($actor, $audit, $file, $logos, $request, $roles): void {
+            $logos->storeInstitution($file);
+            $template = SyllabusTemplate::query()->first();
+            $audit->execute(
+                actorId: $actor->id,
+                roleAssignmentId: $roles->resolve($request)?->id,
+                action: 'institucion.logo_actualizado',
+                resourceType: 'plantilla_silabo',
+                resourceId: $template?->id,
+                result: 'exito',
+                correlationId: $request->attributes->getString('correlation_id') ?: null,
+            );
+        });
 
         return $this->success($request, 'Logo de la universidad actualizado.');
     }

@@ -105,7 +105,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame($snapshot, $revision->fresh()->fotografia);
     }
 
-    public function test_custom_design_respects_open_process_and_explicit_paused_draft_purge(): void
+    public function test_custom_design_replaces_even_a_submitted_syllabus_after_explicit_confirmation(): void
     {
         $this->useCustomDesign = true;
         $syllabus = $this->createValidDraft();
@@ -115,12 +115,20 @@ class ReviewWorkflowTest extends TestCase
         $document['content'][] = ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Nueva instrucción']]];
         $payload = ['document' => $document, 'fingerprint' => SaveTemplateDocument::fingerprint($block)];
         $this->actingAsAdministrator()->patch($url, $payload)->assertJsonValidationErrors('process');
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'version_bloqueo' => $syllabus->version_bloqueo,
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertSuccessful();
+        $revisionId = SyllabusRevision::query()->firstOrFail()->id;
         $this->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'pausar']), ['reason' => 'Ajustar el diseño de la plantilla'])->assertSuccessful();
         $this->patch($url, $payload)->assertJsonValidationErrors('purge_required');
         $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
         $this->assertSame($block->configuracion['document'], $block->fresh()->configuracion['document']);
         $this->patch($url, [...$payload, 'confirm_purge' => true])->assertSuccessful();
         $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseMissing('revisiones_silabo', ['id' => $revisionId]);
+        $this->assertDatabaseCount('silabos', 1);
+        $this->assertDatabaseHas('silabos', ['estado_silabo' => 'sin_iniciar']);
     }
 
     public function test_cp_f_revision_submission_is_validated_idempotent_and_immutable(): void

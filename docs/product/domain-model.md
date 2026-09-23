@@ -112,6 +112,10 @@ a todas las facultades. La preparación inicial se lanza desde el período acad�
 el período fijado, nombre y plantilla automáticos; la operación prepara y abre el proceso
 en una transacción. La base impone un solo proceso abierto o pausado a la vez.
 
+Una convocatoria institucional puede eliminarse junto con sus alcances y sílabos
+generados únicamente si nunca hubo un evento `silabo.borrador_iniciado` en ninguno de
+sus expedientes. La eliminación es administrativa, transaccional y auditada.
+
 `Convocatoria` cuelga de un proceso obligatorio y vincula carrera, período heredado del
 proceso, el subconjunto no vacío de fuentes activas elegido por Coordinación, agrupación,
 fechas y estado (`preparacion`, `abierta`, `pausada`, `cerrada`).

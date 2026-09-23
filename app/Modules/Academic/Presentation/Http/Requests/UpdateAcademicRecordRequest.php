@@ -29,7 +29,7 @@ class UpdateAcademicRecordRequest extends FormRequest
     /** @return array<string, list<mixed>> */
     public function rules(): array
     {
-        return match ($this->route('entity')) {
+        $rules = match ($this->route('entity')) {
             'facultad' => [
                 'nombre' => ['required', 'string', 'max:180'],
                 'campus' => ['required', Rule::enum(CampusLocation::class)],
@@ -52,6 +52,8 @@ class UpdateAcademicRecordRequest extends FormRequest
             ],
             default => [],
         };
+
+        return [...$rules, 'confirm_purge' => ['nullable', 'boolean']];
     }
 
     /** @return array<callable(Validator): void> */

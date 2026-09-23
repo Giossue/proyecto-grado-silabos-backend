@@ -63,6 +63,12 @@ dejaría fuera de plazo a quien ya estaba dentro. La fecha anterior se conserva 
 evento de auditoría. El inicio se corrige mediante la edición del proceso cuando este se
 encuentra en preparación o en pausa; no forma parte de la acción de prórroga.
 
+Administración puede eliminar una convocatoria institucional completa mientras ningún
+docente haya iniciado un sílabo. La regla consulta tanto el estado actual como el evento
+inmutable de inicio, de modo que un reinicio posterior no borra esa huella. La operación
+elimina los alcances y expedientes todavía sin actividad y registra la eliminación en
+auditoría; desde el primer inicio docente, el proceso se conserva como historial.
+
 ## Inicio institucional y alcance de carrera
 
 Administración prepara una sola convocatoria institucional por período académico y la
