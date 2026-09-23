@@ -47,7 +47,7 @@ class AcademicStructureViewData
                         'id' => $faculty->id,
                         'codigo_facultad' => $faculty->getAttribute('codigo_facultad'),
                         'nombre' => $faculty->nombre,
-                        'campus' => $faculty->campus?->value,
+                        'campus' => $faculty->campus->value,
                         'activo' => $faculty->activo,
                         'logo_url' => route('logos.faculty', ['faculty' => $faculty->id, 'v' => $this->logos->version($this->logos->facultyPath($faculty))]),
                     ]),
@@ -67,7 +67,7 @@ class AcademicStructureViewData
                         // materias no modifican este dato de la carrera.
                         'modality' => $career->modalidad?->value,
                         'modality_label' => $career->modalidad?->label(),
-                        'campus_name' => $career->faculty?->campus?->value,
+                        'campus_name' => $career->faculty?->campus->value,
                         'code' => $career->codigo_carrera,
                         'name' => $career->nombre,
                         'active' => $career->activo,
