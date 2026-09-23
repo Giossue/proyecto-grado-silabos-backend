@@ -26,8 +26,9 @@ fuentes activas de su carrera conforme a I-72.
   institucional y alcance de carrera.
 - La acción simplificada es atómica: si la plantilla o la estructura institucional no
   están listas, no queda un proceso a medio crear.
-- Las fechas del proceso se muestran inicialmente con las fechas del período como ayuda,
-  pero se pueden corregir antes de abrir; el servidor sigue validando sus reglas actuales.
+- I-113 reemplaza la precarga de fechas: en una convocatoria nueva ambos selectores
+  empiezan vacíos y Administración debe elegirlos antes de abrir; el servidor sigue
+  exigiendo y validando sus reglas actuales.
 
 ## Cambios previstos
 

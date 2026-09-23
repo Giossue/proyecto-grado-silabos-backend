@@ -280,6 +280,12 @@ preparación y apertura son atómicas. Coordinación conserva su convocatoria pr
 del proceso abierto, hereda período, plantilla y fechas, y elige sus fuentes activas según
 I-72. Las tablas y las reglas de unicidad permanecen separadas.
 
+I-113 (23 de septiembre de 2026), por instrucción explícita del responsable del
+producto, precisa que las fechas de la convocatoria institucional no se copian del
+período académico. Al preparar una convocatoria nueva, Administración debe elegir el
+inicio de elaboración y la fecha límite de entrega; Coordinación hereda esos valores
+elegidos. La edición conserva las fechas ya guardadas.
+
 I-07 implementa un puerto de lectura, fixture sintético versionado, staging inmutable,
 simulación y exclusión humana. Demuestra idempotencia, conflicto y cero mutación del
 catálogo, pero no incorpora esquema, credenciales, red, reglas de identidad ni aplicador:

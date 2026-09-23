@@ -127,6 +127,20 @@ class SyllabusProcessTest extends TestCase
         ]);
     }
 
+    public function test_administration_must_choose_process_dates_explicitly(): void
+    {
+        $this->publishedTemplate();
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.prepare-and-open'), [
+                'period_id' => AcademicPeriod::query()->valueOrFail('id'),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['starts_at', 'due_at']);
+
+        $this->assertDatabaseCount('convocatorias_universidad', 0);
+    }
+
     public function test_prepare_and_open_is_atomic_when_institutional_structure_is_not_ready(): void
     {
         $template = $this->publishedTemplate();

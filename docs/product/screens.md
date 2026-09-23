@@ -330,6 +330,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   convocatorias. La preparación inicial se lanza desde la fila de un período en ADM-04:
   el período queda fijado, el nombre y la plantilla son automáticos, y el `Sheet` solo
   solicita las fechas de elaboración antes de preparar y abrir en una operación atómica.
+  Ambos selectores empiezan vacíos: Administración elige las fechas propias de la
+  convocatoria y el formulario no copia las fechas lectivas del período.
   ADM-12 queda como pantalla de seguimiento y administración posterior. **Editar** solo aparece en preparación o
   en pausa; **Abrir**, **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
   explica la consecuencia y **Pausar** exige motivo. El nombre se genera al crear o guardar
