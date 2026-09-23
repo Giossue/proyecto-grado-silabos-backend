@@ -23,8 +23,13 @@ avisos son internos; el correo sigue fuera de alcance.
       `POST teacher/syllabi/{syllabus}/observations/{observation}/response`.
 - [x] `VerifyObservation` ya no exige una respuesta fijada: estar en revisión implica que
       el docente reenvió su corrección y Coordinación verifica sobre esa revisión.
-- [x] `SubmitSyllabus` deja de fijar respuestas. `respuestas_observacion` se conserva
-      como historia inmutable; los payloads ya no la exponen.
+- [x] `SubmitSyllabus` deja de fijar respuestas y los payloads ya no las exponen.
+- [x] Migración `000097`: elimina `respuestas_observacion` y su función de
+      inmutabilidad, pasa las observaciones `respondida` a `abierta` y restringe el estado
+      a `abierta` o `verificada`. Autorizado por el responsable del producto: el sistema
+      está en pruebas con datos ficticios hasta diciembre de 2026. La rama de
+      `validar_relaciones_flujo()` para esa tabla queda sin uso; no se reescribe la función
+      compartida.
 - [x] SPA: el docente ve «Observaciones de coordinación» en solo lectura; Coordinación ya
       no muestra «Respuesta del docente».
 

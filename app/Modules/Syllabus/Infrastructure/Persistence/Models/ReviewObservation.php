@@ -8,7 +8,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use LogicException;
 
 /**
@@ -58,12 +57,6 @@ class ReviewObservation extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'creado_por');
-    }
-
-    /** @return HasOne<ObservationResponse, $this> */
-    public function response(): HasOne
-    {
-        return $this->hasOne(ObservationResponse::class, 'observacion_revision_id');
     }
 
     protected static function booted(): void

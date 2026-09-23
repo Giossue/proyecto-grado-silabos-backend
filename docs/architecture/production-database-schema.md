@@ -806,7 +806,7 @@ revision_silabo_id UUID (FK → revisiones_silabo.id) NOT NULL
 clave_seccion VARCHAR NULL
 clave_campo VARCHAR NULL
 contenido_observacion_revision TEXT NOT NULL
-estado_observacion_revision VARCHAR NOT NULL
+estado_observacion_revision VARCHAR NOT NULL CHECK (abierta | verificada)
 creado_por UUID (FK → usuarios.id) NOT NULL
 observado_en TIMESTAMPTZ NOT NULL
 ~~~
@@ -834,20 +834,6 @@ solicitud_correccion_id UUID (FK → solicitudes_correccion.id) NOT NULL
 observacion_revision_id UUID (FK → observaciones_revision.id) NOT NULL
 
 UNIQUE (solicitud_correccion_id, observacion_revision_id)
-~~~
-
-## respuestas_observacion
-
-**Contexto:** respuesta del docente a una observación.
-
-~~~text
-id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-observacion_revision_id UUID (FK → observaciones_revision.id) NOT NULL UNIQUE
-revision_respuesta_id UUID (FK → revisiones_silabo.id) NULL
-contenido_respuesta_observacion TEXT NOT NULL
-respondido_por UUID (FK → usuarios.id) NOT NULL
-respondido_en TIMESTAMPTZ NOT NULL
 ~~~
 
 ## aprobaciones
@@ -909,7 +895,6 @@ revisiones_silabo 1:N observaciones_revision
 revisiones_silabo 1:0..1 solicitudes_correccion
 solicitudes_correccion N:M observaciones_revision
   mediante solicitud_correccion_observaciones
-observaciones_revision 1:0..1 respuestas_observacion
 revisiones_silabo 1:0..1 aprobaciones
 aprobaciones 1:0..1 reaperturas
 silabos 1:N transiciones_silabo

@@ -170,13 +170,14 @@ tanto la corrección como el borrado (I-118).
 ### Revisión, validación e IA
 
 `revisiones_silabo`, `observaciones_revision`, `solicitudes_correccion`,
-`solicitud_correccion_observaciones`, `respuestas_observacion`, `aprobaciones`,
+`solicitud_correccion_observaciones`, `aprobaciones`,
 `reaperturas`, `transiciones_silabo`, `ejecuciones_validacion`,
 `resultados_validacion`, `ejecuciones_ia`, `evidencias_ia`, `recomendaciones_ia`,
 `recomendacion_evidencias_ia`, `retroalimentacion_ia`, `conversaciones_ia`,
 `mensajes_ia`, `evidencias_mensaje_ia`, `citas_mensaje_ia`,
-`revisiones_ia_silabo`. I-116 eliminó `preferencias_ia_carrera`: la IA de cada campo la
-decide Administración en la plantilla.
+`revisiones_ia_silabo`. I-120 eliminó `respuestas_observacion` y el estado `respondida`:
+el docente corrige y reenvía, y una observación está abierta o verificada. I-116 eliminó
+`preferencias_ia_carrera`: la IA de cada campo la decide Administración en la plantilla.
 
 Cada docente conserva una conversación por sílabo. Limpiar el panel marca
 `conversaciones_ia.ocultada_en`; no elimina mensajes ni fotografías de evidencia. La

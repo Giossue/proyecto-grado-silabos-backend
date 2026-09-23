@@ -156,7 +156,6 @@ final class InProgressWork
         $correctionIds = DB::table('solicitudes_correccion')->whereIn('silabo_id', $syllabusIds)->pluck('id')->all();
         DB::table('solicitud_correccion_observaciones')->whereIn('solicitud_correccion_id', $correctionIds)
             ->orWhereIn('observacion_revision_id', $observationIds)->delete();
-        DB::table('respuestas_observacion')->whereIn('silabo_id', $syllabusIds)->delete();
         DB::table('revisiones_silabo')->whereIn('id', $revisionIds)->update([
             'revision_anterior_id' => null,
             'reapertura_id' => null,
