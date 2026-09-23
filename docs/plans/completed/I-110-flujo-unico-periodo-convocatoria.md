@@ -1,7 +1,7 @@
 # I-110 — Preparación única del período y la convocatoria institucional
 
 ## Estado
-En curso
+Completado
 
 ## Trazabilidad
 
@@ -52,11 +52,11 @@ fuentes activas de su carrera conforme a I-72.
 ## Pasos
 
 - [x] Diseñar el flujo y registrar el plan.
-- [ ] Añadir el caso de uso y contrato HTTP.
-- [ ] Exponer el estado del proceso en el catálogo académico.
-- [ ] Integrar la acción en la pantalla de períodos.
-- [ ] Actualizar documentación, OpenAPI y trazabilidad.
-- [ ] Ejecutar verificaciones proporcionales y cerrar el plan.
+- [x] Añadir el caso de uso y contrato HTTP.
+- [x] Exponer el estado del proceso en el catálogo académico.
+- [x] Integrar la acción en la pantalla de períodos.
+- [x] Actualizar documentación, OpenAPI y trazabilidad.
+- [x] Ejecutar verificaciones proporcionales y cerrar el plan.
 
 ## Riesgos y reversión
 
@@ -66,4 +66,10 @@ también la preparación; no se crean convocatorias de carrera ni sílabos.
 
 ## Evidencia de cierre
 
-Pendiente.
+- Backend: `php artisan test tests/Feature/Syllabus/SyllabusProcessTest.php` (20 pruebas,
+  295 aserciones) y `tests/Feature/Academic/AcademicStructureTest.php` (15 pruebas,
+  78 aserciones); Pint, PHP y `git diff --check` correctos.
+- Frontend: `npm run typecheck`, `npm run lint`, `npm test -- --run` (29 archivos,
+  106 pruebas), `npm run build`, `npm run contract:check` y `git diff --check` correctos.
+- Contrato: `php artisan openapi:export` actualizado; no hubo migración porque el modelo
+  de períodos y convocatorias no cambia.

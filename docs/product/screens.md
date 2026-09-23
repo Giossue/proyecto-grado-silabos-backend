@@ -325,14 +325,16 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   La primera permite diagnosticar y reintentar trabajos; la segunda
   reconstruye quién hizo qué y cuándo.
 - ADM-12 lista los procesos de sílabos con estado, período institucional, plantilla, inicio, entrega y
-  convocatorias. El alta usa el `Sheet` derecho; **Editar** solo aparece en preparación o
+  convocatorias. La preparación inicial se lanza desde la fila de un período en ADM-04:
+  el período queda fijado, el nombre y la plantilla son automáticos, y el `Sheet` solo
+  solicita las fechas de elaboración antes de preparar y abrir en una operación atómica.
+  ADM-12 queda como pantalla de seguimiento y administración posterior. **Editar** solo aparece en preparación o
   en pausa; **Abrir**, **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
   explica la consecuencia y **Pausar** exige motivo. El nombre se genera al crear o guardar
   como «Convocatoria {nombre del período}»; el formulario no pide nombre ni muestra una
   etiqueta de plantilla vacía. La plantilla institucional se sigue heredando. El alta exige elegir el período
-  académico institucional. ADM-12 oculta «Nuevo proceso» mientras haya uno abierto o
-  pausado y muestra el aviso enlazado a Convocatorias; el servidor rechaza igualmente
-  un alta forzada. COR-03 muestra las convocatorias institucionales visibles y
+  académico institucional. ADM-12 ya no ofrece un alta independiente y remite a Periodos
+  académicos; el servidor rechaza igualmente un alta forzada sin estructura lista. COR-03 muestra las convocatorias institucionales visibles y
   permite iniciar únicamente el alcance de su carrera desde una abierta; hereda plantilla,
   período y fechas, y exige seleccionar al menos una fuente activa de la carrera antes de
   iniciar. Esa selección queda congelada durante el alcance. COR-02 lista

@@ -74,7 +74,7 @@ class SetupChecklist
                 $this->step('accounts', 'Crear las cuentas de coordinadores y docentes', 'Con su rol; el docente se asigna a paralelos desde Coordinación.', $accounts > 0, '/administracion/usuarios'),
                 $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0, '/administracion/estructura-academica'),
                 $this->step('template', 'Crear y formatear la plantilla de sílabo', 'Cree el contenedor vacío y aplique el formato oficial o configure sus bloques manualmente.', $templateReady, '/administracion/plantilla'),
-                $this->step('process', 'Crear y abrir el proceso de sílabos', 'Fechas de inicio y entrega; al abrirlo, las coordinaciones pueden convocar.', SyllabusProcess::query()->exists(), '/administracion/procesos'),
+                $this->step('process', 'Preparar y abrir la convocatoria', 'Desde Periodos académicos elija el período y confirme las fechas de elaboración; las coordinaciones podrán iniciar sus alcances.', SyllabusProcess::query()->exists(), '/administracion/estructura-academica?seccion=periodo'),
             ],
         );
     }

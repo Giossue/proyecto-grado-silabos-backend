@@ -64,7 +64,9 @@ ya estaba dentro. La fecha anterior se conserva en el evento de auditoría.
 ## Inicio institucional y alcance de carrera
 
 Administración prepara una sola convocatoria institucional por período académico y la
-abre para la universidad. Cada coordinador la ve en su área y solo puede iniciar el
+abre para la universidad. La preparación se inicia desde la fila del período académico:
+el período queda fijo, el nombre y la plantilla son automáticos y Administración solo
+confirma las fechas de elaboración. Cada coordinador la ve en su área y solo puede iniciar el
 alcance de su carrera: no define nombre, plantilla, período ni modo de agrupación, pero
 debe elegir un subconjunto no vacío de las fuentes activas de su carrera. El inicio comprueba logo propio de la facultad, malla activa,
 materias programadas con paralelos, docente vigente en cada paralelo y al menos una

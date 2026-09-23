@@ -106,7 +106,9 @@ de IA no se borran y el cambio se rechaza.
 `ProcesoSilabos` es el calendario institucional: nombre, período académico, plantilla
 institucional, fecha de inicio, fecha de entrega y estado (`preparacion`, `abierto`, `pausado`,
 `cerrado`). Lo administra Administración porque el calendario académico oficial obliga
-a todas las facultades. La base impone un solo proceso abierto o pausado a la vez.
+a todas las facultades. La preparación inicial se lanza desde el período académico con
+el período fijado, nombre y plantilla automáticos; la operación prepara y abre el proceso
+en una transacción. La base impone un solo proceso abierto o pausado a la vez.
 
 `Convocatoria` cuelga de un proceso obligatorio y vincula carrera, período heredado del
 proceso, el subconjunto no vacío de fuentes activas elegido por Coordinación, agrupación,

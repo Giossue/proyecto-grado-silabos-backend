@@ -1,6 +1,6 @@
 # Estado de decisiones
 
-Fecha de corte: **30 de agosto de 2026**.
+Fecha de corte: **23 de septiembre de 2026**.
 
 ## Etiquetas
 
@@ -272,6 +272,13 @@ el código técnico se conserva para referencias e historial.
 I-109 (23 de septiembre de 2026) aclara que `semanas_lectivas` no se captura en el
 formulario. El servidor cuenta las semanas de lunes a domingo que toca el rango de
 fechas, aunque la primera o la última sea parcial, y guarda ese resultado entre 1 y 52.
+
+I-110 (23 de septiembre de 2026) simplifica la configuración inicial de convocatorias:
+Administración las prepara y abre desde la fila del período académico, con el período
+fijado y nombre/plantilla automáticos; solo ajusta las fechas de elaboración. La
+preparación y apertura son atómicas. Coordinación conserva su convocatoria propia dentro
+del proceso abierto, hereda período, plantilla y fechas, y elige sus fuentes activas según
+I-72. Las tablas y las reglas de unicidad permanecen separadas.
 
 I-07 implementa un puerto de lectura, fixture sintético versionado, staging inmutable,
 simulación y exclusión humana. Demuestra idempotencia, conflicto y cero mutación del

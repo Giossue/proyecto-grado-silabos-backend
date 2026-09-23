@@ -102,6 +102,46 @@ class SyllabusProcessTest extends TestCase
                 ->where('processes.0.state', 'preparacion'));
     }
 
+    public function test_administration_can_prepare_and_open_from_the_period_flow(): void
+    {
+        $template = $this->publishedTemplate();
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.prepare-and-open'), $this->processPayload($template))
+            ->assertCreated()
+            ->assertJsonPath('message', 'Convocatoria institucional abierta. Las coordinaciones ya pueden iniciar sus convocatorias.');
+
+        $process = SyllabusProcess::query()->firstOrFail();
+        $this->assertSame(SyllabusProcess::STATE_OPEN, $process->estado);
+        $this->actingAsAdministrator()
+            ->getJson(route('api.v1.admin.academic.index'))
+            ->assertJsonPath('catalogs.periods.0.institutional_process.id', $process->id)
+            ->assertJsonPath('catalogs.periods.0.institutional_process.state', SyllabusProcess::STATE_OPEN);
+        $this->assertDatabaseHas('eventos_auditoria', [
+            'accion_evento_auditoria' => 'proceso_silabos.creado',
+            'recurso_id' => $process->id,
+        ]);
+        $this->assertDatabaseHas('eventos_auditoria', [
+            'accion_evento_auditoria' => 'proceso_silabos.abierto',
+            'recurso_id' => $process->id,
+        ]);
+    }
+
+    public function test_prepare_and_open_is_atomic_when_institutional_structure_is_not_ready(): void
+    {
+        $template = $this->publishedTemplate();
+        $this->coordinatorContext->update(['activo' => false]);
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.prepare-and-open'), $this->processPayload($template))
+            ->assertJsonValidationErrors('process');
+
+        $this->assertDatabaseCount('convocatorias_universidad', 0);
+        $this->assertDatabaseMissing('eventos_auditoria', [
+            'accion_evento_auditoria' => 'proceso_silabos.creado',
+        ]);
+    }
+
     public function test_an_empty_template_cannot_prepare_an_institutional_process(): void
     {
         $this->actingAsAdministrator()
