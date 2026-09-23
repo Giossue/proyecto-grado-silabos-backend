@@ -56,10 +56,9 @@ sequenceDiagram
     R->>DB: autorizar alcance y comprobar En revisión
     R->>DB: transacción: observaciones + estado Corrección solicitada + auditoría
     R-->>D: notificación posterior al commit
-    D->>UI: Edita nueva versión de trabajo y responde
+    D->>UI: Edita nueva versión de trabajo
     D->>R: Reenviar con version_bloqueo e idempotency_key
     R->>DB: validar + insertar revisión N+1 inmutable
-    R->>DB: vincular respuestas/cambios a observaciones
     R->>DB: estado En revisión + transición + auditoría
     R-->>Coo: notificación posterior al commit
     Coo->>UI: Ver diff N ↔ N+1 y verificar observaciones

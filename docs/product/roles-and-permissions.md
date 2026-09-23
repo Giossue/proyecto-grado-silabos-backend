@@ -30,8 +30,7 @@ el permiso, pero no lo sustituyen.
 | Asignar docentes a paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta propia |
 | Diseñar/publicar plantilla | Sí, salvo con proceso abierto | Consulta/aporte según política | No |
 | Gestionar fuentes (documentos) | No participa | Sí, en su carrera, salvo con convocatoria en curso | Consulta autorizada |
-| Abrir, pausar, reanudar y cerrar el proceso de sílabos | Sí | Consulta al convocar | No |
-| Preparar convocatoria institucional | Sí, una por período | No | No |
+| Crear y abrir, pausar, reanudar y cerrar el proceso de sílabos | Sí | Consulta al convocar | No |
 | Iniciar alcance de su carrera desde convocatoria institucional abierta | No | Sí, si su malla, materias programadas, paralelos, docentes y fuentes están listos | No |
 | Pausar/reanudar convocatoria | No | Sí, en su carrera | No |
 | Cerrar (sobre el proceso; detiene a todas las convocatorias) | Sí | No | No |
@@ -40,7 +39,7 @@ el permiso, pero no lo sustituyen.
 | Elaborar contenido | No por defecto | No por defecto | Sí, asignado y editable |
 | Solicitar análisis de IA | No por defecto | Consulta de resultados | Sí, si el campo lo permite |
 | Enviar/reenviar | No | No | Sí, asignado |
-| Observar/solicitar corrección | No | Sí | Responder |
+| Observar/solicitar corrección | No | Sí | No; corrige y reenvía (I-120) |
 | Comparar revisiones | Auditoría | Sí | Sí, si es propio/autorizado |
 | Aprobar/reabrir | No | Sí | No |
 | Exportar | Según permiso | Sí en alcance | Sí, propio/autorizado |

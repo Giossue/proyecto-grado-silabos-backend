@@ -14,7 +14,6 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Application\RevisionDiff;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ObservationResponse;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
@@ -24,6 +23,7 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use LogicException;
@@ -267,7 +267,7 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))->assertForbidden();
     }
 
-    public function test_cp_f_correction_preserves_first_snapshot_and_links_response_to_resubmission(): void
+    public function test_cp_f_correction_preserves_first_snapshot_and_is_verified_on_the_resubmission(): void
     {
         [$syllabus, $firstRevision] = $this->submitValidDraft();
         $field = $this->editableScalarField($syllabus);
@@ -304,9 +304,8 @@ class ReviewWorkflowTest extends TestCase
 
                 ->where('syllabus.observations.0.requested', true));
 
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.observations.respond', [$syllabus, $observation]), [
-            'content' => 'Se amplió la descripción según la observación.',
-        ])->assertSuccessful();
+        // Solo Coordinación escribe observaciones: el docente corrige y reenvía.
+        $this->assertFalse(Route::has('api.v1.teacher.syllabi.observations.respond'));
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.reviews.observations.verify', $observation))
             ->assertJsonValidationErrors('syllabus');
@@ -335,8 +334,6 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame($firstSnapshot, $firstRevision->fresh()->fotografia);
         $this->assertNotSame($firstRevision->huella_sha256, $secondRevision->huella_sha256);
         $this->assertSame($firstRevision->id, $secondRevision->revision_anterior_id);
-        $response = ObservationResponse::query()->firstOrFail();
-        $this->assertSame($secondRevision->id, $response->revision_respuesta_id);
         $comparison = app(RevisionDiff::class)->compare($firstRevision, $secondRevision);
         $this->assertGreaterThan(0, $comparison['changed_fields']);
         $repeatableChange = collect($comparison['changes'])->firstWhere('type', 'repetible');
@@ -346,17 +343,6 @@ class ReviewWorkflowTest extends TestCase
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.verify', $observation))->assertSuccessful();
         $this->assertSame('verificada', $observation->fresh()->estado);
-        try {
-            DB::transaction(fn () => DB::table('respuestas_observacion')
-                ->where('id', $response->id)
-                ->update(['contenido' => 'Intento de reescritura histórica.']));
-            $this->fail('PostgreSQL permitió modificar una respuesta ya enviada.');
-        } catch (QueryException) {
-            $this->assertSame(
-                'Se amplió la descripción según la observación.',
-                $response->fresh()->contenido,
-            );
-        }
         $this->actingAsTeacher()
             ->getJson(route('api.v1.coordination.reviews.compare', [$firstRevision, $secondRevision]))
             ->assertOk()

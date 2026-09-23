@@ -107,11 +107,12 @@ sola transacción; los procesos cerrados conservan su historia (I-118).
 ### Proceso de sílabos y convocatoria
 
 `ProcesoSilabos` es el calendario institucional: nombre, período académico, plantilla
-institucional, fecha de inicio, fecha de entrega y estado (`preparacion`, `abierto`, `pausado`,
+institucional, fecha de inicio, fecha de entrega y estado (`abierto`, `pausado`,
 `cerrado`). Lo administra Administración porque el calendario académico oficial obliga
-a todas las facultades. La preparación inicial se lanza desde el período académico con
-el período fijado, nombre y plantilla automáticos; la operación prepara y abre el proceso
-en una transacción. La base impone un solo proceso abierto o pausado a la vez.
+a todas las facultades. Se abre desde el período académico con el período fijado, nombre
+y plantilla automáticos; la creación y apertura ocurren en una sola transacción. La base
+impone un solo proceso abierto o pausado a la vez y conserva los cerrados como historial
+(I-120).
 
 Una convocatoria institucional puede eliminarse junto con sus alcances y sílabos
 generados únicamente si nunca hubo un evento `silabo.borrador_iniciado` en ninguno de
@@ -158,7 +159,8 @@ por plantilla:
 ### Revisión
 
 - `Observacion`: campo, sección o documento; autor, revisión, estado y fecha.
-- `RespuestaObservacion`: respuesta del docente.
+- `RespuestaObservacion`: histórica y de solo lectura. Desde I-120 el docente no
+  responde observaciones: corrige el sílabo y lo reenvía.
 - `Aprobacion`: actor, revisión, fecha, metadatos y huella.
 - `Reapertura`: causa, actor, revisión aprobada de origen y nueva revisión.
 

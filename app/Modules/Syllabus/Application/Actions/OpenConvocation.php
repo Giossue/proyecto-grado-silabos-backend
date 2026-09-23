@@ -7,6 +7,9 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
+use App\Modules\Operations\Application\WorkflowNotificationRecipients;
+use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -22,6 +25,9 @@ class OpenConvocation
         private readonly TemplateStructureValidator $templateStructure,
         private readonly InstitutionalLogos $logos,
         private readonly GenerateConvocationSyllabi $generator,
+        private readonly WorkflowNotificationRecipients $recipients,
+        private readonly ScheduleInternalNotification $notifications,
+        private readonly ConvocationSchedule $schedule,
     ) {}
 
     public function execute(string $convocationId, User $actor, Request $request): Convocation
@@ -72,8 +78,30 @@ class OpenConvocation
                 metadata: ['generated_count' => $generated],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
+            $this->notifyTeachers($convocation, $request);
 
             return $convocation;
         });
+    }
+
+    /** Cada docente recibe su propio aviso: la cantidad de sílabos es distinta para cada uno. */
+    private function notifyTeachers(Convocation $convocation, Request $request): void
+    {
+        $deadline = $this->schedule->draftDeadline($convocation);
+        $due = $deadline === null ? '' : "; la entrega vence el {$this->notifications->date($deadline)}";
+
+        foreach ($this->recipients->teacherSyllabusCounts([$convocation->id]) as $teacherId => $count) {
+            $syllabi = $count === 1 ? '1 sílabo asignado' : "{$count} sílabos asignados";
+            $this->notifications->execute(
+                eventType: 'convocatoria.abierta',
+                deduplicationKey: "convocatoria.abierta:{$convocation->id}:{$teacherId}",
+                recipientIds: [$teacherId],
+                title: 'Tiene sílabos por elaborar',
+                message: "Se abrió la convocatoria de {$convocation->career->nombre}. Tiene {$syllabi}{$due}.",
+                resourceType: 'convocatoria',
+                resourceId: $convocation->id,
+                correlationId: $request->attributes->getString('correlation_id') ?: null,
+            );
+        }
     }
 }

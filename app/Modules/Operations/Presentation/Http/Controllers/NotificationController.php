@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
+use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Operations\Presentation\Http\Requests\MarkAllNotificationsReadRequest;
 use App\Modules\Operations\Presentation\Http\Requests\MarkNotificationReadRequest;
@@ -15,10 +17,11 @@ use Illuminate\Http\JsonResponse;
 
 class NotificationController extends Controller
 {
-    public function index(ViewNotificationsRequest $request): JsonResponse
+    public function index(ViewNotificationsRequest $request, ActiveRole $roles): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
+        $roleCode = $roles->resolve($request)?->role->codigo_rol;
         $status = $request->string('status')->toString() ?: 'all';
         $query = InternalNotification::query()->where('usuario_id', $actor->id);
         if ($status === 'unread') {
@@ -26,7 +29,7 @@ class NotificationController extends Controller
         }
 
         $notifications = $query->latest('notificado_en')->paginate(20)->withQueryString()
-            ->through(fn (InternalNotification $notification): array => $this->notificationPayload($notification, $actor));
+            ->through(fn (InternalNotification $notification): array => $this->notificationPayload($notification, $actor, $roleCode));
         $payload = [
             'filters' => ['status' => $status],
             'notifications' => $notifications,
@@ -63,7 +66,7 @@ class NotificationController extends Controller
     }
 
     /** @return array{id: string, tipo: string, titulo: string, mensaje: string, leido_en: string|null, notificado_en: string, resource_path: string|null} */
-    private function notificationPayload(InternalNotification $notification, User $actor): array
+    private function notificationPayload(InternalNotification $notification, User $actor, ?string $roleCode): array
     {
         return [
             'id' => $notification->id,
@@ -72,7 +75,7 @@ class NotificationController extends Controller
             'mensaje' => $notification->mensaje,
             'leido_en' => $notification->leido_en?->toIso8601String(),
             'notificado_en' => $notification->notificado_en->toIso8601String(),
-            'resource_path' => $this->resourcePath($notification, $actor),
+            'resource_path' => $this->resourcePath($notification, $actor) ?? $this->scopePath($notification, $roleCode),
         ];
     }
 
@@ -111,5 +114,29 @@ class NotificationController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Avisos de I-120 sobre procesos, convocatorias y cuentas: llevan a la pantalla donde
+     * el rol activo actúa. Un rol que no corresponde no recibe enlace.
+     */
+    private function scopePath(InternalNotification $notification, ?string $roleCode): ?string
+    {
+        $coordinator = $roleCode === RoleCode::Coordinator->value;
+        $teacher = $roleCode === RoleCode::Teacher->value;
+
+        return match ($notification->tipo_recurso) {
+            'proceso_silabos', 'convocatoria' => $coordinator ? '/coordinacion/convocatorias' : ($teacher ? '/docente/mis-silabos' : null),
+            'carrera' => $notification->tipo === 'coordinacion.asignada'
+                ? ($coordinator ? '/coordinacion/revisiones' : null)
+                : ($teacher ? '/docente/mis-silabos' : null),
+            'asignacion_rol' => '/rol',
+            'usuario' => match ($roleCode) {
+                RoleCode::Administrator->value => "/admin/usuarios/{$notification->recurso_id}",
+                RoleCode::Coordinator->value => '/coordinacion/asignaciones-docentes',
+                default => null,
+            },
+            default => null,
+        };
     }
 }

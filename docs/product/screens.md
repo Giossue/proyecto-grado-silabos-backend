@@ -331,13 +331,13 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   agrupan en la misma celda y no se muestran metadatos secundarios. ADM-09 conserva su
   ruta independiente para diagnosticar y reintentar trabajos.
 - ADM-12 lista los procesos de sílabos con estado, período institucional, plantilla, inicio, entrega y
-  convocatorias. La preparación inicial se lanza desde la fila de un período en ADM-04:
-  el período queda fijado, el nombre y la plantilla son automáticos, y el `Sheet` solo
-  solicita las fechas de elaboración antes de preparar y abrir en una operación atómica.
+  convocatorias. La apertura se lanza desde la fila de un período en ADM-04: el período
+  queda fijado, el nombre y la plantilla son automáticos, y el `Sheet` solo solicita las
+  fechas de elaboración antes de crear y abrir en una operación atómica.
   Ambos selectores empiezan vacíos: Administración elige las fechas propias de la
   convocatoria y el formulario no copia las fechas lectivas del período.
-  ADM-12 queda como pantalla de seguimiento y administración posterior. **Editar** solo aparece en preparación o
-  en pausa; **Abrir**, **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
+  ADM-12 queda como pantalla de seguimiento y administración posterior. **Editar** solo
+  aparece en pausa; **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
   explica la consecuencia y **Pausar** exige motivo. **Prorrogar plazo** solicita
   únicamente una nueva fecha límite de entrega y el motivo; no permite cambiar el inicio.
   **Eliminar** aparece cuando ningún docente ha iniciado un sílabo y confirma que se

@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
+use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ConvocationDeadline;
@@ -27,6 +29,8 @@ class ExtendProcessDeadline
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly WorkflowNotificationRecipients $recipients,
+        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     public function execute(
@@ -85,8 +89,33 @@ class ExtendProcessDeadline
                 ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
+            $this->notify($locked, $requested, $request);
 
             return $locked->refresh();
         });
+    }
+
+    /** Avisa a quien todavía tiene algo que entregar: Coordinación y docentes sin aprobar. */
+    private function notify(SyllabusProcess $process, CarbonImmutable $dueAt, Request $request): void
+    {
+        $convocations = Convocation::query()->where('proceso_id', $process->id)->get(['id', 'carrera_id']);
+        $recipients = array_keys($this->recipients->teacherSyllabusCounts(
+            array_values(array_map(fn (Convocation $convocation): string => $convocation->id, $convocations->all())),
+            exceptStates: ['aprobado'],
+        ));
+        foreach ($convocations->pluck('carrera_id')->unique() as $careerId) {
+            $recipients = [...$recipients, ...$this->recipients->coordinatorsForCareer($careerId)];
+        }
+
+        $this->notifications->execute(
+            eventType: 'proceso.plazo_extendido',
+            deduplicationKey: "proceso.plazo_extendido:{$process->id}:{$dueAt->getTimestamp()}",
+            recipientIds: $recipients,
+            title: 'Plazo extendido',
+            message: "La entrega de sílabos del proceso «{$process->nombre}» se amplió hasta el {$this->notifications->date($dueAt)}.",
+            resourceType: 'proceso_silabos',
+            resourceId: $process->id,
+            correlationId: $request->attributes->getString('correlation_id') ?: null,
+        );
     }
 }

@@ -18,6 +18,7 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
@@ -29,6 +30,7 @@ use Tests\TestCase;
  */
 class TeacherTransferTest extends TestCase
 {
+    use AssertsInternalNotifications;
     use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
@@ -89,6 +91,27 @@ class TeacherTransferTest extends TestCase
             'accion_evento_auditoria' => 'silabo.docente_transferido',
             'recurso_id' => $syllabus->id,
         ]);
+    }
+
+    public function test_opening_and_transferring_notify_the_teachers_involved(): void
+    {
+        $syllabus = $this->openedSyllabus();
+        $this->assertNotified($this->teacher->id, 'convocatoria.abierta', 'Tiene 1 sílabo asignado; la entrega vence el');
+
+        $this->transfer($syllabus)->assertSuccessful();
+
+        $subject = $syllabus->academicSubjectName();
+        $assigned = $this->assertNotified($this->replacement->id, 'silabo.docente_asignado', "le asignó el sílabo de {$subject}");
+        $this->assertSame('silabo', $assigned->tipo_recurso);
+        $this->assertNotified($this->teacher->id, 'silabo.docente_retirado', "pasó a {$this->replacement->nombre}");
+
+        // Cada uno llega a su pantalla: el entrante al sílabo; el saliente ya no lo ve.
+        $paths = $this->actingAs($this->replacement)
+            ->withSession(['active_role_assignment_id' => $this->replacement->roleAssignments()->firstOrFail()->id])
+            ->getJson(route('api.v1.notifications.index'))
+            ->assertOk()
+            ->json('notifications.data.*.resource_path');
+        $this->assertContains("/docente/mis-silabos/{$syllabus->id}", $paths);
     }
 
     public function test_an_unsubmitted_draft_is_discarded_without_completion_percentage(): void

@@ -8,8 +8,8 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 
 /**
- * El calendario institucional es de Administración. Coordinación lo consulta al preparar
- * su convocatoria, pero no lo crea ni lo mueve de estado.
+ * El calendario institucional es de Administración. Coordinación lo consulta al iniciar
+ * el alcance de su carrera, pero no lo crea ni lo mueve de estado.
  */
 class SyllabusProcessPolicy
 {

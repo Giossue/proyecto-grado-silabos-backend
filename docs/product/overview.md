@@ -48,7 +48,7 @@ El ciclo cubre:
 5. elaboración y validación;
 6. asistencia de IA opcional;
 7. envío como revisión inmutable;
-8. observación, respuesta y corrección;
+8. observación y corrección;
 9. comparación y aprobación;
 10. reapertura controlada;
 11. generación de Word/PDF;

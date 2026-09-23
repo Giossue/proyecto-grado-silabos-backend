@@ -278,22 +278,22 @@ formulario. El servidor cuenta las semanas de lunes a domingo que toca el rango 
 fechas, aunque la primera o la última sea parcial, y guarda ese resultado entre 1 y 52.
 
 I-110 (23 de septiembre de 2026) simplifica la configuración inicial de convocatorias:
-Administración las prepara y abre desde la fila del período académico, con el período
-fijado y nombre/plantilla automáticos; solo ajusta las fechas de elaboración. La
-preparación y apertura son atómicas. Coordinación conserva su convocatoria propia dentro
+Administración las abre desde la fila del período académico, con el período fijado y
+nombre/plantilla automáticos; solo ajusta las fechas de elaboración. La creación y
+apertura son atómicas. Coordinación conserva su convocatoria propia dentro
 del proceso abierto, hereda período, plantilla y fechas, y elige sus fuentes activas según
 I-72. Las tablas y las reglas de unicidad permanecen separadas.
 
 I-113 (23 de septiembre de 2026), por instrucción explícita del responsable del
 producto, precisa que las fechas de la convocatoria institucional no se copian del
-período académico. Al preparar una convocatoria nueva, Administración debe elegir el
+período académico. Al abrir una convocatoria nueva, Administración debe elegir el
 inicio de elaboración y la fecha límite de entrega; Coordinación hereda esos valores
 elegidos. La edición conserva las fechas ya guardadas.
 
 I-114 (23 de septiembre de 2026), por instrucción explícita del responsable del
 producto, limita la prórroga institucional a la fecha límite de entrega. El inicio no
 es una etapa prorrogable: Administración solo puede corregirlo mediante la edición del
-proceso en preparación o en pausa. `fechas_limite_convocatoria` conserva `inicio` y
+proceso en pausa. `fechas_limite_convocatoria` conserva `inicio` y
 `borrador` para validar la ventana de envío, sin cambio de esquema.
 
 I-116 (23 de septiembre de 2026), por instrucción explícita del responsable del
@@ -473,8 +473,16 @@ observaciones, aprobaciones, IA y exportaciones— y lo genera de nuevo desde la
 vigentes en una sola transacción. La inmutabilidad sigue aplicando al flujo ordinario y
 a los procesos cerrados; esta operación excepcional no deja coexistir formatos distintos.
 
+I-120 (23 de septiembre de 2026), por instrucción explícita del responsable del
+producto, retira el estado institucional `preparacion`. La convocatoria institucional
+nace `abierto` en la misma transacción que valida la plantilla, la estructura académica
+y la unicidad del proceso vigente; después solo transita `abierto ⇄ pausado → cerrado`.
+PostgreSQL admite como máximo una convocatoria abierta o pausada, mientras las cerradas
+se conservan como historial. Si ya hubo actividad docente, una equivocación se corrige
+pausando y regenerando los sílabos afectados; no se elimina el proceso.
+
 I-46 (4 de septiembre de 2026) precisa dos alcances del mismo ciclo: Administración
-prepara y abre un único proceso institucional por período académico; Coordinación no
+abre un único proceso institucional por período académico; Coordinación no
 prepara ni configura otra convocatoria, sino que inicia o pausa el alcance de su carrera
 desde ese proceso visible. Iniciar exige malla activa, materias programadas con paralelos y docentes
 vigentes, y fuentes académicas activas; genera atómicamente un sílabo por paralelo. Las

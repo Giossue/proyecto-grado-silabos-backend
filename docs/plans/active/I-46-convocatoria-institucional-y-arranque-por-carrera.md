@@ -19,14 +19,14 @@ migración mediante el release remoto aprobado.
   reanudación. La consulta, filtros y carga de convocatorias respetan la carrera activa.
   Se retiran el aviso institucional separado y el sheet de inicio.
 
-- ADM-12: no se prepara un nuevo proceso mientras exista uno abierto o pausado. La
+- ADM-12: no se abre un nuevo proceso mientras exista uno abierto o pausado. La
   pantalla explica el bloqueo y el caso de uso lo impone dentro de la transacción.
 
 - Ajuste del formulario institucional: nombre automático «Convocatoria {nombre del
   período}» al crear y editar; se retiran el campo Nombre y la etiqueta Plantilla vacía.
 
-- Administración prepara y abre una sola convocatoria institucional (`procesos_silabos`)
-  por período académico de toda la universidad.
+- Administración crea y abre en una sola operación la convocatoria institucional de un
+  período. Solo puede existir una abierta o pausada; las cerradas forman el historial.
 - Coordinación no prepara ni configura nombre, agrupación o fuentes. Ve los procesos
   institucionales y elige uno ya abierto solo para iniciar o pausar el alcance de su
   carrera.

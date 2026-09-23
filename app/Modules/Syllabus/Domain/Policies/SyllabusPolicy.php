@@ -56,11 +56,6 @@ class SyllabusPolicy
             && in_array($syllabus->estado, ['borrador', 'correccion_solicitada', 'en_revision'], true);
     }
 
-    public function respond(User $user, Syllabus $syllabus): bool
-    {
-        return $this->canTeacherEdit($user, $syllabus) && $syllabus->estado === 'correccion_solicitada';
-    }
-
     /**
      * Relevar al responsable es gobierno de la carrera, no edición de contenido: el
      * coordinador cambia quién responde por el expediente sin poder escribir en él.

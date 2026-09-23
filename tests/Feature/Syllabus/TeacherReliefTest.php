@@ -19,6 +19,7 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
@@ -30,6 +31,7 @@ use Tests\TestCase;
  */
 class TeacherReliefTest extends TestCase
 {
+    use AssertsInternalNotifications;
     use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
@@ -80,6 +82,12 @@ class TeacherReliefTest extends TestCase
             ->exists());
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'docente.relevo_global', 'recurso_id' => $this->teacher->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'silabo.docente_transferido', 'recurso_id' => $syllabus->id]);
+
+        // Un solo resumen por persona, no un aviso por sílabo.
+        $this->assertNotified($this->replacement->id, 'docente.relevo_recibido', "2 paralelos y 1 sílabo que tenía {$this->teacher->nombre}");
+        $this->assertNotified($this->teacher->id, 'docente.relevo_entregado', "asignó sus 2 paralelos y 1 sílabo a {$this->replacement->nombre}");
+        $this->assertNotNotified($this->replacement->id, 'silabo.docente_asignado');
+        $this->assertNotNotified($this->teacher->id, 'silabo.docente_retirado');
 
         // Repetirlo ya no encuentra paralelos: se dice, no se duplica.
         $this->relieve()->assertJsonValidationErrors('outgoing_user_id');

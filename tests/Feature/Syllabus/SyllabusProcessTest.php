@@ -77,7 +77,7 @@ class SyllabusProcessTest extends TestCase
         $this->teacherContext = $this->teacher->roleAssignments()->firstOrFail();
     }
 
-    public function test_only_administration_prepares_the_institutional_process(): void
+    public function test_only_administration_opens_the_institutional_process(): void
     {
         $template = $this->publishedTemplate();
 
@@ -90,7 +90,7 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful();
 
         $process = SyllabusProcess::query()->firstOrFail();
-        $this->assertSame('preparacion', $process->estado);
+        $this->assertSame('abierto', $process->estado);
         $this->assertSame($process->academicPeriod->codigo, $process->nombre);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'proceso_silabos.creado', 'recurso_id' => $process->id]);
 
@@ -99,20 +99,7 @@ class SyllabusProcessTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
 
                 ->has('processes', 1)
-                ->where('processes.0.state', 'preparacion'));
-    }
-
-    public function test_administration_can_prepare_and_open_from_the_period_flow(): void
-    {
-        $template = $this->publishedTemplate();
-
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.processes.prepare-and-open'), $this->processPayload($template))
-            ->assertCreated()
-            ->assertJsonPath('message', 'Convocatoria institucional abierta. Las coordinaciones ya pueden iniciar sus convocatorias.');
-
-        $process = SyllabusProcess::query()->firstOrFail();
-        $this->assertSame(SyllabusProcess::STATE_OPEN, $process->estado);
+                ->where('processes.0.state', 'abierto'));
         $this->actingAsAdministrator()
             ->getJson(route('api.v1.admin.academic.index'))
             ->assertJsonPath('catalogs.periods.0.institutional_process.id', $process->id)
@@ -196,7 +183,7 @@ class SyllabusProcessTest extends TestCase
 
     public function test_coordination_cannot_delete_an_institutional_process(): void
     {
-        $process = $this->preparedProcess($this->publishedTemplate(), 'Proceso protegido');
+        $process = $this->createProcess($this->publishedTemplate(), 'Proceso protegido');
 
         $this->actingAsCoordinator()
             ->deleteJson(route('api.v1.admin.processes.destroy', $process))
@@ -210,7 +197,7 @@ class SyllabusProcessTest extends TestCase
         $this->publishedTemplate();
 
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.processes.prepare-and-open'), [
+            ->postJson(route('api.v1.admin.processes.store'), [
                 'period_id' => AcademicPeriod::query()->valueOrFail('id'),
             ])
             ->assertUnprocessable()
@@ -219,13 +206,13 @@ class SyllabusProcessTest extends TestCase
         $this->assertDatabaseCount('convocatorias_universidad', 0);
     }
 
-    public function test_prepare_and_open_is_atomic_when_institutional_structure_is_not_ready(): void
+    public function test_opening_is_atomic_when_institutional_structure_is_not_ready(): void
     {
         $template = $this->publishedTemplate();
         $this->coordinatorContext->update(['activo' => false]);
 
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.processes.prepare-and-open'), $this->processPayload($template))
+            ->postJson(route('api.v1.admin.processes.store'), $this->processPayload($template))
             ->assertJsonValidationErrors('process');
 
         $this->assertDatabaseCount('convocatorias_universidad', 0);
@@ -234,7 +221,7 @@ class SyllabusProcessTest extends TestCase
         ]);
     }
 
-    public function test_an_empty_template_cannot_prepare_an_institutional_process(): void
+    public function test_an_empty_template_cannot_open_an_institutional_process(): void
     {
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Contenedor vacío'])
@@ -243,7 +230,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.processes.store'), $this->processPayload($template))
-            ->assertJsonValidationErrors(['process' => 'La plantilla institucional está vacía. Aplique el formato oficial o configure sus bloques antes de preparar el proceso.']);
+            ->assertJsonValidationErrors(['process' => 'La plantilla institucional está vacía. Aplique el formato oficial o configure sus bloques antes de abrir la convocatoria.']);
     }
 
     public function test_process_dates_arrive_as_days_and_cover_the_whole_deadline_day(): void
@@ -315,38 +302,38 @@ class SyllabusProcessTest extends TestCase
     public function test_only_one_process_can_be_in_progress(): void
     {
         $template = $this->publishedTemplate();
-        $first = $this->preparedProcess($template, 'Primero');
+        $first = $this->createProcess($template, 'Primero');
+        $this->assertSame('abierto', $first->estado);
 
-        // Un período institucional identifica un único proceso, aun antes de abrirlo.
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
-            ...$this->processPayload($template),
-            'nombre' => 'Duplicado del período',
-        ])->assertJsonValidationErrors('period_id');
-
+        // Mientras una convocatoria esté abierta no se puede crear otra, ni siquiera
+        // para un período diferente.
         $otherPeriod = AcademicPeriod::query()->create([
             'codigo' => 'I-46-ALTERNO',
             'fecha_inicio' => '2027-01-01',
             'fecha_fin' => '2027-05-31',
         ]);
-        $second = $this->preparedProcess($template, 'Segundo', $otherPeriod->id);
-
-        $this->transition($first, 'abrir')->assertSuccessful()->assertSuccessful();
-        $this->assertSame('abierto', $first->fresh()->estado);
-
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             ...$this->processPayload($template),
-            'period_id' => $second->periodo_academico_id,
+            'period_id' => $otherPeriod->id,
         ])->assertJsonValidationErrors('process');
-
-        $this->transition($second, 'abrir')->assertJsonValidationErrors('process');
-        $this->assertSame('preparacion', $second->fresh()->estado);
 
         // En pausa sigue ocupando el lugar: pausar no es cerrar.
         $this->transition($first, 'pausar', 'Corrección de la sección de evaluación.')->assertSuccessful();
-        $this->transition($second, 'abrir')->assertJsonValidationErrors('process');
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
+            ...$this->processPayload($template),
+            'period_id' => $otherPeriod->id,
+        ])->assertJsonValidationErrors('process');
 
         $this->transition($first, 'cerrar')->assertSuccessful();
-        $this->transition($second, 'abrir')->assertSuccessful()->assertSuccessful();
+        $second = $this->createProcess($template, 'Segundo', $otherPeriod->id);
+        $this->assertSame('abierto', $second->estado);
+
+        // Cada período conserva una sola convocatoria, aunque la anterior ya cerró.
+        $this->transition($second, 'cerrar')->assertSuccessful();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
+            ...$this->processPayload($template),
+            'period_id' => $first->periodo_academico_id,
+        ])->assertJsonValidationErrors('period_id');
     }
 
     public function test_pausing_requires_a_written_reason_and_is_audited(): void
@@ -368,7 +355,7 @@ class SyllabusProcessTest extends TestCase
     public function test_coordinator_starts_the_institutional_convocation_and_inherits_its_configuration(): void
     {
         $template = $this->publishedTemplate();
-        $process = $this->preparedProcess($template, 'Elaboración 2026-2027');
+        $process = $this->createProcess($template, 'Elaboración 2026-2027');
         $source = $this->coordinatorSource();
         $unselectedSource = AcademicSource::query()->create([
             'carrera_id' => $this->coordinatorContext->carrera_id,
@@ -390,13 +377,6 @@ class SyllabusProcessTest extends TestCase
             'fecha_fin' => '2027-05-31',
         ]);
 
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
-            'process_id' => $process->id,
-            'source_ids' => [$source->id],
-        ])->assertJsonValidationErrors('process_id');
-        $this->assertDatabaseCount('convocatorias_carreras', 0);
-
-        $this->transition($process, 'abrir')->assertSuccessful();
         $this->actingAsCoordinator()->withHeader('Origin', 'http://localhost:5173')
             ->postJson(route('api.v1.coordination.convocations.store'), [
                 'process_id' => $process->id,
@@ -744,9 +724,8 @@ class SyllabusProcessTest extends TestCase
 
     public function test_period_of_a_process_with_convocations_cannot_change(): void
     {
-        $process = $this->preparedProcess($this->publishedTemplate(), 'Proceso con convocatoria');
+        $process = $this->createProcess($this->publishedTemplate(), 'Proceso con convocatoria');
         $source = $this->coordinatorSource();
-        $this->transition($process, 'abrir')->assertSuccessful();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
             'source_ids' => [$source->id],
@@ -774,7 +753,7 @@ class SyllabusProcessTest extends TestCase
         ];
     }
 
-    private function preparedProcess(SyllabusTemplate $template, string $name, ?string $periodId = null): SyllabusProcess
+    private function createProcess(SyllabusTemplate $template, string $name, ?string $periodId = null): SyllabusProcess
     {
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.processes.store'), [...$this->processPayload($template), 'nombre' => $name, ...($periodId === null ? [] : ['period_id' => $periodId])])
@@ -785,10 +764,7 @@ class SyllabusProcessTest extends TestCase
 
     private function openProcess(): SyllabusProcess
     {
-        $process = $this->preparedProcess($this->publishedTemplate(), 'Proceso abierto');
-        $this->transition($process, 'abrir')->assertSuccessful();
-
-        return $process->fresh();
+        return $this->createProcess($this->publishedTemplate(), 'Proceso abierto')->fresh();
     }
 
     private function openedConvocation(): Convocation

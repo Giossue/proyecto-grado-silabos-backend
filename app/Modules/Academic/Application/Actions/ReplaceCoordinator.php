@@ -11,8 +11,11 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -30,6 +33,7 @@ class ReplaceCoordinator
         private readonly AssignRole $assignRole,
         private readonly SetUserStatus $setStatus,
         private readonly RecordAuditEvent $audit,
+        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     /**
@@ -73,7 +77,7 @@ class ReplaceCoordinator
             $this->assignRole->execute($incoming, [
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $lockedCareer->id,
-            ], $actor, $request);
+            ], $actor, $request, notify: false);
 
             if ($current !== null && (bool) ($data['deactivate_outgoing'] ?? false)) {
                 $outgoing = User::query()->lockForUpdate()->find($current->usuario_id);
@@ -100,7 +104,30 @@ class ReplaceCoordinator
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
+            $this->notifyIncoming($lockedCareer, $incoming, $request);
+
             return ['previous_user_id' => $current?->usuario_id, 'role_removed' => $roleRemoved, 'deactivated' => $deactivated];
         });
+    }
+
+    private function notifyIncoming(Career $career, User $incoming, Request $request): void
+    {
+        $pending = Syllabus::query()->where('carrera_id', $career->id)->where('estado', 'en_revision')->count();
+        $waiting = match ($pending) {
+            0 => '',
+            1 => ' Hay 1 sílabo esperando revisión.',
+            default => " Hay {$pending} sílabos esperando revisión.",
+        };
+
+        $this->notifications->execute(
+            eventType: 'coordinacion.asignada',
+            deduplicationKey: "coordinacion.asignada:{$career->id}:{$incoming->id}:".Str::uuid(),
+            recipientIds: [$incoming->id],
+            title: "Ahora coordina {$career->nombre}",
+            message: "Se le asignó la coordinación de {$career->nombre}.{$waiting}",
+            resourceType: 'carrera',
+            resourceId: $career->id,
+            correlationId: $request->attributes->getString('correlation_id') ?: null,
+        );
     }
 }

@@ -4,11 +4,13 @@ namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,6 +33,7 @@ class RelieveTeacher
         private readonly TransferSyllabusTeacher $transfer,
         private readonly RecordAuditEvent $audit,
         private readonly AcademicPeriodPlanning $periodPlanning,
+        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     /**
@@ -102,7 +105,8 @@ class RelieveTeacher
 
             $syllabusIds = $collaborations->pluck('silabo_id')->unique();
             foreach (Syllabus::query()->whereIn('id', $syllabusIds)->get() as $syllabus) {
-                $this->transfer->execute($syllabus, $outgoingUserId, $incomingUserId, "{$idempotencyKey}-{$syllabus->id}", $actor, $request);
+                // Un relevo es un solo aviso por persona, no uno por sílabo.
+                $this->transfer->execute($syllabus, $outgoingUserId, $incomingUserId, "{$idempotencyKey}-{$syllabus->id}", $actor, $request, notify: false);
             }
 
             $movedWithoutSyllabus = 0;
@@ -130,9 +134,45 @@ class RelieveTeacher
                 metadata: [...$summary, 'incoming_user_id' => $incomingUserId, 'parallels_without_syllabus' => $movedWithoutSyllabus, 'career_id' => $careerId],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
+            $this->notifyTeachers($careerId, $outgoingUserId, $incomingUserId, $summary, $idempotencyKey, $request);
 
             return $summary;
         });
+    }
+
+    /** @param Summary $summary */
+    private function notifyTeachers(string $careerId, string $outgoingUserId, string $incomingUserId, array $summary, string $idempotencyKey, Request $request): void
+    {
+        $names = User::query()->whereIn('id', [$outgoingUserId, $incomingUserId])->pluck('nombre', 'id');
+        $career = Career::query()->whereKey($careerId)->value('nombre');
+        $parallels = $summary['parallels'] === 1 ? '1 paralelo' : "{$summary['parallels']} paralelos";
+        $syllabi = match ($summary['syllabi']) {
+            0 => '',
+            1 => ' y 1 sílabo',
+            default => " y {$summary['syllabi']} sílabos",
+        };
+        $correlationId = $request->attributes->getString('correlation_id') ?: null;
+
+        $this->notifications->execute(
+            eventType: 'docente.relevo_recibido',
+            deduplicationKey: "docente.relevo_recibido:{$idempotencyKey}",
+            recipientIds: [$incomingUserId],
+            title: 'Recibió paralelos de otro docente',
+            message: "Coordinación de {$career} le asignó {$parallels}{$syllabi} que tenía {$names[$outgoingUserId]}.",
+            resourceType: 'carrera',
+            resourceId: $careerId,
+            correlationId: $correlationId,
+        );
+        $this->notifications->execute(
+            eventType: 'docente.relevo_entregado',
+            deduplicationKey: "docente.relevo_entregado:{$idempotencyKey}",
+            recipientIds: [$outgoingUserId],
+            title: 'Paralelos reasignados',
+            message: "Coordinación de {$career} asignó sus {$parallels}{$syllabi} a {$names[$incomingUserId]}.",
+            resourceType: 'carrera',
+            resourceId: $careerId,
+            correlationId: $correlationId,
+        );
     }
 
     private function teacherRoleInCareer(string $userId, string $careerId): ?RoleAssignment

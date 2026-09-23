@@ -10,7 +10,6 @@ use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ObservationResponse;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Reopening;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
@@ -102,10 +101,6 @@ class SubmitSyllabus
                 'enviado_en' => now(),
             ]);
 
-            ObservationResponse::query()
-                ->where('silabo_id', $locked->id)
-                ->whereNull('revision_respuesta_id')
-                ->update(['revision_respuesta_id' => $revision->id]);
             $from = $locked->estado;
             $action = $from === 'borrador' ? 'enviar' : 'reenviar';
             $locked->update([

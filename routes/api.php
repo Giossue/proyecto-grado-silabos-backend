@@ -293,9 +293,6 @@ Route::prefix('v1')->group(function (): void {
             Route::post('teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/apply', [AiAssistanceController::class, 'apply'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.fields.ai.apply');
-            Route::post('teacher/syllabi/{syllabus}/observations/{observation}/response', [SyllabusController::class, 'respondObservation'])
-                ->middleware('active-role')
-                ->name('api.v1.teacher.syllabi.observations.respond');
             Route::get('revisions/{revision}/documents', [DocumentController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.documents.show');
             Route::post('revisions/{revision}/documents', [DocumentController::class, 'store'])

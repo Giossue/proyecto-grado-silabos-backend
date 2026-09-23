@@ -11,7 +11,7 @@
 | Borrador                  | Contenido editable actual, todavía no enviado como evidencia.                                |
 | Revisión                  | Fotografía inmutable creada al enviar o reenviar.                                            |
 | Observación               | Solicitud de revisión vinculada a campo, sección o documento.                                |
-| Respuesta                 | Explicación del docente frente a una observación.                                            |
+| Respuesta                 | Retirada en I-120: el docente corrige y reenvía; ya no escribe respuestas a observaciones.   |
 | Aprobación                | Decisión humana sobre una revisión concreta e inmutable.                                     |
 | Reapertura                | Creación controlada de una nueva revisión desde un aprobado conservado.                      |
 | Plantilla                 | Esquema funcional de secciones, bloques y campos del sílabo.                                 |

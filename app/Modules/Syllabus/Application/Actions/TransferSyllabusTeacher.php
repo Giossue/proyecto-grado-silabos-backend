@@ -9,6 +9,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -39,6 +40,7 @@ class TransferSyllabusTeacher
         private readonly ReopenSyllabus $reopen,
         private readonly RecordAuditEvent $audit,
         private readonly AcademicPeriodPlanning $periodPlanning,
+        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     public function execute(
@@ -48,6 +50,7 @@ class TransferSyllabusTeacher
         string $idempotencyKey,
         User $actor,
         Request $request,
+        bool $notify = true,
     ): Syllabus {
         $activeRole = $this->roles->resolve($request);
         $careerId = $syllabus->convocation()->value('carrera_id');
@@ -75,7 +78,7 @@ class TransferSyllabusTeacher
         }
 
         return DB::transaction(function () use (
-            $activeRole, $actor, $idempotencyKey, $incomingRole, $incomingUserId, $outgoingUserId, $request, $syllabus,
+            $activeRole, $actor, $idempotencyKey, $incoming, $incomingRole, $incomingUserId, $notify, $outgoingUserId, $request, $syllabus,
         ): Syllabus {
             $locked = Syllabus::query()->lockForUpdate()->findOrFail($syllabus->id);
 
@@ -169,9 +172,38 @@ class TransferSyllabusTeacher
                 ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
+            if ($notify) {
+                $this->notifyTeachers($locked, $outgoingUserId, $incoming, $idempotencyKey, $request);
+            }
 
             return $locked->refresh();
         });
+    }
+
+    private function notifyTeachers(Syllabus $syllabus, string $outgoingUserId, User $incoming, string $idempotencyKey, Request $request): void
+    {
+        $subject = $syllabus->academicSubjectName();
+        $correlationId = $request->attributes->getString('correlation_id') ?: null;
+        $this->notifications->execute(
+            eventType: 'silabo.docente_asignado',
+            deduplicationKey: "silabo.docente_asignado:{$syllabus->id}:{$idempotencyKey}",
+            recipientIds: [$incoming->id],
+            title: 'Se le asignó un sílabo',
+            message: "Coordinación le asignó el sílabo de {$subject}.",
+            resourceType: 'silabo',
+            resourceId: $syllabus->id,
+            correlationId: $correlationId,
+        );
+        $this->notifications->execute(
+            eventType: 'silabo.docente_retirado',
+            deduplicationKey: "silabo.docente_retirado:{$syllabus->id}:{$idempotencyKey}",
+            recipientIds: [$outgoingUserId],
+            title: 'Sílabo reasignado',
+            message: "El sílabo de {$subject} pasó a {$incoming->nombre}.",
+            resourceType: 'silabo',
+            resourceId: $syllabus->id,
+            correlationId: $correlationId,
+        );
     }
 
     private function teacherRoleInCareer(string $userId, string $careerId): ?RoleAssignment

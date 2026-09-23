@@ -26,7 +26,7 @@ mutable el documento aprobado.
 | Sin iniciar           | Crear borrador       | Docente asignado/sistema | Borrador                         | Fija plantilla y contexto académico.               |
 | Borrador              | Enviar               | Docente autorizado       | En revisión                      | Valida, crea revisión inmutable y audita.          |
 | En revisión           | Solicitar corrección | Coordinador de alcance   | Corrección solicitada            | Selecciona observaciones y habilita nueva edición. |
-| Corrección solicitada | Reenviar             | Docente autorizado       | En revisión                      | Crea nueva revisión y vincula respuestas/cambios.  |
+| Corrección solicitada | Reenviar             | Docente autorizado       | En revisión                      | Crea nueva revisión; Coordinación verifica sobre ella. |
 | En revisión           | Aprobar              | Coordinador autorizado   | Aprobado                         | Fija aprobación sobre revisión inmutable.          |
 | Aprobado              | Reabrir              | Coordinador autorizado   | Borrador o Corrección solicitada | Registra causa y crea revisión enlazada.           |
 
@@ -61,7 +61,7 @@ fecha límite de entrega, sobre el proceso y con motivo escrito; la prórroga al
 todas las convocatorias del proceso y únicamente hacia adelante: adelantar la fecha
 dejaría fuera de plazo a quien ya estaba dentro. La fecha anterior se conserva en el
 evento de auditoría. El inicio se corrige mediante la edición del proceso cuando este se
-encuentra en preparación o en pausa; no forma parte de la acción de prórroga.
+encuentra en pausa; no forma parte de la acción de prórroga.
 
 Administración puede eliminar una convocatoria institucional completa mientras ningún
 docente haya iniciado un sílabo. La regla consulta tanto el estado actual como el evento
@@ -71,10 +71,10 @@ auditoría; desde el primer inicio docente, el proceso se conserva como historia
 
 ## Inicio institucional y alcance de carrera
 
-Administración prepara una sola convocatoria institucional por período académico y la
-abre para la universidad. La preparación se inicia desde la fila del período académico:
-el período queda fijo, el nombre y la plantilla son automáticos y Administración solo
-confirma las fechas de elaboración. Cada coordinador la ve en su área y solo puede iniciar el
+Administración abre una sola convocatoria institucional vigente para toda la universidad.
+La creación se inicia desde la fila del período académico y queda abierta en la misma
+transacción: el período queda fijo, el nombre y la plantilla son automáticos y
+Administración solo confirma las fechas de elaboración. Cada coordinador la ve en su área y solo puede iniciar el
 alcance de su carrera: no define nombre, plantilla, período ni modo de agrupación, pero
 debe elegir un subconjunto no vacío de las fuentes activas de su carrera. El inicio comprueba logo propio de la facultad, malla activa,
 materias programadas con paralelos, docente vigente en cada paralelo y al menos una

@@ -6,10 +6,13 @@ use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
+use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -27,6 +30,8 @@ class TransitionConvocation
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly WorkflowNotificationRecipients $recipients,
+        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     public function execute(
@@ -83,8 +88,29 @@ class TransitionConvocation
                 metadata: array_filter(['reason' => $reason], fn (mixed $value): bool => $value !== null),
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
+            $this->notifyTeachers($locked, $to, $request);
 
             return $locked;
         });
+    }
+
+    /** Los sílabos aprobados no se detienen con la pausa: esos docentes no reciben aviso. */
+    private function notifyTeachers(Convocation $convocation, string $to, Request $request): void
+    {
+        $career = $convocation->career()->value('nombre');
+        [$event, $title, $message] = $to === Convocation::STATE_PAUSED
+            ? ['convocatoria.pausada', 'Convocatoria pausada', "La convocatoria de {$career} está en pausa. Su avance se conserva; podrá continuar cuando se reanude."]
+            : ['convocatoria.reanudada', 'Convocatoria reanudada', "La convocatoria de {$career} se reanudó. Puede continuar con sus sílabos."];
+
+        $this->notifications->execute(
+            eventType: $event,
+            deduplicationKey: "{$event}:{$convocation->id}:".Str::uuid(),
+            recipientIds: array_keys($this->recipients->teacherSyllabusCounts([$convocation->id], exceptStates: ['aprobado'])),
+            title: $title,
+            message: $message,
+            resourceType: 'convocatoria',
+            resourceId: $convocation->id,
+            correlationId: $request->attributes->getString('correlation_id') ?: null,
+        );
     }
 }

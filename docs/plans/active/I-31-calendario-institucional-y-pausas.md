@@ -39,8 +39,8 @@ producción.
 - `procesos_silabos` es el agregado institucional; `convocatorias.proceso_id` es
   obligatorio. Las convocatorias existentes reciben un proceso derivado de su propia
   plantilla y fechas en la migración.
-- Estados del proceso: `preparacion → abierto ⇄ pausado → cerrado`. Estados de la
-  convocatoria: `preparacion → abierta ⇄ pausada`, `cerrada` se conserva.
+- Estados del proceso institucional, actualizado por I-120: `abierto ⇄ pausado → cerrado`.
+  Estados de la convocatoria de carrera: `preparacion → abierta ⇄ pausada`; `cerrada` se conserva.
 - «En curso» = convocatoria `abierta` **y** proceso `abierto`. Es la única condición que
   bloquea ediciones y habilita el trabajo docente.
 - La pausa del administrador congela toda la universidad; la del coordinador, su carrera.

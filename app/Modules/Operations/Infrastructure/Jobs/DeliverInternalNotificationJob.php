@@ -57,12 +57,11 @@ class DeliverInternalNotificationJob implements ShouldQueue
             return;
         }
 
-        $syllabus = $this->syllabusFor($execution);
-        [$title, $message] = $this->message($execution, $syllabus);
+        [$title, $message, $resourceType, $resourceId] = $this->content($execution);
         $recipientIds = $this->recipientIds($execution);
         $eventType = $this->eventType($execution);
 
-        DB::transaction(function () use ($eventType, $message, $recipientIds, $syllabus, $title): void {
+        DB::transaction(function () use ($eventType, $message, $recipientIds, $resourceId, $resourceType, $title): void {
             $locked = $this->lockedExecution();
             if ($locked === null || $locked->estado === 'completada') {
                 return;
@@ -83,8 +82,8 @@ class DeliverInternalNotificationJob implements ShouldQueue
                         'tipo' => $eventType,
                         'titulo' => $title,
                         'mensaje' => $message,
-                        'tipo_recurso' => 'silabo',
-                        'recurso_id' => $syllabus->id,
+                        'tipo_recurso' => $resourceType,
+                        'recurso_id' => $resourceId,
                         'notificado_en' => now(),
                     ],
                 );
@@ -115,6 +114,26 @@ class DeliverInternalNotificationJob implements ShouldQueue
                 'finalizado_en' => now(),
             ]);
         });
+    }
+
+    /**
+     * Los avisos de I-120 llegan redactados; los del flujo del sílabo se redactan aquí
+     * con el nombre vigente de la asignatura.
+     *
+     * @return array{string, string, string, string}
+     */
+    private function content(JobExecution $execution): array
+    {
+        $title = $execution->entrada['titulo'] ?? null;
+        $message = $execution->entrada['mensaje'] ?? null;
+        if (is_string($title) && is_string($message)
+            && is_string($execution->tipo_recurso) && is_string($execution->recurso_id)) {
+            return [$title, $message, $execution->tipo_recurso, $execution->recurso_id];
+        }
+
+        $syllabus = $this->syllabusFor($execution);
+
+        return [...$this->message($execution, $syllabus), 'silabo', $syllabus->id];
     }
 
     /** @return array{string, string} */

@@ -26,7 +26,8 @@
 - El coordinador observa una revisión concreta, solicita corrección o aprueba.
 - COR-06 mantiene la revisión como página completa, pero abre el alta de observaciones
   desde una acción principal en un panel lateral derecho.
-- El docente responde; el coordinador verifica si la observación queda resuelta.
+- Solo Coordinación escribe observaciones. El docente corrige y reenvía; el
+  coordinador verifica sobre la nueva revisión si la observación queda resuelta (I-120).
 - La comparación muestra cambios de campos, filas y secciones.
 - Reabrir conserva la revisión aprobada y registra causa/actor.
 

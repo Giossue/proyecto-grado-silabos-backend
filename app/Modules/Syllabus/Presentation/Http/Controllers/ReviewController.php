@@ -238,7 +238,6 @@ class ReviewController extends Controller
             'syllabus.teachers:id,nombre',
             'syllabus.revisions.submitter:id,nombre',
             'syllabus.revisions.observations.creator:id,nombre',
-            'syllabus.revisions.observations.response.respondent:id,nombre',
             'syllabus.revisions.correctionRequest.observations',
             'syllabus.revisions.approval.approver:id,nombre',
             'syllabus.reopenings.reopener:id,nombre',
@@ -286,7 +285,7 @@ class ReviewController extends Controller
                 'submitted_by' => $item->submitter->nombre,
                 'approved_at' => $item->approval?->aprobado_en->toIso8601String(),
             ])->values(),
-            'observations' => $this->reviewObservationsPayload($syllabus, $latest),
+            'observations' => $this->reviewObservationsPayload($syllabus),
             'correction_request' => $revision->correctionRequest === null ? null : [
                 'justification' => $revision->correctionRequest->justificacion,
                 'requested_at' => $revision->correctionRequest->solicitado_en->toIso8601String(),
@@ -335,18 +334,12 @@ class ReviewController extends Controller
     }
 
     /** @return list<array<string, mixed>> */
-    private function reviewObservationsPayload(Syllabus $syllabus, ?SyllabusRevision $latest): array
+    private function reviewObservationsPayload(Syllabus $syllabus): array
     {
-        $revisionNumbers = [];
-        foreach ($syllabus->revisions as $revision) {
-            $revisionNumbers[$revision->id] = $revision->numero_revision;
-        }
-
         $payload = [];
         foreach ($syllabus->revisions->sortBy('numero_revision') as $revision) {
             $requestedIds = $revision->correctionRequest?->observations->pluck('id') ?? collect();
             foreach ($revision->observations as $observation) {
-                $response = $observation->response;
                 $payload[] = [
                     'id' => $observation->id,
                     'revision_number' => $revision->numero_revision,
@@ -355,20 +348,12 @@ class ReviewController extends Controller
                     'content' => $observation->contenido,
                     'state' => $observation->estado,
                     'requested' => $requestedIds->contains($observation->id),
+                    // Estar en revisión implica que el docente ya reenvió su corrección:
+                    // Coordinación verifica sobre esa revisión, sin respuesta intermedia.
                     'can_verify' => $syllabus->estado === 'en_revision'
-                        && $observation->estado !== 'verificada'
-                        && (! $requestedIds->contains($observation->id)
-                            || $response?->revision_respuesta_id === $latest?->id),
+                        && $observation->estado !== 'verificada',
                     'created_by' => $observation->creator->nombre,
                     'observado_en' => $observation->observado_en->toIso8601String(),
-                    'response' => $response === null ? null : [
-                        'content' => $response->contenido,
-                        'responded_by' => $response->respondent->nombre,
-                        'responded_at' => $response->respondido_en->toIso8601String(),
-                        'revision_number' => $response->revision_respuesta_id === null
-                            ? null
-                            : ($revisionNumbers[$response->revision_respuesta_id] ?? null),
-                    ],
                 ];
             }
         }

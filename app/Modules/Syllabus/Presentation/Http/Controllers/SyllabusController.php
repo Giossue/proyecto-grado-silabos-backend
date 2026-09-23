@@ -14,7 +14,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\AcademicContextValues;
-use App\Modules\Syllabus\Application\Actions\RespondToObservation;
 use App\Modules\Syllabus\Application\Actions\StartDraft;
 use App\Modules\Syllabus\Application\Actions\SubmitSyllabus;
 use App\Modules\Syllabus\Application\Actions\UpdateDraftField;
@@ -22,11 +21,9 @@ use App\Modules\Syllabus\Application\Actions\ValidateDraft;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
-use App\Modules\Syllabus\Presentation\Http\Requests\RespondObservationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\SubmitSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\UpdateDraftFieldRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewSyllabiRequest;
@@ -132,25 +129,6 @@ class SyllabusController extends Controller
         ]);
     }
 
-    public function respondObservation(
-        Syllabus $syllabus,
-        ReviewObservation $observation,
-        RespondObservationRequest $request,
-        RespondToObservation $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute(
-            $syllabus,
-            $observation,
-            $request->string('content')->toString(),
-            $actor,
-            $request,
-        );
-
-        return response()->json(['message' => 'Respuesta guardada. Se incluirá al reenviar la corrección.']);
-    }
-
     public function updateField(
         Syllabus $syllabus,
         FieldDefinition $field,
@@ -205,7 +183,7 @@ class SyllabusController extends Controller
             'validationRuns' => fn ($query) => $query->with('results')->latest('completado_en')->limit(1),
             'revisions' => fn ($query) => $query->with([
                 'submitter:id,nombre', 'approval.approver:id,nombre',
-                'correctionRequest.observations', 'observations.response.respondent:id,nombre',
+                'correctionRequest.observations', 'observations',
             ]),
             'reopenings' => fn ($query) => $query->with('reopener:id,nombre')->latest('reabierto_en'),
         ]);
@@ -292,11 +270,6 @@ class SyllabusController extends Controller
                     'content' => $observation->contenido,
                     'state' => $observation->estado,
                     'requested' => $requestedIds->contains($observation->id),
-                    'response' => $observation->response === null ? null : [
-                        'content' => $observation->response->contenido,
-                        'responded_at' => $observation->response->respondido_en->toIso8601String(),
-                        'fixed' => $observation->response->revision_respuesta_id !== null,
-                    ],
                 ];
             }
         }

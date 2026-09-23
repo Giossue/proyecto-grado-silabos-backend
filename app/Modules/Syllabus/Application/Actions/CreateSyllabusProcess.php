@@ -108,7 +108,7 @@ class CreateSyllabusProcess
 
         if ($template === null || ! $template->hasStructure()) {
             throw ValidationException::withMessages([
-                'process' => 'La plantilla institucional está vacía. Aplique el formato oficial o configure sus bloques antes de preparar el proceso.',
+                'process' => 'La plantilla institucional está vacía. Aplique el formato oficial o configure sus bloques antes de abrir la convocatoria.',
             ]);
         }
 
