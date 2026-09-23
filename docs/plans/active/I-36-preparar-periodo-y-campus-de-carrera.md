@@ -1,5 +1,9 @@
 # I-36: Preparar periodo y campus de la carrera
 
+> Supersedido en lo relativo a la propiedad del campus por I-106: ahora pertenece
+> obligatoriamente a la Facultad y la programación conserva una copia textual. El resto
+> de este plan documenta la decisión y migración originales.
+
 > Nota de terminología (I-62, 2026-09-09): las referencias históricas a «oferta» y
 > `OfferingInheritance` corresponden hoy a **programación de asignatura** y
 > `ScheduledSubjectInheritance`.

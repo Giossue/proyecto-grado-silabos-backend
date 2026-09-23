@@ -26,7 +26,7 @@ al entrar y puede sustituirla desde el menú, sin sumar alcances ni privilegios.
 - `ProgramacionAsignatura`, `Paralelo`, `DocenteParalelo`.
 - `AliasInstitucional` traduce el texto libre de la fuente hacia un catálogo normalizado.
 
-Una `Facultad` agrupa muchas `Carrera` y elige exactamente un campus de la lista fija de
+Una `Facultad` agrupa muchas `Carreras` y elige exactamente un campus de la lista fija de
 cinco ubicaciones institucionales. `Carrera` hereda el campus de su facultad; no existe
 un catálogo ni una entidad independiente de campus. La programación conserva una copia
 textual del campus elegido para preservar el contexto histórico del sílabo.

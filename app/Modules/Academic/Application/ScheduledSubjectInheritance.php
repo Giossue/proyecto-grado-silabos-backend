@@ -2,8 +2,8 @@
 
 namespace App\Modules\Academic\Application;
 
-use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Domain\CampusLocation;
+use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use Illuminate\Validation\ValidationException;

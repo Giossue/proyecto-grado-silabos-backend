@@ -27,19 +27,20 @@ pantallas, rutas y claves foráneas dejan de existir.
 - Toda facultad debe tener exactamente una opción; la alta/edición y la columna
   `facultades.campus_facultad` son obligatorias.
 - El borrado de la tabla exige mapear sus filas referenciadas. La migración aborta antes
-  de retirar datos si un valor es desconocido, una facultad no tiene campus asignado o
-  reúne más de una opción; primero se concilian esos casos preservando la facultad como
-  ámbito único.
+  de retirar datos si hay cualquier fila de campus ajena a las opciones confirmadas,
+  una referencia inválida, una facultad sin carreras con campus o carreras de una misma
+  facultad con ubicaciones distintas; primero se concilian esos casos.
 - La migración remota requiere respaldo y comprobación previa según el runbook; este plan
   no aplica DDL a producción.
 
 ## Cambios previstos
 
-- Dominio: enum de cinco campus; Facultad es propietaria de campus.
+- Dominio: enum PHP y restricciones `CHECK` con cinco campus; Facultad es propietaria.
 - Backend: alta/edición/listado de facultad; herencia hacia carreras y programaciones;
-  retiro de CRUD, estado, permisos y rutas del catálogo.
-- Datos: migración hacia delante para poblar facultad y copia textual en programación,
-  retirar `carreras.campus_id`, `programaciones_asignatura.campus_id` y `campus`.
+  retiro de CRUD, estado, permisos y entidades del catálogo.
+- Datos: migración `000093` hacia delante para poblar facultad y copia textual en
+  programación, retirar `carreras.campus_id`, `programaciones_asignatura.campus_id` y
+  `campus`.
 - Frontend: ADM-04 deja de listar Campus; alta/edición de facultad usa selector; carrera
   muestra el valor heredado; las programaciones y sílabos muestran el nombre.
 - Seguridad/auditoría: validar la opción fija en servidor y auditar cambios junto con los
@@ -59,9 +60,9 @@ pantallas, rutas y claves foráneas dejan de existir.
 ## Pasos
 
 - [x] Confirmar opciones y revisar el alcance en backend, SPA, contrato y documentación.
-- [ ] Implementar enum obligatorio y migración con conciliación segura.
-- [ ] Retirar dependencias del catálogo y actualizar herencia/fotografías.
-- [ ] Actualizar ADM-04, contrato y documentación trazable.
+- [x] Implementar enum obligatorio y migración con conciliación segura.
+- [x] Retirar dependencias del catálogo y actualizar herencia/fotografías.
+- [x] Actualizar ADM-04 y documentación trazable; el inventario OpenAPI no cambia rutas.
 - [ ] Revisar código y ejecutar las verificaciones aplicables.
 - [ ] Registrar evidencia y mover el plan a `docs/plans/completed/`.
 
