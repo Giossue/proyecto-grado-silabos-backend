@@ -20,9 +20,8 @@
   separadas.
 - tablas/columnas: plural y `snake_case`;
 - los códigos de negocio que se repiten entre entidades se nombran con la entidad que
-  identifican: `codigo_facultad`, `codigo_campus`, `codigo_carrera` y
-  `codigo_asignatura`. No se usa `codigo_institucional`, pues no identifica qué entidad
-  está codificada;
+  identifican: `codigo_facultad`, `codigo_carrera` y `codigo_asignatura`. El campus no
+  tiene código ni entidad independiente (I-106);
 - claves primarias internas: UUID generados por aplicación;
 - claves foráneas e índices explícitos;
 - tiempo: `timestamptz` en UTC; la conexión fija `DB_TIMEZONE=UTC` y la conversión a
@@ -52,7 +51,7 @@ programadas de inicio o fin.
 
 ### Académico
 
-`facultades`, `carreras`, `campus`,
+`facultades`, `carreras`,
 `periodos_academicos`, `asignaturas`, `requisitos_asignatura`,
 `programaciones_asignatura`, `paralelos`, `asignaciones_paralelo`.
 
@@ -68,19 +67,22 @@ el error de negocio antes de llegar a la restricción.
 Las filas inactivas se conservan como historial y pueden coexistir con una nueva
 asignación posterior; un relevo finaliza la relación anterior y crea otra.
 
-Estos catálogos no comparten una tabla polimórfica. `carreras.facultad_id` implementa la
-relación uno-a-muchos Facultad → Carreras con clave foránea y borrado restringido.
-`campus` y `periodos_academicos` conservan identidad propia; el período es institucional,
-se identifica y presenta por su código único, declara `semanas_lectivas` entre 1 y 52 y
-no depende de una carrera. Su estado se deriva exclusivamente de sus fechas.
+`carreras.facultad_id` implementa la relación uno-a-muchos Facultad → Carreras con clave
+foránea y borrado restringido. `facultades.campus_facultad` es un valor obligatorio
+limitado por `CHECK` a las cinco opciones de `CampusLocation`. No existe tabla, código,
+clave foránea ni CRUD de campus. `periodos_academicos` conserva identidad propia; el
+período es institucional, se identifica y presenta por su código único, declara
+`semanas_lectivas` entre 1 y 52 y no depende de una carrera. Su estado se deriva
+exclusivamente de sus fechas.
 `programaciones_asignatura` relaciona cada período con una asignatura mediante claves
 foráneas. La modalidad no es tabla sino
 columna de texto con valores fijos (`carreras.modalidad` base, `asignaturas.modalidad`
 opcional, `programaciones_asignatura.modalidad` copia heredada; migraciones `000034` y
-`000052`, I-37/I-62). El campus cuelga de la carrera (`carreras.campus_id`, migración
-`000033`, I-36) y la programación guarda la copia. La
-jerarquía que presenta ADM-04 es una proyección de lectura y no una desnormalización de
-la persistencia.
+`000052`, I-37/I-62). La programación conserva además `campus_programacion`, una copia
+textual obligatoria del campus de la facultad al momento de prepararla; el sílabo toma
+esa fotografía para su contexto institucional (I-106, migración `000093`). La jerarquía
+que presenta ADM-04 es una proyección de lectura y no una desnormalización de la
+persistencia.
 
 `paralelos` no tiene estado propio: antes de tener historia se elimina y, una vez que
 participa en un sílabo, se conserva. Su operatividad se deriva del período y de su

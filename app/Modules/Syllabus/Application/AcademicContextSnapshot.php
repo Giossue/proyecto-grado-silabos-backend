@@ -14,7 +14,6 @@ class AcademicContextSnapshot
             'subject.career.faculty',
             'subject.requirements.requirement',
             'academicPeriod',
-            'campus',
         ]);
         $subject = $scheduledSubject->subject;
         $career = $subject->career;
@@ -62,7 +61,7 @@ class AcademicContextSnapshot
                 'id' => $scheduledSubject->id,
                 'period' => $scheduledSubject->academicPeriod->codigo,
                 'teaching_weeks' => $scheduledSubject->academicPeriod->semanas_lectivas,
-                'campus' => $scheduledSubject->campus->nombre,
+                'campus' => $scheduledSubject->campus_programacion,
                 'modality' => $scheduledSubject->modalidad->label(),
             ],
         ];

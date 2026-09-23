@@ -20,20 +20,23 @@ al entrar y puede sustituirla desde el menú, sin sumar alcances ni privilegios.
 
 ### Estructura académica
 
-- `Facultad`, `Carrera`, `Campus`, `Modalidad`, `PeriodoAcademico`.
+- `Facultad` (con campus obligatorio), `Carrera`, `Modalidad`, `PeriodoAcademico`.
 - `Malla`, `DefinicionCampoMalla`, `Asignatura` con ciclo/orden,
   `ValorCampoAsignatura` y `RequisitoAsignatura`.
 - `ProgramacionAsignatura`, `Paralelo`, `DocenteParalelo`.
 - `AliasInstitucional` traduce el texto libre de la fuente hacia un catálogo normalizado.
 
-Una `Facultad` agrupa muchas `Carrera`. `Campus` representa la ubicación física donde se
-dicta una carrera y sus materias; no es una subdivisión de la facultad.
+Una `Facultad` agrupa muchas `Carrera` y elige exactamente un campus de la lista fija de
+cinco ubicaciones institucionales. `Carrera` hereda el campus de su facultad; no existe
+un catálogo ni una entidad independiente de campus. La programación conserva una copia
+textual del campus elegido para preservar el contexto histórico del sílabo.
 Su logo, cuando existe, es un `ObjetoAlmacenado` privado e inmutable referenciado por
 `logo_objeto_id`; la facultad no guarda rutas del sistema de archivos.
 
-`Campus` es catálogo; la modalidad no: son los valores fijos del Reglamento de Régimen
-Académico (`StudyModality`). La programación de asignatura no elige ninguno de los dos: hereda el campus de
-la carrera (`carreras.campus_id`, I-36) y la modalidad de la materia si se apartó
+El campus es un valor fijo de Facultad (I-106), sin código ni CRUD propio. La modalidad
+tampoco es catálogo: son los valores fijos del Reglamento de Régimen Académico
+(`StudyModality`). La programación de asignatura no elige ninguno de los dos: hereda el
+campus de la facultad de su carrera y la modalidad de la materia si se apartó
 (`asignaturas.modalidad`) o de la base aprobada de la carrera (`carreras.modalidad`,
 I-35, I-37). La excepción de una materia no cambia ni recalifica la modalidad de la
 carrera. La programación conserva las copias porque el sílabo toma de ahí campus y modalidad.

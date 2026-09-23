@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Presentation\Http\Requests;
 
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
@@ -45,15 +46,14 @@ class StoreAcademicRecordRequest extends FormRequest
         return match ($this->route('entity')) {
             'facultad' => [
                 ...$this->namedCatalogRules('facultades', 180),
+                'campus' => ['required', Rule::enum(CampusLocation::class)],
                 // Administración puede adelantarlo; Coordinación lo completa desde su Panel.
                 'logo' => ['nullable', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
             ],
-            'campus' => $this->namedCatalogRules('campus', 120),
             'carrera' => [
                 'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'id')->where('facultad_activa', true)],
                 // La modalidad la aprueba el CES por carrera; las programaciones la heredan (I-35).
                 'modality' => ['required', 'string', Rule::in(StudyModality::values())],
-                'campus_id' => ['required', 'uuid', Rule::exists('campus', 'id')->where('campus_activo', true)],
                 ...$this->namedCatalogRules('carreras', 180),
                 'curriculum_code' => ['required', 'string', 'max:80'],
                 'cycle_count' => ['required', 'integer', 'min:1', 'max:30'],
@@ -136,7 +136,6 @@ class StoreAcademicRecordRequest extends FormRequest
         return [
             'code' => ['nullable', 'string', 'max:80', Rule::unique($table, match ($table) {
                 'facultades' => 'codigo_facultad',
-                'campus' => 'codigo_campus',
                 'carreras' => 'codigo_carrera',
                 default => throw new \LogicException('Catálogo académico no admitido.'),
             })],

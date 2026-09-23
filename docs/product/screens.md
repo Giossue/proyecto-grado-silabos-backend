@@ -179,7 +179,7 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   sin iniciar; Coordinación, avance, días, por revisar y sin iniciar; Docencia, sílabos
   por entregar, días, avance de sus borradores y por corregir. Sin conteos de catálogo.
 - El Panel de cada rol abre con «Puesta en marcha»: barra de progreso y los pasos en
-  orden (Administración: facultades, campus, carreras, modalidades, periodo, cuentas,
+  orden (Administración: facultades, carreras, modalidades, periodo, cuentas,
   coordinadores, plantilla, proceso; Coordinación: logo de la facultad, malla, materias
   y paralelos, docentes, fuentes, convocatoria; Docencia: recibir, iniciar, enviar). El
   logo se carga en un `Dialog` desde el propio paso, sin opción en el sidebar. Cada paso
@@ -265,9 +265,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 - Los estados usan las mismas etiquetas y colores en todo el producto.
 - Los IDs internos y detalles de infraestructura no se muestran.
 - ADM-04 usa el submenú **Estructura académica** con rutas independientes para Facultades,
-  Carreras, Campus y Periodos académicos. Carreras muestra su Facultad, su Modalidad y
-  su Campus, Facultades muestra la cantidad relacionada; los catálogos no se mezclan ni
-  se ocultan en pestañas.
+  Carreras y Periodos académicos. El formulario de facultad exige elegir uno de los cinco
+  campus institucionales; la tabla de facultades lo muestra. Carreras muestra su Facultad,
+  Modalidad y campus heredado. No hay una pantalla o catálogo de campus.
 - La modalidad base se fija por carrera (obligatoria al crearla; la aprueba el CES) y
   no por programación. No hay catálogo: son las del reglamento (presencial, semipresencial, en
   línea, a distancia). Cualquier materia puede apartarse en COR-13 («Igual que la
@@ -277,7 +277,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 - COR-14 no programa materias una a una: **Preparar período** abre una hoja lateral amplia
   con las materias activas que aún no están programadas en el período elegido. Coordinación
   selecciona las que se dictarán y define uno o más paralelos, cada uno con su jornada;
-  campus y modalidad vienen de la carrera (ADM-04 pide ambos al crearla). Una materia
+  campus viene de la facultad elegida por la carrera y la modalidad se fija al crear la
+  carrera. La programación conserva el campus heredado para mantener la fotografía
+  histórica del sílabo. Una materia
   ya preparada no reaparece aquí: para cambios posteriores se usa la acción de su
   materia programada.
 - COR-14 conserva el período seleccionado en la URL. Al entrar elige el período en curso;

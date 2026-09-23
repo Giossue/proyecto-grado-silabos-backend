@@ -3,8 +3,10 @@
 namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -482,14 +484,17 @@ class SyllabusProcessTest extends TestCase
             ])
             ->assertJsonValidationErrors('process');
 
-        // El proceso abierto protege también los catálogos institucionales.
+        // El proceso abierto también protege el campus obligatorio de la facultad.
+        $faculty = Faculty::query()->findOrFail($scheduledSubject->subject->career->facultad_id);
+        $originalScheduledCampus = $scheduledSubject->campus_programacion;
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.academic.store', 'campus'), [
-                'code' => 'NUEVO-EN-CURSO',
-                'nombre' => 'Campus no permitido durante el proceso',
+            ->patchJson(route('api.v1.admin.academic.update', ['facultad', $faculty->id]), [
+                'code' => $faculty->codigo_facultad,
+                'nombre' => $faculty->nombre,
+                'campus' => CampusLocation::Chimbo->value,
             ])
             ->assertJsonValidationErrors('process');
-        $this->assertDatabaseMissing('campus', ['codigo_campus' => 'NUEVO-EN-CURSO']);
+        $this->assertSame(CampusLocation::Matriz, $faculty->fresh()->campus);
 
         // Pausar solo la convocatoria libera exclusivamente a esa carrera.
         $this->actingAsCoordinator()
@@ -509,13 +514,15 @@ class SyllabusProcessTest extends TestCase
         $process = $convocation->process()->firstOrFail();
         $this->transition($process, 'pausar', 'Corrección institucional autorizada.')->assertSuccessful();
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.academic.store', 'campus'), [
-                'code' => 'NUEVO-EN-PAUSA',
-                'nombre' => 'Campus creado durante la pausa',
+            ->patchJson(route('api.v1.admin.academic.update', ['facultad', $faculty->id]), [
+                'code' => $faculty->codigo_facultad,
+                'nombre' => $faculty->nombre,
+                'campus' => CampusLocation::Chimbo->value,
             ])
             ->assertSuccessful()
             ->assertSuccessful();
-        $this->assertDatabaseHas('campus', ['codigo_campus' => 'NUEVO-EN-PAUSA']);
+        $this->assertSame(CampusLocation::Chimbo, $faculty->fresh()->campus);
+        $this->assertSame($originalScheduledCampus, $scheduledSubject->fresh()->campus_programacion);
     }
 
     public function test_teachers_stop_working_while_the_career_or_the_institution_is_paused(): void

@@ -5,7 +5,6 @@ namespace App\Modules\Academic\Application\Actions;
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Campus;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
@@ -31,7 +30,6 @@ class SetAcademicRecordStatus
     private const MODELS = [
         'facultad' => Faculty::class,
         'carrera' => Career::class,
-        'campus' => Campus::class,
         'asignatura' => Subject::class,
         'programacion_asignatura' => ScheduledSubject::class,
         'asignacion_coordinador' => CoordinatorAssignment::class,
@@ -143,7 +141,6 @@ class SetAcademicRecordStatus
         $hasActiveDependants = match ($entity) {
             'facultad' => Career::query()->where('facultad_id', $recordId)->where('activo', true)->exists(),
             'carrera' => Subject::query()->where('carrera_id', $recordId)->where('activo', true)->exists(),
-            'campus' => ScheduledSubject::query()->where('campus_id', $recordId)->where('activo', true)->exists(),
             'asignatura' => ScheduledSubject::query()->where('asignatura_id', $recordId)->where('activo', true)->exists(),
             'programacion_asignatura' => Parallel::query()->where('programacion_asignatura_id', $recordId)->exists(),
             default => false,

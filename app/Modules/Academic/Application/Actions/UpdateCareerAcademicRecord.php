@@ -8,7 +8,6 @@ use App\Modules\Academic\Application\ScheduledSubjectInheritance;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Campus;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
@@ -50,7 +49,6 @@ class UpdateCareerAcademicRecord
         'horas_paec' => 'Horas PAEC',
         'periodo_academico_id' => 'Periodo académico',
         'asignatura_id' => 'Materia',
-        'campus_id' => 'Campus',
         'modalidad' => 'Modalidad',
         'programacion_asignatura_id' => 'Programación de asignatura',
         'usuario_id' => 'Docente',
@@ -259,8 +257,8 @@ class UpdateCareerAcademicRecord
         return [
             'periodo_academico_id' => $period->id,
             'asignatura_id' => $subject->id,
-            // Heredados: el campus lo fija la carrera; la modalidad, la carrera o la materia.
-            'campus_id' => $this->inheritance->campusFor($subject->career)->id,
+            // El campus viene de la facultad; la modalidad, de la carrera o la materia.
+            'campus_programacion' => $this->inheritance->campusFor($subject->career)->value,
             'modalidad' => $this->inheritance->modalityFor($subject),
         ];
     }

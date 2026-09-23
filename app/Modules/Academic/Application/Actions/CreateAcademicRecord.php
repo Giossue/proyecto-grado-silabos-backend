@@ -6,9 +6,9 @@ use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Application\ScheduledSubjectInheritance;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Campus;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
@@ -85,6 +85,7 @@ class CreateAcademicRecord
         $faculty = Faculty::query()->create([
             'codigo_facultad' => $data['code'] ?? null,
             'nombre' => $data['nombre'],
+            'campus' => CampusLocation::from($data['campus']),
             'activo' => true,
         ]);
         if (($data['logo'] ?? null) instanceof UploadedFile) {
@@ -102,17 +103,11 @@ class CreateAcademicRecord
             'carrera' => Career::query()->create([
                 'facultad_id' => $data['faculty_id'],
                 'modalidad' => $data['modality'],
-                'campus_id' => $data['campus_id'],
                 'codigo_carrera' => $data['code'] ?? null,
                 'nombre' => $data['nombre'],
                 'activo' => true,
                 'codigo_malla' => $data['curriculum_code'],
                 'cantidad_ciclos_malla' => $data['cycle_count'],
-            ]),
-            'campus' => Campus::query()->create([
-                'codigo_campus' => $data['code'] ?? null,
-                'nombre' => $data['nombre'],
-                'activo' => true,
             ]),
             'periodo' => AcademicPeriod::query()->create([
                 'codigo' => $data['code'],
@@ -175,7 +170,7 @@ class CreateAcademicRecord
     private function createScheduledSubject(array $data, string $careerId): ScheduledSubject
     {
         $subject = Subject::query()
-            ->with('career:id,campus_id')
+            ->with('career.faculty')
             ->whereKey($this->stringValue($data, 'subject_id'))
             ->where('activo', true)
             ->where('carrera_id', $careerId)
@@ -191,8 +186,8 @@ class CreateAcademicRecord
         return ScheduledSubject::query()->create([
             'periodo_academico_id' => $period->id,
             'asignatura_id' => $subject->id,
-            // Heredados: el campus lo fija la carrera; la modalidad, la carrera o la materia.
-            'campus_id' => $this->inheritance->campusFor($subject->career)->id,
+            // El campus viene de la facultad; la modalidad, de la carrera o la materia.
+            'campus_programacion' => $this->inheritance->campusFor($subject->career)->value,
             'modalidad' => $this->inheritance->modalityFor($subject),
             'activo' => true,
         ]);

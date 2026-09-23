@@ -118,10 +118,10 @@ Fecha de corte: **30 de agosto de 2026**.
 - La identidad de las cuentas se administra de forma centralizada: solo el Administrador
   puede corregir nombre o correo. Coordinadores y Docentes solicitan esos cambios a
   Administración, incluso cuando se trata de la cuenta propia.
-- La estructura institucional se presenta y persiste como Facultad → Carrera. Campus
-  conserva identidad propia y no se mezcla ni se duplica como facultad o carrera. El período académico es
-  un catálogo institucional único (I-41, decisión explícita del responsable del producto
-  del 2026-09-03), aunque la fuente histórica lo repita por carrera.
+- La estructura institucional se presenta y persiste como Facultad → Carrera. Campus es
+  un atributo obligatorio de Facultad, elegido de cinco opciones fijas (I-106); el período
+  académico es un catálogo institucional único (I-41, decisión explícita del responsable
+  del producto del 2026-09-03), aunque la fuente histórica lo repita por carrera.
 - Administración puede corregir los metadatos de esos catálogos y reasignar una carrera a
   otra facultad activa antes de abrir el proceso institucional. Un registro sin
   dependencias se elimina; con historia se protege y explica sus consecuencias. Cada
@@ -477,6 +477,16 @@ I-77 (14 de septiembre de 2026) simplifica `periodos_academicos`: el código ún
 única etiqueta visible y se retiran `nombre` y `activo`. Próximo, En curso y Finalizado
 se derivan exclusivamente de las fechas. `semanas_lectivas` se conserva porque expresa
 las semanas efectivas que distribuye el sílabo y no puede deducirse del rango calendario.
+
+I-106 (22 de septiembre de 2026) retira `campus` como entidad y catálogo independiente.
+La facultad conserva obligatoriamente una sola opción de campus, elegida de una lista fija: Campus Matriz
+Dr. Gabriel Galarza López, Campus Laguacoto, Campus CENI (Centro de Eventos Nacionales
+e Internacionales), Extensión San Miguel y Sede Chimbo. Las carreras heredan esa opción
+de su facultad y cada programación conserva el nombre elegido como fotografía textual;
+el sílabo conserva su propia fotografía inmutable. No existe código de campus. La
+migración mapea el catálogo existente y falla de forma íntegra si una facultad combina
+campus distintos o una referencia no puede mapearse, para permitir su conciliación antes
+de retirar los datos originales.
 
 ## Propuesto
 

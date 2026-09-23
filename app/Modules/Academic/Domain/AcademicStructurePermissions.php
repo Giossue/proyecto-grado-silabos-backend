@@ -11,7 +11,6 @@ final class AcademicStructurePermissions
     public const GOVERNANCE_ENTITIES = [
         'facultad',
         'carrera',
-        'campus',
         'periodo',
         'asignacion_coordinador',
     ];
@@ -28,7 +27,6 @@ final class AcademicStructurePermissions
     public const GOVERNANCE_STATUS_ENTITIES = [
         'facultad',
         'carrera',
-        'campus',
         'asignacion_coordinador',
     ];
 
@@ -36,7 +34,6 @@ final class AcademicStructurePermissions
     public const GOVERNANCE_UPDATE_ENTITIES = [
         'facultad',
         'carrera',
-        'campus',
         'periodo',
     ];
 

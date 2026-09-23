@@ -4,10 +4,10 @@ namespace App\Modules\Academic\Application\Queries;
 
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Campus;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
@@ -42,18 +42,19 @@ class AcademicStructureViewData
                 'faculties' => Faculty::query()
                     ->with('logoObject')
                     ->orderBy('nombre')
-                    ->get(['id', 'codigo_facultad', 'nombre', 'logo_objeto_id', 'activo'])
+                    ->get(['id', 'codigo_facultad', 'nombre', 'campus_facultad', 'logo_objeto_id', 'activo'])
                     ->map(fn (Faculty $faculty): array => [
                         'id' => $faculty->id,
                         'codigo_facultad' => $faculty->getAttribute('codigo_facultad'),
                         'nombre' => $faculty->nombre,
+                        'campus' => $faculty->campus?->value,
                         'activo' => $faculty->activo,
                         'logo_url' => route('logos.faculty', ['faculty' => $faculty->id, 'v' => $this->logos->version($this->logos->facultyPath($faculty))]),
                     ]),
                 'careers' => Career::query()
-                    ->with(['campus:id,nombre', 'coordinatorAssignments' => fn ($query) => $query->effective()->with('user:id,nombre,correo_electronico')])
+                    ->with(['faculty:id,campus_facultad', 'coordinatorAssignments' => fn ($query) => $query->effective()->with('user:id,nombre,correo_electronico')])
                     ->orderBy('nombre')
-                    ->get(['id', 'facultad_id', 'modalidad', 'campus_id', 'codigo_carrera', 'nombre', 'activo'])
+                    ->get(['id', 'facultad_id', 'modalidad', 'codigo_carrera', 'nombre', 'activo'])
                     ->map(fn (Career $career) => [
                         'id' => $career->id,
                         'faculty_id' => $career->facultad_id,
@@ -66,15 +67,11 @@ class AcademicStructureViewData
                         // materias no modifican este dato de la carrera.
                         'modality' => $career->modalidad?->value,
                         'modality_label' => $career->modalidad?->label(),
-                        'campus_id' => $career->campus_id,
-                        'campus_name' => $career->campus?->nombre,
+                        'campus_name' => $career->faculty?->campus?->value,
                         'code' => $career->codigo_carrera,
                         'name' => $career->nombre,
                         'active' => $career->activo,
                     ]),
-                'campuses' => Campus::query()
-                    ->orderBy('nombre')
-                    ->get(['id', 'codigo_campus', 'nombre', 'activo']),
                 'periods' => AcademicPeriod::query()
                     ->orderByDesc('fecha_inicio')
                     ->get()
@@ -94,7 +91,7 @@ class AcademicStructureViewData
                     ->where('activo', true)
                     ->orderBy('nombre')
                     ->get(['id', 'nombre']),
-                'campuses' => Campus::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
+                'campusOptions' => CampusLocation::options(),
                 // Cualquier cuenta activa puede asumir una coordinación: el rol se concede al nombrarla.
                 'coordinatorUsers' => User::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'correo_electronico']),
             ],
@@ -262,7 +259,6 @@ class AcademicStructureViewData
             ->with([
                 'academicPeriod:id,fecha_inicio,fecha_fin',
                 'subject:id,nombre,codigo_asignatura,ciclo',
-                'campus:id,nombre',
                 'parallels' => fn ($query) => $query
                     ->orderBy('codigo')
                     ->select(['id', 'programacion_asignatura_id', 'codigo', 'jornada']),
@@ -315,7 +311,6 @@ class AcademicStructureViewData
                         'id' => $scheduledSubject->id,
                         'subject_id' => $scheduledSubject->asignatura_id,
                         'period_id' => $scheduledSubject->periodo_academico_id,
-                        'campus_id' => $scheduledSubject->campus_id,
                         'label' => "{$scheduledSubject->subject->codigo_asignatura} · {$scheduledSubject->subject->nombre}",
                         'subject_code' => $scheduledSubject->subject->codigo_asignatura,
                         'subject_name' => $scheduledSubject->subject->nombre,
@@ -325,7 +320,7 @@ class AcademicStructureViewData
                         'period_status' => $this->periodPlanning->status($scheduledSubject->academicPeriod),
                         'period_status_label' => $this->periodPlanning->label($scheduledSubject->academicPeriod),
                         'period_planning_enabled' => $periodPlanningEnabled,
-                        'campus_name' => $scheduledSubject->campus->nombre,
+                        'campus_name' => $scheduledSubject->campus_programacion,
                         'modality_name' => $scheduledSubject->modalidad->label(),
                         'parallels' => $scheduledSubject->parallels
                             ->map(fn (Parallel $parallel): array => [
@@ -351,7 +346,6 @@ class AcademicStructureViewData
                         'status_label' => $this->periodPlanning->label($period),
                         'planning_enabled' => $this->periodPlanning->mayPlan($period),
                     ]),
-                'campuses' => Campus::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
                 'activeSubjects' => Subject::query()
                     ->where('activo', true)
                     ->where('carrera_id', $careerId)
@@ -491,7 +485,7 @@ class AcademicStructureViewData
             'faculties' => [],
             'careers' => [],
             'periods' => [],
-            'campuses' => [],
+            'campusOptions' => [],
             'currentCurricula' => [],
             'activeSubjects' => [],
             'scheduledSubjects' => [],

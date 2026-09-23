@@ -3,9 +3,9 @@
 namespace Tests\Feature\Academic;
 
 use App\Models\User;
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Campus;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
@@ -49,6 +49,11 @@ class AcademicStructureTest extends TestCase
         $subject = Subject::query()->firstOrFail();
 
         $this->assertFalse(Schema::hasTable('mallas'));
+        $this->assertFalse(Schema::hasTable('campus'));
+        $this->assertTrue(Schema::hasColumn('facultades', 'campus_facultad'));
+        $this->assertFalse(Schema::hasColumn('carreras', 'campus_id'));
+        $this->assertTrue(Schema::hasColumn('programaciones_asignatura', 'campus_programacion'));
+        $this->assertFalse(Schema::hasColumn('programaciones_asignatura', 'campus_id'));
         $this->assertTrue(Schema::hasColumn('carreras', 'codigo_malla'));
         $this->assertTrue(Schema::hasColumn('carreras', 'cantidad_ciclos_malla'));
         $this->assertTrue(Schema::hasColumn('asignaturas', 'carrera_id'));
@@ -94,12 +99,10 @@ class AcademicStructureTest extends TestCase
     public function test_administrator_creates_a_career_with_its_fixed_curricular_structure(): void
     {
         $faculty = Faculty::query()->firstOrFail();
-        $campus = Campus::query()->firstOrFail();
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'carrera'), [
                 'faculty_id' => $faculty->id,
-                'campus_id' => $campus->id,
                 'modality' => StudyModality::Hibrida->value,
                 'code' => 'CARR-DEMO',
                 'nombre' => 'Carrera de demostración',
@@ -120,7 +123,6 @@ class AcademicStructureTest extends TestCase
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'carrera'), [
                 'faculty_id' => Faculty::query()->firstOrFail()->id,
-                'campus_id' => Campus::query()->firstOrFail()->id,
                 'modality' => StudyModality::Presencial->value,
                 'code' => 'CARR-INCOMPLETA',
                 'nombre' => 'Carrera incompleta',
@@ -322,7 +324,7 @@ class AcademicStructureTest extends TestCase
         $scheduled = ScheduledSubject::query()->create([
             'periodo_academico_id' => $period->id,
             'asignatura_id' => $subject->id,
-            'campus_id' => $career->campus_id,
+            'campus_programacion' => $career->faculty->campus->value,
             'modalidad' => StudyModality::Presencial,
             'activo' => false,
         ]);
@@ -347,12 +349,12 @@ class AcademicStructureTest extends TestCase
         $faculty = Faculty::query()->create([
             'codigo_facultad' => "FAC-{$code}",
             'nombre' => "Facultad {$code}",
+            'campus' => CampusLocation::Matriz,
             'activo' => true,
         ]);
 
         return Career::query()->create([
             'facultad_id' => $faculty->id,
-            'campus_id' => Campus::query()->firstOrFail()->id,
             'modalidad' => StudyModality::Presencial,
             'codigo_carrera' => $code,
             'nombre' => "Carrera {$code}",

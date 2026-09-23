@@ -16,11 +16,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $codigo_carrera
  * @property string $facultad_id
  * @property StudyModality|null $modalidad
- * @property string|null $campus_id
  * @property string $codigo_malla
  * @property int $cantidad_ciclos_malla
  * @property bool $activo
- * @property-read Campus|null $campus
  */
 class Career extends Model
 {
@@ -38,7 +36,7 @@ class Career extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'facultad_id', 'modalidad', 'campus_id', 'codigo_carrera', 'nombre', 'activo',
+        'facultad_id', 'modalidad', 'codigo_carrera', 'nombre', 'activo',
         'codigo_malla', 'cantidad_ciclos_malla',
     ];
 
@@ -62,13 +60,6 @@ class Career extends Model
     public function coordinatorAssignments(): HasMany
     {
         return $this->hasMany(CoordinatorAssignment::class, 'carrera_id');
-    }
-
-    /** Sede aprobada para la carrera; la heredan sus materias programadas (I-36). */
-    /** @return BelongsTo<Campus, $this> */
-    public function campus(): BelongsTo
-    {
-        return $this->belongsTo(Campus::class, 'campus_id');
     }
 
     /** Materias que forman la estructura curricular única de esta carrera. */

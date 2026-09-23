@@ -76,13 +76,12 @@ class TransitionSyllabusProcess
                 if (! (clone $careers)->exists()) {
                     throw ValidationException::withMessages(['process' => 'No existen carreras activas en la estructura institucional.']);
                 }
-                $withoutCampus = (clone $careers)->whereDoesntHave('campus', fn ($query) => $query->where('activo', true))->count();
                 $withoutCoordinator = (clone $careers)->whereDoesntHave(
                     'coordinatorAssignments',
                     fn ($query) => $query->where('activo', true),
                 )->count();
-                if ($withoutCampus > 0 || $withoutCoordinator > 0) {
-                    throw ValidationException::withMessages(['process' => "La estructura institucional no está lista: {$withoutCampus} carrera(s) sin campus activo y {$withoutCoordinator} sin coordinación activa."]);
+                if ($withoutCoordinator > 0) {
+                    throw ValidationException::withMessages(['process' => "La estructura institucional no está lista: {$withoutCoordinator} carrera(s) sin coordinación activa."]);
                 }
                 $other = SyllabusProcess::query()
                     ->inProgress()

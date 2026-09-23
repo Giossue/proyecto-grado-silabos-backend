@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Presentation\Http\Requests;
 
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
@@ -29,15 +30,14 @@ class UpdateAcademicRecordRequest extends FormRequest
         return match ($this->route('entity')) {
             'facultad' => [
                 ...$this->namedCatalogRules('facultades', 180),
+                'campus' => ['required', Rule::enum(CampusLocation::class)],
                 'logo' => ['nullable', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
             ],
             'carrera' => [
                 'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'id')],
                 'modality' => ['required', 'string', Rule::in(StudyModality::values())],
-                'campus_id' => ['required', 'uuid', Rule::exists('campus', 'id')->where('campus_activo', true)],
                 ...$this->namedCatalogRules('carreras', 180),
             ],
-            'campus' => $this->namedCatalogRules('campus', 120),
             'periodo' => [
                 'code' => [
                     'required',
@@ -63,7 +63,6 @@ class UpdateAcademicRecordRequest extends FormRequest
                 'max:80',
                 Rule::unique($table, match ($table) {
                     'facultades' => 'codigo_facultad',
-                    'campus' => 'codigo_campus',
                     'carreras' => 'codigo_carrera',
                     default => throw new \LogicException('Catálogo académico no admitido.'),
                 })->ignore($this->recordId()),

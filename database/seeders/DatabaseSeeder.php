@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Campus;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
@@ -29,18 +29,17 @@ class DatabaseSeeder extends Seeder
         DB::transaction(function (): void {
             $faculty = Faculty::query()->firstOrCreate(
                 ['codigo_facultad' => 'FICAYA'],
-                ['nombre' => 'Facultad de Ciencias de la Ingeniería', 'activo' => true],
-            );
-            $campus = Campus::query()->firstOrCreate(
-                ['codigo_campus' => 'MATRIZ'],
-                ['nombre' => 'Campus Matriz', 'activo' => true],
+                [
+                    'nombre' => 'Facultad de Ciencias de la Ingeniería',
+                    'campus' => CampusLocation::Matriz,
+                    'activo' => true,
+                ],
             );
             $career = Career::query()->firstOrCreate(
                 ['codigo_carrera' => 'SOFTWARE'],
                 [
                     'facultad_id' => $faculty->id,
                     'modalidad' => StudyModality::Presencial,
-                    'campus_id' => $campus->id,
                     'nombre' => 'Software',
                     'activo' => true,
                     'codigo_malla' => 'MALLA-SW-2024',
@@ -72,9 +71,12 @@ class DatabaseSeeder extends Seeder
                 [
                     'periodo_academico_id' => $period->id,
                     'asignatura_id' => $subject->id,
-                    'campus_id' => $campus->id,
                 ],
-                ['modalidad' => StudyModality::Presencial, 'activo' => true],
+                [
+                    'campus_programacion' => CampusLocation::Matriz->value,
+                    'modalidad' => StudyModality::Presencial,
+                    'activo' => true,
+                ],
             );
             $parallel = Parallel::query()->firstOrCreate(
                 ['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => 'A'],

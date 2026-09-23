@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $parallels_count
  * @property-read AcademicPeriod $academicPeriod
  * @property-read Subject $subject
- * @property-read Campus $campus
+ * @property string $campus_programacion
  * @property StudyModality $modalidad
  */
 class ScheduledSubject extends Model
@@ -32,7 +32,7 @@ class ScheduledSubject extends Model
     protected $table = 'programaciones_asignatura';
 
     /** @var list<string> */
-    protected $fillable = ['periodo_academico_id', 'asignatura_id', 'campus_id', 'modalidad', 'activo'];
+    protected $fillable = ['periodo_academico_id', 'asignatura_id', 'campus_programacion', 'modalidad', 'activo'];
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -50,12 +50,6 @@ class ScheduledSubject extends Model
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class, 'asignatura_id');
-    }
-
-    /** @return BelongsTo<Campus, $this> */
-    public function campus(): BelongsTo
-    {
-        return $this->belongsTo(Campus::class, 'campus_id');
     }
 
     /** @return HasMany<Parallel, $this> */

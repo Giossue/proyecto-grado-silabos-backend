@@ -28,7 +28,6 @@ class AcademicGovernanceController extends Controller
         $section = match ($routeSection) {
             null, 'facultades' => 'faculties',
             'carreras' => 'careers',
-            'campus' => 'campuses',
             'periodos-academicos' => 'academic-periods',
             default => abort(404),
         };

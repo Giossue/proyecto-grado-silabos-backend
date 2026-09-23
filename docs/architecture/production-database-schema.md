@@ -111,18 +111,14 @@ id UUID (PK)
 codigo_facultad VARCHAR NULL UNIQUE
 nombre_facultad VARCHAR NOT NULL
 facultad_activa BOOLEAN NOT NULL
+campus_facultad VARCHAR NOT NULL CHECK (campus_facultad IN (
+  'Campus Matriz Dr. Gabriel Galarza López',
+  'Campus Laguacoto',
+  'Campus CENI (Centro de Eventos Nacionales e Internacionales)',
+  'Extensión San Miguel',
+  'Sede Chimbo'
+))
 logo_objeto_id UUID (FK → objetos_almacenados.id) NULL UNIQUE
-~~~
-
-## campus
-
-**Contexto:** sedes institucionales.
-
-~~~text
-id UUID (PK)
-codigo_campus VARCHAR NULL UNIQUE
-nombre_campus VARCHAR NOT NULL
-campus_activo BOOLEAN NOT NULL
 ~~~
 
 ## carreras
@@ -135,7 +131,6 @@ facultad_id UUID (FK → facultades.id) NOT NULL
 codigo_carrera VARCHAR NULL UNIQUE
 nombre_carrera VARCHAR NOT NULL
 carrera_activa BOOLEAN NOT NULL
-campus_id UUID (FK → campus.id) NULL
 modalidad_carrera VARCHAR NULL
 codigo_malla VARCHAR NOT NULL
 cantidad_ciclos_malla SMALLINT NOT NULL
@@ -194,13 +189,19 @@ UNIQUE (asignatura_id, requisito_id, tipo_requisito_asignatura)
 
 ## programaciones_asignatura
 
-**Contexto:** oferta de una asignatura en período y campus.
+**Contexto:** programación de una asignatura en período con fotografía del campus heredado.
 
 ~~~text
 id UUID (PK)
 periodo_academico_id UUID (FK → periodos_academicos.id) NOT NULL
 asignatura_id UUID (FK → asignaturas.id) NOT NULL
-campus_id UUID (FK → campus.id) NOT NULL
+campus_programacion VARCHAR NOT NULL CHECK (campus_programacion IN (
+  'Campus Matriz Dr. Gabriel Galarza López',
+  'Campus Laguacoto',
+  'Campus CENI (Centro de Eventos Nacionales e Internacionales)',
+  'Extensión San Miguel',
+  'Sede Chimbo'
+))
 programacion_asignatura_activa BOOLEAN NOT NULL
 modalidad_programacion_asignatura VARCHAR NOT NULL
 
@@ -224,12 +225,10 @@ UNIQUE (programacion_asignatura_id, codigo_paralelo)
 
 ~~~text
 facultades 1:N carreras
-campus 1:N carreras
 carreras 1:N asignaturas
 asignaturas 1:N requisitos_asignatura, como asignatura y como requisito
 periodos_academicos 1:N programaciones_asignatura
 asignaturas 1:N programaciones_asignatura
-campus 1:N programaciones_asignatura
 programaciones_asignatura 1:N paralelos
 ~~~
 

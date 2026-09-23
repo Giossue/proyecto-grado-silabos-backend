@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Campus;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
@@ -47,7 +46,7 @@ class DeleteAcademicRecord
         }
 
         if (AcademicStructurePermissions::isGovernanceContext($role)) {
-            if (! in_array($entity, ['facultad', 'carrera', 'campus', 'periodo'], true)) {
+            if (! in_array($entity, ['facultad', 'carrera', 'periodo'], true)) {
                 throw new AuthorizationException('Este registro no pertenece a la estructura institucional.');
             }
             $this->locks->assertInstitutionalStructureEditable();
@@ -65,7 +64,6 @@ class DeleteAcademicRecord
                 ? match ($entity) {
                     'facultad' => Faculty::query()->lockForUpdate()->findOrFail($recordId),
                     'carrera' => Career::query()->lockForUpdate()->findOrFail($recordId),
-                    'campus' => Campus::query()->lockForUpdate()->findOrFail($recordId),
                     'periodo' => AcademicPeriod::query()->lockForUpdate()->findOrFail($recordId),
                     default => throw new \LogicException('Entidad institucional no admitida.'),
                 }
@@ -109,8 +107,6 @@ class DeleteAcademicRecord
                 || DB::table('fuentes_academicas')->where('carrera_id', $record->getKey())->exists()
                 || DB::table('convocatorias_carreras')->where('carrera_id', $record->getKey())->exists()
                 || DB::table('asignaciones_rol')->where('carrera_id', $record->getKey())->exists(),
-            'campus' => Career::query()->where('campus_id', $record->getKey())->exists()
-                || ScheduledSubject::query()->where('campus_id', $record->getKey())->exists(),
             'periodo' => ScheduledSubject::query()->where('periodo_academico_id', $record->getKey())->exists()
                 || DB::table('convocatorias_universidad')->where('periodo_academico_id', $record->getKey())->exists(),
             'paralelo' => SyllabusScope::query()->where('paralelo_id', $record->getKey())->exists()

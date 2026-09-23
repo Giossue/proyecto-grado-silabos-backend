@@ -37,10 +37,10 @@
   sus opciones conservan formularios y permisos independientes.
 - Solo el Administrador puede corregir el nombre o el correo de una cuenta. Coordinadores
   y Docentes consultan esos datos en su perfil y solicitan la corrección a Administración.
-- ADM-04 presenta Facultades, Campus, Carreras, Modalidades y Periodos académicos como
-  rutas hijas del submenú Estructura académica. Carreras identifica su Facultad y
-  Facultades cuenta sus carreras; no se combinan en una tabla genérica ni se infiere una
-  dependencia campus-facultad que no existe en el modelo.
+- ADM-04 presenta Facultades, Carreras y Periodos académicos como rutas hijas del submenú
+  Estructura académica. Al crear o editar una facultad, Administración elige su campus
+  obligatorio de las cinco opciones institucionales fijas. Carreras muestra el campus
+  heredado de su facultad; no hay catálogo, código ni ruta de administración de campus.
 - Cada fila de ADM-04 permite editar sus datos en un `Sheet` y eliminarla únicamente
   cuando no tiene dependencias ni historia. Un proceso institucional abierto congela
   esas acciones hasta que Administración lo pause. La carrera permite cambiar de

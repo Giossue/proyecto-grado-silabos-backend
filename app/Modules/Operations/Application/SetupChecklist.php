@@ -4,7 +4,6 @@ namespace App\Modules\Operations\Application;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Campus;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
@@ -69,9 +68,8 @@ class SetupChecklist
             'Puesta en marcha de la institución',
             'En este orden. Cada paso habilita el siguiente; las coordinaciones no pueden empezar hasta que termine.',
             [
-                $this->step('faculties', 'Registrar las facultades', 'Cada facultad agrupa sus carreras; el logo puede completarlo su Coordinación.', Faculty::query()->where('activo', true)->exists(), '/administracion/estructura-academica'),
-                $this->step('campus', 'Registrar los campus', 'Matriz, Laguacoto, CENI, San Miguel… donde se dictan clases.', Campus::query()->where('activo', true)->exists(), '/administracion/estructura-academica'),
-                $this->step('careers', 'Registrar las carreras', 'Cada carrera cuelga de una facultad, con su campus y su modalidad aprobados.', $careerCount > 0, '/administracion/estructura-academica'),
+                $this->step('faculties', 'Registrar las facultades', 'Elija el campus de cada facultad; el logo puede completarlo su Coordinación.', Faculty::query()->where('activo', true)->exists(), '/administracion/estructura-academica'),
+                $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada.', $careerCount > 0, '/administracion/estructura-academica'),
                 $this->step('periods', 'Registrar el periodo académico', 'El periodo que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists(), '/administracion/estructura-academica'),
                 $this->step('accounts', 'Crear las cuentas de coordinadores y docentes', 'Con su rol; el docente se asigna a paralelos desde Coordinación.', $accounts > 0, '/administracion/usuarios'),
                 $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0, '/administracion/estructura-academica'),
@@ -108,7 +106,7 @@ class SetupChecklist
                     'faculty_logo',
                 ),
                 $this->step('curriculum', 'Armar la malla con sus materias', 'Ciclos, materias, horas, créditos y prerrequisitos.', $career->subjects_count > 0, '/coordinacion/estructura-academica'),
-                $this->step('scheduled_subjects', 'Programar las materias del período', 'Materia, período, campus y modalidad.', (clone $scheduledSubjects)->exists(), '/coordinacion/estructura-academica'),
+                $this->step('scheduled_subjects', 'Programar las materias del período', 'Materia, período y modalidad; el campus viene de la facultad.', (clone $scheduledSubjects)->exists(), '/coordinacion/estructura-academica'),
                 $this->step('parallels', 'Crear los paralelos', 'Desde Materias y paralelos, con su jornada: matutina, vespertina o nocturna.', (clone $parallels)->exists(), '/coordinacion/estructura-academica'),
                 $this->step('teachers', 'Asignar un docente a cada paralelo', 'Los docentes ya deben tener cuenta (los crea Administración).', (clone $assignments)->exists(), '/coordinacion/estructura-academica'),
                 $this->step('sources', 'Registrar al menos una fuente académica', 'Documento de apoyo que la convocatoria fija para los docentes.', AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)->exists(), '/coordinacion/fuentes'),

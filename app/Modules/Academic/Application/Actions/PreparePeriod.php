@@ -48,7 +48,7 @@ class PreparePeriod
         $this->locks->assertCareerEditable($careerId);
 
         return DB::transaction(function () use ($actor, $activeRole, $careerId, $data, $request): array {
-            $career = Career::query()->whereKey($careerId)->with('campus')->lockForUpdate()->firstOrFail();
+            $career = Career::query()->whereKey($careerId)->with('faculty')->lockForUpdate()->firstOrFail();
             $period = AcademicPeriod::query()->whereKey($data['period_id'])->lockForUpdate()->firstOrFail();
             $this->periodPlanning->assertMayPlan($period);
             $campus = $this->inheritance->campusFor($career);
@@ -92,7 +92,7 @@ class PreparePeriod
                     $scheduledSubject = ScheduledSubject::query()->create([
                         'periodo_academico_id' => $period->id,
                         'asignatura_id' => $subject->id,
-                        'campus_id' => $campus->id,
+                        'campus_programacion' => $campus->value,
                         'modalidad' => $this->inheritance->modalityFor($subject),
                         'activo' => true,
                     ]);

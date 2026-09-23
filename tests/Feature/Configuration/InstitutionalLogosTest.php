@@ -3,6 +3,7 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\User;
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
@@ -72,7 +73,7 @@ class InstitutionalLogosTest extends TestCase
     public function test_administrator_can_create_a_faculty_with_or_without_its_logo(): void
     {
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.academic.store', 'facultad'), ['code' => 'FAC-SL', 'nombre' => 'Sin logo'])
+            ->postJson(route('api.v1.admin.academic.store', 'facultad'), ['code' => 'FAC-SL', 'nombre' => 'Sin logo', 'campus' => CampusLocation::Matriz->value])
             ->assertSuccessful()
             ->assertSuccessful();
         $this->assertDatabaseHas('facultades', [
@@ -84,6 +85,7 @@ class InstitutionalLogosTest extends TestCase
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
                 'code' => 'FAC-CL',
                 'nombre' => 'Con logo',
+                'campus' => CampusLocation::Laguacoto->value,
                 'logo' => $this->transparentPng(300, 300),
             ])
             ->assertSuccessful()

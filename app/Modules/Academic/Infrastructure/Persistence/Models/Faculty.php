@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Infrastructure\Persistence\Models;
 
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Support\Database\MapsLegacyColumnNames;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/** @property CampusLocation $campus */
 class Faculty extends Model
 {
     use HasUuids, MapsLegacyColumnNames;
@@ -16,6 +18,7 @@ class Faculty extends Model
     protected const LEGACY_COLUMN_ALIASES = [
         'nombre' => 'nombre_facultad',
         'activo' => 'facultad_activa',
+        'campus' => 'campus_facultad',
     ];
 
     public $timestamps = false;
@@ -23,7 +26,13 @@ class Faculty extends Model
     protected $table = 'facultades';
 
     /** @var list<string> */
-    protected $fillable = ['codigo_facultad', 'nombre', 'logo_objeto_id', 'activo'];
+    protected $fillable = ['codigo_facultad', 'nombre', 'campus', 'logo_objeto_id', 'activo'];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return ['campus' => CampusLocation::class];
+    }
 
     /** @return BelongsTo<StoredObject, $this> */
     public function logoObject(): BelongsTo

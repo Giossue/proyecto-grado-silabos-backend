@@ -5,7 +5,6 @@ namespace App\Modules\Academic\Application\Actions;
 use App\Models\User;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Campus;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Application\InstitutionalLogos;
@@ -13,6 +12,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
+use BackedEnum;
 use DateTimeInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
@@ -27,7 +27,6 @@ class UpdateAcademicRecord
     private const MODELS = [
         'facultad' => Faculty::class,
         'carrera' => Career::class,
-        'campus' => Campus::class,
         'periodo' => AcademicPeriod::class,
     ];
 
@@ -35,11 +34,10 @@ class UpdateAcademicRecord
     private const FIELD_LABELS = [
         'facultad_id' => 'Facultad',
         'codigo_facultad' => 'Código de facultad',
-        'codigo_campus' => 'Código de campus',
+        'campus_facultad' => 'Campus',
         'codigo_carrera' => 'Código de carrera',
         'codigo_periodo_academico' => 'Código de período',
         'nombre_facultad' => 'Nombre',
-        'nombre_campus' => 'Nombre',
         'nombre_carrera' => 'Nombre',
         'fecha_inicio_periodo' => 'Fecha de inicio',
         'fecha_fin_periodo' => 'Fecha de fin',
@@ -49,11 +47,10 @@ class UpdateAcademicRecord
     /** @var array<string, string> */
     private const AUDIT_KEYS = [
         'codigo_facultad' => 'code',
-        'codigo_campus' => 'code',
+        'campus_facultad' => 'campus',
         'codigo_carrera' => 'code',
         'codigo_periodo_academico' => 'code',
         'nombre_facultad' => 'name',
-        'nombre_campus' => 'name',
         'nombre_carrera' => 'name',
         'fecha_inicio_periodo' => 'starts_on',
         'fecha_fin_periodo' => 'ends_on',
@@ -131,15 +128,11 @@ class UpdateAcademicRecord
             'facultad' => [
                 'codigo_facultad' => $data['code'] ?? null,
                 'nombre' => $data['nombre'],
-            ],
-            'campus' => [
-                'codigo_campus' => $data['code'] ?? null,
-                'nombre' => $data['nombre'],
+                'campus' => $data['campus'],
             ],
             'carrera' => [
                 'facultad_id' => $data['faculty_id'],
                 'modalidad' => $data['modality'],
-                'campus_id' => $data['campus_id'],
                 'codigo_carrera' => $data['code'] ?? null,
                 'nombre' => $data['nombre'],
             ],
@@ -215,6 +208,10 @@ class UpdateAcademicRecord
 
     private function scalarValue(mixed $value): bool|float|int|string|null
     {
+        if ($value instanceof BackedEnum) {
+            return $value->value;
+        }
+
         if ($value instanceof DateTimeInterface) {
             return $value->format('Y-m-d');
         }
