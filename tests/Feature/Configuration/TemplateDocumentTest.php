@@ -506,23 +506,9 @@ class TemplateDocumentTest extends TestCase
         $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), ['document' => $doc, 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
             ->assertSuccessful();
         $configuration = $block->fresh()->configuracion;
-        $layoutPayload = [
-            ...$configuration['table'],
-            'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
-        ];
-        $this->patchJson(route('api.v1.admin.template.blocks.table.update', [$template, $block]), $layoutPayload)
-            ->assertSuccessful();
-        $rebuiltConfiguration = $block->fresh()->configuracion;
-        $this->assertArrayNotHasKey('document', $rebuiltConfiguration);
-        $this->assertSame(
-            ['contenido', 'acd'],
-            array_column($rebuiltConfiguration['table']['columns'], 'key'),
-        );
-        $this->assertCount(2, $configuration['table']['columns']);
+        $this->assertSame(['contenido', 'acd'], array_column($configuration['table']['columns'], 'key'));
         $this->assertSame('number', $configuration['table']['columns'][1]['type']);
         $this->assertTrue($configuration['table']['columns'][1]['sum']);
-        $this->patchJson(route('api.v1.admin.template.blocks.table.update', [$template, $block]), $layoutPayload)
-            ->assertJsonValidationErrors('fingerprint');
         $fields = [['key' => 'unidades', 'rows' => [
             ['data' => ['_unit' => 1, 'contenido' => 'Tema A', 'acd' => 2]],
             ['data' => ['_unit' => 1, 'contenido' => 'Tema B', 'acd' => 3]],
@@ -553,10 +539,7 @@ class TemplateDocumentTest extends TestCase
         $layout['groups'] = [];
         $layout['bands'] = [];
 
-        $this->patchJson(route('api.v1.admin.template.blocks.table.update', [$template, $block]), [
-            ...$layout,
-            'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertSuccessful();
+        $block->update(['configuracion' => [...$block->configuracion, 'table' => TableLayout::normalize($layout)]]);
 
         $column = ['type' => 'column', 'attrs' => [
             'key' => 'horas_clase', 'label' => 'Horas de clase', 'kind' => 'numero',

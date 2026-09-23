@@ -644,7 +644,7 @@ class SyllabusProcessTest extends TestCase
             ])
             ->assertSuccessful();
         $this->assertSame(CampusLocation::Chimbo, $faculty->fresh()->campus);
-        $this->assertSame(CampusLocation::Chimbo->value, $scheduledSubject->fresh()->campus_programacion->value);
+        $this->assertSame(CampusLocation::Chimbo->value, $scheduledSubject->fresh()->getRawOriginal('campus_programacion'));
 
         // La convocatoria ya pausada permite completar su programación.
         $this->actingAsCoordinator()

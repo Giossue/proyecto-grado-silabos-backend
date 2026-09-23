@@ -535,53 +535,10 @@ class TemplateAndSourceTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
                 ->where("template.sections.$sectionIndex.blocks.0.table.columns.0.key", 'texto'));
 
-        $layout = [
-            'columns' => [
-                ['key' => 'contenidos', 'label' => 'Contenidos temáticos', 'type' => 'text', 'width' => 320],
-                ['key' => 'acd', 'label' => 'ACD', 'type' => 'number', 'group' => 'docencia', 'band' => 'horas', 'sum' => false],
-                ['key' => 'ape', 'label' => 'APE', 'type' => 'number', 'group' => 'estudiante', 'band' => 'horas'],
-                ['key' => 'aa', 'label' => 'AA', 'type' => 'number', 'group' => 'estudiante', 'band' => 'horas'],
-            ],
-            'groups' => [['key' => 'docencia', 'label' => 'Docencia'], ['key' => 'estudiante', 'label' => 'Estudiante']],
-            'bands' => [['key' => 'horas', 'label' => 'Horas por semana']],
-            'header_fields' => [['key' => 'nombre', 'label' => 'Nombre de la unidad']],
-            'totals' => ['enabled' => true, 'label' => 'Total, horas'],
-            'repeat' => ['enabled' => true, 'label' => 'Unidad'],
-        ];
+        // I-118: la estructura se edita sobre la tabla; el formulario separado ya no existe.
         $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.template.blocks.table.update', ['template' => $version, 'block' => $block]), [
-                ...$layout,
-                'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
-            ])
-            ->assertSuccessful()
-            ->assertSuccessful();
-
-        $saved = $block->fresh()->configuracion['table'];
-        $this->assertSame('table', $block->fresh()->configuracion['content_type']);
-        $this->assertSame(['contenidos', 'acd', 'ape', 'aa'], array_column($saved['columns'], 'key'));
-        $this->assertSame(320, $saved['columns'][0]['width']);
-        $this->assertFalse($saved['columns'][1]['sum']);
-        $this->assertTrue($saved['repeat']['enabled']);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'plantilla.tabla_actualizada', 'recurso_id' => $block->id]);
-
-        // Un grupo partido por otra columna no es una cabecera posible.
-        $broken = $layout;
-        $broken['columns'][1]['group'] = 'estudiante';
-        $broken['columns'][2]['group'] = 'docencia';
-        $broken['columns'][3]['group'] = 'estudiante';
-        $broken['fingerprint'] = SaveTemplateDocument::fingerprint($block->fresh());
-        $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.template.blocks.table.update', ['template' => $version, 'block' => $block]), $broken)
-            ->assertJsonValidationErrors('groups');
-
-        // Un campo de texto no acepta esquema de tabla.
-        $textBlock = $version->sections()->where('clave', 'habilidades')->firstOrFail()->blocks()->firstOrFail();
-        $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.template.blocks.table.update', ['template' => $version, 'block' => $textBlock]), [
-                ...$layout,
-                'fingerprint' => SaveTemplateDocument::fingerprint($textBlock),
-            ])
-            ->assertJsonValidationErrors('table');
+            ->patchJson("/api/v1/admin/template/{$version->id}/blocks/{$block->id}/table", ['columns' => []])
+            ->assertNotFound();
     }
 
     public function test_administrator_manages_template_blocks_separately_from_their_fields(): void

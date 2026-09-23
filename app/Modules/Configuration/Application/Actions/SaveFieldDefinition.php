@@ -70,7 +70,7 @@ class SaveFieldDefinition
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
                     'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
-                    'ia_habilitada' => ! $field->heredado && (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
+                    'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
                 ]);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
@@ -78,9 +78,12 @@ class SaveFieldDefinition
             }
 
             // Bloques fijos (ficha de identificación, estado de revisión): su estructura no
-            // se toca; solo cambian etiqueta y ayuda.
+            // se toca; cambian etiqueta, ayuda y, salvo en el flujo, si la IA lee el campo.
             if ($field !== null && in_array($contentType, ['institutional', 'flow'], true)) {
-                $field->update(['etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null]);
+                $field->update([
+                    'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
+                    'ia_habilitada' => $contentType !== 'flow' && (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
+                ]);
                 $template->updateBlockDocument($field->bloque_plantilla_id, ['titulo' => $data['label']]);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
@@ -103,7 +106,7 @@ class SaveFieldDefinition
                 'heredado' => $inherited,
                 'origen_maestro' => $field !== null && $field->heredado ? $field->origen_maestro : null,
                 'editable_docente' => ! $inherited,
-                'ia_habilitada' => ! $inherited && (bool) ($data['ai_enabled'] ?? ($field !== null ? $field->ia_habilitada : false)),
+                'ia_habilitada' => (bool) ($data['ai_enabled'] ?? ($field !== null ? $field->ia_habilitada : false)),
                 'reglas' => $data['rules'] ?? ($field !== null ? $field->reglas : null),
                 'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                 'marcador_documento' => $field !== null ? $field->marcador_documento : null,

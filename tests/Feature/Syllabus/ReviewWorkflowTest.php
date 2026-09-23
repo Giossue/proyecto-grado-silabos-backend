@@ -120,13 +120,18 @@ class ReviewWorkflowTest extends TestCase
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
         $revisionId = SyllabusRevision::query()->firstOrFail()->id;
-        $this->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'pausar']), ['reason' => 'Ajustar el diseño de la plantilla'])->assertSuccessful();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revisionId), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertSuccessful();
+        $approvalId = Approval::query()->firstOrFail()->id;
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'pausar']), ['reason' => 'Ajustar el diseño de la plantilla'])->assertSuccessful();
         $this->patch($url, $payload)->assertJsonValidationErrors('purge_required');
         $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
         $this->assertSame($block->configuracion['document'], $block->fresh()->configuracion['document']);
         $this->patch($url, [...$payload, 'confirm_purge' => true])->assertSuccessful();
         $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
         $this->assertDatabaseMissing('revisiones_silabo', ['id' => $revisionId]);
+        $this->assertDatabaseMissing('aprobaciones', ['id' => $approvalId]);
         $this->assertDatabaseCount('silabos', 1);
         $this->assertDatabaseHas('silabos', ['estado_silabo' => 'sin_iniciar']);
     }

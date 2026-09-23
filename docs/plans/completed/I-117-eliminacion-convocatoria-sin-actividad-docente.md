@@ -2,7 +2,7 @@
 
 ## Estado
 
-En implementación local.
+Completado localmente.
 
 ## Decisión
 
@@ -34,6 +34,11 @@ registros sin actividad en el orden de sus dependencias.
 
 ## Verificación
 
-- [ ] Prueba focalizada de `SyllabusProcessTest`.
-- [ ] Prueba focalizada de `SyllabusProcessActions`.
-- [ ] Contrato OpenAPI, typecheck, lint y formato puntual.
+- [x] `SyllabusProcessTest`: 3 pruebas y 39 aserciones aprobadas.
+- [x] `SyllabusProcessActions.test.ts`: 2 pruebas aprobadas.
+- [x] Contrato OpenAPI, ESLint y Pint aprobados.
+- [ ] El typecheck global está bloqueado por una firma de `submit` concurrente y ajena
+  en `CatalogEditSheet.vue`; no reportó errores en los archivos de I-117.
+
+La ejecución completa de `SyllabusProcessTest` conserva tres fallos ajenos en el flujo
+concurrente de reinicio institucional. Las pruebas focalizadas de I-117 pasan.

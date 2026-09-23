@@ -69,9 +69,10 @@ final class SaveTemplateDocument
                     || ($field !== null && isset($block->configuracion['detached_fields'][$field->clave]))) {
                     throw ValidationException::withMessages(["properties.$index.key" => 'El campo no pertenece al diseño actual.']);
                 }
-                $isInherited = $field !== null && $field->heredado;
-                if (($property['ai_enabled'] ?? false) && ($isInherited || in_array($block->configuredContentType(), ['institutional', 'flow'], true))) {
-                    throw ValidationException::withMessages(["properties.$index.ai_enabled" => 'Este campo no admite asistencia de IA.']);
+                // I-118: la casilla decide si el agente lee el campo, también en la ficha y
+                // en los datos heredados. Solo el estado de revisión queda fuera: no es contenido.
+                if (($property['ai_enabled'] ?? false) && $block->configuredContentType() === 'flow') {
+                    throw ValidationException::withMessages(["properties.$index.ai_enabled" => 'El estado de revisión no es contenido que lea la IA.']);
                 }
             }
             if ($normalized === null) {
@@ -186,6 +187,10 @@ final class SaveTemplateDocument
                         } elseif (in_array($role, ['record', 'total'], true)) {
                             if (! in_array($attrs['kind'], ['texto_largo', 'numero'], true)) {
                                 TemplateDocument::fail('Las columnas admiten texto o número.');
+                            }
+                            // Un total solo suma números; un texto ahí quedaría siempre vacío.
+                            if ($role === 'total' && $attrs['kind'] !== 'numero') {
+                                TemplateDocument::fail('La fila de totales solo admite datos numéricos.');
                             }
                             $knownColumn = $columnKeys[$attrs['key']] ?? null;
                             if ($knownColumn !== null
@@ -304,7 +309,7 @@ final class SaveTemplateDocument
     {
         foreach ($request->input('properties', []) as $property) {
             $attributes = ['etiqueta' => $property['label'], 'ayuda' => $property['help']];
-            if (array_key_exists('ai_enabled', $property) && ! in_array($block->configuredContentType(), ['institutional', 'flow'], true)) {
+            if (array_key_exists('ai_enabled', $property) && $block->configuredContentType() !== 'flow') {
                 // Un campo retirado conserva su configuración para una futura restauración,
                 // pero no vuelve a habilitarse en el formulario actual.
                 if (isset($detached[$property['key']])) {

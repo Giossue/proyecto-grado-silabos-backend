@@ -160,8 +160,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.fields.update');
             Route::patch('admin/template/{template}/blocks/order', [TemplateController::class, 'reorderBlocks'])
                 ->middleware('active-role')->name('api.v1.admin.template.blocks.reorder');
-            Route::patch('admin/template/{template}/blocks/{block}/table', [TemplateController::class, 'updateTableLayout'])
-                ->middleware('active-role')->name('api.v1.admin.template.blocks.table.update');
             Route::patch('admin/template/{template}/blocks/{block}/document', [TemplateController::class, 'updateDocument'])
                 ->middleware('active-role')->name('api.v1.admin.template.blocks.document.update');
             Route::delete('admin/template/{template}/blocks/{block}', [TemplateController::class, 'destroyBlock'])

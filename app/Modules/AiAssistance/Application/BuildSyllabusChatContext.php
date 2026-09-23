@@ -2,7 +2,9 @@
 
 namespace App\Modules\AiAssistance\Application;
 
+use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Support\CanonicalHasher;
@@ -11,6 +13,9 @@ use Illuminate\Support\Str;
 
 class BuildSyllabusChatContext
 {
+    /** Datos de la ficha que identifican a una persona: no aportan a las sugerencias. */
+    private const PERSONAL_VARIABLES = ['nombre_docente', 'correo_docente'];
+
     public function __construct(
         private readonly AiEvidenceCollector $sources,
         private readonly CanonicalHasher $hasher,
@@ -38,7 +43,9 @@ class BuildSyllabusChatContext
                     if (! $field->ia_habilitada) {
                         continue;
                     }
-                    $excerpt = $this->fieldContent($field, $values->get($field->id)?->valor, $rows->get($field->id));
+                    $excerpt = $block->configuredContentType() === 'institutional' && $field->heredado
+                        ? $this->identificationContent($syllabus)
+                        : $this->fieldContent($field, $values->get($field->id)?->valor, $rows->get($field->id));
                     if ($excerpt === '') {
                         continue;
                     }
@@ -83,6 +90,28 @@ class BuildSyllabusChatContext
             array_slice($fieldItems, 0, $fieldQuota),
             array_slice($sourceItems, 0, $sourceQuota),
         );
+    }
+
+    /**
+     * La ficha institucional no guarda un valor propio: se lee desde las variables que la
+     * pintan, sin marcas de unidad ni datos personales del docente.
+     */
+    private function identificationContent(Syllabus $syllabus): string
+    {
+        $values = TemplateVariables::resolve([
+            'identification' => IdentificationCard::fromSyllabus($syllabus),
+            'academic_context' => $syllabus->contexto_academico,
+        ]);
+        $lines = [];
+        foreach (TemplateVariables::definitions() as $key => $definition) {
+            $value = trim($values[$key] ?? '');
+            if (isset($definition['equals']) || in_array($key, self::PERSONAL_VARIABLES, true) || $value === '') {
+                continue;
+            }
+            $lines[] = "{$definition['label']}: {$value}";
+        }
+
+        return implode("\n", $lines);
     }
 
     /** @param Collection<int, RepeatableRow>|null $rows */

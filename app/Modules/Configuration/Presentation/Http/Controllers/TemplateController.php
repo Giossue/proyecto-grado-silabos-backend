@@ -15,7 +15,6 @@ use App\Modules\Configuration\Application\Actions\SaveTemplateAppearance;
 use App\Modules\Configuration\Application\Actions\SaveTemplateDocument;
 use App\Modules\Configuration\Application\Actions\SaveTemplateSection;
 use App\Modules\Configuration\Application\Actions\SaveTemplateTitle;
-use App\Modules\Configuration\Application\Actions\UpdateTableLayout;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
@@ -36,7 +35,6 @@ use App\Modules\Configuration\Presentation\Http\Requests\SaveTemplateDocumentReq
 use App\Modules\Configuration\Presentation\Http\Requests\SaveTemplateSectionRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\SaveTemplateTitleRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\StoreInstitutionLogoRequest;
-use App\Modules\Configuration\Presentation\Http\Requests\UpdateTableLayoutRequest;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\IdentificationCard;
@@ -354,20 +352,6 @@ class TemplateController extends Controller
         });
 
         return $this->success($request, 'Logo de la universidad actualizado.');
-    }
-
-    public function updateTableLayout(
-        SyllabusTemplate $template,
-        string $block,
-        UpdateTableLayoutRequest $request,
-        UpdateTableLayout $action,
-    ): JsonResponse {
-        $block = $template->blockOrFail($block);
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($block, $request->validated(), $actor, $request);
-
-        return $this->success($request, 'Tabla actualizada.');
     }
 
     public function destroyBlock(

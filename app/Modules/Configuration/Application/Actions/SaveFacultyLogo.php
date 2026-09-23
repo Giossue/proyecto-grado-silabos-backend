@@ -33,7 +33,10 @@ final class SaveFacultyLogo
                 && is_string($activeRole->carrera_id),
             403,
         );
-        $this->locks->assertCareerEditable($activeRole->carrera_id);
+        $facultyId = Career::query()->whereKey($activeRole->carrera_id)->value('facultad_id');
+        abort_unless(is_string($facultyId), 404);
+        $careerIds = Career::query()->where('facultad_id', $facultyId)->pluck('id')->all();
+        $this->locks->assertInstitutionalRecordEditable($careerIds);
 
         return $this->work->replace($request, function () use ($activeRole, $actor, $file, $request): Faculty {
             $career = Career::query()
@@ -55,6 +58,6 @@ final class SaveFacultyLogo
             );
 
             return $faculty->refresh();
-        }, $activeRole->carrera_id);
+        }, $careerIds);
     }
 }
