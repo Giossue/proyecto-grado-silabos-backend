@@ -11,5 +11,8 @@
     "Verify your email address": "Verifique su correo electrónico",
     "Please click the button below to verify your email address.": "Use el siguiente botón para verificar su correo electrónico.",
     "Verify Email Address": "Verificar correo",
-    "If you did not create an account, no further action is required.": "Si no esperaba este correo, puede ignorarlo."
+    "If you did not create an account, no further action is required.": "Si no esperaba este correo, puede ignorarlo.",
+    "The provided two factor authentication code was invalid.": "El código de autenticación no es válido.",
+    "The provided two factor recovery code was invalid.": "El código de recuperación no es válido.",
+    "The provided password was incorrect.": "La contraseña no es correcta."
 }

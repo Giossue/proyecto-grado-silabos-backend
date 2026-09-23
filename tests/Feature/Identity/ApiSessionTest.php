@@ -290,7 +290,8 @@ class ApiSessionTest extends TestCase
             ->assertOk();
 
         $this->postJson(route('api.v1.authentication.two-factor.confirm'), ['code' => '000000'])
-            ->assertUnprocessable();
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.code.0', 'El código de autenticación no es válido.');
 
         $this->assertFalse($user->fresh()->hasEnabledTwoFactorAuthentication());
     }
