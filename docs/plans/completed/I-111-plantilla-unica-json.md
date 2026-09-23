@@ -57,3 +57,7 @@ ni respuestas docentes.
   documento un bloque todavía referenciado.
 - `composer verify`: 304 pruebas, 3.846 aserciones, Pint, PHPStan y escaneo de secretos.
 - SPA: contrato OpenAPI (126 consumidores/129 operaciones), TypeScript y ESLint pasan.
+- La migración se aplicó en la base remota con la cuenta de aplicación y quedó en el
+  lote 61. El respaldo lógico previo fue legible; después del cambio se verificaron una
+  plantilla, una sección, un bloque y un campo, sin referencias huérfanas, junto con los
+  dos triggers de integridad y el índice singleton.
