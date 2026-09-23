@@ -38,8 +38,8 @@ use App\Modules\Configuration\Presentation\Http\Requests\StoreInstitutionLogoReq
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\IdentificationCard;
-use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Application\InProgressWork;
+use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -330,8 +330,7 @@ class TemplateController extends Controller
         ActiveRole $roles,
         ProcessLocks $locks,
         InProgressWork $work,
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $file = $request->file('logo');

@@ -9,6 +9,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\AiAssistance\Application\AiEvidenceCollector;
 use App\Modules\AiAssistance\Application\AiResultContract;
+use App\Modules\AiAssistance\Application\BuildSyllabusChatContext;
 use App\Modules\AiAssistance\Application\IndexAcademicSource;
 use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
@@ -773,6 +774,40 @@ class AiAssistanceTest extends TestCase
         $this->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
             ->assertJsonPath('conversation.hidden', true);
         $this->assertDatabaseCount('mensajes_ia', 2);
+    }
+
+    public function test_administration_decides_whether_the_agent_reads_the_identification_card(): void
+    {
+        [$syllabus] = $this->fixture();
+        $syllabus->update(['contexto_academico' => ['subject' => ['name' => 'Ingeniería de requisitos', 'code' => 'SW-P5-021']]]);
+        $template = $syllabus->template;
+        $section = $template->appendSection([
+            'id' => (string) Str::uuid(), 'clave' => 'identificacion', 'titulo' => 'Identificación',
+            'descripcion' => null, 'posicion' => 2, 'bloques' => [],
+        ]);
+        $block = $template->appendBlock($section->id, [
+            'id' => (string) Str::uuid(), 'clave' => 'identificacion', 'tipo' => 'flujo',
+            'titulo' => 'Identificación', 'configuracion' => ['content_type' => 'institutional'], 'posicion' => 1,
+        ]);
+        $card = FieldDefinition::query()->create([
+            'plantilla_id' => $template->id, 'bloque_plantilla_id' => $block->id,
+            'clave' => 'asignatura', 'etiqueta' => 'Identificación', 'tipo' => 'referencia_maestra',
+            'heredado' => true, 'origen_maestro' => 'asignaturas', 'editable_docente' => false,
+            'ia_habilitada' => false, 'posicion' => 1,
+        ]);
+        $read = fn (): array => array_values(array_filter(
+            app(BuildSyllabusChatContext::class)->build($syllabus->fresh()),
+            fn (array $item): bool => $item['field_id'] === $card->id,
+        ));
+
+        $this->assertSame([], $read());
+
+        $card->update(['ia_habilitada' => true]);
+        $excerpt = $read()[0]['excerpt'];
+        $this->assertStringContainsString('Nombre de la asignatura: Ingeniería de requisitos', $excerpt);
+        $this->assertStringContainsString('Código de la asignatura: SW-P5-021', $excerpt);
+        $this->assertStringNotContainsString($this->teacher->correo_electronico, $excerpt);
+        $this->assertStringNotContainsString('Correo institucional', $excerpt);
     }
 
     /** @return array{Syllabus, FieldDefinition, Convocation, AcademicSource} */

@@ -10,7 +10,6 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 final class SaveTemplateAppearance
 {

@@ -677,6 +677,72 @@ class TemplateDocumentTest extends TestCase
         $this->assertArrayNotHasKey('document', $block->fresh()->configuracion);
     }
 
+    public function test_lists_give_teachers_one_text_row_per_item(): void
+    {
+        $template = $this->template();
+        $block = $template->fields()->where('clave', 'objetivos_especificos')->firstOrFail()->block;
+
+        $this->assertSame('bulleted_list', $block->configuredContentType());
+        $this->assertSame(['texto'], array_column(TableLayout::fromBlock($block)['columns'], 'key'));
+        $this->assertNull(TableLayout::fromBlock(
+            $template->fields()->where('clave', 'descripcion')->firstOrFail()->block,
+        ));
+    }
+
+    public function test_administration_decides_ai_reading_on_identification_but_not_on_the_review_flow(): void
+    {
+        $template = $this->template();
+        $identification = $template->fields()->where('clave', 'asignatura')->firstOrFail();
+        $formation = $template->fields()->where('clave', 'formacion_experiencia')->firstOrFail();
+        $block = $identification->block;
+        $properties = fn (bool $enabled): array => [
+            ['key' => 'asignatura', 'label' => $identification->etiqueta, 'help' => '', 'ai_enabled' => $enabled],
+            ['key' => 'formacion_experiencia', 'label' => $formation->etiqueta, 'help' => '', 'ai_enabled' => $enabled],
+        ];
+        $save = fn (bool $enabled) => $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
+            'document' => $block->fresh()->configuracion['document'],
+            'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
+            'properties' => $properties($enabled),
+        ]);
+
+        $save(true)->assertSuccessful();
+        $this->assertTrue($identification->fresh()->ia_habilitada);
+        $this->assertTrue($formation->fresh()->ia_habilitada);
+        $save(false)->assertSuccessful();
+        $this->assertFalse($identification->fresh()->ia_habilitada);
+        $this->assertFalse($formation->fresh()->ia_habilitada);
+
+        $flow = $template->fields()->where('clave', 'estado_revision')->firstOrFail();
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $flow->block]), [
+            'document' => null,
+            'fingerprint' => SaveTemplateDocument::fingerprint($flow->block),
+            'properties' => [['key' => 'estado_revision', 'label' => $flow->etiqueta, 'help' => '', 'ai_enabled' => true]],
+        ])->assertJsonValidationErrors('properties.0.ai_enabled');
+    }
+
+    public function test_total_rows_only_accept_numeric_data(): void
+    {
+        $template = $this->template();
+        $block = $template->fields()->where('clave', 'unidades')->firstOrFail()->block;
+        $column = fn (string $key, string $kind): array => ['type' => 'column', 'attrs' => ['key' => $key, 'label' => $key, 'kind' => $kind]];
+        $cell = fn (array $content): array => ['type' => 'tableCell', 'content' => [['type' => 'paragraph', 'content' => $content]]];
+        $row = fn (string $role, array $cells): array => ['type' => 'tableRow', 'attrs' => ['rowRole' => $role], 'content' => $cells];
+        $document = fn (string $totalKind): array => ['type' => 'doc', 'content' => [['type' => 'table', 'attrs' => ['repeatKey' => 'unidades'], 'content' => [
+            $row('record', [$cell([$column('tema', 'texto_largo')]), $cell([$column('horas', 'numero')])]),
+            $row('total', [$cell([['type' => 'text', 'text' => 'Total']]), $cell([$column($totalKind === 'numero' ? 'horas' : 'tema', $totalKind)])]),
+        ]]]];
+
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
+            'document' => $document('texto_largo'),
+            'fingerprint' => SaveTemplateDocument::fingerprint($block),
+        ])->assertJsonValidationErrors(['document' => 'La fila de totales solo admite datos numéricos.']);
+
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
+            'document' => $document('numero'),
+            'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
+        ])->assertSuccessful();
+    }
+
     private function template(): SyllabusTemplate
     {
         $this->seed(DatabaseSeeder::class);

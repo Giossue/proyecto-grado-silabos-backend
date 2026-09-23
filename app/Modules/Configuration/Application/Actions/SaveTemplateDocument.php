@@ -14,7 +14,6 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 final class SaveTemplateDocument
@@ -76,7 +75,7 @@ final class SaveTemplateDocument
                 }
             }
             if ($normalized === null) {
-                    $this->saveProperties($block, $request, []);
+                $this->saveProperties($block, $request, []);
                 $this->auditDesign($block, $actor, $request, $fields->count());
 
                 return;
