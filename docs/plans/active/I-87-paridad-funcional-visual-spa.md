@@ -180,6 +180,8 @@ recargar manualmente la página, igual que en la interfaz monolítica.
 
 - [x] El contenedor visual de `vue-sonner` se adapta al contenido, con un límite
   responsive para no desbordar la ventana.
+- [x] La superficie del toast contrasta con el tema activo: oscura en tema claro y
+  clara en tema oscuro, con el texto invertido correspondiente.
 - [x] La fachada compartida `src/lib/toast.ts` elimina el punto final de los mensajes
   de éxito, información, advertencia, error y carga.
 
