@@ -5,12 +5,12 @@ namespace App\Modules\Syllabus\Application;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use Closure;
 
 /**
  * Reinicia los expedientes cuya base institucional cambia durante una pausa.
@@ -35,7 +35,7 @@ final class InProgressWork
      * Devuelve cuántos expedientes deberán reemplazarse. No borra antes de que el
      * cambio institucional haya sido validado y guardado.
      *
-     * @param string|list<string>|null $careerIds
+     * @param  string|list<string>|null  $careerIds
      */
     public function requireConfirmation(Request $request, string|array|null $careerIds = null, ?string $periodId = null): int
     {
@@ -58,8 +58,9 @@ final class InProgressWork
 
     /**
      * @template TResult
-     * @param Closure(): TResult $change
-     * @param string|list<string>|null $careerIds
+     *
+     * @param  Closure(): TResult  $change
+     * @param  string|list<string>|null  $careerIds
      * @return TResult
      */
     public function replace(
@@ -67,8 +68,7 @@ final class InProgressWork
         Closure $change,
         string|array|null $careerIds = null,
         ?string $periodId = null,
-    ): mixed
-    {
+    ): mixed {
         return DB::transaction(function () use ($careerIds, $change, $periodId, $request): mixed {
             $count = $this->requireConfirmation($request, $careerIds, $periodId);
             $result = $change();
@@ -84,7 +84,7 @@ final class InProgressWork
      * Elimina cada agregado afectado y lo vuelve a generar con la base vigente.
      * Debe llamarse después de guardar el cambio y dentro de esa misma transacción.
      *
-     * @param string|list<string>|null $careerIds
+     * @param  string|list<string>|null  $careerIds
      * @return array{deleted: int, generated: int}
      */
     public function regenerate(string|array|null $careerIds = null, ?string $periodId = null): array
