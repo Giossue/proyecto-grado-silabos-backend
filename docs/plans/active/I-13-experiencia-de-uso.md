@@ -58,6 +58,9 @@ puede cambiarla desde el menú de usuario.
   render: quien entraba sin rol activo se quedaba sin opciones para toda la sesión.
 - Una entrada con subopciones se despliega y contrae, y con el menú reducido a iconos
   las muestra en un menú flotante sin expandir la barra.
+- Cada entrada enlaza su ruta canónica para conservar el resaltado de ubicación. En
+  Administración, **Panel** apunta a `/admin/panel` y expone su estado activo y
+  `aria-current="page"` mientras se muestra el panel.
 - El control de tema pasa al encabezado compartido, así que alcanza a los tres roles sin
   declararlo por pantalla. En la excepción de DOC-04, que usa una superficie documental
   sin encabezado global, se conserva el mismo control reutilizable en posición flotante.
@@ -81,6 +84,7 @@ puede cambiarla desde el menú de usuario.
 | Defecto | Causa | Prueba que lo protege |
 |---|---|---|
 | El menú lateral se quedaba sin las opciones del rol | Constante en un layout persistente | `PersistentLayoutReactivityTest` |
+| Panel no mostraba su estado activo en Administración | El enlace usaba el atajo `/dashboard` después de que el guard navegaba a `/admin/panel` | `AppShell.test.ts` |
 | Un panel de edición se reabría al guardar | La clave del componente incluía los datos editados, así que Inertia lo recreaba con el panel todavía abierto | `SheetReopeningTest` |
 | Quien perdía la validez de su rol en sesión se quedaba sin ninguno | No se reintentaba la regla del rol único | `ActiveRoleTest` |
 
