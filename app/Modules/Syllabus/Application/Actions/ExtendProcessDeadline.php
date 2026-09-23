@@ -98,19 +98,13 @@ class ExtendProcessDeadline
     /** Avisa a quien todavía tiene algo que entregar: Coordinación y docentes sin aprobar. */
     private function notify(SyllabusProcess $process, CarbonImmutable $dueAt, Request $request): void
     {
-        $convocations = Convocation::query()->where('proceso_id', $process->id)->get(['id', 'carrera_id']);
-        $recipients = array_keys($this->recipients->teacherSyllabusCounts(
-            array_values(array_map(fn (Convocation $convocation): string => $convocation->id, $convocations->all())),
-            exceptStates: ['aprobado'],
-        ));
-        foreach ($convocations->pluck('carrera_id')->unique() as $careerId) {
-            $recipients = [...$recipients, ...$this->recipients->coordinatorsForCareer($careerId)];
-        }
-
         $this->notifications->execute(
             eventType: 'proceso.plazo_extendido',
             deduplicationKey: "proceso.plazo_extendido:{$process->id}:{$dueAt->getTimestamp()}",
-            recipientIds: $recipients,
+            recipientIds: [
+                ...$this->recipients->coordinatorsForProcess($process),
+                ...$this->recipients->teachersWithPendingWork($process),
+            ],
             title: 'Plazo extendido',
             message: "La entrega de sílabos del proceso «{$process->nombre}» se amplió hasta el {$this->notifications->date($dueAt)}.",
             resourceType: 'proceso_silabos',

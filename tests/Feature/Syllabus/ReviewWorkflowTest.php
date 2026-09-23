@@ -27,12 +27,14 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use LogicException;
+use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
 
 class ReviewWorkflowTest extends TestCase
 {
+    use AssertsInternalNotifications;
     use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
@@ -343,6 +345,7 @@ class ReviewWorkflowTest extends TestCase
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.verify', $observation))->assertSuccessful();
         $this->assertSame('verificada', $observation->fresh()->estado);
+        $this->assertNotified($this->teacher->id, 'silabo.observacion_verificada', 'Coordinación dio por resuelta una observación del sílabo');
         $this->actingAsTeacher()
             ->getJson(route('api.v1.coordination.reviews.compare', [$firstRevision, $secondRevision]))
             ->assertOk()

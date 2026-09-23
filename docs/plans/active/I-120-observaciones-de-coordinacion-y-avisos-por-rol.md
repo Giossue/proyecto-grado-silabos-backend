@@ -41,6 +41,8 @@ cuentas activas.
 
 | Evento | Destinatarios | Tipo |
 |---|---|---|
+| Convocatoria institucional abierta | Coordinación de las carreras activas | `proceso.abierto` |
+| Convocatoria institucional pausada / reanudada / cerrada | Coordinación de carreras con convocatoria y docentes con sílabos sin aprobar | `proceso.pausado` / `proceso.reanudado` / `proceso.cerrado` |
 | Prórroga del proceso | Coordinación de carreras con convocatoria y docentes con sílabos sin aprobar | `proceso.plazo_extendido` |
 | Convocatoria abierta | Cada docente con sílabos generados (mensaje con su cantidad) | `convocatoria.abierta` |
 | Convocatoria pausada / reanudada | Docentes de la convocatoria | `convocatoria.pausada` / `convocatoria.reanudada` |
@@ -58,15 +60,15 @@ Descartados tras el análisis:
 - **Sílabos sin docente tras un relevo.** El relevo exige entrante y mueve todo a la
   vez; no deja sílabos sin responsable.
 
-### Pendiente
+Los avisos del proceso se agregaron después del retiro de la etapa de preparación: abrir
+ocurre al crear la convocatoria institucional (`CreateSyllabusProcess`).
 
-- [ ] Avisos de abrir, pausar, reanudar y cerrar el proceso institucional. Se agregan
-      cuando termine el cambio en curso sobre el ciclo del proceso (retiro de la etapa
-      de preparación), para no mezclar ambos trabajos.
+El destino de cada aviso según el rol (`NotificationDestination`) se trabaja por separado.
 
 ## Verificación
 
-- Backend: `ReviewWorkflowTest`, `InternalNotificationTest` y suites de los módulos
-  tocados; Pint y PHPStan.
+- Backend: `ReviewWorkflowTest`, `ConvocationScheduleTest`, `TeacherTransferTest`,
+  `TeacherReliefTest`, `CoordinatorReplacementTest` y `ManagedUserTest` (helper
+  `AssertsInternalNotifications`); Pint y PHPStan sobre los archivos tocados.
 - Frontend: pruebas de `TeacherSyllabusDetailPage`, `CoordinationReviewDetailPage`,
-  typecheck y lint.
+  iconos por tipo en `NotificationsPopover`; typecheck y lint.

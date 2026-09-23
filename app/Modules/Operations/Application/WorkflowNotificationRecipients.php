@@ -2,9 +2,12 @@
 
 namespace App\Modules\Operations\Application;
 
+use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Database\Eloquent\Builder;
 
 class WorkflowNotificationRecipients
@@ -15,6 +18,44 @@ class WorkflowNotificationRecipients
         $careerId = $syllabus->convocation()->value('carrera_id');
 
         return is_string($careerId) ? $this->coordinatorsForCareer($careerId) : [];
+    }
+
+    /**
+     * Coordinación de las carreras de un proceso: las que ya tienen convocatoria o, si
+     * el proceso recién se abre, todas las carreras activas.
+     *
+     * @return list<string>
+     */
+    public function coordinatorsForProcess(SyllabusProcess $process): array
+    {
+        $careerIds = Convocation::query()->where('proceso_id', $process->id)->pluck('carrera_id');
+        if ($careerIds->isEmpty()) {
+            $careerIds = Career::query()->where('activo', true)->pluck('id');
+        }
+
+        $ids = CoordinatorAssignment::query()
+            ->whereIn('carrera_id', $careerIds)
+            ->effective()
+            ->whereHas('user', fn ($query) => $query->where('activo', true))
+            ->pluck('usuario_id')
+            ->all();
+
+        return $this->uniqueStrings($ids);
+    }
+
+    /**
+     * Docentes con sílabos sin aprobar en el proceso: los que una pausa, una reanudación,
+     * una prórroga o el cierre afectan.
+     *
+     * @return list<string>
+     */
+    public function teachersWithPendingWork(SyllabusProcess $process): array
+    {
+        $convocationIds = $this->uniqueStrings(
+            Convocation::query()->where('proceso_id', $process->id)->pluck('id')->all(),
+        );
+
+        return array_map('strval', array_keys($this->teacherSyllabusCounts($convocationIds, exceptStates: ['aprobado'])));
     }
 
     /** @return list<string> */

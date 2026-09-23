@@ -204,7 +204,8 @@ class TemplateDocumentTest extends TestCase
     public function test_teacher_and_coordinator_cannot_change_the_design(): void
     {
         $template = $this->template();
-        $block = $template->fields()->firstOrFail()->block;
+        // Un bloque sin diseño guardado: la ficha de identificación ya nace con uno.
+        $block = $template->fields()->where('clave', 'objetivo_general')->firstOrFail()->block;
         foreach (['docente@silabos.test', 'coordinador@silabos.test'] as $email) {
             $user = User::query()->where('correo_electronico', $email)->firstOrFail();
             $this->actingAs($user)->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id])

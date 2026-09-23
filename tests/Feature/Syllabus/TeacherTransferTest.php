@@ -106,12 +106,11 @@ class TeacherTransferTest extends TestCase
         $this->assertNotified($this->teacher->id, 'silabo.docente_retirado', "pasó a {$this->replacement->nombre}");
 
         // Cada uno llega a su pantalla: el entrante al sílabo; el saliente ya no lo ve.
-        $paths = $this->actingAs($this->replacement)
+        $this->actingAs($this->replacement)
             ->withSession(['active_role_assignment_id' => $this->replacement->roleAssignments()->firstOrFail()->id])
-            ->getJson(route('api.v1.notifications.index'))
+            ->postJson(route('api.v1.notifications.open', $assigned))
             ->assertOk()
-            ->json('notifications.data.*.resource_path');
-        $this->assertContains("/docente/mis-silabos/{$syllabus->id}", $paths);
+            ->assertJsonPath('path', "/docente/mis-silabos/{$syllabus->id}");
     }
 
     public function test_an_unsubmitted_draft_is_discarded_without_completion_percentage(): void

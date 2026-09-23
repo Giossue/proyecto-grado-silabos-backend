@@ -10,11 +10,13 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
+use Tests\Support\AssertsInternalNotifications;
 use Tests\TestCase;
 
 /** I-39: cambiar quién coordina una carrera es un solo paso; la carrera no pierde nada. */
 class CoordinatorReplacementTest extends TestCase
 {
+    use AssertsInternalNotifications;
     use RefreshDatabase;
 
     private User $administrator;
@@ -62,6 +64,9 @@ class CoordinatorReplacementTest extends TestCase
         // Sin `deactivate_outgoing`, la cuenta saliente sigue activa (puede seguir como docente).
         $this->assertTrue($this->coordinator->fresh()->activo);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'academico.coordinacion.reemplazada', 'recurso_id' => $this->career->id]);
+        // Un solo aviso: el de coordinación, no además el genérico de rol nuevo.
+        $this->assertNotified($incoming->id, 'coordinacion.asignada', "Se le asignó la coordinación de {$this->career->nombre}.");
+        $this->assertNotNotified($incoming->id, 'usuario.rol_asignado');
 
         // La misma persona no se reemplaza a sí misma.
         $this->actingAsAdministrator()

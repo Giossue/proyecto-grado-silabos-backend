@@ -28,8 +28,8 @@ class ActiveRole
             return null;
         }
 
-        // Administración y Docencia pueden activarse si son la única opción. Coordinación
-        // siempre exige elegir la carrera al iniciar la sesión, aunque hoy solo haya una.
+        // Administración se activa sola si es la única opción. Coordinación y Docencia
+        // siempre eligen su ámbito al iniciar la sesión, aunque hoy solo tengan uno (I-121).
         if (! is_string($assignmentId)) {
             return $this->activateSoleRole($user, $request);
         }
@@ -101,7 +101,7 @@ class ActiveRole
 
     public function requiresExplicitSelection(RoleAssignment $assignment): bool
     {
-        return $assignment->role->codigo_rol === RoleCode::Coordinator->value;
+        return in_array($assignment->role->codigo_rol, [RoleCode::Coordinator->value, RoleCode::Teacher->value], true);
     }
 
     public function isEligible(RoleAssignment $assignment): bool

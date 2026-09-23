@@ -125,6 +125,25 @@ class TeacherReliefTest extends TestCase
             ->count());
     }
 
+    public function test_pausing_and_resuming_the_convocation_notifies_its_teachers(): void
+    {
+        $this->openedSyllabus();
+        $convocation = Convocation::query()->with('career')->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), [
+                'reason' => 'Corregir la malla antes de continuar.',
+            ])
+            ->assertSuccessful();
+        $this->assertNotified($this->teacher->id, 'convocatoria.pausada', "La convocatoria de {$convocation->career->nombre} está en pausa.");
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))
+            ->assertSuccessful();
+        $this->assertNotified($this->teacher->id, 'convocatoria.reanudada', 'se reanudó');
+        $this->assertNotNotified($this->coordinator->id, 'convocatoria.pausada');
+    }
+
     public function test_a_syllabus_assignment_cannot_be_closed_through_the_generic_status_endpoint(): void
     {
         $this->openedSyllabus();

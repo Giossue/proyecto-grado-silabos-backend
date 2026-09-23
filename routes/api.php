@@ -89,6 +89,8 @@ Route::prefix('v1')->group(function (): void {
                 ->name('api.v1.notifications.read-all');
             Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])
                 ->name('api.v1.notifications.read');
+            Route::post('notifications/{notification}/open', [NotificationController::class, 'open'])
+                ->name('api.v1.notifications.open');
             Route::get('admin/users', [ManagedUserController::class, 'index'])
                 ->middleware('active-role')
                 ->name('api.v1.admin.users.index');

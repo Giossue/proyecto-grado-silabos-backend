@@ -74,9 +74,12 @@ de rol conserva su propia carrera y se retira manualmente al finalizarla. Admini
 es una excepción exclusiva: una cuenta con el rol `administrador` activo no puede tener
 `coordinador` ni `docente` activos, y tampoco se puede conceder `administrador` mientras
 conserve otro rol activo. Las asignaciones finalizadas se conservan como historial.
-Al iniciar como Coordinador debe elegir una carrera incluso si solo tiene una coordinación
-activa; durante la sesión puede cambiar de carrera o rol desde el menú de usuario. Solo
-existe un ámbito activo a la vez.
+Al iniciar como Coordinador o Docente debe elegir su ámbito incluso si solo tiene una
+asignación activa (I-121); Administración, rol exclusivo, entra directo. Durante la sesión
+puede cambiar de carrera o rol desde el menú de usuario. Solo existe un ámbito activo a la
+vez. Abrir un aviso puede activar otro ámbito de la misma persona: el servidor elige, entre
+sus asignaciones vigentes, la que corresponde al aviso, registra
+`rol_activo.seleccionado` y cada pantalla sigue aplicando sus políticas.
 
 Una carrera solo puede tener una coordinación ejercible: una asignación de rol
 `coordinador` activa cuya cuenta también está activa. Para cambiarla, Administración usa

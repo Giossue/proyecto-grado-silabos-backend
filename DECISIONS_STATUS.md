@@ -311,6 +311,14 @@ datos personales del docente. Las listas se completan como filas de una columna,
 fila de totales solo admite datos numéricos y se retira el formulario separado de
 estructura de tablas.
 
+I-121 (23 de septiembre de 2026), por instrucción explícita del responsable del
+producto, hace que Coordinación y Docencia elijan siempre su ámbito al iniciar sesión,
+aunque tengan uno solo, en una pantalla sin menú lateral; sustituye para Docencia la
+activación automática de I-13. Desde esa pantalla se leen los avisos. Abrir uno ya no
+navega a una ruta calculada para otro rol: `POST /notifications/{id}/open` elige en el
+servidor la asignación vigente de la persona que corresponde al aviso, la activa con
+auditoría y devuelve el destino. No concede acceso nuevo.
+
 I-117 (23 de septiembre de 2026), por instrucción explícita del responsable del
 producto, permite a Administración eliminar una convocatoria institucional solo cuando
 ningún docente inició uno de sus sílabos. La comprobación incluye el evento inmutable

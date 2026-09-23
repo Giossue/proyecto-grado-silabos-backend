@@ -24,6 +24,7 @@ class ApiSyllabiIndexTest extends TestCase
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
 
         $this->actingAs($teacher)
+            ->withSession(['active_role_assignment_id' => $teacher->roleAssignments()->firstOrFail()->id])
             ->withHeader('Origin', 'http://localhost:5173')
             ->getJson(route('api.v1.teacher.syllabi.index', ['q' => 'inexistente']))
             ->assertOk()

@@ -314,7 +314,13 @@ class DocumentOperationsTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
 
                 ->where('notifications.total', 1)
-                ->where('notifications.data.0.resource_path', "/coordinacion/revisiones/{$syllabus->revisions()->latest('numero_revision')->value('id')}"));
+                ->where('notifications.data.0.has_destination', true)
+                ->where('notifications.data.0.context', 'Coordinación · '.$syllabus->convocation->career->nombre));
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.notifications.open', $notification))
+            ->assertOk()
+            ->assertJsonPath('path', "/coordinacion/revisiones/{$syllabus->revisions()->latest('numero_revision')->value('id')}")
+            ->assertJsonPath('role_changed', false);
         $this->actingAsTeacher()->postJson(route('api.v1.notifications.read', $notification))->assertForbidden();
         $this->actingAsCoordinator()->postJson(route('api.v1.notifications.read', $notification))->assertSuccessful();
         $this->assertNotNull($notification->fresh()->leido_en);
@@ -351,7 +357,7 @@ class DocumentOperationsTest extends TestCase
             'solicitado_por' => $this->coordinator->id,
             'solicitado_en' => now(),
         ]);
-        InternalNotification::query()->create([
+        $notification = InternalNotification::query()->create([
             'usuario_id' => $this->coordinator->id,
             'clave_deduplicacion' => "documento.exportacion.completada:{$artifact->id}",
             'tipo' => 'documento.exportacion.completada',
@@ -363,15 +369,15 @@ class DocumentOperationsTest extends TestCase
         ]);
 
         $this->actingAsCoordinator()
-            ->getJson(route('api.v1.notifications.index'))
+            ->postJson(route('api.v1.notifications.open', $notification))
             ->assertOk()
-            ->assertJsonPath('notifications.data.0.resource_path', "/revisiones/{$revision->id}/documentos");
+            ->assertJsonPath('path', "/coordinacion/revisiones/{$revision->id}/documentos");
     }
 
     public function test_cp_f_teacher_syllabus_notifications_use_the_canonical_teacher_path(): void
     {
         [$syllabus] = $this->approvedRevision();
-        InternalNotification::query()->create([
+        $notification = InternalNotification::query()->create([
             'usuario_id' => $this->teacher->id,
             'clave_deduplicacion' => "silabo.aprobado:{$syllabus->id}:teacher",
             'tipo' => 'silabo.aprobado',
@@ -383,9 +389,55 @@ class DocumentOperationsTest extends TestCase
         ]);
 
         $this->actingAsTeacher()
-            ->getJson(route('api.v1.notifications.index'))
+            ->postJson(route('api.v1.notifications.open', $notification))
             ->assertOk()
-            ->assertJsonPath('notifications.data.0.resource_path', "/docente/mis-silabos/{$syllabus->id}");
+            ->assertJsonPath('path', "/docente/mis-silabos/{$syllabus->id}");
+    }
+
+    /**
+     * I-121: sin ámbito elegido la persona ve sus avisos; abrir uno activa en el servidor
+     * el rol que corresponde, con auditoría, y nunca abre avisos ajenos.
+     */
+    public function test_opening_a_notification_before_choosing_a_scope_activates_the_matching_role(): void
+    {
+        [$syllabus] = $this->approvedRevision();
+        $notification = InternalNotification::query()->create([
+            'usuario_id' => $this->teacher->id,
+            'clave_deduplicacion' => "silabo.aprobado:{$syllabus->id}:sin-ambito",
+            'tipo' => 'silabo.aprobado',
+            'titulo' => 'Sílabo aprobado',
+            'mensaje' => 'El sílabo fue aprobado.',
+            'tipo_recurso' => 'silabo',
+            'recurso_id' => $syllabus->id,
+            'notificado_en' => now(),
+        ]);
+        $career = $syllabus->convocation->career->nombre;
+
+        $this->actingAs($this->teacher)
+            ->getJson(route('api.v1.session.show'))
+            ->assertJsonPath('active_role', null);
+        $this->getJson(route('api.v1.notifications.index'))
+            ->assertOk()
+            ->assertJsonPath('notifications.data.0.has_destination', true)
+            ->assertJsonPath('notifications.data.0.context', "Docencia · {$career}")
+            ->assertJsonMissingPath('notifications.data.0.resource_path');
+
+        $this->actingAs($this->coordinator)
+            ->postJson(route('api.v1.notifications.open', $notification))
+            ->assertForbidden();
+
+        $this->actingAs($this->teacher)
+            ->postJson(route('api.v1.notifications.open', $notification))
+            ->assertOk()
+            ->assertJsonPath('path', "/docente/mis-silabos/{$syllabus->id}")
+            ->assertJsonPath('role_changed', true);
+        $this->getJson(route('api.v1.session.show'))
+            ->assertJsonPath('active_role.id', $this->teacherContext->id);
+        $this->assertNotNull($notification->fresh()->leido_en);
+        $this->assertDatabaseHas('eventos_auditoria', [
+            'accion_evento_auditoria' => 'rol_activo.seleccionado',
+            'recurso_id' => $this->teacherContext->id,
+        ]);
     }
 
     public function test_cp_f_reports_apply_career_scope_to_indicators_and_detail(): void

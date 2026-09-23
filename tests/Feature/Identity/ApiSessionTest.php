@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
+use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
 class ApiSessionTest extends TestCase
@@ -23,7 +24,8 @@ class ApiSessionTest extends TestCase
         config(['sanctum.stateful' => ['localhost:5173']]);
     }
 
-    public function test_authenticated_teacher_receives_a_session_payload_and_sole_role(): void
+    /** I-121: Docencia elige su ámbito aunque solo tenga uno; Administración entra directo. */
+    public function test_authenticated_teacher_receives_a_session_payload_and_must_choose_its_sole_role(): void
     {
         $this->seed(DatabaseSeeder::class);
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
@@ -37,8 +39,8 @@ class ApiSessionTest extends TestCase
             ->assertJsonPath('user.name', $teacher->nombre)
             ->assertJsonPath('user.email', $teacher->correo_electronico)
             ->assertJsonPath('user.can_edit_identity', false)
-            ->assertJsonPath('active_role.id', $assignment->id)
-            ->assertJsonPath('active_role.code', 'docente')
+            ->assertJsonPath('active_role', null)
+            ->assertJsonPath('available_roles.0.id', $assignment->id)
             ->assertJsonCount(1, 'available_roles');
     }
 
@@ -144,6 +146,7 @@ class ApiSessionTest extends TestCase
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
 
         $this->actingAs($teacher)
+            ->withSession(['active_role_assignment_id' => $teacher->roleAssignments()->firstOrFail()->id])
             ->withoutMiddleware(ValidateCsrfToken::class)
             ->withHeader('Origin', 'http://localhost:5173')
             ->putJson(route('api.v1.authentication.profile.update'), [
@@ -251,6 +254,104 @@ class ApiSessionTest extends TestCase
             ->assertOk()
             ->assertJsonPath('enabled', false)
             ->assertJsonPath('confirmation_required', false);
+    }
+
+    public function test_user_confirms_two_factor_setup_with_a_code_from_the_authenticator(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->withoutMiddleware(ValidateCsrfToken::class)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.authentication.two-factor.enable'))
+            ->assertOk();
+
+        $secret = decrypt($user->fresh()->two_factor_secret);
+
+        $this->postJson(route('api.v1.authentication.two-factor.confirm'), [
+            'code' => app(Google2FA::class)->getCurrentOtp($secret),
+        ])
+            ->assertOk()
+            ->assertJsonPath('enabled', true)
+            ->assertJsonPath('confirmation_required', false)
+            ->assertJsonCount(8, 'recovery_codes');
+
+        $this->assertTrue($user->fresh()->hasEnabledTwoFactorAuthentication());
+    }
+
+    public function test_user_cannot_confirm_two_factor_setup_with_a_wrong_code(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->withoutMiddleware(ValidateCsrfToken::class)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.authentication.two-factor.enable'))
+            ->assertOk();
+
+        $this->postJson(route('api.v1.authentication.two-factor.confirm'), ['code' => '000000'])
+            ->assertUnprocessable();
+
+        $this->assertFalse($user->fresh()->hasEnabledTwoFactorAuthentication());
+    }
+
+    public function test_login_challenge_with_a_valid_totp_code_creates_the_authenticated_session(): void
+    {
+        $secret = app(Google2FA::class)->generateSecretKey();
+        $user = $this->loginPendingSecondFactor($secret);
+
+        $this->postJson(route('api.v1.authentication.two-factor.challenge'), [
+            'code' => app(Google2FA::class)->getCurrentOtp($secret),
+        ])
+            ->assertOk()
+            ->assertSessionMissing('login.id');
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertDatabaseHas('eventos_auditoria', [
+            'accion_evento_auditoria' => 'sesion.iniciada',
+            'recurso_id' => $user->id,
+        ]);
+    }
+
+    public function test_login_challenge_accepts_a_recovery_code_only_once(): void
+    {
+        $user = $this->loginPendingSecondFactor(app(Google2FA::class)->generateSecretKey());
+
+        $this->postJson(route('api.v1.authentication.two-factor.challenge'), [
+            'recovery_code' => 'recovery-code-1',
+        ])->assertOk();
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertNotContains('recovery-code-1', $user->fresh()->recoveryCodes());
+    }
+
+    public function test_login_challenge_rejects_an_invalid_code_and_keeps_the_user_as_guest(): void
+    {
+        $this->loginPendingSecondFactor(app(Google2FA::class)->generateSecretKey());
+
+        $this->postJson(route('api.v1.authentication.two-factor.challenge'), ['code' => '000000'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('code');
+
+        $this->assertGuest();
+    }
+
+    private function loginPendingSecondFactor(string $secret): User
+    {
+        $user = User::factory()->withTwoFactor()->create([
+            'secreto_dos_factores' => encrypt($secret),
+        ]);
+
+        $this->withoutMiddleware(ValidateCsrfToken::class)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->postJson(route('api.v1.authentication.login'), [
+                'email' => $user->correo_electronico,
+                'password' => 'password',
+            ])
+            ->assertAccepted()
+            ->assertJsonPath('two_factor_required', true);
+
+        return $user;
     }
 
     public function test_user_can_list_and_close_an_owned_remote_session(): void

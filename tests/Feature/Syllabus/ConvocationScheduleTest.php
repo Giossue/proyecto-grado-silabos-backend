@@ -3,6 +3,7 @@
 namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -15,6 +16,7 @@ use Carbon\CarbonInterface;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
@@ -26,6 +28,7 @@ use Tests\TestCase;
  */
 class ConvocationScheduleTest extends TestCase
 {
+    use AssertsInternalNotifications;
     use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
@@ -131,6 +134,10 @@ class ConvocationScheduleTest extends TestCase
         $this->assertSame(1, $event->metadatos['convocations_reached']);
         $this->assertSame('borrador', $event->metadatos['stage']);
         $this->assertStringContainsString('licencia', $event->metadatos['reason']);
+        // Se enteran quienes todavía tienen algo que entregar o revisar.
+        $this->assertNotified($this->teacher->id, 'proceso.plazo_extendido', 'se amplió hasta el');
+        $this->assertNotified($this->coordinator->id, 'proceso.plazo_extendido', 'se amplió hasta el');
+        $this->assertNotNotified($this->administrator->id, 'proceso.plazo_extendido');
 
         // Con el plazo movido, el envío que antes rebotaba ahora entra.
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
@@ -195,6 +202,40 @@ class ConvocationScheduleTest extends TestCase
         $process->refresh();
         $this->assertTrue($process->inicia_en->equalTo($previousStart));
         $this->assertTrue($process->entrega_en->equalTo($previousDue));
+    }
+
+    public function test_opening_the_institutional_process_notifies_every_coordination(): void
+    {
+        $this->publishedConfiguration();
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
+            'period_id' => AcademicPeriod::query()->valueOrFail('id'),
+            'starts_at' => now()->subDay()->toIso8601String(),
+            'due_at' => now()->addMonth()->toIso8601String(),
+        ])->assertSuccessful();
+
+        $this->assertNotified($this->coordinator->id, 'proceso.abierto', 'Ya puede iniciar la de su carrera; la entrega vence el');
+        // Los docentes se enteran cuando su carrera abre su convocatoria, no antes.
+        $this->assertNotNotified($this->teacher->id, 'proceso.abierto');
+    }
+
+    public function test_pausing_resuming_and_closing_the_process_notify_who_has_pending_work(): void
+    {
+        $syllabus = $this->createValidDraft();
+        $process = $syllabus->convocation->process;
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'pausar']), [
+            'reason' => 'Corregir la plantilla institucional.',
+        ])->assertSuccessful();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']))->assertSuccessful();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();
+
+        foreach ([$this->teacher, $this->coordinator] as $user) {
+            $this->assertNotified($user->id, 'proceso.pausado', 'está en pausa');
+            $this->assertNotified($user->id, 'proceso.reanudado', 'se reanudó');
+            $this->assertNotified($user->id, 'proceso.cerrado', 'Ya no se reciben envíos.');
+        }
+        $this->assertNotNotified($this->administrator->id, 'proceso.cerrado');
     }
 
     private function expireDeadline(Syllabus $syllabus): Convocation

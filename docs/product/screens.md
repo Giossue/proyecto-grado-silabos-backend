@@ -73,9 +73,13 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 - El menú depende del rol activo y de las capacidades efectivas.
 - UI-02 recibe a Coordinación con cards de sus carreras vigentes. Para Docencia, las
   cards representan únicamente una asignación de rol por carrera, nunca una materia ni
-  un paralelo; al elegirla se abre directamente DOC-02 **Mis sílabos**. Si la persona
-  docente tiene una sola asignación vigente, el servidor activa ese rol al entrar y no
-  muestra la selección. La carrera activa se muestra bajo el nombre de usuario y puede
+  un paralelo; al elegirla se abre directamente DOC-02 **Mis sílabos**. Coordinación y
+  Docencia eligen siempre, aunque tengan una sola asignación vigente (I-121); solo
+  Administración entra directo. UI-02 no muestra el menú lateral: su cabecera ofrece el
+  logo, la campana de avisos, el tema y el menú de usuario con «Cerrar sesión». Cada aviso
+  indica el ámbito en que se abrirá («Docencia · Software») y al abrirlo el servidor
+  activa ese rol antes de navegar; «Ver todas las notificaciones» aparece recién con un
+  ámbito activo. La carrera activa se muestra bajo el nombre de usuario y puede
   cambiarse desde un `Sheet` en ese mismo menú.
 - El selector de tema del encabezado alterna únicamente entre claro y oscuro; no existe
   la opción «Sistema». Sin preferencia guardada, la aplicación arranca en claro.

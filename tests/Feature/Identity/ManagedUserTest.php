@@ -21,10 +21,12 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Symfony\Component\Mime\Email as SymfonyEmail;
+use Tests\Support\AssertsInternalNotifications;
 use Tests\TestCase;
 
 class ManagedUserTest extends TestCase
 {
+    use AssertsInternalNotifications;
     use RefreshDatabase;
 
     private User $administrator;
@@ -66,6 +68,7 @@ class ManagedUserTest extends TestCase
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
 
         $this->actingAs($teacher)
+            ->withSession(['active_role_assignment_id' => $teacher->roleAssignments()->firstOrFail()->id])
             ->getJson(route('api.v1.admin.users.index'))
             ->assertForbidden();
     }
@@ -273,6 +276,9 @@ class ManagedUserTest extends TestCase
             ->where('usuario_id', $teacher->id)
             ->where('carrera_id', $career->id)
             ->exists());
+        // La cuenta ya estaba activa: se entera de que tiene otro ámbito de trabajo.
+        $granted = $this->assertNotified($teacher->id, 'usuario.rol_asignado', "Ahora también puede ingresar como Coordinador en {$career->nombre}.");
+        $this->assertSame('asignacion_rol', $granted->tipo_recurso);
     }
 
     private function coordinatorHolder(): User
@@ -474,6 +480,8 @@ class ManagedUserTest extends TestCase
             'password' => 'Nueva-clave-2026!',
             'password_confirmation' => 'Nueva-clave-2026!',
         ])->assertOk();
+        // Quien emitió la invitación sabe que la cuenta ya está en uso.
+        $this->assertNotified($this->administrator->id, 'usuario.activado', "{$pending->nombre} activó su cuenta");
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.activation.resend', $pending))
             ->assertForbidden();
