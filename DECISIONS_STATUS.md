@@ -264,6 +264,13 @@ es obligatorio y único. La estructura curricular conserva su cantidad de ciclos
 de las materias y relaciones asociadas. Los sílabos existentes conservan su contexto
 inmutable; los nuevos ya no incluyen código de malla.
 
+I-108 (23 de septiembre de 2026), por instrucción explícita del responsable del
+producto, retira el código manual del formulario de período. El servidor genera la única
+etiqueta visible con el rango de meses, un ordinal romano y el año, por ejemplo
+`Agosto-Diciembre II 2026`; el código técnico se conserva para referencias e historial.
+`semanas_lectivas` sigue siendo obligatorio y el formulario aclara que representa semanas
+efectivas de clases, según el calendario institucional.
+
 I-07 implementa un puerto de lectura, fixture sintético versionado, staging inmutable,
 simulación y exclusión humana. Demuestra idempotencia, conflicto y cero mutación del
 catálogo, pero no incorpora esquema, credenciales, red, reglas de identidad ni aplicador:

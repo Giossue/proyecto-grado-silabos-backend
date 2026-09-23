@@ -45,12 +45,6 @@ class UpdateAcademicRecordRequest extends FormRequest
                 'nombre' => ['required', 'string', 'max:180'],
             ],
             'periodo' => [
-                'code' => [
-                    'required',
-                    'string',
-                    'max:40',
-                    Rule::unique('periodos_academicos', 'codigo_periodo_academico')->ignore($this->recordId()),
-                ],
                 'starts_on' => ['required', 'date'],
                 'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
                 'teaching_weeks' => ['required', 'integer', 'min:1', 'max:52'],

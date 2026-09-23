@@ -72,9 +72,10 @@ asignación posterior; un relevo finaliza la relación anterior y crea otra.
 foránea y borrado restringido. `facultades.campus_facultad` es un valor obligatorio
 limitado por `CHECK` a las cinco opciones de `CampusLocation`. No existe tabla, código,
 clave foránea ni CRUD de campus. `periodos_academicos` conserva identidad propia; el
-período es institucional, se identifica y presenta por su código único, declara
-`semanas_lectivas` entre 1 y 52 y no depende de una carrera. Su estado se deriva
-exclusivamente de sus fechas.
+período es institucional, se identifica y presenta por su código único generado por el
+servidor a partir del rango de meses, su ordinal y el año, declara `semanas_lectivas`
+entre 1 y 52 y no depende de una carrera. Su estado se deriva exclusivamente de sus
+fechas.
 `programaciones_asignatura` relaciona cada período con una asignatura mediante claves
 foráneas. La modalidad no es tabla sino
 columna de texto con valores fijos (`carreras.modalidad` base, `asignaturas.modalidad`

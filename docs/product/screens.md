@@ -268,6 +268,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   Carreras y Periodos académicos. El formulario de facultad exige elegir uno de los cinco
   campus institucionales y no solicita código; la tabla de facultades muestra su campus.
   Carreras exige el código de carrera y muestra su Facultad, Modalidad y campus heredado.
+  El período genera automáticamente su etiqueta con el rango de meses, ordinal romano y
+  año; su formulario solo solicita las fechas y las semanas lectivas. Estas últimas son
+  las semanas efectivas de clases del calendario institucional, no todas las semanas
+  calendario de la ventana.
   La configuración de malla solo edita la cantidad de ciclos. No hay una pantalla o
   catálogo de campus ni un código de facultad o malla (I-107).
 - La modalidad base se fija por carrera (obligatoria al crearla; la aprueba el CES) y

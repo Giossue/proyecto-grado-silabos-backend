@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Application\AcademicPeriodLabel;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Application\ScheduledSubjectInheritance;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
@@ -39,6 +40,7 @@ class CreateAcademicRecord
         private readonly InstitutionalLogos $logos,
         private readonly ScheduledSubjectInheritance $inheritance,
         private readonly AcademicPeriodPlanning $periodPlanning,
+        private readonly AcademicPeriodLabel $periodLabel,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -108,7 +110,7 @@ class CreateAcademicRecord
                 'cantidad_ciclos_malla' => $data['cycle_count'],
             ]),
             'periodo' => AcademicPeriod::query()->create([
-                'codigo' => $data['code'],
+                'codigo' => $this->periodLabel->make($data['starts_on'], $data['ends_on']),
                 'fecha_inicio' => $data['starts_on'],
                 'fecha_fin' => $data['ends_on'],
                 'semanas_lectivas' => $data['teaching_weeks'],

@@ -128,6 +128,32 @@ class AcademicStructureTest extends TestCase
             ->assertJsonValidationErrors(['code', 'cycle_count']);
     }
 
+    public function test_administrator_creates_a_period_without_code_and_gets_an_automatic_label(): void
+    {
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.academic.store', 'periodo'), [
+                'starts_on' => '2026-08-17',
+                'ends_on' => '2026-12-18',
+                'teaching_weeks' => 16,
+            ])
+            ->assertSuccessful();
+
+        $period = AcademicPeriod::query()->whereDate('fecha_inicio_periodo', '2026-08-17')->firstOrFail();
+
+        $this->assertSame('Agosto-Diciembre II 2026', $period->codigo);
+        $this->assertSame(16, $period->semanas_lectivas);
+
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.academic.update', ['periodo', $period->id]), [
+                'starts_on' => '2026-09-01',
+                'ends_on' => '2026-12-18',
+                'teaching_weeks' => 16,
+            ])
+            ->assertSuccessful();
+
+        $this->assertSame('Septiembre-Diciembre II 2026', $period->fresh()->codigo);
+    }
+
     public function test_coordinator_configures_own_career_structure_and_creates_subjects_directly_in_it(): void
     {
         $career = Career::query()->findOrFail($this->coordinatorContext->carrera_id);

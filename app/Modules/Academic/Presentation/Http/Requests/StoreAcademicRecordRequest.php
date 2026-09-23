@@ -59,12 +59,6 @@ class StoreAcademicRecordRequest extends FormRequest
                 'cycle_count' => ['required', 'integer', 'min:1', 'max:30'],
             ],
             'periodo' => [
-                'code' => [
-                    'required',
-                    'string',
-                    'max:40',
-                    Rule::unique('periodos_academicos', 'codigo_periodo_academico'),
-                ],
                 'starts_on' => ['required', 'date'],
                 'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
                 'teaching_weeks' => ['required', 'integer', 'min:1', 'max:52'],

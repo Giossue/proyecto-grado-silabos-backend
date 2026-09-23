@@ -3,7 +3,10 @@
 ## Decisión
 
 `periodos_academicos.codigo` es la única etiqueta del período. Se retiran `nombre` y
-`activo`; el estado se deriva exclusivamente de `fecha_inicio` y `fecha_fin`.
+`activo`; el estado se deriva exclusivamente de `fecha_inicio` y `fecha_fin`. Para evitar
+duplicar un dato que se puede obtener de las fechas, la etiqueta se genera en el servidor
+con el rango de meses, el ordinal romano del período dentro del año y el año (por ejemplo,
+`Agosto-Diciembre II 2026`); el formulario no solicita un código manual.
 
 ## Semanas lectivas
 
