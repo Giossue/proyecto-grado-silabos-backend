@@ -79,7 +79,7 @@ carrera, editable activa o inactiva, con eliminación protegida y contexto acad�
 histórico en los sílabos.
 
 I-15 cerró el último hueco funcional conocido: el plazo de la convocatoria ya tiene fecha
-de inicio, se puede prorrogar con motivo y bloquea el envío al vencer; el relevo de un
+de inicio, Administración puede prorrogar la entrega con motivo y el vencimiento bloquea el envío; el relevo de un
 docente es un acto único con sustento documental; y la coordinación encargada se distingue
 de la titular.
 

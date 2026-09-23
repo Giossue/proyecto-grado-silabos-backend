@@ -116,8 +116,9 @@ en una transacción. La base impone un solo proceso abierto o pausado a la vez.
 proceso, el subconjunto no vacío de fuentes activas elegido por Coordinación, agrupación,
 fechas y estado (`preparacion`, `abierta`, `pausada`, `cerrada`).
 Hereda la plantilla, el período y las fechas del proceso al prepararse; las fechas se
-copian, no se referencian, porque la carrera puede prorrogar las suyas. Solo se abre con el proceso
-abierto; al abrirla, la plantilla debe estar completa y las fuentes elegidas activas.
+copian para validar localmente la ventana de envío. La prórroga institucional actualiza
+la entrega del proceso y la etapa `borrador` de todas sus convocatorias; el inicio no se
+prorroga. Solo se abre con el proceso abierto; al abrirla, la plantilla debe estar completa y las fuentes elegidas activas.
 La selección queda congelada al iniciar el alcance y no se amplía al reanudarlo.
 
 Una convocatoria está **en curso** cuando ella está abierta y su proceso también. Esa

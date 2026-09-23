@@ -35,7 +35,7 @@ el permiso, pero no lo sustituyen.
 | Iniciar alcance de su carrera desde convocatoria institucional abierta | No | Sí, si su malla, materias programadas, paralelos, docentes y fuentes están listos | No |
 | Pausar/reanudar convocatoria | No | Sí, en su carrera | No |
 | Cerrar (sobre el proceso; detiene a todas las convocatorias) | Sí | No | No |
-| Prorrogar plazo (sobre el proceso; alcanza a todas las convocatorias) | Sí | No | No |
+| Prorrogar fecha límite de entrega (sobre el proceso; alcanza a todas las convocatorias) | Sí | No | No |
 | Elaborar contenido | No por defecto | No por defecto | Sí, asignado y editable |
 | Solicitar análisis de IA | No por defecto | Consulta de resultados | Sí, si el campo lo permite |
 | Enviar/reenviar | No | No | Sí, asignado |

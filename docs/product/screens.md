@@ -334,7 +334,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   convocatoria y el formulario no copia las fechas lectivas del período.
   ADM-12 queda como pantalla de seguimiento y administración posterior. **Editar** solo aparece en preparación o
   en pausa; **Abrir**, **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
-  explica la consecuencia y **Pausar** exige motivo. El nombre se genera al crear o guardar
+  explica la consecuencia y **Pausar** exige motivo. **Prorrogar plazo** solicita
+  únicamente una nueva fecha límite de entrega y el motivo; no permite cambiar el inicio.
+  El nombre se genera al crear o guardar
   como «Convocatoria {nombre del período}»; el formulario no pide nombre ni muestra una
   etiqueta de plantilla vacía. La plantilla institucional se sigue heredando. El alta exige elegir el período
   académico institucional. ADM-12 ya no ofrece un alta independiente y remite a Periodos

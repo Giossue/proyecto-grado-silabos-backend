@@ -1,5 +1,9 @@
 # I-31: Calendario institucional de sílabos y pausas por alcance
 
+> Actualización I-114 (23 de septiembre de 2026): la prórroga institucional modifica
+> únicamente la fecha límite de entrega y alcanza a todas las convocatorias del proceso;
+> no existe prórroga del inicio ni por carrera.
+
 ## Estado
 
 Implementado y verificado el 2026-09-02. La migración remota ya se ejecutó; queda
@@ -41,7 +45,8 @@ producción.
   bloquea ediciones y habilita el trabajo docente.
 - La pausa del administrador congela toda la universidad; la del coordinador, su carrera.
 - Las fechas de la convocatoria siguen viviendo en `fechas_limite_convocatoria` (I-15) y
-  se copian del proceso al prepararla; la prórroga por carrera se mantiene.
+  se copian del proceso al prepararla; la prórroga institucional sincroniza únicamente
+  la etapa `borrador`.
 - Programaciones, paralelos y asignaciones docentes no se bloquean: no fueron pedidos y el
   relevo docente (I-15) los necesita en plena convocatoria.
 - Los expedientes ya creados conservan su plantilla: cambiar la plantilla del proceso solo

@@ -286,6 +286,12 @@ período académico. Al preparar una convocatoria nueva, Administración debe el
 inicio de elaboración y la fecha límite de entrega; Coordinación hereda esos valores
 elegidos. La edición conserva las fechas ya guardadas.
 
+I-114 (23 de septiembre de 2026), por instrucción explícita del responsable del
+producto, limita la prórroga institucional a la fecha límite de entrega. El inicio no
+es una etapa prorrogable: Administración solo puede corregirlo mediante la edición del
+proceso en preparación o en pausa. `fechas_limite_convocatoria` conserva `inicio` y
+`borrador` para validar la ventana de envío, sin cambio de esquema.
+
 I-07 implementa un puerto de lectura, fixture sintético versionado, staging inmutable,
 simulación y exclusión humana. Demuestra idempotencia, conflicto y cero mutación del
 catálogo, pero no incorpora esquema, credenciales, red, reglas de identidad ni aplicador:
@@ -419,8 +425,9 @@ entrega para toda la universidad y solo puede haber uno en curso. `convocatorias
 cuelga de un proceso obligatorio, hereda su plantilla y sus fechas y gana el estado
 `pausada`. Una convocatoria está en curso solo si ella está abierta y el proceso
 también; esa condición habilita el trabajo docente y congela plantilla (proceso),
-malla y fuentes (carrera). La prórroga por carrera de I-15 se conserva. No resuelve
-`PV-01`: decide cuándo puede cambiarse la plantilla, no quién la aprueba.
+malla y fuentes (carrera). I-114 reemplaza la prórroga por carrera de I-15 con una
+prórroga institucional limitada a la entrega. No resuelve `PV-01`: decide cuándo puede
+cambiarse la plantilla, no quién la aprueba.
 
 I-32 (2 de septiembre de 2026) retira las versiones por decisión explícita del
 responsable del producto: `versiones_plantilla` desaparece —secciones, bloques y campos

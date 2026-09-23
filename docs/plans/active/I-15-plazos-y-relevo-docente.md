@@ -1,5 +1,9 @@
 # I-15: Plazos operables y relevo de docente
 
+> Actualización I-114 (23 de septiembre de 2026): la prórroga pasó al calendario
+> institucional de Administración y modifica únicamente la entrega del borrador. La
+> etapa `inicio` se conserva para validar la ventana de envío, pero no es prorrogable.
+
 ## Estado
 
 Implementado y verificado el 2026-08-26. La verificación completa pasa en verde: **204
@@ -39,8 +43,8 @@ y en el calendario académico no existe ningún evento de sílabos entre 412 reg
 
 ## Resultado demostrable
 
-Un coordinador abre una convocatoria con fecha de inicio y fecha límite propias. Vencido
-el plazo, un docente no puede enviar. El coordinador prorroga con un motivo escrito y el
+Una convocatoria hereda una fecha de inicio y una fecha límite. Vencido el plazo, un
+docente no puede enviar. Administración prorroga la entrega con un motivo escrito y el
 envío vuelve a habilitarse. Cuando un docente deja de estar en servicio, el coordinador
 traspasa el sílabo a otro en un solo acto que cierra la vigencia anterior, abre la nueva,
 registra el documento que lo respalda y deja el expediente en el estado que corresponda.
@@ -61,8 +65,9 @@ lugar de una columna nueva.
 
 ### 2. Prórroga del plazo
 
-- Acción nueva que modifica `vence_en` de una etapa, con motivo obligatorio.
-- Solo el coordinador de la carrera de la convocatoria.
+- Acción institucional que modifica `vence_en` únicamente para `borrador`, con motivo
+  obligatorio.
+- Solo Administración; alcanza a todas las convocatorias del proceso.
 - Evento de auditoría con la fecha anterior, la nueva y el motivo. La fecha original no se
   pierde: se conserva en el evento, que es inmutable.
 
@@ -142,8 +147,8 @@ No se avanza al siguiente con `composer verify` en rojo.
 
 - Pruebas de plazo: envío antes del inicio, dentro de plazo, vencido y tras la prórroga.
 - Pruebas de relevo: expediente sin iniciar, en borrador, en revisión y aprobado.
-- Pruebas de autorización: un coordinador de otra carrera no prorroga ni traspasa; un
-  docente tampoco.
+- Pruebas de autorización: solo Administración prorroga; una coordinación conserva el
+  traspaso dentro de su carrera y un docente no ejecuta ninguna de las dos acciones.
 - Prueba de que la prórroga conserva la fecha anterior en auditoría.
 - Prueba de que el descarte de un borrador deja constancia del avance perdido.
 - `composer verify` completo y `migrate:fresh --seed` sobre esquema vacío.
