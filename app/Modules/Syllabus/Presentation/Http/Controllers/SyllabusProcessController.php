@@ -19,6 +19,7 @@ use App\Modules\Syllabus\Presentation\Http\Requests\StoreSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\UpdateSyllabusProcessRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class SyllabusProcessController extends Controller
