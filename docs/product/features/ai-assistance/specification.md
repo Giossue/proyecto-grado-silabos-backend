@@ -11,9 +11,8 @@
 ## Comportamiento
 
 - Solo campos/secciones habilitados solicitan análisis.
-- Administración define por campo el valor predeterminado de IA y puede impedir que
-  Coordinación lo sustituya para su carrera. Un valor fijado por Administración no se
-  puede alterar desde Coordinación ni mediante una petición forzada.
+- Administración decide por campo si el agente lo lee (I-116, I-119). Coordinación no
+  cambia esa decisión y ninguna petición forzada la altera.
 - La solicitud se procesa en cola y muestra estado.
 - La recuperación se restringe a fuentes vigentes/activas del rol.
 - Cada recomendación muestra explicación, procedencia y extracto verificable.
@@ -75,3 +74,7 @@
 - I-116: `definiciones_campo.ia_habilitada`, fijado por Administración en la plantilla,
   es la única decisión sobre qué campos usan IA. Coordinación no guarda excepciones por
   carrera; la IA solo sugiere y el docente decide.
+- I-119: esa casilla decide si el agente **lee** el campo como referencia. Aplica a todo
+  campo salvo el estado de revisión, incluidos la ficha institucional (leída desde sus
+  variables, sin nombre ni correo del docente) y los datos heredados. Las sugerencias
+  por campo siguen limitadas a texto corto y largo.

@@ -68,7 +68,7 @@ final class SaveTemplateDocument
                     || ($field !== null && isset($block->configuracion['detached_fields'][$field->clave]))) {
                     throw ValidationException::withMessages(["properties.$index.key" => 'El campo no pertenece al diseño actual.']);
                 }
-                // I-118: la casilla decide si el agente lee el campo, también en la ficha y
+                // I-119: la casilla decide si el agente lee el campo, también en la ficha y
                 // en los datos heredados. Solo el estado de revisión queda fuera: no es contenido.
                 if (($property['ai_enabled'] ?? false) && $block->configuredContentType() === 'flow') {
                     throw ValidationException::withMessages(["properties.$index.ai_enabled" => 'El estado de revisión no es contenido que lea la IA.']);

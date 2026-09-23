@@ -303,6 +303,14 @@ sugerencia. Se eliminan `preferencias_ia_carrera`,
 `definiciones_campo.ia_coordinacion_configurable` y las rutas
 `/coordination/ai-configuration`; sustituye las decisiones 1 a 3 de I-72.
 
+I-119 (23 de septiembre de 2026), por instrucción explícita del responsable del
+producto, precisa que la casilla de IA de un campo decide si el agente lo lee como
+referencia para sus sugerencias. Administración la decide en todo campo salvo el estado
+de revisión, incluidos la ficha institucional y los datos heredados; la ficha se lee sin
+datos personales del docente. Las listas se completan como filas de una columna, la
+fila de totales solo admite datos numéricos y se retira el formulario separado de
+estructura de tablas.
+
 I-117 (23 de septiembre de 2026), por instrucción explícita del responsable del
 producto, permite a Administración eliminar una convocatoria institucional solo cuando
 ningún docente inició uno de sus sílabos. La comprobación incluye el evento inmutable

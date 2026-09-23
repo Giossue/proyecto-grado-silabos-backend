@@ -652,7 +652,7 @@ class TemplateDocumentTest extends TestCase
         $field->update(['heredado' => true]);
         $payload = ['document' => $this->document(), 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
             'properties' => [['key' => $field->clave, 'label' => $field->etiqueta, 'help' => null, 'ai_enabled' => true]]];
-        // I-118: Administración decide si el agente lee también los datos heredados.
+        // I-119: Administración decide si el agente lee también los datos heredados.
         $this->patch($url, $payload)->assertSuccessful();
         $this->assertTrue($field->fresh()->ia_habilitada);
         $field->update(['heredado' => false]);

@@ -444,7 +444,7 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame('Se llena sola desde la malla y la programación de asignatura.', $identification->ayuda);
         $this->assertTrue($identification->heredado);
         $this->assertSame('asignaturas', $identification->origen_maestro);
-        // I-118: la casilla decide si el agente lee la ficha; la decide Administración.
+        // I-119: la casilla decide si el agente lee la ficha; la decide Administración.
         $this->assertTrue($identification->ia_habilitada);
     }
 
@@ -535,7 +535,7 @@ class TemplateAndSourceTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
                 ->where("template.sections.$sectionIndex.blocks.0.table.columns.0.key", 'texto'));
 
-        // I-118: la estructura se edita sobre la tabla; el formulario separado ya no existe.
+        // I-119: la estructura se edita sobre la tabla; el formulario separado ya no existe.
         $this->actingAsAdministrator()
             ->patchJson("/api/v1/admin/template/{$version->id}/blocks/{$block->id}/table", ['columns' => []])
             ->assertNotFound();

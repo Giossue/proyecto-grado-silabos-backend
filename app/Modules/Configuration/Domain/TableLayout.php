@@ -67,7 +67,7 @@ final class TableLayout
         }
 
         // Una lista es una tabla de una columna `texto`: el docente agrega un elemento por
-        // fila y el documento la presenta con viñetas o numeración (I-118).
+        // fila y el documento la presenta con viñetas o numeración (I-119).
         return in_array($block->configuredContentType(), ['table', 'bulleted_list', 'numbered_list'], true)
             ? self::default()
             : null;
