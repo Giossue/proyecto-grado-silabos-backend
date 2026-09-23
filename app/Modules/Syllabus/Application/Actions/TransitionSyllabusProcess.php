@@ -3,7 +3,6 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -14,17 +13,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Ciclo del proceso institucional: preparación → abierto ⇄ pausado → cerrado.
+ * Ciclo del proceso institucional: abierto ⇄ pausado → cerrado.
  *
- * Abrir exige que no haya otro proceso en curso y que la plantilla esté completa.
  * Pausar detiene a toda la universidad —envíos y ediciones docentes— y es lo que
  * habilita cambiar la plantilla; por eso pide motivo. Reanudar vuelve a comprobar la
  * plantilla: pudo cambiarse durante la pausa. Cerrar es definitivo.
  */
 class TransitionSyllabusProcess
 {
-    public const OPEN = 'abrir';
-
     public const PAUSE = 'pausar';
 
     public const RESUME = 'reanudar';
@@ -33,7 +29,6 @@ class TransitionSyllabusProcess
 
     /** @var array<string, array{from: list<string>, to: string}> */
     private const TRANSITIONS = [
-        self::OPEN => ['from' => [SyllabusProcess::STATE_PREPARATION], 'to' => SyllabusProcess::STATE_OPEN],
         self::PAUSE => ['from' => [SyllabusProcess::STATE_OPEN], 'to' => SyllabusProcess::STATE_PAUSED],
         self::RESUME => ['from' => [SyllabusProcess::STATE_PAUSED], 'to' => SyllabusProcess::STATE_OPEN],
         self::CLOSE => ['from' => [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED], 'to' => SyllabusProcess::STATE_CLOSED],
@@ -72,27 +67,6 @@ class TransitionSyllabusProcess
             if ($rule['to'] === SyllabusProcess::STATE_OPEN) {
                 // Lo que antes garantizaba «publicar»: la plantilla se usa completa o no se usa.
                 $this->templateStructure->assertUsable($locked->template, 'process');
-                $careers = Career::query()->where('activo', true);
-                if (! (clone $careers)->exists()) {
-                    throw ValidationException::withMessages(['process' => 'No existen carreras activas en la estructura institucional.']);
-                }
-                $withoutCoordinator = (clone $careers)->whereDoesntHave(
-                    'coordinatorAssignments',
-                    fn ($query) => $query->where('activo', true),
-                )->count();
-                if ($withoutCoordinator > 0) {
-                    throw ValidationException::withMessages(['process' => "La estructura institucional no está lista: {$withoutCoordinator} carrera(s) sin coordinación activa."]);
-                }
-                $other = SyllabusProcess::query()
-                    ->inProgress()
-                    ->whereKeyNot($locked->id)
-                    ->with('academicPeriod:id,codigo')
-                    ->first(['id', 'periodo_academico_id']);
-                if ($other !== null) {
-                    throw ValidationException::withMessages([
-                        'process' => "Ya existe un proceso en curso: «{$other->nombre}». Ciérrelo antes de abrir otro.",
-                    ]);
-                }
             }
 
             $previous = $locked->estado;

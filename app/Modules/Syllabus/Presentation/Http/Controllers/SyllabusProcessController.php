@@ -9,7 +9,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Syllabus\Application\Actions\CreateSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\DeleteSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\ExtendProcessDeadline;
-use App\Modules\Syllabus\Application\Actions\PrepareAndOpenSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\TransitionSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\UpdateSyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -75,17 +74,6 @@ class SyllabusProcessController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->execute($request->processData(), $actor, $request);
 
-        return response()->json(['message' => 'Proceso preparado. Ábralo cuando el calendario institucional lo indique.'], 201);
-    }
-
-    public function prepareAndOpen(
-        StoreSyllabusProcessRequest $request,
-        PrepareAndOpenSyllabusProcess $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($request->processData(), $actor, $request);
-
         return response()->json([
             'message' => 'Convocatoria institucional abierta. Las coordinaciones ya pueden iniciar sus convocatorias.',
         ], 201);
@@ -146,7 +134,6 @@ class SyllabusProcessController extends Controller
         $action->execute($process, $transition, $reason, $actor, $request);
 
         $message = match ($transition) {
-            TransitionSyllabusProcess::OPEN => 'Proceso abierto. Las coordinaciones ya pueden abrir sus convocatorias.',
             TransitionSyllabusProcess::PAUSE => 'Proceso en pausa. Los envíos se detienen y la plantilla queda editable.',
             TransitionSyllabusProcess::RESUME => 'Proceso reanudado. Los envíos vuelven a admitirse.',
             default => 'Proceso cerrado.',

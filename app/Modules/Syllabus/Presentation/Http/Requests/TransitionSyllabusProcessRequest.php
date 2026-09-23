@@ -10,7 +10,6 @@ class TransitionSyllabusProcessRequest extends FormRequest
 {
     /** @var array<string, string> */
     private const ABILITIES = [
-        TransitionSyllabusProcess::OPEN => 'open',
         TransitionSyllabusProcess::PAUSE => 'pause',
         TransitionSyllabusProcess::RESUME => 'resume',
         TransitionSyllabusProcess::CLOSE => 'close',

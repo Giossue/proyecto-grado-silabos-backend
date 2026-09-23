@@ -35,11 +35,6 @@ class SyllabusProcessPolicy
         return $this->viewAny($user);
     }
 
-    public function open(User $user, SyllabusProcess $process): bool
-    {
-        return $this->viewAny($user) && $process->estado === SyllabusProcess::STATE_PREPARATION;
-    }
-
     public function pause(User $user, SyllabusProcess $process): bool
     {
         return $this->viewAny($user) && $process->estado === SyllabusProcess::STATE_OPEN;

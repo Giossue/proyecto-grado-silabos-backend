@@ -34,8 +34,6 @@ class SyllabusProcess extends Model
 
     public $timestamps = false;
 
-    public const STATE_PREPARATION = 'preparacion';
-
     public const STATE_OPEN = 'abierto';
 
     public const STATE_PAUSED = 'pausado';
@@ -44,7 +42,6 @@ class SyllabusProcess extends Model
 
     /** @var list<string> */
     public const STATES = [
-        self::STATE_PREPARATION,
         self::STATE_OPEN,
         self::STATE_PAUSED,
         self::STATE_CLOSED,
@@ -89,10 +86,10 @@ class SyllabusProcess extends Model
         return $this->estado === self::STATE_OPEN;
     }
 
-    /** Solo se reconfigura lo que no está corriendo: antes de abrir o durante una pausa. */
+    /** Solo se reconfigura mientras el trabajo institucional está detenido. */
     public function isConfigurable(): bool
     {
-        return in_array($this->estado, [self::STATE_PREPARATION, self::STATE_PAUSED], true);
+        return $this->estado === self::STATE_PAUSED;
     }
 
     /** @return BelongsTo<SyllabusTemplate, $this> */

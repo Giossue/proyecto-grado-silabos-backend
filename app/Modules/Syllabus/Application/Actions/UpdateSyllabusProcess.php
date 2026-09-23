@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Las fechas se cambian solo en preparación o en pausa. El nombre se deriva del período.
+ * Las fechas se cambian solo durante una pausa. El nombre se deriva del período.
  */
 class UpdateSyllabusProcess
 {
@@ -33,7 +33,7 @@ class UpdateSyllabusProcess
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
             if (! $locked->isConfigurable()) {
                 throw ValidationException::withMessages([
-                    'process' => 'Solo un proceso en preparación o en pausa admite cambios. Pause el proceso para modificar las fechas.',
+                    'process' => 'Pause la convocatoria para modificar sus fechas.',
                 ]);
             }
 
