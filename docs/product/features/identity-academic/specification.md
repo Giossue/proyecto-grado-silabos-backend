@@ -39,8 +39,10 @@
   y Docentes consultan esos datos en su perfil y solicitan la corrección a Administración.
 - ADM-04 presenta Facultades, Carreras y Periodos académicos como rutas hijas del submenú
   Estructura académica. Al crear o editar una facultad, Administración elige su campus
-  obligatorio de las cinco opciones institucionales fijas. Carreras muestra el campus
-  heredado de su facultad; no hay catálogo, código ni ruta de administración de campus.
+  obligatorio entre Campus Matriz Dr. Gabriel Galarza López, Campus Laguacoto, Campus CENI
+  (Centro de Eventos Nacionales e Internacionales), Extensión San Miguel y Sede Chimbo.
+  Carreras muestra el campus heredado de su facultad; no hay catálogo, código ni ruta de
+  administración de campus.
 - Cada fila de ADM-04 permite editar sus datos en un `Sheet` y eliminarla únicamente
   cuando no tiene dependencias ni historia. Un proceso institucional abierto congela
   esas acciones hasta que Administración lo pause. La carrera permite cambiar de

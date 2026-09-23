@@ -67,10 +67,10 @@ Las cuentas creadas por el seeder usan exclusivamente datos sintéticos:
 1. Inicie sesión como Administrador y seleccione el rol **Administrador**. Esto
    demuestra `CU-01` y que el rol efectivo no se infiere del último rol usado.
 2. En **Estructura académica → Facultades**, cree `Facultad de demostración` con código
-   `FAC-DEMO`. Entre a **Carreras**, cree `Carrera de demostración` con código `CARR-DEMO`
-   y seleccione esa facultad. Compruebe la relación en ambas tablas; Campus, Modalidades y
-   Periodos académicos permanecen como submenús y colecciones globales independientes.
-   Use **Editar** para corregir el nombre de la carrera y compruebe el cambio en
+   `FAC-DEMO` y elija un campus obligatorio. Entre a **Carreras**, cree `Carrera de
+   demostración` con código `CARR-DEMO` y seleccione esa facultad. Compruebe la facultad,
+   su campus y la carrera en las tablas; el campus se administra desde la facultad y no
+   tiene submenú propio. Use **Editar** para corregir el nombre de la carrera y compruebe el cambio en
    **Auditoría**.
 3. En **Usuarios y roles**, cree una cuenta temporal con nombre `Docente Piloto`, correo
    `docente.piloto@silabos.test`, contraseña `Pilot-2026!Secure`, rol **Docente** y carrera
@@ -108,8 +108,9 @@ Las cuentas creadas por el seeder usan exclusivamente datos sintéticos:
    `Sistemas Distribuidos`, ciclo 7, cuatro créditos y 160 horas. Revise y edite la misma
    materia en **Constructor visual**; confirme que ambas vistas trabajan sobre la misma
    malla.
-3. En **Ofertas y paralelos > Ofertas**, abra `SW-701` para el periodo académico, campus y
-   modalidad sintéticos existentes; desde **Paralelos**, cree el paralelo `A`. En
+3. En **Materias y paralelos**, prepare `SW-701` para el periodo académico. El campus se
+   hereda de la facultad y la modalidad de la carrera; desde **Paralelos**, cree el
+   paralelo `A`. En
    **Asignación docente**, asigne
    `Docente Demo` a ese paralelo con vigencia actual. Ninguna opción de otra carrera debe
    aparecer. Esto completa el reparto de `CU-03`.

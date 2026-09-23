@@ -27,7 +27,7 @@ Word de identificación) se conservan para sílabos y revisiones anteriores sin 
 | Facultad | `faculty` | `carreras.facultad_id` → `facultades.nombre` |
 | Carrera | `career` | `mallas.carrera_id` → `carreras.nombre` |
 | Modalidad de estudio | `modality` | `programaciones_asignatura.modalidad` (valor fijo del RRA, heredado de la materia o de la carrera al programarla; I-35, I-37, I-62) |
-| Campus universitario | `campus` | `programaciones_asignatura.campus_id` → `campus.nombre_campus` |
+| Campus universitario | `campus` | Fotografía de `programaciones_asignatura.campus_programacion`, heredada de la facultad al preparar el período |
 | Asignatura | `subject` | `asignaturas.nombre_asignatura` |
 | Periodo académico | `period` | `programaciones_asignatura.periodo_academico_id` → `periodos_academicos.codigo_periodo_academico` |
 | Ciclo | `cycle` | `asignaturas.ciclo_asignatura` (número → «Séptimo») |
