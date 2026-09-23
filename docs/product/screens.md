@@ -194,7 +194,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   Administración reemplaza el logo institucional desde la hoja «Personalizar plantilla»
   de ADM-06 y puede cargar el logo de facultad al
   crearla o editarla, pero es opcional en ADM-04. Si falta, Coordinación debe cargarlo
-  desde «Puesta en marcha» del Panel antes de abrir su convocatoria. Ambos son PNG sin
+  desde «Puesta en marcha» del Panel antes de abrir su convocatoria. ADM-04 solo muestra
+  una vista previa al editar cuando la facultad tiene un logo propio. Ambos son PNG sin
   fondo; el sistema los ajusta a la medida fija (universidad 1012 × 190 px, facultad
   600 × 180 px) conservando la proporción y centrando sobre transparente. La plantilla
   institucional usa el logo de facultad de muestra; el sílabo real usa el de su carrera.

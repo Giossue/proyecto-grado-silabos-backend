@@ -52,7 +52,9 @@ class AcademicStructureViewData
                         'nombre' => $faculty->nombre,
                         'campus' => $faculty->campus->value,
                         'activo' => $faculty->activo,
-                        'logo_url' => route('logos.faculty', ['faculty' => $faculty->id, 'v' => $this->logos->version($this->logos->facultyPath($faculty))]),
+                        'logo_url' => $this->logos->facultyIsConfigured($faculty)
+                            ? route('logos.faculty', ['faculty' => $faculty->id, 'v' => $this->logos->version($this->logos->facultyPath($faculty))])
+                            : null,
                     ]),
                 'careers' => Career::query()
                     ->with(['faculty:id,campus_facultad', 'coordinatorAssignments' => fn ($query) => $query->effective()->with('user:id,nombre,correo_electronico')])

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\User;
+use App\Modules\Academic\Application\Queries\AcademicStructureViewData;
 use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -99,6 +100,11 @@ class InstitutionalLogosTest extends TestCase
             ->assertOk()
             ->assertHeader('Content-Type', 'image/png')
             ->assertHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+        $faculties = collect(app(AcademicStructureViewData::class)->governance()['catalogs']['faculties'])
+            ->keyBy('nombre');
+        $this->assertNull($faculties->get('Sin logo')['logo_url']);
+        $this->assertIsString($faculties->get('Con logo')['logo_url']);
 
         // Sin subida propia, la facultad muestra el logo de fábrica.
         $legacy = Faculty::query()->where('nombre', '!=', 'Con logo')->firstOrFail();
