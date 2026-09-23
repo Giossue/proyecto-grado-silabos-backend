@@ -2,7 +2,7 @@
 
 ## Estado
 
-Implementado localmente el 2026-09-23.
+Implementado y verificado localmente el 2026-09-23.
 
 ## Decisión
 
@@ -35,11 +35,7 @@ modifica trabajos, reintentos, permisos, persistencia ni el contrato de auditor�
 
 ## Verificación
 
+- [x] `npm run lint`.
 - [x] `npm run typecheck`.
 - [x] Pruebas focalizadas de `AdminAuditPage` y `LoadingSkeleton`: 21 aprobadas.
-- [x] ESLint focalizado sobre los archivos modificados.
 - [x] `git diff --check` en ambos repositorios.
-
-La puerta global de lint y tipos quedó condicionada después de la primera comprobación
-por `src/zz-repro.test.ts`, un archivo ajeno sin seguimiento que contiene errores de
-tipado. La comprobación focalizada del cambio y las pruebas sí están en verde.

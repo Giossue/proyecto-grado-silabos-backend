@@ -85,7 +85,7 @@ class RequestSyllabusAiReview
                 ->whereIn('tipo', ['texto_corto', 'texto_largo'])
                 ->orderBy('posicion')
                 ->get()
-                ->filter(function (FieldDefinition $field) use ($locked, $values): bool {
+                ->filter(function (FieldDefinition $field) use ($values): bool {
                     $value = $values->get($field->id)?->valor;
 
                     return $field->ia_habilitada
