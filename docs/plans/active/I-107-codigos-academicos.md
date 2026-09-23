@@ -2,7 +2,7 @@
 
 ## Estado
 
-Listo local; migración remota pendiente de resolver objetivo y release.
+Migración remota aplicada; release del código pendiente.
 
 ## Trazabilidad
 
@@ -50,6 +50,9 @@ Los formularios y contratos reflejan estas reglas.
 - [x] Agregar la migración sin editar migraciones aplicadas.
 - [x] Actualizar documentación y trazabilidad.
 - [x] Ejecutar las verificaciones aplicables y registrar evidencia.
+- [x] Verificar el objetivo remoto, respaldar y aplicar `000094` con la cuenta de
+  migración documentada; validar el esquema posterior.
+- [ ] Desplegar el backend y frontend actualizados y comprobar la aplicación servida.
 
 ## Riesgos y reversión
 
@@ -68,11 +71,16 @@ Los formularios y contratos reflejan estas reglas.
   125 consumidores SPA frente a 128 operaciones OpenAPI.
 - `OpenApiContractTest` pasó dentro de la suite de backend.
 - `composer types:check` mantiene 14 errores de PHPStan en archivos ajenos a I-107.
-- La migración se ejecutó al migrar el esquema aislado de pruebas. No se verificó ni tocó
-  la base remota; `000094` queda para el release actualizado porque una versión anterior
-  de la aplicación puede consultar las columnas que se retiran. Seguir el runbook de
-  Dokploy al desplegarlo.
-- Conflicto pendiente para la operación remota: las instrucciones `AGENTS.md` señalan
-  `calidad_software` como objetivo; el runbook de Dokploy describe `silabos_ueb_db` y su
-  rol de migración. Resolver el objetivo y el rol sin usar `admin_root` antes de ejecutar
-  DDL remoto.
+- La migración también se ejecutó al migrar el esquema aislado de pruebas.
+- El `AGENTS.md` del repositorio remite a `docs/security/hardening.md` para el perfil
+  remoto; no especifica una base distinta. Ese runbook y la evidencia previa de I-106
+  identifican `silabos_ueb_db` con `silabos_ueb_app`. La conexión remota verificó ambos
+  valores; la mención anterior a `calidad_software` no correspondía a este repositorio.
+- La copia cifrada `/home/giossue/.local/share/silabos-backups/silabos_ueb_db-pre-000094-20260923.dump.gpg`
+  se validó con `pg_restore -l` (483 entradas); permisos 0700 en el directorio y 0600 en
+  el archivo.
+- `000094` se aplicó en lote 60 con `migrate --force --isolated`. Verificación posterior:
+  columnas de facultad y malla ausentes; `codigo_carrera` `NOT NULL` y `UNIQUE`; 0
+  facultades y 0 carreras; `migrate:status` sin pendiente para `000094`.
+- No se hizo commit, push ni redespliegue. Publicar el backend y frontend actualizados
+  para que la aplicación servida coincida con el esquema ya migrado.
