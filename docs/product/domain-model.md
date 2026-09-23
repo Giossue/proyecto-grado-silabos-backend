@@ -55,7 +55,7 @@ borrar su evidencia.
 El Administrador gobierna las entidades institucionales globales y asigna la coordinación
 de una carrera. El Coordinador mantiene su estructura curricular, asignaturas programadas, paralelos y
 asignaciones docentes solo dentro de esa carrera. Un periodo académico representa fechas
-y la cantidad explícita de semanas lectivas;
+y la cantidad calculada de semanas lectivas;
 el ciclo representa la posición de una materia dentro de la estructura curricular.
 
 Cada carrera tiene una sola estructura curricular, almacenada directamente en la carrera:

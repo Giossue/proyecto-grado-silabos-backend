@@ -32,6 +32,13 @@ Fuentes:
 - <https://rdigital.ueb.edu.ec/items/e6e173c3-37d8-41d2-8e9f-fbfa54979bb1>
 - <https://www.ces.gob.ec/wp-content/uploads/2025/05/Reglamento-de-Regimen-Academico.pdf>
 
+## Semanas del período
+
+La cantidad de semanas lectivas proviene del período académico. Administración solo
+registra sus fechas; el servidor cuenta las semanas de lunes a domingo que toca ese rango,
+incluidas las parciales, y la plantilla usa el valor calculado para numerar y validar las
+filas semanales.
+
 ## Alcance y trazabilidad
 
 - RF-017..026, RF-037..044 y RF-066..074.
@@ -62,8 +69,9 @@ separadas. Esta primera versión no introduce rangos ni listas anidadas de seman
    renumera sin huecos.
 2. Docencia puede agregar y quitar filas dentro de cada unidad.
 3. La semana es un entero positivo y no se repite dentro de la planificación.
-4. La cantidad de semanas no se escribe en el encabezado: Administración la declara al
-   crear o editar el período académico y la planificación debe cubrir de 1 hasta ese valor.
+4. La cantidad de semanas no se escribe en el encabezado: el servidor la calcula al crear
+   o editar el período contando semanas de lunes a domingo, y la planificación debe cubrir
+   de 1 hasta ese valor.
 5. ACD, APE y AA admiten valores no negativos con hasta dos decimales.
 6. Los totales por unidad y generales se calculan; nunca se reciben como valores
    editables ni se persisten como fuente de verdad.

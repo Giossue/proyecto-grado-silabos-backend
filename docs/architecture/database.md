@@ -73,8 +73,9 @@ foránea y borrado restringido. `facultades.campus_facultad` es un valor obligat
 limitado por `CHECK` a las cinco opciones de `CampusLocation`. No existe tabla, código,
 clave foránea ni CRUD de campus. `periodos_academicos` conserva identidad propia; el
 período es institucional, se identifica y presenta por su código único generado por el
-servidor a partir del rango de meses, su ordinal y el año, declara `semanas_lectivas`
-entre 1 y 52 y no depende de una carrera. Su estado se deriva exclusivamente de sus
+servidor a partir del rango de meses y el año. `semanas_lectivas` se calcula contando
+las semanas de lunes a domingo que toca el rango, incluidas las parciales, y queda entre
+1 y 52. El período no depende de una carrera. Su estado se deriva exclusivamente de sus
 fechas.
 `programaciones_asignatura` relaciona cada período con una asignatura mediante claves
 foráneas. La modalidad no es tabla sino

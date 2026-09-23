@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Presentation\Http\Requests;
 
+use App\Modules\Academic\Application\AcademicPeriodWeeks;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
@@ -14,6 +15,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
+use Illuminate\Validation\Validator;
 
 class StoreAcademicRecordRequest extends FormRequest
 {
@@ -61,7 +63,6 @@ class StoreAcademicRecordRequest extends FormRequest
             'periodo' => [
                 'starts_on' => ['required', 'date'],
                 'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
-                'teaching_weeks' => ['required', 'integer', 'min:1', 'max:52'],
             ],
             'asignatura' => $this->subjectRules(),
             'programacion_asignatura' => [
@@ -122,6 +123,26 @@ class StoreAcademicRecordRequest extends FormRequest
             ],
             default => [],
         };
+    }
+
+    /** @return array<callable(Validator): void> */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            if ($this->route('entity') !== 'periodo'
+                || $validator->errors()->has('starts_on')
+                || $validator->errors()->has('ends_on')) {
+                return;
+            }
+
+            $weeks = app(AcademicPeriodWeeks::class)->calculate(
+                (string) $this->input('starts_on'),
+                (string) $this->input('ends_on'),
+            );
+            if ($weeks > 52) {
+                $validator->errors()->add('ends_on', 'El período no puede superar 52 semanas calendario.');
+            }
+        }];
     }
 
     private function uniqueWithin(

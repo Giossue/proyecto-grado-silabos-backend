@@ -128,30 +128,42 @@ class AcademicStructureTest extends TestCase
             ->assertJsonValidationErrors(['code', 'cycle_count']);
     }
 
-    public function test_administrator_creates_a_period_without_code_and_gets_an_automatic_label(): void
+    public function test_administrator_creates_a_period_without_manual_code_or_weeks(): void
     {
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'periodo'), [
                 'starts_on' => '2026-08-17',
                 'ends_on' => '2026-12-18',
-                'teaching_weeks' => 16,
+                'teaching_weeks' => 1,
             ])
             ->assertSuccessful();
 
         $period = AcademicPeriod::query()->whereDate('fecha_inicio_periodo', '2026-08-17')->firstOrFail();
 
-        $this->assertSame('Agosto-Diciembre II 2026', $period->codigo);
-        $this->assertSame(16, $period->semanas_lectivas);
+        $this->assertSame('Agosto-Diciembre 2026', $period->codigo);
+        $this->assertSame(18, $period->semanas_lectivas);
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.academic.update', ['periodo', $period->id]), [
                 'starts_on' => '2026-09-01',
-                'ends_on' => '2026-12-18',
-                'teaching_weeks' => 16,
+                'ends_on' => '2026-12-04',
+                'teaching_weeks' => 1,
             ])
             ->assertSuccessful();
 
-        $this->assertSame('Septiembre-Diciembre II 2026', $period->fresh()->codigo);
+        $this->assertSame('Septiembre-Diciembre 2026', $period->fresh()->codigo);
+        $this->assertSame(14, $period->fresh()->semanas_lectivas);
+    }
+
+    public function test_period_rejects_a_range_longer_than_52_calendar_weeks(): void
+    {
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.academic.store', 'periodo'), [
+                'starts_on' => '2026-01-01',
+                'ends_on' => '2027-01-01',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['ends_on']);
     }
 
     public function test_coordinator_configures_own_career_structure_and_creates_subjects_directly_in_it(): void

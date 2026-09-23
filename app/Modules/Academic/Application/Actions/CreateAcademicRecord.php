@@ -5,6 +5,7 @@ namespace App\Modules\Academic\Application\Actions;
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodLabel;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
+use App\Modules\Academic\Application\AcademicPeriodWeeks;
 use App\Modules\Academic\Application\ScheduledSubjectInheritance;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CampusLocation;
@@ -41,6 +42,7 @@ class CreateAcademicRecord
         private readonly ScheduledSubjectInheritance $inheritance,
         private readonly AcademicPeriodPlanning $periodPlanning,
         private readonly AcademicPeriodLabel $periodLabel,
+        private readonly AcademicPeriodWeeks $periodWeeks,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -113,7 +115,7 @@ class CreateAcademicRecord
                 'codigo' => $this->periodLabel->make($data['starts_on'], $data['ends_on']),
                 'fecha_inicio' => $data['starts_on'],
                 'fecha_fin' => $data['ends_on'],
-                'semanas_lectivas' => $data['teaching_weeks'],
+                'semanas_lectivas' => $this->periodWeeks->calculate($data['starts_on'], $data['ends_on']),
             ]),
             'asignatura' => $this->createSubject($data, $this->careerId($activeRole)),
             'programacion_asignatura' => $this->createScheduledSubject($data, $this->careerId($activeRole)),

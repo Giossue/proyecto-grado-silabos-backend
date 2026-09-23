@@ -57,8 +57,8 @@ Fecha de corte: **30 de agosto de 2026**.
   campos puede continuar en otra hoja. Un texto extenso se corta entre líneas visuales
   sin ocupar el espacio entre hojas. Los separadores siguen siendo transitorios y no se
   guardan en la plantilla ni en la revisión.
-- I-57 (8 de septiembre de 2026) cierra `PV-08`: el período declara sus semanas
-  lectivas; Docencia distribuye semanas y horas entre cualquier cantidad de unidades;
+- I-57 (8 de septiembre de 2026) cierra `PV-08`: el período conserva sus semanas
+  lectivas calculadas desde sus fechas; Docencia distribuye semanas y horas entre cualquier cantidad de unidades;
   ACD, APE y AA se suman y comparan exactamente con la malla al validar o enviar. El
   borrador incompleto se conserva. Los créditos son de solo lectura y el total de la
   malla debe equivaler a `créditos × 48`; una incoherencia es un error de configuración.
@@ -266,10 +266,12 @@ inmutable; los nuevos ya no incluyen código de malla.
 
 I-108 (23 de septiembre de 2026), por instrucción explícita del responsable del
 producto, retira el código manual del formulario de período. El servidor genera la única
-etiqueta visible con el rango de meses, un ordinal romano y el año, por ejemplo
-`Agosto-Diciembre II 2026`; el código técnico se conserva para referencias e historial.
-`semanas_lectivas` sigue siendo obligatorio y el formulario aclara que representa semanas
-efectivas de clases, según el calendario institucional.
+etiqueta visible con el rango de meses y el año, por ejemplo `Agosto-Diciembre 2026`;
+el código técnico se conserva para referencias e historial.
+
+I-109 (23 de septiembre de 2026) aclara que `semanas_lectivas` no se captura en el
+formulario. El servidor cuenta las semanas de lunes a domingo que toca el rango de
+fechas, aunque la primera o la última sea parcial, y guarda ese resultado entre 1 y 52.
 
 I-07 implementa un puerto de lectura, fixture sintético versionado, staging inmutable,
 simulación y exclusión humana. Demuestra idempotencia, conflicto y cero mutación del
@@ -491,7 +493,8 @@ expresa mediante la asignación RBAC docente, el paralelo, su estado activo y
 I-77 (14 de septiembre de 2026) simplifica `periodos_academicos`: el código único es la
 única etiqueta visible y se retiran `nombre` y `activo`. Próximo, En curso y Finalizado
 se derivan exclusivamente de las fechas. `semanas_lectivas` se conserva porque expresa
-las semanas efectivas que distribuye el sílabo y no puede deducirse del rango calendario.
+las semanas que distribuye el sílabo y se calcula desde el rango calendario conforme a
+I-109.
 
 I-106 (22 de septiembre de 2026) retira `campus` como entidad y catálogo independiente.
 La facultad conserva obligatoriamente una sola opción de campus, elegida de una lista fija: Campus Matriz

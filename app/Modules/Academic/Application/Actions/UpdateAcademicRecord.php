@@ -4,6 +4,7 @@ namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodLabel;
+use App\Modules\Academic\Application\AcademicPeriodWeeks;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
@@ -62,6 +63,7 @@ class UpdateAcademicRecord
         private readonly InstitutionalLogos $logos,
         private readonly ProcessLocks $locks,
         private readonly AcademicPeriodLabel $periodLabel,
+        private readonly AcademicPeriodWeeks $periodWeeks,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -84,7 +86,7 @@ class UpdateAcademicRecord
 
         return DB::transaction(function () use ($actor, $activeRole, $data, $entity, $modelClass, $recordId, $request): Model {
             $record = $modelClass::query()->lockForUpdate()->findOrFail($recordId);
-            $attributes = $this->attributes($entity, $recordId, $data);
+            $attributes = $this->attributes($entity, $data);
 
             if ($entity === 'carrera') {
                 $this->ensureActiveFacultyWhenChanging($record, (string) $attributes['facultad_id']);
@@ -122,7 +124,7 @@ class UpdateAcademicRecord
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    private function attributes(string $entity, string $recordId, array $data): array
+    private function attributes(string $entity, array $data): array
     {
         return match ($entity) {
             'facultad' => [
@@ -136,10 +138,10 @@ class UpdateAcademicRecord
                 'nombre' => $data['nombre'],
             ],
             'periodo' => [
-                'codigo' => $this->periodLabel->make($data['starts_on'], $data['ends_on'], $recordId),
+                'codigo' => $this->periodLabel->make($data['starts_on'], $data['ends_on']),
                 'fecha_inicio' => $data['starts_on'],
                 'fecha_fin' => $data['ends_on'],
-                'semanas_lectivas' => $data['teaching_weeks'],
+                'semanas_lectivas' => $this->periodWeeks->calculate($data['starts_on'], $data['ends_on']),
             ],
             default => throw ValidationException::withMessages([
                 'entity' => 'El tipo de registro no admite edición.',
