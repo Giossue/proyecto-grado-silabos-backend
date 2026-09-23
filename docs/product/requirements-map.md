@@ -11,7 +11,7 @@
 | Convocatorias y elaboración | RF-034 a RF-045 | CU-06, CU-07, CU-09 |
 | IA | RF-046 a RF-054 | CU-08 |
 | Revisión y aprobación | RF-055 a RF-065 | CU-10 a CU-14 |
-| Documentos, informes y operación | RF-066 a RF-074 | CU-15 a CU-17 |
+| Documentos y operación | RF-066 a RF-074 | CU-15 a CU-17 |
 
 ## Requisitos no funcionales
 

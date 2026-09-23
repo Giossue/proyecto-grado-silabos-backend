@@ -39,7 +39,7 @@
 | COR-09 | Aprobar                                                       |
 | COR-10 | Reabrir aprobado                                              |
 | COR-11 | Fuentes académicas                                            |
-| COR-12 | Informes                                                      |
+| COR-12 | Retirado en I-122: el avance de la carrera se consulta en el Panel |
 | COR-13 | Malla, constructor visual/formulario y materias de la carrera |
 | COR-14 | Materias programadas en el período y sus paralelos            |
 | COR-15 | Asignaciones docentes de la carrera                           |

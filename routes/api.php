@@ -20,7 +20,6 @@ use App\Modules\Identity\Presentation\Http\Controllers\ManagedUserController;
 use App\Modules\Operations\Presentation\Http\Controllers\AuditEventController;
 use App\Modules\Operations\Presentation\Http\Controllers\JobExecutionController;
 use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
-use App\Modules\Operations\Presentation\Http\Controllers\OperationalReportController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ConvocationController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ReviewController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
@@ -213,8 +212,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereUuid('source')->name('api.v1.coordination.sources.pdf.original');
             Route::get('coordination/sources/{source}/assets/{asset}', [AcademicSourceController::class, 'asset'])
                 ->middleware('active-role')->whereUuid(['source', 'asset'])->name('api.v1.coordination.sources.assets.show');
-            Route::get('coordination/reports', [OperationalReportController::class, 'index'])
-                ->middleware('active-role')->name('api.v1.coordination.reports.index');
             Route::get('coordination/academic/curriculum/{curriculum}', [CareerAcademicStructureController::class, 'curriculumBuilder'])
                 ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.show');
             Route::get('coordination/academic/scheduled-subjects', [CareerAcademicStructureController::class, 'scheduledSubjects'])

@@ -5,7 +5,7 @@
 - RF-066 a RF-074; CU-15 a CU-17.
 - RN-031 a RN-034.
 - RNF-006, RNF-008, RNF-013, RNF-017, RNF-024 a RNF-028 y RNF-034.
-- DOC-10, COR-12, ADM-09 y ADM-10.
+- DOC-10, ADM-09 y ADM-10.
 - PV-07, PV-11 y PV-15.
 
 ## Comportamiento
@@ -13,7 +13,6 @@
 - DOCX y PDF nacen de la misma revisión y plantilla.
 - Cada artefacto identifica expediente, revisión, plantilla, tiempo y huella.
 - La descarga reautoriza y no expone almacenamiento público.
-- Informes definen indicador y respetan filtros/alcance.
 - Auditoría apend-only reconstruye transiciones y acciones críticas.
 - ADM-09 muestra estado, intentos y causa de cada proceso, sin duplicar efectos. Se
   titula «Procesos»: nombra para qué sirve, no la máquina que hay debajo.
@@ -41,8 +40,8 @@
   `ejecucion_trabajo` pendiente dentro de la transacción. El consumidor entrega una sola
   notificación interna y permite reintento idempotente. No se activa correo mientras
   `PV-15` continúe abierto.
-- COR-12 define sus indicadores en pantalla y aplica el alcance de carrera a agregados y
-  detalle. No codifica metas institucionales.
+- COR-12 (Informes) se retiró en I-122: el avance de la carrera se consulta en el Panel
+  de Coordinación.
 - ADM-09 expone estado, progreso, conteo acumulado y causa segura; el reintento conserva
   la evidencia anterior en auditoría. ADM-10 no entrega payloads, rutas, contenido ni
   UUID de recursos en la interfaz.

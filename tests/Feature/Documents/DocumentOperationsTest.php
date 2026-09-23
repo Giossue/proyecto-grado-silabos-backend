@@ -4,7 +4,6 @@ namespace Tests\Feature\Documents;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -440,34 +439,6 @@ class DocumentOperationsTest extends TestCase
         ]);
     }
 
-    public function test_cp_f_reports_apply_career_scope_to_indicators_and_detail(): void
-    {
-        [$syllabus] = $this->approvedRevision();
-        $other = $this->otherCareerSyllabus($syllabus->template);
-
-        $this->actingAsCoordinator()
-            ->getJson(route('api.v1.coordination.reports.index'))
-            ->assertOk()
-            ->assertJson(fn (Assert $page) => $page->etc()
-
-                ->where('indicators.total', 1)
-                ->where('indicators.approved', 1)
-                ->where('syllabi.total', 1)
-                ->where('syllabi.data.0.id', $syllabus->id));
-        $this->actingAsCoordinator()
-            ->getJson(route('api.v1.coordination.reports.index', ['convocation' => $other->convocatoria_id]))
-            ->assertOk()
-            ->assertJson(fn (Assert $page) => $page->etc()
-                ->where('indicators.total', 0)
-                ->where('syllabi.total', 0));
-        $this->actingAsCoordinator()
-            ->getJson(route('api.v1.coordination.reports.index', ['state' => 'aprobado']))
-            ->assertOk()
-            ->assertJsonPath('indicators.approved', 1);
-        $this->actingAsTeacher()->getJson(route('api.v1.coordination.reports.index'))->assertForbidden();
-        $this->actingAsAdministrator()->getJson(route('api.v1.coordination.reports.index'))->assertForbidden();
-    }
-
     public function test_cp_f_only_administrator_reads_safe_append_only_audit(): void
     {
         $fingerprint = str_repeat('f', 64);
@@ -604,40 +575,6 @@ class DocumentOperationsTest extends TestCase
         ]);
 
         return [$syllabus->fresh(), $revision->fresh()];
-    }
-
-    private function otherCareerSyllabus(SyllabusTemplate $template): Syllabus
-    {
-        $faculty = Faculty::query()->firstOrFail();
-        $career = Career::query()->create([
-            'facultad_id' => $faculty->id,
-            'codigo_carrera' => 'OTRA-CP-F',
-            'nombre' => 'Otra carrera CP-F',
-            'cantidad_ciclos_malla' => 8,
-            'activo' => true,
-        ]);
-        $subject = Subject::query()->create([
-            'carrera_id' => $career->id,
-            'codigo_asignatura' => 'OTRA-101',
-            'nombre' => 'Asignatura fuera de alcance',
-            'activo' => true,
-        ]);
-        $convocation = Convocation::query()->create([
-            'carrera_id' => $career->id,
-            'proceso_id' => $this->openSyllabusProcess($template->id)->id,
-            'estado' => 'abierta',
-        ]);
-
-        return Syllabus::query()->create([
-            'convocatoria_id' => $convocation->id,
-            'asignatura_id' => $subject->id,
-            'carrera_id' => $career->id,
-            'plantilla_id' => $template->id,
-            'estado' => 'aprobado',
-            'version_bloqueo' => 2,
-            'iniciado_en' => now(),
-            'guardado_en' => now(),
-        ]);
     }
 
     private function actingAsAdministrator(): static

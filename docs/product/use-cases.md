@@ -17,7 +17,7 @@
 | CU-13 | Aprobar sílabo | Coordinador | RF-062, RF-063 |
 | CU-14 | Reabrir sílabo aprobado | Coordinador | RF-064 |
 | CU-15 | Exportar Word y PDF | Usuario autorizado | RF-066 a RF-069 |
-| CU-16 | Consultar avance e informes | Coordinador | RF-036, RF-070 a RF-072 |
+| CU-16 | Consultar avance en el Panel (I-122) | Coordinador | RF-036, RF-070 a RF-072 |
 | CU-17 | Auditar el proceso | Administrador | RF-073, RF-074 |
 | ~~CU-18~~ | ~~Sincronizar datos institucionales~~ | — | Retirado el 2026-08-27 junto con el módulo de importación. RF-016 y RF-075 quedan sin implementación. |
 

@@ -52,7 +52,7 @@ El ciclo cubre:
 9. comparación y aprobación;
 10. reapertura controlada;
 11. generación de Word/PDF;
-12. notificaciones, informes y auditoría.
+12. notificaciones y auditoría.
 
 ## Fuera de alcance
 

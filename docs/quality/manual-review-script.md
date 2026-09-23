@@ -27,7 +27,7 @@ si funcionan, el resto los reutiliza.
 | 3 | Carreras | `/admin/estructura-academica/carreras` | Listado, filtros, tabla, menú de fila y panel lateral |
 | 4 | Usuarios | `/admin/usuarios` | Listado con estados y acciones |
 | 5 | Editor de sílabo | `/docente/mis-silabos` → abrir uno → Editar | La superficie más compleja: campos dinámicos y autoguardado |
-| 6 | Revisión | `/coordinacion/informes` y cola de revisión | Lectura densa y tablas anchas |
+| 6 | Revisión | `/coordinacion/revisiones` | Lectura densa y tablas anchas |
 
 ## 1. Teclado y foco
 
