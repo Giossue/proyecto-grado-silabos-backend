@@ -2,7 +2,8 @@
 
 ## Estado
 
-En curso.
+Completado localmente el 2026-09-22. La migración `000093` se aplicó a la base local
+`silabos_ueb`; los demás entornos siguen su procedimiento de release.
 
 ## Trazabilidad
 
@@ -51,11 +52,13 @@ pantallas, rutas y claves foráneas dejan de existir.
 ## Pruebas
 
 - Actualizar las pruebas académicas y de interfaz que todavía modelan un catálogo o
-  `campus_id`.
-- Comprobar migración con los valores canónicos, detección de referencias desconocidas y
-  de varias opciones en una facultad.
-- Verificar que el contrato publicado no exponga campus como entidad y conserve los cinco
-  valores del selector.
+  `campus_id`; se adaptaron los contratos académicos, de logo y de pausa del proceso.
+- Se aplicó la migración local: tabla y FKs anteriores ausentes, columnas nuevas sin
+  nulos y el campus de las programaciones existentes conservado.
+- `composer lint:check`, `npm run typecheck`, `npm run lint` y
+  `npm run contract:check` pasaron; el contrato OpenAPI se regeneró sin cambios de rutas.
+- `composer types:check` aún reporta 14 errores en archivos ajenos a este cambio. No se
+  ejecutaron las suites automatizadas en esta entrega.
 
 ## Pasos
 
@@ -63,8 +66,8 @@ pantallas, rutas y claves foráneas dejan de existir.
 - [x] Implementar enum obligatorio y migración con conciliación segura.
 - [x] Retirar dependencias del catálogo y actualizar herencia/fotografías.
 - [x] Actualizar ADM-04 y documentación trazable; el inventario OpenAPI no cambia rutas.
-- [ ] Revisar código y ejecutar las verificaciones aplicables.
-- [ ] Registrar evidencia y mover el plan a `docs/plans/completed/`.
+- [x] Revisar el código, aplicar y comprobar la migración local y ejecutar lint, tipos y contrato.
+- [x] Registrar evidencia y mover el plan a `docs/plans/completed/`.
 
 ## Riesgos y reversión
 
@@ -77,4 +80,7 @@ pantallas, rutas y claves foráneas dejan de existir.
 
 ## Evidencia de cierre
 
-Pendiente.
+En `silabos_ueb` la tabla `campus`, `carreras.campus_id` y
+`programaciones_asignatura.campus_id` ya no existen. No quedan campus nulos en
+facultades ni programaciones y la programación existente conserva `Campus Matriz Dr.
+Gabriel Galarza López`. Ninguna base productiva se modificó.

@@ -1,6 +1,6 @@
 # I-36: Preparar periodo y campus de la carrera
 
-> Supersedido en lo relativo a la propiedad del campus por I-106: ahora pertenece
+> Reemplazado en lo relativo a la propiedad del campus por I-106: ahora pertenece
 > obligatoriamente a la Facultad y la programación conserva una copia textual. El resto
 > de este plan documenta la decisión y migración originales.
 

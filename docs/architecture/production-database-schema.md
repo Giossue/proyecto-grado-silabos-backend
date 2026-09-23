@@ -1,4 +1,7 @@
-# Base de datos actual de producción — Sílabos UEB
+# Esquema objetivo de base de datos — Sílabos UEB
+
+Describe el esquema resultante de las migraciones versionadas del repositorio. El estado
+de un entorno productivo se comprueba por separado con el runbook de release.
 
 # 1. Identidad y acceso
 
