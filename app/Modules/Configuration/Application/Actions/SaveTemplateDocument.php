@@ -268,7 +268,7 @@ final class SaveTemplateDocument
                     'etiqueta' => $attrs['label'], 'tipo' => $attrs['kind'],
                     'opciones' => $attrs['options'],
                     'heredado' => false, 'editable_docente' => true,
-                    'ia_habilitada' => false, 'ia_coordinacion_configurable' => true,
+                    'ia_habilitada' => false,
                     'posicion' => ++$position,
                 ]);
             }
@@ -278,14 +278,14 @@ final class SaveTemplateDocument
             foreach ($block->fields->where('heredado', false) as $field) {
                 if (in_array($field->clave, $used, true)) {
                     if (isset($detached[$field->clave])) {
-                        $field->update($detached[$field->clave]);
+                        // Un retiro previo a I-116 también guardó el permiso de Coordinación.
+                        $field->update(array_intersect_key($detached[$field->clave], array_flip(['editable_docente', 'ia_habilitada'])));
                         unset($detached[$field->clave]);
                     }
                 } else {
                     $detached[$field->clave] ??= $field->only([
                         'editable_docente',
                         'ia_habilitada',
-                        'ia_coordinacion_configurable',
                     ]);
                     $field->update(['editable_docente' => false, 'ia_habilitada' => false]);
                 }
@@ -312,14 +312,6 @@ final class SaveTemplateDocument
                     $detached[$property['key']]['ia_habilitada'] = $property['ai_enabled'];
                 } else {
                     $attributes['ia_habilitada'] = $property['ai_enabled'];
-                }
-            }
-            if (array_key_exists('ai_coordinator_configurable', $property)
-                && ! in_array($block->configuredContentType(), ['institutional', 'flow'], true)) {
-                if (isset($detached[$property['key']])) {
-                    $detached[$property['key']]['ia_coordinacion_configurable'] = $property['ai_coordinator_configurable'];
-                } else {
-                    $attributes['ia_coordinacion_configurable'] = $property['ai_coordinator_configurable'];
                 }
             }
             $block->fields()->where('clave', $property['key'])->update($attributes);

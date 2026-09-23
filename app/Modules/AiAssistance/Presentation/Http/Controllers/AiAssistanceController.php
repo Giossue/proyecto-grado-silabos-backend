@@ -8,7 +8,6 @@ use App\Modules\AiAssistance\Application\Actions\ApplyAiRecommendation;
 use App\Modules\AiAssistance\Application\Actions\RecordAiFeedback;
 use App\Modules\AiAssistance\Application\Actions\RequestAiAnalysis;
 use App\Modules\AiAssistance\Application\Actions\RequestSyllabusAiReview;
-use App\Modules\AiAssistance\Application\ResolveEffectiveAiConfiguration;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiEvidence;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiRecommendation;
@@ -24,8 +23,6 @@ use Illuminate\Http\Request;
 
 class AiAssistanceController extends Controller
 {
-    public function __construct(private readonly ResolveEffectiveAiConfiguration $effectiveAi) {}
-
     public function show(Syllabus $syllabus, FieldDefinition $field, Request $request): JsonResponse
     {
         abort_unless($request->user()?->can('edit', $syllabus) === true, 403);
@@ -220,7 +217,7 @@ class AiAssistanceController extends Controller
     {
         abort_unless(
             $field->plantilla_id === $syllabus->plantilla_id
-            && $this->effectiveAi->enabled($syllabus->carrera_id, $field)
+            && $field->ia_habilitada
             && $field->editable_docente
             && ! $field->heredado
             && in_array($field->tipo, ['texto_corto', 'texto_largo'], true),

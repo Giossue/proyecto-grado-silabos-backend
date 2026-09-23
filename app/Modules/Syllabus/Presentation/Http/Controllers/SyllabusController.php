@@ -4,7 +4,6 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Modules\AiAssistance\Application\ResolveEffectiveAiConfiguration;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TableLayout;
@@ -39,7 +38,6 @@ use Illuminate\Support\Collection;
 class SyllabusController extends Controller
 {
     public function __construct(
-        private readonly ResolveEffectiveAiConfiguration $effectiveAi,
         private readonly InstitutionalLogos $logos,
     ) {}
 
@@ -249,7 +247,7 @@ class SyllabusController extends Controller
                 'hours_aa' => data_get($syllabus->contexto_academico, 'subject.hours_aa'),
             ],
             'sections' => $syllabus->template->sections
-                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, $rows, $syllabus->carrera_id))
+                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, $rows))
                 ->values(),
             'validation' => $lastValidation instanceof ValidationRun ? [
                 'completed_at' => $lastValidation->completado_en->toIso8601String(),
@@ -311,11 +309,11 @@ class SyllabusController extends Controller
      * @param  Collection<string, EloquentCollection<int, RepeatableRow>>  $rows
      * @return array<string, mixed>
      */
-    private function sectionPayload(TemplateSection $section, $values, $rows, string $careerId): array
+    private function sectionPayload(TemplateSection $section, $values, $rows): array
     {
         $blocks = [];
         foreach ($section->blocks as $block) {
-            $blocks[] = $this->blockPayload($block, $values, $rows, $careerId);
+            $blocks[] = $this->blockPayload($block, $values, $rows);
         }
 
         return [
@@ -332,7 +330,7 @@ class SyllabusController extends Controller
      * @param  Collection<string, EloquentCollection<int, RepeatableRow>>  $rows
      * @return array<string, mixed>
      */
-    private function blockPayload(TemplateBlock $block, Collection $values, Collection $rows, string $careerId): array
+    private function blockPayload(TemplateBlock $block, Collection $values, Collection $rows): array
     {
         $fields = [];
         foreach ($block->fields as $field) {
@@ -354,7 +352,7 @@ class SyllabusController extends Controller
                 'required' => true,
                 'inherited' => $field->heredado,
                 'teacher_editable' => $field->editable_docente,
-                'ai_enabled' => $this->effectiveAi->enabled($careerId, $field)
+                'ai_enabled' => $field->ia_habilitada
                     && in_array($field->tipo, ['texto_corto', 'texto_largo'], true),
                 'value' => $values->get($field->id)?->valor,
                 'rows' => $fieldRows,

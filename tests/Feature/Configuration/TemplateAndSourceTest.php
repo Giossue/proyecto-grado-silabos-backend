@@ -139,7 +139,6 @@ class TemplateAndSourceTest extends TestCase
                         'help' => 'Sintetice los resultados esperados.',
                         'content_type' => 'text',
                         'ai_enabled' => true,
-                        'ai_coordinator_configurable' => false,
                     ],
                     ['key' => 'matriz_evidencias', 'label' => 'Matriz de evidencias', 'content_type' => 'table'],
                     ['key' => 'acciones_mejora', 'label' => 'Acciones de mejora', 'content_type' => 'numbered_list'],
@@ -183,7 +182,9 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame('proyecto', $blocks[4]->fields->firstOrFail()->opciones[0]['value']);
         $this->assertSame('Sintetice los resultados esperados.', $blocks[0]->fields->firstOrFail()->ayuda);
         $this->assertTrue($blocks[0]->fields->firstOrFail()->ia_habilitada);
-        $this->assertFalse($blocks[0]->fields->firstOrFail()->ia_coordinacion_configurable);
+        // I-116: Administración decide la IA; Coordinación no guarda una preferencia propia.
+        $this->assertFalse(Schema::hasColumn('definiciones_campo', 'ia_coordinacion_configurable'));
+        $this->assertFalse(Schema::hasTable('preferencias_ia_carrera'));
 
         config(['sanctum.stateful' => ['localhost:5173']]);
         $this->actingAsAdministrator()
@@ -197,8 +198,8 @@ class TemplateAndSourceTest extends TestCase
                 'key' => 'modalidades_evaluacion',
                 'content_type' => 'multiple_choice',
                 'ai_enabled' => false,
-                'ai_coordinator_configurable' => true,
-            ]);
+            ])
+            ->assertJsonMissing(['ai_coordinator_configurable' => true]);
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.template.sections.store', $template), [
@@ -360,7 +361,6 @@ class TemplateAndSourceTest extends TestCase
             'heredado' => false,
             'editable_docente' => true,
             'ia_habilitada' => false,
-            'ia_coordinacion_configurable' => true,
             'posicion' => 1,
         ]);
     }
@@ -414,7 +414,6 @@ class TemplateAndSourceTest extends TestCase
                 'content_type' => 'text',
                 'help' => 'Redáctelo en infinitivo.',
                 'ai_enabled' => 1,
-                'ai_coordinator_configurable' => 0,
                 'required' => 0,
                 'teacher_editable' => 0,
                 'inherited' => 1,
@@ -425,7 +424,6 @@ class TemplateAndSourceTest extends TestCase
         $field->refresh();
         $this->assertSame('Redáctelo en infinitivo.', $field->ayuda);
         $this->assertTrue($field->ia_habilitada);
-        $this->assertFalse($field->ia_coordinacion_configurable);
         $this->assertTrue($field->editable_docente);
         $this->assertFalse($field->heredado);
         $this->assertNull($field->origen_maestro);
@@ -440,7 +438,6 @@ class TemplateAndSourceTest extends TestCase
                 'content_type' => 'institutional',
                 'help' => 'Se llena sola desde la malla y la programación de asignatura.',
                 'ai_enabled' => 1,
-                'ai_coordinator_configurable' => 1,
             ])
             ->assertSuccessful()
             ->assertSuccessful();
@@ -449,7 +446,6 @@ class TemplateAndSourceTest extends TestCase
         $this->assertTrue($identification->heredado);
         $this->assertSame('asignaturas', $identification->origen_maestro);
         $this->assertFalse($identification->ia_habilitada);
-        $this->assertFalse($identification->ia_coordinacion_configurable);
     }
 
     public function test_template_blocks_use_document_content_types(): void

@@ -322,10 +322,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   nuevo; el orden dentro del ciclo se asigna automáticamente cuando no lo determina el
   constructor. Una reubicación correcta se guarda sin notificación repetitiva; un fallo
   sí explica la acción correctiva.
-- **Auditoría** es una entrada única del sidebar, sin submenú. Dentro, las pestañas
-  **Procesos** (ADM-09) y **Registro de actividad** (ADM-10) conservan sus rutas y filtros.
-  La primera permite diagnosticar y reintentar trabajos; la segunda
-  reconstruye quién hizo qué y cuándo.
+- **Auditoría** abre directamente ADM-10, sin pestañas ni filtros. Presenta un único
+  registro paginado con fecha, actividad, responsable y resultado; acción y recurso se
+  agrupan en la misma celda y no se muestran metadatos secundarios. ADM-09 conserva su
+  ruta independiente para diagnosticar y reintentar trabajos.
 - ADM-12 lista los procesos de sílabos con estado, período institucional, plantilla, inicio, entrega y
   convocatorias. La preparación inicial se lanza desde la fila de un período en ADM-04:
   el período queda fijado, el nombre y la plantilla son automáticos, y el `Sheet` solo

@@ -19,7 +19,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $origen_maestro
  * @property bool $editable_docente
  * @property bool $ia_habilitada
- * @property bool $ia_coordinacion_configurable
  * @property array<string, mixed>|null $reglas
  * @property list<mixed>|null $opciones
  * @property string|null $marcador_documento
@@ -56,7 +55,6 @@ class FieldDefinition extends Model
         'origen_maestro',
         'editable_docente',
         'ia_habilitada',
-        'ia_coordinacion_configurable',
         'reglas',
         'opciones',
         'marcador_documento',
@@ -70,7 +68,6 @@ class FieldDefinition extends Model
             'heredado' => 'boolean',
             'editable_docente' => 'boolean',
             'ia_habilitada' => 'boolean',
-            'ia_coordinacion_configurable' => 'boolean',
             'reglas' => 'array',
             'opciones' => 'array',
             'posicion' => 'integer',

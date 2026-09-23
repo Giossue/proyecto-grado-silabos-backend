@@ -80,7 +80,6 @@ class SaveTemplateSection
                     'heredado' => false,
                     'editable_docente' => true,
                     'ia_habilitada' => (bool) ($fieldData['ai_enabled'] ?? false),
-                    'ia_coordinacion_configurable' => (bool) ($fieldData['ai_coordinator_configurable'] ?? true),
                     'opciones' => $fieldData['options'] ?? null,
                     'posicion' => 1,
                 ];

@@ -3,7 +3,6 @@
 namespace App\Modules\AiAssistance\Application\Actions;
 
 use App\Models\User;
-use App\Modules\AiAssistance\Application\ResolveEffectiveAiConfiguration;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\SyllabusAiReview;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
@@ -20,7 +19,6 @@ class RequestSyllabusAiReview
 {
     public function __construct(
         private readonly RequestAiAnalysis $requestAnalysis,
-        private readonly ResolveEffectiveAiConfiguration $effectiveAi,
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
     ) {}
@@ -90,7 +88,7 @@ class RequestSyllabusAiReview
                 ->filter(function (FieldDefinition $field) use ($locked, $values): bool {
                     $value = $values->get($field->id)?->valor;
 
-                    return $this->effectiveAi->enabled($locked->carrera_id, $field)
+                    return $field->ia_habilitada
                         && is_string($value) && trim($value) !== '';
                 });
 

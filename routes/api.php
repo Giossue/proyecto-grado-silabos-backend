@@ -5,7 +5,6 @@ use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceControl
 use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
-use App\Modules\AiAssistance\Presentation\Http\Controllers\CareerAiConfigurationController;
 use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceController;
 use App\Modules\Configuration\Presentation\Http\Controllers\FacultyLogoController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
@@ -198,12 +197,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.reviews.teacher.transfer');
             Route::get('coordination/sources', [AcademicSourceController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.coordination.sources.index');
-            Route::get('coordination/ai-configuration', [CareerAiConfigurationController::class, 'show'])
-                ->middleware('active-role')->name('api.v1.coordination.ai-configuration.show');
-            Route::put('coordination/ai-configuration', [CareerAiConfigurationController::class, 'update'])
-                ->middleware('active-role')->name('api.v1.coordination.ai-configuration.update');
-            Route::delete('coordination/ai-configuration', [CareerAiConfigurationController::class, 'destroy'])
-                ->middleware('active-role')->name('api.v1.coordination.ai-configuration.destroy');
             Route::post('coordination/sources', [AcademicSourceController::class, 'store'])
                 ->middleware('active-role')->name('api.v1.coordination.sources.store');
             Route::get('coordination/sources/{source}', [AcademicSourceController::class, 'show'])

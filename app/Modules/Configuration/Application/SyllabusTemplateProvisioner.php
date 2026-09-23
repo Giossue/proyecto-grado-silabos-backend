@@ -127,7 +127,6 @@ final class SyllabusTemplateProvisioner
                     'origen_maestro' => $origin,
                     'editable_docente' => $origin === null,
                     'ia_habilitada' => $contentType === 'text',
-                    'ia_coordinacion_configurable' => $origin === null,
                     'posicion' => 1,
                 ];
 
@@ -146,7 +145,6 @@ final class SyllabusTemplateProvisioner
                         'origen_maestro' => null,
                         'editable_docente' => true,
                         'ia_habilitada' => $inputType === 'texto_largo',
-                        'ia_coordinacion_configurable' => true,
                         'opciones' => $options,
                         'posicion' => $inputPosition + 2,
                     ];

@@ -14,7 +14,6 @@ class BuildSyllabusChatContext
     public function __construct(
         private readonly AiEvidenceCollector $sources,
         private readonly CanonicalHasher $hasher,
-        private readonly ResolveEffectiveAiConfiguration $effectiveAi,
     ) {}
 
     /**
@@ -36,7 +35,7 @@ class BuildSyllabusChatContext
                     if ($field->id === $excludeFieldId) {
                         continue;
                     }
-                    if (! $this->effectiveAi->enabled($syllabus->carrera_id, $field)) {
+                    if (! $field->ia_habilitada) {
                         continue;
                     }
                     $excerpt = $this->fieldContent($field, $values->get($field->id)?->valor, $rows->get($field->id));

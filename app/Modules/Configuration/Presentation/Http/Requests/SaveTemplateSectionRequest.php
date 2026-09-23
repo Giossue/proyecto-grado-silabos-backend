@@ -38,7 +38,7 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
                 },
             ],
             'fields' => [Rule::requiredIf($sectionId === null && ! $this->filled('first_field_label')), 'nullable', 'array', 'min:1', 'max:20'],
-            'fields.*' => ['required', 'array:key,label,help,content_type,options,ai_enabled,ai_coordinator_configurable'],
+            'fields.*' => ['required', 'array:key,label,help,content_type,options,ai_enabled'],
             'fields.*.label' => ['required', 'string', 'max:180'],
             'fields.*.key' => [
                 'required',
@@ -55,7 +55,6 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
             'fields.*.options.*.value' => ['required', 'string', 'max:120', 'distinct'],
             'fields.*.options.*.label' => ['required', 'string', 'max:180'],
             'fields.*.ai_enabled' => ['nullable', 'boolean'],
-            'fields.*.ai_coordinator_configurable' => ['nullable', 'boolean'],
             'first_field_label' => [Rule::requiredIf($requiresLegacyField), 'nullable', 'string', 'max:180'],
             'first_field_key' => [
                 Rule::requiredIf($requiresLegacyField),

@@ -56,6 +56,7 @@ class ExtendProcessDeadline
         if ($requested->isPast()) {
             throw ValidationException::withMessages(['due_at' => 'La nueva fecha ya pasó.']);
         }
+
         return DB::transaction(function () use ($activeRole, $actor, $previous, $process, $reason, $request, $requested, $stage): SyllabusProcess {
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
             $locked->update(['entrega_en' => $requested]);

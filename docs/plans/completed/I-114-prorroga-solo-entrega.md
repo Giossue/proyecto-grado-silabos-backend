@@ -2,7 +2,7 @@
 
 ## Estado
 
-En implementación local.
+Completado localmente.
 
 ## Decisión
 
@@ -33,7 +33,7 @@ prórroga actualiza exclusivamente `borrador` en el proceso y en sus convocatori
 
 ## Verificación
 
-- [ ] Prueba focalizada del formulario Vue.
-- [ ] Prueba focalizada de `ConvocationScheduleTest`.
-- [ ] Prueba de arquitectura y contrato OpenAPI.
-- [ ] Typecheck, lint y formato puntual.
+- [x] Prueba focalizada del formulario Vue: 1 prueba aprobada.
+- [x] Prueba focalizada de `ConvocationScheduleTest`: 10 pruebas aprobadas.
+- [x] Pruebas de arquitectura y contrato OpenAPI: 5 pruebas aprobadas.
+- [x] Typecheck, lint y formato puntual aprobados.

@@ -72,8 +72,6 @@ class SaveFieldDefinition
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
                     'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                     'ia_habilitada' => ! $field->heredado && (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
-                    'ia_coordinacion_configurable' => ! $field->heredado
-                        && (bool) ($data['ai_coordinator_configurable'] ?? $field->ia_coordinacion_configurable),
                 ]);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
@@ -107,8 +105,6 @@ class SaveFieldDefinition
                 'origen_maestro' => $field !== null && $field->heredado ? $field->origen_maestro : null,
                 'editable_docente' => ! $inherited,
                 'ia_habilitada' => ! $inherited && (bool) ($data['ai_enabled'] ?? ($field !== null ? $field->ia_habilitada : false)),
-                'ia_coordinacion_configurable' => ! $inherited
-                    && (bool) ($data['ai_coordinator_configurable'] ?? ($field !== null ? $field->ia_coordinacion_configurable : true)),
                 'reglas' => $data['rules'] ?? ($field !== null ? $field->reglas : null),
                 'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                 'marcador_documento' => $field !== null ? $field->marcador_documento : null,
