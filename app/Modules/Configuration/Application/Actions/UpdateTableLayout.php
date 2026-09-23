@@ -40,14 +40,13 @@ class UpdateTableLayout
 
         $normalized = TableLayout::normalize($layout);
 
-        return DB::transaction(function () use ($actor, $activeRole, $block, $normalized, $request): array {
+        return $this->work->replace($request, function () use ($actor, $activeRole, $block, $normalized, $request): array {
             $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
             $block = $template->blockOrFail($block->id);
             if (! hash_equals(SaveTemplateDocument::fingerprint($block), $request->string('fingerprint')->toString())) {
                 throw ValidationException::withMessages(['fingerprint' => 'La plantilla cambió en otra sesión. Recargue antes de guardar; su estructura no fue sobrescrita.']);
             }
             // Cambiar columnas altera lo que los docentes están llenando.
-            $this->work->requireConfirmation($request);
 
             $configuration = $block->getAttribute('configuracion');
             $configuration = is_array($configuration) ? $configuration : [];

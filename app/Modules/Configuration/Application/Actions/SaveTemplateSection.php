@@ -32,10 +32,9 @@ class SaveTemplateSection
         // Con el proceso institucional abierto, el formato está en uso: se pausa antes.
         $this->locks->assertTemplateEditable();
 
-        return DB::transaction(function () use ($activeRole, $actor, $data, $request, $templateId): TemplateSection {
+        return $this->work->replace($request, function () use ($activeRole, $actor, $data, $request, $templateId): TemplateSection {
             $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
             // Una sección nueva cambia el formato que los docentes están llenando.
-            $this->work->requireConfirmation($request);
 
             $sections = $template->sections()->sortBy('posicion')->values();
             $position = min(
@@ -133,7 +132,7 @@ class SaveTemplateSection
         // Con el proceso institucional abierto, el formato está en uso: se pausa antes.
         $this->locks->assertTemplateEditable();
 
-        return DB::transaction(function () use ($activeRole, $actor, $data, $request, $section): TemplateSection {
+        return $this->work->replace($request, function () use ($activeRole, $actor, $data, $request, $section): TemplateSection {
             $template = SyllabusTemplate::query()->whereKey($section->plantilla_id)->lockForUpdate()->firstOrFail();
             $section = $template->updateSectionDocument($section->id, [
                 'titulo' => $this->stringValue($data, 'title'),

@@ -28,9 +28,8 @@ class DeleteTemplateSection
         // Con el proceso institucional abierto, el formato está en uso: se pausa antes.
         $this->locks->assertTemplateEditable();
 
-        DB::transaction(function () use ($activeRole, $actor, $request, $section): void {
+        $this->work->replace($request, function () use ($activeRole, $actor, $request, $section): void {
             // Una sección menos cambia el formato que los docentes están llenando.
-            $this->work->requireConfirmation($request);
 
             $template = SyllabusTemplate::query()->whereKey($section->plantilla_id)->lockForUpdate()->firstOrFail();
             $lockedSection = $template->sectionOrFail($section->id);

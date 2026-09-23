@@ -26,12 +26,11 @@ final class SaveTemplateTitle
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        DB::transaction(function () use ($activeRole, $actor, $request, $template, $title): void {
+        $this->work->replace($request, function () use ($activeRole, $actor, $request, $template, $title): void {
             $locked = SyllabusTemplate::query()
                 ->whereKey($template->id)
                 ->lockForUpdate()
                 ->firstOrFail();
-            $this->work->requireConfirmation($request);
             $mapping = $locked->mapeo_documento ?? [];
             $mapping['title_block'] = ['text' => trim($title)];
             $locked->update(['mapeo_documento' => $mapping]);

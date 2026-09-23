@@ -266,7 +266,6 @@ heredado BOOLEAN NOT NULL
 origen_maestro VARCHAR NULL
 editable_docente BOOLEAN NOT NULL
 ia_habilitada BOOLEAN NOT NULL
-ia_coordinacion_configurable BOOLEAN NOT NULL DEFAULT true
 reglas_definicion_campo JSONB NULL
 opciones_definicion_campo JSONB NULL
 marcador_documento VARCHAR NULL
@@ -303,22 +302,6 @@ CHECK documento_fuente_academica es un objeto doc con content como arreglo
 CHECK documento_fuente_academica no contiene nodos de texto vacíos
 ~~~
 
-## preferencias_ia_carrera
-
-**Contexto:** excepción de Coordinación sobre la configuración IA de un campo.
-
-~~~text
-id UUID (PK)
-carrera_id UUID (FK → carreras.id) NOT NULL
-definicion_campo_id UUID (FK → definiciones_campo.id) NOT NULL
-ia_habilitada BOOLEAN NOT NULL
-revision_plantilla_origen BIGINT NOT NULL
-configurado_por UUID (FK → usuarios.id) NOT NULL
-configurado_en TIMESTAMPTZ NOT NULL
-
-UNIQUE (carrera_id, definicion_campo_id)
-~~~
-
 ## fragmentos_fuente_academica
 
 **Contexto:** índice derivado y reemplazable del documento estructurado de una fuente.
@@ -350,8 +333,6 @@ fuentes_academicas 1:0..1 objetos_almacenados como PDF vigente
 fuentes_academicas 1:N ejecuciones_trabajo por recurso lógico
 fuentes_academicas 1:N fragmentos_fuente_academica
 fragmentos_fuente_academica 0..1 embedding vectorial por fragmento
-carreras 1:N preferencias_ia_carrera
-definiciones_campo 1:N preferencias_ia_carrera
 ~~~
 
 ---

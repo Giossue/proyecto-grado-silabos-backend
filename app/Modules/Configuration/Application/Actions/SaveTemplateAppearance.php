@@ -28,9 +28,8 @@ final class SaveTemplateAppearance
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        DB::transaction(function () use ($activeRole, $actor, $appearance, $request, $template): void {
+        $this->work->replace($request, function () use ($activeRole, $actor, $appearance, $request, $template): void {
             $locked = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
-            $this->work->requireConfirmation($request);
             $mapping = $locked->mapeo_documento ?? [];
             $mapping['appearance'] = TemplateAppearance::normalize($appearance);
             $locked->update(['mapeo_documento' => $mapping]);

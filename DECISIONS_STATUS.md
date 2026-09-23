@@ -292,6 +292,13 @@ es una etapa prorrogable: Administración solo puede corregirlo mediante la edic
 proceso en preparación o en pausa. `fechas_limite_convocatoria` conserva `inicio` y
 `borrador` para validar la ventana de envío, sin cambio de esquema.
 
+I-116 (23 de septiembre de 2026), por instrucción explícita del responsable del
+producto, deja en Administración la decisión de qué campos usan IA. Coordinación ya no
+guarda excepciones por carrera: la IA solo sugiere y el docente decide si aplica cada
+sugerencia. Se eliminan `preferencias_ia_carrera`,
+`definiciones_campo.ia_coordinacion_configurable` y las rutas
+`/coordination/ai-configuration`; sustituye las decisiones 1 a 3 de I-72.
+
 I-07 implementa un puerto de lectura, fixture sintético versionado, staging inmutable,
 simulación y exclusión humana. Demuestra idempotencia, conflicto y cero mutación del
 catálogo, pero no incorpora esquema, credenciales, red, reglas de identidad ni aplicador:

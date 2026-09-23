@@ -30,6 +30,11 @@ class SyllabusProcessPolicy
         return $this->viewAny($user) && $process->isConfigurable();
     }
 
+    public function delete(User $user, SyllabusProcess $process): bool
+    {
+        return $this->viewAny($user);
+    }
+
     public function open(User $user, SyllabusProcess $process): bool
     {
         return $this->viewAny($user) && $process->estado === SyllabusProcess::STATE_PREPARATION;

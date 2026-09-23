@@ -38,6 +38,10 @@ las sustentan. Ninguna sugerencia bloquea el envío ni se aplica sola.
 
 ## Decisiones confirmadas
 
+> I-116 (23 de septiembre de 2026) sustituye las decisiones 1 a 3 y la sección
+> «Configuración efectiva»: Administración decide la IA de cada campo y Coordinación no
+> guarda excepciones por carrera. Se conservan como historia.
+
 1. `definiciones_campo.ia_habilitada` es el valor predeterminado fijado por
    Administración. `definiciones_campo.ia_coordinacion_configurable` decide, por
    campo, si Coordinación puede guardar una excepción. Cuando es falso, el resolvedor

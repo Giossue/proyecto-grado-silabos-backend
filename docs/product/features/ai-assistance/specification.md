@@ -72,5 +72,6 @@
   por campo. El chat libre, el contexto cruzado entre secciones y la configuración
   efectiva por carrera todavía no están implementados.
 - El contrato de presentación usa `status` de forma consistente entre Laravel y Vue.
-- La plantilla ya conserva `ia_coordinacion_configurable`; la preferencia efectiva por
-  carrera y su resolvedor se completarán en I-72.2.
+- I-116: `definiciones_campo.ia_habilitada`, fijado por Administración en la plantilla,
+  es la única decisión sobre qué campos usan IA. Coordinación no guarda excepciones por
+  carrera; la IA solo sugiere y el docente decide.

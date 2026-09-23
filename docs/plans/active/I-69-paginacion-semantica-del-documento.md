@@ -45,3 +45,13 @@ visuales inaccesibles y desechables; los campos editables mantienen un único co
   `template-document-editor.mjs` conservan edición, selección y guardado.
 - Las suites Unit, Feature y Architecture completan 416 pruebas y 6.286 aserciones; la
   comprobación Integration requiere el servicio Redis externo de la estación.
+
+## Corrección 2026-09-23: tablas en edición
+
+Al abrir «Editar tabla», el editor TipTap estaba marcado como `data-page-flow-through`
+y el paginador insertaba filas espaciadoras `<tr data-page-spacer>` dentro del DOM de
+ProseMirror. ProseMirror las leía como filas reales: aparecía una celda enorme y
+decenas de filas vacías, que además se guardaban con la tabla. Ahora el editor es una
+unidad indivisible y `documentPagination.ts` nunca parte una tabla que viva dentro de un
+elemento `contenteditable="true"`. La vista de lectura conserva el corte por filas.
+Prueba: `src/lib/documentPagination.test.ts` en la SPA.

@@ -168,7 +168,8 @@ detienen el trabajo docente sin borrar nada.
 `resultados_validacion`, `ejecuciones_ia`, `evidencias_ia`, `recomendaciones_ia`,
 `recomendacion_evidencias_ia`, `retroalimentacion_ia`, `conversaciones_ia`,
 `mensajes_ia`, `evidencias_mensaje_ia`, `citas_mensaje_ia`,
-`preferencias_ia_carrera`, `revisiones_ia_silabo`.
+`revisiones_ia_silabo`. I-116 eliminó `preferencias_ia_carrera`: la IA de cada campo la
+decide Administración en la plantilla.
 
 Cada docente conserva una conversación por sílabo. Limpiar el panel marca
 `conversaciones_ia.ocultada_en`; no elimina mensajes ni fotografías de evidencia. La

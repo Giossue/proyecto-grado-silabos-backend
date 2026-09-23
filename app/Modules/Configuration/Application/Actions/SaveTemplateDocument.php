@@ -44,7 +44,7 @@ final class SaveTemplateDocument
             : $this->demoteEmptyRepeatedTables(
                 TemplateDocument::normalize($document, array_keys(TemplateVariables::definitions())),
             );
-        DB::transaction(function () use ($block, $normalized, $fingerprint, $actor, $request): void {
+        $this->work->replace($request, function () use ($block, $normalized, $fingerprint, $actor, $request): void {
             $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
             $this->locks->assertTemplateEditable();
             $block = $template->blockOrFail($block->id);
@@ -74,8 +74,7 @@ final class SaveTemplateDocument
                 }
             }
             if ($normalized === null) {
-                $this->work->requireConfirmation($request);
-                $this->saveProperties($block, $request, []);
+                    $this->saveProperties($block, $request, []);
                 $this->auditDesign($block, $actor, $request, $fields->count());
 
                 return;
@@ -255,7 +254,6 @@ final class SaveTemplateDocument
                     ],
                 ]);
             }
-            $this->work->requireConfirmation($request);
             foreach ($labels as $key => $label) {
                 $fields->get($key)?->update(['etiqueta' => $label]);
             }

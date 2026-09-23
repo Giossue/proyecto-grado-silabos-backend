@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ class ReorderTemplateBlocks
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
+        private readonly InProgressWork $work,
     ) {}
 
     /** @param array<int, string> $blockIds */
@@ -31,7 +33,7 @@ class ReorderTemplateBlocks
         // Con el proceso institucional abierto, el formato está en uso: se pausa antes.
         $this->locks->assertTemplateEditable();
 
-        DB::transaction(function () use ($activeRole, $actor, $blockIds, $request, $sectionId, $template): void {
+        $this->work->replace($request, function () use ($activeRole, $actor, $blockIds, $request, $sectionId, $template): void {
             $lockedTemplate = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
 
             $section = $lockedTemplate->sectionOrFail($sectionId);

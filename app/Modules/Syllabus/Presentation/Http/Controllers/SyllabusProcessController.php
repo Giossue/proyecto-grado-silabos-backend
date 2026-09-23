@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Application\Actions\CreateSyllabusProcess;
+use App\Modules\Syllabus\Application\Actions\DeleteSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\ExtendProcessDeadline;
 use App\Modules\Syllabus\Application\Actions\PrepareAndOpenSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\TransitionSyllabusProcess;
@@ -18,10 +19,14 @@ use App\Modules\Syllabus\Presentation\Http\Requests\StoreSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\UpdateSyllabusProcessRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 
 class SyllabusProcessController extends Controller
 {
-    public function index(ManageSyllabusProcessesRequest $request): JsonResponse
+    public function index(
+        ManageSyllabusProcessesRequest $request,
+        DeleteSyllabusProcess $deleteProcess,
+    ): JsonResponse
     {
         $template = SyllabusTemplate::query()->first();
         $activeProcess = SyllabusProcess::query()->inProgress()
@@ -45,6 +50,7 @@ class SyllabusProcessController extends Controller
                     'due_at' => $process->entrega_en->toIso8601String(),
                     'convocations_count' => $process->convocations_count,
                     'configurable' => $process->isConfigurable(),
+                    'deletable' => $deleteProcess->isDeletable($process),
                 ]),
             // La plantilla es una sola: se informa cuál es, no se elige.
             'template' => $template?->hasStructure()
@@ -95,6 +101,19 @@ class SyllabusProcessController extends Controller
         $action->execute($process, $request->processData(), $actor, $request);
 
         return response()->json(['message' => 'Proceso actualizado. Las convocatorias que se abran desde ahora toman esta configuración.']);
+    }
+
+    public function destroy(
+        SyllabusProcess $process,
+        Request $request,
+        DeleteSyllabusProcess $action,
+    ): JsonResponse {
+        Gate::authorize('delete', $process);
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $action->execute($process, $actor, $request);
+
+        return response()->json(['message' => 'Convocatoria institucional eliminada.']);
     }
 
     public function extendDeadline(
