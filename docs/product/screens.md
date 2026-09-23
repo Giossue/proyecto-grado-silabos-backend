@@ -253,8 +253,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   la invitación anterior y emite otra al nuevo correo (I-38, I-88). COR-15 muestra las
   cuentas pendientes dentro de la tabla de docentes y asignaciones, con estado «Pendiente
   de activación» y la misma acción de reenvío para la carrera activa.
-- Salida de personas (I-39): en ADM-04 Carreras muestra la coordinación activa y su menú
-  tiene **Reemplazar coordinador** (o **Asignar coordinador** si no hay): cierra
+- Salida de personas (I-39): en ADM-04 Carreras la coordinación no ocupa una columna;
+  su menú tiene **Reemplazar coordinador** (o **Asignar coordinador** si no hay): cierra
   nombramiento y rol de quien sale, abre los de quien entra y, si se marca y no le
   queda otro rol, desactiva la cuenta saliente. Administración elige a la persona
   coordinadora sin tipo de designación ni sustento documental. En COR-15, cada asignación
