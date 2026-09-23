@@ -32,8 +32,6 @@ class TemplateStructureValidator
     /** @throws ValidationException */
     public function assertUsable(SyllabusTemplate $template, string $errorKey = 'template'): void
     {
-        $template->loadMissing('sections.blocks.fields');
-
         $missing = array_values(array_diff(self::REQUIRED_SECTIONS, $template->sections->pluck('clave')->all()));
         if ($missing !== []) {
             throw ValidationException::withMessages([

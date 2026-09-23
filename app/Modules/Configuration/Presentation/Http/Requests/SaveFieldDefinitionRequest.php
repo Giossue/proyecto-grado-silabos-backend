@@ -34,20 +34,24 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
                 Rule::requiredIf($fieldId === null),
                 'nullable',
                 'uuid',
-                Rule::exists('componentes_plantilla', 'id')
-                    ->where('plantilla_id', $templateId)
-                    ->where('tipo_componente_plantilla', 'seccion')
-                    ->whereNull('componente_padre_id'),
+                static function (string $attribute, mixed $value, \Closure $fail) use ($template): void {
+                    if (is_string($value)
+                        && (! $template instanceof SyllabusTemplate || $template->section($value) === null)) {
+                        $fail('La sección seleccionada no pertenece a la plantilla.');
+                    }
+                },
             ],
             'position' => ['nullable', 'integer', 'min:0'],
             'block_id' => [
                 Rule::requiredIf($fieldId !== null),
                 'nullable',
                 'uuid',
-                Rule::exists('componentes_plantilla', 'id')
-                    ->where('plantilla_id', $templateId)
-                    ->where('tipo_componente_plantilla', '!=', 'seccion')
-                    ->whereNotNull('componente_padre_id'),
+                static function (string $attribute, mixed $value, \Closure $fail) use ($template): void {
+                    if (is_string($value)
+                        && (! $template instanceof SyllabusTemplate || $template->block($value) === null)) {
+                        $fail('El bloque seleccionado no pertenece a la plantilla.');
+                    }
+                },
             ],
             'key' => [
                 'required',

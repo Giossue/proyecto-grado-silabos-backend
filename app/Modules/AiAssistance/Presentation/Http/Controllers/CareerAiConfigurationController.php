@@ -19,7 +19,7 @@ class CareerAiConfigurationController extends Controller
     {
         $activeRole = $roles->resolve($request);
         abort_unless($activeRole?->role->codigo_rol === 'coordinador' && is_string($activeRole->carrera_id), 403);
-        $template = SyllabusTemplate::query()->with('sections.blocks.fields')->firstOrFail();
+        $template = SyllabusTemplate::query()->firstOrFail();
         $preferences = CareerAiPreference::query()->where('carrera_id', $activeRole->carrera_id)
             ->get()->keyBy('definicion_campo_id');
         $fields = [];

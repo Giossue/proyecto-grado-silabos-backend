@@ -17,7 +17,7 @@ class SyllabusSnapshot
     /** @return array<string, mixed> */
     public function build(Syllabus $syllabus): array
     {
-        $syllabus->loadMissing(['template.sections.blocks.fields', 'values', 'rows']);
+        $syllabus->loadMissing(['template', 'values', 'rows']);
         $values = $syllabus->values->keyBy('definicion_campo_id');
         $rows = $syllabus->rows
             ->sortBy(fn (RepeatableRow $row): string => sprintf(

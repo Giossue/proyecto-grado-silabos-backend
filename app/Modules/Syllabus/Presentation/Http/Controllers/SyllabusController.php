@@ -203,7 +203,7 @@ class SyllabusController extends Controller
     {
         $syllabus->load([
             'convocation.career', 'convocation.process.academicPeriod', 'subject', 'scopes.parallel', 'teachers:id,nombre,correo_electronico',
-            'template.sections.blocks.fields', 'values', 'rows',
+            'template', 'values', 'rows',
             'validationRuns' => fn ($query) => $query->with('results')->latest('completado_en')->limit(1),
             'revisions' => fn ($query) => $query->with([
                 'submitter:id,nombre', 'approval.approver:id,nombre',

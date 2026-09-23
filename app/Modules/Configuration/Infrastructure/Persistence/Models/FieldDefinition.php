@@ -5,6 +5,7 @@ namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 use App\Support\Database\MapsLegacyColumnNames;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -37,7 +38,6 @@ class FieldDefinition extends Model
         'reglas' => 'reglas_definicion_campo',
         'opciones' => 'opciones_definicion_campo',
         'posicion' => 'posicion_definicion_campo',
-        'bloque_plantilla_id' => 'componente_plantilla_id',
     ];
 
     public $timestamps = false;
@@ -83,9 +83,17 @@ class FieldDefinition extends Model
         return $this->belongsTo(SyllabusTemplate::class, 'plantilla_id');
     }
 
-    /** @return BelongsTo<TemplateBlock, $this> */
-    public function block(): BelongsTo
+    /** @return Attribute<TemplateBlock|null, never> */
+    protected function block(): Attribute
     {
-        return $this->belongsTo(TemplateBlock::class, 'componente_plantilla_id');
+        return Attribute::get(function (): ?TemplateBlock {
+            $template = $this->relationLoaded('template')
+                ? $this->getRelation('template')
+                : $this->template()->first();
+
+            return $template instanceof SyllabusTemplate
+                ? $template->block($this->bloque_plantilla_id)
+                : null;
+        });
     }
 }

@@ -43,9 +43,9 @@ final class SaveTemplateDocument
                 TemplateDocument::normalize($document, array_keys(TemplateVariables::definitions())),
             );
         DB::transaction(function () use ($block, $normalized, $fingerprint, $actor, $request): void {
-            SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
+            $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
             $this->locks->assertTemplateEditable();
-            $block->refresh()->load('fields');
+            $block = $template->blockOrFail($block->id);
             if (! hash_equals(self::fingerprint($block), $fingerprint)) {
                 throw ValidationException::withMessages(['fingerprint' => 'La plantilla cambió en otra sesión. Recargue antes de guardar; su diseño no fue sobrescrito.']);
             }
@@ -260,7 +260,9 @@ final class SaveTemplateDocument
             $position = $block->fields->count();
             foreach ($toCreate as $key => $attrs) {
                 $block->fields()->create([
-                    'plantilla_id' => $block->plantilla_id, 'clave' => $key,
+                    'plantilla_id' => $block->plantilla_id,
+                    'bloque_plantilla_id' => $block->id,
+                    'clave' => $key,
                     'etiqueta' => $attrs['label'], 'tipo' => $attrs['kind'],
                     'opciones' => $attrs['options'],
                     'heredado' => false, 'editable_docente' => true,

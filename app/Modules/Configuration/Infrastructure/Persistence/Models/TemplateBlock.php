@@ -3,96 +3,111 @@
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use App\Modules\Configuration\Domain\TableLayout;
-use App\Support\Database\MapsLegacyColumnNames;
+use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * @property string $id
- * @property string $plantilla_id
- * @property string $seccion_plantilla_id
- * @property string $clave
- * @property string $tipo
- * @property string $titulo
- * @property array<string, mixed>|null $configuracion
- * @property int $posicion
- * @property-read SyllabusTemplate $template
- * @property-read TemplateSection $section
- */
-class TemplateBlock extends Model
+/** Bloque embebido dentro de `plantilla_silabo.documento_plantilla`. */
+final class TemplateBlock implements UrlRoutable
 {
-    use HasUuids, MapsLegacyColumnNames;
+    public string $id;
 
-    protected const LEGACY_COLUMN_ALIASES = [
-        'seccion_plantilla_id' => 'componente_padre_id',
-        'clave' => 'clave_componente_plantilla',
-        'tipo' => 'tipo_componente_plantilla',
-        'titulo' => 'titulo_componente_plantilla',
-        'configuracion' => 'configuracion_componente_plantilla',
-        'posicion' => 'posicion_componente_plantilla',
-    ];
+    public string $plantilla_id;
 
-    public $timestamps = false;
+    public string $seccion_plantilla_id;
 
-    protected $table = 'componentes_plantilla';
+    public string $clave;
 
-    /** @var list<string> */
-    protected $fillable = ['plantilla_id', 'seccion_plantilla_id', 'clave', 'tipo', 'titulo', 'configuracion', 'posicion'];
+    public string $tipo;
 
-    protected static function booted(): void
-    {
-        static::addGlobalScope('bloque', function (Builder $builder): void {
-            $table = $builder->getModel()->getTable();
-            $builder->where("{$table}.tipo_componente_plantilla", '<>', 'seccion')
-                ->whereNotNull("{$table}.componente_padre_id");
-        });
+    public string $titulo;
+
+    /** @var array<string, mixed> */
+    public array $configuracion;
+
+    public int $posicion;
+
+    /** @param array<string, mixed> $data */
+    public function __construct(
+        public readonly SyllabusTemplate $template,
+        public readonly TemplateSection $section,
+        private array $data,
+    ) {
+        $this->hydrate($data);
     }
 
-    /** @return array<string, string> */
-    protected function casts(): array
+    /** @return Builder<FieldDefinition> */
+    public function fields(): Builder
     {
-        return ['configuracion' => 'array', 'posicion' => 'integer'];
+        return FieldDefinition::query()
+            ->where('plantilla_id', $this->plantilla_id)
+            ->where('bloque_plantilla_id', $this->id)
+            ->orderBy('posicion');
     }
 
-    /** @return BelongsTo<SyllabusTemplate, $this> */
-    public function template(): BelongsTo
+    public function __get(string $name): mixed
     {
-        return $this->belongsTo(SyllabusTemplate::class, 'plantilla_id');
+        return match ($name) {
+            'fields' => $this->fields()->get(),
+            'section' => $this->section,
+            'template' => $this->template,
+            default => null,
+        };
     }
 
-    /** @return BelongsTo<TemplateSection, $this> */
-    public function section(): BelongsTo
+    public function getAttribute(string $key): mixed
     {
-        return $this->belongsTo(TemplateSection::class, 'componente_padre_id');
+        return $this->{$key} ?? null;
     }
 
-    /** @return HasMany<FieldDefinition, $this> */
-    public function fields(): HasMany
+    /** @param array<string, mixed> $attributes */
+    public function update(array $attributes): bool
     {
-        return $this->hasMany(FieldDefinition::class, 'componente_plantilla_id')->orderBy('posicion');
+        $fresh = $this->template->fresh()->updateBlockDocument($this->id, $attributes);
+        $this->hydrate($fresh->data);
+
+        return true;
+    }
+
+    public function delete(): bool
+    {
+        $this->template->fresh()->removeBlockDocument($this->id);
+
+        return true;
+    }
+
+    public function fresh(): self
+    {
+        return $this->template->fresh()->blockOrFail($this->id);
+    }
+
+    public function refresh(): self
+    {
+        $fresh = $this->fresh();
+        $this->hydrate($fresh->data);
+
+        return $this;
+    }
+
+    public function load(mixed $relations): self
+    {
+        return $this;
+    }
+
+    public function loadMissing(mixed $relations): self
+    {
+        return $this;
     }
 
     public function configuredContentType(): ?string
     {
-        $configuration = $this->getAttribute('configuracion');
-
-        if (! is_array($configuration)) {
-            return null;
-        }
-
-        $contentType = $configuration['content_type'] ?? null;
+        $contentType = $this->configuracion['content_type'] ?? null;
 
         return is_string($contentType) ? $contentType : null;
     }
 
     public function pageOrientation(): ?string
     {
-        $orientation = is_array($this->configuracion)
-            ? ($this->configuracion['page_orientation'] ?? null)
-            : null;
+        $orientation = $this->configuracion['page_orientation'] ?? null;
         if (in_array($orientation, ['portrait', 'landscape'], true)) {
             return $orientation;
         }
@@ -100,5 +115,65 @@ class TemplateBlock extends Model
         $layout = TableLayout::fromBlock($this);
 
         return $layout !== null && TableLayout::isPlanning($layout) ? 'landscape' : null;
+    }
+
+    /** @return array<string, mixed> */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'plantilla_id' => $this->plantilla_id,
+            'seccion_plantilla_id' => $this->seccion_plantilla_id,
+            'clave' => $this->clave,
+            'tipo' => $this->tipo,
+            'titulo' => $this->titulo,
+            'configuracion' => $this->configuracion,
+            'posicion' => $this->posicion,
+        ];
+    }
+
+    public function getRouteKey(): string
+    {
+        return $this->id;
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
+
+    public function resolveRouteBinding($value, $field = null): mixed
+    {
+        return null;
+    }
+
+    public function resolveSoftDeletableRouteBinding($value, $field = null): mixed
+    {
+        return null;
+    }
+
+    public function __toString(): string
+    {
+        return $this->id;
+    }
+
+    /** @return array<string, mixed> */
+    public function toDocument(): array
+    {
+        return $this->data;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function hydrate(array $data): void
+    {
+        $this->data = $data;
+        $this->id = (string) $data['id'];
+        $this->plantilla_id = $this->template->id;
+        $this->seccion_plantilla_id = $this->section->id;
+        $this->clave = (string) $data['clave'];
+        $this->tipo = (string) $data['tipo'];
+        $this->titulo = (string) $data['titulo'];
+        $this->configuracion = is_array($data['configuracion'] ?? null) ? $data['configuracion'] : [];
+        $this->posicion = (int) ($data['posicion'] ?? 1);
     }
 }

@@ -4,7 +4,6 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
@@ -35,25 +34,14 @@ class ReorderTemplateBlocks
         DB::transaction(function () use ($activeRole, $actor, $blockIds, $request, $sectionId, $template): void {
             $lockedTemplate = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
 
-            $blocks = TemplateBlock::query()
-                ->where('plantilla_id', $lockedTemplate->id)
-                ->where('seccion_plantilla_id', $sectionId)
-                ->lockForUpdate()
-                ->get();
+            $section = $lockedTemplate->sectionOrFail($sectionId);
+            $blocks = $section->blocks();
 
             if ($blocks->count() !== count($blockIds) || $blocks->pluck('id')->sort()->values()->all() !== collect($blockIds)->sort()->values()->all()) {
                 throw ValidationException::withMessages(['blocks' => 'El orden de bloques no es válido.']);
             }
 
-            $temporaryPosition = ((int) $blocks->max('posicion')) + $blocks->count() + 1;
-
-            foreach ($blocks->values() as $position => $block) {
-                $block->update(['posicion' => $temporaryPosition + $position]);
-            }
-
-            foreach ($blockIds as $position => $blockId) {
-                $blocks->firstWhere('id', $blockId)?->update(['posicion' => $position + 1]);
-            }
+            $lockedTemplate->reorderBlocks($sectionId, $blockIds);
 
             $this->audit->execute(
                 actorId: $actor->id,

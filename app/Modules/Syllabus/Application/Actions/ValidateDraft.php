@@ -30,7 +30,7 @@ class ValidateDraft
             $locked = Syllabus::query()->lockForUpdate()->findOrFail($syllabus->id);
             $fields = FieldDefinition::query()
                 ->where('plantilla_id', $locked->plantilla_id)
-                ->with('block')
+                ->with('template')
                 ->get();
             $values = $locked->values()->get()->keyBy('definicion_campo_id');
             $rows = $locked->rows()->orderBy('posicion')->get()->groupBy('definicion_campo_id');

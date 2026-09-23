@@ -18,7 +18,7 @@ class SyllabusTemplateSeeder extends Seeder
             return;
         }
 
-        if ($template->sections()->exists() || $template->blocks()->exists() || $template->fields()->exists()) {
+        if ($template->hasStructure()) {
             return;
         }
 

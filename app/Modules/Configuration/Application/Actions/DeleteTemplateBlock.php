@@ -3,6 +3,8 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -30,7 +32,13 @@ class DeleteTemplateBlock
             // Un bloque menos cambia el formato que los docentes están llenando.
             $this->work->requireConfirmation($request);
 
-            $block->delete();
+            $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
+            $lockedBlock = $template->blockOrFail($block->id);
+            FieldDefinition::query()
+                ->where('plantilla_id', $template->id)
+                ->where('bloque_plantilla_id', $lockedBlock->id)
+                ->delete();
+            $template->removeBlockDocument($lockedBlock->id);
 
             $this->audit->execute(
                 actorId: $actor->id,

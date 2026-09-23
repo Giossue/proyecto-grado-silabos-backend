@@ -2,62 +2,104 @@
 
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
-use App\Support\Database\MapsLegacyColumnNames;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Contracts\Routing\UrlRoutable;
 
-/**
- * @property string $id
- * @property string $plantilla_id
- * @property string $clave
- * @property string $titulo
- * @property string|null $descripcion
- * @property int $posicion
- * @property-read SyllabusTemplate $template
- */
-class TemplateSection extends Model
+/** Sección embebida dentro de `plantilla_silabo.documento_plantilla`. */
+final class TemplateSection implements UrlRoutable
 {
-    use HasUuids, MapsLegacyColumnNames;
+    public string $id;
 
-    protected const LEGACY_COLUMN_ALIASES = [
-        'clave' => 'clave_componente_plantilla',
-        'titulo' => 'titulo_componente_plantilla',
-        'descripcion' => 'descripcion_componente_plantilla',
-        'posicion' => 'posicion_componente_plantilla',
-    ];
+    public string $plantilla_id;
 
-    public $timestamps = false;
+    public string $clave;
 
-    protected $table = 'componentes_plantilla';
+    public string $titulo;
 
-    /** @var list<string> */
-    protected $fillable = ['plantilla_id', 'clave', 'titulo', 'descripcion', 'posicion'];
+    public ?string $descripcion;
 
-    protected static function booted(): void
+    public int $posicion;
+
+    /** @param array<string, mixed> $data */
+    public function __construct(public readonly SyllabusTemplate $template, private array $data)
     {
-        static::addGlobalScope('seccion', function (Builder $builder): void {
-            $table = $builder->getModel()->getTable();
-            $builder->where("{$table}.tipo_componente_plantilla", 'seccion')
-                ->whereNull("{$table}.componente_padre_id");
-        });
-
-        static::creating(function (self $section): void {
-            $section->setAttribute('tipo_componente_plantilla', 'seccion');
-        });
+        $this->hydrate($data);
     }
 
-    /** @return BelongsTo<SyllabusTemplate, $this> */
-    public function template(): BelongsTo
+    /** @return EmbeddedTemplateCollection<int, TemplateBlock> */
+    public function blocks(): EmbeddedTemplateCollection
     {
-        return $this->belongsTo(SyllabusTemplate::class, 'plantilla_id');
+        return new EmbeddedTemplateCollection(array_map(
+            fn (array $block): TemplateBlock => new TemplateBlock($this->template, $this, $block),
+            array_values($this->data['bloques'] ?? []),
+        ));
     }
 
-    /** @return HasMany<TemplateBlock, $this> */
-    public function blocks(): HasMany
+    public function __get(string $name): mixed
     {
-        return $this->hasMany(TemplateBlock::class, 'componente_padre_id')->orderBy('posicion');
+        return $name === 'blocks' ? $this->blocks() : null;
+    }
+
+    /** @param array<string, mixed> $attributes */
+    public function update(array $attributes): bool
+    {
+        $fresh = $this->template->fresh()->updateSectionDocument($this->id, $attributes);
+        $this->hydrate($fresh->data);
+
+        return true;
+    }
+
+    public function delete(): bool
+    {
+        $this->template->fresh()->removeSectionDocument($this->id);
+
+        return true;
+    }
+
+    public function fresh(): self
+    {
+        return $this->template->fresh()->sectionOrFail($this->id);
+    }
+
+    /** @return array<string, mixed> */
+    public function toDocument(): array
+    {
+        return $this->data;
+    }
+
+    public function getRouteKey(): string
+    {
+        return $this->id;
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'id';
+    }
+
+    public function resolveRouteBinding($value, $field = null): mixed
+    {
+        return null;
+    }
+
+    public function resolveSoftDeletableRouteBinding($value, $field = null): mixed
+    {
+        return null;
+    }
+
+    public function __toString(): string
+    {
+        return $this->id;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function hydrate(array $data): void
+    {
+        $this->data = $data;
+        $this->id = (string) $data['id'];
+        $this->plantilla_id = $this->template->id;
+        $this->clave = (string) $data['clave'];
+        $this->titulo = (string) $data['titulo'];
+        $this->descripcion = is_string($data['descripcion'] ?? null) ? $data['descripcion'] : null;
+        $this->posicion = (int) ($data['posicion'] ?? 1);
     }
 }

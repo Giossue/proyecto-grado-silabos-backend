@@ -25,7 +25,7 @@ class BuildSyllabusChatContext
      */
     public function build(Syllabus $syllabus, ?string $query = null, ?string $excludeFieldId = null): array
     {
-        $syllabus->loadMissing(['template.sections.blocks.fields', 'values', 'rows', 'convocation']);
+        $syllabus->loadMissing(['template', 'values', 'rows', 'convocation']);
         $values = $syllabus->values->keyBy('definicion_campo_id');
         $rows = $syllabus->rows->groupBy('definicion_campo_id');
         $fieldItems = [];

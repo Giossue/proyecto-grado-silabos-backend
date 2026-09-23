@@ -35,7 +35,7 @@ class AiChatController extends Controller
                 $review !== null,
                 fn ($query) => $query->where('revision_ia_silabo_id', $review->id),
             )
-            ->with(['field.block.section', 'recommendations.evidence', 'recommendations.feedback'])
+            ->with(['field.template', 'recommendations.evidence', 'recommendations.feedback'])
             ->latest('solicitado_en')
             ->limit(25)
             ->get();

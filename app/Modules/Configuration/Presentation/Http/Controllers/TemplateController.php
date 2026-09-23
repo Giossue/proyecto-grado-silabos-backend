@@ -66,9 +66,9 @@ class TemplateController extends Controller
         return response()->json($payload);
     }
 
-    public function updateDocument(SyllabusTemplate $template, TemplateBlock $block, SaveTemplateDocumentRequest $request, SaveTemplateDocument $action): JsonResponse
+    public function updateDocument(SyllabusTemplate $template, string $block, SaveTemplateDocumentRequest $request, SaveTemplateDocument $action): JsonResponse
     {
-        abort_unless($block->plantilla_id === $template->id, 404);
+        $block = $template->blockOrFail($block);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($block, $request->validated('document'), $request->validated('fingerprint'), $actor, $request);
@@ -104,8 +104,6 @@ class TemplateController extends Controller
     /** @return array<string, mixed> */
     private function builderProps(SyllabusTemplate $template, ProcessLocks $locks, InstitutionalLogos $logos): array
     {
-        $template->load('sections.blocks.fields');
-
         return [
             'processLock' => $locks->templateLockReason(),
             'identificationSample' => IdentificationCard::grid(IdentificationCard::sample()),
@@ -128,17 +126,20 @@ class TemplateController extends Controller
                     'key' => $section->clave,
                     'title' => $section->titulo,
                     'description' => $section->descripcion,
-                    'blocks' => $section->blocks->map(fn (TemplateBlock $block) => [
-                        'id' => $block->id,
-                        'key' => $block->clave,
-                        'title' => $block->titulo,
-                        'type' => $block->tipo,
-                        'content_type' => $this->contentType($block, $block->fields->first()),
-                        'page_orientation' => $block->pageOrientation(),
-                        'table' => TableLayout::fromBlock($block),
-                        'document' => $block->configuracion['document'] ?? null,
-                        'fingerprint' => SaveTemplateDocument::fingerprint($block),
-                        'fields' => $block->fields
+                    'blocks' => $section->blocks->map(function (TemplateBlock $block): array {
+                        $fields = $block->fields;
+
+                        return [
+                            'id' => $block->id,
+                            'key' => $block->clave,
+                            'title' => $block->titulo,
+                            'type' => $block->tipo,
+                            'content_type' => $this->contentType($block, $fields->first()),
+                            'page_orientation' => $block->pageOrientation(),
+                            'table' => TableLayout::fromBlock($block),
+                            'document' => $block->configuracion['document'] ?? null,
+                            'fingerprint' => SaveTemplateDocument::fingerprint($block),
+                            'fields' => $fields
                             ->reject(fn (FieldDefinition $field) => isset($block->configuracion['detached_fields'][$field->clave]))
                             ->map(fn (FieldDefinition $field) => [
                                 'id' => $field->id,
@@ -157,7 +158,8 @@ class TemplateController extends Controller
                                 'document_marker' => $field->marcador_documento,
                                 'content_type' => $this->contentType($block, $field),
                             ])->values()->all(),
-                    ])->values()->all(),
+                        ];
+                    })->values()->all(),
                 ])->values()->all(),
             ],
             'blockTypes' => [
@@ -275,11 +277,11 @@ class TemplateController extends Controller
 
     public function updateSection(
         SyllabusTemplate $template,
-        TemplateSection $section,
+        string $section,
         SaveTemplateSectionRequest $request,
         SaveTemplateSection $action,
     ): JsonResponse {
-        abort_unless($section->plantilla_id === $template->id, 404);
+        $section = $template->sectionOrFail($section);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->update($section, $request->validated(), $actor, $request);
@@ -346,11 +348,11 @@ class TemplateController extends Controller
 
     public function updateTableLayout(
         SyllabusTemplate $template,
-        TemplateBlock $block,
+        string $block,
         UpdateTableLayoutRequest $request,
         UpdateTableLayout $action,
     ): JsonResponse {
-        abort_unless($block->plantilla_id === $template->id, 404);
+        $block = $template->blockOrFail($block);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($block, $request->validated(), $actor, $request);
@@ -360,11 +362,11 @@ class TemplateController extends Controller
 
     public function destroyBlock(
         SyllabusTemplate $template,
-        TemplateBlock $block,
+        string $block,
         ManageTemplatesRequest $request,
         DeleteTemplateBlock $action,
     ): JsonResponse {
-        abort_unless($block->plantilla_id === $template->id, 404);
+        $block = $template->blockOrFail($block);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($block, $actor, $request);
@@ -374,11 +376,11 @@ class TemplateController extends Controller
 
     public function destroySection(
         SyllabusTemplate $template,
-        TemplateSection $section,
+        string $section,
         ManageTemplatesRequest $request,
         DeleteTemplateSection $action,
     ): JsonResponse {
-        abort_unless($section->plantilla_id === $template->id, 404);
+        $section = $template->sectionOrFail($section);
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $action->execute($section, $actor, $request);

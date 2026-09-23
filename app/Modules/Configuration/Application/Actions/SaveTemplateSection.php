@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -14,6 +13,7 @@ use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class SaveTemplateSection
@@ -37,35 +37,17 @@ class SaveTemplateSection
             // Una sección nueva cambia el formato que los docentes están llenando.
             $this->work->requireConfirmation($request);
 
-            $sections = TemplateSection::query()
-                ->where('plantilla_id', $template->id)
-                ->orderBy('posicion')
-                ->lockForUpdate()
-                ->get()
-                ->values();
+            $sections = $template->sections()->sortBy('posicion')->values();
             $position = min(
                 max(1, ((int) ($data['position'] ?? $sections->count() + 1))),
                 $sections->count() + 1,
             );
-            $temporaryPosition = ((int) $sections->max('posicion')) + $sections->count() + 2;
+            $sectionId = (string) Str::uuid();
+            $blocks = [];
+            $fieldDefinitions = [];
 
-            foreach ($sections as $index => $existingSection) {
-                $existingSection->update(['posicion' => $temporaryPosition + $index]);
-            }
-
-            foreach ($sections as $index => $existingSection) {
-                $existingSection->update([
-                    'posicion' => $index < $position - 1 ? $index + 1 : $index + 2,
-                ]);
-            }
-
-            $section = TemplateSection::query()->create([
-                'plantilla_id' => $template->id,
-                'clave' => $this->stringValue($data, 'key'),
-                'titulo' => $this->stringValue($data, 'title'),
-                'posicion' => $position,
-            ]);
             foreach ($this->fields($data) as $fieldPosition => $fieldData) {
+                $blockId = (string) Str::uuid();
                 $contentType = $this->stringValue($fieldData, 'content_type');
                 $configuration = ['content_type' => $contentType];
                 if ($contentType === 'table') {
@@ -73,11 +55,8 @@ class SaveTemplateSection
                 }
                 $fieldKey = $this->stringValue($fieldData, 'key');
                 $fieldLabel = $this->stringValue($fieldData, 'label');
-                $block = TemplateBlock::query()->create([
-                    'plantilla_id' => $template->id,
-                    'seccion_plantilla_id' => $section->id,
-                    // La clave del campo ya es única dentro de la plantilla y cabe en
-                    // la columna de 120 caracteres de componentes_plantilla.
+                $blocks[] = [
+                    'id' => $blockId,
                     'clave' => $fieldKey,
                     'tipo' => in_array($contentType, ['table', 'bulleted_list', 'numbered_list'], true)
                         ? 'repetible'
@@ -85,10 +64,10 @@ class SaveTemplateSection
                     'titulo' => $fieldLabel,
                     'configuracion' => $configuration,
                     'posicion' => $fieldPosition + 1,
-                ]);
-                FieldDefinition::query()->create([
+                ];
+                $fieldDefinitions[] = [
                     'plantilla_id' => $template->id,
-                    'bloque_plantilla_id' => $block->id,
+                    'bloque_plantilla_id' => $blockId,
                     'clave' => $fieldKey,
                     'etiqueta' => $fieldLabel,
                     'tipo' => match ($contentType) {
@@ -104,8 +83,35 @@ class SaveTemplateSection
                     'ia_coordinacion_configurable' => (bool) ($fieldData['ai_coordinator_configurable'] ?? true),
                     'opciones' => $fieldData['options'] ?? null,
                     'posicion' => 1,
-                ]);
+                ];
             }
+
+            $orderedSections = $sections
+                ->map(fn (TemplateSection $existingSection): array => $existingSection->toDocument())
+                ->all();
+            array_splice($orderedSections, $position - 1, 0, [[
+                'id' => $sectionId,
+                'clave' => $this->stringValue($data, 'key'),
+                'titulo' => $this->stringValue($data, 'title'),
+                'descripcion' => null,
+                'posicion' => $position,
+                'bloques' => $blocks,
+            ]]);
+            $orderedSections = array_map(
+                fn (array $section, int $index): array => [...$section, 'posicion' => $index + 1],
+                $orderedSections,
+                array_keys($orderedSections),
+            );
+            $template->update(['documento' => [
+                'version_esquema' => 1,
+                'secciones' => $orderedSections,
+            ]]);
+
+            foreach ($fieldDefinitions as $fieldDefinition) {
+                FieldDefinition::query()->create($fieldDefinition);
+            }
+
+            $section = $template->fresh()->sectionOrFail($sectionId);
 
             $this->audit->execute(
                 actorId: $actor->id,
@@ -129,7 +135,10 @@ class SaveTemplateSection
         $this->locks->assertTemplateEditable();
 
         return DB::transaction(function () use ($activeRole, $actor, $data, $request, $section): TemplateSection {
-            $section->update(['titulo' => $this->stringValue($data, 'title')]);
+            $template = SyllabusTemplate::query()->whereKey($section->plantilla_id)->lockForUpdate()->firstOrFail();
+            $section = $template->updateSectionDocument($section->id, [
+                'titulo' => $this->stringValue($data, 'title'),
+            ]);
 
             $this->audit->execute(
                 actorId: $actor->id,

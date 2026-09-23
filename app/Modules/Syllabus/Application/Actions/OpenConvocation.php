@@ -41,7 +41,7 @@ class OpenConvocation
         return DB::transaction(function () use ($actor, $convocationId, $activeRole, $request): Convocation {
             $convocation = Convocation::query()
                 ->lockForUpdate()
-                ->with(['career.faculty', 'sources', 'process.template.sections.blocks.fields'])
+                ->with(['career.faculty', 'sources', 'process.template'])
                 ->findOrFail($convocationId);
             if ($activeRole?->carrera_id !== $convocation->carrera_id || $activeRole->role->codigo_rol !== 'coordinador') {
                 abort(403);

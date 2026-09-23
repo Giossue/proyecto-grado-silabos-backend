@@ -56,7 +56,7 @@ class ResetSyllabus
         return DB::transaction(function () use ($activeRole, $actor, $reason, $request, $syllabus): Syllabus {
             $locked = Syllabus::query()
                 ->lockForUpdate()
-                ->with(['convocation', 'scopes.scheduledSubject', 'template.sections.blocks.fields'])
+                ->with(['convocation', 'scopes.scheduledSubject', 'template'])
                 ->findOrFail($syllabus->id);
 
             if (! in_array($locked->estado, self::RESETTABLE_STATES, true)) {

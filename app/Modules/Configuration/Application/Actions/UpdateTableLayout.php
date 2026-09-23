@@ -41,8 +41,8 @@ class UpdateTableLayout
         $normalized = TableLayout::normalize($layout);
 
         return DB::transaction(function () use ($actor, $activeRole, $block, $normalized, $request): array {
-            SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
-            $block->refresh()->load('fields');
+            $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
+            $block = $template->blockOrFail($block->id);
             if (! hash_equals(SaveTemplateDocument::fingerprint($block), $request->string('fingerprint')->toString())) {
                 throw ValidationException::withMessages(['fingerprint' => 'La plantilla cambió en otra sesión. Recargue antes de guardar; su estructura no fue sobrescrita.']);
             }

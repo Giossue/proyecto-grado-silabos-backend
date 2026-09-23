@@ -3,6 +3,8 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -30,7 +32,13 @@ class DeleteTemplateSection
             // Una sección menos cambia el formato que los docentes están llenando.
             $this->work->requireConfirmation($request);
 
-            $section->delete();
+            $template = SyllabusTemplate::query()->whereKey($section->plantilla_id)->lockForUpdate()->firstOrFail();
+            $lockedSection = $template->sectionOrFail($section->id);
+            FieldDefinition::query()
+                ->where('plantilla_id', $template->id)
+                ->whereIn('bloque_plantilla_id', $lockedSection->blocks()->pluck('id'))
+                ->delete();
+            $template->removeSectionDocument($lockedSection->id);
 
             $this->audit->execute(
                 actorId: $actor->id,

@@ -7,13 +7,13 @@ use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class SaveFieldDefinition
@@ -58,7 +58,7 @@ class SaveFieldDefinition
 
             $contentType = $this->stringValue($data, 'content_type');
 
-            $customBlock = $field?->block()->first();
+            $customBlock = $field?->block;
             if ($field !== null && $customBlock !== null && is_array($customBlock->configuracion['document'] ?? null)) {
                 abort_unless($customBlock->id === $this->stringValue($data, 'block_id'), 404);
                 if ($contentType !== $customBlock->configuredContentType() || $data['key'] !== $field->clave) {
@@ -84,7 +84,7 @@ class SaveFieldDefinition
             // se toca; solo cambian etiqueta y ayuda.
             if ($field !== null && in_array($contentType, ['institutional', 'flow'], true)) {
                 $field->update(['etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null]);
-                TemplateBlock::query()->whereKey($field->bloque_plantilla_id)->update(['titulo' => $data['label']]);
+                $template->updateBlockDocument($field->bloque_plantilla_id, ['titulo' => $data['label']]);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
                 return $field;
@@ -148,47 +148,37 @@ class SaveFieldDefinition
     private function createBlock(SyllabusTemplate $template, array $data, string $contentType): TemplateBlock
     {
         $sectionId = $this->stringValue($data, 'section_id');
-        $section = TemplateSection::query()
-            ->whereKey($sectionId)
-            ->where('plantilla_id', $template->id)
-            ->firstOrFail();
-
-        $blocks = TemplateBlock::query()
-            ->where('seccion_plantilla_id', $section->id)
-            ->orderBy('posicion')
-            ->lockForUpdate()
-            ->get()
-            ->values();
+        $section = $template->sectionOrFail($sectionId);
+        $blocks = $section->blocks()->sortBy('posicion')->values();
         $position = min(
             max(1, ((int) ($data['position'] ?? $blocks->count() + 1))),
             $blocks->count() + 1,
         );
-        $temporaryPosition = ((int) $blocks->max('posicion')) + $blocks->count() + 2;
-
-        foreach ($blocks as $index => $existingBlock) {
-            $existingBlock->update(['posicion' => $temporaryPosition + $index]);
-        }
-
-        foreach ($blocks as $index => $existingBlock) {
-            $existingBlock->update([
-                'posicion' => $index < $position - 1 ? $index + 1 : $index + 2,
-            ]);
-        }
-
         $configuration = ['content_type' => $contentType];
         if ($contentType === 'table') {
             $configuration['table'] = TableLayout::default();
         }
 
-        return TemplateBlock::query()->create([
-            'plantilla_id' => $template->id,
-            'seccion_plantilla_id' => $section->id,
+        $blockId = (string) Str::uuid();
+        $orderedBlocks = $blocks
+            ->map(fn (TemplateBlock $block): array => $block->toDocument())
+            ->all();
+        array_splice($orderedBlocks, $position - 1, 0, [[
+            'id' => $blockId,
             'clave' => $data['key'],
             'tipo' => $this->blockType($contentType),
             'titulo' => $data['label'],
             'configuracion' => $configuration,
             'posicion' => $position,
-        ]);
+        ]]);
+        $orderedBlocks = array_map(
+            fn (array $block, int $index): array => [...$block, 'posicion' => $index + 1],
+            $orderedBlocks,
+            array_keys($orderedBlocks),
+        );
+        $template->updateSectionDocument($section->id, ['bloques' => $orderedBlocks]);
+
+        return $template->blockOrFail($blockId);
     }
 
     /** @param array<string, mixed> $data */
@@ -199,10 +189,7 @@ class SaveFieldDefinition
         string $contentType,
     ): TemplateBlock {
         $blockId = $this->stringValue($data, 'block_id');
-        $block = TemplateBlock::query()
-            ->whereKey($blockId)
-            ->where('plantilla_id', $template->id)
-            ->firstOrFail();
+        $block = $template->blockOrFail($blockId);
         abort_unless($block->id === $field->bloque_plantilla_id, 404);
 
         $configuration = $block->getAttribute('configuracion');

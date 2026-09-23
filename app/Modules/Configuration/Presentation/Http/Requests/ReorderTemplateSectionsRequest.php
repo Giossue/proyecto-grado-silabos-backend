@@ -3,7 +3,6 @@
 namespace App\Modules\Configuration\Presentation\Http\Requests;
 
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use Illuminate\Validation\Rule;
 
 class ReorderTemplateSectionsRequest extends ManageTemplatesRequest
 {
@@ -11,7 +10,7 @@ class ReorderTemplateSectionsRequest extends ManageTemplatesRequest
     public function rules(): array
     {
         $template = $this->route('template');
-        $templateId = $template instanceof SyllabusTemplate ? $template->id : $template;
+        $template = $template instanceof SyllabusTemplate ? $template : null;
 
         return [
             'section_ids' => ['required', 'array', 'min:1'],
@@ -19,10 +18,11 @@ class ReorderTemplateSectionsRequest extends ManageTemplatesRequest
                 'required',
                 'uuid',
                 'distinct',
-                Rule::exists('componentes_plantilla', 'id')
-                    ->where('plantilla_id', $templateId)
-                    ->where('tipo_componente_plantilla', 'seccion')
-                    ->whereNull('componente_padre_id'),
+                static function (string $attribute, mixed $value, \Closure $fail) use ($template): void {
+                    if (! is_string($value) || $template?->section($value) === null) {
+                        $fail('La sección seleccionada no pertenece a la plantilla.');
+                    }
+                },
             ],
         ];
     }

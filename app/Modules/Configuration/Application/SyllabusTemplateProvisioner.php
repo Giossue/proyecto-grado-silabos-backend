@@ -7,9 +7,8 @@ use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -46,9 +45,7 @@ final class SyllabusTemplateProvisioner
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($lockedTemplate->sections()->exists()
-                || $lockedTemplate->blocks()->exists()
-                || $lockedTemplate->fields()->exists()) {
+            if ($lockedTemplate->hasStructure()) {
                 throw ValidationException::withMessages([
                     'template' => 'Solo se puede aplicar el formato oficial a una plantilla vacía.',
                 ]);
@@ -56,7 +53,7 @@ final class SyllabusTemplateProvisioner
 
             $this->populateOfficialFormat($lockedTemplate);
 
-            return $lockedTemplate->fresh(['sections.blocks.fields']);
+            return $lockedTemplate->fresh();
         });
     }
 
@@ -69,6 +66,10 @@ final class SyllabusTemplateProvisioner
         }
 
         return SyllabusTemplate::query()->create([
+            'documento' => [
+                'version_esquema' => 1,
+                'secciones' => [],
+            ],
             'mapeo_documento' => [
                 'appearance' => TemplateAppearance::defaults(),
                 'title_block' => TemplateTitleBlock::defaults(),
@@ -83,15 +84,13 @@ final class SyllabusTemplateProvisioner
         /** @var list<array{0: string, 1: string, 2: string, 3: list<string>|null}> $identificationInputs */
         $identificationInputs = config('syllabus_template.identification_inputs', []);
 
+        $sections = [];
         foreach ($baseline as $sectionPosition => [$sectionKey, $sectionTitle, $fields]) {
-            $section = TemplateSection::query()->create([
-                'plantilla_id' => $template->id,
-                'clave' => $sectionKey,
-                'titulo' => $sectionTitle,
-                'posicion' => $sectionPosition + 1,
-            ]);
+            $sectionId = (string) Str::uuid();
+            $blocks = [];
 
             foreach ($fields as $blockPosition => [$fieldKey, $label, $contentType, $preset]) {
+                $blockId = (string) Str::uuid();
                 $configuration = ['content_type' => $contentType];
                 if ($preset !== null) {
                     $configuration['table'] = TablePresets::layout($preset);
@@ -103,15 +102,14 @@ final class SyllabusTemplateProvisioner
                     $configuration['document'] = TemplateDocumentDefaults::identification();
                 }
 
-                $block = TemplateBlock::query()->create([
-                    'plantilla_id' => $template->id,
-                    'seccion_plantilla_id' => $section->id,
+                $blocks[] = [
+                    'id' => $blockId,
                     'clave' => $blockPosition === 0 ? "{$sectionKey}_principal" : "{$sectionKey}_{$fieldKey}",
                     'tipo' => $this->blockType($contentType),
                     'titulo' => $label,
                     'configuracion' => $configuration,
                     'posicion' => $blockPosition + 1,
-                ]);
+                ];
                 $origin = match ($contentType) {
                     'institutional' => 'asignaturas',
                     'flow' => 'flujo',
@@ -120,7 +118,7 @@ final class SyllabusTemplateProvisioner
 
                 FieldDefinition::query()->create([
                     'plantilla_id' => $template->id,
-                    'bloque_plantilla_id' => $block->id,
+                    'bloque_plantilla_id' => $blockId,
                     'clave' => $fieldKey,
                     'etiqueta' => $label,
                     'tipo' => $this->fieldType($contentType),
@@ -139,7 +137,7 @@ final class SyllabusTemplateProvisioner
                 foreach ($identificationInputs as $inputPosition => [$inputKey, $inputLabel, $inputType, $options]) {
                     FieldDefinition::query()->create([
                         'plantilla_id' => $template->id,
-                        'bloque_plantilla_id' => $block->id,
+                        'bloque_plantilla_id' => $blockId,
                         'clave' => $inputKey,
                         'etiqueta' => $inputLabel,
                         'tipo' => $inputType,
@@ -153,7 +151,21 @@ final class SyllabusTemplateProvisioner
                     ]);
                 }
             }
+
+            $sections[] = [
+                'id' => $sectionId,
+                'clave' => $sectionKey,
+                'titulo' => $sectionTitle,
+                'descripcion' => null,
+                'posicion' => $sectionPosition + 1,
+                'bloques' => $blocks,
+            ];
         }
+
+        $template->update(['documento' => [
+            'version_esquema' => 1,
+            'secciones' => $sections,
+        ]]);
     }
 
     private function blockType(string $contentType): string

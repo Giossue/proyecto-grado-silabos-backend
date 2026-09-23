@@ -3,7 +3,6 @@
 namespace App\Modules\Configuration\Presentation\Http\Requests;
 
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -17,7 +16,7 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
         $template = $this->route('template');
         $templateId = $template instanceof SyllabusTemplate ? $template->id : $template;
         $section = $this->route('section');
-        $sectionId = $section instanceof TemplateSection ? $section->id : null;
+        $sectionId = is_string($section) ? $section : null;
         $hasFields = is_array($this->input('fields')) && $this->input('fields') !== [];
         $requiresLegacyField = $sectionId === null && ! $hasFields;
 
@@ -29,11 +28,14 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
                 'string',
                 'regex:/^[a-z][a-z0-9_]*$/',
                 'max:100',
-                Rule::unique('componentes_plantilla', 'clave_componente_plantilla')
-                    ->where('plantilla_id', $templateId)
-                    ->where('tipo_componente_plantilla', 'seccion')
-                    ->whereNull('componente_padre_id')
-                    ->ignore($sectionId),
+                static function (string $attribute, mixed $value, \Closure $fail) use ($sectionId, $template): void {
+                    if ($template instanceof SyllabusTemplate
+                        && $template->sections()->contains(
+                            fn ($section): bool => $section->clave === $value && $section->id !== $sectionId,
+                        )) {
+                        $fail('La clave ya está siendo utilizada por otra sección.');
+                    }
+                },
             ],
             'fields' => [Rule::requiredIf($sectionId === null && ! $this->filled('first_field_label')), 'nullable', 'array', 'min:1', 'max:20'],
             'fields.*' => ['required', 'array:key,label,help,content_type,options,ai_enabled,ai_coordinator_configurable'],
