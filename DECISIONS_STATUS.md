@@ -473,7 +473,7 @@ observaciones, aprobaciones, IA y exportaciones— y lo genera de nuevo desde la
 vigentes en una sola transacción. La inmutabilidad sigue aplicando al flujo ordinario y
 a los procesos cerrados; esta operación excepcional no deja coexistir formatos distintos.
 
-I-120 (23 de septiembre de 2026), por instrucción explícita del responsable del
+I-121 (23 de septiembre de 2026), por instrucción explícita del responsable del
 producto, retira el estado institucional `preparacion`. La convocatoria institucional
 nace `abierto` en la misma transacción que valida la plantilla, la estructura académica
 y la unicidad del proceso vigente; después solo transita `abierto ⇄ pausado → cerrado`.

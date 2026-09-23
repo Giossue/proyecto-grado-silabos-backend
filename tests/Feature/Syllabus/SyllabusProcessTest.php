@@ -114,6 +114,14 @@ class SyllabusProcessTest extends TestCase
         ]);
     }
 
+    public function test_database_rejects_the_removed_preparation_state(): void
+    {
+        $process = $this->openProcess();
+
+        $this->expectException(QueryException::class);
+        $process->update(['estado' => 'preparacion']);
+    }
+
     public function test_administration_can_delete_a_process_without_teacher_activity(): void
     {
         $convocation = $this->openedConvocation();

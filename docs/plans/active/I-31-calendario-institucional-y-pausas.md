@@ -39,7 +39,7 @@ producción.
 - `procesos_silabos` es el agregado institucional; `convocatorias.proceso_id` es
   obligatorio. Las convocatorias existentes reciben un proceso derivado de su propia
   plantilla y fechas en la migración.
-- Estados del proceso institucional, actualizado por I-120: `abierto ⇄ pausado → cerrado`.
+- Estados del proceso institucional, actualizado por I-121: `abierto ⇄ pausado → cerrado`.
   Estados de la convocatoria de carrera: `preparacion → abierta ⇄ pausada`; `cerrada` se conserva.
 - «En curso» = convocatoria `abierta` **y** proceso `abierto`. Es la única condición que
   bloquea ediciones y habilita el trabajo docente.
@@ -66,9 +66,9 @@ producción.
 
 ## Pruebas
 
-- Proceso: creación solo por Administración; apertura única; pausa/reanudación/cierre con
+- Proceso: creación y apertura atómicas solo por Administración; pausa/reanudación/cierre con
   auditoría; plantilla bloqueada con proceso abierto y editable en pausa.
-- Convocatoria: hereda plantilla y fechas; no abre con proceso en preparación o pausado;
+- Convocatoria: hereda plantilla y fechas; no inicia con proceso pausado o cerrado;
   pausa por carrera bloquea malla y fuentes solo de esa carrera; docente no envía en pausa.
 - Regresión de suites existentes con el nuevo requisito de proceso.
 

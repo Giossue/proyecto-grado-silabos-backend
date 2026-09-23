@@ -112,7 +112,7 @@ institucional, fecha de inicio, fecha de entrega y estado (`abierto`, `pausado`,
 a todas las facultades. Se abre desde el período académico con el período fijado, nombre
 y plantilla automáticos; la creación y apertura ocurren en una sola transacción. La base
 impone un solo proceso abierto o pausado a la vez y conserva los cerrados como historial
-(I-120).
+(I-121).
 
 Una convocatoria institucional puede eliminarse junto con sus alcances y sílabos
 generados únicamente si nunca hubo un evento `silabo.borrador_iniciado` en ninguno de

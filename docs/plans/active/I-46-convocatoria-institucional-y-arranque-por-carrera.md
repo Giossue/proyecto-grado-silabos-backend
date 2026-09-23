@@ -44,7 +44,7 @@ migración mediante el release remoto aprobado.
 1. Restricciones PostgreSQL: un proceso por período y un alcance de convocatoria por
    carrera/período; conservar agrupaciones históricas, pero generar siempre por paralelo.
 2. Casos de uso y políticas: retirar creación/edición manual por Coordinación, verificar
-   preparación institucional/carrera y sincronizar fuentes automáticamente.
+   apertura institucional e inicio por carrera y sincronizar fuentes automáticamente.
 3. UI: COR-02 muestra procesos institucionales y permite iniciar/pausar; se retiran los
    campos de nombre, agrupación y fuentes.
 4. Pruebas, documentación de dominio/pantallas/permisos/trazabilidad y procedimiento de
