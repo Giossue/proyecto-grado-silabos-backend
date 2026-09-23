@@ -54,8 +54,9 @@ Fecha de corte: **23 de septiembre de 2026**.
   muestra el logo UEB y una muestra de facultad, mientras cada sílabo resuelve el logo de
   la facultad de su carrera. I-123 reemplaza la autoridad de carga definida originalmente:
   solo Administración puede cargarlo o reemplazarlo desde la gestión de Facultades. Si
-  falta, Coordinación no puede iniciar la convocatoria y debe solicitar la corrección a
-  Administración.
+  falta en un registro anterior, Coordinación no puede iniciar la convocatoria y debe
+  solicitar la corrección a Administración. I-125 vuelve obligatoria la carga al crear
+  una facultad y exige que ese PNG no tenga transparencia.
 - I-69 (10 de septiembre de 2026) pagina la hoja por unidades semánticas: una tabla
   puede ocupar varias hojas, se corta entre grupos completos de filas y repite su
   cabecera; los títulos acompañan el inicio del primer campo, pero un bloque con varios
@@ -598,6 +599,15 @@ Administrador puede cargarlo o reemplazarlo al crear o editar la facultad en ADM
 Coordinación deja de tener el paso, diálogo, dato de Panel y endpoint de carga que había
 introducido I-68. La existencia del logo continúa siendo requisito para iniciar el alcance
 de la carrera; si falta, Coordinación recibe una validación que remite a Administración.
+
+I-125 (23 de septiembre de 2026), por instrucción explícita y corrección inmediata del
+responsable del producto, vuelve obligatorio el logo al crear una facultad en ADM-04. El
+formulario indica como medida recomendada 600 × 180 px y exige un PNG sin fondo, con
+transparencia; el servidor conserva la proporción y lo centra sobre un lienzo transparente
+a esa medida. Al editar una
+facultad que ya tiene logo, reemplazarlo sigue siendo opcional; un registro anterior sin
+logo exige cargarlo antes de guardar cualquier edición. El logo institucional mantiene
+el mismo requisito de PNG con transparencia.
 
 ## Propuesto
 

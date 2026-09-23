@@ -7,14 +7,10 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,9 +22,13 @@ use Illuminate\Database\Eloquent\Builder;
  *
  * @phpstan-type Step array{key: string, label: string, hint: string, done: bool, href: string, action: string|null}
  * @phpstan-type Checklist array{title: string, intro: string, done: int, total: int, steps: list<Step>}
+ *
+ * @phpstan-import-type CoordinatorReadiness from CoordinatorConvocationReadiness
  */
 class SetupChecklist
 {
+    public function __construct(private readonly CoordinatorConvocationReadiness $coordinatorReadiness) {}
+
     /**
      * Resumen para el encabezado: cuánto falta según el rol activo.
      *
@@ -76,31 +76,77 @@ class SetupChecklist
         );
     }
 
-    /** @return Checklist */
-    public function forCoordinator(?string $careerId): array
+    /**
+     * @param  CoordinatorReadiness|null  $readiness
+     * @return Checklist
+     */
+    public function forCoordinator(?string $careerId, ?array $readiness = null): array
     {
         if ($careerId === null) {
             return $this->build('Puesta en marcha de la carrera', '', []);
         }
 
-        $career = Career::query()->withCount('subjects')->findOrFail($careerId);
-        $scheduledSubjects = ScheduledSubject::query()->whereHas('subject', fn (Builder $query) => $query->where('carrera_id', $careerId));
-        $parallels = Parallel::query()->whereHas('scheduledSubject.subject', fn (Builder $query) => $query->where('carrera_id', $careerId));
-        $assignments = TeacherAssignment::query()->where('activo', true)->whereHas('parallel.scheduledSubject.subject', fn (Builder $query) => $query->where('carrera_id', $careerId));
-        $processOpen = SyllabusProcess::query()->where('estado', SyllabusProcess::STATE_OPEN)->exists();
+        $readiness ??= $this->coordinatorReadiness->inspect($careerId);
+        $process = $readiness['process'];
+        $period = $process?->academicPeriod?->codigo;
+        $scheduledTotal = $readiness['scheduled_total'];
+        $scheduledWithParallels = $readiness['scheduled_with_parallels'];
+        $parallelTotal = $readiness['parallel_total'];
+        $parallelsWithTeacher = $readiness['parallels_with_teacher'];
 
         return $this->build(
             'Puesta en marcha de la carrera',
             'En este orden. Al abrir la convocatoria se crea un sílabo por paralelo con su docente.',
             [
-                $this->step('curriculum', 'Armar la malla con sus materias', 'Ciclos, materias, horas, créditos y prerrequisitos.', $career->subjects_count > 0, '/coordinacion/estructura-academica'),
-                $this->step('scheduled_subjects', 'Programar las materias del período', 'Materia, período y modalidad; el campus viene de la facultad.', (clone $scheduledSubjects)->exists(), '/coordinacion/estructura-academica'),
-                $this->step('parallels', 'Crear los paralelos', 'Desde Materias y paralelos, con su jornada: matutina, vespertina o nocturna.', (clone $parallels)->exists(), '/coordinacion/estructura-academica'),
-                $this->step('teachers', 'Asignar un docente a cada paralelo', 'Los docentes ya deben tener cuenta (los crea Administración).', (clone $assignments)->exists(), '/coordinacion/estructura-academica'),
-                $this->step('sources', 'Registrar al menos una fuente académica', 'Documento de apoyo que la convocatoria fija para los docentes.', AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)->exists(), '/coordinacion/fuentes'),
-                $this->step('convocation', 'Crear y abrir la convocatoria', $processOpen ? 'El proceso institucional está abierto: ya puede convocar.' : 'Espera a que Administración abra el proceso de sílabos.', Convocation::query()->where('carrera_id', $careerId)->exists(), '/coordinacion/convocatorias'),
+                $this->step('curriculum', 'Armar la malla con sus materias', 'Ciclos, materias, horas, créditos y prerrequisitos.', $readiness['curriculum_ready'], '/coordinacion/estructura-academica'),
+                $this->step(
+                    'scheduled_subjects',
+                    'Programar las materias del período',
+                    $period === null ? 'Espera a que Administración abra la convocatoria institucional para conocer el período.' : "Registre las materias que se impartirán en {$period}.",
+                    $scheduledTotal > 0,
+                    '/coordinacion/estructura-academica',
+                ),
+                $this->step(
+                    'parallels',
+                    'Crear los paralelos',
+                    $scheduledTotal === 0 ? 'Primero programe las materias del período.' : "{$scheduledWithParallels} de {$scheduledTotal} materias programadas tienen paralelos.",
+                    $scheduledTotal > 0 && $scheduledWithParallels === $scheduledTotal,
+                    '/coordinacion/estructura-academica',
+                ),
+                $this->step(
+                    'teachers',
+                    'Asignar un docente a cada paralelo',
+                    $parallelTotal === 0 ? 'Primero cree los paralelos del período.' : "{$parallelsWithTeacher} de {$parallelTotal} paralelos tienen un docente vigente.",
+                    $parallelTotal > 0 && $parallelsWithTeacher === $parallelTotal,
+                    '/coordinacion/estructura-academica',
+                ),
+                $this->step('sources', 'Registrar al menos una fuente académica', 'Documento de apoyo que la convocatoria fija para los docentes.', $readiness['sources_total'] > 0, '/coordinacion/fuentes'),
+                $this->step(
+                    'convocation',
+                    'Abrir la convocatoria de la carrera',
+                    $this->coordinatorConvocationHint($readiness),
+                    $readiness['convocation'] !== null,
+                    '/coordinacion/convocatorias',
+                    $readiness['can_open'] ? 'open_convocation' : null,
+                ),
             ],
         );
+    }
+
+    /** @param CoordinatorReadiness $readiness */
+    private function coordinatorConvocationHint(array $readiness): string
+    {
+        $process = $readiness['process'];
+
+        return match (true) {
+            $process === null => 'Espera a que Administración abra la convocatoria institucional.',
+            $process->estado === SyllabusProcess::STATE_PAUSED => 'La convocatoria institucional está en pausa.',
+            ! $readiness['deadline_open'] => 'El plazo institucional venció. Administración debe prorrogarlo antes de abrir la convocatoria.',
+            ! $readiness['template_ready'] => 'Administración debe completar la plantilla institucional.',
+            ! $readiness['faculty_logo_ready'] => 'Administración debe cargar el logo de la facultad.',
+            $readiness['can_open'] => 'Todo está listo. Seleccione las fuentes y abra la convocatoria.',
+            default => 'Complete los pasos anteriores para poder abrirla.',
+        };
     }
 
     /** @return Checklist */

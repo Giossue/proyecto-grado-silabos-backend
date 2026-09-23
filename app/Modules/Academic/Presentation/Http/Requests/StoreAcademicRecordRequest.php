@@ -49,8 +49,7 @@ class StoreAcademicRecordRequest extends FormRequest
             'facultad' => [
                 'nombre' => ['required', 'string', 'max:180'],
                 'campus' => ['required', Rule::enum(CampusLocation::class)],
-                // El logo es opcional, pero su gestión pertenece exclusivamente a Administración.
-                'logo' => ['nullable', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
+                'logo' => ['required', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
             ],
             'carrera' => [
                 'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'id')->where('facultad_activa', true)],

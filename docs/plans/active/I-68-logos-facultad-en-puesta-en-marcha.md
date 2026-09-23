@@ -30,6 +30,7 @@ reemplazadas por I-123 el 2026-09-23; este documento conserva el historial de I-
 
 Los puntos de carga desde Coordinación se retiraron en I-123. Permanecen vigentes la
 proyección de ambos logos, la carga administrativa y el bloqueo de apertura si falta.
+I-125 reemplaza además la regla histórica que permitía omitirlo en el alta.
 
 ## Verificación
 

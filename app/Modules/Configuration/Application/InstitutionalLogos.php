@@ -11,11 +11,10 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Logos que encabezan el sílabo: el de la universidad (uno, reemplazable por
- * Administración) y el de cada facultad. El alta administrativa puede dejar pendiente
- * este último, pero Coordinación debe configurarlo antes de abrir su convocatoria.
- * Ambos son PNG sin fondo; el sistema los ajusta a una medida fija (conservando la
- * proporción, centrados sobre lienzo transparente) para que el encabezado salga siempre
- * igual. Viven en el disco privado y se sirven por ruta propia; el Word los lee del disco.
+ * Administración) y el de cada facultad. El logo de facultad es obligatorio al crearla
+ * y solo Administración lo gestiona. Ambos usan transparencia y el sistema los ajusta a
+ * una medida fija conservando la proporción, centrados sobre un lienzo transparente.
+ * Viven en el disco privado y se sirven por ruta propia; el Word los lee del disco.
  */
 class InstitutionalLogos
 {
@@ -30,8 +29,7 @@ class InstitutionalLogos
     private const INSTITUTION_PATH = 'logos/institucion.png';
 
     /**
-     * Reglas de validación del archivo: PNG con transparencia. La medida no se exige
-     * porque `fit()` la ajusta al guardar.
+     * La medida no se exige porque `fit()` la ajusta al guardar.
      *
      * @param  array{width: positive-int, height: positive-int}  $size
      * @return list<mixed>
@@ -79,7 +77,7 @@ class InstitutionalLogos
 
     /**
      * Ajusta el PNG a la medida: se escala conservando la proporción hasta caber y se
-     * centra sobre un lienzo transparente del tamaño exacto. Devuelve los bytes PNG.
+     * centra sobre un lienzo transparente del tamaño exacto.
      *
      * @param  array{width: positive-int, height: positive-int}  $size
      */

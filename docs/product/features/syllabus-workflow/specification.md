@@ -10,13 +10,21 @@
 
 ## Comportamiento
 
-- El coordinador prepara una convocatoria con periodo, plantilla, fuentes, asignaciones y plazos.
-  Antes de abrirla, el logo de la facultad de su carrera debe haber sido cargado por
-  Administración desde ADM-04.
+- Administración fija el período, la plantilla y las fechas en el proceso institucional;
+  cada carrera hereda esos datos y Coordinación selecciona las fuentes de su alcance.
+  Antes de abrirlo, el logo de la facultad debe haber sido cargado por Administración
+  desde ADM-04.
+- COR-01 comprueba la preparación completa del período vigente: materias programadas,
+  paralelos, docente vigente por paralelo, fuentes, plantilla y logo. Si está lista,
+  Coordinación selecciona las fuentes y abre su convocatoria desde el Panel.
+- COR-01 y DOC-01 muestran el plazo heredado con inicio, entrega y un estado temporal
+  explícito. Docencia continúa hacia sus sílabos y Coordinación abre el seguimiento del
+  alcance ya creado. El calendario se deriva del proceso y sus fechas límite; no se guarda
+  una copia adicional para el Panel.
 - Cada paralelo genera su propio sílabo y `por_paralelo` es la agrupación predeterminada;
   `por_oferta` se conserva como alternativa registrada conforme a DT-11.
-- COR-02 prioriza el listado de convocatorias y abre su formulario de preparación desde una
-  acción principal en un panel lateral derecho; conserva allí los errores hasta corregirlos.
+- COR-02 prioriza el listado de convocatorias y abre el diálogo de fuentes desde la acción
+  de cada período; conserva allí los errores hasta corregirlos.
 - El sistema genera el conjunto esperado de sílabos sin duplicar el canónico.
 - El docente edita por secciones, hereda datos maestros y ve los errores de validación.
 - El autoguardado y el guardado explícito evitan pérdida y muestran su estado.

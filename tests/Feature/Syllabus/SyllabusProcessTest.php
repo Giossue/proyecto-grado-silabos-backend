@@ -307,6 +307,50 @@ class SyllabusProcessTest extends TestCase
             ->assertOk()->assertJson(fn (Assert $page) => $page->etc()->has('convocations.data', 0));
     }
 
+    public function test_dashboards_expose_the_shared_deadline_and_allow_coordination_to_open_its_scope(): void
+    {
+        $process = $this->openProcess();
+        $source = $this->coordinatorSource();
+
+        $this->actingAsCoordinator()
+            ->getJson(route('api.v1.dashboard.show'))
+            ->assertOk()
+            ->assertJsonPath('deadline.state', 'active')
+            ->assertJsonPath('deadline.convocation_id', null)
+            ->assertJsonPath('coordination_convocation.process_id', $process->id)
+            ->assertJsonPath('coordination_convocation.can_open', true)
+            ->assertJsonPath('coordination_convocation.available_sources.0.id', $source->id)
+            ->assertJsonPath('setup.steps.5.action', 'open_convocation');
+
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
+            'process_id' => $process->id,
+            'source_ids' => [$source->id],
+        ])->assertSuccessful();
+        $convocation = Convocation::query()->where('proceso_id', $process->id)->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->getJson(route('api.v1.dashboard.show'))
+            ->assertOk()
+            ->assertJsonPath('deadline.convocation_id', $convocation->id)
+            ->assertJsonPath('coordination_convocation.can_open', false)
+            ->assertJsonPath('coordination_convocation.convocation_id', $convocation->id);
+
+        $this->actingAsTeacher()
+            ->getJson(route('api.v1.dashboard.show'))
+            ->assertOk()
+            ->assertJsonCount(2, 'metrics')
+            ->assertJsonPath('deadline.state', 'active')
+            ->assertJsonPath('deadline.convocation_id', $convocation->id)
+            ->assertJsonPath('coordination_convocation', null);
+
+        $this->transition($process, 'pausar', 'Se corrige la configuración institucional.')->assertSuccessful();
+
+        $this->actingAsTeacher()
+            ->getJson(route('api.v1.dashboard.show'))
+            ->assertOk()
+            ->assertJsonPath('deadline.state', 'paused');
+    }
+
     public function test_only_one_process_can_be_in_progress(): void
     {
         $template = $this->publishedTemplate();
@@ -608,6 +652,7 @@ class SyllabusProcessTest extends TestCase
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
                 'nombre' => 'Facultad creada durante el proceso',
                 'campus' => CampusLocation::Laguacoto->value,
+                'logo' => $this->transparentPng(600, 180),
             ])
             ->assertCreated();
 

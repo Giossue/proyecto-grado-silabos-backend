@@ -76,14 +76,14 @@ defecto de las tablas sin esquema y de las listas.
       solo acepta contenedores sin secciones, bloques ni campos.
 - [x] Logos del encabezado (`InstitutionalLogos`): el de la universidad se reemplaza
       desde la plantilla (`POST admin/plantilla/logo`); desde I-123 solo Administración
-      carga o reemplaza el de cada facultad al crearla o editarla. Puede omitirlo al
-      guardar, pero Coordinación no puede iniciar su convocatoria mientras falte. PNG sin
-      fondo (regla `TransparentPng`, canal alfa); la medida no se
-      exige: `InstitutionalLogos::fit` escala conservando la proporción y centra sobre
-      lienzo transparente de 1012 × 190 o 600 × 180 (decisión del responsable del
+      carga o reemplaza el de cada facultad al crearla o editarla. I-125 lo hace obligatorio
+      en el alta y exige un PNG sin fondo mediante `TransparentPng`; la interfaz recomienda
+      600 × 180 px. La medida no se exige exactamente: `InstitutionalLogos::fit` escala
+      conservando la proporción y centra sobre lienzo transparente de 1012 × 190 para la
+      institución o 600 × 180 para la facultad (decisión del responsable del
       producto, 2026-09-03: mejor ajustar que rechazar). Se sirven en `logos/institucion` y
-      `logos/facultad/{id}`; el Word lee el archivo del disco privado. Sin subida, el
-      logo de fábrica es solo una muestra y no habilita la apertura.
+      `logos/facultad/{id}`; el Word lee el archivo del disco privado. En registros
+      anteriores sin subida, el logo de fábrica es solo una muestra y no habilita la apertura.
 - [x] Jornada del paralelo (`paralelos.jornada`, migración `000030`: matutina,
       vespertina, nocturna; opcional) para completar la ficha. Se elige al crear o
       editar el paralelo. Los campos propios de la malla no llegan al sílabo.

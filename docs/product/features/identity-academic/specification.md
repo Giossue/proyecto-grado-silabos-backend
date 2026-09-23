@@ -43,7 +43,8 @@
   (Centro de Eventos Nacionales e Internacionales), Extensión San Miguel y Sede Chimbo.
   Carreras muestra el campus heredado de su facultad; no hay catálogo, código ni ruta de
   administración de campus.
-- Facultad se identifica por nombre, campus obligatorio y logo opcional; no tiene código.
+- Facultad se identifica por nombre, campus y logo obligatorios; no tiene código. El logo
+  es un PNG sin fondo, con transparencia, y el formulario recomienda 600 × 180 px (I-125).
   Carrera requiere un código único, nombre, modalidad y cantidad de ciclos; no tiene
   código de malla (I-107).
 - Cada fila de ADM-04 permite editar sus datos en un `Sheet` y eliminarla únicamente

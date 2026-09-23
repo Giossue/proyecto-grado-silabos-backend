@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Tests\Support\MakesTransparentPng;
 use Tests\TestCase;
 
-/** I-34: logos del encabezado sin fondo, ajustados a la medida fija al guardar. */
+/** I-34/I-125: logos del encabezado ajustados a la medida fija al guardar. */
 class InstitutionalLogosTest extends TestCase
 {
     use MakesTransparentPng;
@@ -71,16 +71,20 @@ class InstitutionalLogosTest extends TestCase
         $this->assertStoredPngHasSize('logos/institucion.png', 1012, 190);
     }
 
-    public function test_administrator_can_create_a_faculty_with_or_without_its_logo(): void
+    public function test_administrator_must_create_a_faculty_with_a_transparent_logo(): void
     {
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), ['nombre' => 'Sin logo', 'campus' => CampusLocation::Matriz->value])
-            ->assertSuccessful()
-            ->assertSuccessful();
-        $this->assertDatabaseHas('facultades', [
-            'nombre_facultad' => 'Sin logo',
-            'logo_objeto_id' => null,
-        ]);
+            ->assertJsonValidationErrors('logo');
+        $this->assertDatabaseMissing('facultades', ['nombre_facultad' => 'Sin logo']);
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
+                'nombre' => 'Logo con fondo',
+                'campus' => CampusLocation::Matriz->value,
+                'logo' => $this->opaquePng(600, 180),
+            ])
+            ->assertJsonValidationErrors(['logo' => 'El logo debe ser un PNG sin fondo (con transparencia).']);
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
@@ -101,9 +105,7 @@ class InstitutionalLogosTest extends TestCase
             ->assertHeader('Content-Type', 'image/png')
             ->assertHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
-        $faculties = collect(app(AcademicStructureViewData::class)->governance()['catalogs']['faculties'])
-            ->keyBy('nombre');
-        $this->assertNull($faculties->get('Sin logo')['logo_url']);
+        $faculties = collect(app(AcademicStructureViewData::class)->governance()['catalogs']['faculties'])->keyBy('nombre');
         $this->assertIsString($faculties->get('Con logo')['logo_url']);
 
         // Sin subida propia, la facultad muestra el logo de fábrica.
@@ -127,6 +129,21 @@ class InstitutionalLogosTest extends TestCase
         $this->postJson('/api/v1/coordination/faculty-logo', [
             'logo' => $this->transparentPng(320, 120),
         ])->assertNotFound();
+
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.academic.update', ['entity' => 'facultad', 'record' => $faculty]), [
+                'nombre' => $faculty->nombre,
+                'campus' => $faculty->campus->value,
+            ])
+            ->assertJsonValidationErrors('logo');
+
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.academic.update', ['entity' => 'facultad', 'record' => $faculty]), [
+                'nombre' => $faculty->nombre,
+                'campus' => $faculty->campus->value,
+                'logo' => $this->opaquePng(320, 120),
+            ])
+            ->assertJsonValidationErrors(['logo' => 'El logo debe ser un PNG sin fondo (con transparencia).']);
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.academic.update', ['entity' => 'facultad', 'record' => $faculty]), [

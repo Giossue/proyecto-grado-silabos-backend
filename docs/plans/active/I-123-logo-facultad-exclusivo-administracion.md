@@ -21,7 +21,8 @@ Implementado el 2026-09-23.
 
 - [x] Retirar el endpoint, request y acción que permitían cargar el logo con rol Coordinador.
 - [x] Retirar del Panel de Coordinación el paso, diálogo, cliente API y dato específico.
-- [x] Conservar la carga opcional al crear o editar una facultad en ADM-04.
+- [x] Conservar inicialmente la carga opcional al crear o editar una facultad en ADM-04;
+  I-125 reemplaza después esa regla para el alta.
 - [x] Mantener el bloqueo de apertura y dirigir el mensaje a Administración.
 - [x] Actualizar el contrato OpenAPI, las pruebas y la documentación trazable.
 

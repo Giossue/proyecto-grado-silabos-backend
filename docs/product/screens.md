@@ -178,15 +178,23 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   ciclo y cada paralelo con su jornada. La materia programada no se edita desde esta
   pantalla; **Agregar paralelo** incluye una tabla de resumen con los paralelos y jornadas
   ya registrados.
-- Indicadores del Panel (UI-01), cuatro por rol y todos accionables: Administración ve
-  avance del proceso (% aprobados), días para la entrega, carreras sin convocar y sílabos
-  sin iniciar; Coordinación, avance, días, por revisar y sin iniciar; Docencia, sílabos
-  por entregar, días, avance de sus borradores y por corregir. Sin conteos de catálogo.
+- Indicadores del Panel (UI-01): Administración ve avance del proceso (% aprobados), días
+  para la entrega, carreras sin convocar y sílabos sin iniciar; Coordinación ve avance,
+  sílabos por revisar y sin iniciar; Docencia ve sílabos por entregar y por corregir. El
+  plazo deja de ser un indicador numérico aislado para Coordinación y Docencia: una tarjeta
+  muestra período, inicio, entrega y el estado próxima, en curso, pausada o vencida. Antes
+  del inicio cuenta hacia esa fecha y durante la apertura cuenta hacia la entrega. Una pausa
+  o un vencimiento se nombra sin mostrar cero días como si el plazo siguiera vigente.
 - El Panel de cada rol muestra primero sus indicadores y debajo «Puesta en marcha»:
   barra de progreso y los pasos en orden (Administración: facultades, carreras,
   modalidades, periodo, cuentas,
-  coordinadores, plantilla, proceso; Coordinación: malla, materias y paralelos, docentes,
-  fuentes, convocatoria; Docencia: recibir, iniciar, enviar). Cada paso
+  coordinadores, plantilla, proceso; Coordinación: malla, materias programadas, paralelos,
+  docentes, fuentes, convocatoria; Docencia: recibir, iniciar, enviar). Coordinación calcula
+  los pasos contra el período institucional vigente y solo los completa cuando todas las
+  materias programadas tienen paralelos y todos los paralelos tienen docente vigente. Si
+  todo está listo, el último paso abre un diálogo para seleccionar las fuentes e iniciar la
+  convocatoria desde el mismo Panel. Una vez abierta, la tarjeta de plazo abre su
+  seguimiento. Docencia continúa desde esa tarjeta hacia **Mis sílabos**. Cada paso
   se calcula con datos reales; el siguiente lleva su botón y la tarjeta desaparece al
   completarse. Administración conserva «Panel» en el sidebar; Coordinación y Docencia
   conservan la pantalla y el checklist, pero no tienen esa entrada lateral ni un atajo
@@ -197,12 +205,11 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   carrera a la derecha, dentro del ancho útil de los márgenes y antes del bloque de título.
   Administración reemplaza el logo institucional desde la hoja «Personalizar plantilla»
   de ADM-06 y es la única que puede cargar o reemplazar el logo de facultad al
-  crearla o editarla en ADM-04. El archivo es opcional al guardar la facultad, pero debe
-  existir antes de que Coordinación inicie su convocatoria. Si falta, la validación remite
-  a Administración. ADM-04 solo muestra
-  una vista previa al editar cuando la facultad tiene un logo propio. Ambos son PNG sin
-  fondo; el sistema los ajusta a la medida fija (universidad 1012 × 190 px, facultad
-  600 × 180 px) conservando la proporción y centrando sobre transparente. La plantilla
+  crearla o editarla en ADM-04. El logo es obligatorio al crear la facultad; el formulario
+  indica 600 × 180 px como medida recomendada y exige un PNG sin fondo, con transparencia. Al editar,
+  solo vuelve a exigirse si el registro anterior no tiene logo. El logo institucional
+  conserva su PNG con transparencia y medida fija de 1012 × 190 px. El sistema ajusta
+  ambos conservando la proporción y los centra sobre un lienzo transparente. La plantilla
   institucional usa el logo de facultad de muestra; el sílabo real usa el de su carrera.
 - Si una sección tiene un solo campo, no lleva subtítulo «n.1»: basta el título de la
   sección, en la hoja, el editor docente, la revisión y el Word. Con varios campos sí
@@ -355,7 +362,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   académicos; el servidor rechaza igualmente un alta forzada sin estructura lista. COR-03 muestra las convocatorias institucionales visibles y
   permite iniciar únicamente el alcance de su carrera desde una abierta; hereda plantilla,
   período y fechas, y exige seleccionar al menos una fuente activa de la carrera antes de
-  iniciar. Esa selección queda congelada durante el alcance. COR-02 lista
+  iniciar. El mismo inicio está disponible en COR-01 cuando la comprobación completa de
+  malla, programación, paralelos, docentes, fuentes, plantilla y logo indica que la carrera
+  está lista. Esa selección queda congelada durante el alcance. COR-02 lista
   los procesos institucionales desde antes de iniciar la carrera, con estado institucional
   y estado de carrera separados; el filtro muestra solo convocatorias iniciadas, pausadas y
   cerradas, y el seguimiento de expedientes se consulta en un `Sheet` lateral dentro de cada convocatoria. No tiene

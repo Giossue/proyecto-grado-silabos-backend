@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\SetupChecklist;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
+use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -20,6 +22,11 @@ use Illuminate\Support\Carbon;
 /**
  * El panel resume el trabajo con el alcance del rol activo. Ninguna métrica cruza ese
  * alcance: Coordinación cuenta dentro de su carrera y Docencia solo lo propio.
+ *
+ * @phpstan-import-type CoordinatorReadiness from CoordinatorConvocationReadiness
+ *
+ * @phpstan-type DeadlinePayload array{period: string, starts_at: string, due_at: string, state: string, days_until_start: int, days_until_due: int, convocation_id: string|null}
+ * @phpstan-type CoordinationConvocationPayload array{process_id: string, period: string, convocation_id: string|null, can_open: bool, available_sources: list<array{id: string, name: string}>}
  */
 class DashboardController extends Controller
 {
@@ -28,15 +35,20 @@ class DashboardController extends Controller
         ActiveRole $roles,
         SetupChecklist $setup,
         ConvocationSchedule $schedule,
+        CoordinatorConvocationReadiness $readiness,
     ): JsonResponse {
         $activeRole = $roles->resolve($request);
         $user = $request->user();
+        $coordinatorReadiness = $activeRole?->role->codigo_rol === RoleCode::Coordinator->value
+            && is_string($activeRole->carrera_id)
+            ? $readiness->inspect($activeRole->carrera_id)
+            : null;
 
         $metrics = match (true) {
             $activeRole === null || ! $user instanceof User => [],
             $activeRole->role->codigo_rol === RoleCode::Administrator->value => $this->administratorMetrics(),
-            $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorMetrics($activeRole->carrera_id, $schedule),
-            $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherMetrics($user, $activeRole->carrera_id, $schedule),
+            $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorMetrics($coordinatorReadiness),
+            $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherMetrics($user, $activeRole->carrera_id),
             default => [],
         };
 
@@ -44,14 +56,25 @@ class DashboardController extends Controller
         $checklist = match (true) {
             $activeRole === null || ! $user instanceof User => null,
             $activeRole->role->codigo_rol === RoleCode::Administrator->value => $setup->forAdministrator(),
-            $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $setup->forCoordinator($activeRole->carrera_id),
+            $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $setup->forCoordinator($activeRole->carrera_id, $coordinatorReadiness),
             $activeRole->role->codigo_rol === RoleCode::Teacher->value => $setup->forTeacher($user, $activeRole->carrera_id),
+            default => null,
+        };
+
+        $deadline = match (true) {
+            $activeRole === null || ! $user instanceof User => null,
+            $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorDeadline($coordinatorReadiness, $schedule),
+            $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherDeadline($user, $activeRole->carrera_id, $schedule),
             default => null,
         };
 
         $payload = [
             'metrics' => $metrics,
             'setup' => $checklist,
+            'deadline' => $deadline,
+            'coordinationConvocation' => $activeRole?->role->codigo_rol === RoleCode::Coordinator->value
+                ? $this->coordinationConvocation($activeRole->carrera_id, $coordinatorReadiness)
+                : null,
         ];
 
         return response()->json($this->apiPayload($payload));
@@ -61,8 +84,8 @@ class DashboardController extends Controller
      * Los enlaces de puesta en marcha pertenecían a las rutas web/Inertia. La SPA recibe
      * solo información de dominio y decide una ruta propia cuando ese módulo exista.
      *
-     * @param  array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null}  $payload
-     * @return array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null}
+     * @param  array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null, deadline: array<string, mixed>|null, coordinationConvocation: array<string, mixed>|null}  $payload
+     * @return array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null, deadline: array<string, mixed>|null, coordination_convocation: array<string, mixed>|null}
      */
     private function apiPayload(array $payload): array
     {
@@ -84,6 +107,8 @@ class DashboardController extends Controller
         return [
             'metrics' => $payload['metrics'],
             'setup' => $setup,
+            'deadline' => $payload['deadline'],
+            'coordination_convocation' => $payload['coordinationConvocation'],
         ];
     }
 
@@ -129,17 +154,14 @@ class DashboardController extends Controller
         ];
     }
 
-    /** @return list<array{key: string, label: string, value: int, suffix: string|null, hint: string}> */
-    private function coordinatorMetrics(?string $careerId, ConvocationSchedule $schedule): array
+    /**
+     * @param  CoordinatorReadiness|null  $readiness
+     * @return list<array{key: string, label: string, value: int, suffix: string|null, hint: string}>
+     */
+    private function coordinatorMetrics(?array $readiness): array
     {
-        $convocation = Convocation::query()
-            ->where('carrera_id', $careerId)
-            ->whereIn('estado', ['abierta', 'pausada'])
-            ->orderByDesc(
-                SyllabusProcess::query()->select('inicia_en')
-                    ->whereColumn('convocatorias_universidad.id', 'convocatorias_carreras.proceso_id'),
-            )
-            ->first();
+        $convocation = $readiness['convocation'] ?? null;
+        $convocation = $convocation instanceof Convocation ? $convocation : null;
         $syllabi = Syllabus::query()->when(
             $convocation !== null,
             fn (Builder $query) => $query->where('convocatoria_id', $convocation->id),
@@ -151,7 +173,6 @@ class DashboardController extends Controller
 
         return [
             $this->progressMetric($approved, $total, $none),
-            $this->daysLeftMetric($convocation === null ? null : $schedule->draftDeadline($convocation), $none),
             [
                 'key' => 'in_review',
                 'label' => 'Por revisar',
@@ -170,19 +191,12 @@ class DashboardController extends Controller
     }
 
     /** @return list<array{key: string, label: string, value: int, suffix: string|null, hint: string}> */
-    private function teacherMetrics(User $user, ?string $careerId, ConvocationSchedule $schedule): array
+    private function teacherMetrics(User $user, ?string $careerId): array
     {
         $own = fn (): Builder => Syllabus::query()
             ->whereHas('convocation', fn (Builder $query) => $query->where('carrera_id', $careerId))
             ->whereHas('collaborators', fn (Builder $query) => $query->where('usuario_id', $user->id));
         $pending = $own()->whereNotIn('estado', ['en_revision', 'aprobado'])->count();
-        $deadline = $own()->whereNotIn('estado', ['aprobado'])
-            ->with('convocation')
-            ->get()
-            ->map(fn (Syllabus $syllabus): ?CarbonInterface => $schedule->draftDeadline($syllabus->convocation))
-            ->filter()
-            ->sort()
-            ->first();
 
         return [
             [
@@ -192,7 +206,6 @@ class DashboardController extends Controller
                 'suffix' => null,
                 'hint' => $pending === 0 ? 'Nada pendiente por ahora' : 'Aún no enviados a revisión',
             ],
-            $this->daysLeftMetric($deadline, $pending === 0 ? 'Sin entregas pendientes' : null),
             [
                 'key' => 'correction_requested',
                 'label' => 'Por corregir',
@@ -200,6 +213,119 @@ class DashboardController extends Controller
                 'suffix' => null,
                 'hint' => 'Devueltos por Coordinación con observaciones',
             ],
+        ];
+    }
+
+    /**
+     * @param  CoordinatorReadiness|null  $readiness
+     * @return DeadlinePayload|null
+     */
+    private function coordinatorDeadline(?array $readiness, ConvocationSchedule $schedule): ?array
+    {
+        $process = $readiness['process'] ?? null;
+        if (! $process instanceof SyllabusProcess) {
+            return null;
+        }
+
+        $convocation = $readiness['convocation'] ?? null;
+        $convocation = $convocation instanceof Convocation ? $convocation : null;
+        if ($convocation !== null) {
+            $convocation->loadMissing(['deadlines', 'process.academicPeriod']);
+            $startsAt = $schedule->startsAt($convocation) ?? $process->inicia_en;
+            $dueAt = $schedule->draftDeadline($convocation) ?? $process->entrega_en;
+        } else {
+            $process->loadMissing('academicPeriod');
+            $startsAt = $process->inicia_en;
+            $dueAt = $process->entrega_en;
+        }
+
+        return $this->deadlinePayload($process, $convocation, $startsAt, $dueAt);
+    }
+
+    /** @return DeadlinePayload|null */
+    private function teacherDeadline(User $user, ?string $careerId, ConvocationSchedule $schedule): ?array
+    {
+        $syllabus = Syllabus::query()
+            ->whereNotIn('estado', ['aprobado'])
+            ->whereHas('collaborators', fn (Builder $query) => $query->where('usuario_id', $user->id))
+            ->when($careerId !== null, fn (Builder $query) => $query->whereHas('convocation', fn (Builder $convocation) => $convocation->where('carrera_id', $careerId)))
+            ->whereHas('convocation.process', fn (Builder $process) => $process->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))
+            ->with(['convocation.deadlines', 'convocation.process.academicPeriod'])
+            ->get()
+            ->sortBy(fn (Syllabus $item): int => $schedule->draftDeadline($item->convocation)?->getTimestamp() ?? PHP_INT_MAX)
+            ->first();
+
+        if (! $syllabus instanceof Syllabus) {
+            return null;
+        }
+
+        $convocation = $syllabus->convocation;
+        $process = $convocation->process;
+        $startsAt = $schedule->startsAt($convocation) ?? $process->inicia_en;
+        $dueAt = $schedule->draftDeadline($convocation) ?? $process->entrega_en;
+
+        return $this->deadlinePayload($process, $convocation, $startsAt, $dueAt);
+    }
+
+    /**
+     * @return DeadlinePayload
+     */
+    private function deadlinePayload(
+        SyllabusProcess $process,
+        ?Convocation $convocation,
+        CarbonInterface $startsAt,
+        CarbonInterface $dueAt,
+    ): array {
+        $today = now()->startOfDay();
+        $start = $startsAt->copy()->startOfDay();
+        $due = $dueAt->copy()->startOfDay();
+        $state = match (true) {
+            $process->estado === SyllabusProcess::STATE_CLOSED || $convocation?->estado === Convocation::STATE_CLOSED => 'closed',
+            $process->estado === SyllabusProcess::STATE_PAUSED || $convocation?->estado === Convocation::STATE_PAUSED => 'paused',
+            $today->lessThan($start) => 'upcoming',
+            $today->greaterThan($due) => 'overdue',
+            default => 'active',
+        };
+
+        return [
+            'period' => $process->academicPeriod->codigo,
+            'starts_at' => $startsAt->toIso8601String(),
+            'due_at' => $dueAt->toIso8601String(),
+            'state' => $state,
+            'days_until_start' => max(0, (int) $today->diffInDays($start, false)),
+            'days_until_due' => max(0, (int) $today->diffInDays($due, false)),
+            'convocation_id' => $convocation?->id,
+        ];
+    }
+
+    /**
+     * @param  CoordinatorReadiness|null  $readiness
+     * @return CoordinationConvocationPayload|null
+     */
+    private function coordinationConvocation(?string $careerId, ?array $readiness): ?array
+    {
+        $process = $readiness['process'] ?? null;
+        if (! is_string($careerId) || ! $process instanceof SyllabusProcess) {
+            return null;
+        }
+        $convocation = $readiness['convocation'] ?? null;
+        $convocation = $convocation instanceof Convocation ? $convocation : null;
+
+        return [
+            'process_id' => $process->id,
+            'period' => $process->academicPeriod->codigo,
+            'convocation_id' => $convocation?->id,
+            'can_open' => $readiness['can_open'],
+            'available_sources' => $readiness['can_open']
+                ? array_values(AcademicSource::query()
+                    ->where('carrera_id', $careerId)
+                    ->where('activo', true)
+                    ->orderBy('nombre')
+                    ->get(['id', 'nombre'])
+                    ->map(fn (AcademicSource $source): array => ['id' => $source->id, 'name' => $source->nombre])
+                    ->values()
+                    ->all())
+                : [],
         ];
     }
 
