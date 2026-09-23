@@ -75,18 +75,20 @@ class IssueActivationInvitation
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
-            $roleName = $user->roleAssignments()
+            $assignment = $user->roleAssignments()
+                ->with('career')
                 ->where('activo', true)
-                ->get()
-                ->map(fn ($assignment) => $assignment->role->nombre_rol)
-                ->first() ?? 'Usuario';
+                ->first();
+            $roleName = $assignment?->role->nombre_rol ?? 'Usuario';
+            $careerName = $assignment?->career?->nombre;
             $activationUrl = rtrim((string) config('app.frontend_url'), '/').'/activar-cuenta?token='.urlencode($token);
 
-            DB::afterCommit(function () use ($activationUrl, $roleName, $user): void {
+            DB::afterCommit(function () use ($activationUrl, $careerName, $roleName, $user): void {
                 Mail::to($user->correo_electronico)->queue(new ManagedUserActivationMail(
                     name: $user->nombre,
                     roleName: $roleName,
                     activationUrl: $activationUrl,
+                    careerName: $careerName,
                 ));
             });
 

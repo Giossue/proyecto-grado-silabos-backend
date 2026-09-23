@@ -629,6 +629,18 @@ class ManagedUserTest extends TestCase
         $this->assertSame('urgent', $message->getHeaders()->getHeaderBody('Priority'));
     }
 
+    public function test_activation_mail_names_the_career_and_links_the_header_to_the_spa(): void
+    {
+        config(['app.url' => 'https://api.test', 'app.frontend_url' => 'https://frontend.test']);
+        $mail = new ManagedUserActivationMail('Docente', 'Coordinador', 'https://frontend.test/activar-cuenta?token=abc', 'Software');
+
+        $html = $mail->render();
+
+        $this->assertStringContainsString('como Coordinador de la carrera Software.', strip_tags($html));
+        $this->assertStringContainsString('href="https://frontend.test"', $html);
+        $this->assertStringNotContainsString('https://api.test', $html);
+    }
+
     public function test_postgresql_rejects_a_scoped_role_for_an_administrator(): void
     {
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();

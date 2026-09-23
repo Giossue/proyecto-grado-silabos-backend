@@ -19,6 +19,7 @@ class ManagedUserActivationMail extends Mailable implements ShouldQueue
         public readonly string $name,
         public readonly string $roleName,
         public readonly string $activationUrl,
+        public readonly ?string $careerName = null,
     ) {}
 
     public function envelope(): Envelope
