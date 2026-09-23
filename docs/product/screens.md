@@ -265,6 +265,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   (ADM-02) se rechaza si tiene sílabos en curso o es la única administración; al
   desactivar se cierran sus asignaciones docentes activas.
 - Los estados usan las mismas etiquetas y colores en todo el producto.
+- Cuando Administración corrige una plantilla, facultad, carrera o período utilizado por
+  el proceso vigente, la interfaz exige que el alcance esté pausado y muestra cuántos
+  sílabos reemplazará. La confirmación aclara que también desaparecen revisiones,
+  aprobaciones, IA y exportaciones antes de regenerarlos (I-118).
 - Los IDs internos y detalles de infraestructura no se muestran.
 - ADM-04 usa el submenú **Estructura académica** con rutas independientes para Facultades,
   Carreras y Periodos académicos. El formulario de facultad exige elegir uno de los cinco

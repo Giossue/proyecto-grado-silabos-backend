@@ -92,13 +92,15 @@ y `composer verify` para cambios amplios, riesgosos o cuando se soliciten expres
 - Alcance actual: Carrera de Software UEB.
 - Roles: Administrador, Coordinador y Docente.
 - Estados: Sin iniciar, Borrador, En revisión, Corrección solicitada y Aprobado.
-- Una revisión enviada es inmutable.
-- Una revisión aprobada es inmutable.
+- Una revisión enviada es inmutable durante el flujo normal.
+- Una revisión aprobada es inmutable durante el flujo normal.
 - Reabrir conserva la aprobada y crea otra revisión enlazada.
 - La plantilla institucional es una sola y se edita en el sitio, sin versiones ni
-  publicación (I-32); cada revisión enviada conserva su copia completa. Cambiar la
-  plantilla o la malla con una convocatoria pausada borra, previa confirmación, los
-  sílabos en curso que aún no se enviaron. Las fuentes académicas son documentos
+  publicación (I-32); cada revisión enviada conserva su copia completa. Corregir la
+  plantilla o una base académica con el proceso o la convocatoria pausados reemplaza,
+  previa confirmación, todos los sílabos afectados, incluidos enviados y aprobados,
+  junto con sus revisiones, IA y exportaciones; el cambio y la regeneración son una
+  sola transacción (I-118). Las fuentes académicas son documentos
   Markdown editables de la Coordinación, sin versiones; la evidencia de IA guarda su
   propia fotografía.
 - Las validaciones determinísticas y las recomendaciones de IA son conceptos separados.

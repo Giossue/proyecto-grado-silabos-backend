@@ -19,9 +19,9 @@ Implementado el 2026-09-02; verificación local y migración remota registradas 
   el proceso.
 - Una malla por carrera (`mallas`), sin número de versión ni marca de actual.
 - Con la convocatoria pausada, un cambio estructural en la plantilla o en la malla
-  pregunta «esto borrará N sílabos en curso» y, confirmado, los borra y guarda. Los
-  sílabos ya enviados o con análisis de IA no se borran: la base los protege y el
-  cambio se rechaza con explicación.
+  informa cuántos sílabos reemplazará y pide confirmación. I-118 amplió la operación a
+  enviados y aprobados: guarda la corrección, elimina el agregado completo y regenera
+  todos los afectados en la misma transacción.
 - Cada revisión enviada lleva su copia completa: estructura, valores y mapa de
   exportación. Los sílabos de procesos cerrados no se tocan.
 
@@ -34,9 +34,9 @@ Implementado el 2026-09-02; verificación local y migración remota registradas 
 - La confirmación del borrado viaja como error de validación `purge_required` con la
   cifra; un diálogo único en el layout la captura y repite la petición con
   `confirm_purge`. Ningún formulario necesita conocer la regla.
-- Solo disparan el borrado los cambios que el sílabo copia: secciones, bloques y campos
-  de la plantilla; configuración, campos y materias de la malla. Relaciones y
-  reubicación en el lienzo no borran nada.
+- Disparan el reemplazo los cambios que alteran el documento o sus valores heredados:
+  apariencia, orden, secciones, bloques y campos de la plantilla; facultad, carrera,
+  período, programación y estructura curricular que alimentan el sílabo.
 - La pausa (I-31) sigue siendo la puerta: sin pausar no se edita.
 
 ## Pruebas

@@ -114,7 +114,10 @@ sustituye las relaciones transaccionales ni permite reconstruir autorizaciones.
 `plantilla_silabo` no referencia una carrera y solo admite una fila. El índice único
 `plantilla_silabo_unica` aplica esa cardinalidad directamente, sin un booleano
 `es_institucional` que siempre tendría el mismo valor. La plantilla se edita en el sitio
-y cada revisión enviada conserva su propia fotografía inmutable (I-32, I-52).
+y cada revisión enviada conserva su propia fotografía inmutable durante el flujo normal
+(I-32, I-52). I-118 habilita mediante una variable local de transacción el borrado
+excepcional del agregado completo cuando una base institucional se corrige con el proceso
+pausado; fuera de esa transacción los triggers conservan la inmutabilidad.
 `plantilla_silabo.documento_plantilla` guarda en JSONB versionado la composición visual
 de secciones, bloques y tablas (I-111). Las definiciones de campo siguen en filas y
 `bloque_plantilla_id` apunta al UUID estable del bloque embebido; triggers de PostgreSQL
@@ -159,6 +162,10 @@ el período de una convocatoria universitaria que ya tiene convocatorias de carr
 migración `000027` creó un proceso por cada convocatoria existente con su propia
 plantilla y fechas. El estado `pausada` de la convocatoria y `pausado` del proceso
 detienen el trabajo docente sin borrar nada.
+Una corrección confirmada durante esa pausa usa `InProgressWork`: guarda el cambio,
+elimina dependencias de revisión, aprobación, IA y exportación, y regenera desde la
+programación vigente antes del commit. Si la regeneración falla, PostgreSQL revierte
+tanto la corrección como el borrado (I-118).
 
 ### Revisión, validación e IA
 

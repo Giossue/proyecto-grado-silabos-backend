@@ -62,6 +62,11 @@ corregirlos. Ni el Coordinador por dirigir a una persona ni el Docente sobre su 
 perfil puede modificarlos; el cambio se solicita a Administración.
 La edición administrativa de catálogos conserva el valor anterior y el nuevo en auditoría;
 no concede al Administrador permisos sobre mallas, materias o contenido docente.
+Si el dato alimenta sílabos del proceso vigente, primero se pausa el alcance y el cambio
+usa el reinicio confirmado de I-118. Corregir nombre o correo de una cuenta no reinicia
+sílabos: las revisiones enviadas ya conservan la identidad fotografiada; desactivar un
+docente con trabajo en curso sigue bloqueado y los relevos de docentes o coordinadores
+usan sus operaciones atómicas específicas.
 
 ## Acumulación de roles
 

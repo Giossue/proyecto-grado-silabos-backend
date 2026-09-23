@@ -34,11 +34,7 @@ registros sin actividad en el orden de sus dependencias.
 
 ## Verificación
 
-- [x] `SyllabusProcessTest`: 3 pruebas y 39 aserciones aprobadas.
+- [x] `SyllabusProcessTest`: 24 pruebas y 342 aserciones aprobadas; las 3 pruebas
+  específicas de eliminación aportan 39 aserciones.
 - [x] `SyllabusProcessActions.test.ts`: 2 pruebas aprobadas.
-- [x] Contrato OpenAPI, ESLint y Pint aprobados.
-- [ ] El typecheck global está bloqueado por una firma de `submit` concurrente y ajena
-  en `CatalogEditSheet.vue`; no reportó errores en los archivos de I-117.
-
-La ejecución completa de `SyllabusProcessTest` conserva tres fallos ajenos en el flujo
-concurrente de reinicio institucional. Las pruebas focalizadas de I-117 pasan.
+- [x] Contrato OpenAPI, typecheck, ESLint y Pint aprobados.

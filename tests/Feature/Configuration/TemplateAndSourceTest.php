@@ -444,7 +444,8 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame('Se llena sola desde la malla y la programación de asignatura.', $identification->ayuda);
         $this->assertTrue($identification->heredado);
         $this->assertSame('asignaturas', $identification->origen_maestro);
-        $this->assertFalse($identification->ia_habilitada);
+        // I-118: la casilla decide si el agente lee la ficha; la decide Administración.
+        $this->assertTrue($identification->ia_habilitada);
     }
 
     public function test_template_blocks_use_document_content_types(): void

@@ -643,7 +643,7 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame('Nuevo título', $block->fresh()->titulo);
     }
 
-    public function test_properties_cannot_enable_ai_on_inherited_fields_or_reactivate_removed_fields(): void
+    public function test_properties_enable_ai_on_inherited_fields_but_never_reactivate_removed_fields(): void
     {
         $template = $this->template();
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
@@ -652,7 +652,9 @@ class TemplateDocumentTest extends TestCase
         $field->update(['heredado' => true]);
         $payload = ['document' => $this->document(), 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
             'properties' => [['key' => $field->clave, 'label' => $field->etiqueta, 'help' => null, 'ai_enabled' => true]]];
-        $this->patch($url, $payload)->assertJsonValidationErrors('properties.0.ai_enabled');
+        // I-118: Administración decide si el agente lee también los datos heredados.
+        $this->patch($url, $payload)->assertSuccessful();
+        $this->assertTrue($field->fresh()->ia_habilitada);
         $field->update(['heredado' => false]);
         $payload['fingerprint'] = SaveTemplateDocument::fingerprint($block->fresh());
         $payload['document'] = ['type' => 'doc', 'content' => [['type' => 'paragraph']]];

@@ -131,7 +131,10 @@ envío.
 
 - Doble clic/reintento de envío: una sola revisión mediante idempotencia.
 - Edición concurrente: conflicto visible; no sobrescritura silenciosa.
-- Cambio de plantilla o malla con convocatoria pausada: borra, previa confirmación, los sílabos en curso sin enviar de ese alcance; los enviados o con IA no se borran y el cambio se rechaza.
+- Corrección de plantilla o base académica con el alcance pausado: previa confirmación,
+  guarda el cambio, elimina todos los sílabos afectados —incluidos enviados, aprobados,
+  revisiones, IA y exportaciones— y los regenera desde cero en una sola transacción
+  (I-118). No alcanza procesos cerrados.
 - Cambio de fuente activa: invalida/recalcula ayuda de IA futura, no reescribe resultados
   históricos.
 - Edición o desactivación de la malla: bloquea trabajo nuevo cuando queda inactiva, pero

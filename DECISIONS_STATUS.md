@@ -21,6 +21,10 @@ Fecha de corte: **23 de septiembre de 2026**.
 - La plantilla institucional es única y se edita en el sitio; no hay versiones ni
   publicación (I-32, 2 de septiembre de 2026). Cada revisión enviada conserva su copia
   completa de la estructura y del mapa de exportación, que es lo que la protege.
+- I-118 establece una excepción administrativa explícita: al corregir durante una pausa
+  la plantilla única o una base académica que alimenta el proceso vigente, se reemplaza
+  todo sílabo afectado, incluso enviado o aprobado. La corrección, el borrado del
+  expediente completo y su regeneración forman una transacción confirmada y auditada.
 - Las fuentes académicas son documentos de la Coordinación (I-95, 19 de septiembre de
   2026): nombre, descripción y documento JSON estructurado editable, sin versiones ni
   conflictos. Los fragmentos son un índice reemplazable, no otra fuente de verdad.
@@ -448,10 +452,18 @@ responsable del producto: `versiones_plantilla` desaparece —secciones, bloques
 cuelgan de `plantillas_silabo`, que gana `mapeo_documento`— y `versiones_malla` pasa a
 `mallas`, una por carrera, sin `numero_version` ni `es_actual`. Ya no hay «publicar» ni
 «crear versión»: la estructura se comprueba al abrir o reanudar el proceso. Regla de
-borrado: con la convocatoria pausada, un cambio estructural en la plantilla o en la
-malla borra los sílabos en curso de ese alcance previa confirmación con la cifra; los que
-ya se enviaron a revisión o tienen análisis de IA no se borran —la base los protege— y en
-ese caso el cambio se rechaza. Los sílabos de procesos cerrados no se tocan.
+borrado, sustituida después por I-118: con la convocatoria pausada, un cambio estructural
+en la plantilla o en la malla exige confirmación con la cifra afectada. Los sílabos de
+procesos cerrados no se tocan.
+
+I-118 (23 de septiembre de 2026), por instrucción explícita del responsable del
+producto, corrige el alcance de I-32. La plantilla aprobada es única para todas las
+carreras: si Administración detecta que el proceso vigente partió de una plantilla o
+base académica equivocada, primero lo pausa y confirma la consecuencia. El sistema
+guarda la corrección, elimina por completo cada sílabo afectado —borrador, revisiones,
+observaciones, aprobaciones, IA y exportaciones— y lo genera de nuevo desde las fuentes
+vigentes en una sola transacción. La inmutabilidad sigue aplicando al flujo ordinario y
+a los procesos cerrados; esta operación excepcional no deja coexistir formatos distintos.
 
 I-46 (4 de septiembre de 2026) precisa dos alcances del mismo ciclo: Administración
 prepara y abre un único proceso institucional por período académico; Coordinación no

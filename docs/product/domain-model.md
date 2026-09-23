@@ -99,9 +99,10 @@ relevos aplican la misma protección en el servidor (I-64).
 
 No hay publicación: la estructura se comprueba al abrir o reanudar el proceso. Un sílabo
 sin enviar lee la plantilla en vivo; una revisión enviada conserva su copia completa y ya
-no depende de ella. Si la plantilla o la estructura curricular cambian con la convocatoria pausada, los
-sílabos en curso sin enviar se borran previa confirmación; los ya enviados o con análisis
-de IA no se borran y el cambio se rechaza.
+no depende de ella durante el flujo normal. Si se corrige la plantilla o una base académica
+durante una pausa, todos los sílabos afectados se reemplazan previa confirmación, incluso
+los enviados o aprobados y sus análisis de IA. La corrección y la regeneración son una
+sola transacción; los procesos cerrados conservan su historia (I-118).
 
 ### Proceso de sílabos y convocatoria
 
@@ -182,7 +183,9 @@ establece; una recomendación de IA nunca bloquea por sí sola.
 1. Cada acción protegida exige usuario activo y permiso efectivo sobre el recurso.
 2. No se crean dos coordinaciones activas superpuestas para una misma carrera.
 3. La única plantilla institucional activa crea nuevos sílabos en una convocatoria de cualquier carrera.
-4. Una revisión enviada/aprobada es inmutable y contiene su propia copia de la plantilla.
+4. Una revisión enviada/aprobada es inmutable en el flujo normal y contiene su propia
+   copia de la plantilla; I-118 permite eliminar el agregado completo únicamente durante
+   un reinicio institucional confirmado de un proceso vigente y pausado.
 5. Todo envío o reenvío inserta una revisión; nunca actualiza la anterior.
 6. Una aprobación apunta a una revisión concreta.
 7. Una reapertura no altera la aprobación previa.
