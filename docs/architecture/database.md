@@ -147,7 +147,7 @@ privados `academic_source_image`; Base64 y URLs firmadas no se persisten.
 ### Convocatorias y sílabos
 
 `convocatorias_universidad`, `convocatorias_carreras`, `fuentes_convocatoria`,
-`fechas_limite_convocatoria`, `silabos`, `alcances_silabo`, `colaboradores_silabo`,
+`fechas_limite_convocatoria`, `silabos`, `alcances_silabo`, vista `docentes_vigentes_silabo` (I-130),
 `revisiones_silabo`, `filas_repetibles`, `valores_campo`, `transiciones_estado`.
 
 `convocatorias_universidad` (I-31, I-41) es el calendario institucional: período académico,

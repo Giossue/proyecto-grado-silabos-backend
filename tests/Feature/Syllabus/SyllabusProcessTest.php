@@ -13,6 +13,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -143,7 +144,6 @@ class SyllabusProcessTest extends TestCase
         $this->assertDatabaseMissing('convocatorias_universidad', ['id' => $process->id]);
         $this->assertDatabaseMissing('convocatorias_carreras', ['id' => $convocation->id]);
         $this->assertDatabaseCount('alcances_silabo', 0);
-        $this->assertDatabaseCount('colaboradores_silabo', 0);
         $this->assertDatabaseCount('fechas_limite_convocatoria', 0);
         $this->assertDatabaseCount('fuentes_convocatoria', 0);
         foreach ($syllabusIds as $syllabusId) {
@@ -542,12 +542,23 @@ class SyllabusProcessTest extends TestCase
         $this->assertDatabaseCount('silabos', 1);
         $this->assertDatabaseHas('silabos', ['estado_silabo' => 'sin_iniciar']);
         $this->assertSame(13, $template->fresh()->sections()->count());
+
+        // El docente vigente recibe el aviso; apunta a la carrera y sobrevive al borrado.
+        $notice = JobExecution::query()
+            ->where('tipo', 'notificacion.interna')
+            ->whereJsonContains('entrada_ejecucion_trabajo', ['tipo_evento' => 'silabo.regenerado'])
+            ->sole();
+        $this->assertSame('carrera', $notice->tipo_recurso);
+        $this->assertSame($syllabus->carrera_id, $notice->recurso_id);
+        $this->assertNotEmpty($notice->entrada['destinatarios_ids']);
+        $this->assertStringContainsString($syllabus->academicSubjectName(), $notice->entrada['mensaje']);
     }
 
-    public function test_changing_the_career_structure_during_a_pause_regenerates_the_affected_syllabi(): void
+    public function test_changing_the_cycle_count_or_requirements_refreshes_without_purging(): void
     {
         $convocation = $this->openedConvocation();
         $career = Career::query()->firstOrFail();
+        $syllabus = Syllabus::query()->firstOrFail();
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección de la malla con expedientes abiertos.'])
             ->assertSuccessful();
@@ -556,19 +567,28 @@ class SyllabusProcessTest extends TestCase
             ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
                 'cycle_count' => 9,
             ])
-            ->assertJsonValidationErrors('purge_required');
-        $this->assertDatabaseCount('silabos', 1);
-
-        $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
-                'cycle_count' => 9,
-                'confirm_purge' => 1,
-            ])
-            ->assertSuccessful()
             ->assertSuccessful();
-        $this->assertDatabaseCount('silabos', 1);
-        $this->assertSame(9, data_get(Syllabus::query()->firstOrFail()->contexto_academico, 'curriculum.cycle_count'));
+        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+        $this->assertSame(9, data_get($syllabus->fresh()->contexto_academico, 'curriculum.cycle_count'));
         $this->assertSame(9, $career->fresh()->cantidad_ciclos_malla);
+
+        // Materia sin programar: su creación tampoco reinicia nada.
+        $other = Subject::query()->findOrFail($syllabus->asignatura_id)->replicate();
+        $other->codigo_asignatura = 'SW-699';
+        $other->nombre = 'Materia correquisito';
+        $other->orden_en_ciclo = 99;
+        $other->save();
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.curriculum.requirements.store', $career->id), [
+                'subject_id' => $syllabus->asignatura_id,
+                'requirement_id' => $other->id,
+                'type' => 'correquisito',
+            ])
+            ->assertSuccessful();
+        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+        $this->assertContains($other->codigo_asignatura, data_get($syllabus->fresh()->contexto_academico, 'subject.corequisites'));
+        $this->assertFalse(JobExecution::query()
+            ->whereJsonContains('entrada_ejecucion_trabajo', ['tipo_evento' => 'silabo.regenerado'])->exists());
     }
 
     public function test_cosmetic_curriculum_changes_refresh_the_card_without_purging(): void

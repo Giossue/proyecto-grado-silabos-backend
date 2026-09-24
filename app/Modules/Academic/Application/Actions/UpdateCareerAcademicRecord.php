@@ -93,7 +93,6 @@ class UpdateCareerAcademicRecord
             throw new AuthorizationException('No puede editar este registro con el rol activo.');
         }
         // Toda la estructura de carrera queda congelada mientras sus docentes trabajan.
-        // Un relevo no pasa por esta edición genérica: conserva el sílabo y su auditoría.
         $this->locks->assertCareerEditable($activeRole->carrera_id);
         // Nombre, código, ciclo, orden o unidad de una materia son presentación: se
         // refrescan en la ficha de los sílabos en curso sin reiniciarlos. Solo los

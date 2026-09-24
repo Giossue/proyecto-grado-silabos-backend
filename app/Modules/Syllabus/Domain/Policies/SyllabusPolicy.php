@@ -8,7 +8,6 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Auth\Access\Response;
-use Illuminate\Database\Eloquent\Builder;
 
 class SyllabusPolicy
 {
@@ -114,12 +113,6 @@ class SyllabusPolicy
 
     private function hasCurrentCollaboration(User $user, Syllabus $syllabus): bool
     {
-        return $syllabus->collaborators()
-            ->where('usuario_id', $user->id)
-            ->whereHas('teacherAssignment', fn (Builder $query) => $query
-                ->where('activo', true)
-                ->whereHas('roleAssignment.user', fn (Builder $userQuery) => $userQuery->where('activo', true))
-            )
-            ->exists();
+        return Syllabus::query()->whereKey($syllabus->getKey())->whereCurrentTeacher($user)->exists();
     }
 }

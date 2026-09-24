@@ -425,17 +425,18 @@ UNIQUE (convocatoria_id, paralelo_id)
 UNIQUE (silabo_id, paralelo_id)
 ~~~
 
-## colaboradores_silabo
+## docentes_vigentes_silabo (vista)
 
-**Contexto:** docentes colaboradores de un sílabo.
+**Contexto:** docente vigente de un sílabo (I-130, migración `000098`, que retira la
+tabla `colaboradores_silabo`). Se deriva de `alcances_silabo` → `asignaciones_paralelo`
+activas → `asignaciones_rol` activas con rol `docente`. Solo lectura.
 
 ~~~text
-id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-usuario_id UUID (FK → usuarios.id) NOT NULL
-docente_paralelo_id UUID (FK → asignaciones_paralelo.id) NOT NULL
-
-UNIQUE (silabo_id, docente_paralelo_id)
+silabo_id UUID
+usuario_id UUID
+asignacion_rol_id UUID
+asignacion_paralelo_id UUID
+paralelo_id UUID
 ~~~
 
 ## valores_campo
@@ -507,7 +508,7 @@ convocatorias_carreras N:M fuentes_academicas mediante fuentes_convocatoria
 convocatorias_carreras 1:N fechas_limite_convocatoria
 convocatorias_carreras 1:N silabos
 silabos N:M paralelos mediante alcances_silabo
-silabos N:M usuarios mediante colaboradores_silabo
+silabos N:M usuarios mediante la vista docentes_vigentes_silabo (derivada de alcances y asignaciones de paralelo)
 silabos N:M definiciones_campo mediante valores_campo
 silabos 1:N filas_repetibles
 silabos 1:N ejecuciones_validacion

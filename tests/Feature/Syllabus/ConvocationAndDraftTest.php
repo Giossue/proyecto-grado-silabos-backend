@@ -75,7 +75,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame(8, data_get($syllabus->contexto_academico, 'curriculum.cycle_count'));
         $this->assertArrayNotHasKey('code', data_get($syllabus->contexto_academico, 'curriculum'));
         $this->assertCount(1, $syllabus->scopes()->get());
-        $this->assertCount(1, $syllabus->collaborators()->get());
+        $this->assertCount(1, $syllabus->currentTeachers()->get());
         $master = $syllabus->values()->where('heredado', true)->firstOrFail();
         $this->assertSame('Arquitectura de Software', $master->valor['nombre']);
         $this->assertDatabaseHas('eventos_auditoria', [
@@ -240,6 +240,24 @@ class ConvocationAndDraftTest extends TestCase
                     'sections' => [['blocks' => [['table', 'fields']]]],
                 ],
             ]);
+    }
+
+    public function test_teacher_payload_reports_editability_and_pause_reason(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
+            ->assertOk()
+            ->assertJsonPath('syllabus.editable', true)
+            ->assertJsonPath('syllabus.edit_block_reason', null);
+
+        $syllabus->convocation()->update(['estado' => Convocation::STATE_PAUSED]);
+
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
+            ->assertOk()
+            ->assertJsonPath('syllabus.editable', false)
+            ->assertJsonPath('syllabus.edit_block_reason', 'La convocatoria está en pausa. Podrá seguir editando cuando se reanude.');
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertForbidden();
     }
 
     public function test_inherited_field_and_coordinator_edit_are_denied(): void

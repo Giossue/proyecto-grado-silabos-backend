@@ -51,13 +51,15 @@ class CreateAcademicRecord
         if (! $activeRole instanceof RoleAssignment || ! AcademicStructurePermissions::mayCreate($activeRole, $entity)) {
             throw new AuthorizationException('No puede gestionar este tipo de registro con el rol activo.');
         }
-        // Una convocatoria en curso ya fijó sus materias programadas, paralelos y colaboradores. El
-        // relevo docente es la única excepción y usa su propio caso de uso atómico.
-        if (AcademicStructurePermissions::isCareerContext($activeRole)) {
+        // Una convocatoria en curso ya fijó sus materias programadas y paralelos. Asignar un
+        // docente a un paralelo es la excepción: el sílabo sigue al paralelo y el nuevo
+        // docente continúa donde quedó (I-130).
+        if (AcademicStructurePermissions::isCareerContext($activeRole) && $entity !== 'asignacion_docente') {
             $this->locks->assertCareerEditable($activeRole->carrera_id);
         }
-        $careerScope = $entity === 'asignatura' ? $activeRole->carrera_id : [];
 
+        // Crear un registro no altera la base de ningún sílabo en curso (una materia nueva
+        // aún no está programada): el alcance vacío no purga nada.
         return $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity, $request): Model {
             $record = $this->create($entity, $data, $activeRole);
 
@@ -72,7 +74,7 @@ class CreateAcademicRecord
             );
 
             return $record;
-        }, $careerScope);
+        }, []);
     }
 
     /** @param array<string, mixed> $data */

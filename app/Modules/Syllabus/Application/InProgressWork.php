@@ -5,6 +5,7 @@ namespace App\Modules\Syllabus\Application;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
+use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -27,7 +29,12 @@ final class InProgressWork
 {
     public const CONFIRMATION_FIELD = 'confirm_purge';
 
-    public function __construct(private readonly GenerateConvocationSyllabi $generator) {}
+    public const DEFAULT_REASON = 'cambió la base institucional (malla, período académico o plantilla)';
+
+    public function __construct(
+        private readonly GenerateConvocationSyllabi $generator,
+        private readonly ScheduleInternalNotification $notifications,
+    ) {}
 
     /** @param string|list<string>|null $careerIds */
     public function count(string|array|null $careerIds = null, ?string $periodId = null): int
@@ -72,12 +79,18 @@ final class InProgressWork
         Closure $change,
         string|array|null $careerIds = null,
         ?string $periodId = null,
+        ?string $reason = null,
     ): mixed {
-        return DB::transaction(function () use ($careerIds, $change, $periodId, $request): mixed {
+        return DB::transaction(function () use ($careerIds, $change, $periodId, $reason, $request): mixed {
             $count = $this->requireConfirmation($request, $careerIds, $periodId);
             $result = $change();
             if ($count > 0) {
-                $this->regenerate($careerIds, $periodId);
+                $this->regenerate(
+                    $careerIds,
+                    $periodId,
+                    $reason,
+                    $request->attributes->getString('correlation_id') ?: null,
+                );
             }
 
             return $result;
@@ -87,20 +100,43 @@ final class InProgressWork
     /**
      * Elimina cada agregado afectado y lo vuelve a generar con la base vigente.
      * Debe llamarse después de guardar el cambio y dentro de esa misma transacción.
+     * Cada docente vigente del expediente recibe un aviso de que perdió su contenido.
      *
      * @param  string|list<string>|null  $careerIds
      * @return array{deleted: int, generated: int}
      */
-    public function regenerate(string|array|null $careerIds = null, ?string $periodId = null): array
-    {
-        $syllabi = $this->inProgress($careerIds, $periodId)->lockForUpdate()->get(['id', 'convocatoria_id']);
+    public function regenerate(
+        string|array|null $careerIds = null,
+        ?string $periodId = null,
+        ?string $reason = null,
+        ?string $correlationId = null,
+    ): array {
+        $syllabi = $this->inProgress($careerIds, $periodId)->lockForUpdate()
+            ->get(['id', 'convocatoria_id', 'carrera_id', 'asignatura_id', 'contexto_academico']);
         if ($syllabi->isEmpty()) {
             return ['deleted' => 0, 'generated' => 0];
         }
 
         $convocationIds = $syllabi->pluck('convocatoria_id')->unique()->values()->all();
         $syllabusIds = array_values(array_map('strval', $syllabi->pluck('id')->all()));
+        // Los destinatarios se resuelven antes del borrado: después ya no hay alcances.
+        $teachers = $this->currentTeachers($syllabusIds);
         $this->deleteAggregates($syllabusIds);
+        foreach ($syllabi as $syllabus) {
+            $subject = $syllabus->academicSubjectName();
+            // El aviso apunta a la carrera: el borrado del expediente no lo alcanza.
+            $this->notifications->execute(
+                eventType: 'silabo.regenerado',
+                deduplicationKey: "silabo.regenerado:{$syllabus->id}:".Str::uuid(),
+                recipientIds: $teachers[$syllabus->id] ?? [],
+                title: "Su sílabo de {$subject} se generó de nuevo",
+                message: "Su sílabo de {$subject} se generó de nuevo porque ".($reason ?? self::DEFAULT_REASON)
+                    .'. Se perdió el contenido anterior (borrador, revisiones y análisis de IA); debe completarlo otra vez.',
+                resourceType: 'carrera',
+                resourceId: (string) $syllabus->carrera_id,
+                correlationId: $correlationId,
+            );
+        }
 
         $generated = 0;
         $convocations = Convocation::query()
@@ -113,6 +149,27 @@ final class InProgressWork
         }
 
         return ['deleted' => count($syllabusIds), 'generated' => $generated];
+    }
+
+    /**
+     * Docentes con responsabilidad activa sobre algún paralelo del expediente.
+     *
+     * @param  list<string>  $syllabusIds
+     * @return array<string, list<string>>
+     */
+    private function currentTeachers(array $syllabusIds): array
+    {
+        // TODO: sustituir por Syllabus::currentTeachers() cuando exista.
+        return DB::table('alcances_silabo')
+            ->join('asignaciones_paralelo', 'asignaciones_paralelo.paralelo_id', '=', 'alcances_silabo.paralelo_id')
+            ->join('asignaciones_rol', 'asignaciones_rol.id', '=', 'asignaciones_paralelo.asignacion_rol_id')
+            ->whereIn('alcances_silabo.silabo_id', $syllabusIds)
+            ->where('asignaciones_paralelo.docente_paralelo_activo', true)
+            ->distinct()
+            ->get(['alcances_silabo.silabo_id', 'asignaciones_rol.usuario_id'])
+            ->groupBy('silabo_id')
+            ->map(fn ($rows): array => array_values(array_map('strval', $rows->pluck('usuario_id')->all())))
+            ->all();
     }
 
     /** @param list<string> $syllabusIds */
@@ -222,12 +279,13 @@ final class InProgressWork
 
     /**
      * Actualiza en los expedientes en curso de la carrera los datos de presentación de
-     * la materia (nombre, código, ciclo, orden, unidad y requisitos por código) sin
+     * la materia (nombre, código, ciclo, orden, unidad y requisitos por código) y la
+     * cantidad de ciclos de la malla sin
      * reiniciar el trabajo docente. Se usa para cambios cosméticos de la malla.
      */
     public function refreshSubjects(string $careerId): int
     {
-        $syllabi = $this->inProgress($careerId)->lockForUpdate()->get();
+        $syllabi = $this->inProgress($careerId)->with('career')->lockForUpdate()->get();
         $subjects = Subject::query()
             ->whereKey($syllabi->pluck('asignatura_id')->unique()->values()->all())
             ->with('requirements.requirement')
@@ -254,6 +312,7 @@ final class InProgressWork
             data_set($context, 'subject.organization_unit', $subject->unidad_organizacion_curricular);
             data_set($context, 'subject.prerequisites', $codes('prerrequisito'));
             data_set($context, 'subject.corequisites', $codes('correquisito'));
+            data_set($context, 'curriculum.cycle_count', $syllabus->career->cantidad_ciclos_malla);
             $syllabus->contexto_academico = $context;
             $syllabus->save();
 

@@ -9,6 +9,7 @@ use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -106,16 +107,36 @@ class Syllabus extends Model
         return $this->hasMany(SyllabusScope::class, 'silabo_id');
     }
 
-    /** @return HasMany<SyllabusCollaborator, $this> */
-    public function collaborators(): HasMany
+    /**
+     * Docentes vigentes: quien tiene hoy la asignación activa de un paralelo del sílabo.
+     * El sílabo pertenece al paralelo, no a una persona (I-130).
+     *
+     * @return HasMany<CurrentSyllabusTeacher, $this>
+     */
+    public function currentTeachers(): HasMany
     {
-        return $this->hasMany(SyllabusCollaborator::class, 'silabo_id');
+        return $this->hasMany(CurrentSyllabusTeacher::class, 'silabo_id');
     }
 
-    /** @return BelongsToMany<User, $this> */
+    /** @return BelongsToMany<User, $this> Usuarios docentes vigentes (ver `currentTeachers`). */
     public function teachers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'colaboradores_silabo', 'silabo_id', 'usuario_id');
+        return $this->belongsToMany(User::class, 'docentes_vigentes_silabo', 'silabo_id', 'usuario_id');
+    }
+
+    /**
+     * Sílabos que el usuario puede trabajar hoy como docente vigente de alguno de sus
+     * paralelos. No mira el rol activo de la sesión; eso lo resuelve quien consulta.
+     *
+     * @param  Builder<Syllabus>  $query
+     */
+    public function scopeWhereCurrentTeacher(Builder $query, User|string $user): void
+    {
+        $userId = $user instanceof User ? $user->id : $user;
+
+        $query->whereHas('currentTeachers', fn (Builder $teacher): Builder => $teacher
+            ->where('usuario_id', $userId)
+            ->whereHas('user', fn (Builder $account): Builder => $account->where('activo', true)));
     }
 
     /** @return HasMany<FieldValue, $this> */

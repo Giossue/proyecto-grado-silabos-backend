@@ -16,7 +16,6 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -59,7 +58,9 @@ class SetAcademicRecordStatus
         if (! $activeRole instanceof RoleAssignment || ! AcademicStructurePermissions::mayChangeStatus($activeRole, $entity)) {
             throw new AuthorizationException('No puede cambiar este registro con el rol activo.');
         }
-        if (AcademicStructurePermissions::isCareerContext($activeRole)) {
+        // Cambiar el docente de un paralelo no altera sílabos: se admite con la convocatoria
+        // en curso (I-130).
+        if (AcademicStructurePermissions::isCareerContext($activeRole) && $entity !== 'asignacion_docente') {
             $this->locks->assertCareerEditable($activeRole->carrera_id);
         }
         $careerScope = $entity === 'asignatura' && AcademicStructurePermissions::isCareerContext($activeRole)
@@ -75,14 +76,10 @@ class SetAcademicRecordStatus
                 $this->periodPlanning->assertScheduledSubjectMayChange($record);
             } elseif ($record instanceof TeacherAssignment) {
                 $this->periodPlanning->assertTeacherAssignmentMayChange($record);
-                if ($record->activo !== $active) {
-                    $this->assertTeacherAssignmentMayChange($record->id);
-
-                    if ($active) {
-                        throw ValidationException::withMessages([
-                            'record' => 'Una asignación histórica no se reactiva. Cree una nueva asignación o use el relevo docente para conservar el historial.',
-                        ]);
-                    }
+                if ($record->activo !== $active && $active) {
+                    throw ValidationException::withMessages([
+                        'record' => 'Una asignación cerrada no se reactiva. Asigne de nuevo al docente en el paralelo.',
+                    ]);
                 }
             }
 
@@ -145,16 +142,5 @@ class SetAcademicRecordStatus
                 'record' => 'Elimine primero los registros activos que dependen de este elemento.',
             ]);
         }
-    }
-
-    private function assertTeacherAssignmentMayChange(string $assignmentId): void
-    {
-        if (! SyllabusCollaborator::query()->where('docente_paralelo_id', $assignmentId)->exists()) {
-            return;
-        }
-
-        throw ValidationException::withMessages([
-            'record' => 'Esta asignación ya forma parte de un sílabo. Use el relevo docente para cambiarla y conservar el historial.',
-        ]);
     }
 }

@@ -7,9 +7,9 @@ use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 final class SaveTemplateAppearance
 {
@@ -17,7 +17,6 @@ final class SaveTemplateAppearance
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
-        private readonly InProgressWork $work,
     ) {}
 
     /** @param array<string, mixed> $appearance */
@@ -27,7 +26,8 @@ final class SaveTemplateAppearance
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        $this->work->replace($request, function () use ($activeRole, $actor, $appearance, $request, $template): void {
+        // La apariencia se lee en vivo de la plantilla al presentar y exportar: no purga.
+        DB::transaction(function () use ($activeRole, $actor, $appearance, $request, $template): void {
             $locked = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
             $mapping = $locked->mapeo_documento ?? [];
             $mapping['appearance'] = TemplateAppearance::normalize($appearance);

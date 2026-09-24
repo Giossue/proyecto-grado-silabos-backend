@@ -19,7 +19,6 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\ProcessLocks;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 
@@ -372,10 +371,6 @@ class AcademicStructureViewData
             ])
             ->orderByDesc('asignado_en')
             ->get();
-        $usedAssignmentIds = SyllabusCollaborator::query()
-            ->whereIn('docente_paralelo_id', $teacherAssignments->pluck('id'))
-            ->pluck('docente_paralelo_id')
-            ->flip();
 
         return [
             'career' => [
@@ -396,9 +391,9 @@ class AcademicStructureViewData
                     'period_status' => $this->periodPlanning->status($assignment->parallel->scheduledSubject->academicPeriod),
                     'period_planning_enabled' => $this->periodPlanning->mayPlan($assignment->parallel->scheduledSubject->academicPeriod),
                     'active' => $assignment->activo,
-                    'editable' => $this->periodPlanning->mayPlan($assignment->parallel->scheduledSubject->academicPeriod)
-                        && $lockReason === null
-                        && ! $usedAssignmentIds->has($assignment->id),
+                    // Quitar o cambiar al docente no toca el sílabo del paralelo: solo un
+                    // período finalizado lo impide, no la convocatoria en curso (I-130).
+                    'editable' => $this->periodPlanning->mayPlan($assignment->parallel->scheduledSubject->academicPeriod),
                 ]),
             'pendingTeachers' => RoleAssignment::query()
                 ->effective()
@@ -423,6 +418,8 @@ class AcademicStructureViewData
                         'scheduledSubject.subject',
                         fn ($query) => $query->where('carrera_id', $careerId),
                     )
+                    // Solo paralelos sin docente vigente: se asigna tras quitar al anterior.
+                    ->whereDoesntHave('teacherAssignments', fn ($query) => $query->where('activo', true))
                     ->with([
                         'scheduledSubject.subject:id,codigo_asignatura,nombre',
                         'scheduledSubject.academicPeriod:id,codigo,fecha_inicio,fecha_fin',

@@ -22,8 +22,8 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotificatio
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 use App\Support\CanonicalHasher;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
@@ -530,10 +530,11 @@ class DocumentOperationsTest extends TestCase
             'guardado_en' => now(),
         ]);
         $teacherAssignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
-        SyllabusCollaborator::query()->create([
+        SyllabusScope::query()->create([
             'silabo_id' => $syllabus->id,
-            'usuario_id' => $this->teacher->id,
-            'docente_paralelo_id' => $teacherAssignment->id,
+            'convocatoria_id' => $convocation->id,
+            'programacion_asignatura_id' => $teacherAssignment->parallel->programacion_asignatura_id,
+            'paralelo_id' => $teacherAssignment->paralelo_id,
         ]);
         $snapshot = [
             'schema_version' => 1,

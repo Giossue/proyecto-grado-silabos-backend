@@ -20,7 +20,6 @@ class DeleteManagedUser
     /** Tablas donde una cuenta deja historia que no se puede borrar. */
     private const TRACES = [
         'asignaciones_paralelo' => 'asignacion_rol_id',
-        'colaboradores_silabo' => 'usuario_id',
         'eventos_auditoria' => 'actor_usuario_id',
         'observaciones_revision' => 'creado_por',
         'revisiones_silabo' => 'enviado_por',

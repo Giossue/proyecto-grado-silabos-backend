@@ -195,7 +195,7 @@ class DashboardController extends Controller
     {
         $own = fn (): Builder => Syllabus::query()
             ->whereHas('convocation', fn (Builder $query) => $query->where('carrera_id', $careerId))
-            ->whereHas('collaborators', fn (Builder $query) => $query->where('usuario_id', $user->id));
+            ->whereCurrentTeacher($user);
         $pending = $own()->whereNotIn('estado', ['en_revision', 'aprobado'])->count();
 
         return [
@@ -247,7 +247,7 @@ class DashboardController extends Controller
     {
         $syllabus = Syllabus::query()
             ->whereNotIn('estado', ['aprobado'])
-            ->whereHas('collaborators', fn (Builder $query) => $query->where('usuario_id', $user->id))
+            ->whereCurrentTeacher($user)
             ->when($careerId !== null, fn (Builder $query) => $query->whereHas('convocation', fn (Builder $convocation) => $convocation->where('carrera_id', $careerId)))
             ->whereHas('convocation.process', fn (Builder $process) => $process->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))
             ->with(['convocation.deadlines', 'convocation.process.academicPeriod'])

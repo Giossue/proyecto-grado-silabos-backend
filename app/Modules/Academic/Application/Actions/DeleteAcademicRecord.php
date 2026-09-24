@@ -14,8 +14,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\ProcessLocks;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -32,7 +30,6 @@ class DeleteAcademicRecord
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
-        private readonly ProcessLocks $locks,
         private readonly AcademicPeriodPlanning $periodPlanning,
     ) {}
 
@@ -51,7 +48,8 @@ class DeleteAcademicRecord
             if ($entity !== 'asignacion_docente') {
                 throw new AuthorizationException('Este registro no admite eliminación desde Coordinación.');
             }
-            $this->locks->assertCareerEditable($role->carrera_id);
+            // Quitar un docente de un paralelo se permite con la convocatoria en curso: el
+            // sílabo sigue al paralelo y quien se asigne después continúa (I-130).
         } else {
             throw new AuthorizationException('No puede eliminar este registro con el rol activo.');
         }
@@ -101,7 +99,8 @@ class DeleteAcademicRecord
                 || DB::table('asignaciones_rol')->where('carrera_id', $record->getKey())->exists(),
             'periodo' => ScheduledSubject::query()->where('periodo_academico_id', $record->getKey())->exists()
                 || DB::table('convocatorias_universidad')->where('periodo_academico_id', $record->getKey())->exists(),
-            'asignacion_docente' => SyllabusCollaborator::query()->where('docente_paralelo_id', $record->getKey())->exists(),
+            // El sílabo pertenece al paralelo: quitar al docente no toca su contenido (I-130).
+            'asignacion_docente' => false,
             default => true,
         };
 

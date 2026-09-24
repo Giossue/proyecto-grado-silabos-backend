@@ -5,8 +5,8 @@ namespace App\Modules\Operations\Application;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\CurrentSyllabusTeacher;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -106,14 +106,10 @@ class WorkflowNotificationRecipients
         return $counts;
     }
 
-    /** @return Builder<SyllabusCollaborator> */
+    /** @return Builder<CurrentSyllabusTeacher> */
     private function activeCollaborators(): Builder
     {
-        return SyllabusCollaborator::query()
-            ->whereHas('teacherAssignment', fn ($query) => $query
-                ->where('asignaciones_paralelo.docente_paralelo_activo', true)
-                ->whereHas('roleAssignment.user', fn ($query) => $query->where('usuarios.usuario_activo', true)))
-            ->whereHas('user', fn ($query) => $query->where('activo', true));
+        return CurrentSyllabusTeacher::query()->withActiveUser();
     }
 
     /**

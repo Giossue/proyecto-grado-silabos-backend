@@ -19,6 +19,7 @@ use App\Modules\Syllabus\Application\Actions\SubmitSyllabus;
 use App\Modules\Syllabus\Application\Actions\UpdateDraftField;
 use App\Modules\Syllabus\Application\Actions\ValidateDraft;
 use App\Modules\Syllabus\Application\IdentificationCard;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -31,6 +32,7 @@ use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 
 class SyllabusController extends Controller
 {
@@ -52,7 +54,7 @@ class SyllabusController extends Controller
 
         $syllabi = Syllabus::query()
             ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $activeRole?->carrera_id))
-            ->whereHas('collaborators', fn ($query) => $query->where('usuario_id', $user->id))
+            ->whereCurrentTeacher($user)
                 // La búsqueda mira la asignatura y la convocatoria, que es como se
                 // recuerda un expediente: por la materia y por el periodo en que se pidió.
             ->when($search, fn ($query, string $term) => $query->where(
@@ -201,6 +203,7 @@ class SyllabusController extends Controller
             'iniciado_en' => $syllabus->iniciado_en?->toIso8601String(),
             'version_bloqueo' => $syllabus->version_bloqueo,
             'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
+            ...$this->teacherEditability($syllabus),
             'parallels' => $syllabus->scopes->pluck('parallel.codigo')->unique()->values(),
             'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
             'presentation' => [
@@ -253,6 +256,31 @@ class SyllabusController extends Controller
                 'reopened_by' => $syllabus->reopenings->first()->reopener->nombre,
             ],
         ];
+    }
+
+    /**
+     * Indica al editor docente si puede escribir ahora y, si no, por qué. Reutiliza la
+     * política (`start`/`edit`) para no duplicar la regla; el motivo solo explica.
+     *
+     * @return array{editable: bool, edit_block_reason: string|null}
+     */
+    private function teacherEditability(Syllabus $syllabus): array
+    {
+        $user = request()->user();
+        $ability = $syllabus->estado === 'sin_iniciar' ? 'start' : 'edit';
+        if ($user instanceof User && Gate::forUser($user)->allows($ability, $syllabus)) {
+            return ['editable' => true, 'edit_block_reason' => null];
+        }
+
+        $convocationState = $syllabus->convocation->estado;
+        $reason = match (true) {
+            ! in_array($syllabus->estado, ['sin_iniciar', 'borrador', 'correccion_solicitada'], true) => 'El sílabo no admite cambios en su estado actual.',
+            $convocationState === Convocation::STATE_CLOSED => 'La convocatoria está cerrada: el sílabo queda solo para consulta.',
+            ! $syllabus->convocation->isRunning() => 'La convocatoria está en pausa. Podrá seguir editando cuando se reanude.',
+            default => 'No tiene una asignación vigente para editar este sílabo.',
+        };
+
+        return ['editable' => false, 'edit_block_reason' => $reason];
     }
 
     /** @return list<array<string, mixed>> */

@@ -34,8 +34,8 @@ class SetUserStatus
 
             if (! $active) {
                 DB::table('sesiones')->where('user_id', $target->id)->delete();
-                // Ningún paralelo queda a nombre de alguien que ya no está (I-39); los
-                // sílabos en curso se relevaron antes, porque `ensureMayDeactivate` lo exige.
+                // Ningún paralelo queda a nombre de alguien que ya no está (I-39); sus
+                // sílabos en curso ya tienen otro docente, porque `ensureMayDeactivate` lo exige.
                 $closedTeacherAssignments = DB::table('asignaciones_paralelo')
                     ->whereIn('asignacion_rol_id', RoleAssignment::query()->where('usuario_id', $target->id)->select('id'))
                     ->where('docente_paralelo_activo', true)
@@ -88,7 +88,8 @@ class SetUserStatus
 
     /**
      * Desactivar no puede dejar huérfano nada: ni la administración de la institución ni
-     * un sílabo en curso. Lo segundo lo resuelve Coordinación con el relevo docente.
+     * un sílabo en curso. Lo segundo lo resuelve Coordinación asignando
+     * otro docente a sus paralelos: el sílabo sigue al paralelo (I-130).
      */
     private function ensureMayDeactivate(User $target): void
     {
@@ -111,20 +112,20 @@ class SetUserStatus
             }
         }
 
-        $inProgress = DB::table('colaboradores_silabo')
-            ->join('silabos', 'silabos.id', '=', 'colaboradores_silabo.silabo_id')
+        $inProgress = DB::table('docentes_vigentes_silabo')
+            ->join('silabos', 'silabos.id', '=', 'docentes_vigentes_silabo.silabo_id')
             ->join('convocatorias_carreras', 'convocatorias_carreras.id', '=', 'silabos.convocatoria_id')
             ->join('carreras', 'carreras.id', '=', 'convocatorias_carreras.carrera_id')
-            ->where('colaboradores_silabo.usuario_id', $target->id)
+            ->where('docentes_vigentes_silabo.usuario_id', $target->id)
             ->whereIn('silabos.estado_silabo', ['borrador', 'en_revision', 'correccion_solicitada'])
             ->where('convocatorias_carreras.estado_convocatoria_carrera', 'abierta')
             ->groupBy('carreras.nombre_carrera')
-            ->selectRaw('carreras.nombre_carrera AS carrera, COUNT(*) AS total')
+            ->selectRaw('carreras.nombre_carrera AS carrera, COUNT(DISTINCT silabos.id) AS total')
             ->get();
         if ($inProgress->isNotEmpty()) {
             $detail = $inProgress->map(fn (object $row): string => "{$row->total} en {$row->carrera}")->implode(', ');
             throw ValidationException::withMessages([
-                'active' => "Tiene sílabos en curso ({$detail}). Coordinación debe relevar al docente antes de desactivar la cuenta.",
+                'active' => "Tiene sílabos en curso ({$detail}). Coordinación debe asignar otro docente a sus paralelos antes de desactivar la cuenta.",
             ]);
         }
     }

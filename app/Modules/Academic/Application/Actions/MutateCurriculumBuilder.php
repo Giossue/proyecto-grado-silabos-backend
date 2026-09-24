@@ -36,7 +36,6 @@ class MutateCurriculumBuilder
     ): Career {
         return DB::transaction(function () use ($actor, $curriculumId, $data, $request): Career {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
-            $affected = $this->work->requireConfirmation($request, $role->carrera_id);
             $cycleCount = (int) $data['cycle_count'];
 
             $lastUsedCycle = (int) $career->subjects()->max('ciclo');
@@ -54,9 +53,8 @@ class MutateCurriculumBuilder
                 'before_cycle_count' => $beforeCycleCount,
                 'after_cycle_count' => $cycleCount,
             ]);
-            if ($affected > 0) {
-                $this->work->regenerate($role->carrera_id);
-            }
+            // Solo cambian datos de presentación de la ficha: se refrescan sin purgar.
+            $this->work->refreshSubjects($role->carrera_id);
 
             return $career;
         });
@@ -67,7 +65,6 @@ class MutateCurriculumBuilder
     {
         return DB::transaction(function () use ($actor, $curriculumId, $data, $request): SubjectRequirement {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
-            $affected = $this->work->requireConfirmation($request, $role->carrera_id);
             $subjects = Subject::query()
                 ->where('carrera_id', $career->id)
                 ->whereIn('id', [$data['subject_id'], $data['requirement_id']])
@@ -100,9 +97,8 @@ class MutateCurriculumBuilder
                 'requirement_id' => $requirement->requisito_id,
                 'type' => $requirement->tipo,
             ]);
-            if ($affected > 0) {
-                $this->work->regenerate($role->carrera_id);
-            }
+            // Solo cambian datos de presentación de la ficha: se refrescan sin purgar.
+            $this->work->refreshSubjects($role->carrera_id);
 
             return $requirement;
         });
@@ -116,7 +112,6 @@ class MutateCurriculumBuilder
     ): void {
         DB::transaction(function () use ($actor, $curriculumId, $requirementId, $request): void {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
-            $affected = $this->work->requireConfirmation($request, $role->carrera_id);
             $requirement = SubjectRequirement::query()
                 ->whereHas('subject', fn ($query) => $query->where('carrera_id', $career->id))
                 ->whereHas('requirement', fn ($query) => $query->where('carrera_id', $career->id))
@@ -125,9 +120,8 @@ class MutateCurriculumBuilder
             $metadata = ['career_id' => $career->id, 'type' => $requirement->tipo];
             $requirement->delete();
             $this->record($actor, $role, $request, 'academico.requisito_asignatura.eliminacion', 'requisito_asignatura', $requirementId, $metadata);
-            if ($affected > 0) {
-                $this->work->regenerate($role->carrera_id);
-            }
+            // Solo cambian datos de presentación de la ficha: se refrescan sin purgar.
+            $this->work->refreshSubjects($role->carrera_id);
         });
     }
 

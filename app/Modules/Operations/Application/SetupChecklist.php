@@ -150,7 +150,7 @@ class SetupChecklist
     {
         $own = Syllabus::query()
             ->when($careerId !== null, fn (Builder $query) => $query->whereHas('convocation', fn (Builder $convocation) => $convocation->where('carrera_id', $careerId)))
-            ->whereHas('collaborators', fn (Builder $query) => $query->where('usuario_id', $user->id));
+            ->whereCurrentTeacher($user);
         $total = (clone $own)->count();
         $started = (clone $own)->where('estado', '!=', 'sin_iniciar')->count();
         $submitted = (clone $own)->whereIn('estado', ['en_revision', 'aprobado'])->count();

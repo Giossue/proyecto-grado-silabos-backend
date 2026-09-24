@@ -12,7 +12,6 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
@@ -63,12 +62,6 @@ class DeleteScheduledSubject
                 ->whereIn('paralelo_id', $parallelIds)
                 ->lockForUpdate()
                 ->pluck('id');
-
-            if (SyllabusCollaborator::query()->whereIn('docente_paralelo_id', $assignmentIds)->exists()) {
-                throw ValidationException::withMessages([
-                    'scheduledSubject' => 'La materia programada tiene asignaciones docentes con historia de sílabo y no puede eliminarse.',
-                ]);
-            }
 
             TeacherAssignment::query()->whereIn('id', $assignmentIds)->delete();
             Parallel::query()->whereIn('id', $parallelIds)->delete();

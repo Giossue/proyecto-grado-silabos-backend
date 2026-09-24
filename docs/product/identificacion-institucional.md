@@ -42,8 +42,8 @@ Word de identificación) se conservan para sílabos y revisiones anteriores sin 
 | Horas autónomas (AA) | `hours_aa` | `asignaturas.horas_aa` |
 | Total de horas por periodo | `total_hours` | `asignaturas.total_horas_asignatura` |
 | Total, créditos | `credits` | `asignaturas.creditos_asignatura` |
-| Nombre del docente | `teacher` | `colaboradores_silabo` → `usuarios.nombre_usuario` |
-| Correo institucional | `email` | `colaboradores_silabo` → `usuarios.correo_electronico` |
+| Nombre del docente | `teacher` | `docentes_vigentes_silabo` → `usuarios.nombre_usuario` |
+| Correo institucional | `email` | `docentes_vigentes_silabo` → `usuarios.correo_electronico` |
 | Estudiantes con discapacidad (Sí/No, tipo, adaptación) | `disability`, `disability_type`, `disability_description` | Lo escribe el docente: campos `discapacidad_tiene`, `discapacidad_tipo`, `discapacidad_adaptacion` del bloque de identificación (`valores_campo`) |
 | Formación y experiencia académica-investigativa | `formation` | Lo escribe el docente: campo `formacion_experiencia` del mismo bloque; última fila de la tabla |
 

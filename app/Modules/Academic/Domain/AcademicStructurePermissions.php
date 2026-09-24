@@ -77,7 +77,7 @@ final class AcademicStructurePermissions
     public static function mayChangeStatus(?RoleAssignment $activeRole, string $entity): bool
     {
         // Coordinación no activa ni desactiva registros: la malla se edita y la asignación
-        // docente se crea, se elimina si no se usó o se releva.
+        // docente se crea o se quita; el sílabo sigue al paralelo (I-130).
         return self::isGovernanceContext($activeRole) && in_array($entity, self::GOVERNANCE_STATUS_ENTITIES, true);
     }
 

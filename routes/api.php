@@ -213,8 +213,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.academic.period.prepare');
             Route::post('coordination/academic/parallels', [CareerAcademicStructureController::class, 'storeParallels'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.parallels.store');
-            Route::post('coordination/academic/relieve-teacher', [CareerAcademicStructureController::class, 'relieveTeacher'])
-                ->middleware('active-role')->name('api.v1.coordination.academic.teachers.relieve');
             Route::post('coordination/academic/{entity}', [CareerAcademicStructureController::class, 'store'])
                 ->middleware('active-role')->whereIn('entity', AcademicStructurePermissions::CAREER_GENERIC_CREATE_ENTITIES)->name('api.v1.coordination.academic.store');
             Route::patch('coordination/academic/{entity}/{record}', [CareerAcademicStructureController::class, 'update'])

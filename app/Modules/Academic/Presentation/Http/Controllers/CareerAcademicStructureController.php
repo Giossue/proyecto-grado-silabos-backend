@@ -21,8 +21,6 @@ use App\Modules\Academic\Presentation\Http\Requests\UpdateCareerAcademicRecordRe
 use App\Modules\Academic\Presentation\Http\Requests\UpdateCurriculumConfigurationRequest;
 use App\Modules\Academic\Presentation\Http\Requests\UpdateSubjectLayoutRequest;
 use App\Modules\Identity\Application\ActiveRole;
-use App\Modules\Syllabus\Application\Actions\RelieveTeacher;
-use App\Modules\Syllabus\Presentation\Http\Requests\RelieveTeacherRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -89,23 +87,6 @@ class CareerAcademicStructureController extends Controller
         $created = $action->execute($data, $actor, $request);
 
         return $this->success($request, "{$created} paralelos creados dentro de su carrera.");
-    }
-
-    /** Relevo de un docente en todos sus paralelos de la carrera o en uno solo (I-39). */
-    public function relieveTeacher(RelieveTeacherRequest $request, RelieveTeacher $action): JsonResponse
-    {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $summary = $action->execute(
-            $request->string('outgoing_user_id')->toString(),
-            $request->string('incoming_user_id')->toString(),
-            $request->string('idempotency_key')->toString(),
-            $actor,
-            $request,
-            $request->filled('teacher_assignment_id') ? $request->string('teacher_assignment_id')->toString() : null,
-        );
-
-        return $this->success($request, "Relevo aplicado en {$summary['parallels']} paralelos; {$summary['syllabi']} sílabos pasaron al docente entrante.");
     }
 
     /** Prepara de forma atómica las materias y paralelos seleccionados para un período. */

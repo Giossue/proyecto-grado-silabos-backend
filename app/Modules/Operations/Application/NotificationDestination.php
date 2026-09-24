@@ -10,9 +10,8 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\CurrentSyllabusTeacher;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -170,14 +169,10 @@ final class NotificationDestination
      */
     private function teacherOptions(Syllabus $syllabus, User $user, Collection $eligible, string $path): array
     {
-        $assignmentIds = SyllabusCollaborator::query()
+        $assignmentIds = CurrentSyllabusTeacher::query()
             ->where('silabo_id', $syllabus->id)
             ->where('usuario_id', $user->id)
-            ->whereHas('teacherAssignment', fn (Builder $query) => $query->where('activo', true))
-            ->with('teacherAssignment:id,asignacion_rol_id')
-            ->get()
-            ->map(fn (SyllabusCollaborator $collaborator): ?string => $collaborator->teacherAssignment->asignacion_rol_id)
-            ->filter()
+            ->pluck('asignacion_rol_id')
             ->all();
 
         $options = [];

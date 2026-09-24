@@ -4,11 +4,9 @@ namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -107,21 +105,10 @@ final class GenerateConvocationSyllabi
                 'programacion_asignatura_id' => $scheduledSubject->id,
                 'paralelo_id' => $parallel->id,
             ]);
-            foreach ($parallel->teacherAssignments as $assignment) {
-                $this->addCollaborator($syllabus, $assignment);
-            }
         }
 
         $fields = $convocation->process->template->sections
             ->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields));
         $this->inherit->execute($syllabus, $fields, $scheduledSubject);
-    }
-
-    private function addCollaborator(Syllabus $syllabus, TeacherAssignment $assignment): void
-    {
-        SyllabusCollaborator::query()->firstOrCreate([
-            'silabo_id' => $syllabus->id,
-            'docente_paralelo_id' => $assignment->id,
-        ], ['usuario_id' => $assignment->roleAssignment->usuario_id]);
     }
 }

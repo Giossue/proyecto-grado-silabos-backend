@@ -35,7 +35,7 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 use App\Support\CanonicalHasher;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
@@ -109,7 +109,7 @@ class AiAssistanceTest extends TestCase
         $this->assertSame(0, $syllabus->fresh()->version_bloqueo);
         $this->assertSame(
             '  Formular   objetivos claros',
-            FieldValue::query()->where('silabo_id', $syllabus->id)->firstOrFail()->valor,
+            FieldValue::query()->where('silabo_id', $syllabus->id)->where('definicion_campo_id', $field->id)->firstOrFail()->valor,
         );
         $this->assertDatabaseHas('notificaciones_internas', [
             'usuario_id' => $this->teacher->id,
@@ -144,7 +144,7 @@ class AiAssistanceTest extends TestCase
         $this->assertSame(1, $syllabus->fresh()->version_bloqueo);
         $this->assertSame(
             'Formular objetivos claros.',
-            FieldValue::query()->where('silabo_id', $syllabus->id)->firstOrFail()->valor,
+            FieldValue::query()->where('silabo_id', $syllabus->id)->where('definicion_campo_id', $field->id)->firstOrFail()->valor,
         );
         $applied = AiFeedback::query()->where('decision', 'aplicada')->firstOrFail();
         $this->assertSame('  Formular   objetivos claros', $applied->contenido_antes);
@@ -548,7 +548,7 @@ class AiAssistanceTest extends TestCase
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertSame(
             'Edición determinística disponible',
-            FieldValue::query()->where('silabo_id', $syllabus->id)->firstOrFail()->valor,
+            FieldValue::query()->where('silabo_id', $syllabus->id)->where('definicion_campo_id', $field->id)->firstOrFail()->valor,
         );
     }
 
@@ -876,12 +876,13 @@ class AiAssistanceTest extends TestCase
             'version_bloqueo' => 0,
             'iniciado_en' => now(),
         ]);
-        SyllabusCollaborator::query()->create([
+        // El docente del sílabo es el vigente del paralelo que cubre (I-130).
+        $parallel = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail()->parallel;
+        SyllabusScope::query()->create([
             'silabo_id' => $syllabus->id,
-            'usuario_id' => $this->teacher->id,
-            'docente_paralelo_id' => TeacherAssignment::query()
-                ->forUser($this->teacher->id)
-                ->valueOrFail('id'),
+            'convocatoria_id' => $convocation->id,
+            'programacion_asignatura_id' => $parallel->programacion_asignatura_id,
+            'paralelo_id' => $parallel->id,
         ]);
         FieldValue::query()->create([
             'silabo_id' => $syllabus->id,

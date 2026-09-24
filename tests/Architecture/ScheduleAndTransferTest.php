@@ -44,20 +44,6 @@ it('conserva la fecha anterior y el motivo al prorrogar', function (): void {
         ->toContain('lessThanOrEqualTo');
 });
 
-it('descarta el borrador en un relevo sin guardar porcentaje de llenado', function (): void {
-    $transfer = (string) file_get_contents(
-        dirname(__DIR__, 2).'/app/Modules/Syllabus/Application/Actions/RelieveTeacher.php',
-    );
-
-    expect($transfer)
-        ->not->toContain("'discarded_completion'")
-        ->toContain('silabo.docente_transferido')
-        // Un expediente en revisión no se traspasa: el revisor quedaría sin interlocutor.
-        ->toContain("=== 'en_revision'")
-        // Cerrar una vigencia y abrir otra por separado deja el sílabo sin responsable.
-        ->toContain('DB::transaction');
-});
-
 it('marca la aprobacion hecha por quien redacto', function (): void {
     $approve = (string) file_get_contents(
         dirname(__DIR__, 2).'/app/Modules/Syllabus/Application/Actions/ApproveSyllabus.php',

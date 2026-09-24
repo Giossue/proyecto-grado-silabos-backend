@@ -132,8 +132,10 @@ condición habilita a los docentes y, por lo mismo, congela lo que sostiene su t
 con el proceso abierto no se edita la plantilla; los catálogos institucionales, cuentas
 y roles continúan administrables. Con una
 convocatoria en curso no se edita la estructura curricular, las fuentes, programaciones, paralelos ni asignaciones
-genéricas de esa carrera. En un período que aún no finaliza, el relevo docente es la
-única excepción, porque traslada de forma atómica la responsabilidad y el historial.
+genéricas de esa carrera. La asignación docente de un paralelo es la excepción (I-130):
+el sílabo pertenece al paralelo, no a una persona, y su docente es quien tiene hoy la
+asignación vigente. Coordinación quita al docente y asigna otro; el sílabo sigue igual
+en cualquier estado y el nuevo docente continúa. Solo un período finalizado lo impide.
 Para corregir se pausa: Administración
 el proceso —detiene a toda la universidad—, Coordinación su convocatoria —solo su
 carrera—. Los expedientes ya creados conservan la plantilla con la que nacieron; cambiar
