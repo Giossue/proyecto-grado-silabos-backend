@@ -64,7 +64,8 @@ class SignatureWorkflow
         return DocumentSignature::query()
             ->where('artefacto_exportacion_id', $artifact->id)
             ->with(['signer:id,nombre', 'storedObject'])
-            ->orderBy('firmado_en')
+            // El orden es fijo: 'docente' antes que 'coordinacion'.
+            ->orderByDesc('rol_firma')
             ->get();
     }
 
