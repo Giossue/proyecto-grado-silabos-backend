@@ -3096,6 +3096,116 @@
                 ]
             }
         },
+        "/api/v1/coordination/academic/parallels/{parallel}": {
+            "delete": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_academic_parallels_destroy",
+                "summary": "api.v1.coordination.academic.parallels.destroy",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "parallel",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_academic_parallels_update",
+                "summary": "api.v1.coordination.academic.parallels.update",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "parallel",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/coordination/academic/prepare-period": {
             "post": {
                 "tags": [

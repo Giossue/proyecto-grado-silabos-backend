@@ -27,7 +27,7 @@ class CreateParallels
     ) {}
 
     /**
-     * @param  array{scheduled_subject_id: string, codes: list<string>, shift?: string|null}  $data
+     * @param  array{scheduled_subject_id: string, codes: list<string>, shift: string}  $data
      */
     public function execute(array $data, User $actor, Request $request): int
     {
@@ -67,7 +67,7 @@ class CreateParallels
                 $parallel = Parallel::query()->create([
                     'programacion_asignatura_id' => $scheduledSubject->id,
                     'codigo' => $code,
-                    'jornada' => $data['shift'] ?? null,
+                    'jornada' => $data['shift'],
                 ]);
                 $this->audit->execute(
                     actorId: $actor->id,

@@ -7,10 +7,12 @@ use App\Models\User;
 use App\Modules\Academic\Application\Actions\CreateAcademicRecord;
 use App\Modules\Academic\Application\Actions\CreateParallels;
 use App\Modules\Academic\Application\Actions\DeleteAcademicRecord;
+use App\Modules\Academic\Application\Actions\DeleteParallel;
 use App\Modules\Academic\Application\Actions\DeleteScheduledSubject;
 use App\Modules\Academic\Application\Actions\MutateCurriculumBuilder;
 use App\Modules\Academic\Application\Actions\PreparePeriod;
 use App\Modules\Academic\Application\Actions\UpdateCareerAcademicRecord;
+use App\Modules\Academic\Application\Actions\UpdateParallel;
 use App\Modules\Academic\Application\Queries\AcademicStructureViewData;
 use App\Modules\Academic\Presentation\Http\Requests\ManageCareerAcademicStructureRequest;
 use App\Modules\Academic\Presentation\Http\Requests\PreparePeriodRequest;
@@ -19,6 +21,7 @@ use App\Modules\Academic\Presentation\Http\Requests\StoreParallelsRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreSubjectRequirementRequest;
 use App\Modules\Academic\Presentation\Http\Requests\UpdateCareerAcademicRecordRequest;
 use App\Modules\Academic\Presentation\Http\Requests\UpdateCurriculumConfigurationRequest;
+use App\Modules\Academic\Presentation\Http\Requests\UpdateParallelRequest;
 use App\Modules\Academic\Presentation\Http\Requests\UpdateSubjectLayoutRequest;
 use App\Modules\Identity\Application\ActiveRole;
 use Illuminate\Http\JsonResponse;
@@ -82,11 +85,37 @@ class CareerAcademicStructureController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var array{scheduled_subject_id: string, codes: list<string>, shift?: string|null} $data */
+        /** @var array{scheduled_subject_id: string, codes: list<string>, shift: string} $data */
         $data = $request->validated();
         $created = $action->execute($data, $actor, $request);
 
         return $this->success($request, "{$created} paralelos creados dentro de su carrera.");
+    }
+
+    /** Corrige código y jornada de un paralelo sin sílabo. */
+    public function updateParallel(
+        string $parallel,
+        UpdateParallelRequest $request,
+        UpdateParallel $action,
+    ): JsonResponse {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        /** @var array{code: string, shift: string} $data */
+        $data = $request->validated();
+        $action->execute($parallel, $data, $actor, $request);
+
+        return $this->success($request, 'Paralelo actualizado.');
+    }
+
+    /** Elimina un paralelo sin sílabo ni docente asignado. */
+    public function destroyParallel(
+        string $parallel,
+        ManageCareerAcademicStructureRequest $request,
+        DeleteParallel $action,
+    ): JsonResponse {
+        $action->execute($parallel, $this->actor($request), $request);
+
+        return $this->success($request, 'Paralelo eliminado.');
     }
 
     /** Prepara de forma atómica las materias y paralelos seleccionados para un período. */
@@ -96,7 +125,7 @@ class CareerAcademicStructureController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var array{period_id: string, subjects: list<array{id: string, parallels: list<array{code: string, shift?: string|null, teacher_user_id?: string|null}>}>} $data */
+        /** @var array{period_id: string, subjects: list<array{id: string, parallels: list<array{code: string, shift: string, teacher_user_id?: string|null}>}>} $data */
         $data = $request->validated();
         $result = $action->execute($data, $actor, $request);
 

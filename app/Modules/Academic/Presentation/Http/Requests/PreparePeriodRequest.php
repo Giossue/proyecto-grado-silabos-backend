@@ -127,7 +127,7 @@ class PreparePeriodRequest extends FormRequest
             'subjects.*.id' => ['required', 'uuid', 'distinct'],
             'subjects.*.parallels' => ['required', 'array', 'min:1', 'max:50'],
             'subjects.*.parallels.*.code' => ['required', 'string', 'max:30'],
-            'subjects.*.parallels.*.shift' => ['nullable', 'string', Rule::in(Parallel::SHIFTS)],
+            'subjects.*.parallels.*.shift' => ['required', 'string', Rule::in(Parallel::SHIFTS)],
             'subjects.*.parallels.*.teacher_user_id' => ['nullable', 'uuid'],
         ];
     }

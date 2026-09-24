@@ -214,6 +214,10 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.academic.period.prepare');
             Route::post('coordination/academic/parallels', [CareerAcademicStructureController::class, 'storeParallels'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.parallels.store');
+            Route::patch('coordination/academic/parallels/{parallel}', [CareerAcademicStructureController::class, 'updateParallel'])
+                ->middleware('active-role')->whereUuid('parallel')->name('api.v1.coordination.academic.parallels.update');
+            Route::delete('coordination/academic/parallels/{parallel}', [CareerAcademicStructureController::class, 'destroyParallel'])
+                ->middleware('active-role')->whereUuid('parallel')->name('api.v1.coordination.academic.parallels.destroy');
             Route::post('coordination/academic/{entity}', [CareerAcademicStructureController::class, 'store'])
                 ->middleware('active-role')->whereIn('entity', AcademicStructurePermissions::CAREER_GENERIC_CREATE_ENTITIES)->name('api.v1.coordination.academic.store');
             Route::patch('coordination/academic/{entity}/{record}', [CareerAcademicStructureController::class, 'update'])

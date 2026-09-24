@@ -36,7 +36,7 @@ class PreparePeriod
     ) {}
 
     /**
-     * @param  array{period_id: string, subjects: list<array{id: string, parallels: list<array{code: string, shift?: string|null, teacher_user_id?: string|null}>}>}  $data
+     * @param  array{period_id: string, subjects: list<array{id: string, parallels: list<array{code: string, shift: string, teacher_user_id?: string|null}>}>}  $data
      * @return array{scheduledSubjects: int, parallels: int, assignments: int, subjects: int}
      */
     public function execute(array $data, User $actor, Request $request): array
@@ -141,7 +141,7 @@ class PreparePeriod
                     );
                     $scheduledSubjects++;
                 }
-                /** @var array{parallels: list<array{code: string, shift?: string|null, teacher_user_id?: string|null}>} $setting */
+                /** @var array{parallels: list<array{code: string, shift: string, teacher_user_id?: string|null}>} $setting */
                 $setting = $settingsBySubject->get($subject->id);
                 foreach ($setting['parallels'] as $parallelSetting) {
                     $parallelExists = Parallel::query()
@@ -156,7 +156,7 @@ class PreparePeriod
                     $parallel = Parallel::query()->create([
                         'programacion_asignatura_id' => $scheduledSubject->id,
                         'codigo' => $parallelSetting['code'],
-                        'jornada' => $parallelSetting['shift'] ?? null,
+                        'jornada' => $parallelSetting['shift'],
                     ]);
                     $this->audit->execute(
                         actorId: $actor->id,

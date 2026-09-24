@@ -258,6 +258,9 @@ class AcademicStructureViewData
             ->whereIn('id', Syllabus::query()->select('paralelo_id'))
             ->pluck('programacion_asignatura_id')
             ->flip();
+        $parallelIds = $scheduledSubjects->flatMap(fn (ScheduledSubject $item) => $item->parallels->pluck('id'));
+        $parallelsWithSyllabus = Syllabus::query()->whereIn('paralelo_id', $parallelIds)->pluck('paralelo_id')->flip();
+        $parallelsWithTeacher = TeacherAssignment::query()->whereIn('paralelo_id', $parallelIds)->pluck('paralelo_id')->flip();
         $periods = AcademicPeriod::query()
             ->get(['id', 'codigo', 'fecha_inicio', 'fecha_fin'])
             ->sort(function (AcademicPeriod $left, AcademicPeriod $right): int {
@@ -293,7 +296,7 @@ class AcademicStructureViewData
             ],
             'selectedPeriodId' => $selectedPeriodId,
             'scheduledSubjects' => $scheduledSubjects
-                ->map(function (ScheduledSubject $scheduledSubject) use ($lockReason, $usedScheduledSubjectIds): array {
+                ->map(function (ScheduledSubject $scheduledSubject) use ($lockReason, $usedScheduledSubjectIds, $parallelsWithSyllabus, $parallelsWithTeacher): array {
                     $periodPlanningEnabled = $this->periodPlanning->mayPlan($scheduledSubject->academicPeriod);
 
                     return [
@@ -316,6 +319,9 @@ class AcademicStructureViewData
                                 'id' => $parallel->id,
                                 'code' => $parallel->codigo,
                                 'shift' => $this->parallelShift($parallel),
+                                // Sin sílabo se corrige código y jornada; sin docente además se elimina.
+                                'editable' => ! $parallelsWithSyllabus->has($parallel->id),
+                                'deletable' => ! $parallelsWithSyllabus->has($parallel->id) && ! $parallelsWithTeacher->has($parallel->id),
                             ])
                             ->values()
                             ->all(),

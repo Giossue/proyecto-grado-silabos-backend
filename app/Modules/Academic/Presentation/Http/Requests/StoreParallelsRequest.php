@@ -55,7 +55,7 @@ class StoreParallelsRequest extends FormRequest
             ],
             'codes' => ['required', 'array', 'min:1', 'max:50'],
             'codes.*' => ['required', 'string', 'max:30', 'distinct'],
-            'shift' => ['nullable', 'string', Rule::in(Parallel::SHIFTS)],
+            'shift' => ['required', 'string', Rule::in(Parallel::SHIFTS)],
         ];
     }
 }

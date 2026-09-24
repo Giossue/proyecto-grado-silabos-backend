@@ -77,6 +77,7 @@ class DatabaseSeeder extends Seeder
             );
             $parallel = Parallel::query()->firstOrCreate(
                 ['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => 'A'],
+                ['jornada' => 'matutina'],
             );
 
             $users = collect([

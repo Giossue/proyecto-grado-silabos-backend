@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property string $id
  * @property string $codigo
- * @property string|null $jornada
+ * @property string $jornada
  * @property-read ScheduledSubject $scheduledSubject
  */
 class Parallel extends Model

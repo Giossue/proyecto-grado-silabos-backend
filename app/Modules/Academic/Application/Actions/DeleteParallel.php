@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Modules\Academic\Application\Actions;
+
+use App\Models\User;
+use App\Modules\Academic\Application\AcademicPeriodPlanning;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
+use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
+use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\ProcessLocks;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+/**
+ * Elimina un paralelo sin actividad: sin sílabo ni docente asignado (vigente o
+ * histórico). La materia programada conserva al menos un paralelo.
+ */
+class DeleteParallel
+{
+    public function __construct(
+        private readonly ActiveRole $roles,
+        private readonly RecordAuditEvent $audit,
+        private readonly ProcessLocks $locks,
+        private readonly AcademicPeriodPlanning $periodPlanning,
+    ) {}
+
+    public function execute(string $parallelId, User $actor, Request $request): void
+    {
+        $role = $this->roles->resolve($request);
+        $careerId = ParallelScope::careerId($role);
+        $this->locks->assertCareerEditable($careerId);
+
+        DB::transaction(function () use ($actor, $careerId, $parallelId, $request, $role): void {
+            $parallel = ParallelScope::find($parallelId, $careerId);
+            $this->periodPlanning->assertParallelMayChange($parallel);
+            ParallelScope::assertWithoutSyllabus($parallel, 'El paralelo ya tiene sílabo y no puede eliminarse.');
+            if (TeacherAssignment::query()->where('paralelo_id', $parallel->id)->exists()) {
+                throw ValidationException::withMessages([
+                    'record' => 'El paralelo tiene un docente asignado. Quite primero la asignación docente.',
+                ]);
+            }
+            $siblings = Parallel::query()
+                ->where('programacion_asignatura_id', $parallel->getAttribute('programacion_asignatura_id'))
+                ->count();
+            if ($siblings <= 1) {
+                throw ValidationException::withMessages([
+                    'record' => 'La materia debe conservar al menos un paralelo. Elimine la materia programada si ya no se dicta.',
+                ]);
+            }
+            $code = $parallel->codigo;
+            $parallel->delete();
+
+            $this->audit->execute(
+                actorId: $actor->id,
+                roleAssignmentId: ParallelScope::roleId($role),
+                action: 'academico.paralelo.eliminacion',
+                resourceType: 'paralelo',
+                resourceId: $parallelId,
+                result: 'exito',
+                metadata: ['name' => $code],
+                correlationId: $request->attributes->getString('correlation_id') ?: null,
+            );
+        });
+    }
+}

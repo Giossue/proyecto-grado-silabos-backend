@@ -315,7 +315,7 @@ class PrepareTestingEnvironmentCommand extends Command
         $settings = [];
         foreach ($pending as $id) {
             $settings[] = ['id' => $id, 'parallels' => $id === $subject->id
-                ? [['code' => self::PARALLEL_CODE, 'teacher_user_id' => $teacher->id]]
+                ? [['code' => self::PARALLEL_CODE, 'shift' => 'matutina', 'teacher_user_id' => $teacher->id]]
                 : []];
         }
         app(PreparePeriod::class)->execute([
@@ -334,7 +334,7 @@ class PrepareTestingEnvironmentCommand extends Command
             ->whereDoesntHave('teacherAssignments', fn ($q) => $q->where('activo', true))->orderBy('codigo')->first();
         if ($free === null) {
             $code = 'P'.(Parallel::query()->where('programacion_asignatura_id', $scheduled->id)->count() + 1);
-            app(CreateParallels::class)->execute(['scheduled_subject_id' => $scheduled->id, 'codes' => [$code]], $coordinator->user, $this->requestAs($coordinator));
+            app(CreateParallels::class)->execute(['scheduled_subject_id' => $scheduled->id, 'codes' => [$code], 'shift' => 'matutina'], $coordinator->user, $this->requestAs($coordinator));
             $free = Parallel::query()->where('programacion_asignatura_id', $scheduled->id)->where('codigo', $code)->firstOrFail();
         }
         app(CreateAcademicRecord::class)->execute('asignacion_docente', ['parallel_id' => $free->id, 'user_id' => $teacher->id], $coordinator->user, $this->requestAs($coordinator));
