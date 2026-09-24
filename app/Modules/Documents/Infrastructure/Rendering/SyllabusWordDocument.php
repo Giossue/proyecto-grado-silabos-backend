@@ -128,7 +128,6 @@ class SyllabusWordDocument
             }
         }
 
-        $this->signatures($section, $input);
         $this->metadata($section, $input);
 
         return $word;
@@ -190,41 +189,6 @@ class SyllabusWordDocument
         $right = $row->addCell($this->context->contentWidth - $leftWidth, ['valign' => 'center']);
         if (is_file($faculty)) {
             $right->addImage($faculty, ['height' => 40, 'alignment' => Jc::END]);
-        }
-    }
-
-    /**
-     * Bloque "Revisión y aprobación" como el formato UEB: una columna por firmante con
-     * la celda de firma vacía (se firma en FirmaEC), su nombre y cargo, y la fecha.
-     */
-    private function signatures(Section $section, DocumentRenderInput $input): void
-    {
-        if ($input->signatures === []) {
-            return;
-        }
-
-        $section->addText('Revisión y aprobación', [], ['spaceBefore' => 360, 'spaceAfter' => 240, 'keepNext' => true]);
-        $border = ['borderSize' => 6, 'borderColor' => WordRenderContext::BLUE];
-        $table = $section->addTable([...$border, 'width' => 100 * 50, 'unit' => TblWidth::PERCENT, 'cellMargin' => 80]);
-        $width = intdiv($this->context->contentWidth, count($input->signatures));
-        $bold = ['bold' => true];
-        $tight = ['spaceAfter' => 0, 'keepNext' => true];
-
-        // Alto fijo para que quepa el sello de la firma electrónica.
-        $row = $table->addRow(1500, ['cantSplit' => true]);
-        foreach ($input->signatures as $_) {
-            $row->addCell($width, [...$border, 'valign' => 'bottom'])->addText('Firma:', $bold, $tight);
-        }
-        $row = $table->addRow(null, ['cantSplit' => true]);
-        foreach ($input->signatures as $party) {
-            $cell = $row->addCell($width, [...$border, 'bgColor' => WordRenderContext::LIGHT_BLUE]);
-            $cell->addText('Nombre: '.$party->name, $bold, $tight);
-            $cell->addText($party->role, $bold, $tight);
-        }
-        $row = $table->addRow(null, ['cantSplit' => true]);
-        foreach ($input->signatures as $party) {
-            $row->addCell($width, [...$border, 'bgColor' => WordRenderContext::BLUE])
-                ->addText($party->dateLabel.': '.$party->date, [...$bold, 'color' => 'FFFFFF'], ['spaceAfter' => 0]);
         }
     }
 

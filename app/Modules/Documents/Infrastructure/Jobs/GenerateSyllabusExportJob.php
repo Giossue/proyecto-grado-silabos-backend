@@ -2,12 +2,11 @@
 
 namespace App\Modules\Documents\Infrastructure\Jobs;
 
-use App\Models\User;
+use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Documents\Application\DocumentBundleValidator;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use App\Modules\Documents\Domain\Data\RenderedDocument;
-use App\Modules\Documents\Domain\Data\SignatureParty;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -89,8 +88,7 @@ class GenerateSyllabusExportJob implements ShouldQueue
             revisionFingerprint: $revision->huella_sha256,
             generatedAt: $artifact->solicitado_en->toIso8601String(),
             locale: $artifact->idioma,
-            snapshot: $revision->fotografia,
-            signatures: $this->signatures($revision, $approval),
+            snapshot: $this->withSignatures($revision, $approval),
         ));
         if ($renderer->version() !== $artifact->version_renderizador) {
             throw new RuntimeException('La versión del renderer no coincide con la solicitud.');
@@ -231,27 +229,21 @@ class GenerateSyllabusExportJob implements ShouldQueue
     }
 
     /**
-     * Quien entregó la revisión y quien la aprobó, con las fechas en hora de Ecuador.
+     * Completa las variables de firma (fecha de entrega, coordinación y fecha de revisión)
+     * para que la plantilla las ubique donde quiera, p. ej. en "Revisión y aprobación".
      *
-     * @return list<SignatureParty>
+     * @return array<string, mixed>
      */
-    private function signatures(SyllabusRevision $revision, Approval $approval): array
+    private function withSignatures(SyllabusRevision $revision, Approval $approval): array
     {
-        $date = fn ($moment): string => $moment->setTimezone('America/Guayaquil')->format('d-m-Y');
+        $snapshot = $revision->fotografia;
+        $variables = is_array($snapshot['template_variables'] ?? null) ? $snapshot['template_variables'] : [];
+        $snapshot['template_variables'] = [...$variables, ...TemplateVariables::approval([
+            'submitted_on' => $revision->enviado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
+            'coordinator' => $approval->approver->nombre ?? '',
+            'approved_on' => $approval->aprobado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
+        ])];
 
-        return [
-            new SignatureParty(
-                name: User::query()->whereKey($revision->enviado_por)->value('nombre') ?? '',
-                role: 'Docente',
-                dateLabel: 'Fecha de entrega',
-                date: $date($revision->enviado_en),
-            ),
-            new SignatureParty(
-                name: $approval->approver->nombre ?? '',
-                role: 'Coordinación de Carrera',
-                dateLabel: 'Fecha de revisión',
-                date: $date($approval->aprobado_en),
-            ),
-        ];
+        return $snapshot;
     }
 }

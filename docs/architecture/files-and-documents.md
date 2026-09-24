@@ -56,9 +56,6 @@ I-34 incorporó PHPWord. I-56 usa `phpword-docx-v3+text-pdf-v2`; I-57 eleva el s
 esquema 4 para conservar `blocks[].page_orientation`, además de `blocks[].document` y
 `template_variables`. `TemplateDocumentResolver` sustituye tokens y expande
 filas/unidades/totales exclusivamente con esa fotografía.
-Desde `phpword-docx-v4+text-pdf-v3` el documento cierra con "Revisión y aprobación":
-una columna para quien entregó la revisión y otra para quien la aprobó, con la celda
-de firma vacía para firmar electrónicamente en FirmaEC, nombre, cargo y fechas.
 `TemplateDocumentWord` traduce nodos permitidos a PHPWord: fuentes, marcas, alineación,
 listas, fondos, anchos, `gridSpan` y `vMerge`. La planificación abre una sección carta
 horizontal, cada unidad posterior inicia página y las cabeceras se repiten al desbordar;

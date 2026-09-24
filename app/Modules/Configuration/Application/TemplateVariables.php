@@ -27,10 +27,30 @@ final class TemplateVariables
         return $values;
     }
 
+    /**
+     * Variables de firma resueltas al exportar una revisión aprobada. Sobrescriben las de
+     * la fotografía, que se tomó al enviar y no podía conocerlas.
+     *
+     * @param  array{submitted_on: string, coordinator: string, approved_on: string}  $approval
+     * @return array<string, string>
+     */
+    public static function approval(array $approval): array
+    {
+        $keys = array_keys(array_filter(
+            self::definitions(),
+            fn (array $definition): bool => str_starts_with($definition['source'], 'approval.'),
+        ));
+
+        return array_intersect_key(self::resolve(['approval' => $approval]), array_flip($keys));
+    }
+
     /** @return list<array{key: string, label: string, sample: string}> */
     public static function catalog(): array
     {
-        $samples = self::resolve(['identification' => IdentificationCard::sample()]);
+        $samples = self::resolve([
+            'identification' => IdentificationCard::sample(),
+            'approval' => ['submitted_on' => '14-08-2026', 'coordinator' => 'Ing. Galuth García', 'approved_on' => '14-08-2026'],
+        ]);
         $catalog = [];
         foreach (self::definitions() as $key => $definition) {
             $catalog[] = ['key' => $key, 'label' => $definition['label'], 'sample' => $samples[$key]];
