@@ -84,11 +84,11 @@ final class IdentificationCard
             'prerequisites' => self::join(data_get($context, 'subject.prerequisites')) ?: 'Ninguno',
             'corequisites' => self::join(data_get($context, 'subject.corequisites')) ?: 'Ninguno',
             'organization_unit' => $get('subject.organization_unit'),
-            'hours_ac' => $get('subject.hours_ac'),
-            'hours_pae' => $get('subject.hours_pae'),
-            'hours_aa' => $get('subject.hours_aa'),
-            'total_hours' => $get('subject.total_hours'),
-            'credits' => $get('subject.credits'),
+            'hours_ac' => self::number($get('subject.hours_ac')),
+            'hours_pae' => self::number($get('subject.hours_pae')),
+            'hours_aa' => self::number($get('subject.hours_aa')),
+            'total_hours' => self::number($get('subject.total_hours')),
+            'credits' => self::number($get('subject.credits')),
             'teacher' => self::join($teachers),
             'email' => self::join($emails),
             'disability' => mb_strtolower(self::stripAccents($input('discapacidad_tiene'))),
@@ -159,8 +159,8 @@ final class IdentificationCard
             [$value('No'), $number($disability === 'no' ? 'X' : ''), $value('', 5)],
             [$label('COMPONENTES DE APRENDIZAJE EN EL PERÍODO ACADÉMICO', 2, 4), $small('HORAS DEL PROFESOR', 3), $small('HORAS DEL ESTUDIANTE', 3), $small('TOTAL DE HORAS POR PERÍODO', 1, 2)],
             [$small('HORAS DE DOCENCIA (ACD)', 3, 1, true), $small('HORAS DE PRÁCTICAS DE APLICACIÓN O EXPERIMENTACIÓN (APE)', 2, 1, true), $small('HORAS DE APRENDIZAJE AUTÓNOMAS (AA)', 1, 1, true)],
-            [$number($v('hours_ac'), 3), $number($v('hours_pae'), 2), $number($v('hours_aa')), $number($v('total_hours'))],
-            [$small('TOTAL, CRÉDITOS', 6, 1, true), $number($v('credits'), 1, true)],
+            [$number(self::number($v('hours_ac')), 3), $number(self::number($v('hours_pae')), 2), $number(self::number($v('hours_aa'))), $number(self::number($v('total_hours')))],
+            [$small('TOTAL, CRÉDITOS', 6, 1, true), $number(self::number($v('credits')), 1, true)],
             [$label('NOMBRE DEL DOCENTE', 2), $value($v('teacher'), 5), $small('CORREO INSTITUCIONAL'), $value($v('email'))],
             // Última fila del formato: etiqueta en negrita y, debajo, el texto del docente.
             [self::cell("FORMACIÓN Y EXPERIENCIA ACADÉMICA – INVESTIGATIVA:\n".$v('formation'), 9, 1, 'plain', false, false, false)],
@@ -205,6 +205,20 @@ final class IdentificationCard
         $names = [1 => 'Primero', 'Segundo', 'Tercero', 'Cuarto', 'Quinto', 'Sexto', 'Séptimo', 'Octavo', 'Noveno', 'Décimo'];
 
         return is_numeric($value) && isset($names[(int) $value]) ? $names[(int) $value] : self::text($value);
+    }
+
+    /**
+     * Horas y créditos sin ceros sobrantes: «32.00» se muestra «32» y «2.50», «2.5».
+     * Un texto que no es número se devuelve tal cual.
+     */
+    public static function number(string $value): string
+    {
+        $value = trim($value);
+        if (! is_numeric($value) || ! str_contains($value, '.')) {
+            return $value;
+        }
+
+        return rtrim(rtrim($value, '0'), '.');
     }
 
     private static function text(mixed $value): string

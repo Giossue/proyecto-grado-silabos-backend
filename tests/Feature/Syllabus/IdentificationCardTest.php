@@ -104,4 +104,20 @@ class IdentificationCardTest extends TestCase
         $this->assertSame('Matriz', $data['campus']);
         $this->assertSame('Presencial', $data['modality']);
     }
+
+    public function test_hours_and_credits_drop_trailing_zeros_in_card_and_variables(): void
+    {
+        $data = IdentificationCard::build(
+            ['subject' => ['hours_ac' => '32.00', 'hours_pae' => '16.50', 'hours_aa' => '48.0', 'total_hours' => '100.00', 'credits' => '2.00']],
+            [], [], [],
+        );
+
+        $this->assertSame(['32', '16.5', '48', '100', '2'], [$data['hours_ac'], $data['hours_pae'], $data['hours_aa'], $data['total_hours'], $data['credits']]);
+        $this->assertSame('Pendiente', IdentificationCard::number('Pendiente'));
+
+        // Fotografías antiguas guardaron «32.00»: las variables también se limpian.
+        $variables = \App\Modules\Configuration\Application\TemplateVariables::resolve(['identification' => ['hours_ac' => '32.00', 'credits' => '2.50']]);
+        $this->assertSame('32', $variables['horas_docencia']);
+        $this->assertSame('2.5', $variables['creditos_asignatura']);
+    }
 }

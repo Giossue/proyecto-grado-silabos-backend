@@ -21,6 +21,9 @@ final class TemplateVariables
         foreach (self::definitions() as $key => $definition) {
             $value = data_get($snapshot, $definition['source']);
             $text = is_scalar($value) ? (string) $value : '';
+            if (preg_match('/^identification\.(hours_|total_hours|credits)/', $definition['source']) === 1) {
+                $text = IdentificationCard::number($text);
+            }
             $values[$key] = isset($definition['equals']) ? ($text === $definition['equals'] ? 'X' : '') : $text;
         }
 
