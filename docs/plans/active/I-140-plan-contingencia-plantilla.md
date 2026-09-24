@@ -1,7 +1,7 @@
 # I-140 — Plan de contingencia de la plantilla del sílabo
 
-Estado: aprobado y en ejecución (24 de septiembre de 2026). Parte backend hecha; falta
-frontend, recorrido con Playwright y migración remota.
+Estado: aprobado y en ejecución (24 de septiembre de 2026). Backend y frontend hechos; falta
+la migración remota.
 
 ## Por qué
 
@@ -125,4 +125,29 @@ junta todo lo que falta para cerrar el tema de una vez.
 - [x] Word/PDF: una parte sin nombre no imprime subtítulo ni consume número (6.1, 6.2
   quedan consecutivos).
 - [x] Mensajes al docente e IA: `FieldDefinition::displayName()` cae al nombre de la sección.
-- [ ] Frontend (constructor y vista del docente): a cargo del agente de frontend.
+- [x] Frontend: «Nombre (opcional)» en Editar parte, Agregar parte y Agregar sección (la
+  sección sí exige nombre). Sin nombre no hay subtítulo ni número en el lienzo (6.1, 6.2
+  consecutivos) ni en la vista del docente.
+
+## Avance frontend (hecho, 24 de septiembre de 2026)
+
+Parte de esto llegó en los commits `ce4682b` y `e4f894f` del frontend.
+
+- [x] 1, 2, 3, 4, 5 (interruptor «Hoja horizontal»; el lienzo agrupa hojas por orientación),
+  6, 7 (solo el nombre de la sección es obligatorio), 8, 9, 10 (aviso en vez de nada).
+- [x] 11, 12, 13, 14, 15.
+- [x] 16. Ajustado a pedido del usuario: las celdas no desbordan. Se usa `hyphens: auto`
+  (español) y `overflow-wrap: anywhere` como último recurso, en el lienzo, el editor de
+  tablas y las tablas del docente. En columnas muy angostas (Semana, APE) una palabra
+  corta puede cortarse.
+- [x] 19, 20, 21, 22, 23, 24, 25, 26, 27, 28.
+- [x] En la vista previa un dato automático sin valor queda vacío (antes decía «Dato
+  automático»).
+- [x] Tarjeta «Plazo de la convocatoria»: barra de avance clara bajo las fechas de inicio
+  y entrega.
+- [x] Arreglado «Editar título» de la barra, que no abría (la referencia quedó dentro de
+  un `v-for`).
+- [x] `vue-tsc`, `eslint`, `vitest` (167 pruebas) y `build` pasan. Recorrido Playwright
+  (administración y docente, escrituras interceptadas) en `/tmp/auditoria-plantilla/despues/`.
+- [ ] Pendiente fuera de este plan: Escape no cierra algunos diálogos cuando el cursor está
+  en un campo de texto.
