@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Syllabus;
 
+use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use Tests\TestCase;
 
@@ -116,7 +117,7 @@ class IdentificationCardTest extends TestCase
         $this->assertSame('Pendiente', IdentificationCard::number('Pendiente'));
 
         // Fotografías antiguas guardaron «32.00»: las variables también se limpian.
-        $variables = \App\Modules\Configuration\Application\TemplateVariables::resolve(['identification' => ['hours_ac' => '32.00', 'credits' => '2.50']]);
+        $variables = TemplateVariables::resolve(['identification' => ['hours_ac' => '32.00', 'credits' => '2.50']]);
         $this->assertSame('32', $variables['horas_docencia']);
         $this->assertSame('2.5', $variables['creditos_asignatura']);
     }
