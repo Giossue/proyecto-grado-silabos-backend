@@ -1,7 +1,7 @@
 # I-140 — Plan de contingencia de la plantilla del sílabo
 
-Estado: propuesto (24 de septiembre de 2026). Se ejecuta completo, en un solo paso, cuando
-el usuario lo apruebe.
+Estado: aprobado y en ejecución (24 de septiembre de 2026). Parte backend hecha; falta
+frontend, recorrido con Playwright y migración remota.
 
 ## Por qué
 
@@ -90,6 +90,23 @@ junta todo lo que falta para cerrar el tema de una vez.
 - El guardado automático, el aviso al salir, la detección de conflictos y "Reintentar".
 - La validación de horas y semanas contra la malla.
 - La firma electrónica (I-139).
+
+## Avance backend (hecho)
+
+- [x] 5. `page_orientation` (`portrait` · `landscape` · `null` = automático) se guarda con
+  `PATCH /api/v1/admin/template/{template}/fields/{field}` (partes con docente) o
+  `PATCH /api/v1/admin/template/{template}/blocks/{block}/document` (texto fijo). Si no se
+  envía, se conserva. Planificación sigue horizontal por defecto; el Word ya lo respeta
+  (`SyllabusWordDocument`).
+- [x] 8. "Selección múltiple" fuera de `blockTypes` y rechazada al crear (parte o sección);
+  una parte existente de ese tipo se puede seguir editando.
+- [x] 10. Texto fijo sin `document` o vacío: 422 «Escriba el texto fijo antes de guardar.»
+- [x] 17. `ValidateDraft` no exige texto fijo, partes no editables por el docente ni
+  definiciones que no están en el documento.
+- [x] 18. Dato institucional faltante: «Avise a Coordinación: falta el dato «…» en la
+  información de la carrera.» (sigue bloqueando). Horas y semanas sin cambios.
+- [x] 3 (backend). Mensajes de la API dicen «sección» y «parte».
+- [x] Migraciones `000106`, `000110` y `000111` aplicadas en la base local.
 
 ## Cierre y verificación
 
