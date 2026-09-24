@@ -244,6 +244,29 @@ class SyllabusProcessTest extends TestCase
             ->assertJsonValidationErrors(['process' => 'La plantilla institucional está vacía. Aplique el formato oficial o configure sus bloques antes de abrir la convocatoria.']);
     }
 
+    public function test_process_dates_start_today_at_the_earliest_and_stay_inside_the_period(): void
+    {
+        $template = $this->publishedTemplate();
+        $period = AcademicPeriod::query()->firstOrFail();
+        $period->update(['fecha_fin' => now()->addMonth()->toDateString()]);
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.store'), [
+                ...$this->processPayload($template),
+                'starts_at' => now()->subDay()->toDateString(),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['starts_at' => 'El inicio no puede ser anterior a hoy.']);
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.store'), [
+                ...$this->processPayload($template),
+                'due_at' => now()->addMonths(2)->toDateString(),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('due_at');
+    }
+
     public function test_process_dates_arrive_as_days_and_cover_the_whole_deadline_day(): void
     {
         $template = $this->publishedTemplate();
@@ -879,7 +902,7 @@ class SyllabusProcessTest extends TestCase
     {
         return [
             'period_id' => AcademicPeriod::query()->valueOrFail('id'),
-            'starts_at' => now()->subDay()->toIso8601String(),
+            'starts_at' => now()->toIso8601String(),
             'due_at' => now()->addMonth()->toIso8601String(),
         ];
     }

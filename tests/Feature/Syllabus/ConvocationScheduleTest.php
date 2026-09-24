@@ -206,7 +206,7 @@ class ConvocationScheduleTest extends TestCase
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             'period_id' => AcademicPeriod::query()->valueOrFail('id'),
-            'starts_at' => now()->subDay()->toIso8601String(),
+            'starts_at' => now()->toIso8601String(),
             'due_at' => now()->addMonth()->toIso8601String(),
         ])->assertSuccessful();
 
