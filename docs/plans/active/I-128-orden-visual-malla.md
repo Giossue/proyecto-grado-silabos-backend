@@ -31,3 +31,17 @@ de alta queda disponible en cada ciclo editable sin cubrir otra tarjeta.
 - Backend: `composer verify` aprobado, 329 pruebas y 4.012 aserciones; PHPStan y Pint
   aprobados.
 - Pendiente la revisión visual con ratón, táctil y zoom en navegador real (PV-19).
+
+## Corrección visual — 2026-09-24
+
+Una prueba en Chromium reprodujo el salto de la tarjeta fuera del carril: Vue Flow
+descuenta el tamaño del nodo del límite de arrastre y conserva una coordenada interna
+distinta de la declarada al soltar. El constructor amplía el límite, fija la altura del
+ciclo, desactiva el desplazamiento automático del lienzo durante el gesto y sincroniza
+las coordenadas internas de todas las tarjetas al guardar o restaurar. En Chromium,
+arrastrar la primera materia dos posiciones a la derecha mantuvo la altura del ciclo;
+una respuesta HTTP 200 dejó las posiciones finales exactas y una HTTP 500 restauró las
+originales. Ambas enviaron `cycle=1` y `position=2`. La prueba permanente
+`tests/e2e/curriculum-drag.spec.ts` ejecuta esos dos casos con Vue Flow real en Chromium;
+ambos pasaron. La suite frontend completa pasó con 145 pruebas, junto con lint,
+typecheck y el build Vite.
