@@ -12,6 +12,7 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Calcula si una carrera puede abrir su alcance del proceso institucional vigente.
@@ -118,5 +119,48 @@ final class CoordinatorConvocationReadiness
             'deadline_open' => $deadlineOpen,
             'can_open' => $canOpen,
         ];
+    }
+
+    /**
+     * Mensajes simples de lo que falta en datos académicos para abrir la convocatoria.
+     *
+     * @param  CoordinatorReadiness  $readiness
+     * @return list<string>
+     */
+    public function missingAcademicData(array $readiness): array
+    {
+        $missing = [];
+        if (! $readiness['curriculum_ready']) {
+            $missing[] = 'Falta registrar la malla de la carrera con sus materias.';
+        }
+        if ($readiness['scheduled_total'] === 0) {
+            $missing[] = 'Falta programar materias en el período.';
+        }
+        $withoutParallel = $readiness['scheduled_total'] - $readiness['scheduled_with_parallels'];
+        if ($withoutParallel > 0) {
+            $missing[] = $withoutParallel === 1
+                ? 'Falta 1 materia programada sin paralelo.'
+                : "Faltan {$withoutParallel} materias programadas sin paralelo.";
+        }
+        $withoutTeacher = $readiness['parallel_total'] - $readiness['parallels_with_teacher'];
+        if ($withoutTeacher > 0) {
+            $missing[] = $withoutTeacher === 1
+                ? 'Falta 1 paralelo sin docente.'
+                : "Faltan {$withoutTeacher} paralelos sin docente.";
+        }
+        if ($readiness['sources_total'] === 0) {
+            $missing[] = 'Falta registrar al menos una fuente académica activa.';
+        }
+
+        return $missing;
+    }
+
+    /** Rechaza abrir cuando faltan datos académicos; usa el mismo cálculo que ve Coordinación. */
+    public function assertAcademicDataReady(string $careerId): void
+    {
+        $missing = $this->missingAcademicData($this->inspect($careerId));
+        if ($missing !== []) {
+            throw ValidationException::withMessages(['convocation' => $missing]);
+        }
     }
 }

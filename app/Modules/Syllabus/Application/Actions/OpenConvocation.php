@@ -11,6 +11,7 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
+use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -29,6 +30,7 @@ class OpenConvocation
         private readonly WorkflowNotificationRecipients $recipients,
         private readonly ScheduleInternalNotification $notifications,
         private readonly ConvocationSchedule $schedule,
+        private readonly CoordinatorConvocationReadiness $readiness,
     ) {}
 
     public function execute(string $convocationId, User $actor, Request $request): Convocation
@@ -59,6 +61,7 @@ class OpenConvocation
                     default => 'El proceso institucional todavía no se abre. Podrá abrir cuando Administración lo inicie.',
                 }]);
             }
+            $this->readiness->assertAcademicDataReady($convocation->carrera_id);
             $template = SyllabusTemplate::institutional();
             $this->templateStructure->assertUsable($template, 'convocation');
             if ($convocation->sources->isEmpty()

@@ -12,6 +12,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\Actions\OpenConvocation;
+use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -178,6 +179,56 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('preparacion', $convocation->fresh()->estado);
         $this->assertDatabaseCount('silabos', 0);
         $this->assertDatabaseMissing('eventos_auditoria', ['accion_evento_auditoria' => 'convocatoria.abierta']);
+    }
+
+    public function test_opening_reports_how_many_parallels_lack_a_teacher(): void
+    {
+        $scheduledSubject = ScheduledSubject::query()->firstOrFail();
+        Parallel::query()->create(['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => 'B']);
+        Parallel::query()->create(['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => 'C']);
+        $convocation = $this->createPreparedConvocation();
+
+        $this->assertOpeningFails($convocation, 'Faltan 2 paralelos sin docente.');
+        $this->assertDatabaseCount('silabos', 0);
+    }
+
+    public function test_opening_is_rejected_when_a_scheduled_subject_has_no_parallel(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        $scheduledSubject = ScheduledSubject::query()->firstOrFail();
+        $other = $scheduledSubject->subject->replicate();
+        $other->codigo_asignatura = 'OTRA-01';
+        $other->nombre_asignatura = 'Materia sin paralelo';
+        $other->save();
+        ScheduledSubject::query()->create([
+            'asignatura_id' => $other->id,
+            'periodo_academico_id' => $scheduledSubject->periodo_academico_id,
+            'campus_programacion' => $scheduledSubject->campus_programacion,
+            'modalidad' => $scheduledSubject->modalidad,
+            'activo' => true,
+        ]);
+
+        $this->assertOpeningFails($convocation, 'Falta 1 materia programada sin paralelo.');
+        $this->assertSame('preparacion', $convocation->fresh()->estado);
+    }
+
+    public function test_opening_is_rejected_without_curriculum_subjects(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        $readiness = app(CoordinatorConvocationReadiness::class);
+        $state = $readiness->inspect($convocation->carrera_id);
+        $state['curriculum_ready'] = false;
+
+        $this->assertContains('Falta registrar la malla de la carrera con sus materias.', $readiness->missingAcademicData($state));
+    }
+
+    public function test_opening_is_rejected_without_active_sources(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        AcademicSource::query()->update(['activo' => false]);
+
+        $this->assertOpeningFails($convocation, 'Falta registrar al menos una fuente académica activa.');
+        $this->assertDatabaseCount('silabos', 0);
     }
 
     public function test_archived_source_blocks_convocation_opening(): void
