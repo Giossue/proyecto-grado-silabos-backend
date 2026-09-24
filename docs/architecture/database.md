@@ -129,8 +129,12 @@ impiden referencias huérfanas en ambas direcciones. `definiciones_campo.plantil
 es la única referencia persistida a la plantilla: `silabos`, `convocatorias_universidad`,
 `artefactos_exportacion` y el historial de IA ya no la guardan (I-132, I-135) y la aplicación la
 resuelve con `SyllabusTemplate::institutional()`. La exportación renderiza desde
-`revisiones_silabo.fotografia`, no desde la plantilla vigente. Todos los campos se validan como
-obligatorios al enviar, pero el estado `borrador` puede permanecer incompleto.
+`revisiones_silabo.fotografia`, no desde la plantilla vigente. Cada bloque guarda su tipo una
+sola vez en `configuracion.content_type` (`text`, `table`, listas, `institutional` o `fixed` =
+contenido fijo sin campos); el tipo de almacenamiento se deriva de él (I-138).
+`definiciones_campo.reglas_definicion_campo` guarda `{required, max_length, min_rows,
+max_rows}`: sin reglas el campo es obligatorio. Se validan al enviar; el estado `borrador`
+puede permanecer incompleto o fuera de límites.
 
 `fuentes_academicas` es un documento por fila (I-95): nombre único por carrera,
 descripción y `documento_fuente_academica` JSON editable. `contenido_fuente_academica`

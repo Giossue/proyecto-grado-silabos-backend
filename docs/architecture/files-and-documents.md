@@ -63,6 +63,14 @@ el resto vuelve a la orientación general. No importa HTML ni recursos externos.
 Las revisiones anteriores sin documento mantienen su lector. Los artefactos existentes
 no se modifican; la versión del motor participa en la idempotencia.
 
+I-138: fuera del título y los logos del encabezado, nada del documento está fijo en
+código. La sección «Revisión y aprobación» es contenido fijo editable de la plantilla
+con las variables `nombre_docente`, `nombre_coordinador`, `fecha_entrega` y
+`fecha_revision`; las tres últimas no existen al enviar y `GenerateSyllabusExportJob` las
+completa desde la aprobación (fecha de envío, nombre de quien aprobó y fecha de
+aprobación, hora de Ecuador). Solo muestran nombres y fechas: la firma digital dentro del
+sistema es trabajo aparte.
+
 El PDF continúa como respaldo de texto (ahora incluye texto fijo y variables del diseño);
 no se promete maquetación de tablas, colores ni cortes iguales al DOCX. La fidelidad
 institucional y el motor PDF siguen sujetos a PV-07.

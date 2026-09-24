@@ -337,13 +337,13 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   los totales flotantes inician visibles y se pueden contraer temporalmente; en móvil se
   consultan desde su botón. El lienzo no muestra minimapa; conserva los controles de zoom
   y el desplazamiento. En oscuro, lienzo, ciclos y tarjetas se distinguen por superficie y
-  borde, con textos y metadatos legibles. «Configurar malla» es la acción primaria del encabezado y solo
-  edita la cantidad de ciclos; los campos de la tarjeta (ACD, APE, AA, CRED, TOTAL)
-  los fija el reglamento y nacen con la malla. Al crear o editar una materia, todos los
-  campos activos son obligatorios, las magnitudes se presentan en una fila compacta y
-  **TOTAL** se calcula con la suma de los componentes de horas, sin incluir créditos. La
-  unidad de organización curricular se elige de una lista fija (básica, profesional,
-  integración curricular); el orden dentro del ciclo se asigna automáticamente cuando
+  borde, con textos y metadatos legibles. «Configurar malla» es la acción primaria del
+  encabezado y solo edita la cantidad de ciclos; los campos de la tarjeta (ACD, APE, AA,
+  CRED, TOTAL) los fija el reglamento y nacen con la malla. Al crear o editar una materia,
+  todos los campos activos son obligatorios, las magnitudes se presentan en una fila
+  compacta y **TOTAL** se calcula con la suma de los componentes de horas, sin incluir
+  créditos. La unidad de organización curricular se elige de una lista fija (básica,
+  profesional, integración curricular); el orden dentro del ciclo se asigna automáticamente cuando
   no lo determina el constructor. Al soltar una materia, el orden de todo el ciclo se guarda junto en una
   transacción. Una reubicación correcta se guarda sin notificación repetitiva; un fallo
   restaura el orden anterior y explica la acción correctiva.

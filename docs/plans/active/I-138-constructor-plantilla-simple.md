@@ -2,7 +2,7 @@
 
 ## Estado
 
-En curso (24 de septiembre de 2026). Pendiente al cerrar: aplicar la migración en la base
+Implementado el 24 de septiembre de 2026. Pendiente al cerrar: aplicar la migración en la base
 remota de pruebas (no se ejecuta nada contra ella desde este incremento).
 
 ## Objetivo
@@ -58,4 +58,10 @@ fijo (sus campos quedan retirados, no se borran datos) y limpia `repeat/totals/s
 
 ## Verificación
 
-Pendiente.
+- Backend: `composer verify` en `silabos_ueb_test_plantilla` (pint, phpstan, 329 pruebas).
+- Frontend: `vue-tsc --noEmit`, `eslint src`, `vitest run` (148 pruebas).
+- Migración probada sobre una plantilla sembrada con el código anterior: quita `tipo`,
+  retira el estado de revisión (24 → 23 definiciones), convierte indicadores y escala,
+  y una segunda ejecución deja el JSON idéntico.
+- Fuera de alcance: unificar la doble descripción de tablas y la paginación del editor.
+  Las reglas se editan en el campo principal de cada bloque.
