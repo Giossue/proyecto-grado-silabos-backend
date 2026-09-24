@@ -146,8 +146,12 @@ class SyllabusController extends Controller
             'message' => 'Borrador guardado.',
             'version_bloqueo' => $updated->version_bloqueo,
             'guardado_en' => $updated->guardado_en?->toIso8601String(),
+            // Misma forma que la carga del borrador (`id`, `data`, `position`): el
+            // editor reemplaza sus filas con esta respuesta y otra forma las borraba.
             'rows' => $field->tipo === 'repetible'
                 ? $updated->rows()->where('definicion_campo_id', $field->id)->orderBy('posicion')->get(['id', 'datos', 'posicion'])
+                    ->map(fn (RepeatableRow $row): array => ['id' => $row->id, 'data' => $row->datos, 'position' => $row->posicion])
+                    ->values()
                 : [],
         ]);
     }

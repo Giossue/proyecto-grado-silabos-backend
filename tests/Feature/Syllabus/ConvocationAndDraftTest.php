@@ -545,7 +545,7 @@ class ConvocationAndDraftTest extends TestCase
         ])->assertOk()
             ->assertJsonCount(1, 'rows')
             ->assertJsonPath('rows.0.id', $secondRowId)
-            ->assertJsonPath('rows.0.posicion', 1);
+            ->assertJsonPath('rows.0.position', 1);
 
         $this->assertDatabaseMissing('filas_repetibles', ['datos_fila_repetible->texto' => 'Primera fila']);
         $this->assertDatabaseHas('filas_repetibles', [
@@ -553,6 +553,31 @@ class ConvocationAndDraftTest extends TestCase
             'posicion_fila_repetible' => 1,
             'datos_fila_repetible->texto' => 'Segunda fila ajustada',
         ]);
+    }
+
+    public function test_saved_rows_keep_the_draft_shape_and_empty_rows_survive(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
+        $syllabus->refresh();
+        $field = FieldDefinition::query()
+            ->where('tipo', 'repetible')
+            ->firstOrFail();
+
+        // «Agregar fila» envía una fila vacía; el editor reemplaza sus filas con la
+        // respuesta, así que debe llegar con `data`/`position` como en la carga.
+        $saved = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
+            'version_bloqueo' => $syllabus->version_bloqueo,
+            'rows' => [['data' => ['texto' => '']]],
+        ])->assertOk()
+            ->assertJsonCount(1, 'rows')
+            ->assertJsonPath('rows.0.position', 1)
+            ->assertJsonMissingPath('rows.0.datos');
+        $this->assertIsArray($saved->json('rows.0.data'));
+
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
+            ->assertOk();
+        $this->assertDatabaseHas('filas_repetibles', ['id' => $saved->json('rows.0.id')]);
     }
 
     public function test_teacher_fills_table_cells_by_column_and_unit(): void
@@ -573,9 +598,9 @@ class ConvocationAndDraftTest extends TestCase
             ],
         ])->assertOk();
 
-        $this->assertSame('unit', $saved->json('rows.0.datos._kind'));
-        $this->assertSame(2, $saved->json('rows.1.datos.acd'));
-        $this->assertSame(1.5, $saved->json('rows.1.datos.ape'));
+        $this->assertSame('unit', $saved->json('rows.0.data._kind'));
+        $this->assertSame(2, $saved->json('rows.1.data.acd'));
+        $this->assertSame(1.5, $saved->json('rows.1.data.ape'));
 
         // Una celda no puede ser una estructura anidada.
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
