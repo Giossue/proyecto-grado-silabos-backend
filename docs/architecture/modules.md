@@ -60,6 +60,18 @@ Un módulo expone solo:
 
 No expone consultas ad hoc sobre sus tablas, modelos Eloquent mutables ni lógica interna.
 
+Las consultas de solo lectura que otro módulo necesita viven en
+`Application/Queries/` del módulo dueño y devuelven identificadores o arreglos, no
+modelos. Ejemplo: `NotificationDestination` (Operaciones) resuelve el destino de un
+aviso con `Syllabus\Application\Queries\SyllabusNavigationLookup`,
+`AiAssistance\Application\Queries\AiHistorySyllabusLookup` y
+`Documents\Application\Queries\ExportArtifactLookup`.
+
+Deuda conocida: aún quedan usos directos de modelos de otros módulos (por ejemplo
+`WorkflowNotificationRecipients`, `SetupChecklist` y `RetryJobExecution` en
+Operaciones, y Sílabos sobre modelos de Académico/Configuración). Se migran a este
+patrón cuando se toquen; no hay prueba de arquitectura que los bloquee todavía.
+
 ## Eventos recomendados
 
 - `CampaignOpened`

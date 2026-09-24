@@ -3,20 +3,18 @@
 namespace App\Modules\Operations\Application;
 
 use App\Models\User;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
-use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
+use App\Modules\AiAssistance\Application\Queries\AiHistorySyllabusLookup;
+use App\Modules\Documents\Application\Queries\ExportArtifactLookup;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\CurrentSyllabusTeacher;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use App\Modules\Syllabus\Application\Queries\SyllabusNavigationLookup;
 use Illuminate\Support\Collection;
 
 /**
  * Decide a qué pantalla lleva un aviso y con cuál de los roles vigentes de la persona
- * (I-121). Solo elige entre asignaciones que ella ya puede activar: no concede acceso,
+ * (I-121). Lee los otros módulos solo mediante sus consultas públicas. Solo elige entre asignaciones que ella ya puede activar: no concede acceso,
  * y cada pantalla sigue aplicando sus propias políticas después del cambio de rol.
  *
  * @phpstan-type Destination array{assignment: RoleAssignment|null, path: string}
@@ -26,7 +24,12 @@ final class NotificationDestination
     /** Avisos dirigidos a Coordinación aunque la persona también enseñe esa materia. */
     private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'coordinacion.asignada'];
 
-    public function __construct(private readonly ActiveRole $roles) {}
+    public function __construct(
+        private readonly ActiveRole $roles,
+        private readonly SyllabusNavigationLookup $syllabi,
+        private readonly AiHistorySyllabusLookup $aiHistory,
+        private readonly ExportArtifactLookup $artifacts,
+    ) {}
 
     /**
      * @param  Collection<int, RoleAssignment>|null  $eligible  Asignaciones vigentes ya cargadas.
@@ -75,16 +78,16 @@ final class NotificationDestination
         }
 
         return match ($notification->tipo_recurso) {
-            'silabo' => $this->syllabusOptions(Syllabus::query()->find($id), $notification, $user, $eligible),
-            'ejecucion_ia', 'revision_ia_silabo' => $this->aiOptions(AiHistoryEntry::query()->find($id), $user, $eligible),
-            'artefacto_exportacion' => $this->artifactOptions(ExportArtifact::query()->with('revision.syllabus')->find($id), $user, $eligible),
+            'silabo' => $this->syllabusOptions($id, $notification, $user, $eligible),
+            'ejecucion_ia', 'revision_ia_silabo' => $this->aiOptions($id, $user, $eligible),
+            'artefacto_exportacion' => $this->artifactOptions($id, $user, $eligible),
             'convocatoria' => $this->careerOptions(
-                Convocation::query()->whereKey($id)->pluck('carrera_id')->all(),
+                $this->syllabi->convocationCareerIds($id),
                 $eligible,
                 teacherFirst: true,
             ),
             'proceso_silabos' => $this->careerOptions(
-                Convocation::query()->where('proceso_id', $id)->pluck('carrera_id')->all(),
+                $this->syllabi->processCareerIds($id),
                 $eligible,
                 teacherFirst: true,
             ),
@@ -104,19 +107,19 @@ final class NotificationDestination
      * @param  Collection<int, RoleAssignment>  $eligible
      * @return list<Destination>
      */
-    private function syllabusOptions(?Syllabus $syllabus, InternalNotification $notification, User $user, Collection $eligible): array
+    private function syllabusOptions(string $syllabusId, InternalNotification $notification, User $user, Collection $eligible): array
     {
-        if ($syllabus === null) {
+        if (! $this->syllabi->exists($syllabusId)) {
             return [];
         }
-        $careerId = $syllabus->convocation()->value('carrera_id');
-        $revision = $syllabus->revisions()->latest('numero_revision')->value('id');
-        $teacher = $this->teacherOptions($syllabus, $user, $eligible, "/docente/mis-silabos/{$syllabus->id}");
+        $careerId = $this->syllabi->careerId($syllabusId);
+        $revision = $this->syllabi->latestRevisionId($syllabusId);
+        $teacher = $this->teacherOptions($syllabusId, $user, $eligible, "/docente/mis-silabos/{$syllabusId}");
         $coordinator = $this->withRole(
             $eligible,
             RoleCode::Coordinator,
-            is_string($careerId) ? [$careerId] : [],
-            is_string($revision) ? "/coordinacion/revisiones/{$revision}" : '/coordinacion/revisiones',
+            $careerId !== null ? [$careerId] : [],
+            $revision !== null ? "/coordinacion/revisiones/{$revision}" : '/coordinacion/revisiones',
         );
 
         return in_array($notification->tipo, self::COORDINATION_EVENTS, true)
@@ -128,36 +131,35 @@ final class NotificationDestination
      * @param  Collection<int, RoleAssignment>  $eligible
      * @return list<Destination>
      */
-    private function aiOptions(?AiHistoryEntry $entry, User $user, Collection $eligible): array
+    private function aiOptions(string $entryId, User $user, Collection $eligible): array
     {
-        $syllabusId = $entry?->input('silabo_id');
-        $syllabus = is_string($syllabusId) ? Syllabus::query()->find($syllabusId) : null;
+        $syllabusId = $this->aiHistory->syllabusId($entryId);
 
-        return $syllabus === null
+        return $syllabusId === null || ! $this->syllabi->exists($syllabusId)
             ? []
-            : $this->teacherOptions($syllabus, $user, $eligible, "/docente/mis-silabos/{$syllabus->id}");
+            : $this->teacherOptions($syllabusId, $user, $eligible, "/docente/mis-silabos/{$syllabusId}");
     }
 
     /**
      * @param  Collection<int, RoleAssignment>  $eligible
      * @return list<Destination>
      */
-    private function artifactOptions(?ExportArtifact $artifact, User $user, Collection $eligible): array
+    private function artifactOptions(string $artifactId, User $user, Collection $eligible): array
     {
-        $revision = $artifact?->revision;
-        $syllabus = $revision?->syllabus;
-        if ($revision === null || $syllabus === null) {
+        $target = $this->artifacts->revisionOf($artifactId);
+        if ($target === null) {
             return [];
         }
-        $careerId = $syllabus->convocation()->value('carrera_id');
+        ['revision_id' => $revisionId, 'syllabus_id' => $syllabusId] = $target;
+        $careerId = $this->syllabi->careerId($syllabusId);
 
         return [
-            ...$this->teacherOptions($syllabus, $user, $eligible, "/docente/revisiones/{$revision->id}/documentos"),
+            ...$this->teacherOptions($syllabusId, $user, $eligible, "/docente/revisiones/{$revisionId}/documentos"),
             ...$this->withRole(
                 $eligible,
                 RoleCode::Coordinator,
-                is_string($careerId) ? [$careerId] : [],
-                "/coordinacion/revisiones/{$revision->id}/documentos",
+                $careerId !== null ? [$careerId] : [],
+                "/coordinacion/revisiones/{$revisionId}/documentos",
             ),
         ];
     }
@@ -169,13 +171,9 @@ final class NotificationDestination
      * @param  Collection<int, RoleAssignment>  $eligible
      * @return list<Destination>
      */
-    private function teacherOptions(Syllabus $syllabus, User $user, Collection $eligible, string $path): array
+    private function teacherOptions(string $syllabusId, User $user, Collection $eligible, string $path): array
     {
-        $assignmentIds = CurrentSyllabusTeacher::query()
-            ->where('silabo_id', $syllabus->id)
-            ->where('usuario_id', $user->id)
-            ->pluck('asignacion_rol_id')
-            ->all();
+        $assignmentIds = $this->syllabi->teacherAssignmentIds($syllabusId, $user->id);
 
         $options = [];
         foreach ($eligible as $assignment) {
@@ -188,13 +186,12 @@ final class NotificationDestination
     }
 
     /**
-     * @param  array<mixed>  $careerIds
+     * @param  list<string>  $careers
      * @param  Collection<int, RoleAssignment>  $eligible
      * @return list<Destination>
      */
-    private function careerOptions(array $careerIds, Collection $eligible, bool $teacherFirst): array
+    private function careerOptions(array $careers, Collection $eligible, bool $teacherFirst): array
     {
-        $careers = array_values(array_filter($careerIds, 'is_string'));
         $teacher = $this->withRole($eligible, RoleCode::Teacher, $careers, '/docente/mis-silabos');
         $coordinator = $this->withRole($eligible, RoleCode::Coordinator, $careers, '/coordinacion/convocatorias');
 
