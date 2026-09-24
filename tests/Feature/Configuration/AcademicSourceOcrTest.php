@@ -203,6 +203,25 @@ final class AcademicSourceOcrTest extends TestCase
         $this->assertSame("Liderazgo\nAutocontrol\nToma de decisiones", $source->contenido);
     }
 
+    public function test_html_entities_from_the_ocr_are_not_shown_as_text_in_table_cells(): void
+    {
+        // PaddleOCR entrega el texto de la celda ya escapado (p. ej. `5 &#x27;A&#x27;`).
+        $this->fakeCompletedJob([[
+            'id' => 'table', 'kind' => 'table', 'locations' => [],
+            'row_count' => 1, 'column_count' => 1,
+            'cells' => [$this->tableCell('c1', 0, 0, '5 &#x27;A&#x27; &amp; B')],
+        ]]);
+        $source = $this->createSource();
+        $this->actingAsCoordinator()->post(
+            route('api.v1.coordination.sources.pdf.ingest', $source),
+            ['pdf' => UploadedFile::fake()->create('comillas.pdf', 20, 'application/pdf')],
+        )->assertStatus(202);
+
+        $this->runJobs(JobExecution::query()->firstOrFail());
+
+        $this->assertSame("5 'A' & B", $source->refresh()->contenido);
+    }
+
     public function test_provider_markdown_is_used_when_the_document_graph_has_no_elements(): void
     {
         $this->fakeCompletedJob([], [], "## Contenido recuperado\n\nTexto ordenado.");

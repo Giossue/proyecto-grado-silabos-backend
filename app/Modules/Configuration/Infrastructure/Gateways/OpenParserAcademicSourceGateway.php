@@ -348,7 +348,11 @@ final class OpenParserAcademicSourceGateway implements AcademicSourceOcrGateway
                 $tag = ($cell['role'] ?? 'body') === 'body' ? 'td' : 'th';
                 $rowspan = max(1, (int) ($cell['row_span'] ?? 1));
                 $colspan = max(1, (int) ($cell['column_span'] ?? 1));
-                $text = is_string($cell['text'] ?? null) ? $cell['text'] : '';
+                // El OCR puede entregar el texto ya escapado (`&#x27;`): se decodifica antes
+                // de escaparlo una sola vez, o la entidad terminaría visible en la celda.
+                $text = is_string($cell['text'] ?? null)
+                    ? html_entity_decode($cell['text'], ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                    : '';
                 $html .= "<{$tag} rowspan=\"{$rowspan}\" colspan=\"{$colspan}\">".htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8')."</{$tag}>";
             }
             $html .= '</tr>';
