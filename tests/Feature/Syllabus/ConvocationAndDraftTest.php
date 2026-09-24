@@ -7,6 +7,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
+use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -14,6 +15,7 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\Actions\OpenConvocation;
 use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
+use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -407,6 +409,56 @@ class ConvocationAndDraftTest extends TestCase
         $messages = $run->results()->get()->groupBy('definicion_campo_id');
         $this->assertArrayNotHasKey($text->id, $messages->all());
         $this->assertSame('«'.$empty->etiqueta.'» está vacío. Complétalo antes de enviar.', $messages[$empty->id]->first()->mensaje);
+    }
+
+    public function test_part_shown_only_when_another_matches_is_not_required_while_hidden_and_prints_empty(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
+        $has = FieldDefinition::query()->where('clave', 'discapacidad_tiene')->firstOrFail();
+        $type = FieldDefinition::query()->where('clave', 'discapacidad_tipo')->firstOrFail();
+        $adaptation = FieldDefinition::query()->where('clave', 'discapacidad_adaptacion')->firstOrFail();
+        $save = fn (FieldDefinition $field, string $value) => $this->actingAsTeacher()->patchJson(
+            route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
+            ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $value],
+        )->assertOk();
+        $missing = function () use ($syllabus): array {
+            return array_column($this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))
+                ->assertSuccessful()->json('validation.results'), 'field_id');
+        };
+
+        $detail = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
+        $fields = collect($detail->json('syllabus.sections'))->flatMap(fn ($section) => $section['blocks'])->flatMap(fn ($block) => $block['fields'])->keyBy('key');
+        $this->assertSame(['key' => 'discapacidad_tiene', 'value' => 'Sí'], $fields['discapacidad_tipo']['show_when']);
+        $this->assertNull($fields['discapacidad_tiene']['show_when']);
+
+        // Con «Sí», las dos partes aparecen y son obligatorias.
+        $save($has, 'Sí');
+        $this->assertContains($type->id, $missing());
+        $this->assertContains($adaptation->id, $missing());
+
+        // Llenas y luego «No»: se ocultan, no se piden y su valor se conserva.
+        $save($type, 'Visual');
+        $save($adaptation, 'Material ampliado');
+        $save($has, 'No');
+        $this->assertNotContains($type->id, $missing());
+        $this->assertNotContains($adaptation->id, $missing());
+        $this->assertSame('Visual', $syllabus->values()->where('definicion_campo_id', $type->id)->value('valor'));
+
+        // En el documento, la parte oculta sale vacía.
+        $snapshot = app(SyllabusSnapshot::class)->build($syllabus->fresh());
+        $this->assertSame('', $snapshot['identification']['disability_type']);
+        $block = collect($snapshot['sections'])->flatMap(fn ($section) => $section['blocks'])
+            ->first(fn ($block) => collect($block['fields'])->contains('key', 'discapacidad_tipo'));
+        $snapshotFields = collect($block['fields'])->keyBy('key');
+        $this->assertTrue($snapshotFields['discapacidad_tipo']['hidden']);
+        $this->assertSame('Visual', $snapshotFields['discapacidad_tipo']['value']);
+        $resolved = json_encode(TemplateDocumentResolver::resolve($block['document'], $block['fields'], [], null), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+        $this->assertStringNotContainsString('Visual', $resolved);
+        $this->assertStringNotContainsString('Material ampliado', $resolved);
+
+        $save($has, 'Sí');
+        $this->assertSame('Visual', app(SyllabusSnapshot::class)->build($syllabus->fresh())['identification']['disability_type']);
     }
 
     public function test_validation_skips_fixed_and_non_editable_parts_and_sends_missing_institutional_data_to_coordination(): void

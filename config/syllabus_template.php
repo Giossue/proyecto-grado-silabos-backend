@@ -54,10 +54,11 @@ return [
         ]],
     ],
 
+    // Quinto valor: «Mostrar solo si» (otra parte de selección y su valor), o null.
     'identification_inputs' => [
-        ['discapacidad_tiene', 'Estudiantes con discapacidad', 'seleccion_unica', ['Sí', 'No']],
-        ['discapacidad_tipo', 'Tipo de discapacidad', 'texto_corto', null],
-        ['discapacidad_adaptacion', 'Descripción de la adaptación curricular', 'texto_corto', null],
-        ['formacion_experiencia', 'Formación y experiencia académica-investigativa', 'texto_largo', null],
+        ['discapacidad_tiene', 'Estudiantes con discapacidad', 'seleccion_unica', ['Sí', 'No'], null],
+        ['discapacidad_tipo', 'Tipo de discapacidad', 'texto_corto', null, ['key' => 'discapacidad_tiene', 'value' => 'Sí']],
+        ['discapacidad_adaptacion', 'Descripción de la adaptación curricular', 'texto_corto', null, ['key' => 'discapacidad_tiene', 'value' => 'Sí']],
+        ['formacion_experiencia', 'Formación y experiencia académica-investigativa', 'texto_largo', null, null],
     ],
 ];

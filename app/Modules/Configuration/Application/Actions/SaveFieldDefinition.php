@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -58,6 +59,10 @@ class SaveFieldDefinition
             $contentType = $this->stringValue($data, 'content_type');
             // Una parte sin nombre se guarda con etiqueta vacía y no muestra subtítulo.
             $data['label'] = trim((string) ($data['label'] ?? ''));
+            // «Mostrar solo si» solo cambia cuando la petición lo trae.
+            $condition = array_key_exists('show_when', $data)
+                ? ['mostrar_si' => FieldConditions::normalize($data['show_when'])]
+                : [];
 
             $customBlock = $field?->block;
             if ($field !== null && $customBlock !== null && is_array($customBlock->configuracion['document'] ?? null)) {
@@ -73,6 +78,7 @@ class SaveFieldDefinition
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
                     'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                     'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
+                    ...$condition,
                 ]);
                 $this->applyOrientation($customBlock, $data);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
@@ -86,6 +92,7 @@ class SaveFieldDefinition
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
                     'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
+                    ...$condition,
                 ]);
                 $block = $template->updateBlockDocument($field->bloque_plantilla_id, ['titulo' => $data['label']]);
                 $this->applyOrientation($block, $data);
@@ -131,6 +138,7 @@ class SaveFieldDefinition
                 'ia_habilitada' => (bool) ($data['ai_enabled'] ?? ($field !== null ? $field->ia_habilitada : false)),
                 'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                 'marcador_documento' => $field !== null ? $field->marcador_documento : null,
+                ...$condition,
             ];
 
             if ($field === null) {

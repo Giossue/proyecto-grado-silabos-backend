@@ -849,6 +849,36 @@ class TemplateDocumentTest extends TestCase
         $this->assertFalse($formation->fresh()->ia_habilitada);
     }
 
+    public function test_administration_sets_show_only_if_on_a_part(): void
+    {
+        $template = $this->template();
+        $type = $template->fields()->where('clave', 'discapacidad_tipo')->firstOrFail();
+        $formation = $template->fields()->where('clave', 'formacion_experiencia')->firstOrFail();
+        $block = $type->block;
+        // La plantilla por defecto ya pide el tipo solo cuando hay estudiantes con discapacidad.
+        $this->assertSame(['key' => 'discapacidad_tiene', 'value' => 'Sí'], $type->mostrar_si);
+        $this->assertNull($formation->mostrar_si);
+        $payload = $this->getJson(route('api.v1.admin.template.show', $template))->json();
+        $this->assertContains(['key' => 'discapacidad_tiene', 'value' => 'Sí'], data_get($payload, 'template.sections.*.blocks.*.fields.*.show_when'));
+
+        $save = fn (mixed $condition) => $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
+            'document' => $block->fresh()->configuracion['document'],
+            'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
+            'properties' => [['key' => 'formacion_experiencia', 'label' => $formation->etiqueta, 'help' => '', 'show_when' => $condition]],
+        ]);
+
+        $save(['key' => 'discapacidad_tiene', 'value' => 'No'])->assertSuccessful();
+        $this->assertSame(['key' => 'discapacidad_tiene', 'value' => 'No'], $formation->fresh()->mostrar_si);
+        $save(['key' => 'formacion_experiencia', 'value' => 'No'])
+            ->assertJsonValidationErrors(['properties.0.show_when' => 'Una parte no puede depender de sí misma.']);
+        $save(['key' => 'discapacidad_tipo', 'value' => 'x'])
+            ->assertJsonValidationErrors(['properties.0.show_when' => 'La parte elegida en «Mostrar solo si» debe ser de Sí/No o de selección.']);
+        $save(['key' => 'discapacidad_tiene', 'value' => 'Tal vez'])
+            ->assertJsonValidationErrors(['properties.0.show_when' => 'El valor elegido no es una opción de esa parte.']);
+        $save(null)->assertSuccessful();
+        $this->assertNull($formation->fresh()->mostrar_si);
+    }
+
     public function test_total_rows_only_accept_numeric_data(): void
     {
         $template = $this->template();

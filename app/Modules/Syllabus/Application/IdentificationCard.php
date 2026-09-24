@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Domain\CurricularUnit;
+use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -176,7 +177,7 @@ final class IdentificationCard
     {
         $definitions = FieldDefinition::query()
             ->whereIn('clave', array_keys(self::INPUT_KEYS))
-            ->get(['id', 'clave']);
+            ->get(['id', 'clave', 'tipo', 'mostrar_si']);
         if ($definitions->isEmpty()) {
             return [];
         }
@@ -189,6 +190,11 @@ final class IdentificationCard
         $inputs = [];
         foreach ($definitions as $definition) {
             $inputs[$definition->clave] = $values->get($definition->id)?->valor;
+        }
+        // «Mostrar solo si»: una parte oculta sale vacía en la ficha (p. ej. el tipo de
+        // discapacidad cuando la respuesta es «No»).
+        foreach (FieldConditions::hiddenKeys($definitions, $inputs) as $key) {
+            $inputs[$key] = null;
         }
 
         return $inputs;

@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateDocument;
@@ -315,6 +316,10 @@ final class SaveTemplateDocument
                 } else {
                     $attributes['ia_habilitada'] = $property['ai_enabled'];
                 }
+            }
+            if (array_key_exists('show_when', $property) && ! isset($detached[$property['key']])) {
+                $condition = FieldConditions::normalize($property['show_when']);
+                $attributes['mostrar_si'] = $condition === null ? null : json_encode($condition, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
             }
             $block->fields()->where('clave', $property['key'])->update($attributes);
         }

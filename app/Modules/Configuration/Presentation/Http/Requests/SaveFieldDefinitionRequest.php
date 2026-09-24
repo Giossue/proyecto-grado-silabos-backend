@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Presentation\Http\Requests;
 
+use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Illuminate\Validation\Rule;
@@ -76,6 +77,8 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'options.*.label' => ['required', 'string', 'max:180'],
             'document_marker' => ['nullable', 'string', 'max:160'],
             'page_orientation' => ['sometimes', 'nullable', 'in:portrait,landscape'],
+            // «Mostrar solo si»: null es «Siempre».
+            'show_when' => ['sometimes', 'nullable', 'array:key,value'],
         ];
     }
 
@@ -95,6 +98,17 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             if ($this->input('content_type') === 'multiple_choice'
                 && count((array) $this->input('options', [])) < 2) {
                 $validator->errors()->add('options', 'Agregue al menos dos opciones.');
+            }
+            if ($this->has('show_when') && $this->input('show_when') !== null) {
+                $template = $this->route('template');
+                $field = $this->route('field');
+                $templateId = $template instanceof SyllabusTemplate ? $template->id : (string) $template;
+                $error = $field instanceof FieldDefinition && $field->heredado
+                    ? 'Un dato automático no puede ocultarse.'
+                    : FieldConditions::error($templateId, (string) $this->input('key'), $this->input('show_when'));
+                if ($error !== null) {
+                    $validator->errors()->add('show_when', $error);
+                }
             }
         }];
     }

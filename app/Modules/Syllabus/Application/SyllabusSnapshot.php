@@ -2,6 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
+use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -31,6 +32,13 @@ class SyllabusSnapshot
         $identification = IdentificationCard::fromSyllabus($syllabus);
 
         $template = SyllabusTemplate::institutional();
+        $definitions = FieldDefinition::query()->where('plantilla_id', $template->id)->get();
+        // «Mostrar solo si»: una parte oculta sale vacía en el documento, pero su valor
+        // se conserva en la copia para no perder el trabajo del docente.
+        $hidden = array_flip(FieldConditions::hiddenKeys(
+            $definitions,
+            $definitions->mapWithKeys(fn (FieldDefinition $field): array => [$field->clave => $values->get($field->id)?->valor])->all(),
+        ));
 
         return [
             'schema_version' => 4,
@@ -57,6 +65,8 @@ class SyllabusSnapshot
                         'table' => TableLayout::fromBlock($block),
                         'document' => $block->configuracion['document'] ?? null,
                         'fields' => $block->fields->map(fn (FieldDefinition $field): array => [
+                            'show_when' => FieldConditions::normalize($field->mostrar_si),
+                            'hidden' => isset($hidden[$field->clave]),
                             'definition_id' => $field->id,
                             'key' => $field->clave,
                             'label' => $field->etiqueta,

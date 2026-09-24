@@ -15,6 +15,7 @@ use App\Modules\Configuration\Application\Actions\SaveTemplateAppearance;
 use App\Modules\Configuration\Application\Actions\SaveTemplateDocument;
 use App\Modules\Configuration\Application\Actions\SaveTemplateSection;
 use App\Modules\Configuration\Application\Actions\SaveTemplateTitle;
+use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
@@ -148,6 +149,7 @@ class TemplateController extends Controller
                                     'help' => $field->ayuda,
                                     'type' => $field->tipo,
                                     'options' => $this->fieldOptions($field),
+                                    'show_when' => FieldConditions::normalize($field->mostrar_si),
                                     'required' => true,
                                     'inherited' => $field->heredado,
                                     'master_source' => $field->origen_maestro,

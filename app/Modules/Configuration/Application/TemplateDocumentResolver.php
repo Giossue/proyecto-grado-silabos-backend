@@ -16,7 +16,11 @@ final class TemplateDocumentResolver
      */
     public static function resolve(array $document, array $fields, array $variables, ?array $layout, ?array $planningExpectations = null): array
     {
-        $byKey = array_column($fields, null, 'key');
+        $byKey = [];
+        foreach ($fields as $field) {
+            // Una parte oculta por «Mostrar solo si» sale vacía.
+            $byKey[$field['key']] = ($field['hidden'] ?? false) === true ? [...$field, 'value' => null, 'rows' => []] : $field;
+        }
         $visit = function (array $node, array $data = []) use (&$visit, $byKey, $variables, $layout, $planningExpectations): array {
             $type = $node['type'];
             $attrs = $node['attrs'] ?? [];

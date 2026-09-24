@@ -95,6 +95,10 @@ final class WordFieldRenderer
             return;
         }
 
+        // Una parte oculta por «Mostrar solo si» no imprime valor.
+        if (($field['hidden'] ?? false) === true) {
+            return;
+        }
         $this->text($section, $field['value'] ?? null);
     }
 

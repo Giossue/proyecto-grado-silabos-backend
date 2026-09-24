@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -43,9 +44,14 @@ class ValidateDraft
                 );
             }
             $issues = [];
+            // «Mostrar solo si»: una parte oculta no se pide al docente.
+            $hidden = array_flip(FieldConditions::hiddenKeys(
+                $fields,
+                $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->clave => $values->get($field->id)?->valor])->all(),
+            ));
 
             foreach ($fields as $field) {
-                if (! $this->requiredFromTeacher($field)) {
+                if (isset($hidden[$field->clave]) || ! $this->requiredFromTeacher($field)) {
                     continue;
                 }
                 $fieldRows = $rows->get($field->id, collect());

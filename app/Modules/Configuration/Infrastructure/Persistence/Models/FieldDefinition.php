@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $ia_habilitada
  * @property list<mixed>|null $opciones
  * @property string|null $marcador_documento
+ * @property array<string, mixed>|null $mostrar_si
  * @property int $posicion
  * @property-read TemplateBlock|null $block
  */
@@ -55,6 +56,7 @@ class FieldDefinition extends Model
         'ia_habilitada',
         'opciones',
         'marcador_documento',
+        'mostrar_si',
         'posicion',
     ];
 
@@ -66,6 +68,7 @@ class FieldDefinition extends Model
             'editable_docente' => 'boolean',
             'ia_habilitada' => 'boolean',
             'opciones' => 'array',
+            'mostrar_si' => 'array',
             'posicion' => 'integer',
         ];
     }

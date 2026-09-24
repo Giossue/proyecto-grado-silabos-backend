@@ -81,7 +81,7 @@ final class SyllabusTemplateProvisioner
     {
         /** @var list<array{0: string, 1: string, 2: list<array{0: string, 1: string, 2: string, 3: string|null}>}> $baseline */
         $baseline = config('syllabus_template.baseline', []);
-        /** @var list<array{0: string, 1: string, 2: string, 3: list<string>|null}> $identificationInputs */
+        /** @var list<array{0: string, 1: string, 2: string, 3: list<string>|null, 4?: array{key: string, value: string}|null}> $identificationInputs */
         $identificationInputs = config('syllabus_template.identification_inputs', []);
 
         $sections = [];
@@ -140,7 +140,8 @@ final class SyllabusTemplateProvisioner
                     continue;
                 }
 
-                foreach ($identificationInputs as $inputPosition => [$inputKey, $inputLabel, $inputType, $options]) {
+                foreach ($identificationInputs as $inputPosition => $input) {
+                    [$inputKey, $inputLabel, $inputType, $options] = $input;
                     $fieldDefinitions[] = [
                         'plantilla_id' => $template->id,
                         'bloque_plantilla_id' => $blockId,
@@ -152,6 +153,7 @@ final class SyllabusTemplateProvisioner
                         'editable_docente' => true,
                         'ia_habilitada' => $inputType === 'texto_largo',
                         'opciones' => $options,
+                        'mostrar_si' => $input[4] ?? null,
                         'posicion' => $inputPosition + 2,
                     ];
                 }

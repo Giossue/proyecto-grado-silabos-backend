@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TableLayout;
@@ -361,6 +362,8 @@ class SyllabusController extends Controller
                 'help' => $field->ayuda,
                 'type' => $field->tipo,
                 'options' => $this->fieldOptions($field),
+                // «Mostrar solo si»: la hoja oculta la parte mientras no se cumple.
+                'show_when' => FieldConditions::normalize($field->mostrar_si),
                 'required' => true,
                 'inherited' => $field->heredado,
                 'teacher_editable' => $field->editable_docente,

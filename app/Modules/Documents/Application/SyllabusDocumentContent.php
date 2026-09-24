@@ -39,9 +39,10 @@ class SyllabusDocumentContent
                 }
                 foreach ($this->arrayList($block['fields'] ?? null) as $field) {
                     $label = $this->string($field['label'] ?? null, 'Campo');
-                    $rows = $this->arrayList($field['rows'] ?? null);
+                    $hidden = ($field['hidden'] ?? false) === true;
+                    $rows = $hidden ? [] : $this->arrayList($field['rows'] ?? null);
                     if ($rows === []) {
-                        $lines[] = '    '.$label.': '.$this->display($field['value'] ?? null);
+                        $lines[] = '    '.$label.': '.($hidden ? '' : $this->display($field['value'] ?? null));
 
                         continue;
                     }
