@@ -9,7 +9,6 @@ use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
@@ -104,39 +103,15 @@ class AcademicStructureViewData
                     ->orderBy('nombre')
                     ->get(['id', 'nombre']),
                 'campusOptions' => CampusLocation::options(),
-                // Cualquier cuenta activa puede asumir una coordinación: el rol se concede al nombrarla.
-                'coordinatorUsers' => User::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'correo_electronico']),
-            ],
-        ];
-    }
-
-    /** @return array<string, mixed> */
-    public function coordinations(): array
-    {
-        return [
-            'coordinatorAssignments' => CoordinatorAssignment::query()
-                ->with(['user:id,nombre,correo_electronico', 'career:id,nombre'])
-                ->orderByDesc('activo')
-                ->orderBy('carrera_id')
-                ->get()
-                ->map(fn (CoordinatorAssignment $assignment) => [
-                    'id' => $assignment->id,
-                    'user_name' => $assignment->user->nombre,
-                    'career_name' => $assignment->career->nombre,
-                    'active' => $assignment->activo,
-                ]),
-            'options' => [
-                ...$this->emptyOptions(),
-                'careers' => Career::query()
-                    ->where('activo', true)
-                    ->orderBy('nombre')
-                    ->get(['id', 'nombre']),
+                // Cualquier cuenta activa puede asumir una coordinación (el rol se concede al
+                // nombrarla), incluso recién creada y pendiente de activar; Administración no
+                // coordina carreras.
                 'coordinatorUsers' => User::query()
                     ->where('activo', true)
-                    ->whereIn('id', RoleAssignment::query()
+                    ->whereNotIn('id', RoleAssignment::query()
                         ->select('usuario_id')
                         ->effective()
-                        ->where('rol', RoleCode::Coordinator->value))
+                        ->where('rol', RoleCode::Administrator->value))
                     ->orderBy('nombre')
                     ->get(['id', 'nombre', 'correo_electronico']),
             ],

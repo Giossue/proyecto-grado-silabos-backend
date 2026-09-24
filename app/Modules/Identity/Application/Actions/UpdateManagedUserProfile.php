@@ -47,15 +47,11 @@ class UpdateManagedUserProfile
 
             // Una cuenta activada pertenece a una persona: que Administración le cambie el
             // correo entregaría su historial a otra. Si alguien asume sus funciones, se le
-            // crea su propia cuenta. El titular sí puede actualizar su propio correo.
-            if ($locked->isDirty('correo_electronico') && $previous['verified'] && $actor->id !== $locked->id) {
+            // crea su propia cuenta. La regla alcanza también al titular desde su perfil.
+            if ($locked->isDirty('correo_electronico') && $previous['verified']) {
                 throw ValidationException::withMessages([
                     'correo_electronico' => 'La cuenta ya fue activada y su correo no se puede cambiar. Si otra persona asume sus funciones, cree su cuenta y asígnele el rol.',
                 ]);
-            }
-
-            if ($locked->isDirty('correo_electronico')) {
-                $locked->correo_verificado_en = null;
             }
 
             $locked->save();

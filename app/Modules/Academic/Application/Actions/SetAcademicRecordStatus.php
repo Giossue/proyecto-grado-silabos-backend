@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
@@ -31,7 +30,6 @@ class SetAcademicRecordStatus
         'carrera' => Career::class,
         'asignatura' => Subject::class,
         'programacion_asignatura' => ScheduledSubject::class,
-        'asignacion_coordinador' => CoordinatorAssignment::class,
         'asignacion_docente' => TeacherAssignment::class,
     ];
 

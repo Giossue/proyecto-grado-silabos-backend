@@ -95,14 +95,8 @@ Route::prefix('v1')->group(function (): void {
             Route::post('admin/users', [ManagedUserController::class, 'store'])
                 ->middleware('active-role')
                 ->name('api.v1.admin.users.store');
-            Route::get('admin/users/{user}', [ManagedUserController::class, 'show'])
-                ->middleware('active-role')->name('api.v1.admin.users.show');
             Route::patch('admin/users/{user}', [ManagedUserController::class, 'update'])
                 ->middleware('active-role')->name('api.v1.admin.users.update');
-            Route::post('admin/users/{user}/roles', [ManagedUserController::class, 'assignRole'])
-                ->middleware('active-role')->name('api.v1.admin.users.roles.store');
-            Route::patch('admin/users/{user}/status', [ManagedUserController::class, 'setStatus'])
-                ->middleware('active-role')->name('api.v1.admin.users.status.update');
             Route::post('admin/users/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
                 ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.admin.users.activation.resend');
             Route::delete('admin/users/{user}', [ManagedUserController::class, 'destroy'])
@@ -127,7 +121,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.academic.destroy');
             Route::get('admin/processes', [SyllabusProcessController::class, 'index'])->middleware('active-role')->name('api.v1.admin.processes.index');
             Route::post('admin/processes', [SyllabusProcessController::class, 'store'])->middleware('active-role')->name('api.v1.admin.processes.store');
-            Route::patch('admin/processes/{process}', [SyllabusProcessController::class, 'update'])->middleware('active-role')->name('api.v1.admin.processes.update');
             Route::delete('admin/processes/{process}', [SyllabusProcessController::class, 'destroy'])->middleware('active-role')->name('api.v1.admin.processes.destroy');
             Route::post('admin/processes/{process}/deadline', [SyllabusProcessController::class, 'extendDeadline'])->middleware('active-role')->name('api.v1.admin.processes.deadline.extend');
             Route::post('admin/processes/{process}/{transition}', [SyllabusProcessController::class, 'transition'])->middleware('active-role')->whereIn('transition', ['pausar', 'reanudar', 'cerrar'])->name('api.v1.admin.processes.transition');

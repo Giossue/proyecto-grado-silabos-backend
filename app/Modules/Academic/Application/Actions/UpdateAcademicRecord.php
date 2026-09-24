@@ -91,15 +91,15 @@ class UpdateAcademicRecord
         return DB::transaction(function () use ($actor, $activeRole, $data, $entity, $modelClass, $recordId, $request): Model {
             $record = $modelClass::query()->lockForUpdate()->findOrFail($recordId);
             $careerIds = $record instanceof Faculty
-                ? Career::query()->where('facultad_id', $record->id)->pluck('id')->all()
+                ? array_values(Career::query()->where('facultad_id', $record->id)->pluck('id')->map(fn ($id): string => (string) $id)->all())
                 : ($record instanceof Career ? $record->id : null);
             $periodId = $record instanceof AcademicPeriod ? $record->id : null;
             $this->locks->assertInstitutionalRecordEditable(
-                is_array($careerIds) ? $careerIds : (is_string($careerIds) ? [$careerIds] : []),
+                is_array($careerIds) ? array_map('strval', $careerIds) : (is_string($careerIds) ? [$careerIds] : []),
                 $periodId,
             );
 
-            return $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity, $record, $request): Model {
+            $change = function () use ($actor, $activeRole, $data, $entity, $record, $request): Model {
                 $attributes = $this->attributes($entity, $data);
 
                 if ($entity === 'carrera') {
@@ -120,6 +120,11 @@ class UpdateAcademicRecord
                 $record->save();
                 if ($record instanceof Faculty || $record instanceof Career) {
                     $this->refreshScheduledInheritance($record);
+                    $this->work->refreshIdentification(
+                        $record instanceof Faculty
+                            ? array_values(Career::query()->where('facultad_id', $record->id)->pluck('id')->map(fn ($id): string => (string) $id)->all())
+                            : [$record->id],
+                    );
                 }
 
                 $this->audit->execute(
@@ -134,7 +139,14 @@ class UpdateAcademicRecord
                 );
 
                 return $record;
-            }, $careerIds, $periodId);
+            };
+
+            // Facultad y carrera solo aportan datos de presentación (nombre, código,
+            // campus, modalidad, logo): se actualiza la ficha sin borrar el trabajo en
+            // curso. El período cambia las semanas lectivas y sí reinicia los sílabos.
+            return $record instanceof AcademicPeriod
+                ? $this->work->replace($request, $change, null, $periodId)
+                : $change();
         });
     }
 

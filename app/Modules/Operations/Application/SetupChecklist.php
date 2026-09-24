@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
  * Cada paso se calcula con datos reales; no se marca a mano ni se guarda. Cuando
  * todo está hecho, el panel deja de mostrarlo.
  *
- * @phpstan-type Step array{key: string, label: string, hint: string, done: bool, href: string, action: string|null}
+ * @phpstan-type Step array{key: string, label: string, hint: string, done: bool, action: string|null}
  * @phpstan-type Checklist array{title: string, intro: string, done: int, total: int, steps: list<Step>}
  *
  * @phpstan-import-type CoordinatorReadiness from CoordinatorConvocationReadiness
@@ -65,13 +65,13 @@ class SetupChecklist
             'Puesta en marcha de la institución',
             'En este orden. Cada paso habilita el siguiente; las coordinaciones no pueden empezar hasta que termine.',
             [
-                $this->step('faculties', 'Registrar las facultades', 'Elija el campus y, cuando corresponda, cargue el logo de cada facultad.', Faculty::query()->where('activo', true)->exists(), '/administracion/estructura-academica'),
-                $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada.', $careerCount > 0, '/administracion/estructura-academica'),
-                $this->step('periods', 'Registrar el periodo académico', 'El periodo que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists(), '/administracion/estructura-academica'),
-                $this->step('accounts', 'Crear las cuentas de coordinadores y docentes', 'Con su rol; el docente se asigna a paralelos desde Coordinación.', $accounts > 0, '/administracion/usuarios'),
-                $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0, '/administracion/estructura-academica'),
-                $this->step('template', 'Crear y formatear la plantilla de sílabo', 'Cree el contenedor vacío y aplique el formato oficial o configure sus bloques manualmente.', $templateReady, '/administracion/plantilla'),
-                $this->step('process', 'Preparar y abrir la convocatoria', 'Desde Periodos académicos elija el período y confirme las fechas de elaboración; las coordinaciones podrán iniciar sus alcances.', SyllabusProcess::query()->exists(), '/administracion/estructura-academica?seccion=periodo'),
+                $this->step('faculties', 'Registrar las facultades', 'Elija el campus y, cuando corresponda, cargue el logo de cada facultad.', Faculty::query()->where('activo', true)->exists()),
+                $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada.', $careerCount > 0),
+                $this->step('periods', 'Registrar el periodo académico', 'El periodo que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists()),
+                $this->step('accounts', 'Crear las cuentas de coordinadores y docentes', 'Con su rol; el docente se asigna a paralelos desde Coordinación.', $accounts > 0),
+                $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0),
+                $this->step('template', 'Crear y formatear la plantilla de sílabo', 'Cree el contenedor vacío y aplique el formato oficial o configure sus bloques manualmente.', $templateReady),
+                $this->step('process', 'Preparar y abrir la convocatoria', 'Desde Periodos académicos elija el período y confirme las fechas de elaboración; las coordinaciones podrán iniciar sus alcances.', SyllabusProcess::query()->exists()),
             ],
         );
     }
@@ -98,35 +98,31 @@ class SetupChecklist
             'Puesta en marcha de la carrera',
             'En este orden. Al abrir la convocatoria se crea un sílabo por paralelo con su docente.',
             [
-                $this->step('curriculum', 'Armar la malla con sus materias', 'Ciclos, materias, horas, créditos y prerrequisitos.', $readiness['curriculum_ready'], '/coordinacion/estructura-academica'),
+                $this->step('curriculum', 'Armar la malla con sus materias', 'Ciclos, materias, horas, créditos y prerrequisitos.', $readiness['curriculum_ready']),
                 $this->step(
                     'scheduled_subjects',
                     'Programar las materias del período',
                     $period === null ? 'Espera a que Administración abra la convocatoria institucional para conocer el período.' : "Registre las materias que se impartirán en {$period}.",
                     $scheduledTotal > 0,
-                    '/coordinacion/estructura-academica',
                 ),
                 $this->step(
                     'parallels',
                     'Crear los paralelos',
                     $scheduledTotal === 0 ? 'Primero programe las materias del período.' : "{$scheduledWithParallels} de {$scheduledTotal} materias programadas tienen paralelos.",
                     $scheduledTotal > 0 && $scheduledWithParallels === $scheduledTotal,
-                    '/coordinacion/estructura-academica',
                 ),
                 $this->step(
                     'teachers',
                     'Asignar un docente a cada paralelo',
                     $parallelTotal === 0 ? 'Primero cree los paralelos del período.' : "{$parallelsWithTeacher} de {$parallelTotal} paralelos tienen un docente vigente.",
                     $parallelTotal > 0 && $parallelsWithTeacher === $parallelTotal,
-                    '/coordinacion/estructura-academica',
                 ),
-                $this->step('sources', 'Registrar al menos una fuente académica', 'Documento de apoyo que la convocatoria fija para los docentes.', $readiness['sources_total'] > 0, '/coordinacion/fuentes'),
+                $this->step('sources', 'Registrar al menos una fuente académica', 'Documento de apoyo que la convocatoria fija para los docentes.', $readiness['sources_total'] > 0),
                 $this->step(
                     'convocation',
                     'Abrir la convocatoria de la carrera',
                     $this->coordinatorConvocationHint($readiness),
                     $readiness['convocation'] !== null,
-                    '/coordinacion/convocatorias',
                     $readiness['can_open'] ? 'open_convocation' : null,
                 ),
             ],
@@ -158,15 +154,14 @@ class SetupChecklist
         $total = (clone $own)->count();
         $started = (clone $own)->where('estado', '!=', 'sin_iniciar')->count();
         $submitted = (clone $own)->whereIn('estado', ['en_revision', 'aprobado'])->count();
-        $index = '/mis-silabos';
 
         return $this->build(
             'Sus sílabos, paso a paso',
             $total === 0 ? 'Cuando Coordinación abra la convocatoria, aquí aparecerán sus sílabos.' : 'Cada sílabo se inicia, se completa y se envía a revisión.',
             [
-                $this->step('assigned', 'Recibir los sílabos asignados', $total > 0 ? "{$total} asignados." : 'Los asigna Coordinación al abrir la convocatoria.', $total > 0, $index),
-                $this->step('started', 'Iniciar cada sílabo', $total > 0 ? "{$started} de {$total} iniciados." : 'Al iniciar se copian los datos de la malla.', $total > 0 && $started === $total, $index),
-                $this->step('submitted', 'Completar y enviar a revisión', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega.', $total > 0 && $submitted === $total, $index),
+                $this->step('assigned', 'Recibir los sílabos asignados', $total > 0 ? "{$total} asignados." : 'Los asigna Coordinación al abrir la convocatoria.', $total > 0),
+                $this->step('started', 'Iniciar cada sílabo', $total > 0 ? "{$started} de {$total} iniciados." : 'Al iniciar se copian los datos de la malla.', $total > 0 && $started === $total),
+                $this->step('submitted', 'Completar y enviar a revisión', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega.', $total > 0 && $submitted === $total),
             ],
         );
     }
@@ -188,9 +183,8 @@ class SetupChecklist
         string $label,
         string $hint,
         bool $done,
-        string $href,
         ?string $action = null,
     ): array {
-        return ['key' => $key, 'label' => $label, 'hint' => $hint, 'done' => $done, 'href' => $href, 'action' => $action];
+        return ['key' => $key, 'label' => $label, 'hint' => $hint, 'done' => $done, 'action' => $action];
     }
 }

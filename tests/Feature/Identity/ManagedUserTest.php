@@ -73,40 +73,6 @@ class ManagedUserTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_administrator_sees_complete_role_history_for_a_user(): void
-    {
-        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
-        $existing = $teacher->roleAssignments()->firstOrFail();
-        $archived = $existing->replicate();
-        $archived->id = null;
-        $archived->activo = false;
-        $archived->save();
-
-        $this->actingAsAdministrator()
-            ->getJson(route('api.v1.admin.users.show', $teacher))
-            ->assertOk()
-            ->assertJson(fn (Assert $page) => $page->etc()
-
-                ->where('managedUser.correo_electronico', 'docente@silabos.test')
-                ->has('managedUser.assignments', 2)
-                ->where('managedUser.assignments.0.effective', true)
-                ->where('managedUser.assignments.1.effective', false));
-    }
-
-    public function test_administrator_reads_user_detail_through_the_api_contract(): void
-    {
-        config(['sanctum.stateful' => ['localhost:5173']]);
-        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
-
-        $this->actingAsAdministrator()
-            ->withHeader('Origin', 'http://localhost:5173')
-            ->getJson(route('api.v1.admin.users.show', $teacher))
-            ->assertOk()
-            ->assertJsonPath('managedUser.correo_electronico', 'docente@silabos.test')
-            ->assertJsonPath('managedUser.assignments.0.role_code', RoleCode::Teacher->value)
-            ->assertJsonStructure(['roles', 'careers']);
-    }
-
     public function test_the_list_filters_by_role_career_and_state(): void
     {
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
@@ -246,25 +212,33 @@ class ManagedUserTest extends TestCase
 
         // Con la carrera ya coordinada, la concesión se rechaza y lo dice.
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.users.roles.store', $teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $teacher), [
+                ...$this->identityOf($teacher),
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $career->id,
             ])
             ->assertJsonValidationErrors('role_code');
 
         $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.users.status.update', $this->coordinatorHolder()), ['active' => false])
+            ->patchJson(route('api.v1.admin.users.update', $this->coordinatorHolder()), [...$this->identityOf($this->coordinatorHolder()), 'active' => false])
             ->assertSuccessful();
 
-        // Al retirarse quien la ejercía, el rol queda como historial; la cuenta inactiva
-        // ya no puede bloquear una coordinación nueva.
-        $this->assertTrue(CoordinatorAssignment::query()
+        // Al desactivarse quien la ejercía, su coordinación se cierra: la carrera queda
+        // sin coordinación y la auditoría dice cuál se cerró.
+        $this->assertFalse(CoordinatorAssignment::query()
             ->where('usuario_id', $this->coordinatorHolder()->id)
             ->where('activo', true)
             ->exists());
+        $this->assertFalse(CoordinatorAssignment::query()->effective()->where('carrera_id', $career->id)->exists());
+        $event = DB::table('eventos_auditoria')
+            ->where('accion_evento_auditoria', 'usuario.desactivado')
+            ->where('recurso_id', $this->coordinatorHolder()->id)
+            ->firstOrFail();
+        $this->assertStringContainsString($career->nombre, (string) json_encode($event));
 
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.users.roles.store', $teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $teacher), [
+                ...$this->identityOf($teacher),
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $career->id,
             ])
@@ -295,11 +269,12 @@ class ManagedUserTest extends TestCase
         // Conceder la coordinación abre el nombramiento, y la base no admite dos activos
         // en la misma carrera: primero se retira a quien la ejerce.
         $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.users.status.update', $this->coordinatorHolder()), ['active' => false])
+            ->patchJson(route('api.v1.admin.users.update', $this->coordinatorHolder()), [...$this->identityOf($this->coordinatorHolder()), 'active' => false])
             ->assertSuccessful();
 
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.users.roles.store', $teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $teacher), [
+                ...$this->identityOf($teacher),
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $career->id,
             ])
@@ -336,7 +311,8 @@ class ManagedUserTest extends TestCase
         ]);
 
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.users.roles.store', $target), [
+            ->patchJson(route('api.v1.admin.users.update', $target), [
+                ...$this->identityOf($target),
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
             ])
@@ -357,7 +333,8 @@ class ManagedUserTest extends TestCase
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
 
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.users.roles.store', $teacher), [
+            ->patchJson(route('api.v1.admin.users.update', $teacher), [
+                ...$this->identityOf($teacher),
                 'role_code' => RoleCode::Administrator->value,
             ])
             ->assertUnprocessable()
@@ -383,7 +360,8 @@ class ManagedUserTest extends TestCase
         ]);
 
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.users.roles.store', $coordinator), [
+            ->patchJson(route('api.v1.admin.users.update', $coordinator), [
+                ...$this->identityOf($coordinator),
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $secondCareer->id,
             ])
@@ -421,7 +399,7 @@ class ManagedUserTest extends TestCase
         ]);
 
         $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.users.status.update', $teacher), ['active' => false])
+            ->patchJson(route('api.v1.admin.users.update', $teacher), [...$this->identityOf($teacher), 'active' => false])
             ->assertSuccessful()
             ->assertSuccessful();
 
@@ -438,7 +416,7 @@ class ManagedUserTest extends TestCase
     public function test_administrator_cannot_deactivate_own_account(): void
     {
         $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.users.status.update', $this->administrator), ['active' => false])
+            ->patchJson(route('api.v1.admin.users.update', $this->administrator), [...$this->identityOf($this->administrator), 'active' => false])
             ->assertForbidden();
 
         $this->assertTrue($this->administrator->fresh()->activo);
@@ -683,5 +661,11 @@ class ManagedUserTest extends TestCase
             ->withSession(['active_role_assignment_id' => $this->administratorContext->id]);
 
         return $this;
+    }
+
+    /** @return array{nombre: string, correo_electronico: string} */
+    private function identityOf(User $user): array
+    {
+        return ['nombre' => $user->nombre, 'correo_electronico' => $user->correo_electronico];
     }
 }

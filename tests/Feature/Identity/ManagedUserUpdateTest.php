@@ -198,7 +198,7 @@ class ManagedUserUpdateTest extends TestCase
 
         // La carrera solo admite una coordinación activa: se retira antes a quien la ejerce.
         $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.users.status.update', $this->coordinator), ['active' => false])
+            ->patchJson(route('api.v1.admin.users.update', $this->coordinator), [...$this->identityOf($this->coordinator), 'active' => false])
             ->assertSuccessful();
 
         $this->actingAsAdministrator()
@@ -212,10 +212,10 @@ class ManagedUserUpdateTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
 
-        // El estado de cuenta es la puerta exterior: el rol queda como historial, pero
-        // una cuenta inactiva no puede ejercerlo ni bloquear la futura coordinación.
+        // Desactivar cierra también la coordinación recién concedida: la carrera no queda
+        // a nombre de una cuenta inactiva.
         $this->assertDatabaseHas('usuarios', ['id' => $this->teacher->id, 'usuario_activo' => false]);
-        $this->assertTrue(CoordinatorAssignment::query()
+        $this->assertFalse(CoordinatorAssignment::query()
             ->where('usuario_id', $this->teacher->id)
             ->where('carrera_id', $career->id)
             ->where('activo', true)
@@ -236,5 +236,11 @@ class ManagedUserUpdateTest extends TestCase
             ->withSession(['active_role_assignment_id' => $this->coordinatorContext->id]);
 
         return $this;
+    }
+
+    /** @return array{nombre: string, correo_electronico: string} */
+    private function identityOf(User $user): array
+    {
+        return ['nombre' => $user->nombre, 'correo_electronico' => $user->correo_electronico];
     }
 }

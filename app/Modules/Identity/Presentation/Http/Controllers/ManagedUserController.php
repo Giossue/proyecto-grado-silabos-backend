@@ -13,11 +13,8 @@ use App\Modules\Identity\Application\Actions\SetUserStatus;
 use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
-use App\Modules\Identity\Presentation\Http\Requests\AssignRoleRequest;
 use App\Modules\Identity\Presentation\Http\Requests\CreateManagedUserRequest;
 use App\Modules\Identity\Presentation\Http\Requests\IndexUsersRequest;
-use App\Modules\Identity\Presentation\Http\Requests\SetUserStatusRequest;
-use App\Modules\Identity\Presentation\Http\Requests\ShowManagedUserRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateManagedUserRequest;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -96,7 +93,8 @@ class ManagedUserController extends Controller
                     'active' => $user->activo,
                     'pending_activation' => $user->correo_verificado_en === null,
                     'two_factor_enabled' => $user->dos_factores_confirmado_en !== null,
-                    'roles' => $effective->map(fn ($assignment) => [
+                    'roles' => $effective->map(fn (RoleAssignment $assignment): array => [
+                        'code' => $assignment->rol,
                         'name' => $assignment->role->nombre_rol,
                         'career_name' => $assignment->career?->nombre,
                     ])->values()->all(),
@@ -144,48 +142,6 @@ class ManagedUserController extends Controller
         ], 201);
     }
 
-    public function show(User $user, ShowManagedUserRequest $request): JsonResponse
-    {
-        $user->load(['roleAssignments' => fn ($query) => $query
-            ->with(['career:id,nombre'])
-            ->orderByDesc('asignado_en')]);
-
-        $payload = [
-            'managedUser' => [
-                'id' => $user->id,
-                'nombre' => $user->nombre,
-                'correo_electronico' => $user->correo_electronico,
-                'active' => $user->activo,
-                'assignments' => $user->roleAssignments->map(fn ($assignment) => [
-                    'id' => $assignment->id,
-                    'role_code' => $assignment->rol,
-                    'role_name' => $assignment->role->nombre_rol,
-                    'career_id' => $assignment->carrera_id,
-                    'career_name' => $assignment->career?->nombre,
-                    'active' => $assignment->activo,
-                    'effective' => $assignment->activo,
-                ])->values(),
-            ],
-            'roles' => $this->fixedRoles(),
-            'careers' => Career::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
-        ];
-
-        return response()->json($payload);
-    }
-
-    public function assignRole(User $user, AssignRoleRequest $request, AssignRole $action): JsonResponse
-    {
-        Gate::authorize('update', $user);
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($user, [
-            'role_code' => $request->string('role_code')->toString(),
-            'career_id' => $request->filled('career_id') ? $request->string('career_id')->toString() : null,
-        ], $actor, $request);
-
-        return response()->json(['message' => 'Rol asignado con su alcance.']);
-    }
-
     /** @return list<array{codigo: string, nombre: string}> */
     private function fixedRoles(): array
     {
@@ -193,18 +149,6 @@ class ManagedUserController extends Controller
             fn (RoleCode $role): array => ['codigo' => $role->value, 'nombre' => $role->label()],
             RoleCode::cases(),
         );
-    }
-
-    public function setStatus(User $user, SetUserStatusRequest $request, SetUserStatus $action): JsonResponse
-    {
-        Gate::authorize('update', $user);
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($user, $request->boolean('active'), $actor, $request);
-
-        $message = $user->fresh()?->activo ? 'Cuenta activada.' : 'Cuenta desactivada y sesiones revocadas.';
-
-        return response()->json(['message' => $message]);
     }
 
     /** Reemite una invitación; el alcance de la policy permite Administración o su carrera. */

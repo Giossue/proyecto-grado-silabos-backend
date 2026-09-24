@@ -6,10 +6,8 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Identity\Application\Actions\AssignRole;
-use App\Modules\Identity\Application\Actions\SetUserStatus;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
-use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -20,24 +18,23 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Cambia quién coordina una carrera en un solo paso (I-39): cierra el nombramiento y el
- * rol de quien sale, abre los de quien entra (concediéndole el rol si no lo tiene) y,
- * si se pide y ya no le queda ningún rol vigente, desactiva la cuenta saliente. Sirve
+ * rol de quien sale y abre los de quien entra (concediéndole el rol si no lo tiene). La
+ * cuenta saliente no se toca: desactivarla es una decisión aparte en Usuarios. Sirve
  * también para nombrar a la primera persona cuando la carrera no tiene coordinación.
  *
- * @phpstan-type Result array{previous_user_id: string|null, role_removed: bool, deactivated: bool}
+ * @phpstan-type Result array{previous_user_id: string|null, role_removed: bool}
  */
 class ReplaceCoordinator
 {
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly AssignRole $assignRole,
-        private readonly SetUserStatus $setStatus,
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     /**
-     * @param  array{incoming_user_id: string, deactivate_outgoing?: bool}  $data
+     * @param  array{incoming_user_id: string}  $data
      * @return Result
      */
     public function execute(Career $career, array $data, User $actor, Request $request): array
@@ -50,7 +47,7 @@ class ReplaceCoordinator
             ]);
         }
 
-        return DB::transaction(function () use ($actor, $activeRole, $career, $data, $incoming, $request): array {
+        return DB::transaction(function () use ($actor, $activeRole, $career, $incoming, $request): array {
             $lockedCareer = Career::query()->whereKey($career->id)->lockForUpdate()->firstOrFail();
             $current = CoordinatorAssignment::query()
                 ->effective()
@@ -65,7 +62,6 @@ class ReplaceCoordinator
             }
 
             $roleRemoved = false;
-            $deactivated = false;
             if ($current !== null) {
                 $current->update(['activo' => false]);
                 // `CoordinatorAssignment` ya es la vista tipada de la asignación RBAC;
@@ -79,15 +75,6 @@ class ReplaceCoordinator
                 'career_id' => $lockedCareer->id,
             ], $actor, $request, notify: false);
 
-            if ($current !== null && (bool) ($data['deactivate_outgoing'] ?? false)) {
-                $outgoing = User::query()->lockForUpdate()->find($current->usuario_id);
-                $hasOtherRoles = RoleAssignment::query()->effective()->where('usuario_id', $current->usuario_id)->exists();
-                if ($outgoing !== null && $outgoing->activo && ! $hasOtherRoles && $outgoing->id !== $actor->id) {
-                    $this->setStatus->execute($outgoing, false, $actor, $request);
-                    $deactivated = true;
-                }
-            }
-
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $activeRole?->id,
@@ -99,14 +86,13 @@ class ReplaceCoordinator
                     'previous_user_id' => $current?->usuario_id,
                     'incoming_user_id' => $incoming->id,
                     'role_removed' => $roleRemoved,
-                    'deactivated' => $deactivated,
                 ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             $this->notifyIncoming($lockedCareer, $incoming, $request);
 
-            return ['previous_user_id' => $current?->usuario_id, 'role_removed' => $roleRemoved, 'deactivated' => $deactivated];
+            return ['previous_user_id' => $current?->usuario_id, 'role_removed' => $roleRemoved];
         });
     }
 

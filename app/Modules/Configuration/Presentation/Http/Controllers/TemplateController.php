@@ -38,11 +38,11 @@ use App\Modules\Configuration\Presentation\Http\Requests\StoreInstitutionLogoReq
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\IdentificationCard;
-use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 
 class TemplateController extends Controller
 {
@@ -329,14 +329,14 @@ class TemplateController extends Controller
         RecordAuditEvent $audit,
         ActiveRole $roles,
         ProcessLocks $locks,
-        InProgressWork $work,
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $file = $request->file('logo');
         abort_unless($file instanceof UploadedFile, 422);
         $locks->assertTemplateEditable();
-        $work->replace($request, function () use ($actor, $audit, $file, $logos, $request, $roles): void {
+        // El logo se lee en vivo al mostrar y exportar: no reinicia los sílabos en curso.
+        DB::transaction(function () use ($actor, $audit, $file, $logos, $request, $roles): void {
             $logos->storeInstitution($file);
             $template = SyllabusTemplate::query()->first();
             $audit->execute(

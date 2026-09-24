@@ -2,7 +2,9 @@
 
 namespace App\Modules\Syllabus\Application;
 
+use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Closure;
@@ -95,7 +97,7 @@ final class InProgressWork
         }
 
         $convocationIds = $syllabi->pluck('convocatoria_id')->unique()->values()->all();
-        $syllabusIds = $syllabi->pluck('id')->all();
+        $syllabusIds = array_values(array_map('strval', $syllabi->pluck('id')->all()));
         $this->deleteAggregates($syllabusIds);
 
         $generated = 0;
@@ -169,6 +171,51 @@ final class InProgressWork
         DB::table('notificaciones_internas')->whereIn('recurso_id', [...$syllabusIds, ...$revisionIds])->delete();
 
         Syllabus::query()->whereKey($syllabusIds)->delete();
+    }
+
+    /**
+     * Actualiza los datos de presentación de la ficha (facultad, carrera, campus y
+     * modalidad) de los expedientes en curso sin tocar borradores, revisiones,
+     * aprobaciones ni análisis de IA. Los logos se leen en vivo al exportar.
+     *
+     * @param  list<string>  $careerIds
+     */
+    public function refreshIdentification(array $careerIds): int
+    {
+        if ($careerIds === []) {
+            return 0;
+        }
+
+        $syllabi = $this->inProgress($careerIds)->with('career.faculty')->lockForUpdate()->get();
+        foreach ($syllabi as $syllabus) {
+            $context = $syllabus->contexto_academico;
+            $career = $syllabus->career;
+            data_set($context, 'career.name', $career->nombre);
+            data_set($context, 'career.code', $career->codigo_carrera);
+            data_set($context, 'career.faculty', $career->faculty?->nombre);
+            data_set($context, 'career.faculty_id', $career->facultad_id);
+
+            $scheduled = ScheduledSubject::query()->find(data_get($context, 'scheduled_subject.id'));
+            if ($scheduled instanceof ScheduledSubject) {
+                data_set($context, 'scheduled_subject.campus', $scheduled->campus_programacion);
+                data_set($context, 'scheduled_subject.modality', $scheduled->modalidad->label());
+                $syllabus->values()->get()
+                    ->filter(fn (FieldValue $value): bool => $value->origen === 'asignaturas')
+                    ->each(function (FieldValue $value) use ($scheduled): void {
+                        $current = is_array($value->valor) ? $value->valor : [];
+                        $value->update(['valor' => [
+                            ...$current,
+                            'campus' => $scheduled->campus_programacion,
+                            'modalidad' => $scheduled->modalidad->label(),
+                        ]]);
+                    });
+            }
+
+            $syllabus->contexto_academico = $context;
+            $syllabus->save();
+        }
+
+        return $syllabi->count();
     }
 
     /** @param string|list<string>|null $careerIds

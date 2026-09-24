@@ -10,13 +10,11 @@ use App\Modules\Syllabus\Application\Actions\CreateSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\DeleteSyllabusProcess;
 use App\Modules\Syllabus\Application\Actions\ExtendProcessDeadline;
 use App\Modules\Syllabus\Application\Actions\TransitionSyllabusProcess;
-use App\Modules\Syllabus\Application\Actions\UpdateSyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Presentation\Http\Requests\ExtendProcessDeadlineRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ManageSyllabusProcessesRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionSyllabusProcessRequest;
-use App\Modules\Syllabus\Presentation\Http\Requests\UpdateSyllabusProcessRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -77,18 +75,6 @@ class SyllabusProcessController extends Controller
         return response()->json([
             'message' => 'Convocatoria institucional abierta. Las coordinaciones ya pueden iniciar sus convocatorias.',
         ], 201);
-    }
-
-    public function update(
-        SyllabusProcess $process,
-        UpdateSyllabusProcessRequest $request,
-        UpdateSyllabusProcess $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($process, $request->processData(), $actor, $request);
-
-        return response()->json(['message' => 'Proceso actualizado. Las convocatorias que se abran desde ahora toman esta configuración.']);
     }
 
     public function destroy(

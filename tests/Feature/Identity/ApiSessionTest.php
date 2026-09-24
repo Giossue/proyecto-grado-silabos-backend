@@ -127,20 +127,31 @@ class ApiSessionTest extends TestCase
             ->withHeader('Origin', 'http://localhost:5173')
             ->putJson(route('api.v1.authentication.profile.update'), [
                 'nombre' => 'María José Pérez López',
-                'correo_electronico' => 'maria.perez@silabos.test',
+                'correo_electronico' => 'admin@silabos.test',
             ])
             ->assertOk()
             ->assertJsonPath('user.name', 'MARÍA JOSÉ PÉREZ LÓPEZ')
-            ->assertJsonPath('user.email', 'maria.perez@silabos.test')
-            ->assertJsonPath('user.email_verified', false)
+            ->assertJsonPath('user.email', 'admin@silabos.test')
+            ->assertJsonPath('user.email_verified', true)
             ->assertJsonPath('user.can_edit_identity', true);
+
+        // El correo de una cuenta activada no cambia nunca, ni siquiera por su titular.
+        $this->actingAs($administrator)
+            ->withoutMiddleware(ValidateCsrfToken::class)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->putJson(route('api.v1.authentication.profile.update'), [
+                'nombre' => 'María José Pérez López',
+                'correo_electronico' => 'maria.perez@silabos.test',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('correo_electronico');
 
         $this->assertDatabaseHas('usuarios', [
             'id' => $administrator->id,
             'nombre_usuario' => 'MARÍA JOSÉ PÉREZ LÓPEZ',
-            'correo_electronico' => 'maria.perez@silabos.test',
-            'correo_verificado_en' => null,
+            'correo_electronico' => 'admin@silabos.test',
         ]);
+        $this->assertNotNull($administrator->fresh()->correo_verificado_en);
     }
 
     public function test_teacher_cannot_update_own_profile_through_the_api(): void

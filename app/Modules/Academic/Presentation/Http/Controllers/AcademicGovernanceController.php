@@ -60,15 +60,13 @@ class AcademicGovernanceController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var array{incoming_user_id: string, deactivate_outgoing?: bool} $data */
+        /** @var array{incoming_user_id: string} $data */
         $data = $request->validated();
         $result = $action->execute($career, $data, $actor, $request);
 
         $message = $result['previous_user_id'] === null
             ? "Coordinación de {$career->nombre} asignada."
-            : ($result['deactivated']
-                ? "Coordinación de {$career->nombre} reemplazada; la cuenta saliente quedó desactivada."
-                : "Coordinación de {$career->nombre} reemplazada.");
+            : "Coordinación de {$career->nombre} reemplazada.";
 
         return response()->json(['message' => $message]);
     }

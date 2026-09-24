@@ -98,9 +98,6 @@ class StoreAcademicRecordRequest extends FormRequest
                 ],
                 'shift' => ['nullable', 'string', Rule::in(Parallel::SHIFTS)],
             ],
-            'asignacion_coordinador' => [
-                ...$this->assignmentRules('carreras', 'career_id'),
-            ],
             'asignacion_docente' => [
                 'user_id' => [
                     'required',
@@ -191,15 +188,6 @@ class StoreAcademicRecordRequest extends FormRequest
         ];
 
         return $rules;
-    }
-
-    /** @return array<string, list<mixed>> */
-    private function assignmentRules(string $table, string $scope): array
-    {
-        return [
-            'user_id' => ['required', 'uuid', Rule::exists('usuarios', 'id')->where('usuario_activo', true)],
-            $scope => ['required', 'uuid', Rule::exists($table, 'id')->where('carrera_activa', true)],
-        ];
     }
 
     private function careerId(): ?string

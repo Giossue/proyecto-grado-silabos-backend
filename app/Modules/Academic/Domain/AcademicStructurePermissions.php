@@ -12,7 +12,6 @@ final class AcademicStructurePermissions
         'facultad',
         'carrera',
         'periodo',
-        'asignacion_coordinador',
     ];
 
     /** @var list<string> */
@@ -27,7 +26,6 @@ final class AcademicStructurePermissions
     public const GOVERNANCE_STATUS_ENTITIES = [
         'facultad',
         'carrera',
-        'asignacion_coordinador',
     ];
 
     /** @var list<string> */

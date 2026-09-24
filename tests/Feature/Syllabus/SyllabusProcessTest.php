@@ -669,15 +669,23 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección institucional del campus.'])
             ->assertSuccessful();
+        // Nombre, campus y logo de la facultad son de presentación: no piden confirmar
+        // purga ni reinician los sílabos en curso; solo se actualiza su ficha (I-127).
+        $syllabusId = Syllabus::query()->firstOrFail()->id;
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.academic.update', ['facultad', $faculty->id]), [
-                'nombre' => $faculty->nombre,
+                'nombre' => 'Facultad renombrada',
                 'campus' => CampusLocation::Chimbo->value,
-                'confirm_purge' => 1,
             ])
             ->assertSuccessful();
         $this->assertSame(CampusLocation::Chimbo, $faculty->fresh()->campus);
         $this->assertSame(CampusLocation::Chimbo->value, $scheduledSubject->fresh()->getRawOriginal('campus_programacion'));
+        $syllabus = Syllabus::query()->findOrFail($syllabusId);
+        $this->assertSame('Facultad renombrada', data_get($syllabus->contexto_academico, 'career.faculty'));
+        $this->assertSame(
+            $scheduledSubject->fresh()->campus_programacion,
+            data_get($syllabus->contexto_academico, 'scheduled_subject.campus'),
+        );
 
         // La convocatoria ya pausada permite completar su programación.
         $this->actingAsCoordinator()
@@ -758,42 +766,6 @@ class SyllabusProcessTest extends TestCase
         $this->transition($convocation->process()->firstOrFail(), 'cerrar')->assertSuccessful();
         $this->assertSame('pausada', $convocation->fresh()->estado);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertForbidden();
-    }
-
-    public function test_process_configuration_changes_only_in_preparation_or_pause(): void
-    {
-        $process = $this->openProcess();
-        $payload = $this->processPayload($process->template);
-
-        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.processes.update', $process), $payload)
-            ->assertForbidden();
-
-        $this->transition($process, 'pausar', 'Se corrige la fecha de entrega.')->assertSuccessful();
-        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.processes.update', $process), $payload)
-            ->assertSuccessful()
-            ->assertSuccessful();
-        $this->assertSame($process->academicPeriod->codigo, $process->fresh()->nombre);
-    }
-
-    public function test_period_of_a_process_with_convocations_cannot_change(): void
-    {
-        $process = $this->createProcess($this->publishedTemplate(), 'Proceso con convocatoria');
-        $source = $this->coordinatorSource();
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
-            'process_id' => $process->id,
-            'source_ids' => [$source->id],
-        ])->assertSuccessful();
-        $this->transition($process, 'pausar', 'El período no puede reasignarse tras iniciar convocatorias.')->assertSuccessful();
-        $otherPeriod = AcademicPeriod::query()->create([
-            'codigo' => 'I-41-NO-CAMBIAR',
-            'fecha_inicio' => '2027-06-01',
-            'fecha_fin' => '2027-10-31',
-        ]);
-
-        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.processes.update', $process), [
-            ...$this->processPayload($process->template),
-            'period_id' => $otherPeriod->id,
-        ])->assertJsonValidationErrors('period_id');
     }
 
     /** @return array{period_id: string, starts_at: string, due_at: string} */

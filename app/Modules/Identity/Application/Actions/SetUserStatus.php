@@ -30,6 +30,7 @@ class SetUserStatus
             $target->update(['activo' => $active]);
 
             $closedTeacherAssignments = 0;
+            $closedCoordinations = [];
 
             if (! $active) {
                 DB::table('sesiones')->where('user_id', $target->id)->delete();
@@ -39,6 +40,7 @@ class SetUserStatus
                     ->whereIn('asignacion_rol_id', RoleAssignment::query()->where('usuario_id', $target->id)->select('id'))
                     ->where('docente_paralelo_activo', true)
                     ->update(['docente_paralelo_activo' => false]);
+                $closedCoordinations = $this->closeCoordinations($target);
             }
 
             $this->audit->execute(
@@ -48,12 +50,40 @@ class SetUserStatus
                 resourceType: 'usuario',
                 resourceId: $target->id,
                 result: 'exito',
-                metadata: ['closed_teacher_assignments' => $closedTeacherAssignments],
+                metadata: [
+                    'closed_teacher_assignments' => $closedTeacherAssignments,
+                    'closed_coordinations' => implode(', ', $closedCoordinations),
+                ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $target;
         });
+    }
+
+    /**
+     * Quien ya no está no coordina: la carrera queda sin coordinación visible y el
+     * checklist y las convocatorias dejan de contarla hasta que Administración nombre
+     * a otra persona desde Carreras.
+     *
+     * @return list<string>
+     */
+    private function closeCoordinations(User $target): array
+    {
+        $closed = [];
+        $assignments = RoleAssignment::query()
+            ->effective()
+            ->with('career:id,nombre')
+            ->where('usuario_id', $target->id)
+            ->where('rol', RoleCode::Coordinator->value)
+            ->lockForUpdate()
+            ->get();
+        foreach ($assignments as $assignment) {
+            $assignment->update(['activo' => false]);
+            $closed[] = $assignment->career->nombre ?? (string) $assignment->carrera_id;
+        }
+
+        return $closed;
     }
 
     /**
