@@ -20,6 +20,7 @@ pendiente para la aceptación en dispositivos y navegadores reales.
   APE, AA, créditos y total; el resto de la tarjeta usa superficies neutras.
 - Conservar el tinte primario suave en los paneles laterales de nivel, asignaturas y total
   tanto en claro como en oscuro.
+- Dar al constructor un poco más de altura para aprovechar el espacio inferior disponible.
 - Mantener legibles el texto principal, los metadatos, las insignias y los totales.
 - Quitar el minimapa y su dependencia; conservar zoom y desplazamiento del lienzo.
 - Quitar la franja lateral del ciclo y su cálculo de unidad predominante; conservar la
