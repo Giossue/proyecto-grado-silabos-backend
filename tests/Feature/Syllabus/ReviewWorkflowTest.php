@@ -107,7 +107,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame($snapshot, $revision->fresh()->fotografia);
     }
 
-    public function test_custom_design_replaces_even_a_submitted_syllabus_after_explicit_confirmation(): void
+    public function test_custom_design_change_never_purges_an_approved_syllabus(): void
     {
         $this->useCustomDesign = true;
         $syllabus = $this->createValidDraft();
@@ -127,15 +127,14 @@ class ReviewWorkflowTest extends TestCase
         ])->assertSuccessful();
         $approvalId = Approval::query()->firstOrFail()->id;
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'pausar']), ['reason' => 'Ajustar el diseño de la plantilla'])->assertSuccessful();
-        $this->patch($url, $payload)->assertJsonValidationErrors('purge_required');
-        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
-        $this->assertSame($block->configuracion['document'], $block->fresh()->configuracion['document']);
-        $this->patch($url, [...$payload, 'confirm_purge' => true])->assertSuccessful();
-        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
-        $this->assertDatabaseMissing('revisiones_silabo', ['id' => $revisionId]);
-        $this->assertDatabaseMissing('aprobaciones', ['id' => $approvalId]);
+        // Un sílabo aprobado nunca se purga: el cambio se guarda sin pedir confirmación
+        // y la aprobación, su revisión y el expediente se conservan (igual que ResetSyllabus).
+        $this->patch($url, $payload)->assertSuccessful();
+        $this->assertNotSame($block->configuracion['document'], $block->fresh()->configuracion['document']);
+        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
+        $this->assertDatabaseHas('revisiones_silabo', ['id' => $revisionId]);
+        $this->assertDatabaseHas('aprobaciones', ['id' => $approvalId]);
         $this->assertDatabaseCount('silabos', 1);
-        $this->assertDatabaseHas('silabos', ['estado_silabo' => 'sin_iniciar']);
     }
 
     public function test_cp_f_revision_submission_is_validated_idempotent_and_immutable(): void
@@ -308,9 +307,8 @@ class ReviewWorkflowTest extends TestCase
 
         // Solo Coordinación escribe observaciones: el docente corrige y reenvía.
         $this->assertFalse(Route::has('api.v1.teacher.syllabi.observations.respond'));
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.reviews.observations.verify', $observation))
-            ->assertJsonValidationErrors('syllabus');
+        // Tampoco hay verificación aparte: aprobar da por resueltas las observaciones.
+        $this->assertFalse(Route::has('api.v1.coordination.reviews.observations.verify'));
 
         $syllabus->refresh();
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
@@ -343,9 +341,6 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame($stableRowId, $repeatableChange['after']['rows'][0]['id'], 'La fila estable no coincide en el snapshot posterior.');
         $this->assertSame($newRowId, $repeatableChange['after']['rows'][1]['id'], 'La fila nueva no coincide en el snapshot posterior.');
 
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.verify', $observation))->assertSuccessful();
-        $this->assertSame('verificada', $observation->fresh()->estado);
-        $this->assertNotified($this->teacher->id, 'silabo.observacion_verificada', 'Coordinación dio por resuelta una observación del sílabo');
         $this->actingAsTeacher()
             ->getJson(route('api.v1.coordination.reviews.compare', [$firstRevision, $secondRevision]))
             ->assertOk()
@@ -355,7 +350,7 @@ class ReviewWorkflowTest extends TestCase
                 ->where('comparison.after_revision', 2));
     }
 
-    public function test_cp_f_approval_requires_verified_observations_and_is_idempotent(): void
+    public function test_cp_f_approval_resolves_pending_observations_and_is_idempotent(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $revision), [
@@ -366,16 +361,10 @@ class ReviewWorkflowTest extends TestCase
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => $key,
-        ])->assertJsonValidationErrors('observations');
-        $this->assertSame('en_revision', $syllabus->fresh()->estado);
-        $this->assertDatabaseCount('aprobaciones', 0);
-
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.verify', $observation))->assertSuccessful();
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
-            'idempotency_key' => $key,
         ])->assertSuccessful();
         $approval = Approval::query()->firstOrFail();
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
+        $this->assertSame('verificada', $observation->fresh()->estado);
         $this->assertSame($revision->id, $approval->revision_silabo_id);
         $this->assertSame(64, strlen($approval->huella_sha256));
         $this->assertWorkflowNotification($syllabus->id, 'silabo.aprobado');
@@ -589,6 +578,46 @@ class ReviewWorkflowTest extends TestCase
 
         // Sin trabajo que descartar no hay nada que reiniciar; y el docente nunca puede.
         $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Intento no autorizado.'])->assertForbidden();
+    }
+
+    public function test_closed_convocation_keeps_the_review_read_only(): void
+    {
+        [$syllabus, $revision] = $this->submitValidDraft();
+        $message = 'La convocatoria está cerrada: la revisión queda solo para consulta y no admite decisiones.';
+
+        // En pausa la revisión sigue: Coordinación decide aunque los docentes no editen.
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$syllabus->convocation, 'pausar']), ['reason' => 'Ajuste de la malla durante la revisión.'])->assertSuccessful();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $revision), [
+            'content' => 'Observación registrada durante la pausa.',
+        ])->assertSuccessful();
+
+        $syllabus->convocation->update(['estado' => Convocation::STATE_CLOSED]);
+
+        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))
+            ->assertOk()
+            ->assertJsonPath('decisions_allowed', false)
+            ->assertJsonPath('reset.allowed', false);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $revision), [
+            'content' => 'Observación fuera de plazo.',
+        ])->assertForbidden()->assertJsonPath('message', $message);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
+            'observation_ids' => [ReviewObservation::query()->firstOrFail()->id],
+            'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
+        ])->assertForbidden()->assertJsonPath('message', $message);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertForbidden()->assertJsonPath('message', $message);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), [
+            'reason' => 'La malla cambió las horas de la materia después de la entrega.',
+        ])->assertForbidden()->assertJsonPath('message', $message);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reopen', $syllabus), [
+            'cause' => 'Intento de reabrir con la convocatoria cerrada.',
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertForbidden()->assertJsonPath('message', $message);
+
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertDatabaseCount('aprobaciones', 0);
+        $this->assertSame(1, ReviewObservation::query()->count());
     }
 
     private function assertWorkflowNotification(string $syllabusId, string $eventType): void

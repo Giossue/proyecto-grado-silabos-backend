@@ -14,7 +14,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
@@ -111,8 +110,6 @@ class CreateAcademicRecord
                 'semanas_lectivas' => $this->periodWeeks->calculate($data['starts_on'], $data['ends_on']),
             ]),
             'asignatura' => $this->createSubject($data, $this->careerId($activeRole)),
-            'programacion_asignatura' => $this->createScheduledSubject($data, $this->careerId($activeRole)),
-            'paralelo' => $this->createParallel($data, $this->careerId($activeRole)),
             'asignacion_docente' => $this->createTeacherAssignment($data, $this->careerId($activeRole)),
             default => throw ValidationException::withMessages([
                 'entity' => 'El tipo de registro académico no es válido.',
@@ -159,54 +156,6 @@ class CreateAcademicRecord
         ]);
 
         return $subject;
-    }
-
-    /** @param array<string, mixed> $data */
-    private function createScheduledSubject(array $data, string $careerId): ScheduledSubject
-    {
-        $subject = Subject::query()
-            ->with('career.faculty')
-            ->whereKey($this->stringValue($data, 'subject_id'))
-            ->where('activo', true)
-            ->where('carrera_id', $careerId)
-            ->lockForUpdate()
-            ->firstOrFail();
-
-        $period = AcademicPeriod::query()
-            ->whereKey($this->stringValue($data, 'period_id'))
-            ->lockForUpdate()
-            ->firstOrFail();
-        $this->periodPlanning->assertMayPlan($period);
-
-        return ScheduledSubject::query()->create([
-            'periodo_academico_id' => $period->id,
-            'asignatura_id' => $subject->id,
-            // El campus viene de la facultad; la modalidad, de la carrera o la materia.
-            'campus_programacion' => $this->inheritance->campusFor($subject->career)->value,
-            'modalidad' => $this->inheritance->modalityFor($subject),
-            'activo' => true,
-        ]);
-    }
-
-    /** @param array<string, mixed> $data */
-    private function createParallel(array $data, string $careerId): Parallel
-    {
-        $scheduledSubject = ScheduledSubject::query()
-            ->whereKey($this->stringValue($data, 'scheduled_subject_id'))
-            ->where('activo', true)
-            ->whereHas(
-                'subject',
-                fn ($query) => $query->where('carrera_id', $careerId),
-            )
-            ->lockForUpdate()
-            ->firstOrFail();
-        $this->periodPlanning->assertScheduledSubjectMayChange($scheduledSubject, 'scheduled_subject_id');
-
-        return Parallel::query()->create([
-            'programacion_asignatura_id' => $scheduledSubject->id,
-            'codigo' => $data['code'],
-            'jornada' => $data['shift'] ?? null,
-        ]);
     }
 
     /** @param array<string, mixed> $data */

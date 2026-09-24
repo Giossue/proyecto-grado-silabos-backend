@@ -8,6 +8,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -567,6 +568,99 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful();
         $this->assertDatabaseCount('silabos', 1);
         $this->assertSame(9, data_get(Syllabus::query()->firstOrFail()->contexto_academico, 'curriculum.cycle_count'));
+        $this->assertSame(9, $career->fresh()->cantidad_ciclos_malla);
+    }
+
+    public function test_cosmetic_curriculum_changes_refresh_the_card_without_purging(): void
+    {
+        $convocation = $this->openedConvocation();
+        $career = Career::query()->firstOrFail();
+        $syllabus = Syllabus::query()->firstOrFail();
+        $subject = Subject::query()->findOrFail($syllabus->asignatura_id);
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección del nombre de una materia.'])
+            ->assertSuccessful();
+
+        $payload = [
+            'code' => $subject->codigo_asignatura,
+            'nombre' => 'Materia renombrada',
+            'cycle' => $subject->ciclo,
+            'position' => $subject->orden_en_ciclo,
+            'organization_unit' => $subject->unidad_organizacion_curricular ?? 'Unidad Básica',
+            'modality' => $subject->modalidad?->value,
+            'creditos' => $subject->creditos,
+            'horas_totales' => $subject->horas_totales,
+            'hours_project' => $subject->horas_proyecto,
+            'hours_ap' => $subject->horas_ap,
+            'horas_ac' => $subject->horas_ac,
+            'horas_pae' => $subject->horas_pae,
+            'horas_aa' => $subject->horas_aa,
+            'hours_paec' => $subject->horas_paec,
+        ];
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.update', ['asignatura', $subject->id]), $payload)
+            ->assertSuccessful();
+        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+        $this->assertSame('Materia renombrada', data_get($syllabus->fresh()->contexto_academico, 'subject.name'));
+
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.curriculum.layout.update', $career->id), [
+                'subject_id' => $subject->id,
+                'cycle' => $subject->ciclo,
+                'position' => 7,
+            ])
+            ->assertSuccessful();
+        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+        $this->assertSame(
+            $subject->fresh()->orden_en_ciclo,
+            data_get($syllabus->fresh()->contexto_academico, 'subject.position'),
+        );
+
+        // Cambiar la carga académica sí reinicia los sílabos en curso.
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.update', ['asignatura', $subject->id]), [
+                ...$payload,
+                'horas_aa' => (float) $subject->horas_aa + 16,
+            ])
+            ->assertJsonValidationErrors('purge_required');
+    }
+
+    public function test_a_purge_never_replaces_an_approved_syllabus(): void
+    {
+        $convocation = $this->openedConvocation();
+        $career = Career::query()->firstOrFail();
+        $approved = Syllabus::query()->firstOrFail();
+        Syllabus::query()->whereKey($approved->id)->update(['estado' => 'aprobado']);
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección de la malla con un sílabo aprobado.'])
+            ->assertSuccessful();
+
+        // Sin expedientes en curso no hay nada que confirmar y el aprobado se conserva.
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), ['cycle_count' => 9])
+            ->assertSuccessful();
+        $this->assertDatabaseHas('silabos', ['id' => $approved->id, 'estado_silabo' => 'aprobado']);
+        $this->assertDatabaseCount('silabos', 1);
+    }
+
+    public function test_an_institutional_pause_does_not_unlock_an_open_career_convocation(): void
+    {
+        $convocation = $this->openedConvocation();
+        $career = Career::query()->firstOrFail();
+        $this->transition($convocation->process()->firstOrFail(), 'pausar', 'Ajuste institucional del período.')->assertSuccessful();
+        $this->assertSame('abierta', $convocation->fresh()->estado);
+
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), ['cycle_count' => 9])
+            ->assertJsonValidationErrors('process');
+        $this->assertSame(8, $career->fresh()->cantidad_ciclos_malla);
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Pausa propia para corregir la malla.'])
+            ->assertSuccessful();
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), ['cycle_count' => 9, 'confirm_purge' => 1])
+            ->assertSuccessful();
         $this->assertSame(9, $career->fresh()->cantidad_ciclos_malla);
     }
 

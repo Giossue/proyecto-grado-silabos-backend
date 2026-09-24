@@ -5,10 +5,7 @@ namespace App\Modules\Academic\Presentation\Http\Requests;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Domain\StudyModality;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Illuminate\Foundation\Http\FormRequest;
@@ -44,62 +41,6 @@ class UpdateCareerAcademicRecordRequest extends FormRequest
     {
         return match ($this->route('entity')) {
             'asignatura' => $this->subjectRules(),
-            'programacion_asignatura' => [
-                'period_id' => [
-                    'required',
-                    'uuid',
-                    Rule::exists('periodos_academicos', 'id'),
-                ],
-                'subject_id' => [
-                    'required',
-                    'uuid',
-                    Rule::exists('asignaturas', 'id')->where(fn ($query) => $query
-                        ->where('asignatura_activa', true)
-                        ->where('carrera_id', $this->careerId())),
-                    Rule::unique('programaciones_asignatura', 'asignatura_id')
-                        ->where('periodo_academico_id', $this->input('period_id'))
-                        ->ignore($this->recordId()),
-                ],
-            ],
-            'paralelo' => [
-                'scheduled_subject_id' => [
-                    'required',
-                    'uuid',
-                    Rule::exists('programaciones_asignatura', 'id')->where(fn ($query) => $query
-                        ->where('programacion_asignatura_activa', true)
-                        ->whereIn('asignatura_id', Subject::query()
-                            ->select('id')
-                            ->where('carrera_id', $this->careerId()))),
-                ],
-                'code' => [
-                    'required',
-                    'string',
-                    'max:30',
-                    Rule::unique('paralelos', 'codigo_paralelo')
-                        ->where('programacion_asignatura_id', $this->input('scheduled_subject_id'))
-                        ->ignore($this->recordId()),
-                ],
-                'shift' => ['nullable', 'string', Rule::in(Parallel::SHIFTS)],
-            ],
-            'asignacion_docente' => [
-                'user_id' => [
-                    'required',
-                    'uuid',
-                    Rule::exists('usuarios', 'id')->where(fn ($query) => $query
-                        ->where('usuario_activo', true)
-                        ->whereNotNull('correo_verificado_en')),
-                ],
-                'parallel_id' => [
-                    'required',
-                    'uuid',
-                    Rule::exists('paralelos', 'id')->where(fn ($query) => $query
-                        ->whereIn('programacion_asignatura_id', ScheduledSubject::query()
-                            ->select('id')
-                            ->where('programacion_asignatura_activa', true)
-                            ->whereHas('subject', fn ($subject) => $subject
-                                ->where('carrera_id', $this->careerId())))),
-                ],
-            ],
             default => [],
         };
     }
@@ -112,15 +53,6 @@ class UpdateCareerAcademicRecordRequest extends FormRequest
 
         return match ($entity) {
             'asignatura' => Subject::query()->whereKey($recordId)->where('carrera_id', $careerId)->exists(),
-            'programacion_asignatura' => ScheduledSubject::query()->whereKey($recordId)->whereHas(
-                'subject', fn ($query) => $query->where('carrera_id', $careerId),
-            )->exists(),
-            'paralelo' => Parallel::query()->whereKey($recordId)->whereHas(
-                'scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $careerId),
-            )->exists(),
-            'asignacion_docente' => TeacherAssignment::query()->whereKey($recordId)->whereHas(
-                'parallel.scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $careerId),
-            )->exists(),
             default => false,
         };
     }
@@ -164,10 +96,5 @@ class UpdateCareerAcademicRecordRequest extends FormRequest
     private function recordId(): string
     {
         return is_string($this->route('record')) ? $this->route('record') : '';
-    }
-
-    private function careerId(): ?string
-    {
-        return app(ActiveRole::class)->resolve($this)?->carrera_id;
     }
 }

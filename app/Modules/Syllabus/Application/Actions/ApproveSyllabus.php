@@ -52,15 +52,12 @@ class ApproveSyllabus
                 throw ValidationException::withMessages(['revision' => 'Solo puede aprobarse la revisión vigente.']);
             }
 
-            $unresolved = ReviewObservation::query()
+            // Aprobar es la decisión final de Coordinación: da por resueltas sus propias
+            // observaciones pendientes en lugar de exigir verificarlas una a una.
+            $resolved = ReviewObservation::query()
                 ->whereHas('revision', fn ($query) => $query->where('silabo_id', $syllabus->id))
                 ->where('estado', '!=', 'verificada')
-                ->count();
-            if ($unresolved > 0) {
-                throw ValidationException::withMessages([
-                    'observations' => "Quedan {$unresolved} observaciones sin verificar.",
-                ]);
-            }
+                ->update(['estado' => 'verificada']);
 
             $approvedAt = now();
             $fingerprint = $this->hasher->hash([
@@ -90,6 +87,7 @@ class ApproveSyllabus
                 result: 'exito',
                 metadata: [
                     'revision_number' => $revision->numero_revision,
+                    'resolved_observations' => $resolved,
                     'fingerprint' => $fingerprint,
                     // DT-10 permite que quien redacta apruebe. No se impide, pero el caso
                     // queda distinguible para poder reportarlo sin reconstruirlo.

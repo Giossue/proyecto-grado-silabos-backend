@@ -139,7 +139,8 @@ class MutateCurriculumBuilder
     ): void {
         DB::transaction(function () use ($actor, $curriculumId, $subjectId, $request): void {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
-            $affected = $this->work->requireConfirmation($request, $role->carrera_id);
+            // Solo se elimina una materia sin programaciones ni sílabos: no hay trabajo
+            // que reiniciar. Sus requisitos sí aparecían en fichas de otras materias.
             $subject = Subject::query()
                 ->where('carrera_id', $career->id)
                 ->lockForUpdate()
@@ -179,9 +180,7 @@ class MutateCurriculumBuilder
             ];
             $subject->delete();
             $this->record($actor, $role, $request, 'academico.asignatura.eliminacion', 'asignatura', $subjectId, $metadata);
-            if ($affected > 0) {
-                $this->work->regenerate($role->carrera_id);
-            }
+            $this->work->refreshSubjects($role->carrera_id);
         });
     }
 
@@ -190,7 +189,7 @@ class MutateCurriculumBuilder
     {
         return DB::transaction(function () use ($actor, $curriculumId, $data, $request): Subject {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
-            $affected = $this->work->requireConfirmation($request, $role->carrera_id);
+            // Mover una tarjeta es presentación: se refresca la ficha, no se purga.
             if ((int) $data['cycle'] > $career->cantidad_ciclos_malla) {
                 throw ValidationException::withMessages(['cycle' => 'El ciclo excede la configuración de la malla.']);
             }
@@ -200,21 +199,36 @@ class MutateCurriculumBuilder
                 ->whereKey($data['subject_id'])
                 ->lockForUpdate()
                 ->firstOrFail();
+            if ((int) $data['cycle'] !== $subject->ciclo) {
+                throw ValidationException::withMessages([
+                    'cycle' => 'Una materia solo puede reordenarse dentro de su ciclo.',
+                ]);
+            }
+
+            $cycleSubjects = Subject::query()
+                ->where('carrera_id', $career->id)
+                ->where('ciclo', $subject->ciclo)
+                ->orderBy('orden_en_ciclo')
+                ->orderBy('nombre')
+                ->lockForUpdate()
+                ->get();
+            $ordered = $cycleSubjects->reject(fn (Subject $item): bool => $item->id === $subject->id)->values();
+            $position = min((int) $data['position'], $ordered->count());
+            $ordered->splice($position, 0, [$subject]);
             $beforeCycle = $subject->ciclo;
             $beforePosition = $subject->orden_en_ciclo;
-            $subject->update([
-                'ciclo' => $data['cycle'],
-                'orden_en_ciclo' => $data['position'],
-            ]);
+            $ordered->each(function (Subject $item, int $index): void {
+                if ($item->orden_en_ciclo !== $index) {
+                    $item->update(['orden_en_ciclo' => $index]);
+                }
+            });
             $this->record($actor, $role, $request, 'academico.asignatura.posicion_actualizada', 'asignatura', $subject->id, [
                 'before_cycle' => $beforeCycle,
                 'after_cycle' => $subject->ciclo,
                 'before_position' => $beforePosition,
                 'after_position' => $subject->orden_en_ciclo,
             ]);
-            if ($affected > 0) {
-                $this->work->regenerate($role->carrera_id);
-            }
+            $this->work->refreshSubjects($role->carrera_id);
 
             return $subject;
         });

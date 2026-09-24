@@ -7,7 +7,7 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/** Relevo de un docente en todos sus paralelos de la carrera activa (I-39). */
+/** Relevo de un docente en todos sus paralelos de la carrera activa o en uno solo (I-39). */
 class RelieveTeacherRequest extends FormRequest
 {
     public function authorize(): bool
@@ -22,6 +22,7 @@ class RelieveTeacherRequest extends FormRequest
         return [
             'outgoing_user_id' => ['required', 'uuid', 'exists:usuarios,id'],
             'incoming_user_id' => ['required', 'uuid', 'different:outgoing_user_id', Rule::exists('usuarios', 'id')->where('usuario_activo', true)],
+            'teacher_assignment_id' => ['nullable', 'uuid'],
             'idempotency_key' => ['required', 'string', 'max:120'],
         ];
     }

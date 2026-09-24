@@ -3,15 +3,20 @@
 namespace App\Modules\Syllabus\Presentation\Http\Requests;
 
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class ReopenSyllabusRequest extends FormRequest
 {
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $syllabus = $this->route('syllabus');
+        if (! $syllabus instanceof Syllabus) {
+            return Response::deny();
+        }
 
-        return $syllabus instanceof Syllabus && $this->user()?->can('review', $syllabus) === true;
+        return Gate::forUser($this->user())->inspect('decide', $syllabus);
     }
 
     /** @return array<string, list<string>> */

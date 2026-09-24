@@ -58,6 +58,24 @@ class Convocation extends Model
             ->whereHas('process', fn (Builder $process) => $process->where('estado', SyllabusProcess::STATE_OPEN));
     }
 
+    /**
+     * Congela la malla y las fuentes de la carrera: la convocatoria sigue abierta por su
+     * coordinación dentro de un proceso vigente (abierto o pausado). Una pausa
+     * institucional no libera las carreras: solo la pausa de la propia convocatoria
+     * (o no tener convocatoria vigente) habilita editar sus bases. A diferencia de
+     * `running`, no decide si los docentes pueden editar.
+     *
+     * @param  Builder<Convocation>  $query
+     */
+    public function scopeLockingCareerData(Builder $query): void
+    {
+        $query->where('estado', self::STATE_OPEN)
+            ->whereHas('process', fn (Builder $process) => $process->whereIn('estado', [
+                SyllabusProcess::STATE_OPEN,
+                SyllabusProcess::STATE_PAUSED,
+            ]));
+    }
+
     public function isRunning(): bool
     {
         return $this->estado === self::STATE_OPEN

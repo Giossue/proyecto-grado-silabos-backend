@@ -11,18 +11,29 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Ramsey\Uuid\Uuid;
 
 /**
- * Releva a un docente en todos sus paralelos de la carrera de una vez (I-39). Los
- * paralelos con sílabo pasan por `TransferSyllabusTeacher` (mismas reglas por estado);
- * los que aún no tienen sílabo solo cambian de manos. Todo o nada: si algún sílabo está
- * en revisión, no se mueve ninguno y se dice cuál.
+ * Única forma de cambiar al docente de un paralelo (I-39). Alcance: todos los paralelos
+ * vigentes del saliente en la carrera o uno solo (`teacherAssignmentId`). Los paralelos
+ * sin sílabo solo cambian de manos; los que tienen sílabo exigen convocatoria abierta o
+ * pausada y siguen las reglas por estado (A1, DT-08):
+ *
+ * - Aprobado: se reabre conservando la revisión intacta. El que entra hereda el trabajo.
+ * - Corrección solicitada: se conserva. Hubo envío, así que es evidencia institucional.
+ * - Borrador sin enviar: se descarta y el nuevo empieza limpio.
+ * - En revisión: no se traspasa; el revisor quedaría sin interlocutor.
+ *
+ * Todo o nada: si algo impide un paralelo, no se mueve ninguno y se dice cuál.
  *
  * @phpstan-type Summary array{parallels: int, syllabi: int}
  */
@@ -30,7 +41,7 @@ class RelieveTeacher
 {
     public function __construct(
         private readonly ActiveRole $roles,
-        private readonly TransferSyllabusTeacher $transfer,
+        private readonly ReopenSyllabus $reopen,
         private readonly RecordAuditEvent $audit,
         private readonly AcademicPeriodPlanning $periodPlanning,
         private readonly ScheduleInternalNotification $notifications,
@@ -45,6 +56,7 @@ class RelieveTeacher
         string $idempotencyKey,
         User $actor,
         Request $request,
+        ?string $teacherAssignmentId = null,
     ): array {
         $activeRole = $this->roles->resolve($request);
         $careerId = $activeRole?->carrera_id;
@@ -59,11 +71,12 @@ class RelieveTeacher
             throw ValidationException::withMessages(['incoming_user_id' => 'El docente entrante no tiene un rol docente vigente en la carrera.']);
         }
 
-        return DB::transaction(function () use ($activeRole, $actor, $careerId, $idempotencyKey, $incomingRole, $incomingUserId, $outgoingUserId, $request): array {
+        return DB::transaction(function () use ($activeRole, $actor, $careerId, $idempotencyKey, $incomingRole, $incomingUserId, $outgoingUserId, $request, $teacherAssignmentId): array {
             $assignments = TeacherAssignment::query()
                 ->forUser($outgoingUserId)
                 ->where('activo', true)
                 ->whereHas('parallel.scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $careerId))
+                ->when($teacherAssignmentId !== null, fn ($query) => $query->whereKey($teacherAssignmentId))
                 ->with([
                     'parallel.scheduledSubject.subject:id,nombre',
                     'parallel.scheduledSubject.academicPeriod:id,fecha_inicio,fecha_fin',
@@ -74,7 +87,9 @@ class RelieveTeacher
                     ->mayPlan($assignment->parallel->scheduledSubject->academicPeriod))
                 ->values();
             if ($assignments->isEmpty()) {
-                throw ValidationException::withMessages(['outgoing_user_id' => 'Ese docente no tiene paralelos vigentes en la carrera.']);
+                throw ValidationException::withMessages($teacherAssignmentId !== null
+                    ? ['teacher_assignment_id' => 'Ese paralelo no está vigente a cargo del docente saliente.']
+                    : ['outgoing_user_id' => 'Ese docente no tiene paralelos vigentes en la carrera.']);
             }
 
             $incomingConflicts = TeacherAssignment::query()
@@ -91,7 +106,7 @@ class RelieveTeacher
 
             $collaborations = SyllabusCollaborator::query()
                 ->whereIn('docente_paralelo_id', $assignments->pluck('id'))
-                ->with('syllabus:id,estado,asignatura_id')
+                ->with(['syllabus:id,estado,asignatura_id,convocatoria_id', 'syllabus.convocation:id,estado', 'teacherAssignment'])
                 ->get();
             $underReview = $collaborations
                 ->filter(fn (SyllabusCollaborator $collaboration): bool => $collaboration->syllabus->estado === 'en_revision')
@@ -103,15 +118,36 @@ class RelieveTeacher
                 ]);
             }
 
+            $notOpen = $collaborations
+                ->filter(fn (SyllabusCollaborator $collaboration): bool => ! in_array($collaboration->syllabus->convocation->estado, ['abierta', 'pausada'], true))
+                ->map(fn (SyllabusCollaborator $collaboration): string => $assignments
+                    ->firstWhere('id', $collaboration->docente_paralelo_id)?->parallel->scheduledSubject->subject->nombre ?? 'una materia');
+            if ($notOpen->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'outgoing_user_id' => 'La convocatoria de '.$notOpen->unique()->implode(', ').' no está abierta ni pausada. Solo se releva con sílabos en una convocatoria vigente.',
+                ]);
+            }
+
             $syllabusIds = $collaborations->pluck('silabo_id')->unique();
-            foreach (Syllabus::query()->whereIn('id', $syllabusIds)->get() as $syllabus) {
-                // Un relevo es un solo aviso por persona, no uno por sílabo.
-                $this->transfer->execute($syllabus, $outgoingUserId, $incomingUserId, "{$idempotencyKey}-{$syllabus->id}", $actor, $request, notify: false);
+            // Se toma antes de mover: mover reescribe `docente_paralelo_id` en cada colaboración.
+            $assignmentsWithSyllabus = $collaborations->pluck('docente_paralelo_id')->all();
+            foreach (Syllabus::query()->whereIn('id', $syllabusIds)->lockForUpdate()->get() as $syllabus) {
+                $this->moveSyllabus(
+                    $syllabus,
+                    $collaborations->where('silabo_id', $syllabus->id)->values(),
+                    $incomingRole,
+                    $outgoingUserId,
+                    $incomingUserId,
+                    Uuid::uuid5(Uuid::NAMESPACE_URL, "relevo:{$idempotencyKey}:{$syllabus->id}")->toString(),
+                    $actor,
+                    $activeRole,
+                    $request,
+                );
             }
 
             $movedWithoutSyllabus = 0;
             foreach ($assignments as $assignment) {
-                if ($collaborations->contains('docente_paralelo_id', $assignment->id)) {
+                if (in_array($assignment->id, $assignmentsWithSyllabus, true)) {
                     continue;
                 }
                 $assignment->update(['activo' => false]);
@@ -124,6 +160,7 @@ class RelieveTeacher
             }
 
             $summary = ['parallels' => $assignments->count(), 'syllabi' => $syllabusIds->count()];
+            $scope = $teacherAssignmentId !== null ? ['teacher_assignment_id' => $teacherAssignmentId] : [];
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $activeRole->id,
@@ -131,13 +168,79 @@ class RelieveTeacher
                 resourceType: 'usuario',
                 resourceId: $outgoingUserId,
                 result: 'exito',
-                metadata: [...$summary, 'incoming_user_id' => $incomingUserId, 'parallels_without_syllabus' => $movedWithoutSyllabus, 'career_id' => $careerId],
+                metadata: [...$summary, 'incoming_user_id' => $incomingUserId, 'parallels_without_syllabus' => $movedWithoutSyllabus, 'career_id' => $careerId, ...$scope],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifyTeachers($careerId, $outgoingUserId, $incomingUserId, $summary, $idempotencyKey, $request);
 
             return $summary;
         });
+    }
+
+    /**
+     * Pasa al entrante los paralelos del saliente en un sílabo y aplica la regla por estado.
+     *
+     * @param  Collection<int, SyllabusCollaborator>  $collaborations
+     */
+    private function moveSyllabus(
+        Syllabus $syllabus,
+        Collection $collaborations,
+        RoleAssignment $incomingRole,
+        string $outgoingUserId,
+        string $incomingUserId,
+        string $idempotencyKey,
+        User $actor,
+        RoleAssignment $activeRole,
+        Request $request,
+    ): void {
+        foreach ($collaborations as $collaboration) {
+            $previous = $collaboration->teacherAssignment;
+            $this->periodPlanning->assertTeacherAssignmentMayChange($previous, 'syllabus');
+            $previous->update(['activo' => false]);
+            $replacement = TeacherAssignment::query()->create([
+                'asignacion_rol_id' => $incomingRole->id,
+                'paralelo_id' => $previous->paralelo_id,
+                'activo' => true,
+            ]);
+            $collaboration->update([
+                'usuario_id' => $incomingUserId,
+                'docente_paralelo_id' => $replacement->id,
+            ]);
+        }
+
+        $previousState = $syllabus->estado;
+        if ($previousState === 'aprobado') {
+            // Se reabre después de mover a los colaboradores, para que el aviso llegue a
+            // quien entra. La revisión aprobada queda intacta: ADR-0005.
+            $this->reopen->execute($syllabus, 'Relevo de docente registrado por Coordinación.', $idempotencyKey, $actor, $request);
+        }
+        if ($previousState === 'borrador') {
+            // DT-08: el borrador sin enviar no es evidencia institucional.
+            FieldValue::query()->where('silabo_id', $syllabus->id)->delete();
+            RepeatableRow::query()->where('silabo_id', $syllabus->id)->delete();
+            $syllabus->update([
+                'estado' => 'sin_iniciar',
+                'version_bloqueo' => $syllabus->version_bloqueo + 1,
+                'iniciado_en' => null,
+                'guardado_en' => null,
+            ]);
+        }
+
+        $this->audit->execute(
+            actorId: $actor->id,
+            roleAssignmentId: $activeRole->id,
+            action: 'silabo.docente_transferido',
+            resourceType: 'silabo',
+            resourceId: $syllabus->id,
+            result: 'exito',
+            metadata: [
+                'outgoing_user_id' => $outgoingUserId,
+                'incoming_user_id' => $incomingUserId,
+                'previous_state' => $previousState,
+                'parallels_moved' => $collaborations->count(),
+            ],
+            correlationId: $request->attributes->getString('correlation_id') ?: null,
+        );
     }
 
     /** @param Summary $summary */

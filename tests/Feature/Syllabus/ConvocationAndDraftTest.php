@@ -11,16 +11,20 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Syllabus\Application\Actions\OpenConvocation;
+use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
+use Illuminate\Validation\ValidationException;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\Support\MakesTransparentPng;
 use Tests\TestCase;
@@ -61,10 +65,7 @@ class ConvocationAndDraftTest extends TestCase
     {
         $convocation = $this->createPreparedConvocation();
 
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.open', $convocation))
-            ->assertSuccessful()
-            ->assertSuccessful();
+        $this->openPrepared($convocation);
 
         $convocation->refresh();
         $syllabus = Syllabus::query()->firstOrFail();
@@ -90,9 +91,7 @@ class ConvocationAndDraftTest extends TestCase
                 ->where('convocation.counts.total', 1)
                 ->has('convocation.syllabi', 1));
 
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.open', $convocation))
-            ->assertForbidden();
+        $this->assertOpeningFails($convocation, 'Solo una convocatoria en preparación puede abrirse.');
         $this->assertDatabaseCount('silabos', 1);
     }
 
@@ -100,11 +99,7 @@ class ConvocationAndDraftTest extends TestCase
     {
         $convocation = $this->createPreparedConvocation(withFacultyLogo: false);
 
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.open', $convocation))
-            ->assertJsonValidationErrors([
-                'convocation' => 'Administración debe cargar el logo de la facultad antes de que Coordinación abra la convocatoria.',
-            ]);
+        $this->assertOpeningFails($convocation, 'Administración debe cargar el logo de la facultad antes de que Coordinación abra la convocatoria.');
 
         $this->assertSame('preparacion', $convocation->fresh()->estado);
         $this->assertDatabaseCount('silabos', 0);
@@ -133,10 +128,43 @@ class ConvocationAndDraftTest extends TestCase
         ]);
         $convocation = $this->createPreparedConvocation();
 
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.open', $convocation))->assertSuccessful();
+        $this->openPrepared($convocation);
 
         $this->assertSame(2, Syllabus::query()->count());
         $this->assertSame([1, 1], Syllabus::query()->withCount('scopes')->pluck('scopes_count')->all());
+    }
+
+    public function test_resuming_generates_syllabi_only_for_parallels_created_during_the_pause(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        $this->openPrepared($convocation);
+        $original = Syllabus::query()->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Se agrega el paralelo B a la malla.'])
+            ->assertSuccessful();
+        $parallel = Parallel::query()->create([
+            'programacion_asignatura_id' => ScheduledSubject::query()->firstOrFail()->id,
+            'codigo' => 'B',
+        ]);
+        TeacherAssignment::query()->create([
+            'usuario_id' => $this->teacher->id,
+            'paralelo_id' => $parallel->id,
+            'activo' => true,
+        ]);
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))
+            ->assertSuccessful();
+
+        $this->assertSame('abierta', $convocation->fresh()->estado);
+        $this->assertSame(2, Syllabus::query()->count());
+        $this->assertTrue(Syllabus::query()->whereKey($original->id)->exists());
+        $this->assertTrue(Syllabus::query()->whereHas('scopes', fn ($scope) => $scope->where('paralelo_id', $parallel->id))->exists());
+
+        // Idempotente: una segunda pasada no duplica expedientes.
+        $this->assertSame(0, app(GenerateConvocationSyllabi::class)->execute($convocation->fresh()));
+        $this->assertSame(2, Syllabus::query()->count());
     }
 
     public function test_opening_is_atomic_when_a_parallel_has_no_current_teacher(): void
@@ -145,9 +173,7 @@ class ConvocationAndDraftTest extends TestCase
         Parallel::query()->create(['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => 'B']);
         $convocation = $this->createPreparedConvocation();
 
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.open', $convocation))
-            ->assertJsonValidationErrors('convocation');
+        $this->assertOpeningFails($convocation);
 
         $this->assertSame('preparacion', $convocation->fresh()->estado);
         $this->assertDatabaseCount('silabos', 0);
@@ -161,9 +187,7 @@ class ConvocationAndDraftTest extends TestCase
             ->whereIn('id', $convocation->sources()->pluck('fuentes_academicas.id'))
             ->update(['activo' => false]);
 
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.open', $convocation))
-            ->assertJsonValidationErrors('convocation');
+        $this->assertOpeningFails($convocation);
 
         $this->assertDatabaseCount('silabos', 0);
         $this->assertSame('preparacion', $convocation->fresh()->estado);
@@ -451,7 +475,7 @@ class ConvocationAndDraftTest extends TestCase
     private function openConvocationAndGetSyllabus(): Syllabus
     {
         $convocation = $this->createPreparedConvocation();
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.open', $convocation))->assertSuccessful();
+        $this->openPrepared($convocation);
 
         return Syllabus::query()->firstOrFail();
     }
@@ -484,6 +508,28 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAs($this->administrator)->withSession(['active_role_assignment_id' => $this->administratorContext->id]);
 
         return $this;
+    }
+
+    /** El alta real abre dentro de CreateConvocation; aquí se ejercita OpenConvocation aislada. */
+    private function openPrepared(Convocation $convocation): void
+    {
+        $request = Request::create('/');
+        $request->attributes->set('active_role', $this->coordinatorContext);
+        app(OpenConvocation::class)->execute($convocation->id, $this->coordinator, $request);
+    }
+
+    private function assertOpeningFails(Convocation $convocation, ?string $message = null): void
+    {
+        try {
+            $this->openPrepared($convocation);
+            $this->fail('La apertura debía rechazarse.');
+        } catch (ValidationException $exception) {
+            $errors = $exception->errors();
+            $this->assertArrayHasKey('convocation', $errors);
+            if ($message !== null) {
+                $this->assertSame($message, $errors['convocation'][0]);
+            }
+        }
     }
 
     private function actingAsCoordinator(): static

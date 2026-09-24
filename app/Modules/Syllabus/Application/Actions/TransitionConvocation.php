@@ -8,6 +8,7 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
+use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\Request;
@@ -32,6 +33,7 @@ class TransitionConvocation
         private readonly RecordAuditEvent $audit,
         private readonly WorkflowNotificationRecipients $recipients,
         private readonly ScheduleInternalNotification $notifications,
+        private readonly GenerateConvocationSyllabi $generator,
     ) {}
 
     public function execute(
@@ -76,6 +78,9 @@ class TransitionConvocation
                 }
             }
 
+            // Los paralelos creados durante la pausa nacen con su expediente al reanudar.
+            $generated = $to === Convocation::STATE_OPEN ? $this->generator->execute($locked) : 0;
+
             $locked->update(['estado' => $to]);
 
             $this->audit->execute(
@@ -85,7 +90,10 @@ class TransitionConvocation
                 resourceType: 'convocatoria',
                 resourceId: $locked->id,
                 result: 'exito',
-                metadata: array_filter(['reason' => $reason], fn (mixed $value): bool => $value !== null),
+                metadata: array_filter(
+                    ['reason' => $reason, 'generated_count' => $generated ?: null],
+                    fn (mixed $value): bool => $value !== null,
+                ),
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifyTeachers($locked, $to, $request);

@@ -11,8 +11,10 @@ use Illuminate\Validation\ValidationException;
  *
  * Con el proceso institucional abierto, la plantilla no cambia: los docentes están
  * llenando ese formato. Los catálogos institucionales y las cuentas siguen operativos.
- * Con una convocatoria en curso, la malla y las fuentes de esa carrera no cambian: los
- * sílabos se apoyan en ellas. Para editar esas bases se pausa el alcance correspondiente.
+ * Con una convocatoria abierta, la malla y las fuentes de esa carrera no cambian: los
+ * sílabos se apoyan en ellas. Para editarlas la coordinación pausa su convocatoria; la
+ * pausa institucional del proceso no basta. Los registros institucionales (período)
+ * sí se liberan con la pausa del proceso.
  *
  * Las razones se devuelven como texto para que la interfaz explique el bloqueo con las
  * mismas palabras con las que el servidor lo rechaza.
@@ -54,7 +56,7 @@ class ProcessLocks
 
         $convocation = Convocation::query()
             ->where('carrera_id', $careerId)
-            ->running()
+            ->lockingCareerData()
             ->with(['career:id,nombre', 'process.academicPeriod:id,codigo'])
             ->first(['id', 'carrera_id', 'proceso_id']);
 

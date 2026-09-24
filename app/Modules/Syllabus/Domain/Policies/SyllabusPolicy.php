@@ -5,7 +5,9 @@ namespace App\Modules\Syllabus\Domain\Policies;
 use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Database\Eloquent\Builder;
 
 class SyllabusPolicy
@@ -56,21 +58,36 @@ class SyllabusPolicy
             && in_array($syllabus->estado, ['borrador', 'correccion_solicitada', 'en_revision'], true);
     }
 
-    /**
-     * Relevar al responsable es gobierno de la carrera, no edición de contenido: el
-     * coordinador cambia quién responde por el expediente sin poder escribir en él.
-     * La edición excepcional de contenido no forma parte de este permiso.
-     */
-    public function transferTeacher(User $user, Syllabus $syllabus): bool
+    /** Descartar lo presentado para que el docente lo rehaga: coordinación de la carrera, nunca sobre aprobados. */
+    public function reset(User $user, Syllabus $syllabus): Response
     {
-        return $this->review($user, $syllabus) && $syllabus->estado !== 'en_revision';
+        if (! in_array($syllabus->estado, ['borrador', 'en_revision', 'correccion_solicitada'], true)) {
+            return Response::deny();
+        }
+
+        return $this->decide($user, $syllabus);
     }
 
-    /** Descartar lo presentado para que el docente lo rehaga: coordinación de la carrera, nunca sobre aprobados. */
-    public function reset(User $user, Syllabus $syllabus): bool
+    /**
+     * Decidir sobre un expediente (observar, pedir corrección, aprobar, reabrir,
+     * reiniciar) exige que la convocatoria de la carrera siga viva: abierta o en pausa.
+     * Cerrada, la revisión queda solo para consulta.
+     */
+    public function decide(User $user, Syllabus $syllabus): Response
     {
-        return $this->review($user, $syllabus)
-            && in_array($syllabus->estado, ['borrador', 'en_revision', 'correccion_solicitada'], true);
+        if (! $this->review($user, $syllabus)) {
+            return Response::deny();
+        }
+        if (! self::convocationAllowsDecisions($syllabus->convocation()->value('estado'))) {
+            return Response::deny('La convocatoria está cerrada: la revisión queda solo para consulta y no admite decisiones.');
+        }
+
+        return Response::allow();
+    }
+
+    public static function convocationAllowsDecisions(mixed $state): bool
+    {
+        return in_array($state, [Convocation::STATE_OPEN, Convocation::STATE_PAUSED], true);
     }
 
     public function review(User $user, Syllabus $syllabus): bool

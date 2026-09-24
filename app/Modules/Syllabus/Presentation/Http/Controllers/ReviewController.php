@@ -8,18 +8,14 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Identity\Application\ActiveRole;
-use App\Modules\Identity\Domain\Enums\RoleCode;
-use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\Actions\AddReviewObservation;
 use App\Modules\Syllabus\Application\Actions\ApproveSyllabus;
 use App\Modules\Syllabus\Application\Actions\ReopenSyllabus;
 use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
 use App\Modules\Syllabus\Application\Actions\ResetSyllabus;
-use App\Modules\Syllabus\Application\Actions\TransferSyllabusTeacher;
-use App\Modules\Syllabus\Application\Actions\VerifyObservation;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\RevisionDiff;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
+use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Modules\Syllabus\Presentation\Http\Requests\ApproveSyllabusRequest;
@@ -27,8 +23,6 @@ use App\Modules\Syllabus\Presentation\Http\Requests\ReopenSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ResetSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreCorrectionRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreObservationRequest;
-use App\Modules\Syllabus\Presentation\Http\Requests\TransferSyllabusTeacherRequest;
-use App\Modules\Syllabus\Presentation\Http\Requests\VerifyObservationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewReviewsRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -146,20 +140,6 @@ class ReviewController extends Controller
         return response()->json(['message' => $message]);
     }
 
-    public function verifyObservation(
-        ReviewObservation $observation,
-        VerifyObservationRequest $request,
-        VerifyObservation $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($observation, $actor, $request);
-
-        $message = 'Observación verificada como resuelta.';
-
-        return response()->json(['message' => $message]);
-    }
-
     public function approve(
         SyllabusRevision $revision,
         ApproveSyllabusRequest $request,
@@ -245,6 +225,7 @@ class ReviewController extends Controller
         $syllabus = $revision->syllabus;
         $latest = $syllabus->revisions->sortByDesc('numero_revision')->first();
         $latestReopening = $syllabus->reopenings->sortByDesc('reabierto_en')->first();
+        $decisionsAllowed = SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation->estado);
         $documentMapping = is_array($revision->fotografia['document_mapping'] ?? null)
             ? $revision->fotografia['document_mapping']
             : [];
@@ -290,18 +271,10 @@ class ReviewController extends Controller
                 'justification' => $revision->correctionRequest->justificacion,
                 'requested_at' => $revision->correctionRequest->solicitado_en->toIso8601String(),
             ],
-            // El relevo necesita identidades, no nombres: quién sale y entre quiénes elegir.
+            // Con la convocatoria cerrada la revisión es solo de consulta (SyllabusPolicy::decide).
+            'decisions_allowed' => $decisionsAllowed,
             'reset' => [
-                'allowed' => in_array($syllabus->estado, ResetSyllabus::RESETTABLE_STATES, true)
-                    && in_array($syllabus->convocation()->value('estado'), ['abierta', 'pausada'], true),
-            ],
-            'transfer' => [
-                'allowed' => $syllabus->estado !== 'en_revision',
-                'current' => $syllabus->teachers->map(fn (User $teacher): array => [
-                    'id' => $teacher->id,
-                    'nombre' => $teacher->nombre,
-                ])->unique('id')->values(),
-                'candidates' => $this->careerTeachers($syllabus),
+                'allowed' => $decisionsAllowed && in_array($syllabus->estado, ResetSyllabus::RESETTABLE_STATES, true),
             ],
             'reopening' => $latestReopening === null ? null : [
                 'cause' => $latestReopening->causa,
@@ -309,28 +282,6 @@ class ReviewController extends Controller
                 'reopened_by' => $latestReopening->reopener->nombre,
             ],
         ];
-    }
-
-    /**
-     * Docentes con rol vigente en la carrera del expediente. Es el universo del que puede
-     * salir un reemplazo: fuera de la carrera no hay alcance que lo sostenga.
-     *
-     * @return list<array{id: string, nombre: string}>
-     */
-    private function careerTeachers(Syllabus $syllabus): array
-    {
-        $teacherIds = RoleAssignment::query()
-            ->effective()
-            ->where('carrera_id', $syllabus->convocation->carrera_id)
-            ->where('rol', RoleCode::Teacher->value)
-            ->pluck('usuario_id');
-
-        $payload = [];
-        foreach (User::query()->where('activo', true)->whereIn('id', $teacherIds)->orderBy('nombre')->get(['id', 'nombre']) as $teacher) {
-            $payload[] = ['id' => $teacher->id, 'nombre' => $teacher->nombre];
-        }
-
-        return $payload;
     }
 
     /** @return list<array<string, mixed>> */
@@ -348,10 +299,6 @@ class ReviewController extends Controller
                     'content' => $observation->contenido,
                     'state' => $observation->estado,
                     'requested' => $requestedIds->contains($observation->id),
-                    // Estar en revisión implica que el docente ya reenvió su corrección:
-                    // Coordinación verifica sobre esa revisión, sin respuesta intermedia.
-                    'can_verify' => $syllabus->estado === 'en_revision'
-                        && $observation->estado !== 'verificada',
                     'created_by' => $observation->creator->nombre,
                     'observado_en' => $observation->observado_en->toIso8601String(),
                 ];
@@ -371,27 +318,6 @@ class ReviewController extends Controller
         $action->execute($syllabus, $request->string('reason')->toString(), $actor, $request);
 
         $message = 'Sílabo reiniciado. El docente empieza de cero con la malla y la plantilla actuales; el historial se conserva.';
-
-        return response()->json(['message' => $message]);
-    }
-
-    public function transferTeacher(
-        Syllabus $syllabus,
-        TransferSyllabusTeacherRequest $request,
-        TransferSyllabusTeacher $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute(
-            $syllabus,
-            $request->string('outgoing_user_id')->toString(),
-            $request->string('incoming_user_id')->toString(),
-            $request->string('idempotency_key')->toString(),
-            $actor,
-            $request,
-        );
-
-        $message = 'Relevo registrado. El expediente queda a cargo del docente entrante.';
 
         return response()->json(['message' => $message]);
     }

@@ -8,12 +8,10 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\Actions\CreateConvocation;
-use App\Modules\Syllabus\Application\Actions\OpenConvocation;
 use App\Modules\Syllabus\Application\Actions\TransitionConvocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
-use App\Modules\Syllabus\Presentation\Http\Requests\OpenConvocationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreConvocationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionConvocationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewConvocationsRequest;
@@ -132,15 +130,6 @@ class ConvocationController extends Controller
         return response()->json($payload);
     }
 
-    public function open(Convocation $convocation, OpenConvocationRequest $request, OpenConvocation $action): JsonResponse
-    {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($convocation->id, $actor, $request);
-
-        return response()->json(['message' => 'Convocatoria abierta y expedientes generados sin duplicados.']);
-    }
-
     public function transition(
         Convocation $convocation,
         string $transition,
@@ -154,7 +143,7 @@ class ConvocationController extends Controller
 
         $message = $transition === TransitionConvocation::PAUSE
             ? 'Convocatoria en pausa. Los docentes de la carrera no editan ni envían; la malla y las fuentes quedan editables.'
-            : 'Convocatoria reanudada. Los docentes vuelven a trabajar y la malla y las fuentes quedan protegidas.';
+            : 'Convocatoria reanudada. Los docentes vuelven a trabajar, los paralelos nuevos ya tienen su sílabo y la malla y las fuentes quedan protegidas.';
 
         return response()->json(['message' => $message]);
     }

@@ -3,15 +3,20 @@
 namespace App\Modules\Syllabus\Presentation\Http\Requests;
 
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class StoreCorrectionRequest extends FormRequest
 {
-    public function authorize(): bool
+    public function authorize(): Response
     {
         $revision = $this->route('revision');
+        if (! $revision instanceof SyllabusRevision) {
+            return Response::deny();
+        }
 
-        return $revision instanceof SyllabusRevision && $this->user()?->can('review', $revision) === true;
+        return Gate::forUser($this->user())->inspect('decide', $revision);
     }
 
     /** @return array<string, list<string>> */

@@ -7,14 +7,11 @@ use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Domain\StudyModality;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Unique;
 use Illuminate\Validation\Validator;
 
 class StoreAcademicRecordRequest extends FormRequest
@@ -64,40 +61,6 @@ class StoreAcademicRecordRequest extends FormRequest
                 'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
             ],
             'asignatura' => $this->subjectRules(),
-            'programacion_asignatura' => [
-                'period_id' => [
-                    'required',
-                    'uuid',
-                    Rule::exists('periodos_academicos', 'id'),
-                ],
-                'subject_id' => [
-                    'required',
-                    'uuid',
-                    Rule::exists('asignaturas', 'id')->where(fn ($query) => $query
-                        ->where('asignatura_activa', true)
-                        ->where('carrera_id', $this->careerId())),
-                    Rule::unique('programaciones_asignatura', 'asignatura_id')
-                        ->where('periodo_academico_id', $this->input('period_id')),
-                ],
-            ],
-            'paralelo' => [
-                'scheduled_subject_id' => [
-                    'required',
-                    'uuid',
-                    Rule::exists('programaciones_asignatura', 'id')->where(fn ($query) => $query
-                        ->where('programacion_asignatura_activa', true)
-                        ->whereIn('asignatura_id', Subject::query()
-                            ->select('id')
-                            ->where('carrera_id', $this->careerId()))),
-                ],
-                'code' => [
-                    'required',
-                    'string',
-                    'max:30',
-                    $this->uniqueWithin('paralelos', 'codigo_paralelo', 'programacion_asignatura_id', 'scheduled_subject_id'),
-                ],
-                'shift' => ['nullable', 'string', Rule::in(Parallel::SHIFTS)],
-            ],
             'asignacion_docente' => [
                 'user_id' => [
                     'required',
@@ -147,17 +110,6 @@ class StoreAcademicRecordRequest extends FormRequest
                 $validator->errors()->add('ends_on', 'El período no puede superar 52 semanas calendario.');
             }
         }];
-    }
-
-    private function uniqueWithin(
-        string $table,
-        string $column,
-        string $scopeColumn,
-        ?string $input = null,
-    ): Unique {
-        $scopeValue = $this->input($input ?? $scopeColumn);
-
-        return Rule::unique($table, $column)->where($scopeColumn, $scopeValue);
     }
 
     /** @return array<string, list<mixed>> */

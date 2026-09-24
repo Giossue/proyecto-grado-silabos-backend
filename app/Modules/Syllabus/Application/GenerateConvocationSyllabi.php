@@ -13,7 +13,11 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
-/** Genera desde las fuentes maestras vigentes todos los sílabos de una convocatoria. */
+/**
+ * Genera desde las fuentes maestras vigentes los sílabos de una convocatoria. Es
+ * idempotente: un paralelo que ya tiene expediente en la convocatoria no se toca, de
+ * modo que al reanudar solo nacen los sílabos de paralelos creados durante la pausa.
+ */
 final class GenerateConvocationSyllabi
 {
     public function __construct(
@@ -54,8 +58,14 @@ final class GenerateConvocationSyllabi
             ]);
         }
 
+        $covered = SyllabusScope::query()
+            ->where('convocatoria_id', $convocation->id)
+            ->pluck('paralelo_id')
+            ->flip();
+
         foreach ($scheduledSubjects as $scheduledSubject) {
-            if ($scheduledSubject->parallels->isEmpty() || $scheduledSubject->parallels->contains(
+            $pending = $scheduledSubject->parallels->reject(fn (Parallel $parallel): bool => $covered->has($parallel->id));
+            if ($scheduledSubject->parallels->isEmpty() || $pending->contains(
                 fn (Parallel $parallel): bool => $parallel->teacherAssignments->count() !== 1,
             )) {
                 throw ValidationException::withMessages([
@@ -67,6 +77,9 @@ final class GenerateConvocationSyllabi
         $generated = 0;
         foreach ($scheduledSubjects as $scheduledSubject) {
             foreach ($scheduledSubject->parallels as $parallel) {
+                if ($covered->has($parallel->id)) {
+                    continue;
+                }
                 $this->generate($convocation, $scheduledSubject, new Collection([$parallel]));
                 $generated++;
             }

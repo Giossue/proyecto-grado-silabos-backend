@@ -328,7 +328,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   pantalla.
 - COR-13 abre la malla en una página completa con ciclos, tarjetas, totales y relaciones.
   El lienzo permite zoom, desplazamiento, conexión y reubicación, además de crear una
-  materia en su ciclo y editarla directamente desde su tarjeta. El desplazamiento se
+  materia desde el control al final de su ciclo y editarla desde las acciones de su
+  tarjeta. Ambos formularios se abren en el diálogo compartido y no cubren las tarjetas.
+  Las tarjetas solo se arrastran dentro de su propio ciclo: al mover una, las demás
+  muestran el orden resultante antes de soltarla. El desplazamiento se
   limita al ancho del ciclo con más asignaturas y a la altura de los ciclos configurados,
   conservando solo un margen breve alrededor del contenido. En escritorio, la leyenda y
   los totales flotantes inician visibles y se pueden contraer temporalmente; en móvil se
@@ -339,8 +342,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   **TOTAL** se calcula con la suma de los componentes de horas, sin incluir créditos. La
   unidad de organización curricular sugiere valores ya usados y admite escribir uno
   nuevo; el orden dentro del ciclo se asigna automáticamente cuando no lo determina el
-  constructor. Una reubicación correcta se guarda sin notificación repetitiva; un fallo
-  sí explica la acción correctiva.
+  constructor. Al soltar una materia, el orden de todo el ciclo se guarda junto en una
+  transacción. Una reubicación correcta se guarda sin notificación repetitiva; un fallo
+  restaura el orden anterior y explica la acción correctiva.
 - **Auditoría** abre directamente ADM-10, sin pestañas ni filtros. Presenta un único
   registro paginado con fecha, actividad, responsable y resultado; acción y recurso se
   agrupan en la misma celda y no se muestran metadatos secundarios. ADM-09 conserva su

@@ -8,7 +8,6 @@ use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
@@ -17,7 +16,6 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -50,7 +48,7 @@ class DeleteAcademicRecord
                 throw new AuthorizationException('Este registro no pertenece a la estructura institucional.');
             }
         } elseif (AcademicStructurePermissions::isCareerContext($role) && $role->carrera_id !== null) {
-            if (! in_array($entity, ['paralelo', 'asignacion_docente'], true)) {
+            if ($entity !== 'asignacion_docente') {
                 throw new AuthorizationException('Este registro no admite eliminación desde Coordinación.');
             }
             $this->locks->assertCareerEditable($role->carrera_id);
@@ -67,18 +65,13 @@ class DeleteAcademicRecord
                     default => throw new \LogicException('Entidad institucional no admitida.'),
                 }
             : match ($entity) {
-                'paralelo' => Parallel::query()
-                    ->whereHas('scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $role->carrera_id))
-                    ->lockForUpdate()->findOrFail($recordId),
                 'asignacion_docente' => TeacherAssignment::query()
                     ->whereHas('parallel.scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $role->carrera_id))
                     ->lockForUpdate()->findOrFail($recordId),
                 default => throw new \LogicException('Entidad de carrera no admitida.'),
             };
 
-            if ($record instanceof Parallel) {
-                $this->periodPlanning->assertParallelMayChange($record);
-            } elseif ($record instanceof TeacherAssignment) {
+            if ($record instanceof TeacherAssignment) {
                 $this->periodPlanning->assertTeacherAssignmentMayChange($record);
             }
 
@@ -108,8 +101,6 @@ class DeleteAcademicRecord
                 || DB::table('asignaciones_rol')->where('carrera_id', $record->getKey())->exists(),
             'periodo' => ScheduledSubject::query()->where('periodo_academico_id', $record->getKey())->exists()
                 || DB::table('convocatorias_universidad')->where('periodo_academico_id', $record->getKey())->exists(),
-            'paralelo' => SyllabusScope::query()->where('paralelo_id', $record->getKey())->exists()
-                || SyllabusCollaborator::query()->whereHas('teacherAssignment', fn ($query) => $query->where('paralelo_id', $record->getKey()))->exists(),
             'asignacion_docente' => SyllabusCollaborator::query()->where('docente_paralelo_id', $record->getKey())->exists(),
             default => true,
         };
@@ -124,17 +115,6 @@ class DeleteAcademicRecord
     /** @return array<string, int|string> */
     private function delete(string $entity, Model $record): array
     {
-        if ($entity === 'paralelo') {
-            $assignmentIds = TeacherAssignment::query()
-                ->where('paralelo_id', $record->getKey())
-                ->lockForUpdate()
-                ->pluck('id');
-            TeacherAssignment::query()->whereIn('id', $assignmentIds)->delete();
-            $record->delete();
-
-            return ['deleted_teacher_assignments' => $assignmentIds->count()];
-        }
-
         $name = (string) ($record->getAttribute('nombre') ?? $record->getAttribute('codigo') ?? $record->getKey());
         $record->delete();
 

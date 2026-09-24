@@ -3,6 +3,8 @@
 namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -218,12 +220,66 @@ final class InProgressWork
         return $syllabi->count();
     }
 
+    /**
+     * Actualiza en los expedientes en curso de la carrera los datos de presentación de
+     * la materia (nombre, código, ciclo, orden, unidad y requisitos por código) sin
+     * reiniciar el trabajo docente. Se usa para cambios cosméticos de la malla.
+     */
+    public function refreshSubjects(string $careerId): int
+    {
+        $syllabi = $this->inProgress($careerId)->lockForUpdate()->get();
+        $subjects = Subject::query()
+            ->whereKey($syllabi->pluck('asignatura_id')->unique()->values()->all())
+            ->with('requirements.requirement')
+            ->get()
+            ->keyBy('id');
+
+        foreach ($syllabi as $syllabus) {
+            $subject = $subjects->get($syllabus->asignatura_id);
+            if (! $subject instanceof Subject) {
+                continue;
+            }
+            $codes = fn (string $type): array => $subject->requirements
+                ->where('tipo', $type)
+                ->map(fn (SubjectRequirement $requirement): string => $requirement->requirement->codigo_asignatura)
+                ->sort()
+                ->values()
+                ->all();
+
+            $context = $syllabus->contexto_academico;
+            data_set($context, 'subject.name', $subject->nombre);
+            data_set($context, 'subject.code', $subject->codigo_asignatura);
+            data_set($context, 'subject.cycle', $subject->ciclo);
+            data_set($context, 'subject.position', $subject->orden_en_ciclo);
+            data_set($context, 'subject.organization_unit', $subject->unidad_organizacion_curricular);
+            data_set($context, 'subject.prerequisites', $codes('prerrequisito'));
+            data_set($context, 'subject.corequisites', $codes('correquisito'));
+            $syllabus->contexto_academico = $context;
+            $syllabus->save();
+
+            $syllabus->values()->get()
+                ->filter(fn (FieldValue $value): bool => $value->origen === 'asignaturas')
+                ->each(function (FieldValue $value) use ($subject): void {
+                    $current = is_array($value->valor) ? $value->valor : [];
+                    $value->update(['valor' => [
+                        ...$current,
+                        'codigo' => $subject->codigo_asignatura,
+                        'nombre' => $subject->nombre,
+                        'ciclo' => $subject->ciclo,
+                    ]]);
+                });
+        }
+
+        return $syllabi->count();
+    }
+
     /** @param string|list<string>|null $careerIds
      * @return Builder<Syllabus>
      */
     private function inProgress(string|array|null $careerIds, ?string $periodId = null): Builder
     {
-        return Syllabus::query()->whereHas('convocation', fn (Builder $query) => $query
+        // Un sílabo aprobado queda fuera: ni se purga ni se refresca (igual que ResetSyllabus).
+        return Syllabus::query()->where('estado', '!=', 'aprobado')->whereHas('convocation', fn (Builder $query) => $query
             ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
             ->whereHas('process', fn (Builder $process) => $process
                 ->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))

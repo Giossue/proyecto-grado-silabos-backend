@@ -234,6 +234,22 @@ class AcademicStructureTest extends TestCase
     {
         $career = Career::query()->findOrFail($this->coordinatorContext->carrera_id);
         $subject = Subject::query()->where('carrera_id', $career->id)->firstOrFail();
+        $second = Subject::query()->create([
+            'carrera_id' => $career->id,
+            'codigo_asignatura' => 'SW-TEST-2',
+            'nombre' => 'Segunda materia',
+            'ciclo' => $subject->ciclo,
+            'orden_en_ciclo' => 1,
+            'activo' => true,
+        ]);
+        $third = Subject::query()->create([
+            'carrera_id' => $career->id,
+            'codigo_asignatura' => 'SW-TEST-3',
+            'nombre' => 'Tercera materia',
+            'ciclo' => $subject->ciclo,
+            'orden_en_ciclo' => 2,
+            'activo' => true,
+        ]);
 
         $this->actingAsCoordinator()
             ->withHeader('Origin', 'http://localhost:5173')
@@ -250,16 +266,34 @@ class AcademicStructureTest extends TestCase
             ->withHeader('Origin', 'http://localhost:5173')
             ->patchJson("/api/v1/coordination/academic/curriculum/{$career->id}/subject-layout", [
                 'subject_id' => $subject->id,
-                'cycle' => 2,
-                'position' => 4,
+                'cycle' => $subject->ciclo,
+                'position' => 2,
             ])
             ->assertOk()
             ->assertJsonPath('message', 'Posición de la materia actualizada.');
 
         $this->assertDatabaseHas('asignaturas', [
             'id' => $subject->id,
-            'ciclo_asignatura' => 2,
-            'orden_asignatura_en_ciclo' => 4,
+            'ciclo_asignatura' => $subject->ciclo,
+            'orden_asignatura_en_ciclo' => 2,
+        ]);
+        $this->assertSame([$second->id, $third->id, $subject->id],
+            Subject::query()->where('carrera_id', $career->id)->where('ciclo', $subject->ciclo)
+                ->orderBy('orden_en_ciclo')->pluck('id')->all());
+
+        $this->actingAsCoordinator()
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->patchJson("/api/v1/coordination/academic/curriculum/{$career->id}/subject-layout", [
+                'subject_id' => $subject->id,
+                'cycle' => $subject->ciclo + 1,
+                'position' => 0,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('cycle');
+        $this->assertDatabaseHas('asignaturas', [
+            'id' => $subject->id,
+            'ciclo_asignatura' => $subject->ciclo,
+            'orden_asignatura_en_ciclo' => 2,
         ]);
     }
 
@@ -299,11 +333,12 @@ class AcademicStructureTest extends TestCase
             'activo' => true,
         ]);
         $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.academic.status', [
-                'entity' => 'asignatura',
-                'record' => $otherSubject->id,
-            ]), ['active' => false])
-            ->assertNotFound();
+            ->patchJson(route('api.v1.coordination.academic.update', ['asignatura', $otherSubject->id]), [
+                'code' => 'OTR-101',
+                'nombre' => 'Materia renombrada',
+            ])
+            ->assertForbidden();
+        $this->assertSame('Materia ajena', $otherSubject->fresh()->nombre);
     }
 
     public function test_scheduled_subjects_keep_their_career_scope_after_curricula_removal(): void

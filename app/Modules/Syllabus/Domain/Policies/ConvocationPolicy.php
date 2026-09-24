@@ -30,11 +30,6 @@ class ConvocationPolicy
             && $activeRole->carrera_id === $convocation->carrera_id;
     }
 
-    public function open(User $user, Convocation $convocation): bool
-    {
-        return $this->view($user, $convocation) && $convocation->estado === 'preparacion';
-    }
-
     public function pause(User $user, Convocation $convocation): bool
     {
         return $this->view($user, $convocation) && $convocation->estado === Convocation::STATE_OPEN;

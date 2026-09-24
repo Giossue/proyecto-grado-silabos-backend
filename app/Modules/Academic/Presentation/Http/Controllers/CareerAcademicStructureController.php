@@ -10,12 +10,10 @@ use App\Modules\Academic\Application\Actions\DeleteAcademicRecord;
 use App\Modules\Academic\Application\Actions\DeleteScheduledSubject;
 use App\Modules\Academic\Application\Actions\MutateCurriculumBuilder;
 use App\Modules\Academic\Application\Actions\PreparePeriod;
-use App\Modules\Academic\Application\Actions\SetAcademicRecordStatus;
 use App\Modules\Academic\Application\Actions\UpdateCareerAcademicRecord;
 use App\Modules\Academic\Application\Queries\AcademicStructureViewData;
 use App\Modules\Academic\Presentation\Http\Requests\ManageCareerAcademicStructureRequest;
 use App\Modules\Academic\Presentation\Http\Requests\PreparePeriodRequest;
-use App\Modules\Academic\Presentation\Http\Requests\SetAcademicRecordStatusRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreAcademicRecordRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreParallelsRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreSubjectRequirementRequest;
@@ -93,7 +91,7 @@ class CareerAcademicStructureController extends Controller
         return $this->success($request, "{$created} paralelos creados dentro de su carrera.");
     }
 
-    /** Relevo de un docente en todos sus paralelos y sílabos de la carrera (I-39). */
+    /** Relevo de un docente en todos sus paralelos de la carrera o en uno solo (I-39). */
     public function relieveTeacher(RelieveTeacherRequest $request, RelieveTeacher $action): JsonResponse
     {
         $actor = $request->user();
@@ -104,6 +102,7 @@ class CareerAcademicStructureController extends Controller
             $request->string('idempotency_key')->toString(),
             $actor,
             $request,
+            $request->filled('teacher_assignment_id') ? $request->string('teacher_assignment_id')->toString() : null,
         );
 
         return $this->success($request, "Relevo aplicado en {$summary['parallels']} paralelos; {$summary['syllabi']} sílabos pasaron al docente entrante.");
@@ -133,22 +132,6 @@ class CareerAcademicStructureController extends Controller
         );
 
         return $this->success($request, $message);
-    }
-
-    public function setStatus(
-        string $entity,
-        string $record,
-        SetAcademicRecordStatusRequest $request,
-        SetAcademicRecordStatus $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $active = $request->boolean('active');
-        $action->execute($entity, $record, $active, $actor, $request);
-
-        return $this->success($request, $active
-            ? 'Registro activado.'
-            : 'Registro desactivado sin borrar su historial.');
     }
 
     public function update(

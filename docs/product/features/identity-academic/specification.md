@@ -90,7 +90,8 @@
 - ADM-02..04 y COR-14..15 priorizan sus tablas; COR-13 prioriza la página completa de la
   malla. En el desglose de COR-13, la acción principal abre desde la derecha el formulario
   manual; en el constructor visual, cada ciclo permite crear materias y cada tarjeta se
-  edita directamente en el lienzo, sin abrir ese Sheet.
+  edita desde sus acciones en el diálogo compartido. El arrastre reordena únicamente
+  dentro del ciclo y muestra el resultado antes de guardar.
 - La asignación académica decide qué sílabos puede ver y editar un docente.
 
 ## Criterios críticos

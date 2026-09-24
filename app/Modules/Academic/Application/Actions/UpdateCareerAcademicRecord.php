@@ -7,20 +7,16 @@ use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Application\ScheduledSubjectInheritance;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
-use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
-use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusCollaborator;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 use DateTimeInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
@@ -51,6 +47,11 @@ class UpdateCareerAcademicRecord
         'programacion_asignatura_id' => 'Programación de asignatura',
         'usuario_id' => 'Docente',
         'paralelo_id' => 'Paralelo',
+    ];
+
+    /** @var list<string> Campos de materia que solo cambian cómo se presenta la ficha. */
+    private const PRESENTATION_SUBJECT_FIELDS = [
+        'codigo_asignatura', 'nombre', 'ciclo', 'orden_en_ciclo', 'unidad_organizacion_curricular',
     ];
 
     /** @var array<string, string> */
@@ -94,9 +95,14 @@ class UpdateCareerAcademicRecord
         // Toda la estructura de carrera queda congelada mientras sus docentes trabajan.
         // Un relevo no pasa por esta edición genérica: conserva el sílabo y su auditoría.
         $this->locks->assertCareerEditable($activeRole->carrera_id);
-        $careerScope = $entity === 'asignatura' ? $activeRole->carrera_id : [];
+        // Nombre, código, ciclo, orden o unidad de una materia son presentación: se
+        // refrescan en la ficha de los sílabos en curso sin reiniciarlos. Solo los
+        // datos que cambian la carga académica (créditos, horas, modalidad) purgan.
+        $cosmeticSubject = $entity === 'asignatura'
+            && $this->onlyPresentationChanges($recordId, $data, $activeRole->carrera_id);
+        $careerScope = $entity === 'asignatura' && ! $cosmeticSubject ? $activeRole->carrera_id : [];
 
-        return $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity, $recordId, $request): Model {
+        return $this->work->replace($request, function () use ($actor, $activeRole, $cosmeticSubject, $data, $entity, $recordId, $request): Model {
             $record = $this->scopedRecord($entity, $recordId, $activeRole->carrera_id);
             $this->assertPeriodMayChange($record);
             $this->ensureMutable($entity, $record);
@@ -131,9 +137,28 @@ class UpdateCareerAcademicRecord
                 metadata: $metadata,
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
+            if ($cosmeticSubject) {
+                $this->work->refreshSubjects($activeRole->carrera_id);
+            }
 
             return $record;
         }, $careerScope);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function onlyPresentationChanges(string $recordId, array $data, string $careerId): bool
+    {
+        $subject = Subject::query()->whereKey($recordId)->where('carrera_id', $careerId)->first();
+        if (! $subject instanceof Subject) {
+            return false;
+        }
+        // Solo se aplican los datos de carga académica: si ninguno cambia, lo demás es presentación.
+        $subject->fill(array_diff_key(
+            $this->subjectAttributes($data, $subject),
+            array_flip(self::PRESENTATION_SUBJECT_FIELDS),
+        ));
+
+        return ! $subject->isDirty();
     }
 
     private function scopedRecord(string $entity, string $recordId, string $careerId): Model
@@ -143,35 +168,14 @@ class UpdateCareerAcademicRecord
                 ->whereKey($recordId)
                 ->where('carrera_id', $careerId)
                 ->lockForUpdate()->firstOrFail(),
-            'programacion_asignatura' => ScheduledSubject::query()
-                ->whereKey($recordId)
-                ->whereHas('subject', fn ($query) => $query->where('carrera_id', $careerId))
-                ->lockForUpdate()->firstOrFail(),
-            'paralelo' => Parallel::query()
-                ->whereKey($recordId)
-                ->whereHas('scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $careerId))
-                ->lockForUpdate()->firstOrFail(),
-            'asignacion_docente' => TeacherAssignment::query()
-                ->whereKey($recordId)
-                ->whereHas('parallel.scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $careerId))
-                ->lockForUpdate()->firstOrFail(),
             default => throw new AuthorizationException('El tipo de registro no admite edición desde Coordinación.'),
         };
     }
 
     private function ensureMutable(string $entity, Model $record): void
     {
-        if ($record instanceof TeacherAssignment && ! $record->activo) {
-            throw ValidationException::withMessages([
-                'record' => 'Las asignaciones históricas no se editan. Cree una nueva asignación o use el relevo docente.',
-            ]);
-        }
-
         $usedBySyllabus = match ($entity) {
             'asignatura' => false,
-            'programacion_asignatura' => SyllabusScope::query()->where('programacion_asignatura_id', $record->getKey())->exists(),
-            'paralelo' => SyllabusScope::query()->where('paralelo_id', $record->getKey())->exists(),
-            'asignacion_docente' => SyllabusCollaborator::query()->where('docente_paralelo_id', $record->getKey())->exists(),
             default => true,
         };
 
@@ -191,9 +195,6 @@ class UpdateCareerAcademicRecord
     {
         return match ($entity) {
             'asignatura' => $this->subjectAttributes($data, $record),
-            'programacion_asignatura' => $this->scheduledSubjectAttributes($data, $careerId),
-            'paralelo' => $this->parallelAttributes($data, $careerId),
-            'asignacion_docente' => $this->teacherAssignmentAttributes($data, $careerId, $record),
             default => throw ValidationException::withMessages(['entity' => 'El tipo de registro no admite edición.']),
         };
     }
@@ -233,90 +234,6 @@ class UpdateCareerAcademicRecord
         }
 
         return $attributes;
-    }
-
-    /** @param array<string, mixed> $data
-     * @return array<string, mixed>
-     */
-    private function scheduledSubjectAttributes(array $data, string $careerId): array
-    {
-        $subject = Subject::query()->whereKey($this->stringValue($data, 'subject_id'))
-            ->where('activo', true)
-            ->where('carrera_id', $careerId)
-            ->lockForUpdate()->firstOrFail();
-        $period = AcademicPeriod::query()->whereKey($this->stringValue($data, 'period_id'))
-            ->lockForUpdate()->firstOrFail();
-        $this->periodPlanning->assertMayPlan($period);
-        $subject->loadMissing('career');
-
-        return [
-            'periodo_academico_id' => $period->id,
-            'asignatura_id' => $subject->id,
-            // El campus viene de la facultad; la modalidad, de la carrera o la materia.
-            'campus_programacion' => $this->inheritance->campusFor($subject->career)->value,
-            'modalidad' => $this->inheritance->modalityFor($subject),
-        ];
-    }
-
-    /** @param array<string, mixed> $data
-     * @return array<string, string>
-     */
-    private function parallelAttributes(array $data, string $careerId): array
-    {
-        $scheduledSubject = ScheduledSubject::query()->whereKey($this->stringValue($data, 'scheduled_subject_id'))
-            ->where('activo', true)
-            ->whereHas('subject', fn ($query) => $query->where('carrera_id', $careerId))
-            ->lockForUpdate()->firstOrFail();
-        $this->periodPlanning->assertScheduledSubjectMayChange($scheduledSubject, 'scheduled_subject_id');
-
-        return ['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => $data['code'], 'jornada' => $data['shift'] ?? null];
-    }
-
-    /** @param array<string, mixed> $data
-     * @return array<string, mixed>
-     */
-    private function teacherAssignmentAttributes(array $data, string $careerId, Model $record): array
-    {
-        if (! $record instanceof TeacherAssignment) {
-            throw new \LogicException('El registro esperado debe ser una asignación docente.');
-        }
-
-        $parallel = Parallel::query()->whereKey($this->stringValue($data, 'parallel_id'))
-            ->whereHas('scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $careerId))
-            ->lockForUpdate()->firstOrFail();
-        $this->periodPlanning->assertParallelMayChange($parallel, 'parallel_id');
-        $userId = $this->stringValue($data, 'user_id');
-        $roleAssignment = RoleAssignment::query()->effective()
-            ->where('usuario_id', $userId)
-            ->where('carrera_id', $careerId)
-            ->where('rol', RoleCode::Teacher->value)
-            ->whereHas('user', fn ($query) => $query
-                ->where('activo', true)
-                ->whereNotNull('correo_verificado_en'))
-            ->first();
-
-        if (! $roleAssignment instanceof RoleAssignment) {
-            throw ValidationException::withMessages([
-                'user_id' => 'El docente debe verificar su correo antes de recibir una asignación.',
-            ]);
-        }
-
-        $alreadyAssigned = TeacherAssignment::query()
-            ->where('paralelo_id', $parallel->id)
-            ->where('activo', true)
-            ->where('id', '!=', $record->id)
-            ->exists();
-
-        if ($alreadyAssigned) {
-            throw ValidationException::withMessages([
-                'user_id' => 'El paralelo ya tiene un docente asignado.',
-            ]);
-        }
-
-        return [
-            'asignacion_rol_id' => $roleAssignment->id,
-            'paralelo_id' => $parallel->id,
-        ];
     }
 
     private function assertPeriodMayChange(Model $record): void
@@ -364,17 +281,5 @@ class UpdateCareerAcademicRecord
         return is_bool($value) || is_float($value) || is_int($value) || is_string($value)
             ? $value
             : null;
-    }
-
-    /** @param array<string, mixed> $data */
-    private function stringValue(array $data, string $key): string
-    {
-        $value = $data[$key] ?? null;
-
-        if (! is_string($value)) {
-            throw ValidationException::withMessages([$key => 'El identificador recibido no es válido.']);
-        }
-
-        return $value;
     }
 }

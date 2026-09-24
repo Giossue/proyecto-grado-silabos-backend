@@ -13,6 +13,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Database\Seeders\DatabaseSeeder;
@@ -25,8 +26,9 @@ use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
 
 /**
- * I-39: relevar a un docente en todos sus paralelos de una vez. Los paralelos con sílabo
- * siguen las reglas del relevo por expediente; los que no tienen sílabo solo cambian de
+ * I-39: relevar a un docente es la única forma de cambiar el docente de un paralelo. El
+ * alcance es todos sus paralelos o uno solo. Los paralelos con sílabo siguen las reglas por
+ * estado y exigen convocatoria abierta o pausada; los que no tienen sílabo solo cambian de
  * manos. Con un sílabo en revisión no se mueve nada.
  */
 class TeacherReliefTest extends TestCase
@@ -105,6 +107,73 @@ class TeacherReliefTest extends TestCase
         $this->assertSame(0, TeacherAssignment::query()->forUser($this->replacement->id)->count());
     }
 
+    public function test_the_relief_can_target_a_single_parallel(): void
+    {
+        $syllabus = $this->openedSyllabus();
+        $extra = $this->extraParallelFor($this->teacher);
+        $extraAssignment = TeacherAssignment::query()->forUser($this->teacher->id)->where('paralelo_id', $extra->id)->firstOrFail();
+
+        $this->relieve(assignmentId: $extraAssignment->id)->assertSuccessful();
+
+        $this->assertFalse($extraAssignment->fresh()->activo);
+        $this->assertTrue(TeacherAssignment::query()->forUser($this->replacement->id)->where('paralelo_id', $extra->id)->where('activo', true)->exists());
+        // El paralelo con sílabo queda como estaba.
+        $this->assertDatabaseHas('colaboradores_silabo', ['silabo_id' => $syllabus->id, 'usuario_id' => $this->teacher->id]);
+        $this->assertNotified($this->replacement->id, 'docente.relevo_recibido', '1 paralelo que tenía');
+
+        // Un paralelo que ya no es del saliente no se releva.
+        $this->relieve(assignmentId: $extraAssignment->id)->assertJsonValidationErrors('teacher_assignment_id');
+    }
+
+    public function test_an_unsubmitted_draft_is_discarded_without_completion_percentage(): void
+    {
+        $syllabus = $this->validDraft();
+        $this->assertGreaterThan(0, $syllabus->values()->where('heredado', false)->count());
+
+        $this->relieve()->assertSuccessful();
+
+        $syllabus->refresh();
+        $this->assertSame('sin_iniciar', $syllabus->estado);
+        $this->assertSame(0, $syllabus->values()->count());
+        $this->assertSame(0, $syllabus->rows()->count());
+        $event = AuditEvent::query()->where('accion', 'silabo.docente_transferido')->firstOrFail();
+        $this->assertSame('borrador', $event->metadatos['previous_state']);
+        $this->assertArrayNotHasKey('discarded_completion', $event->metadatos);
+    }
+
+    public function test_an_approved_syllabus_is_reopened_and_keeps_the_approved_revision_intact(): void
+    {
+        $syllabus = $this->submittedSyllabus();
+        $revision = $syllabus->revisions()->orderByDesc('numero_revision')->firstOrFail();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertSuccessful();
+        $revisionCount = $syllabus->revisions()->count();
+
+        $this->relieve()->assertSuccessful();
+
+        $syllabus->refresh();
+        $this->assertSame('correccion_solicitada', $syllabus->estado);
+        $this->assertSame($revisionCount, $syllabus->revisions()->count());
+        $this->assertDatabaseCount('aprobaciones', 1);
+        $this->assertDatabaseHas('reaperturas', ['silabo_id' => $syllabus->id]);
+        $this->assertDatabaseHas('colaboradores_silabo', ['silabo_id' => $syllabus->id, 'usuario_id' => $this->replacement->id]);
+        $this->assertGreaterThan(0, $syllabus->values()->count());
+    }
+
+    public function test_a_closed_convocation_blocks_the_relief_of_its_syllabi(): void
+    {
+        $syllabus = $this->openedSyllabus();
+        $convocation = Convocation::query()->firstOrFail();
+        $convocation->estado = Convocation::STATE_CLOSED;
+        $convocation->save();
+
+        $this->relieve()->assertJsonValidationErrors('outgoing_user_id');
+
+        $this->assertDatabaseHas('colaboradores_silabo', ['silabo_id' => $syllabus->id, 'usuario_id' => $this->teacher->id]);
+        $this->assertSame(0, TeacherAssignment::query()->forUser($this->replacement->id)->count());
+    }
+
     public function test_global_relief_leaves_finished_period_assignments_in_history(): void
     {
         $syllabus = $this->openedSyllabus();
@@ -144,62 +213,30 @@ class TeacherReliefTest extends TestCase
         $this->assertNotNotified($this->coordinator->id, 'convocatoria.pausada');
     }
 
-    public function test_a_syllabus_assignment_cannot_be_closed_through_the_generic_status_endpoint(): void
+    public function test_coordination_only_changes_a_teacher_through_the_relief(): void
     {
         $this->openedSyllabus();
-        $convocation = Convocation::query()->firstOrFail();
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), [
-                'reason' => 'Validar que el historial siga protegido.',
-            ])
-            ->assertSuccessful();
         $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
 
+        // Ni edición en sitio ni activación/desactivación: solo relevo, alta o baja sin uso.
         $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.academic.status', [
-                'entity' => 'asignacion_docente',
-                'record' => $assignment->id,
-            ]), ['active' => false])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('record');
+            ->patchJson("/api/v1/coordination/academic/asignacion_docente/{$assignment->id}", [
+                'user_id' => $this->replacement->id,
+                'parallel_id' => $assignment->paralelo_id,
+            ])
+            ->assertMethodNotAllowed();
+        $this->actingAsCoordinator()
+            ->patchJson("/api/v1/coordination/academic/asignacion_docente/{$assignment->id}/status", ['active' => false])
+            ->assertNotFound();
+        $this->actingAsCoordinator()
+            ->postJson('/api/v1/coordination/academic/paralelo', ['scheduled_subject_id' => $assignment->parallel->programacion_asignatura_id, 'code' => 'Q'])
+            ->assertNotFound();
+        $this->actingAsCoordinator()
+            ->deleteJson("/api/v1/coordination/academic/paralelo/{$assignment->paralelo_id}")
+            ->assertNotFound();
 
         $this->assertTrue($assignment->fresh()->activo);
-    }
-
-    public function test_a_historical_assignment_cannot_be_reactivated_or_edited(): void
-    {
-        $this->openedSyllabus();
-        $this->relieve()->assertSuccessful();
-        $convocation = Convocation::query()->firstOrFail();
-
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), [
-                'reason' => 'Proteger el historial de la asignación relevada.',
-            ])
-            ->assertSuccessful();
-
-        $historical = TeacherAssignment::query()->forUser($this->teacher->id)->where('activo', false)->firstOrFail();
-
-        $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.academic.status', [
-                'entity' => 'asignacion_docente',
-                'record' => $historical->id,
-            ]), ['active' => true])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('record');
-
-        $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.academic.update', [
-                'entity' => 'asignacion_docente',
-                'record' => $historical->id,
-            ]), [
-                'user_id' => $this->replacement->id,
-                'parallel_id' => $historical->paralelo_id,
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('record');
-
-        $this->assertFalse($historical->fresh()->activo);
+        $this->assertSame($this->teacher->id, $assignment->fresh()->roleAssignment->usuario_id);
     }
 
     public function test_the_replacement_must_teach_in_the_career_and_only_coordination_relieves(): void
@@ -241,19 +278,20 @@ class TeacherReliefTest extends TestCase
         $this->assertFalse($this->teacher->fresh()->activo);
     }
 
-    private function relieve(?string $incomingId = null): TestResponse
+    private function relieve(?string $incomingId = null, ?string $assignmentId = null): TestResponse
     {
-        return $this->actingAsCoordinator()->postJson(route('api.v1.coordination.academic.teachers.relieve'), $this->payload($incomingId));
+        return $this->actingAsCoordinator()->postJson(route('api.v1.coordination.academic.teachers.relieve'), $this->payload($incomingId, $assignmentId));
     }
 
     /** @return array<string, string> */
-    private function payload(?string $incomingId = null): array
+    private function payload(?string $incomingId = null, ?string $assignmentId = null): array
     {
-        return [
+        return array_filter([
             'outgoing_user_id' => $this->teacher->id,
             'incoming_user_id' => $incomingId ?? $this->replacement->id,
+            'teacher_assignment_id' => $assignmentId,
             'idempotency_key' => (string) Str::uuid(),
-        ];
+        ]);
     }
 
     private function extraParallelFor(User $teacher): Parallel

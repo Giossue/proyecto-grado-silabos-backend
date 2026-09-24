@@ -46,7 +46,7 @@ it('conserva la fecha anterior y el motivo al prorrogar', function (): void {
 
 it('descarta el borrador en un relevo sin guardar porcentaje de llenado', function (): void {
     $transfer = (string) file_get_contents(
-        dirname(__DIR__, 2).'/app/Modules/Syllabus/Application/Actions/TransferSyllabusTeacher.php',
+        dirname(__DIR__, 2).'/app/Modules/Syllabus/Application/Actions/RelieveTeacher.php',
     );
 
     expect($transfer)
