@@ -39,7 +39,7 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
             ],
             'fields' => [Rule::requiredIf($sectionId === null && ! $this->filled('first_field_label')), 'nullable', 'array', 'min:1', 'max:20'],
             'fields.*' => ['required', 'array:key,label,help,content_type,options,ai_enabled'],
-            'fields.*.label' => ['required', 'string', 'max:180'],
+            'fields.*.label' => ['nullable', 'string', 'max:180'],
             'fields.*.key' => [
                 'required',
                 'string',

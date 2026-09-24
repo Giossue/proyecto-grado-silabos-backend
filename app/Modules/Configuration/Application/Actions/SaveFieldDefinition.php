@@ -56,6 +56,8 @@ class SaveFieldDefinition
             // Un campo nuevo o cambiado altera el formato que los docentes están llenando.
 
             $contentType = $this->stringValue($data, 'content_type');
+            // Una parte sin nombre se guarda con etiqueta vacía y no muestra subtítulo.
+            $data['label'] = trim((string) ($data['label'] ?? ''));
 
             $customBlock = $field?->block;
             if ($field !== null && $customBlock !== null && is_array($customBlock->configuracion['document'] ?? null)) {

@@ -61,8 +61,8 @@ class ValidateDraft
                         // El docente no puede llenar un dato institucional: sigue bloqueando,
                         // pero el mensaje le dice a quién acudir.
                         'message' => $field->heredado
-                            ? "Avise a Coordinación: falta el dato «{$field->etiqueta}» en la información de la carrera."
-                            : "«{$field->etiqueta}» está vacío. Complétalo antes de enviar.",
+                            ? "Avise a Coordinación: falta el dato «{$field->displayName()}» en la información de la carrera."
+                            : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
                     ];
                 }
 

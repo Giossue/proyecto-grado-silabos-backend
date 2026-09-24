@@ -55,7 +55,7 @@ class AiAssistanceController extends Controller
             'field' => [
                 'id' => $field->id,
                 'key' => $field->clave,
-                'label' => $field->etiqueta,
+                'label' => $field->displayName(),
                 'content' => is_string($current) ? $current : '',
             ],
             'environment' => [

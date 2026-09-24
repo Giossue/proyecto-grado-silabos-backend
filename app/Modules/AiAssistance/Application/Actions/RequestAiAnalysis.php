@@ -66,7 +66,7 @@ class RequestAiAnalysis
             }
 
             $context = $this->contextBuilder->build($locked, implode(' ', array_filter([
-                $field->etiqueta,
+                $field->displayName(),
                 $field->clave,
                 $content,
             ], 'is_string')), $field->id);

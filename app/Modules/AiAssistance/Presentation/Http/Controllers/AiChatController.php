@@ -83,7 +83,7 @@ class AiChatController extends Controller
             $reviewResults[] = [
                 'id' => $execution->id,
                 'field_id' => $field->id,
-                'field_label' => $field->etiqueta,
+                'field_label' => $field->displayName(),
                 'section' => [
                     'id' => $section->id,
                     'title' => $section->titulo,

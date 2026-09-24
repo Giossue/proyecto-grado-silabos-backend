@@ -399,6 +399,24 @@ class AcademicStructureViewData
                     // período finalizado lo impide, no la convocatoria en curso (I-130).
                     'editable' => $this->periodPlanning->mayPlan($assignment->parallel->scheduledSubject->academicPeriod),
                 ]),
+            // Todo docente activo con rol docente vigente en la carrera, tenga o no
+            // paralelo: la lista de Coordinación muestra también a quien aún no dicta.
+            'careerTeachers' => RoleAssignment::query()
+                ->effective()
+                ->where('carrera_id', $careerId)
+                ->where('rol', RoleCode::Teacher->value)
+                ->whereHas('user', fn ($query) => $query->where('activo', true))
+                ->with('user:id,nombre,correo_electronico,correo_verificado_en')
+                ->get()
+                ->map(fn (RoleAssignment $assignment): array => [
+                    'id' => $assignment->user->id,
+                    'name' => $assignment->user->nombre,
+                    'email' => $assignment->user->correo_electronico,
+                    'pending_activation' => $assignment->user->correo_verificado_en === null,
+                ])
+                ->unique('id')
+                ->sortBy('name')
+                ->values(),
             'pendingTeachers' => RoleAssignment::query()
                 ->effective()
                 ->where('carrera_id', $careerId)

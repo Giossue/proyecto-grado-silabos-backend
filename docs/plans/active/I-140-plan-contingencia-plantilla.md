@@ -115,3 +115,14 @@ junta todo lo que falta para cerrar el tema de una vez.
 3. Repetir el recorrido de la auditoría con Playwright, como administración y como
    docente, y guardar capturas de antes y después.
 4. Respaldar la base remota, migrarla y subir los cambios.
+
+## Parte sin nombre (backend)
+
+- [x] `SaveFieldDefinitionRequest.label`, `SaveTemplateSectionRequest.fields.*.label` y
+  `SaveTemplateDocumentRequest.title` opcionales; la sección conserva `title` obligatorio.
+- [x] Se guarda cadena vacía (la columna NOT NULL admite `''`; no hay CHECK de no vacío),
+  por lo que no hace falta migración.
+- [x] Word/PDF: una parte sin nombre no imprime subtítulo ni consume número (6.1, 6.2
+  quedan consecutivos).
+- [x] Mensajes al docente e IA: `FieldDefinition::displayName()` cae al nombre de la sección.
+- [ ] Frontend (constructor y vista del docente): a cargo del agente de frontend.

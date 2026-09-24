@@ -54,7 +54,7 @@ class BuildSyllabusChatContext
                     $fieldItems[] = [
                         'id' => (string) Str::uuid(),
                         'type' => 'seccion_silabo',
-                        'label' => "{$section->titulo} · {$field->etiqueta}",
+                        'label' => trim((string) $field->etiqueta) === '' ? $section->titulo : "{$section->titulo} · {$field->etiqueta}",
                         'excerpt' => $excerpt,
                         'fingerprint' => $this->hasher->hash($excerpt),
                         'field_id' => $field->id,

@@ -162,6 +162,44 @@ class WordRendererTest extends TestCase
         $this->assertStringContainsString('<w:numPr>', $document);
     }
 
+    public function test_unnamed_part_prints_no_subtitle_and_keeps_numbering_consecutive(): void
+    {
+        $snapshot = $this->snapshot();
+        array_splice($snapshot['sections'][2]['blocks'], 1, 0, [[
+            'key' => 'parte_sin_nombre',
+            'title' => '',
+            'content_type' => 'text',
+            'table' => null,
+            'fields' => [['key' => 'parte_sin_nombre', 'label' => '', 'type' => 'texto_largo', 'value' => 'Contenido sin subtítulo', 'rows' => []]],
+        ]]);
+        $result = app(DocumentRenderer::class)->render(new DocumentRenderInput(
+            subject: 'Inteligencia Artificial',
+            subjectCode: 'SW-P7-037',
+            academicPeriod: 'Marzo – Julio 2026',
+            revisionNumber: 3,
+            revisionFingerprint: str_repeat('ab', 32),
+            generatedAt: '2026-09-02T20:00:00-05:00',
+            locale: 'es-EC',
+            snapshot: $snapshot,
+        ));
+
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-test-');
+        $this->assertNotFalse($temporary);
+        file_put_contents($temporary, $result->docx->bytes);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $document = $zip->getFromName('word/document.xml');
+        $zip->close();
+        @unlink($temporary);
+        $this->assertIsString($document);
+
+        $this->assertStringContainsString('Contenido sin subtítulo', $document);
+        $this->assertStringContainsString('3.1 Descripción', $document);
+        $this->assertStringContainsString('3.2 Objetivos', $document);
+        $this->assertStringNotContainsString('3.3', $document);
+        $this->assertStringNotContainsString('Campo', $document);
+    }
+
     /** @return array<string, mixed> */
     private function snapshot(): array
     {

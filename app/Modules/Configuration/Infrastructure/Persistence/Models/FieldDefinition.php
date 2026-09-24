@@ -86,4 +86,17 @@ class FieldDefinition extends Model
             ? $template->block($this->bloque_plantilla_id)
             : null;
     }
+
+    /** Nombre para mensajes: una parte sin nombre toma el de su sección. */
+    public function displayName(): string
+    {
+        $label = trim((string) $this->etiqueta);
+        if ($label !== '') {
+            return $label;
+        }
+        $block = $this->block;
+        $blockTitle = trim((string) $block?->titulo);
+
+        return $blockTitle !== '' ? $blockTitle : trim((string) $block?->section->titulo);
+    }
 }

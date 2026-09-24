@@ -62,7 +62,8 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
                     ->where('plantilla_id', $templateId)
                     ->ignore($fieldId),
             ],
-            'label' => ['required', 'string', 'max:180'],
+            // El nombre de una parte es opcional: sin nombre no se imprime subtítulo.
+            'label' => ['nullable', 'string', 'max:180'],
             'help' => ['nullable', 'string', 'max:2000'],
             'content_type' => ['required', Rule::in($types)],
             'inherited' => ['nullable', 'boolean'],

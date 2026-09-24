@@ -307,4 +307,41 @@ class CareerTeacherTest extends TestCase
         $this->assertSame(2, $teacher->roleAssignments()->count());
         Mail::assertNothingQueued();
     }
+
+    public function test_teacher_list_includes_every_active_career_teacher_even_without_parallel(): void
+    {
+        $withoutParallel = User::query()->create([
+            'nombre' => 'Docente sin paralelo',
+            'correo_electronico' => 'sin.paralelo@silabos.test',
+            'contrasena' => Hash::make('Demo-2026!'),
+            'correo_verificado_en' => now(),
+            'activo' => true,
+        ]);
+        $inactive = User::query()->create([
+            'nombre' => 'Docente inactivo',
+            'correo_electronico' => 'inactivo@silabos.test',
+            'contrasena' => Hash::make('Demo-2026!'),
+            'correo_verificado_en' => now(),
+            'activo' => false,
+        ]);
+        foreach ([$withoutParallel, $inactive] as $user) {
+            RoleAssignment::query()->create([
+                'usuario_id' => $user->id,
+                'rol' => RoleCode::Teacher->value,
+                'carrera_id' => $this->context->carrera_id,
+                'activo' => true,
+            ]);
+        }
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful();
+        $pendingId = User::query()->where('correo_electronico', 'nuevo@silabos.test')->value('id');
+
+        $teachers = collect($this->getJson(route('api.v1.coordination.academic.teacher-assignments.index'))
+            ->assertOk()
+            ->json('careerTeachers'));
+
+        $this->assertFalse($teachers->firstWhere('id', $withoutParallel->id)['pending_activation']);
+        $this->assertTrue($teachers->firstWhere('id', $pendingId)['pending_activation']);
+        $this->assertNotNull($teachers->firstWhere('id', User::query()->where('correo_electronico', 'docente@silabos.test')->value('id')));
+        $this->assertNull($teachers->firstWhere('id', $inactive->id));
+    }
 }

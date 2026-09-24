@@ -444,6 +444,55 @@ class TemplateAndSourceTest extends TestCase
         $this->assertTrue($identification->ia_habilitada);
     }
 
+    public function test_a_part_may_have_no_name_but_a_section_still_needs_one(): void
+    {
+        $version = $this->createTemplate();
+        $section = $version->sections()->where('clave', 'objetivos')->firstOrFail();
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.template.fields.store', $version), [
+                'section_id' => $section->id,
+                'key' => 'parte_sin_nombre',
+                'label' => '',
+                'content_type' => 'text',
+            ])
+            ->assertSuccessful();
+
+        $field = FieldDefinition::query()->where('plantilla_id', $version->id)->where('clave', 'parte_sin_nombre')->firstOrFail();
+        $this->assertSame('', $field->etiqueta);
+        $this->assertSame('', $field->block?->titulo);
+        // Los mensajes al docente usan el nombre de la sección cuando la parte no tiene.
+        $this->assertSame($section->titulo, $field->displayName());
+
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.template.fields.update', [$version, $field]), [
+                'block_id' => $field->bloque_plantilla_id,
+                'key' => 'parte_sin_nombre',
+                'label' => '   ',
+                'content_type' => 'text',
+            ])
+            ->assertSuccessful();
+        $this->assertSame('', $field->fresh()->etiqueta);
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.template.sections.store', $version), [
+                'title' => '',
+                'key' => 'seccion_sin_titulo',
+                'fields' => [['key' => 'parte_de_seccion', 'label' => null, 'content_type' => 'text']],
+            ])
+            ->assertJsonValidationErrors('title')
+            ->assertJsonMissingValidationErrors('fields.0.label');
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.template.sections.store', $version), [
+                'title' => 'Sección con parte sin nombre',
+                'key' => 'seccion_parte_sin_nombre',
+                'fields' => [['key' => 'parte_de_seccion', 'label' => null, 'content_type' => 'text']],
+            ])
+            ->assertSuccessful();
+        $this->assertSame('', FieldDefinition::query()->where('plantilla_id', $version->id)->where('clave', 'parte_de_seccion')->value('etiqueta_definicion_campo'));
+    }
+
     public function test_template_blocks_use_document_content_types(): void
     {
         $version = $this->createTemplate();

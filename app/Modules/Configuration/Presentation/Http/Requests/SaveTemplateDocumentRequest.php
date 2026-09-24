@@ -10,7 +10,7 @@ class SaveTemplateDocumentRequest extends ManageTemplatesRequest
         return [
             'document' => ['required', 'array'],
             'fingerprint' => ['required', 'string', 'size:64'],
-            'title' => ['sometimes', 'required', 'string', 'max:180'],
+            'title' => ['sometimes', 'nullable', 'string', 'max:180'],
             'properties' => ['sometimes', 'array', 'max:500'],
             'properties.*' => ['required', 'array:key,label,help,ai_enabled'],
             'properties.*.key' => ['required', 'string', 'distinct', 'max:180'],

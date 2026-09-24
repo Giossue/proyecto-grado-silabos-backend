@@ -56,7 +56,7 @@ class SaveTemplateSection
                     $configuration['document'] = TemplateDocumentDefaults::fixedPlaceholder();
                 }
                 $fieldKey = $this->stringValue($fieldData, 'key');
-                $fieldLabel = $this->stringValue($fieldData, 'label');
+                $fieldLabel = trim((string) ($fieldData['label'] ?? ''));
                 $blocks[] = [
                     'id' => $blockId,
                     'clave' => $fieldKey,

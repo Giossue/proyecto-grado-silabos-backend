@@ -122,9 +122,12 @@ class SyllabusWordDocument
                 ],
             );
             $containers = WordValues::arrayList($block['blocks'] ?? null);
-            foreach ($containers as $fieldIndex => $container) {
-                // Un solo campo en la sección: basta el título de la sección.
-                $fields->render($section, $container, count($containers) > 1 ? $number.'.'.($fieldIndex + 1) : null);
+            $partNumber = 0;
+            foreach ($containers as $container) {
+                // Un solo campo en la sección: basta el título de la sección. Una parte sin
+                // nombre no lleva subtítulo ni consume número (6.1, 6.2 siguen seguidos).
+                $numbered = count($containers) > 1 && WordFieldRenderer::hasTitle($container);
+                $fields->render($section, $container, $numbered ? $number.'.'.(++$partNumber) : null);
             }
         }
 

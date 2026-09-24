@@ -17,13 +17,23 @@ final class WordFieldRenderer
         private readonly WordDataTable $tables,
     ) {}
 
+    /**
+     * Una parte sin nombre en la plantilla no imprime subtítulo.
+     *
+     * @param  array<string, mixed>  $container
+     */
+    public static function hasTitle(array $container): bool
+    {
+        return WordValues::string($container['title'] ?? null, '') !== '';
+    }
+
     /** @param array<string, mixed> $container */
     public function render(Section $section, array $container, ?string $number): void
     {
         $fields = WordValues::arrayList($container['fields'] ?? null);
         $field = $fields[0] ?? [];
         $label = WordValues::string($field['label'] ?? null, WordValues::string($container['title'] ?? null, 'Campo'));
-        if ($number !== null) {
+        if ($number !== null && self::hasTitle($container)) {
             $section->addText(
                 $number.' '.$label,
                 [
