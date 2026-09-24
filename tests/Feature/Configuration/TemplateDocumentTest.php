@@ -153,6 +153,26 @@ class TemplateDocumentTest extends TestCase
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'plantilla.diseno_actualizado', 'recurso_id' => $block->id]);
     }
 
+    public function test_a_part_can_be_saved_without_a_name(): void
+    {
+        $template = $this->template();
+        $block = $template->fields()->where('clave', 'objetivo_general')->firstOrFail()->block;
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
+
+        $this->patchJson($url, [
+            'document' => $this->document(),
+            'fingerprint' => SaveTemplateDocument::fingerprint($block),
+            'properties' => [[
+                'key' => 'objetivo_general',
+                'label' => '',
+                'help' => null,
+                'ai_enabled' => false,
+            ]],
+        ])->assertSuccessful();
+
+        $this->assertSame('', $block->fields()->where('clave', 'objetivo_general')->firstOrFail()->etiqueta);
+    }
+
     public function test_admin_creates_a_selection_field_and_uses_it_as_a_conditional_mark(): void
     {
         $template = $this->template();

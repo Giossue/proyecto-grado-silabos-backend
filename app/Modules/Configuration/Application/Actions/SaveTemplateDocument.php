@@ -306,7 +306,7 @@ final class SaveTemplateDocument
     private function saveProperties(TemplateBlock $block, Request $request, array $detached): void
     {
         foreach ($request->input('properties', []) as $property) {
-            $attributes = ['etiqueta' => $property['label'], 'ayuda' => $property['help']];
+            $attributes = ['etiqueta' => $property['label'] ?? '', 'ayuda' => $property['help']];
             if (array_key_exists('ai_enabled', $property)) {
                 // Un campo retirado conserva su configuración para una futura restauración,
                 // pero no vuelve a habilitarse en el formulario actual.
