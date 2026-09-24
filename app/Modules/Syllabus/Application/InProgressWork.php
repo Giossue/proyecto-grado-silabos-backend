@@ -159,14 +159,11 @@ final class InProgressWork
      */
     private function currentTeachers(array $syllabusIds): array
     {
-        // TODO: sustituir por Syllabus::currentTeachers() cuando exista.
-        return DB::table('alcances_silabo')
-            ->join('asignaciones_paralelo', 'asignaciones_paralelo.paralelo_id', '=', 'alcances_silabo.paralelo_id')
-            ->join('asignaciones_rol', 'asignaciones_rol.id', '=', 'asignaciones_paralelo.asignacion_rol_id')
-            ->whereIn('alcances_silabo.silabo_id', $syllabusIds)
-            ->where('asignaciones_paralelo.docente_paralelo_activo', true)
+        // Misma regla que permisos y avisos: la vista de docentes vigentes del paralelo.
+        return DB::table('docentes_vigentes_silabo')
+            ->whereIn('silabo_id', $syllabusIds)
             ->distinct()
-            ->get(['alcances_silabo.silabo_id', 'asignaciones_rol.usuario_id'])
+            ->get(['silabo_id', 'usuario_id'])
             ->groupBy('silabo_id')
             ->map(fn ($rows): array => array_values(array_map('strval', $rows->pluck('usuario_id')->all())))
             ->all();
