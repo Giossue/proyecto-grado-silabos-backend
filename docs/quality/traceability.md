@@ -22,10 +22,10 @@ otro ciclo y asigna posiciones consecutivas a todas sus materias en una transacc
 COR-13, contraste oscuro y minimapa — RF-008..016, RNF-018..023, RN-005..008,
 CU-03, COR-13, CP-F estructura académica y CP-N accesibilidad/experiencia:
 `CurriculumCanvas` elimina el minimapa y conserva zoom/desplazamiento; los tokens
-acotados al constructor distinguen lienzo, carriles y tarjetas mediante negros y grises
-en oscuro. Cada materia conserva una unidad y el ciclo deja de inferir o mostrar una
-unidad predominante. La revisión en Chromium comprueba ambos temas y contraste calculado;
-PV-19 mantiene pendiente la aceptación con dispositivos y navegadores reales.
+acotados al constructor distinguen lienzo, carriles y tarjetas mediante tonos azul
+grisáceo oscuros. Cada materia conserva una unidad y el ciclo deja de inferir o mostrar
+una unidad predominante. La revisión en Chromium comprueba ambos temas y contraste
+calculado; PV-19 mantiene pendiente la aceptación con dispositivos y navegadores reales.
 
 I-54 — RF-003..016, RN-001..008, CU-02/03, COR-15 y ADM-02:
 `CareerTeacherTest` verifica alta limitada a la carrera activa, reutilización sin cambiar

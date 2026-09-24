@@ -36,9 +36,11 @@ reducir y mover el lienzo.
   conserva el ciclo y guarda o restaura el orden según la respuesta de la API.
 - Render sintético en Chromium, claro y oscuro: ningún `.vue-flow__minimap` y dos botones
   de zoom. La paleta clara conserva fondos blancos en ciclos y tarjetas.
-- Render sintético final inspeccionado en Chromium: cuatro ciclos en negro y grises,
-  ninguna etiqueta vertical de unidad y una cabecera de nivel por ciclo.
-- En oscuro, el contraste calculado es 11,23:1 para el texto principal de tarjeta,
-  7,68:1 para metadatos y 13,57:1 para el número de nivel. La separación tonal entre
-  carril y tarjeta es 1,48:1 y ambos conservan un borde visible.
+- Render sintético final inspeccionado en Chromium: cuatro ciclos en tonos azul grisáceo,
+  ninguna etiqueta vertical de unidad y una cabecera de nivel por ciclo. Los colores
+  computados coinciden con la guía recibida para lienzo, carril, tarjeta, tarjeta
+  secundaria, bordes, textos y relaciones.
+- En oscuro, el contraste calculado es 12,00:1 para el texto principal de tarjeta y
+  6,12:1 para sus metadatos. Prerrequisito y correquisito alcanzan 4,81:1 y 5,37:1
+  respectivamente sobre el lienzo.
 - La aceptación perceptiva en dispositivos reales sigue pendiente de PV-19.
