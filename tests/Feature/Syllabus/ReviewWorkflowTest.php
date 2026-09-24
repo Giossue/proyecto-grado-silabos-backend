@@ -446,6 +446,7 @@ class ReviewWorkflowTest extends TestCase
         $otherParallel = Parallel::query()->create([
             'programacion_asignatura_id' => $syllabus->parallel->programacion_asignatura_id,
             'codigo' => 'Z',
+            'jornada' => 'matutina',
         ]);
         $otherSyllabus = Syllabus::query()->create([
             'convocatoria_id' => $syllabus->convocatoria_id,

@@ -519,6 +519,7 @@ class ManagedUserTest extends TestCase
         $parallel = Parallel::query()->create([
             'programacion_asignatura_id' => ScheduledSubject::query()->firstOrFail()->id,
             'codigo' => 'Z',
+            'jornada' => 'matutina',
         ]);
         TeacherAssignment::query()->create([
             'usuario_id' => $assigned->id,

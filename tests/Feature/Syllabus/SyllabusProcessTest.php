@@ -776,6 +776,14 @@ class SyllabusProcessTest extends TestCase
                 'shift' => 'matutina',
             ])
             ->assertJsonValidationErrors('process');
+        // Tampoco se edita ni elimina un paralelo mientras la convocatoria está abierta.
+        $parallel = $scheduledSubject->parallels()->firstOrFail();
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.parallels.update', $parallel), ['code' => 'Z', 'shift' => 'nocturna'])
+            ->assertJsonValidationErrors('process');
+        $this->actingAsCoordinator()
+            ->deleteJson(route('api.v1.coordination.academic.parallels.destroy', $parallel))
+            ->assertJsonValidationErrors('process');
 
         // Los registros nuevos siguen disponibles durante el proceso.
         $this->actingAsAdministrator()

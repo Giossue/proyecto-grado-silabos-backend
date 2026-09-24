@@ -75,6 +75,7 @@ class ApiDashboardTest extends TestCase
         Parallel::query()->create([
             'programacion_asignatura_id' => $scheduledSubject->id,
             'codigo' => 'B',
+            'jornada' => 'matutina',
         ]);
 
         $this->actingAs($coordinator)
