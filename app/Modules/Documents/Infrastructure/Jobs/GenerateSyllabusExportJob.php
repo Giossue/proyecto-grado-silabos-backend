@@ -205,6 +205,10 @@ class GenerateSyllabusExportJob implements ShouldQueue
             'almacenado_en' => now(),
         ];
         $existing = StoredObject::query()->where('disco', 'private')->where('ruta_interna', $path)->first();
+        if ($existing !== null && ! $document->reproducible) {
+            // Reintento tras guardar el PDF convertido: se conserva el primero (I-139).
+            return $existing;
+        }
         if ($existing !== null) {
             $this->assertObjectMatches($existing, $document);
         }

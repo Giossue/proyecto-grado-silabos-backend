@@ -131,13 +131,14 @@ class ExportOpenApi extends Command
             str_contains($name, '.admin.') => 'Administración',
             str_contains($name, '.coordination.') => 'Coordinación',
             str_contains($name, '.teacher.') => 'Docencia',
-            str_contains($name, '.documents.') => 'Documentos',
+            str_contains($name, '.documents.'), str_contains($name, '.signature.') => 'Documentos',
             default => 'Operación',
         };
         $isDownload = $name === 'api.v1.documents.download';
         $isLogoUpload = str_ends_with($name, '.logo.store');
         $isSourcePdfUpload = $name === 'api.v1.coordination.sources.pdf.ingest';
-        $isSourceOriginalPdf = $name === 'api.v1.coordination.sources.pdf.original';
+        $isSourceOriginalPdf = in_array($name, ['api.v1.coordination.sources.pdf.original', 'api.v1.signature.pdf'], true);
+        $isSignatureUpload = $name === 'api.v1.signature.store';
         $isSourceAsset = $name === 'api.v1.coordination.sources.assets.show';
         $isSourceContent = $name === 'api.v1.coordination.sources.content.update';
         $isPreparePeriod = $name === 'api.v1.coordination.academic.period.prepare';
@@ -153,7 +154,7 @@ class ExportOpenApi extends Command
             'operationId' => str_replace('.', '_', $name),
             'summary' => $name,
             'responses' => [
-                ($isSourcePdfUpload ? '202' : '200') => [
+                ($isSourcePdfUpload ? '202' : ($isSignatureUpload ? '201' : '200')) => [
                     'description' => 'Operación completada.',
                     'content' => $successContent,
                 ],
@@ -172,6 +173,16 @@ class ExportOpenApi extends Command
                     'type' => 'object',
                     'required' => ['logo'],
                     'properties' => ['logo' => ['type' => 'string', 'format' => 'binary']],
+                ]]];
+            } elseif ($isSignatureUpload) {
+                // I-139: solo viaja el PDF firmado; el certificado y su clave no salen del navegador.
+                $content = ['multipart/form-data' => ['schema' => [
+                    'type' => 'object',
+                    'required' => ['signed_pdf', 'base_sha256'],
+                    'properties' => [
+                        'signed_pdf' => ['type' => 'string', 'format' => 'binary'],
+                        'base_sha256' => ['type' => 'string', 'pattern' => '^[A-Fa-f0-9]{64}$'],
+                    ],
                 ]]];
             } elseif ($isSourcePdfUpload) {
                 $content = ['multipart/form-data' => ['schema' => [

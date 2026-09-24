@@ -159,6 +159,14 @@ class DeliverInternalNotificationJob implements ShouldQueue
                 'Sílabo reabierto',
                 "El sílabo {$syllabus->subject->nombre}{$revisionLabel} fue reabierto para corrección.",
             ],
+            'silabo.firmado_docente' => [
+                'Sílabo listo para su firma',
+                "El docente firmó electrónicamente el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Falta la firma de coordinación.",
+            ],
+            'silabo.firmado' => [
+                'Sílabo firmado',
+                "Coordinación firmó electrónicamente el sílabo {$syllabus->subject->nombre}{$revisionLabel}. El PDF firmado ya está disponible.",
+            ],
             'silabo.reiniciado' => [
                 'Sílabo reiniciado',
                 "Coordinación reinició el sílabo {$syllabus->subject->nombre}. Empiece de nuevo con la malla y la plantilla actuales.",

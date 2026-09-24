@@ -28,6 +28,13 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // I-139: PDF fiel desde el DOCX con LibreOffice detrás de Gotenberg. Sin URL se
+    // conserva el PDF de texto de respaldo (pruebas y entorno local).
+    'gotenberg' => [
+        'url' => env('GOTENBERG_URL'),
+        'timeout' => (int) env('GOTENBERG_TIMEOUT', 90),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -9,6 +9,7 @@ use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
+use App\Modules\Documents\Presentation\Http\Controllers\SignatureController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\ActivationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
@@ -279,6 +280,13 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.documents.store');
             Route::get('exports/{artifact}/{format}', [DocumentController::class, 'download'])
                 ->middleware('active-role')->whereIn('format', ['docx', 'pdf'])->name('api.v1.documents.download');
+            // I-139: firma electrónica en el navegador; el servidor solo valida el PDF firmado.
+            Route::get('revisions/{revision}/signature', [SignatureController::class, 'show'])
+                ->middleware('active-role')->name('api.v1.signature.show');
+            Route::get('revisions/{revision}/signature/pdf', [SignatureController::class, 'pdf'])
+                ->middleware('active-role')->name('api.v1.signature.pdf');
+            Route::post('revisions/{revision}/signature', [SignatureController::class, 'store'])
+                ->middleware('active-role')->name('api.v1.signature.store');
         });
     });
 });

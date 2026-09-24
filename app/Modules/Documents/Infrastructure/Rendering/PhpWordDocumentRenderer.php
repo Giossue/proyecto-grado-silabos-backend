@@ -12,12 +12,16 @@ use RuntimeException;
 use ZipArchive;
 
 /**
- * DOCX con formato completo vía PhpWord (I-34) y PDF de texto plano de respaldo.
- * Los bytes son reproducibles: fechas fijas en el documento y en el paquete ZIP.
+ * DOCX con formato completo vía PhpWord (I-34). El PDF sale del mismo DOCX convertido
+ * con LibreOffice (Gotenberg, I-139) o, sin ese servicio, es el PDF de texto plano de
+ * respaldo. Los bytes son reproducibles: fechas fijas en el documento y en el paquete ZIP.
  */
 class PhpWordDocumentRenderer implements DocumentRenderer
 {
     public const VERSION = 'phpword-docx-v3+text-pdf-v2';
+
+    /** I-139: el PDF es el DOCX convertido por LibreOffice (Gotenberg). */
+    public const VERSION_GOTENBERG = 'phpword-docx-v3+libreoffice-pdf-v1';
 
     /** Marca de tiempo fija para las entradas del ZIP (1980-01-01, la mínima válida). */
     private const ZIP_MTIME = 315532800;
@@ -26,27 +30,33 @@ class PhpWordDocumentRenderer implements DocumentRenderer
         private readonly SyllabusWordDocument $document,
         private readonly SyllabusDocumentContent $content,
         private readonly PlainTextPdf $pdf,
+        private readonly GotenbergPdfConverter $converter,
     ) {}
 
     public function version(): string
     {
-        return self::VERSION;
+        return $this->converter->enabled() ? self::VERSION_GOTENBERG : self::VERSION;
     }
 
     public function render(DocumentRenderInput $input): DocumentBundle
     {
+        $docx = $this->docx($input);
+
         return new DocumentBundle(
             docx: new RenderedDocument(
                 format: 'docx',
                 mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                 extension: 'docx',
-                bytes: $this->docx($input),
+                bytes: $docx,
             ),
             pdf: new RenderedDocument(
                 format: 'pdf',
                 mime: 'application/pdf',
                 extension: 'pdf',
-                bytes: $this->pdf->write($this->content->lines($input)),
+                bytes: $this->converter->enabled()
+                    ? $this->converter->convert($docx, $input->generatedAt)
+                    : $this->pdf->write($this->content->lines($input)),
+                reproducible: ! $this->converter->enabled(),
             ),
         );
     }

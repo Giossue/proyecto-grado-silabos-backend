@@ -181,10 +181,14 @@ final class InProgressWork
 
         $exports = DB::table('artefactos_exportacion')
             ->whereIn('revision_silabo_id', $revisionIds)
-            ->get(['objeto_docx_id', 'objeto_pdf_id']);
+            ->get(['id', 'objeto_docx_id', 'objeto_pdf_id']);
+        // I-139: las firmas y sus PDF firmados caen con la exportación que firmaron.
+        $signatures = DB::table('firmas_documento')->whereIn('artefacto_exportacion_id', $exports->pluck('id')->all());
         $objectIds = $exports->flatMap(fn ($export) => [$export->objeto_docx_id, $export->objeto_pdf_id])
+            ->merge((clone $signatures)->pluck('objeto_almacenado_id'))
             ->filter()->unique()->values()->all();
         $objects = DB::table('objetos_almacenados')->whereIn('id', $objectIds)->get(['disco', 'ruta_interna']);
+        $signatures->delete();
         DB::table('artefactos_exportacion')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('objetos_almacenados')->whereIn('id', $objectIds)->delete();
         DB::afterCommit(function () use ($objects): void {

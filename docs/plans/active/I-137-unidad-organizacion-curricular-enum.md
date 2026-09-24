@@ -14,6 +14,13 @@ pintaban. Las unidades las fija el Reglamento de Régimen Académico (art. 30): 
 profesional e integración curricular. Pasan a valores fijos en código, como la modalidad
 (I-37).
 
+**Revisión de fuente, 2026-09-24.** La atribución anterior al art. 30 del CES no está
+respaldada por la codificación consultada: el texto anterior enumeraba las tres
+unidades en el art. 31 y fue derogado por el reglamento de 2022. La malla de Software
+publicada por la UEB sí utiliza estas categorías. Se registra en `DT-15` la decisión
+pendiente sobre límites por ciclo y posible clasificación múltiple; el enum existente
+no equivale a una regla del CES que asigne unidades a ciclos concretos.
+
 ## Trazabilidad
 
 RF de malla (UI Coordinación › Estructura académica) e identificación institucional del

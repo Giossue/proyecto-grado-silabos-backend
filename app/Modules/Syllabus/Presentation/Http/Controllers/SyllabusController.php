@@ -209,6 +209,10 @@ class SyllabusController extends Controller
             ...$this->teacherEditability($syllabus),
             'parallels' => [$syllabus->parallel->codigo],
             'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
+            // I-139: revisión aprobada vigente, la que el docente firma electrónicamente.
+            'approved_revision_id' => $syllabus->estado === 'aprobado'
+                ? $syllabus->revisions()->whereHas('approval')->latest('numero_revision')->value('id')
+                : null,
             'presentation' => [
                 'appearance' => TemplateAppearance::fromMapping($template->mapeo_documento),
                 'title' => TemplateTitleBlock::fromMapping($template->mapeo_documento)['text'],

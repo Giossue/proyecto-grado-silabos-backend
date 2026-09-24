@@ -25,4 +25,12 @@ esquina inferior derecha. El usuario aún puede ampliar, reducir y mover el lien
 
 ## Verificación
 
-Pendiente de registrar tras la implementación.
+- `npm run lint`, `npm run typecheck` y los dos tests Vitest focalizados: aprobados.
+- `tests/e2e/curriculum-drag.spec.ts` en Chromium: dos recorridos aprobados; el arrastre
+  conserva el ciclo y guarda o restaura el orden según la respuesta de la API.
+- Render sintético en Chromium, claro y oscuro: ningún `.vue-flow__minimap` y dos botones
+  de zoom. La paleta clara conserva fondos blancos en ciclos y tarjetas.
+- En oscuro, el contraste calculado con colores computados fue 7,75:1 para el texto
+  principal de tarjeta, 5,74:1 para metadatos, 5,51:1 para la insignia y 4,97:1 para
+  el encabezado de horas. La separación tonal entre carril y tarjeta fue 1,69:1.
+- La aceptación perceptiva en dispositivos reales sigue pendiente de PV-19.

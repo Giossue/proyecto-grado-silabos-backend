@@ -46,6 +46,20 @@ Estas no reemplazan los PV de la SRS:
 | DT-12 | Efecto de alcanzar la fecha de fin de un período sobre sus ofertas, paralelos, asignaciones y sílabos | Por ahora, la fecha es informativa: no hay cierre ni eliminación automática. Coordinación elimina, tras confirmación, solo ofertas que no tengan dependencias; un período con ofertas, procesos o convocatorias no se elimina. Definir si se automatiza un cierre futuro sin alterar la historia. | Antes de automatizar el cierre de período |
 | DT-13 | Ingesta de fuentes PDF | OpenParser con `paddleocr-vl-1.6` y `openparser@1` como adaptador PDF → documento JSON; `deepseek-flash` puede normalizar la salida por lotes cuando `AI_SOURCE_NORMALIZATION_ENABLED=true`, sin fallback silencioso; ejecución asíncrona y PDF privado | Implementaciones I-95/I-96/I-99; requiere PV-12/PV-14 |
 | DT-14 | Más de un docente activo en el mismo paralelo | No permitido: cada paralelo tiene como máximo una asignación docente activa; el relevo conserva la historia en filas inactivas | Cerrada el 2026-09-20 |
+| DT-15 | Fuente y alcance de la unidad de organización curricular por materia y ciclo | Conservar una unidad por materia y no restringirla por ciclo; la franja del ciclo es solo una visualización. No admitir doble clasificación ni fijar rangos hasta contrastar la malla aprobada aplicable con Coordinación. | Antes de validar unidades por ciclo o cambiar la cardinalidad de `asignaturas.unidad_organizacion_curricular` |
+
+### DT-15 — Conflicto de procedencia normativa (2026-09-24)
+
+`I-137` y el comentario de `CurricularUnit` atribuyen las tres unidades al art. 30 del
+Reglamento de Régimen Académico. El [texto anterior del CES (2019/2021)](https://www.ces.gob.ec/wp-content/uploads/2021/04/VADEMECUM_Final_2.pdf)
+las enumeraba en su art. 31; la [codificación del CES alojada en 2025](https://www.ces.gob.ec/wp-content/uploads/2025/05/Reglamento-de-Regimen-Academico.pdf)
+deroga ese texto y no contiene esa enumeración ni una correspondencia obligatoria entre
+unidad y ciclo. La [malla publicada por la UEB para Software](https://www.ueb.edu.ec/pregrado/facultad-ciencias/software)
+sí agrupa sus asignaturas en básica (I–III), profesional (IV–VII) e integración
+curricular (VIII). Falta confirmar la vigencia y autoridad de esa malla para convertir
+sus rangos en una restricción de servidor; también si la institución prevé ciclos
+mixtos o una materia adscrita a más de una unidad. Hasta entonces no se infiere una
+prohibición general del CES ni se fuerza una unidad por ciclo.
 
 ## Entrevistas pendientes
 
