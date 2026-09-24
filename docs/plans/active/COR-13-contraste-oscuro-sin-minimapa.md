@@ -41,7 +41,7 @@ aún puede ampliar, reducir y mover el lienzo.
 - `tests/e2e/curriculum-drag.spec.ts` en Chromium: dos recorridos aprobados; el arrastre
   conserva el ciclo y guarda o restaura el orden según la respuesta de la API.
 - Render sintético en Chromium, claro y oscuro: ningún `.vue-flow__minimap` y dos botones
-  de zoom. La paleta clara conserva fondos blancos en ciclos y tarjetas.
+  de zoom. En claro, el carril queda apenas más oscuro que las tarjetas blancas.
 - Render sintético final inspeccionado en Chromium: cuatro ciclos neutros, ninguna
   etiqueta vertical de unidad y una cabecera de nivel por ciclo. El carril es más oscuro
   que la tarjeta; badge y encabezados académicos heredan el color de unidad.

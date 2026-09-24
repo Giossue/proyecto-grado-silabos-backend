@@ -2,7 +2,9 @@
 
 ## Estado
 
-En curso (24 de septiembre de 2026).
+Backend y frontend implementados (24 de septiembre de 2026). Falta desplegar Gotenberg
+en Dokploy (`GOTENBERG_URL`) y probar con un `.p12` real emitido en Ecuador y en FirmaEC
+(ver POR VALIDAR).
 
 ## Decisión de alcance
 
@@ -72,6 +74,41 @@ Solo contra perder trabajo y quedar atascado: la subida compara con el PDF vigen
 bloquea nuevas firmas de la revisión anterior y la regeneración institucional (I-118)
 borra también las firmas y sus PDF.
 
+## Frontend (repositorio `proyecto-grado-silabos-frontend`)
+
+- `src/api/signatures.ts`: `getSignatureStatus`, `downloadSignaturePdf`, `submitSignature`
+  (`multipart`: `signed_pdf` + `base_sha256`, la huella del PDF descargado).
+- `src/lib/signature/certificate.ts`: abre el `.p12`/`.pfx` con node-forge y explica
+  clave incorrecta, archivo inválido, certificado vencido o aún no válido.
+- `src/lib/signature/signPdf.ts`: escribe la actualización incremental propia (firma,
+  campo/anotación, apariencia, página, AcroForm con `SigFlags 3` y tabla de referencias
+  clásica o flujo `/XRef` según el original); firma con `@signpdf/signer-p12` (SHA-256,
+  `adbe.pkcs7.detached`, `/Contents` de 32 768 hex). Usa la posición `stamp` del estado;
+  sin ella, respaldo en la última página. Se carga solo al firmar (import dinámico).
+- `src/lib/signature/stamp.ts`: sello con QR (`FIRMADO POR`, `RAZON`, `LOCALIZACION`,
+  `FECHA` en hora de Ecuador, `VALIDAR CON`) y texto Courier/Courier-Bold.
+- `DocumentSignatureCard.vue`: tarjeta «Firma electrónica» en el sílabo aprobado del
+  docente (`approved_revision_id`) y en la revisión aprobada de coordinación; estado,
+  firmas registradas, botón «Firmar electrónicamente» solo para quien le toca, diálogo
+  (archivo + clave), «Volver a descargar y firmar» si alguien firmó antes y descarga del
+  PDF vigente/firmado.
+- `scripts/signature-e2e.sh documento.pdf [carpeta]`: prueba de extremo a extremo.
+
 ## Verificación
 
-Pendiente de ejecutar al cerrar.
+24 de septiembre de 2026:
+
+- Frontend: `npx vue-tsc --noEmit`, `npx eslint src`, `npx vitest run` (159 pruebas;
+  incluye `signPdf.test.ts` con `.p12` creado en la prueba y `DocumentSignatureCard.test.ts`
+  con mocks) y `npm run build` sin errores. `npm run contract:check` solo reporta una
+  ruta ajena a I-139 (`career-academics.ts`, requisitos de la malla).
+- `scripts/signature-e2e.sh` con `.p12` de OpenSSL (moderno y `-legacy` 3DES/SHA-1):
+  docente y después coordinación firman; `IncrementalPdfSignatureVerifier` acepta cada
+  paso, la segunda firma conserva los bytes de la primera y `pdfsig` informa ambas como
+  «Signature is Valid» (la última, «Total document signed»). Probado con un PDF de
+  PDFKit (tabla `xref`) y con el PDF real firmado en FirmaEC (flujos `/XRef`, 3 firmas
+  previas que siguen igual de válidas); los sellos quedan en las celdas «Firma:».
+- Firma ejecutada en Chromium real (Playwright sobre el servidor de desarrollo, sin
+  `Buffer` nativo): `pdfsig` y el verificador PHP la aceptan.
+- `pdfsig` marca «Certificate issuer isn't Trusted» porque los certificados de prueba
+  son autofirmados (la cadena real queda POR VALIDAR).
