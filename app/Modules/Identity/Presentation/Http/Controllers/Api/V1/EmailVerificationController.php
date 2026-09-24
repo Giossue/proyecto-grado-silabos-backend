@@ -4,6 +4,8 @@ namespace App\Modules\Identity\Presentation\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Identity\Application\Actions\IssueActivationInvitation;
+use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
@@ -22,13 +24,24 @@ class EmailVerificationController extends Controller
         return response()->json(['message' => 'Correo electrónico verificado. Ya puede ingresar.']);
     }
 
-    public function resend(Request $request): JsonResponse
+    public function resend(Request $request, IssueActivationInvitation $invitations): JsonResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
 
         if (! $user->hasVerifiedEmail()) {
-            $user->sendEmailVerificationNotification();
+            // Una cuenta que nunca se activó se completa con la invitación (define contraseña
+            // y verifica el correo a la vez). Mandar aquí la verificación simple dejaría la
+            // invitación pendiente inservible y habría dos enlaces para lo mismo.
+            $pending = ActivationInvitation::query()->where('usuario_id', $user->id)->latest(ActivationInvitation::CREATED_AT)->first();
+            $activated = ActivationInvitation::query()->where('usuario_id', $user->id)->whereNotNull('usada_en')->exists();
+
+            if ($pending !== null && ! $activated) {
+                $issuer = $pending->emitida_por_usuario_id === null ? null : User::query()->find($pending->emitida_por_usuario_id);
+                $invitations->execute($user, $issuer ?? $user, $request, 'reenvio_titular');
+            } else {
+                $user->sendEmailVerificationNotification();
+            }
         }
 
         return response()->json([

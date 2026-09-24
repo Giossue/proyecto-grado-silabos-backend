@@ -8,6 +8,7 @@ use App\Modules\Identity\Domain\PersonName;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Corrige el nombre y el correo de una cuenta.
@@ -42,6 +43,15 @@ class UpdateManagedUserProfile
             $locked->fill(['nombre' => $name, 'correo_electronico' => $email]);
             if (! $locked->isDirty()) {
                 return $locked;
+            }
+
+            // Una cuenta activada pertenece a una persona: que Administración le cambie el
+            // correo entregaría su historial a otra. Si alguien asume sus funciones, se le
+            // crea su propia cuenta. El titular sí puede actualizar su propio correo.
+            if ($locked->isDirty('correo_electronico') && $previous['verified'] && $actor->id !== $locked->id) {
+                throw ValidationException::withMessages([
+                    'correo_electronico' => 'La cuenta ya fue activada y su correo no se puede cambiar. Si otra persona asume sus funciones, cree su cuenta y asígnele el rol.',
+                ]);
             }
 
             if ($locked->isDirty('correo_electronico')) {

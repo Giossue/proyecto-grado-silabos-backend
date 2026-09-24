@@ -49,7 +49,7 @@ class ManagedUserUpdateTest extends TestCase
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
                 'nombre' => 'Docente Corregida',
-                'correo_electronico' => 'docente.corregida@silabos.test',
+                'correo_electronico' => 'docente@silabos.test',
                 'active' => false,
             ])
             ->assertSuccessful()
@@ -57,7 +57,7 @@ class ManagedUserUpdateTest extends TestCase
 
         $this->teacher->refresh();
         $this->assertSame('DOCENTE CORREGIDA', $this->teacher->nombre);
-        $this->assertSame('docente.corregida@silabos.test', $this->teacher->correo_electronico);
+        $this->assertSame('docente@silabos.test', $this->teacher->correo_electronico);
         $this->assertFalse($this->teacher->activo);
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion_evento_auditoria' => 'usuario.perfil_actualizado',
@@ -67,6 +67,21 @@ class ManagedUserUpdateTest extends TestCase
             'accion_evento_auditoria' => 'usuario.desactivado',
             'recurso_id' => $this->teacher->id,
         ]);
+    }
+
+    public function test_an_activated_account_keeps_its_email(): void
+    {
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
+                'nombre' => 'Docente',
+                'correo_electronico' => 'otra.persona@silabos.test',
+                'active' => true,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('correo_electronico');
+
+        $this->assertSame('docente@silabos.test', $this->teacher->fresh()->correo_electronico);
+        $this->assertTrue($this->teacher->fresh()->hasVerifiedEmail());
     }
 
     public function test_an_administrator_adds_a_role_in_the_same_save(): void

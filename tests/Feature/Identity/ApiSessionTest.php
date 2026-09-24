@@ -3,11 +3,14 @@
 namespace Tests\Feature\Identity;
 
 use App\Models\User;
+use App\Modules\Identity\Infrastructure\Mail\ManagedUserActivationMail;
+use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use PragmaRX\Google2FA\Google2FA;
@@ -206,6 +209,27 @@ class ApiSessionTest extends TestCase
             ->assertAccepted();
 
         Notification::assertSentTo($user, VerifyEmail::class);
+    }
+
+    public function test_resending_for_a_pending_activation_reissues_the_invitation(): void
+    {
+        Notification::fake();
+        Mail::fake();
+        $user = User::factory()->create();
+        $user->markEmailAsUnverified();
+        $old = ActivationInvitation::query()->create([
+            'usuario_id' => $user->id,
+            'huella_activacion' => hash('sha256', 'anterior'),
+            'expira_en' => now()->addDay(),
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('api.v1.authentication.email-verification.resend'))
+            ->assertAccepted();
+
+        Notification::assertNothingSent();
+        Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo($user->correo_electronico));
+        $this->assertNotNull($old->fresh()->invalidada_en);
     }
 
     public function test_login_requires_a_second_factor_before_creating_the_authenticated_session(): void
