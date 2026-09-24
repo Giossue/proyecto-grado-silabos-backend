@@ -4,7 +4,10 @@ namespace App\Modules\Documents\Domain\Data;
 
 final readonly class DocumentRenderInput
 {
-    /** @param array<string, mixed> $snapshot */
+    /**
+     * @param  array<string, mixed>  $snapshot
+     * @param  list<SignatureParty>  $signatures  Docente que entrega y coordinación que aprueba.
+     */
     public function __construct(
         public string $subject,
         public string $subjectCode,
@@ -14,5 +17,6 @@ final readonly class DocumentRenderInput
         public string $generatedAt,
         public string $locale,
         public array $snapshot,
+        public array $signatures = [],
     ) {}
 }

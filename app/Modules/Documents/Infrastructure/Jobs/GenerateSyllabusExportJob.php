@@ -2,16 +2,19 @@
 
 namespace App\Modules\Documents\Infrastructure\Jobs;
 
+use App\Models\User;
 use App\Modules\Documents\Application\DocumentBundleValidator;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use App\Modules\Documents\Domain\Data\RenderedDocument;
+use App\Modules\Documents\Domain\Data\SignatureParty;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -71,7 +74,8 @@ class GenerateSyllabusExportJob implements ShouldQueue
             'syllabus.subject',
             'syllabus.convocation.process.academicPeriod',
         ])->findOrFail($this->artifactId);
-        if (! Approval::query()->where('revision_silabo_id', $artifact->revision_silabo_id)->exists()) {
+        $approval = Approval::query()->with('approver')->where('revision_silabo_id', $artifact->revision_silabo_id)->first();
+        if ($approval === null) {
             throw new RuntimeException('La revisión dejó de estar aprobada.');
         }
 
@@ -86,6 +90,7 @@ class GenerateSyllabusExportJob implements ShouldQueue
             generatedAt: $artifact->solicitado_en->toIso8601String(),
             locale: $artifact->idioma,
             snapshot: $revision->fotografia,
+            signatures: $this->signatures($revision, $approval),
         ));
         if ($renderer->version() !== $artifact->version_renderizador) {
             throw new RuntimeException('La versión del renderer no coincide con la solicitud.');
@@ -223,5 +228,30 @@ class GenerateSyllabusExportJob implements ShouldQueue
             || ! hash_equals($object->huella_sha256, $document->fingerprint())) {
             throw new RuntimeException('El objeto privado existente no coincide con la exportación esperada.');
         }
+    }
+
+    /**
+     * Quien entregó la revisión y quien la aprobó, con las fechas en hora de Ecuador.
+     *
+     * @return list<SignatureParty>
+     */
+    private function signatures(SyllabusRevision $revision, Approval $approval): array
+    {
+        $date = fn ($moment): string => $moment->setTimezone('America/Guayaquil')->format('d-m-Y');
+
+        return [
+            new SignatureParty(
+                name: User::query()->whereKey($revision->enviado_por)->value('nombre') ?? '',
+                role: 'Docente',
+                dateLabel: 'Fecha de entrega',
+                date: $date($revision->enviado_en),
+            ),
+            new SignatureParty(
+                name: $approval->approver->nombre ?? '',
+                role: 'Coordinación de Carrera',
+                dateLabel: 'Fecha de revisión',
+                date: $date($approval->aprobado_en),
+            ),
+        ];
     }
 }

@@ -7,6 +7,7 @@ use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Application\SyllabusDocumentContent;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
+use App\Modules\Documents\Domain\Data\SignatureParty;
 use App\Modules\Documents\Infrastructure\Rendering\PhpWordDocumentRenderer;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use Tests\TestCase;
@@ -78,6 +79,44 @@ class WordRendererTest extends TestCase
         $this->assertStringContainsString('Arial', $stylesXml);
         $this->assertStringContainsString('w:color w:val="000000"', $stylesXml);
         $this->assertStringContainsString('w:sz w:val="24"', $stylesXml);
+    }
+
+    public function test_closes_with_the_review_and_approval_signature_block(): void
+    {
+        $input = new DocumentRenderInput(
+            subject: 'Inteligencia Artificial',
+            subjectCode: 'SW-P7-037',
+            academicPeriod: 'Marzo – Julio 2026',
+            revisionNumber: 3,
+            revisionFingerprint: str_repeat('ef', 32),
+            generatedAt: '2026-09-07T20:00:00-05:00',
+            locale: 'es-EC',
+            snapshot: $this->snapshot(),
+            signatures: [
+                new SignatureParty('Ing. Mónica Bonilla', 'Docente', 'Fecha de entrega', '14-08-2026'),
+                new SignatureParty('Ing. Galuth García', 'Coordinación de Carrera', 'Fecha de revisión', '14-08-2026'),
+            ],
+        );
+
+        $bundle = app(DocumentRenderer::class)->render($input);
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-test-');
+        $this->assertNotFalse($temporary);
+        file_put_contents($temporary, $bundle->docx->bytes);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $document = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        @unlink($temporary);
+
+        $this->assertStringContainsString('Revisión y aprobación', $document);
+        $this->assertSame(2, substr_count($document, 'Firma:'));
+        $this->assertStringContainsString('Nombre: Ing. Mónica Bonilla', $document);
+        $this->assertStringContainsString('Coordinación de Carrera', $document);
+        $this->assertStringContainsString('Fecha de entrega: 14-08-2026', $document);
+        $this->assertStringContainsString('Fecha de revisión: 14-08-2026', $document);
+        // El bloque va antes del pie de trazabilidad.
+        $this->assertLessThan(strpos($document, 'huella '), strpos($document, 'Revisión y aprobación'));
+        $this->assertContains('  Nombre: Ing. Galuth García · Coordinación de Carrera', app(SyllabusDocumentContent::class)->lines($input));
     }
 
     public function test_renders_grouped_headers_units_and_totals_deterministically(): void

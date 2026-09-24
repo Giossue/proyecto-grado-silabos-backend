@@ -54,6 +54,16 @@ class SyllabusDocumentContent
             $lines[] = '';
         }
 
+        if ($input->signatures !== []) {
+            $lines[] = 'Revisión y aprobación';
+            foreach ($input->signatures as $party) {
+                $lines[] = '  Firma:';
+                $lines[] = '  Nombre: '.$party->name.' · '.$party->role;
+                $lines[] = '  '.$party->dateLabel.': '.$party->date;
+                $lines[] = '';
+            }
+        }
+
         return $lines;
     }
 
