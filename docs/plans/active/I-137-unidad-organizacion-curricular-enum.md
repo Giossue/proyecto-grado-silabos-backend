@@ -17,9 +17,10 @@ profesional e integración curricular. Pasan a valores fijos en código, como la
 **Revisión de fuente, 2026-09-24.** La atribución anterior al art. 30 del CES no está
 respaldada por la codificación consultada: el texto anterior enumeraba las tres
 unidades en el art. 31 y fue derogado por el reglamento de 2022. La malla de Software
-publicada por la UEB sí utiliza estas categorías. Se registra en `DT-15` la decisión
-pendiente sobre límites por ciclo y posible clasificación múltiple; el enum existente
-no equivale a una regla del CES que asigne unidades a ciclos concretos.
+publicada por la UEB sí utiliza estas categorías. `DT-15` quedó cerrado por decisión del
+responsable del producto: una materia elige una sola unidad y el ciclo no asigna ni
+restringe unidades. El enum existente no equivale a una regla del CES que asigne unidades
+a ciclos concretos.
 
 ## Trazabilidad
 

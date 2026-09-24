@@ -3,9 +3,8 @@
 namespace App\Modules\Academic\Domain;
 
 /**
- * Unidades de organización curricular del Reglamento de Régimen Académico (art. 30):
- * básica, profesional e integración curricular (antes «titulación»). Son fijas, así que
- * van en código y no como texto libre; la ficha de identificación marca la que aplique.
+ * Catálogo funcional de unidades usado por la malla de Software UEB. Cada materia elige
+ * una; el ciclo no asigna ni restringe esa elección.
  */
 enum CurricularUnit: string
 {

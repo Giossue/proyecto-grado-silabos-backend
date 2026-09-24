@@ -64,6 +64,8 @@ Cada carrera tiene una sola estructura curricular, almacenada directamente en la
 su código y cantidad de ciclos. No hay una entidad, versiones ni estado activable de
 `mallas`. Las asignaturas pertenecen directamente a la carrera. Sus atributos académicos
 son fijos y obligatorios; ninguna carrera crea columnas, valores EAV o campos arbitrarios.
+Cada asignatura elige exactamente una unidad de organización curricular del catálogo fijo;
+el ciclo no tiene unidad propia ni restringe la elección de sus asignaturas.
 Las horas totales se derivan de ACD + APE + AA y el servidor las recalcula en cada alta o
 edición. Si el desglose no envía una posición, la materia se agrega después de la última
 del mismo ciclo. Una relación académica guarda origen, destino y tipo; el color del

@@ -343,10 +343,12 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   todos los campos activos son obligatorios, las magnitudes se presentan en una fila
   compacta y **TOTAL** se calcula con la suma de los componentes de horas, sin incluir
   créditos. La unidad de organización curricular se elige de una lista fija (básica,
-  profesional, integración curricular); el orden dentro del ciclo se asigna automáticamente cuando
-  no lo determina el constructor. Al soltar una materia, el orden de todo el ciclo se guarda junto en una
-  transacción. Una reubicación correcta se guarda sin notificación repetitiva; un fallo
-  restaura el orden anterior y explica la acción correctiva.
+  profesional, integración curricular) para cada materia. El ciclo no muestra una franja
+  de unidad ni calcula una unidad predominante; el orden dentro del ciclo se asigna
+  automáticamente cuando no lo determina el constructor. Al soltar una materia, el orden
+  de todo el ciclo se guarda junto en una transacción. Una reubicación correcta se guarda
+  sin notificación repetitiva; un fallo restaura el orden anterior y explica la acción
+  correctiva.
 - **Auditoría** abre directamente ADM-10, sin pestañas ni filtros. Presenta un único
   registro paginado con fecha, actividad, responsable y resultado; acción y recurso se
   agrupan en la misma celda y no se muestran metadatos secundarios. ADM-09 conserva su
