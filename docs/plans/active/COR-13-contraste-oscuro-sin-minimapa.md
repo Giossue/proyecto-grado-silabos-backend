@@ -5,14 +5,16 @@
 RF-008..016, RN-005..008, CU-03, COR-13 y CP-F estructura académica; RNF-018..023 y
 CP-N de accesibilidad/experiencia. La petición visual del responsable del producto del
 2026-09-24 pide mayor contraste en el constructor oscuro y retirar el minimapa de la
-esquina inferior derecha. La corrección posterior pide superficies negras y grises y
-retirar la franja que infería una unidad predominante por ciclo. No depende de un `PV`
-abierto. PV-19 sigue pendiente para la aceptación en dispositivos y navegadores reales.
+esquina inferior derecha. La corrección posterior retira la franja que infería una unidad
+predominante por ciclo. La revisión visual final sustituye los grises neutros por tonos
+azul grisáceo oscuros para reducir la fatiga expresada por el usuario. No depende de un
+`PV` abierto. PV-19 sigue pendiente para la aceptación en dispositivos y navegadores reales.
 
 ## Entrega
 
-- Diferenciar lienzo, carriles, tarjetas y sus bordes dentro de COR-13 mediante grises
-  semánticos acotados al constructor, sin alterar las otras pantallas ni la paleta clara.
+- Diferenciar lienzo, carriles, tarjetas y sus bordes dentro de COR-13 mediante tonos azul
+  grisáceo semánticos acotados al constructor, sin alterar las otras pantallas ni la
+  paleta clara.
 - Mantener legibles el texto principal, los metadatos, las insignias y los totales.
 - Quitar el minimapa y su dependencia; conservar zoom y desplazamiento del lienzo.
 - Quitar la franja lateral del ciclo y su cálculo de unidad predominante; conservar la
@@ -22,9 +24,9 @@ abierto. PV-19 sigue pendiente para la aceptación en dispositivos y navegadores
 
 ## Criterios
 
-La Malla oscura usa superficies negras y grises, separa visualmente cada nivel y materia
-y sus textos conservan contraste legible. La Malla clara conserva sus superficies. El
-minimapa y la franja de unidad por ciclo no aparecen. El usuario aún puede ampliar,
+La Malla oscura usa superficies azul grisáceo oscuras, separa visualmente cada nivel y
+materia y sus textos conservan contraste legible. La Malla clara conserva sus superficies.
+El minimapa y la franja de unidad por ciclo no aparecen. El usuario aún puede ampliar,
 reducir y mover el lienzo.
 
 ## Verificación
@@ -34,7 +36,9 @@ reducir y mover el lienzo.
   conserva el ciclo y guarda o restaura el orden según la respuesta de la API.
 - Render sintético en Chromium, claro y oscuro: ningún `.vue-flow__minimap` y dos botones
   de zoom. La paleta clara conserva fondos blancos en ciclos y tarjetas.
-- En oscuro, el contraste calculado con colores computados fue 7,75:1 para el texto
-  principal de tarjeta, 5,74:1 para metadatos, 5,51:1 para la insignia y 4,97:1 para
-  el encabezado de horas. La separación tonal entre carril y tarjeta fue 1,69:1.
+- Render sintético final inspeccionado en Chromium: cuatro ciclos en negro y grises,
+  ninguna etiqueta vertical de unidad y una cabecera de nivel por ciclo.
+- En oscuro, el contraste calculado es 11,23:1 para el texto principal de tarjeta,
+  7,68:1 para metadatos y 13,57:1 para el número de nivel. La separación tonal entre
+  carril y tarjeta es 1,48:1 y ambos conservan un borde visible.
 - La aceptación perceptiva en dispositivos reales sigue pendiente de PV-19.
