@@ -21,9 +21,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Illuminate\Validation\ValidationException;
 use Tests\Support\CreatesSyllabusProcess;
@@ -563,11 +561,6 @@ class ConvocationAndDraftTest extends TestCase
             'carrera_id' => $this->coordinatorContext->carrera_id,
             'proceso_id' => $process->id,
             'estado' => 'preparacion',
-        ]);
-        DB::table('fuentes_convocatoria')->insert([
-            'id' => (string) Str::uuid(),
-            'convocatoria_id' => $convocation->id,
-            'fuente_academica_id' => $source->id,
         ]);
 
         return $convocation;

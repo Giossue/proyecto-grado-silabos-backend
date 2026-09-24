@@ -891,7 +891,6 @@ class AiAssistanceTest extends TestCase
             'contenido' => $content,
             'activo' => $enabled,
         ]);
-        $convocation->sources()->attach($source->id, ['id' => (string) Str::uuid()]);
         app(IndexAcademicSource::class)->execute($source);
 
         return $source;

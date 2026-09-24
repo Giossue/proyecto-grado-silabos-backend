@@ -64,9 +64,8 @@ class OpenConvocation
             $this->readiness->assertAcademicDataReady($convocation->carrera_id);
             $template = SyllabusTemplate::institutional();
             $this->templateStructure->assertUsable($template, 'convocation');
-            if ($convocation->sources->isEmpty()
-                || $convocation->sources->contains(fn ($source): bool => ! $source->activo)) {
-                throw ValidationException::withMessages(['convocation' => 'Las fuentes fijadas deben continuar activas al abrir.']);
+            if ($convocation->sources->isEmpty()) {
+                throw ValidationException::withMessages(['convocation' => 'La carrera necesita al menos una fuente académica activa para abrir la convocatoria.']);
             }
 
             $generated = $this->generator->execute($convocation);

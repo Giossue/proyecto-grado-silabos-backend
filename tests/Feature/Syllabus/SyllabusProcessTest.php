@@ -147,7 +147,6 @@ class SyllabusProcessTest extends TestCase
 
         $this->assertDatabaseMissing('convocatorias_universidad', ['id' => $process->id]);
         $this->assertDatabaseMissing('convocatorias_carreras', ['id' => $convocation->id]);
-        $this->assertDatabaseCount('fuentes_convocatoria', 0);
         foreach ($syllabusIds as $syllabusId) {
             $this->assertDatabaseMissing('silabos', ['id' => $syllabusId]);
         }
@@ -318,7 +317,6 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
-            'source_ids' => [$source->id],
         ])
             ->assertSuccessful();
         $convocation = Convocation::query()->where('proceso_id', $process->id)->firstOrFail();
@@ -350,7 +348,6 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
-            'source_ids' => [$source->id],
         ])->assertSuccessful();
         $convocation = Convocation::query()->where('proceso_id', $process->id)->firstOrFail();
 
@@ -457,16 +454,10 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()->withHeader('Origin', 'http://localhost:5173')
             ->postJson(route('api.v1.coordination.convocations.store'), [
-                'process_id' => $process->id,
-                'source_ids' => [$inactiveSource->id],
-            ])->assertUnprocessable()->assertJsonValidationErrors('source_ids');
-
-        $this->actingAsCoordinator()->withHeader('Origin', 'http://localhost:5173')
-            ->postJson(route('api.v1.coordination.convocations.store'), [
-                // El cliente no puede sustituir el período; sí elige las fuentes de su carrera.
+                // El cliente no puede sustituir el período ni elegir fuentes: se usan todas las activas.
                 'process_id' => $process->id,
                 'period_id' => $otherPeriod->id,
-                'source_ids' => [$source->id],
+                'source_ids' => [],
             ])->assertCreated()->assertJsonStructure(['message', 'convocation_id']);
 
         $convocation = Convocation::query()->firstOrFail();
@@ -474,7 +465,9 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame($process->periodo_academico_id, $convocation->process->periodo_academico_id);
         $this->assertSame('abierta', $convocation->estado);
         $this->assertTrue($convocation->sources()->whereKey($source->id)->exists());
-        $this->assertFalse($convocation->sources()->whereKey($unselectedSource->id)->exists());
+        $this->assertTrue($convocation->sources()->whereKey($unselectedSource->id)->exists());
+        $this->assertFalse($convocation->sources()->whereKey($inactiveSource->id)->exists());
+        $this->assertFalse(Schema::hasTable('fuentes_convocatoria'));
         // I-132: la convocatoria de carrera no copia las fechas del proceso.
         $this->assertFalse(Schema::hasTable('fechas_limite_convocatoria'));
 
@@ -887,7 +880,7 @@ class SyllabusProcessTest extends TestCase
     {
         $convocation = $this->openedConvocation();
         $source = AcademicSource::query()->firstOrFail();
-        $payload = ['source_ids' => [$source->id]];
+        $payload = ['process_id' => $convocation->proceso_id];
 
         $this->actingAsCoordinator()->patch('/coordinacion/convocatorias/'.$convocation->id, $payload)->assertNotFound();
 
@@ -936,7 +929,6 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
-            'source_ids' => [$source->id],
         ])->assertSuccessful();
         $convocation = Convocation::query()->where('proceso_id', $process->id)->firstOrFail();
 

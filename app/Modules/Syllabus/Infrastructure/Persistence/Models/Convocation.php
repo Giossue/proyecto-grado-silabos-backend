@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -112,11 +111,16 @@ class Convocation extends Model
         return $this->belongsTo(Career::class, 'carrera_id');
     }
 
-    /** @return BelongsToMany<AcademicSource, $this> */
-    public function sources(): BelongsToMany
+    /**
+     * La IA usa todas las fuentes activas de la carrera; con la convocatoria abierta
+     * quedan congeladas por ProcessLocks, así que no hace falta copiarlas.
+     *
+     * @return HasMany<AcademicSource, $this>
+     */
+    public function sources(): HasMany
     {
-        return $this->belongsToMany(AcademicSource::class, 'fuentes_convocatoria', 'convocatoria_id', 'fuente_academica_id')
-            ->withPivot('id');
+        return $this->hasMany(AcademicSource::class, 'carrera_id', 'carrera_id')
+            ->where('fuentes_academicas.activo', true);
     }
 
     /** @return HasMany<Syllabus, $this> */

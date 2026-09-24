@@ -71,9 +71,9 @@ class TransitionConvocation
             }
             if ($to === Convocation::STATE_OPEN) {
                 $locked->load('sources');
-                if ($locked->sources->isEmpty() || $locked->sources->contains(fn ($source): bool => ! $source->activo)) {
+                if ($locked->sources->isEmpty()) {
                     throw ValidationException::withMessages([
-                        'convocation' => 'Revise la selección: la convocatoria necesita al menos una fuente activa antes de reanudarse.',
+                        'convocation' => 'La carrera necesita al menos una fuente académica activa antes de reanudar la convocatoria.',
                     ]);
                 }
             }

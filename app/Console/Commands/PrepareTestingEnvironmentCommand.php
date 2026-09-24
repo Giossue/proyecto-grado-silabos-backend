@@ -369,7 +369,7 @@ class PrepareTestingEnvironmentCommand extends Command
             return;
         }
         app(CreateConvocation::class)->execute(
-            ['process_id' => $process->id, 'source_ids' => $sources],
+            ['process_id' => $process->id],
             $coordinator->user,
             $this->requestAs($coordinator),
         );

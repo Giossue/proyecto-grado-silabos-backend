@@ -166,9 +166,13 @@ privados `academic_source_image`; Base64 y URLs firmadas no se persisten.
 
 ### Convocatorias y sílabos
 
-`convocatorias_universidad`, `convocatorias_carreras`, `fuentes_convocatoria`,
+`convocatorias_universidad`, `convocatorias_carreras`,
 `silabos`, vista `docentes_vigentes_silabo` (I-130),
 `revisiones_silabo`, `filas_repetibles`, `valores_campo`, `transiciones_estado`.
+
+La convocatoria de carrera no elige fuentes: la IA usa todas las fuentes académicas
+activas de la carrera, que `ProcessLocks` congela mientras la convocatoria está abierta.
+La migración `000113` eliminó `fuentes_convocatoria`.
 
 `convocatorias_universidad` (I-31, I-41) es el calendario institucional: período académico,
 inicio (`inicia_en`), entrega (`entrega_en`) y estado. Las convocatorias de carrera leen

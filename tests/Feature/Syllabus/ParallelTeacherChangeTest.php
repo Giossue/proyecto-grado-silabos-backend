@@ -235,7 +235,6 @@ class ParallelTeacherChangeTest extends TestCase
         [$template, $source] = $this->publishedConfiguration();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id, now()->subDay()->toIso8601String(), now()->addMonth()->toIso8601String())->id,
-            'source_ids' => [$source->id],
         ])->assertSuccessful();
         $convocation = Convocation::query()->firstOrFail();
 

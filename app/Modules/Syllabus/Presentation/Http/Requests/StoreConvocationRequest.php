@@ -18,19 +18,12 @@ class StoreConvocationRequest extends FormRequest
     {
         return [
             'process_id' => ['required', 'uuid', Rule::exists('convocatorias_universidad', 'id')->where('estado_convocatoria_universidad', 'abierto')],
-            'source_ids' => ['required', 'array', 'min:1'],
-            'source_ids.*' => ['required', 'uuid', 'distinct', 'exists:fuentes_academicas,id'],
         ];
     }
 
-    /** @return array{process_id: string, source_ids: list<string>} */
+    /** @return array{process_id: string} */
     public function convocationData(): array
     {
-        $sourceIds = $this->input('source_ids', []);
-
-        return [
-            'process_id' => $this->string('process_id')->toString(),
-            'source_ids' => is_array($sourceIds) ? array_values(array_filter($sourceIds, 'is_string')) : [],
-        ];
+        return ['process_id' => $this->string('process_id')->toString()];
     }
 }

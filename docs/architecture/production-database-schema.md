@@ -365,31 +365,6 @@ proceso_id UUID (FK → convocatorias_universidad.id) NOT NULL
 UNIQUE (carrera_id, proceso_id)
 ~~~
 
-## fuentes_convocatoria
-
-**Contexto:** fuentes habilitadas en una convocatoria de carrera.
-
-~~~text
-id UUID (PK)
-convocatoria_id UUID (FK → convocatorias_carreras.id) NOT NULL
-fuente_academica_id UUID (FK → fuentes_academicas.id) NOT NULL
-
-UNIQUE (convocatoria_id, fuente_academica_id)
-~~~
-
-## fechas_limite_convocatoria
-
-**Contexto:** vencimiento por etapa.
-
-~~~text
-id UUID (PK)
-convocatoria_id UUID (FK → convocatorias_carreras.id) NOT NULL
-etapa_fecha_limite_convocatoria VARCHAR NOT NULL
-vence_en TIMESTAMPTZ NOT NULL
-
-UNIQUE (convocatoria_id, etapa_fecha_limite_convocatoria)
-~~~
-
 ## silabos
 
 **Contexto:** borrador vivo de un sílabo.
@@ -491,7 +466,7 @@ periodos_academicos 1:0..1 convocatorias_universidad
 plantilla_silabo 1:N convocatorias_universidad
 convocatorias_universidad 1:N convocatorias_carreras
 carreras 1:N convocatorias_carreras
-convocatorias_carreras N:M fuentes_academicas mediante fuentes_convocatoria
+convocatorias_carreras usa todas las fuentes_academicas activas de su carrera (sin tabla intermedia)
 convocatorias_carreras 1:N fechas_limite_convocatoria
 convocatorias_carreras 1:N silabos
 paralelos 1:N silabos (uno por convocatoria de carrera)

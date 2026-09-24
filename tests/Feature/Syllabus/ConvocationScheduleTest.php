@@ -267,7 +267,6 @@ class ConvocationScheduleTest extends TestCase
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id, $startsAt ?? now()->subDay(), now()->addMonth())->id,
-            'source_ids' => [$source->id],
         ])->assertSuccessful();
 
         return Convocation::query()->firstOrFail();

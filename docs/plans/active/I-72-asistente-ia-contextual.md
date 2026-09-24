@@ -55,9 +55,9 @@ las sustentan. Ninguna sugerencia bloquea el envío ni se aplica sola.
 4. «Cualquier configuración» incluye estructura, orden, campos, tablas, textos fijos,
    reglas, apariencia y opciones de IA de la plantilla. Los logos institucional y de
    facultad quedan fuera porque no son configuración de la plantilla.
-5. Coordinación elige un subconjunto no vacío de sus fuentes activas antes de iniciar su
-   alcance. `fuentes_convocatoria` conserva esa selección; deja de sincronizar todas las
-   fuentes automáticamente. Una vez iniciado el alcance, la selección queda congelada.
+5. (Reemplazado) Coordinación ya no elige fuentes: la IA usa todas las fuentes activas
+   de la carrera, congeladas por `ProcessLocks` con la convocatoria abierta. La
+   migración `000113` eliminó `fuentes_convocatoria`.
 6. El interruptor decide qué campos entran en la revisión de IA; no cambia si el campo es
    obligatorio, editable o válido y no altera la validación determinística.
 7. El chat y la revisión usan el mismo ensamblador de contexto y la misma evidencia. El
@@ -149,7 +149,7 @@ PV-13 y PV-14 definan hardware y modelo; no se añade una base vectorial por ant
 - Agregar `plantillas_silabo.revision_configuracion`, entero creciente.
 - Crear `preferencias_ia_carrera` con UUID, carrera, definición de campo, valor,
   `revision_plantilla_origen`, actor y restricción única por carrera/campo.
-- Mantener `fuentes_convocatoria` como fotografía de la selección de Coordinación.
+- (Reemplazado por `000113`) Sin tabla de selección de fuentes por convocatoria.
 - Crear `fragmentos_fuente_academica` con fuente, ruta de encabezados, posición,
   contenido y huella; reconstruirlos después del commit al cambiar el Markdown.
 - Crear `revisiones_ia_silabo` como ejecución padre y relacionar las ejecuciones por
