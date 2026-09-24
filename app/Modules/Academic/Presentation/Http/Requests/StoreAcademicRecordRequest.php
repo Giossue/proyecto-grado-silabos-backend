@@ -130,7 +130,7 @@ class StoreAcademicRecordRequest extends FormRequest
             // Vacío = la de la carrera; otra modalidad es una excepción de la materia.
             'modality' => ['nullable', 'string', Rule::in(StudyModality::values())],
             'creditos' => ['required', 'numeric', 'min:0', 'max:9999.99'],
-            'horas_totales' => ['required', 'integer', 'min:0', 'max:65535'],
+            'horas_totales' => ['required', 'integer', 'min:0', 'max:32767'],
             'hours_project' => ['nullable', 'numeric', 'min:0', 'max:9999.99'],
             'hours_ap' => ['nullable', 'numeric', 'min:0', 'max:9999.99'],
             'horas_ac' => ['required', 'numeric', 'min:0', 'max:9999.99'],

@@ -97,7 +97,11 @@ de identidad es `carreras.codigo_carrera`; no existe código de malla.
 `asignaturas.carrera_id` las relaciona directamente. Los
 atributos académicos de `asignaturas` son fijos y tipados: ninguna carrera agrega
 columnas, valores EAV o campos arbitrarios. ACD, APE, AA, créditos y total son un
-conjunto fijo; el total se deriva de ACD + APE + AA.
+conjunto fijo; `total_horas_asignatura` es una columna generada `STORED` igual a
+`round(horas_ac + horas_pae + horas_aa)` (I-132) y no se escribe desde la aplicación.
+`horas_proyecto`, `horas_ap` y `horas_paec` no participan del total. La migración
+`000100` trasladó a `horas_pae` el saldo de las filas cuyo total superaba la suma de
+componentes (prácticas preprofesionales y de servicio comunitario), sin perder horas.
 `asignaturas.ciclo` y `orden_en_ciclo` determinan la posición reproducible del lienzo.
 Las coordenadas de pantalla no se persisten. `requisitos_asignatura.tipo` conserva la
 semántica explícita de cada flecha.
@@ -108,8 +112,8 @@ sustituye las relaciones transaccionales ni permite reconstruir autorizaciones.
 
 ### Plantillas y fuentes
 
-`plantilla_silabo`, `definiciones_campo`, `fuentes_academicas`,
-`fragmentos_fuente_academica`.
+`plantilla_silabo`, `definiciones_campo`, `fuentes_academicas` y el almacén vectorial
+`documentos_ia` (I-135).
 
 `plantilla_silabo` no referencia una carrera y solo admite una fila. El índice único
 `plantilla_silabo_unica` aplica esa cardinalidad directamente, sin un booleano
@@ -121,7 +125,11 @@ pausado; fuera de esa transacción los triggers conservan la inmutabilidad.
 `plantilla_silabo.documento_plantilla` guarda en JSONB versionado la composición visual
 de secciones, bloques y tablas (I-111). Las definiciones de campo siguen en filas y
 `bloque_plantilla_id` apunta al UUID estable del bloque embebido; triggers de PostgreSQL
-impiden referencias huérfanas en ambas direcciones. Todos los campos se validan como
+impiden referencias huérfanas en ambas direcciones. `definiciones_campo.plantilla_id`
+es la única referencia persistida a la plantilla: `silabos`, `convocatorias_universidad`,
+`artefactos_exportacion` y el historial de IA ya no la guardan (I-132, I-135) y la aplicación la
+resuelve con `SyllabusTemplate::institutional()`. La exportación renderiza desde
+`revisiones_silabo.fotografia`, no desde la plantilla vigente. Todos los campos se validan como
 obligatorios al enviar, pero el estado `borrador` puede permanecer incompleto.
 
 `fuentes_academicas` es un documento por fila (I-95): nombre único por carrera,
@@ -130,13 +138,19 @@ es una proyección textual para búsqueda y compatibilidad. La migración `00005
 `notas_internas`; las tablas
 `versiones_fuente`, `fragmentos_fuente` y `conflictos_fuente` se retiraron en la
 migración `000020`; no eran compatibles con el documento único editable. La migración
-`000078` incorpora `fragmentos_fuente_academica` como índice derivado y reemplazable del
-documento actual: conserva ruta de encabezados, posición, extracto y huella, pero nunca
-es fuente de verdad ni una versión publicable. Su índice GIN permite recuperación
-textual en español. La migración `000087` añade a esa misma tabla el embedding
-`vector(1536)` de `text-embedding-3-small` y un índice HNSW por distancia coseno. La
-evidencia de IA conserva su propia fotografía del contenido citado aunque este índice se
-reconstruya. Si el proveedor de embeddings falla, la recuperación textual continúa.
+`000078` incorporó un índice derivado de fragmentos y la `000087` su embedding
+`vector(1536)` de `text-embedding-3-small`. Desde I-135 (migración `000103`) ese índice
+es `documentos_ia`, un almacén vectorial estándar: `contenido_documento` (texto del
+fragmento), `metadatos_documento` JSONB (`fuente_academica_id`, `carrera_id`, `titulo`,
+`ruta_encabezados`, `posicion`, `pagina_inicio`, `pagina_fin`, `bloques_origen`,
+`huella`) y `embedding vector(1536)` con índice HNSW por distancia coseno. Un índice por
+expresión sobre `metadatos_documento->>'fuente_academica_id'` sirve a filtros y borrados;
+un índice GIN en español permite la recuperación textual cuando no hay embeddings. Es
+derivado y reemplazable: nunca es fuente de verdad. Como la fuente vive en JSON, el
+trigger `eliminar_documentos_ia_de_fuente` reemplaza la antigua cascada al borrar una
+fuente. La evidencia de IA conserva su propia fotografía del contenido citado aunque el
+índice se reconstruya. Si el proveedor de embeddings falla, la recuperación textual
+continúa.
 I-95/I-96 incorporan el PDF privado y producen el documento JSON con OpenParser sobre
 `paddleocr-vl-1.6`. La
 migración `000089` agrega el documento versionado, procedencia por fragmento y retira
@@ -147,21 +161,28 @@ privados `academic_source_image`; Base64 y URLs firmadas no se persisten.
 ### Convocatorias y sílabos
 
 `convocatorias_universidad`, `convocatorias_carreras`, `fuentes_convocatoria`,
-`fechas_limite_convocatoria`, `silabos`, `alcances_silabo`, vista `docentes_vigentes_silabo` (I-130),
+`silabos`, vista `docentes_vigentes_silabo` (I-130),
 `revisiones_silabo`, `filas_repetibles`, `valores_campo`, `transiciones_estado`.
 
 `convocatorias_universidad` (I-31, I-41) es el calendario institucional: período académico,
-plantilla institucional, inicio, entrega y estado. Los actores y momentos de sus
+inicio (`inicia_en`), entrega (`entrega_en`) y estado. Las convocatorias de carrera leen
+esas fechas; `fechas_limite_convocatoria`, que las copiaba por carrera, se retiró en la
+migración `000100` (I-132) y la prórroga solo mueve `entrega_en`. Los actores y momentos de sus
 transiciones viven en `eventos_auditoria`. Un índice parcial único sobre
 `estado IN ('abierto', 'pausado')` garantiza un solo proceso en curso.
-`convocatorias_carreras.proceso_id` es obligatorio y permite heredar el período y la
-plantilla sin copiarlos en la tabla de carrera. Su identidad única es
+`convocatorias_carreras.proceso_id` es obligatorio y permite heredar el período y las
+fechas sin copiarlos en la tabla de carrera. Su identidad única es
 `carrera_id + proceso_id`; solo conserva el estado actual, mientras los actores y
 momentos de transición viven en auditoría. Un trigger PostgreSQL bloquea cambiar
 el período de una convocatoria universitaria que ya tiene convocatorias de carrera. La
 migración `000027` creó un proceso por cada convocatoria existente con su propia
 plantilla y fechas. El estado `pausada` de la convocatoria y `pausado` del proceso
 detienen el trabajo docente sin borrar nada.
+Cada sílabo cubre exactamente un paralelo: `silabos.paralelo_id` es obligatorio y único
+junto con `convocatoria_id`. La migración `000099` (I-131) retiró `alcances_silabo`
+(la materia programada se deriva de `paralelos.programacion_asignatura_id`) y
+`silabos.carrera_id` (la carrera es la de `convocatorias_carreras`); la vista
+`docentes_vigentes_silabo` se recreó sobre `silabos.paralelo_id`.
 Una corrección confirmada durante esa pausa usa `InProgressWork`: guarda el cambio,
 elimina dependencias de revisión, aprobación, IA y exportación, y regenera desde la
 programación vigente antes del commit. Si la regeneración falla, PostgreSQL revierte
@@ -169,34 +190,47 @@ tanto la corrección como el borrado (I-118).
 
 ### Revisión, validación e IA
 
-`revisiones_silabo`, `observaciones_revision`, `solicitudes_correccion`,
-`solicitud_correccion_observaciones`, `aprobaciones`,
-`reaperturas`, `transiciones_silabo`, `ejecuciones_validacion`,
-`resultados_validacion`, `ejecuciones_ia`, `evidencias_ia`, `recomendaciones_ia`,
-`recomendacion_evidencias_ia`, `retroalimentacion_ia`, `conversaciones_ia`,
-`mensajes_ia`, `evidencias_mensaje_ia`, `citas_mensaje_ia`,
-`revisiones_ia_silabo`. I-120 eliminó `respuestas_observacion` y el estado `respondida`:
-el docente corrige y reenvía, y una observación está abierta o verificada. I-116 eliminó
+`revisiones_silabo`, `observaciones_revision`, `solicitudes_correccion`, `aprobaciones`,
+`reaperturas`, `ejecuciones_validacion`,
+`resultados_validacion` y la memoria de IA `historial_ia` (I-135). I-120 eliminó `respuestas_observacion` y el estado `respondida`:
+el docente corrige y reenvía, y una observación está abierta o verificada.
+Desde I-131, `aprobaciones`, `reaperturas`, `solicitudes_correccion` y
+`artefactos_exportacion` no guardan `silabo_id`: el sílabo se obtiene de la revisión
+(`revision_silabo_id` o `revision_aprobada_id`). La unicidad por sílabo de las claves de
+idempotencia de aprobaciones y reaperturas la verifica `validar_relaciones_flujo`.
+Desde I-136 no existe `transiciones_silabo`: los cambios de estado del sílabo se
+registran solo en `eventos_auditoria`, con `from_state`/`to_state` en los metadatos.
+Desde I-134, una solicitud de corrección envía todas las observaciones abiertas de su
+revisión (se exige al menos una); la migración `000102` eliminó
+`solicitud_correccion_observaciones` y la rama correspondiente de
+`validar_relaciones_flujo`. Las observaciones incluidas son las de
+`observaciones_revision` con el mismo `revision_silabo_id`. I-116 eliminó
 `preferencias_ia_carrera`: la IA de cada campo la decide Administración en la plantilla.
 
-Cada docente conserva una conversación por sílabo. Limpiar el panel marca
-`conversaciones_ia.ocultada_en`; no elimina mensajes ni fotografías de evidencia. La
-pregunta y la respuesta son mensajes separados, la respuesta referencia su ejecución de
-trabajo y la versión del borrador, y sus citas solo pueden apuntar a fotografías de
-secciones habilitadas o fuentes seleccionadas guardadas para ese mismo mensaje.
-`iniciada_en`, `enviado_en` y `fijada_en` expresan los momentos funcionales de la
-conversación, el mensaje y su evidencia; estas tablas no usan timestamps técnicos
-genéricos.
-`evidencias_ia` conserva una fotografía tipada de cada entrada usada por una revisión de
-campo. `fuente_academica` referencia la fuente seleccionada y, cuando corresponde, su
-fragmento derivado; `seccion_silabo` referencia la definición del campo relacionado del
-mismo borrador. En ambos casos etiqueta, extracto y huella permanecen inmutables aunque
-cambie luego el documento o el borrador.
-`revisiones_ia_silabo` es la ejecución padre de una evaluación integral y es única por
-sílabo y `version_bloqueo_origen`. Sus conteos y estado se agregan a partir de las
-`ejecuciones_ia` hijas; una repetición sin cambios reutiliza la misma revisión, mientras
-una edición obliga a validar y crea otra para la nueva versión. Los estados terminales y
-sus entradas son inmutables.
+I-135 reemplazó las once tablas de IA (`ejecuciones_ia`, `revisiones_ia_silabo`,
+`recomendaciones_ia`, `evidencias_ia`, `recomendacion_evidencias_ia`,
+`retroalimentacion_ia`, `conversaciones_ia`, `mensajes_ia`, `evidencias_mensaje_ia`,
+`citas_mensaje_ia` y `fragmentos_fuente_academica`) por dos, con el patrón estándar de
+memoria de agente + almacén vectorial. `historial_ia` guarda un mensaje JSONB por fila
+(`id`, `sesion_id`, `mensaje_ia`, `enviado_en`), agrupado por sesión:
+
+- `silabo:{id}:campo:{campo}`: mensajes `analisis` (entrada fijada, evidencia tipada,
+  recomendaciones, estado, error) y `decision` (aceptada, ignorada, no útil o aplicada,
+  con contenido anterior/posterior y versiones del borrador);
+- `silabo:{id}:revision`: mensajes `revision` con los conteos agregados de sus análisis;
+- `silabo:{id}:usuario:{usuario}`: el chat (`mensaje` con rol `usuario` o `asistente`,
+  evidencia y citas) y los marcadores `ocultamiento` que limpian el panel sin borrar.
+
+`mensaje_ia.entrada` es la entrada fijada: el trigger `proteger_historial_ia` impide
+cambiarla y congela todo mensaje que salió de `pendiente`/`en_ejecucion`; solo el
+reinicio institucional confirmado (I-118) puede borrar. Índices únicos parciales por
+expresión conservan la idempotencia de análisis (sesión, clave, revisión), de revisiones
+(sesión, `version_bloqueo_origen`), de preguntas del chat (sesión, clave) y de decisiones
+(recomendación, persona, decisión; una sola `aplicada`). El progreso técnico vive en
+`ejecuciones_trabajo` (`ia.analisis`, `ia.chat`), cuyo `recurso_id` es el id del
+mensaje. Al eliminar un sílabo, el trigger `eliminar_historial_ia_de_silabo` borra sus
+sesiones. La evidencia sigue siendo una fotografía (etiqueta, extracto y huella)
+inmutable aunque cambien luego el documento o el borrador.
 `plantilla_silabo.revision_configuracion` aumenta ante cualquier cambio de estructura,
 contenido o apariencia. Una preferencia de carrera solo es efectiva si el campo permite
 la decisión de Coordinación y su `revision_plantilla_origen` coincide; de otro modo rige
@@ -253,6 +287,10 @@ protege mediante el contexto académico fijado en cada sílabo.
 
 ## Índices y restricciones
 
+Toda llave foránea de una sola columna encabeza algún índice (I-133, migración
+`000101`): PostgreSQL no los crea solo y, sin ellos, filtrar por la relación o borrar el
+padre recorre la tabla hija. Una llave foránea nueva debe llegar con su índice.
+
 Como mínimo, prueba/define:
 
 - unicidad de identificadores institucionales no nulos;
@@ -275,14 +313,15 @@ seeder dos veces. Las asignaciones activas se reutilizan para conservar la idemp
 
 ### Invariantes de IA implementados
 
-- la ejecución, el campo y la versión de plantilla pertenecen al mismo sílabo;
+- la ejecución y el campo pertenecen al mismo sílabo (con plantilla única, I-132 retiró la
+  comprobación de `plantilla_id`);
 - una clave funcional activa es única por sílabo/campo, y una ejecución fallida permite
   una solicitud nueva sin reescribir historia;
 - una revisión integral es única por sílabo/versión; cada campo aparece como máximo una
   vez dentro de ella y toda ejecución hija debe compartir sílabo y versión de bloqueo;
 - evidencia solo se fija mientras la ejecución está pendiente; la externa debe provenir
   de una fuente activa, de igual carrera y fijada por la convocatoria, y la interna debe
-  pertenecer a la plantilla del sílabo. El tipo determina de forma excluyente qué FK se
+  citar una definición de campo existente. El tipo determina de forma excluyente qué FK se
   admite y una fotografía nunca se reescribe;
 - una conversación es única por docente y sílabo; una clave idempotente no crea dos
   preguntas dentro de la misma conversación;

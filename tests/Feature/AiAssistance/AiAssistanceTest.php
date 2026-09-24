@@ -21,12 +21,8 @@ use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HttpAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Jobs\AnalyzeSyllabusFieldJob;
 use App\Modules\AiAssistance\Infrastructure\Jobs\AnswerSyllabusChatJob;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiEvidence;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiFeedback;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiMessage;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiRecommendation;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\SyllabusAiReview;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiDocument;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -35,9 +31,9 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 use App\Support\CanonicalHasher;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -45,7 +41,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
-use LogicException;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
 
@@ -92,19 +87,19 @@ class AiAssistanceTest extends TestCase
             'idempotency_key' => $key,
         ])->assertSuccessful();
 
-        $this->assertDatabaseCount('ejecuciones_ia', 1);
-        $this->assertDatabaseCount('evidencias_ia', 1);
+        $this->assertSame(1, $this->analyses()->count());
+        $this->assertCount(1, $this->analysis()->evidence());
         $this->assertDatabaseCount('ejecuciones_trabajo', 1);
         Queue::assertPushed(AnalyzeSyllabusFieldJob::class, 1);
-        $execution = AiExecution::query()->firstOrFail();
+        $execution = $this->analysis();
         $this->runJob($execution);
 
         $execution->refresh();
-        $recommendation = AiRecommendation::query()->firstOrFail();
-        $this->assertSame('completada', $execution->estado);
-        $this->assertSame('contract-simulator-v1', $execution->version_pasarela_ejecutada);
-        $this->assertSame('Formular objetivos claros.', $recommendation->texto_sugerido);
-        $this->assertStringNotContainsString('APROBADO', $recommendation->texto_sugerido);
+        $recommendation = $execution->recommendations()[0];
+        $this->assertSame('completada', $execution->state());
+        $this->assertSame('contract-simulator-v1', $execution->part('version_pasarela_ejecutada'));
+        $this->assertSame('Formular objetivos claros.', $recommendation['texto_sugerido']);
+        $this->assertStringNotContainsString('APROBADO', $recommendation['texto_sugerido']);
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertSame(0, $syllabus->fresh()->version_bloqueo);
         $this->assertSame(
@@ -127,40 +122,44 @@ class AiAssistanceTest extends TestCase
                 )
                 ->where('executions.0.recommendations.0.title', 'Normalización editorial reproducible'));
 
-        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.feedback', [$syllabus, $field, $recommendation]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.feedback', [$syllabus, $field, $recommendation['id']]), [
             'decision' => 'aceptada',
         ])->assertSuccessful();
-        $this->assertDatabaseHas('retroalimentacion_ia', [
-            'recomendacion_ia_id' => $recommendation->id,
-            'usuario_id' => $this->teacher->id,
-            'decision_retroalimentacion_ia' => 'aceptada',
-        ]);
+        $this->assertTrue($this->decisions()
+            ->where('mensaje_ia->entrada->recomendacion_id', $recommendation['id'])
+            ->where('mensaje_ia->entrada->usuario_id', $this->teacher->id)
+            ->where('mensaje_ia->entrada->decision', 'aceptada')
+            ->exists());
         $this->assertSame(0, $syllabus->fresh()->version_bloqueo);
 
-        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.apply', [$syllabus, $field, $recommendation]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.apply', [$syllabus, $field, $recommendation['id']]), [
             'version_bloqueo' => 0,
-        ])->assertSuccessful();
+        ])->assertSuccessful()->assertJsonPath('value', 'Formular objetivos claros.');
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertSame(1, $syllabus->fresh()->version_bloqueo);
         $this->assertSame(
             'Formular objetivos claros.',
             FieldValue::query()->where('silabo_id', $syllabus->id)->where('definicion_campo_id', $field->id)->firstOrFail()->valor,
         );
-        $applied = AiFeedback::query()->where('decision', 'aplicada')->firstOrFail();
-        $this->assertSame('  Formular   objetivos claros', $applied->contenido_antes);
-        $this->assertSame('Formular objetivos claros.', $applied->contenido_despues);
-        $this->assertSame(0, $applied->version_bloqueo_origen);
-        $this->assertSame(1, $applied->version_bloqueo_resultado);
+        $applied = $this->decisions()->where('mensaje_ia->entrada->decision', 'aplicada')->firstOrFail();
+        $this->assertSame('  Formular   objetivos claros', $applied->input('contenido_antes'));
+        $this->assertSame('Formular objetivos claros.', $applied->input('contenido_despues'));
+        $this->assertSame(0, $applied->input('version_bloqueo_origen'));
+        $this->assertSame(1, $applied->input('version_bloqueo_resultado'));
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion_evento_auditoria' => 'ia.recomendacion_aplicada',
             'resultado_evento_auditoria' => 'exito',
         ]);
 
-        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.apply', [$syllabus, $field, $recommendation]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.apply', [$syllabus, $field, $recommendation['id']]), [
             'version_bloqueo' => 0,
         ])->assertSuccessful();
         $this->assertSame(1, $syllabus->fresh()->version_bloqueo);
-        $this->assertSame(1, AiFeedback::query()->where('decision', 'aplicada')->count());
+        $this->assertSame(1, $this->decisions()->where('mensaje_ia->entrada->decision', 'aplicada')->count());
+        $this->getJson(route('api.v1.teacher.syllabi.fields.ai.show', [$syllabus, $field]))
+            ->assertOk()
+            ->assertJsonPath('executions.0.recommendations.0.applied', true)
+            ->assertJsonPath('executions.0.recommendations.0.my_decisions', ['aceptada', 'aplicada']);
     }
 
     public function test_teacher_requests_one_contextual_review_and_sees_it_inside_the_editor(): void
@@ -173,7 +172,7 @@ class AiAssistanceTest extends TestCase
             'idempotency_key' => (string) Str::uuid(),
             'version_bloqueo' => $syllabus->version_bloqueo,
         ])->assertJsonValidationErrors('syllabus');
-        $this->assertDatabaseCount('ejecuciones_ia', 0);
+        $this->assertDatabaseCount('historial_ia', 0);
 
         $this->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $syllabus->refresh();
@@ -200,13 +199,15 @@ class AiAssistanceTest extends TestCase
                 'version_bloqueo' => $syllabus->version_bloqueo,
             ])->assertAccepted();
 
-        $this->assertDatabaseCount('ejecuciones_ia', 1);
-        $this->assertDatabaseCount('revisiones_ia_silabo', 1);
+        $this->assertSame(1, $this->analyses()->count());
+        $this->assertSame(1, AiHistoryEntry::query()->ofType('revision')->count());
         Queue::assertPushed(AnalyzeSyllabusFieldJob::class, 1);
 
-        $execution = AiExecution::query()->firstOrFail();
-        $review = SyllabusAiReview::query()->firstOrFail();
-        $this->assertSame($review->id, $execution->revision_ia_silabo_id);
+        $execution = $this->analysis();
+        $review = AiHistoryEntry::query()->ofType('revision')->firstOrFail();
+        $this->assertSame(AiHistoryEntry::reviewSession($syllabus->id), $review->sesion_id);
+        $this->assertSame(AiHistoryEntry::fieldSession($syllabus->id, $field->id), $execution->sesion_id);
+        $this->assertSame($review->id, $execution->input('revision_id'));
         $this->withHeader('Origin', 'http://localhost:5173')
             ->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
             ->assertOk()
@@ -218,10 +219,10 @@ class AiAssistanceTest extends TestCase
 
         $this->runJob($execution);
         $review->refresh();
-        $this->assertSame('completada', $review->estado_revision_ia);
-        $this->assertSame(1, $review->campos_finalizados);
-        $this->assertSame(1, $review->campos_con_recomendaciones);
-        $this->assertNotNull($review->completado_en);
+        $this->assertSame('completada', $review->state());
+        $this->assertSame(1, $review->part('campos_finalizados'));
+        $this->assertSame(1, $review->part('campos_con_recomendaciones'));
+        $this->assertNotNull($review->part('completado_en'));
         $this->assertDatabaseHas('notificaciones_internas', [
             'tipo_notificacion_interna' => 'ia.revision_silabo.finalizada',
             'tipo_recurso' => 'revision_ia_silabo',
@@ -268,7 +269,7 @@ class AiAssistanceTest extends TestCase
             ])->assertAccepted()
             ->assertJsonPath('message', 'La solicitud quedó registrada. Puede continuar editando mientras se procesa.');
 
-        $execution = AiExecution::query()->firstOrFail();
+        $execution = $this->analysis();
         $this->runJob($execution);
 
         $this->withHeader('Origin', 'http://localhost:5173')
@@ -284,7 +285,6 @@ class AiAssistanceTest extends TestCase
         Queue::fake();
         [$syllabus, $field] = $this->fixture();
         $related = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->whereKeyNot($field->id)
             ->firstOrFail();
         $related->update(['ia_habilitada' => true]);
@@ -299,20 +299,20 @@ class AiAssistanceTest extends TestCase
             ])->assertAccepted()
             ->assertJsonPath('review.total_fields', 2);
 
-        $review = SyllabusAiReview::query()->firstOrFail();
-        $executions = $review->executions()->orderBy('definicion_campo_id')->get();
+        $review = AiHistoryEntry::query()->ofType('revision')->firstOrFail();
+        $executions = $this->analyses()->where('mensaje_ia->entrada->revision_id', $review->id)->get();
         $this->assertCount(2, $executions);
         Queue::assertPushed(AnalyzeSyllabusFieldJob::class, 2);
 
         $this->runJob($executions->firstOrFail());
         $review->refresh();
-        $this->assertSame('en_ejecucion', $review->estado_revision_ia);
-        $this->assertSame(1, $review->campos_finalizados);
+        $this->assertSame('en_ejecucion', $review->state());
+        $this->assertSame(1, $review->part('campos_finalizados'));
 
         $this->runJob($executions->last());
         $review->refresh();
-        $this->assertSame('completada', $review->estado_revision_ia);
-        $this->assertSame(2, $review->campos_finalizados);
+        $this->assertSame('completada', $review->state());
+        $this->assertSame(2, $review->part('campos_finalizados'));
     }
 
     public function test_ia_neg_01_inactive_sources_are_excluded_and_missing_evidence_is_inconclusive(): void
@@ -323,13 +323,13 @@ class AiAssistanceTest extends TestCase
         $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
-        $execution = AiExecution::query()->firstOrFail();
+        $execution = $this->analysis();
 
-        $this->assertDatabaseCount('evidencias_ia', 0);
+        $this->assertSame([], $execution->evidence());
         $this->runJob($execution);
-        $this->assertSame('no_concluyente', $execution->fresh()->estado);
-        $this->assertSame('evidencia_insuficiente', $execution->fresh()->motivo_no_concluyente);
-        $this->assertDatabaseCount('recomendaciones_ia', 0);
+        $this->assertSame('no_concluyente', $execution->fresh()->state());
+        $this->assertSame('evidencia_insuficiente', $execution->fresh()->part('motivo_no_concluyente'));
+        $this->assertSame([], $execution->fresh()->recommendations());
         $this->assertSame('borrador', $syllabus->fresh()->estado);
     }
 
@@ -343,13 +343,12 @@ class AiAssistanceTest extends TestCase
         $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
-        $execution = AiExecution::query()->firstOrFail();
+        $execution = $this->analysis();
 
-        $this->assertFalse($execution->metadatos_entrada['too_many_evidence']);
-        $this->assertDatabaseCount('evidencias_ia', 1);
+        $this->assertCount(1, $execution->evidence());
         $this->runJob($execution);
-        $this->assertSame('completada', $execution->fresh()->estado);
-        $this->assertDatabaseCount('recomendaciones_ia', 1);
+        $this->assertSame('completada', $execution->fresh()->state());
+        $this->assertCount(1, $execution->fresh()->recommendations());
     }
 
     public function test_markdown_sources_are_retrieved_by_heading_and_hostile_text_remains_data(): void
@@ -390,7 +389,6 @@ class AiAssistanceTest extends TestCase
             Los resultados y objetivos deben mantener consistencia curricular.
             MARKDOWN);
         $related = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('id', '!=', $field->id)
             ->firstOrFail();
         $related->update(['ia_habilitada' => true]);
@@ -405,22 +403,18 @@ class AiAssistanceTest extends TestCase
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
 
-        $execution = AiExecution::query()->firstOrFail();
-        $this->assertDatabaseHas('evidencias_ia', [
-            'ejecucion_ia_id' => $execution->id,
-            'tipo_evidencia_ia' => 'seccion_silabo',
-            'definicion_campo_id' => $related->id,
-            'fuente_academica_id' => null,
-            'extracto_evidencia_ia' => 'Aplicar fundamentos de software en un caso verificable.',
-        ]);
-        $this->assertDatabaseHas('evidencias_ia', [
-            'ejecucion_ia_id' => $execution->id,
-            'tipo_evidencia_ia' => 'fuente_academica',
-            'definicion_campo_id' => null,
-        ]);
+        $execution = $this->analysis();
+        $evidence = collect($execution->evidence());
+        $internal = $evidence->firstWhere('tipo', 'seccion_silabo');
+        $external = $evidence->firstWhere('tipo', 'fuente_academica');
+        $this->assertSame($related->id, $internal['definicion_campo_id']);
+        $this->assertNull($internal['fuente_academica_id']);
+        $this->assertSame('Aplicar fundamentos de software en un caso verificable.', $internal['extracto']);
+        $this->assertNull($external['definicion_campo_id']);
+        $this->assertTrue(AiDocument::query()->whereKey($external['documento_id'])->exists());
 
         $this->runJob($execution);
-        $this->assertSame('completada', $execution->fresh()->estado);
+        $this->assertSame('completada', $execution->fresh()->state());
     }
 
     public function test_ia_neg_05_and_06_invented_references_and_oversized_outputs_fail_closed(): void
@@ -452,15 +446,15 @@ class AiAssistanceTest extends TestCase
         $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
-        $invented = AiExecution::query()->latest('solicitado_en')->firstOrFail();
+        $invented = $this->analyses()->latest('enviado_en')->firstOrFail();
         (new AnalyzeSyllabusFieldJob($invented->id))->handle(
             $inventingGateway,
             app(AiResultContract::class),
             app(RecordAuditEvent::class),
         );
-        $this->assertSame('fallida', $invented->fresh()->estado);
-        $this->assertSame('contrato_ia_invalido', $invented->fresh()->codigo_error);
-        $this->assertDatabaseCount('recomendaciones_ia', 0);
+        $this->assertSame('fallida', $invented->fresh()->state());
+        $this->assertSame('contrato_ia_invalido', $invented->fresh()->part('codigo_error'));
+        $this->assertSame([], $invented->fresh()->recommendations());
 
         $oversizedGateway = new class implements AiAnalysisGateway
         {
@@ -486,15 +480,15 @@ class AiAssistanceTest extends TestCase
         $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
-        $oversized = AiExecution::query()->latest('solicitado_en')->firstOrFail();
+        $oversized = $this->analyses()->latest('enviado_en')->firstOrFail();
         (new AnalyzeSyllabusFieldJob($oversized->id))->handle(
             $oversizedGateway,
             app(AiResultContract::class),
             app(RecordAuditEvent::class),
         );
-        $this->assertSame('fallida', $oversized->fresh()->estado);
-        $this->assertSame('contrato_ia_invalido', $oversized->fresh()->codigo_error);
-        $this->assertDatabaseCount('recomendaciones_ia', 0);
+        $this->assertSame('fallida', $oversized->fresh()->state());
+        $this->assertSame('contrato_ia_invalido', $oversized->fresh()->part('codigo_error'));
+        $this->assertSame([], $oversized->fresh()->recommendations());
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertSame(0, $syllabus->fresh()->version_bloqueo);
     }
@@ -523,8 +517,8 @@ class AiAssistanceTest extends TestCase
             'idempotency_key' => (string) Str::uuid(),
             'version_bloqueo' => $syllabus->version_bloqueo,
         ]);
-        $execution = AiExecution::query()->firstOrFail();
-        $review = SyllabusAiReview::query()->firstOrFail();
+        $execution = $this->analysis();
+        $review = AiHistoryEntry::query()->ofType('revision')->firstOrFail();
         $job = new AnalyzeSyllabusFieldJob($execution->id);
         try {
             $job->handle($gateway, app(AiResultContract::class), app(RecordAuditEvent::class));
@@ -534,13 +528,14 @@ class AiAssistanceTest extends TestCase
         }
 
         $execution->refresh();
-        $this->assertSame('fallida', $execution->estado);
-        $this->assertSame('servicio_ia_no_disponible', $execution->codigo_error);
-        $this->assertStringNotContainsString('TOKEN', (string) $execution->mensaje_error);
-        $this->assertStringNotContainsString('/srv/private', (string) $execution->mensaje_error);
+        $this->assertSame('fallida', $execution->state());
+        $this->assertSame('servicio_ia_no_disponible', $execution->part('codigo_error'));
+        $this->assertStringNotContainsString('TOKEN', (string) $execution->part('mensaje_error'));
+        $this->assertStringNotContainsString('/srv/private', (string) $execution->part('mensaje_error'));
+        $this->assertSame('fallida', DB::table('ejecuciones_trabajo')->where('id', $execution->input('ejecucion_trabajo_id'))->value('estado_ejecucion_trabajo'));
         $review->refresh();
-        $this->assertSame('fallida', $review->estado_revision_ia);
-        $this->assertSame(1, $review->campos_fallidos);
+        $this->assertSame('fallida', $review->state());
+        $this->assertSame(1, $review->part('campos_fallidos'));
         $this->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => 0,
             'value' => 'Edición determinística disponible',
@@ -564,7 +559,7 @@ class AiAssistanceTest extends TestCase
             'idempotency_key' => (string) Str::uuid(),
         ]);
 
-        $this->assertDatabaseCount('ejecuciones_ia', 1);
+        $this->assertSame(1, $this->analyses()->count());
         Queue::assertPushed(AnalyzeSyllabusFieldJob::class, 1);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'ia.analisis_reutilizado']);
 
@@ -575,11 +570,11 @@ class AiAssistanceTest extends TestCase
         $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
-        $this->assertDatabaseCount('ejecuciones_ia', 2);
+        $this->assertSame(2, $this->analyses()->count());
         Queue::assertPushed(AnalyzeSyllabusFieldJob::class, 2);
         $this->assertCount(
             2,
-            AiExecution::query()->pluck('clave_funcional')->unique()->all(),
+            $this->analyses()->get()->map(fn (AiHistoryEntry $entry): mixed => $entry->input('clave_funcional'))->unique()->all(),
         );
     }
 
@@ -591,69 +586,49 @@ class AiAssistanceTest extends TestCase
         $this->postJson(route('api.v1.teacher.syllabi.fields.ai.store', [$syllabus, $field]), [
             'idempotency_key' => (string) Str::uuid(),
         ]);
-        $execution = AiExecution::query()->firstOrFail();
+        $execution = $this->analysis();
         $this->runJob($execution);
-        $recommendation = AiRecommendation::query()->firstOrFail();
-        $evidence = AiEvidence::query()->firstOrFail();
-        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.feedback', [$syllabus, $field, $recommendation]), [
+        $recommendation = $execution->fresh()->recommendations()[0];
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.feedback', [$syllabus, $field, $recommendation['id']]), [
             'decision' => 'no_util',
-        ]);
-        $feedback = AiFeedback::query()->firstOrFail();
+        ])->assertSuccessful();
+        $feedback = $this->decisions()->firstOrFail();
 
-        try {
-            $recommendation->update(['titulo' => 'Alterado']);
-            $this->fail('El modelo permitió alterar una recomendación histórica.');
-        } catch (LogicException) {
-            $this->assertNotSame('Alterado', $recommendation->fresh()->titulo);
-        }
+        // El análisis terminal y la decisión son inmutables en PostgreSQL: ni la
+        // evidencia, ni las recomendaciones, ni la entrada fijada pueden reescribirse.
         foreach ([
-            ['evidencias_ia', $evidence->id, ['extracto_evidencia_ia' => 'alterado']],
-            ['recomendaciones_ia', $recommendation->id, ['titulo_recomendacion_ia' => 'alterado']],
-            ['retroalimentacion_ia', $feedback->id, ['decision_retroalimentacion_ia' => 'ignorada']],
-            ['ejecuciones_ia', $execution->id, ['contenido_entrada_ia' => 'alterado']],
-        ] as [$table, $id, $changes]) {
+            [$execution->id, "jsonb_set(mensaje_ia, '{entrada,evidencia,0,extracto}', '\"alterado\"')"],
+            [$execution->id, "jsonb_set(mensaje_ia, '{recomendaciones,0,titulo}', '\"alterado\"')"],
+            [$execution->id, "mensaje_ia || '{\"recomendaciones\": []}'::jsonb"],
+            [$feedback->id, "jsonb_set(mensaje_ia, '{entrada,decision}', '\"ignorada\"')"],
+        ] as [$id, $expression]) {
             try {
-                DB::transaction(fn () => DB::table($table)->where('id', $id)->update($changes));
-                $this->fail("PostgreSQL permitió alterar {$table}.");
+                DB::transaction(fn () => DB::table('historial_ia')->where('id', $id)->update(['mensaje_ia' => DB::raw($expression)]));
+                $this->fail('PostgreSQL permitió alterar un mensaje terminal del historial de IA.');
             } catch (QueryException) {
                 $this->assertTrue(true);
             }
         }
         try {
-            DB::transaction(fn () => AiEvidence::query()->create([
-                'ejecucion_ia_id' => $execution->id,
-                'tipo_evidencia_ia' => $evidence->tipo_evidencia_ia,
-                'definicion_campo_id' => $evidence->definicion_campo_id,
-                'fuente_academica_id' => $evidence->fuente_academica_id,
-                'fragmento_fuente_academica_id' => $evidence->fragmento_fuente_academica_id,
-                'etiqueta_evidencia_ia' => $evidence->etiqueta_evidencia_ia,
-                'extracto' => $evidence->extracto,
-                'huella_contenido' => $evidence->huella_contenido,
-            ]));
-            $this->fail('PostgreSQL permitió agregar evidencia después del resultado terminal.');
+            DB::transaction(fn () => DB::table('historial_ia')->where('id', $execution->id)->delete());
+            $this->fail('PostgreSQL permitió eliminar historial de IA.');
         } catch (QueryException) {
-            $this->assertDatabaseCount('evidencias_ia', 1);
+            $this->assertDatabaseHas('historial_ia', ['id' => $execution->id]);
         }
         try {
-            DB::transaction(fn () => AiRecommendation::query()->create([
-                'ejecucion_ia_id' => $execution->id,
-                'definicion_campo_id' => $field->id,
-                'ordinal' => 2,
-                'tipo' => 'editorial',
-                'titulo' => 'Tardía',
-                'explicacion' => 'No debe poder agregarse tras completar la ejecución.',
-                'texto_sugerido' => 'Texto tardío.',
+            DB::transaction(fn () => $this->decisions()->create([
+                'sesion_id' => $feedback->sesion_id,
+                'mensaje_ia' => $feedback->mensaje_ia,
             ]));
-            $this->fail('PostgreSQL permitió agregar una recomendación después del resultado terminal.');
+            $this->fail('PostgreSQL permitió duplicar una decisión.');
         } catch (QueryException) {
-            $this->assertDatabaseCount('recomendaciones_ia', 1);
+            $this->assertSame(1, $this->decisions()->count());
         }
 
         $otherField = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->whereKeyNot($field->id)
             ->firstOrFail();
-        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.feedback', [$syllabus, $otherField, $recommendation]), [
+        $this->postJson(route('api.v1.teacher.syllabi.fields.ai.feedback', [$syllabus, $otherField, $recommendation['id']]), [
             'decision' => 'aceptada',
         ])->assertNotFound();
 
@@ -731,7 +706,7 @@ class AiAssistanceTest extends TestCase
             'version_bloqueo' => 0,
             'value' => 'El editor permanece disponible',
         ])->assertOk();
-        $this->assertDatabaseCount('ejecuciones_ia', 1);
+        $this->assertSame(1, $this->analyses()->count());
     }
 
     public function test_teacher_chats_with_the_syllabus_and_receives_verifiable_citations(): void
@@ -756,11 +731,11 @@ class AiAssistanceTest extends TestCase
             'idempotency_key' => $key,
         ])->assertAccepted();
 
-        $this->assertDatabaseCount('conversaciones_ia', 1);
-        $this->assertDatabaseCount('mensajes_ia', 2);
+        $chat = AiHistoryEntry::query()->session(AiHistoryEntry::chatSession($syllabus->id, $this->teacher->id));
+        $this->assertSame(2, (clone $chat)->ofType('mensaje')->count());
         Queue::assertPushed(AnswerSyllabusChatJob::class, 1);
 
-        $answer = AiMessage::query()->where('rol_mensaje_ia', 'asistente')->firstOrFail();
+        $answer = (clone $chat)->where('mensaje_ia->rol', 'asistente')->firstOrFail();
         (new AnswerSyllabusChatJob($answer->id))->handle(app(AiChatGateway::class));
 
         $this->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
@@ -772,15 +747,24 @@ class AiAssistanceTest extends TestCase
         $this->deleteJson(route('api.v1.teacher.syllabi.ai-chat.clear', $syllabus))
             ->assertOk();
         $this->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
-            ->assertJsonPath('conversation.hidden', true);
-        $this->assertDatabaseCount('mensajes_ia', 2);
+            ->assertJsonPath('conversation.hidden', true)
+            ->assertJsonCount(2, 'conversation.messages');
+        $this->assertSame(2, (clone $chat)->ofType('mensaje')->count());
+
+        $this->postJson(route('api.v1.teacher.syllabi.ai-chat.messages.store', $syllabus), [
+            'message' => 'Otra pregunta',
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertAccepted();
+        $this->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
+            ->assertJsonPath('conversation.hidden', false)
+            ->assertJsonPath('conversation.messages.2.content', 'Otra pregunta');
     }
 
     public function test_administration_decides_whether_the_agent_reads_the_identification_card(): void
     {
         [$syllabus] = $this->fixture();
         $syllabus->update(['contexto_academico' => ['subject' => ['name' => 'Ingeniería de requisitos', 'code' => 'SW-P5-021']]]);
-        $template = $syllabus->template;
+        $template = SyllabusTemplate::institutional();
         $section = $template->appendSection([
             'id' => (string) Str::uuid(), 'clave' => 'identificacion', 'titulo' => 'Identificación',
             'descripcion' => null, 'posicion' => 2, 'bloques' => [],
@@ -867,22 +851,15 @@ class AiAssistanceTest extends TestCase
             'proceso_id' => $this->openSyllabusProcess($templateVersion->id)->id,
             'estado' => 'abierta',
         ]);
+        // El docente del sílabo es el vigente del paralelo que cubre (I-130).
+        $parallel = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail()->parallel;
         $syllabus = Syllabus::query()->create([
             'convocatoria_id' => $convocation->id,
+            'paralelo_id' => $parallel->id,
             'asignatura_id' => $subject->id,
-            'carrera_id' => $career->id,
-            'plantilla_id' => $templateVersion->id,
             'estado' => 'borrador',
             'version_bloqueo' => 0,
             'iniciado_en' => now(),
-        ]);
-        // El docente del sílabo es el vigente del paralelo que cubre (I-130).
-        $parallel = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail()->parallel;
-        SyllabusScope::query()->create([
-            'silabo_id' => $syllabus->id,
-            'convocatoria_id' => $convocation->id,
-            'programacion_asignatura_id' => $parallel->programacion_asignatura_id,
-            'paralelo_id' => $parallel->id,
         ]);
         FieldValue::query()->create([
             'silabo_id' => $syllabus->id,
@@ -928,7 +905,24 @@ class AiAssistanceTest extends TestCase
             ->withSession(['active_role_assignment_id' => $this->teacherContext->id]);
     }
 
-    private function runJob(AiExecution $execution): void
+    /** @return Builder<AiHistoryEntry> */
+    private function analyses(): Builder
+    {
+        return AiHistoryEntry::query()->ofType('analisis')->orderBy('enviado_en');
+    }
+
+    private function analysis(): AiHistoryEntry
+    {
+        return $this->analyses()->firstOrFail();
+    }
+
+    /** @return Builder<AiHistoryEntry> */
+    private function decisions(): Builder
+    {
+        return AiHistoryEntry::query()->ofType('decision');
+    }
+
+    private function runJob(AiHistoryEntry $execution): void
     {
         (new AnalyzeSyllabusFieldJob($execution->id))->handle(
             app(AiAnalysisGateway::class),

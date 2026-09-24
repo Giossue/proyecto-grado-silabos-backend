@@ -166,7 +166,7 @@ it('I-107 guarda ciclos en la carrera y retira códigos de facultad y malla', fu
         ->and(Schema::hasColumn('carreras', 'cantidad_ciclos_malla'))->toBeTrue()
         ->and(Schema::hasColumn('asignaturas', 'carrera_id'))->toBeTrue()
         ->and(Schema::hasColumn('asignaturas', 'malla_id'))->toBeFalse()
-        ->and(Schema::hasColumn('silabos', 'carrera_id'))->toBeTrue()
+        ->and(Schema::hasColumn('silabos', 'carrera_id'))->toBeFalse()
         ->and(Schema::hasColumn('silabos', 'malla_id'))->toBeFalse();
 
     $careerCode = collect(DB::select(
@@ -184,7 +184,9 @@ it('I-107 guarda ciclos en la carrera y retira códigos de facultad y malla', fu
         ->toContain('carreras_cantidad_ciclos_malla_check')
         ->toContain('asignaturas_carrera_id_foreign')
         ->toContain('asignaturas_carrera_id_codigo_asignatura_unique')
-        ->toContain('silabos_carrera_id_foreign');
+        ->toContain('silabos_paralelo_id_foreign')
+        ->toContain('silabos_convocatoria_id_paralelo_id_unique')
+        ->not->toContain('silabos_carrera_id_foreign');
 });
 
 it('I-62 persiste la programación de asignaturas con nombres e invariante propios', function () {
@@ -192,8 +194,9 @@ it('I-62 persiste la programación de asignaturas con nombres e invariante propi
         ->and(Schema::hasTable('ofertas_academicas'))->toBeFalse()
         ->and(Schema::hasColumn('paralelos', 'programacion_asignatura_id'))->toBeTrue()
         ->and(Schema::hasColumn('paralelos', 'oferta_academica_id'))->toBeFalse()
-        ->and(Schema::hasColumn('alcances_silabo', 'programacion_asignatura_id'))->toBeTrue()
-        ->and(Schema::hasColumn('alcances_silabo', 'oferta_academica_id'))->toBeFalse();
+        ->and(Schema::hasTable('alcances_silabo'))->toBeFalse()
+        ->and(Schema::hasColumn('silabos', 'paralelo_id'))->toBeTrue()
+        ->and(Schema::hasColumn('silabos', 'carrera_id'))->toBeFalse();
 
     $restricciones = collect(DB::select(
         "SELECT conname

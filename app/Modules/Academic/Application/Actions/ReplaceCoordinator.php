@@ -98,7 +98,7 @@ class ReplaceCoordinator
 
     private function notifyIncoming(Career $career, User $incoming, Request $request): void
     {
-        $pending = Syllabus::query()->where('carrera_id', $career->id)->where('estado', 'en_revision')->count();
+        $pending = Syllabus::query()->whereHas('convocation', fn ($convocation) => $convocation->where('carrera_id', $career->id))->where('estado', 'en_revision')->count();
         $waiting = match ($pending) {
             0 => '',
             1 => ' Hay 1 sílabo esperando revisión.',

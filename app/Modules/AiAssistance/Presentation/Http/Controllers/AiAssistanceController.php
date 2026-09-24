@@ -8,9 +8,7 @@ use App\Modules\AiAssistance\Application\Actions\ApplyAiRecommendation;
 use App\Modules\AiAssistance\Application\Actions\RecordAiFeedback;
 use App\Modules\AiAssistance\Application\Actions\RequestAiAnalysis;
 use App\Modules\AiAssistance\Application\Actions\RequestSyllabusAiReview;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiEvidence;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiRecommendation;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
 use App\Modules\AiAssistance\Presentation\Http\Requests\ApplyAiRecommendationRequest;
 use App\Modules\AiAssistance\Presentation\Http\Requests\RecordAiFeedbackRequest;
 use App\Modules\AiAssistance\Presentation\Http\Requests\RequestAiAnalysisRequest;
@@ -34,17 +32,18 @@ class AiAssistanceController extends Controller
             ->first();
         $current = $fieldValue === null ? '' : $fieldValue->valor;
 
-        $executions = AiExecution::query()
-            ->where('silabo_id', $syllabus->id)
-            ->where('definicion_campo_id', $field->id)
-            ->with([
-                'evidence',
-                'recommendations.evidence',
-                'recommendations.feedback',
-            ])
-            ->latest('solicitado_en')
+        $session = AiHistoryEntry::fieldSession($syllabus->id, $field->id);
+        $executions = AiHistoryEntry::query()
+            ->session($session)
+            ->ofType('analisis')
+            ->latest('enviado_en')
             ->limit(10)
             ->get();
+        $decisions = AiHistoryEntry::query()
+            ->session($session)
+            ->ofType('decision')
+            ->get()
+            ->groupBy(fn (AiHistoryEntry $decision): string => (string) $decision->input('recomendacion_id'));
 
         $payload = [
             'syllabus' => [
@@ -62,32 +61,33 @@ class AiAssistanceController extends Controller
             'environment' => [
                 'is_provisional_simulator' => (string) config('ai.driver') === 'baseline',
             ],
-            'executions' => $executions->map(fn (AiExecution $execution): array => [
+            'executions' => $executions->map(fn (AiHistoryEntry $execution): array => [
                 'id' => $execution->id,
-                'status' => $execution->estado,
-                'requested_at' => $execution->solicitado_en->toIso8601String(),
-                'completed_at' => $execution->completado_en?->toIso8601String(),
+                'status' => $execution->state(),
+                'requested_at' => $execution->enviado_en->toIso8601String(),
+                'completed_at' => $execution->part('completado_en'),
                 'analysis_label' => 'Análisis con asistencia de IA',
-                'input_content' => $execution->contenido_entrada,
-                'reason' => $this->reasonLabel($execution->motivo_no_concluyente),
-                'mensaje_error' => $execution->mensaje_error,
-                'evidence' => $execution->evidence
-                    ->map(fn (AiEvidence $evidence): array => $this->evidencePayload($evidence))
-                    ->values()
-                    ->all(),
-                'recommendations' => $execution->recommendations->map(fn (AiRecommendation $recommendation): array => [
-                    'id' => $recommendation->id,
-                    'type' => $recommendation->tipo,
-                    'title' => $recommendation->titulo,
-                    'explanation' => $recommendation->explicacion,
-                    'suggested_text' => $recommendation->texto_sugerido,
-                    'evidence_ids' => $recommendation->evidence->pluck('id')->values(),
-                    'my_decisions' => $recommendation->feedback
-                        ->where('usuario_id', $actor->id)
-                        ->pluck('decision')
-                        ->values(),
-                    'applied' => $recommendation->feedback->contains('decision', 'aplicada'),
-                ])->values(),
+                'input_content' => (string) $execution->input('contenido'),
+                'reason' => $this->reasonLabel($execution->part('motivo_no_concluyente')),
+                'mensaje_error' => $execution->part('mensaje_error'),
+                'evidence' => array_map(fn (array $evidence): array => $this->evidencePayload($evidence), $execution->evidence()),
+                'recommendations' => array_map(function (array $recommendation) use ($actor, $decisions): array {
+                    $own = $decisions->get((string) $recommendation['id'], collect());
+
+                    return [
+                        'id' => $recommendation['id'],
+                        'type' => $recommendation['tipo'],
+                        'title' => $recommendation['titulo'],
+                        'explanation' => $recommendation['explicacion'],
+                        'suggested_text' => $recommendation['texto_sugerido'],
+                        'evidence_ids' => array_values($recommendation['evidencia_ids'] ?? []),
+                        'my_decisions' => $own
+                            ->filter(fn (AiHistoryEntry $decision): bool => $decision->input('usuario_id') === $actor->id)
+                            ->map(fn (AiHistoryEntry $decision): mixed => $decision->input('decision'))
+                            ->values(),
+                        'applied' => $own->contains(fn (AiHistoryEntry $decision): bool => $decision->input('decision') === 'aplicada'),
+                    ];
+                }, $execution->recommendations()),
             ])->values(),
         ];
 
@@ -100,17 +100,18 @@ class AiAssistanceController extends Controller
     }
 
     /**
+     * @param  array<string, mixed>  $evidence
      * @return array{id: string, type: string, field_id: string|null, source_id: string|null, source: string, excerpt: string}
      */
-    private function evidencePayload(AiEvidence $evidence): array
+    private function evidencePayload(array $evidence): array
     {
         return [
-            'id' => $evidence->id,
-            'type' => $evidence->tipo_evidencia_ia,
-            'field_id' => $this->nullableIdentifier($evidence->definicion_campo_id),
-            'source_id' => $this->nullableIdentifier($evidence->fuente_academica_id),
-            'source' => $evidence->etiqueta_evidencia_ia,
-            'excerpt' => $evidence->extracto,
+            'id' => (string) $evidence['id'],
+            'type' => (string) $evidence['tipo'],
+            'field_id' => $this->nullableIdentifier($evidence['definicion_campo_id'] ?? null),
+            'source_id' => $this->nullableIdentifier($evidence['fuente_academica_id'] ?? null),
+            'source' => (string) $evidence['etiqueta'],
+            'excerpt' => (string) $evidence['extracto'],
         ];
     }
 
@@ -150,17 +151,18 @@ class AiAssistanceController extends Controller
             $request,
         );
 
+        $total = (int) $review->input('total_campos');
+        $completed = (int) $review->part('campos_finalizados');
+
         return response()->json([
-            'message' => "Revisión de IA iniciada para {$review->total_campos} campo(s)",
+            'message' => "Revisión de IA iniciada para {$total} campo(s)",
             'review' => [
                 'id' => $review->id,
-                'status' => $review->estado_revision_ia,
-                'draft_version' => $review->version_bloqueo_origen,
-                'total_fields' => $review->total_campos,
-                'completed_fields' => $review->campos_finalizados,
-                'progress' => $review->total_campos === 0
-                    ? 0
-                    : (int) floor(($review->campos_finalizados / $review->total_campos) * 100),
+                'status' => $review->state(),
+                'draft_version' => (int) $review->input('version_bloqueo_origen'),
+                'total_fields' => $total,
+                'completed_fields' => $completed,
+                'progress' => $total === 0 ? 0 : (int) floor(($completed / $total) * 100),
             ],
         ], 202);
     }
@@ -168,16 +170,17 @@ class AiAssistanceController extends Controller
     public function feedback(
         Syllabus $syllabus,
         FieldDefinition $field,
-        AiRecommendation $recommendation,
+        string $recommendation,
         RecordAiFeedbackRequest $request,
         RecordAiFeedback $action,
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $this->assertField($syllabus, $field);
-        abort_unless($recommendation->definicion_campo_id === $field->id, 404);
+        $this->assertRecommendation($syllabus, $field, $recommendation);
         $action->execute(
             $syllabus,
+            $field,
             $recommendation,
             $request->string('decision')->toString(),
             $actor,
@@ -190,16 +193,17 @@ class AiAssistanceController extends Controller
     public function apply(
         Syllabus $syllabus,
         FieldDefinition $field,
-        AiRecommendation $recommendation,
+        string $recommendation,
         ApplyAiRecommendationRequest $request,
         ApplyAiRecommendation $action,
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $this->assertField($syllabus, $field);
-        abort_unless($recommendation->definicion_campo_id === $field->id, 404);
-        $updated = $action->execute(
+        $this->assertRecommendation($syllabus, $field, $recommendation);
+        $result = $action->execute(
             $syllabus,
+            $field,
             $recommendation,
             $request->integer('version_bloqueo'),
             $actor,
@@ -208,16 +212,27 @@ class AiAssistanceController extends Controller
 
         return response()->json([
             'message' => 'La recomendación se aplicó al campo después de verificar la versión del borrador.',
-            'version_bloqueo' => $updated->version_bloqueo,
-            'value' => $recommendation->texto_sugerido,
+            'version_bloqueo' => $result['syllabus']->version_bloqueo,
+            'value' => $result['value'],
         ]);
+    }
+
+    private function assertRecommendation(Syllabus $syllabus, FieldDefinition $field, string $recommendation): void
+    {
+        abort_unless(
+            AiHistoryEntry::query()
+                ->session(AiHistoryEntry::fieldSession($syllabus->id, $field->id))
+                ->ofType('analisis')
+                ->whereRaw("mensaje_ia->'recomendaciones' @> CAST(? AS jsonb)", [json_encode([['id' => $recommendation]])])
+                ->exists(),
+            404,
+        );
     }
 
     private function assertField(Syllabus $syllabus, FieldDefinition $field): void
     {
         abort_unless(
-            $field->plantilla_id === $syllabus->plantilla_id
-            && $field->ia_habilitada
+            $field->ia_habilitada
             && $field->editable_docente
             && ! $field->heredado
             && in_array($field->tipo, ['texto_corto', 'texto_largo'], true),
@@ -225,7 +240,7 @@ class AiAssistanceController extends Controller
         );
     }
 
-    private function reasonLabel(?string $reason): ?string
+    private function reasonLabel(mixed $reason): ?string
     {
         return match ($reason) {
             'limite_evidencia_excedido' => 'El conjunto de evidencia excede el límite técnico seguro.',

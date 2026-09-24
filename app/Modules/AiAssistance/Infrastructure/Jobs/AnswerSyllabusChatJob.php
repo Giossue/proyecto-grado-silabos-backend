@@ -6,7 +6,8 @@ use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Domain\Data\AiChatInput;
 use App\Modules\AiAssistance\Domain\Exceptions\AiContractException;
 use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiMessage;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
+use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,15 +34,16 @@ class AnswerSyllabusChatJob implements ShouldQueue
 
     public function handle(AiChatGateway $gateway): void
     {
-        $message = DB::transaction(function (): ?AiMessage {
-            $message = AiMessage::query()->lockForUpdate()->find($this->messageId);
-            if ($message === null || in_array($message->estado_mensaje_ia, ['completado', 'fallido'], true)) {
+        $message = DB::transaction(function (): ?AiHistoryEntry {
+            $message = AiHistoryEntry::query()->lockForUpdate()->find($this->messageId);
+            if ($message === null || ! $message->isOpen()) {
                 return null;
             }
-            $message->update(['estado_mensaje_ia' => 'en_ejecucion']);
-            $message->jobExecution()->update([
+            $message->amend(['estado' => 'en_ejecucion']);
+            $job = JobExecution::query()->lockForUpdate()->find($message->inputString('ejecucion_trabajo_id'));
+            $job?->update([
                 'estado' => 'en_ejecucion', 'progreso' => 15,
-                'intentos' => DB::raw('intentos + 1'), 'iniciado_en' => now(),
+                'intentos' => $job->intentos + 1, 'iniciado_en' => now(),
             ]);
 
             return $message;
@@ -49,59 +51,59 @@ class AnswerSyllabusChatJob implements ShouldQueue
         if ($message === null) {
             return;
         }
-        $message->load(['conversation.messages', 'evidence']);
-        $question = AiMessage::query()->findOrFail($message->respuesta_a_id)->contenido_mensaje_ia;
-        $completed = $message->conversation->messages
-            ->where('id', '!=', $message->id)
-            ->where('estado_mensaje_ia', 'completado')
-            ->take(-((int) config('ai.limits.chat_history_messages')));
+        $question = AiHistoryEntry::query()->findOrFail($message->inputString('respuesta_a_id'))->input('contenido');
+        $completed = AiHistoryEntry::query()
+            ->session($message->sesion_id)
+            ->ofType('mensaje')
+            ->whereKeyNot($message->id)
+            ->where('mensaje_ia->estado', 'completado')
+            ->latest('enviado_en')
+            ->limit((int) config('ai.limits.chat_history_messages'))
+            ->get()
+            ->reverse();
         $history = [];
         foreach ($completed as $item) {
+            $isUser = $item->part('rol') === 'usuario';
             $history[] = [
-                'role' => $item->rol_mensaje_ia === 'usuario' ? 'user' : 'assistant',
-                'content' => $item->contenido_mensaje_ia,
+                'role' => $isUser ? 'user' : 'assistant',
+                'content' => (string) ($isUser ? $item->input('contenido') : $item->part('contenido')),
             ];
         }
         $evidence = [];
-        foreach ($message->evidence as $item) {
+        foreach ($message->evidence() as $item) {
             $evidence[] = [
-                'id' => $item->id,
-                'type' => $item->tipo_evidencia_mensaje_ia,
-                'label' => $item->etiqueta_evidencia_mensaje_ia,
-                'excerpt' => $item->extracto_evidencia_mensaje_ia,
+                'id' => (string) $item['id'],
+                'type' => (string) $item['tipo'],
+                'label' => (string) $item['etiqueta'],
+                'excerpt' => (string) $item['extracto'],
             ];
         }
 
         try {
-            $result = $gateway->reply(new AiChatInput($message->id, $question, 'es-EC', $history, $evidence));
+            $result = $gateway->reply(new AiChatInput($message->id, (string) $question, 'es-EC', $history, $evidence));
+            if (array_diff($result->citationIds, array_column($evidence, 'id')) !== []) {
+                throw new AiContractException('La respuesta citó evidencia fuera del conjunto fijado.');
+            }
             DB::transaction(function () use ($message, $result): void {
-                $locked = AiMessage::query()->lockForUpdate()->findOrFail($message->id);
-                if (in_array($locked->estado_mensaje_ia, ['completado', 'fallido'], true)) {
+                $locked = AiHistoryEntry::query()->lockForUpdate()->findOrFail($message->id);
+                if (! $locked->isOpen()) {
                     return;
                 }
-                $locked->update([
-                    'estado_mensaje_ia' => 'completado',
-                    'contenido_mensaje_ia' => $result->answer,
+                $locked->amend([
+                    'estado' => 'completado',
+                    'contenido' => $result->answer,
+                    'citas' => $result->citationIds,
                     'version_pasarela_ejecutada' => $result->gatewayVersion,
-                    'completado_en' => now(),
+                    'completado_en' => now()->toIso8601String(),
                 ]);
-                foreach ($result->citationIds as $ordinal => $evidenceId) {
-                    DB::table('citas_mensaje_ia')->insert([
-                        'mensaje_ia_id' => $locked->id,
-                        'evidencia_mensaje_ia_id' => $evidenceId,
-                        'ordinal_cita_mensaje_ia' => $ordinal + 1,
-                    ]);
-                }
-                $locked->jobExecution()->update([
+                JobExecution::query()->find($locked->inputString('ejecucion_trabajo_id'))?->update([
                     'estado' => 'completada', 'progreso' => 100,
                     'resultado' => ['message_id' => $locked->id, 'citation_count' => count($result->citationIds)],
                     'finalizado_en' => now(),
                 ]);
             });
-        } catch (AiContractException $exception) {
+        } catch (AiContractException) {
             $this->finishFailed('contrato_ia_invalido', 'La respuesta de IA no pudo verificarse.');
-        } catch (AiGatewayUnavailable $exception) {
-            throw $exception;
         }
     }
 
@@ -116,15 +118,15 @@ class AnswerSyllabusChatJob implements ShouldQueue
     private function finishFailed(string $code, string $message): void
     {
         DB::transaction(function () use ($code, $message): void {
-            $chatMessage = AiMessage::query()->lockForUpdate()->find($this->messageId);
-            if ($chatMessage === null || in_array($chatMessage->estado_mensaje_ia, ['completado', 'fallido'], true)) {
+            $chatMessage = AiHistoryEntry::query()->lockForUpdate()->find($this->messageId);
+            if ($chatMessage === null || ! $chatMessage->isOpen()) {
                 return;
             }
-            $chatMessage->update([
-                'estado_mensaje_ia' => 'fallido', 'codigo_error' => $code,
-                'mensaje_error' => $message, 'completado_en' => now(),
+            $chatMessage->amend([
+                'estado' => 'fallido', 'codigo_error' => $code,
+                'mensaje_error' => $message, 'completado_en' => now()->toIso8601String(),
             ]);
-            $chatMessage->jobExecution()->update([
+            JobExecution::query()->find($chatMessage->inputString('ejecucion_trabajo_id'))?->update([
                 'estado' => 'fallida', 'codigo_error' => $code,
                 'mensaje_error' => $message, 'finalizado_en' => now(),
             ]);

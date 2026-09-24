@@ -23,8 +23,6 @@ class StoreCorrectionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'observation_ids' => ['required', 'array', 'min:1', 'max:100'],
-            'observation_ids.*' => ['required', 'uuid', 'distinct'],
             'justification' => ['required', 'string', 'min:10', 'max:10000'],
         ];
     }

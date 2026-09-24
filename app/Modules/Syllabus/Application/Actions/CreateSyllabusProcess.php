@@ -67,7 +67,6 @@ class CreateSyllabusProcess
                 ]);
             }
             $process = SyllabusProcess::query()->create([
-                'plantilla_id' => $template->id,
                 'periodo_academico_id' => $data['period_id'],
                 'inicia_en' => $data['starts_at'],
                 'entrega_en' => $data['due_at'],
@@ -82,7 +81,7 @@ class CreateSyllabusProcess
                 resourceId: $process->id,
                 result: 'exito',
                 metadata: [
-                    'template_id' => $process->plantilla_id,
+                    'template_id' => $template->id,
                     'period_id' => $process->periodo_academico_id,
                     'starts_at' => $process->inicia_en->toIso8601String(),
                     'due_at' => $process->entrega_en->toIso8601String(),

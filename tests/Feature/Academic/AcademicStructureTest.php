@@ -61,7 +61,7 @@ class AcademicStructureTest extends TestCase
         $this->assertTrue(Schema::hasColumn('carreras', 'codigo_carrera'));
         $this->assertTrue(Schema::hasColumn('carreras', 'cantidad_ciclos_malla'));
         $this->assertTrue(Schema::hasColumn('asignaturas', 'carrera_id'));
-        $this->assertTrue(Schema::hasColumn('silabos', 'carrera_id'));
+        $this->assertFalse(Schema::hasColumn('silabos', 'carrera_id'));
         $this->assertFalse(Schema::hasColumn('asignaturas', 'malla_id'));
         $this->assertFalse(Schema::hasColumn('silabos', 'malla_id'));
         $this->assertFalse(Schema::hasColumn('paralelos', 'paralelo_activo'));

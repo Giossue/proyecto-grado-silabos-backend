@@ -46,7 +46,7 @@ por defecto (`OPENPARSER_ENABLED=false`) hasta resolver PV-12 y PV-14.
 8. Las imágenes se validan y guardan como objetos privados `academic_source_image` en su
    posición lógica.
 9. Una transacción reemplaza el documento completo, deriva texto y reconstruye
-   `fragmentos_fuente_academica` con página y bloques de origen.
+   los documentos de `documentos_ia` con página y bloques de origen en sus metadatos.
 10. Si `EMBEDDINGS_DRIVER=openai`, la cola `ia` genera embeddings
    `text-embedding-3-small` de 1536 dimensiones. Un fallo de embeddings no altera el
    documento canónico.
@@ -77,11 +77,13 @@ introducir saltos artificiales en el documento editable.
 
 ## Persistencia
 
-Solo existen dos tablas específicas del módulo:
+El módulo usa dos tablas:
 
 - `fuentes_academicas`: metadatos, documento JSON completo, texto derivado, PDF vigente
   y estado de ingesta;
-- `fragmentos_fuente_academica`: índice reemplazable textual/vectorial con procedencia.
+- `documentos_ia` (I-135): almacén vectorial reemplazable (contenido, metadatos JSON con
+  fuente, carrera, encabezados, páginas y huella, y embedding) compartido con el
+  asistente de IA.
 
 Las ejecuciones usan la tabla operativa compartida `ejecuciones_trabajo`; no existe una
 tabla de extracciones. Los PDF y las imágenes reutilizan `objetos_almacenados` y se

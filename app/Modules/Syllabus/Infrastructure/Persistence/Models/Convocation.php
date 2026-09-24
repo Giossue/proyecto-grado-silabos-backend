@@ -124,10 +124,4 @@ class Convocation extends Model
     {
         return $this->hasMany(Syllabus::class, 'convocatoria_id');
     }
-
-    /** @return HasMany<ConvocationDeadline, $this> */
-    public function deadlines(): HasMany
-    {
-        return $this->hasMany(ConvocationDeadline::class, 'convocatoria_id');
-    }
 }

@@ -123,13 +123,8 @@ class ReviewController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $validated = $request->validated();
-        $ids = is_array($validated['observation_ids'])
-            ? array_values(array_filter($validated['observation_ids'], is_string(...)))
-            : [];
         $action->execute(
             $revision,
-            $ids,
             $request->string('justification')->toString(),
             $actor,
             $request,
@@ -218,7 +213,7 @@ class ReviewController extends Controller
             'syllabus.teachers:id,nombre',
             'syllabus.revisions.submitter:id,nombre',
             'syllabus.revisions.observations.creator:id,nombre',
-            'syllabus.revisions.correctionRequest.observations',
+            'syllabus.revisions.correctionRequest',
             'syllabus.revisions.approval.approver:id,nombre',
             'syllabus.reopenings.reopener:id,nombre',
         ]);
@@ -289,7 +284,8 @@ class ReviewController extends Controller
     {
         $payload = [];
         foreach ($syllabus->revisions->sortBy('numero_revision') as $revision) {
-            $requestedIds = $revision->correctionRequest?->observations->pluck('id') ?? collect();
+            // Una solicitud de corrección incluye todas las observaciones de su revisión.
+            $requested = $revision->correctionRequest !== null;
             foreach ($revision->observations as $observation) {
                 $payload[] = [
                     'id' => $observation->id,
@@ -298,7 +294,7 @@ class ReviewController extends Controller
                     'field_key' => $observation->clave_campo,
                     'content' => $observation->contenido,
                     'state' => $observation->estado,
-                    'requested' => $requestedIds->contains($observation->id),
+                    'requested' => $requested,
                     'created_by' => $observation->creator->nombre,
                     'observado_en' => $observation->observado_en->toIso8601String(),
                 ];

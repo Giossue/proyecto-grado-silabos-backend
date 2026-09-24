@@ -230,9 +230,9 @@ class DashboardController extends Controller
         $convocation = $readiness['convocation'] ?? null;
         $convocation = $convocation instanceof Convocation ? $convocation : null;
         if ($convocation !== null) {
-            $convocation->loadMissing(['deadlines', 'process.academicPeriod']);
-            $startsAt = $schedule->startsAt($convocation) ?? $process->inicia_en;
-            $dueAt = $schedule->draftDeadline($convocation) ?? $process->entrega_en;
+            $convocation->loadMissing('process.academicPeriod');
+            $startsAt = $schedule->startsAt($convocation);
+            $dueAt = $schedule->draftDeadline($convocation);
         } else {
             $process->loadMissing('academicPeriod');
             $startsAt = $process->inicia_en;
@@ -250,9 +250,9 @@ class DashboardController extends Controller
             ->whereCurrentTeacher($user)
             ->when($careerId !== null, fn (Builder $query) => $query->whereHas('convocation', fn (Builder $convocation) => $convocation->where('carrera_id', $careerId)))
             ->whereHas('convocation.process', fn (Builder $process) => $process->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))
-            ->with(['convocation.deadlines', 'convocation.process.academicPeriod'])
+            ->with(['convocation.process.academicPeriod'])
             ->get()
-            ->sortBy(fn (Syllabus $item): int => $schedule->draftDeadline($item->convocation)?->getTimestamp() ?? PHP_INT_MAX)
+            ->sortBy(fn (Syllabus $item): int => $schedule->draftDeadline($item->convocation)->getTimestamp())
             ->first();
 
         if (! $syllabus instanceof Syllabus) {
@@ -261,8 +261,8 @@ class DashboardController extends Controller
 
         $convocation = $syllabus->convocation;
         $process = $convocation->process;
-        $startsAt = $schedule->startsAt($convocation) ?? $process->inicia_en;
-        $dueAt = $schedule->draftDeadline($convocation) ?? $process->entrega_en;
+        $startsAt = $schedule->startsAt($convocation);
+        $dueAt = $schedule->draftDeadline($convocation);
 
         return $this->deadlinePayload($process, $convocation, $startsAt, $dueAt);
     }

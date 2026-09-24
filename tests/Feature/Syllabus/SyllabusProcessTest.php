@@ -59,7 +59,11 @@ class SyllabusProcessTest extends TestCase
         }
 
         $this->assertTrue(Schema::hasColumns('convocatorias_carreras', ['id', 'carrera_id', 'proceso_id', 'estado_convocatoria_carrera']));
-        $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['id', 'periodo_academico_id', 'plantilla_id', 'inicia_en', 'entrega_en', 'estado_convocatoria_universidad']));
+        $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['id', 'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado_convocatoria_universidad']));
+        // I-132: la plantilla es única y no se referencia por fila.
+        foreach (['silabos', 'convocatorias_universidad', 'artefactos_exportacion', 'historial_ia'] as $table) {
+            $this->assertFalse(Schema::hasColumn($table, 'plantilla_id'));
+        }
         $this->assertFalse(Schema::hasColumn('convocatorias_carreras', 'creado_en'));
         $this->assertFalse(Schema::hasColumn('convocatorias_universidad', 'creado_en'));
     }
@@ -143,8 +147,6 @@ class SyllabusProcessTest extends TestCase
 
         $this->assertDatabaseMissing('convocatorias_universidad', ['id' => $process->id]);
         $this->assertDatabaseMissing('convocatorias_carreras', ['id' => $convocation->id]);
-        $this->assertDatabaseCount('alcances_silabo', 0);
-        $this->assertDatabaseCount('fechas_limite_convocatoria', 0);
         $this->assertDatabaseCount('fuentes_convocatoria', 0);
         foreach ($syllabusIds as $syllabusId) {
             $this->assertDatabaseMissing('silabos', ['id' => $syllabusId]);
@@ -447,20 +449,11 @@ class SyllabusProcessTest extends TestCase
         $convocation = Convocation::query()->firstOrFail();
         $this->assertSame($process->id, $convocation->proceso_id);
         $this->assertSame($process->periodo_academico_id, $convocation->process->periodo_academico_id);
-        $this->assertSame($template->id, $convocation->process->plantilla_id);
         $this->assertSame('abierta', $convocation->estado);
         $this->assertTrue($convocation->sources()->whereKey($source->id)->exists());
         $this->assertFalse($convocation->sources()->whereKey($unselectedSource->id)->exists());
-        $this->assertDatabaseHas('fechas_limite_convocatoria', [
-            'convocatoria_id' => $convocation->id,
-            'etapa_fecha_limite_convocatoria' => 'inicio',
-            'vence_en' => $process->inicia_en,
-        ]);
-        $this->assertDatabaseHas('fechas_limite_convocatoria', [
-            'convocatoria_id' => $convocation->id,
-            'etapa_fecha_limite_convocatoria' => 'borrador',
-            'vence_en' => $process->entrega_en,
-        ]);
+        // I-132: la convocatoria de carrera no copia las fechas del proceso.
+        $this->assertFalse(Schema::hasTable('fechas_limite_convocatoria'));
 
         $this->assertDatabaseCount('silabos', 1);
 
@@ -476,7 +469,7 @@ class SyllabusProcessTest extends TestCase
     public function test_an_open_process_freezes_the_template_until_it_is_paused(): void
     {
         $process = $this->openProcess();
-        $template = $process->template;
+        $template = SyllabusTemplate::institutional();
         $sectionPayload = [
             'title' => 'Anexos',
             'key' => 'anexos',
@@ -515,7 +508,7 @@ class SyllabusProcessTest extends TestCase
     {
         $convocation = $this->openedConvocation();
         $process = $convocation->process()->firstOrFail();
-        $template = $process->template;
+        $template = SyllabusTemplate::institutional();
         $syllabus = Syllabus::query()->firstOrFail();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $this->transition($process, 'pausar', 'Ajuste de la plantilla con expedientes abiertos.')->assertSuccessful();
@@ -549,7 +542,7 @@ class SyllabusProcessTest extends TestCase
             ->whereJsonContains('entrada_ejecucion_trabajo', ['tipo_evento' => 'silabo.regenerado'])
             ->sole();
         $this->assertSame('carrera', $notice->tipo_recurso);
-        $this->assertSame($syllabus->carrera_id, $notice->recurso_id);
+        $this->assertSame($convocation->carrera_id, $notice->recurso_id);
         $this->assertNotEmpty($notice->entrada['destinatarios_ids']);
         $this->assertStringContainsString($syllabus->academicSubjectName(), $notice->entrada['mensaje']);
     }
@@ -821,7 +814,6 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $editableField = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('editable_docente', true)
             ->firstOrFail();
 

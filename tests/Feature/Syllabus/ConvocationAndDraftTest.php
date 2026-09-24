@@ -74,7 +74,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('Arquitectura de Software', data_get($syllabus->contexto_academico, 'subject.name'));
         $this->assertSame(8, data_get($syllabus->contexto_academico, 'curriculum.cycle_count'));
         $this->assertArrayNotHasKey('code', data_get($syllabus->contexto_academico, 'curriculum'));
-        $this->assertCount(1, $syllabus->scopes()->get());
+        $this->assertNotNull($syllabus->parallel);
         $this->assertCount(1, $syllabus->currentTeachers()->get());
         $master = $syllabus->values()->where('heredado', true)->firstOrFail();
         $this->assertSame('Arquitectura de Software', $master->valor['nombre']);
@@ -131,7 +131,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->openPrepared($convocation);
 
         $this->assertSame(2, Syllabus::query()->count());
-        $this->assertSame([1, 1], Syllabus::query()->withCount('scopes')->pluck('scopes_count')->all());
+        $this->assertSame(2, Syllabus::query()->distinct()->count('paralelo_id'));
     }
 
     public function test_resuming_generates_syllabi_only_for_parallels_created_during_the_pause(): void
@@ -160,7 +160,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('abierta', $convocation->fresh()->estado);
         $this->assertSame(2, Syllabus::query()->count());
         $this->assertTrue(Syllabus::query()->whereKey($original->id)->exists());
-        $this->assertTrue(Syllabus::query()->whereHas('scopes', fn ($scope) => $scope->where('paralelo_id', $parallel->id))->exists());
+        $this->assertTrue(Syllabus::query()->where('paralelo_id', $parallel->id)->exists());
 
         // Idempotente: una segunda pasada no duplica expedientes.
         $this->assertSame(0, app(GenerateConvocationSyllabi::class)->execute($convocation->fresh()));
@@ -200,7 +200,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $syllabus->refresh();
         $field = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('clave', 'descripcion')->firstOrFail();
 
         $response = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
@@ -265,7 +264,7 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
-        $inherited = FieldDefinition::query()->where('plantilla_id', $syllabus->plantilla_id)
+        $inherited = FieldDefinition::query()
             ->where('heredado', true)->firstOrFail();
 
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $inherited]), [
@@ -273,7 +272,7 @@ class ConvocationAndDraftTest extends TestCase
             'value' => 'Intento de sobrescritura',
         ])->assertUnprocessable()->assertJsonValidationErrors('field');
 
-        $editable = FieldDefinition::query()->where('plantilla_id', $syllabus->plantilla_id)
+        $editable = FieldDefinition::query()
             ->where('editable_docente', true)->firstOrFail();
         $this->actingAsCoordinator()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $editable]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
@@ -287,7 +286,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
         $field = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('tipo', 'texto_largo')
             ->firstOrFail();
 
@@ -315,7 +313,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertGreaterThan(0, $firstRun->errores_bloqueantes);
 
         $requiredEditable = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('heredado', false)
             ->get();
         foreach ($requiredEditable as $field) {
@@ -341,7 +338,6 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $field = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('clave', 'unidades')
             ->firstOrFail();
         $rows = $this->validPlanningRows();
@@ -370,7 +366,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
         $field = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('tipo', 'repetible')
             ->firstOrFail();
 
@@ -407,7 +402,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
         $field = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('tipo', 'repetible')
             ->firstOrFail();
 
@@ -448,7 +442,6 @@ class ConvocationAndDraftTest extends TestCase
         $process = $periodId === null
             ? $this->openSyllabusProcess($template->id, now()->subDay()->toIso8601String(), now()->addMonth()->toIso8601String())
             : SyllabusProcess::query()->create([
-                'plantilla_id' => $template->id,
                 'periodo_academico_id' => $periodId,
                 'inicia_en' => now()->subDay(),
                 'entrega_en' => now()->addMonth(),

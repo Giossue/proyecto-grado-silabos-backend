@@ -125,6 +125,8 @@ class UpdateCareerAcademicRecord
 
             $metadata = $this->auditContext($record, $dirty);
             $record->save();
+            // El total de horas es una columna generada: se relee tras guardar.
+            $record->refresh();
 
             $this->audit->execute(
                 actorId: $actor->id,
@@ -213,7 +215,6 @@ class UpdateCareerAcademicRecord
             'ciclo' => $data['cycle'] ?? null,
             'modalidad' => $this->inheritance->subjectModality($data),
             'creditos' => $data['creditos'] ?? null,
-            'horas_totales' => CurriculumSystemFields::totalHours($data),
         ];
         $optional = [
             'position' => 'orden_en_ciclo',
@@ -266,6 +267,15 @@ class UpdateCareerAcademicRecord
             $auditKey = self::AUDIT_KEYS[$field] ?? $field;
             $metadata["before_{$auditKey}"] = $this->scalarValue($record->getRawOriginal($field));
             $metadata["after_{$auditKey}"] = $this->scalarValue($record->getAttribute($field));
+        }
+        // El total es generado por la base; se audita cuando cambia alguno de sus componentes.
+        if ($record instanceof Subject && array_intersect(CurriculumSystemFields::TOTAL_HOUR_COMPONENT_KEYS, array_keys($dirty)) !== []) {
+            $after = (int) round(CurriculumSystemFields::totalHours($record->only(CurriculumSystemFields::TOTAL_HOUR_COMPONENT_KEYS)));
+            if ($after !== $record->horas_totales) {
+                $metadata['changed_fields'] .= ', '.self::FIELD_LABELS['horas_totales'];
+                $metadata['before_total_hours'] = $record->horas_totales;
+                $metadata['after_total_hours'] = $after;
+            }
         }
 
         return $metadata;

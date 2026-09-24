@@ -3,7 +3,7 @@
 namespace App\Modules\AiAssistance\Infrastructure\Jobs;
 
 use App\Modules\AiAssistance\Domain\Contracts\AcademicSourceEmbeddingGateway;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AcademicSourceFragment;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiDocument;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -35,14 +35,14 @@ final class EmbedAcademicSourceJob implements ShouldQueue
             return;
         }
 
-        $fragments = AcademicSourceFragment::query()
-            ->where('fuente_academica_id', $this->sourceId)
-            ->orderBy('posicion_fragmento')
-            ->get(['id', 'ruta_encabezados', 'titulo_fragmento', 'contenido_fragmento']);
+        $fragments = AiDocument::query()
+            ->fromSources([$this->sourceId])
+            ->inSourceOrder()
+            ->get(['id', 'contenido_documento', 'metadatos_documento']);
 
         foreach ($fragments->chunk((int) config('ai.embeddings.batch_size')) as $batch) {
             $inputs = array_values($batch
-                ->map(fn (AcademicSourceFragment $fragment): string => $this->inputFor($fragment))
+                ->map(fn (AiDocument $fragment): string => $this->inputFor($fragment))
                 ->values()
                 ->all());
             $vectors = $gateway->embed($inputs);
@@ -52,7 +52,7 @@ final class EmbedAcademicSourceJob implements ShouldQueue
 
             foreach ($batch->values() as $index => $fragment) {
                 DB::update(
-                    'UPDATE fragmentos_fuente_academica SET embedding = CAST(? AS vector) WHERE id = ?',
+                    'UPDATE documentos_ia SET embedding = CAST(? AS vector) WHERE id = ?',
                     [$this->vectorLiteral($vectors[$index]), $fragment->id],
                 );
             }
@@ -65,12 +65,12 @@ final class EmbedAcademicSourceJob implements ShouldQueue
         // de embeddings falle; el siguiente indexado puede reintentarlo.
     }
 
-    private function inputFor(AcademicSourceFragment $fragment): string
+    private function inputFor(AiDocument $fragment): string
     {
-        $path = implode(' > ', $fragment->ruta_encabezados ?? []);
-        $title = trim((string) $fragment->titulo_fragmento);
+        $path = implode(' > ', $fragment->headingPath());
+        $title = trim((string) $fragment->title());
 
-        return trim(implode("\n", array_filter([$path, $title, $fragment->contenido_fragmento])));
+        return trim(implode("\n", array_filter([$path, $title, $fragment->contenido_documento])));
     }
 
     /** @param list<float> $vector */

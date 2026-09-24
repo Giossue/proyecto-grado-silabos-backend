@@ -7,12 +7,10 @@ use App\Modules\AiAssistance\Application\RefreshSyllabusAiReview;
 use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
 use App\Modules\AiAssistance\Domain\Data\AiAnalysisInput;
 use App\Modules\AiAssistance\Domain\Data\AiEvidenceInput;
-use App\Modules\AiAssistance\Domain\Data\AiRecommendationOutput;
 use App\Modules\AiAssistance\Domain\Exceptions\AiContractException;
 use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiRecommendation;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiRecommendationEvidence;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
@@ -22,6 +20,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Throwable;
 
 class AnalyzeSyllabusFieldJob implements ShouldQueue
@@ -54,6 +53,7 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
         'consistency' => 'consistencia',
     ];
 
+    /** @param string $executionId Identificador del mensaje `analisis` en `historial_ia`. */
     public function __construct(public readonly string $executionId)
     {
         $this->onQueue('ia');
@@ -71,22 +71,14 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
         }
         $refreshReview->forExecution($this->executionId);
 
-        $execution = AiExecution::query()
-            ->with(['field', 'evidence'])
-            ->findOrFail($this->executionId);
-        $metadata = $execution->metadatos_entrada;
-        if (($metadata['too_many_evidence'] ?? false) === true) {
-            $this->finishInconclusive('evidence_limit_exceeded', $gateway->version(), $audit, $refreshReview);
-
-            return;
-        }
-        if ($execution->evidence->isEmpty()) {
+        $analysis = AiHistoryEntry::query()->findOrFail($this->executionId);
+        if ($analysis->evidence() === []) {
             $this->finishInconclusive('insufficient_evidence', $gateway->version(), $audit, $refreshReview);
 
             return;
         }
 
-        $input = $this->input($execution);
+        $input = $this->input($analysis);
         try {
             $result = $gateway->analyze($input);
             $contract->validate($input, $result);
@@ -99,8 +91,6 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
             );
 
             return;
-        } catch (AiGatewayUnavailable $exception) {
-            throw $exception;
         }
 
         if ($result->status === 'inconclusive') {
@@ -115,51 +105,54 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
         }
 
         DB::transaction(function () use ($audit, $result): void {
-            $execution = AiExecution::query()->with('evidence')->lockForUpdate()->findOrFail($this->executionId);
-            if (in_array($execution->estado, ['completada', 'no_concluyente', 'fallida'], true)) {
+            $analysis = AiHistoryEntry::query()->lockForUpdate()->findOrFail($this->executionId);
+            if (! $analysis->isOpen()) {
                 return;
             }
-            $evidenceById = $execution->evidence->keyBy('id');
+            $evidenceIds = array_column($analysis->evidence(), 'id');
+            $recommendations = [];
             foreach ($result->recommendations as $index => $output) {
-                $recommendation = $this->persistRecommendation($execution, $output, $index + 1);
-                foreach (array_unique($output->evidenceIds) as $evidenceId) {
-                    if ($evidenceById->has($evidenceId)) {
-                        AiRecommendationEvidence::query()->create([
-                            'recomendacion_ia_id' => $recommendation->id,
-                            'evidencia_ia_id' => $evidenceId,
-                        ]);
-                    }
-                }
+                $recommendations[] = [
+                    'id' => (string) Str::uuid(),
+                    'ordinal' => $index + 1,
+                    // El contrato emite `clarity`/`consistency`; la BD guarda español.
+                    'tipo' => self::TIPOS_RECOMENDACION[$output->type] ?? $output->type,
+                    'titulo' => $output->title,
+                    'explicacion' => $output->explanation,
+                    'texto_sugerido' => $output->suggestedText,
+                    'evidencia_ids' => array_values(array_intersect(array_unique($output->evidenceIds), $evidenceIds)),
+                ];
             }
-            $execution->update([
+            $analysis->amend([
                 'estado' => 'completada',
                 'version_pasarela_ejecutada' => $result->gatewayVersion,
-                'completado_en' => now(),
+                'recomendaciones' => $recommendations,
+                'completado_en' => now()->toIso8601String(),
             ]);
-            $job = JobExecution::query()->lockForUpdate()->findOrFail($execution->ejecucion_trabajo_id);
+            $job = JobExecution::query()->lockForUpdate()->findOrFail($analysis->inputString('ejecucion_trabajo_id'));
             $job->update([
                 'estado' => 'completada',
                 'progreso' => 100,
                 'resultado' => [
-                    'ai_execution_id' => $execution->id,
+                    'ai_execution_id' => $analysis->id,
                     'status' => 'completed',
-                    'recommendation_count' => count($result->recommendations),
+                    'recommendation_count' => count($recommendations),
                 ],
                 'finalizado_en' => now(),
                 'codigo_error' => null,
                 'mensaje_error' => null,
             ]);
-            $this->notify($execution, 'completada');
+            $this->notify($analysis, 'completada');
             $audit->execute(
                 actorId: null,
                 roleAssignmentId: null,
                 action: 'ia.analisis_completado',
                 resourceType: 'ejecucion_ia',
-                resourceId: $execution->id,
+                resourceId: $analysis->id,
                 result: 'exito',
                 metadata: [
                     'gateway_version' => $result->gatewayVersion,
-                    'recommendation_count' => count($result->recommendations),
+                    'recommendation_count' => count($recommendations),
                 ],
                 correlationId: $job->correlacion_id,
             );
@@ -186,12 +179,15 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
     private function markRunning(): bool
     {
         return DB::transaction(function (): bool {
-            $execution = AiExecution::query()->lockForUpdate()->find($this->executionId);
-            if ($execution === null || in_array($execution->estado, ['completada', 'no_concluyente', 'fallida'], true)) {
+            $analysis = AiHistoryEntry::query()->lockForUpdate()->find($this->executionId);
+            if ($analysis === null || ! $analysis->isOpen()) {
                 return false;
             }
-            $job = JobExecution::query()->lockForUpdate()->findOrFail($execution->ejecucion_trabajo_id);
-            $execution->update(['estado' => 'en_ejecucion', 'iniciado_en' => $execution->iniciado_en ?? now()]);
+            $job = JobExecution::query()->lockForUpdate()->findOrFail($analysis->inputString('ejecucion_trabajo_id'));
+            $analysis->amend([
+                'estado' => 'en_ejecucion',
+                'iniciado_en' => $analysis->part('iniciado_en') ?? now()->toIso8601String(),
+            ]);
             $job->update([
                 'estado' => 'en_ejecucion',
                 'intentos' => $job->intentos + 1,
@@ -213,34 +209,33 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
         RefreshSyllabusAiReview $refreshReview,
     ): void {
         DB::transaction(function () use ($audit, $gatewayVersion, $reason): void {
-            $execution = AiExecution::query()->lockForUpdate()->findOrFail($this->executionId);
-            if (in_array($execution->estado, ['completada', 'no_concluyente', 'fallida'], true)) {
+            $analysis = AiHistoryEntry::query()->lockForUpdate()->findOrFail($this->executionId);
+            if (! $analysis->isOpen()) {
                 return;
             }
-            // `$reason` llega en el vocabulario del contrato; se traduce al persistir.
-            $motivo = self::MOTIVOS_NO_CONCLUYENTE[$reason] ?? $reason;
-            $execution->update([
+            $analysis->amend([
                 'estado' => 'no_concluyente',
                 'version_pasarela_ejecutada' => $gatewayVersion,
-                'motivo_no_concluyente' => $motivo,
-                'completado_en' => now(),
+                // `$reason` llega en el vocabulario del contrato; se traduce al persistir.
+                'motivo_no_concluyente' => self::MOTIVOS_NO_CONCLUYENTE[$reason] ?? $reason,
+                'completado_en' => now()->toIso8601String(),
             ]);
-            $job = JobExecution::query()->lockForUpdate()->findOrFail($execution->ejecucion_trabajo_id);
+            $job = JobExecution::query()->lockForUpdate()->findOrFail($analysis->inputString('ejecucion_trabajo_id'));
             $job->update([
                 'estado' => 'completada',
                 'progreso' => 100,
-                'resultado' => ['ai_execution_id' => $execution->id, 'status' => 'inconclusive', 'reason' => $reason],
+                'resultado' => ['ai_execution_id' => $analysis->id, 'status' => 'inconclusive', 'reason' => $reason],
                 'finalizado_en' => now(),
                 'codigo_error' => null,
                 'mensaje_error' => null,
             ]);
-            $this->notify($execution, 'no_concluyente');
+            $this->notify($analysis, 'no_concluyente');
             $audit->execute(
                 actorId: null,
                 roleAssignmentId: null,
                 action: 'ia.analisis_no_concluyente',
                 resourceType: 'ejecucion_ia',
-                resourceId: $execution->id,
+                resourceId: $analysis->id,
                 result: 'exito',
                 metadata: ['reason' => $reason, 'gateway_version' => $gatewayVersion],
                 correlationId: $job->correlacion_id,
@@ -256,17 +251,17 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
         RefreshSyllabusAiReview $refreshReview,
     ): void {
         DB::transaction(function () use ($audit, $code, $message): void {
-            $execution = AiExecution::query()->lockForUpdate()->find($this->executionId);
-            if ($execution === null || in_array($execution->estado, ['completada', 'no_concluyente', 'fallida'], true)) {
+            $analysis = AiHistoryEntry::query()->lockForUpdate()->find($this->executionId);
+            if ($analysis === null || ! $analysis->isOpen()) {
                 return;
             }
-            $execution->update([
+            $analysis->amend([
                 'estado' => 'fallida',
                 'codigo_error' => $code,
                 'mensaje_error' => $message,
-                'completado_en' => now(),
+                'completado_en' => now()->toIso8601String(),
             ]);
-            $job = JobExecution::query()->lockForUpdate()->find($execution->ejecucion_trabajo_id);
+            $job = JobExecution::query()->lockForUpdate()->find($analysis->inputString('ejecucion_trabajo_id'));
             if ($job !== null) {
                 $job->update([
                     'estado' => 'fallida',
@@ -281,7 +276,7 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
                     roleAssignmentId: null,
                     action: 'ia.analisis_fallido',
                     resourceType: 'ejecucion_ia',
-                    resourceId: $execution->id,
+                    resourceId: $analysis->id,
                     result: 'fallido',
                     metadata: ['error_code' => $code],
                     correlationId: $job->correlacion_id,
@@ -291,62 +286,46 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
         $refreshReview->forExecution($this->executionId);
     }
 
-    private function input(AiExecution $execution): AiAnalysisInput
+    private function input(AiHistoryEntry $analysis): AiAnalysisInput
     {
         $evidence = [];
-        foreach ($execution->evidence as $item) {
+        foreach ($analysis->evidence() as $item) {
             $evidence[] = new AiEvidenceInput(
-                $item->id,
-                $item->tipo_evidencia_ia === 'seccion_silabo'
-                    ? (string) $item->definicion_campo_id
-                    : (string) $item->fuente_academica_id,
-                $item->etiqueta_evidencia_ia,
-                $item->extracto,
-                $item->huella_contenido,
-                $item->tipo_evidencia_ia,
+                (string) $item['id'],
+                $item['tipo'] === 'seccion_silabo'
+                    ? (string) $item['definicion_campo_id']
+                    : (string) $item['fuente_academica_id'],
+                (string) $item['etiqueta'],
+                (string) $item['extracto'],
+                (string) $item['huella'],
+                (string) $item['tipo'],
             );
         }
+        $label = FieldDefinition::query()->whereKey($analysis->input('definicion_campo_id'))->value('etiqueta');
 
         return new AiAnalysisInput(
-            $execution->id,
-            $execution->version_contrato,
-            $execution->version_instruccion,
-            $execution->field->clave,
-            $execution->field->etiqueta,
-            $execution->contenido_entrada,
-            $execution->huella_contenido,
-            $execution->idioma,
+            $analysis->id,
+            (string) $analysis->input('version_contrato'),
+            (string) $analysis->input('version_instruccion'),
+            (string) $analysis->input('clave_campo'),
+            is_string($label) ? $label : (string) $analysis->input('clave_campo'),
+            (string) $analysis->input('contenido'),
+            (string) $analysis->input('huella_contenido'),
+            (string) $analysis->input('idioma'),
             $evidence,
             (int) config('ai.limits.recommendations'),
         );
     }
 
-    private function persistRecommendation(
-        AiExecution $execution,
-        AiRecommendationOutput $output,
-        int $ordinal,
-    ): AiRecommendation {
-        return AiRecommendation::query()->create([
-            'ejecucion_ia_id' => $execution->id,
-            'definicion_campo_id' => $execution->definicion_campo_id,
-            'ordinal' => $ordinal,
-            // El contrato emite `clarity`/`consistency`; la BD guarda español.
-            'tipo' => self::TIPOS_RECOMENDACION[$output->type] ?? $output->type,
-            'titulo' => $output->title,
-            'explicacion' => $output->explanation,
-            'texto_sugerido' => $output->suggestedText,
-        ]);
-    }
-
-    private function notify(AiExecution $execution, string $estado): void
+    private function notify(AiHistoryEntry $analysis, string $estado): void
     {
-        if ($execution->revision_ia_silabo_id !== null) {
+        if ($analysis->input('revision_id') !== null) {
             return;
         }
         InternalNotification::query()->firstOrCreate(
             [
-                'usuario_id' => $execution->solicitado_por,
-                'clave_deduplicacion' => "ia.analisis.{$estado}:{$execution->id}",
+                'usuario_id' => $analysis->input('solicitado_por'),
+                'clave_deduplicacion' => "ia.analisis.{$estado}:{$analysis->id}",
             ],
             [
                 'tipo' => "ia.analisis.{$estado}",
@@ -355,7 +334,7 @@ class AnalyzeSyllabusFieldJob implements ShouldQueue
                     ? 'La ayuda solicitada está lista para revisión. Ningún cambio se aplicó automáticamente.'
                     : 'La ayuda no produjo recomendaciones verificables. Puede continuar trabajando normalmente.',
                 'tipo_recurso' => 'ejecucion_ia',
-                'recurso_id' => $execution->id,
+                'recurso_id' => $analysis->id,
                 'notificado_en' => now(),
             ],
         );

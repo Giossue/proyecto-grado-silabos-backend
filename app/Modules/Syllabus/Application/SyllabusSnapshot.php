@@ -17,7 +17,7 @@ class SyllabusSnapshot
     /** @return array<string, mixed> */
     public function build(Syllabus $syllabus): array
     {
-        $syllabus->loadMissing(['template', 'values', 'rows']);
+        $syllabus->loadMissing(['values', 'rows']);
         $values = $syllabus->values->keyBy('definicion_campo_id');
         $rows = $syllabus->rows
             ->sortBy(fn (RepeatableRow $row): string => sprintf(
@@ -30,18 +30,20 @@ class SyllabusSnapshot
 
         $identification = IdentificationCard::fromSyllabus($syllabus);
 
+        $template = SyllabusTemplate::institutional();
+
         return [
             'schema_version' => 4,
-            'template_id' => $syllabus->plantilla_id,
+            'template_id' => $template->id,
             'template_name' => SyllabusTemplate::INSTITUTIONAL_NAME,
             // La copia lleva también el mapa del documento: la revisión se exporta desde
             // sí misma aunque la plantilla haya cambiado después.
-            'document_mapping' => $syllabus->template->mapeo_documento,
+            'document_mapping' => $template->mapeo_documento,
             'academic_context' => $syllabus->contexto_academico,
             // Ficha de identificación ya armada: el documento no vuelve a consultar la malla.
             'identification' => $identification,
             'template_variables' => TemplateVariables::resolve(['identification' => $identification, 'academic_context' => $syllabus->contexto_academico]),
-            'sections' => $syllabus->template->sections
+            'sections' => $template->sections
                 ->map(fn (TemplateSection $section): array => [
                     'key' => $section->clave,
                     'title' => $section->titulo,

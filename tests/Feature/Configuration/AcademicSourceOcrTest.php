@@ -89,9 +89,10 @@ final class AcademicSourceOcrTest extends TestCase
         $this->actingAsCoordinator()
             ->getJson(route('api.v1.coordination.sources.show', $source))
             ->assertJsonPath('source.ingestion.progress', 100);
-        $this->assertDatabaseHas('fragmentos_fuente_academica', [
-            'fuente_academica_id' => $source->id,
-            'titulo_fragmento' => 'Resultado',
+        $this->assertDatabaseHas('documentos_ia', [
+            'metadatos_documento->fuente_academica_id' => $source->id,
+            'metadatos_documento->carrera_id' => $source->carrera_id,
+            'metadatos_documento->titulo' => 'Resultado',
         ]);
         Http::assertSent(fn ($request): bool => $request->url() === 'https://openparser.test/parse/async'
             && $request->hasHeader('Authorization', 'Bearer test-token')

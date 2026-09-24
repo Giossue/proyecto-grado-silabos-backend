@@ -455,7 +455,7 @@ class TemplateDocumentTest extends TestCase
         $this->assertStringContainsString('Carrera congelada', json_encode($resolved));
         $input = new DocumentRenderInput(
             subject: 'Materia', subjectCode: 'SW-001', academicPeriod: '2026', revisionNumber: 1,
-            revisionFingerprint: str_repeat('a', 64), templateId: '01900000-0000-7000-8000-000000000001',
+            revisionFingerprint: str_repeat('a', 64),
             generatedAt: '2026-09-06T00:00:00Z', locale: 'es-EC',
             snapshot: [
                 'document_mapping' => ['appearance' => [

@@ -3,16 +3,14 @@
 namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ConvocationDeadline;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 
 /**
- * El calendario de una convocatoria vive en `fechas_limite_convocatoria`, una fila por
- * etapa. La etapa `inicio` vence cuando se habilita la elaboración; la etapa `borrador`,
- * cuando se cierra el envío. Modelarlo así evita duplicar el concepto de fecha en dos
- * sitios distintos.
+ * El calendario de una convocatoria de carrera es el de su convocatoria institucional:
+ * `inicia_en` habilita la entrega y `entrega_en` la cierra. Desde I-132 no se copia por
+ * carrera; la prórroga de Administración mueve la fecha del proceso y alcanza a todas.
  *
  * El reglamento de la UEB exige que la planificación microcurricular esté programada
  * antes de iniciar el periodo académico. Estas fechas son la forma de cumplirlo, y por eso
@@ -24,24 +22,14 @@ class ConvocationSchedule
 
     public const STAGE_DRAFT = 'borrador';
 
-    public function startsAt(Convocation $convocation): ?CarbonImmutable
+    public function startsAt(Convocation $convocation): CarbonImmutable
     {
-        return $this->stage($convocation, self::STAGE_START)?->vence_en;
+        return $convocation->process->inicia_en;
     }
 
-    public function draftDeadline(Convocation $convocation): ?CarbonImmutable
+    public function draftDeadline(Convocation $convocation): CarbonImmutable
     {
-        return $this->stage($convocation, self::STAGE_DRAFT)?->vence_en;
-    }
-
-    public function stage(Convocation $convocation, string $stage): ?ConvocationDeadline
-    {
-        return $convocation->relationLoaded('deadlines')
-            ? $convocation->deadlines->firstWhere('etapa', $stage)
-            : ConvocationDeadline::query()
-                ->where('convocatoria_id', $convocation->id)
-                ->where('etapa', $stage)
-                ->first();
+        return $convocation->process->entrega_en;
     }
 
     /**
@@ -57,7 +45,7 @@ class ConvocationSchedule
         $now = CarbonImmutable::now();
         $startsAt = $this->startsAt($convocation);
 
-        if ($startsAt !== null && $now->lessThan($startsAt)) {
+        if ($now->lessThan($startsAt)) {
             throw ValidationException::withMessages([
                 'deadline' => 'La convocatoria todavía no inicia; podrá enviar a partir del '
                     .$startsAt->translatedFormat('d/m/Y H:i').'.',
@@ -66,7 +54,7 @@ class ConvocationSchedule
 
         $deadline = $this->draftDeadline($convocation);
 
-        if ($deadline !== null && $now->greaterThan($deadline)) {
+        if ($now->greaterThan($deadline)) {
             throw ValidationException::withMessages([
                 'deadline' => 'El plazo de entrega venció el '
                     .$deadline->translatedFormat('d/m/Y H:i')

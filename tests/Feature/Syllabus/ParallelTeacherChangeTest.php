@@ -82,7 +82,6 @@ class ParallelTeacherChangeTest extends TestCase
         $this->actingAsReplacement()->getJson(route('api.v1.teacher.syllabi.index'))
             ->assertOk()->assertJsonPath('syllabi.data.0.id', $syllabus->id);
         $field = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('heredado', false)
             ->firstOrFail();
         $this->actingAsReplacement()->patchJson(
@@ -219,7 +218,6 @@ class ParallelTeacherChangeTest extends TestCase
         $syllabus = $this->openedSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $fields = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('heredado', false)
             ->get();
         foreach ($fields as $field) {

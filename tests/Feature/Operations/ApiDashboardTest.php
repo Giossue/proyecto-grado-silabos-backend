@@ -67,7 +67,6 @@ class ApiDashboardTest extends TestCase
         $scheduledSubject = ScheduledSubject::query()->firstOrFail();
         $template = app(SyllabusTemplateProvisioner::class)->createWithOfficialFormat();
         $process = SyllabusProcess::query()->create([
-            'plantilla_id' => $template->id,
             'periodo_academico_id' => $scheduledSubject->periodo_academico_id,
             'inicia_en' => now()->addDays(2),
             'entrega_en' => now()->addDays(9),

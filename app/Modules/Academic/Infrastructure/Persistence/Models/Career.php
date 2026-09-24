@@ -3,12 +3,14 @@
 namespace App\Modules\Academic\Infrastructure\Persistence\Models;
 
 use App\Modules\Academic\Domain\StudyModality;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Support\Database\MapsLegacyColumnNames;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 /**
  * @property string $id
@@ -68,9 +70,9 @@ class Career extends Model
         return $this->hasMany(Subject::class, 'carrera_id');
     }
 
-    /** @return HasMany<Syllabus, $this> */
-    public function syllabi(): HasMany
+    /** @return HasManyThrough<Syllabus, Convocation, $this> Sílabos de sus convocatorias (I-131). */
+    public function syllabi(): HasManyThrough
     {
-        return $this->hasMany(Syllabus::class, 'carrera_id');
+        return $this->hasManyThrough(Syllabus::class, Convocation::class, 'carrera_id', 'convocatoria_id');
     }
 }

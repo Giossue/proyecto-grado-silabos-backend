@@ -19,8 +19,8 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\ProcessLocks;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 
 class AcademicStructureViewData
 {
@@ -250,8 +250,9 @@ class AcademicStructureViewData
             ])
             ->orderBy('asignatura_id')
             ->get();
-        $usedScheduledSubjectIds = SyllabusScope::query()
+        $usedScheduledSubjectIds = Parallel::query()
             ->whereIn('programacion_asignatura_id', $scheduledSubjects->pluck('id'))
+            ->whereIn('id', Syllabus::query()->select('paralelo_id'))
             ->pluck('programacion_asignatura_id')
             ->flip();
         $periods = AcademicPeriod::query()

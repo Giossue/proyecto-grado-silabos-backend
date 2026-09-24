@@ -24,9 +24,10 @@ orden de lectura y el Markdown. Las tablas HTML y las imágenes se protegen como
 opacos y se restauran después; DeepSeek no reemplaza el OCR ni puede quitar esos
 recursos. Luego se reconstruye el índice de fragmentos.
 
-Después de reconstruir `fragmentos_fuente_academica`, el trabajo de la cola `ia` puede
-generar embeddings con `text-embedding-3-small` y guardarlos en la columna vectorial de
-esa misma tabla. No existe una tabla separada de embeddings. La consulta del asistente
+Después de reconstruir los documentos de la fuente en `documentos_ia` (I-135), el
+trabajo de la cola `ia` puede generar embeddings con `text-embedding-3-small` y
+guardarlos en la columna `embedding` de esa misma tabla. No existe una tabla separada de
+embeddings. La consulta del asistente
 vectoriza la pregunta con el mismo modelo, filtra las fuentes autorizadas y ordena por
 distancia coseno; si el proveedor está desactivado o indisponible, usa el índice textual
 GIN existente.
@@ -114,9 +115,13 @@ embeddings de 3072 dimensiones.
   estados, tamaños, tipos, referencias, ausencia de HTML y ausencia de texto idéntico.
   El cliente HTTP rechaza además claves de decisión, nota, estado, score, herramientas o
   aprobación en cualquier nivel del JSON.
-- Persistencia: `ejecuciones_ia`, `evidencias_ia`, `recomendaciones_ia`,
-  `recomendacion_evidencias_ia` y `retroalimentacion_ia`. Triggers PostgreSQL fijan
-  relaciones y cierran evidencia/salida al alcanzar un estado terminal.
+- Persistencia (I-135): dos tablas con el patrón memoria de agente + almacén vectorial.
+  `historial_ia` guarda cada análisis, revisión integral, decisión humana y mensaje de
+  chat como un JSON en su sesión (`silabo:{id}:campo:{campo}`, `silabo:{id}:revision`,
+  `silabo:{id}:usuario:{usuario}`); `documentos_ia` guarda fragmentos, metadatos y
+  embeddings. El trigger `proteger_historial_ia` fija la entrada y cierra evidencia y
+  salida al alcanzar un estado terminal; índices únicos parciales mantienen la
+  idempotencia. El estado técnico y el progreso viven en `ejecuciones_trabajo`.
 - Cola: `ai`, tres intentos, timeout de 60 segundos y backoff 5/30/120. Un fallo conserva
   causa segura; evidencia insuficiente o conflictiva finaliza sin llamar al gateway.
 

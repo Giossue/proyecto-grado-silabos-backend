@@ -7,6 +7,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -44,7 +45,7 @@ final class CoordinatorConvocationReadiness
         $career = Career::query()->with('faculty')->withCount('subjects')->findOrFail($careerId);
         $process = SyllabusProcess::query()
             ->inProgress()
-            ->with(['academicPeriod', 'template'])
+            ->with('academicPeriod')
             ->first();
 
         $scheduledSubjects = ScheduledSubject::query()
@@ -87,7 +88,7 @@ final class CoordinatorConvocationReadiness
             ->where('carrera_id', $careerId)
             ->where('proceso_id', $process->id)
             ->first();
-        $templateReady = $process?->template?->hasStructure() ?? false;
+        $templateReady = $process !== null && (SyllabusTemplate::query()->first()?->hasStructure() ?? false);
         $facultyLogoReady = $this->logos->facultyIsConfigured($career->faculty);
         $deadlineOpen = $process !== null && now()->startOfDay()->lessThanOrEqualTo($process->entrega_en->copy()->startOfDay());
 

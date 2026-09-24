@@ -38,18 +38,18 @@ final class IdentificationCard
     /** @return Data */
     public static function fromSyllabus(Syllabus $syllabus): array
     {
-        $syllabus->loadMissing(['scopes.parallel', 'teachers']);
+        $syllabus->loadMissing(['parallel', 'teachers']);
 
         $data = self::build(
             $syllabus->contexto_academico ?? [],
-            self::strings($syllabus->scopes->pluck('parallel.codigo')),
+            self::strings(collect([$syllabus->parallel->codigo])),
             self::strings($syllabus->teachers->pluck('nombre')),
             self::strings($syllabus->teachers->pluck('correo_electronico')),
             self::inputs($syllabus),
         );
         $data['shift'] = implode(', ', array_map(
             fn (string $shift): string => self::SHIFT_LABELS[$shift] ?? ucfirst($shift),
-            self::strings($syllabus->scopes->pluck('parallel.jornada')),
+            self::strings(collect([$syllabus->parallel->jornada])),
         ));
 
         return $data;
@@ -174,7 +174,6 @@ final class IdentificationCard
     private static function inputs(Syllabus $syllabus): array
     {
         $definitions = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->whereIn('clave', array_keys(self::INPUT_KEYS))
             ->get(['id', 'clave']);
         if ($definitions->isEmpty()) {

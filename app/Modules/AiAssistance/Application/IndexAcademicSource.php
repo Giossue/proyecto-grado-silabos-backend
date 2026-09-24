@@ -3,7 +3,7 @@
 namespace App\Modules\AiAssistance\Application;
 
 use App\Modules\AiAssistance\Infrastructure\Jobs\EmbedAcademicSourceJob;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AcademicSourceFragment;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiDocument;
 use App\Modules\Configuration\Application\AcademicSourceDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Support\CanonicalHasher;
@@ -19,7 +19,7 @@ class IndexAcademicSource
 
     public function execute(AcademicSource $source): int
     {
-        AcademicSourceFragment::query()->where('fuente_academica_id', $source->id)->delete();
+        AiDocument::query()->fromSources([$source->id])->delete();
         $document = $source->documento;
         if (($document['content'] ?? []) === []) {
             $document = $this->documents->fromLegacyText($source->contenido);
@@ -29,19 +29,22 @@ class IndexAcademicSource
             (int) config('ai.limits.source_fragment_characters'),
         );
         foreach ($fragments as $position => $fragment) {
-            AcademicSourceFragment::query()->create([
-                'fuente_academica_id' => $source->id,
-                'ruta_encabezados' => $fragment['heading_path'],
-                'titulo_fragmento' => $fragment['title'],
-                'pagina_inicio' => $fragment['page_start'],
-                'pagina_fin' => $fragment['page_end'],
-                'bloques_origen' => $fragment['source_blocks'],
-                'posicion_fragmento' => $position,
-                'contenido_fragmento' => $fragment['content'],
-                'huella_fragmento' => $this->hasher->hash([
-                    'path' => $fragment['heading_path'],
-                    'content' => $fragment['content'],
-                ]),
+            AiDocument::query()->create([
+                'contenido_documento' => $fragment['content'],
+                'metadatos_documento' => array_filter([
+                    'fuente_academica_id' => $source->id,
+                    'carrera_id' => $source->carrera_id,
+                    'titulo' => $fragment['title'],
+                    'ruta_encabezados' => $fragment['heading_path'],
+                    'posicion' => $position,
+                    'pagina_inicio' => $fragment['page_start'],
+                    'pagina_fin' => $fragment['page_end'],
+                    'bloques_origen' => $fragment['source_blocks'],
+                    'huella' => $this->hasher->hash([
+                        'path' => $fragment['heading_path'],
+                        'content' => $fragment['content'],
+                    ]),
+                ], static fn (mixed $value): bool => $value !== null),
             ]);
         }
 

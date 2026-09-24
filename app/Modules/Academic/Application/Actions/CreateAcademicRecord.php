@@ -9,7 +9,6 @@ use App\Modules\Academic\Application\AcademicPeriodWeeks;
 use App\Modules\Academic\Application\ScheduledSubjectInheritance;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CampusLocation;
-use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
@@ -147,7 +146,6 @@ class CreateAcademicRecord
             'unidad_organizacion_curricular' => $data['organization_unit'] ?? null,
             'modalidad' => $this->inheritance->subjectModality($data),
             'creditos' => $data['creditos'] ?? null,
-            'horas_totales' => CurriculumSystemFields::totalHours($data),
             'horas_proyecto' => $data['hours_project'] ?? null,
             'horas_ap' => $data['hours_ap'] ?? null,
             'horas_ac' => $data['horas_ac'] ?? null,
@@ -157,7 +155,8 @@ class CreateAcademicRecord
             'activo' => true,
         ]);
 
-        return $subject;
+        // `horas_totales` lo calcula PostgreSQL.
+        return $subject->refresh();
     }
 
     /** @param array<string, mixed> $data */

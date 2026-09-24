@@ -21,7 +21,6 @@ class ApproveSyllabus
     public function __construct(
         private readonly CanonicalHasher $hasher,
         private readonly ActiveRole $roles,
-        private readonly RecordSyllabusTransition $transitions,
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
@@ -68,7 +67,6 @@ class ApproveSyllabus
                 'idempotency_key' => $idempotencyKey,
             ]);
             $approval = Approval::query()->create([
-                'silabo_id' => $syllabus->id,
                 'revision_silabo_id' => $revision->id,
                 'clave_idempotencia' => $idempotencyKey,
                 'huella_sha256' => $fingerprint,
@@ -77,7 +75,6 @@ class ApproveSyllabus
             ]);
             $syllabus->update(['estado' => 'aprobado', 'version_bloqueo' => $syllabus->version_bloqueo + 1]);
             $activeRole = $this->roles->resolve($request);
-            $this->transitions->execute($syllabus, $revision, 'en_revision', 'aprobado', 'aprobar', $actor, $activeRole);
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $activeRole?->id,
@@ -87,6 +84,8 @@ class ApproveSyllabus
                 result: 'exito',
                 metadata: [
                     'revision_number' => $revision->numero_revision,
+                    'from_state' => 'en_revision',
+                    'to_state' => 'aprobado',
                     'resolved_observations' => $resolved,
                     'fingerprint' => $fingerprint,
                     // DT-10 permite que quien redacta apruebe. No se impide, pero el caso
@@ -110,9 +109,8 @@ class ApproveSyllabus
 
     private function existingApproval(Syllabus $syllabus, string $key, User $actor): ?Approval
     {
-        $approval = Approval::query()
-            ->where('silabo_id', $syllabus->id)
-            ->where('clave_idempotencia', $key)
+        $approval = $syllabus->approvals()
+            ->where('aprobaciones.clave_idempotencia', $key)
             ->first();
         if ($approval !== null && $approval->aprobado_por !== $actor->id) {
             abort(403);

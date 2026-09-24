@@ -3,7 +3,7 @@
 namespace App\Modules\Operations\Application;
 
 use App\Models\User;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -76,7 +76,7 @@ final class NotificationDestination
 
         return match ($notification->tipo_recurso) {
             'silabo' => $this->syllabusOptions(Syllabus::query()->find($id), $notification, $user, $eligible),
-            'ejecucion_ia' => $this->aiOptions(AiExecution::query()->with('syllabus')->find($id), $user, $eligible),
+            'ejecucion_ia', 'revision_ia_silabo' => $this->aiOptions(AiHistoryEntry::query()->find($id), $user, $eligible),
             'artefacto_exportacion' => $this->artifactOptions(ExportArtifact::query()->with('revision.syllabus')->find($id), $user, $eligible),
             'convocatoria' => $this->careerOptions(
                 Convocation::query()->whereKey($id)->pluck('carrera_id')->all(),
@@ -127,9 +127,10 @@ final class NotificationDestination
      * @param  Collection<int, RoleAssignment>  $eligible
      * @return list<Destination>
      */
-    private function aiOptions(?AiExecution $execution, User $user, Collection $eligible): array
+    private function aiOptions(?AiHistoryEntry $entry, User $user, Collection $eligible): array
     {
-        $syllabus = $execution?->syllabus;
+        $syllabusId = $entry?->input('silabo_id');
+        $syllabus = is_string($syllabusId) ? Syllabus::query()->find($syllabusId) : null;
 
         return $syllabus === null
             ? []

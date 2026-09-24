@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $unidad_organizacion_curricular
  * @property StudyModality|null $modalidad
  * @property string|null $creditos
- * @property int|null $horas_totales
+ * @property-read int|null $horas_totales Columna generada: ACD + APE + AA (I-132).
  * @property string|null $horas_proyecto
  * @property string|null $horas_ap
  * @property string|null $horas_ac
@@ -58,7 +58,6 @@ class Subject extends Model
         'unidad_organizacion_curricular',
         'modalidad',
         'creditos',
-        'horas_totales',
         'horas_proyecto',
         'horas_ap',
         'horas_ac',
@@ -85,6 +84,16 @@ class Subject extends Model
             'horas_paec' => 'decimal:2',
             'activo' => 'boolean',
         ];
+    }
+
+    /**
+     * `total_horas_asignatura` es una columna generada: PostgreSQL rechaza copiarla.
+     *
+     * @param  array<int, string>|null  $except
+     */
+    public function replicate(?array $except = null): static
+    {
+        return parent::replicate([...($except ?? []), 'total_horas_asignatura']);
     }
 
     /** @return BelongsTo<Career, $this> */

@@ -7,7 +7,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\Request;
@@ -56,12 +55,6 @@ class CreateConvocation
                 DB::table('fuentes_convocatoria')->insert([
                     'id' => (string) Str::uuid(), 'convocatoria_id' => $convocation->id,
                     'fuente_academica_id' => $sourceId,
-                ]);
-            }
-            foreach ([ConvocationSchedule::STAGE_START => $process->inicia_en, ConvocationSchedule::STAGE_DRAFT => $process->entrega_en] as $stage => $dueAt) {
-                DB::table('fechas_limite_convocatoria')->insert([
-                    'id' => (string) Str::uuid(), 'convocatoria_id' => $convocation->id, 'etapa_fecha_limite_convocatoria' => $stage,
-                    'vence_en' => $dueAt,
                 ]);
             }
             $this->audit->execute(

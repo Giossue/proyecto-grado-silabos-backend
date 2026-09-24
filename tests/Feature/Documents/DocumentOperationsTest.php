@@ -23,7 +23,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
 use App\Support\CanonicalHasher;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
@@ -97,7 +96,6 @@ class DocumentOperationsTest extends TestCase
         Queue::assertPushed(GenerateSyllabusExportJob::class, 1);
         $artifact = ExportArtifact::query()->firstOrFail();
         $this->assertSame($revision->id, $artifact->revision_silabo_id);
-        $this->assertSame($syllabus->plantilla_id, $artifact->plantilla_id);
 
         $outsider = User::factory()->create();
         $outsiderContext = RoleAssignment::query()->create([
@@ -182,7 +180,6 @@ class DocumentOperationsTest extends TestCase
             academicPeriod: $syllabus->convocation->process->academicPeriod()->valueOrFail('codigo'),
             revisionNumber: $revision->numero_revision,
             revisionFingerprint: $revision->huella_sha256,
-            templateId: $syllabus->plantilla_id,
             generatedAt: $artifact->solicitado_en->toIso8601String(),
             locale: 'es-EC',
             snapshot: $revision->fotografia,
@@ -346,9 +343,7 @@ class DocumentOperationsTest extends TestCase
     {
         [$syllabus, $revision] = $this->approvedRevision();
         $artifact = ExportArtifact::query()->create([
-            'silabo_id' => $syllabus->id,
             'revision_silabo_id' => $revision->id,
-            'plantilla_id' => $syllabus->plantilla_id,
             'version_renderizador' => 'test',
             'idioma' => 'es-EC',
             'clave_idempotencia' => (string) Str::uuid(),
@@ -519,22 +514,15 @@ class DocumentOperationsTest extends TestCase
             'proceso_id' => $this->openSyllabusProcess($version->id)->id,
             'estado' => 'abierta',
         ]);
+        $teacherAssignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
         $syllabus = Syllabus::query()->create([
             'convocatoria_id' => $convocation->id,
+            'paralelo_id' => $teacherAssignment->paralelo_id,
             'asignatura_id' => $subject->id,
-            'carrera_id' => $subject->carrera_id,
-            'plantilla_id' => $version->id,
             'estado' => 'aprobado',
             'version_bloqueo' => 2,
             'iniciado_en' => now()->subDay(),
             'guardado_en' => now(),
-        ]);
-        $teacherAssignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
-        SyllabusScope::query()->create([
-            'silabo_id' => $syllabus->id,
-            'convocatoria_id' => $convocation->id,
-            'programacion_asignatura_id' => $teacherAssignment->parallel->programacion_asignatura_id,
-            'paralelo_id' => $teacherAssignment->paralelo_id,
         ]);
         $snapshot = [
             'schema_version' => 1,
@@ -567,7 +555,6 @@ class DocumentOperationsTest extends TestCase
             'enviado_en' => now()->subMinute(),
         ]);
         Approval::query()->create([
-            'silabo_id' => $syllabus->id,
             'revision_silabo_id' => $revision->id,
             'clave_idempotencia' => (string) Str::uuid(),
             'huella_sha256' => hash('sha256', $revision->huella_sha256),

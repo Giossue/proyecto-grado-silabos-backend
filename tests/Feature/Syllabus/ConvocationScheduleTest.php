@@ -9,12 +9,13 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
+use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ConvocationDeadline;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Carbon\CarbonInterface;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
@@ -59,18 +60,15 @@ class ConvocationScheduleTest extends TestCase
         $this->teacherContext = $this->teacher->roleAssignments()->firstOrFail();
     }
 
-    public function test_a_convocation_records_both_the_start_and_the_deadline(): void
+    public function test_a_convocation_reads_the_start_and_the_deadline_from_its_process(): void
     {
         $convocation = $this->prepareConvocation();
+        $schedule = app(ConvocationSchedule::class);
 
-        $this->assertDatabaseHas('fechas_limite_convocatoria', [
-            'convocatoria_id' => $convocation->id,
-            'etapa_fecha_limite_convocatoria' => 'inicio',
-        ]);
-        $this->assertDatabaseHas('fechas_limite_convocatoria', [
-            'convocatoria_id' => $convocation->id,
-            'etapa_fecha_limite_convocatoria' => 'borrador',
-        ]);
+        // I-132: la carrera no copia las fechas; las lee de la convocatoria institucional.
+        $this->assertFalse(Schema::hasTable('fechas_limite_convocatoria'));
+        $this->assertTrue($schedule->startsAt($convocation)->equalTo($convocation->process->inicia_en));
+        $this->assertTrue($schedule->draftDeadline($convocation)->equalTo($convocation->process->entrega_en));
     }
 
     public function test_the_deadline_cannot_be_set_before_the_start(): void
@@ -117,10 +115,8 @@ class ConvocationScheduleTest extends TestCase
     {
         $syllabus = $this->createValidDraft();
         $convocation = $this->expireDeadline($syllabus);
-        $previous = $convocation->deadlines()->where('etapa', 'borrador')->firstOrFail()->vence_en;
-
-        // La fecha del proceso también venció: la prórroga es institucional (I-32).
-        $convocation->process()->update(['inicia_en' => $previous->subDay(), 'entrega_en' => $previous]);
+        // La fecha vencida es la del proceso: la prórroga es institucional (I-32).
+        $previous = $convocation->process->entrega_en;
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
             'due_at' => now()->addWeek()->toIso8601String(),
@@ -241,10 +237,7 @@ class ConvocationScheduleTest extends TestCase
     private function expireDeadline(Syllabus $syllabus): Convocation
     {
         $convocation = $syllabus->convocation;
-        ConvocationDeadline::query()
-            ->where('convocatoria_id', $convocation->id)
-            ->where('etapa', 'borrador')
-            ->update(['vence_en' => now()->subDay()]);
+        $convocation->process()->update(['inicia_en' => now()->subDays(2), 'entrega_en' => now()->subDay()]);
 
         return $convocation->fresh();
     }
@@ -256,7 +249,6 @@ class ConvocationScheduleTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
 
         $fields = FieldDefinition::query()
-            ->where('plantilla_id', $syllabus->plantilla_id)
             ->where('heredado', false)
             ->get();
         foreach ($fields as $field) {

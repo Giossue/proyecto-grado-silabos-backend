@@ -10,6 +10,7 @@ use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
@@ -65,7 +66,7 @@ class SyllabusController extends Controller
                         ->whereRaw('codigo_periodo_academico ILIKE ?', ["%{$term}%"])),
             ))
             ->when($state, fn ($query, string $value) => $query->where('estado', $value))
-            ->with(['convocation:id,carrera_id,proceso_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'subject:id,nombre,codigo_asignatura', 'scopes.parallel:id,codigo'])
+            ->with(['convocation:id,carrera_id,proceso_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'subject:id,nombre,codigo_asignatura', 'parallel:id,codigo'])
             ->orderByRaw('guardado_en DESC NULLS LAST')
             ->paginate(15)
             ->withQueryString()
@@ -77,7 +78,7 @@ class SyllabusController extends Controller
                 'period' => $syllabus->convocation->process->academicPeriod->codigo,
                 'state' => $syllabus->estado,
                 'iniciado_en' => $syllabus->iniciado_en?->toIso8601String(),
-                'parallels' => $syllabus->scopes->pluck('parallel.codigo')->unique()->values(),
+                'parallels' => [$syllabus->parallel->codigo],
                 'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
             ]);
 
@@ -180,18 +181,19 @@ class SyllabusController extends Controller
     private function syllabusPayload(Syllabus $syllabus): array
     {
         $syllabus->load([
-            'convocation.career', 'convocation.process.academicPeriod', 'subject', 'scopes.parallel', 'teachers:id,nombre,correo_electronico',
-            'template', 'values', 'rows',
+            'convocation.career', 'convocation.process.academicPeriod', 'subject', 'parallel', 'teachers:id,nombre,correo_electronico',
+            'values', 'rows',
             'validationRuns' => fn ($query) => $query->with('results')->latest('completado_en')->limit(1),
             'revisions' => fn ($query) => $query->with([
                 'submitter:id,nombre', 'approval.approver:id,nombre',
-                'correctionRequest.observations', 'observations',
+                'correctionRequest', 'observations',
             ]),
             'reopenings' => fn ($query) => $query->with('reopener:id,nombre')->latest('reabierto_en'),
         ]);
         $values = $syllabus->values->keyBy('definicion_campo_id');
         $rows = $syllabus->rows->groupBy('definicion_campo_id');
         $lastValidation = $syllabus->validationRuns->first();
+        $template = SyllabusTemplate::institutional();
 
         return [
             'id' => $syllabus->id,
@@ -204,11 +206,11 @@ class SyllabusController extends Controller
             'version_bloqueo' => $syllabus->version_bloqueo,
             'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
             ...$this->teacherEditability($syllabus),
-            'parallels' => $syllabus->scopes->pluck('parallel.codigo')->unique()->values(),
+            'parallels' => [$syllabus->parallel->codigo],
             'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
             'presentation' => [
-                'appearance' => TemplateAppearance::fromMapping($syllabus->template->mapeo_documento),
-                'title' => TemplateTitleBlock::fromMapping($syllabus->template->mapeo_documento)['text'],
+                'appearance' => TemplateAppearance::fromMapping($template->mapeo_documento),
+                'title' => TemplateTitleBlock::fromMapping($template->mapeo_documento)['text'],
                 'logos' => [
                     'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
                     'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
@@ -227,7 +229,7 @@ class SyllabusController extends Controller
                 'hours_ape' => data_get($syllabus->contexto_academico, 'subject.hours_pae'),
                 'hours_aa' => data_get($syllabus->contexto_academico, 'subject.hours_aa'),
             ],
-            'sections' => $syllabus->template->sections
+            'sections' => $template->sections
                 ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, $rows))
                 ->values(),
             'validation' => $lastValidation instanceof ValidationRun ? [
@@ -288,7 +290,8 @@ class SyllabusController extends Controller
     {
         $payload = [];
         foreach ($syllabus->revisions->sortBy('numero_revision') as $revision) {
-            $requestedIds = $revision->correctionRequest?->observations->pluck('id') ?? collect();
+            // Una solicitud de corrección incluye todas las observaciones de su revisión.
+            $requested = $revision->correctionRequest !== null;
             foreach ($revision->observations as $observation) {
                 $payload[] = [
                     'id' => $observation->id,
@@ -297,7 +300,7 @@ class SyllabusController extends Controller
                     'field_key' => $observation->clave_campo,
                     'content' => $observation->contenido,
                     'state' => $observation->estado,
-                    'requested' => $requestedIds->contains($observation->id),
+                    'requested' => $requested,
                 ];
             }
         }

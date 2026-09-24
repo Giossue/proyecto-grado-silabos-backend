@@ -12,7 +12,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,10 +49,7 @@ class DeleteScheduledSubject
                 ->lockForUpdate()
                 ->pluck('id');
 
-            if (SyllabusScope::query()
-                ->where('programacion_asignatura_id', $scheduledSubject->id)
-                ->orWhereIn('paralelo_id', $parallelIds)
-                ->exists()) {
+            if (Syllabus::query()->whereIn('paralelo_id', $parallelIds)->exists()) {
                 throw ValidationException::withMessages([
                     'scheduledSubject' => 'La materia programada tiene sílabos relacionados y no puede eliminarse. El historial institucional debe conservarse.',
                 ]);

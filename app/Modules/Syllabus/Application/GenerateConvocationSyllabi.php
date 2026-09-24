@@ -4,11 +4,10 @@ namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusScope;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -25,7 +24,7 @@ final class GenerateConvocationSyllabi
 
     public function execute(Convocation $convocation): int
     {
-        $convocation->loadMissing('process.template');
+        $convocation->loadMissing('process');
         $scheduledSubjects = ScheduledSubject::query()
             ->where('periodo_academico_id', $convocation->process->periodo_academico_id)
             ->where('activo', true)
@@ -56,7 +55,7 @@ final class GenerateConvocationSyllabi
             ]);
         }
 
-        $covered = SyllabusScope::query()
+        $covered = Syllabus::query()
             ->where('convocatoria_id', $convocation->id)
             ->pluck('paralelo_id')
             ->flip();
@@ -78,7 +77,7 @@ final class GenerateConvocationSyllabi
                 if ($covered->has($parallel->id)) {
                     continue;
                 }
-                $this->generate($convocation, $scheduledSubject, new Collection([$parallel]));
+                $this->generate($convocation, $scheduledSubject, $parallel);
                 $generated++;
             }
         }
@@ -86,28 +85,17 @@ final class GenerateConvocationSyllabi
         return $generated;
     }
 
-    /** @param Collection<int, Parallel> $parallels */
-    private function generate(Convocation $convocation, ScheduledSubject $scheduledSubject, Collection $parallels): void
+    private function generate(Convocation $convocation, ScheduledSubject $scheduledSubject, Parallel $parallel): void
     {
         $syllabus = Syllabus::query()->create([
             'convocatoria_id' => $convocation->id,
+            'paralelo_id' => $parallel->id,
             'asignatura_id' => $scheduledSubject->subject->id,
-            'carrera_id' => $scheduledSubject->subject->carrera_id,
-            'plantilla_id' => $convocation->process->plantilla_id,
             'contexto_academico' => $this->academicContext->build($scheduledSubject),
             'estado' => 'sin_iniciar',
         ]);
 
-        foreach ($parallels as $parallel) {
-            SyllabusScope::query()->create([
-                'silabo_id' => $syllabus->id,
-                'convocatoria_id' => $convocation->id,
-                'programacion_asignatura_id' => $scheduledSubject->id,
-                'paralelo_id' => $parallel->id,
-            ]);
-        }
-
-        $fields = $convocation->process->template->sections
+        $fields = SyllabusTemplate::institutional()->sections
             ->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields));
         $this->inherit->execute($syllabus, $fields, $scheduledSubject);
     }

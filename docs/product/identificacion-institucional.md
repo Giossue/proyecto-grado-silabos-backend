@@ -31,7 +31,7 @@ Word de identificación) se conservan para sílabos y revisiones anteriores sin 
 | Asignatura | `subject` | `asignaturas.nombre_asignatura` |
 | Periodo académico | `period` | `programaciones_asignatura.periodo_academico_id` → `periodos_academicos.codigo_periodo_academico` |
 | Ciclo | `cycle` | `asignaturas.ciclo_asignatura` (número → «Séptimo») |
-| Paralelo | `parallel` | `paralelos.codigo_paralelo` de los alcances del expediente (`alcances_silabo`) |
+| Paralelo | `parallel` | `paralelos.codigo_paralelo` del paralelo del expediente (`silabos.paralelo_id`) |
 | Jornada | `shift` | `paralelos.jornada_paralelo` (matutina, vespertina, nocturna) |
 | Código | `code` | `asignaturas.codigo_asignatura` |
 | Prerrequisitos | `prerequisites` | `requisitos_asignatura` con `tipo_requisito_asignatura = prerrequisito` → código de la materia requerida |

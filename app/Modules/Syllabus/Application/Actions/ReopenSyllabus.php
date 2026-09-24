@@ -20,7 +20,6 @@ class ReopenSyllabus
     public function __construct(
         private readonly SyllabusSnapshot $snapshots,
         private readonly ActiveRole $roles,
-        private readonly RecordSyllabusTransition $transitions,
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
@@ -50,7 +49,7 @@ class ReopenSyllabus
 
             $approval = Approval::query()
                 ->with('revision')
-                ->where('silabo_id', $locked->id)
+                ->whereHas('revision', fn ($revision) => $revision->where('silabo_id', $locked->id))
                 ->latest('aprobado_en')
                 ->firstOrFail();
             if ($approval->reopening()->exists()) {
@@ -58,7 +57,6 @@ class ReopenSyllabus
             }
 
             $reopening = Reopening::query()->create([
-                'silabo_id' => $locked->id,
                 'aprobacion_id' => $approval->id,
                 'revision_aprobada_id' => $approval->revision_silabo_id,
                 'clave_idempotencia' => $idempotencyKey,
@@ -73,16 +71,6 @@ class ReopenSyllabus
                 'guardado_en' => now(),
             ]);
             $activeRole = $this->roles->resolve($request);
-            $this->transitions->execute(
-                $locked,
-                $approval->revision,
-                'aprobado',
-                'correccion_solicitada',
-                'reabrir',
-                $actor,
-                $activeRole,
-                ['approval_id' => $approval->id],
-            );
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $activeRole?->id,
@@ -90,7 +78,7 @@ class ReopenSyllabus
                 resourceType: 'reapertura',
                 resourceId: $reopening->id,
                 result: 'exito',
-                metadata: ['revision_number' => $approval->revision->numero_revision, 'approval_id' => $approval->id],
+                metadata: ['revision_number' => $approval->revision->numero_revision, 'from_state' => 'aprobado', 'to_state' => 'correccion_solicitada', 'approval_id' => $approval->id],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifications->execute(
@@ -108,9 +96,8 @@ class ReopenSyllabus
 
     private function existingReopening(Syllabus $syllabus, string $key, User $actor): ?Reopening
     {
-        $reopening = Reopening::query()
-            ->where('silabo_id', $syllabus->id)
-            ->where('clave_idempotencia', $key)
+        $reopening = $syllabus->reopenings()
+            ->where('reaperturas.clave_idempotencia', $key)
             ->first();
         if ($reopening !== null && $reopening->reabierto_por !== $actor->id) {
             abort(403);

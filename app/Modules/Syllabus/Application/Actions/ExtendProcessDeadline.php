@@ -10,7 +10,6 @@ use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ConvocationDeadline;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -19,8 +18,8 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * La prórroga es de Administración porque el calendario es de la universidad, no de
- * cada carrera. Se mueve la entrega del proceso y, con ella, la etapa de borrador de
- * todas sus convocatorias; es una excepción, así que exige motivo y conserva la fecha
+ * cada carrera. Se mueve la entrega del proceso, que es la fecha que leen todas sus
+ * convocatorias; es una excepción, así que exige motivo y conserva la fecha
  * anterior en auditoría. Solo hacia adelante: adelantar dejaría fuera de plazo a quien
  * ya estaba dentro. El inicio se corrige al editar un proceso en preparación o pausa.
  */
@@ -65,13 +64,9 @@ class ExtendProcessDeadline
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
             $locked->update(['entrega_en' => $requested]);
 
-            // Las convocatorias copiaron la fecha al prepararse; la prórroga las alcanza a
-            // todas, pero nunca les quita tiempo si alguna ya tenía una fecha mayor.
-            $reached = ConvocationDeadline::query()
-                ->where('etapa', $stage)
-                ->where('vence_en', '<', $requested)
-                ->whereIn('convocatoria_id', Convocation::query()->where('proceso_id', $locked->id)->select('id'))
-                ->update(['vence_en' => $requested]);
+            // Las convocatorias de carrera leen la fecha del proceso (I-132): la prórroga
+            // las alcanza a todas sin copiarla.
+            $reached = Convocation::query()->where('proceso_id', $locked->id)->count();
 
             $this->audit->execute(
                 actorId: $actor->id,

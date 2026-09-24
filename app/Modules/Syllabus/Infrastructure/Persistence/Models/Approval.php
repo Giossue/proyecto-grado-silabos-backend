@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property string $id
- * @property string $silabo_id
  * @property string $revision_silabo_id
  * @property string $clave_idempotencia
  * @property string $huella_sha256
@@ -31,7 +30,7 @@ class Approval extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'silabo_id', 'revision_silabo_id', 'clave_idempotencia', 'huella_sha256',
+        'revision_silabo_id', 'clave_idempotencia', 'huella_sha256',
         'aprobado_por', 'aprobado_en',
     ];
 

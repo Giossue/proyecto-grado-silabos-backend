@@ -5,7 +5,7 @@ namespace App\Modules\AiAssistance\Application;
 use App\Modules\AiAssistance\Domain\Contracts\AcademicSourceEmbeddingGateway;
 use App\Modules\AiAssistance\Domain\Exceptions\AiContractException;
 use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AcademicSourceFragment;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiDocument;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Support\Collection;
 
@@ -14,14 +14,14 @@ class RetrieveAiEvidence
     public function __construct(private readonly AcademicSourceEmbeddingGateway $embeddings) {}
 
     /**
-     * @return Collection<int, AcademicSourceFragment>
+     * @return Collection<int, AiDocument>
      */
     public function forSyllabus(Syllabus $syllabus, ?string $query, int $limit): Collection
     {
         $syllabus->loadMissing('convocation');
         $sourceIds = $syllabus->convocation->sources()
             ->where('fuentes_academicas.activo', true)
-            ->where('fuentes_academicas.carrera_id', $syllabus->carrera_id)
+            ->where('fuentes_academicas.carrera_id', $syllabus->convocation->carrera_id)
             ->pluck('fuentes_academicas.id')
             ->map(static fn (mixed $id): string => (string) $id)
             ->values();
@@ -36,14 +36,12 @@ class RetrieveAiEvidence
                 return $semantic;
             }
 
-            $expression = "to_tsvector('spanish', coalesce(titulo_fragmento, '') || ' ' || contenido_fragmento)";
-            $ranked = AcademicSourceFragment::query()
-                ->with('source')
-                ->whereIn('fuente_academica_id', $sourceIds)
+            $expression = "to_tsvector('spanish'::regconfig, coalesce(metadatos_documento->>'titulo', '') || ' ' || contenido_documento)";
+            $ranked = AiDocument::query()
+                ->fromSources($sourceIds->all())
                 ->whereRaw("{$expression} @@ plainto_tsquery('spanish', ?)", [$search])
                 ->orderByRaw("ts_rank_cd({$expression}, plainto_tsquery('spanish', ?)) DESC", [$search])
-                ->orderBy('fuente_academica_id')
-                ->orderBy('posicion_fragmento')
+                ->inSourceOrder()
                 ->limit($limit)
                 ->get();
             if ($ranked->isNotEmpty()) {
@@ -51,18 +49,16 @@ class RetrieveAiEvidence
             }
         }
 
-        return AcademicSourceFragment::query()
-            ->with('source')
-            ->whereIn('fuente_academica_id', $sourceIds)
-            ->orderBy('fuente_academica_id')
-            ->orderBy('posicion_fragmento')
+        return AiDocument::query()
+            ->fromSources($sourceIds->all())
+            ->inSourceOrder()
             ->limit($limit)
             ->get();
     }
 
     /**
      * @param  array<int, string>  $sourceIds
-     * @return Collection<int, AcademicSourceFragment>
+     * @return Collection<int, AiDocument>
      */
     private function semanticSearch(array $sourceIds, string $search, int $limit): Collection
     {
@@ -76,9 +72,8 @@ class RetrieveAiEvidence
             return collect();
         }
 
-        return AcademicSourceFragment::query()
-            ->with('source')
-            ->whereIn('fuente_academica_id', $sourceIds)
+        return AiDocument::query()
+            ->fromSources($sourceIds)
             ->whereNotNull('embedding')
             ->orderByRaw('embedding <=> CAST(? AS vector) ASC', [$this->vectorLiteral($embedding)])
             ->limit($limit)

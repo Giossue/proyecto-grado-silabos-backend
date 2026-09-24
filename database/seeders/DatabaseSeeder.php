@@ -58,7 +58,6 @@ class DatabaseSeeder extends Seeder
                     'nombre' => 'Arquitectura de Software',
                     'ciclo' => 6,
                     'creditos' => 4,
-                    'horas_totales' => 192,
                     'horas_ac' => 64,
                     'horas_pae' => 32,
                     'horas_aa' => 96,

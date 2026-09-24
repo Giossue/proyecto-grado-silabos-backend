@@ -11,13 +11,12 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use LogicException;
 
 /**
  * @property string $id
- * @property string $silabo_id
  * @property string $revision_silabo_id
- * @property string $plantilla_id
  * @property string|null $ejecucion_trabajo_id
  * @property string|null $objeto_docx_id
  * @property string|null $objeto_pdf_id
@@ -29,6 +28,7 @@ use LogicException;
  * @property CarbonImmutable $solicitado_en
  * @property CarbonImmutable|null $completado_en
  * @property-read SyllabusRevision $revision
+ * @property-read Syllabus $syllabus
  */
 class ExportArtifact extends Model
 {
@@ -42,7 +42,7 @@ class ExportArtifact extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'silabo_id', 'revision_silabo_id', 'plantilla_id', 'ejecucion_trabajo_id',
+        'revision_silabo_id', 'ejecucion_trabajo_id',
         'objeto_docx_id', 'objeto_pdf_id', 'version_renderizador', 'idioma',
         'clave_idempotencia', 'estado', 'solicitado_por', 'asignacion_rol_id',
         'solicitado_en', 'completado_en',
@@ -60,10 +60,14 @@ class ExportArtifact extends Model
         return $this->belongsTo(SyllabusRevision::class, 'revision_silabo_id');
     }
 
-    /** @return BelongsTo<Syllabus, $this> */
-    public function syllabus(): BelongsTo
+    /**
+     * El sílabo se deriva de la revisión exportada (I-131).
+     *
+     * @return HasOneThrough<Syllabus, SyllabusRevision, $this>
+     */
+    public function syllabus(): HasOneThrough
     {
-        return $this->belongsTo(Syllabus::class, 'silabo_id');
+        return $this->hasOneThrough(Syllabus::class, SyllabusRevision::class, 'id', 'id', 'revision_silabo_id', 'silabo_id');
     }
 
     /** @return BelongsTo<JobExecution, $this> */

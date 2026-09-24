@@ -9,7 +9,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * @property string $id
@@ -29,7 +28,7 @@ class CorrectionRequest extends Model
     protected $table = 'solicitudes_correccion';
 
     /** @var list<string> */
-    protected $fillable = ['silabo_id', 'revision_silabo_id', 'justificacion', 'solicitado_por', 'solicitado_en'];
+    protected $fillable = ['revision_silabo_id', 'justificacion', 'solicitado_por', 'solicitado_en'];
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -47,16 +46,5 @@ class CorrectionRequest extends Model
     public function requester(): BelongsTo
     {
         return $this->belongsTo(User::class, 'solicitado_por');
-    }
-
-    /** @return BelongsToMany<ReviewObservation, $this> */
-    public function observations(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            ReviewObservation::class,
-            'solicitud_correccion_observaciones',
-            'solicitud_correccion_id',
-            'observacion_revision_id',
-        );
     }
 }

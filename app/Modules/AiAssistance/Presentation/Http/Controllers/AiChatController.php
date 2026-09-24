@@ -5,11 +5,9 @@ namespace App\Modules\AiAssistance\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\AiAssistance\Application\Actions\SendSyllabusAiMessage;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiConversation;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiMessage;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\SyllabusAiReview;
+use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
 use App\Modules\AiAssistance\Presentation\Http\Requests\SendAiChatMessageRequest;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,76 +18,96 @@ class AiChatController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User && $actor->can('edit', $syllabus), 403);
-        $conversation = AiConversation::query()
-            ->where('silabo_id', $syllabus->id)
-            ->where('usuario_id', $actor->id)
-            ->with(['messages.citations'])
+        $session = AiHistoryEntry::chatSession($syllabus->id, $actor->id);
+        $chat = AiHistoryEntry::query()
+            ->session($session)
+            ->whereIn('mensaje_ia->tipo', ['mensaje', 'ocultamiento'])
+            ->orderBy('enviado_en')
+            ->get();
+        $review = AiHistoryEntry::query()
+            ->session(AiHistoryEntry::reviewSession($syllabus->id))
+            ->ofType('revision')
+            ->latest('enviado_en')
             ->first();
-        $review = SyllabusAiReview::query()
-            ->where('silabo_id', $syllabus->id)
-            ->latest('solicitado_en')
-            ->first();
-        $executions = AiExecution::query()
-            ->where('silabo_id', $syllabus->id)
+        $executions = AiHistoryEntry::query()
+            ->fieldAnalysesOf($syllabus->id)
             ->when(
                 $review !== null,
-                fn ($query) => $query->where('revision_ia_silabo_id', $review->id),
+                fn ($query) => $query->where('mensaje_ia->entrada->revision_id', $review?->id),
             )
-            ->with(['field.template', 'recommendations.evidence', 'recommendations.feedback'])
-            ->latest('solicitado_en')
+            ->latest('enviado_en')
             ->limit(25)
             ->get();
+        $fields = FieldDefinition::query()
+            ->with('template')
+            ->whereKey($executions->map(fn (AiHistoryEntry $execution): mixed => $execution->input('definicion_campo_id'))->unique()->values())
+            ->get()
+            ->keyBy('id');
+        $decisions = AiHistoryEntry::query()
+            ->where('sesion_id', 'like', "silabo:{$syllabus->id}:campo:%")
+            ->ofType('decision')
+            ->get()
+            ->groupBy(fn (AiHistoryEntry $decision): string => (string) $decision->input('recomendacion_id'));
         $reviewResults = [];
         foreach ($executions as $execution) {
+            $field = $fields->get($execution->input('definicion_campo_id'));
+            $section = $field?->block?->section;
+            if ($field === null || $section === null) {
+                continue;
+            }
+            $evidence = collect($execution->evidence())->keyBy('id');
             $recommendations = [];
-            foreach ($execution->recommendations as $recommendation) {
+            foreach ($execution->recommendations() as $recommendation) {
                 $citations = [];
-                foreach ($recommendation->evidence as $evidence) {
-                    $citations[] = [
-                        'id' => $evidence->id,
-                        'type' => $evidence->tipo_evidencia_ia,
-                        'field_id' => $evidence->definicion_campo_id,
-                        'source_id' => $evidence->fuente_academica_id,
-                        'label' => $evidence->etiqueta_evidencia_ia,
-                        'excerpt' => $evidence->extracto,
-                    ];
+                foreach ($recommendation['evidencia_ids'] ?? [] as $evidenceId) {
+                    $item = $evidence->get($evidenceId);
+                    if (is_array($item)) {
+                        $citations[] = $this->citationPayload($item);
+                    }
                 }
+                $own = $decisions->get((string) $recommendation['id'], collect());
                 $recommendations[] = [
-                    'id' => $recommendation->id,
-                    'title' => $recommendation->titulo,
-                    'explanation' => $recommendation->explicacion,
-                    'suggested_text' => $recommendation->texto_sugerido,
-                    'applied' => $recommendation->feedback->contains('decision', 'aplicada'),
-                    'decisions' => $recommendation->feedback->where('usuario_id', $actor->id)->pluck('decision')->values()->all(),
+                    'id' => $recommendation['id'],
+                    'title' => $recommendation['titulo'],
+                    'explanation' => $recommendation['explicacion'],
+                    'suggested_text' => $recommendation['texto_sugerido'],
+                    'applied' => $own->contains(fn (AiHistoryEntry $decision): bool => $decision->input('decision') === 'aplicada'),
+                    'decisions' => $own
+                        ->filter(fn (AiHistoryEntry $decision): bool => $decision->input('usuario_id') === $actor->id)
+                        ->map(fn (AiHistoryEntry $decision): mixed => $decision->input('decision'))
+                        ->values()
+                        ->all(),
                     'citations' => $citations,
                 ];
             }
             $reviewResults[] = [
                 'id' => $execution->id,
-                'field_id' => $execution->definicion_campo_id,
-                'field_label' => $execution->field->etiqueta,
+                'field_id' => $field->id,
+                'field_label' => $field->etiqueta,
                 'section' => [
-                    'id' => $execution->field->block->section->id,
-                    'title' => $execution->field->block->section->titulo,
+                    'id' => $section->id,
+                    'title' => $section->titulo,
                 ],
-                'status' => $execution->estado,
-                'stale' => $execution->version_bloqueo_origen !== $syllabus->version_bloqueo,
-                'reason' => $execution->motivo_no_concluyente,
-                'error' => $execution->mensaje_error,
+                'status' => $execution->state(),
+                'stale' => (int) $execution->input('version_bloqueo_origen') !== $syllabus->version_bloqueo,
+                'reason' => $execution->part('motivo_no_concluyente'),
+                'error' => $execution->part('mensaje_error'),
                 'recommendations' => $recommendations,
             ];
         }
         $messages = [];
-        if ($conversation !== null) {
-            foreach ($conversation->messages as $message) {
+        foreach ($chat as $message) {
+            if ($message->type() === 'mensaje') {
                 $messages[] = $this->messagePayload($message);
             }
         }
+        $reviewTotal = (int) $review?->input('total_campos');
+        $reviewCompleted = (int) $review?->part('campos_finalizados');
 
         return response()->json([
-            'conversation' => $conversation === null ? null : [
-                'id' => $conversation->id,
-                'hidden' => $conversation->ocultada_en !== null,
+            'conversation' => $chat->isEmpty() ? null : [
+                'id' => $session,
+                'hidden' => $chat->last()->type() === 'ocultamiento',
                 'messages' => $messages,
             ],
             'suggested_questions' => [
@@ -100,16 +118,16 @@ class AiChatController extends Controller
             'available' => (string) config('ai.driver') !== 'disabled',
             'review' => $review === null ? null : [
                 'id' => $review->id,
-                'status' => $review->estado_revision_ia,
-                'draft_version' => $review->version_bloqueo_origen,
-                'stale' => $review->version_bloqueo_origen !== $syllabus->version_bloqueo,
-                'total_fields' => $review->total_campos,
-                'completed_fields' => $review->campos_finalizados,
-                'fields_with_recommendations' => $review->campos_con_recomendaciones,
-                'failed_fields' => $review->campos_fallidos,
-                'progress' => (int) floor(($review->campos_finalizados / $review->total_campos) * 100),
-                'requested_at' => $review->solicitado_en->toIso8601String(),
-                'completed_at' => $review->completado_en?->toIso8601String(),
+                'status' => $review->state(),
+                'draft_version' => (int) $review->input('version_bloqueo_origen'),
+                'stale' => (int) $review->input('version_bloqueo_origen') !== $syllabus->version_bloqueo,
+                'total_fields' => $reviewTotal,
+                'completed_fields' => $reviewCompleted,
+                'fields_with_recommendations' => (int) $review->part('campos_con_recomendaciones'),
+                'failed_fields' => (int) $review->part('campos_fallidos'),
+                'progress' => $reviewTotal === 0 ? 0 : (int) floor(($reviewCompleted / $reviewTotal) * 100),
+                'requested_at' => $review->enviado_en->toIso8601String(),
+                'completed_at' => $review->part('completado_en'),
             ],
             'review_results' => $reviewResults,
         ]);
@@ -140,44 +158,60 @@ class AiChatController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User && $actor->can('edit', $syllabus), 403);
-        AiConversation::query()
-            ->where('silabo_id', $syllabus->id)
-            ->where('usuario_id', $actor->id)
-            ->update(['ocultada_en' => now()]);
+        $session = AiHistoryEntry::chatSession($syllabus->id, $actor->id);
+        $last = AiHistoryEntry::query()->session($session)->latest('enviado_en')->first();
+        if ($last !== null && $last->type() !== 'ocultamiento') {
+            AiHistoryEntry::query()->create([
+                'sesion_id' => $session,
+                'mensaje_ia' => [
+                    'tipo' => 'ocultamiento',
+                    'estado' => 'registrada',
+                    'entrada' => ['usuario_id' => $actor->id],
+                ],
+            ]);
+        }
 
         return response()->json(['message' => 'La conversación se ocultó de la vista.']);
     }
 
     /** @return array<string, mixed> */
-    private function messagePayload(AiMessage $message): array
+    private function messagePayload(AiHistoryEntry $message): array
     {
+        $isUser = $message->part('rol') === 'usuario';
+        $evidence = collect($message->evidence())->keyBy('id');
+        $citations = [];
+        foreach ((array) $message->part('citas') as $evidenceId) {
+            $item = $evidence->get($evidenceId);
+            if (is_array($item)) {
+                $citations[] = $this->citationPayload($item);
+            }
+        }
+
         return [
             'id' => $message->id,
-            'role' => $message->rol_mensaje_ia,
-            'status' => $message->estado_mensaje_ia,
-            'content' => $message->contenido_mensaje_ia,
-            'draft_version' => $message->version_bloqueo_origen,
-            'error' => $message->mensaje_error,
+            'role' => $message->part('rol'),
+            'status' => $message->state(),
+            'content' => (string) ($isUser ? $message->input('contenido') : $message->part('contenido')),
+            'draft_version' => (int) $message->input('version_bloqueo_origen'),
+            'error' => $message->part('mensaje_error'),
             'created_at' => $message->enviado_en->toIso8601String(),
-            'citations' => $this->citationPayloads($message),
+            'citations' => $citations,
         ];
     }
 
-    /** @return list<array<string, mixed>> */
-    private function citationPayloads(AiMessage $message): array
+    /**
+     * @param  array<string, mixed>  $evidence
+     * @return array<string, mixed>
+     */
+    private function citationPayload(array $evidence): array
     {
-        $citations = [];
-        foreach ($message->citations as $evidence) {
-            $citations[] = [
-                'id' => $evidence->id,
-                'type' => $evidence->tipo_evidencia_mensaje_ia,
-                'field_id' => $evidence->definicion_campo_id,
-                'source_id' => $evidence->fuente_academica_id,
-                'label' => $evidence->etiqueta_evidencia_mensaje_ia,
-                'excerpt' => $evidence->extracto_evidencia_mensaje_ia,
-            ];
-        }
-
-        return $citations;
+        return [
+            'id' => $evidence['id'],
+            'type' => $evidence['tipo'],
+            'field_id' => $evidence['definicion_campo_id'] ?? null,
+            'source_id' => $evidence['fuente_academica_id'] ?? null,
+            'label' => $evidence['etiqueta'],
+            'excerpt' => $evidence['extracto'],
+        ];
     }
 }

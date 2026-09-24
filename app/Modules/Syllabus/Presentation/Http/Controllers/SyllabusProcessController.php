@@ -32,7 +32,7 @@ class SyllabusProcessController extends Controller
 
         $payload = [
             'processes' => SyllabusProcess::query()
-                ->with(['template:id', 'academicPeriod:id,codigo'])
+                ->with('academicPeriod:id,codigo')
                 ->withCount('convocations')
                 ->orderByDesc('inicia_en')
                 ->get()

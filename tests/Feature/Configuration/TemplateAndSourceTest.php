@@ -616,11 +616,11 @@ class TemplateAndSourceTest extends TestCase
 
         $this->assertSame("Resultado\n\nDiseña software seguro.", $source->fresh()->contenido);
         $this->assertSame('doc', $source->fresh()->documento['type']);
-        $this->assertDatabaseHas('fragmentos_fuente_academica', [
-            'fuente_academica_id' => $source->id,
-            'titulo_fragmento' => 'Resultado',
-            'posicion_fragmento' => 0,
-            'contenido_fragmento' => 'Diseña software seguro.',
+        $this->assertDatabaseHas('documentos_ia', [
+            'metadatos_documento->fuente_academica_id' => $source->id,
+            'metadatos_documento->titulo' => 'Resultado',
+            'metadatos_documento->posicion' => '0',
+            'contenido_documento' => 'Diseña software seguro.',
         ]);
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion_evento_auditoria' => 'fuente.contenido_actualizado',

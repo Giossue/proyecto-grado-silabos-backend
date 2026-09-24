@@ -4,6 +4,7 @@ namespace App\Modules\AiAssistance\Application;
 
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -29,12 +30,12 @@ class BuildSyllabusChatContext
      */
     public function build(Syllabus $syllabus, ?string $query = null, ?string $excludeFieldId = null): array
     {
-        $syllabus->loadMissing(['template', 'values', 'rows', 'convocation']);
+        $syllabus->loadMissing(['values', 'rows', 'convocation']);
         $values = $syllabus->values->keyBy('definicion_campo_id');
         $rows = $syllabus->rows->groupBy('definicion_campo_id');
         $fieldItems = [];
 
-        foreach ($syllabus->template->sections->sortBy('posicion') as $section) {
+        foreach (SyllabusTemplate::institutional()->sections->sortBy('posicion') as $section) {
             foreach ($section->blocks->sortBy('posicion') as $block) {
                 foreach ($block->fields->sortBy('posicion') as $field) {
                     if ($field->id === $excludeFieldId) {

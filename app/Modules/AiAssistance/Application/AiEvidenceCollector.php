@@ -34,16 +34,17 @@ class AiEvidenceCollector
 
         $limit = (int) config('ai.limits.evidence_items');
         $items = [];
+        $names = $sources->pluck('nombre', 'id');
         foreach ($this->retriever->forSyllabus($syllabus, $query, $limit) as $fragment) {
-            $path = array_values(array_filter($fragment->ruta_encabezados, fn (string $heading): bool => $heading !== ''));
-            $sourceName = $fragment->source->nombre;
+            $path = array_values(array_filter($fragment->headingPath(), fn (string $heading): bool => $heading !== ''));
+            $sourceName = (string) $names->get($fragment->sourceId(), '');
             $items[] = [
-                'source_id' => $fragment->fuente_academica_id,
+                'source_id' => $fragment->sourceId(),
                 'source_name' => mb_substr($path === [] ? $sourceName : $sourceName.' · '.implode(' › ', $path), 0, 180),
                 'fragment_id' => $fragment->id,
                 'heading_path' => $path,
-                'excerpt' => mb_substr($fragment->contenido_fragmento, 0, (int) config('ai.limits.evidence_excerpt_characters')),
-                'fingerprint' => $fragment->huella_fragmento,
+                'excerpt' => mb_substr($fragment->contenido_documento, 0, (int) config('ai.limits.evidence_excerpt_characters')),
+                'fingerprint' => $fragment->fingerprint(),
             ];
         }
 

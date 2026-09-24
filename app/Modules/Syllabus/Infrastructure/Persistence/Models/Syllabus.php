@@ -4,9 +4,8 @@ namespace App\Modules\Syllabus\Infrastructure\Persistence\Models;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiExecution;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 /**
  * @property string $id
@@ -29,9 +29,8 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property-read Convocation $convocation
  * @property-read Subject $subject
  * @property-read Career $career
- * @property string $plantilla_id
- * @property string $carrera_id
- * @property-read SyllabusTemplate $template
+ * @property-read Parallel $parallel
+ * @property string $paralelo_id
  */
 class Syllabus extends Model
 {
@@ -48,7 +47,7 @@ class Syllabus extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'convocatoria_id', 'asignatura_id', 'carrera_id', 'plantilla_id', 'estado',
+        'convocatoria_id', 'paralelo_id', 'asignatura_id', 'estado',
         'contexto_academico', 'version_bloqueo', 'iniciado_en', 'guardado_en',
     ];
 
@@ -89,22 +88,24 @@ class Syllabus extends Model
         return $this->belongsTo(Subject::class, 'asignatura_id');
     }
 
-    /** @return BelongsTo<Career, $this> */
-    public function career(): BelongsTo
+    /**
+     * La carrera se deriva de la convocatoria de carrera (I-131).
+     *
+     * @return HasOneThrough<Career, Convocation, $this>
+     */
+    public function career(): HasOneThrough
     {
-        return $this->belongsTo(Career::class, 'carrera_id');
+        return $this->hasOneThrough(Career::class, Convocation::class, 'id', 'id', 'convocatoria_id', 'carrera_id');
     }
 
-    /** @return BelongsTo<SyllabusTemplate, $this> */
-    public function template(): BelongsTo
+    /**
+     * Paralelo que cubre el sílabo: exactamente uno por sílabo y convocatoria (I-131).
+     *
+     * @return BelongsTo<Parallel, $this>
+     */
+    public function parallel(): BelongsTo
     {
-        return $this->belongsTo(SyllabusTemplate::class, 'plantilla_id');
-    }
-
-    /** @return HasMany<SyllabusScope, $this> */
-    public function scopes(): HasMany
-    {
-        return $this->hasMany(SyllabusScope::class, 'silabo_id');
+        return $this->belongsTo(Parallel::class, 'paralelo_id');
     }
 
     /**
@@ -174,27 +175,15 @@ class Syllabus extends Model
         );
     }
 
-    /** @return HasMany<Approval, $this> */
-    public function approvals(): HasMany
+    /** @return HasManyThrough<Approval, SyllabusRevision, $this> */
+    public function approvals(): HasManyThrough
     {
-        return $this->hasMany(Approval::class, 'silabo_id');
+        return $this->hasManyThrough(Approval::class, SyllabusRevision::class, 'silabo_id', 'revision_silabo_id');
     }
 
-    /** @return HasMany<Reopening, $this> */
-    public function reopenings(): HasMany
+    /** @return HasManyThrough<Reopening, SyllabusRevision, $this> */
+    public function reopenings(): HasManyThrough
     {
-        return $this->hasMany(Reopening::class, 'silabo_id');
-    }
-
-    /** @return HasMany<AiExecution, $this> */
-    public function aiExecutions(): HasMany
-    {
-        return $this->hasMany(AiExecution::class, 'silabo_id');
-    }
-
-    /** @return HasMany<SyllabusTransition, $this> */
-    public function transitions(): HasMany
-    {
-        return $this->hasMany(SyllabusTransition::class, 'silabo_id');
+        return $this->hasManyThrough(Reopening::class, SyllabusRevision::class, 'silabo_id', 'revision_aprobada_id');
     }
 }

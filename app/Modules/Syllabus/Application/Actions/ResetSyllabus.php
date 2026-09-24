@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -56,7 +57,7 @@ class ResetSyllabus
         return DB::transaction(function () use ($activeRole, $actor, $reason, $request, $syllabus): Syllabus {
             $locked = Syllabus::query()
                 ->lockForUpdate()
-                ->with(['convocation', 'scopes.scheduledSubject', 'template'])
+                ->with(['convocation', 'parallel.scheduledSubject'])
                 ->findOrFail($syllabus->id);
 
             if (! in_array($locked->estado, self::RESETTABLE_STATES, true)) {
@@ -72,10 +73,7 @@ class ResetSyllabus
                 ]);
             }
 
-            $scheduledSubject = $locked->scopes->first()?->scheduledSubject;
-            if ($scheduledSubject === null) {
-                throw ValidationException::withMessages(['syllabus' => 'El sílabo no tiene una materia programada asociada.']);
-            }
+            $scheduledSubject = $locked->parallel->scheduledSubject;
 
             $discarded = [
                 'previous_state' => $locked->estado,
@@ -98,7 +96,7 @@ class ResetSyllabus
             ]);
             $this->inherit->execute(
                 $locked,
-                $locked->template->sections->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields)),
+                SyllabusTemplate::institutional()->sections->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields)),
                 $scheduledSubject,
             );
 

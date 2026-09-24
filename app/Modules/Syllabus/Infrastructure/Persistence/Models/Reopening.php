@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property string $id
- * @property string $silabo_id
  * @property string $aprobacion_id
  * @property string $revision_aprobada_id
  * @property string $clave_idempotencia
@@ -30,7 +29,7 @@ class Reopening extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'silabo_id', 'aprobacion_id', 'revision_aprobada_id', 'clave_idempotencia',
+        'aprobacion_id', 'revision_aprobada_id', 'clave_idempotencia',
         'causa', 'reabierto_por', 'reabierto_en',
     ];
 

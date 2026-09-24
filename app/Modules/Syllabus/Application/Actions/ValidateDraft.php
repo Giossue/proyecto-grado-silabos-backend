@@ -29,7 +29,6 @@ class ValidateDraft
         return DB::transaction(function () use ($actor, $request, $syllabus): ValidationRun {
             $locked = Syllabus::query()->lockForUpdate()->findOrFail($syllabus->id);
             $fields = FieldDefinition::query()
-                ->where('plantilla_id', $locked->plantilla_id)
                 ->with('template')
                 ->get();
             $values = $locked->values()->get()->keyBy('definicion_campo_id');

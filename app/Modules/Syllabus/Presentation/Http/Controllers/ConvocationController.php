@@ -49,7 +49,7 @@ class ConvocationController extends Controller
                     }
                 })
                 ->with([
-                    'academicPeriod:id,codigo', 'template:id',
+                    'academicPeriod:id,codigo',
                     'convocations' => fn ($career) => $career->where('carrera_id', $careerId)->withCount('syllabi'),
                 ])
                 ->orderByDesc('inicia_en')
@@ -89,9 +89,9 @@ class ConvocationController extends Controller
     public function show(Convocation $convocation, Request $request): JsonResponse
     {
         abort_unless($request->user()?->can('view', $convocation) === true, 403);
-        $convocation->load(['career', 'sources', 'deadlines', 'process.academicPeriod', 'process.template']);
+        $convocation->load(['career', 'sources', 'process.academicPeriod']);
         $syllabi = $convocation->syllabi()
-            ->with(['subject:id,nombre,codigo_asignatura', 'scopes.parallel:id,codigo', 'teachers:id,nombre'])
+            ->with(['subject:id,nombre,codigo_asignatura', 'parallel:id,codigo', 'teachers:id,nombre'])
             ->orderBy('asignatura_id')->get();
 
         $payload = [
@@ -106,8 +106,8 @@ class ConvocationController extends Controller
                 'period' => $convocation->process->academicPeriod->codigo,
                 'template' => SyllabusTemplate::INSTITUTIONAL_NAME,
                 'sources' => $convocation->sources->map(fn (AcademicSource $source) => $source->nombre)->values(),
-                'start_date' => $convocation->deadlines->firstWhere('etapa', 'inicio')?->vence_en->toIso8601String(),
-                'draft_deadline' => $convocation->deadlines->firstWhere('etapa', 'borrador')?->vence_en->toIso8601String(),
+                'start_date' => $convocation->process->inicia_en->toIso8601String(),
+                'draft_deadline' => $convocation->process->entrega_en->toIso8601String(),
                 'counts' => [
                     'total' => $syllabi->count(),
                     'not_started' => $syllabi->where('estado', 'sin_iniciar')->count(),
@@ -121,7 +121,7 @@ class ConvocationController extends Controller
                     'code' => $syllabus->academicSubjectCode(),
                     'state' => $syllabus->estado,
                     'iniciado_en' => $syllabus->iniciado_en?->toIso8601String(),
-                    'parallels' => $syllabus->scopes->pluck('parallel.codigo')->unique()->values(),
+                    'parallels' => [$syllabus->parallel->codigo],
                     'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
                 ])->values(),
             ],

@@ -10,7 +10,6 @@ use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Reopening;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\CanonicalHasher;
@@ -26,7 +25,6 @@ class SubmitSyllabus
         private readonly SyllabusSnapshot $snapshots,
         private readonly CanonicalHasher $hasher,
         private readonly ActiveRole $roles,
-        private readonly RecordSyllabusTransition $transitions,
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
@@ -81,9 +79,8 @@ class SubmitSyllabus
                 ->lockForUpdate()
                 ->first();
             $reopening = $locked->estado === 'correccion_solicitada'
-                ? Reopening::query()
-                    ->where('silabo_id', $locked->id)
-                    ->whereNotIn('id', SyllabusRevision::query()->whereNotNull('reapertura_id')->select('reapertura_id'))
+                ? $locked->reopenings()
+                    ->whereNotIn('reaperturas.id', SyllabusRevision::query()->whereNotNull('reapertura_id')->select('reapertura_id'))
                     ->latest('reabierto_en')
                     ->first()
                 : null;
@@ -109,7 +106,6 @@ class SubmitSyllabus
                 'guardado_en' => now(),
             ]);
             $activeRole = $this->roles->resolve($request);
-            $this->transitions->execute($locked, $revision, $from, 'en_revision', $action, $actor, $activeRole);
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $activeRole?->id,
@@ -120,7 +116,7 @@ class SubmitSyllabus
                 resourceType: 'revision_silabo',
                 resourceId: $revision->id,
                 result: 'exito',
-                metadata: ['revision_number' => $revision->numero_revision, 'fingerprint' => $revision->huella_sha256],
+                metadata: ['revision_number' => $revision->numero_revision, 'from_state' => $from, 'to_state' => 'en_revision', 'fingerprint' => $revision->huella_sha256],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $eventType = $action === 'enviar' ? 'silabo.enviado' : 'silabo.reenviado';

@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -62,7 +63,7 @@ class TransitionSyllabusProcess
         }
 
         return DB::transaction(function () use ($activeRole, $actor, $process, $reason, $request, $rule): SyllabusProcess {
-            $locked = SyllabusProcess::query()->lockForUpdate()->with('template')->findOrFail($process->id);
+            $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
             if (! in_array($locked->estado, $rule['from'], true)) {
                 throw ValidationException::withMessages([
                     'process' => 'El proceso no está en un estado que admita esta acción.',
@@ -71,7 +72,7 @@ class TransitionSyllabusProcess
 
             if ($rule['to'] === SyllabusProcess::STATE_OPEN) {
                 // Lo que antes garantizaba «publicar»: la plantilla se usa completa o no se usa.
-                $this->templateStructure->assertUsable($locked->template, 'process');
+                $this->templateStructure->assertUsable(SyllabusTemplate::institutional(), 'process');
             }
 
             $previous = $locked->estado;

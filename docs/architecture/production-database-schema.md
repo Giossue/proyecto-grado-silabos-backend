@@ -302,26 +302,24 @@ CHECK documento_fuente_academica es un objeto doc con content como arreglo
 CHECK documento_fuente_academica no contiene nodos de texto vacíos
 ~~~
 
-## fragmentos_fuente_academica
+## documentos_ia
 
-**Contexto:** índice derivado y reemplazable del documento estructurado de una fuente.
+**Contexto:** almacén vectorial (I-135) derivado y reemplazable del documento
+estructurado de cada fuente académica.
 
 ~~~text
 id UUID (PK)
-fuente_academica_id UUID (FK → fuentes_academicas.id) NOT NULL
-ruta_encabezados JSONB NOT NULL
-titulo_fragmento VARCHAR NULL
-pagina_inicio SMALLINT NULL
-pagina_fin SMALLINT NULL
-bloques_origen JSONB NULL
-posicion_fragmento SMALLINT NOT NULL
-contenido_fragmento TEXT NOT NULL
-huella_fragmento CHAR(64) NOT NULL
+contenido_documento TEXT NOT NULL
+metadatos_documento JSONB NOT NULL DEFAULT '{}'
 embedding VECTOR(1536) NULL
 
-UNIQUE (fuente_academica_id, posicion_fragmento)
-Índice GIN de búsqueda textual en español sobre título y contenido
+CHECK metadatos_documento es un objeto con fuente_academica_id
+Metadatos: fuente_academica_id, carrera_id, titulo, ruta_encabezados, posicion,
+  pagina_inicio, pagina_fin, bloques_origen, huella
 Índice HNSW parcial de `embedding` con `vector_cosine_ops`
+Índice btree ((metadatos_documento->>'fuente_academica_id'), posicion)
+Índice GIN de búsqueda textual en español sobre título y contenido
+Trigger eliminar_documentos_ia_de_fuente: borra los documentos de una fuente eliminada
 ~~~
 
 ### Cardinalidades
@@ -331,8 +329,8 @@ plantilla_silabo 1:N definiciones_campo
 carreras 1:N fuentes_academicas
 fuentes_academicas 1:0..1 objetos_almacenados como PDF vigente
 fuentes_academicas 1:N ejecuciones_trabajo por recurso lógico
-fuentes_academicas 1:N fragmentos_fuente_academica
-fragmentos_fuente_academica 0..1 embedding vectorial por fragmento
+fuentes_academicas 1:N documentos_ia mediante metadatos_documento.fuente_academica_id
+documentos_ia 0..1 embedding vectorial por documento
 ~~~
 
 ---
@@ -400,8 +398,8 @@ UNIQUE (convocatoria_id, etapa_fecha_limite_convocatoria)
 ~~~text
 id UUID (PK)
 convocatoria_id UUID (FK → convocatorias_carreras.id) NOT NULL
+paralelo_id UUID (FK → paralelos.id) NOT NULL
 asignatura_id UUID (FK → asignaturas.id) NOT NULL
-carrera_id UUID (FK → carreras.id) NOT NULL
 estado_silabo VARCHAR NOT NULL
 version_bloqueo INTEGER NOT NULL
 iniciado_en TIMESTAMPTZ NULL
@@ -410,26 +408,16 @@ contexto_academico_silabo JSONB NOT NULL
 plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
 ~~~
 
-## alcances_silabo
-
-**Contexto:** paralelos cubiertos por un sílabo.
-
-~~~text
-id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-convocatoria_id UUID (FK → convocatorias_carreras.id) NOT NULL
-programacion_asignatura_id UUID (FK → programaciones_asignatura.id) NOT NULL
-paralelo_id UUID (FK → paralelos.id) NOT NULL
-
-UNIQUE (convocatoria_id, paralelo_id)
-UNIQUE (silabo_id, paralelo_id)
-~~~
+`UNIQUE (convocatoria_id, paralelo_id)`. La carrera se obtiene de
+`convocatorias_carreras.carrera_id` y la materia programada de
+`paralelos.programacion_asignatura_id`; I-131 (`000099`) retiró `alcances_silabo` y
+`silabos.carrera_id`.
 
 ## docentes_vigentes_silabo (vista)
 
 **Contexto:** docente vigente de un sílabo (I-130, migración `000098`, que retira la
-tabla `colaboradores_silabo`). Se deriva de `alcances_silabo` → `asignaciones_paralelo`
-activas → `asignaciones_rol` activas con rol `docente`. Solo lectura.
+tabla `colaboradores_silabo`; I-131 la recrea en `000099`). Se deriva de
+`silabos.paralelo_id` → `asignaciones_paralelo` activas → `asignaciones_rol` activas con rol `docente`. Solo lectura.
 
 ~~~text
 silabo_id UUID
@@ -507,8 +495,8 @@ carreras 1:N convocatorias_carreras
 convocatorias_carreras N:M fuentes_academicas mediante fuentes_convocatoria
 convocatorias_carreras 1:N fechas_limite_convocatoria
 convocatorias_carreras 1:N silabos
-silabos N:M paralelos mediante alcances_silabo
-silabos N:M usuarios mediante la vista docentes_vigentes_silabo (derivada de alcances y asignaciones de paralelo)
+paralelos 1:N silabos (uno por convocatoria de carrera)
+silabos N:M usuarios mediante la vista docentes_vigentes_silabo (derivada del paralelo y sus asignaciones)
 silabos N:M definiciones_campo mediante valores_campo
 silabos 1:N filas_repetibles
 silabos 1:N ejecuciones_validacion
@@ -545,231 +533,70 @@ entrada_ejecucion_trabajo JSONB NULL
 intentos_maximos SMALLINT NOT NULL
 ~~~
 
-## ejecuciones_ia
+## historial_ia
 
-**Contexto:** una solicitud de IA sobre un campo de un sílabo.
-
-~~~text
-id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-definicion_campo_id UUID (FK → definiciones_campo.id) NOT NULL
-ejecucion_trabajo_id UUID (FK → ejecuciones_trabajo.id) NULL UNIQUE
-clave_idempotencia UUID NOT NULL
-clave_funcional CHAR(64) NOT NULL
-estado_ejecucion_ia VARCHAR NOT NULL
-version_contrato VARCHAR NOT NULL
-version_instruccion VARCHAR NOT NULL
-version_pasarela_solicitada VARCHAR NOT NULL
-version_pasarela_ejecutada VARCHAR NULL
-idioma VARCHAR NOT NULL
-contenido_entrada_ia TEXT NOT NULL
-huella_contenido CHAR(64) NOT NULL
-huella_conjunto_fuentes CHAR(64) NOT NULL
-metadatos_entrada_ia JSONB NOT NULL
-version_bloqueo_origen INTEGER NOT NULL
-motivo_no_concluyente VARCHAR NULL
-codigo_error VARCHAR NULL
-mensaje_error TEXT NULL
-solicitado_por UUID (FK → usuarios.id) NOT NULL
-asignacion_rol_id UUID (FK → asignaciones_rol.id) NULL
-solicitado_en TIMESTAMPTZ NOT NULL
-iniciado_en TIMESTAMPTZ NULL
-completado_en TIMESTAMPTZ NULL
-plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
-revision_ia_silabo_id UUID (FK → revisiones_ia_silabo.id) NULL
-
-UNIQUE (silabo_id, definicion_campo_id, clave_idempotencia)
-UNIQUE parcial sobre clave_funcional
-UNIQUE (revision_ia_silabo_id, definicion_campo_id)
-~~~
-
-## revisiones_ia_silabo
-
-**Contexto:** ejecución padre de una revisión integral de IA sobre una versión del sílabo.
+**Contexto:** memoria de la IA (I-135). Cada fila es un mensaje JSON de una sesión;
+reemplaza a `ejecuciones_ia`, `revisiones_ia_silabo`, `evidencias_ia`,
+`recomendaciones_ia`, `recomendacion_evidencias_ia`, `retroalimentacion_ia`,
+`conversaciones_ia`, `mensajes_ia`, `evidencias_mensaje_ia` y `citas_mensaje_ia`.
 
 ~~~text
 id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-version_bloqueo_origen INTEGER NOT NULL
-clave_idempotencia UUID NOT NULL
-estado_revision_ia VARCHAR NOT NULL DEFAULT 'pendiente'
-total_campos SMALLINT NOT NULL
-campos_finalizados SMALLINT NOT NULL DEFAULT 0
-campos_con_recomendaciones SMALLINT NOT NULL DEFAULT 0
-campos_fallidos SMALLINT NOT NULL DEFAULT 0
-solicitado_por UUID (FK → usuarios.id) NOT NULL
-asignacion_rol_id UUID (FK → asignaciones_rol.id) NULL
-solicitado_en TIMESTAMPTZ NOT NULL
-iniciado_en TIMESTAMPTZ NULL
-completado_en TIMESTAMPTZ NULL
+sesion_id TEXT NOT NULL
+mensaje_ia JSONB NOT NULL
+enviado_en TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
 
-UNIQUE (silabo_id, version_bloqueo_origen)
-UNIQUE (silabo_id, clave_idempotencia)
+CHECK sesion_id ~ 'silabo:{uuid}:(campo:{uuid}|revision|usuario:{uuid})'
+CHECK mensaje_ia objeto con entrada objeto,
+  tipo IN ('analisis', 'revision', 'decision', 'mensaje', 'ocultamiento'),
+  estado IN ('pendiente', 'en_ejecucion', 'completada', 'no_concluyente', 'parcial',
+             'fallida', 'completado', 'fallido', 'registrada')
+Índice btree (sesion_id text_pattern_ops, enviado_en)
+UNIQUE parcial análisis: (sesion_id, entrada.clave_idempotencia, entrada.revision_id)
+UNIQUE parcial revisión: (sesion_id, entrada.version_bloqueo_origen)
+UNIQUE parcial pregunta de chat: (sesion_id, entrada.clave_idempotencia)
+UNIQUE parcial decisión: (entrada.recomendacion_id, entrada.usuario_id, entrada.decision)
+UNIQUE parcial aplicación: (entrada.recomendacion_id) WHERE decision = 'aplicada'
+Trigger proteger_historial_ia: entrada inmutable; mensaje terminal inmutable; sin
+  borrado salvo reinicio institucional (I-118)
+Trigger eliminar_historial_ia_de_silabo (en silabos): borra las sesiones del sílabo
 ~~~
 
-## evidencias_ia
-
-**Contexto:** extractos de fuente que respaldan una ejecución IA.
+Forma de `mensaje_ia` por tipo:
 
 ~~~text
-id UUID (PK)
-ejecucion_ia_id UUID (FK → ejecuciones_ia.id) NOT NULL
-fuente_academica_id UUID (FK → fuentes_academicas.id) NULL
-etiqueta_evidencia_ia VARCHAR NOT NULL
-extracto_evidencia_ia TEXT NOT NULL
-huella_contenido CHAR(64) NOT NULL
-tipo_evidencia_ia VARCHAR NOT NULL DEFAULT 'fuente_academica'
-definicion_campo_id UUID (FK → definiciones_campo.id) NULL
-fragmento_fuente_academica_id UUID (FK → fragmentos_fuente_academica.id) NULL
-
-CHECK (tipo_evidencia_ia IN ('fuente_academica', 'seccion_silabo'))
-CHECK: fuente académica referencia fuente y opcionalmente fragmento; sección de sílabo
-referencia definición de campo sin fuente ni fragmento
-~~~
-
-## recomendaciones_ia
-
-**Contexto:** recomendaciones generadas para un campo.
-
-~~~text
-id UUID (PK)
-ejecucion_ia_id UUID (FK → ejecuciones_ia.id) NOT NULL
-definicion_campo_id UUID (FK → definiciones_campo.id) NOT NULL
-ordinal SMALLINT NOT NULL
-tipo_recomendacion_ia VARCHAR NOT NULL
-titulo_recomendacion_ia VARCHAR NOT NULL
-explicacion_recomendacion_ia TEXT NOT NULL
-texto_sugerido TEXT NOT NULL
-
-UNIQUE (ejecucion_ia_id, ordinal)
-~~~
-
-## recomendacion_evidencias_ia
-
-**Contexto:** evidencia usada por cada recomendación.
-
-~~~text
-id UUID (PK)
-recomendacion_ia_id UUID (FK → recomendaciones_ia.id) NOT NULL
-evidencia_ia_id UUID (FK → evidencias_ia.id) NOT NULL
-
-UNIQUE (recomendacion_ia_id, evidencia_ia_id)
-~~~
-
-## retroalimentacion_ia
-
-**Contexto:** decisión humana respecto de una recomendación IA.
-
-~~~text
-id UUID (PK)
-recomendacion_ia_id UUID (FK → recomendaciones_ia.id) NOT NULL
-usuario_id UUID (FK → usuarios.id) NOT NULL
-asignacion_rol_id UUID (FK → asignaciones_rol.id) NULL
-decision_retroalimentacion_ia VARCHAR NOT NULL
-contenido_anterior_retroalimentacion_ia TEXT NULL
-contenido_posterior_retroalimentacion_ia TEXT NULL
-version_bloqueo_origen INTEGER NULL
-version_bloqueo_resultado INTEGER NULL
-decidido_en TIMESTAMPTZ NOT NULL
-
-UNIQUE (recomendacion_ia_id, usuario_id, decision_retroalimentacion_ia)
-UNIQUE parcial: una sola decisión aplicada por recomendación
-~~~
-
-## conversaciones_ia
-
-**Contexto:** conversación contextual de un docente sobre un sílabo.
-
-~~~text
-id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-usuario_id UUID (FK → usuarios.id) NOT NULL
-ocultada_en TIMESTAMPTZ NULL
-iniciada_en TIMESTAMPTZ NOT NULL
-
-UNIQUE (silabo_id, usuario_id)
-~~~
-
-## mensajes_ia
-
-**Contexto:** pregunta o respuesta persistida dentro de una conversación IA.
-
-~~~text
-id UUID (PK)
-conversacion_ia_id UUID (FK → conversaciones_ia.id) NOT NULL
-respuesta_a_id UUID (FK → mensajes_ia.id) NULL
-ejecucion_trabajo_id UUID (FK → ejecuciones_trabajo.id) NULL UNIQUE
-clave_idempotencia UUID NULL
-rol_mensaje_ia VARCHAR NOT NULL
-estado_mensaje_ia VARCHAR NOT NULL
-contenido_mensaje_ia TEXT NOT NULL
-version_bloqueo_origen INTEGER NOT NULL
-version_pasarela_ejecutada VARCHAR NULL
-codigo_error VARCHAR NULL
-mensaje_error TEXT NULL
-completado_en TIMESTAMPTZ NULL
-enviado_en TIMESTAMPTZ NOT NULL
-
-CHECK (rol_mensaje_ia IN ('usuario', 'asistente'))
-CHECK (estado_mensaje_ia IN ('completado', 'pendiente', 'en_ejecucion', 'fallido'))
-UNIQUE (conversacion_ia_id, clave_idempotencia)
-~~~
-
-## evidencias_mensaje_ia
-
-**Contexto:** fotografía de la evidencia usada por una respuesta del chat.
-
-~~~text
-id UUID (PK)
-mensaje_ia_id UUID (FK → mensajes_ia.id) NOT NULL
-tipo_evidencia_mensaje_ia VARCHAR NOT NULL
-definicion_campo_id UUID (FK → definiciones_campo.id) NULL
-fuente_academica_id UUID (FK → fuentes_academicas.id) NULL
-etiqueta_evidencia_mensaje_ia VARCHAR NOT NULL
-extracto_evidencia_mensaje_ia TEXT NOT NULL
-huella_evidencia_mensaje_ia CHAR(64) NOT NULL
-fijada_en TIMESTAMPTZ NOT NULL
-
-CHECK (tipo_evidencia_mensaje_ia IN ('seccion_silabo', 'fuente_academica'))
-CHECK: sección referencia definición de campo; fuente referencia fuente académica
-UNIQUE (mensaje_ia_id, huella_evidencia_mensaje_ia)
-~~~
-
-## citas_mensaje_ia
-
-**Contexto:** evidencias citadas por una respuesta del chat, en orden de presentación.
-
-~~~text
-mensaje_ia_id UUID (FK → mensajes_ia.id) NOT NULL
-evidencia_mensaje_ia_id UUID (FK → evidencias_mensaje_ia.id) NOT NULL
-ordinal_cita_mensaje_ia SMALLINT NOT NULL
-
-PRIMARY KEY (mensaje_ia_id, evidencia_mensaje_ia_id)
-UNIQUE (mensaje_ia_id, ordinal_cita_mensaje_ia)
+analisis   {tipo, estado, entrada{silabo_id, definicion_campo_id, clave_campo,
+            revision_id, clave_idempotencia, clave_funcional, ejecucion_trabajo_id,
+            version_contrato, version_instruccion, version_pasarela_solicitada, idioma,
+            contenido, huella_contenido, huella_conjunto_fuentes,
+            version_bloqueo_origen, parametros, solicitado_por, asignacion_rol_id,
+            evidencia[{id, tipo, definicion_campo_id, fuente_academica_id,
+                       documento_id, etiqueta, extracto, huella}]},
+            recomendaciones[{id, ordinal, tipo, titulo, explicacion, texto_sugerido,
+                             evidencia_ids}],
+            version_pasarela_ejecutada, motivo_no_concluyente, codigo_error,
+            mensaje_error, iniciado_en, completado_en}
+revision   {tipo, estado, entrada{silabo_id, version_bloqueo_origen,
+            clave_idempotencia, total_campos, solicitado_por, asignacion_rol_id},
+            campos_finalizados, campos_con_recomendaciones, campos_fallidos,
+            iniciado_en, completado_en}
+decision   {tipo, estado: registrada, entrada{analisis_id, recomendacion_id,
+            usuario_id, asignacion_rol_id, decision, contenido_antes?,
+            contenido_despues?, version_bloqueo_origen?, version_bloqueo_resultado?}}
+mensaje    usuario:   {tipo, rol, estado: completado, entrada{contenido,
+                       clave_idempotencia, version_bloqueo_origen, usuario_id}}
+           asistente: {tipo, rol, estado, entrada{respuesta_a_id,
+                       version_bloqueo_origen, ejecucion_trabajo_id, evidencia[...]},
+                       contenido, citas[ids], version_pasarela_ejecutada,
+                       codigo_error, mensaje_error, completado_en}
+ocultamiento {tipo, estado: registrada, entrada{usuario_id}}
 ~~~
 
 ### Cardinalidades
 
 ~~~text
-silabos 1:N ejecuciones_ia
-definiciones_campo 1:N ejecuciones_ia
-ejecuciones_trabajo 1:0..1 ejecuciones_ia
-ejecuciones_ia 1:N evidencias_ia
-fuentes_academicas 1:N evidencias_ia
-ejecuciones_ia 1:N recomendaciones_ia
-recomendaciones_ia N:M evidencias_ia mediante recomendacion_evidencias_ia
-recomendaciones_ia 1:N retroalimentacion_ia
-revisiones_ia_silabo 1:N ejecuciones_ia
-silabos 1:N revisiones_ia_silabo
-usuarios 1:N revisiones_ia_silabo
-asignaciones_rol 1:N revisiones_ia_silabo
-fragmentos_fuente_academica 1:N evidencias_ia
-silabos 1:N conversaciones_ia
-usuarios 1:N conversaciones_ia
-conversaciones_ia 1:N mensajes_ia
-mensajes_ia 1:N mensajes_ia mediante respuesta_a_id
-mensajes_ia 1:N evidencias_mensaje_ia
-mensajes_ia N:M evidencias_mensaje_ia mediante citas_mensaje_ia
+silabos 1:N historial_ia mediante el prefijo de sesion_id
+ejecuciones_trabajo 1:0..1 historial_ia (recurso_id = id del mensaje)
 ~~~
 
 ---
@@ -818,23 +645,10 @@ observado_en TIMESTAMPTZ NOT NULL
 
 ~~~text
 id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
 revision_silabo_id UUID (FK → revisiones_silabo.id) NOT NULL UNIQUE
 justificacion_solicitud_correccion TEXT NOT NULL
 solicitado_por UUID (FK → usuarios.id) NOT NULL
 solicitado_en TIMESTAMPTZ NOT NULL
-~~~
-
-## solicitud_correccion_observaciones
-
-**Contexto:** puente entre solicitudes y observaciones.
-
-~~~text
-id UUID (PK)
-solicitud_correccion_id UUID (FK → solicitudes_correccion.id) NOT NULL
-observacion_revision_id UUID (FK → observaciones_revision.id) NOT NULL
-
-UNIQUE (solicitud_correccion_id, observacion_revision_id)
 ~~~
 
 ## aprobaciones
@@ -843,15 +657,15 @@ UNIQUE (solicitud_correccion_id, observacion_revision_id)
 
 ~~~text
 id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
 revision_silabo_id UUID (FK → revisiones_silabo.id) NOT NULL UNIQUE
 clave_idempotencia UUID NOT NULL
 huella_sha256 CHAR(64) NOT NULL
 aprobado_por UUID (FK → usuarios.id) NOT NULL
 aprobado_en TIMESTAMPTZ NOT NULL
-
-UNIQUE (silabo_id, clave_idempotencia)
 ~~~
+
+El sílabo se obtiene de `revisiones_silabo.silabo_id`. La clave de idempotencia sigue
+siendo única por sílabo; la comprueba el trigger `validar_relaciones_flujo` (I-131).
 
 ## reaperturas
 
@@ -859,33 +673,22 @@ UNIQUE (silabo_id, clave_idempotencia)
 
 ~~~text
 id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
 aprobacion_id UUID (FK → aprobaciones.id) NOT NULL UNIQUE
-revision_aprobada_id UUID (FK → revisiones_silabo.id) NOT NULL
+revision_aprobada_id UUID (FK → revisiones_silabo.id) NOT NULL INDEX
 clave_idempotencia UUID NOT NULL
 causa TEXT NOT NULL
 reabierto_por UUID (FK → usuarios.id) NOT NULL
 reabierto_en TIMESTAMPTZ NOT NULL
-
-UNIQUE (silabo_id, clave_idempotencia)
 ~~~
 
-## transiciones_silabo
+El sílabo se obtiene de `revision_aprobada_id`; el trigger exige que coincida con la
+revisión de la aprobación y que la clave de idempotencia sea única por sílabo (I-131).
 
-**Contexto:** bitácora de cambios de estado.
+## Cambios de estado del sílabo
 
-~~~text
-id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-revision_silabo_id UUID (FK → revisiones_silabo.id) NULL
-estado_origen VARCHAR NOT NULL
-estado_destino VARCHAR NOT NULL
-accion_transicion_silabo VARCHAR NOT NULL
-actor_usuario_id UUID (FK → usuarios.id) NOT NULL
-asignacion_rol_id UUID (FK → asignaciones_rol.id) NULL
-metadatos_transicion_silabo JSONB NULL
-ocurrido_en TIMESTAMPTZ NOT NULL
-~~~
+Desde I-136 no existe `transiciones_silabo`: cada cambio de estado queda en
+`eventos_auditoria` (`silabo.enviado`, `silabo.reenviado`, `silabo.correccion_solicitada`,
+`silabo.aprobado`, `silabo.reabierto`) con `from_state` y `to_state` en sus metadatos.
 
 ### Cardinalidades
 
@@ -894,11 +697,10 @@ silabos 1:N revisiones_silabo
 revisiones_silabo 0..1:N revisiones_silabo mediante revision_anterior_id
 revisiones_silabo 1:N observaciones_revision
 revisiones_silabo 1:0..1 solicitudes_correccion
-solicitudes_correccion N:M observaciones_revision
-  mediante solicitud_correccion_observaciones
+solicitudes_correccion incluye todas las observaciones_revision de su revisión
+  (derivado por revision_silabo_id; I-134)
 revisiones_silabo 1:0..1 aprobaciones
 aprobaciones 1:0..1 reaperturas
-silabos 1:N transiciones_silabo
 ~~~
 
 ---
@@ -934,7 +736,6 @@ UNIQUE (disco, ruta_interna)
 
 ~~~text
 id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
 revision_silabo_id UUID (FK → revisiones_silabo.id) NOT NULL
 ejecucion_trabajo_id UUID (FK → ejecuciones_trabajo.id) NULL UNIQUE
 objeto_docx_id UUID (FK → objetos_almacenados.id) NULL UNIQUE
@@ -950,7 +751,10 @@ completado_en TIMESTAMPTZ NULL
 plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
 
 UNIQUE (revision_silabo_id, clave_idempotencia)
+INDEX (revision_silabo_id, estado_artefacto_exportacion, solicitado_en)
 ~~~
+
+El sílabo se obtiene de la revisión exportada (I-131 retiró `silabo_id`).
 
 ## notificaciones_internas
 
@@ -1018,7 +822,7 @@ batch INTEGER NOT NULL
 ~~~text
 usuarios 1:N objetos_almacenados como propietario
 carreras 1:N objetos_almacenados
-silabos 1:N artefactos_exportacion
+revisiones_silabo 1:N artefactos_exportacion
 revisiones_silabo 1:N artefactos_exportacion
 ejecuciones_trabajo 1:0..1 artefactos_exportacion
 objetos_almacenados 1:0..1 artefactos_exportacion como DOCX

@@ -47,6 +47,15 @@ class SyllabusTemplate extends Model
         ];
     }
 
+    /**
+     * La plantilla institucional es única (I-25/I-32): sílabos, procesos, exportaciones
+     * y ejecuciones de IA no guardan referencia a ella (I-132).
+     */
+    public static function institutional(): self
+    {
+        return self::query()->firstOrFail();
+    }
+
     /** @return EmbeddedTemplateCollection<int, TemplateSection> */
     public function sections(): EmbeddedTemplateCollection
     {

@@ -3,7 +3,6 @@
 namespace App\Modules\Syllabus\Infrastructure\Persistence\Models;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,13 +17,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * carreras. Fija la plantilla y las fechas; cada convocatoria de carrera cuelga de él.
  *
  * @property string $id
- * @property string $plantilla_id
  * @property string $periodo_academico_id
  * @property CarbonImmutable $inicia_en
  * @property CarbonImmutable $entrega_en
  * @property string $estado
  * @property-read string $nombre
- * @property-read SyllabusTemplate $template
  */
 class SyllabusProcess extends Model
 {
@@ -51,7 +48,7 @@ class SyllabusProcess extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'plantilla_id', 'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado',
+        'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado',
     ];
 
     /** @return array<string, string> */
@@ -90,12 +87,6 @@ class SyllabusProcess extends Model
     public function isConfigurable(): bool
     {
         return $this->estado === self::STATE_PAUSED;
-    }
-
-    /** @return BelongsTo<SyllabusTemplate, $this> */
-    public function template(): BelongsTo
-    {
-        return $this->belongsTo(SyllabusTemplate::class, 'plantilla_id');
     }
 
     /** @return BelongsTo<AcademicPeriod, $this> */

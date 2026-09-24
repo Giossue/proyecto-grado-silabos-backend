@@ -5,6 +5,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 use App\Models\User;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
@@ -37,7 +38,7 @@ class OpenConvocation
         return DB::transaction(function () use ($actor, $convocationId, $activeRole, $request): Convocation {
             $convocation = Convocation::query()
                 ->lockForUpdate()
-                ->with(['career.faculty', 'sources', 'process.template'])
+                ->with(['career.faculty', 'sources', 'process'])
                 ->findOrFail($convocationId);
             if ($activeRole?->carrera_id !== $convocation->carrera_id || $activeRole->role->codigo_rol !== 'coordinador') {
                 abort(403);
@@ -58,7 +59,7 @@ class OpenConvocation
                     default => 'El proceso institucional todavía no se abre. Podrá abrir cuando Administración lo inicie.',
                 }]);
             }
-            $template = $convocation->process->template;
+            $template = SyllabusTemplate::institutional();
             $this->templateStructure->assertUsable($template, 'convocation');
             if ($convocation->sources->isEmpty()
                 || $convocation->sources->contains(fn ($source): bool => ! $source->activo)) {
@@ -88,7 +89,7 @@ class OpenConvocation
     private function notifyTeachers(Convocation $convocation, Request $request): void
     {
         $deadline = $this->schedule->draftDeadline($convocation);
-        $due = $deadline === null ? '' : "; la entrega vence el {$this->notifications->date($deadline)}";
+        $due = "; la entrega vence el {$this->notifications->date($deadline)}";
 
         foreach ($this->recipients->teacherSyllabusCounts([$convocation->id]) as $teacherId => $count) {
             $syllabi = $count === 1 ? '1 sílabo asignado' : "{$count} sílabos asignados";
