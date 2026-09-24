@@ -459,7 +459,12 @@ class ManagedUserTest extends TestCase
             'password_confirmation' => 'Nueva-clave-2026!',
         ])->assertOk();
         // Quien emitió la invitación sabe que la cuenta ya está en uso.
-        $this->assertNotified($this->administrator->id, 'usuario.activado', "{$pending->nombre} activó su cuenta");
+        $notice = $this->assertNotified($this->administrator->id, 'usuario.activado', "{$pending->nombre} activó su cuenta");
+        // No hay ficha por cuenta: el aviso abre Usuarios filtrado por esa persona.
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.notifications.open', $notice))
+            ->assertOk()
+            ->assertJsonPath('path', '/admin/usuarios?q='.urlencode($pending->correo_electronico));
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.activation.resend', $pending))
             ->assertForbidden();

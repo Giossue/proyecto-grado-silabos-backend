@@ -92,7 +92,8 @@ final class NotificationDestination
                 ? $this->withRole($eligible, RoleCode::Coordinator, [$id], '/coordinacion/revisiones')
                 : $this->withRole($eligible, RoleCode::Teacher, [$id], '/docente/mis-silabos'),
             'usuario' => [
-                ...$this->withRole($eligible, RoleCode::Administrator, null, "/admin/usuarios/{$id}"),
+                // No hay ficha por cuenta: la lista de Usuarios se abre filtrada por ella.
+                ...$this->withRole($eligible, RoleCode::Administrator, null, '/admin/usuarios?'.http_build_query(['q' => User::query()->whereKey($id)->value('correo_electronico') ?? ''])),
                 ...$this->withRole($eligible, RoleCode::Coordinator, null, '/coordinacion/asignaciones-docentes'),
             ],
             default => [],
