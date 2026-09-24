@@ -18,6 +18,7 @@ use App\Modules\Configuration\Application\Actions\SaveTemplateTitle;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\FieldRules;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -133,7 +134,7 @@ class TemplateController extends Controller
                             'key' => $block->clave,
                             'title' => $block->titulo,
                             'type' => $block->tipo,
-                            'content_type' => $this->contentType($block, $fields->first()),
+                            'content_type' => $block->contentType(),
                             'page_orientation' => $block->pageOrientation(),
                             'table' => TableLayout::fromBlock($block),
                             'document' => $block->configuracion['document'] ?? null,
@@ -148,13 +149,14 @@ class TemplateController extends Controller
                                     'help' => $field->ayuda,
                                     'type' => $field->tipo,
                                     'options' => $this->fieldOptions($field),
-                                    'required' => true,
+                                    'required' => FieldRules::read($field->reglas, $field->tipo)['required'] || $field->heredado,
+                                    'rules' => FieldRules::read($field->reglas, $field->tipo),
                                     'inherited' => $field->heredado,
                                     'master_source' => $field->origen_maestro,
                                     'teacher_editable' => $field->editable_docente,
                                     'ai_enabled' => $field->ia_habilitada,
                                     'document_marker' => $field->marcador_documento,
-                                    'content_type' => $this->contentType($block, $field),
+                                    'content_type' => $block->contentType(),
                                 ])->values()->all(),
                         ];
                     })->values()->all(),
@@ -167,6 +169,7 @@ class TemplateController extends Controller
                 ['value' => 'numbered_list', 'label' => 'Lista numerada'],
                 ['value' => 'boolean', 'label' => 'Sí / No'],
                 ['value' => 'multiple_choice', 'label' => 'Selección múltiple'],
+                ['value' => 'fixed', 'label' => 'Contenido fijo (el docente no llena)'],
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
         ];
@@ -194,21 +197,6 @@ class TemplateController extends Controller
         $action->execute($template, $request->string('title')->toString(), $actor, $request);
 
         return $this->success($request, 'Título de la plantilla actualizado.');
-    }
-
-    private function contentType(TemplateBlock $block, ?FieldDefinition $field): string
-    {
-        $contentType = $block->configuredContentType();
-
-        if ($contentType !== null) {
-            return $contentType;
-        }
-
-        if ($field?->tipo === 'repetible' || $block->tipo === 'repetible') {
-            return 'table';
-        }
-
-        return 'text';
     }
 
     /** @return list<array{value: string, label: string}> */

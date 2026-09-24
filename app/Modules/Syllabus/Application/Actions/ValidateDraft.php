@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Domain\FieldRules;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 
 class ValidateDraft
 {
-    public const RULE_VERSION = 'planning-v2';
+    public const RULE_VERSION = 'planning-v3';
 
     public function __construct(
         private readonly ActiveRole $roles,
@@ -49,10 +50,19 @@ class ValidateDraft
                     continue;
                 }
                 $fieldRows = $rows->get($field->id, collect());
+                $value = $values->get($field->id)?->valor;
+                // Las filas de encabezado de unidad no cuentan como filas de datos.
+                $records = $fieldRows->filter(fn ($row): bool => ($row->datos['_kind'] ?? null) !== 'unit')->count();
                 $missing = $field->tipo === 'repetible'
                     ? $fieldRows->isEmpty()
-                    : ! $this->filled($values->get($field->id)?->valor);
-                if ($missing) {
+                    : ! $this->filled($value);
+                $rules = FieldRules::read($field->reglas, $field->tipo);
+                if (! $missing && ! $field->heredado) {
+                    foreach (FieldRules::issues($rules, $field->etiqueta, $value, $records) as $ruleIssue) {
+                        $issues[] = ['field_id' => $field->id, 'severity' => 'error', ...$ruleIssue];
+                    }
+                }
+                if ($missing && ($rules['required'] || $field->heredado)) {
                     $issues[] = [
                         'field_id' => $field->id,
                         'code' => $field->heredado ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',

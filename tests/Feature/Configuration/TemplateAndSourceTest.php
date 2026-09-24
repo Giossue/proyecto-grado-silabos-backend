@@ -67,7 +67,7 @@ class TemplateAndSourceTest extends TestCase
 
         $template->refresh();
         $this->assertCount(12, $template->sections());
-        $this->assertCount(24, $template->fields()->get(), 'Incluye la ficha, las tablas complejas y los campos del PDF de referencia.');
+        $this->assertCount(21, $template->fields()->get(), 'Incluye la ficha, las tablas del docente y los campos del PDF; el contenido fijo no tiene campos.');
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion_evento_auditoria' => 'plantilla.formateada',
             'recurso_id' => $template->id,
@@ -76,14 +76,10 @@ class TemplateAndSourceTest extends TestCase
         $evaluation = $template->sections()->where('clave', 'evaluacion')->firstOrFail();
         $blocks = $evaluation->blocks()->orderBy('posicion');
         $this->assertSame(['Indicadores de evaluación', 'Escala de valoración', 'Recuperación y aprobación'], $blocks->pluck('titulo')->all());
-        $indicators = $blocks->first()->configuracion['table'];
-        $this->assertSame(['indicador', 'primer_parcial', 'ponderacion_primer_parcial', 'segundo_parcial', 'ponderacion_segundo_parcial'], array_column($indicators['columns'], 'key'));
-        $this->assertFalse($indicators['totals']['enabled'], 'No se incorpora una fórmula o ponderación pendiente de validación.');
-        $this->assertSame([false], array_values(array_unique(array_column($indicators['columns'], 'sum'))));
-        $indicatorField = $template->fields()->where('clave', 'indicadores_evaluacion')->firstOrFail();
-        $this->assertTrue($indicatorField->editable_docente);
-        $this->assertFalse($indicatorField->heredado);
-        $this->assertSame('repetible', $indicatorField->tipo);
+        // I-138: indicadores y escala son contenido fijo con los valores UEB, sin campos.
+        $this->assertSame(['fixed', 'fixed', 'text'], $blocks->map->configuredContentType()->all());
+        $this->assertArrayNotHasKey('table', $blocks->first()->configuracion);
+        $this->assertNull($template->fields()->where('clave', 'indicadores_evaluacion')->first());
         $this->assertDatabaseCount('valores_campo', 0);
         $this->assertDatabaseCount('filas_repetibles', 0);
         $this->assertEquals(

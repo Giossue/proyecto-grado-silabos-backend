@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
+use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Application\DocumentBundleValidator;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
@@ -173,6 +174,9 @@ class DocumentOperationsTest extends TestCase
         $this->assertIsString($documentXml);
         $this->assertStringContainsString($revision->huella_sha256, $documentXml);
         $this->assertStringContainsString('Contenido academico verificable', $documentXml);
+        // Firmas (I-138): nombres y fechas se resuelven al exportar la revisión aprobada.
+        $this->assertStringContainsString($this->coordinator->nombre, $documentXml);
+        $this->assertStringContainsString(now()->setTimezone('America/Guayaquil')->format('d-m-Y'), $documentXml);
 
         $input = new DocumentRenderInput(
             subject: $syllabus->subject()->valueOrFail('nombre'),
@@ -541,6 +545,16 @@ class DocumentOperationsTest extends TestCase
                         'value' => 'Contenido academico verificable',
                         'rows' => [],
                     ]],
+                ]],
+            ], [
+                'key' => 'revision',
+                'title' => 'Revisión y aprobación',
+                'blocks' => [[
+                    'key' => 'firmas',
+                    'title' => 'Revisión y aprobación',
+                    'content_type' => 'fixed',
+                    'document' => TemplateDocumentDefaults::signatures(),
+                    'fields' => [],
                 ]],
             ]],
         ];

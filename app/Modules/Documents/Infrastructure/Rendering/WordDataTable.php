@@ -15,7 +15,7 @@ final class WordDataTable
     public function __construct(private readonly WordRenderContext $context) {}
 
     /**
-     * @param  array{columns: list<array{key: string, label: string, type: string, group: string|null, band: string|null, sum?: bool, width?: int|null}>, groups: list<array{key: string, label: string}>, bands: list<array{key: string, label: string}>, header_fields: list<array{key: string, label: string}>, totals: array{enabled: bool, label: string}, repeat: array{enabled: bool, label: string}}  $layout
+     * @param  array{columns: list<array{key: string, label: string, type: string, group: string|null, band: string|null, sum?: bool, width?: int|null}>, groups: list<array{key: string, label: string}>, bands: list<array{key: string, label: string}>, header_fields: list<array{key: string, label: string}>, totals: array{enabled: bool, label?: string}, repeat: array{enabled: bool, label?: string}}  $layout
      * @param  list<array<string, mixed>>  $rows
      */
     public function render(Section $section, array $layout, array $rows): void
@@ -64,7 +64,7 @@ final class WordDataTable
                             ...($this->context->hasAppearance ? ['bgColor' => $this->context->headerBackground()] : []),
                         ]);
                         if ($fieldIndex === 0) {
-                            $unitCell->addText($layout['repeat']['label'].' No.', $labelStyle, ['spaceAfter' => 0]);
+                            $unitCell->addText(($layout['repeat']['label'] ?? 'Unidad').' No.', $labelStyle, ['spaceAfter' => 0]);
                             $numberCell->addText((string) ($index + 1), $labelStyle, ['spaceAfter' => 0, 'alignment' => Jc::CENTER]);
                         }
                         if ($columnCount > 2) {
@@ -109,7 +109,7 @@ final class WordDataTable
                 foreach ($layout['columns'] as $columnIndex => $column) {
                     $cell = $row->addCell($widths[$columnIndex], ['bgColor' => WordRenderContext::TOTAL_BLUE]);
                     $text = $columnIndex === 0
-                        ? $layout['totals']['label']
+                        ? ($layout['totals']['label'] ?? 'Total')
                         : ($column['type'] === 'number' && ($column['sum'] ?? true) === true ? WordValues::sum($unit['rows'], $column['key']) : '');
                     $cell->addText(
                         $text,
@@ -263,7 +263,7 @@ final class WordDataTable
     /**
      * Filas agrupadas por unidad; la fila con `_kind = unit` trae la cabecera.
      *
-     * @param  array{repeat: array{enabled: bool, label: string}}  $layout
+     * @param  array{repeat: array{enabled: bool, label?: string}}  $layout
      * @param  list<array<string, mixed>>  $rows
      * @return list<array{header: array<string, mixed>, rows: list<array<string, mixed>>}>
      */

@@ -30,7 +30,6 @@ class InheritMasterValues
                     'campus' => $scheduledSubject->campus_programacion,
                     'modalidad' => $scheduledSubject->modalidad->label(),
                 ],
-                'flujo' => ['estado' => 'Sin iniciar'],
                 default => null,
             };
             FieldValue::query()->create([

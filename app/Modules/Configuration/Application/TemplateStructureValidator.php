@@ -76,12 +76,6 @@ class TemplateStructureValidator
             ]);
         }
 
-        if ($block->tipo === 'flujo' && $field->editable_docente) {
-            throw ValidationException::withMessages([
-                $errorKey => 'Los metadatos de revisión no pueden ser editables por el docente.',
-            ]);
-        }
-
         if ($field->tipo === 'calculo') {
             throw ValidationException::withMessages([
                 $errorKey => 'Los cálculos automáticos todavía no están disponibles.',

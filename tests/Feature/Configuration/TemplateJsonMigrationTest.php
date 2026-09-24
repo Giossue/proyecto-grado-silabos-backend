@@ -19,6 +19,8 @@ class TemplateJsonMigrationTest extends TestCase
         $section = $template->sections()->firstOrFail();
         $block = $section->blocks()->firstOrFail();
         $field = $block->fields()->firstOrFail();
+        $simplified = require database_path('migrations/2026_09_24_000106_simplify_template_blocks.php');
+        $simplified->down();
         $migration = require database_path('migrations/2026_09_23_000094_store_single_syllabus_template_as_json.php');
 
         $this->assertInstanceOf(Migration::class, $migration);

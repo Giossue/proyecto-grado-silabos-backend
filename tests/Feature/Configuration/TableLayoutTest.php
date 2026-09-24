@@ -44,7 +44,7 @@ class TableLayoutTest extends TestCase
         $this->assertSame('Contenidos temáticos', $layout['columns'][0]['label']);
         $this->assertSame('text', $layout['columns'][5]['type']);
         $this->assertSame(['docencia', 'estudiante'], array_column($layout['groups'], 'key'));
-        $this->assertSame(['semana', 'acd', 'ape', 'aa'], TableLayout::numericColumns($layout));
+        $this->assertSame(['acd', 'ape', 'aa'], TableLayout::numericColumns($layout), 'Sin indicación solo suman las horas; la semana nunca.');
         $this->assertTrue(TableLayout::isPlanning($layout));
         $this->assertSame('semana', TableLayout::columnsByRole($layout)['week']);
         $this->assertSame(['enabled' => true, 'label' => 'Total'], $layout['totals']);
@@ -108,5 +108,23 @@ class TableLayoutTest extends TestCase
         } catch (ValidationException $exception) {
             $this->assertArrayHasKey('columns.0.group', $exception->errors());
         }
+    }
+
+    public function test_disabled_toggles_keep_no_label_and_year_or_week_never_sum(): void
+    {
+        $layout = TableLayout::normalize([
+            'columns' => [
+                ['key' => 'anio', 'label' => 'Año', 'type' => 'number', 'sum' => true],
+                ['key' => 'publicado', 'label' => 'Año', 'type' => 'number', 'sum' => true],
+                ['key' => 'semana', 'label' => 'Semana', 'type' => 'number', 'sum' => true, 'role' => 'week'],
+                ['key' => 'puntos', 'label' => 'Puntos', 'type' => 'number', 'sum' => true],
+            ],
+            'totals' => ['enabled' => false, 'label' => 'Total'],
+            'repeat' => ['enabled' => false, 'label' => 'Unidad'],
+        ]);
+
+        $this->assertSame(['enabled' => false], $layout['totals']);
+        $this->assertSame(['enabled' => false], $layout['repeat']);
+        $this->assertSame(['puntos'], TableLayout::numericColumns($layout));
     }
 }

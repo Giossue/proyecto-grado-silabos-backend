@@ -70,7 +70,7 @@ final class TemplateDocument
                 $kind = $kind === 'markdown' ? 'texto_largo' : $kind;
                 if (! is_string($key) || ! preg_match('/^[a-z][a-z0-9_]{0,119}$/D', $key)
                     || ! is_string($label) || trim($label) === '' || mb_strlen($label) > 180
-                    || ! in_array($kind, [...self::FIELD_TYPES, 'repetible', 'seleccion_unica', 'referencia_maestra', 'flujo', 'booleano'], true)) {
+                    || ! in_array($kind, [...self::FIELD_TYPES, 'repetible', 'seleccion_unica', 'referencia_maestra', 'booleano'], true)) {
                     self::fail('Cada campo necesita un nombre y un tipo válido.');
                 }
                 $node['attrs'] = ['key' => $key, 'label' => trim($label), 'kind' => $kind];

@@ -69,7 +69,7 @@ final class TemplateDocumentResolver
                         $result[] = ['type' => 'pageBreak'];
                     }
                     if ($layout['repeat']['enabled']) {
-                        $result[] = ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $layout['repeat']['label'].' '.$number, 'marks' => [['type' => 'bold']]]]];
+                        $result[] = ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => ($layout['repeat']['label'] ?? 'Unidad').' '.$number, 'marks' => [['type' => 'bold']]]]];
                     }
                     $totals = [];
                     foreach ($layout['columns'] as $column) {

@@ -42,25 +42,8 @@ final class TablePresets
             ],
             'bibliografia' => [
                 'columns' => [
-                    $col('autor', 'Autor'), $col('titulo', 'Título'), $col('anio', 'Año', 'number'),
+                    $col('autor', 'Autor'), $col('titulo', 'Título'), $col('anio', 'Año', 'number', sum: false),
                     $col('ciudad', 'Ciudad'), $col('editorial', 'Editorial'), $col('isbn', 'ISBN'), $col('codigo', 'Código'),
-                ],
-            ],
-            // Referencia aportada en I-56: sin puntajes ni fórmulas predeterminados.
-            'indicadores' => [
-                'columns' => [
-                    $col('indicador', 'Indicadores', width: 3),
-                    $col('primer_parcial', 'Puntos', 'number', 'primer_parcial', sum: false, width: 1),
-                    $col('ponderacion_primer_parcial', 'Ponderación', 'number', 'primer_parcial', sum: false, width: 1),
-                    $col('segundo_parcial', 'Puntos', 'number', 'segundo_parcial', sum: false, width: 1),
-                    $col('ponderacion_segundo_parcial', 'Ponderación', 'number', 'segundo_parcial', sum: false, width: 1),
-                ],
-                'groups' => [['key' => 'primer_parcial', 'label' => 'Primer parcial'], ['key' => 'segundo_parcial', 'label' => 'Segundo parcial']],
-            ],
-            'escala' => [
-                'columns' => [
-                    $col('cualitativa', 'Escala cualitativa'), $col('cuantitativa', 'Escala cuantitativa grado y posgrado'),
-                    $col('equivalencia', 'Equivalencias'), $col('valoracion', 'Valoración de la asignatura'),
                 ],
             ],
             'perfil' => [

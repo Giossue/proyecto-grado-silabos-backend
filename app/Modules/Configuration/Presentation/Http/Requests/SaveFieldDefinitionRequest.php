@@ -16,6 +16,7 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
         'numbered_list',
         'boolean',
         'multiple_choice',
+        'fixed',
     ];
 
     /** @return array<string, list<mixed>> */
@@ -25,9 +26,8 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
         $templateId = $template instanceof SyllabusTemplate ? $template->id : $template;
         $field = $this->route('field');
         $fieldId = $field instanceof FieldDefinition ? $field->id : null;
-        // Los bloques fijos (identificación, estado de revisión) no se crean desde la
-        // paleta, pero sí se les edita la ayuda.
-        $types = $fieldId === null ? self::TYPES : [...self::TYPES, 'institutional', 'flow'];
+        // La ficha de identificación no se crea desde la paleta, pero sí se le edita la ayuda.
+        $types = $fieldId === null ? self::TYPES : [...self::TYPES, 'institutional'];
 
         return [
             'section_id' => [
@@ -69,7 +69,11 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'master_source' => ['nullable', 'required_if:inherited,true', 'string', 'max:100'],
             'teacher_editable' => ['nullable', 'boolean'],
             'ai_enabled' => ['nullable', 'boolean'],
-            'rules' => ['nullable', 'array'],
+            'rules' => ['nullable', 'array:required,max_length,min_rows,max_rows'],
+            'rules.required' => ['sometimes', 'boolean'],
+            'rules.max_length' => ['nullable', 'integer'],
+            'rules.min_rows' => ['nullable', 'integer'],
+            'rules.max_rows' => ['nullable', 'integer'],
             'options' => ['nullable', 'array', 'min:2', 'max:50'],
             'options.*' => ['required', 'array:value,label'],
             'options.*.value' => ['required', 'string', 'max:120', 'distinct'],

@@ -50,8 +50,7 @@ class SyllabusSnapshot
                     'blocks' => $section->blocks->map(fn (TemplateBlock $block): array => [
                         'key' => $block->clave,
                         'title' => $block->titulo,
-                        'content_type' => $block->configuredContentType()
-                            ?? ($block->tipo === 'repetible' ? 'table' : 'text'),
+                        'content_type' => $block->contentType(),
                         'page_orientation' => $block->pageOrientation(),
                         // El esquema de la tabla viaja con la copia: el documento se
                         // exporta con las columnas que el docente llenó.

@@ -8,7 +8,7 @@ use Illuminate\Validation\Validator;
 
 class SaveTemplateSectionRequest extends ManageTemplatesRequest
 {
-    private const CONTENT_TYPES = ['text', 'table', 'bulleted_list', 'numbered_list', 'boolean', 'multiple_choice'];
+    private const CONTENT_TYPES = ['text', 'table', 'bulleted_list', 'numbered_list', 'boolean', 'multiple_choice', 'fixed'];
 
     /** @return array<string, list<mixed>> */
     public function rules(): array

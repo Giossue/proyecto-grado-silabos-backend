@@ -22,8 +22,8 @@ use Illuminate\Validation\ValidationException;
  *     groups: list<Named>,
  *     bands: list<Named>,
  *     header_fields: list<Named>,
- *     totals: array{enabled: bool, label: string},
- *     repeat: array{enabled: bool, label: string},
+ *     totals: array{enabled: bool, label?: string},
+ *     repeat: array{enabled: bool, label?: string},
  * }
  */
 final class TableLayout
@@ -51,9 +51,21 @@ final class TableLayout
             'groups' => [],
             'bands' => [],
             'header_fields' => [],
-            'totals' => ['enabled' => false, 'label' => 'Total'],
-            'repeat' => ['enabled' => false, 'label' => 'Unidad'],
+            'totals' => ['enabled' => false],
+            'repeat' => ['enabled' => false],
         ];
+    }
+
+    /**
+     * Solo suman los números con sentido de cantidad (horas, puntos): la semana y el año
+     * son números de orden y su total no significa nada (I-138).
+     */
+    public static function summable(string $type, ?string $role, ?string $key, ?string $label): bool
+    {
+        $year = in_array($key, ['anio', 'ano', 'year'], true)
+            || preg_match('/^\s*(año|anio|year)s?\s*$/iu', (string) $label) === 1;
+
+        return $type === 'number' && $role !== 'week' && ! $year;
     }
 
     /** @return Layout|null Un bloque no tabular puede adquirir esquema al volver repetible una tabla incrustada. */
@@ -138,7 +150,9 @@ final class TableLayout
                 'type' => $type,
                 'group' => $group === false ? null : $group,
                 'band' => $band === false ? null : $band,
-                'sum' => $type === 'number' && (bool) ($column['sum'] ?? true),
+                // Sin indicación, solo suman las horas.
+                'sum' => self::summable($type, $role, $key, $label)
+                    && (bool) ($column['sum'] ?? in_array($role, ['hours_acd', 'hours_ape', 'hours_aa'], true)),
                 'width' => is_numeric($width) && (int) $width > 0 ? (int) $width : null,
                 'role' => $role,
             ];
@@ -163,15 +177,20 @@ final class TableLayout
             'groups' => array_values(array_filter($groups, fn (array $group): bool => in_array($group['key'], $usedGroups, true))),
             'bands' => array_values(array_filter($bands, fn (array $band): bool => in_array($band['key'], $usedBands, true))),
             'header_fields' => $headerFields,
-            'totals' => [
-                'enabled' => (bool) (($raw['totals']['enabled'] ?? false)),
-                'label' => self::label($raw['totals']['label'] ?? null) ?? 'Total',
-            ],
-            'repeat' => [
-                'enabled' => (bool) (($raw['repeat']['enabled'] ?? false)),
-                'label' => self::label($raw['repeat']['label'] ?? null) ?? 'Unidad',
-            ],
+            // El nombre solo se guarda si la opción está encendida.
+            'totals' => self::toggle($raw['totals'] ?? null, 'Total'),
+            'repeat' => self::toggle($raw['repeat'] ?? null, 'Unidad'),
         ];
+    }
+
+    /** @return array{enabled: bool, label?: string} */
+    private static function toggle(mixed $raw, string $default): array
+    {
+        $raw = is_array($raw) ? $raw : [];
+
+        return (bool) ($raw['enabled'] ?? false)
+            ? ['enabled' => true, 'label' => self::label($raw['label'] ?? null) ?? $default]
+            : ['enabled' => false];
     }
 
     /**

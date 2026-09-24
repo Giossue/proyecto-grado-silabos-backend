@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\FieldRules;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -338,6 +339,11 @@ class SyllabusController extends Controller
     {
         $fields = [];
         foreach ($block->fields as $field) {
+            // Un campo retirado del diseño ya no es parte del formulario (I-116).
+            if (isset($block->configuracion['detached_fields'][$field->clave])) {
+                continue;
+            }
+            $rules = FieldRules::read($field->reglas, $field->tipo);
             $fieldRows = [];
             foreach ($rows->get($field->id) ?? [] as $row) {
                 $fieldRows[] = [
@@ -353,7 +359,8 @@ class SyllabusController extends Controller
                 'help' => $field->ayuda,
                 'type' => $field->tipo,
                 'options' => $this->fieldOptions($field),
-                'required' => true,
+                'required' => $rules['required'] || $field->heredado,
+                'rules' => $rules,
                 'inherited' => $field->heredado,
                 'teacher_editable' => $field->editable_docente,
                 'ai_enabled' => $field->ia_habilitada
@@ -366,8 +373,7 @@ class SyllabusController extends Controller
         return [
             'id' => $block->id,
             'title' => $block->titulo,
-            'content_type' => $block->configuredContentType()
-                ?? ($block->tipo === 'repetible' ? 'table' : 'text'),
+            'content_type' => $block->contentType(),
             'table' => TableLayout::fromBlock($block),
             'page_orientation' => $block->pageOrientation(),
             'document' => $block->configuracion['document'] ?? null,

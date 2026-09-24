@@ -348,7 +348,7 @@ class TemplateDocumentTest extends TestCase
         );
     }
 
-    public function test_removing_the_last_data_column_turns_a_repeated_table_into_a_static_table(): void
+    public function test_a_repeated_table_without_data_columns_is_rejected_because_the_editor_fixes_it_first(): void
     {
         $template = $this->template();
         $field = $template->fields()->where('clave', 'unidades')->firstOrFail();
@@ -388,23 +388,11 @@ class TemplateDocumentTest extends TestCase
             ],
         ]]];
 
+        // El editor la convierte en tabla fija antes de guardar; el servidor no adivina.
         $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
             'document' => $document,
             'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertSuccessful();
-
-        $saved = $block->fresh()->configuracion['document'];
-        $this->assertNull($saved['content'][0]['attrs']['repeatKey']);
-        $this->assertSame('fixed', $saved['content'][0]['content'][1]['attrs']['rowRole']);
-        $this->assertSame(
-            'Ejemplo',
-            $saved['content'][0]['content'][1]['content'][0]['content'][0]['content'][0]['text'],
-        );
-        $this->assertFalse($field->fresh()->editable_docente);
-        $this->assertArrayHasKey(
-            $field->clave,
-            $block->fresh()->configuracion['detached_fields'],
-        );
+        ])->assertJsonValidationErrors(['document' => 'La tabla repetible necesita al menos una fila con campos de datos.']);
     }
 
     public function test_text_field_list_format_preserves_values_and_exports_lines_as_items(): void
@@ -665,19 +653,102 @@ class TemplateDocumentTest extends TestCase
         $this->assertTrue($block->fresh()->configuracion['detached_fields'][$field->clave]['ia_habilitada']);
     }
 
-    public function test_flow_accepts_only_properties_and_never_a_document(): void
+    public function test_official_format_has_fixed_evaluation_tables_and_signatures_without_flow(): void
     {
         $template = $this->template();
-        $block = $template->sections()->flatMap->blocks->first(fn ($block) => $block->configuredContentType() === 'flow');
-        $this->assertNotNull($block);
-        $field = $block->fields()->firstOrFail();
-        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
-        $payload = ['document' => null, 'fingerprint' => SaveTemplateDocument::fingerprint($block),
-            'properties' => [['key' => $field->clave, 'label' => $field->etiqueta, 'help' => 'Estado determinado por el sistema.']]];
-        $this->patch($url, [...$payload, 'document' => $this->document()])->assertJsonValidationErrors('document');
-        $this->patch($url, $payload)->assertSuccessful();
-        $this->assertSame('Estado determinado por el sistema.', $field->fresh()->ayuda);
-        $this->assertArrayNotHasKey('document', $block->fresh()->configuracion);
+        $blocks = $template->blocks()->keyBy('titulo');
+
+        $this->assertFalse($template->blocks()->contains(fn ($block) => $block->configuredContentType() === 'flow'));
+        $this->assertNull($template->fields()->where('clave', 'estado_revision')->first());
+        foreach (['Indicadores de evaluación', 'Escala de valoración', 'Revisión y aprobación'] as $title) {
+            $block = $blocks->get($title);
+            $this->assertSame('fixed', $block->configuredContentType());
+            $this->assertCount(0, $block->fields);
+            $this->assertSame([], TemplateDocument::nodes($block->configuracion['document'], 'field'));
+            $this->assertArrayNotHasKey('tipo', $block->toDocument());
+        }
+        $text = json_encode($blocks->get('Indicadores de evaluación')->configuracion['document'], JSON_UNESCAPED_UNICODE);
+        foreach (['Evaluación parcial', '3.5', '1.75', 'TOTAL', 'Ponderación'] as $expected) {
+            $this->assertStringContainsString($expected, $text);
+        }
+        $this->assertStringContainsString('Recuperación', json_encode($blocks->get('Escala de valoración')->configuracion['document'], JSON_UNESCAPED_UNICODE));
+        $signatures = array_column(array_column(TemplateDocument::nodes($blocks->get('Revisión y aprobación')->configuracion['document'], 'variable'), 'attrs'), 'id');
+        $this->assertEqualsCanonicalizing(['nombre_docente', 'nombre_coordinador', 'fecha_entrega', 'fecha_revision'], $signatures);
+    }
+
+    public function test_administration_creates_a_fixed_content_block_without_teacher_fields(): void
+    {
+        $template = $this->template();
+        $section = $template->sections()->firstWhere('clave', 'etica');
+
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id,
+            'key' => 'nota_institucional',
+            'label' => 'Nota institucional',
+            'content_type' => 'fixed',
+        ])->assertSuccessful();
+
+        $block = $template->fresh()->blocks()->firstWhere('clave', 'nota_institucional');
+        $this->assertSame('fixed', $block->configuredContentType());
+        $this->assertSame('narrativa', $block->tipo);
+        $this->assertCount(0, $block->fields);
+        $this->assertSame([], TemplateDocument::nodes($block->configuracion['document'], 'field'));
+        $this->assertContains('fixed', array_column($this->getJson(route('api.v1.admin.template.show', $template))->json('blockTypes') ?? [], 'value'));
+
+        $document = $block->configuracion['document'];
+        $document['content'][0]['content'][0]['content'][0]['content'][0]['content'][0]['text'] = 'Texto institucional';
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
+            'document' => $document, 'fingerprint' => SaveTemplateDocument::fingerprint($block), 'properties' => [],
+        ])->assertSuccessful();
+        $this->assertStringContainsString('Texto institucional', json_encode($block->fresh()->configuracion['document']));
+    }
+
+    public function test_field_rules_are_configured_per_field_and_rejected_when_they_do_not_apply(): void
+    {
+        $template = $this->template();
+        $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
+        $block = $field->block;
+        $document = TemplateDocumentDefaults::fixedPlaceholder();
+        $document['content'][] = ['type' => 'paragraph', 'content' => [['type' => 'field', 'attrs' => ['key' => 'objetivo_general', 'label' => 'Objetivo general', 'kind' => 'texto_largo']]]];
+        $save = fn (array $rules) => $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
+            'document' => $document,
+            'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
+            'properties' => [['key' => 'objetivo_general', 'label' => 'Objetivo general', 'help' => null, 'rules' => $rules]],
+        ]);
+
+        $save(['required' => false, 'max_length' => 300])->assertSuccessful();
+        $this->assertEquals(['required' => false, 'max_length' => 300, 'min_rows' => null, 'max_rows' => null], $field->fresh()->reglas);
+        $save(['min_rows' => 2])->assertJsonValidationErrors('properties.0.rules');
+
+        $list = $template->fields()->where('clave', 'objetivos_especificos')->firstOrFail();
+        $this->patchJson(route('api.v1.admin.template.fields.update', [$template, $list]), [
+            'block_id' => $list->bloque_plantilla_id, 'key' => $list->clave, 'label' => $list->etiqueta,
+            'content_type' => 'bulleted_list', 'rules' => ['min_rows' => 3, 'max_rows' => 2],
+        ])->assertJsonValidationErrors('rules');
+        $this->patchJson(route('api.v1.admin.template.fields.update', [$template, $list]), [
+            'block_id' => $list->bloque_plantilla_id, 'key' => $list->clave, 'label' => $list->etiqueta,
+            'content_type' => 'bulleted_list', 'rules' => ['min_rows' => 2, 'max_rows' => 5],
+        ])->assertSuccessful();
+        $this->assertSame(2, $list->fresh()->reglas['min_rows']);
+        $shown = collect($this->getJson(route('api.v1.admin.template.show', $template))->json('template.sections'))
+            ->flatMap(fn ($section) => $section['blocks'])->flatMap(fn ($block) => $block['fields'])->firstWhere('key', 'objetivos_especificos');
+        $this->assertSame(['required' => true, 'max_length' => null, 'min_rows' => 2, 'max_rows' => 5], $shown['rules']);
+    }
+
+    public function test_a_year_column_cannot_be_summed_in_a_totals_row(): void
+    {
+        $template = $this->template();
+        $block = $template->fields()->where('clave', 'unidades')->firstOrFail()->block;
+        $column = fn (string $key, string $label): array => ['type' => 'column', 'attrs' => ['key' => $key, 'label' => $label, 'kind' => 'numero']];
+        $cell = fn (array $content): array => ['type' => 'tableCell', 'content' => [['type' => 'paragraph', 'content' => $content]]];
+        $document = ['type' => 'doc', 'content' => [['type' => 'table', 'attrs' => ['repeatKey' => 'unidades', 'visualStructure' => true], 'content' => [
+            ['type' => 'tableRow', 'attrs' => ['rowRole' => 'record'], 'content' => [$cell([$column('anio', 'Año')])]],
+            ['type' => 'tableRow', 'attrs' => ['rowRole' => 'total'], 'content' => [$cell([$column('anio', 'Año')])]],
+        ]]]];
+
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
+            'document' => $document, 'fingerprint' => SaveTemplateDocument::fingerprint($block),
+        ])->assertJsonValidationErrors(['document' => 'La columna «Año» no se suma; quítela de la fila de totales.']);
     }
 
     public function test_lists_give_teachers_one_text_row_per_item(): void
@@ -692,7 +763,7 @@ class TemplateDocumentTest extends TestCase
         ));
     }
 
-    public function test_administration_decides_ai_reading_on_identification_but_not_on_the_review_flow(): void
+    public function test_administration_decides_ai_reading_on_identification(): void
     {
         $template = $this->template();
         $identification = $template->fields()->where('clave', 'asignatura')->firstOrFail();
@@ -714,13 +785,6 @@ class TemplateDocumentTest extends TestCase
         $save(false)->assertSuccessful();
         $this->assertFalse($identification->fresh()->ia_habilitada);
         $this->assertFalse($formation->fresh()->ia_habilitada);
-
-        $flow = $template->fields()->where('clave', 'estado_revision')->firstOrFail();
-        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $flow->block]), [
-            'document' => null,
-            'fingerprint' => SaveTemplateDocument::fingerprint($flow->block),
-            'properties' => [['key' => 'estado_revision', 'label' => $flow->etiqueta, 'help' => '', 'ai_enabled' => true]],
-        ])->assertJsonValidationErrors('properties.0.ai_enabled');
     }
 
     public function test_total_rows_only_accept_numeric_data(): void

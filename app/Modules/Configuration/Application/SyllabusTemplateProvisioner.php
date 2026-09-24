@@ -93,7 +93,14 @@ final class SyllabusTemplateProvisioner
             foreach ($fields as $blockPosition => [$fieldKey, $label, $contentType, $preset]) {
                 $blockId = (string) Str::uuid();
                 $configuration = ['content_type' => $contentType];
-                if ($preset !== null) {
+                if ($contentType === 'fixed') {
+                    $configuration['document'] = match ($preset) {
+                        'indicadores' => TemplateDocumentDefaults::evaluationIndicators(),
+                        'escala' => TemplateDocumentDefaults::gradingScale(),
+                        'firmas' => TemplateDocumentDefaults::signatures(),
+                        default => TemplateDocumentDefaults::fixedPlaceholder(),
+                    };
+                } elseif ($preset !== null) {
                     $configuration['table'] = TablePresets::layout($preset);
                 }
                 if ($preset === 'planificacion') {
@@ -106,16 +113,15 @@ final class SyllabusTemplateProvisioner
                 $blocks[] = [
                     'id' => $blockId,
                     'clave' => $blockPosition === 0 ? "{$sectionKey}_principal" : "{$sectionKey}_{$fieldKey}",
-                    'tipo' => $this->blockType($contentType),
                     'titulo' => $label,
                     'configuracion' => $configuration,
                     'posicion' => $blockPosition + 1,
                 ];
-                $origin = match ($contentType) {
-                    'institutional' => 'asignaturas',
-                    'flow' => 'flujo',
-                    default => null,
-                };
+                // El contenido fijo no tiene campo del docente.
+                if ($contentType === 'fixed') {
+                    continue;
+                }
+                $origin = $contentType === 'institutional' ? 'asignaturas' : null;
 
                 $fieldDefinitions[] = [
                     'plantilla_id' => $template->id,
@@ -171,19 +177,10 @@ final class SyllabusTemplateProvisioner
         }
     }
 
-    private function blockType(string $contentType): string
-    {
-        return match ($contentType) {
-            'flow' => 'flujo',
-            'institutional', 'text' => 'narrativa',
-            default => 'repetible',
-        };
-    }
-
     private function fieldType(string $contentType): string
     {
         return match ($contentType) {
-            'institutional', 'flow' => 'referencia_maestra',
+            'institutional' => 'referencia_maestra',
             'text' => 'texto_largo',
             default => 'repetible',
         };

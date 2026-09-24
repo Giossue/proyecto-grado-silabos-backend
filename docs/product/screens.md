@@ -335,7 +335,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   limita al ancho del ciclo con más asignaturas y a la altura de los ciclos configurados,
   conservando solo un margen breve alrededor del contenido. En escritorio, la leyenda y
   los totales flotantes inician visibles y se pueden contraer temporalmente; en móvil se
-  consultan desde su botón. «Configurar malla» es la acción primaria del encabezado y solo
+  consultan desde su botón. El lienzo no muestra minimapa; conserva los controles de zoom
+  y el desplazamiento. En oscuro, lienzo, ciclos y tarjetas se distinguen por superficie y
+  borde, con textos y metadatos legibles. «Configurar malla» es la acción primaria del encabezado y solo
   edita la cantidad de ciclos; los campos de la tarjeta (ACD, APE, AA, CRED, TOTAL)
   los fija el reglamento y nacen con la malla. Al crear o editar una materia, todos los
   campos activos son obligatorios, las magnitudes se presentan en una fila compacta y

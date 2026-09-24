@@ -309,7 +309,7 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $firstRun = ValidationRun::query()->latest('completado_en')->firstOrFail();
-        $this->assertSame('planning-v2', $firstRun->version_reglas);
+        $this->assertSame('planning-v3', $firstRun->version_reglas);
         $this->assertGreaterThan(0, $firstRun->errores_bloqueantes);
 
         $requiredEditable = FieldDefinition::query()
@@ -331,6 +331,39 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $lastRun = ValidationRun::query()->whereKeyNot($firstRun->id)->firstOrFail();
         $this->assertSame(0, $lastRun->errores_bloqueantes);
+    }
+
+    public function test_field_rules_never_block_the_draft_but_are_checked_before_sending(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
+        $text = FieldDefinition::query()->where('clave', 'objetivo_general')->firstOrFail();
+        $list = FieldDefinition::query()->where('clave', 'objetivos_especificos')->firstOrFail();
+        $optional = FieldDefinition::query()->where('clave', 'habilidades_blandas')->firstOrFail();
+        $text->update(['reglas' => ['required' => true, 'max_length' => 10]]);
+        $list->update(['reglas' => ['min_rows' => 2, 'max_rows' => 3]]);
+        $optional->update(['reglas' => ['required' => false]]);
+
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $text]), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+            'value' => 'Un objetivo demasiado largo',
+        ])->assertOk();
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $list]), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+            'rows' => [['data' => ['texto' => 'Único objetivo']]],
+        ])->assertOk();
+
+        $detail = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
+        $fields = collect($detail->json('syllabus.sections'))->flatMap(fn ($section) => $section['blocks'])->flatMap(fn ($block) => $block['fields'])->keyBy('key');
+        $this->assertSame(10, $fields['objetivo_general']['rules']['max_length']);
+        $this->assertFalse($fields['habilidades_blandas']['required']);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
+        $run = ValidationRun::query()->latest('completado_en')->firstOrFail();
+        $messages = $run->results()->get()->groupBy('definicion_campo_id');
+        $this->assertSame('«Objetivo general» admite hasta 10 caracteres; ahora tiene 27.', $messages[$text->id]->first()->mensaje);
+        $this->assertSame('«Objetivos específicos» necesita al menos 2 fila(s); ahora tiene 1.', $messages[$list->id]->first()->mensaje);
+        $this->assertArrayNotHasKey($optional->id, $messages->all(), 'Un campo opcional vacío no bloquea el envío.');
     }
 
     public function test_planning_with_wrong_hours_can_be_saved_but_fails_deterministic_validation(): void

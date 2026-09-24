@@ -34,8 +34,9 @@ return [
             ['ambientes_aprendizaje', 'Ambientes o escenarios de aprendizaje', 'bulleted_list', null],
         ]],
         ['evaluacion', 'Evaluación de los aprendizajes', [
-            ['indicadores_evaluacion', 'Indicadores de evaluación', 'table', 'indicadores'],
-            ['componentes_evaluacion', 'Escala de valoración', 'table', 'escala'],
+            // Contenido fijo: valores UEB que el docente no llena (I-138).
+            ['indicadores_evaluacion', 'Indicadores de evaluación', 'fixed', 'indicadores'],
+            ['componentes_evaluacion', 'Escala de valoración', 'fixed', 'escala'],
             ['recuperacion', 'Recuperación y aprobación', 'text', null],
         ]],
         ['perfil_egreso', 'Relación de la asignatura con los resultados de aprendizaje del perfil de egreso', [
@@ -49,7 +50,7 @@ return [
             ['bibliografia_complementaria', 'Bibliografía complementaria', 'table', 'bibliografia'],
         ]],
         ['revision', 'Revisión y aprobación', [
-            ['estado_revision', 'Estado de revisión', 'flow', null],
+            ['firmas', 'Revisión y aprobación', 'fixed', 'firmas'],
         ]],
     ],
 

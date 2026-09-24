@@ -3,6 +3,8 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\TemplateDocumentDefaults;
+use App\Modules\Configuration\Domain\FieldRules;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -25,7 +27,7 @@ class SaveFieldDefinition
     ) {}
 
     /** @param array<string, mixed> $data */
-    public function create(string $templateId, array $data, User $actor, Request $request): FieldDefinition
+    public function create(string $templateId, array $data, User $actor, Request $request): ?FieldDefinition
     {
         $this->locks->assertTemplateEditable();
 
@@ -37,7 +39,7 @@ class SaveFieldDefinition
     {
         $this->locks->assertTemplateEditable();
 
-        return $this->persist($field, $field->plantilla_id, $data, $actor, $request);
+        return $this->persist($field, $field->plantilla_id, $data, $actor, $request) ?? $field;
     }
 
     /** @param array<string, mixed> $data */
@@ -47,10 +49,10 @@ class SaveFieldDefinition
         array $data,
         User $actor,
         Request $request,
-    ): FieldDefinition {
+    ): ?FieldDefinition {
         $activeRole = $this->roles->resolve($request);
 
-        return $this->work->replace($request, function () use ($actor, $activeRole, $data, $field, $request, $templateId): FieldDefinition {
+        return $this->work->replace($request, function () use ($actor, $activeRole, $data, $field, $request, $templateId): ?FieldDefinition {
             $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
             // Un campo nuevo o cambiado altera el formato que los docentes están llenando.
 
@@ -70,18 +72,20 @@ class SaveFieldDefinition
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
                     'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                     'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
+                    'reglas' => $this->rules($data, $field->tipo, $field->reglas),
                 ]);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
                 return $field;
             }
 
-            // Bloques fijos (ficha de identificación, estado de revisión): su estructura no
-            // se toca; cambian etiqueta, ayuda y, salvo en el flujo, si la IA lee el campo.
-            if ($field !== null && in_array($contentType, ['institutional', 'flow'], true)) {
+            // Ficha de identificación: su estructura no se toca; cambian etiqueta, ayuda y
+            // si la IA lee el campo.
+            if ($field !== null && $contentType === 'institutional') {
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
-                    'ia_habilitada' => $contentType !== 'flow' && (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
+                    'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
+                    'reglas' => $this->rules($data, $field->tipo, $field->reglas),
                 ]);
                 $template->updateBlockDocument($field->bloque_plantilla_id, ['titulo' => $data['label']]);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
@@ -89,9 +93,26 @@ class SaveFieldDefinition
                 return $field;
             }
 
+            if ($field !== null && $contentType === 'fixed') {
+                throw ValidationException::withMessages(['content_type' => 'Un campo del docente no se convierte en contenido fijo. Cree un bloque de contenido fijo.']);
+            }
             $block = $field === null
                 ? $this->createBlock($template, $data, $contentType)
                 : $this->updateBlock($field, $template, $data, $contentType);
+            // El contenido fijo no tiene campos: Administración escribe su texto en el diseño.
+            if ($contentType === 'fixed') {
+                $this->audit->execute(
+                    actorId: $actor->id,
+                    roleAssignmentId: $activeRole?->id,
+                    action: 'plantilla.bloque_creado',
+                    resourceType: 'bloque_plantilla',
+                    resourceId: $block->id,
+                    result: 'exito',
+                    correlationId: $request->attributes->getString('correlation_id') ?: null,
+                );
+
+                return null;
+            }
             // Todo campo es obligatorio y lo llena el docente salvo lo heredado de la
             // malla, que nace así con la plantilla y no se cambia desde aquí (I-33).
             $inherited = $field !== null && $field->heredado;
@@ -106,7 +127,7 @@ class SaveFieldDefinition
                 'origen_maestro' => $field !== null && $field->heredado ? $field->origen_maestro : null,
                 'editable_docente' => ! $inherited,
                 'ia_habilitada' => (bool) ($data['ai_enabled'] ?? ($field !== null ? $field->ia_habilitada : false)),
-                'reglas' => $data['rules'] ?? ($field !== null ? $field->reglas : null),
+                'reglas' => $this->rules($data, $this->fieldType($contentType), $field?->reglas),
                 'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                 'marcador_documento' => $field !== null ? $field->marcador_documento : null,
             ];
@@ -155,6 +176,9 @@ class SaveFieldDefinition
         if ($contentType === 'table') {
             $configuration['table'] = TableLayout::default();
         }
+        if ($contentType === 'fixed') {
+            $configuration['document'] = TemplateDocumentDefaults::fixedPlaceholder();
+        }
 
         $blockId = (string) Str::uuid();
         $orderedBlocks = $blocks
@@ -163,7 +187,6 @@ class SaveFieldDefinition
         array_splice($orderedBlocks, $position - 1, 0, [[
             'id' => $blockId,
             'clave' => $data['key'],
-            'tipo' => $this->blockType($contentType),
             'titulo' => $data['label'],
             'configuracion' => $configuration,
             'posicion' => $position,
@@ -196,7 +219,6 @@ class SaveFieldDefinition
         }
 
         $block->update([
-            'tipo' => $this->blockType($contentType),
             'titulo' => $data['label'],
             'configuracion' => [
                 ...(is_array($configuration) ? $configuration : []),
@@ -207,11 +229,16 @@ class SaveFieldDefinition
         return $block;
     }
 
-    private function blockType(string $contentType): string
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>|null  $current
+     * @return array<string, mixed>|null
+     */
+    private function rules(array $data, string $fieldType, ?array $current): ?array
     {
-        return $contentType === 'institutional'
-            ? 'flujo'
-            : (in_array($contentType, ['table', 'bulleted_list', 'numbered_list'], true) ? 'repetible' : 'narrativa');
+        return array_key_exists('rules', $data) && $data['rules'] !== null
+            ? FieldRules::normalize($data['rules'], $fieldType)
+            : $current;
     }
 
     private function fieldType(string $contentType): string

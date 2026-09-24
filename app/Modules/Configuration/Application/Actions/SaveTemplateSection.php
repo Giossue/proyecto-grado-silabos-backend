@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -51,18 +52,22 @@ class SaveTemplateSection
                 if ($contentType === 'table') {
                     $configuration['table'] = TableLayout::default();
                 }
+                if ($contentType === 'fixed') {
+                    $configuration['document'] = TemplateDocumentDefaults::fixedPlaceholder();
+                }
                 $fieldKey = $this->stringValue($fieldData, 'key');
                 $fieldLabel = $this->stringValue($fieldData, 'label');
                 $blocks[] = [
                     'id' => $blockId,
                     'clave' => $fieldKey,
-                    'tipo' => in_array($contentType, ['table', 'bulleted_list', 'numbered_list'], true)
-                        ? 'repetible'
-                        : 'narrativa',
                     'titulo' => $fieldLabel,
                     'configuracion' => $configuration,
                     'posicion' => $fieldPosition + 1,
                 ];
+                // El contenido fijo no tiene campos del docente.
+                if ($contentType === 'fixed') {
+                    continue;
+                }
                 $fieldDefinitions[] = [
                     'plantilla_id' => $template->id,
                     'bloque_plantilla_id' => $blockId,

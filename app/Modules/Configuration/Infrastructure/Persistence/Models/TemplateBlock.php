@@ -22,6 +22,7 @@ final class TemplateBlock implements UrlRoutable
 
     public string $clave;
 
+    /** Derivado de `configuracion.content_type`; el JSON del bloque no lo guarda (I-138). */
     public string $tipo;
 
     public string $titulo;
@@ -110,6 +111,17 @@ final class TemplateBlock implements UrlRoutable
         return is_string($contentType) ? $contentType : null;
     }
 
+    public function contentType(): string
+    {
+        return $this->configuredContentType() ?? 'text';
+    }
+
+    /** Tipo de almacenamiento del bloque: sus filas se guardan como repetibles o no. */
+    public static function kindFor(string $contentType): string
+    {
+        return in_array($contentType, ['table', 'bulleted_list', 'numbered_list'], true) ? 'repetible' : 'narrativa';
+    }
+
     public function pageOrientation(): ?string
     {
         $orientation = $this->configuracion['page_orientation'] ?? null;
@@ -176,9 +188,9 @@ final class TemplateBlock implements UrlRoutable
         $this->plantilla_id = $this->template->id;
         $this->seccion_plantilla_id = $this->section->id;
         $this->clave = (string) $data['clave'];
-        $this->tipo = (string) $data['tipo'];
         $this->titulo = (string) $data['titulo'];
         $this->configuracion = is_array($data['configuracion'] ?? null) ? $data['configuracion'] : [];
+        $this->tipo = self::kindFor($this->contentType());
         $this->posicion = (int) ($data['posicion'] ?? 1);
     }
 }

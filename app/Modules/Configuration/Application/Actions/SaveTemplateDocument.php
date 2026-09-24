@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\FieldRules;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -34,15 +35,11 @@ final class SaveTemplateDocument
         ], JSON_THROW_ON_ERROR));
     }
 
-    /** @param array<string, mixed>|null $document */
-    public function execute(TemplateBlock $block, ?array $document, string $fingerprint, User $actor, Request $request): void
+    /** @param array<string, mixed> $document */
+    public function execute(TemplateBlock $block, array $document, string $fingerprint, User $actor, Request $request): void
     {
         abort_unless($actor->can('manage-templates'), 403);
-        $normalized = $document === null
-            ? null
-            : $this->demoteEmptyRepeatedTables(
-                TemplateDocument::normalize($document, array_keys(TemplateVariables::definitions())),
-            );
+        $normalized = TemplateDocument::normalize($document, array_keys(TemplateVariables::definitions()));
         $this->locks->assertTemplateEditable();
         $this->work->replace($request, function () use ($block, $normalized, $fingerprint, $actor, $request): void {
             $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
@@ -51,34 +48,17 @@ final class SaveTemplateDocument
             if (! hash_equals(self::fingerprint($block), $fingerprint)) {
                 throw ValidationException::withMessages(['fingerprint' => 'La plantilla cambió en otra sesión. Recargue antes de guardar; su diseño no fue sobrescrito.']);
             }
-            $flow = $block->configuredContentType() === 'flow';
-            if ($flow !== ($normalized === null)) {
-                TemplateDocument::fail($flow ? 'El estado de revisión pertenece al flujo del sistema.' : 'El diseño del bloque es obligatorio.');
-            }
             $fields = $block->fields->keyBy('clave');
-            $documentFieldKeys = $normalized === null
-                ? []
-                : array_map(
-                    static fn (array $node): string => $node['attrs']['key'],
-                    TemplateDocument::nodes($normalized, 'field'),
-                );
+            $documentFieldKeys = array_map(
+                static fn (array $node): string => $node['attrs']['key'],
+                TemplateDocument::nodes($normalized, 'field'),
+            );
             foreach ($request->input('properties', []) as $index => $property) {
                 $field = $fields->get($property['key']);
                 if (($field === null && ! in_array($property['key'], $documentFieldKeys, true))
                     || ($field !== null && isset($block->configuracion['detached_fields'][$field->clave]))) {
                     throw ValidationException::withMessages(["properties.$index.key" => 'El campo no pertenece al diseño actual.']);
                 }
-                // I-119: la casilla decide si el agente lee el campo, también en la ficha y
-                // en los datos heredados. Solo el estado de revisión queda fuera: no es contenido.
-                if (($property['ai_enabled'] ?? false) && $block->configuredContentType() === 'flow') {
-                    throw ValidationException::withMessages(["properties.$index.ai_enabled" => 'El estado de revisión no es contenido que lea la IA.']);
-                }
-            }
-            if ($normalized === null) {
-                $this->saveProperties($block, $request, []);
-                $this->auditDesign($block, $actor, $request, $fields->count());
-
-                return;
             }
             $normalized = $this->applyPropertyLabels($normalized, $request->input('properties', []));
             $used = [];
@@ -202,6 +182,9 @@ final class SaveTemplateDocument
                                 && $knownColumn['role'] !== $attrs['role']) {
                                 TemplateDocument::fail('Un campo de columna debe conservar la misma función especial.');
                             }
+                            if ($role === 'total' && ! TableLayout::summable('number', $attrs['role'] ?? null, $attrs['key'], $attrs['label'])) {
+                                TemplateDocument::fail("La columna «{$attrs['label']}» no se suma; quítela de la fila de totales.");
+                            }
                             $columnKeys[$attrs['key']] = [
                                 ...($knownColumn ?? $attrs),
                                 'role' => $attrs['role'] ?? $knownColumn['role'] ?? null,
@@ -281,8 +264,7 @@ final class SaveTemplateDocument
             foreach ($block->fields->where('heredado', false) as $field) {
                 if (in_array($field->clave, $used, true)) {
                     if (isset($detached[$field->clave])) {
-                        // Un retiro previo a I-116 también guardó el permiso de Coordinación.
-                        $field->update(array_intersect_key($detached[$field->clave], array_flip(['editable_docente', 'ia_habilitada'])));
+                        $field->update($detached[$field->clave]);
                         unset($detached[$field->clave]);
                     }
                 } else {
@@ -306,9 +288,13 @@ final class SaveTemplateDocument
     /** @param array<string, mixed> $detached */
     private function saveProperties(TemplateBlock $block, Request $request, array $detached): void
     {
-        foreach ($request->input('properties', []) as $property) {
+        foreach ($request->input('properties', []) as $index => $property) {
             $attributes = ['etiqueta' => $property['label'], 'ayuda' => $property['help']];
-            if (array_key_exists('ai_enabled', $property) && $block->configuredContentType() !== 'flow') {
+            if (array_key_exists('rules', $property)) {
+                $type = $block->fields()->where('clave', $property['key'])->first()?->tipo;
+                $attributes['reglas'] = FieldRules::normalize($property['rules'], (string) $type, "properties.$index.rules");
+            }
+            if (array_key_exists('ai_enabled', $property)) {
                 // Un campo retirado conserva su configuración para una futura restauración,
                 // pero no vuelve a habilitarse en el formulario actual.
                 if (isset($detached[$property['key']])) {
@@ -323,9 +309,6 @@ final class SaveTemplateDocument
             'titulo' => $request->has('title') ? $request->string('title')->trim()->value() : $block->titulo,
             'configuracion' => [...($block->configuracion ?? []), 'detached_fields' => $detached],
         ]);
-        if ($block->configuredContentType() === 'flow' && $request->has('title')) {
-            $block->fields()->first()?->update(['etiqueta' => $block->titulo]);
-        }
     }
 
     /** @param array<string, mixed> $document
@@ -351,39 +334,6 @@ final class SaveTemplateDocument
         };
 
         return $visit($document);
-    }
-
-    /** @param array<string, mixed> $document
-     * @return array<string, mixed>
-     */
-    private function demoteEmptyRepeatedTables(array $document): array
-    {
-        if (isset($document['content'])) {
-            $document['content'] = array_map(
-                $this->demoteEmptyRepeatedTables(...),
-                $document['content'],
-            );
-        }
-
-        if (($document['type'] ?? null) !== 'table'
-            || ($document['attrs']['repeatKey'] ?? null) === null
-            || TemplateDocument::nodes($document, 'column') !== []) {
-            return $document;
-        }
-
-        $document['attrs']['repeatKey'] = null;
-        $document['attrs']['groupByUnit'] = null;
-        $document['attrs']['visualStructure'] = null;
-        unset($document['attrs']['repeatLabel']);
-        $document['content'] = array_map(static function (array $row): array {
-            if (($row['type'] ?? null) === 'tableRow') {
-                $row['attrs']['rowRole'] = 'fixed';
-            }
-
-            return $row;
-        }, $document['content']);
-
-        return $document;
     }
 
     private function auditDesign(TemplateBlock $block, User $actor, Request $request, int $fields): void
