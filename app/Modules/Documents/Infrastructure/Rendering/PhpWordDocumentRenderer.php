@@ -18,10 +18,10 @@ use ZipArchive;
  */
 class PhpWordDocumentRenderer implements DocumentRenderer
 {
-    public const VERSION = 'phpword-docx-v3+text-pdf-v2';
+    public const VERSION = 'phpword-docx-v4+text-pdf-v2';
 
     /** I-139: el PDF es el DOCX convertido por LibreOffice (Gotenberg). */
-    public const VERSION_GOTENBERG = 'phpword-docx-v3+libreoffice-pdf-v1';
+    public const VERSION_GOTENBERG = 'phpword-docx-v4+libreoffice-pdf-v1';
 
     /** Marca de tiempo fija para las entradas del ZIP (1980-01-01, la mínima válida). */
     private const ZIP_MTIME = 315532800;
@@ -89,6 +89,11 @@ class PhpWordDocumentRenderer implements DocumentRenderer
                 if (is_string($stable)) {
                     $zip->addFromString('word/numbering.xml', $stable);
                 }
+            }
+            // Rejilla de tablas coherente con las celdas combinadas (evita desbordes en PDF).
+            $document = $zip->getFromName('word/document.xml');
+            if (is_string($document)) {
+                $zip->addFromString('word/document.xml', WordTableGrid::fix($document));
             }
             for ($index = 0; $index < $zip->numFiles; $index++) {
                 $zip->setMtimeIndex($index, self::ZIP_MTIME);

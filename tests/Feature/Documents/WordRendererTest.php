@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Documents;
 
+use App\Modules\Configuration\Application\TemplateDocumentDefaults;
+use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Application\SyllabusDocumentContent;
@@ -9,6 +11,9 @@ use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use App\Modules\Documents\Infrastructure\Rendering\PhpWordDocumentRenderer;
 use App\Modules\Syllabus\Application\IdentificationCard;
+use DOMDocument;
+use DOMElement;
+use DOMXPath;
 use Tests\TestCase;
 use ZipArchive;
 
@@ -198,6 +203,85 @@ class WordRendererTest extends TestCase
         $this->assertStringContainsString('3.2 Objetivos', $document);
         $this->assertStringNotContainsString('3.3', $document);
         $this->assertStringNotContainsString('Campo', $document);
+    }
+
+    /**
+     * Regresión del desborde en PDF: PhpWord armaba `w:tblGrid` con la fila de más celdas
+     * sin contar `gridSpan`, y LibreOffice pintaba el texto sobre la celda vecina. Cada
+     * tabla debe tener tantas columnas como su fila más ancha, anchos que sumen el ancho
+     * útil y diseño fijo; las marcas vacías de la ficha quedan vacías.
+     */
+    public function test_table_grids_match_cells_and_fill_the_usable_width(): void
+    {
+        $snapshot = $this->snapshot();
+        $snapshot['template_variables'] = TemplateVariables::resolve(['identification' => $snapshot['identification']]);
+        $snapshot['sections'][0]['blocks'][0]['document'] = TemplateDocumentDefaults::identification();
+        $snapshot['sections'][2]['blocks'][] = [
+            'key' => 'firmas',
+            'title' => 'Revisión',
+            'content_type' => 'fixed',
+            'document' => TemplateDocumentDefaults::signatures(),
+            'fields' => [],
+        ];
+        $result = app(DocumentRenderer::class)->render(new DocumentRenderInput(
+            subject: 'Inteligencia Artificial',
+            subjectCode: 'SW-P7-037',
+            academicPeriod: 'Marzo – Julio 2026',
+            revisionNumber: 3,
+            revisionFingerprint: str_repeat('ab', 32),
+            generatedAt: '2026-09-02T20:00:00-05:00',
+            locale: 'es-EC',
+            snapshot: $snapshot,
+        ));
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-grid-test-');
+        $this->assertNotFalse($temporary);
+        file_put_contents($temporary, $result->docx->bytes);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $xml = $zip->getFromName('word/document.xml');
+        $zip->close();
+        @unlink($temporary);
+        $this->assertIsString($xml);
+
+        $this->assertStringContainsString('MODALIDAD DE ESTUDIO', $xml);
+        $this->assertStringNotContainsString('Dato automático', $xml);
+        $this->assertStringNotContainsString('[[variable:', $xml);
+
+        $dom = new DOMDocument;
+        $dom->loadXML($xml);
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+        $identification = false;
+        foreach ($xpath->query('//w:tbl') ?: [] as $table) {
+            $this->assertInstanceOf(DOMElement::class, $table);
+            $grid = array_map(
+                fn ($column): int => (int) ($column instanceof DOMElement ? $column->getAttribute('w:w') : 0),
+                iterator_to_array($xpath->query('w:tblGrid/w:gridCol', $table) ?: []),
+            );
+            $total = array_sum($grid);
+            $this->assertSame('fixed', $xpath->evaluate('string(w:tblPr/w:tblLayout/@w:type)', $table));
+            $this->assertSame((string) $total, $xpath->evaluate('string(w:tblPr/w:tblW/@w:w)', $table));
+            // Ancho útil de la hoja (Carta con márgenes); nunca más ancho que la página.
+            $this->assertContains($total, [9406, 9405, 9404, 13006, 13007, 13005, 13004], 'La tabla no ocupa el ancho útil.');
+            foreach ($xpath->query('w:tr', $table) ?: [] as $row) {
+                $columns = 0;
+                $width = 0;
+                foreach ($xpath->query('w:tc', $row) ?: [] as $cell) {
+                    $span = (int) $xpath->evaluate('string(w:tcPr/w:gridSpan/@w:val)', $cell);
+                    $cellWidth = (int) $xpath->evaluate('string(w:tcPr/w:tcW/@w:w)', $cell);
+                    $this->assertSame(array_sum(array_slice($grid, $columns, max(1, $span))), $cellWidth);
+                    $columns += max(1, $span);
+                    $width += $cellWidth;
+                }
+                $this->assertSame(count($grid), $columns, 'Una fila no ocupa todas las columnas de la rejilla.');
+                $this->assertSame($total, $width);
+            }
+            if (str_contains($table->textContent, 'MODALIDAD DE ESTUDIO')) {
+                $identification = true;
+                $this->assertCount(count(IdentificationCard::WIDTHS), $grid);
+            }
+        }
+        $this->assertTrue($identification);
     }
 
     /** @return array<string, mixed> */

@@ -60,6 +60,12 @@ filas/unidades/totales exclusivamente con esa fotografía.
 listas, fondos, anchos, `gridSpan` y `vMerge`. La planificación abre una sección carta
 horizontal, cada unidad posterior inicia página y las cabeceras se repiten al desbordar;
 el resto vuelve a la orientación general. No importa HTML ni recursos externos.
+`phpword-docx-v4` corrige el desborde de texto en el PDF de LibreOffice: PhpWord armaba
+`w:tblGrid` con la fila de más celdas sin contar `gridSpan`; `WordTableGrid` recalcula
+la rejilla con los bordes reales de todas las filas, ajusta cada `tcW` a ella, fija el
+ancho total en twips y usa `tblLayout=fixed`. Si una palabra no cabe en su celda, la
+tabla baja la letra desde la del cuerpo hasta 7 pt (6 pt solo en esa celda); una
+cabecera que ni así cabe se escribe en vertical, como «Semana» en el formato UEB.
 Las revisiones anteriores sin documento mantienen su lector. Los artefactos existentes
 no se modifican; la versión del motor participa en la idempotencia.
 

@@ -41,8 +41,6 @@ final class WordDataTable
                 $header = $unit['header'];
                 $labelStyle = ['bold' => true, 'size' => 9, 'color' => $this->context->headerColor()];
                 $first = $widths[0];
-                $numberWidth = $layout['repeat']['enabled'] ? (int) floor($first * 0.32) : 0;
-                $unitWidth = $first - $numberWidth;
                 $labelSpan = max(1, min(4, $columnCount - 2));
                 $labelWidth = $columnCount > 2 ? (int) array_sum(array_slice($widths, 1, $labelSpan)) : 0;
                 $valueSpan = max(1, $columnCount - 1 - $labelSpan);
@@ -53,19 +51,16 @@ final class WordDataTable
                     $value = $headerField['key'] === '' ? '' : WordValues::cell($header, $headerField['key']);
                     if ($layout['repeat']['enabled']) {
                         $merge = $fieldIndex === 0 ? 'restart' : 'continue';
-                        $unitCell = $row->addCell($unitWidth, [
-                            'vMerge' => $merge,
-                            'valign' => 'center',
-                            ...($this->context->hasAppearance ? ['bgColor' => $this->context->headerBackground()] : []),
-                        ]);
-                        $numberCell = $row->addCell($numberWidth, [
+                        // «Unidad No.» y su número comparten la primera columna: dividirla en dos
+                        // celdas añadiría una columna que las demás filas no tienen.
+                        $unitCell = $row->addCell($first, [
                             'vMerge' => $merge,
                             'valign' => 'center',
                             ...($this->context->hasAppearance ? ['bgColor' => $this->context->headerBackground()] : []),
                         ]);
                         if ($fieldIndex === 0) {
-                            $unitCell->addText(($layout['repeat']['label'] ?? 'Unidad').' No.', $labelStyle, ['spaceAfter' => 0]);
-                            $numberCell->addText((string) ($index + 1), $labelStyle, ['spaceAfter' => 0, 'alignment' => Jc::CENTER]);
+                            $unitCell->addText(($layout['repeat']['label'] ?? 'Unidad').' No.', $labelStyle, ['spaceAfter' => 0, 'alignment' => Jc::CENTER]);
+                            $unitCell->addText((string) ($index + 1), $labelStyle, ['spaceAfter' => 0, 'alignment' => Jc::CENTER]);
                         }
                         if ($columnCount > 2) {
                             $row->addCell($labelWidth, ['bgColor' => $this->context->headerBackground(), 'gridSpan' => $labelSpan])

@@ -58,6 +58,7 @@ final class WordFieldRenderer
                 $this->context->hasAppearance ? (string) $this->context->appearance['body_alignment'] : null,
                 $this->context->hasAppearance ? $this->context->color('table_header_background') : null,
                 $this->context->hasAppearance ? $this->context->color('table_header_color') : null,
+                (int) $this->context->appearance['body_font_size'],
             ))->append($section, $resolved, $this->context->contentWidth);
 
             return;
