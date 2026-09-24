@@ -7,16 +7,19 @@ CP-N de accesibilidad/experiencia. La petición visual del responsable del produ
 2026-09-24 pide mayor contraste en el constructor oscuro y retirar el minimapa de la
 esquina inferior derecha. La corrección posterior retira la franja que infería una unidad
 predominante por ciclo. La revisión visual final replica la jerarquía del tema claro:
-ciclos neutros apenas más oscuros que las tarjetas y color de unidad solo en su badge y
-la leyenda. No depende de un `PV` abierto. PV-19 sigue pendiente para la aceptación en
-dispositivos y navegadores reales.
+ciclos neutros apenas más oscuros que las tarjetas y color de unidad en su badge, leyenda
+y encabezados académicos. Los paneles laterales de nivel y totales conservan en oscuro el
+tinte primario suave que muestran en claro. No depende de un `PV` abierto. PV-19 sigue
+pendiente para la aceptación en dispositivos y navegadores reales.
 
 ## Entrega
 
 - Diferenciar lienzo, carriles y tarjetas con la jerarquía semántica del tema claro; en
   oscuro, el carril queda apenas más oscuro que la tarjeta de materia.
-- Reservar el color de unidad para el badge de la materia y la leyenda; los campos ACD,
-  APE, AA, créditos y total usan superficies neutras.
+- Aplicar el color de unidad al badge de la materia, la leyenda y los encabezados ACD,
+  APE, AA, créditos y total; el resto de la tarjeta usa superficies neutras.
+- Conservar el tinte primario suave en los paneles laterales de nivel, asignaturas y total
+  tanto en claro como en oscuro.
 - Mantener legibles el texto principal, los metadatos, las insignias y los totales.
 - Quitar el minimapa y su dependencia; conservar zoom y desplazamiento del lienzo.
 - Quitar la franja lateral del ciclo y su cálculo de unidad predominante; conservar la
@@ -27,9 +30,10 @@ dispositivos y navegadores reales.
 ## Criterios
 
 La Malla oscura sigue la composición visual de la clara: fondo neutro, ciclo ligeramente
-más oscuro y tarjeta de materia más clara. Solo el badge y la leyenda identifican con
-color la unidad curricular. El minimapa y la franja de unidad por ciclo no aparecen. El
-usuario aún puede ampliar, reducir y mover el lienzo.
+más oscuro y tarjeta de materia más clara. El badge, la leyenda y los encabezados
+académicos identifican con color la unidad curricular; los laterales del ciclo usan el
+tinte primario suave. El minimapa y la franja de unidad por ciclo no aparecen. El usuario
+aún puede ampliar, reducir y mover el lienzo.
 
 ## Verificación
 
@@ -40,5 +44,5 @@ usuario aún puede ampliar, reducir y mover el lienzo.
   de zoom. La paleta clara conserva fondos blancos en ciclos y tarjetas.
 - Render sintético final inspeccionado en Chromium: cuatro ciclos neutros, ninguna
   etiqueta vertical de unidad y una cabecera de nivel por ciclo. El carril es más oscuro
-  que la tarjeta y los encabezados académicos ya no heredan el color de unidad.
+  que la tarjeta; badge y encabezados académicos heredan el color de unidad.
 - La aceptación perceptiva en dispositivos reales sigue pendiente de PV-19.

@@ -23,10 +23,11 @@ COR-13, contraste oscuro y minimapa — RF-008..016, RNF-018..023, RN-005..008,
 CU-03, COR-13, CP-F estructura académica y CP-N accesibilidad/experiencia:
 `CurriculumCanvas` elimina el minimapa y conserva zoom/desplazamiento; en oscuro replica
 la jerarquía neutra del tema claro, con el carril ligeramente más oscuro que las tarjetas.
-Cada materia conserva una unidad, identificada con color solo en su badge y la leyenda;
-el ciclo deja de inferir o mostrar una unidad predominante. La revisión en Chromium
-comprueba ambos temas; PV-19 mantiene pendiente la aceptación con dispositivos y
-navegadores reales.
+Cada materia conserva una unidad, identificada con color en su badge, la leyenda y los
+encabezados ACD, APE, AA, créditos y total; los laterales de nivel y totales conservan el
+tinte primario suave. El ciclo deja de inferir o mostrar una unidad predominante. La
+revisión en Chromium comprueba ambos temas; PV-19 mantiene pendiente la aceptación con
+dispositivos y navegadores reales.
 
 I-54 — RF-003..016, RN-001..008, CU-02/03, COR-15 y ADM-02:
 `CareerTeacherTest` verifica alta limitada a la carrera activa, reutilización sin cambiar
