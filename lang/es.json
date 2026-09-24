@@ -14,5 +14,7 @@
     "If you did not create an account, no further action is required.": "Si no esperaba este correo, puede ignorarlo.",
     "The provided two factor authentication code was invalid.": "El código de autenticación no es válido.",
     "The provided two factor recovery code was invalid.": "El código de recuperación no es válido.",
-    "The provided password was incorrect.": "La contraseña no es correcta."
+    "The provided password was incorrect.": "La contraseña no es correcta.",
+    "(and :count more error)": "(y :count error más)",
+    "(and :count more errors)": "(y :count errores más)"
 }

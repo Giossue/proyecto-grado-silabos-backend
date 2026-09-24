@@ -480,9 +480,34 @@ class AcademicStructureTest extends TestCase
                 ]],
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('subjects.0.parallels.1.code');
+            ->assertJsonValidationErrors(['subjects.0.parallels' => 'Hay paralelos repetidos en la misma materia.']);
 
         $this->assertDatabaseMissing('programaciones_asignatura', ['asignatura_id' => $subject->id]);
+    }
+
+    public function test_the_same_parallel_code_is_allowed_in_different_subjects(): void
+    {
+        $first = Subject::query()->firstOrFail()->replicate();
+        $first->codigo_asignatura = 'SW-P7-037';
+        $first->nombre = 'Inteligencia Artificial';
+        $first->save();
+        $second = Subject::query()->firstOrFail()->replicate();
+        $second->codigo_asignatura = 'SW-IC8-038';
+        $second->nombre = 'Gestión de las Tecnologías de la Información';
+        $second->save();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
+                'period_id' => AcademicPeriod::query()->firstOrFail()->id,
+                'subjects' => [
+                    ['id' => $first->id, 'parallels' => [['code' => 'A']]],
+                    ['id' => $second->id, 'parallels' => [['code' => 'A']]],
+                ],
+            ])
+            ->assertSuccessful();
+
+        $this->assertDatabaseHas('programaciones_asignatura', ['asignatura_id' => $first->id]);
+        $this->assertDatabaseHas('programaciones_asignatura', ['asignatura_id' => $second->id]);
     }
 
     public function test_preparing_a_period_does_not_reuse_an_inactive_scheduled_subject(): void

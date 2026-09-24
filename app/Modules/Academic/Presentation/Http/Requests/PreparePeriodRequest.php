@@ -7,6 +7,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Identity\Application\ActiveRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 /**
  * «Preparar período» recibe toda la malla pendiente, con paralelos y docentes
@@ -82,6 +83,37 @@ class PreparePeriodRequest extends FormRequest
         return false;
     }
 
+    /**
+     * Un paralelo no se repite dentro de la misma materia; «A» sí puede existir en
+     * varias materias (la regla `distinct` comparaba todas las materias juntas).
+     *
+     * @return list<\Closure(Validator): void>
+     */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            foreach ((array) $this->input('subjects', []) as $index => $subject) {
+                $codes = array_map(
+                    fn (mixed $parallel): string => mb_strtoupper(is_array($parallel) && is_string($parallel['code'] ?? null) ? $parallel['code'] : ''),
+                    is_array($subject) && is_array($subject['parallels'] ?? null) ? $subject['parallels'] : [],
+                );
+                if (count($codes) !== count(array_unique($codes))) {
+                    $validator->errors()->add("subjects.{$index}.parallels", 'Hay paralelos repetidos en la misma materia.');
+                }
+            }
+        }];
+    }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return [
+            'subjects.*.parallels.*.code' => 'paralelo',
+            'subjects.*.parallels.*.shift' => 'jornada',
+            'subjects.*.parallels.*.teacher_user_id' => 'docente',
+        ];
+    }
+
     /** @return array<string, list<mixed>> */
     public function rules(): array
     {
@@ -94,7 +126,7 @@ class PreparePeriodRequest extends FormRequest
             'subjects' => ['required', 'array', 'min:1', 'max:200'],
             'subjects.*.id' => ['required', 'uuid', 'distinct'],
             'subjects.*.parallels' => ['required', 'array', 'min:1', 'max:50'],
-            'subjects.*.parallels.*.code' => ['required', 'string', 'max:30', 'distinct'],
+            'subjects.*.parallels.*.code' => ['required', 'string', 'max:30'],
             'subjects.*.parallels.*.shift' => ['nullable', 'string', Rule::in(Parallel::SHIFTS)],
             'subjects.*.parallels.*.teacher_user_id' => ['nullable', 'uuid'],
         ];
