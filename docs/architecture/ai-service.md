@@ -122,6 +122,11 @@ embeddings de 3072 dimensiones.
   embeddings. El trigger `proteger_historial_ia` fija la entrada y cierra evidencia y
   salida al alcanzar un estado terminal; índices únicos parciales mantienen la
   idempotencia. El estado técnico y el progreso viven en `ejecuciones_trabajo`.
+- Avatar: `GET ai-chat` incluye `avatar {emotion, intensity}` en `review` y en cada
+  mensaje del asistente. `AvatarHint` lo deriva de forma determinista del estado
+  (`completada` → `happy`, `parcial` → `surprised`, `no_concluyente`/`fallida` →
+  `confused`); nunca se infiere del texto generado y la SPA solo lo usa para la
+  expresión del robot.
 - Cola: `ai`, tres intentos, timeout de 60 segundos y backoff 5/30/120. Un fallo conserva
   causa segura; evidencia insuficiente o conflictiva finaliza sin llamar al gateway.
 

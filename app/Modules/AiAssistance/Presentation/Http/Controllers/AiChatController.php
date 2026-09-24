@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\AiAssistance\Application\Actions\SendSyllabusAiMessage;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
+use App\Modules\AiAssistance\Presentation\Http\AvatarHint;
 use App\Modules\AiAssistance\Presentation\Http\Requests\SendAiChatMessageRequest;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -128,6 +129,11 @@ class AiChatController extends Controller
                 'progress' => $reviewTotal === 0 ? 0 : (int) floor(($reviewCompleted / $reviewTotal) * 100),
                 'requested_at' => $review->enviado_en->toIso8601String(),
                 'completed_at' => $review->part('completado_en'),
+                'avatar' => AvatarHint::forReview(
+                    $review->state(),
+                    (int) $review->part('campos_con_recomendaciones'),
+                    (int) $review->part('campos_fallidos'),
+                ),
             ],
             'review_results' => $reviewResults,
         ]);
@@ -196,6 +202,7 @@ class AiChatController extends Controller
             'error' => $message->part('mensaje_error'),
             'created_at' => $message->enviado_en->toIso8601String(),
             'citations' => $citations,
+            'avatar' => AvatarHint::forMessage((string) $message->part('rol'), $message->state()),
         ];
     }
 

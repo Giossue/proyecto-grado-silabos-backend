@@ -191,7 +191,8 @@ class AiAssistanceTest extends TestCase
             ])->assertAccepted()
             ->assertJsonPath('review.status', 'pendiente')
             ->assertJsonPath('review.total_fields', 1)
-            ->assertJsonPath('review.progress', 0);
+            ->assertJsonPath('review.progress', 0)
+            ->assertJsonPath('review.avatar', null);
 
         $this->withHeader('Origin', 'http://localhost:5173')
             ->postJson(route('api.v1.teacher.syllabi.ai.review', $syllabus), [
@@ -238,7 +239,9 @@ class AiAssistanceTest extends TestCase
             ->assertOk()
             ->assertJsonPath('review.status', 'completada')
             ->assertJsonPath('review.progress', 100)
-            ->assertJsonPath('review.completed_fields', 1);
+            ->assertJsonPath('review.completed_fields', 1)
+            ->assertJsonPath('review.avatar.emotion', 'happy')
+            ->assertJsonPath('review.avatar.intensity', 0.5);
 
         $this->getJson(route('api.v1.teacher.syllabi.ai-chat.show', $syllabus))
             ->assertOk()
