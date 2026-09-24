@@ -66,6 +66,12 @@
 - COR-14 puede crear varios paralelos de una misma materia programada en un lote atómico: los códigos
   separados por coma o línea comparten jornada; una duplicación o un código inválido no
   crea una parte del lote. Cada paralelo creado queda auditado por separado.
+- Al preparar un período, COR-14 incluye todas las materias activas aún no programadas.
+  Sugiere los paralelos y docentes del período anterior; COR-15 puede ajustar esas
+  asignaciones en la misma hoja. El servidor verifica el rol docente efectivo, la carrera
+  y el correo confirmado antes de guardar todas las materias, paralelos y asignaciones
+  en una transacción. La ausencia de docente deja el paralelo pendiente, sin impedir
+  preparar las demás materias.
 - Cada carrera tiene cero o una malla actual, editable activa o inactiva. Coordinación
   puede deshabilitarla/reactivarla y solo eliminarla cuando no tiene programaciones ni sílabos.
   Una programación, paralelo o asignación ya incorporada a un sílabo queda protegida y no se

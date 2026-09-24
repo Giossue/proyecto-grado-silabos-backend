@@ -116,16 +116,18 @@ class CareerAcademicStructureController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var array{period_id: string, subjects: list<array{id: string, parallels: list<array{code: string, shift?: string|null}>}>} $data */
+        /** @var array{period_id: string, subjects: list<array{id: string, parallels: list<array{code: string, shift?: string|null, teacher_user_id?: string|null}>}>} $data */
         $data = $request->validated();
         $result = $action->execute($data, $actor, $request);
 
         $message = sprintf(
-            'Período preparado: %d %s y %d %s nuevos para %d %s.',
+            'Período preparado: %d %s, %d %s y %d %s para %d %s.',
             $result['scheduledSubjects'],
             $result['scheduledSubjects'] === 1 ? 'materia programada' : 'materias programadas',
             $result['parallels'],
             $result['parallels'] === 1 ? 'paralelo' : 'paralelos',
+            $result['assignments'],
+            $result['assignments'] === 1 ? 'docente asignado' : 'docentes asignados',
             $result['subjects'],
             $result['subjects'] === 1 ? 'materia' : 'materias',
         );

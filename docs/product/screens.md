@@ -299,7 +299,11 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   de la carrera y la muestra en el listado (I-35).
 - COR-14 no programa materias una a una: **Preparar período** abre una hoja lateral amplia
   con las materias activas que aún no están programadas en el período elegido. Coordinación
-  selecciona las que se dictarán y define uno o más paralelos, cada uno con su jornada;
+  revisa toda la malla pendiente y confirma uno o más paralelos por materia, cada uno con
+  su jornada y un docente opcional. La hoja propone paralelos, jornadas y docentes del
+  período anterior, si existen; solo propone docentes activos, verificados y con rol
+  vigente en la carrera. La propuesta se puede corregir antes de guardar y los paralelos
+  sin docente quedan pendientes de asignación. El guardado es atómico y auditado;
   campus viene de la facultad elegida por la carrera y la modalidad se fija al crear la
   carrera. La programación conserva el campus heredado para mantener la fotografía
   histórica del sílabo. Una materia

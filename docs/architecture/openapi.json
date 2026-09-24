@@ -3334,12 +3334,60 @@
                     }
                 },
                 "requestBody": {
-                    "required": false,
+                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "additionalProperties": true
+                                "required": [
+                                    "period_id",
+                                    "subjects"
+                                ],
+                                "properties": {
+                                    "period_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "subjects": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "required": [
+                                                "id",
+                                                "parallels"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "format": "uuid"
+                                                },
+                                                "parallels": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "code"
+                                                        ],
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "shift": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "teacher_user_id": {
+                                                                "type": "string",
+                                                                "format": "uuid",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

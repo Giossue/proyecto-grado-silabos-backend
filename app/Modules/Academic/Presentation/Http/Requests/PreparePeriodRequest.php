@@ -9,9 +9,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
- * «Preparar período» permite elegir materias y sus paralelos con jornada propia en un
- * solo envío.
- * Solo admite materias que todavía no están programadas en el período elegido.
+ * «Preparar período» recibe toda la malla pendiente, con paralelos y docentes
+ * opcionales, en un solo envío. El caso de uso comprueba la completitud.
  */
 class PreparePeriodRequest extends FormRequest
 {
@@ -39,6 +38,7 @@ class PreparePeriodRequest extends FormRequest
                                     ? trim($parallel['code'])
                                     : '',
                                 'shift' => $parallel['shift'] ?? null,
+                                'teacher_user_id' => $parallel['teacher_user_id'] ?? null,
                             ])
                             ->filter(fn (array $parallel): bool => $parallel['code'] !== '')
                             ->values()
@@ -56,7 +56,30 @@ class PreparePeriodRequest extends FormRequest
 
         return $this->user()?->activo === true
             && $activeRole !== null
-            && AcademicStructurePermissions::mayCreate($activeRole, 'programacion_asignatura');
+            && AcademicStructurePermissions::mayCreate($activeRole, 'programacion_asignatura')
+            && (! $this->includesTeacher()
+                || AcademicStructurePermissions::mayCreate($activeRole, 'asignacion_docente'));
+    }
+
+    private function includesTeacher(): bool
+    {
+        $subjects = $this->input('subjects');
+        if (! is_array($subjects)) {
+            return false;
+        }
+
+        foreach ($subjects as $subject) {
+            if (! is_array($subject) || ! is_array($subject['parallels'] ?? null)) {
+                continue;
+            }
+            foreach ($subject['parallels'] as $parallel) {
+                if (is_array($parallel) && ! empty($parallel['teacher_user_id'])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /** @return array<string, list<mixed>> */
@@ -73,6 +96,7 @@ class PreparePeriodRequest extends FormRequest
             'subjects.*.parallels' => ['required', 'array', 'min:1', 'max:50'],
             'subjects.*.parallels.*.code' => ['required', 'string', 'max:30', 'distinct'],
             'subjects.*.parallels.*.shift' => ['nullable', 'string', Rule::in(Parallel::SHIFTS)],
+            'subjects.*.parallels.*.teacher_user_id' => ['nullable', 'uuid'],
         ];
     }
 }

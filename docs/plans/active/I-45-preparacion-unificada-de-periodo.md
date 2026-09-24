@@ -16,6 +16,10 @@ crea uno o más paralelos con jornada individual. La acción de la materia progr
 permite agregar otros más tarde. Ninguna omisión elimina programación, paralelo ni
 historia. I-62 actualiza aquí el vocabulario sin alterar esta decisión funcional.
 
+I-126 (2026-09-23) reemplaza la selección manual de materias: todas las materias
+activas pendientes se incluyen y se proponen paralelos y docentes del período anterior.
+La regla de conservar los registros existentes continúa vigente.
+
 ## Pasos
 
 - [x] Aceptar y validar la preparación solo para materias aún no programadas del período.

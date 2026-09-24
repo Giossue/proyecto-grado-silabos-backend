@@ -11,6 +11,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
@@ -346,6 +347,81 @@ class AcademicStructureTest extends TestCase
         $this->assertSame(1, Parallel::query()
             ->where('programacion_asignatura_id', $scheduled->firstOrFail()->id)
             ->count());
+    }
+
+    public function test_preparing_a_period_assigns_a_verified_career_teacher_in_the_same_transaction(): void
+    {
+        $subject = Subject::query()->firstOrFail()->replicate();
+        $subject->codigo_asignatura = 'SW-605';
+        $subject->nombre = 'Ingeniería de Requisitos';
+        $subject->save();
+        $period = AcademicPeriod::query()->firstOrFail();
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
+                'period_id' => $period->id,
+                'subjects' => [[
+                    'id' => $subject->id,
+                    'parallels' => [['code' => 'A', 'shift' => 'matutina', 'teacher_user_id' => $teacher->id]],
+                ]],
+            ])
+            ->assertSuccessful()
+            ->assertJsonPath('message', 'Período preparado: 1 materia programada, 1 paralelo y 1 docente asignado para 1 materia.');
+
+        $scheduled = ScheduledSubject::query()->where('asignatura_id', $subject->id)->firstOrFail();
+        $parallel = Parallel::query()->where('programacion_asignatura_id', $scheduled->id)->firstOrFail();
+        $assignment = TeacherAssignment::query()->where('paralelo_id', $parallel->id)->firstOrFail();
+        $this->assertSame($teacher->id, $assignment->roleAssignment->usuario_id);
+    }
+
+    public function test_preparing_a_period_rejects_an_invalid_teacher_without_creating_any_subject(): void
+    {
+        $subject = Subject::query()->firstOrFail()->replicate();
+        $subject->codigo_asignatura = 'SW-606';
+        $subject->nombre = 'Arquitectura';
+        $subject->save();
+        $period = AcademicPeriod::query()->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
+                'period_id' => $period->id,
+                'subjects' => [[
+                    'id' => $subject->id,
+                    'parallels' => [['code' => 'A', 'teacher_user_id' => $this->administrator->id]],
+                ]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('subjects');
+
+        $this->assertDatabaseMissing('programaciones_asignatura', ['asignatura_id' => $subject->id]);
+    }
+
+    public function test_preparing_a_period_requires_every_pending_active_subject(): void
+    {
+        $first = Subject::query()->firstOrFail()->replicate();
+        $first->codigo_asignatura = 'SW-607';
+        $first->nombre = 'Seguridad';
+        $first->save();
+        $second = Subject::query()->firstOrFail()->replicate();
+        $second->codigo_asignatura = 'SW-608';
+        $second->nombre = 'Redes';
+        $second->save();
+        $period = AcademicPeriod::query()->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
+                'period_id' => $period->id,
+                'subjects' => [[
+                    'id' => $first->id,
+                    'parallels' => [['code' => 'A']],
+                ]],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('subjects');
+
+        $this->assertDatabaseMissing('programaciones_asignatura', ['asignatura_id' => $first->id]);
+        $this->assertDatabaseMissing('programaciones_asignatura', ['asignatura_id' => $second->id]);
     }
 
     public function test_preparing_a_period_rejects_duplicate_parallel_codes_after_normalization(): void

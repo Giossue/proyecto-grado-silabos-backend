@@ -140,6 +140,7 @@ class ExportOpenApi extends Command
         $isSourceOriginalPdf = $name === 'api.v1.coordination.sources.pdf.original';
         $isSourceAsset = $name === 'api.v1.coordination.sources.assets.show';
         $isSourceContent = $name === 'api.v1.coordination.sources.content.update';
+        $isPreparePeriod = $name === 'api.v1.coordination.academic.period.prepare';
         $successContent = $isDownload
             ? ['application/octet-stream' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
             : ($isSourceOriginalPdf
@@ -184,9 +185,33 @@ class ExportOpenApi extends Command
                     'required' => ['document'],
                     'properties' => ['document' => ['$ref' => '#/components/schemas/SourceDocument']],
                 ]]];
+            } elseif ($isPreparePeriod) {
+                $content = ['application/json' => ['schema' => [
+                    'type' => 'object',
+                    'required' => ['period_id', 'subjects'],
+                    'properties' => [
+                        'period_id' => ['type' => 'string', 'format' => 'uuid'],
+                        'subjects' => ['type' => 'array', 'items' => [
+                            'type' => 'object',
+                            'required' => ['id', 'parallels'],
+                            'properties' => [
+                                'id' => ['type' => 'string', 'format' => 'uuid'],
+                                'parallels' => ['type' => 'array', 'items' => [
+                                    'type' => 'object',
+                                    'required' => ['code'],
+                                    'properties' => [
+                                        'code' => ['type' => 'string'],
+                                        'shift' => ['type' => 'string', 'nullable' => true],
+                                        'teacher_user_id' => ['type' => 'string', 'format' => 'uuid', 'nullable' => true],
+                                    ],
+                                ]],
+                            ],
+                        ]],
+                    ],
+                ]]];
             }
             $operation['requestBody'] = [
-                'required' => $isSourcePdfUpload,
+                'required' => $isSourcePdfUpload || $isPreparePeriod,
                 'content' => $content,
             ];
         }

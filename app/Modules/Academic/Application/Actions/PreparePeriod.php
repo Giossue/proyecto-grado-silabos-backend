@@ -10,7 +10,9 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
@@ -20,9 +22,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Programa las materias seleccionadas en un período con campus y modalidad heredados,
- * y crea los paralelos indicados. Una materia ya programada no vuelve a entrar por este
- * flujo: sus paralelos se agregan desde la programación existente.
+ * Programa materias pendientes con sus paralelos y docentes confirmados. La operación
+ * completa se revierte si alguna asignación no es válida.
  */
 class PreparePeriod
 {
@@ -35,8 +36,8 @@ class PreparePeriod
     ) {}
 
     /**
-     * @param  array{period_id: string, subjects: list<array{id: string, parallels: list<array{code: string, shift?: string|null}>}>}  $data
-     * @return array{scheduledSubjects: int, parallels: int, subjects: int}
+     * @param  array{period_id: string, subjects: list<array{id: string, parallels: list<array{code: string, shift?: string|null, teacher_user_id?: string|null}>}>}  $data
+     * @return array{scheduledSubjects: int, parallels: int, assignments: int, subjects: int}
      */
     public function execute(array $data, User $actor, Request $request): array
     {
@@ -71,6 +72,37 @@ class PreparePeriod
                     'subjects' => 'Todas las materias seleccionadas deben estar activas y pertenecer a la malla de esta carrera.',
                 ]);
             }
+            $unpreparedIds = Subject::query()
+                ->where('activo', true)
+                ->where('carrera_id', $careerId)
+                ->whereDoesntHave('scheduledSubjects', fn ($query) => $query
+                    ->where('periodo_academico_id', $period->id)
+                    ->where('activo', true))
+                ->pluck('id');
+            if ($unpreparedIds->diff($settingsBySubject->keys())->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'subjects' => 'Incluya todas las materias activas que faltan por programar en este período.',
+                ]);
+            }
+
+            $teacherIds = collect($data['subjects'])
+                ->flatMap(fn (array $setting): array => array_column($setting['parallels'], 'teacher_user_id'))
+                ->filter(fn (mixed $id): bool => is_string($id) && $id !== '')
+                ->unique()
+                ->values();
+            $teacherRoles = RoleAssignment::query()
+                ->effective()
+                ->where('carrera_id', $careerId)
+                ->where('rol', RoleCode::Teacher->value)
+                ->whereIn('usuario_id', $teacherIds)
+                ->whereHas('user', fn ($query) => $query->where('activo', true)->whereNotNull('correo_verificado_en'))
+                ->get()
+                ->keyBy('usuario_id');
+            if ($teacherRoles->count() !== $teacherIds->count()) {
+                throw ValidationException::withMessages([
+                    'subjects' => 'Todos los docentes elegidos deben tener una cuenta verificada y un rol docente vigente en esta carrera.',
+                ]);
+            }
 
             $existing = ScheduledSubject::query()
                 ->where('periodo_academico_id', $period->id)
@@ -80,6 +112,7 @@ class PreparePeriod
             $correlationId = $request->attributes->getString('correlation_id') ?: null;
             $scheduledSubjects = 0;
             $parallels = 0;
+            $assignments = 0;
 
             foreach ($subjects as $subject) {
                 $scheduledSubject = $existing->get($subject->id);
@@ -108,7 +141,7 @@ class PreparePeriod
                     );
                     $scheduledSubjects++;
                 }
-                /** @var array{parallels: list<array{code: string, shift?: string|null}>} $setting */
+                /** @var array{parallels: list<array{code: string, shift?: string|null, teacher_user_id?: string|null}>} $setting */
                 $setting = $settingsBySubject->get($subject->id);
                 foreach ($setting['parallels'] as $parallelSetting) {
                     $parallelExists = Parallel::query()
@@ -136,10 +169,29 @@ class PreparePeriod
                         correlationId: $correlationId,
                     );
                     $parallels++;
+                    $teacherId = $parallelSetting['teacher_user_id'] ?? null;
+                    if ($teacherId !== null) {
+                        $assignment = TeacherAssignment::query()->create([
+                            'asignacion_rol_id' => $teacherRoles->get($teacherId)->id,
+                            'paralelo_id' => $parallel->id,
+                            'activo' => true,
+                        ]);
+                        $this->audit->execute(
+                            actorId: $actor->id,
+                            roleAssignmentId: $activeRole->id,
+                            action: 'academico.asignacion_docente.creacion',
+                            resourceType: 'asignacion_docente',
+                            resourceId: $assignment->id,
+                            result: 'exito',
+                            metadata: ['period_prepared' => true, 'bulk' => true],
+                            correlationId: $correlationId,
+                        );
+                        $assignments++;
+                    }
                 }
             }
 
-            return ['scheduledSubjects' => $scheduledSubjects, 'parallels' => $parallels, 'subjects' => $subjects->count()];
+            return ['scheduledSubjects' => $scheduledSubjects, 'parallels' => $parallels, 'assignments' => $assignments, 'subjects' => $subjects->count()];
         });
     }
 }
