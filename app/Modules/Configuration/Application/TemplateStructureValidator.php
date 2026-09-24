@@ -41,12 +41,12 @@ class TemplateStructureValidator
 
         foreach ($template->sections as $section) {
             if ($section->blocks->isEmpty()) {
-                throw ValidationException::withMessages([$errorKey => "La sección «{$section->titulo}» de la plantilla no tiene bloques."]);
+                throw ValidationException::withMessages([$errorKey => "La sección «{$section->titulo}» de la plantilla está vacía."]);
             }
 
             foreach ($section->blocks as $block) {
                 if ($block->fields->isEmpty() && ! is_array($block->configuracion['document'] ?? null)) {
-                    throw ValidationException::withMessages([$errorKey => "El bloque «{$block->titulo}» de la plantilla no tiene campos."]);
+                    throw ValidationException::withMessages([$errorKey => "La sección «{$block->titulo}» de la plantilla no tiene partes."]);
                 }
 
                 foreach ($block->fields as $field) {
@@ -62,7 +62,7 @@ class TemplateStructureValidator
 
             if ($unmapped !== []) {
                 throw ValidationException::withMessages([
-                    $errorKey => 'La plantilla tiene marcadores de documento obligatorios sin campo: '.implode(', ', $unmapped).'.',
+                    $errorKey => 'Al documento de la plantilla le faltan partes: '.implode(', ', $unmapped).'.',
                 ]);
             }
         }
@@ -72,7 +72,7 @@ class TemplateStructureValidator
     {
         if ($field->heredado && ($field->origen_maestro === null || $field->editable_docente)) {
             throw ValidationException::withMessages([
-                $errorKey => "El campo heredado «{$field->etiqueta}» debe indicar origen y ser de solo lectura.",
+                $errorKey => "El dato automático «{$field->etiqueta}» está mal configurado. Vuelva a cargar el formato oficial UEB.",
             ]);
         }
 

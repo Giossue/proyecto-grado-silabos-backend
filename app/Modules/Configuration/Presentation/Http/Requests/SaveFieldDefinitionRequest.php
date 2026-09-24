@@ -15,7 +15,6 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
         'bulleted_list',
         'numbered_list',
         'boolean',
-        'multiple_choice',
         'fixed',
     ];
 
@@ -27,7 +26,8 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
         $field = $this->route('field');
         $fieldId = $field instanceof FieldDefinition ? $field->id : null;
         // La ficha de identificación no se crea desde la paleta, pero sí se le edita la ayuda.
-        $types = $fieldId === null ? self::TYPES : [...self::TYPES, 'institutional'];
+        // "Selección múltiple" ya no se ofrece; una parte existente de ese tipo se conserva.
+        $types = $fieldId === null ? self::TYPES : [...self::TYPES, 'institutional', 'multiple_choice'];
 
         return [
             'section_id' => [
@@ -49,7 +49,7 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
                 static function (string $attribute, mixed $value, \Closure $fail) use ($template): void {
                     if (is_string($value)
                         && (! $template instanceof SyllabusTemplate || $template->block($value) === null)) {
-                        $fail('El bloque seleccionado no pertenece a la plantilla.');
+                        $fail('La sección elegida no pertenece a la plantilla.');
                     }
                 },
             ],
@@ -69,16 +69,21 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'master_source' => ['nullable', 'required_if:inherited,true', 'string', 'max:100'],
             'teacher_editable' => ['nullable', 'boolean'],
             'ai_enabled' => ['nullable', 'boolean'],
-            'rules' => ['nullable', 'array:required,max_length,min_rows,max_rows'],
-            'rules.required' => ['sometimes', 'boolean'],
-            'rules.max_length' => ['nullable', 'integer'],
-            'rules.min_rows' => ['nullable', 'integer'],
-            'rules.max_rows' => ['nullable', 'integer'],
             'options' => ['nullable', 'array', 'min:2', 'max:50'],
             'options.*' => ['required', 'array:value,label'],
             'options.*.value' => ['required', 'string', 'max:120', 'distinct'],
             'options.*.label' => ['required', 'string', 'max:180'],
             'document_marker' => ['nullable', 'string', 'max:160'],
+            'page_orientation' => ['sometimes', 'nullable', 'in:portrait,landscape'],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'content_type.in' => 'Elija un tipo de parte de la lista.',
+            'page_orientation.in' => 'Elija hoja vertical u horizontal.',
         ];
     }
 

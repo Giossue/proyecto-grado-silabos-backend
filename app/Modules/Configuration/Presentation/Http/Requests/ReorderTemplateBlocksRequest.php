@@ -29,7 +29,7 @@ class ReorderTemplateBlocksRequest extends ManageTemplatesRequest
                 'distinct',
                 static function (string $attribute, mixed $value, \Closure $fail) use ($template): void {
                     if (! is_string($value) || $template?->block($value) === null) {
-                        $fail('El bloque seleccionado no pertenece a la plantilla.');
+                        $fail('La sección elegida no pertenece a la plantilla.');
                     }
                 },
             ],

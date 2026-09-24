@@ -96,7 +96,7 @@ class RequestSyllabusAiReview
 
             if ($fields->isEmpty()) {
                 throw ValidationException::withMessages([
-                    'syllabus' => 'No hay campos con contenido habilitados para la revisión de IA',
+                    'syllabus' => 'No hay partes con contenido habilitadas para la revisión de IA',
                 ]);
             }
 

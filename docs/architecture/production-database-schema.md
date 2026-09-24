@@ -266,7 +266,6 @@ heredado BOOLEAN NOT NULL
 origen_maestro VARCHAR NULL
 editable_docente BOOLEAN NOT NULL
 ia_habilitada BOOLEAN NOT NULL
-reglas_definicion_campo JSONB NULL
 opciones_definicion_campo JSONB NULL
 marcador_documento VARCHAR NULL
 posicion_definicion_campo SMALLINT NOT NULL

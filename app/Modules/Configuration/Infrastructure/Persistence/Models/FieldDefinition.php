@@ -19,7 +19,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $origen_maestro
  * @property bool $editable_docente
  * @property bool $ia_habilitada
- * @property array<string, mixed>|null $reglas
  * @property list<mixed>|null $opciones
  * @property string|null $marcador_documento
  * @property int $posicion
@@ -34,7 +33,6 @@ class FieldDefinition extends Model
         'etiqueta' => 'etiqueta_definicion_campo',
         'ayuda' => 'ayuda_definicion_campo',
         'tipo' => 'tipo_definicion_campo',
-        'reglas' => 'reglas_definicion_campo',
         'opciones' => 'opciones_definicion_campo',
         'posicion' => 'posicion_definicion_campo',
     ];
@@ -55,7 +53,6 @@ class FieldDefinition extends Model
         'origen_maestro',
         'editable_docente',
         'ia_habilitada',
-        'reglas',
         'opciones',
         'marcador_documento',
         'posicion',
@@ -68,7 +65,6 @@ class FieldDefinition extends Model
             'heredado' => 'boolean',
             'editable_docente' => 'boolean',
             'ia_habilitada' => 'boolean',
-            'reglas' => 'array',
             'opciones' => 'array',
             'posicion' => 'integer',
         ];

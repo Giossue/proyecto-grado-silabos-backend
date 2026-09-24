@@ -18,7 +18,6 @@ use App\Modules\Configuration\Application\Actions\SaveTemplateTitle;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\FieldRules;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -149,8 +148,7 @@ class TemplateController extends Controller
                                     'help' => $field->ayuda,
                                     'type' => $field->tipo,
                                     'options' => $this->fieldOptions($field),
-                                    'required' => FieldRules::read($field->reglas, $field->tipo)['required'] || $field->heredado,
-                                    'rules' => FieldRules::read($field->reglas, $field->tipo),
+                                    'required' => true,
                                     'inherited' => $field->heredado,
                                     'master_source' => $field->origen_maestro,
                                     'teacher_editable' => $field->editable_docente,
@@ -168,8 +166,7 @@ class TemplateController extends Controller
                 ['value' => 'bulleted_list', 'label' => 'Lista con viñetas'],
                 ['value' => 'numbered_list', 'label' => 'Lista numerada'],
                 ['value' => 'boolean', 'label' => 'Sí / No'],
-                ['value' => 'multiple_choice', 'label' => 'Selección múltiple'],
-                ['value' => 'fixed', 'label' => 'Contenido fijo (el docente no llena)'],
+                ['value' => 'fixed', 'label' => 'Texto fijo (el docente no lo llena)'],
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
         ];
@@ -232,7 +229,7 @@ class TemplateController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->create($template->id, $request->validated(), $actor, $request);
 
-        return $this->success($request, 'Campo agregado al bloque.');
+        return $this->success($request, 'Parte agregada a la sección.');
     }
 
     public function updateField(
@@ -246,7 +243,7 @@ class TemplateController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->update($field, $request->validated(), $actor, $request);
 
-        return $this->success($request, 'Campo actualizado.');
+        return $this->success($request, 'Parte actualizada.');
     }
 
     public function storeSection(
@@ -258,7 +255,7 @@ class TemplateController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->create($template->id, $request->validated(), $actor, $request);
 
-        return $this->success($request, 'Bloque agregado al borrador.');
+        return $this->success($request, 'Sección agregada al borrador.');
     }
 
     public function updateSection(
@@ -272,7 +269,7 @@ class TemplateController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->update($section, $request->validated(), $actor, $request);
 
-        return $this->success($request, 'Bloque actualizado.');
+        return $this->success($request, 'Sección actualizada.');
     }
 
     public function reorderBlocks(
@@ -290,7 +287,7 @@ class TemplateController extends Controller
             $request,
         );
 
-        return $this->success($request, 'Orden de campos actualizado.');
+        return $this->success($request, 'Orden de partes actualizado.');
     }
 
     public function reorderSections(
@@ -307,7 +304,7 @@ class TemplateController extends Controller
             $request,
         );
 
-        return $this->success($request, 'Orden de bloques actualizado.');
+        return $this->success($request, 'Orden de secciones actualizado.');
     }
 
     /** Reemplaza el logo de la universidad que encabeza todos los sílabos. */
@@ -366,7 +363,7 @@ class TemplateController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->execute($section, $actor, $request);
 
-        return $this->success($request, 'Bloque eliminado.');
+        return $this->success($request, 'Sección eliminada.');
     }
 
     private function success(Request $request, string $message): JsonResponse

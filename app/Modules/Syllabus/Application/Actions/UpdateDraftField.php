@@ -33,7 +33,7 @@ class UpdateDraftField
                 throw ValidationException::withMessages(['syllabus' => 'El expediente no está en estado editable.']);
             }
             if ($field->heredado || ! $field->editable_docente || $field->tipo === 'calculo') {
-                throw ValidationException::withMessages(['field' => 'Este campo institucional no puede ser editado por el docente.']);
+                throw ValidationException::withMessages(['field' => 'Esta parte la llena el sistema; el docente no puede cambiarla.']);
             }
 
             if ($field->tipo === 'repetible') {

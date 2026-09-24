@@ -39,7 +39,7 @@ class ApplyAiRecommendation
             $recommendation = $analysis?->recommendation($recommendationId);
             if ($analysis === null || $recommendation === null || $analysis->state() !== 'completada') {
                 throw ValidationException::withMessages([
-                    'recommendation' => 'La recomendación no corresponde a este campo y sílabo.',
+                    'recommendation' => 'La recomendación no corresponde a esta parte del sílabo.',
                 ]);
             }
             $suggestedText = (string) $recommendation['texto_sugerido'];
@@ -76,7 +76,7 @@ class ApplyAiRecommendation
             if (mb_strlen($suggestedText) > $maxLength
                 || preg_match('/<\/?[a-z][^>]*>/i', $suggestedText) === 1) {
                 throw ValidationException::withMessages([
-                    'recommendation' => 'El texto sugerido no cumple las reglas del campo.',
+                    'recommendation' => 'El texto sugerido no cumple las reglas de la parte.',
                 ]);
             }
 

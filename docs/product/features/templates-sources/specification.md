@@ -66,9 +66,9 @@
   nace sin campos; una tabla del editor se convierte en contenido fijo con «Convertir en
   contenido fijo». Indicadores de evaluación y escala de valoración vienen fijos con los
   valores UEB. Las tablas del docente son fijas, con filas o por unidad.
-- Cada campo del docente puede ser obligatorio u opcional, tener máximo de caracteres
-  (texto) y mínimo/máximo de filas (listas y tablas). El editor docente muestra un
-  contador; los límites se comprueban al enviar y nunca impiden guardar el borrador.
+- Todo el sílabo lo llena el docente salvo el contenido fijo: no existe «Obligatorio»
+  configurable ni límites de caracteres o filas. Al enviar, cada campo vacío bloquea con
+  ««Campo» está vacío. Complétalo antes de enviar.»; el borrador se guarda siempre.
 
 ## Criterios críticos
 

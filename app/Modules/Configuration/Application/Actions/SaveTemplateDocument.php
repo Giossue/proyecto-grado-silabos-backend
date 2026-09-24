@@ -4,7 +4,6 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\FieldRules;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -45,6 +44,9 @@ final class SaveTemplateDocument
             $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
             $this->locks->assertTemplateEditable();
             $block = $template->blockOrFail($block->id);
+            if ($block->contentType() === 'fixed' && ! self::hasContent($normalized)) {
+                throw ValidationException::withMessages(['document' => 'Escriba el texto fijo antes de guardar.']);
+            }
             if (! hash_equals(self::fingerprint($block), $fingerprint)) {
                 throw ValidationException::withMessages(['fingerprint' => 'La plantilla cambió en otra sesión. Recargue antes de guardar; su diseño no fue sobrescrito.']);
             }
@@ -57,7 +59,7 @@ final class SaveTemplateDocument
                 $field = $fields->get($property['key']);
                 if (($field === null && ! in_array($property['key'], $documentFieldKeys, true))
                     || ($field !== null && isset($block->configuracion['detached_fields'][$field->clave]))) {
-                    throw ValidationException::withMessages(["properties.$index.key" => 'El campo no pertenece al diseño actual.']);
+                    throw ValidationException::withMessages(["properties.$index.key" => 'La parte no pertenece al diseño actual.']);
                 }
             }
             $normalized = $this->applyPropertyLabels($normalized, $request->input('properties', []));
@@ -68,21 +70,21 @@ final class SaveTemplateDocument
                 $attrs = $node['attrs'];
                 $key = $attrs['key'];
                 if (isset($labels[$key]) && $labels[$key] !== $attrs['label']) {
-                    TemplateDocument::fail('Un campo debe conservar el mismo nombre en todas sus apariciones.');
+                    TemplateDocument::fail('Una parte debe conservar el mismo nombre en todas sus apariciones.');
                 }
                 $labels[$key] = $attrs['label'];
                 $used[] = $key;
                 if (isset($fields[$key])) {
                     $choice = $attrs['choice'] ?? null;
                     if ($choice !== null && ! in_array($choice, $this->optionValues($fields[$key]), true)) {
-                        TemplateDocument::fail('La condición usa una opción que no pertenece al campo.');
+                        TemplateDocument::fail('La condición usa una opción que no pertenece a la parte.');
                     }
 
                     continue;
                 }
                 if (! in_array($attrs['kind'], TemplateDocument::FIELD_TYPES, true)
                     || FieldDefinition::query()->where('plantilla_id', $block->plantilla_id)->where('clave', $key)->exists()) {
-                    TemplateDocument::fail('El campo pertenece a otro bloque o su tipo no está permitido.');
+                    TemplateDocument::fail('La parte pertenece a otra sección o su tipo no está permitido.');
                 }
                 $definition = [
                     'key' => $attrs['key'],
@@ -91,10 +93,10 @@ final class SaveTemplateDocument
                     'options' => $attrs['options'] ?? null,
                 ];
                 if ($attrs['kind'] === 'seleccion_unica' && $definition['options'] === null) {
-                    TemplateDocument::fail('Un campo de selección necesita sus opciones.');
+                    TemplateDocument::fail('Una parte de selección necesita sus opciones.');
                 }
                 if (isset($toCreate[$key]) && $toCreate[$key] !== $definition) {
-                    TemplateDocument::fail('Dos campos comparten nombre interno pero tienen distinta definición.');
+                    TemplateDocument::fail('Dos partes distintas tienen el mismo nombre. Cambie el nombre de una.');
                 }
                 $toCreate[$key] = $definition;
             }
@@ -115,7 +117,7 @@ final class SaveTemplateDocument
                     'options' => null,
                 ];
                 if (isset($toCreate[$key]) && $toCreate[$key] !== $definition) {
-                    TemplateDocument::fail('Dos campos comparten nombre interno pero tienen distinta definición.');
+                    TemplateDocument::fail('Dos partes distintas tienen el mismo nombre. Cambie el nombre de una.');
                 }
                 $toCreate[$key] = $definition;
                 $labels[$key] = $label;
@@ -137,7 +139,7 @@ final class SaveTemplateDocument
                 $key = $table['attrs']['repeatKey'];
                 if ($key === null) {
                     if (TemplateDocument::nodes($table, 'column') !== []) {
-                        TemplateDocument::fail('Los campos de fila deben estar dentro de su tabla repetible.');
+                        TemplateDocument::fail('Las partes de fila deben estar dentro de su tabla.');
                     }
 
                     continue;
@@ -174,13 +176,13 @@ final class SaveTemplateDocument
                             $knownColumn = $columnKeys[$attrs['key']] ?? null;
                             if ($knownColumn !== null
                                 && ($knownColumn['label'] !== $attrs['label'] || $knownColumn['kind'] !== $attrs['kind'])) {
-                                TemplateDocument::fail('Un campo de columna debe mantener el mismo nombre y tipo en todas sus apariciones.');
+                                TemplateDocument::fail('Una columna debe mantener el mismo nombre y tipo en toda la tabla.');
                             }
                             if ($knownColumn !== null
                                 && ($knownColumn['role'] ?? null) !== null
                                 && ($attrs['role'] ?? null) !== null
                                 && $knownColumn['role'] !== $attrs['role']) {
-                                TemplateDocument::fail('Un campo de columna debe conservar la misma función especial.');
+                                TemplateDocument::fail('Una columna debe conservar la misma función en toda la tabla.');
                             }
                             if ($role === 'total' && ! TableLayout::summable('number', $attrs['role'] ?? null, $attrs['key'], $attrs['label'])) {
                                 TemplateDocument::fail("La columna «{$attrs['label']}» no se suma; quítela de la fila de totales.");
@@ -199,15 +201,15 @@ final class SaveTemplateDocument
                                 $summedKeys[] = $attrs['key'];
                             }
                         } else {
-                            TemplateDocument::fail('Un campo de columna debe estar en una fila de datos, unidad o total.');
+                            TemplateDocument::fail('Una columna debe estar en una fila de datos, de unidad o de total.');
                         }
                     }
                 }
                 if (! $hasRecords || $recordKeys === []) {
-                    TemplateDocument::fail('La tabla repetible necesita al menos una fila con campos de datos.');
+                    TemplateDocument::fail('La tabla necesita al menos una fila que llene el docente.');
                 }
                 if (array_diff($totalKeys, $recordKeys) !== [] || array_intersect(array_keys($headerKeys), $recordKeys) !== []) {
-                    TemplateDocument::fail('Los totales deben usar campos de datos; los campos de unidad deben tener nombres propios.');
+                    TemplateDocument::fail('Los totales deben sumar columnas que llena el docente, y las columnas de unidad necesitan su propio nombre.');
                 }
             }
             if ($layout !== null && $columnKeys !== []) {
@@ -216,7 +218,7 @@ final class SaveTemplateDocument
                 foreach ($columnKeys as $key => $attrs) {
                     $type = $attrs['kind'] === 'numero' ? 'number' : 'text';
                     if (isset($known[$key]) && $known[$key]['type'] !== $type) {
-                        TemplateDocument::fail('No cambie el tipo de una columna existente; inserte un campo nuevo.');
+                        TemplateDocument::fail('No cambie el tipo de una columna que ya existe; agregue una columna nueva.');
                     }
                     $columns[] = [
                         'key' => $key, 'label' => $attrs['label'], 'type' => $type,
@@ -285,15 +287,26 @@ final class SaveTemplateDocument
         });
     }
 
+    /** @param array<string, mixed> $node */
+    private static function hasContent(array $node): bool
+    {
+        if (in_array($node['type'] ?? null, ['text', 'variable', 'field', 'column', 'table'], true)) {
+            return true;
+        }
+        foreach ((array) ($node['content'] ?? []) as $child) {
+            if (is_array($child) && self::hasContent($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** @param array<string, mixed> $detached */
     private function saveProperties(TemplateBlock $block, Request $request, array $detached): void
     {
-        foreach ($request->input('properties', []) as $index => $property) {
+        foreach ($request->input('properties', []) as $property) {
             $attributes = ['etiqueta' => $property['label'], 'ayuda' => $property['help']];
-            if (array_key_exists('rules', $property)) {
-                $type = $block->fields()->where('clave', $property['key'])->first()?->tipo;
-                $attributes['reglas'] = FieldRules::normalize($property['rules'], (string) $type, "properties.$index.rules");
-            }
             if (array_key_exists('ai_enabled', $property)) {
                 // Un campo retirado conserva su configuración para una futura restauración,
                 // pero no vuelve a habilitarse en el formulario actual.
@@ -305,9 +318,18 @@ final class SaveTemplateDocument
             }
             $block->fields()->where('clave', $property['key'])->update($attributes);
         }
+        $configuration = [...($block->configuracion ?? []), 'detached_fields' => $detached];
+        if ($request->has('page_orientation')) {
+            $orientation = $request->input('page_orientation');
+            if (is_string($orientation)) {
+                $configuration['page_orientation'] = $orientation;
+            } else {
+                unset($configuration['page_orientation']);
+            }
+        }
         $block->update([
             'titulo' => $request->has('title') ? $request->string('title')->trim()->value() : $block->titulo,
-            'configuracion' => [...($block->configuracion ?? []), 'detached_fields' => $detached],
+            'configuracion' => $configuration,
         ]);
     }
 

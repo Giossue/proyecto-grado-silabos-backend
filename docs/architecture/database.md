@@ -132,9 +132,8 @@ resuelve con `SyllabusTemplate::institutional()`. La exportación renderiza desd
 `revisiones_silabo.fotografia`, no desde la plantilla vigente. Cada bloque guarda su tipo una
 sola vez en `configuracion.content_type` (`text`, `table`, listas, `institutional` o `fixed` =
 contenido fijo sin campos); el tipo de almacenamiento se deriva de él (I-138).
-`definiciones_campo.reglas_definicion_campo` guarda `{required, max_length, min_rows,
-max_rows}`: sin reglas el campo es obligatorio. Se validan al enviar; el estado `borrador`
-puede permanecer incompleto o fuera de límites.
+No hay reglas por campo: `reglas_definicion_campo` se eliminó (migración `000111`). Todo
+campo del docente es obligatorio al enviar; el estado `borrador` puede quedar incompleto.
 
 `fuentes_academicas` es un documento por fila (I-95): nombre único por carrera,
 descripción y `documento_fuente_academica` JSON editable. `contenido_fuente_academica`

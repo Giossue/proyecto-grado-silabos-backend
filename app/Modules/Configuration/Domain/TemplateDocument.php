@@ -22,7 +22,7 @@ final class TemplateDocument
     public static function normalize(array $document, array $variables): array
     {
         if (strlen(json_encode($document, JSON_THROW_ON_ERROR)) > 2000000) {
-            self::fail('El diseño excede el límite de 2 MB. Divida el contenido en bloques.');
+            self::fail('El diseño pasa el límite de 2 MB. Divida el contenido en varias secciones.');
         }
         $count = 0;
         $visit = function (mixed $raw, string $parent, int $depth, bool $insideTable = false, bool $repeated = false) use (&$visit, &$count, $variables): array {
@@ -60,7 +60,7 @@ final class TemplateDocument
             }
             if (in_array($type, ['field', 'column'], true)) {
                 if ($type === 'column' && ! $repeated) {
-                    self::fail('Los campos de fila deben estar dentro de su tabla repetible.');
+                    self::fail('Las partes de fila deben estar dentro de su tabla.');
                 }
                 $key = $attrs['key'] ?? '';
                 $label = $attrs['label'] ?? '';
@@ -71,7 +71,7 @@ final class TemplateDocument
                 if (! is_string($key) || ! preg_match('/^[a-z][a-z0-9_]{0,119}$/D', $key)
                     || ! is_string($label) || trim($label) === '' || mb_strlen($label) > 180
                     || ! in_array($kind, [...self::FIELD_TYPES, 'repetible', 'seleccion_unica', 'referencia_maestra', 'booleano'], true)) {
-                    self::fail('Cada campo necesita un nombre y un tipo válido.');
+                    self::fail('Cada parte necesita un nombre y un tipo válido.');
                 }
                 $node['attrs'] = ['key' => $key, 'label' => trim($label), 'kind' => $kind];
                 $rawOptions = $attrs['options'] ?? null;
@@ -82,15 +82,15 @@ final class TemplateDocument
                 }
                 $options = self::options($rawOptions);
                 if ($options !== null && $kind !== 'seleccion_unica') {
-                    self::fail('Solo un campo de selección admite opciones.');
+                    self::fail('Solo una parte de selección admite opciones.');
                 }
                 $node['attrs']['options'] = $options;
                 $choice = $attrs['choice'] ?? null;
                 if ($choice !== null && (! is_string($choice) || trim($choice) === '' || mb_strlen($choice) > 100)) {
-                    self::fail('Opción de campo no válida.');
+                    self::fail('Una opción de la parte no es válida.');
                 }
                 if ($choice !== null && $options !== null && ! in_array($choice, $options, true)) {
-                    self::fail('La condición usa una opción que no pertenece al campo.');
+                    self::fail('La condición usa una opción que no pertenece a la parte.');
                 }
                 $node['attrs']['choice'] = $choice;
                 $listStyle = $attrs['listStyle'] ?? null;
@@ -121,7 +121,7 @@ final class TemplateDocument
             if ($type === 'table') {
                 $key = $attrs['repeatKey'] ?? null;
                 if ($key !== null && (! is_string($key) || ! preg_match('/^[a-z][a-z0-9_]{0,119}$/D', $key))) {
-                    self::fail('La tabla repetible no tiene un campo válido.');
+                    self::fail('La tabla no tiene una parte válida.');
                 }
                 $repeatLabel = $attrs['repeatLabel'] ?? null;
                 if ($repeatLabel !== null && ($key === null || ! is_string($repeatLabel) || trim($repeatLabel) === '' || mb_strlen($repeatLabel) > 180)) {
@@ -328,17 +328,17 @@ final class TemplateDocument
             return null;
         }
         if (! is_array($raw) || ! array_is_list($raw) || count($raw) < 2 || count($raw) > 20) {
-            self::fail('Un campo de selección necesita entre 2 y 20 opciones.');
+            self::fail('Una parte de selección necesita entre 2 y 20 opciones.');
         }
         $options = [];
         foreach ($raw as $option) {
             if (! is_string($option) || trim($option) === '' || mb_strlen(trim($option)) > 100) {
-                self::fail('Las opciones del campo no son válidas.');
+                self::fail('Las opciones de la parte no son válidas.');
             }
             $options[] = trim($option);
         }
         if (count(array_unique($options)) !== count($options)) {
-            self::fail('Las opciones del campo no pueden repetirse.');
+            self::fail('Las opciones de la parte no pueden repetirse.');
         }
 
         return $options;

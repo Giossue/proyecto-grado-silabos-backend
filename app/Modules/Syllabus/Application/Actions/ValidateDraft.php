@@ -3,8 +3,8 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Domain\FieldRules;
 use App\Modules\Configuration\Domain\TableLayout;
+use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -45,31 +45,24 @@ class ValidateDraft
             $issues = [];
 
             foreach ($fields as $field) {
-                $detached = $field->block?->configuracion['detached_fields'] ?? [];
-                if (is_array($detached) && array_key_exists($field->clave, $detached)) {
+                if (! $this->requiredFromTeacher($field)) {
                     continue;
                 }
                 $fieldRows = $rows->get($field->id, collect());
-                $value = $values->get($field->id)?->valor;
-                // Las filas de encabezado de unidad no cuentan como filas de datos.
-                $records = $fieldRows->filter(fn ($row): bool => ($row->datos['_kind'] ?? null) !== 'unit')->count();
+                // Todo campo del formulario es obligatorio al enviar; el borrador se guarda siempre.
                 $missing = $field->tipo === 'repetible'
                     ? $fieldRows->isEmpty()
-                    : ! $this->filled($value);
-                $rules = FieldRules::read($field->reglas, $field->tipo);
-                if (! $missing && ! $field->heredado) {
-                    foreach (FieldRules::issues($rules, $field->etiqueta, $value, $records) as $ruleIssue) {
-                        $issues[] = ['field_id' => $field->id, 'severity' => 'error', ...$ruleIssue];
-                    }
-                }
-                if ($missing && ($rules['required'] || $field->heredado)) {
+                    : ! $this->filled($values->get($field->id)?->valor);
+                if ($missing) {
                     $issues[] = [
                         'field_id' => $field->id,
                         'code' => $field->heredado ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
                         'severity' => 'error',
+                        // El docente no puede llenar un dato institucional: sigue bloqueando,
+                        // pero el mensaje le dice a quién acudir.
                         'message' => $field->heredado
-                            ? "No se pudo heredar el dato institucional «{$field->etiqueta}». Solicita corrección de la configuración."
-                            : "Completa el campo obligatorio «{$field->etiqueta}».",
+                            ? "Avise a Coordinación: falta el dato «{$field->etiqueta}» en la información de la carrera."
+                            : "«{$field->etiqueta}» está vacío. Complétalo antes de enviar.",
                     ];
                 }
 
@@ -119,6 +112,40 @@ class ValidateDraft
 
             return $run->load('results');
         });
+    }
+
+    /**
+     * Solo se exige lo que el docente llena, más los datos institucionales heredados
+     * (que bloquean con aviso a Coordinación). No se exige el texto fijo, las partes
+     * que el docente no edita ni las definiciones que ya no aparecen en el documento.
+     */
+    private function requiredFromTeacher(FieldDefinition $field): bool
+    {
+        $block = $field->block;
+        if ($block === null || $block->contentType() === 'fixed') {
+            return false;
+        }
+        if ($field->heredado) {
+            return true;
+        }
+        if (! $field->editable_docente) {
+            return false;
+        }
+        $configuration = $block->configuracion ?? [];
+        $detached = $configuration['detached_fields'] ?? [];
+        if (is_array($detached) && array_key_exists($field->clave, $detached)) {
+            return false;
+        }
+        $document = $configuration['document'] ?? null;
+        if (! is_array($document)) {
+            return true;
+        }
+        $keys = [
+            ...array_map(static fn (array $node): mixed => $node['attrs']['key'] ?? null, TemplateDocument::nodes($document, 'field')),
+            ...array_map(static fn (array $node): mixed => $node['attrs']['repeatKey'] ?? null, TemplateDocument::nodes($document, 'table')),
+        ];
+
+        return in_array($field->clave, $keys, true);
     }
 
     private function filled(mixed $value): bool

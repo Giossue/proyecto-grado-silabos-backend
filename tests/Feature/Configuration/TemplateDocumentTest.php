@@ -15,6 +15,7 @@ use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 use ZipArchive;
@@ -392,7 +393,7 @@ class TemplateDocumentTest extends TestCase
         $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
             'document' => $document,
             'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertJsonValidationErrors(['document' => 'La tabla repetible necesita al menos una fila con campos de datos.']);
+        ])->assertJsonValidationErrors(['document' => 'La tabla necesita al menos una fila que llene el docente.']);
     }
 
     public function test_text_field_list_format_preserves_values_and_exports_lines_as_items(): void
@@ -676,6 +677,58 @@ class TemplateDocumentTest extends TestCase
         $this->assertEqualsCanonicalizing(['nombre_docente', 'nombre_coordinador', 'fecha_entrega', 'fecha_revision'], $signatures);
     }
 
+    public function test_administration_turns_a_part_to_landscape_and_back(): void
+    {
+        $template = $this->template();
+        $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
+        $block = $field->block;
+        $url = route('api.v1.admin.template.fields.update', [$template, $field]);
+        $payload = ['block_id' => $block->id, 'key' => $field->clave, 'label' => $field->etiqueta, 'content_type' => $block->contentType()];
+
+        $this->patchJson($url, [...$payload, 'page_orientation' => 'landscape'])->assertSuccessful();
+        $this->assertSame('landscape', $block->fresh()->pageOrientation());
+        $this->getJson(route('api.v1.admin.template.show', $template))
+            ->assertJsonFragment(['page_orientation' => 'landscape']);
+
+        // Sin el campo, la orientación elegida se conserva.
+        $this->patchJson($url, $payload)->assertSuccessful();
+        $this->assertSame('landscape', $block->fresh()->pageOrientation());
+
+        $this->patchJson($url, [...$payload, 'page_orientation' => 'sideways'])
+            ->assertJsonValidationErrors(['page_orientation' => 'Elija hoja vertical u horizontal.']);
+        $this->patchJson($url, [...$payload, 'page_orientation' => null])->assertSuccessful();
+        $this->assertNull($block->fresh()->pageOrientation());
+
+        // Planificación sigue horizontal por defecto.
+        $planning = $template->fields()->where('clave', 'unidades')->firstOrFail()->block;
+        $this->assertSame('landscape', $planning->pageOrientation());
+    }
+
+    public function test_fixed_text_can_be_landscape_and_is_not_saved_empty(): void
+    {
+        $template = $this->template();
+        $section = $template->sections()->firstWhere('clave', 'etica');
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id, 'key' => 'nota_fija', 'label' => 'Nota fija', 'content_type' => 'fixed',
+        ])->assertSuccessful();
+        $block = $template->fresh()->blocks()->firstWhere('clave', 'nota_fija');
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
+
+        $this->patchJson($url, ['fingerprint' => SaveTemplateDocument::fingerprint($block)])
+            ->assertJsonValidationErrors(['document' => 'Escriba el texto fijo antes de guardar.']);
+        $this->patchJson($url, [
+            'document' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]],
+            'fingerprint' => SaveTemplateDocument::fingerprint($block),
+        ])->assertJsonValidationErrors(['document' => 'Escriba el texto fijo antes de guardar.']);
+
+        $this->patchJson($url, [
+            'document' => $block->configuracion['document'],
+            'fingerprint' => SaveTemplateDocument::fingerprint($block),
+            'page_orientation' => 'landscape',
+        ])->assertSuccessful();
+        $this->assertSame('landscape', $block->fresh()->pageOrientation());
+    }
+
     public function test_administration_creates_a_fixed_content_block_without_teacher_fields(): void
     {
         $template = $this->template();
@@ -703,36 +756,25 @@ class TemplateDocumentTest extends TestCase
         $this->assertStringContainsString('Texto institucional', json_encode($block->fresh()->configuracion['document']));
     }
 
-    public function test_field_rules_are_configured_per_field_and_rejected_when_they_do_not_apply(): void
+    public function test_fields_have_no_optional_flag_or_limits(): void
     {
         $template = $this->template();
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $block = $field->block;
         $document = TemplateDocumentDefaults::fixedPlaceholder();
         $document['content'][] = ['type' => 'paragraph', 'content' => [['type' => 'field', 'attrs' => ['key' => 'objetivo_general', 'label' => 'Objetivo general', 'kind' => 'texto_largo']]]];
-        $save = fn (array $rules) => $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
+
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
             'document' => $document,
             'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
-            'properties' => [['key' => 'objetivo_general', 'label' => 'Objetivo general', 'help' => null, 'rules' => $rules]],
-        ]);
+            'properties' => [['key' => 'objetivo_general', 'label' => 'Objetivo general', 'help' => null, 'rules' => ['required' => false, 'max_length' => 300]]],
+        ])->assertJsonValidationErrors('properties.0');
+        $this->assertFalse(Schema::hasColumn('definiciones_campo', 'reglas_definicion_campo'));
 
-        $save(['required' => false, 'max_length' => 300])->assertSuccessful();
-        $this->assertEquals(['required' => false, 'max_length' => 300, 'min_rows' => null, 'max_rows' => null], $field->fresh()->reglas);
-        $save(['min_rows' => 2])->assertJsonValidationErrors('properties.0.rules');
-
-        $list = $template->fields()->where('clave', 'objetivos_especificos')->firstOrFail();
-        $this->patchJson(route('api.v1.admin.template.fields.update', [$template, $list]), [
-            'block_id' => $list->bloque_plantilla_id, 'key' => $list->clave, 'label' => $list->etiqueta,
-            'content_type' => 'bulleted_list', 'rules' => ['min_rows' => 3, 'max_rows' => 2],
-        ])->assertJsonValidationErrors('rules');
-        $this->patchJson(route('api.v1.admin.template.fields.update', [$template, $list]), [
-            'block_id' => $list->bloque_plantilla_id, 'key' => $list->clave, 'label' => $list->etiqueta,
-            'content_type' => 'bulleted_list', 'rules' => ['min_rows' => 2, 'max_rows' => 5],
-        ])->assertSuccessful();
-        $this->assertSame(2, $list->fresh()->reglas['min_rows']);
         $shown = collect($this->getJson(route('api.v1.admin.template.show', $template))->json('template.sections'))
             ->flatMap(fn ($section) => $section['blocks'])->flatMap(fn ($block) => $block['fields'])->firstWhere('key', 'objetivos_especificos');
-        $this->assertSame(['required' => true, 'max_length' => null, 'min_rows' => 2, 'max_rows' => 5], $shown['rules']);
+        $this->assertTrue($shown['required']);
+        $this->assertArrayNotHasKey('rules', $shown);
     }
 
     public function test_a_year_column_cannot_be_summed_in_a_totals_row(): void

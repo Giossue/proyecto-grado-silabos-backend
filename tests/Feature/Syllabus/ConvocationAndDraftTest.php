@@ -333,37 +333,60 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame(0, $lastRun->errores_bloqueantes);
     }
 
-    public function test_field_rules_never_block_the_draft_but_are_checked_before_sending(): void
+    public function test_every_teacher_field_is_required_only_when_sending(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $text = FieldDefinition::query()->where('clave', 'objetivo_general')->firstOrFail();
-        $list = FieldDefinition::query()->where('clave', 'objetivos_especificos')->firstOrFail();
-        $optional = FieldDefinition::query()->where('clave', 'habilidades_blandas')->firstOrFail();
-        $text->update(['reglas' => ['required' => true, 'max_length' => 10]]);
-        $list->update(['reglas' => ['min_rows' => 2, 'max_rows' => 3]]);
-        $optional->update(['reglas' => ['required' => false]]);
+        $empty = FieldDefinition::query()->where('clave', 'habilidades_blandas')->firstOrFail();
 
+        // El borrador acepta texto largo y campos vacíos: no hay límites configurables.
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $text]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
-            'value' => 'Un objetivo demasiado largo',
-        ])->assertOk();
-        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $list]), [
-            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
-            'rows' => [['data' => ['texto' => 'Único objetivo']]],
+            'value' => str_repeat('Objetivo amplio. ', 200),
         ])->assertOk();
 
         $detail = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
         $fields = collect($detail->json('syllabus.sections'))->flatMap(fn ($section) => $section['blocks'])->flatMap(fn ($block) => $block['fields'])->keyBy('key');
-        $this->assertSame(10, $fields['objetivo_general']['rules']['max_length']);
-        $this->assertFalse($fields['habilidades_blandas']['required']);
+        $this->assertTrue($fields['habilidades_blandas']['required']);
+        $this->assertArrayNotHasKey('rules', $fields['objetivo_general']);
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $run = ValidationRun::query()->latest('completado_en')->firstOrFail();
         $messages = $run->results()->get()->groupBy('definicion_campo_id');
-        $this->assertSame('«Objetivo general» admite hasta 10 caracteres; ahora tiene 27.', $messages[$text->id]->first()->mensaje);
-        $this->assertSame('«Objetivos específicos» necesita al menos 2 fila(s); ahora tiene 1.', $messages[$list->id]->first()->mensaje);
-        $this->assertArrayNotHasKey($optional->id, $messages->all(), 'Un campo opcional vacío no bloquea el envío.');
+        $this->assertArrayNotHasKey($text->id, $messages->all());
+        $this->assertSame('«'.$empty->etiqueta.'» está vacío. Complétalo antes de enviar.', $messages[$empty->id]->first()->mensaje);
+    }
+
+    public function test_validation_skips_fixed_and_non_editable_parts_and_sends_missing_institutional_data_to_coordination(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
+        $template = SyllabusTemplate::query()->firstOrFail();
+        $fixedBlock = $template->blocks()->first(fn ($block): bool => $block->contentType() === 'fixed');
+        $this->assertNotNull($fixedBlock);
+        // Una definición antigua dentro de un texto fijo no se le pide al docente.
+        $inFixed = FieldDefinition::query()->create([
+            'plantilla_id' => $template->id, 'bloque_plantilla_id' => $fixedBlock->id, 'clave' => 'resto_fijo',
+            'etiqueta' => 'Resto de texto fijo', 'tipo' => 'texto_largo', 'heredado' => false,
+            'editable_docente' => true, 'ia_habilitada' => false, 'posicion' => 99,
+        ]);
+        $locked = FieldDefinition::query()->where('heredado', false)->where('clave', 'habilidades_blandas')->firstOrFail();
+        $locked->update(['editable_docente' => false]);
+        $inherited = FieldDefinition::query()->where('heredado', true)->firstOrFail();
+        $syllabus->values()->where('definicion_campo_id', $inherited->id)->delete();
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
+        $messages = ValidationRun::query()->latest('completado_en')->firstOrFail()
+            ->results()->get()->groupBy('definicion_campo_id');
+
+        $this->assertArrayNotHasKey($inFixed->id, $messages->all());
+        $this->assertArrayNotHasKey($locked->id, $messages->all());
+        $this->assertSame(
+            "Avise a Coordinación: falta el dato «{$inherited->etiqueta}» en la información de la carrera.",
+            $messages[$inherited->id]->first()->mensaje,
+        );
+        $this->assertSame('error', $messages[$inherited->id]->first()->severidad);
     }
 
     public function test_planning_with_wrong_hours_can_be_saved_but_fails_deterministic_validation(): void

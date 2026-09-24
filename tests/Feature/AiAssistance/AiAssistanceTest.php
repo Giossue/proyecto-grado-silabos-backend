@@ -831,7 +831,6 @@ class AiAssistanceTest extends TestCase
             'heredado' => false,
             'editable_docente' => true,
             'ia_habilitada' => true,
-            'reglas' => ['max' => 50000],
             'posicion' => 1,
         ]);
         FieldDefinition::query()->create([
@@ -843,7 +842,6 @@ class AiAssistanceTest extends TestCase
             'heredado' => false,
             'editable_docente' => true,
             'ia_habilitada' => false,
-            'reglas' => ['max' => 50000],
             'posicion' => 2,
         ]);
         $convocation = Convocation::query()->create([

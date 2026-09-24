@@ -4,7 +4,6 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
-use App\Modules\Configuration\Domain\FieldRules;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -62,18 +61,18 @@ class SaveFieldDefinition
             if ($field !== null && $customBlock !== null && is_array($customBlock->configuracion['document'] ?? null)) {
                 abort_unless($customBlock->id === $this->stringValue($data, 'block_id'), 404);
                 if ($contentType !== $customBlock->configuredContentType() || $data['key'] !== $field->clave) {
-                    throw ValidationException::withMessages(['content_type' => 'Use Editar diseño para modificar la estructura y los campos de este bloque.']);
+                    throw ValidationException::withMessages(['content_type' => 'Use Editar diseño para cambiar la estructura y las partes de esta sección.']);
                 }
                 if (isset($customBlock->configuracion['detached_fields'][$field->clave])) {
-                    throw ValidationException::withMessages(['field' => 'Este campo se retiró del diseño; no es parte del formulario actual.']);
+                    throw ValidationException::withMessages(['field' => 'Esta parte se quitó del diseño; ya no está en el formulario.']);
                 }
                 // Las propiedades no convierten un número o fecha en texto ni alteran su referencia.
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
                     'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                     'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
-                    'reglas' => $this->rules($data, $field->tipo, $field->reglas),
                 ]);
+                $this->applyOrientation($customBlock, $data);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
                 return $field;
@@ -85,20 +84,21 @@ class SaveFieldDefinition
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
                     'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
-                    'reglas' => $this->rules($data, $field->tipo, $field->reglas),
                 ]);
-                $template->updateBlockDocument($field->bloque_plantilla_id, ['titulo' => $data['label']]);
+                $block = $template->updateBlockDocument($field->bloque_plantilla_id, ['titulo' => $data['label']]);
+                $this->applyOrientation($block, $data);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
                 return $field;
             }
 
             if ($field !== null && $contentType === 'fixed') {
-                throw ValidationException::withMessages(['content_type' => 'Un campo del docente no se convierte en contenido fijo. Cree un bloque de contenido fijo.']);
+                throw ValidationException::withMessages(['content_type' => 'Una parte que llena el docente no se puede cambiar a texto fijo. Agregue un texto fijo nuevo.']);
             }
             $block = $field === null
                 ? $this->createBlock($template, $data, $contentType)
                 : $this->updateBlock($field, $template, $data, $contentType);
+            $this->applyOrientation($block, $data);
             // El contenido fijo no tiene campos: Administración escribe su texto en el diseño.
             if ($contentType === 'fixed') {
                 $this->audit->execute(
@@ -127,7 +127,6 @@ class SaveFieldDefinition
                 'origen_maestro' => $field !== null && $field->heredado ? $field->origen_maestro : null,
                 'editable_docente' => ! $inherited,
                 'ia_habilitada' => (bool) ($data['ai_enabled'] ?? ($field !== null ? $field->ia_habilitada : false)),
-                'reglas' => $this->rules($data, $this->fieldType($contentType), $field?->reglas),
                 'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
                 'marcador_documento' => $field !== null ? $field->marcador_documento : null,
             ];
@@ -147,6 +146,21 @@ class SaveFieldDefinition
 
             return $field;
         });
+    }
+
+    /** @param array<string, mixed> $data */
+    private function applyOrientation(TemplateBlock $block, array $data): void
+    {
+        if (! array_key_exists('page_orientation', $data)) {
+            return;
+        }
+        $configuration = $block->configuracion ?? [];
+        if (is_string($data['page_orientation'])) {
+            $configuration['page_orientation'] = $data['page_orientation'];
+        } else {
+            unset($configuration['page_orientation']);
+        }
+        $block->update(['configuracion' => $configuration]);
     }
 
     private function auditField(FieldDefinition $field, string $action, User $actor, ?string $roleAssignmentId, Request $request): void
@@ -215,7 +229,7 @@ class SaveFieldDefinition
         $configuration = $block->getAttribute('configuracion');
 
         if (is_array($configuration) && isset($configuration['document']) && ($configuration['content_type'] ?? null) !== $contentType) {
-            throw ValidationException::withMessages(['content_type' => 'Este campo tiene un diseño personalizado. Use Editar diseño para cambiar su contenido sin perder sus espacios.']);
+            throw ValidationException::withMessages(['content_type' => 'Esta parte tiene un diseño propio. Use Editar diseño para cambiarla sin perder lo que ya tiene.']);
         }
 
         $block->update([
@@ -227,18 +241,6 @@ class SaveFieldDefinition
         ]);
 
         return $block;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     * @param  array<string, mixed>|null  $current
-     * @return array<string, mixed>|null
-     */
-    private function rules(array $data, string $fieldType, ?array $current): ?array
-    {
-        return array_key_exists('rules', $data) && $data['rules'] !== null
-            ? FieldRules::normalize($data['rules'], $fieldType)
-            : $current;
     }
 
     private function fieldType(string $contentType): string

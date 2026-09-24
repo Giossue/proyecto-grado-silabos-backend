@@ -8,7 +8,7 @@ use Illuminate\Validation\Validator;
 
 class SaveTemplateSectionRequest extends ManageTemplatesRequest
 {
-    private const CONTENT_TYPES = ['text', 'table', 'bulleted_list', 'numbered_list', 'boolean', 'multiple_choice', 'fixed'];
+    private const CONTENT_TYPES = ['text', 'table', 'bulleted_list', 'numbered_list', 'boolean', 'fixed'];
 
     /** @return array<string, list<mixed>> */
     public function rules(): array
@@ -70,6 +70,15 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
                 Rule::in(self::CONTENT_TYPES),
             ],
             'position' => ['nullable', 'integer', 'min:0'],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'fields.*.content_type.in' => 'Elija un tipo de parte de la lista.',
+            'first_field_content_type.in' => 'Elija un tipo de parte de la lista.',
         ];
     }
 

@@ -138,15 +138,6 @@ class TemplateAndSourceTest extends TestCase
                     ['key' => 'matriz_evidencias', 'label' => 'Matriz de evidencias', 'content_type' => 'table'],
                     ['key' => 'acciones_mejora', 'label' => 'Acciones de mejora', 'content_type' => 'numbered_list'],
                     ['key' => 'requiere_adaptacion', 'label' => 'Requiere adaptación', 'content_type' => 'boolean'],
-                    [
-                        'key' => 'modalidades_evaluacion',
-                        'label' => 'Modalidades de evaluación',
-                        'content_type' => 'multiple_choice',
-                        'options' => [
-                            ['value' => 'proyecto', 'label' => 'Proyecto'],
-                            ['value' => 'examen', 'label' => 'Examen'],
-                        ],
-                    ],
                 ],
             ])
             ->assertSuccessful()
@@ -159,22 +150,20 @@ class TemplateAndSourceTest extends TestCase
 
         $this->assertSame(2, $section->posicion);
         $this->assertSame(
-            ['Resumen', 'Matriz de evidencias', 'Acciones de mejora', 'Requiere adaptación', 'Modalidades de evaluación'],
+            ['Resumen', 'Matriz de evidencias', 'Acciones de mejora', 'Requiere adaptación'],
             $blocks->pluck('titulo')->all(),
         );
         $this->assertSame(
-            ['text', 'table', 'numbered_list', 'boolean', 'multiple_choice'],
+            ['text', 'table', 'numbered_list', 'boolean'],
             $blocks->pluck('configuracion')->map(fn (array $configuration): string => $configuration['content_type'])->all(),
         );
         $this->assertSame(
-            ['resumen_resultados', 'matriz_evidencias', 'acciones_mejora', 'requiere_adaptacion', 'modalidades_evaluacion'],
+            ['resumen_resultados', 'matriz_evidencias', 'acciones_mejora', 'requiere_adaptacion'],
             $blocks->pluck('clave')->all(),
         );
         $this->assertSame('texto', $blocks[1]->configuracion['table']['columns'][0]['key']);
         $this->assertFalse(Schema::hasColumn('definiciones_campo', 'obligatorio'));
         $this->assertSame('booleano', $blocks[3]->fields->firstOrFail()->tipo);
-        $this->assertSame('seleccion_multiple', $blocks[4]->fields->firstOrFail()->tipo);
-        $this->assertSame('proyecto', $blocks[4]->fields->firstOrFail()->opciones[0]['value']);
         $this->assertSame('Sintetice los resultados esperados.', $blocks[0]->fields->firstOrFail()->ayuda);
         $this->assertTrue($blocks[0]->fields->firstOrFail()->ia_habilitada);
         // I-116: Administración decide la IA; Coordinación no guarda una preferencia propia.
@@ -188,12 +177,8 @@ class TemplateAndSourceTest extends TestCase
             ->assertOk()
             ->assertJsonPath('template.titleBlock.text', TemplateTitleBlock::DEFAULT_TEXT)
             ->assertJsonFragment(['value' => 'boolean', 'label' => 'Sí / No'])
-            ->assertJsonFragment(['value' => 'multiple_choice', 'label' => 'Selección múltiple'])
-            ->assertJsonFragment([
-                'key' => 'modalidades_evaluacion',
-                'content_type' => 'multiple_choice',
-                'ai_enabled' => false,
-            ])
+            ->assertJsonFragment(['value' => 'fixed', 'label' => 'Texto fijo (el docente no lo llena)'])
+            ->assertJsonMissing(['value' => 'multiple_choice'])
             ->assertJsonMissing(['ai_coordinator_configurable' => true]);
 
         $this->actingAsAdministrator()
@@ -211,11 +196,26 @@ class TemplateAndSourceTest extends TestCase
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.template.fields.store', $template), [
                 'section_id' => $section->id,
-                'key' => 'seleccion_sin_opciones',
-                'label' => 'Selección sin opciones',
+                'key' => 'seleccion_multiple_nueva',
+                'label' => 'Selección múltiple',
                 'content_type' => 'multiple_choice',
+                'options' => [
+                    ['value' => 'proyecto', 'label' => 'Proyecto'],
+                    ['value' => 'examen', 'label' => 'Examen'],
+                ],
             ])
-            ->assertJsonValidationErrors('options');
+            ->assertJsonValidationErrors(['content_type' => 'Elija un tipo de parte de la lista.']);
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.template.sections.store', $template), [
+                'title' => 'Con selección múltiple',
+                'key' => 'bloque_seleccion',
+                'fields' => [[
+                    'key' => 'modalidades', 'label' => 'Modalidades', 'content_type' => 'multiple_choice',
+                    'options' => [['value' => 'a', 'label' => 'A'], ['value' => 'b', 'label' => 'B']],
+                ]],
+            ])
+            ->assertJsonValidationErrors('fields.0.content_type');
     }
 
     public function test_only_administrator_updates_controlled_template_appearance(): void

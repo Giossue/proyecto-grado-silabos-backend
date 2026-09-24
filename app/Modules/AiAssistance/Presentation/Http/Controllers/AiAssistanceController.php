@@ -155,7 +155,7 @@ class AiAssistanceController extends Controller
         $completed = (int) $review->part('campos_finalizados');
 
         return response()->json([
-            'message' => "Revisión de IA iniciada para {$total} campo(s)",
+            'message' => "Revisión de IA iniciada para {$total} parte(s)",
             'review' => [
                 'id' => $review->id,
                 'status' => $review->state(),
@@ -211,7 +211,7 @@ class AiAssistanceController extends Controller
         );
 
         return response()->json([
-            'message' => 'La recomendación se aplicó al campo después de verificar la versión del borrador.',
+            'message' => 'La recomendación se aplicó a la parte.',
             'version_bloqueo' => $result['syllabus']->version_bloqueo,
             'value' => $result['value'],
         ]);
@@ -245,7 +245,7 @@ class AiAssistanceController extends Controller
         return match ($reason) {
             'limite_evidencia_excedido' => 'El conjunto de evidencia excede el límite técnico seguro.',
             'evidencia_insuficiente' => 'No hay evidencia activa suficiente para analizar.',
-            'contenido_vacio' => 'El campo todavía no contiene texto para analizar.',
+            'contenido_vacio' => 'La parte todavía no tiene texto para analizar.',
             'sin_cambio_editorial' => 'No se identificó un cambio editorial verificable.',
             null => null,
             default => 'La evidencia disponible no permite producir una recomendación verificable.',

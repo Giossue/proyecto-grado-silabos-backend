@@ -69,7 +69,6 @@ class RequestAiAnalysis
                 $field->etiqueta,
                 $field->clave,
                 $content,
-                json_encode($field->reglas, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             ], 'is_string')), $field->id);
             $sourceSetFingerprint = $this->hasher->hash(array_map(fn (array $item): array => [
                 'type' => $item['type'],
@@ -81,7 +80,6 @@ class RequestAiAnalysis
             $functionalKey = $this->hasher->hash([
                 'content_fingerprint' => $contentFingerprint,
                 'field_id' => $field->id,
-                'field_rules' => $field->reglas,
                 'template_id' => $field->plantilla_id,
                 'source_set_fingerprint' => $sourceSetFingerprint,
                 'gateway_version' => $this->gateway->version(),
@@ -196,7 +194,7 @@ class RequestAiAnalysis
             || $field->heredado
             || ! in_array($field->tipo, ['texto_corto', 'texto_largo'], true)) {
             throw ValidationException::withMessages([
-                'field' => 'La asistencia de IA no está habilitada para este campo.',
+                'field' => 'La asistencia de IA no está habilitada para esta parte.',
             ]);
         }
     }

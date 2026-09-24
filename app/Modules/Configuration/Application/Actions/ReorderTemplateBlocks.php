@@ -39,7 +39,7 @@ class ReorderTemplateBlocks
             $blocks = $section->blocks();
 
             if ($blocks->count() !== count($blockIds) || $blocks->pluck('id')->sort()->values()->all() !== collect($blockIds)->sort()->values()->all()) {
-                throw ValidationException::withMessages(['blocks' => 'El orden de bloques no es válido.']);
+                throw ValidationException::withMessages(['blocks' => 'El nuevo orden no es válido. Recargue la página e intente otra vez.']);
             }
 
             $lockedTemplate->reorderBlocks($sectionId, array_values($blockIds));

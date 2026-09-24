@@ -4,7 +4,6 @@ namespace App\Modules\Documents\Infrastructure\Rendering;
 
 use App\Modules\Documents\Infrastructure\Persistence\Models\DocumentSignature;
 use DOMDocument;
-use DOMElement;
 use Symfony\Component\Process\Process;
 use Throwable;
 
@@ -111,7 +110,6 @@ class SignatureStampLocator
         foreach ($document->getElementsByTagName('page') as $page) {
             $words = [];
             foreach ($page->getElementsByTagName('word') as $word) {
-                \assert($word instanceof DOMElement);
                 $words[] = [
                     'text' => trim($word->textContent),
                     'xMin' => (float) $word->getAttribute('xMin'),

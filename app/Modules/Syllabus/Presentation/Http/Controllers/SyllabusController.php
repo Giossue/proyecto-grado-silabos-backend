@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\FieldRules;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -160,7 +159,7 @@ class SyllabusController extends Controller
 
         $message = $run->errores_bloqueantes === 0
             ? 'Validación completada sin errores bloqueantes.'
-            : 'Validación completada. Revisa los campos señalados.';
+            : 'Validación completada. Revise las partes señaladas.';
 
         return response()->json([
             'message' => $message,
@@ -347,7 +346,6 @@ class SyllabusController extends Controller
             if (isset($block->configuracion['detached_fields'][$field->clave])) {
                 continue;
             }
-            $rules = FieldRules::read($field->reglas, $field->tipo);
             $fieldRows = [];
             foreach ($rows->get($field->id) ?? [] as $row) {
                 $fieldRows[] = [
@@ -363,8 +361,7 @@ class SyllabusController extends Controller
                 'help' => $field->ayuda,
                 'type' => $field->tipo,
                 'options' => $this->fieldOptions($field),
-                'required' => $rules['required'] || $field->heredado,
-                'rules' => $rules,
+                'required' => true,
                 'inherited' => $field->heredado,
                 'teacher_editable' => $field->editable_docente,
                 'ai_enabled' => $field->ia_habilitada

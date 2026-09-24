@@ -92,7 +92,8 @@ Las cuentas creadas por el seeder usan exclusivamente datos sintéticos:
     - etiqueta `Objetivo general`;
     - tipo **Texto largo**;
     - ayuda `Describa el propósito formativo de la asignatura`;
-    - **Obligatorio**, **Editable por docente** y **Permite asistencia de IA** activos;
+    - **Editable por docente** y **Permite asistencia de IA** activos (todo campo del
+      docente es obligatorio al enviar; no hay casilla «Obligatorio»);
     - **Heredado de maestro** inactivo.
 
     Publique y congele la versión. Intente editarla y confirme que la interfaz solo ofrece
