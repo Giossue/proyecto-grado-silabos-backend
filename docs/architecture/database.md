@@ -89,7 +89,10 @@ persistencia.
 
 `paralelos` no tiene estado propio: antes de tener historia se elimina y, una vez que
 participa en un sílabo, se conserva. Su operatividad se deriva del período y de su
-programación, sin duplicar un booleano individual.
+programación, sin duplicar un booleano individual. Todo paralelo tiene código único por
+materia programada y `jornada_paralelo` obligatoria (`matutina`, `vespertina` o
+`nocturna`); la migración `000112` rellenó los nulos con `matutina` y dejó la columna
+NOT NULL (I-141).
 
 La estructura curricular no es una entidad separada: `carreras.cantidad_ciclos_malla`
 define la cantidad de ciclos de la única estructura de esa carrera. El código obligatorio
