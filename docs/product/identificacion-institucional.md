@@ -36,7 +36,7 @@ Word de identificación) se conservan para sílabos y revisiones anteriores sin 
 | Código | `code` | `asignaturas.codigo_asignatura` |
 | Prerrequisitos | `prerequisites` | `requisitos_asignatura` con `tipo_requisito_asignatura = prerrequisito` → código de la materia requerida |
 | Correquisitos | `corequisites` | `requisitos_asignatura` con `tipo_requisito_asignatura = correquisito` |
-| Unidad de organización curricular | `organization_unit` | `asignaturas.unidad_organizativa_curricular_asignatura`; marca X en Básica, Profesional o Titulación |
+| Unidad de organización curricular | `organization_unit` | `asignaturas.unidad_organizativa_curricular_asignatura` (enum `CurricularUnit`: `basica`, `profesional`, `integracion_curricular`); la fotografía guarda la etiqueta y la ficha marca X en la fila que corresponda |
 | Horas de docencia (ACD) | `hours_ac` | `asignaturas.horas_ac` |
 | Horas prácticas (APE) | `hours_pae` | `asignaturas.horas_pae` |
 | Horas autónomas (AA) | `hours_aa` | `asignaturas.horas_aa` |

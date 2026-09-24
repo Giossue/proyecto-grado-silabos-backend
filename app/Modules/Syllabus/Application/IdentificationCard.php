@@ -2,6 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
+use App\Modules\Academic\Domain\CurricularUnit;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -104,7 +105,7 @@ final class IdentificationCard
             [
                 'career' => ['name' => 'Software', 'faculty' => 'Ciencias Administrativas, Gestión Empresarial e Informática'],
                 'subject' => [
-                    'name' => 'Asignatura de ejemplo', 'code' => 'SW-P7-037', 'cycle' => 7, 'organization_unit' => 'Unidad Profesional',
+                    'name' => 'Asignatura de ejemplo', 'code' => 'SW-P7-037', 'cycle' => 7, 'organization_unit' => 'Unidad profesional',
                     'prerequisites' => ['SW-P6-032'], 'corequisites' => [],
                     'hours_ac' => 32, 'hours_pae' => 16, 'hours_aa' => 48, 'total_hours' => 96, 'credits' => 2,
                 ],
@@ -133,8 +134,8 @@ final class IdentificationCard
     public static function grid(array $data): array
     {
         $v = fn (string $key): string => is_scalar($data[$key] ?? null) ? (string) $data[$key] : '';
-        $unit = mb_strtolower(self::stripAccents($v('organization_unit')));
-        $mark = fn (string $needle): string => $unit !== '' && str_contains($unit, $needle) ? 'X' : '';
+        $unit = CurricularUnit::tryFromText($v('organization_unit'));
+        $mark = fn (CurricularUnit $candidate): string => $unit === $candidate ? 'X' : '';
         $disability = $v('disability');
 
         $label = fn (string $text, int $span = 1, int $rows = 1, bool $shade = false): array => self::cell($text, $span, $rows, $shade ? 'shade' : 'plain', true, false, false);
@@ -150,9 +151,9 @@ final class IdentificationCard
             [$label('ASIGNATURA', 2, 1, true), $label('PERIODO ACADÉMICO', 4, 1, true), $label('CICLO', 1, 1, true), $label('PARALELO', 1, 1, true), $label('JORNADA', 1, 1, true)],
             [$value($v('subject'), 2), $value($v('period'), 4), $value($v('cycle')), $value($v('parallel')), $value($v('shift'))],
             [$label('CÓDIGO:', 1, 1, true), $value($v('code'), 1, 1, true), $label('PRERREQUISITOS:', 3, 1, true), $value($v('prerequisites'), 2, 1, true), $label('CORREQUISITOS:', 1, 1, true), $value($v('corequisites'), 1, 1, true)],
-            [$label('UNIDAD DE ORGANIZACIÓN CURRICULAR', 2, 3), $value('Unidad Básica', 6), $number($mark('basica'))],
-            [$value('Unidad Profesional', 6, 1, true), $number($mark('profesional'), 1, true)],
-            [$value('Unidad de Titulación', 6), $number($mark('titulacion'))],
+            [$label('UNIDAD DE ORGANIZACIÓN CURRICULAR', 2, 3), $value('Unidad básica', 6), $number($mark(CurricularUnit::Basica))],
+            [$value('Unidad profesional', 6, 1, true), $number($mark(CurricularUnit::Profesional), 1, true)],
+            [$value('Unidad de integración curricular', 6), $number($mark(CurricularUnit::IntegracionCurricular))],
             [$label('ESTUDIANTES CON DISCAPACIDAD', 2, 3), $value('Sí', 1, 2), self::cell($disability === 'si' ? 'X' : '', 1, 2, 'plain', true, false, true), $note('Tipo de discapacidad:', $v('disability_type'), 5)],
             [$note('Descripción de la adaptación curricular:', $v('disability_description'), 5)],
             [$value('No'), $number($disability === 'no' ? 'X' : ''), $value('', 5)],

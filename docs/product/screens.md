@@ -340,9 +340,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   los fija el reglamento y nacen con la malla. Al crear o editar una materia, todos los
   campos activos son obligatorios, las magnitudes se presentan en una fila compacta y
   **TOTAL** se calcula con la suma de los componentes de horas, sin incluir créditos. La
-  unidad de organización curricular sugiere valores ya usados y admite escribir uno
-  nuevo; el orden dentro del ciclo se asigna automáticamente cuando no lo determina el
-  constructor. Al soltar una materia, el orden de todo el ciclo se guarda junto en una
+  unidad de organización curricular se elige de una lista fija (básica, profesional,
+  integración curricular); el orden dentro del ciclo se asigna automáticamente cuando
+  no lo determina el constructor. Al soltar una materia, el orden de todo el ciclo se guarda junto en una
   transacción. Una reubicación correcta se guarda sin notificación repetitiva; un fallo
   restaura el orden anterior y explica la acción correctiva.
 - **Auditoría** abre directamente ADM-10, sin pestañas ni filtros. Presenta un único

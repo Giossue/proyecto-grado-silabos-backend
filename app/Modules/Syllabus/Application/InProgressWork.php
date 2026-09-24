@@ -285,7 +285,7 @@ final class InProgressWork
             data_set($context, 'subject.code', $subject->codigo_asignatura);
             data_set($context, 'subject.cycle', $subject->ciclo);
             data_set($context, 'subject.position', $subject->orden_en_ciclo);
-            data_set($context, 'subject.organization_unit', $subject->unidad_organizacion_curricular);
+            data_set($context, 'subject.organization_unit', $subject->unidad_organizacion_curricular?->label());
             data_set($context, 'subject.prerequisites', $codes('prerrequisito'));
             data_set($context, 'subject.corequisites', $codes('correquisito'));
             data_set($context, 'curriculum.cycle_count', $syllabus->career->cantidad_ciclos_malla);

@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Presentation\Http\Requests;
 
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
+use App\Modules\Academic\Domain\CurricularUnit;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
@@ -73,7 +74,7 @@ class UpdateCareerAcademicRecordRequest extends FormRequest
             'nombre' => ['required', 'string', 'max:180'],
             'cycle' => ['required', 'integer', 'min:1', 'max:30'],
             'position' => ['nullable', 'integer', 'min:0', 'max:999'],
-            'organization_unit' => ['required', 'string', 'max:80'],
+            'organization_unit' => ['required', 'string', Rule::in(CurricularUnit::values())],
             'modality' => ['nullable', 'string', Rule::in(StudyModality::values())],
             'creditos' => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'horas_totales' => ['required', 'integer', 'min:0', 'max:32767'],

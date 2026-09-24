@@ -5,6 +5,7 @@ namespace App\Modules\Academic\Application\Queries;
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Domain\CampusLocation;
+use App\Modules\Academic\Domain\CurricularUnit;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
@@ -200,7 +201,8 @@ class AcademicStructureViewData
                     'name' => $subject->nombre,
                     'cycle' => $subject->ciclo,
                     'position' => $subject->orden_en_ciclo,
-                    'organization_unit' => $subject->unidad_organizacion_curricular,
+                    'organization_unit' => $subject->unidad_organizacion_curricular?->value,
+                    'organization_unit_label' => $subject->unidad_organizacion_curricular?->label(),
                     'modality' => $subject->modalidad?->value,
                     'modality_label' => $subject->modalidad?->label(),
                     'credits' => $subject->creditos,
@@ -230,6 +232,7 @@ class AcademicStructureViewData
                     'type' => $requirement->tipo,
                 ]),
             'modalityOptions' => StudyModality::options(),
+            'organizationUnitOptions' => CurricularUnit::options(),
             'options' => $this->emptyOptions(),
         ];
     }

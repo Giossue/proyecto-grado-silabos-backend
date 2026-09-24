@@ -44,7 +44,7 @@ class AcademicContextSnapshot
                 'name' => $subject->nombre,
                 'cycle' => $subject->ciclo,
                 'position' => $subject->orden_en_ciclo,
-                'organization_unit' => $subject->unidad_organizacion_curricular,
+                'organization_unit' => $subject->unidad_organizacion_curricular?->label(),
                 'credits' => $subject->creditos,
                 'total_hours' => $subject->horas_totales,
                 'hours_project' => $subject->horas_proyecto,

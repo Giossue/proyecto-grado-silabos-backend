@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Infrastructure\Persistence\Models;
 
+use App\Modules\Academic\Domain\CurricularUnit;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Support\Database\MapsLegacyColumnNames;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $nombre
  * @property int|null $ciclo
  * @property int $orden_en_ciclo
- * @property string|null $unidad_organizacion_curricular
+ * @property CurricularUnit|null $unidad_organizacion_curricular
  * @property StudyModality|null $modalidad
  * @property string|null $creditos
  * @property-read int|null $horas_totales Columna generada: ACD + APE + AA (I-132).
@@ -72,6 +73,7 @@ class Subject extends Model
     {
         return [
             'ciclo' => 'integer',
+            'unidad_organizacion_curricular' => CurricularUnit::class,
             'modalidad' => StudyModality::class,
             'orden_en_ciclo' => 'integer',
             'creditos' => 'decimal:2',

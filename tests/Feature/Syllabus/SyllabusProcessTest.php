@@ -599,7 +599,7 @@ class SyllabusProcessTest extends TestCase
             'nombre' => 'Materia renombrada',
             'cycle' => $subject->ciclo,
             'position' => $subject->orden_en_ciclo,
-            'organization_unit' => $subject->unidad_organizacion_curricular ?? 'Unidad Básica',
+            'organization_unit' => $subject->unidad_organizacion_curricular?->value ?? 'basica',
             'modality' => $subject->modalidad?->value,
             'creditos' => $subject->creditos,
             'horas_totales' => $subject->horas_totales,

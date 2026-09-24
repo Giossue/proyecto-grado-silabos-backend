@@ -210,7 +210,7 @@ class AcademicStructureTest extends TestCase
                 'code' => 'SW-701',
                 'nombre' => 'Arquitectura Empresarial',
                 'cycle' => 7,
-                'organization_unit' => 'Unidad profesional',
+                'organization_unit' => 'profesional',
                 'horas_ac' => 48,
                 'horas_pae' => 32,
                 'horas_aa' => 64,
