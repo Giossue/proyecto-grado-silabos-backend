@@ -4,7 +4,9 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
+use App\Modules\Academic\Domain\Contracts\CurricularExtractionGateway;
 use App\Modules\Academic\Infrastructure\Access\AcademicRoleEligibility;
+use App\Modules\Academic\Infrastructure\Gateways\HostedCurricularExtractionGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AcademicSourceEmbeddingGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
@@ -55,6 +57,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(CurricularExtractionGateway::class, HostedCurricularExtractionGateway::class);
         $this->app->bind(RoleEligibility::class, AcademicRoleEligibility::class);
         $this->app->bind(DocumentRenderer::class, PhpWordDocumentRenderer::class);
         $this->app->bind(AiAnalysisGateway::class, function (): AiAnalysisGateway {

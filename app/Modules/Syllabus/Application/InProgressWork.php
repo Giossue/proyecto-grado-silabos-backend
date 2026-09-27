@@ -36,10 +36,12 @@ final class InProgressWork
         private readonly ScheduleInternalNotification $notifications,
     ) {}
 
-    /** @param string|list<string>|null $careerIds */
-    public function count(string|array|null $careerIds = null, ?string $periodId = null, ?string $subjectId = null): int
+    /** @param string|list<string>|null $careerIds
+     * @param  list<string>|null  $subjectIds
+     */
+    public function count(string|array|null $careerIds = null, ?string $periodId = null, ?string $subjectId = null, ?array $subjectIds = null): int
     {
-        return $this->inProgress($careerIds, $periodId, $subjectId)->count();
+        return $this->inProgress($careerIds, $periodId, $subjectId, $subjectIds)->count();
     }
 
     /**
@@ -47,10 +49,11 @@ final class InProgressWork
      * cambio institucional haya sido validado y guardado.
      *
      * @param  string|list<string>|null  $careerIds
+     * @param  list<string>|null  $subjectIds
      */
-    public function requireConfirmation(Request $request, string|array|null $careerIds = null, ?string $periodId = null, ?string $subjectId = null): int
+    public function requireConfirmation(Request $request, string|array|null $careerIds = null, ?string $periodId = null, ?string $subjectId = null, ?array $subjectIds = null): int
     {
-        $count = $this->count($careerIds, $periodId, $subjectId);
+        $count = $this->count($careerIds, $periodId, $subjectId, $subjectIds);
         if ($count === 0) {
             return 0;
         }
@@ -72,6 +75,7 @@ final class InProgressWork
      *
      * @param  Closure(): TResult  $change
      * @param  string|list<string>|null  $careerIds
+     * @param  list<string>|null  $subjectIds
      * @return TResult
      */
     public function replace(
@@ -81,9 +85,10 @@ final class InProgressWork
         ?string $periodId = null,
         ?string $reason = null,
         ?string $subjectId = null,
+        ?array $subjectIds = null,
     ): mixed {
-        return DB::transaction(function () use ($careerIds, $change, $periodId, $reason, $request, $subjectId): mixed {
-            $count = $this->requireConfirmation($request, $careerIds, $periodId, $subjectId);
+        return DB::transaction(function () use ($careerIds, $change, $periodId, $reason, $request, $subjectId, $subjectIds): mixed {
+            $count = $this->requireConfirmation($request, $careerIds, $periodId, $subjectId, $subjectIds);
             $result = $change();
             if ($count > 0) {
                 $this->regenerate(
@@ -92,6 +97,7 @@ final class InProgressWork
                     $reason,
                     $request->attributes->getString('correlation_id') ?: null,
                     $subjectId,
+                    $subjectIds,
                 );
             }
 
@@ -105,6 +111,7 @@ final class InProgressWork
      * Cada docente vigente del expediente recibe un aviso de que perdió su contenido.
      *
      * @param  string|list<string>|null  $careerIds
+     * @param  list<string>|null  $subjectIds
      * @return array{deleted: int, generated: int}
      */
     public function regenerate(
@@ -113,8 +120,9 @@ final class InProgressWork
         ?string $reason = null,
         ?string $correlationId = null,
         ?string $subjectId = null,
+        ?array $subjectIds = null,
     ): array {
-        $syllabi = $this->inProgress($careerIds, $periodId, $subjectId)->with('convocation:id,carrera_id')->lockForUpdate()
+        $syllabi = $this->inProgress($careerIds, $periodId, $subjectId, $subjectIds)->with('convocation:id,carrera_id')->lockForUpdate()
             ->get(['id', 'convocatoria_id', 'asignatura_id', 'contexto_academico']);
         if ($syllabi->isEmpty()) {
             return ['deleted' => 0, 'generated' => 0];
@@ -148,7 +156,7 @@ final class InProgressWork
             ->lockForUpdate()
             ->get();
         foreach ($convocations as $convocation) {
-            $generated += $this->generator->execute($convocation, $subjectId);
+            $generated += $this->generator->execute($convocation, $subjectId, $subjectIds);
         }
 
         return ['deleted' => count($syllabusIds), 'generated' => $generated];
@@ -316,15 +324,17 @@ final class InProgressWork
     }
 
     /** @param string|list<string>|null $careerIds
+     * @param  list<string>|null  $subjectIds
      * @return Builder<Syllabus>
      */
-    private function inProgress(string|array|null $careerIds, ?string $periodId = null, ?string $subjectId = null): Builder
+    private function inProgress(string|array|null $careerIds, ?string $periodId = null, ?string $subjectId = null, ?array $subjectIds = null): Builder
     {
         // Una aprobación protege el expediente aunque esté reabierto: su historial
         // no puede desaparecer ni cambiar de contexto al corregir una base.
         return Syllabus::query()->where('estado', '!=', 'aprobado')
             ->whereDoesntHave('approvals')
             ->when($subjectId !== null, fn (Builder $query) => $query->where('asignatura_id', $subjectId))
+            ->when($subjectIds !== null, fn (Builder $query) => $query->whereIn('asignatura_id', $subjectIds))
             ->whereHas('convocation', fn (Builder $query) => $query
                 ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
                 ->whereHas('process', fn (Builder $process) => $process

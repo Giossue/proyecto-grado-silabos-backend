@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Domain\TableLayout;
@@ -76,11 +77,12 @@ class SaveFieldDefinition
                 // Las propiedades no convierten un número o fecha en texto ni alteran su referencia.
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
-                    'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
+                    'opciones' => CurricularFieldOptions::fromAttributes($data) !== [] ? null : ($data['options'] ?? $field->opciones),
                     'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
                     ...$condition,
                 ]);
                 $this->applyOrientation($customBlock, $data);
+                $this->applyOptionsSource($customBlock, $field, $data);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
                 return $field;
@@ -136,7 +138,7 @@ class SaveFieldDefinition
                 'origen_maestro' => $field !== null && $field->heredado ? $field->origen_maestro : null,
                 'editable_docente' => ! $inherited,
                 'ia_habilitada' => (bool) ($data['ai_enabled'] ?? ($field !== null ? $field->ia_habilitada : false)),
-                'opciones' => $contentType === 'multiple_choice' ? $data['options'] : null,
+                'opciones' => $contentType === 'multiple_choice' ? ($data['options'] ?? $field?->opciones) : null,
                 'marcador_documento' => $field !== null ? $field->marcador_documento : null,
                 ...$condition,
             ];
@@ -152,10 +154,49 @@ class SaveFieldDefinition
                 $action = 'plantilla.campo_actualizado';
             }
 
+            $this->applyOptionsSource($block, $field, $data);
             $this->auditField($field, $action, $actor, $activeRole?->id, $request);
 
             return $field;
         });
+    }
+
+    /** @param array<string, mixed> $data */
+    private function applyOptionsSource(TemplateBlock $block, FieldDefinition $field, array $data): void
+    {
+        if (! array_key_exists('options_source', $data) && ! array_key_exists('options_sources', $data)) {
+            return;
+        }
+        $sources = CurricularFieldOptions::fromAttributes($data);
+        foreach ($sources as $source) {
+            if (! in_array($field->tipo, CurricularFieldOptions::CHOICE_TYPES, true) || ! CurricularFieldOptions::sourceIsAllowed($source)) {
+                throw ValidationException::withMessages(['options_sources' => 'Seleccione listas curriculares para una pregunta de selección.']);
+            }
+        }
+        $configuration = $block->configuracion;
+        $configuration['options_sources'][$field->clave] = $sources;
+        if (is_array($configuration['document'] ?? null)) {
+            $visit = function (array $node) use (&$visit, $field, $sources): array {
+                if (($node['type'] ?? null) === 'field' && ($node['attrs']['key'] ?? null) === $field->clave) {
+                    if ($sources !== [] && ($node['attrs']['choice'] ?? null) !== null) {
+                        throw ValidationException::withMessages(['options_source' => 'Una marca de opción fija no admite opciones curriculares.']);
+                    }
+                    $node['attrs']['options_sources'] = $sources;
+                    $node['attrs']['options_source'] = count($sources) === 1 ? $sources[0] : null;
+                    $node['attrs']['options'] = $sources !== [] ? null : array_map(
+                        static fn (mixed $option): mixed => is_array($option) ? ($option['value'] ?? '') : $option,
+                        $field->opciones ?? [],
+                    );
+                }
+                if (is_array($node['content'] ?? null)) {
+                    $node['content'] = array_map($visit, $node['content']);
+                }
+
+                return $node;
+            };
+            $configuration['document'] = $visit($configuration['document']);
+        }
+        $block->update(['configuracion' => $configuration]);
     }
 
     /** @param array<string, mixed> $data */

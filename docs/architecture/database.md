@@ -99,7 +99,9 @@ define la cantidad de ciclos de la única estructura de esa carrera. El código 
 de identidad es `carreras.codigo_carrera`; no existe código de malla.
 `asignaturas.carrera_id` las relaciona directamente. Los
 atributos académicos de `asignaturas` son fijos y tipados: ninguna carrera agrega
-columnas, valores EAV o campos arbitrarios. ACD, APE, AA, créditos y total son un
+columnas o redefine esos atributos mediante valores EAV. I-145 admite contenido
+documental configurable en conceptos y valores curriculares relacionados, descritos
+más abajo. ACD, APE, AA, créditos y total son un
 conjunto fijo; `total_horas_asignatura` es una columna generada `STORED` igual a
 `round(horas_ac + horas_pae + horas_aa)` (I-132) y no se escribe desde la aplicación.
 `horas_proyecto`, `horas_ap` y `horas_paec` no participan del total. La migración
@@ -128,6 +130,47 @@ resultados como lista numerada, fuente y ubicación. Si el formato usa resultado
 copia está vacía, la validación impide enviar; borradores históricos sin esa variable
 continúan funcionando. I-144 limita su reinicio a la asignatura corregida y conserva
 expedientes con aprobación, incluidas las revisiones aprobadas enlazadas tras reapertura.
+
+### Datos curriculares documentales (I-145)
+
+La migración `2026_09_27_000145_create_curricular_imports` incorpora:
+
+- `conceptos_curriculares`: clave global única, etiqueta, tipo `texto|lista|tabla`,
+  ámbito `carrera|asignatura` y columnas declaradas para tablas. Un trigger impide
+  cambiar clave, tipo, ámbito o columnas después de crear el concepto.
+- `valores_curriculares`: FK de concepto/carrera/asignatura, contenido JSONB,
+  evidencia y persona/fecha de confirmación. Índices parciales hacen único el valor
+  por concepto/carrera para ámbito carrera y por concepto/asignatura para ámbito
+  asignatura. La FK compuesta `(asignatura_id,carrera_id)` impide mezclar carreras;
+  un trigger comprueba ámbito y tipo JSON general. La aplicación valida cada texto,
+  elemento de lista y celda, incluidas las claves exactas de columnas.
+- `importaciones_curriculares`: carrera, solicitante, clave de idempotencia,
+  estado `pendiente|en_ejecucion|lista|aplicada|fallida`, documentos con huellas,
+  instrucciones opcionales, propuesta, selección aplicada y fechas. La combinación
+  carrera/clave de idempotencia es única. Sus filas representan operaciones de
+  importación, sin reintroducir versiones de malla ni de fuente.
+
+La propuesta no es contenido vigente. `ApplyCurricularImport` bloquea carrera,
+importación, fuentes y destinos, coteja la huella consultada y verifica de nuevo los
+documentos activos. Esa huella incluye los valores actuales de la carrera para
+detectar otra importación aplicada entre consulta y confirmación. Solo se aceptan
+IDs de filas existentes, una fila por concepto/destino y materias de la carrera.
+La selección aplicada conserva IDs, asignaturas resueltas y aceptación de discrepancia.
+La auditoría general contiene conteos y huellas; el contenido vive en las tablas
+autorizadas, no en logs.
+
+`contexto_academico.curricular` fotografía definiciones, valores y evidencia de la
+carrera/asignatura al generar cada sílabo. La resolución de `curricular_{clave}` y de
+opciones docentes usa esa copia. Los datos ausentes bloquean el envío cuando el
+formato los requiere, sin consultar la base viva para completar una revisión histórica.
+Los aliases I-144 de resultados, fuente y ubicación priorizan el concepto genérico
+`resultados_aprendizaje` de tipo lista y ámbito asignatura cuando existe en la
+fotografía. En su ausencia conservan la base fotografiada I-144. No se sincronizan ni
+duplican filas entre ambos modelos actuales.
+Corregir valores durante una pausa usa `InProgressWork` con el conjunto de materias
+afectadas; un valor de carrera afecta a toda esa carrera. Los expedientes con
+aprobación conservada quedan fuera del reemplazo. Borrar una materia sin programación
+ni sílabos elimina sus valores actuales y conserva el registro de importación.
 
 ### Plantillas y fuentes
 

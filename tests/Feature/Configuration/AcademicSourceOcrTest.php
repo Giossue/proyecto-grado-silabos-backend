@@ -99,6 +99,25 @@ final class AcademicSourceOcrTest extends TestCase
             && $request->hasHeader('Idempotency-Key'));
     }
 
+    public function test_late_ocr_result_and_failure_do_not_replace_a_newer_pdf(): void
+    {
+        $this->fakeCompletedJob([$this->textElement('paragraph', 'paragraph', 'Contenido del archivo anterior.')]);
+        $source = $this->createSource();
+        $this->actingAsCoordinator()->post(route('api.v1.coordination.sources.pdf.ingest', $source),
+            ['pdf' => UploadedFile::fake()->createWithContent('anterior.pdf', "%PDF-1.4\nAnterior")])->assertStatus(202);
+        $old = JobExecution::query()->firstOrFail();
+        $this->actingAsCoordinator()->post(route('api.v1.coordination.sources.pdf.ingest', $source),
+            ['pdf' => UploadedFile::fake()->createWithContent('actual.pdf', "%PDF-1.4\nActual")])->assertStatus(202);
+        $currentObject = $source->fresh()->objeto_pdf_id;
+        $this->runJobs($old);
+        $this->assertSame('fuente_modificada', $old->fresh()->codigo_error);
+        $this->assertSame($currentObject, $source->fresh()->objeto_pdf_id);
+        $this->assertSame('pendiente', $source->fresh()->estado_ingesta);
+        $this->assertStringNotContainsString('Contenido del archivo anterior.', $source->fresh()->contenido ?? '');
+        app(AcademicSourceOcrExecutionFinalizer::class)->fail($old->id, 'fallo_tardio', 'Falló el intento anterior.');
+        $this->assertSame('pendiente', $source->fresh()->estado_ingesta);
+    }
+
     public function test_tables_with_spans_and_images_keep_their_logical_order(): void
     {
         $png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';

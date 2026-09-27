@@ -152,6 +152,32 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 ## Actualizado para esta entrega
 
+I-145 (27 de septiembre de 2026), autorizado con «ok veamos», corrige el recorrido
+principal de I-144: Coordinación entrega PDF/XLSX o selecciona fuentes ya cargadas;
+el asistente extrae una propuesta de datos para su carrera y asignaturas. La revisión
+por lote muestra procedencia y excepciones, sin exigir transcribir cada resultado.
+La extracción no modifica datos vigentes antes de la confirmación humana.
+
+El contenido documental admite conceptos configurables de texto, lista o tabla y
+valores relacionados con carrera/asignatura. Esto aclara la frontera de I-75: los
+atributos académicos estructurales siguen tipados; los conceptos documentales no crean
+columnas en asignaturas ni una entidad específica por campo. La clave, tipo, ámbito y
+columnas de un concepto compartido permanecen estables. Administración vincula los
+conceptos en la plantilla única como datos automáticos o como opciones de selección
+docente; una selección puede combinar listas de asignatura y carrera.
+
+La aplicación comprueba pertenencia, tipos, evidencia, huellas y pausa del proceso.
+Una materia sin coincidencia se resuelve mediante elección explícita. Ante datos
+distintos entre fuentes, Coordinación selecciona un candidato y confirma la
+discrepancia de esa fila; esto no establece una jerarquía institucional de fuentes
+ni cierra PV-02. Evidencia inválida y conflictos estructurales impiden aplicar esa
+fila. La fotografía del sílabo conserva definición, valor y procedencia; la
+regeneración mantiene la protección de aprobaciones de I-144 y se limita al ámbito
+afectado. Cantidad de unidades, cardinalidad de habilidades, APE cero y generación
+de planificación siguen pendientes de decisión académica; no se deducen del número
+de filas extraídas. La autorización cubre esta implementación local, sin afirmar
+despliegue ni validación institucional de los documentos de ejemplo.
+
 I-144 (27 de septiembre de 2026), autorizado por el responsable del producto, inicia
 datos curriculares estructurados con resultados de aprendizaje por asignatura.
 Coordinación registra lista ordenada, documento/página de procedencia y confirma la
@@ -160,7 +186,11 @@ automático en la plantilla única. Cada sílabo conserva una fotografía indepe
 del origen vivo; la ausencia bloquea el envío solo si el formato utiliza ese dato.
 La implementación local agrega cabecera y filas relacionadas, no atributos arbitrarios
 de malla ni versiones de fuentes. No confirma cantidad de unidades, límite de habilidades,
-reglas APE ni generación de unidades mediante IA.
+reglas APE ni generación de unidades mediante IA. I-145 incorpora el recorrido
+documental general; el registro manual de I-144 queda como mantenimiento puntual.
+Los aliases anteriores de resultados/fuente/ubicación priorizan el concepto genérico
+`resultados_aprendizaje` (lista/asignatura) confirmado en la fotografía y conservan
+el origen I-144 cuando aquel no existe; no se duplican datos vigentes.
 
 El 2026-09-27, ante la instrucción del responsable del producto de resolver las
 decisiones de implementación, se concilia I-118 preservando la evidencia aprobada:

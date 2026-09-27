@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Presentation\Http\Requests;
 
+use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -17,6 +18,7 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
         'numbered_list',
         'boolean',
         'fixed',
+        'multiple_choice',
     ];
 
     /** @return array<string, list<mixed>> */
@@ -27,8 +29,7 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
         $field = $this->route('field');
         $fieldId = $field instanceof FieldDefinition ? $field->id : null;
         // La ficha de identificación no se crea desde la paleta, pero sí se le edita la ayuda.
-        // "Selección múltiple" ya no se ofrece; una parte existente de ese tipo se conserva.
-        $types = $fieldId === null ? self::TYPES : [...self::TYPES, 'institutional', 'multiple_choice'];
+        $types = $fieldId === null ? self::TYPES : [...self::TYPES, 'institutional'];
 
         return [
             'section_id' => [
@@ -71,10 +72,13 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'master_source' => ['nullable', 'required_if:inherited,true', 'string', 'max:100'],
             'teacher_editable' => ['nullable', 'boolean'],
             'ai_enabled' => ['nullable', 'boolean'],
-            'options' => ['nullable', 'array', 'min:2', 'max:50'],
+            'options' => ['nullable', 'array', 'max:50'],
             'options.*' => ['required', 'array:value,label'],
             'options.*.value' => ['required', 'string', 'max:120', 'distinct'],
             'options.*.label' => ['required', 'string', 'max:180'],
+            'options_source' => ['sometimes', 'nullable', 'string', 'max:140'],
+            'options_sources' => ['sometimes', 'array', 'list', 'max:20'],
+            'options_sources.*' => ['required', 'string', 'max:140', 'distinct'],
             'document_marker' => ['nullable', 'string', 'max:160'],
             'page_orientation' => ['sometimes', 'nullable', 'in:portrait,landscape'],
             // «Mostrar solo si»: null es «Siempre».
@@ -95,9 +99,29 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
-            if ($this->input('content_type') === 'multiple_choice'
-                && count((array) $this->input('options', [])) < 2) {
+            $field = $this->route('field');
+            $sources = $this->has('options_sources') || $this->has('options_source')
+                ? CurricularFieldOptions::fromAttributes($this->all())
+                : ($field instanceof FieldDefinition ? CurricularFieldOptions::sources($field) : []);
+            foreach ($sources as $source) {
+                if (! CurricularFieldOptions::sourceIsAllowed($source)) {
+                    $validator->errors()->add('options_sources', 'Seleccione listas curriculares disponibles.');
+                }
+            }
+            if ($sources !== [] && $this->input('content_type') !== 'multiple_choice'
+                && (! $field instanceof FieldDefinition || ! in_array($field->tipo, CurricularFieldOptions::CHOICE_TYPES, true))) {
+                $validator->errors()->add('options_sources', 'Solo una pregunta de selección admite opciones curriculares.');
+            }
+            if (! $field instanceof FieldDefinition && $this->input('content_type') === 'multiple_choice' && $sources === []) {
+                $validator->errors()->add('content_type', 'Seleccione un catálogo curricular para la nueva selección múltiple.');
+            }
+            if (($this->input('content_type') === 'multiple_choice'
+                || ($field instanceof FieldDefinition && in_array($field->tipo, CurricularFieldOptions::CHOICE_TYPES, true)))
+                && $sources === [] && count((array) $this->input('options', $field instanceof FieldDefinition ? $field->opciones : [])) < 2) {
                 $validator->errors()->add('options', 'Agregue al menos dos opciones.');
+            }
+            if ($sources !== [] && $this->input('options') !== null && $this->input('options') !== []) {
+                $validator->errors()->add('options', 'Las opciones provienen de las listas curriculares.');
             }
             if ($this->has('show_when') && $this->input('show_when') !== null) {
                 $template = $this->route('template');

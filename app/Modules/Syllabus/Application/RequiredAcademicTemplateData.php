@@ -2,6 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
+use App\Modules\Academic\Application\CurricularData;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -15,7 +16,7 @@ final class RequiredAcademicTemplateData
      */
     public function issues(array $academicContext): array
     {
-        $definitions = TemplateVariables::definitions();
+        $definitions = TemplateVariables::definitions(['academic_context' => $academicContext]);
         $values = TemplateVariables::resolve(['academic_context' => $academicContext]);
         $missing = [];
 
@@ -27,10 +28,12 @@ final class RequiredAcademicTemplateData
                 }
                 foreach (TemplateDocument::nodes($document, 'variable') as $node) {
                     $key = $node['attrs']['id'] ?? null;
-                    if (! is_string($key) || ! ($definitions[$key]['required'] ?? false) || trim($values[$key] ?? '') !== '') {
+                    if (! is_string($key)
+                        || (! ($definitions[$key]['required'] ?? false) && ! str_starts_with($key, CurricularData::VARIABLE_PREFIX))
+                        || trim($values[$key] ?? '') !== '') {
                         continue;
                     }
-                    $label = $definitions[$key]['label'];
+                    $label = $definitions[$key]['label'] ?? $node['attrs']['label'] ?? $key;
                     $missing[$key] = [
                         'field_id' => null,
                         'code' => 'dato_curricular_faltante',

@@ -52,6 +52,7 @@ class ExportOpenApi extends Command
                 'schemas' => [
                     'SubjectLearningOutcomes' => $this->learningOutcomesSchema(),
                     'SubjectLearningOutcomesInput' => $this->learningOutcomesInputSchema(),
+                    ...$this->curricularImportSchemas(),
                     'Message' => [
                         'type' => 'object',
                         'required' => ['message'],
@@ -62,6 +63,7 @@ class ExportOpenApi extends Command
                         'required' => ['message'],
                         'properties' => [
                             'message' => ['type' => 'string'],
+                            'code' => ['type' => 'string'],
                             'errors' => [
                                 'type' => 'object',
                                 'additionalProperties' => ['type' => 'array', 'items' => ['type' => 'string']],
@@ -145,6 +147,9 @@ class ExportOpenApi extends Command
         $isSourceContent = $name === 'api.v1.coordination.sources.content.update';
         $isPreparePeriod = $name === 'api.v1.coordination.academic.period.prepare';
         $isLearningOutcomes = str_starts_with($name, 'api.v1.coordination.academic.subjects.learning-outcomes.');
+        $isCurricularImport = str_starts_with($name, 'api.v1.coordination.curricular-imports.');
+        $isCurricularImportCreate = $name === 'api.v1.coordination.curricular-imports.store';
+        $isCurricularImportRetry = $name === 'api.v1.coordination.curricular-imports.retry';
         $successContent = $isDownload
             ? ['application/octet-stream' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
             : ($isSourceOriginalPdf
@@ -155,12 +160,16 @@ class ExportOpenApi extends Command
         if ($isLearningOutcomes) {
             $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectLearningOutcomes']]];
         }
+        if ($isCurricularImport) {
+            $schema = str_ends_with($name, '.index') ? 'CurricularImportsIndex' : 'CurricularImport';
+            $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/'.$schema]]];
+        }
         $operation = [
             'tags' => [$tag],
             'operationId' => str_replace('.', '_', $name),
             'summary' => $name,
             'responses' => [
-                ($isSourcePdfUpload ? '202' : ($isSignatureUpload ? '201' : '200')) => [
+                ($isSourcePdfUpload || $isCurricularImportCreate || $isCurricularImportRetry ? '202' : ($isSignatureUpload ? '201' : '200')) => [
                     'description' => 'Operación completada.',
                     'content' => $successContent,
                 ],
@@ -178,9 +187,17 @@ class ExportOpenApi extends Command
                 $operation['responses']['409'] = $this->errorResponse('Los resultados cambiaron desde la consulta; vuelva a cargarlos.');
             }
         }
-        if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+        if ($isCurricularImport) {
+            $operation['responses']['404'] = $this->errorResponse('El registro o la materia no pertenecen a la carrera activa o no existen.');
+            $operation['responses']['409'] = $this->errorResponse('La propuesta, las fuentes o la base curricular cambiaron; consulte de nuevo antes de confirmar.');
+        }
+        if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true) && ! $isCurricularImportRetry) {
             $content = ['application/json' => ['schema' => ['type' => 'object', 'additionalProperties' => true]]];
-            if ($isLearningOutcomes) {
+            if ($isCurricularImportCreate) {
+                $content = ['multipart/form-data' => ['schema' => ['$ref' => '#/components/schemas/CurricularImportInput']]];
+            } elseif ($isCurricularImport) {
+                $content = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/CurricularImportApplyInput']]];
+            } elseif ($isLearningOutcomes) {
                 $content = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectLearningOutcomesInput']]];
             } elseif ($isLogoUpload) {
                 $content = ['multipart/form-data' => ['schema' => [
@@ -236,7 +253,7 @@ class ExportOpenApi extends Command
                 ]]];
             }
             $operation['requestBody'] = [
-                'required' => $isSourcePdfUpload || $isPreparePeriod || $isLearningOutcomes,
+                'required' => $isSourcePdfUpload || $isPreparePeriod || $isLearningOutcomes || $isCurricularImport,
                 'content' => $content,
             ];
         }
@@ -297,6 +314,112 @@ class ExportOpenApi extends Command
                 'confirmed' => ['type' => 'boolean', 'const' => true],
                 'expected_fingerprint' => ['type' => ['string', 'null'], 'pattern' => '^[a-f0-9]{64}$'],
                 'confirm_purge' => ['type' => 'boolean'],
+            ],
+        ];
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function curricularImportSchemas(): array
+    {
+        $uuid = ['type' => 'string', 'format' => 'uuid'];
+        $nullableUuid = ['type' => ['string', 'null'], 'format' => 'uuid'];
+        $nullableText = ['type' => ['string', 'null']];
+        $fingerprint = ['type' => 'string', 'pattern' => '^[a-f0-9]{64}$'];
+        $status = ['type' => 'string', 'enum' => ['pendiente', 'en_ejecucion', 'lista', 'aplicada', 'fallida']];
+        $selection = [
+            'type' => 'object', 'required' => ['id'], 'additionalProperties' => false,
+            'properties' => ['id' => $uuid, 'subject_id' => $nullableUuid, 'accept_conflict' => ['type' => 'boolean']],
+        ];
+
+        return [
+            'CurricularConceptDefinition' => [
+                'type' => 'object', 'required' => ['key', 'label', 'type', 'scope', 'columns'],
+                'properties' => [
+                    'key' => ['type' => 'string', 'pattern' => '^[a-z][a-z0-9_]{0,99}$'],
+                    'label' => ['type' => 'string', 'maxLength' => 180],
+                    'type' => ['type' => 'string', 'enum' => ['texto', 'lista', 'tabla']],
+                    'scope' => ['type' => 'string', 'enum' => ['carrera', 'asignatura']],
+                    'columns' => ['type' => ['array', 'null'], 'items' => [
+                        'type' => 'object', 'required' => ['key', 'label'],
+                        'properties' => ['key' => ['type' => 'string'], 'label' => ['type' => 'string']],
+                    ]],
+                ],
+            ],
+            'CurricularImportProposal' => [
+                'type' => 'object', 'required' => ['definitions', 'values', 'issues'],
+                'properties' => [
+                    'definitions' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/CurricularConceptDefinition']],
+                    'values' => ['type' => 'array', 'items' => [
+                        'type' => 'object', 'required' => ['id', 'concept_key', 'subject_id', 'subject_name', 'value', 'evidence', 'issue', 'issue_code'],
+                        'properties' => [
+                            'id' => $uuid, 'concept_key' => ['type' => 'string'], 'subject_id' => $nullableUuid, 'subject_name' => $nullableText,
+                            'value' => ['description' => 'Texto, lista de textos o filas con celdas de texto según el concepto. Un candidato invalid_value conserva el JSON original para mostrar la excepción.'],
+                            'current_value' => ['description' => 'Contenido vigente para el destino identificado, o null si está ausente o sin resolver. Solo lectura.'],
+                            'change' => ['type' => ['string', 'null'], 'enum' => [null, 'new', 'unchanged', 'replace'], 'description' => 'Comparación del contenido; null cuando la asignatura todavía no está resuelta.'],
+                            'evidence' => ['type' => 'array', 'items' => [
+                                'type' => 'object', 'required' => ['source_id', 'locator', 'quote'],
+                                'properties' => ['source_id' => $uuid, 'locator' => ['type' => 'string'], 'quote' => ['type' => 'string']],
+                            ]],
+                            'issue' => $nullableText,
+                            'issue_code' => ['type' => ['string', 'null'], 'enum' => [null, 'subject_unmatched', 'invalid_value', 'invalid_evidence', 'conflict', 'source_conflict']],
+                        ],
+                    ]],
+                    'issues' => ['type' => 'array', 'items' => ['type' => 'string']],
+                ],
+            ],
+            'CurricularImport' => [
+                'type' => 'object', 'required' => ['id', 'career_id', 'status', 'documents', 'proposal', 'applied_items', 'fingerprint', 'error', 'editable', 'lock_reason'],
+                'properties' => [
+                    'id' => $uuid, 'career_id' => $uuid, 'status' => $status,
+                    'documents' => ['type' => 'array', 'items' => [
+                        'type' => 'object', 'required' => ['source_id', 'name', 'hash', 'kind', 'execution_id'],
+                        'properties' => [
+                            'source_id' => $uuid, 'name' => ['type' => 'string'],
+                            'hash' => ['type' => ['string', 'null'], 'pattern' => '^[a-f0-9]{64}$'],
+                            'kind' => ['type' => 'string', 'enum' => ['pdf', 'xlsx', 'source']], 'execution_id' => $nullableUuid,
+                            'file_hash' => $fingerprint, 'original_object_id' => $nullableUuid,
+                        ],
+                    ]],
+                    'proposal' => ['anyOf' => [['$ref' => '#/components/schemas/CurricularImportProposal'], ['type' => 'null']]],
+                    'applied_items' => ['type' => 'array', 'items' => [...$selection, 'required' => ['id', 'subject_id', 'accept_conflict']]],
+                    'fingerprint' => $fingerprint, 'error' => $nullableText, 'editable' => ['type' => 'boolean'], 'lock_reason' => $nullableText,
+                    'message' => ['type' => 'string'],
+                ],
+            ],
+            'CurricularImportsIndex' => [
+                'type' => 'object', 'required' => ['imports', 'subjects', 'sources', 'lock_reason', 'capabilities'],
+                'properties' => [
+                    'imports' => ['type' => 'array', 'items' => [
+                        'type' => 'object', 'required' => ['id', 'status', 'created_at', 'applied_at', 'error'],
+                        'properties' => ['id' => $uuid, 'status' => $status, 'created_at' => ['type' => 'string', 'format' => 'date-time'],
+                            'applied_at' => ['type' => ['string', 'null'], 'format' => 'date-time'], 'error' => $nullableText],
+                    ]],
+                    'subjects' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['id', 'name', 'code'],
+                        'properties' => ['id' => $uuid, 'name' => ['type' => 'string'], 'code' => ['type' => 'string']]]],
+                    'sources' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['id', 'name'],
+                        'properties' => ['id' => $uuid, 'name' => ['type' => 'string']]]],
+                    'lock_reason' => $nullableText,
+                    'capabilities' => ['type' => 'object', 'required' => ['pdf', 'xlsx', 'extraction'], 'properties' => [
+                        'pdf' => ['type' => 'boolean'], 'xlsx' => ['type' => 'boolean'], 'extraction' => ['type' => 'boolean'],
+                    ]],
+                ],
+            ],
+            'CurricularImportInput' => [
+                'type' => 'object', 'anyOf' => [['required' => ['files']], ['required' => ['source_ids']]],
+                'properties' => [
+                    'files' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 10, 'items' => ['type' => 'string', 'format' => 'binary'],
+                        'description' => 'Hasta 10 archivos PDF/XLSX privados, de hasta 20 MiB cada uno y 30 MiB combinados.'],
+                    'source_ids' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 10, 'uniqueItems' => true, 'items' => $uuid],
+                    'instruction' => ['type' => ['string', 'null'], 'maxLength' => 4000],
+                ],
+            ],
+            'CurricularImportApplyInput' => [
+                'type' => 'object', 'required' => ['expected_fingerprint', 'confirmed', 'items'],
+                'properties' => [
+                    'expected_fingerprint' => $fingerprint, 'confirmed' => ['type' => 'boolean', 'const' => true],
+                    'items' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 10000, 'items' => $selection],
+                    'confirm_purge' => ['type' => 'boolean'],
+                ],
             ],
         ];
     }

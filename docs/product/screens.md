@@ -258,6 +258,22 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   una sola vez con nombre, descripción y PDF. Durante la ingesta, un diálogo modal
   bloquea el resto del flujo, muestra el avance real y abre COR-11 automáticamente solo
   al finalizar; el detalle no ofrece carga ni reprocesamiento del PDF.
+  I-145 añade en Coordinación un botón flotante **Importar datos curriculares**:
+  recibe PDF/XLSX o fuentes ya cargadas para la carrera activa y abre un asistente con
+  carga, estado del procesamiento y revisión de la propuesta. No pide transcribir
+  contenidos ni indicar manualmente la procedencia de cada dato. Las filas muestran
+  materia, contenido propuesto, fuente/localizador/extracto y contenido vigente cuando
+  existe, distinguiendo incorporaciones y reemplazos. Una materia sin coincidencia
+  permite elegir el destino; una discrepancia exige elegir un candidato y confirmar
+  esa decisión. Los errores de evidencia o estructura mantienen la fila excluida.
+  El envío aplica únicamente las filas seleccionadas y conserva la confirmación de
+  regeneración cuando hay sílabos afectados. Una falla muestra el error y ofrece
+  reintentar; las capacidades deshabilitadas y el bloqueo por convocatoria se explican
+  junto a la acción. Cambiar de carrera descarta el estado local anterior del asistente.
+  En ADM-06 los conceptos confirmados aparecen en el catálogo de datos automáticos.
+  Los campos de selección docente pueden obtener opciones de una o varias listas
+  curriculares, por ejemplo habilidades de asignatura y transversales. Cada sílabo
+  usa su copia de esas opciones, y el docente elige de ella sin escribir el catálogo.
 - ADM-02: una cuenta «Pendiente de activación» (correo aún no verificado) tiene en su
   menú **Reenviar invitación** (nuevo enlace de un solo uso al correo actual) y
   **Eliminar** (solo sin actividad; con historia, desactivar). Corregir su correo invalida

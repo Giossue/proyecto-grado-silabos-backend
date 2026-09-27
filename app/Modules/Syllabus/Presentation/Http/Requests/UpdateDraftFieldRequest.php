@@ -2,6 +2,7 @@
 
 namespace App\Modules\Syllabus\Presentation\Http\Requests;
 
+use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Closure;
@@ -101,7 +102,7 @@ class UpdateDraftFieldRequest extends FormRequest
             'numero' => [$presence, 'numeric'],
             'fecha' => [$presence, 'date_format:Y-m-d'],
             'seleccion_unica' => [$presence, 'string', Rule::in($this->allowedOptions($field))],
-            'seleccion_multiple' => [$presence, 'array', 'max:50'],
+            'seleccion_multiple' => [$presence, 'array', 'list', 'max:50'],
             'booleano' => [$presence, 'boolean'],
             'repetible' => ['prohibited'],
             'referencia_maestra', 'calculo' => ['nullable'],
@@ -112,20 +113,8 @@ class UpdateDraftFieldRequest extends FormRequest
     /** @return list<string> */
     private function allowedOptions(FieldDefinition $field): array
     {
-        $options = $field->opciones ?? [];
+        $syllabus = $this->route('syllabus');
 
-        $values = [];
-        foreach ($options as $option) {
-            if (is_string($option) || is_int($option)) {
-                $values[] = (string) $option;
-
-                continue;
-            }
-            if (is_array($option) && (is_string($option['value'] ?? null) || is_int($option['value'] ?? null))) {
-                $values[] = (string) $option['value'];
-            }
-        }
-
-        return array_values(array_unique($values));
+        return CurricularFieldOptions::values($field, $syllabus instanceof Syllabus ? ($syllabus->contexto_academico ?? []) : []);
     }
 }

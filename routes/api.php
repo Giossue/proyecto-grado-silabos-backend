@@ -4,6 +4,8 @@ use App\Http\Controllers\DashboardController;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
 use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
+use App\Modules\Academic\Presentation\Http\Controllers\CurricularImportsController;
+use App\Modules\Academic\Presentation\Http\Controllers\CurricularImportUploadController;
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectLearningOutcomesController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
@@ -205,6 +207,16 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.show');
             Route::get('coordination/academic/subjects/{subject}/learning-outcomes', [SubjectLearningOutcomesController::class, 'show'])
                 ->middleware('active-role')->whereUuid('subject')->name('api.v1.coordination.academic.subjects.learning-outcomes.show');
+            Route::get('coordination/curricular-imports', [CurricularImportsController::class, 'index'])
+                ->middleware('active-role')->name('api.v1.coordination.curricular-imports.index');
+            Route::post('coordination/curricular-imports', [CurricularImportUploadController::class, 'store'])
+                ->middleware(['active-role', 'throttle:source-ocr'])->name('api.v1.coordination.curricular-imports.store');
+            Route::get('coordination/curricular-imports/{import}', [CurricularImportsController::class, 'show'])
+                ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.curricular-imports.show');
+            Route::post('coordination/curricular-imports/{import}/apply', [CurricularImportsController::class, 'apply'])
+                ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.curricular-imports.apply');
+            Route::post('coordination/curricular-imports/{import}/retry', [CurricularImportUploadController::class, 'retry'])
+                ->middleware(['active-role', 'throttle:source-ocr'])->whereUuid('import')->name('api.v1.coordination.curricular-imports.retry');
             Route::put('coordination/academic/subjects/{subject}/learning-outcomes', [SubjectLearningOutcomesController::class, 'update'])
                 ->middleware('active-role')->whereUuid('subject')->name('api.v1.coordination.academic.subjects.learning-outcomes.update');
             Route::get('coordination/academic/scheduled-subjects', [CareerAcademicStructureController::class, 'scheduledSubjects'])

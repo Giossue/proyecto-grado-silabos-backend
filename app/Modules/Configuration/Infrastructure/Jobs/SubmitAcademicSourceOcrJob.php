@@ -55,7 +55,7 @@ final class SubmitAcademicSourceOcrJob implements ShouldQueue
                 'codigo_error' => null,
                 'mensaje_error' => null,
             ]);
-            AcademicSource::query()->whereKey($locked->recurso_id)->update([
+            AcademicSource::query()->whereKey($locked->recurso_id)->where('objeto_pdf_id', $locked->entrada['pdf_object_id'] ?? null)->update([
                 'estado_ingesta' => 'en_ejecucion',
                 'ingesta_actualizada_en' => now(),
             ]);

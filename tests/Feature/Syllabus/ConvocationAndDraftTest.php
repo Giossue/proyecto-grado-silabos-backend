@@ -430,7 +430,7 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $firstRun = ValidationRun::query()->latest('completado_en')->firstOrFail();
-        $this->assertSame('planning-v4', $firstRun->version_reglas);
+        $this->assertSame('planning-curricular-v5', $firstRun->version_reglas);
         $this->assertGreaterThan(0, $firstRun->errores_bloqueantes);
 
         $requiredEditable = FieldDefinition::query()

@@ -22,7 +22,8 @@ final class GenerateConvocationSyllabi
         private readonly InheritMasterValues $inherit,
     ) {}
 
-    public function execute(Convocation $convocation, ?string $subjectId = null): int
+    /** @param list<string>|null $subjectIds */
+    public function execute(Convocation $convocation, ?string $subjectId = null, ?array $subjectIds = null): int
     {
         $convocation->loadMissing('process');
         $scheduledSubjects = ScheduledSubject::query()
@@ -30,6 +31,7 @@ final class GenerateConvocationSyllabi
             ->where('activo', true)
             ->whereHas('subject', fn ($query) => $query->where('carrera_id', $convocation->carrera_id))
             ->when($subjectId !== null, fn ($query) => $query->where('asignatura_id', $subjectId))
+            ->when($subjectIds !== null, fn ($query) => $query->whereIn('asignatura_id', $subjectIds))
             ->with([
                 'subject.career.faculty',
                 'parallels' => fn ($query) => $query->lockForUpdate()->with([

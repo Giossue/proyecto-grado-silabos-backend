@@ -16,7 +16,7 @@ class SaveTemplateDocumentRequest extends ManageTemplatesRequest
             'fingerprint' => ['required', 'string', 'size:64'],
             'title' => ['sometimes', 'nullable', 'string', 'max:180'],
             'properties' => ['sometimes', 'array', 'max:500'],
-            'properties.*' => ['required', 'array:key,label,help,ai_enabled,show_when'],
+            'properties.*' => ['required', 'array:key,label,help,ai_enabled,show_when,options_source,options_sources'],
             'properties.*.key' => ['required', 'string', 'distinct', 'max:180'],
             // El nombre de una parte es opcional: vacía, la parte no lleva subtítulo.
             'properties.*.label' => ['present', 'nullable', 'string', 'max:180'],
@@ -24,6 +24,9 @@ class SaveTemplateDocumentRequest extends ManageTemplatesRequest
             'properties.*.ai_enabled' => ['sometimes', 'boolean'],
             // «Mostrar solo si»: null es «Siempre».
             'properties.*.show_when' => ['sometimes', 'nullable', 'array:key,value'],
+            'properties.*.options_source' => ['sometimes', 'nullable', 'string', 'max:140'],
+            'properties.*.options_sources' => ['sometimes', 'array', 'list', 'max:20'],
+            'properties.*.options_sources.*' => ['required', 'string', 'max:140'],
             'confirm_purge' => ['nullable', 'boolean'],
             'page_orientation' => ['sometimes', 'nullable', 'in:portrait,landscape'],
         ];

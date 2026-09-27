@@ -5,6 +5,7 @@ namespace App\Modules\Academic\Application\Actions;
 use App\Models\User;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 use App\Modules\Identity\Application\ActiveRole;
@@ -175,6 +176,7 @@ class MutateCurriculumBuilder
             // Sin programaciones ni sílabos, la base curricular no tiene historia
             // independiente. Sus resultados se eliminan por cascada con la cabecera.
             $subject->learningOutcomeBase()->delete();
+            CurricularValue::query()->where('asignatura_id', $subject->id)->delete();
             $subject->delete();
             $this->record($actor, $role, $request, 'academico.asignatura.eliminacion', 'asignatura', $subjectId, $metadata);
             $this->work->refreshSubjects($role->carrera_id);

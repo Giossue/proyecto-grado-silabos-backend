@@ -2,6 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
+use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TableLayout;
@@ -41,7 +42,7 @@ class SyllabusSnapshot
         ));
 
         return [
-            'schema_version' => 4,
+            'schema_version' => 5,
             'template_id' => $template->id,
             'template_name' => SyllabusTemplate::INSTITUTIONAL_NAME,
             // La copia lleva también el mapa del documento: la revisión se exporta desde
@@ -71,6 +72,9 @@ class SyllabusSnapshot
                             'key' => $field->clave,
                             'label' => $field->etiqueta,
                             'type' => $field->tipo,
+                            'options_source' => CurricularFieldOptions::source($field),
+                            'options_sources' => CurricularFieldOptions::sources($field),
+                            'options' => CurricularFieldOptions::options($field, $syllabus->contexto_academico ?? []),
                             'inherited' => $field->heredado,
                             'master_source' => $field->origen_maestro,
                             'document_marker' => $field->marcador_documento,

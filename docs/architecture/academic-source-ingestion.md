@@ -85,9 +85,63 @@ El módulo usa dos tablas:
   fuente, carrera, encabezados, páginas y huella, y embedding) compartido con el
   asistente de IA.
 
-Las ejecuciones usan la tabla operativa compartida `ejecuciones_trabajo`; no existe una
-tabla de extracciones. Los PDF y las imágenes reutilizan `objetos_almacenados` y se
+Las ejecuciones de ingesta usan la tabla operativa compartida `ejecuciones_trabajo`.
+Los PDF y las imágenes reutilizan `objetos_almacenados` y se
 entregan únicamente por rutas autenticadas y acotadas a la carrera.
+
+## Extracción de datos curriculares (I-145)
+
+El asistente de Coordinación recibe PDF/XLSX o IDs de fuentes existentes de su carrera.
+Se admite un máximo de 10 archivos de 20 MB cada uno, con 30 MB combinados para respetar el
+límite HTTP/PHP de 32 MB del despliegue. Las fuentes ya almacenadas no suman a ese
+volumen. La misma validación se presenta antes de subir en la SPA.
+`RequestCurricularImport` conserva archivos privados, comprueba capacidades y registra
+una operación idempotente en `importaciones_curriculares`. El PDF reutiliza la ingesta
+anterior; `CurricularWorkbookReader` lee XLSX directamente, conserva hoja/fila/celdas y
+valores almacenados, sin ejecutar fórmulas ni macros. El libro original queda en el
+almacén privado. Los tipos admitidos se anuncian mediante `capabilities` en el listado.
+
+`PrepareCurricularImportJob`, en la cola `integraciones`, espera la lectura de todos
+los documentos y avanza por lotes acotados. `CurricularSourceBlocks` identifica bloques
+y filas de tablas con localizadores. El gateway recibe carrera, catálogo de materias,
+conceptos conocidos e instrucciones de importación, y propone conceptos/valores con
+citas a esos bloques. Cada lote actualiza cursor y progreso en `ejecuciones_trabajo`;
+solo el recorrido completo publica la propuesta. Un reintento explícito de una
+importación fallida usa `POST /coordination/curricular-imports/{id}/retry`.
+
+La validación comprueba tipos, coincidencia de materias y que el contenido citado
+exista en los bloques. La comparación normalizada exige texto no vacío y palabras
+completas; «10» no valida una fuente que solo dice «100». Un código/nombre ambiguo,
+valor incompatible o evidencia insuficiente queda como excepción visible. Una
+discrepancia entre fuentes conserva candidatos separados: la confirmación selecciona
+uno y exige aceptación explícita de esa discrepancia, sin decidir automáticamente
+qué documento tiene autoridad académica.
+
+Coordinación revisa fuente, localizador, extracto y comparación con el contenido
+vigente, selecciona filas y confirma. `ApplyCurricularImport` coteja las huellas de
+los documentos actuales, alcance, tipos y estado del proceso dentro de la transacción.
+La huella documental es la del JSON canónico después de la ingesta; la huella del
+archivo original se conserva aparte. Una fuente editada invalida la propuesta anterior.
+La lectura de un archivo o la respuesta del modelo nunca escribe valores curriculares
+confirmados por sí sola. Catálogo, relaciones y fotografía están descritos en
+`database.md`; el contrato HTTP se genera en `openapi.json`.
+
+La extracción de I-145 tiene configuración independiente:
+
+```text
+CURRICULAR_EXTRACTION_ENABLED=false
+CURRICULAR_EXTRACTION_BASE_URL=https://api.deepseek.com
+CURRICULAR_EXTRACTION_MODEL=deepseek-flash
+CURRICULAR_EXTRACTION_API_KEY=
+```
+
+Si esas variables no existen, `config/curricular_import.php` hereda las equivalentes
+de normalización editorial. `.env.example` las declara explícitamente desactivadas.
+La configuración fija límites de lote, respuesta y archivos; los servicios externos
+reciben contenido de las fuentes cuando se habilitan. La indisponibilidad del servicio
+impide preparar nuevas propuestas y permite conservar las ya confirmadas. Habilitar
+un proveedor no constituye evidencia de precisión; la prueba con documentos reales
+se registra por separado en el plan I-145.
 
 ## Configuración
 

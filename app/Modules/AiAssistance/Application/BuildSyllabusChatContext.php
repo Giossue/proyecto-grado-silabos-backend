@@ -104,7 +104,7 @@ class BuildSyllabusChatContext
             'academic_context' => $syllabus->contexto_academico,
         ]);
         $lines = [];
-        foreach (TemplateVariables::definitions() as $key => $definition) {
+        foreach (TemplateVariables::definitions([]) as $key => $definition) {
             $value = trim($values[$key] ?? '');
             if (isset($definition['equals']) || in_array($key, self::PERSONAL_VARIABLES, true) || $value === '') {
                 continue;

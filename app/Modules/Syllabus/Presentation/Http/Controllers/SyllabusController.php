@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
@@ -239,7 +240,7 @@ class SyllabusController extends Controller
                 'hours_aa' => data_get($syllabus->contexto_academico, 'subject.hours_aa'),
             ],
             'sections' => $template->sections
-                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, $rows))
+                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, $rows, $syllabus->contexto_academico ?? []))
                 ->values(),
             'validation' => $lastValidation instanceof ValidationRun ? [
                 'completed_at' => $lastValidation->completado_en->toIso8601String(),
@@ -320,13 +321,14 @@ class SyllabusController extends Controller
     /**
      * @param  Collection<string, FieldValue>  $values
      * @param  Collection<string, EloquentCollection<int, RepeatableRow>>  $rows
+     * @param  array<string, mixed>  $academicContext
      * @return array<string, mixed>
      */
-    private function sectionPayload(TemplateSection $section, $values, $rows): array
+    private function sectionPayload(TemplateSection $section, $values, $rows, array $academicContext): array
     {
         $blocks = [];
         foreach ($section->blocks as $block) {
-            $blocks[] = $this->blockPayload($block, $values, $rows);
+            $blocks[] = $this->blockPayload($block, $values, $rows, $academicContext);
         }
 
         return [
@@ -341,9 +343,10 @@ class SyllabusController extends Controller
     /**
      * @param  Collection<string, FieldValue>  $values
      * @param  Collection<string, EloquentCollection<int, RepeatableRow>>  $rows
+     * @param  array<string, mixed>  $academicContext
      * @return array<string, mixed>
      */
-    private function blockPayload(TemplateBlock $block, Collection $values, Collection $rows): array
+    private function blockPayload(TemplateBlock $block, Collection $values, Collection $rows, array $academicContext): array
     {
         $fields = [];
         foreach ($block->fields as $field) {
@@ -365,7 +368,9 @@ class SyllabusController extends Controller
                 'label' => $field->etiqueta,
                 'help' => $field->ayuda,
                 'type' => $field->tipo,
-                'options' => $this->fieldOptions($field),
+                'options' => CurricularFieldOptions::options($field, $academicContext),
+                'options_source' => CurricularFieldOptions::source($field),
+                'options_sources' => CurricularFieldOptions::sources($field),
                 // «Mostrar solo si»: la hoja oculta la parte mientras no se cumple.
                 'show_when' => FieldConditions::normalize($field->mostrar_si),
                 'required' => true,
@@ -387,30 +392,5 @@ class SyllabusController extends Controller
             'document' => $block->configuracion['document'] ?? null,
             'fields' => $fields,
         ];
-    }
-
-    /** @return list<array{value: string, label: string}> */
-    private function fieldOptions(FieldDefinition $field): array
-    {
-        $options = $field->opciones ?? [];
-
-        $normalized = [];
-        foreach ($options as $option) {
-            if (is_string($option) || is_int($option)) {
-                $normalized[] = ['value' => (string) $option, 'label' => (string) $option];
-
-                continue;
-            }
-            if (! is_array($option) || (! is_string($option['value'] ?? null) && ! is_int($option['value'] ?? null))) {
-                continue;
-            }
-            $value = (string) $option['value'];
-            $normalized[] = [
-                'value' => $value,
-                'label' => is_string($option['label'] ?? null) ? $option['label'] : $value,
-            ];
-        }
-
-        return $normalized;
     }
 }

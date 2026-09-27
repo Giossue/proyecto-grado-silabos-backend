@@ -2,13 +2,14 @@
 
 namespace App\Modules\Configuration\Presentation\Http\Requests;
 
+use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class SaveTemplateSectionRequest extends ManageTemplatesRequest
 {
-    private const CONTENT_TYPES = ['text', 'table', 'bulleted_list', 'numbered_list', 'boolean', 'fixed'];
+    private const CONTENT_TYPES = ['text', 'table', 'bulleted_list', 'numbered_list', 'boolean', 'fixed', 'multiple_choice'];
 
     /** @return array<string, list<mixed>> */
     public function rules(): array
@@ -38,7 +39,7 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
                 },
             ],
             'fields' => [Rule::requiredIf($sectionId === null && ! $this->filled('first_field_label')), 'nullable', 'array', 'min:1', 'max:20'],
-            'fields.*' => ['required', 'array:key,label,help,content_type,options,ai_enabled'],
+            'fields.*' => ['required', 'array:key,label,help,content_type,options,options_source,options_sources,ai_enabled'],
             'fields.*.label' => ['nullable', 'string', 'max:180'],
             'fields.*.key' => [
                 'required',
@@ -50,7 +51,10 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
             ],
             'fields.*.content_type' => ['required', Rule::in(self::CONTENT_TYPES)],
             'fields.*.help' => ['nullable', 'string', 'max:2000'],
-            'fields.*.options' => ['nullable', 'array', 'min:2', 'max:50'],
+            'fields.*.options' => ['nullable', 'array', 'max:50'],
+            'fields.*.options_source' => ['sometimes', 'nullable', 'string', 'max:140'],
+            'fields.*.options_sources' => ['sometimes', 'array', 'list', 'max:20'],
+            'fields.*.options_sources.*' => ['required', 'string', 'max:140'],
             'fields.*.options.*' => ['required', 'array:value,label'],
             'fields.*.options.*.value' => ['required', 'string', 'max:120', 'distinct'],
             'fields.*.options.*.label' => ['required', 'string', 'max:180'],
@@ -67,7 +71,7 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
             'first_field_content_type' => [
                 Rule::requiredIf($requiresLegacyField),
                 'nullable',
-                Rule::in(self::CONTENT_TYPES),
+                Rule::in(array_diff(self::CONTENT_TYPES, ['multiple_choice'])),
             ],
             'position' => ['nullable', 'integer', 'min:0'],
         ];
@@ -87,10 +91,20 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
     {
         return [function (Validator $validator): void {
             foreach ((array) $this->input('fields', []) as $index => $field) {
-                if (is_array($field)
-                    && ($field['content_type'] ?? null) === 'multiple_choice'
-                    && count((array) ($field['options'] ?? [])) < 2) {
-                    $validator->errors()->add("fields.{$index}.options", 'Agregue al menos dos opciones.');
+                if (! is_array($field)) {
+                    continue;
+                }
+                $sources = CurricularFieldOptions::fromAttributes($field);
+                if (($field['content_type'] ?? null) === 'multiple_choice' && $sources === []) {
+                    $validator->errors()->add("fields.{$index}.content_type", 'Seleccione un catálogo curricular para la nueva selección múltiple.');
+                }
+                foreach ($sources as $source) {
+                    if (($field['content_type'] ?? null) !== 'multiple_choice' || ! CurricularFieldOptions::sourceIsAllowed($source)) {
+                        $validator->errors()->add("fields.{$index}.options_sources", 'Seleccione listas curriculares para una pregunta de selección.');
+                    }
+                }
+                if ($sources !== [] && ($field['options'] ?? null) !== null && $field['options'] !== []) {
+                    $validator->errors()->add("fields.{$index}.options", 'Las opciones provienen de la lista curricular.');
                 }
             }
         }];

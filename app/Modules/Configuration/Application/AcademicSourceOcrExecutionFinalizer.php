@@ -35,6 +35,14 @@ final class AcademicSourceOcrExecutionFinalizer
                 return;
             }
             $source = AcademicSource::query()->lockForUpdate()->findOrFail($lockedExecution->recurso_id);
+            if (isset($lockedExecution->entrada['pdf_object_id']) && $source->objeto_pdf_id !== $lockedExecution->entrada['pdf_object_id']) {
+                $lockedExecution->update([
+                    'estado' => 'fallida', 'codigo_error' => 'fuente_modificada',
+                    'mensaje_error' => 'La fuente tiene otro PDF. Se descartó el resultado anterior.', 'finalizado_en' => now(),
+                ]);
+
+                return;
+            }
             $source->update([
                 'documento' => $document,
                 'version_documento' => 1,
@@ -95,10 +103,11 @@ final class AcademicSourceOcrExecutionFinalizer
                 'mensaje_error' => $message,
                 'finalizado_en' => now(),
             ]);
-            AcademicSource::query()->whereKey($execution->recurso_id)->update([
-                'estado_ingesta' => 'fallida',
-                'ingesta_actualizada_en' => now(),
-            ]);
+            AcademicSource::query()->whereKey($execution->recurso_id)
+                ->when(isset($execution->entrada['pdf_object_id']), fn ($query) => $query->where('objeto_pdf_id', $execution->entrada['pdf_object_id']))->update([
+                    'estado_ingesta' => 'fallida',
+                    'ingesta_actualizada_en' => now(),
+                ]);
             $this->audit->execute(
                 actorId: null,
                 roleAssignmentId: null,

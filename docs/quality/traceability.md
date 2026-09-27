@@ -13,6 +13,24 @@ Necesidad / hallazgo
 
 ## Fuentes de verdad
 
+I-145 — RF-008..045, RF-046..054; RN-005..016, RN-020..024, RN-028..030;
+RNF-001..010, RNF-024..036; CU-03..08; COR-11, COR-13, ADM-06, DOC-04, DOC-06:
+`RequestCurricularImport`, `PrepareCurricularImport`, `CurricularWorkbookReader`,
+`CurricularImportProposal`, `ApplyCurricularImport`, `CurricularImportsViewData` y
+migración `000145`; `CurricularData`, `TemplateVariables`, `CurricularFieldOptions`
+y fotografías de contexto/revisión. SPA `CurricularImportAssistant`,
+`CurricularImportReview` y enlaces de selección en el constructor de plantilla.
+`CurricularImportsTest` cubre selección parcial, permisos, asignaturas ajenas,
+confirmación, concurrencia entre importaciones, cambios de fuente, tipos, evidencia,
+duplicados, discrepancias aceptadas, rollback, regeneración acotada, aprobaciones
+conservadas y restricciones SQL. `CurricularBindingTest` cubre catálogo dinámico,
+opciones, fotografías y datos ausentes. Pruebas SPA: `CurricularImportAssistant.test.ts`,
+`CurricularImportReview.test.ts`, `TemplateCurricularSelection.test.ts`.
+La ejecución focalizada del núcleo, sus límites y las puertas de integración se
+registran en el plan I-145; no equivalen a aceptación institucional de la extracción.
+PV-02 sigue abierta para precedencia documental; las reglas académicas de habilidades,
+unidades y APE permanecen pendientes.
+
 I-144 — RF-008..033, RF-037..044; RN-005..016, RN-020..024; CU-03..07;
 COR-13, ADM-06, DOC-04; CP-F estructura, plantilla y elaboración:
 `SaveSubjectLearningOutcomes`, `SubjectLearningOutcomesViewData`, cabecera/filas de

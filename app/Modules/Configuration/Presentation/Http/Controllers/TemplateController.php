@@ -15,6 +15,7 @@ use App\Modules\Configuration\Application\Actions\SaveTemplateAppearance;
 use App\Modules\Configuration\Application\Actions\SaveTemplateDocument;
 use App\Modules\Configuration\Application\Actions\SaveTemplateSection;
 use App\Modules\Configuration\Application\Actions\SaveTemplateTitle;
+use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
@@ -148,7 +149,9 @@ class TemplateController extends Controller
                                     'label' => $field->etiqueta,
                                     'help' => $field->ayuda,
                                     'type' => $field->tipo,
-                                    'options' => $this->fieldOptions($field),
+                                    'options' => CurricularFieldOptions::options($field),
+                                    'options_source' => CurricularFieldOptions::source($field),
+                                    'options_sources' => CurricularFieldOptions::sources($field),
                                     'show_when' => FieldConditions::normalize($field->mostrar_si),
                                     'required' => true,
                                     'inherited' => $field->heredado,
@@ -168,6 +171,8 @@ class TemplateController extends Controller
                 ['value' => 'bulleted_list', 'label' => 'Lista con viñetas'],
                 ['value' => 'numbered_list', 'label' => 'Lista numerada'],
                 ['value' => 'boolean', 'label' => 'Sí / No'],
+                ...(collect(TemplateVariables::definitions())->contains(fn (array $definition): bool => ($definition['type'] ?? null) === 'lista')
+                    ? [['value' => 'multiple_choice', 'label' => 'Selección del catálogo curricular']] : []),
                 ['value' => 'fixed', 'label' => 'Texto fijo (el docente no lo llena)'],
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
@@ -196,30 +201,6 @@ class TemplateController extends Controller
         $action->execute($template, $request->string('title')->toString(), $actor, $request);
 
         return $this->success($request, 'Título de la plantilla actualizado.');
-    }
-
-    /** @return list<array{value: string, label: string}> */
-    private function fieldOptions(FieldDefinition $field): array
-    {
-        $normalized = [];
-        foreach ($field->opciones ?? [] as $option) {
-            if (is_string($option) || is_int($option)) {
-                $value = (string) $option;
-                $normalized[] = ['value' => $value, 'label' => $value];
-
-                continue;
-            }
-            if (! is_array($option) || (! is_string($option['value'] ?? null) && ! is_int($option['value'] ?? null))) {
-                continue;
-            }
-            $value = (string) $option['value'];
-            $normalized[] = [
-                'value' => $value,
-                'label' => is_string($option['label'] ?? null) ? $option['label'] : $value,
-            ];
-        }
-
-        return $normalized;
     }
 
     public function storeField(

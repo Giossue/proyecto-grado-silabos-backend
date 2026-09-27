@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -56,6 +57,13 @@ class SaveTemplateSection
                     $configuration['document'] = TemplateDocumentDefaults::fixedPlaceholder();
                 }
                 $fieldKey = $this->stringValue($fieldData, 'key');
+                $sources = CurricularFieldOptions::fromAttributes($fieldData);
+                foreach ($sources as $source) {
+                    if ($contentType !== 'multiple_choice' || ! CurricularFieldOptions::sourceIsAllowed($source)) {
+                        throw ValidationException::withMessages(['options_source' => 'Seleccione una lista curricular para una pregunta de selección.']);
+                    }
+                    $configuration['options_sources'] = [$fieldKey => $sources];
+                }
                 $fieldLabel = trim((string) ($fieldData['label'] ?? ''));
                 $blocks[] = [
                     'id' => $blockId,
@@ -83,7 +91,7 @@ class SaveTemplateSection
                     'heredado' => false,
                     'editable_docente' => true,
                     'ia_habilitada' => (bool) ($fieldData['ai_enabled'] ?? false),
-                    'opciones' => $fieldData['options'] ?? null,
+                    'opciones' => $sources === [] ? ($fieldData['options'] ?? null) : null,
                     'posicion' => 1,
                 ];
             }

@@ -1,0 +1,107 @@
+<?php
+
+namespace App\Modules\Academic\Application\Queries;
+
+use App\Modules\Academic\Application\CurricularImportCapabilities;
+use App\Modules\Academic\Domain\AcademicStructurePermissions;
+use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
+use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
+use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Syllabus\Application\ProcessLocks;
+use App\Support\CanonicalHasher;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\Request;
+
+final class CurricularImportsViewData
+{
+    public function __construct(
+        private readonly ActiveRole $roles,
+        private readonly ProcessLocks $locks,
+        private readonly CanonicalHasher $hasher,
+    ) {}
+
+    public function role(Request $request): RoleAssignment
+    {
+        $role = $this->roles->resolve($request);
+        if (! $role instanceof RoleAssignment || ! AcademicStructurePermissions::isCareerContext($role)) {
+            throw new AuthorizationException('Solo la coordinación activa puede gestionar las importaciones de su carrera.');
+        }
+
+        return $role;
+    }
+
+    public function find(string $id, Request $request): CurricularImport
+    {
+        return CurricularImport::query()->where('carrera_id', $this->role($request)->carrera_id)->findOrFail($id);
+    }
+
+    /** @return array<string, mixed> */
+    public function index(Request $request): array
+    {
+        $careerId = $this->role($request)->carrera_id;
+
+        return [
+            'imports' => CurricularImport::query()->where('carrera_id', $careerId)->orderByDesc('solicitado_en')->orderByDesc('id')
+                ->get(['id', 'estado_importacion', 'solicitado_en', 'aplicado_en', 'mensaje_error_importacion'])->map(fn (CurricularImport $import): array => [
+                    'id' => $import->id, 'status' => $import->estado_importacion,
+                    'created_at' => $import->solicitado_en->toISOString(), 'applied_at' => $import->aplicado_en?->toISOString(),
+                    'error' => $import->mensaje_error_importacion,
+                ])->all(),
+            'subjects' => Subject::query()->where('carrera_id', $careerId)->orderBy('nombre')->get(['id', 'nombre', 'codigo_asignatura'])
+                ->map(fn (Subject $subject): array => ['id' => $subject->id, 'name' => $subject->nombre, 'code' => $subject->codigo_asignatura])->all(),
+            'sources' => AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)
+                ->whereNotNull('contenido_fuente_academica')->where('contenido', '!=', '')->orderBy('nombre')->get(['id', 'nombre'])
+                ->map(fn (AcademicSource $source): array => ['id' => $source->id, 'name' => $source->nombre])->all(),
+            'lock_reason' => $this->locks->careerLockReason($careerId),
+            'capabilities' => app(CurricularImportCapabilities::class)->toArray(),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function detail(CurricularImport $import): array
+    {
+        $lockReason = $this->locks->careerLockReason($import->carrera_id);
+
+        return [
+            'id' => $import->id, 'career_id' => $import->carrera_id, 'status' => $import->estado_importacion,
+            'documents' => $import->documentos_importacion, 'proposal' => $this->proposalWithCurrentValues($import),
+            'applied_items' => $import->seleccion_aplicada ?? [],
+            'fingerprint' => $this->fingerprint($import), 'error' => $import->mensaje_error_importacion,
+            'editable' => $lockReason === null && $import->estado_importacion === 'lista', 'lock_reason' => $lockReason,
+        ];
+    }
+
+    public function fingerprint(CurricularImport $import): string
+    {
+        return $this->hasher->hash([
+            'id' => $import->id, 'status' => $import->estado_importacion,
+            'documents' => $import->documentos_importacion, 'proposal' => $import->propuesta_importacion,
+            // También detecta otra importación aplicada después de consultar esta.
+            'current_values' => CurricularValue::query()->where('carrera_id', $import->carrera_id)->orderBy('id')->get()->toArray(),
+        ]);
+    }
+
+    /** @return array<string, mixed>|null */
+    private function proposalWithCurrentValues(CurricularImport $import): ?array
+    {
+        $proposal = $import->propuesta_importacion;
+        if ($proposal === null) {
+            return null;
+        }
+        $definitions = array_column($proposal['definitions'], null, 'key');
+        $current = CurricularValue::query()->with('concept')->where('carrera_id', $import->carrera_id)->get()
+            ->keyBy(fn (CurricularValue $value): string => $value->concept->clave_concepto.':'.($value->asignatura_id ?? 'career'));
+        foreach ($proposal['values'] as &$row) {
+            $unresolved = ($definitions[$row['concept_key']]['scope'] ?? null) === 'asignatura' && $row['subject_id'] === null;
+            $value = $unresolved ? null : $current->get($row['concept_key'].':'.($row['subject_id'] ?? 'career'));
+            $row['current_value'] = $value?->valor_curricular;
+            $row['change'] = $unresolved ? null : ($value === null ? 'new'
+                : ($this->hasher->hash($value->valor_curricular) === $this->hasher->hash($row['value']) ? 'unchanged' : 'replace'));
+        }
+
+        return $proposal;
+    }
+}

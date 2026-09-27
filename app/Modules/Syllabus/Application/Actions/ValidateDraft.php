@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateDocument;
@@ -20,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 
 class ValidateDraft
 {
-    public const RULE_VERSION = 'planning-v4';
+    public const RULE_VERSION = 'planning-curricular-v5';
 
     public function __construct(
         private readonly ActiveRole $roles,
@@ -55,6 +56,32 @@ class ValidateDraft
             foreach ($fields as $field) {
                 if (isset($hidden[$field->clave]) || ! $this->requiredFromTeacher($field)) {
                     continue;
+                }
+                $optionsSource = CurricularFieldOptions::sources($field);
+                if ($optionsSource !== []) {
+                    $allowed = CurricularFieldOptions::values($field, $academicContext);
+                    $value = $values->get($field->id)?->valor;
+                    $selection = is_array($value) ? $value : ($value === null ? [] : [$value]);
+                    if ($allowed === []) {
+                        $issues[] = [
+                            'field_id' => $field->id,
+                            'code' => 'catalogo_curricular_faltante',
+                            'severity' => 'error',
+                            'message' => "Avise a Coordinación: falta el catálogo curricular de «{$field->displayName()}» para esta asignatura.",
+                        ];
+
+                        continue;
+                    }
+                    if (($value !== null && $field->tipo === 'seleccion_multiple' && (! is_array($value) || ! array_is_list($value)))
+                        || ($value !== null && $field->tipo === 'seleccion_unica' && ! is_string($value))
+                        || array_filter($selection, static fn (mixed $item): bool => ! is_string($item) || ! in_array($item, $allowed, true)) !== []) {
+                        $issues[] = [
+                            'field_id' => $field->id,
+                            'code' => 'seleccion_curricular_invalida',
+                            'severity' => 'error',
+                            'message' => "«{$field->displayName()}» contiene una opción que no corresponde al catálogo curricular de esta asignatura.",
+                        ];
+                    }
                 }
                 $fieldRows = $rows->get($field->id, collect());
                 // Todo campo del formulario es obligatorio al enviar; el borrador se guarda siempre.

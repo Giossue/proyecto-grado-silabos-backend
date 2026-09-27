@@ -204,7 +204,7 @@ class TemplateAndSourceTest extends TestCase
                     ['value' => 'examen', 'label' => 'Examen'],
                 ],
             ])
-            ->assertJsonValidationErrors(['content_type' => 'Elija un tipo de parte de la lista.']);
+            ->assertJsonValidationErrors(['content_type' => 'Seleccione un catálogo curricular para la nueva selección múltiple.']);
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.template.sections.store', $template), [

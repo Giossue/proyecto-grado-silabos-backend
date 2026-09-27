@@ -17,10 +17,30 @@ I-118 quedó resuelta el 2026-09-27 mediante la delegación del responsable del 
 se conservan los aprobados y la revisión aprobada tras reapertura; las correcciones
 confirmadas regeneran expedientes en curso sin aprobación conservada, incluidos los
 enviados. En resultados de aprendizaje, el efecto se limita a su asignatura. Esta
-resolución no constituye una aprobación del tutor ni de la institución. Pendiente de nuevas
-unidades de implementación: otros catálogos, enlaces de datos configurables, extracción
-semántica y generación de planificación mediante IA. No confundir ingesta documental
-con normalización curricular ni esta primera entrega con el plan completo.
+resolución no constituye una aprobación del tutor ni de la institución.
+
+## Importación curricular desde documentos, 2026-09-27 (I-145)
+
+La corrección del responsable del producto establece documentos y revisión por lote
+como entrada principal. Se implementan conceptos de texto/lista/tabla, valores por
+carrera/asignatura, PDF/XLSX y fuentes existentes, extracción con referencias,
+confirmación selectiva, datos automáticos y opciones docentes obtenidas de una o
+varias listas. El formulario manual de I-144 conserva utilidad puntual y no representa
+el asistente completo solicitado. Estado y evidencia en
+`active/I-145-asistente-importacion-curricular.md`.
+
+Persistencia/aplicación tienen pruebas locales de aislamiento, concurrencia,
+evidencia, discrepancias, regeneración y conservación de aprobados. La puerta completa,
+la demostración con documentos reales y la revisión visual deben quedar registradas
+en ese plan antes de declarar la entrega terminada. Esta implementación no prueba por
+sí sola precisión de extracción ni vigencia académica.
+
+Pendientes académicos: autoridad institucional de fuentes discrepantes, agrupación en
+unidades, cardinalidad de habilidades y efecto de APE cero. La selección explícita
+de un candidato permite resolver una importación concreta sin inventar esas reglas.
+Pendiente funcional separado: generación asistida de la planificación a partir del
+contexto confirmado. Nuevos conceptos de los tipos admitidos son configuración;
+nuevos formatos de archivo o reglas académicas pueden exigir desarrollo.
 
 ## Paridad funcional y visual de la SPA, 2026-09-17 (I-87)
 

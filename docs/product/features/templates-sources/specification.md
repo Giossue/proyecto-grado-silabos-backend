@@ -29,15 +29,15 @@
   opciones (encabezados, énfasis, listas, cita, tabla con selector de tamaño, código,
   enlace, divisor y operaciones de tabla). Se guarda como JSON ProseMirror/Tiptap; el
   formato se aplica y se renderiza en tiempo real.
-- Antes de iniciar su alcance, Coordinación elige un subconjunto no vacío de las fuentes
-  activas de su carrera. La convocatoria fija exactamente esa selección, que no puede
-  cambiarse después de iniciada; al reanudar, todas deben continuar activas. La evidencia
+- Desde I-124 la convocatoria usa todas las fuentes activas de la carrera; se retiró
+  la selección por convocatoria. La selección de documentos de I-145 pertenece a una
+  operación de importación curricular y no cambia ese alcance de asistencia. La evidencia
   de IA guarda su propia fotografía (nombre, extracto y huella del
   contenido), por lo que editar la fuente después no reescribe análisis pasados.
 - Coordinación carga un PDF privado para obtener el documento mediante OpenParser con
   `paddleocr-vl-1.6` y salida `openparser@1`.
   La ruta devuelve `202`, el resultado conserva procedencia por página y luego
-  se indexa en fragmentos_fuente_academica para búsqueda y citas.
+  se indexa en `documentos_ia` para búsqueda y citas (I-135).
 - La ingesta calcula una huella SHA-256 y es idempotente. Repetir el mismo PDF no crea
   otro job Parse en OpenParser: se reutiliza el trabajo externo existente. PostgreSQL
   puede registrar una nueva ejecución interna cuando cambia la versión del normalizador,
@@ -78,8 +78,25 @@
   numerados en su orden confirmado. No se convierte automáticamente una parte editable
   existente ni se sustituye una plantilla durante la migración.
 - Si una plantilla utiliza esa variable sin resultados fotografiados, la validación
-  indica que Coordinación debe corregir la base. Agregar un campo visual sigue sin
-  registrar un origen académico nuevo: el catálogo general configurable es posterior.
+  indica que Coordinación debe corregir la base.
+- I-145 permite importar conceptos documentales de texto/lista/tabla desde PDF/XLSX
+  y fuentes de la carrera. La propuesta conserva evidencia, materia y excepciones;
+  solo la selección confirmada se convierte en contenido vigente. Agregar un concepto
+  admitido amplía el catálogo automático `curricular_{clave}` sin código por campo.
+  Los datos automáticos anteriores de resultados/fuente/ubicación priorizan la lista
+  importada `resultados_aprendizaje` de la asignatura dentro de la fotografía; si falta,
+  conservan el origen I-144. Esto permite usar las plantillas existentes sin duplicar
+  resultados en ambas bases.
+- Administración puede vincular campos de selección a una o varias listas curriculares.
+  El catálogo docente se resuelve desde la fotografía de su sílabo, permite combinar
+  listas de asignatura y carrera y elimina opciones repetidas. Si falta un origen
+  requerido, la validación informa el dato curricular pendiente y no ofrece una unión
+  incompleta. El servidor rechaza valores fuera de las opciones fotografiadas.
+- Las propuestas muestran el dato vigente y el candidato para revisar reemplazos.
+  Evidencia inválida, tipos incompatibles y conflictos estructurales bloquean su fila;
+  una materia ambigua permite asociación explícita dentro de la carrera. Una
+  discrepancia documental exige elegir una fila y aceptar la decisión. Esto no fija
+  precedencia institucional ni resuelve cardinalidad de habilidades o reglas APE.
 
 - No se abre un proceso con marcador DOCX obligatorio sin mapeo.
 - Un sílabo histórico sigue renderizando después de editar la plantilla viva.
