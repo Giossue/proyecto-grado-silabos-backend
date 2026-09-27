@@ -464,3 +464,28 @@ quedan fijos en servidor.
 - [x] Unificar la escala de tablas en editor, vista y DOCX.
 - [x] Simplificar la hoja reutilizable y derivar «Campos» desde «Contenido».
 - [x] Cubrir normalización, persistencia, contrato de interfaz y exportación.
+
+## Corrección — ancho de tablas y catálogo de variables (2026-09-27)
+
+ADM-06, RF-017..026, RN-009..012, CU-04, CP-F plantilla y PV-19. La ficha
+institucional de ejemplo se cortaba a la derecha al entrar a editar una tabla; el
+selector `@` solo incluía los primeros ocho datos automáticos. PV-07 y PV-19 siguen
+pendientes de aceptación institucional y en dispositivos reales; no condicionan esta
+corrección de interfaz.
+
+- [x] Ajustar la tabla al ancho imprimible tanto en la edición como en la vista previa,
+      respetando las proporciones de columnas guardadas y dejando desplazamiento local
+      si un diseño excepcional supera el ancho disponible.
+- [x] Mostrar el catálogo completo en el selector `@`, con búsqueda, desplazamiento
+      de la opción activa y posición dentro de la ventana al cambiar el scroll o tamaño.
+- [x] Verificar una tabla ancha del tamaño de la ficha, navegación del selector, tipos y lint;
+      actualizar la matriz de trazabilidad con la evidencia.
+
+No cambia esquema, contrato JSON, permisos ni datos existentes. Reversión: restaurar
+los estilos y comportamiento del selector en el frontend.
+
+Verificado con una tabla sintética de ocho columnas a 627 px: editor y vista previa
+midieron 627 px, sin contenido oculto a la derecha. En Chromium, el menú mostró los
+16 datos de prueba, se colocó encima de la celda cercana al borde inferior y `↑`
+seleccionó el último dato desplazando la lista. Pasaron dos pruebas Vitest, ESLint,
+TypeScript y build Vite. Queda pendiente la aceptación PV-19 en dispositivos reales.

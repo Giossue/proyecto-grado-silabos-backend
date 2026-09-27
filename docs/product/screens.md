@@ -173,6 +173,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   título, bloque y campo. El tamaño de campo se aplica uniformemente a texto,
   variables y campos dentro de cualquier tabla. La fuente Arial, los colores globales,
   las alineaciones y los énfasis institucionales son fijos y no aparecen como controles.
+- Al editar tablas en ADM-06, las columnas se ajustan al ancho imprimible; un diseño
+  excepcionalmente ancho conserva desplazamiento horizontal dentro de la hoja. El
+  selector `@` permite buscar y recorrer todos los datos automáticos del catálogo y
+  se sitúa dentro de la ventana cerca de la celda activa.
 - La ficha institucional parte del formato oficial y conserva su diseño al mostrarse en
   el constructor. Sus variables muestran datos de malla, programación, paralelos y docentes;
   no son campos de escritura. Discapacidad y formación son campos que completa el
@@ -273,6 +277,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   «Datos confirmados» muestra los valores que usará un sílabo nuevo, filtrables por
   materia o concepto y con procedencia. Cuando faltan resultados importados, muestra
   los resultados I-144 como registro anterior sin atribuirles un extracto inexistente.
+  El panel distingue Importar, Historial y Datos confirmados mediante pestañas con
+  estado activo. La carga presenta primero archivos nuevos y documentos anteriores;
+  una indicación adicional se abre solo si se necesita. El pie mantiene visible la
+  acción principal y explica cuándo falta elegir un documento, también en móvil.
   La acción manual «Resultados de aprendizaje» desaparece del menú de cada materia;
   las correcciones nuevas siguen el recorrido de importación y confirmación.
   El botón no aparece en Convocatorias, Materias y paralelos, Asignación docente ni

@@ -202,3 +202,24 @@ de habilidades que todavía requiere confirmación académica.
 - La publicación de código y migración no acredita el despliegue de API/workers/SPA
   en Dokploy. Su estado HTTP y los proveedores alojados requieren comprobación en
   el ambiente desplegado; no se afirma esa verificación desde la demo local.
+
+## Mejora de claridad del panel (2026-09-27)
+
+El responsable muestra el estado vacío del asistente y pide una presentación más
+intuitiva, sin instrucciones repetidas. Alcance: I-145/I-147, COR-13, CU-05,
+RF-027..033 y RNF-018..023. PV-19 sigue pendiente para dispositivos reales. No
+cambian permisos, API, datos ni flujo de confirmación.
+
+- [x] Sustituir los tres botones de navegación por pestañas con estado activo claro.
+- [x] Quitar el aviso redundante; ordenar archivos nuevos, reutilización e indicación
+      opcional, con límites legibles y acción principal visible.
+- [x] Probar envío, navegación, errores y ventana estrecha; actualizar trazabilidad.
+
+Reversión: restaurar la composición anterior del panel sin cambiar las importaciones
+almacenadas.
+
+Frontend: `npm test` aprobó 207 pruebas (una omisión preexistente); `npm run lint`
+y `npm run build` aprobaron. Chromium con datos sintéticos verificó modo oscuro a
+900 y 360 px, pestañas completas sin desbordamiento horizontal y acción visible.
+Al desplegar la indicación en 360 px, el área desplazable mostró el textarea entero
+por encima del pie. La validación en dispositivos reales sigue en PV-19.
