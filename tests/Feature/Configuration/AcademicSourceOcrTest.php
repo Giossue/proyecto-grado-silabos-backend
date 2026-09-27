@@ -3,7 +3,11 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
+use App\Modules\AiAssistance\Infrastructure\Jobs\EmbedAcademicSourceJob;
+use App\Modules\Configuration\Application\AcademicSourceDocument;
 use App\Modules\Configuration\Application\AcademicSourceOcrExecutionFinalizer;
+use App\Modules\Configuration\Application\Actions\RequestAcademicSourceOcr;
 use App\Modules\Configuration\Application\Contracts\AcademicSourceFigureCropper;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceDocumentNormalizer;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
@@ -16,6 +20,7 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -43,7 +48,6 @@ final class AcademicSourceOcrTest extends TestCase
             'openparser.api_key' => 'test-token',
             'openparser.ocr_model' => 'paddleocr-vl-1.6',
             'ai.driver' => 'disabled',
-            'ai.embeddings.driver' => 'disabled',
         ]);
         Storage::fake('private');
         Queue::fake();
@@ -58,21 +62,13 @@ final class AcademicSourceOcrTest extends TestCase
         ]);
         $source = $this->createSource();
 
-        $response = $this->actingAsCoordinator()->post(
-            route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->create('reglamento.pdf', 20, 'application/pdf')],
-        );
-        $response->assertStatus(202)->assertJsonStructure(['execution_id', 'status']);
-        $execution = JobExecution::query()->firstOrFail();
+        $execution = $this->ingest($source, UploadedFile::fake()->create('reglamento.pdf', 20, 'application/pdf'));
         $this->assertSame('fuente_academica.openparser', $execution->tipo);
         Queue::assertPushed(SubmitAcademicSourceOcrJob::class, fn (SubmitAcademicSourceOcrJob $job): bool => $job->executionId === $execution->id);
 
-        $this->actingAsCoordinator()
-            ->getJson(route('api.v1.coordination.sources.show', $source))
-            ->assertOk()
-            ->assertJsonPath('source.ingestion.status', 'pendiente')
-            ->assertJsonPath('source.ingestion.progress', 0)
-            ->assertJsonPath('source.ingestion.error_message', null);
+        $this->assertSame('pendiente', $source->fresh()->estado_ingesta);
+        $this->assertSame(0, $execution->progreso);
+        $this->assertNull($execution->mensaje_error);
 
         $this->runJobs($execution);
 
@@ -86,14 +82,9 @@ final class AcademicSourceOcrTest extends TestCase
         $this->assertSame('Resultado', $source->documento['content'][1]['content'][0]['text']);
         $this->assertStringContainsString('Diseña software seguro.', (string) $source->contenido);
         $this->assertSame('completada', $execution->fresh()->estado);
-        $this->actingAsCoordinator()
-            ->getJson(route('api.v1.coordination.sources.show', $source))
-            ->assertJsonPath('source.ingestion.progress', 100);
-        $this->assertDatabaseHas('documentos_ia', [
-            'metadatos_documento->fuente_academica_id' => $source->id,
-            'metadatos_documento->carrera_id' => $source->carrera_id,
-            'metadatos_documento->titulo' => 'Resultado',
-        ]);
+        $this->assertSame(100, $execution->fresh()->progreso);
+        $this->assertDatabaseCount('documentos_ia', 0);
+        Queue::assertNotPushed(EmbedAcademicSourceJob::class);
         Http::assertSent(fn ($request): bool => $request->url() === 'https://openparser.test/parse/async'
             && $request->hasHeader('Authorization', 'Bearer test-token')
             && $request->hasHeader('Idempotency-Key'));
@@ -103,11 +94,8 @@ final class AcademicSourceOcrTest extends TestCase
     {
         $this->fakeCompletedJob([$this->textElement('paragraph', 'paragraph', 'Contenido del archivo anterior.')]);
         $source = $this->createSource();
-        $this->actingAsCoordinator()->post(route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->createWithContent('anterior.pdf', "%PDF-1.4\nAnterior")])->assertStatus(202);
-        $old = JobExecution::query()->firstOrFail();
-        $this->actingAsCoordinator()->post(route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->createWithContent('actual.pdf', "%PDF-1.4\nActual")])->assertStatus(202);
+        $old = $this->ingest($source, UploadedFile::fake()->createWithContent('anterior.pdf', "%PDF-1.4\nAnterior"));
+        $this->ingest($source, UploadedFile::fake()->createWithContent('actual.pdf', "%PDF-1.4\nActual"));
         $currentObject = $source->fresh()->objeto_pdf_id;
         $this->runJobs($old);
         $this->assertSame('fuente_modificada', $old->fresh()->codigo_error);
@@ -141,10 +129,7 @@ final class AcademicSourceOcrTest extends TestCase
             'id' => 'asset-1', 'kind' => 'figure', 'data_base64' => $png, 'mime_type' => 'image/png',
         ]]);
         $source = $this->createSource();
-        $this->actingAsCoordinator()->post(
-            route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->create('recursos.pdf', 20, 'application/pdf')],
-        )->assertStatus(202);
+        $this->ingest($source, UploadedFile::fake()->create('recursos.pdf', 20, 'application/pdf'));
 
         $this->runJobs(JobExecution::query()->firstOrFail());
 
@@ -164,16 +149,9 @@ final class AcademicSourceOcrTest extends TestCase
         $this->assertSame('Imagen', $source->documento['content'][2]['attrs']['alt']);
         Storage::disk('private')->assertExists($asset->ruta_interna);
 
-        $this->actingAsCoordinator()
-            ->get(route('api.v1.coordination.sources.assets.show', ['source' => $source, 'asset' => $asset]))
-            ->assertOk()
-            ->assertHeader('content-type', 'image/png');
-
-        $detail = $this->actingAsCoordinator()->getJson(route('api.v1.coordination.sources.show', $source));
-        $detail->assertOk()->assertJsonPath('source.document.content.2.attrs.src', route('api.v1.coordination.sources.assets.show', [
-            'source' => $source->id,
-            'asset' => $asset->id,
-        ]));
+        $this->assertSame('private', $asset->disco);
+        $this->assertSame($source->carrera_id, $asset->carrera_id);
+        $this->assertArrayNotHasKey('src', $source->documento['content'][2]['attrs']);
     }
 
     public function test_structured_table_cells_take_precedence_over_provider_html(): void
@@ -189,10 +167,7 @@ final class AcademicSourceOcrTest extends TestCase
         ];
         $this->fakeCompletedJob([$table]);
         $source = $this->createSource();
-        $this->actingAsCoordinator()->post(
-            route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->create('tabla.pdf', 20, 'application/pdf')],
-        )->assertStatus(202);
+        $this->ingest($source, UploadedFile::fake()->create('tabla.pdf', 20, 'application/pdf'));
 
         $this->runJobs(JobExecution::query()->firstOrFail());
 
@@ -209,10 +184,7 @@ final class AcademicSourceOcrTest extends TestCase
             'cells' => [$this->tableCell('c1', 0, 0, 'Liderazgo\\nAutocontrol\\nToma de decisiones')],
         ]]);
         $source = $this->createSource();
-        $this->actingAsCoordinator()->post(
-            route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->create('saltos.pdf', 20, 'application/pdf')],
-        )->assertStatus(202);
+        $this->ingest($source, UploadedFile::fake()->create('saltos.pdf', 20, 'application/pdf'));
 
         $this->runJobs(JobExecution::query()->firstOrFail());
 
@@ -231,10 +203,7 @@ final class AcademicSourceOcrTest extends TestCase
             'cells' => [$this->tableCell('c1', 0, 0, '5 &#x27;A&#x27; &amp; B')],
         ]]);
         $source = $this->createSource();
-        $this->actingAsCoordinator()->post(
-            route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->create('comillas.pdf', 20, 'application/pdf')],
-        )->assertStatus(202);
+        $this->ingest($source, UploadedFile::fake()->create('comillas.pdf', 20, 'application/pdf'));
 
         $this->runJobs(JobExecution::query()->firstOrFail());
 
@@ -245,10 +214,7 @@ final class AcademicSourceOcrTest extends TestCase
     {
         $this->fakeCompletedJob([], [], "## Contenido recuperado\n\nTexto ordenado.");
         $source = $this->createSource();
-        $this->actingAsCoordinator()->post(
-            route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->create('markdown.pdf', 20, 'application/pdf')],
-        )->assertStatus(202);
+        $this->ingest($source, UploadedFile::fake()->create('markdown.pdf', 20, 'application/pdf'));
 
         $this->runJobs(JobExecution::query()->firstOrFail());
 
@@ -262,47 +228,60 @@ final class AcademicSourceOcrTest extends TestCase
     {
         $this->fakeCompletedJob([$this->textElement('paragraph', 'paragraph', 'Contenido')]);
         $source = $this->createSource();
-        $this->actingAsCoordinator()->post(
-            route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->create('original.pdf', 20, 'application/pdf')],
-        )->assertStatus(202);
+        $this->ingest($source, UploadedFile::fake()->create('original.pdf', 20, 'application/pdf'));
         $this->runJobs(JobExecution::query()->firstOrFail());
         $source->refresh();
 
-        $this->actingAsCoordinator()
-            ->get(route('api.v1.coordination.sources.pdf.original', $source))
+        $import = CurricularImport::query()->create([
+            'carrera_id' => $source->carrera_id,
+            'solicitado_por' => $this->coordinator->id,
+            'estado_importacion' => 'pendiente',
+            'documentos_importacion' => [[
+                'source_id' => $source->id,
+                'name' => $source->nombre,
+                'kind' => 'pdf',
+                'hash' => null,
+                'execution_id' => JobExecution::query()->firstOrFail()->id,
+                'original_object_id' => $source->objeto_pdf_id,
+            ]],
+            'solicitado_en' => now(),
+        ]);
+        $url = route('api.v1.coordination.curricular-imports.documents.original', [
+            'import' => $import, 'source' => $source,
+        ]);
+        $this->actingAsCoordinator()->get($url)
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
 
         $this->actingAsCoordinator()
-            ->getJson(route('api.v1.coordination.sources.show', $source))
-            ->assertJsonPath('source.has_original_pdf', true);
+            ->getJson(route('api.v1.coordination.curricular-imports.show', $import))
+            ->assertOk()
+            ->assertJsonPath('documents.0.original_url', $url);
     }
 
     public function test_empty_text_nodes_are_removed_before_persisting_a_source_document(): void
     {
         $source = $this->createSource();
 
-        $this->actingAsCoordinator()->putJson(
-            route('api.v1.coordination.sources.content.update', $source),
-            ['document' => [
-                'schemaVersion' => 1,
-                'type' => 'doc',
+        $documents = app(AcademicSourceDocument::class);
+        $document = $documents->normalize([
+            'schemaVersion' => 1,
+            'type' => 'doc',
+            'content' => [[
+                'type' => 'table',
                 'content' => [[
-                    'type' => 'table',
+                    'type' => 'tableRow',
                     'content' => [[
-                        'type' => 'tableRow',
+                        'type' => 'tableCell',
                         'content' => [[
-                            'type' => 'tableCell',
-                            'content' => [[
-                                'type' => 'paragraph',
-                                'content' => [['type' => 'text', 'text' => '']],
-                            ]],
+                            'type' => 'paragraph',
+                            'content' => [['type' => 'text', 'text' => '']],
                         ]],
                     ]],
                 ]],
             ]],
-        )->assertOk();
+        ]);
+        $source->update(['documento' => $document, 'contenido' => $documents->text($document)]);
 
         $paragraph = $source->fresh()->documento['content'][0]['content'][0]['content'][0]['content'][0];
         $this->assertSame(['type' => 'paragraph'], $paragraph);
@@ -351,10 +330,7 @@ final class AcademicSourceOcrTest extends TestCase
             $this->textElement('after', 'paragraph', 'Después'),
         ]);
         $source = $this->createSource();
-        $this->actingAsCoordinator()->post(
-            route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->create('figura.pdf', 20, 'application/pdf')],
-        )->assertStatus(202);
+        $this->ingest($source, UploadedFile::fake()->create('figura.pdf', 20, 'application/pdf'));
 
         $this->runJobs(JobExecution::query()->firstOrFail());
 
@@ -370,10 +346,7 @@ final class AcademicSourceOcrTest extends TestCase
         $this->fakeCompletedJob([]);
         $source = $this->createSource();
         $original = $source->documento;
-        $this->actingAsCoordinator()->post(
-            route('api.v1.coordination.sources.pdf.ingest', $source),
-            ['pdf' => UploadedFile::fake()->create('vacio.pdf', 20, 'application/pdf')],
-        )->assertStatus(202);
+        $this->ingest($source, UploadedFile::fake()->create('vacio.pdf', 20, 'application/pdf'));
 
         $this->runJobs(JobExecution::query()->firstOrFail());
 
@@ -466,11 +439,22 @@ final class AcademicSourceOcrTest extends TestCase
 
     private function createSource(): AcademicSource
     {
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.sources.store'), ['nombre' => 'Fuente OCR'])
-            ->assertCreated();
+        return AcademicSource::query()->create([
+            'carrera_id' => $this->coordinatorContext->carrera_id,
+            'nombre' => 'Documento OCR',
+            'activo' => true,
+            'documento' => app(AcademicSourceDocument::class)->fromLegacyText(''),
+        ])->refresh();
+    }
 
-        return AcademicSource::query()->where('nombre', 'Fuente OCR')->firstOrFail();
+    private function ingest(AcademicSource $source, UploadedFile $file): JobExecution
+    {
+        $request = Request::create('/internal/curricular-ingestion', 'POST');
+        $request->setUserResolver(fn (): User => $this->coordinator);
+        $request->setLaravelSession($this->app['session.store']);
+        $request->session()->put('active_role_assignment_id', $this->coordinatorContext->id);
+
+        return app(RequestAcademicSourceOcr::class)->execute($source, $file, $this->coordinator, $request);
     }
 
     private function actingAsCoordinator(): static

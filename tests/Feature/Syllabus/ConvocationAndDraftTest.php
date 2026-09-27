@@ -292,26 +292,18 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertContains('Falta registrar la malla de la carrera con sus materias.', $readiness->missingAcademicData($state));
     }
 
-    public function test_opening_is_rejected_without_active_sources(): void
+    public function test_opening_and_resuming_do_not_require_active_sources(): void
     {
         $convocation = $this->createPreparedConvocation();
-        AcademicSource::query()->update(['activo' => false]);
-
-        $this->assertOpeningFails($convocation, 'Falta registrar al menos una fuente académica activa.');
-        $this->assertDatabaseCount('silabos', 0);
-    }
-
-    public function test_archived_source_blocks_convocation_opening(): void
-    {
-        $convocation = $this->createPreparedConvocation();
-        AcademicSource::query()
-            ->whereIn('id', $convocation->sources()->pluck('fuentes_academicas.id'))
-            ->update(['activo' => false]);
-
-        $this->assertOpeningFails($convocation);
-
-        $this->assertDatabaseCount('silabos', 0);
-        $this->assertSame('preparacion', $convocation->fresh()->estado);
+        AcademicSource::query()->delete();
+        $this->openPrepared($convocation);
+        $this->actingAsCoordinator();
+        $this->assertSame('abierta', $convocation->fresh()->estado);
+        $this->assertDatabaseCount('silabos', 1);
+        $this->assertDatabaseCount('fuentes_academicas', 0);
+        $this->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Comprobar la reanudación sin fuentes.'])->assertOk();
+        $this->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))->assertOk();
+        $this->assertSame('abierta', $convocation->fresh()->estado);
     }
 
     public function test_teacher_starts_autosaves_and_stale_version_returns_recoverable_conflict(): void
@@ -718,13 +710,9 @@ class ConvocationAndDraftTest extends TestCase
         $template = SyllabusTemplate::query()->firstOrFail();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
 
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.sources.store'), [
-            'nombre' => 'Fuente I-03',
-            'description' => 'Documento de apoyo del periodo.',
-        ]);
-        $source = AcademicSource::query()->firstOrFail();
-        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.sources.content.update', $source), [
-            'content' => "## Perfil base\n\nEvidencia académica autorizada.",
+        $source = AcademicSource::query()->create([
+            'carrera_id' => $this->coordinatorContext->carrera_id, 'nombre' => 'Fuente I-03',
+            'activo' => true, 'contenido' => 'Evidencia histórica conservada.',
         ]);
 
         return [$template->fresh(), $source->fresh()];

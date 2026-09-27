@@ -2,6 +2,7 @@
 
 return [
     'driver' => env('AI_DRIVER', 'disabled'),
+    // Compatibilidad de adaptadores históricos; I-146 deshabilita el análisis y su servicio HTTP.
     'contract_version' => 'ai-analysis-v1',
     'instruction_version' => 'ueb-editorial-v1',
     'http' => [
@@ -33,7 +34,8 @@ return [
         'max_image_bytes' => (int) env('AI_SOURCE_NORMALIZATION_MAX_IMAGE_BYTES', 2097152),
     ],
     'embeddings' => [
-        'driver' => env('EMBEDDINGS_DRIVER', 'disabled'),
+        // Compatibilidad histórica: I-146 retira la recuperación vectorial.
+        'driver' => 'disabled',
         'base_url' => env('EMBEDDINGS_BASE_URL', 'https://api.openai.com/v1'),
         'model' => env('EMBEDDINGS_MODEL', 'text-embedding-3-small'),
         'api_key' => env('EMBEDDINGS_API_KEY', env('AI_API_KEY')),

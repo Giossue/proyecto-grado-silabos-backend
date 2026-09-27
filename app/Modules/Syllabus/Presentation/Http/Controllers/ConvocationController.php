@@ -4,7 +4,6 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\Actions\CreateConvocation;
@@ -31,10 +30,6 @@ class ConvocationController extends Controller
 
         $payload = [
             'filters' => ['q' => $search ?: null, 'state' => $state],
-            'available_sources' => AcademicSource::query()
-                ->where('carrera_id', $careerId)->where('activo', true)
-                ->orderBy('nombre')->get(['id', 'nombre'])
-                ->map(fn (AcademicSource $source): array => ['id' => $source->id, 'name' => $source->nombre])->values(),
             'convocations' => SyllabusProcess::query()
                 // La convocatoria se identifica por el período institucional que abarca.
                 ->when($search, fn ($query, string $term) => $query->where(
@@ -89,7 +84,7 @@ class ConvocationController extends Controller
     public function show(Convocation $convocation, Request $request): JsonResponse
     {
         abort_unless($request->user()?->can('view', $convocation) === true, 403);
-        $convocation->load(['career', 'sources', 'process.academicPeriod']);
+        $convocation->load(['career', 'process.academicPeriod']);
         $syllabi = $convocation->syllabi()
             ->with(['subject:id,nombre,codigo_asignatura', 'parallel:id,codigo', 'teachers:id,nombre'])
             ->orderBy('asignatura_id')->get();
@@ -105,7 +100,6 @@ class ConvocationController extends Controller
                 ],
                 'period' => $convocation->process->academicPeriod->codigo,
                 'template' => SyllabusTemplate::INSTITUTIONAL_NAME,
-                'sources' => $convocation->sources->map(fn (AcademicSource $source) => $source->nombre)->values(),
                 'start_date' => $convocation->process->inicia_en->toIso8601String(),
                 'draft_deadline' => $convocation->process->entrega_en->toIso8601String(),
                 'counts' => [
@@ -142,8 +136,8 @@ class ConvocationController extends Controller
         $action->execute($convocation, $transition, $reason, $actor, $request);
 
         $message = $transition === TransitionConvocation::PAUSE
-            ? 'Convocatoria en pausa. Los docentes de la carrera no editan ni envían; la malla y las fuentes quedan editables.'
-            : 'Convocatoria reanudada. Los docentes vuelven a trabajar, los paralelos nuevos ya tienen su sílabo y la malla y las fuentes quedan protegidas.';
+            ? 'Convocatoria en pausa. Los docentes de la carrera no editan ni envían; la malla y los datos curriculares quedan editables.'
+            : 'Convocatoria reanudada. Los docentes vuelven a trabajar, los paralelos nuevos ya tienen su sílabo y la malla y los datos curriculares quedan protegidos.';
 
         return response()->json(['message' => $message]);
     }

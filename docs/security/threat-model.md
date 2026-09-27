@@ -4,7 +4,7 @@
 
 - credenciales, sesiones y asignaciones de rol;
 - datos personales de usuarios;
-- estructura y fuentes académicas;
+- estructura académica, documentos privados de ingesta y datos curriculares confirmados;
 - borradores, revisiones, observaciones y aprobaciones;
 - plantillas oficiales, DOCX/PDF y huellas;
 - auditoría y evidencias de IA;
@@ -27,7 +27,7 @@
 | Acceso horizontal | Docente cambia UUID/URL y ve otro sílabo | Policy por registro, scope SQL, pruebas de fuga |
 | Elevación de rol | El frontend concede capacidad | permiso servidor, vigencia, auditoría |
 | CSRF/session fixation | Mutación con sesión robada/fijada | Fortify, CSRF, cookies seguras, rotación, revocación |
-| XSS/Markdown | Fuente o sílabo ejecuta script | escape, sanitización allowlist, CSP evaluada |
+| XSS/Markdown | Documento importado o sílabo ejecuta script | escape, sanitización allowlist, CSP evaluada |
 | Inyección | los filtros alteran la consulta | Query Builder, allowlists, validación |
 | Mass assignment | petición cambia estado/rol no permitido | DTO/validated, fillable estricto, casos de uso |
 | Upload malicioso | DOCX/archivo activo o enorme | tipo real, límites, privado, cuarentena/escaneo |
@@ -35,8 +35,8 @@
 | Revisión manipulada | aprobado se sobrescribe | append-only, constraints, huella, auditoría |
 | Carrera/reintento | dos envíos/aprobaciones | lock/versión, idempotencia, transacción |
 | Job replay | trabajo duplica efectos | clave única, entrada y estado persistidos, idempotencia |
-| Prompt injection | fuente ordena exfiltrar/ignorar reglas | datos delimitados, sin tools/red, simulador independiente del contenido y salida validada |
-| Referencia inventada | IA cita fuente inexistente | snapshot de IDs autorizados, contrato y vínculo PostgreSQL |
+| Prompt injection | documento o mensaje ordena exfiltrar/ignorar reglas | datos delimitados, sin tools/red, simulador independiente del contenido y salida validada |
+| Referencia inventada | IA cita evidencia inexistente | snapshot de IDs autorizados, contrato y vínculo PostgreSQL |
 | SSRF/proveedor externo | una URL manipulada desvía contenido o la clave de IA | URL definida solo por operación, HTTPS obligatorio, sin credenciales embebidas ni redirecciones; clave en secreto de despliegue |
 | Decisión encubierta de IA | respuesta intenta aprobar, calificar o cambiar estado | claves prohibidas, tipos allowlist y aplicación humana separada |
 | Exfiltración por logs | prompts/documentos aparecen en logs | minimización, redacción, acceso/retención |

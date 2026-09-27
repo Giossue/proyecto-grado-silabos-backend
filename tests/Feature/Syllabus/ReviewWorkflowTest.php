@@ -671,14 +671,10 @@ class ReviewWorkflowTest extends TestCase
             ])->assertSuccessful();
         }
 
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.sources.store'), [
-            'nombre' => 'Fuente I-04',
-            'description' => 'Documento de apoyo del periodo.',
-        ])->assertSuccessful();
-        $source = AcademicSource::query()->firstOrFail();
-        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.sources.content.update', $source), [
-            'content' => "## Perfil I-04\n\nEvidencia I-04.",
-        ])->assertSuccessful();
+        $source = AcademicSource::query()->create([
+            'carrera_id' => $this->coordinatorContext->carrera_id, 'nombre' => 'Fuente I-04',
+            'activo' => true, 'contenido' => 'Evidencia histórica conservada.',
+        ]);
 
         return [$template->fresh(), $source->fresh()];
     }

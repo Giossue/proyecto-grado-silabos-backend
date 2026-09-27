@@ -55,18 +55,23 @@ class CurricularIngestionTest extends TestCase
 
     public function test_xlsx_upload_prepares_verifiable_private_proposal_and_only_confirmation_changes_curriculum(): void
     {
+        config(['ai.embeddings.driver' => 'openai']);
         $file = $this->workbook();
         $response = $this->postJson($this->storeUrl(), ['files' => [$file], 'instruction' => 'Leer las habilidades de la materia.'])
             ->assertAccepted()->assertJsonPath('status', 'pendiente')->assertJsonPath('proposal', null);
         $import = CurricularImport::query()->findOrFail($response->json('id'));
         $this->assertDatabaseCount('valores_curriculares', 0);
         $this->assertDatabaseCount('conceptos_curriculares', 0);
+        $this->assertDatabaseCount('documentos_ia', 0);
         Queue::assertPushed(PrepareCurricularImportJob::class, fn ($job) => $job->importId === $import->id);
         $object = StoredObject::query()->where('clasificacion', 'curricular_workbook')->firstOrFail();
         $this->assertSame('private', $object->disco);
         $this->assertSame($this->subject->carrera_id, $object->carrera_id);
         Storage::disk('private')->assertExists($object->ruta_interna);
         $this->assertStringNotContainsString($object->ruta_interna, $response->getContent());
+        $this->assertSame('recursos.xlsx', $response->json('documents.0.original_name'));
+        $download = $response->json('documents.0.original_url');
+        $this->get($download)->assertOk()->assertDownload('recursos.xlsx');
         $source = AcademicSource::query()->findOrFail($import->documentos_importacion[0]['source_id']);
         $this->assertStringContainsString('A2:', $source->contenido);
         $this->assertStringContainsString('Hoja «Recursos»', $source->contenido);
@@ -87,6 +92,10 @@ class CurricularIngestionTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $value->evidencia_curricular[0]['source_hash']);
         $this->assertTrue(app(PrepareCurricularImport::class)->step($import->id));
         $this->assertDatabaseCount('valores_curriculares', 1);
+        foreach (['admin@silabos.test', 'docente@silabos.test'] as $email) {
+            $this->asRole($email);
+            $this->get($download)->assertForbidden();
+        }
     }
 
     public function test_same_upload_and_source_content_are_idempotent_without_duplicating_files_jobs_or_sources(): void
@@ -103,6 +112,8 @@ class CurricularIngestionTest extends TestCase
         $this->travel(61)->seconds();
         $source = AcademicSource::query()->firstOrFail();
         $third = $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertAccepted()->json('id');
+        $reused = CurricularImport::query()->findOrFail($third);
+        $this->assertSame(CurricularImport::query()->findOrFail($first)->documentos_importacion[0]['original_object_id'], $reused->documentos_importacion[0]['original_object_id']);
         $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertAccepted()->assertJsonPath('id', $third);
         $this->assertDatabaseCount('fuentes_academicas', 1);
     }

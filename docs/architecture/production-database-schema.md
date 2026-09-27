@@ -278,8 +278,9 @@ TRIGGER: bloque_plantilla_id debe existir dentro de documento_plantilla
 
 ## fuentes_academicas
 
-**Contexto:** documento académico estructurado de una carrera, editable y seleccionable
-para IA; puede provenir del editor o de OpenParser.
+**Contexto:** documento interno de ingesta curricular de una carrera. I-146 retira su
+CRUD/editor y su selección para revisión IA; conserva documentos y archivos privados
+para importaciones I-145 y evidencia histórica. El nombre físico se mantiene.
 
 ~~~text
 id UUID (PK)
@@ -303,8 +304,9 @@ CHECK documento_fuente_academica no contiene nodos de texto vacíos
 
 ## documentos_ia
 
-**Contexto:** almacén vectorial (I-135) derivado y reemplazable del documento
-estructurado de cada fuente académica.
+**Contexto:** almacén vectorial histórico de I-135. I-146 desactiva indexación,
+embeddings y recuperación; conserva esta estructura y sus registros, sin DDL ni
+consulta desde el chat vigente.
 
 ~~~text
 id UUID (PK)

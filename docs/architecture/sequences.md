@@ -92,36 +92,38 @@ sequenceDiagram
     end
 ```
 
-## Solicitar asistencia de IA
+## Solicitar contenido y unidades al chat (I-146)
 
 ```mermaid
 sequenceDiagram
     actor D as Docente
     participant UI as SPA Vue
-    participant A as RequestAiAnalysis
+    participant A as SendSyllabusAiMessage
     participant DB as PostgreSQL
     participant Q as Redis/Worker
-    participant AI as Servicio IA configurado
+    participant AI as AiChatGateway
 
-    D->>UI: Solicita análisis de campo habilitado
-    UI->>A: request(field, content_hash)
-    A->>DB: autorizar + resolver plantilla y fuentes activas
-    A->>DB: crear/reusar EjecucionIA con clave compatible
+    D->>UI: Pregunta sobre contenido o unidades
+    UI->>A: mensaje y clave idempotente
+    A->>DB: autorizar sílabo y fijar contexto curricular-units-v1
+    A->>DB: crear/reusar mensaje y contexto académico/curricular
     A-->>UI: estado Pendiente
     A-->>Q: job después del commit
-    Q->>AI: contrato versionado, datos mínimos y fuentes autorizadas
+    Q->>AI: contexto fotografiado, tablas de planificación y conversación compatible
     alt Respuesta válida
-        AI-->>Q: recomendaciones + referencias
-        Q->>DB: validar referencias y persistir evidencia/estado Completado
-        Q-->>UI: notificación/actualización
-        D->>UI: compara y aplica/ignora explícitamente
-        UI->>DB: persiste decisión y cambio humano
-    else Timeout, fallo o evidencia insuficiente
-        AI-->>Q: error tipado/no concluyente
-        Q->>DB: estado Fallido/No concluyente y diagnóstico seguro
+        AI-->>Q: propuesta y referencias al contexto recibido
+        Q->>DB: validar referencias y persistir respuesta/evidencia
+        Q-->>UI: respuesta disponible
+        D->>UI: decide el contenido que incorpora mediante la edición normal
+    else Timeout, fallo o cita inválida
+        AI-->>Q: error
+        Q->>DB: estado Fallido y diagnóstico seguro
         Q-->>UI: ayuda no disponible; flujo principal continúa
     end
 ```
+
+No se consultan fuentes vivas ni vectores. El historial anterior permanece visible,
+pero no se envía al proveedor bajo el contrato nuevo.
 
 ## Generar y descargar documentos
 

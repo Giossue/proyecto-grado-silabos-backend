@@ -312,8 +312,7 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsCoordinator()->withHeader('Origin', 'http://localhost:5173')
             ->getJson(route('api.v1.coordination.convocations.index'))
             ->assertOk()
-            ->assertJsonPath('available_sources.0.id', $source->id)
-            ->assertJsonPath('available_sources.0.name', $source->nombre);
+            ->assertJsonMissingPath('available_sources');
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
@@ -343,8 +342,9 @@ class SyllabusProcessTest extends TestCase
             ->assertJsonPath('deadline.convocation_id', null)
             ->assertJsonPath('coordination_convocation.process_id', $process->id)
             ->assertJsonPath('coordination_convocation.can_open', true)
-            ->assertJsonPath('coordination_convocation.available_sources.0.id', $source->id)
-            ->assertJsonPath('setup.steps.5.action', 'open_convocation');
+            ->assertJsonMissingPath('coordination_convocation.available_sources')
+            ->assertJsonCount(5, 'setup.steps')
+            ->assertJsonPath('setup.steps.4.action', 'open_convocation');
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
@@ -431,15 +431,15 @@ class SyllabusProcessTest extends TestCase
     {
         $template = $this->publishedTemplate();
         $process = $this->createProcess($template, 'Elaboración 2026-2027');
-        $source = $this->coordinatorSource();
-        $unselectedSource = AcademicSource::query()->create([
+        $this->coordinatorSource();
+        AcademicSource::query()->create([
             'carrera_id' => $this->coordinatorContext->carrera_id,
             'nombre' => 'Fuente activa no elegida',
             'descripcion' => 'No debe incorporarse implícitamente.',
             'contenido' => 'Contenido fuera de la selección de esta convocatoria.',
             'activo' => true,
         ]);
-        $inactiveSource = AcademicSource::query()->create([
+        AcademicSource::query()->create([
             'carrera_id' => $this->coordinatorContext->carrera_id,
             'nombre' => 'Fuente inactiva',
             'descripcion' => 'No puede incorporarse a una convocatoria nueva.',
@@ -454,7 +454,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()->withHeader('Origin', 'http://localhost:5173')
             ->postJson(route('api.v1.coordination.convocations.store'), [
-                // El cliente no puede sustituir el período ni elegir fuentes: se usan todas las activas.
+                // El cliente no puede sustituir el período ni reactivar la antigua selección de fuentes.
                 'process_id' => $process->id,
                 'period_id' => $otherPeriod->id,
                 'source_ids' => [],
@@ -464,9 +464,8 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame($process->id, $convocation->proceso_id);
         $this->assertSame($process->periodo_academico_id, $convocation->process->periodo_academico_id);
         $this->assertSame('abierta', $convocation->estado);
-        $this->assertTrue($convocation->sources()->whereKey($source->id)->exists());
-        $this->assertTrue($convocation->sources()->whereKey($unselectedSource->id)->exists());
-        $this->assertFalse($convocation->sources()->whereKey($inactiveSource->id)->exists());
+        $this->getJson(route('api.v1.coordination.convocations.show', $convocation))->assertOk()->assertJsonMissingPath('convocation.sources');
+        $this->assertDatabaseCount('fuentes_academicas', 3);
         $this->assertFalse(Schema::hasTable('fuentes_convocatoria'));
         // I-132: la convocatoria de carrera no copia las fechas del proceso.
         $this->assertFalse(Schema::hasTable('fechas_limite_convocatoria'));
@@ -693,11 +692,10 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame(9, $career->fresh()->cantidad_ciclos_malla);
     }
 
-    public function test_a_running_convocation_freezes_curriculum_and_sources_of_its_career_only(): void
+    public function test_a_running_convocation_freezes_curriculum_of_its_career_only(): void
     {
         $convocation = $this->openedConvocation();
         $career = Career::query()->firstOrFail();
-        $source = AcademicSource::query()->firstOrFail();
 
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
@@ -707,21 +705,13 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame(8, $career->fresh()->cantidad_ciclos_malla);
 
         $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.sources.update', $source), [
-                'nombre' => 'Fuente renombrada',
-                'description' => null,
-            ])
-            ->assertJsonValidationErrors('process');
-        $this->assertNotSame('Fuente renombrada', $source->fresh()->nombre);
-
-        $this->actingAsCoordinator()
             ->getJson(route('api.v1.coordination.academic.curriculum.show', $career))
             ->assertOk()
             ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('curriculum.editable', false)
                 ->where('curriculum.lock_reason', 'Convocatoria activa'));
 
-        // Pausar la convocatoria de la carrera libera su malla y sus fuentes.
+        // Pausar la convocatoria de la carrera libera su malla y sus datos curriculares.
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), [
                 'reason' => 'Corrección de las horas de dos materias antes de continuar.',
@@ -740,14 +730,6 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
         $this->assertSame(10, $career->fresh()->cantidad_ciclos_malla);
-
-        $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.sources.update', $source), [
-                'nombre' => 'Fuente renombrada',
-                'description' => null,
-            ])
-            ->assertSuccessful()
-            ->assertSuccessful();
 
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))
@@ -954,14 +936,10 @@ class SyllabusProcessTest extends TestCase
 
     private function coordinatorSource(): AcademicSource
     {
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.sources.store'), [
-            'nombre' => 'Fuente I-31',
-            'description' => 'Documento de apoyo del periodo.',
-        ])->assertSuccessful();
-        $source = AcademicSource::query()->firstOrFail();
-        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.sources.content.update', $source), [
-            'content' => "## Perfil\n\nEvidencia académica autorizada.",
-        ])->assertSuccessful();
+        $source = AcademicSource::query()->create([
+            'carrera_id' => $this->coordinatorContext->carrera_id, 'nombre' => 'Fuente I-31',
+            'activo' => true, 'contenido' => 'Evidencia histórica conservada.',
+        ]);
 
         return $source->fresh();
     }

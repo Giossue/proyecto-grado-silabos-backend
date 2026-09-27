@@ -2,6 +2,7 @@
 
 namespace App\Modules\AiAssistance\Infrastructure\Jobs;
 
+use App\Modules\AiAssistance\Application\BuildSyllabusChatContext;
 use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Domain\Data\AiChatInput;
 use App\Modules\AiAssistance\Domain\Exceptions\AiContractException;
@@ -51,12 +52,20 @@ class AnswerSyllabusChatJob implements ShouldQueue
         if ($message === null) {
             return;
         }
+        // Un mensaje anterior al retiro puede contener fuentes RAG fotografiadas.
+        // Se conserva su entrada, pero no se envía a un proveedor bajo el flujo nuevo.
+        if ($message->input('context_version') !== BuildSyllabusChatContext::VERSION) {
+            $this->finishFailed('contexto_ia_retirado', 'La solicitud pertenece al asistente anterior. Envíe otra pregunta para preparar las unidades.');
+
+            return;
+        }
         $question = AiHistoryEntry::query()->findOrFail($message->inputString('respuesta_a_id'))->input('contenido');
         $completed = AiHistoryEntry::query()
             ->session($message->sesion_id)
             ->ofType('mensaje')
             ->whereKeyNot($message->id)
             ->where('mensaje_ia->estado', 'completado')
+            ->where('mensaje_ia->entrada->context_version', BuildSyllabusChatContext::VERSION)
             ->latest('enviado_en')
             ->limit((int) config('ai.limits.chat_history_messages'))
             ->get()

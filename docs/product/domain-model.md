@@ -101,10 +101,12 @@ relevos aplican la misma protección en el servidor (I-64).
 - `PlantillaSilabo` institucional única, sin versiones (I-32/I-111): su documento JSON
   contiene secciones, bloques, tablas y configuración visual. Las definiciones de campo
   permanecen relacionales por sus referencias transaccionales. Se edita en el sitio.
-- `FuenteAcademica` es un documento de la Coordinación de la carrera: nombre,
-  descripción y contenido JSON estructurado editable. No tiene versiones; sus
-  fragmentos son un índice reemplazable y la evidencia de IA conserva su propia
-  fotografía del contenido.
+- `FuenteAcademica` conserva su nombre físico por compatibilidad, pero desde I-146 es
+  almacenamiento interno de documentos de ingesta I-145. No tiene CRUD público ni
+  alimenta el chat o el revisor mediante recuperación vectorial.
+- `ConceptoCurricular`, `ValorCurricular` e `ImportacionCurricular` conservan el contenido
+  confirmado, su ámbito y procedencia. Los candidatos no modifican la base vigente hasta
+  que Coordinación confirma la selección correspondiente.
 
 No hay publicación: la estructura se comprueba al abrir o reanudar el proceso. Un sílabo
 sin enviar lee la plantilla en vivo; una revisión enviada conserva su copia completa y ya
@@ -131,19 +133,18 @@ generados únicamente si nunca hubo un evento `silabo.borrador_iniciado` en ning
 sus expedientes. La eliminación es administrativa, transaccional y auditada.
 
 `Convocatoria` cuelga de un proceso obligatorio y vincula carrera, período heredado del
-proceso, el subconjunto no vacío de fuentes activas elegido por Coordinación, agrupación,
-fechas y estado (`preparacion`, `abierta`, `pausada`, `cerrada`).
+proceso, agrupación, fechas y estado (`preparacion`, `abierta`, `pausada`, `cerrada`).
 Hereda la plantilla, el período y las fechas del proceso al prepararse; las fechas se
 copian para validar localmente la ventana de envío. La prórroga institucional actualiza
 la entrega del proceso y la etapa `borrador` de todas sus convocatorias; el inicio no se
-prorroga. Solo se abre con el proceso abierto; al abrirla, la plantilla debe estar completa y las fuentes elegidas activas.
-La selección queda congelada al iniciar el alcance y no se amplía al reanudarlo.
+prorroga. Solo se abre con el proceso abierto; al abrirla, la plantilla debe estar completa. I-146 elimina la existencia o selección de fuentes
+como condición para abrir o reanudar la convocatoria.
 
 Una convocatoria está **en curso** cuando ella está abierta y su proceso también. Esa
 condición habilita a los docentes y, por lo mismo, congela lo que sostiene su trabajo:
 con el proceso abierto no se edita la plantilla; los catálogos institucionales, cuentas
 y roles continúan administrables. Con una
-convocatoria en curso no se edita la estructura curricular, las fuentes, programaciones, paralelos ni asignaciones
+convocatoria en curso no se edita la estructura curricular, los datos curriculares confirmados, programaciones, paralelos ni asignaciones
 genéricas de esa carrera. La asignación docente de un paralelo es la excepción (I-130):
 el sílabo pertenece al paralelo, no a una persona, y su docente es quien tiene hoy la
 asignación vigente. Coordinación quita al docente y asigna otro; el sílabo sigue igual
@@ -181,10 +182,10 @@ por plantilla:
 ### Validación e IA
 
 - `EjecucionValidacion` y `ResultadoValidacion`: reglas determinísticas reproducibles.
-- `EjecucionIA`: entrada/huella, modelo, parámetros, estado y tiempos.
-- `RecomendacionIA`: sugerencia informativa.
-- `EvidenciaRecomendacion`: fuente citada con extracto y huella del contenido.
-- `RetroalimentacionIA`: aceptar, ignorar o no útil; la aplicación explícita es humana.
+- `HistorialIA`: mensajes de chat, contexto autorizado y referencias fotografiadas.
+- La generación asistida propone contenido y unidades; el docente decide qué incorpora.
+- I-146 retira ejecución del revisor, recomendaciones aplicables y feedback. Los
+  registros antiguos permanecen para auditoría, sin recrear esas operaciones.
 
 No mezcles ambos subsistemas. Una validación puede bloquear si una regla aprobada lo
 establece; una recomendación de IA nunca bloquea por sí sola.
@@ -207,8 +208,8 @@ establece; una recomendación de IA nunca bloquea por sí sola.
 6. Una aprobación apunta a una revisión concreta.
 7. Una reapertura no altera la aprobación previa.
 8. La comparación solo usa revisiones del mismo expediente autorizado.
-9. Una recomendación solo cita fuentes activas fijadas por esa convocatoria, y su
-   evidencia es una fotografía inmutable del contenido citado.
+9. El chat cita únicamente el contexto académico/curricular y las tablas de unidades o
+   planificación de su entrada; no consulta fuentes vivas ni índices vectoriales (I-146).
 10. Word y PDF se generan desde la copia que guarda la propia revisión.
 11. Redis y el servicio de IA pueden fallar sin corromper el expediente.
 12. La estructura curricular única de una carrera se define por

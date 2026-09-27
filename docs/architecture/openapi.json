@@ -4284,6 +4284,86 @@
                 ]
             }
         },
+        "/api/v1/coordination/curricular-imports/{import}/documents/{source}/original": {
+            "get": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_curricular-imports_documents_original",
+                "summary": "api.v1.coordination.curricular-imports.documents.original",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/pdf": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            },
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "404": {
+                        "description": "El registro o la materia no pertenecen a la carrera activa o no existen.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "La propuesta, las fuentes o la base curricular cambiaron; consulte de nuevo antes de confirmar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "import",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "source",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/coordination/curricular-imports/{import}/retry": {
             "post": {
                 "tags": [
@@ -4643,465 +4723,6 @@
                         }
                     }
                 },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/coordination/sources": {
-            "get": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_sources_index",
-                "summary": "api.v1.coordination.sources.index",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_sources_store",
-                "summary": "api.v1.coordination.sources.store",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/coordination/sources/{source}": {
-            "delete": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_sources_destroy",
-                "summary": "api.v1.coordination.sources.destroy",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "source",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            },
-            "get": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_sources_show",
-                "summary": "api.v1.coordination.sources.show",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "source",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            },
-            "patch": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_sources_update",
-                "summary": "api.v1.coordination.sources.update",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "source",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/coordination/sources/{source}/assets/{asset}": {
-            "get": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_sources_assets_show",
-                "summary": "api.v1.coordination.sources.assets.show",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "image/*": {
-                                "schema": {
-                                    "type": "string",
-                                    "format": "binary"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "source",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "asset",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/coordination/sources/{source}/content": {
-            "put": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_sources_content_update",
-                "summary": "api.v1.coordination.sources.content.update",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "source",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "document"
-                                ],
-                                "properties": {
-                                    "document": {
-                                        "$ref": "#/components/schemas/SourceDocument"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/coordination/sources/{source}/pdf": {
-            "post": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_sources_pdf_ingest",
-                "summary": "api.v1.coordination.sources.pdf.ingest",
-                "responses": {
-                    "202": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "source",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "pdf"
-                                ],
-                                "properties": {
-                                    "pdf": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/coordination/sources/{source}/pdf-original": {
-            "get": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_sources_pdf_original",
-                "summary": "api.v1.coordination.sources.pdf.original",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/pdf": {
-                                "schema": {
-                                    "type": "string",
-                                    "format": "binary"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "source",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
                 "security": [
                     {
                         "sanctumCookie": []
@@ -6030,62 +5651,6 @@
                 ]
             }
         },
-        "/api/v1/teacher/syllabi/{syllabus}/ai-review": {
-            "post": {
-                "tags": [
-                    "Docencia"
-                ],
-                "operationId": "api_v1_teacher_syllabi_ai_review",
-                "summary": "api.v1.teacher.syllabi.ai.review",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "syllabus",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
         "/api/v1/teacher/syllabi/{syllabus}/fields/{field}": {
             "patch": {
                 "tags": [
@@ -6125,265 +5690,6 @@
                     },
                     {
                         "name": "field",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai": {
-            "get": {
-                "tags": [
-                    "Docencia"
-                ],
-                "operationId": "api_v1_teacher_syllabi_fields_ai_show",
-                "summary": "api.v1.teacher.syllabi.fields.ai.show",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "syllabus",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "field",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Docencia"
-                ],
-                "operationId": "api_v1_teacher_syllabi_fields_ai_store",
-                "summary": "api.v1.teacher.syllabi.fields.ai.store",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "syllabus",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "field",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/apply": {
-            "post": {
-                "tags": [
-                    "Docencia"
-                ],
-                "operationId": "api_v1_teacher_syllabi_fields_ai_apply",
-                "summary": "api.v1.teacher.syllabi.fields.ai.apply",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "syllabus",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "field",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "recommendation",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/decision": {
-            "post": {
-                "tags": [
-                    "Docencia"
-                ],
-                "operationId": "api_v1_teacher_syllabi_fields_ai_feedback",
-                "summary": "api.v1.teacher.syllabi.fields.ai.feedback",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "syllabus",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "field",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "recommendation",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -6962,7 +6268,9 @@
                                 "name",
                                 "hash",
                                 "kind",
-                                "execution_id"
+                                "execution_id",
+                                "original_name",
+                                "original_url"
                             ],
                             "properties": {
                                 "source_id": {
@@ -6971,6 +6279,19 @@
                                 },
                                 "name": {
                                     "type": "string"
+                                },
+                                "original_name": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "original_url": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Descarga privada autorizada del PDF/XLSX original de esta importación."
                                 },
                                 "hash": {
                                     "type": [
@@ -7151,6 +6472,7 @@
                     },
                     "sources": {
                         "type": "array",
+                        "description": "Nombre compatible: documentos internos de ingesta reutilizables de la carrera; no existe CRUD de fuentes.",
                         "items": {
                             "type": "object",
                             "required": [
@@ -7222,6 +6544,7 @@
                     },
                     "source_ids": {
                         "type": "array",
+                        "description": "IDs de documentos internos de ingesta previos de la carrera activa.",
                         "minItems": 1,
                         "maxItems": 10,
                         "uniqueItems": true,
@@ -7321,68 +6644,6 @@
                         }
                     }
                 }
-            },
-            "SourceDocumentNode": {
-                "type": "object",
-                "required": [
-                    "type"
-                ],
-                "properties": {
-                    "type": {
-                        "type": "string"
-                    },
-                    "text": {
-                        "type": "string"
-                    },
-                    "attrs": {
-                        "type": "object",
-                        "additionalProperties": true
-                    },
-                    "marks": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "content": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/SourceDocumentNode"
-                        }
-                    }
-                }
-            },
-            "SourceDocument": {
-                "allOf": [
-                    {
-                        "$ref": "#/components/schemas/SourceDocumentNode"
-                    },
-                    {
-                        "type": "object",
-                        "required": [
-                            "schemaVersion",
-                            "type",
-                            "content"
-                        ],
-                        "properties": {
-                            "schemaVersion": {
-                                "type": "integer",
-                                "const": 1
-                            },
-                            "type": {
-                                "type": "string",
-                                "const": "doc"
-                            },
-                            "content": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/components/schemas/SourceDocumentNode"
-                                }
-                            }
-                        }
-                    }
-                ]
             }
         },
         "responses": {

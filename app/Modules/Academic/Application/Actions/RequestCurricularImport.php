@@ -9,7 +9,6 @@ use App\Modules\Academic\Application\Queries\CurricularImportsViewData;
 use App\Modules\Academic\Infrastructure\Jobs\PrepareCurricularImportJob;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
-use App\Modules\AiAssistance\Application\IndexAcademicSource;
 use App\Modules\Configuration\Application\AcademicSourceDocument;
 use App\Modules\Configuration\Application\Actions\CreateAcademicSource;
 use App\Modules\Configuration\Application\Actions\RequestAcademicSourceOcr;
@@ -57,8 +56,8 @@ final class RequestCurricularImport
         abort_unless($sources->count() === count($sourceIds), 404);
         $sourceHashes = [];
         foreach ($sources as $source) {
-            if (trim($source->contenido ?? '') === '' || in_array($source->estado_ingesta, ['pendiente', 'en_ejecucion'], true)) {
-                throw ValidationException::withMessages(['source_ids' => 'Espere a que termine la lectura de las fuentes seleccionadas.']);
+            if (trim($source->contenido ?? '') === '' || in_array($source->estado_ingesta, ['pendiente', 'en_ejecucion', 'fallida'], true)) {
+                throw ValidationException::withMessages(['source_ids' => 'Los documentos seleccionados deben terminar su lectura correctamente antes de reutilizarlos.']);
             }
             $sourceHashes[$source->id] = $this->hasher->hash($source->documento ?? []);
         }
@@ -87,7 +86,24 @@ final class RequestCurricularImport
             }
             $documentRecords = [];
             foreach ($sources as $source) {
-                $documentRecords[] = ['source_id' => $source->id, 'name' => $source->nombre, 'hash' => $this->hasher->hash($source->documento ?? []), 'kind' => 'source', 'execution_id' => null];
+                $hash = $this->hasher->hash($source->documento ?? []);
+                $original = $source->objeto_pdf_id;
+                if ($original === null) {
+                    $previous = CurricularImport::query()->where('carrera_id', $careerId)
+                        ->whereJsonContains('documentos_importacion', [['source_id' => $source->id, 'hash' => $hash]])
+                        ->orderByDesc('solicitado_en')->get(['documentos_importacion']);
+                    foreach ($previous as $candidate) {
+                        foreach ($candidate->documentos_importacion as $document) {
+                            if ($document['source_id'] === $source->id && ($document['hash'] ?? null) === $hash && isset($document['original_object_id'])) {
+                                $original = $document['original_object_id'];
+                                break 2;
+                            }
+                        }
+                    }
+                }
+                $documentRecords[] = ['source_id' => $source->id, 'name' => $source->nombre, 'hash' => $hash,
+                    'kind' => $source->objeto_pdf_id !== null ? 'pdf' : 'source',
+                    'execution_id' => null, 'original_object_id' => $original];
             }
             foreach ($files as $file) {
                 $kind = strtolower($file->getClientOriginalExtension());
@@ -108,7 +124,6 @@ final class RequestCurricularImport
                         throw ValidationException::withMessages(['files' => $exception->getMessage()]);
                     }
                     $source->update(['documento' => $document, 'version_documento' => 1, 'contenido' => $this->documents->text($document), 'estado_ingesta' => 'completada', 'ingesta_actualizada_en' => now()]);
-                    app(IndexAcademicSource::class)->execute($source);
                     $hash = hash_file('sha256', (string) $file->getRealPath());
                     $path = 'curricular-imports/'.$careerId.'/'.$hash.'.xlsx';
                     if (! Storage::disk('private')->exists($path)) {

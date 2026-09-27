@@ -25,14 +25,13 @@ Los componentes reutilizables, pruebas Vitest, estilos, Dockerfile y configuraci
 Nginx pertenecen al repositorio frontend. Sus variables públicas se inyectan en el
 arranque para que el mismo bundle apunte al backend de cada ambiente.
 
-COR-11 usa Tiptap sobre el documento JSON canónico de la fuente y lo presenta como flujo
-continuo, sin `PaginatedDocument`. Las tablas permiten agregar filas/columnas, combinar
-y separar celdas, y se desplazan dentro del editor si exceden el ancho disponible. Las
-imágenes y el PDF original usan rutas privadas emitidas por la API. La SPA nunca
-convierte el documento a Markdown. La creación consulta el estado de ingesta y el
-porcentaje de `ejecuciones_trabajo` dentro de un `Dialog` modal; no navega al editor
-hasta recibir `completada`. El documento incluye separadores horizontales entre páginas
-del PDF; la carga no se repite desde la pantalla de detalle.
+I-146 retira COR-11, su editor documental y los paneles/acciones del revisor de IA.
+La SPA conserva el chat para elaborar contenido y unidades desde el contexto académico
+confirmado del sílabo. La importación curricular I-145 permite cargar PDF/XLSX o
+reutilizar documentos previos de ingesta y revisar candidatos por lote. El original se
+consulta mediante una descarga privada autorizada por importación, sin recuperar el
+CRUD de fuentes. Los nombres wire `sources`/`source_ids` permanecen por compatibilidad
+interna; las etiquetas de producto los presentan como documentos de ingesta.
 
 ## Despliegue
 

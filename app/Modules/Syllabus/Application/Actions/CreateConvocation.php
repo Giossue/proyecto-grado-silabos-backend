@@ -3,7 +3,6 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -13,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/** Coordinación inicia el alcance heredado; la IA usa todas las fuentes activas de la carrera. */
+/** Coordinación inicia el alcance heredado del proceso institucional. */
 class CreateConvocation
 {
     public function __construct(
@@ -38,7 +37,6 @@ class CreateConvocation
             if (Convocation::query()->where('carrera_id', $activeRole->carrera_id)->where('proceso_id', $process->id)->exists()) {
                 throw ValidationException::withMessages(['process_id' => 'Esta carrera ya tiene una convocatoria para el período institucional.']);
             }
-            $sourceCount = AcademicSource::query()->where('carrera_id', $activeRole->carrera_id)->where('activo', true)->count();
 
             $convocation = Convocation::query()->create([
                 'carrera_id' => $activeRole->carrera_id,
@@ -49,7 +47,7 @@ class CreateConvocation
                 actorId: $actor->id, roleAssignmentId: $activeRole->id,
                 action: 'convocatoria.iniciada', resourceType: 'convocatoria', resourceId: $convocation->id,
                 result: 'exito',
-                metadata: ['process_id' => $process->id, 'period_id' => $process->periodo_academico_id, 'source_count' => $sourceCount],
+                metadata: ['process_id' => $process->id, 'period_id' => $process->periodo_academico_id],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 

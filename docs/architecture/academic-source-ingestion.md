@@ -1,8 +1,11 @@
-# Ingesta estructurada de fuentes académicas
+# Documentos internos de ingesta curricular
 
 ## Estado
 
-Implementada por I-95/I-96 y la migración `000089`. El proveedor permanece desactivado
+I-146 retira el CRUD/editor de Fuentes académicas y el revisor con recuperación
+vectorial. La lectura documental implementada en I-95/I-96 permanece como infraestructura
+interna de la importación curricular I-145, sin borrado de evidencia histórica.
+El proveedor permanece desactivado
 por defecto (`OPENPARSER_ENABLED=false`) hasta resolver PV-12 y PV-14.
 
 ## Decisión
@@ -21,12 +24,12 @@ por defecto (`OPENPARSER_ENABLED=false`) hasta resolver PV-12 y PV-14.
 - No se usa `/extract`, Mistral, Docling ni un proveedor de respaldo. Si DeepSeek está
   configurado para la normalización y devuelve un resultado vacío, inválido o incompleto,
   la ingesta falla y conserva el documento anterior.
-- `contenido_fuente_academica` es texto derivado para búsqueda y compatibilidad; la
-  fuente de verdad editable es `documento_fuente_academica`.
+- `contenido_fuente_academica` es texto derivado para extracción y compatibilidad; el
+  documento interno canónico es `documento_fuente_academica`.
 
 ## Flujo
 
-1. Coordinación carga un PDF. Laravel valida MIME, tamaño, huella y alcance, y lo guarda
+1. Coordinación carga un PDF mediante una importación curricular. Laravel valida MIME, tamaño, huella y alcance, y lo guarda
    en el disco privado.
 2. `RequestAcademicSourceOcr` crea una `ejecuciones_trabajo` idempotente con la huella,
    modelo y versión del adaptador.
@@ -45,11 +48,11 @@ por defecto (`OPENPARSER_ENABLED=false`) hasta resolver PV-12 y PV-14.
    desde el PDF privado.
 8. Las imágenes se validan y guardan como objetos privados `academic_source_image` en su
    posición lógica.
-9. Una transacción reemplaza el documento completo, deriva texto y reconstruye
-   los documentos de `documentos_ia` con página y bloques de origen en sus metadatos.
-10. Si `EMBEDDINGS_DRIVER=openai`, la cola `ia` genera embeddings
-   `text-embedding-3-small` de 1536 dimensiones. Un fallo de embeddings no altera el
-   documento canónico.
+9. Una transacción guarda el documento interno completo y deriva su texto. Los trabajos
+   comprueban que el archivo y la solicitud siguen vigentes para evitar resultados tardíos
+   que sobrescriban otro documento.
+10. I-146 elimina la indexación textual/vectorial y el despacho de embeddings. La lectura
+    alimenta exclusivamente la propuesta curricular de I-145.
 
 ### Idempotencia y reprocesamiento
 
@@ -71,29 +74,27 @@ nueva. Su proveedor, modelo, versión, páginas y lotes quedan en
 `ejecuciones_trabajo.resultado_ejecucion_trabajo.normalization`. Un PDF con bytes
 distintos produce otra huella y otro job de OpenParser.
 
-COR-11 presenta el documento resultante como flujo continuo. El PDF privado vigente se
-puede consultar mediante una ruta autenticada para verificar las páginas físicas sin
-introducir saltos artificiales en el documento editable.
+La descarga del original se autoriza desde
+`GET /api/v1/coordination/curricular-imports/{import}/documents/{source}/original`.
+La importación debe pertenecer a la carrera activa y el documento a esa importación.
+No se exponen las rutas privadas del almacenamiento ni se recupera el CRUD documental.
 
 ## Persistencia
 
-El módulo usa dos tablas:
+`fuentes_academicas` conserva su nombre físico por compatibilidad: metadatos, documento
+JSON completo, texto derivado, PDF vigente y estado de ingesta. Desde I-146 representa
+un documento interno de la importación; no un catálogo editable por una pantalla pública.
+`documentos_ia` y sus índices anteriores permanecen como estructuras históricas inactivas;
+esta ingesta no los reconstruye ni los consulta.
 
-- `fuentes_academicas`: metadatos, documento JSON completo, texto derivado, PDF vigente
-  y estado de ingesta;
-- `documentos_ia` (I-135): almacén vectorial reemplazable (contenido, metadatos JSON con
-  fuente, carrera, encabezados, páginas y huella, y embedding) compartido con el
-  asistente de IA.
-
-Las ejecuciones de ingesta usan la tabla operativa compartida `ejecuciones_trabajo`.
-Los PDF y las imágenes reutilizan `objetos_almacenados` y se
-entregan únicamente por rutas autenticadas y acotadas a la carrera.
+Los trabajos usan `ejecuciones_trabajo`. PDF, XLSX e imágenes reutilizan
+`objetos_almacenados` privados. La retirada no elimina documentos, evidencia ni tablas.
 
 ## Extracción de datos curriculares (I-145)
 
-El asistente de Coordinación recibe PDF/XLSX o IDs de fuentes existentes de su carrera.
+El asistente de Coordinación recibe PDF/XLSX o IDs de documentos internos ya ingeridos de su carrera.
 Se admite un máximo de 10 archivos de 20 MB cada uno, con 30 MB combinados para respetar el
-límite HTTP/PHP de 32 MB del despliegue. Las fuentes ya almacenadas no suman a ese
+límite HTTP/PHP de 32 MB del despliegue. Los documentos ya almacenados no suman a ese
 volumen. La misma validación se presenta antes de subir en la SPA.
 `RequestCurricularImport` conserva archivos privados, comprueba capacidades y registra
 una operación idempotente en `importaciones_curriculares`. El PDF reutiliza la ingesta
@@ -121,7 +122,7 @@ Coordinación revisa fuente, localizador, extracto y comparación con el conteni
 vigente, selecciona filas y confirma. `ApplyCurricularImport` coteja las huellas de
 los documentos actuales, alcance, tipos y estado del proceso dentro de la transacción.
 La huella documental es la del JSON canónico después de la ingesta; la huella del
-archivo original se conserva aparte. Una fuente editada invalida la propuesta anterior.
+archivo original se conserva aparte. Un cambio del documento interno invalida la propuesta anterior.
 La lectura de un archivo o la respuesta del modelo nunca escribe valores curriculares
 confirmados por sí sola. Catálogo, relaciones y fotografía están descritos en
 `database.md`; el contrato HTTP se genera en `openapi.json`.
@@ -138,7 +139,7 @@ CURRICULAR_EXTRACTION_API_KEY=
 Si esas variables no existen, `config/curricular_import.php` hereda las equivalentes
 de normalización editorial. `.env.example` las declara explícitamente desactivadas.
 La configuración fija límites de lote, respuesta y archivos; los servicios externos
-reciben contenido de las fuentes cuando se habilitan. La indisponibilidad del servicio
+reciben contenido de los documentos cuando se habilitan. La indisponibilidad del servicio
 impide preparar nuevas propuestas y permite conservar las ya confirmadas. Habilitar
 un proveedor no constituye evidencia de precisión; la prueba con documentos reales
 se registra por separado en el plan I-145.

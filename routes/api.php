@@ -7,9 +7,7 @@ use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureCo
 use App\Modules\Academic\Presentation\Http\Controllers\CurricularImportsController;
 use App\Modules\Academic\Presentation\Http\Controllers\CurricularImportUploadController;
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectLearningOutcomesController;
-use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
-use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
 use App\Modules\Documents\Presentation\Http\Controllers\SignatureController;
@@ -185,24 +183,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.reviews.reopen');
             Route::post('coordination/syllabi/{syllabus}/reset', [ReviewController::class, 'reset'])
                 ->middleware('active-role')->name('api.v1.coordination.reviews.reset');
-            Route::get('coordination/sources', [AcademicSourceController::class, 'index'])
-                ->middleware('active-role')->name('api.v1.coordination.sources.index');
-            Route::post('coordination/sources', [AcademicSourceController::class, 'store'])
-                ->middleware('active-role')->name('api.v1.coordination.sources.store');
-            Route::get('coordination/sources/{source}', [AcademicSourceController::class, 'show'])
-                ->middleware('active-role')->name('api.v1.coordination.sources.show');
-            Route::patch('coordination/sources/{source}', [AcademicSourceController::class, 'update'])
-                ->middleware('active-role')->name('api.v1.coordination.sources.update');
-            Route::delete('coordination/sources/{source}', [AcademicSourceController::class, 'destroy'])
-                ->middleware('active-role')->name('api.v1.coordination.sources.destroy');
-            Route::put('coordination/sources/{source}/content', [AcademicSourceController::class, 'updateContent'])
-                ->middleware('active-role')->name('api.v1.coordination.sources.content.update');
-            Route::post('coordination/sources/{source}/pdf', [AcademicSourceController::class, 'ingestPdf'])
-                ->middleware(['active-role', 'throttle:source-ocr'])->name('api.v1.coordination.sources.pdf.ingest');
-            Route::get('coordination/sources/{source}/pdf-original', [AcademicSourceController::class, 'originalPdf'])
-                ->middleware('active-role')->whereUuid('source')->name('api.v1.coordination.sources.pdf.original');
-            Route::get('coordination/sources/{source}/assets/{asset}', [AcademicSourceController::class, 'asset'])
-                ->middleware('active-role')->whereUuid(['source', 'asset'])->name('api.v1.coordination.sources.assets.show');
             Route::get('coordination/academic/curriculum/{curriculum}', [CareerAcademicStructureController::class, 'curriculumBuilder'])
                 ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.show');
             Route::get('coordination/academic/subjects/{subject}/learning-outcomes', [SubjectLearningOutcomesController::class, 'show'])
@@ -215,6 +195,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.curricular-imports.show');
             Route::post('coordination/curricular-imports/{import}/apply', [CurricularImportsController::class, 'apply'])
                 ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.curricular-imports.apply');
+            Route::get('coordination/curricular-imports/{import}/documents/{source}/original', [CurricularImportUploadController::class, 'original'])
+                ->middleware('active-role')->whereUuid(['import', 'source'])->name('api.v1.coordination.curricular-imports.documents.original');
             Route::post('coordination/curricular-imports/{import}/retry', [CurricularImportUploadController::class, 'retry'])
                 ->middleware(['active-role', 'throttle:source-ocr'])->whereUuid('import')->name('api.v1.coordination.curricular-imports.retry');
             Route::put('coordination/academic/subjects/{subject}/learning-outcomes', [SubjectLearningOutcomesController::class, 'update'])
@@ -271,9 +253,6 @@ Route::prefix('v1')->group(function (): void {
             Route::post('teacher/syllabi/{syllabus}/submit', [SyllabusController::class, 'submit'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.submit');
-            Route::post('teacher/syllabi/{syllabus}/ai-review', [AiAssistanceController::class, 'review'])
-                ->middleware(['active-role', 'throttle:ai-analysis'])
-                ->name('api.v1.teacher.syllabi.ai.review');
             Route::get('teacher/syllabi/{syllabus}/ai-chat', [AiChatController::class, 'show'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.ai-chat.show');
@@ -283,18 +262,6 @@ Route::prefix('v1')->group(function (): void {
             Route::delete('teacher/syllabi/{syllabus}/ai-chat', [AiChatController::class, 'clear'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.ai-chat.clear');
-            Route::get('teacher/syllabi/{syllabus}/fields/{field}/ai', [AiAssistanceController::class, 'show'])
-                ->middleware('active-role')
-                ->name('api.v1.teacher.syllabi.fields.ai.show');
-            Route::post('teacher/syllabi/{syllabus}/fields/{field}/ai', [AiAssistanceController::class, 'store'])
-                ->middleware(['active-role', 'throttle:ai-analysis'])
-                ->name('api.v1.teacher.syllabi.fields.ai.store');
-            Route::post('teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/decision', [AiAssistanceController::class, 'feedback'])
-                ->middleware('active-role')
-                ->name('api.v1.teacher.syllabi.fields.ai.feedback');
-            Route::post('teacher/syllabi/{syllabus}/fields/{field}/ai/{recommendation}/apply', [AiAssistanceController::class, 'apply'])
-                ->middleware('active-role')
-                ->name('api.v1.teacher.syllabi.fields.ai.apply');
             Route::get('revisions/{revision}/documents', [DocumentController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.documents.show');
             Route::post('revisions/{revision}/documents', [DocumentController::class, 'store'])

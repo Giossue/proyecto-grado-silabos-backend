@@ -1,151 +1,86 @@
-# Servicio de asistencia de IA
+# Servicios de IA e ingesta documental
 
-## Frontera
+## Alcance vigente — I-146
 
-Laravel conserva usuarios, permisos, convocatorias, contenido, fuentes, ejecuciones y
-decisiones. La inferencia ocurre detrás de adaptadores HTTP intercambiables. El dominio
-depende de `AiAnalysisGateway`, no de un modelo, proveedor o SDK.
+El chat ayuda a elaborar contenido y unidades desde el contexto académico y curricular
+fotografiado del sílabo. La extracción curricular I-145 propone datos desde documentos
+aportados por Coordinación. Son flujos separados con confirmación humana.
+
+Se retiraron el revisor por campo, la revisión integral, sus operaciones de aplicación y
+feedback, y la recuperación textual/vectorial de Fuentes académicas. No se activan
+embeddings ni se consulta `documentos_ia` para el chat. Las tablas y los mensajes antiguos
+se conservan como historia; su existencia no habilita funcionalidad retirada.
+
+## Fronteras
+
+Laravel conserva permisos, ámbito de carrera, convocatorias, contenido, trabajos y
+decisiones. El chat usa `AiChatGateway`; la extracción documental usa
+`CurricularExtractionGateway`. Los adaptadores no autorizan usuarios ni escriben datos
+académicos por decisión propia.
 
 ```text
-Docente → Laravel → registro EjecucionIA → cola Redis → Job
-Job → AiAnalysisGateway → servicio local u hospedado de IA
-                            │
-                            └─ resultado + referencias
-Job → valida contrato → persiste recomendaciones/evidencias → notifica
+Docente → chat autorizado → contexto fotografiado → cola → AiChatGateway
+       ← propuesta de elaboración y referencias a ese contexto
+
+Coordinación → PDF/XLSX privado → lectura/OCR → CurricularExtractionGateway
+            ← propuesta por carrera/materia + extractos + excepciones
+Coordinación → confirma selección → datos curriculares vigentes → nuevos snapshots
 ```
 
-## OCR de fuentes académicas
+## Contexto del chat
 
-La extracción de fuentes PDF es un flujo separado de AiAnalysisGateway. OpenParser usa
-`paddleocr-vl-1.6` para producir el documento JSON y, cuando
-`AI_SOURCE_NORMALIZATION_ENABLED=true` con driver `deepseek`, un adaptador específico
-envía sus páginas por lotes a `deepseek-flash` para normalizar el
-orden de lectura y el Markdown. Las tablas HTML y las imágenes se protegen como bloques
-opacos y se restauran después; DeepSeek no reemplaza el OCR ni puede quitar esos
-recursos. Luego se reconstruye el índice de fragmentos.
+- Carrera, asignatura, horas y semanas del expediente; datos curriculares confirmados
+  fotografiados; estructura y filas de tablas de unidades/planificación.
+- No se leen otros campos ni se usa la casilla histórica `ia_habilitada` para ampliar
+  ese contexto. La versión `curricular-units-v1` separa las preguntas nuevas del historial
+  anterior, que permanece visible y no se envía al proveedor. Los trabajos de chat
+  anteriores a esa versión terminan sin invocar el gateway.
+- Ninguna búsqueda en documentos vivos ni recuperación vectorial.
+- Referencias del tipo `contexto_academico`, `dato_curricular` y `seccion_silabo`.
+  La respuesta solo puede citar evidencias incluidas en la entrada autorizada.
+- El contenido existente y la pregunta son datos no confiables. No alteran permisos,
+  estados, instrucciones del sistema ni configuración de herramientas.
+- La salida ofrece propuestas; no completa automáticamente campos ni sustituye la
+  validación determinística de semanas, horas o información obligatoria.
 
-Después de reconstruir los documentos de la fuente en `documentos_ia` (I-135), el
-trabajo de la cola `ia` puede generar embeddings con `text-embedding-3-small` y
-guardarlos en la columna `embedding` de esa misma tabla. No existe una tabla separada de
-embeddings. La consulta del asistente
-vectoriza la pregunta con el mismo modelo, filtra las fuentes autorizadas y ordena por
-distancia coseno; si el proveedor está desactivado o indisponible, usa el índice textual
-GIN existente.
+## Ingesta documental I-145
 
-El flujo completo, el contrato por página y la política de imágenes están en
-[academic-source-ingestion.md](academic-source-ingestion.md).
-La salida OCR no toma decisiones académicas. Una ejecución correcta reemplaza el
-contenido de la fuente y la Coordinación conserva la revisión y edición humana.
+PDF y XLSX permanecen privados y asociados a una importación de la carrera. OpenParser
+produce el documento interno PDF; la normalización editorial opcional conserva el
+contenido y las estructuras protegidas. `CurricularWorkbookReader` conserva referencias
+de hoja/celda y rangos combinados. No ejecuta fórmulas ni macros.
 
-## Contrato lógico
+La extracción curricular identifica conceptos de texto/lista/tabla, destino y citas.
+Laravel comprueba la correspondencia entre dato, extracto y documento. Solo se guardan
+valores vigentes después de una confirmación con huella, permiso y alcance válidos.
+El detalle técnico está en [academic-source-ingestion.md](academic-source-ingestion.md).
+Estos documentos internos no tienen CRUD público ni alimentan una base vectorizada.
 
-La petición incluye solo lo necesario:
+## Configuración, seguridad y degradación
 
-- `request_id` y versión del contrato;
-- campo/sección y huella del contenido;
-- contexto académico mínimo;
-- IDs de fuentes autorizadas y extractos ya filtrados;
-- versión de políticas/instrucciones;
-- idioma y límites de salida.
+La configuración de proveedor/modelo del chat permanece disponible. La lectura OCR y la
+extracción curricular conservan sus adaptadores y configuración independientes. Los
+secretos permanecen en configuración del entorno; no se incorporan al documento ni a
+respuestas, logs o mensajes de error.
 
-La respuesta incluye:
+Cada llamada limita tamaño, tiempo, intentos y salida. La respuesta se valida contra el
+contrato del flujo y se rechazan referencias ajenas. La clave de idempotencia incluye el
+contexto, contenido, modelo e instrucciones relevantes; el historial no se recalcula
+silenciosamente. Los trabajos del revisor y de embeddings anteriores a I-146 terminan
+sin generar nuevos resultados del flujo retirado.
 
-- `request_id`, estado y modelo/versiones;
-- recomendaciones estructuradas;
-- referencias a la fuente citada y su extracto;
-- advertencia de evidencia insuficiente;
-- métricas técnicas permitidas;
-- errores tipados, nunca una transición académica.
+La indisponibilidad del proveedor afecta solo al servicio de IA correspondiente. La
+elaboración manual, validación, envío, revisión humana y aprobación continúan. La IA no
+califica, aprueba ni bloquea el proceso académico.
 
-## Control humano
+## Persistencia e historia
 
-- La salida se presenta como recomendación.
-- El texto del sílabo cambia solo después de acción explícita.
-- Se conserva antes/después y decisión del usuario.
-- Ningún umbral de confianza aprueba o bloquea.
-- Conflictos de fuentes se muestran y escalan a una persona.
+`historial_ia` conserva conversaciones y evidencia de ejecuciones anteriores; las
+restricciones de inmutabilidad y la protección de aprobados permanecen. Los nuevos
+mensajes usan contexto autorizado del expediente. `documentos_ia` y sus índices son
+estructuras históricas inactivas para este producto; I-146 no ordena borrarlas ni aplicar
+una migración destructiva.
 
-## Seguridad
-
-- Fuentes y contenido son datos, no instrucciones ejecutables.
-- Delimita y etiqueta extractos para reducir prompt injection.
-- No habilites herramientas, red o archivos del host innecesarios al modelo.
-- Limita tamaño, tiempo, concurrencia y salida.
-- Valida el esquema de respuesta; rechaza referencias no solicitadas.
-- Minimiza datos personales y solo llama al proveedor autorizado por el despliegue.
-- Los logs usan huellas/IDs, no prompts completos por defecto.
-
-## Reproducibilidad y caché
-
-La clave funcional considera al menos contenido, campo, plantilla, reglas, conjunto de
-fuentes/versiones, modelo y versión de instrucciones. Si uno cambia, no se reutiliza un
-resultado incompatible. El histórico nunca se recalcula en silencio.
-
-## Degradación
-
-Timeout, modelo no disponible, respuesta inválida o evidencia insuficiente producen un
-estado Fallido/No concluyente y una explicación segura. El usuario continúa con el flujo
-determinístico. Usa circuit breaker/backoff solo después de medir; no encadenes reintentos
-sin límite.
-
-## Pendientes
-
-`PV-13`, `PV-14` y `PV-18` impiden elegir hardware, modelos y umbrales finales. El
-contrato y sus fakes sí pueden implementarse antes.
-
-La decisión técnica inicial de I-92 fija provisionalmente `text-embedding-3-small` con
-1536 dimensiones para las fuentes académicas. Cambiar a `text-embedding-3-large` exige
-una migración porque la dimensión física de `vector(1536)` no puede mezclarse con
-embeddings de 3072 dimensiones.
-
-## Implementación reversible I-06
-
-- Puerto: `AiAnalysisGateway`; adaptadores `disabled`, `baseline` y `http` seleccionados
-  con `AI_DRIVER`. Producción parte en `disabled`.
-- Contrato: `ai-analysis-v1`; instrucciones `ueb-editorial-v1`. La versión del gateway
-  solicitada y la realmente ejecutada se conservan por separado.
-- Red: el adaptador HTTP acepta únicamente `http` hacia `localhost`, `127.0.0.1` o `::1`,
-  sin credenciales en URL ni redirecciones, con conexión y tiempo total acotados.
-- Entrada: hasta 50 000 caracteres, 50 evidencias y 12 000 caracteres por extracto. El
-  snapshot privado conserva texto, huellas y fuente citada; logs y auditoría
-  reciben solo IDs, versiones, conteos y huellas.
-- Admisión: seis solicitudes nuevas por minuto y por docente/sílabo. La cuota es
-  configurable y limita trabajo costoso sin afectar guardado, validación ni envío.
-- Salida: hasta cinco recomendaciones normalizadas. `AiResultContract` verifica request,
-  estados, tamaños, tipos, referencias, ausencia de HTML y ausencia de texto idéntico.
-  El cliente HTTP rechaza además claves de decisión, nota, estado, score, herramientas o
-  aprobación en cualquier nivel del JSON.
-- Persistencia (I-135): dos tablas con el patrón memoria de agente + almacén vectorial.
-  `historial_ia` guarda cada análisis, revisión integral, decisión humana y mensaje de
-  chat como un JSON en su sesión (`silabo:{id}:campo:{campo}`, `silabo:{id}:revision`,
-  `silabo:{id}:usuario:{usuario}`); `documentos_ia` guarda fragmentos, metadatos y
-  embeddings. El trigger `proteger_historial_ia` fija la entrada y cierra evidencia y
-  salida al alcanzar un estado terminal; índices únicos parciales mantienen la
-  idempotencia. El estado técnico y el progreso viven en `ejecuciones_trabajo`.
-- Avatar: `GET ai-chat` incluye `avatar {emotion, intensity}` en `review` y en cada
-  mensaje del asistente. `AvatarHint` lo deriva de forma determinista del estado
-  (`completada` → `happy`, `parcial` → `surprised`, `no_concluyente`/`fallida` →
-  `confused`); nunca se infiere del texto generado y la SPA solo lo usa para la
-  expresión del robot.
-- Cola: `ai`, tres intentos, timeout de 60 segundos y backoff 5/30/120. Un fallo conserva
-  causa segura; evidencia insuficiente o conflictiva finaliza sin llamar al gateway.
-
-El simulador `contract-simulator-v1` no usa el contenido de las fuentes como
-instrucciones. Solo prueba integración, trazabilidad y control humano; debe reemplazarse
-tras la evaluación de I-08 y las decisiones pendientes.
-
-## Proveedores alojados I-73
-
-- `AI_DRIVER=openai`, `claude` o `deepseek` selecciona el protocolo; `anthropic` se
-  acepta como alias de `claude`.
-- Los tres usan `AI_BASE_URL`, `AI_MODEL` y `AI_API_KEY`. La URL exige HTTPS, no admite
-  credenciales incrustadas ni redirecciones. Puede señalar la base o el endpoint completo.
-- OpenAI usa Responses con JSON Schema y `store=false`; Claude usa Messages con salida
-  JSON estructurada; DeepSeek usa Chat Completions con JSON y pensamiento deshabilitado.
-- La respuesta del proveedor se reduce al contrato interno. Laravel fija el request ID y
-  la versión del gateway, verifica tipos, tamaños y citas y nunca acepta acciones
-  académicas.
-- La clave solo entra en la cabecera HTTP. Los errores remotos se reemplazan por mensajes
-  seguros; cuerpos, claves, prompts y razonamiento no se registran ni persisten.
-- El modelo sigue siendo una decisión del operador y forma parte de la versión funcional
-  del gateway, por lo que cambiarlo evita atribuir un resultado al modelo anterior.
+PV-12, PV-13, PV-14 y PV-18 siguen delimitando privacidad, capacidad y evaluación de los
+servicios vigentes. La elección de embeddings y la evaluación del revisor retirado dejan
+de ser puertas de implementación activas. La evidencia de retirada está en el plan I-146.

@@ -6,7 +6,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
@@ -27,7 +26,6 @@ use Illuminate\Validation\ValidationException;
  *   scheduled_with_parallels: int,
  *   parallel_total: int,
  *   parallels_with_teacher: int,
- *   sources_total: int,
  *   template_ready: bool,
  *   faculty_logo_ready: bool,
  *   deadline_open: bool,
@@ -81,10 +79,6 @@ final class CoordinatorConvocationReadiness
                     ->whereNotNull('usuarios.correo_verificado_en'))))
             ->count();
 
-        $sourcesTotal = AcademicSource::query()
-            ->where('carrera_id', $careerId)
-            ->where('activo', true)
-            ->count();
         $convocation = $process === null ? null : Convocation::query()
             ->where('carrera_id', $careerId)
             ->where('proceso_id', $process->id)
@@ -101,7 +95,6 @@ final class CoordinatorConvocationReadiness
             && $scheduledWithParallels === $scheduledTotal
             && $parallelTotal > 0
             && $parallelsWithTeacher === $parallelTotal
-            && $sourcesTotal > 0
             && $templateReady
             && $facultyLogoReady;
 
@@ -113,7 +106,6 @@ final class CoordinatorConvocationReadiness
             'scheduled_with_parallels' => $scheduledWithParallels,
             'parallel_total' => $parallelTotal,
             'parallels_with_teacher' => $parallelsWithTeacher,
-            'sources_total' => $sourcesTotal,
             'template_ready' => $templateReady,
             'faculty_logo_ready' => $facultyLogoReady,
             'deadline_open' => $deadlineOpen,
@@ -147,9 +139,6 @@ final class CoordinatorConvocationReadiness
             $missing[] = $withoutTeacher === 1
                 ? 'Falta 1 paralelo sin docente.'
                 : "Faltan {$withoutTeacher} paralelos sin docente.";
-        }
-        if ($readiness['sources_total'] === 0) {
-            $missing[] = 'Falta registrar al menos una fuente académica activa.';
         }
 
         return $missing;

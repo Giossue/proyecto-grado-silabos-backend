@@ -22,6 +22,9 @@ it('mantiene el contrato OpenAPI sincronizado con las rutas públicas v1', funct
                 '/api/v1/session',
                 '/api/v1/admin/template/{template}/sections',
                 '/api/v1/teacher/syllabi/{syllabus}',
+                '/api/v1/teacher/syllabi/{syllabus}/ai-chat',
+                '/api/v1/coordination/curricular-imports',
+                '/api/v1/coordination/curricular-imports/{import}/documents/{source}/original',
                 '/api/v1/coordination/reviews/{revision}',
                 '/api/v1/exports/{artifact}/{format}',
             ])
@@ -30,6 +33,14 @@ it('mantiene el contrato OpenAPI sincronizado con las rutas públicas v1', funct
             ->toHaveKey('multipart/form-data')
             ->and($committed['paths']['/api/v1/exports/{artifact}/{format}']['get']['responses']['200']['content'])
             ->toHaveKey('application/octet-stream');
+        foreach (array_keys($committed['paths']) as $path) {
+            expect($path)->not->toStartWith('/api/v1/coordination/sources')
+                ->and($path)->not->toEndWith('/ai-review')
+                ->and($path)->not->toContain('/fields/{field}/ai');
+        }
+        expect($committed['components']['schemas'])->not->toHaveKey('SourceDocument')
+            ->and($committed['paths']['/api/v1/coordination/curricular-imports/{import}/documents/{source}/original']['get']['responses']['200']['content'])
+            ->toHaveKeys(['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     } finally {
         if (is_string($temporaryPath) && file_exists($temporaryPath)) {
             unlink($temporaryPath);

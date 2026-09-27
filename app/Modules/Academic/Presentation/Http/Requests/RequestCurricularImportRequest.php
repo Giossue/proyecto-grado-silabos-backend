@@ -27,7 +27,7 @@ final class RequestCurricularImportRequest extends FormRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['files' => 'documentos', 'files.*' => 'archivo', 'source_ids' => 'fuentes seleccionadas', 'source_ids.*' => 'fuente', 'instruction' => 'indicación para la importación'];
+        return ['files' => 'documentos', 'files.*' => 'archivo', 'source_ids' => 'documentos seleccionados', 'source_ids.*' => 'documento', 'instruction' => 'indicación para la importación'];
     }
 
     /** @return list<callable(Validator): void> */

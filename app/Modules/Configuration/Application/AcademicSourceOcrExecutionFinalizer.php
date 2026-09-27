@@ -2,7 +2,6 @@
 
 namespace App\Modules\Configuration\Application;
 
-use App\Modules\AiAssistance\Application\IndexAcademicSource;
 use App\Modules\Configuration\Domain\Data\AcademicSourceOcrResult;
 use App\Modules\Configuration\Domain\Exceptions\AcademicSourceOcrContractException;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
@@ -15,7 +14,6 @@ final class AcademicSourceOcrExecutionFinalizer
     public function __construct(
         private readonly AcademicSourceOcrAssetStore $assets,
         private readonly AcademicSourceDocument $documents,
-        private readonly IndexAcademicSource $indexer,
         private readonly RecordAuditEvent $audit,
     ) {}
 
@@ -51,7 +49,6 @@ final class AcademicSourceOcrExecutionFinalizer
                 'estado_ingesta' => 'completada',
                 'ingesta_actualizada_en' => now(),
             ]);
-            $fragmentCount = $this->indexer->execute($source);
             $lockedExecution->update([
                 'estado' => 'completada',
                 'progreso' => 100,
@@ -61,7 +58,6 @@ final class AcademicSourceOcrExecutionFinalizer
                     'model' => $result->model,
                     'normalization' => $result->usage['normalization'] ?? null,
                     'page_count' => count($result->pages),
-                    'fragment_count' => $fragmentCount,
                     'image_count' => $materialized['image_count'],
                     'document_fingerprint' => hash('sha256', json_encode($document, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)),
                 ],
@@ -80,7 +76,6 @@ final class AcademicSourceOcrExecutionFinalizer
                     'model' => $result->model,
                     'normalization' => $result->usage['normalization'] ?? null,
                     'page_count' => count($result->pages),
-                    'fragment_count' => $fragmentCount,
                     'image_count' => $materialized['image_count'],
                 ],
                 correlationId: $lockedExecution->correlacion_id,

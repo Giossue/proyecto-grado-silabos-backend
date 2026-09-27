@@ -41,7 +41,7 @@ real.
 | Sílabos | académico, configuración, convocatorias, identidad |
 | Revisión | sílabos, identidad |
 | Validación | sílabos/configuración mediante DTO/contratos |
-| IA | sílabos, configuración/fuentes mediante contratos |
+| IA | contexto fotografiado de sílabos y configuración técnica mediante contratos; generación de unidades sin RAG (I-146) |
 | Documentos | sílabos, configuración mediante snapshots/contratos; DOCX con PhpWord (`PhpWordDocumentRenderer`, I-34) y PDF de texto plano de respaldo |
 | Operaciones | eventos/DTO públicos de módulos |
 
@@ -82,7 +82,7 @@ patrón cuando se toquen; no hay prueba de arquitectura que los bloquee todavía
 - `SyllabusApproved`
 - `ApprovedSyllabusReopened`
 - `TemplateVersionPublished`
-- `SourceVersionActivated`
+- `CurricularImportApplied`
 - `ExportRequested`
 - `ImportCompleted`
 

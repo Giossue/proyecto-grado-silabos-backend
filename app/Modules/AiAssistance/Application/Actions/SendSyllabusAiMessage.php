@@ -52,6 +52,7 @@ class SendSyllabusAiMessage
                         'clave_idempotencia' => $idempotencyKey,
                         'version_bloqueo_origen' => $locked->version_bloqueo,
                         'usuario_id' => $actor->id,
+                        'context_version' => BuildSyllabusChatContext::VERSION,
                     ],
                 ],
             ]);
@@ -64,7 +65,7 @@ class SendSyllabusAiMessage
                 'etiqueta' => $item['label'],
                 'extracto' => $item['excerpt'],
                 'huella' => $item['fingerprint'],
-            ], $this->context->build($locked, $content));
+            ], $this->context->build($locked));
 
             $answerId = (string) Str::uuid();
             $correlationId = $request->attributes->getString('correlation_id');
@@ -92,6 +93,7 @@ class SendSyllabusAiMessage
                         'version_bloqueo_origen' => $locked->version_bloqueo,
                         'ejecucion_trabajo_id' => $job->id,
                         'evidencia' => $evidence,
+                        'context_version' => BuildSyllabusChatContext::VERSION,
                     ],
                     'contenido' => '',
                     'citas' => [],

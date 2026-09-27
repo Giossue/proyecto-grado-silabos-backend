@@ -17,7 +17,7 @@ SPA Vue 3 (repositorio frontend)
 API Laravel 13 (este repositorio)
   ├─ Identidad y acceso
   ├─ Estructura académica
-  ├─ Plantillas y fuentes
+  ├─ Plantilla y datos curriculares
   ├─ Convocatorias
   ├─ Sílabos y revisiones
   ├─ Revisión y aprobación
@@ -29,12 +29,16 @@ API Laravel 13 (este repositorio)
        ▼                 ▼
   PostgreSQL       Redis + workers
        │                 ├─ exportación Word/PDF
-       │                 ├─ análisis de IA
+       │                 ├─ chat de elaboración e ingesta documental
        │                 └─ importación/notificaciones
        ├─ almacenamiento privado
        ├─ servicio HTTP local de IA
        └─ fuente institucional de solo lectura/importación
 ```
+
+I-146 retira el CRUD de Fuentes académicas y el revisor con recuperación vectorial.
+La importación curricular I-145 conserva documentos privados internos y confirmación
+humana; las estructuras históricas de IA se conservan sin habilitar operaciones nuevas.
 
 ## Dirección de dependencias
 
@@ -58,12 +62,12 @@ en proveedores de servicio sin convertir cada módulo en un microservicio.
 |---|---|
 | Identidad | usuarios, roles, sesiones y alcance efectivo |
 | Académico | carreras, periodos, mallas, asignaturas, ofertas y asignaciones |
-| Configuración | plantillas, campos, fuentes, versiones y publicación |
+| Configuración | plantilla institucional, campos y configuración de operación |
 | Convocatorias | proceso institucional, preparación por carrera, apertura, pausas, plazos y seguimiento |
 | Sílabos | borradores, secciones, revisiones, colaboradores y estados |
 | Revisión | observaciones, respuestas, comparación, aprobación y reapertura |
 | Validación | reglas determinísticas y resultados reproducibles |
-| IA | ejecuciones, recomendaciones, evidencia y retroalimentación |
+| IA | chat de elaboración con contexto académico/curricular, evidencia e historial |
 | Documentos | archivos privados, Word/PDF y artefactos versionados |
 | Operaciones | notificaciones, auditoría, outbox, trabajos e informes |
 | Integraciones | importaciones, reconciliación y conflictos institucionales |

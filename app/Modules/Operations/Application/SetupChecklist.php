@@ -117,7 +117,6 @@ class SetupChecklist
                     $parallelTotal === 0 ? 'Primero cree los paralelos del período.' : "{$parallelsWithTeacher} de {$parallelTotal} paralelos tienen un docente vigente.",
                     $parallelTotal > 0 && $parallelsWithTeacher === $parallelTotal,
                 ),
-                $this->step('sources', 'Registrar al menos una fuente académica', 'Documento de apoyo que la convocatoria fija para los docentes.', $readiness['sources_total'] > 0),
                 $this->step(
                     'convocation',
                     'Abrir la convocatoria de la carrera',
@@ -140,7 +139,7 @@ class SetupChecklist
             ! $readiness['deadline_open'] => 'El plazo institucional venció. Administración debe prorrogarlo antes de abrir la convocatoria.',
             ! $readiness['template_ready'] => 'Administración debe completar la plantilla institucional.',
             ! $readiness['faculty_logo_ready'] => 'Administración debe cargar el logo de la facultad.',
-            $readiness['can_open'] => 'Todo está listo. Seleccione las fuentes y abra la convocatoria.',
+            $readiness['can_open'] => 'Todo está listo. Puede abrir la convocatoria.',
             default => 'Complete los pasos anteriores para poder abrirla.',
         };
     }

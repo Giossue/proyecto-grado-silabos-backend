@@ -75,22 +75,20 @@ Administración abre una sola convocatoria institucional vigente para toda la un
 La creación se inicia desde la fila del período académico y queda abierta en la misma
 transacción: el período queda fijo, el nombre y la plantilla son automáticos y
 Administración solo confirma las fechas de elaboración. Cada coordinador la ve en su área y solo puede iniciar el
-alcance de su carrera: no define nombre, plantilla, período ni modo de agrupación, pero
-debe elegir un subconjunto no vacío de las fuentes activas de su carrera. El inicio comprueba logo propio de la facultad, malla activa,
-materias programadas con paralelos, docente vigente en cada paralelo y al menos una
-fuente académica activa; si todo pasa,
-crea la convocatoria de carrera y exactamente un sílabo por paralelo en una transacción.
-Solo las fuentes elegidas se fijan al inicio; esa selección queda congelada y al
-reanudar se comprueba que continúen activas, sin incorporar otras automáticamente. La base impide repetir proceso por período o alcance por
-carrera/período.
+alcance de su carrera: no define nombre, plantilla, período ni modo de agrupación.
+El inicio comprueba logo propio de la facultad, malla activa, materias programadas con
+paralelos y docente vigente en cada paralelo. Si todo pasa, crea la convocatoria de
+carrera y exactamente un sílabo por paralelo en una transacción. I-146 retira la
+selección y el requisito de Fuentes académicas, también al reanudar. La base impide
+repetir proceso por período o alcance por carrera/período.
 
 ## Pausas
 
 Una pausa detiene el reloj para el alcance que la decide. Administración pausa el
 proceso y ningún docente de la universidad edita ni envía hasta que lo reanude; entre
 tanto la plantilla vuelve a ser editable. Coordinación pausa su convocatoria y solo los
-docentes de esa carrera se detienen; entre tanto la malla y las fuentes de la carrera
-vuelven a ser editables, pero no cambia el conjunto de fuentes ya fijado para el alcance.
+docentes de esa carrera se detienen; entre tanto la malla y los datos curriculares de
+la carrera vuelven a ser editables según sus permisos y confirmaciones de regeneración.
 Los borradores se conservan tal cual. Ambas pausas exigen
 motivo y quedan en auditoría; reanudar una convocatoria requiere que el proceso esté
 abierto. Cerrar el proceso es definitivo: los expedientes se conservan y ya no admiten
@@ -105,7 +103,7 @@ periodo académico.
 - usuario activo, rol, alcance y asignación vigentes;
 - convocatoria y periodo compatibles;
 - al iniciar el alcance: logo propio de la facultad, malla activa, materias programadas,
-  paralelos y docentes vigentes, y fuentes académicas activas de la carrera;
+  paralelos y docentes vigentes; I-146 retira la existencia de fuentes como requisito;
 - malla actual activa al programar materias y abrir un proceso nuevo;
 - control de concurrencia superado;
 - plantilla institucional completa al abrir el proceso; la revisión enviada se renderiza desde su propia copia;
@@ -122,10 +120,11 @@ periodo académico.
 
 ## IA en el ciclo
 
-El análisis puede solicitarse durante edición o antes del envío. Sus estados son
-Pendiente, En proceso, Completado o Fallido. El usuario puede continuar si falla. Aplicar
-una recomendación requiere acción explícita y deja registro; ignorarla no invalida el
-envío.
+I-146 conserva el chat para proponer contenido y unidades desde el contexto académico
+y curricular fotografiado y las tablas de planificación. La respuesta no modifica el
+sílabo ni bloquea el envío. El usuario puede continuar si falla. El revisor automático,
+sus recomendaciones aplicables y la consulta vectorial están retirados; su historia se
+conserva.
 
 ## Casos de carrera
 
@@ -138,8 +137,8 @@ envío.
   aprobados y los expedientes reabiertos que contienen una revisión aprobada, así como
   los procesos cerrados. La corrección de resultados de aprendizaje se limita a los
   expedientes elegibles de la asignatura modificada.
-- Cambio de fuente activa: invalida/recalcula ayuda de IA futura, no reescribe resultados
-  históricos.
+- Confirmación de datos curriculares: afecta las nuevas fotografías y los expedientes
+  regenerados según el alcance permitido; no reescribe historia protegida.
 - Edición o desactivación de la malla: bloquea trabajo nuevo cuando queda inactiva, pero
   no cambia el contexto académico fijado en sílabos y revisiones existentes.
 - Reintento de exportación: no duplica aprobación ni cambia revisión.

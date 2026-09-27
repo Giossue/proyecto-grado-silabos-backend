@@ -11,8 +11,9 @@ quién decidió un cambio y si la aprobación puede reproducirse.
 ## Producto
 
 Aplicación web autenticada que configura una convocatoria académica, crea sílabos desde una
-plantilla versionada, hereda datos maestros, permite elaboración colaborativa, aplica
-validaciones, ofrece ayuda de IA con evidencia, gestiona revisión/corrección/aprobación y
+plantilla institucional configurable, hereda datos maestros y curriculares confirmados,
+permite elaboración colaborativa, aplica validaciones y ofrece un chat de ayuda para
+elaborar contenido y unidades, gestiona revisión/corrección/aprobación y
 genera Word/PDF desde la revisión aprobada.
 
 ## Objetivo de valor
@@ -22,7 +23,8 @@ genera Word/PDF desde la revisión aprobada.
 - reglas y plantillas configurables sin cambiar el esquema físico;
 - revisión por observaciones trazables, no por archivos enviados de un lado a otro;
 - historial inmutable y comparación de revisiones;
-- evidencia verificable para toda ayuda de IA;
+- procedencia verificable para los datos curriculares importados;
+- propuestas de elaboración con contexto académico autorizado;
 - exportaciones coherentes con el contenido aprobado;
 - información reproducible para coordinación y auditoría.
 
@@ -42,11 +44,11 @@ asignación, vigencia y estado.
 El ciclo cubre:
 
 1. preparación de identidad y estructura académica;
-2. versionado de plantilla y fuentes;
+2. configuración de la plantilla e importación de documentos curriculares;
 3. apertura de convocatoria;
 4. generación de sílabos esperados;
 5. elaboración y validación;
-6. asistencia de IA opcional;
+6. generación asistida opcional de contenido y unidades;
 7. envío como revisión inmutable;
 8. observación y corrección;
 9. comparación y aprobación;
@@ -55,6 +57,8 @@ El ciclo cubre:
 12. notificaciones y auditoría.
 
 ## Fuera de alcance
+
+- CRUD de Fuentes académicas y revisor de IA con recuperación vectorial, retirados en I-146;
 
 - administrar aula virtual/EVEA;
 - matrículas, calificaciones u horarios;

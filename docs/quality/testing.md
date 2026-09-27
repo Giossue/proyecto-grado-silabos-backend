@@ -91,21 +91,28 @@ cortado o desalineado.
 
 ## IA
 
-Además de aceptación funcional, cubre `IA-NEG-01` a `IA-NEG-09`:
+I-146 retira el revisor y RAG. La cobertura vigente del chat comprueba:
 
-- fuente inactiva o fuera de vigencia;
-- evidencia inexistente/insuficiente;
-- conflicto entre fuentes;
-- prompt injection en contenido/fuente;
-- referencia inventada o fuera del conjunto autorizado;
-- salida malformada/demasiado grande;
-- timeout/caída/reintento;
-- intento de decisión o modificación automática;
-- contenido equivalente y caché incompatible por cambio de versión.
+- autorización por docente/carrera, límites e idempotencia;
+- contexto académico/curricular fotografiado y tablas de planificación sin datos personales;
+- ausencia de recuperación textual/vectorial y de nuevas indexaciones/embeddings;
+- historia previa conservada, pero excluida de nuevas llamadas al proveedor;
+- referencias inventadas, salida malformada o demasiado grande;
+- prompt injection tratado como datos y ausencia de modificación/decisión automática;
+- timeout, caída y reintento sin impedir la edición determinística;
+- incompatibilidad de caché al cambiar la versión de contexto;
+- rutas del revisor retiradas y trabajos antiguos sin efectos nuevos.
+
+La extracción curricular I-145 tiene pruebas separadas de evidencia, conflicto,
+asociación a carrera/asignatura y confirmación por lote. `IA-NEG-01` a `IA-NEG-09`
+conservan trazabilidad histórica; no reactivan el revisor retirado.
 
 La suite principal debe aprobar con IA desactivada.
 
-## Cobertura automatizada I-06
+## Antecedente de cobertura I-06 (revisor retirado por I-146)
+
+La descripción siguiente documenta la etapa anterior. La cobertura vigente se registra
+en el plan I-146 y en `AiAssistanceTest`; no exige conservar endpoints retirados.
 
 `AiAssistanceTest` usa PostgreSQL real y gateways controlados para cubrir CU-08 e
 `IA-NEG-01` a `IA-NEG-09`:

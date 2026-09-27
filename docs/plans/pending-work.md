@@ -4,6 +4,19 @@ Corte histórico del 30 de agosto de 2026, con actualización I-56 a continuaci�
 Este documento separa lo que falta según de quién
 depende, porque son cosas de naturaleza distinta y no se resuelven igual.
 
+## Retirada de fuentes y del revisor de IA, 2026-09-27 (I-146)
+
+Por instrucción expresa del responsable del producto se retiran el CRUD de Fuentes
+académicas, el requisito de fuentes para convocar y el revisor de IA basado en una
+base vectorizada. Se conserva la importación documental I-145 y su evidencia interna,
+la generación asistida de contenido/unidades mediante chat y la configuración técnica
+de IA. La retirada no elimina datos históricos ni implica migración destructiva.
+
+La implementación y verificación corresponden al plan I-146. Las tareas antiguas de
+activar embeddings, reconstruir el índice o terminar el revisor dejan de ser pendientes
+activos. PV-12/PV-13/PV-14/PV-18 siguen aplicando a los servicios de extracción y
+elaboración que permanecen; no reabren el alcance retirado.
+
 ## Datos curriculares por asignatura, 2026-09-27 (I-144)
 
 Primera unidad implementada localmente: registro y confirmación de resultados de
@@ -23,7 +36,7 @@ resolución no constituye una aprobación del tutor ni de la institución.
 
 La corrección del responsable del producto establece documentos y revisión por lote
 como entrada principal. Se implementan conceptos de texto/lista/tabla, valores por
-carrera/asignatura, PDF/XLSX y fuentes existentes, extracción con referencias,
+carrera/asignatura, PDF/XLSX y documentos previos de ingesta, extracción con referencias,
 confirmación selectiva, datos automáticos y opciones docentes obtenidas de una o
 varias listas. El formulario manual de I-144 conserva utilidad puntual y no representa
 el asistente completo solicitado. Estado y evidencia en
@@ -182,7 +195,7 @@ Done»_, y la Definition of Done incluye la revisión manual de interfaz del pun
 | I-03       | completa               | revisión manual y `PV-05`                                      |
 | I-04       | completa               | revisión manual, `DT-07` y `PV-16`                             |
 | I-05       | completa               | fidelidad del DOCX y `PV-07`, `PV-11`, `PV-12`, `PV-15`        |
-| I-06       | completa               | evaluación experta y `PV-02`, `PV-13`, `PV-14`, `PV-18`        |
+| I-06       | revisor retirado por I-146 | Historial conservado; evaluación solo del chat y extracción vigentes |
 | I-07       | retirada el 2026-08-27 | ninguna; el módulo se eliminó                                  |
 | I-08       | completa               | pruebas con participantes y dispositivos reales                |
 | I-09, I-10 | completas              | revisión manual de interfaz                                    |

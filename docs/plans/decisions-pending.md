@@ -17,7 +17,7 @@
 | PV-11 | Conservación, backup, RPO y RTO | Técnico/autoridad | P2 producción |
 | PV-12 | Base legal, finalidad y aviso de privacidad | UEB/datos | P0 datos sensibles, P2 producción |
 | PV-13 | Hardware disponible para IA local | Personal técnico/autores | P0 selección IA |
-| PV-14 | Modelos locales de embeddings y generación | Autores/evaluación experta | P0 implementación IA final |
+| PV-14 | Modelos de extracción y generación | Autores/evaluación experta | I-146 retira embeddings/revisor; evaluación pendiente de servicios vigentes |
 | PV-15 | Correo institucional y contenido de avisos | Técnico/coordinación | P1 notificación externa; mecanismo listo, transporte en `log` |
 | PV-16 | Edición excepcional de contenido por coordinador | Coordinación | P0 permisos I-04 |
 | PV-17 | Instrumento/población para medir proceso actual | Dirección/autores | P1 línea base |
@@ -44,7 +44,7 @@ Estas no reemplazan los PV de la SRS:
 | DT-10 | Autoaprobación del sílabo por quien lo redactó | Permitida, marcada de forma distinguible en auditoría | Cerrada el 2026-08-26 |
 | DT-11 | Destino del modo `por_oferta` tras cerrar PV-06 | Conservado; `por_paralelo` es el valor por defecto | Cerrada el 2026-08-26 en I-15 |
 | DT-12 | Efecto de alcanzar la fecha de fin de un período sobre sus ofertas, paralelos, asignaciones y sílabos | Por ahora, la fecha es informativa: no hay cierre ni eliminación automática. Coordinación elimina, tras confirmación, solo ofertas que no tengan dependencias; un período con ofertas, procesos o convocatorias no se elimina. Definir si se automatiza un cierre futuro sin alterar la historia. | Antes de automatizar el cierre de período |
-| DT-13 | Ingesta de fuentes PDF | OpenParser con `paddleocr-vl-1.6` y `openparser@1` como adaptador PDF → documento JSON; `deepseek-flash` puede normalizar la salida por lotes cuando `AI_SOURCE_NORMALIZATION_ENABLED=true`, sin fallback silencioso; ejecución asíncrona y PDF privado | Implementaciones I-95/I-96/I-99; requiere PV-12/PV-14 |
+| DT-13 | Ingesta PDF interna para importación curricular | OpenParser con `paddleocr-vl-1.6` y `openparser@1` como adaptador PDF → documento JSON; `deepseek-flash` puede normalizar la salida por lotes cuando `AI_SOURCE_NORMALIZATION_ENABLED=true`, sin fallback silencioso; ejecución asíncrona y PDF privado | Implementaciones I-95/I-96/I-99; requiere PV-12/PV-14 |
 | DT-14 | Más de un docente activo en el mismo paralelo | No permitido: cada paralelo tiene como máximo una asignación docente activa; el relevo conserva la historia en filas inactivas | Cerrada el 2026-09-20 |
 | DT-15 | Fuente y alcance de la unidad de organización curricular por materia y ciclo | Una unidad obligatoria por materia, sin unidad ni restricciones por ciclo; se retira la franja visual que infería una unidad predominante. | Cerrada el 2026-09-24 por decisión del responsable del producto |
 

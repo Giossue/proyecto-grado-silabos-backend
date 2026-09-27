@@ -172,10 +172,11 @@ afectadas; un valor de carrera afecta a toda esa carrera. Los expedientes con
 aprobación conservada quedan fuera del reemplazo. Borrar una materia sin programación
 ni sílabos elimina sus valores actuales y conserva el registro de importación.
 
-### Plantillas y fuentes
+### Plantilla y documentos internos de ingesta
 
-`plantilla_silabo`, `definiciones_campo`, `fuentes_academicas` y el almacén vectorial
-`documentos_ia` (I-135).
+`plantilla_silabo`, `definiciones_campo` y `fuentes_academicas` (nombre físico histórico
+del documento interno de ingesta I-145). I-146 no elimina tablas ni evidencia: retira
+el CRUD público y desactiva el uso de `documentos_ia` para recuperación vectorial.
 
 `plantilla_silabo` no referencia una carrera y solo admite una fila. El índice único
 `plantilla_silabo_unica` aplica esa cardinalidad directamente, sin un booleano
@@ -199,25 +200,19 @@ contenido fijo sin campos); el tipo de almacenamiento se deriva de él (I-138).
 No hay reglas por campo: `reglas_definicion_campo` se eliminó (migración `000111`). Todo
 campo del docente es obligatorio al enviar; el estado `borrador` puede quedar incompleto.
 
-`fuentes_academicas` es un documento por fila (I-95): nombre único por carrera,
-descripción y `documento_fuente_academica` JSON editable. `contenido_fuente_academica`
+`fuentes_academicas` conserva un documento por fila: nombre único por carrera,
+descripción y `documento_fuente_academica` JSON interno. Desde I-146 se escribe mediante
+la ingesta I-145 y no mediante un editor o CRUD público. `contenido_fuente_academica`
 es una proyección textual para búsqueda y compatibilidad. La migración `000054` retira
 `notas_internas`; las tablas
 `versiones_fuente`, `fragmentos_fuente` y `conflictos_fuente` se retiraron en la
 migración `000020`; no eran compatibles con el documento único editable. La migración
 `000078` incorporó un índice derivado de fragmentos y la `000087` su embedding
 `vector(1536)` de `text-embedding-3-small`. Desde I-135 (migración `000103`) ese índice
-es `documentos_ia`, un almacén vectorial estándar: `contenido_documento` (texto del
-fragmento), `metadatos_documento` JSONB (`fuente_academica_id`, `carrera_id`, `titulo`,
-`ruta_encabezados`, `posicion`, `pagina_inicio`, `pagina_fin`, `bloques_origen`,
-`huella`) y `embedding vector(1536)` con índice HNSW por distancia coseno. Un índice por
-expresión sobre `metadatos_documento->>'fuente_academica_id'` sirve a filtros y borrados;
-un índice GIN en español permite la recuperación textual cuando no hay embeddings. Es
-derivado y reemplazable: nunca es fuente de verdad. Como la fuente vive en JSON, el
-trigger `eliminar_documentos_ia_de_fuente` reemplaza la antigua cascada al borrar una
-fuente. La evidencia de IA conserva su propia fotografía del contenido citado aunque el
-índice se reconstruya. Si el proveedor de embeddings falla, la recuperación textual
-continúa.
+es `documentos_ia`, estructura histórica con texto, metadatos, embeddings e índices
+HNSW/GIN. I-146 retira su indexación y recuperación activas; los registros y restricciones
+existentes se conservan. No se usa como fuente de verdad ni como contexto del chat. La
+evidencia histórica sigue fotografiada y no se reconstruye por esta retirada.
 I-95/I-96 incorporan el PDF privado y producen el documento JSON con OpenParser sobre
 `paddleocr-vl-1.6`. La
 migración `000089` agrega el documento versionado, procedencia por fragmento y retira
@@ -231,9 +226,9 @@ privados `academic_source_image`; Base64 y URLs firmadas no se persisten.
 `silabos`, vista `docentes_vigentes_silabo` (I-130),
 `revisiones_silabo`, `filas_repetibles`, `valores_campo`, `transiciones_estado`.
 
-La convocatoria de carrera no elige fuentes: la IA usa todas las fuentes académicas
-activas de la carrera, que `ProcessLocks` congela mientras la convocatoria está abierta.
-La migración `000113` eliminó `fuentes_convocatoria`.
+I-146 elimina las fuentes como requisito para convocar. No se seleccionan ni se consultan
+para revisión por IA. La migración histórica `000113` ya había eliminado
+`fuentes_convocatoria`; I-146 no requiere borrar información histórica.
 
 `convocatorias_universidad` (I-31, I-41) es el calendario institucional: período académico,
 inicio (`inicia_en`), entrega (`entrega_en`) y estado. Las convocatorias de carrera leen
@@ -285,13 +280,14 @@ I-135 reemplazó las once tablas de IA (`ejecuciones_ia`, `revisiones_ia_silabo`
 `recomendaciones_ia`, `evidencias_ia`, `recomendacion_evidencias_ia`,
 `retroalimentacion_ia`, `conversaciones_ia`, `mensajes_ia`, `evidencias_mensaje_ia`,
 `citas_mensaje_ia` y `fragmentos_fuente_academica`) por dos, con el patrón estándar de
-memoria de agente + almacén vectorial. `historial_ia` guarda un mensaje JSONB por fila
+memoria de agente + almacén vectorial. I-146 conserva esas estructuras y retira las
+operaciones nuevas del revisor y del índice. `historial_ia` guarda un mensaje JSONB por fila
 (`id`, `sesion_id`, `mensaje_ia`, `enviado_en`), agrupado por sesión:
 
-- `silabo:{id}:campo:{campo}`: mensajes `analisis` (entrada fijada, evidencia tipada,
+- Histórico retirado I-146 — `silabo:{id}:campo:{campo}`: mensajes `analisis` (entrada fijada, evidencia tipada,
   recomendaciones, estado, error) y `decision` (aceptada, ignorada, no útil o aplicada,
   con contenido anterior/posterior y versiones del borrador);
-- `silabo:{id}:revision`: mensajes `revision` con los conteos agregados de sus análisis;
+- Histórico retirado I-146 — `silabo:{id}:revision`: mensajes `revision` con los conteos agregados de sus análisis;
 - `silabo:{id}:usuario:{usuario}`: el chat (`mensaje` con rol `usuario` o `asistente`,
   evidencia y citas) y los marcadores `ocultamiento` que limpian el panel sin borrar.
 
@@ -301,7 +297,7 @@ reinicio institucional confirmado (I-118) puede borrar. Índices únicos parcial
 expresión conservan la idempotencia de análisis (sesión, clave, revisión), de revisiones
 (sesión, `version_bloqueo_origen`), de preguntas del chat (sesión, clave) y de decisiones
 (recomendación, persona, decisión; una sola `aplicada`). El progreso técnico vive en
-`ejecuciones_trabajo` (`ia.analisis`, `ia.chat`), cuyo `recurso_id` es el id del
+`ejecuciones_trabajo` (`ia.chat`; `ia.analisis` queda retirado en I-146), cuyo `recurso_id` es el id del
 mensaje. Al eliminar un sílabo, el trigger `eliminar_historial_ia_de_silabo` borra sus
 sesiones. La evidencia sigue siendo una fotografía (etiqueta, extracto y huella)
 inmutable aunque cambien luego el documento o el borrador.
@@ -385,7 +381,13 @@ regla. Acompáñalos con pruebas en PostgreSQL real.
 `DatabaseBootstrapTest` comprueba la zona efectiva de la sesión PostgreSQL y ejecuta el
 seeder dos veces. Las asignaciones activas se reutilizan para conservar la idempotencia.
 
-### Invariantes de IA implementados
+### Invariantes de IA conservados
+
+I-146 mantiene las restricciones y la evidencia histórica. Las referencias siguientes a
+análisis por campo, revisión integral, fuentes externas, recomendaciones y feedback
+describen registros del revisor retirado, sin habilitar nuevas operaciones. El chat
+vigente usa contexto académico/curricular y tablas de unidades/planificación, con
+`context_version=curricular-units-v1`; no recupera fuentes ni aplica recomendaciones.
 
 - la ejecución y el campo pertenecen al mismo sílabo (con plantilla única, I-132 retiró la
   comprobación de `plantilla_id`);

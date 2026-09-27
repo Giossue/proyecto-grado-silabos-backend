@@ -21,7 +21,7 @@ final readonly class AiChatInput
     {
         return [
             'request_id' => $this->requestId,
-            'task' => 'syllabus_contextual_chat',
+            'task' => 'syllabus_unit_content',
             'locale' => $this->locale,
             'question' => $this->question,
             'history' => $this->history,

@@ -57,7 +57,8 @@ class ApiDashboardTest extends TestCase
             ->assertJsonPath('coordination_convocation', null)
             ->assertJsonMissingPath('faculty_logo')
             ->assertJsonMissing(['key' => 'faculty_logo'])
-            ->assertJsonCount(6, 'setup.steps');
+            ->assertJsonMissing(['key' => 'sources'])
+            ->assertJsonCount(5, 'setup.steps');
     }
 
     public function test_coordinator_dashboard_uses_the_current_period_and_requires_every_parallel_to_have_a_teacher(): void
@@ -93,7 +94,7 @@ class ApiDashboardTest extends TestCase
             ->assertJsonPath('setup.steps.3.key', 'teachers')
             ->assertJsonPath('setup.steps.3.done', false)
             ->assertJsonPath('setup.steps.3.hint', '1 de 2 paralelos tienen un docente vigente.')
-            ->assertJsonPath('setup.steps.5.action', null);
+            ->assertJsonPath('setup.steps.4.action', null);
     }
 
     public function test_dashboard_requires_an_active_role(): void

@@ -16,7 +16,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\Actions\ActivateManagedUser;
 use App\Modules\Identity\Application\Actions\CreateCareerTeacher;
@@ -45,9 +44,7 @@ use RuntimeException;
 /**
  * Deja una base de pruebas lista para recorrer el flujo con dos docentes. Solo usa las
  * acciones de aplicación, así que respeta las mismas reglas y auditoría que la interfaz.
- * Es idempotente: reutiliza lo existente y nunca borra datos previos. No carga fuentes
- * académicas; sin una fuente activa la convocatoria de carrera queda pendiente y basta
- * con volver a ejecutarlo después de subirla.
+ * Es idempotente: reutiliza lo existente y nunca borra datos previos.
  */
 class PrepareTestingEnvironmentCommand extends Command
 {
@@ -139,11 +136,10 @@ class PrepareTestingEnvironmentCommand extends Command
                 app(AcademicPeriodPlanning::class)->label($period),
             ])->all());
         $this->line(sprintf(
-            'Malla: %d materias activas · programaciones: %d · paralelos: %d · fuentes activas: %d',
+            'Malla: %d materias activas · programaciones: %d · paralelos: %d',
             Subject::query()->where('carrera_id', $career->id)->where('activo', true)->count(),
             ScheduledSubject::query()->whereHas('subject', fn ($q) => $q->where('carrera_id', $career->id))->count(),
             Parallel::query()->whereHas('scheduledSubject.subject', fn ($q) => $q->where('carrera_id', $career->id))->count(),
-            AcademicSource::query()->where('carrera_id', $career->id)->where('activo', true)->count(),
         ));
         $this->line(sprintf(
             'Convocatorias institucionales: %s · de carrera: %s',
@@ -361,19 +357,12 @@ class PrepareTestingEnvironmentCommand extends Command
             return;
         }
 
-        /** @var list<string> $sources */
-        $sources = AcademicSource::query()->where('carrera_id', $career->id)->where('activo', true)->pluck('id')->values()->all();
-        if ($sources === []) {
-            $this->components->warn('La carrera no tiene fuentes académicas activas: la convocatoria de carrera necesita al menos una. Súbala y vuelva a ejecutar este comando.');
-
-            return;
-        }
         app(CreateConvocation::class)->execute(
             ['process_id' => $process->id],
             $coordinator->user,
             $this->requestAs($coordinator),
         );
-        $this->line('Convocatoria de carrera abierta con '.count($sources).' fuente(s).');
+        $this->line('Convocatoria de carrera abierta.');
     }
 
     private function verify(Career $career): void

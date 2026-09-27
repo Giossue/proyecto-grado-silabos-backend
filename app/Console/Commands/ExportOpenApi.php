@@ -70,31 +70,6 @@ class ExportOpenApi extends Command
                             ],
                         ],
                     ],
-                    'SourceDocumentNode' => [
-                        'type' => 'object',
-                        'required' => ['type'],
-                        'properties' => [
-                            'type' => ['type' => 'string'],
-                            'text' => ['type' => 'string'],
-                            'attrs' => ['type' => 'object', 'additionalProperties' => true],
-                            'marks' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => true]],
-                            'content' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/SourceDocumentNode']],
-                        ],
-                    ],
-                    'SourceDocument' => [
-                        'allOf' => [
-                            ['$ref' => '#/components/schemas/SourceDocumentNode'],
-                            [
-                                'type' => 'object',
-                                'required' => ['schemaVersion', 'type', 'content'],
-                                'properties' => [
-                                    'schemaVersion' => ['type' => 'integer', 'const' => 1],
-                                    'type' => ['type' => 'string', 'const' => 'doc'],
-                                    'content' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/SourceDocumentNode']],
-                                ],
-                            ],
-                        ],
-                    ],
                 ],
                 'responses' => [
                     'Unauthorized' => $this->errorResponse('Sesión no autenticada.'),
@@ -140,11 +115,9 @@ class ExportOpenApi extends Command
         };
         $isDownload = $name === 'api.v1.documents.download';
         $isLogoUpload = str_ends_with($name, '.logo.store');
-        $isSourcePdfUpload = $name === 'api.v1.coordination.sources.pdf.ingest';
-        $isSourceOriginalPdf = in_array($name, ['api.v1.coordination.sources.pdf.original', 'api.v1.signature.pdf'], true);
+        $isSignaturePdf = $name === 'api.v1.signature.pdf';
+        $isCurricularOriginal = $name === 'api.v1.coordination.curricular-imports.documents.original';
         $isSignatureUpload = $name === 'api.v1.signature.store';
-        $isSourceAsset = $name === 'api.v1.coordination.sources.assets.show';
-        $isSourceContent = $name === 'api.v1.coordination.sources.content.update';
         $isPreparePeriod = $name === 'api.v1.coordination.academic.period.prepare';
         $isLearningOutcomes = str_starts_with($name, 'api.v1.coordination.academic.subjects.learning-outcomes.');
         $isCurricularImport = str_starts_with($name, 'api.v1.coordination.curricular-imports.');
@@ -152,15 +125,17 @@ class ExportOpenApi extends Command
         $isCurricularImportRetry = $name === 'api.v1.coordination.curricular-imports.retry';
         $successContent = $isDownload
             ? ['application/octet-stream' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
-            : ($isSourceOriginalPdf
+            : ($isSignaturePdf
                 ? ['application/pdf' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
-                : ($isSourceAsset
-                ? ['image/*' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
-                : ['application/json' => ['schema' => ['type' => 'object']]]));
+                : ['application/json' => ['schema' => ['type' => 'object']]]);
+        if ($isCurricularOriginal) {
+            $binary = ['schema' => ['type' => 'string', 'format' => 'binary']];
+            $successContent = ['application/pdf' => $binary, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => $binary];
+        }
         if ($isLearningOutcomes) {
             $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectLearningOutcomes']]];
         }
-        if ($isCurricularImport) {
+        if ($isCurricularImport && ! $isCurricularOriginal) {
             $schema = str_ends_with($name, '.index') ? 'CurricularImportsIndex' : 'CurricularImport';
             $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/'.$schema]]];
         }
@@ -169,7 +144,7 @@ class ExportOpenApi extends Command
             'operationId' => str_replace('.', '_', $name),
             'summary' => $name,
             'responses' => [
-                ($isSourcePdfUpload || $isCurricularImportCreate || $isCurricularImportRetry ? '202' : ($isSignatureUpload ? '201' : '200')) => [
+                ($isCurricularImportCreate || $isCurricularImportRetry ? '202' : ($isSignatureUpload ? '201' : '200')) => [
                     'description' => 'Operación completada.',
                     'content' => $successContent,
                 ],
@@ -215,18 +190,6 @@ class ExportOpenApi extends Command
                         'base_sha256' => ['type' => 'string', 'pattern' => '^[A-Fa-f0-9]{64}$'],
                     ],
                 ]]];
-            } elseif ($isSourcePdfUpload) {
-                $content = ['multipart/form-data' => ['schema' => [
-                    'type' => 'object',
-                    'required' => ['pdf'],
-                    'properties' => ['pdf' => ['type' => 'string', 'format' => 'binary']],
-                ]]];
-            } elseif ($isSourceContent) {
-                $content = ['application/json' => ['schema' => [
-                    'type' => 'object',
-                    'required' => ['document'],
-                    'properties' => ['document' => ['$ref' => '#/components/schemas/SourceDocument']],
-                ]]];
             } elseif ($isPreparePeriod) {
                 $content = ['application/json' => ['schema' => [
                     'type' => 'object',
@@ -253,7 +216,7 @@ class ExportOpenApi extends Command
                 ]]];
             }
             $operation['requestBody'] = [
-                'required' => $isSourcePdfUpload || $isPreparePeriod || $isLearningOutcomes || $isCurricularImport,
+                'required' => $isPreparePeriod || $isLearningOutcomes || $isCurricularImport,
                 'content' => $content,
             ];
         }
@@ -372,9 +335,11 @@ class ExportOpenApi extends Command
                 'properties' => [
                     'id' => $uuid, 'career_id' => $uuid, 'status' => $status,
                     'documents' => ['type' => 'array', 'items' => [
-                        'type' => 'object', 'required' => ['source_id', 'name', 'hash', 'kind', 'execution_id'],
+                        'type' => 'object', 'required' => ['source_id', 'name', 'hash', 'kind', 'execution_id', 'original_name', 'original_url'],
                         'properties' => [
                             'source_id' => $uuid, 'name' => ['type' => 'string'],
+                            'original_name' => $nullableText,
+                            'original_url' => ['type' => ['string', 'null'], 'description' => 'Descarga privada autorizada del PDF/XLSX original de esta importación.'],
                             'hash' => ['type' => ['string', 'null'], 'pattern' => '^[a-f0-9]{64}$'],
                             'kind' => ['type' => 'string', 'enum' => ['pdf', 'xlsx', 'source']], 'execution_id' => $nullableUuid,
                             'file_hash' => $fingerprint, 'original_object_id' => $nullableUuid,
@@ -396,7 +361,7 @@ class ExportOpenApi extends Command
                     ]],
                     'subjects' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['id', 'name', 'code'],
                         'properties' => ['id' => $uuid, 'name' => ['type' => 'string'], 'code' => ['type' => 'string']]]],
-                    'sources' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['id', 'name'],
+                    'sources' => ['type' => 'array', 'description' => 'Nombre compatible: documentos internos de ingesta reutilizables de la carrera; no existe CRUD de fuentes.', 'items' => ['type' => 'object', 'required' => ['id', 'name'],
                         'properties' => ['id' => $uuid, 'name' => ['type' => 'string']]]],
                     'lock_reason' => $nullableText,
                     'capabilities' => ['type' => 'object', 'required' => ['pdf', 'xlsx', 'extraction'], 'properties' => [
@@ -409,7 +374,7 @@ class ExportOpenApi extends Command
                 'properties' => [
                     'files' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 10, 'items' => ['type' => 'string', 'format' => 'binary'],
                         'description' => 'Hasta 10 archivos PDF/XLSX privados, de hasta 20 MiB cada uno y 30 MiB combinados.'],
-                    'source_ids' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 10, 'uniqueItems' => true, 'items' => $uuid],
+                    'source_ids' => ['type' => 'array', 'description' => 'IDs de documentos internos de ingesta previos de la carrera activa.', 'minItems' => 1, 'maxItems' => 10, 'uniqueItems' => true, 'items' => $uuid],
                     'instruction' => ['type' => ['string', 'null'], 'maxLength' => 4000],
                 ],
             ],

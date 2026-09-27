@@ -14,8 +14,6 @@ use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAcademicSourceEmbeddingGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAnalysisGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\HttpAiAnalysisGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\OpenAiAcademicSourceEmbeddingGateway;
 use App\Modules\Configuration\Application\Contracts\AcademicSourceFigureCropper;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceDocumentNormalizer;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
@@ -60,14 +58,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CurricularExtractionGateway::class, HostedCurricularExtractionGateway::class);
         $this->app->bind(RoleEligibility::class, AcademicRoleEligibility::class);
         $this->app->bind(DocumentRenderer::class, PhpWordDocumentRenderer::class);
-        $this->app->bind(AiAnalysisGateway::class, function (): AiAnalysisGateway {
-            return match ((string) config('ai.driver')) {
-                'baseline' => app(BaselineAiAnalysisGateway::class),
-                'http' => app(HttpAiAnalysisGateway::class),
-                'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiAnalysisGateway::class),
-                default => app(DisabledAiAnalysisGateway::class),
-            };
-        });
+        // I-146: análisis editorial y recuperación vectorial retirados. Estas
+        // vinculaciones conservan compatibilidad sin reactivar servicios antiguos.
+        $this->app->bind(AiAnalysisGateway::class, DisabledAiAnalysisGateway::class);
         $this->app->bind(AiChatGateway::class, function (): AiChatGateway {
             return match ((string) config('ai.driver')) {
                 'baseline' => app(BaselineAiAnalysisGateway::class),
@@ -75,12 +68,7 @@ class AppServiceProvider extends ServiceProvider
                 default => app(DisabledAiAnalysisGateway::class),
             };
         });
-        $this->app->bind(AcademicSourceEmbeddingGateway::class, function (): AcademicSourceEmbeddingGateway {
-            return match ((string) config('ai.embeddings.driver')) {
-                'openai' => app(OpenAiAcademicSourceEmbeddingGateway::class),
-                default => app(DisabledAcademicSourceEmbeddingGateway::class),
-            };
-        });
+        $this->app->bind(AcademicSourceEmbeddingGateway::class, DisabledAcademicSourceEmbeddingGateway::class);
         $this->app->bind(AcademicSourceDocumentNormalizer::class, function (): AcademicSourceDocumentNormalizer {
             return (bool) config('ai.source_normalization.enabled')
                 && strtolower((string) config('ai.source_normalization.driver')) === 'deepseek'
@@ -134,19 +122,6 @@ class AppServiceProvider extends ServiceProvider
             fn (User $user): bool => $user->activo
                 && app(ActiveRole::class)->hasRole(request(), RoleCode::Administrator),
         );
-        // Las fuentes son documentos de la Coordinación: Administración no participa.
-        Gate::define(
-            'view-sources',
-            fn (User $user): bool => $user->activo
-                && app(ActiveRole::class)->hasRole(request(), RoleCode::Coordinator),
-        );
-        Gate::define('manage-source', function (User $user, AcademicSource $source): bool {
-            $activeRole = app(ActiveRole::class)->resolve(request());
-
-            return $user->activo
-                && $activeRole?->role->codigo_rol === RoleCode::Coordinator->value
-                && $activeRole->carrera_id === $source->carrera_id;
-        });
         RateLimiter::for('ai-analysis', function (Request $request): Limit {
             $user = $request->user();
             $syllabus = $request->route('syllabus');

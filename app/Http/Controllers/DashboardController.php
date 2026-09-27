@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\SetupChecklist;
@@ -26,7 +25,7 @@ use Illuminate\Support\Carbon;
  * @phpstan-import-type CoordinatorReadiness from CoordinatorConvocationReadiness
  *
  * @phpstan-type DeadlinePayload array{period: string, starts_at: string, due_at: string, state: string, days_until_start: int, days_until_due: int, convocation_id: string|null}
- * @phpstan-type CoordinationConvocationPayload array{process_id: string, period: string, convocation_id: string|null, can_open: bool, available_sources: list<array{id: string, name: string}>}
+ * @phpstan-type CoordinationConvocationPayload array{process_id: string, period: string, convocation_id: string|null, can_open: bool}
  */
 class DashboardController extends Controller
 {
@@ -316,16 +315,6 @@ class DashboardController extends Controller
             'period' => $process->academicPeriod->codigo,
             'convocation_id' => $convocation?->id,
             'can_open' => $readiness['can_open'],
-            'available_sources' => $readiness['can_open']
-                ? array_values(AcademicSource::query()
-                    ->where('carrera_id', $careerId)
-                    ->where('activo', true)
-                    ->orderBy('nombre')
-                    ->get(['id', 'nombre'])
-                    ->map(fn (AcademicSource $source): array => ['id' => $source->id, 'name' => $source->nombre])
-                    ->values()
-                    ->all())
-                : [],
         ];
     }
 

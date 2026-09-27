@@ -8,7 +8,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
@@ -56,10 +55,10 @@ class PrepareTestingEnvironmentCommandTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_it_prepares_teachers_and_waits_for_a_source_before_opening_the_convocation(): void
+    public function test_it_prepares_teachers_and_opens_without_a_source_catalog(): void
     {
         $this->artisan('pruebas:preparar', ['--carrera' => 'SOFTWARE'])
-            ->expectsOutputToContain('no tiene fuentes académicas activas')
+            ->expectsOutputToContain('Convocatoria de carrera abierta.')
             ->assertSuccessful();
 
         foreach (PrepareTestingEnvironmentCommand::TEACHERS as $teacher) {
@@ -75,17 +74,15 @@ class PrepareTestingEnvironmentCommandTest extends TestCase
             ScheduledSubject::query()->with('subject')->get()->pluck('subject.nombre')->sort()->values()->all(),
         );
         $this->assertSame(SyllabusProcess::STATE_OPEN, SyllabusProcess::query()->value('estado'));
-        $this->assertSame(0, Convocation::query()->count());
+        $this->assertSame(1, Convocation::query()->count());
+        $this->assertDatabaseCount('fuentes_academicas', 0);
         // La coordinación vigente se reutiliza; no se crea otra.
         $this->assertFalse(User::query()->where('correo_electronico', PrepareTestingEnvironmentCommand::COORDINATOR_EMAIL)->exists());
     }
 
-    public function test_rerun_with_a_source_opens_the_convocation_and_is_idempotent(): void
+    public function test_rerun_without_sources_is_idempotent(): void
     {
         $this->artisan('pruebas:preparar', ['--carrera' => 'SOFTWARE'])->assertSuccessful();
-        AcademicSource::query()->create([
-            'carrera_id' => $this->career->id, 'nombre' => 'Fuente', 'activo' => true, 'contenido' => '## Perfil',
-        ]);
 
         $this->artisan('pruebas:preparar', ['--carrera' => 'SOFTWARE'])->assertSuccessful();
         $this->artisan('pruebas:preparar', ['--carrera' => 'SOFTWARE'])->assertSuccessful();

@@ -7,11 +7,15 @@
 | Identidad y acceso | RF-001 a RF-007 | CU-01, CU-02 |
 | Estructura académica | RF-008 a RF-016 | CU-03 |
 | Plantillas | RF-017 a RF-026 | CU-04 |
-| Fuentes | RF-027 a RF-033 | CU-05 |
+| CRUD de fuentes — retirado por I-146; evidencia documental interna conservada en I-145 | RF-027 a RF-033 (históricos) | CU-05 (retirado) |
 | Convocatorias y elaboración | RF-034 a RF-045 | CU-06, CU-07, CU-09 |
-| IA | RF-046 a RF-054 | CU-08 |
+| Chat de elaboración; revisor y recuperación vectorial retirados por I-146 | RF-046 a RF-054 (alcance actualizado) | CU-08 |
 | Revisión y aprobación | RF-055 a RF-065 | CU-10 a CU-14 |
 | Documentos y operación | RF-066 a RF-074 | CU-15 a CU-17 |
+
+La decisión I-146 del responsable del producto modifica el alcance activo. Los IDs de
+la SRS se conservan para trazabilidad y no acreditan funciones retiradas como vigentes.
+La importación I-145 utiliza documentos privados de entrada y confirmación humana.
 
 ## Requisitos no funcionales
 

@@ -8,6 +8,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
+use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\ProcessLocks;
@@ -53,6 +54,7 @@ final class CurricularImportsViewData
             'subjects' => Subject::query()->where('carrera_id', $careerId)->orderBy('nombre')->get(['id', 'nombre', 'codigo_asignatura'])
                 ->map(fn (Subject $subject): array => ['id' => $subject->id, 'name' => $subject->nombre, 'code' => $subject->codigo_asignatura])->all(),
             'sources' => AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)
+                ->whereNotIn('estado_ingesta', ['pendiente', 'en_ejecucion', 'fallida'])
                 ->whereNotNull('contenido_fuente_academica')->where('contenido', '!=', '')->orderBy('nombre')->get(['id', 'nombre'])
                 ->map(fn (AcademicSource $source): array => ['id' => $source->id, 'name' => $source->nombre])->all(),
             'lock_reason' => $this->locks->careerLockReason($careerId),
@@ -64,10 +66,17 @@ final class CurricularImportsViewData
     public function detail(CurricularImport $import): array
     {
         $lockReason = $this->locks->careerLockReason($import->carrera_id);
+        $originalNames = StoredObject::query()->where('carrera_id', $import->carrera_id)
+            ->whereIn('id', array_column($import->documentos_importacion, 'original_object_id'))
+            ->pluck('nombre_logico', 'id');
 
         return [
             'id' => $import->id, 'career_id' => $import->carrera_id, 'status' => $import->estado_importacion,
-            'documents' => $import->documentos_importacion, 'proposal' => $this->proposalWithCurrentValues($import),
+            'documents' => array_map(fn (array $document): array => [...$document,
+                'original_name' => $originalNames->get($document['original_object_id'] ?? ''),
+                'original_url' => isset($document['original_object_id'])
+                    ? route('api.v1.coordination.curricular-imports.documents.original', ['import' => $import->id, 'source' => $document['source_id']]) : null,
+            ], $import->documentos_importacion), 'proposal' => $this->proposalWithCurrentValues($import),
             'applied_items' => $import->seleccion_aplicada ?? [],
             'fingerprint' => $this->fingerprint($import), 'error' => $import->mensaje_error_importacion,
             'editable' => $lockReason === null && $import->estado_importacion === 'lista', 'lock_reason' => $lockReason,

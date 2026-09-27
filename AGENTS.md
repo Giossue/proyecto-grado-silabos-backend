@@ -103,11 +103,13 @@ y `composer verify` para cambios amplios, riesgosos o cuando se soliciten expres
   Los aprobados, sus revisiones enlazadas tras reapertura y los procesos cerrados se
   conservan; el cambio y la regeneración son una sola transacción (I-118, aclarada
   en I-144). Corregir resultados de aprendizaje limita el reinicio a su asignatura.
-  Las fuentes académicas son documentos
-  Markdown editables de la Coordinación, sin versiones; la evidencia de IA guarda su
-  propia fotografía.
+  I-146 retira el CRUD de Fuentes académicas y el revisor de IA con recuperación
+  vectorial. I-145 conserva documentos privados internos de ingesta y evidencia histórica;
+  el chat de elaboración usa el contexto académico y curricular fotografiado del sílabo.
 - Las validaciones determinísticas y las recomendaciones de IA son conceptos separados.
-- La IA muestra la fuente y el extracto citado; una persona decide y ejecuta.
+- La extracción curricular conserva fuente y extracto; una persona confirma los datos.
+- El chat de IA propone contenido y unidades desde el contexto autorizado del sílabo;
+  no analiza ni revisa el sílabo mediante fuentes o una base vectorizada (I-146).
 - La indisponibilidad de IA degrada solo la ayuda de IA.
 - Edición directa excepcional del coordinador depende de `PV-16`; no asumirla.
 - No escribir en la base institucional; la integración es un adaptador de lectura/importación.

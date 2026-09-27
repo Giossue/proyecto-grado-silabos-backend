@@ -9,6 +9,7 @@ use App\Modules\AiAssistance\Domain\Data\AiAnalysisInput;
 use App\Modules\AiAssistance\Domain\Data\AiChatInput;
 use App\Modules\AiAssistance\Domain\Data\AiEvidenceInput;
 use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
+use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAnalysisGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAnalysisGateway;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -26,9 +27,11 @@ class HostedAiAnalysisGatewayTest extends TestCase
             ]),
         ]);
 
-        $result = app(AiAnalysisGateway::class)->analyze($this->input());
+        // El adaptador conserva el contrato histórico; el puerto de análisis vivo
+        // permanece deshabilitado desde I-146, independientemente del proveedor.
+        $result = (new HostedAiAnalysisGateway)->analyze($this->input());
 
-        $this->assertInstanceOf(HostedAiAnalysisGateway::class, app(AiAnalysisGateway::class));
+        $this->assertInstanceOf(DisabledAiAnalysisGateway::class, app(AiAnalysisGateway::class));
         $this->assertSame('openai:gpt-test', $result->gatewayVersion);
         app(AiResultContract::class)->validate($this->input($result->requestId), $result);
         Http::assertSent(function (Request $request): bool {
@@ -76,7 +79,7 @@ class HostedAiAnalysisGatewayTest extends TestCase
             ]),
         ]);
 
-        $result = app(AiAnalysisGateway::class)->analyze($this->input());
+        $result = (new HostedAiAnalysisGateway)->analyze($this->input());
 
         $this->assertSame('claude:claude-test', $result->gatewayVersion);
     }
@@ -166,7 +169,9 @@ class HostedAiAnalysisGatewayTest extends TestCase
         $this->assertSame(['evidence-1'], $result->citationIds);
         $this->assertSame('openai:gpt-test', $result->gatewayVersion);
         Http::assertSent(fn (Request $request): bool => data_get($request->data(), 'text.format.name') === 'syllabus_chat'
-            && ! array_key_exists('reasoning', $request->data()));
+            && ! array_key_exists('reasoning', $request->data())
+            && str_contains((string) data_get($request->data(), 'input.0.content.0.text'), 'UNIDADES')
+            && str_contains((string) data_get($request->data(), 'input.1.content.0.text'), 'syllabus_unit_content'));
     }
 
     private function configure(string $driver, string $baseUrl, string $model): void

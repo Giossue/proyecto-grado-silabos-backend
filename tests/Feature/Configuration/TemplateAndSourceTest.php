@@ -3,11 +3,8 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\User;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -628,137 +625,20 @@ class TemplateAndSourceTest extends TestCase
         }
     }
 
-    public function test_coordinator_creates_and_edits_source_document(): void
+    public function test_source_management_endpoints_are_retired_for_every_role(): void
     {
-        $source = $this->createSourceAsCoordinator('Perfil de egreso');
-        $this->assertSame('Documento de referencia.', $source->descripcion);
-        $this->assertFalse(Schema::hasColumn('fuentes_academicas', 'notas_internas'));
-
-        $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.sources.update', $source), [
-                'nombre' => 'Perfil de egreso 2026',
-                'description' => 'Versión socializada con docentes.',
-            ])
-            ->assertSuccessful()
-            ->assertSuccessful();
-
-        $updated = $source->fresh();
-        $this->assertSame('Perfil de egreso 2026', $updated->nombre);
-
-        $this->actingAsCoordinator()
-            ->putJson(route('api.v1.coordination.sources.content.update', $source), [
-                'document' => [
-                    'schemaVersion' => 1,
-                    'type' => 'doc',
-                    'content' => [
-                        ['type' => 'heading', 'attrs' => ['level' => 2], 'content' => [['type' => 'text', 'text' => 'Resultado']]],
-                        ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Diseña software seguro.']]],
-                    ],
-                ],
-            ])
-            ->assertSuccessful()
-            ->assertSuccessful();
-
-        $this->assertSame("Resultado\n\nDiseña software seguro.", $source->fresh()->contenido);
-        $this->assertSame('doc', $source->fresh()->documento['type']);
-        $this->assertDatabaseHas('documentos_ia', [
-            'metadatos_documento->fuente_academica_id' => $source->id,
-            'metadatos_documento->titulo' => 'Resultado',
-            'metadatos_documento->posicion' => '0',
-            'contenido_documento' => 'Diseña software seguro.',
-        ]);
-        $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'fuente.contenido_actualizado',
-            'recurso_id' => $source->id,
-        ]);
-
-        $this->actingAsCoordinator()
-
-            ->getJson(route('api.v1.coordination.sources.show', $source))
-            ->assertOk()
-            ->assertJson(fn (Assert $page) => $page->etc()
-
-                ->where('source.name', 'Perfil de egreso 2026')
-                ->where('source.document.type', 'doc')
-                ->missing('source.content'));
-    }
-
-    public function test_source_name_is_unique_per_career(): void
-    {
-        $this->createSourceAsCoordinator('Reglamento académico');
-
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.sources.store'), ['nombre' => 'Reglamento académico'])
-            ->assertJsonValidationErrors('nombre');
-
-        $this->assertSame(1, AcademicSource::query()->where('nombre', 'Reglamento académico')->count());
-    }
-
-    public function test_coordinator_can_physically_remove_an_unused_source(): void
-    {
-        $source = $this->createSourceAsCoordinator('Fuente para retirar');
-
-        $this->actingAsCoordinator()
-            ->deleteJson(route('api.v1.coordination.sources.destroy', $source))
-            ->assertOk()
-            ->assertJsonPath('message', 'Fuente eliminada.');
-
-        $this->assertNull($source->fresh());
-        $this->actingAsCoordinator()
-            ->getJson(route('api.v1.coordination.sources.index'))
-            ->assertOk()
-            ->assertJsonCount(0, 'sources');
-        $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'fuente.eliminada',
-            'recurso_id' => $source->id,
-        ]);
-    }
-
-    public function test_administrator_cannot_access_sources(): void
-    {
-        $source = $this->createSourceAsCoordinator('Fuente de coordinación');
-
-        $this->actingAsAdministrator()
-            ->getJson(route('api.v1.coordination.sources.index'))
-            ->assertForbidden();
-
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.coordination.sources.store'), ['nombre' => 'Fuente administrativa'])
-            ->assertForbidden();
-
-        $this->actingAsAdministrator()
-            ->putJson(route('api.v1.coordination.sources.content.update', $source), ['content' => 'Edición indebida'])
-            ->assertForbidden();
-
-        $this->actingAsAdministrator()
-            ->deleteJson(route('api.v1.coordination.sources.destroy', $source))
-            ->assertForbidden();
-    }
-
-    public function test_coordinator_cannot_open_source_from_another_career(): void
-    {
-        $faculty = Faculty::query()->firstOrFail();
-        $otherCareer = Career::query()->create([
-            'facultad_id' => $faculty->id,
-            'codigo_carrera' => 'REDES',
-            'nombre' => 'Redes',
-            'cantidad_ciclos_malla' => 8,
-            'activo' => true,
-        ]);
-        $source = AcademicSource::query()->create([
-            'carrera_id' => $otherCareer->id,
-            'nombre' => 'Fuente fuera de alcance',
-            'activo' => true,
-        ]);
-
-        $this->actingAsCoordinator()
-
-            ->getJson(route('api.v1.coordination.sources.show', $source))
-            ->assertForbidden();
-
-        $this->actingAsCoordinator()
-            ->putJson(route('api.v1.coordination.sources.content.update', $source), ['content' => 'Edición fuera de alcance'])
-            ->assertForbidden();
+        foreach ([$this->administrator, $this->coordinator] as $user) {
+            $this->actingAs($user)->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id]);
+            $this->getJson('/api/v1/coordination/sources')->assertNotFound();
+            $this->postJson('/api/v1/coordination/sources', ['nombre' => 'Retirada'])->assertNotFound();
+            $id = (string) Str::uuid();
+            foreach (['get', 'patch', 'put', 'delete'] as $method) {
+                $this->{$method.'Json'}('/api/v1/coordination/sources/'.$id)->assertNotFound();
+            }
+            $this->putJson('/api/v1/coordination/sources/'.$id.'/content', ['content' => 'Retirada'])->assertNotFound();
+            $this->postJson('/api/v1/coordination/sources/'.$id.'/pdf')->assertNotFound();
+        }
+        $this->assertDatabaseCount('fuentes_academicas', 0);
     }
 
     private function createTemplate(): SyllabusTemplate
@@ -770,18 +650,6 @@ class TemplateAndSourceTest extends TestCase
             ->assertSuccessful();
 
         return $template->fresh();
-    }
-
-    private function createSourceAsCoordinator(string $name): AcademicSource
-    {
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.sources.store'), [
-                'nombre' => $name,
-                'description' => 'Documento de referencia.',
-            ])
-            ->assertSuccessful();
-
-        return AcademicSource::query()->where('nombre', $name)->firstOrFail();
     }
 
     private function actingAsAdministrator(): static

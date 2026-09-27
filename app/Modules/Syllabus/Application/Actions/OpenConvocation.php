@@ -40,7 +40,7 @@ class OpenConvocation
         return DB::transaction(function () use ($actor, $convocationId, $activeRole, $request): Convocation {
             $convocation = Convocation::query()
                 ->lockForUpdate()
-                ->with(['career.faculty', 'sources', 'process'])
+                ->with(['career.faculty', 'process'])
                 ->findOrFail($convocationId);
             if ($activeRole?->carrera_id !== $convocation->carrera_id || $activeRole->role->codigo_rol !== 'coordinador') {
                 abort(403);
@@ -64,9 +64,6 @@ class OpenConvocation
             $this->readiness->assertAcademicDataReady($convocation->carrera_id);
             $template = SyllabusTemplate::institutional();
             $this->templateStructure->assertUsable($template, 'convocation');
-            if ($convocation->sources->isEmpty()) {
-                throw ValidationException::withMessages(['convocation' => 'La carrera necesita al menos una fuente académica activa para abrir la convocatoria.']);
-            }
 
             $generated = $this->generator->execute($convocation);
 

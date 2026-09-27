@@ -19,7 +19,7 @@ use Illuminate\Validation\ValidationException;
 /**
  * Pausa y reanudación por carrera. El cierre no es de la carrera: lo decide
  * Administración cerrando el proceso, que detiene a todas las convocatorias. La pausa es lo que permite a Coordinación corregir
- * su malla o sus fuentes sin que los docentes sigan trabajando sobre lo que cambia; no
+ * su malla o sus datos curriculares sin que los docentes sigan trabajando sobre lo que cambia; no
  * toca a las demás carreras. Reanudar exige que el proceso institucional siga abierto.
  */
 class TransitionConvocation
@@ -68,14 +68,6 @@ class TransitionConvocation
                 throw ValidationException::withMessages([
                     'convocation' => 'El proceso institucional no está abierto; la convocatoria se reanudará cuando Administración lo reanude.',
                 ]);
-            }
-            if ($to === Convocation::STATE_OPEN) {
-                $locked->load('sources');
-                if ($locked->sources->isEmpty()) {
-                    throw ValidationException::withMessages([
-                        'convocation' => 'La carrera necesita al menos una fuente académica activa antes de reanudar la convocatoria.',
-                    ]);
-                }
             }
 
             // Los paralelos creados durante la pausa nacen con su expediente al reanudar.

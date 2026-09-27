@@ -2,7 +2,6 @@
 
 namespace App\Modules\Configuration\Application;
 
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use Illuminate\Validation\ValidationException;
 
 final class AcademicSourceDocument
@@ -83,20 +82,6 @@ final class AcademicSourceDocument
         }
 
         return implode("\n\n", $blocks);
-    }
-
-    /**
-     * @param  array<string, mixed>  $document
-     * @return array<string, mixed>
-     */
-    public function withAssetUrls(AcademicSource $source, array $document): array
-    {
-        $document['content'] = array_map(
-            fn (mixed $node): mixed => is_array($node) ? $this->withNodeAssetUrl($source, $node) : $node,
-            is_array($document['content'] ?? null) ? $document['content'] : [],
-        );
-
-        return $document;
     }
 
     /** @return array<string, mixed>|null */
@@ -230,30 +215,5 @@ final class AcademicSourceDocument
         $text = implode($separator, array_filter($values, static fn (string $value): bool => $value !== ''));
 
         return preg_replace('/[ \t]*\n[ \t]*/u', "\n", $text) ?? $text;
-    }
-
-    /**
-     * @param  array<string, mixed>  $node
-     * @return array<string, mixed>
-     */
-    private function withNodeAssetUrl(AcademicSource $source, array $node): array
-    {
-        if (($node['type'] ?? null) === 'sourceImage' && is_array($node['attrs'] ?? null)) {
-            $objectId = $node['attrs']['objectId'] ?? null;
-            if (is_string($objectId)) {
-                $node['attrs']['src'] = route('api.v1.coordination.sources.assets.show', [
-                    'source' => $source->id,
-                    'asset' => $objectId,
-                ]);
-            }
-        }
-        if (is_array($node['content'] ?? null)) {
-            $node['content'] = array_map(
-                fn (mixed $child): mixed => is_array($child) ? $this->withNodeAssetUrl($source, $child) : $child,
-                $node['content'],
-            );
-        }
-
-        return $node;
     }
 }

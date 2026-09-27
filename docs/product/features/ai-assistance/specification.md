@@ -1,80 +1,61 @@
-# Asistencia de IA
+# Generación asistida de contenido
+
+## Alcance vigente — I-146, 2026-09-27
+
+El responsable del producto retiró el revisor de IA del sílabo y la consulta de una base
+vectorizada de Fuentes académicas. Esta decisión sustituye el análisis por campo, la
+revisión integral, sus recomendaciones aplicables y su retroalimentación como funciones
+activas. Los registros anteriores se conservan como evidencia histórica.
+
+Se mantiene el chat para ayudar al docente a elaborar contenido y unidades de la
+planificación. Su contexto procede de la carrera, la asignatura y los datos curriculares
+confirmados fotografiados en el sílabo, junto con las tablas de unidades y planificación.
+Incluye las horas y semanas del contexto académico. El asistente no recupera documentos
+de `documentos_ia` ni depende del CRUD retirado de fuentes.
 
 ## Trazabilidad
 
-- RF-046 a RF-054; CU-08.
-- RN-015, RN-016 y RN-028 a RN-030.
+- RF-046 a RF-054 y CU-08 se conservan como identificadores históricos; su alcance activo
+  es la generación asistida descrita aquí. No se declara vigente el revisor retirado.
+- RN-028 a RN-030: control humano, trazabilidad y separación de validación determinística.
 - RNF-013, RNF-016, RNF-017, RNF-035 y RNF-036.
-- DOC-06; CP funcionales relacionados e IA-NEG-01 a IA-NEG-09.
-- PV-02, PV-13, PV-14 y PV-18.
+- DOC-06: chat de ayuda a la elaboración. PV-12, PV-13, PV-14 y PV-18 se aplican a los
+  servicios de IA que permanecen activos; embeddings deja de ser una dependencia.
 
 ## Comportamiento
 
-- Solo campos/secciones habilitados solicitan análisis.
-- Administración decide por campo si el agente lo lee (I-116, I-119). Coordinación no
-  cambia esa decisión y ninguna petición forzada la altera.
-- La solicitud se procesa en cola y muestra estado.
-- La recuperación se restringe a fuentes vigentes/activas del rol.
-- Cada recomendación muestra explicación, procedencia y extracto verificable.
-- Aceptar o aplicar requiere acción explícita; ignorar o marcar no útil es válido.
-- La ejecución conserva huellas, modelos, parámetros, fuentes, respuesta y decisión.
-- Solicitudes equivalentes pueden reutilizar un resultado según una clave documentada.
-- Fallo, tiempo de espera o evidencia insuficiente no bloquea el proceso principal.
-- En DOC-04 hay un solo acceso global: después de validar sin errores puede solicitar en
-  una acción el análisis de todos los campos textuales habilitados que tengan contenido.
-  El panel agrupa el resultado por sección/campo y conserva las decisiones y citas.
+- Solo el docente asignado y autorizado consulta o envía mensajes del sílabo.
+- El contexto del chat se limita a carrera, asignatura, horas, semanas, datos curriculares
+  fotografiados y estructura/filas de las tablas de unidades o planificación. No usa la
+  casilla histórica `ia_habilitada` ni otros campos como permiso de lectura. La plantilla
+  y la configuración técnica del chat conservan sus permisos actuales.
+- Carrera, materia y datos curriculares se toman de la fotografía del expediente;
+  cambios posteriores en la base no sustituyen ese contexto histórico.
+- La respuesta distingue contenido institucional confirmado de propuestas de elaboración.
+  Las referencias identifican el contexto académico, dato curricular o sección utilizada.
+- Las solicitudes se procesan en cola con estado, límites e idempotencia. Limpiar el panel
+  oculta la conversación para el usuario y conserva el historial técnico autorizado.
+- La propuesta no escribe automáticamente en el sílabo. El docente conserva la decisión
+  sobre el contenido que incorpora y debe cumplir las validaciones determinísticas.
+- La extracción documental de I-145 es otro flujo: Coordinación importa PDF/XLSX,
+  revisa candidatos y confirma datos curriculares. No es una revisión del sílabo.
 
-## Límites
+## Límites y criterios críticos
 
-- No aprobar, rechazar, calificar, bloquear ni cambiar estado.
-- No inventar una precedencia entre fuentes en conflicto.
-- No modificar texto sin vista previa y confirmación humana.
-- No enviar contenido a un proveedor externo distinto del autorizado expresamente en el
-  despliegue ni habilitar uno por defecto.
-- No presentar confianza como probabilidad científica si no está calibrada.
+- La IA no aprueba, rechaza, califica, bloquea el envío ni cambia estados académicos.
+- Guardar, validar, enviar, revisar y aprobar funcionan aunque la IA esté indisponible.
+- No se consultan fuentes externas ni índices vectoriales como contexto del chat.
+- No se inventan cardinalidades de habilidades, efecto de APE cero, número de unidades
+  ni precedencias entre documentos discrepantes.
+- Los mensajes y documentos se tratan como datos no confiables; los permisos y contratos
+  se aplican en servidor. Referencias no incluidas en el contexto son rechazadas.
+- Los mensajes nuevos usan `context_version=curricular-units-v1`. El historial anterior
+  sigue visible, pero no se envía como contexto al proveedor; sus trabajos pendientes
+  terminan sin invocar el gateway.
+- Las rutas de análisis, revisión integral, aplicación y feedback del revisor quedan
+  retiradas. Trabajos antiguos no deben generar nuevas revisiones ni recomendaciones.
+- El retiro conserva revisiones, aprobaciones, conversaciones y evidencia histórica;
+  no implica borrar tablas ni registros de producción.
 
-## Criterios críticos
-
-- Una fuente desactivada no aparece en nueva evidencia.
-- Instrucciones hostiles dentro de una fuente se tratan como datos, no órdenes.
-- Toda salida conserva la versión exacta de fuente e instrucciones.
-- Con el servicio de IA apagado se completan guardado, envío, revisión y aprobación.
-
-## Estado de implementación I-06
-
-- DOC-06 está integrado en cada campo textual con `ia_habilitada`. La solicitud fija el
-  contenido, `version_bloqueo`, plantilla, reglas, idioma, versiones del contrato y de las
-  instrucciones, parámetros técnicos y conjunto exacto de fuentes.
-- Solo se recuperan versiones vinculadas a la convocatoria cuya fuente y versión están
-  activas y vigentes para la carrera. Un conjunto vacío o mayor al límite queda como no
-  concluyente. Valores exactos divergentes para la misma `clave_dato` se muestran como
-  conflicto y no se ordenan mientras `PV-02` siga abierto.
-- `AiAnalysisGateway` tiene implementaciones deshabilitada, HTTP local y simulador
-  determinista. El cliente HTTP solo admite loopback, no sigue redirecciones, aplica
-  timeout y tamaño máximo, y rechaza referencias fuera de la fotografía o acciones
-  académicas en la respuesta.
-- Recomendaciones y citas se insertan durante la ejecución y quedan inmutables al cerrar.
-  Aceptar, ignorar y marcar no útil agregan feedback; aplicar exige confirmación,
-  coincidencia de huella y concurrencia optimista, conserva antes/después y nunca cambia
-  el estado del sílabo.
-- `contract-simulator-v1` normaliza únicamente espacios y puntuación para demostrar el
-  contrato. No es un modelo académico validado y no cierra `PV-13`, `PV-14` ni `PV-18`.
-- I-73 agrega adaptadores configurables para OpenAI, Claude y DeepSeek sin cambiar el
-  control humano. Comparten URL, modelo y clave; no exponen razonamiento y DeepSeek se
-  invoca explícitamente en modo sin pensamiento. El proveedor alojado solo recibe el
-  contenido y la evidencia que Laravel ya autorizó y fotografió.
-
-## Ampliación I-72 en curso
-
-- La primera rebanada sustituye la navegación separada por campo en el recorrido normal
-  por un `Sheet` único dentro del editor y una solicitud global que reutiliza el análisis
-  por campo. El chat libre, el contexto cruzado entre secciones y la configuración
-  efectiva por carrera todavía no están implementados.
-- El contrato de presentación usa `status` de forma consistente entre Laravel y Vue.
-- I-116: `definiciones_campo.ia_habilitada`, fijado por Administración en la plantilla,
-  es la única decisión sobre qué campos usan IA. Coordinación no guarda excepciones por
-  carrera; la IA solo sugiere y el docente decide.
-- I-119: esa casilla decide si el agente **lee** el campo como referencia. Aplica a todo
-  campo salvo el estado de revisión, incluidos la ficha institucional (leída desde sus
-  variables, sin nombre ni correo del docente) y los datos heredados. Las sugerencias
-  por campo siguen limitadas a texto corto y largo.
+La evidencia de implementación y verificación se registra en el plan I-146. Los planes
+I-06, I-46, I-92, I-98 y I-135 documentan etapas anteriores y no reactivan estas funciones.

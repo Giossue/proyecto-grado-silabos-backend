@@ -2,139 +2,93 @@
 
 namespace App\Modules\AiAssistance\Application;
 
-use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Academic\Application\CurricularData;
+use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Syllabus\Application\IdentificationCard;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Support\CanonicalHasher;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
+/** Contexto fotografiado para proponer contenido de unidades; sin RAG ni datos personales. */
 class BuildSyllabusChatContext
 {
-    /** Datos de la ficha que identifican a una persona: no aportan a las sugerencias. */
-    private const PERSONAL_VARIABLES = ['nombre_docente', 'correo_docente'];
+    public const VERSION = 'curricular-units-v1';
 
-    public function __construct(
-        private readonly AiEvidenceCollector $sources,
-        private readonly CanonicalHasher $hasher,
-    ) {}
+    public function __construct(private readonly CanonicalHasher $hasher) {}
 
-    /**
-     * @return list<array{
-     *   id: string, type: string, label: string, excerpt: string, fingerprint: string,
-     *   field_id: string|null, source_id: string|null, fragment_id: string|null
-     * }>
-     */
-    public function build(Syllabus $syllabus, ?string $query = null, ?string $excludeFieldId = null): array
+    /** @return list<array{id: string, type: string, label: string, excerpt: string, fingerprint: string, field_id: string|null, source_id: null, fragment_id: null}> */
+    public function build(Syllabus $syllabus): array
     {
-        $syllabus->loadMissing(['values', 'rows', 'convocation']);
-        $values = $syllabus->values->keyBy('definicion_campo_id');
-        $rows = $syllabus->rows->groupBy('definicion_campo_id');
-        $fieldItems = [];
-
+        $syllabus->loadMissing('rows');
+        $context = $syllabus->contexto_academico ?? [];
+        $academic = [];
+        foreach ([
+            'career.name' => 'Carrera', 'subject.name' => 'Asignatura', 'subject.code' => 'Código',
+            'subject.cycle' => 'Ciclo', 'subject.organization_unit' => 'Unidad curricular',
+            'subject.credits' => 'Créditos', 'subject.hours_ac' => 'Horas ACD',
+            'subject.hours_pae' => 'Horas APE', 'subject.hours_aa' => 'Horas AA',
+            'scheduled_subject.teaching_weeks' => 'Semanas lectivas',
+        ] as $path => $label) {
+            $value = data_get($context, $path);
+            if (is_scalar($value) && trim((string) $value) !== '') {
+                $academic[] = $label.': '.$value;
+            }
+        }
+        $items = [];
+        if ($academic !== []) {
+            $items[] = $this->item('contexto_academico', 'Carrera y asignatura', implode("\n", $academic));
+        }
+        $definitions = data_get($context, 'curricular.definitions', []);
+        $values = data_get($context, 'curricular.values', []);
+        $curricularItems = [];
+        foreach (is_array($definitions) ? $definitions : [] as $key => $definition) {
+            if (! is_array($definition) || ! is_array($values) || ! array_key_exists($key, $values)) {
+                continue;
+            }
+            $content = CurricularData::display($values[$key], $definition);
+            if ($content !== '') {
+                $curricularItems[] = $this->item('dato_curricular', (string) ($definition['label'] ?? $key), $content);
+            }
+        }
+        // Compatibilidad con sílabos anteriores a la importación genérica.
+        if (! is_array($values) || ! array_key_exists('resultados_aprendizaje', $values)) {
+            $outcomes = data_get($context, 'subject.learning_outcomes.outcomes', []);
+            $texts = is_array($outcomes) ? array_filter(array_column($outcomes, 'text'), 'is_string') : [];
+            if ($texts !== []) {
+                $curricularItems[] = $this->item('dato_curricular', 'Resultados de aprendizaje confirmados', implode("\n", $texts));
+            }
+        }
         foreach (SyllabusTemplate::institutional()->sections->sortBy('posicion') as $section) {
             foreach ($section->blocks->sortBy('posicion') as $block) {
+                $layout = TableLayout::fromBlock($block);
+                if ($layout === null) {
+                    continue;
+                }
+                // En TableLayout, repeat agrupa por unidad; las filas repetibles genéricas no lo habilitan.
+                $groupsByUnit = $layout['repeat']['enabled'];
+                if (! TableLayout::isPlanning($layout) && ! $groupsByUnit) {
+                    continue;
+                }
                 foreach ($block->fields->sortBy('posicion') as $field) {
-                    if ($field->id === $excludeFieldId) {
+                    if ($field->tipo !== 'repetible') {
                         continue;
                     }
-                    if (! $field->ia_habilitada) {
-                        continue;
-                    }
-                    $excerpt = $block->configuredContentType() === 'institutional' && $field->heredado
-                        ? $this->identificationContent($syllabus)
-                        : $this->fieldContent($field, $values->get($field->id)?->valor, $rows->get($field->id));
-                    if ($excerpt === '') {
-                        continue;
-                    }
-                    $excerpt = mb_substr($excerpt, 0, (int) config('ai.limits.evidence_excerpt_characters'));
-                    $fieldItems[] = [
-                        'id' => (string) Str::uuid(),
-                        'type' => 'seccion_silabo',
-                        'label' => trim((string) $field->etiqueta) === '' ? $section->titulo : "{$section->titulo} · {$field->etiqueta}",
-                        'excerpt' => $excerpt,
-                        'fingerprint' => $this->hasher->hash($excerpt),
-                        'field_id' => $field->id,
-                        'source_id' => null,
-                        'fragment_id' => null,
-                    ];
+                    $rows = $syllabus->rows->where('definicion_campo_id', $field->id)->sortBy('posicion')->pluck('datos')->values()->all();
+                    $content = $this->hasher->json(['columns' => $layout['columns'], 'unit_fields' => $layout['header_fields'], 'rows' => $rows]);
+                    $items[] = $this->item('seccion_silabo', $field->displayName(), $content, $field->id);
                 }
             }
         }
 
-        $sourceItems = [];
-        foreach ($this->sources->collect($syllabus, $query)['items'] as $source) {
-            $sourceItems[] = [
-                'id' => (string) Str::uuid(),
-                'type' => 'fuente_academica',
-                'label' => $source['source_name'],
-                'excerpt' => $source['excerpt'],
-                'fingerprint' => $source['fingerprint'],
-                'field_id' => null,
-                'source_id' => $source['source_id'],
-                'fragment_id' => $source['fragment_id'],
-            ];
-        }
-
-        $limit = max(1, (int) config('ai.limits.evidence_items'));
-        $sourceQuota = $sourceItems === [] ? 0 : min(count($sourceItems), max(1, intdiv($limit, 2)));
-        $fieldQuota = min(count($fieldItems), $limit - $sourceQuota);
-        $remaining = $limit - $sourceQuota - $fieldQuota;
-        $sourceQuota += min($remaining, count($sourceItems) - $sourceQuota);
-        $remaining = $limit - $sourceQuota - $fieldQuota;
-        $fieldQuota += min($remaining, count($fieldItems) - $fieldQuota);
-
-        return array_merge(
-            array_slice($fieldItems, 0, $fieldQuota),
-            array_slice($sourceItems, 0, $sourceQuota),
-        );
+        return array_slice([...$items, ...$curricularItems], 0, max(1, (int) config('ai.limits.evidence_items')));
     }
 
-    /**
-     * La ficha institucional no guarda un valor propio: se lee desde las variables que la
-     * pintan, sin marcas de unidad ni datos personales del docente.
-     */
-    private function identificationContent(Syllabus $syllabus): string
+    /** @return array{id: string, type: string, label: string, excerpt: string, fingerprint: string, field_id: string|null, source_id: null, fragment_id: null} */
+    private function item(string $type, string $label, string $content, ?string $fieldId = null): array
     {
-        $values = TemplateVariables::resolve([
-            'identification' => IdentificationCard::fromSyllabus($syllabus),
-            'academic_context' => $syllabus->contexto_academico,
-        ]);
-        $lines = [];
-        foreach (TemplateVariables::definitions([]) as $key => $definition) {
-            $value = trim($values[$key] ?? '');
-            if (isset($definition['equals']) || in_array($key, self::PERSONAL_VARIABLES, true) || $value === '') {
-                continue;
-            }
-            $lines[] = "{$definition['label']}: {$value}";
-        }
+        $excerpt = mb_substr($content, 0, (int) config('ai.limits.evidence_excerpt_characters'));
 
-        return implode("\n", $lines);
-    }
-
-    /** @param Collection<int, RepeatableRow>|null $rows */
-    private function fieldContent(FieldDefinition $field, mixed $value, mixed $rows): string
-    {
-        if ($field->tipo === 'repetible') {
-            $data = [];
-            foreach (($rows ?? []) as $row) {
-                $data[(int) $row->posicion] = $row->datos;
-            }
-            ksort($data);
-            $data = array_values($data);
-
-            return $data === [] ? '' : (json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '');
-        }
-        if (is_bool($value)) {
-            return $value ? 'Sí' : 'No';
-        }
-        if (is_array($value)) {
-            return implode(', ', array_filter($value, 'is_scalar'));
-        }
-
-        return is_scalar($value) ? trim((string) $value) : '';
+        return ['id' => (string) Str::uuid(), 'type' => $type, 'label' => $label, 'excerpt' => $excerpt,
+            'fingerprint' => $this->hasher->hash($excerpt), 'field_id' => $fieldId, 'source_id' => null, 'fragment_id' => null];
     }
 }

@@ -8,11 +8,28 @@ use App\Modules\Academic\Application\Actions\RequestCurricularImport;
 use App\Modules\Academic\Application\Actions\RetryCurricularImport;
 use App\Modules\Academic\Application\Queries\CurricularImportsViewData;
 use App\Modules\Academic\Presentation\Http\Requests\RequestCurricularImportRequest;
+use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class CurricularImportUploadController extends Controller
 {
+    public function original(Request $request, string $import, string $source, CurricularImportsViewData $view): StreamedResponse
+    {
+        $record = $view->find($import, $request);
+        $document = collect($record->documentos_importacion)->firstWhere('source_id', $source);
+        abort_unless(is_array($document) && is_string($document['original_object_id'] ?? null), 404);
+        $object = StoredObject::query()->where('carrera_id', $record->carrera_id)->where('estado', 'activo')
+            ->whereKey($document['original_object_id'])->firstOrFail();
+        abort_unless(Storage::disk($object->disco)->exists($object->ruta_interna), 404);
+
+        return Storage::disk($object->disco)->download($object->ruta_interna, $object->nombre_logico, [
+            'Content-Type' => $object->mime, 'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
     public function retry(Request $request, string $import, RetryCurricularImport $action, CurricularImportsViewData $view): JsonResponse
     {
         $actor = $request->user();

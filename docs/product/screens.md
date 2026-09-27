@@ -1,5 +1,10 @@
 # Inventario de interfaces
 
+I-146 (2026-09-27) retira COR-11 y los paneles del revisor de IA. DOC-06 conserva el
+chat de elaboración con contexto académico/curricular; la importación I-145 conserva
+documentos privados internos y revisión por lote, sin editor de fuentes. COR-11 queda
+en el inventario como identificador histórico.
+
 ## Globales
 
 | ID    | Pantalla                   |
@@ -18,7 +23,7 @@
 | DOC-03 | Resumen del sílabo              |
 | DOC-04 | Editor por secciones            |
 | DOC-05 | Validación determinística       |
-| DOC-06 | Asistencia de IA                |
+| DOC-06 | Chat de elaboración de contenido y unidades                |
 | DOC-07 | Confirmación de envío           |
 | DOC-08 | Correcciones y respuestas       |
 | DOC-09 | Historial y comparación         |
@@ -38,7 +43,7 @@
 | COR-08 | Solicitar corrección                                          |
 | COR-09 | Aprobar                                                       |
 | COR-10 | Reabrir aprobado                                              |
-| COR-11 | Fuentes académicas                                            |
+| COR-11 | Retirada por I-146: Fuentes académicas                                            |
 | COR-12 | Retirado en I-122: el avance de la carrera se consulta en el Panel |
 | COR-13 | Malla, constructor visual/formulario y materias de la carrera |
 | COR-14 | Materias programadas en el período y sus paralelos            |
@@ -133,10 +138,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   **Enviar sílabo**. Las recomendaciones de IA permanecen opcionales y no bloquean.
 - DOC-04 ubica el único **Asistente IA** en una columna fija a la derecha del formulario
   en escritorio, nunca uno por sección o campo. En pantallas estrechas se conserva dentro
-  del flujo, después del formulario. Muestra las fuentes disponibles y los resultados
-  agrupados por sección/campo. **Revisar sílabo** solo se habilita después de una
-  validación limpia; la edición y el envío continúan disponibles mientras la IA procesa
-  o falla. La ruta de detalle docente usa una superficie documental sin sidebar ni
+  del flujo, después del formulario. El chat propone contenido y unidades desde el
+  contexto académico/curricular fotografiado y las tablas de planificación. No presenta
+  fuentes ni revisión automática; la edición y el envío continúan disponibles mientras
+  el chat procesa o falla. La ruta de detalle docente usa una superficie documental sin sidebar ni
   encabezado autenticado global; conserva únicamente el cambio de tema y el formulario
   mantiene sus propias acciones operativas.
 - I-60 separa los dos estados de ADM-06. `/admin/plantilla/{id}` presenta la plantilla
@@ -189,11 +194,11 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   barra de progreso y los pasos en orden (Administración: facultades, carreras,
   modalidades, periodo, cuentas,
   coordinadores, plantilla, proceso; Coordinación: malla, materias programadas, paralelos,
-  docentes, fuentes, convocatoria; Docencia: recibir, iniciar, enviar). Coordinación calcula
+  docentes, convocatoria; Docencia: recibir, iniciar, enviar). Coordinación calcula
   los pasos contra el período institucional vigente y solo los completa cuando todas las
   materias programadas tienen paralelos y todos los paralelos tienen docente vigente. Si
-  todo está listo, el último paso abre un diálogo para seleccionar las fuentes e iniciar la
-  convocatoria desde el mismo Panel. Una vez abierta, la tarjeta de plazo abre su
+  todo está listo, el último paso permite iniciar la convocatoria desde el mismo Panel.
+  I-146 retira la selección y el requisito de Fuentes académicas. Una vez abierta, la tarjeta de plazo abre su
   seguimiento. Docencia continúa desde esa tarjeta hacia **Mis sílabos**. Cada paso
   se calcula con datos reales; el siguiente lleva su botón y la tarjeta desaparece al
   completarse. Administración conserva «Panel» en el sidebar; Coordinación y Docencia
@@ -250,16 +255,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   solo lectura; una incoherencia con 48 horas por crédito se reporta como configuración.
   En ADM-06 aún no existe una materia contra la cual comparar, por lo que el resumen no
   se muestra. Aparece únicamente dentro de un sílabo real con contexto de malla.
-  Las fuentes son documentos editables: COR-11 abre el contenido como un documento
-  continuo con cinta de opciones; el formato se aplica en tiempo real y el sistema
-  conserva un documento JSON estructurado. Tablas combinadas e imágenes mantienen su
-  orden. Una pestaña separada muestra el PDF original privado para contrastar la
-  extracción; el editor no intenta reproducir sus páginas físicas. La fuente se crea
-  una sola vez con nombre, descripción y PDF. Durante la ingesta, un diálogo modal
-  bloquea el resto del flujo, muestra el avance real y abre COR-11 automáticamente solo
-  al finalizar; el detalle no ofrece carga ni reprocesamiento del PDF.
+  I-146 retira COR-11 y su editor de fuentes. Los originales PDF/XLSX de importaciones
+  curriculares se descargan de forma privada y autorizada desde el detalle del lote.
   I-145 añade en Coordinación un botón flotante **Importar datos curriculares**:
-  recibe PDF/XLSX o fuentes ya cargadas para la carrera activa y abre un asistente con
+  recibe PDF/XLSX o documentos de ingesta previos de la carrera activa y abre un asistente con
   carga, estado del procesamiento y revisión de la propuesta. No pide transcribir
   contenidos ni indicar manualmente la procedencia de cada dato. Las filas muestran
   materia, contenido propuesto, fuente/localizador/extracto y contenido vigente cuando
@@ -389,10 +388,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   académico institucional. ADM-12 ya no ofrece un alta independiente y remite a Periodos
   académicos; el servidor rechaza igualmente un alta forzada sin estructura lista. COR-03 muestra las convocatorias institucionales visibles y
   permite iniciar únicamente el alcance de su carrera desde una abierta; hereda plantilla,
-  período y fechas, y exige seleccionar al menos una fuente activa de la carrera antes de
-  iniciar. El mismo inicio está disponible en COR-01 cuando la comprobación completa de
-  malla, programación, paralelos, docentes, fuentes, plantilla y logo indica que la carrera
-  está lista. Esa selección queda congelada durante el alcance. COR-02 lista
+  período y fechas. El mismo inicio está disponible en COR-01 cuando la comprobación
+  completa de malla, programación, paralelos, docentes, plantilla y logo indica que la
+  carrera está lista; los documentos de ingesta no son un requisito para convocar. COR-02 lista
   los procesos institucionales desde antes de iniciar la carrera, con estado institucional
   y estado de carrera separados; el filtro muestra solo convocatorias iniciadas, pausadas y
   cerradas, y el seguimiento de expedientes se consulta en un `Sheet` lateral dentro de cada convocatoria. No tiene
@@ -402,10 +400,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   esa misma pantalla se pausa, reanuda o cierra el proceso. COR-04 es solo seguimiento y
   avisa cuando la convocatoria o
   el proceso institucional están en pausa o cerrados. ADM-05,
-  ADM-06, COR-11 y COR-13 muestran un aviso con la razón del bloqueo y ocultan las
+  ADM-06 y COR-13 muestran un aviso con la razón del bloqueo y ocultan las
   acciones de edición mientras dure; el servidor rechaza igual aunque se fuerce la
   petición. I-44 limita ese candado a la plantilla institucional y, por carrera, a la
-  malla, fuentes, programaciones, paralelos y asignaciones genéricas. Facultades, carreras,
+  malla, datos curriculares, programaciones, paralelos y asignaciones genéricas. Facultades, carreras,
   períodos, cuentas y roles continúan administrables durante el proceso abierto.
 - El menú de acciones de ADM-04 distingue edición y eliminación: **Editar** abre un
   `Sheet` precargado; **Eliminar** pide confirmación y explica si una dependencia o
@@ -418,7 +416,7 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 | Rol           | Interfaces cubiertas                            | Comportamiento                                                                                                                                                                                                                                 |
 | ------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Administrador | ADM-02, ADM-03, ADM-04, ADM-05, ADM-06 y ADM-12 | Cuentas, roles, catálogos, coordinaciones, campos y procesos de sílabos se crean desde una acción que abre el `Sheet` derecho. La única plantilla institucional se crea como contenedor vacío; el administrador puede aplicar «Formatear» para cargar la estructura oficial o construirla manualmente. |
-| Coordinador   | COR-02, COR-06, COR-11, COR-13, COR-14 y COR-15 | Convocatorias, observaciones, fuentes, mallas, materias programadas, paralelos y asignaciones docentes usan el mismo patrón. En COR-15, los selectores permiten buscar docentes por nombre o correo y paralelos por materia, período o código. |
+| Coordinador   | COR-02, COR-06, COR-13, COR-14 y COR-15 | Convocatorias, observaciones, mallas, materias programadas, paralelos y asignaciones docentes usan el mismo patrón. En COR-15, los selectores permiten buscar docentes por nombre o correo y paralelos por materia, período o código. |
 | Docente       | DOC-02 a DOC-10                                 | No administra colecciones maestras. Edición, IA, envío y respuestas son flujos académicos de página completa, no formularios de alta.                                                                                                          |
 
 Selección de rol, filtros, configuración personal, resolución de contradicciones y

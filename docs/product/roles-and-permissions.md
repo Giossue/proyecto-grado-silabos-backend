@@ -30,21 +30,25 @@ el permiso, pero no lo sustituyen.
 | Gestionar materias programadas y paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta asignada |
 | Asignar docentes a paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta propia |
 | Diseñar/publicar plantilla | Sí, salvo con proceso abierto | Consulta/aporte según política | No |
-| Gestionar fuentes (documentos) | No participa | Sí, en su carrera, salvo con convocatoria en curso | Consulta autorizada |
+| Importar documentos y confirmar datos curriculares (I-145/I-146) | No participa | Sí, en su carrera, con los bloqueos de corrección vigentes | Consulta del contexto de sus sílabos |
 | Crear y abrir, pausar, reanudar y cerrar el proceso de sílabos | Sí | Consulta al convocar | No |
-| Iniciar alcance de su carrera desde convocatoria institucional abierta | No | Sí, si su malla, materias programadas, paralelos, docentes y fuentes están listos | No |
+| Iniciar alcance de su carrera desde convocatoria institucional abierta | No | Sí, si su malla, materias programadas, paralelos y docentes están listos | No |
 | Pausar/reanudar convocatoria | No | Sí, en su carrera | No |
 | Cerrar (sobre el proceso; detiene a todas las convocatorias) | Sí | No | No |
 | Prorrogar fecha límite de entrega (sobre el proceso; alcanza a todas las convocatorias) | Sí | No | No |
 | Eliminar convocatoria institucional sin actividad docente | Sí | No | No |
 | Elaborar contenido | No por defecto | No por defecto | Sí, asignado y editable |
-| Solicitar análisis de IA | No por defecto | Consulta de resultados | Sí, si el campo lo permite |
+| Chat para elaborar contenido y unidades | Configuración técnica y campos legibles | No por defecto | Sí, en su sílabo y contexto autorizado |
 | Enviar/reenviar | No | No | Sí, asignado |
 | Observar/solicitar corrección | No | Sí | No; corrige y reenvía (I-120) |
 | Comparar revisiones | Auditoría | Sí | Sí, si es propio/autorizado |
 | Aprobar/reabrir | No | Sí | No |
 | Exportar | Según permiso | Sí en alcance | Sí, propio/autorizado |
 | Consultar auditoría | Sí, permiso explícito | Vista limitada | No por defecto |
+
+I-146 retira la gestión pública de Fuentes académicas y las operaciones del revisor de
+IA. La descarga de originales de importación exige carrera activa y pertenencia del
+documento a esa importación. El historial conservado no concede permisos nuevos.
 
 `PV-16` decide si el coordinador puede editar excepcionalmente contenido docente. Hasta
 resolverlo, la implementación debe negar esa edición. Si se autoriza, exigirá motivo,

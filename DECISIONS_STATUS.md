@@ -28,11 +28,11 @@ Fecha de corte: **27 de septiembre de 2026**.
   protegidos, al igual que los procesos cerrados (aclaración I-144, 2026-09-27).
   La corrección, el borrado del expediente elegible y su regeneración forman una
   transacción confirmada y auditada.
-- Las fuentes académicas son documentos de la Coordinación (I-95, 19 de septiembre de
-  2026): nombre, descripción y documento JSON estructurado editable, sin versiones ni
-  conflictos. Los fragmentos son un índice reemplazable, no otra fuente de verdad.
-  Administración no participa. La evidencia de IA
-  conserva nombre, extracto y huella del contenido en el momento del análisis.
+- I-146 (27 de septiembre de 2026), por instrucción expresa del responsable del producto,
+  retira Fuentes académicas como CRUD y el revisor de IA basado en recuperación vectorial.
+  Las convocatorias no exigen fuentes. Permanecen la importación curricular I-145 con
+  documentos privados internos, el chat de elaboración con datos fotografiados y la
+  configuración técnica de IA. El historial y la evidencia existente se conservan.
 - La plantilla de sílabo es única e institucional: no pertenece a una carrera y la usan
   las convocatorias de cualquier carrera tal como esté al abrir el proceso.
 - La plantilla se arma sobre hojas y bloques (I-33/I-53). Solo Administración cambia
@@ -152,8 +152,30 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 ## Actualizado para esta entrega
 
+I-146 (27 de septiembre de 2026) sustituye el alcance activo de I-46/I-92/I-95/I-98/I-116/I-119/I-124
+relativo al CRUD de fuentes, su requisito para convocar y el revisor con RAG. Se retiran
+sus pantallas, rutas de gestión, análisis por campo, revisión global, aplicación y
+feedback del revisor. Los párrafos históricos que describen esas funciones no son
+requisitos vigentes. La orden procede del responsable del producto, sin atribuirla al
+tutor ni a la institución.
+
+I-145 continúa recibiendo PDF/XLSX y permite reutilizar documentos internos de ingesta.
+Los nombres de contrato `sources`/`source_ids` se conservan por compatibilidad; ya no
+representan un CRUD de Fuentes académicas. Los originales tienen descarga privada por
+importación. No se elimina evidencia histórica, contenido curricular confirmado ni
+almacenamiento existente como parte de esta retirada.
+
+El chat conservado ayuda a elaborar contenido y unidades desde carrera, asignatura,
+horas, semanas, datos curriculares confirmados y tablas de unidades/planificación del
+sílabo. La casilla histórica `ia_habilitada` no amplía ese contexto; las preguntas nuevas
+usan `curricular-units-v1` y no envían al proveedor el historial anterior. No consulta el índice
+vectorial ni ejecuta revisión académica. La configuración del proveedor sigue disponible;
+no se cambian permisos de aprobación ni validaciones determinísticas. La verificación
+operativa y el estado de entrega se registran en el plan I-146.
+
+
 I-145 (27 de septiembre de 2026), autorizado con «ok veamos», corrige el recorrido
-principal de I-144: Coordinación entrega PDF/XLSX o selecciona fuentes ya cargadas;
+principal de I-144: Coordinación entrega PDF/XLSX o reutiliza documentos de ingesta ya cargados;
 el asistente extrae una propuesta de datos para su carrera y asignaturas. La revisión
 por lote muestra procedencia y excepciones, sin exigir transcribir cada resultado.
 La extracción no modifica datos vigentes antes de la confirmación humana.
@@ -352,6 +374,7 @@ es una etapa prorrogable: Administración solo puede corregirlo mediante la edic
 proceso en pausa. `fechas_limite_convocatoria` conserva `inicio` y
 `borrador` para validar la ventana de envío, sin cambio de esquema.
 
+Antecedente sustituido por I-146 en el alcance de lectura y revisión de IA:
 I-116 (23 de septiembre de 2026), por instrucción explícita del responsable del
 producto, deja en Administración la decisión de qué campos usan IA. Coordinación ya no
 guarda excepciones por carrera: la IA solo sugiere y el docente decide si aplica cada
@@ -359,6 +382,8 @@ sugerencia. Se eliminan `preferencias_ia_carrera`,
 `definiciones_campo.ia_coordinacion_configurable` y las rutas
 `/coordination/ai-configuration`; sustituye las decisiones 1 a 3 de I-72.
 
+Antecedente sustituido por I-146 en el alcance de lectura de IA; el comportamiento de
+listas y totales se conserva:
 I-119 (23 de septiembre de 2026), por instrucción explícita del responsable del
 producto, precisa que la casilla de IA de un campo decide si el agente lo lee como
 referencia para sus sugerencias. Administración la decide en todo campo salvo el estado
