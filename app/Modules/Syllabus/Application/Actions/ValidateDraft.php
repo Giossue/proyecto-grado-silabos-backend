@@ -10,6 +10,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\AcademicContextValues;
+use App\Modules\Syllabus\Application\RequiredAcademicTemplateData;
 use App\Modules\Syllabus\Domain\PlanningTable;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationResult;
@@ -19,11 +20,12 @@ use Illuminate\Support\Facades\DB;
 
 class ValidateDraft
 {
-    public const RULE_VERSION = 'planning-v3';
+    public const RULE_VERSION = 'planning-v4';
 
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly RequiredAcademicTemplateData $academicTemplateData,
     ) {}
 
     public function execute(Syllabus $syllabus, User $actor, Request $request): ValidationRun
@@ -43,7 +45,7 @@ class ValidateDraft
                     $locked->convocation->process->academicPeriod->semanas_lectivas,
                 );
             }
-            $issues = [];
+            $issues = $this->academicTemplateData->issues($academicContext);
             // «Mostrar solo si»: una parte oculta no se pide al docente.
             $hidden = array_flip(FieldConditions::hiddenKeys(
                 $fields,

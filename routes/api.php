@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
 use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
+use App\Modules\Academic\Presentation\Http\Controllers\SubjectLearningOutcomesController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiAssistanceController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\Configuration\Presentation\Http\Controllers\AcademicSourceController;
@@ -202,6 +203,10 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereUuid(['source', 'asset'])->name('api.v1.coordination.sources.assets.show');
             Route::get('coordination/academic/curriculum/{curriculum}', [CareerAcademicStructureController::class, 'curriculumBuilder'])
                 ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.show');
+            Route::get('coordination/academic/subjects/{subject}/learning-outcomes', [SubjectLearningOutcomesController::class, 'show'])
+                ->middleware('active-role')->whereUuid('subject')->name('api.v1.coordination.academic.subjects.learning-outcomes.show');
+            Route::put('coordination/academic/subjects/{subject}/learning-outcomes', [SubjectLearningOutcomesController::class, 'update'])
+                ->middleware('active-role')->whereUuid('subject')->name('api.v1.coordination.academic.subjects.learning-outcomes.update');
             Route::get('coordination/academic/scheduled-subjects', [CareerAcademicStructureController::class, 'scheduledSubjects'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-subjects.index');
             Route::get('coordination/academic/teacher-assignments', [CareerAcademicStructureController::class, 'teacherAssignments'])

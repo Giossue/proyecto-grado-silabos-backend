@@ -48,6 +48,13 @@ como la ventana temporal común de la universidad (I-41).
 Una `Asignatura` se identifica dentro de su carrera por su código visible, que es el que
 leen las personas y el que usa el producto en programaciones, sílabos y documentos.
 
+I-144 incorpora `BaseResultadosAsignatura`, con procedencia y confirmación explícita,
+y `ResultadoAprendizajeAsignatura`, una fila ordenada con identidad propia. Coordinación
+mantiene la colección de su carrera. No equivale a una unidad de planificación: la
+cantidad de resultados no determina por sí sola la cantidad de unidades. El sílabo
+conserva una fotografía de la base para lectura y exportación, independiente de cambios
+posteriores en las filas vivas.
+
 Las relaciones que ya respaldan un sílabo se protegen y no se eliminan. Las que aún no
 tienen dependencias se eliminan; roles, nombramientos y asignaciones se desactivan sin
 borrar su evidencia.
@@ -102,9 +109,12 @@ relevos aplican la misma protección en el servidor (I-64).
 No hay publicación: la estructura se comprueba al abrir o reanudar el proceso. Un sílabo
 sin enviar lee la plantilla en vivo; una revisión enviada conserva su copia completa y ya
 no depende de ella durante el flujo normal. Si se corrige la plantilla o una base académica
-durante una pausa, todos los sílabos afectados se reemplazan previa confirmación, incluso
-los enviados o aprobados y sus análisis de IA. La corrección y la regeneración son una
-sola transacción; los procesos cerrados conservan su historia (I-118).
+durante una pausa, los expedientes afectados en curso sin aprobación conservada se
+reemplazan previa confirmación, incluidos los enviados y sus análisis de IA. Los
+aprobados y los expedientes reabiertos que conservan una revisión aprobada quedan fuera
+del reinicio. La corrección y la regeneración son una sola transacción; los procesos
+cerrados conservan su historia (I-118, aclarada en I-144). Corregir resultados de
+aprendizaje solo alcanza a la asignatura modificada.
 
 ### Proceso de sílabos y convocatoria
 
@@ -191,7 +201,8 @@ establece; una recomendación de IA nunca bloquea por sí sola.
 3. La única plantilla institucional activa crea nuevos sílabos en una convocatoria de cualquier carrera.
 4. Una revisión enviada/aprobada es inmutable en el flujo normal y contiene su propia
    copia de la plantilla; I-118 permite eliminar el agregado completo únicamente durante
-   un reinicio institucional confirmado de un proceso vigente y pausado.
+   un reinicio institucional confirmado de un proceso vigente y pausado, siempre que
+   no conserve una aprobación. Una reapertura conserva la revisión aprobada y sus vínculos.
 5. Todo envío o reenvío inserta una revisión; nunca actualiza la anterior.
 6. Una aprobación apunta a una revisión concreta.
 7. Una reapertura no altera la aprobación previa.

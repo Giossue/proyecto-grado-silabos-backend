@@ -72,6 +72,15 @@
 
 ## Criterios críticos
 
+- I-144 añade al catálogo automático resultados de aprendizaje de la asignatura,
+  nombre de su fuente y ubicación. Administración puede insertarlos en contenido fijo;
+  el valor sale de la fotografía académica del sílabo. Los resultados se muestran
+  numerados en su orden confirmado. No se convierte automáticamente una parte editable
+  existente ni se sustituye una plantilla durante la migración.
+- Si una plantilla utiliza esa variable sin resultados fotografiados, la validación
+  indica que Coordinación debe corregir la base. Agregar un campo visual sigue sin
+  registrar un origen académico nuevo: el catálogo general configurable es posterior.
+
 - No se abre un proceso con marcador DOCX obligatorio sin mapeo.
 - Un sílabo histórico sigue renderizando después de editar la plantilla viva.
 - La evidencia de IA nunca usa una fuente inactiva ni ajena a la convocatoria.

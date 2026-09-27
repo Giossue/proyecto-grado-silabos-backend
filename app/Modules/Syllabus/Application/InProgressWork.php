@@ -37,9 +37,9 @@ final class InProgressWork
     ) {}
 
     /** @param string|list<string>|null $careerIds */
-    public function count(string|array|null $careerIds = null, ?string $periodId = null): int
+    public function count(string|array|null $careerIds = null, ?string $periodId = null, ?string $subjectId = null): int
     {
-        return $this->inProgress($careerIds, $periodId)->count();
+        return $this->inProgress($careerIds, $periodId, $subjectId)->count();
     }
 
     /**
@@ -48,9 +48,9 @@ final class InProgressWork
      *
      * @param  string|list<string>|null  $careerIds
      */
-    public function requireConfirmation(Request $request, string|array|null $careerIds = null, ?string $periodId = null): int
+    public function requireConfirmation(Request $request, string|array|null $careerIds = null, ?string $periodId = null, ?string $subjectId = null): int
     {
-        $count = $this->count($careerIds, $periodId);
+        $count = $this->count($careerIds, $periodId, $subjectId);
         if ($count === 0) {
             return 0;
         }
@@ -58,8 +58,8 @@ final class InProgressWork
         if (! $request->boolean(self::CONFIRMATION_FIELD)) {
             throw ValidationException::withMessages([
                 'purge_required' => $count === 1
-                    ? 'Este cambio reemplazará 1 sílabo. Se eliminarán su borrador, revisiones, aprobaciones y análisis de IA, y se generará nuevamente desde la base corregida.'
-                    : "Este cambio reemplazará {$count} sílabos. Se eliminarán sus borradores, revisiones, aprobaciones y análisis de IA, y se generarán nuevamente desde la base corregida.",
+                    ? 'Este cambio reemplazará 1 sílabo. Se eliminarán su borrador, revisiones y análisis de IA, y se generará nuevamente desde la base corregida.'
+                    : "Este cambio reemplazará {$count} sílabos. Se eliminarán sus borradores, revisiones y análisis de IA, y se generarán nuevamente desde la base corregida.",
                 'purge_count' => (string) $count,
             ]);
         }
@@ -80,9 +80,10 @@ final class InProgressWork
         string|array|null $careerIds = null,
         ?string $periodId = null,
         ?string $reason = null,
+        ?string $subjectId = null,
     ): mixed {
-        return DB::transaction(function () use ($careerIds, $change, $periodId, $reason, $request): mixed {
-            $count = $this->requireConfirmation($request, $careerIds, $periodId);
+        return DB::transaction(function () use ($careerIds, $change, $periodId, $reason, $request, $subjectId): mixed {
+            $count = $this->requireConfirmation($request, $careerIds, $periodId, $subjectId);
             $result = $change();
             if ($count > 0) {
                 $this->regenerate(
@@ -90,6 +91,7 @@ final class InProgressWork
                     $periodId,
                     $reason,
                     $request->attributes->getString('correlation_id') ?: null,
+                    $subjectId,
                 );
             }
 
@@ -110,8 +112,9 @@ final class InProgressWork
         ?string $periodId = null,
         ?string $reason = null,
         ?string $correlationId = null,
+        ?string $subjectId = null,
     ): array {
-        $syllabi = $this->inProgress($careerIds, $periodId)->with('convocation:id,carrera_id')->lockForUpdate()
+        $syllabi = $this->inProgress($careerIds, $periodId, $subjectId)->with('convocation:id,carrera_id')->lockForUpdate()
             ->get(['id', 'convocatoria_id', 'asignatura_id', 'contexto_academico']);
         if ($syllabi->isEmpty()) {
             return ['deleted' => 0, 'generated' => 0];
@@ -145,7 +148,7 @@ final class InProgressWork
             ->lockForUpdate()
             ->get();
         foreach ($convocations as $convocation) {
-            $generated += $this->generator->execute($convocation);
+            $generated += $this->generator->execute($convocation, $subjectId);
         }
 
         return ['deleted' => count($syllabusIds), 'generated' => $generated];
@@ -315,18 +318,22 @@ final class InProgressWork
     /** @param string|list<string>|null $careerIds
      * @return Builder<Syllabus>
      */
-    private function inProgress(string|array|null $careerIds, ?string $periodId = null): Builder
+    private function inProgress(string|array|null $careerIds, ?string $periodId = null, ?string $subjectId = null): Builder
     {
-        // Un sílabo aprobado queda fuera: ni se purga ni se refresca (igual que ResetSyllabus).
-        return Syllabus::query()->where('estado', '!=', 'aprobado')->whereHas('convocation', fn (Builder $query) => $query
-            ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
-            ->whereHas('process', fn (Builder $process) => $process
-                ->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))
-            ->when(is_string($careerIds), fn (Builder $scoped) => $scoped->where('carrera_id', $careerIds))
-            ->when(is_array($careerIds), fn (Builder $scoped) => $scoped->whereIn('carrera_id', $careerIds))
-            ->when($periodId !== null, fn (Builder $scoped) => $scoped->whereHas(
-                'process',
-                fn (Builder $process) => $process->where('periodo_academico_id', $periodId),
-            )));
+        // Una aprobación protege el expediente aunque esté reabierto: su historial
+        // no puede desaparecer ni cambiar de contexto al corregir una base.
+        return Syllabus::query()->where('estado', '!=', 'aprobado')
+            ->whereDoesntHave('approvals')
+            ->when($subjectId !== null, fn (Builder $query) => $query->where('asignatura_id', $subjectId))
+            ->whereHas('convocation', fn (Builder $query) => $query
+                ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
+                ->whereHas('process', fn (Builder $process) => $process
+                    ->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))
+                ->when(is_string($careerIds), fn (Builder $scoped) => $scoped->where('carrera_id', $careerIds))
+                ->when(is_array($careerIds), fn (Builder $scoped) => $scoped->whereIn('carrera_id', $careerIds))
+                ->when($periodId !== null, fn (Builder $scoped) => $scoped->whereHas(
+                    'process',
+                    fn (Builder $process) => $process->where('periodo_academico_id', $periodId),
+                )));
     }
 }

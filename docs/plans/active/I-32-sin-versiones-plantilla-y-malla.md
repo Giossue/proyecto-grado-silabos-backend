@@ -19,9 +19,10 @@ Implementado el 2026-09-02; verificación local y migración remota registradas 
   el proceso.
 - Una malla por carrera (`mallas`), sin número de versión ni marca de actual.
 - Con la convocatoria pausada, un cambio estructural en la plantilla o en la malla
-  informa cuántos sílabos reemplazará y pide confirmación. I-118 amplió la operación a
-  enviados y aprobados: guarda la corrección, elimina el agregado completo y regenera
-  todos los afectados en la misma transacción.
+  informa cuántos sílabos reemplazará y pide confirmación. I-118, aclarada en I-144
+  el 2026-09-27, guarda la corrección y regenera en una transacción los expedientes
+  afectados en curso sin aprobación conservada, incluidos los enviados. Preserva
+  aprobados y expedientes reabiertos que contienen una revisión aprobada.
 - Cada revisión enviada lleva su copia completa: estructura, valores y mapa de
   exportación. Los sílabos de procesos cerrados no se tocan.
 

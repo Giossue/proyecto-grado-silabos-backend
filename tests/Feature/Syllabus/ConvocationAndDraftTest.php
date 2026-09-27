@@ -5,9 +5,11 @@ namespace Tests\Feature\Syllabus;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectLearningOutcomeBase;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
+use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -15,6 +17,7 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\Actions\OpenConvocation;
 use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
+use App\Modules\Syllabus\Application\RequiredAcademicTemplateData;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -113,6 +116,71 @@ class ConvocationAndDraftTest extends TestCase
         $existing->subject->update(['nombre' => 'Nombre nuevo en la malla']);
 
         $this->assertSame($originalName, $existing->fresh()->academicSubjectName());
+    }
+
+    public function test_confirmed_curricular_outcomes_are_frozen_with_the_syllabus_and_resolved_in_order(): void
+    {
+        $scheduled = ScheduledSubject::query()->firstOrFail();
+        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.academic.subjects.learning-outcomes.update', $scheduled->asignatura_id), [
+            'source_name' => 'Proyecto de carrera de prueba',
+            'source_locator' => 'Página 12, ficha de la asignatura',
+            'outcomes' => [['text' => 'Compara alternativas de diseño.'], ['text' => 'Justifica una arquitectura.']],
+            'confirmed' => true,
+            'expected_fingerprint' => null,
+        ])->assertOk();
+
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $snapshot = app(SyllabusSnapshot::class)->build($syllabus);
+        $this->assertSame("1. Compara alternativas de diseño.\n2. Justifica una arquitectura.", $snapshot['template_variables']['resultados_aprendizaje_asignatura']);
+        $this->assertSame('Proyecto de carrera de prueba', $snapshot['template_variables']['fuente_resultados_aprendizaje']);
+        $this->assertSame('Página 12, ficha de la asignatura', $snapshot['template_variables']['ubicacion_resultados_aprendizaje']);
+        $this->assertSame($this->coordinator->id, data_get($snapshot, 'academic_context.subject.learning_outcomes.confirmed_by.id'));
+
+        // Simula una corrección posterior del dato vivo: la lectura del expediente
+        // y la exportación siguen utilizando la copia con la que se creó.
+        $base = SubjectLearningOutcomeBase::query()->firstOrFail();
+        $base->outcomes()->firstOrFail()->update(['texto_resultado' => 'Texto curricular posterior.']);
+        $base->update(['nombre_fuente' => 'Otra fuente posterior']);
+        $this->assertSame($snapshot['template_variables'], app(SyllabusSnapshot::class)->build($syllabus->fresh())['template_variables']);
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
+            ->assertOk()
+            ->assertJsonPath('syllabus.template_variables.resultados_aprendizaje_asignatura', $snapshot['template_variables']['resultados_aprendizaje_asignatura']);
+    }
+
+    public function test_a_missing_curricular_value_blocks_validation_when_used_in_a_fixed_block(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $this->assertSame([], app(RequiredAcademicTemplateData::class)->issues($syllabus->contexto_academico));
+        $block = FieldDefinition::query()->where('clave', 'resultados_aprendizaje')->firstOrFail()->block;
+        $block->update(['configuracion' => [
+            'content_type' => 'fixed',
+            'document' => ['type' => 'doc', 'content' => [
+                ['type' => 'paragraph', 'content' => [['type' => 'variable', 'attrs' => ['id' => 'resultados_aprendizaje_asignatura']]]],
+                ['type' => 'paragraph', 'content' => [['type' => 'variable', 'attrs' => ['id' => 'resultados_aprendizaje_asignatura']]]],
+            ]],
+        ]]);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertOk();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertOk();
+        $run = ValidationRun::query()->latest('completado_en')->firstOrFail();
+        $issues = $run->results()->where('codigo', 'dato_curricular_faltante')->get();
+        $this->assertCount(1, $issues, 'Repetir la variable no debe duplicar el error.');
+        $this->assertStringContainsString('Coordinación', $issues->first()->mensaje);
+        $this->assertNull($issues->first()->definicion_campo_id);
+
+        $context = $syllabus->contexto_academico;
+        $context['subject']['learning_outcomes'] = ['outcomes' => [['text' => 'Resultado confirmado.']]];
+        $this->assertSame([], app(RequiredAcademicTemplateData::class)->issues($context));
+    }
+
+    public function test_curricular_variables_accept_old_snapshots_and_have_useful_template_samples(): void
+    {
+        $variables = TemplateVariables::resolve(['identification' => ['subject' => 'Materia histórica']]);
+        $this->assertSame('Materia histórica', $variables['nombre_asignatura']);
+        $this->assertSame('', $variables['resultados_aprendizaje_asignatura']);
+        $samples = collect(TemplateVariables::catalog())->keyBy('key');
+        $this->assertStringContainsString('1. ', $samples['resultados_aprendizaje_asignatura']['sample']);
+        $this->assertNotEmpty($samples['fuente_resultados_aprendizaje']['sample']);
     }
 
     public function test_explicit_per_parallel_mode_generates_one_syllabus_for_each_parallel(): void
@@ -362,7 +430,7 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $firstRun = ValidationRun::query()->latest('completado_en')->firstOrFail();
-        $this->assertSame('planning-v3', $firstRun->version_reglas);
+        $this->assertSame('planning-v4', $firstRun->version_reglas);
         $this->assertGreaterThan(0, $firstRun->errores_bloqueantes);
 
         $requiredEditable = FieldDefinition::query()

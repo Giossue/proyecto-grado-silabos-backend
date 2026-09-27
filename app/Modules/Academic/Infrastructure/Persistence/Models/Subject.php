@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property string $id
@@ -29,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $activo
  * @property string $carrera_id
  * @property-read Career $career
+ * @property-read SubjectLearningOutcomeBase|null $learningOutcomeBase
  */
 class Subject extends Model
 {
@@ -102,6 +104,12 @@ class Subject extends Model
     public function career(): BelongsTo
     {
         return $this->belongsTo(Career::class, 'carrera_id');
+    }
+
+    /** @return HasOne<SubjectLearningOutcomeBase, $this> */
+    public function learningOutcomeBase(): HasOne
+    {
+        return $this->hasOne(SubjectLearningOutcomeBase::class, 'asignatura_id');
     }
 
     /** @return HasMany<ScheduledSubject, $this> */

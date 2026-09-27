@@ -2,9 +2,77 @@
 
 ## Estado
 
-Análisis documental realizado el 2026-09-27. Propuesta en preparación; no autoriza
-migraciones, cambios de permisos ni sustitución de decisiones confirmadas. Esta entrega
-registra evidencia y un diseño para discutir, sin implementar comportamiento.
+Primera unidad implementada y verificada localmente. El 2026-09-27 el responsable del producto autorizó guardar y
+subir el estado anterior y comenzar este plan. El punto previo quedó en `4761c10d`.
+La primera unidad implementa registro de resultados de aprendizaje por asignatura,
+confirmación de Coordinación y uso como dato automático de plantilla. La propuesta
+completa de catálogos, condiciones e IA continúa en preparación.
+
+La [matriz de Calidad de Software](I-144-matriz-calidad-software.md) contiene las doce
+áreas del sílabo, procedencia y cuatro resultados de muestra documental. No se cargan
+datos reales automáticamente ni se presupone la autoridad de los documentos adjuntos.
+
+## Primera unidad implementada
+
+1. En **Coordinación → Malla → acciones de una materia → Resultados de aprendizaje**,
+   registrar el documento, página/apartado y resultados ordenados. Guardar exige
+   confirmar que se contrastaron con esa fuente; editar invalida esa confirmación en UI.
+2. El servidor exige Coordinación de la carrera, valida filas y pertenencia de IDs,
+   detecta escrituras concurrentes con huella y bloquea edición con convocatoria abierta.
+   La consulta permanece disponible en modo lectura.
+3. La base curricular se guarda en cabecera y filas relacionadas, sin EAV ni nuevos
+   campos arbitrarios de malla. Mantiene identidad de filas al reordenar, confirmador,
+   fecha y procedencia; auditoría conserva huellas/conteos, no textos completos.
+4. Administración puede insertar **Resultados de aprendizaje de la asignatura** desde
+   **Dato automático**, en un bloque de contenido fijo, además de fuente y ubicación.
+   El cambio de una plantilla existente usa su procedimiento normal de edición y pausa;
+   la migración no convierte respuestas docentes ni reemplaza el formato guardado.
+5. Al generar el sílabo se fotografía la base validada. El documento usa esa copia; los
+   cambios posteriores del origen vivo no alteran la lectura/exportación histórica.
+   Si el formato utiliza el dato y falta, la validación bloquea el envío y remite a
+   Coordinación. Un formato que no lo utiliza conserva su funcionamiento anterior.
+6. Una corrección con expedientes en curso exige la confirmación de regeneración. Se
+   añadió alcance opcional por asignatura al servicio existente para preservar las otras
+   materias, tanto al borrar como al volver a generar; un paralelo incompleto ajeno
+   no bloquea la corrección. Los expedientes aprobados y la evidencia aprobada tras reapertura se
+   conservan conforme a la resolución de I-118 indicada más abajo.
+
+### Contrato, migración y límites
+
+- GET/PUT `/api/v1/coordination/academic/subjects/{subject}/learning-outcomes`.
+- PUT: `source_name`, `source_locator`, `outcomes: [{id?, text}]`, `confirmed: true`,
+  `expected_fingerprint` (nulo en primer registro); `confirm_purge` en correcciones que
+  requieran regenerar. Una huella obsoleta devuelve 409 y
+  `conflicto_resultados_aprendizaje`.
+- GET devuelve datos, orden/IDs, confirmación, huella y permiso efectivo de edición.
+  OpenAPI se genera desde `ExportOpenApi`; no se edita el JSON manualmente.
+- Migración nueva `2026_09_27_000144_create_subject_learning_outcomes`: cabecera
+  `bases_resultados_asignatura` y filas `resultados_aprendizaje_asignatura`. FK, orden
+  único por base, textos no vacíos y fechas UTC. Aplicada solo en bases locales de
+  prueba/demostración; despliegue remoto pendiente.
+- Primer registro manual estructurado; no se añadió extracción semántica automática de
+  PDF/Excel. El nombre y localizador son procedencia declarada por Coordinación, sin
+  validar automáticamente vigencia/aprobación de ese documento.
+- Las tres variables nuevas usan el catálogo existente. No se implementó todavía un
+  catálogo universal de conceptos nuevos configurable sin código.
+- No se agregaron límites académicos de habilidades, reglas APE ni cantidad de unidades.
+  Tampoco cambió el alcance de lectura de IA: los datos automáticos en bloques fijos no
+  entran necesariamente en su contexto; la generación de unidades será otra unidad.
+
+### Resolución del alcance de I-118, 2026-09-27
+
+El responsable del producto delegó resolver las decisiones de implementación. Con esa
+instrucción se concilia I-118 con la conservación de evidencia aprobada: las correcciones
+confirmadas durante una pausa regeneran los expedientes afectados en curso que no
+conservan una aprobación. Los enviados sin aprobación siguen dentro del alcance.
+Se preservan los aprobados, sus revisiones y exportaciones, incluidos los expedientes
+reabiertos que conservan una revisión aprobada; también los procesos cerrados.
+La corrección de resultados de aprendizaje se limita a la asignatura modificada.
+
+Esta resolución delegada sustituye las frases documentales que incluían aprobados en
+la purga. No se atribuye al tutor ni a una autoridad institucional y no resuelve
+cardinalidad de habilidades, reglas APE o cantidad de unidades. Las comprobaciones y
+el estado de despliegue se registran en la sección de verificación, con su evidencia.
 
 ## Trazabilidad
 
@@ -168,19 +236,62 @@ esta lectura. La siguiente implementación debe conciliar la documentación afec
 - [x] Leer los cuatro archivos y contrastar Calidad de Software.
 - [x] Inspeccionar plantilla, variables, herencia, condiciones y decisiones vigentes.
 - [x] Registrar discrepancias y límites de automatización.
+- [x] Conciliar I-118 mediante resolución delegada: preservar evidencia aprobada y
+      limitar el reinicio de resultados de aprendizaje a la materia corregida.
 - [ ] Acordar fuente autoritativa, alcance de edición y reglas de unidades/habilidades/APE.
-- [ ] Elaborar una matriz de campos de una sola asignatura: origen, valor, condición,
-      permiso, ausencia y evidencia; validarla con Coordinación.
-- [ ] Diseñar la primera unidad vertical: resultados de aprendizaje importados,
-      validados por Coordinación y precargados para la materia correcta.
+- [x] Elaborar una matriz de campos de una sola asignatura: origen, valor, condición,
+      permiso, ausencia y evidencia. La aceptación académica de la matriz está pendiente.
+- [x] Implementar la primera unidad vertical: resultados de aprendizaje registrados,
+      confirmados por Coordinación y disponibles para el formato de la materia correcta.
 - [ ] Tras resolver las decisiones afectadas, especificar migración, contrato API,
       pantallas, pruebas y actualización de trazabilidad; implementar en otro incremento
       concreto o actualizar este plan con alcance aprobado.
 
 ## Verificación y riesgos
 
-Esta entrega se verifica mediante lectura cruzada de documentos, inspección del código
-y `git diff --check`. No cambia comportamiento y no requiere pruebas de aplicación.
+El análisis inicial se verificó mediante lectura cruzada de documentos e inspección del
+código. Verificación de la primera unidad el 2026-09-27:
+
+- `composer verify`: escaneo de secretos, Pint, PHPStan y **381 pruebas / 4.443
+  aserciones** aprobados en `silabos_ueb_i144_test`, PostgreSQL/Redis locales.
+- Regresión final de resultados, procesos y generación: **70 casos / 738 aserciones**;
+  incluye preservar aprobaciones históricas y corregir una materia aunque otra tenga
+  un paralelo incompleto. Fotografía, variables y validación curricular cubiertas
+  en `ConvocationAndDraftTest`.
+- SPA: TypeScript aprobado; **193 pruebas aprobadas y una omitida** por la suite;
+  contrato 110 consumidores / 121 operaciones; build aprobado.
+- `npm run lint` completo aprobado. Los scripts de depuración `.tmp-dbg.mjs` y
+  `.tmp-shot.mjs` quedaron parametrizados y sin credenciales incrustadas; se corrigieron
+  las variables sin uso y se incluyeron en la comprobación global de ESLint.
+- Navegador real SPA → API, base `silabos_ueb_i144_preview_test` aislada: guardar,
+  reabrir los cuatro resultados de la matriz y comprobar desmarcado de confirmación al
+  editar/reordenar. Sin errores JavaScript ni respuestas HTTP fallidas. Escritorio
+  1440 px y móvil 360 px, claro/oscuro, sin desbordamiento horizontal. Capturas y reporte
+  locales en `/tmp/i144-preview-artifacts/`; no son activos del repositorio.
+- Comprobación pura de exportación: cuatro resultados producen cuatro textos y tres
+  saltos de línea en Word, y cuatro líneas en PDF de texto; las variables históricas
+  se resuelven exclusivamente desde la fotografía.
+- `git diff --check` aprobado.
+
+### Preparación del despliegue autorizado, 2026-09-27
+
+El responsable autorizó resolver los pendientes de esta entrega, migrar si fuera
+necesario y subir ambos repositorios. La conexión remota documentada confirma
+`current_database() = silabos_ueb_db` y `current_user = silabos_ueb_app`, 43 sílabos,
+cero aprobaciones y la migración I-144 pendiente. La base de Calidad Software es
+otra aplicación y no participa en este despliegue.
+
+Se obtuvo un respaldo PostgreSQL en formato custom fuera del repositorio, con permisos
+`0600`, en `~/.local/state/silabos/backups/silabos_ueb_db-pre-i144-20260927.dump`.
+Archivo de 490.118 bytes; `pg_restore --list` leyó su índice correctamente. SHA-256:
+`6ff7f0b9aad045eb2ef4fec28aa3d98e9d3f20e0a7c7f87cbfda29628525327f`.
+Esto verifica la lectura del respaldo, no un ensayo de restauración.
+
+La configuración SSH local `ueb` respondió `Permission denied (publickey)`.
+La migración productiva debe ejecutarse por Laravel dentro de Dokploy; no se sustituye
+por DDL manual desde la estación. Se solicitó el acceso vigente y se comprobará el
+despliegue tras el push: el arranque del contenedor migra si `RUN_MIGRATIONS=true`.
+Hasta obtener evidencia posterior, el estado remoto continúa pendiente.
 
 Una futura implementación debe probar alcance entre carreras, coincidencia por identidad
 de asignatura (no solo nombre), diferencias de fuentes, ausencia de datos, cardinalidad
@@ -189,5 +300,6 @@ el flujo normal de inmutabilidad y la excepción administrativa explícita I-118
 
 Riesgos principales: convertir ejemplos en reglas, interpretar mal celdas combinadas,
 importar una versión no validada, asignar datos a otra carrera y prometer generación
-automática de hechos que la fuente no contiene. Este documento no modifica datos ni
-necesita reversión de aplicación.
+automática de hechos que la fuente no contiene. La migración es aditiva; no cambia datos
+curriculares existentes ni siembra contenidos. La recuperación en entornos compartidos
+se realiza mediante corrección hacia delante, sin rollback destructivo automático.

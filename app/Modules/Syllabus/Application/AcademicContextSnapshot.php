@@ -13,6 +13,8 @@ class AcademicContextSnapshot
         $scheduledSubject->loadMissing([
             'subject.career.faculty',
             'subject.requirements.requirement',
+            'subject.learningOutcomeBase.outcomes',
+            'subject.learningOutcomeBase.confirmedBy',
             'academicPeriod',
         ]);
         $subject = $scheduledSubject->subject;
@@ -25,7 +27,7 @@ class AcademicContextSnapshot
             ->all();
 
         return [
-            'schema_version' => 3,
+            'schema_version' => 4,
             // La ficha de identificación (I-34) sale de aquí: carrera, facultad y requisitos.
             'career' => [
                 'id' => $career->id,
@@ -55,6 +57,7 @@ class AcademicContextSnapshot
                 'hours_paec' => $subject->horas_paec,
                 'prerequisites' => $requirementCodes('prerrequisito'),
                 'corequisites' => $requirementCodes('correquisito'),
+                'learning_outcomes' => $subject->learningOutcomeBase?->snapshot(),
             ],
             'scheduled_subject' => [
                 'id' => $scheduledSubject->id,

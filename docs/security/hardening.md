@@ -41,14 +41,16 @@
 
 ### Migraciones en la base remota
 
-Desde la estación autorizada, la autenticación de PostgreSQL se obtiene exclusivamente de
-`~/.pgpass`; no se usa SSH, Tailscale ni se copia la contraseña al repositorio o al
+Desde la estación autorizada, las comprobaciones PostgreSQL y los respaldos usan
+exclusivamente `~/.pgpass`; no se copia la contraseña al repositorio ni al
 historial del shell. El archivo debe pertenecer al usuario y tener permisos `0600`. La
 entrada de este proyecto identifica el perfil
 `187.127.6.234:8004:silabos_ueb_db:silabos_ueb_app`.
 
-Laravel debe recibir `DB_PASSWORD='(null)'` para que la contraseña local de `.env` no
-reemplace la resolución de libpq mediante `.pgpass`.
+En producción, Laravel se ejecuta dentro del contenedor del backend administrado por
+Dokploy, con su configuración de ejecución. Antes de migrar se comprueban la base,
+usuario y servidor efectivos, el artefacto desplegado y el respaldo; la conexión local
+de `.env` no acredita el destino productivo. No se vuelca el entorno del contenedor.
 
 Desde I-28 la tabla de control del migrador se llama `migraciones`, y ese renombrado no
 puede vivir dentro de una migración: si la tabla configurada no existe, el migrador la
@@ -56,21 +58,17 @@ crearía vacía y consideraría pendiente todo el historial. Por eso la secuenci
 estado → renombrado idempotente → migrador con bloqueo → estado:
 
 ```bash
-DB_CONNECTION=pgsql DB_HOST=187.127.6.234 DB_PORT=8004 \
-DB_DATABASE=silabos_ueb_db DB_USERNAME=silabos_ueb_app DB_PASSWORD='(null)' \
-php artisan migrate:status
+docker exec <contenedor-backend> php artisan migrate:status
 
-DB_CONNECTION=pgsql DB_HOST=187.127.6.234 DB_PORT=8004 \
-DB_DATABASE=silabos_ueb_db DB_USERNAME=silabos_ueb_app DB_PASSWORD='(null)' \
-php artisan db:rename-migrations-table --force
+docker exec <contenedor-backend> php artisan db:rename-migrations-table --force
 
-DB_CONNECTION=pgsql DB_HOST=187.127.6.234 DB_PORT=8004 \
-DB_DATABASE=silabos_ueb_db DB_USERNAME=silabos_ueb_app DB_PASSWORD='(null)' \
-php artisan migrate --force --isolated
+docker exec <contenedor-backend> php artisan migrate --force --isolated
 ```
 
-Después se repite `migrate:status`. Nunca se imprime, registra ni pasa como argumento la
-contraseña almacenada en `.pgpass`.
+Después se repite `migrate:status`. El arranque documentado en
+`docs/runbooks/deploy-dokploy.md` ejecuta esta migración cuando `RUN_MIGRATIONS=true`;
+un push no prueba que el despliegue o la migración hayan concluido. Nunca se imprime,
+registra ni pasa como argumento la contraseña almacenada en `.pgpass`.
 
 Antes de aplicar la migración `000025` (traducción de valores) sobre una base con datos,
 toma un respaldo (`pg_dump`) y verifica con `SELECT DISTINCT` que las columnas de estado

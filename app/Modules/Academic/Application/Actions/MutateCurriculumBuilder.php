@@ -172,6 +172,9 @@ class MutateCurriculumBuilder
                 'code' => $subject->codigo_asignatura,
                 'name' => $subject->nombre,
             ];
+            // Sin programaciones ni sílabos, la base curricular no tiene historia
+            // independiente. Sus resultados se eliminan por cascada con la cabecera.
+            $subject->learningOutcomeBase()->delete();
             $subject->delete();
             $this->record($actor, $role, $request, 'academico.asignatura.eliminacion', 'asignatura', $subjectId, $metadata);
             $this->work->refreshSubjects($role->carrera_id);

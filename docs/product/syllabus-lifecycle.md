@@ -132,9 +132,12 @@ envío.
 - Doble clic/reintento de envío: una sola revisión mediante idempotencia.
 - Edición concurrente: conflicto visible; no sobrescritura silenciosa.
 - Corrección de plantilla o base académica con el alcance pausado: previa confirmación,
-  guarda el cambio, elimina todos los sílabos afectados —incluidos enviados, aprobados,
-  revisiones, IA y exportaciones— y los regenera desde cero en una sola transacción
-  (I-118). No alcanza procesos cerrados.
+  guarda el cambio y regenera desde cero los expedientes afectados en curso sin
+  aprobación conservada, incluidos los enviados y sus revisiones, IA y exportaciones,
+  en una sola transacción (I-118, aclarada en I-144 el 2026-09-27). Conserva los
+  aprobados y los expedientes reabiertos que contienen una revisión aprobada, así como
+  los procesos cerrados. La corrección de resultados de aprendizaje se limita a los
+  expedientes elegibles de la asignatura modificada.
 - Cambio de fuente activa: invalida/recalcula ayuda de IA futura, no reescribe resultados
   históricos.
 - Edición o desactivación de la malla: bloquea trabajo nuevo cuando queda inactiva, pero

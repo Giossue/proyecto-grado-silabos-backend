@@ -1,6 +1,6 @@
 # Estado de decisiones
 
-Fecha de corte: **23 de septiembre de 2026**.
+Fecha de corte: **27 de septiembre de 2026**.
 
 ## Etiquetas
 
@@ -23,8 +23,11 @@ Fecha de corte: **23 de septiembre de 2026**.
   completa de la estructura y del mapa de exportación, que es lo que la protege.
 - I-118 establece una excepción administrativa explícita: al corregir durante una pausa
   la plantilla única o una base académica que alimenta el proceso vigente, se reemplaza
-  todo sílabo afectado, incluso enviado o aprobado. La corrección, el borrado del
-  expediente completo y su regeneración forman una transacción confirmada y auditada.
+  cada expediente afectado en curso que no conserva una aprobación, incluso si fue
+  enviado. Los aprobados y la revisión aprobada conservada tras reapertura quedan
+  protegidos, al igual que los procesos cerrados (aclaración I-144, 2026-09-27).
+  La corrección, el borrado del expediente elegible y su regeneración forman una
+  transacción confirmada y auditada.
 - Las fuentes académicas son documentos de la Coordinación (I-95, 19 de septiembre de
   2026): nombre, descripción y documento JSON estructurado editable, sin versiones ni
   conflictos. Los fragmentos son un índice reemplazable, no otra fuente de verdad.
@@ -148,6 +151,27 @@ Fecha de corte: **23 de septiembre de 2026**.
   proceso —toda la universidad—, Coordinación su convocatoria —solo su carrera—.
 
 ## Actualizado para esta entrega
+
+I-144 (27 de septiembre de 2026), autorizado por el responsable del producto, inicia
+datos curriculares estructurados con resultados de aprendizaje por asignatura.
+Coordinación registra lista ordenada, documento/página de procedencia y confirma la
+revisión de los datos. Administración puede incorporar esos resultados como dato
+automático en la plantilla única. Cada sílabo conserva una fotografía independiente
+del origen vivo; la ausencia bloquea el envío solo si el formato utiliza ese dato.
+La implementación local agrega cabecera y filas relacionadas, no atributos arbitrarios
+de malla ni versiones de fuentes. No confirma cantidad de unidades, límite de habilidades,
+reglas APE ni generación de unidades mediante IA.
+
+El 2026-09-27, ante la instrucción del responsable del producto de resolver las
+decisiones de implementación, se concilia I-118 preservando la evidencia aprobada:
+una corrección confirmada solo regenera expedientes en curso que no conservan una
+aprobación; los enviados sin aprobación siguen dentro del alcance. La reapertura
+conserva la revisión aprobada y sus vínculos, por lo que no habilita el borrado de ese
+expediente mediante un reinicio. Corregir resultados de aprendizaje afecta únicamente
+a la asignatura modificada; las otras materias y los procesos cerrados se conservan.
+Esta resolución delegada de producto reemplaza las frases que incluían aprobados en
+la purga; no se atribuye al tutor ni a una autoridad académica y no resuelve las reglas
+pendientes de habilidades, APE o unidades.
 
 I-54 (2026-09-06), por solicitud explícita del responsable del producto, permite al
 Coordinador crear o incorporar cuentas como Docente exclusivamente en su carrera activa.
@@ -475,13 +499,17 @@ en la plantilla o en la malla exige confirmación con la cifra afectada. Los sí
 procesos cerrados no se tocan.
 
 I-118 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, corrige el alcance de I-32. La plantilla aprobada es única para todas las
-carreras: si Administración detecta que el proceso vigente partió de una plantilla o
-base académica equivocada, primero lo pausa y confirma la consecuencia. El sistema
-guarda la corrección, elimina por completo cada sílabo afectado —borrador, revisiones,
-observaciones, aprobaciones, IA y exportaciones— y lo genera de nuevo desde las fuentes
-vigentes en una sola transacción. La inmutabilidad sigue aplicando al flujo ordinario y
-a los procesos cerrados; esta operación excepcional no deja coexistir formatos distintos.
+producto, corrige el alcance de I-32. Su alcance vigente incorpora la resolución
+delegada de I-144 del 27 de septiembre de 2026: la plantilla es única para todas las
+carreras y una corrección de plantilla o base académica exige pausar el ámbito
+correspondiente y confirmar la consecuencia. El sistema guarda la corrección, elimina
+el expediente elegible completo —borrador, revisiones, observaciones, IA y
+exportaciones— y lo genera desde las fuentes vigentes en una sola transacción.
+Son elegibles los expedientes afectados en curso sin aprobación conservada, incluidos
+los enviados. Se preservan los aprobados, la evidencia aprobada tras reapertura y los
+procesos cerrados. Sus fotografías pueden conservar el formato anterior; la plantilla
+vigente continúa siendo una sola. El reinicio de resultados de aprendizaje se limita
+a la materia corregida.
 
 I-121 (23 de septiembre de 2026), por instrucción explícita del responsable del
 producto, retira el estado institucional `preparacion`. La convocatoria institucional

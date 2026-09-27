@@ -12,6 +12,9 @@ Continúa I-127 (cambios cosméticos sin purga) en la malla de Coordinación.
   purga: `InProgressWork::refreshSubjects` actualiza la ficha de los sílabos en curso.
   Créditos, horas y modalidad siguen purgando. Eliminar una materia no pide purga.
 - `InProgressWork::inProgress` excluye sílabos aprobados (como `ResetSyllabus`).
+  La aclaración I-144 del 2026-09-27 conserva también expedientes con aprobación
+  histórica tras reapertura; consultar su plan para la implementación y verificación
+  de esa protección adicional.
 - `Convocation::scopeLockingCareerData`: la malla/fuentes de una carrera siguen
   bloqueadas con su convocatoria abierta aunque Administración pause el proceso.
   `running` (trabajo docente) y el bloqueo de registros institucionales no cambian.

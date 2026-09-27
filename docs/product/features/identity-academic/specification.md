@@ -96,6 +96,28 @@
 
 ## Criterios críticos
 
+### Resultados de aprendizaje de la asignatura (I-144)
+
+Coordinación consulta o registra resultados desde las acciones de cada materia en Malla.
+Cada conjunto conserva documento, página/apartado y filas ordenadas. Guardar exige
+confirmar revisión contra la fuente; solo se permite en la carrera activa y mientras su
+convocatoria permita editar bases académicas. La lista y confirmación se guardan juntas,
+con detección de cambios concurrentes y auditoría de huellas. Corregir con expedientes
+en curso exige confirmación de regeneración y limita el efecto a la materia modificada.
+I-118, aclarada en I-144 el 2026-09-27, conserva los expedientes aprobados y los que
+contienen una revisión aprobada tras reapertura. Se regeneran los expedientes elegibles
+en curso de esa materia, incluidos los enviados sin aprobación; se conservan las otras
+materias y los procesos cerrados.
+
+Administración decide dónde mostrar el dato en la plantilla. El sílabo fotografía los
+resultados al generarse y el docente no modifica esa variable. La falta de resultados
+solo impide enviar cuando el formato los utiliza; el mensaje remite a Coordinación.
+Documento/localizador son procedencia declarada, no una verificación automática de la
+vigencia de la fuente. La primera entrega no extrae semánticamente el PDF ni establece
+cantidad de unidades, habilidades o reglas de evaluación APE.
+
+### Criterios comunes
+
 - Un usuario fuera de alcance no puede inferir ni descargar el recurso.
 - Un ID de malla, materia programada, paralelo o asignación de otra carrera no concede acceso
   ni permite una mutación aunque se envíe fuera de la interfaz.

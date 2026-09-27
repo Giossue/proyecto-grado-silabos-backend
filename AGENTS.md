@@ -98,9 +98,12 @@ y `composer verify` para cambios amplios, riesgosos o cuando se soliciten expres
 - La plantilla institucional es una sola y se edita en el sitio, sin versiones ni
   publicación (I-32); cada revisión enviada conserva su copia completa. Corregir la
   plantilla o una base académica con el proceso o la convocatoria pausados reemplaza,
-  previa confirmación, todos los sílabos afectados, incluidos enviados y aprobados,
-  junto con sus revisiones, IA y exportaciones; el cambio y la regeneración son una
-  sola transacción (I-118). Las fuentes académicas son documentos
+  previa confirmación, los expedientes afectados en curso que no conservan una
+  aprobación, incluidos los enviados, junto con sus revisiones, IA y exportaciones.
+  Los aprobados, sus revisiones enlazadas tras reapertura y los procesos cerrados se
+  conservan; el cambio y la regeneración son una sola transacción (I-118, aclarada
+  en I-144). Corregir resultados de aprendizaje limita el reinicio a su asignatura.
+  Las fuentes académicas son documentos
   Markdown editables de la Coordinación, sin versiones; la evidencia de IA guarda su
   propia fotografía.
 - Las validaciones determinísticas y las recomendaciones de IA son conceptos separados.

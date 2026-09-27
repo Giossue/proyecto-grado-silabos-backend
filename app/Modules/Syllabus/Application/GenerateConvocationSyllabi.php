@@ -22,13 +22,14 @@ final class GenerateConvocationSyllabi
         private readonly InheritMasterValues $inherit,
     ) {}
 
-    public function execute(Convocation $convocation): int
+    public function execute(Convocation $convocation, ?string $subjectId = null): int
     {
         $convocation->loadMissing('process');
         $scheduledSubjects = ScheduledSubject::query()
             ->where('periodo_academico_id', $convocation->process->periodo_academico_id)
             ->where('activo', true)
             ->whereHas('subject', fn ($query) => $query->where('carrera_id', $convocation->carrera_id))
+            ->when($subjectId !== null, fn ($query) => $query->where('asignatura_id', $subjectId))
             ->with([
                 'subject.career.faculty',
                 'parallels' => fn ($query) => $query->lockForUpdate()->with([

@@ -113,6 +113,22 @@ semántica explícita de cada flecha.
 programación al crear el expediente. Es evidencia histórica de lectura y exportación; no
 sustituye las relaciones transaccionales ni permite reconstruir autorizaciones.
 
+I-144 agrega `bases_resultados_asignatura` (una cabecera por asignatura, con documento
+fuente, localizador y confirmación de Coordinación) y `resultados_aprendizaje_asignatura`
+(filas con identidad estable, texto y posición única por cabecera). La cabecera referencia
+asignatura y usuario confirmador con borrado restringido; sus filas tienen cascada.
+Eliminar una materia sin dependencias elimina antes su cabecera. Una materia programada
+conserva los bloqueos de borrado existentes. No son atributos arbitrarios de malla.
+
+La escritura reemplaza la lista en una transacción y compara una huella de lo consultado
+para detectar concurrencia. `contexto_academico.subject.learning_outcomes` fotografía
+contenido, orden y procedencia al generar cada sílabo. La exportación resuelve los datos
+desde esa fotografía, sin consultas al catálogo vivo. El catálogo de variables expone
+resultados como lista numerada, fuente y ubicación. Si el formato usa resultados y su
+copia está vacía, la validación impide enviar; borradores históricos sin esa variable
+continúan funcionando. I-144 limita su reinicio a la asignatura corregida y conserva
+expedientes con aprobación, incluidas las revisiones aprobadas enlazadas tras reapertura.
+
 ### Plantillas y fuentes
 
 `plantilla_silabo`, `definiciones_campo`, `fuentes_academicas` y el almacén vectorial
@@ -123,8 +139,10 @@ sustituye las relaciones transaccionales ni permite reconstruir autorizaciones.
 `es_institucional` que siempre tendría el mismo valor. La plantilla se edita en el sitio
 y cada revisión enviada conserva su propia fotografía inmutable durante el flujo normal
 (I-32, I-52). I-118 habilita mediante una variable local de transacción el borrado
-excepcional del agregado completo cuando una base institucional se corrige con el proceso
-pausado; fuera de esa transacción los triggers conservan la inmutabilidad.
+excepcional del agregado elegible completo cuando una base institucional se corrige con
+el ámbito correspondiente pausado; fuera de esa transacción los triggers conservan la
+inmutabilidad. La aclaración I-144 excluye expedientes con aprobación conservada, aunque
+hayan sido reabiertos, y procesos cerrados.
 `plantilla_silabo.documento_plantilla` guarda en JSONB versionado la composición visual
 de secciones, bloques y tablas (I-111). Las definiciones de campo siguen en filas y
 `bloque_plantilla_id` apunta al UUID estable del bloque embebido; triggers de PostgreSQL
@@ -194,9 +212,12 @@ junto con `convocatoria_id`. La migración `000099` (I-131) retiró `alcances_si
 `silabos.carrera_id` (la carrera es la de `convocatorias_carreras`); la vista
 `docentes_vigentes_silabo` se recreó sobre `silabos.paralelo_id`.
 Una corrección confirmada durante esa pausa usa `InProgressWork`: guarda el cambio,
-elimina dependencias de revisión, aprobación, IA y exportación, y regenera desde la
-programación vigente antes del commit. Si la regeneración falla, PostgreSQL revierte
-tanto la corrección como el borrado (I-118).
+elimina las dependencias de revisión, IA y exportación de los expedientes elegibles en
+curso y regenera desde la programación vigente antes del commit. Incluye los enviados
+sin aprobación; preserva los aprobados y la evidencia aprobada tras una reapertura.
+Si la regeneración falla, PostgreSQL revierte tanto la corrección como el borrado
+(I-118, aclarada en I-144). El cambio de resultados de aprendizaje añade el filtro por
+asignatura para conservar las otras materias.
 
 ### Revisión, validación e IA
 

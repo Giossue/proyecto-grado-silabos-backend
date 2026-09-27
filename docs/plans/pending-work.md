@@ -4,6 +4,24 @@ Corte histórico del 30 de agosto de 2026, con actualización I-56 a continuaci�
 Este documento separa lo que falta según de quién
 depende, porque son cosas de naturaleza distinta y no se resuelven igual.
 
+## Datos curriculares por asignatura, 2026-09-27 (I-144)
+
+Primera unidad implementada localmente: registro y confirmación de resultados de
+aprendizaje por Coordinación, fotografía por sílabo y variables automáticas para la
+plantilla. Matriz y avance en `active/I-144-analisis-datos-curriculares-y-autollenado.md`
+y `active/I-144-matriz-calidad-software.md`.
+
+Pendiente de decisión: autoridad de cada fuente en conflicto, agrupación de contenidos
+en unidades, cardinalidad de habilidades y significado de APE cero. La discrepancia
+I-118 quedó resuelta el 2026-09-27 mediante la delegación del responsable del producto:
+se conservan los aprobados y la revisión aprobada tras reapertura; las correcciones
+confirmadas regeneran expedientes en curso sin aprobación conservada, incluidos los
+enviados. En resultados de aprendizaje, el efecto se limita a su asignatura. Esta
+resolución no constituye una aprobación del tutor ni de la institución. Pendiente de nuevas
+unidades de implementación: otros catálogos, enlaces de datos configurables, extracción
+semántica y generación de planificación mediante IA. No confundir ingesta documental
+con normalización curricular ni esta primera entrega con el plan completo.
+
 ## Paridad funcional y visual de la SPA, 2026-09-17 (I-87)
 
 La auditoría posterior a I-85/I-86 confirmó que los componentes canónicos están

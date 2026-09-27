@@ -50,6 +50,8 @@ class ExportOpenApi extends Command
                     ],
                 ],
                 'schemas' => [
+                    'SubjectLearningOutcomes' => $this->learningOutcomesSchema(),
+                    'SubjectLearningOutcomesInput' => $this->learningOutcomesInputSchema(),
                     'Message' => [
                         'type' => 'object',
                         'required' => ['message'],
@@ -142,6 +144,7 @@ class ExportOpenApi extends Command
         $isSourceAsset = $name === 'api.v1.coordination.sources.assets.show';
         $isSourceContent = $name === 'api.v1.coordination.sources.content.update';
         $isPreparePeriod = $name === 'api.v1.coordination.academic.period.prepare';
+        $isLearningOutcomes = str_starts_with($name, 'api.v1.coordination.academic.subjects.learning-outcomes.');
         $successContent = $isDownload
             ? ['application/octet-stream' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
             : ($isSourceOriginalPdf
@@ -149,6 +152,9 @@ class ExportOpenApi extends Command
                 : ($isSourceAsset
                 ? ['image/*' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
                 : ['application/json' => ['schema' => ['type' => 'object']]]));
+        if ($isLearningOutcomes) {
+            $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectLearningOutcomes']]];
+        }
         $operation = [
             'tags' => [$tag],
             'operationId' => str_replace('.', '_', $name),
@@ -166,9 +172,17 @@ class ExportOpenApi extends Command
         if ($parameters !== []) {
             $operation['parameters'] = $parameters;
         }
+        if ($isLearningOutcomes) {
+            $operation['responses']['404'] = $this->errorResponse('La asignatura no pertenece a la carrera activa o no existe.');
+            if ($method === 'PUT') {
+                $operation['responses']['409'] = $this->errorResponse('Los resultados cambiaron desde la consulta; vuelva a cargarlos.');
+            }
+        }
         if (in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
             $content = ['application/json' => ['schema' => ['type' => 'object', 'additionalProperties' => true]]];
-            if ($isLogoUpload) {
+            if ($isLearningOutcomes) {
+                $content = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectLearningOutcomesInput']]];
+            } elseif ($isLogoUpload) {
                 $content = ['multipart/form-data' => ['schema' => [
                     'type' => 'object',
                     'required' => ['logo'],
@@ -222,7 +236,7 @@ class ExportOpenApi extends Command
                 ]]];
             }
             $operation['requestBody'] = [
-                'required' => $isSourcePdfUpload || $isPreparePeriod,
+                'required' => $isSourcePdfUpload || $isPreparePeriod || $isLearningOutcomes,
                 'content' => $content,
             ];
         }
@@ -231,6 +245,60 @@ class ExportOpenApi extends Command
         }
 
         return $operation;
+    }
+
+    /** @return array<string, mixed> */
+    private function learningOutcomesSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['subject_id', 'source_name', 'source_locator', 'outcomes', 'confirmed_at', 'confirmed_by', 'fingerprint', 'editable', 'lock_reason'],
+            'properties' => [
+                'subject_id' => ['type' => 'string', 'format' => 'uuid'],
+                'source_name' => ['type' => 'string'],
+                'source_locator' => ['type' => 'string'],
+                'outcomes' => ['type' => 'array', 'items' => [
+                    'type' => 'object', 'required' => ['id', 'text', 'position'],
+                    'properties' => [
+                        'id' => ['type' => 'string', 'format' => 'uuid'],
+                        'text' => ['type' => 'string'],
+                        'position' => ['type' => 'integer', 'minimum' => 1],
+                    ],
+                ]],
+                'confirmed_at' => ['type' => ['string', 'null'], 'format' => 'date-time'],
+                'confirmed_by' => [
+                    'type' => ['object', 'null'], 'required' => ['id', 'name'],
+                    'properties' => ['id' => ['type' => 'string', 'format' => 'uuid'], 'name' => ['type' => 'string']],
+                ],
+                'fingerprint' => ['type' => ['string', 'null'], 'pattern' => '^[a-f0-9]{64}$'],
+                'editable' => ['type' => 'boolean'],
+                'lock_reason' => ['type' => ['string', 'null']],
+                'message' => ['type' => 'string'],
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function learningOutcomesInputSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['source_name', 'source_locator', 'outcomes', 'confirmed', 'expected_fingerprint'],
+            'properties' => [
+                'source_name' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 240],
+                'source_locator' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 500],
+                'outcomes' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 100, 'items' => [
+                    'type' => 'object', 'required' => ['text'], 'additionalProperties' => false,
+                    'properties' => [
+                        'id' => ['type' => 'string', 'format' => 'uuid'],
+                        'text' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 12000],
+                    ],
+                ]],
+                'confirmed' => ['type' => 'boolean', 'const' => true],
+                'expected_fingerprint' => ['type' => ['string', 'null'], 'pattern' => '^[a-f0-9]{64}$'],
+                'confirm_purge' => ['type' => 'boolean'],
+            ],
+        ];
     }
 
     /** @return array<string, mixed> */
