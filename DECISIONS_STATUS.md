@@ -152,6 +152,10 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 ## Actualizado para esta entrega
 
+Ajuste de I-145 (27 de septiembre de 2026), por instrucción del responsable, sitúa el único
+acceso al asistente curricular de I-145 en **Coordinación → Malla**. El botón deja de
+ser global en las pantallas de Coordinación; permisos y alcance por carrera no cambian.
+
 I-146 (27 de septiembre de 2026) sustituye el alcance activo de I-46/I-92/I-95/I-98/I-116/I-119/I-124
 relativo al CRUD de fuentes, su requisito para convocar y el revisor con RAG. Se retiran
 sus pantallas, rutas de gestión, análisis por campo, revisión global, aplicación y

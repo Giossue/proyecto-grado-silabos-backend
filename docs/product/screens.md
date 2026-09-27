@@ -257,8 +257,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   se muestra. Aparece únicamente dentro de un sílabo real con contexto de malla.
   I-146 retira COR-11 y su editor de fuentes. Los originales PDF/XLSX de importaciones
   curriculares se descargan de forma privada y autorizada desde el detalle del lote.
-  I-145 añade en Coordinación un botón flotante **Importar datos curriculares**:
-  recibe PDF/XLSX o documentos de ingesta previos de la carrera activa y abre un asistente con
+  I-145 sitúa el botón flotante **Asistente curricular** únicamente en COR-13,
+  **Coordinación → Malla**, para la carrera activa. El asistente recibe PDF/XLSX o
+  documentos de ingesta previos de esa carrera y abre un recorrido con
   carga, estado del procesamiento y revisión de la propuesta. No pide transcribir
   contenidos ni indicar manualmente la procedencia de cada dato. Las filas muestran
   materia, contenido propuesto, fuente/localizador/extracto y contenido vigente cuando
@@ -269,6 +270,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   regeneración cuando hay sílabos afectados. Una falla muestra el error y ofrece
   reintentar; las capacidades deshabilitadas y el bloqueo por convocatoria se explican
   junto a la acción. Cambiar de carrera descarta el estado local anterior del asistente.
+  El botón no aparece en Convocatorias, Materias y paralelos, Asignación docente ni
+  otras pantallas.
   En ADM-06 los conceptos confirmados aparecen en el catálogo de datos automáticos.
   Los campos de selección docente pueden obtener opciones de una o varias listas
   curriculares, por ejemplo habilidades de asignatura y transversales. Cada sílabo

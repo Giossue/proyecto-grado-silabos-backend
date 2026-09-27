@@ -30,7 +30,7 @@ mediante datos/configuración, sin una tabla, endpoint o pantalla por cada conce
 
 ## Recorrido que se implementa
 
-1. Botón flotante en el ámbito de Coordinación abre el asistente de documentos.
+1. Botón flotante solo en **Coordinación → Malla** abre el asistente de documentos.
    Carrera derivada de la sesión; carga PDF/XLSX y elección de fuentes ya cargadas.
 2. PDF reutiliza OpenParser/PaddleOCR; XLSX se lee directamente con sus hojas/celdas.
    Archivo privado, huella, trabajo asíncrono y progreso. No se vuelve a pedir nombre,
@@ -122,6 +122,9 @@ mediante datos/configuración, sin una tabla, endpoint o pantalla por cada conce
 - [x] Asistente flotante y revisión de propuestas.
 - [x] Verificación, demostración y documentación de resultados (con proveedor simulado;
   aceptación con proveedores reales pendiente según el apartado siguiente).
+
+La ubicación inicial en todas las pantallas de Coordinación fue corregida por
+instrucción del responsable: el único acceso al asistente está en **Malla**.
 
 ### Evidencia local parcial, 2026-09-27
 
