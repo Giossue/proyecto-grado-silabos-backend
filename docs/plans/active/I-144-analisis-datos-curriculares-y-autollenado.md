@@ -2,7 +2,8 @@
 
 ## Estado
 
-Primera unidad implementada y verificada localmente. El 2026-09-27 el responsable del producto autorizó guardar y
+Primera unidad implementada, verificada localmente y subida a ambos repositorios;
+migración remota aplicada y comprobada el 2026-09-27. El responsable del producto autorizó guardar y
 subir el estado anterior y comenzar este plan. El punto previo quedó en `4761c10d`.
 La primera unidad implementa registro de resultados de aprendizaje por asignatura,
 confirmación de Coordinación y uso como dato automático de plantilla. La propuesta
@@ -48,8 +49,8 @@ datos reales automáticamente ni se presupone la autoridad de los documentos adj
   OpenAPI se genera desde `ExportOpenApi`; no se edita el JSON manualmente.
 - Migración nueva `2026_09_27_000144_create_subject_learning_outcomes`: cabecera
   `bases_resultados_asignatura` y filas `resultados_aprendizaje_asignatura`. FK, orden
-  único por base, textos no vacíos y fechas UTC. Aplicada solo en bases locales de
-  prueba/demostración; despliegue remoto pendiente.
+  único por base, textos no vacíos y fechas UTC. Aplicada en bases locales de
+  prueba/demostración y en la base remota `silabos_ueb_db`, lote 72.
 - Primer registro manual estructurado; no se añadió extracción semántica automática de
   PDF/Excel. El nombre y localizador son procedencia declarada por Coordinación, sin
   validar automáticamente vigencia/aprobación de ese documento.
@@ -273,25 +274,44 @@ código. Verificación de la primera unidad el 2026-09-27:
   se resuelven exclusivamente desde la fotografía.
 - `git diff --check` aprobado.
 
-### Preparación del despliegue autorizado, 2026-09-27
+### Migración remota y push autorizados, 2026-09-27
 
 El responsable autorizó resolver los pendientes de esta entrega, migrar si fuera
-necesario y subir ambos repositorios. La conexión remota documentada confirma
+necesario y subir ambos repositorios. La comprobación previa de la conexión remota confirmó
 `current_database() = silabos_ueb_db` y `current_user = silabos_ueb_app`, 43 sílabos,
 cero aprobaciones y la migración I-144 pendiente. La base de Calidad Software es
 otra aplicación y no participa en este despliegue.
 
 Se obtuvo un respaldo PostgreSQL en formato custom fuera del repositorio, con permisos
-`0600`, en `~/.local/state/silabos/backups/silabos_ueb_db-pre-i144-20260927.dump`.
+`0600`, actualizado antes de ejecutar la migración en
+`~/.local/state/silabos/backups/silabos_ueb_db-pre-i144-direct-20260927.dump`.
 Archivo de 490.118 bytes; `pg_restore --list` leyó su índice correctamente. SHA-256:
-`6ff7f0b9aad045eb2ef4fec28aa3d98e9d3f20e0a7c7f87cbfda29628525327f`.
+`706c9091e2e1c0382864915e9485e814025b2e67ea4bc653cb0456202a40c95b`.
 Esto verifica la lectura del respaldo, no un ensayo de restauración.
 
-La configuración SSH local `ueb` respondió `Permission denied (publickey)`.
-La migración productiva debe ejecutarse por Laravel dentro de Dokploy; no se sustituye
-por DDL manual desde la estación. Se solicitó el acceso vigente y se comprobará el
-despliegue tras el push: el arranque del contenedor migra si `RUN_MIGRATIONS=true`.
-Hasta obtener evidencia posterior, el estado remoto continúa pendiente.
+El usuario corrigió el procedimiento: este proyecto migra directamente desde la
+estación autorizada mediante Laravel y `~/.pgpass`, conforme a
+`docs/security/hardening.md`. Se había aplicado indebidamente la regla de ejecución
+en contenedor de Calidad Software a Sílabos. Se restauró la sección de migraciones
+remotas al contenido anterior a `34055f01`; SSH y el acceso al contenedor de Dokploy
+no son requisitos para esta migración.
+
+La ejecución usa `DB_PASSWORD='(null)'` para que libpq resuelva la autenticación desde
+`~/.pgpass`, comprueba el destino y sigue estado → renombrado idempotente de la tabla
+de control → migrador con bloqueo → estado. El comando de renombrado confirmó que
+`migraciones` ya existía; `php artisan migrate --force --isolated` ejecutó únicamente
+I-144 y terminó correctamente. `migrate:status` posterior la muestra aplicada en
+el lote 72. La conexión efectiva de Laravel coincidió con la base y el usuario
+comprobados mediante PostgreSQL.
+
+La comprobación posterior verificó las dos tablas, sus claves primarias y foráneas,
+unicidad y restricciones de contenido/posición. Ambas tablas nuevas están vacías;
+se conservan los conteos anteriores de 43 sílabos y cero aprobaciones. La migración
+no carga contenidos ni modifica registros de negocio existentes.
+
+Código subido y verificado contra `origin/main`: backend `34055f01`, frontend
+`940f983`. Esta evidencia acredita el push y la migración de base; no acredita
+la versión servida por HTTP ni la salud del despliegue de aplicación.
 
 Una futura implementación debe probar alcance entre carreras, coincidencia por identidad
 de asignatura (no solo nombre), diferencias de fuentes, ausencia de datos, cardinalidad
