@@ -19,10 +19,11 @@ elaboración que permanecen; no reabren el alcance retirado.
 
 ## Datos curriculares por asignatura, 2026-09-27 (I-144)
 
-Primera unidad implementada localmente: registro y confirmación de resultados de
-aprendizaje por Coordinación, fotografía por sílabo y variables automáticas para la
+Primera unidad I-144: registro y confirmación manual de resultados de aprendizaje,
+fotografía por sílabo y variables automáticas para la
 plantilla. Matriz y avance en `active/I-144-analisis-datos-curriculares-y-autollenado.md`
-y `active/I-144-matriz-calidad-software.md`.
+y `active/I-144-matriz-calidad-software.md`. I-147 retiró la escritura manual; sus
+datos antiguos permanecen como respaldo cuando no hay importación confirmada.
 
 Pendiente de decisión: autoridad de cada fuente en conflicto, agrupación de contenidos
 en unidades, cardinalidad de habilidades y significado de APE cero. La discrepancia
@@ -38,8 +39,9 @@ La corrección del responsable del producto establece documentos y revisión por
 como entrada principal. Se implementan conceptos de texto/lista/tabla, valores por
 carrera/asignatura, PDF/XLSX y documentos previos de ingesta, extracción con referencias,
 confirmación selectiva, datos automáticos y opciones docentes obtenidas de una o
-varias listas. El formulario manual de I-144 conserva utilidad puntual y no representa
-el asistente completo solicitado. Estado y evidencia en
+varias listas. I-147 deja este asistente como único recorrido de confirmación y muestra
+los datos efectivos con procedencia; el formulario manual de I-144 fue retirado.
+Estado y evidencia en
 `active/I-145-asistente-importacion-curricular.md`.
 
 Persistencia/aplicación tienen pruebas locales de aislamiento, concurrencia,

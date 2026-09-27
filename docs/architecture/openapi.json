@@ -3391,134 +3391,6 @@
                 ]
             }
         },
-        "/api/v1/coordination/academic/subjects/{subject}/learning-outcomes": {
-            "get": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_academic_subjects_learning-outcomes_show",
-                "summary": "api.v1.coordination.academic.subjects.learning-outcomes.show",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SubjectLearningOutcomes"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    },
-                    "404": {
-                        "description": "La asignatura no pertenece a la carrera activa o no existe.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "subject",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            },
-            "put": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_academic_subjects_learning-outcomes_update",
-                "summary": "api.v1.coordination.academic.subjects.learning-outcomes.update",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/SubjectLearningOutcomes"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    },
-                    "404": {
-                        "description": "La asignatura no pertenece a la carrera activa o no existe.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    },
-                    "409": {
-                        "description": "Los resultados cambiaron desde la consulta; vuelva a cargarlos.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/Error"
-                                }
-                            }
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "subject",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/SubjectLearningOutcomesInput"
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
         "/api/v1/coordination/academic/teacher-assignments": {
             "get": {
                 "tags": [
@@ -5894,160 +5766,6 @@
             }
         },
         "schemas": {
-            "SubjectLearningOutcomes": {
-                "type": "object",
-                "required": [
-                    "subject_id",
-                    "source_name",
-                    "source_locator",
-                    "outcomes",
-                    "confirmed_at",
-                    "confirmed_by",
-                    "fingerprint",
-                    "editable",
-                    "lock_reason"
-                ],
-                "properties": {
-                    "subject_id": {
-                        "type": "string",
-                        "format": "uuid"
-                    },
-                    "source_name": {
-                        "type": "string"
-                    },
-                    "source_locator": {
-                        "type": "string"
-                    },
-                    "outcomes": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "required": [
-                                "id",
-                                "text",
-                                "position"
-                            ],
-                            "properties": {
-                                "id": {
-                                    "type": "string",
-                                    "format": "uuid"
-                                },
-                                "text": {
-                                    "type": "string"
-                                },
-                                "position": {
-                                    "type": "integer",
-                                    "minimum": 1
-                                }
-                            }
-                        }
-                    },
-                    "confirmed_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
-                    },
-                    "confirmed_by": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "required": [
-                            "id",
-                            "name"
-                        ],
-                        "properties": {
-                            "id": {
-                                "type": "string",
-                                "format": "uuid"
-                            },
-                            "name": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "fingerprint": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "pattern": "^[a-f0-9]{64}$"
-                    },
-                    "editable": {
-                        "type": "boolean"
-                    },
-                    "lock_reason": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
-                    "message": {
-                        "type": "string"
-                    }
-                }
-            },
-            "SubjectLearningOutcomesInput": {
-                "type": "object",
-                "required": [
-                    "source_name",
-                    "source_locator",
-                    "outcomes",
-                    "confirmed",
-                    "expected_fingerprint"
-                ],
-                "properties": {
-                    "source_name": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 240
-                    },
-                    "source_locator": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 500
-                    },
-                    "outcomes": {
-                        "type": "array",
-                        "minItems": 1,
-                        "maxItems": 100,
-                        "items": {
-                            "type": "object",
-                            "required": [
-                                "text"
-                            ],
-                            "additionalProperties": false,
-                            "properties": {
-                                "id": {
-                                    "type": "string",
-                                    "format": "uuid"
-                                },
-                                "text": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                    "maxLength": 12000
-                                }
-                            }
-                        }
-                    },
-                    "confirmed": {
-                        "type": "boolean",
-                        "const": true
-                    },
-                    "expected_fingerprint": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "pattern": "^[a-f0-9]{64}$"
-                    },
-                    "confirm_purge": {
-                        "type": "boolean"
-                    }
-                }
-            },
             "CurricularConceptDefinition": {
                 "type": "object",
                 "required": [
@@ -6101,6 +5819,132 @@
                                 }
                             }
                         }
+                    }
+                }
+            },
+            "ConfirmedCurricularValue": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "key",
+                    "concept_key",
+                    "label",
+                    "type",
+                    "scope",
+                    "columns",
+                    "subject_id",
+                    "subject_name",
+                    "subject_code",
+                    "value",
+                    "evidence",
+                    "confirmed_at",
+                    "origin"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "concept_key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "texto",
+                            "lista",
+                            "tabla"
+                        ]
+                    },
+                    "scope": {
+                        "type": "string",
+                        "enum": [
+                            "carrera",
+                            "asignatura"
+                        ]
+                    },
+                    "columns": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "key",
+                                "label"
+                            ],
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "subject_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "subject_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "subject_code": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "value": {
+                        "description": "Texto, lista de textos o tabla confirmada que usa un sílabo nuevo."
+                    },
+                    "evidence": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "source_name",
+                                "locator",
+                                "quote"
+                            ],
+                            "properties": {
+                                "source_name": {
+                                    "type": "string"
+                                },
+                                "locator": {
+                                    "type": "string"
+                                },
+                                "quote": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "confirmed_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "origin": {
+                        "type": "string",
+                        "enum": [
+                            "importacion",
+                            "anterior"
+                        ],
+                        "description": "El registro I-144 solo aparece si no lo sustituyó un resultado importado."
                     }
                 }
             },
@@ -6396,6 +6240,7 @@
                 "required": [
                     "imports",
                     "subjects",
+                    "current_values",
                     "sources",
                     "lock_reason",
                     "capabilities"
@@ -6468,6 +6313,12 @@
                                     "type": "string"
                                 }
                             }
+                        }
+                    },
+                    "current_values": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ConfirmedCurricularValue"
                         }
                     },
                     "sources": {

@@ -32,6 +32,10 @@ reutilizar documentos previos de ingesta y revisar candidatos por lote. El origi
 consulta mediante una descarga privada autorizada por importación, sin recuperar el
 CRUD de fuentes. Los nombres wire `sources`/`source_ids` permanecen por compatibilidad
 interna; las etiquetas de producto los presentan como documentos de ingesta.
+I-147 retira del lienzo de Malla el editor manual de resultados de aprendizaje. La
+sección «Datos confirmados» del asistente presenta valores efectivos de la carrera y
+sus materias con procedencia, incluido el respaldo I-144 cuando todavía no hay un
+resultado documental importado para esa asignatura.
 
 ## Despliegue
 

@@ -152,6 +152,14 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 ## Actualizado para esta entrega
 
+I-147 (27 de septiembre de 2026), por instrucción del responsable, retira de la malla
+el editor manual de «Resultados de aprendizaje». El asistente curricular de Malla
+presenta los datos confirmados que usará un sílabo nuevo, incluida su procedencia.
+Para resultados de una asignatura, el valor documental I-145 prevalece; cuando no
+existe, se muestra la base I-144 como «Registro anterior». La base, los expedientes y
+revisiones históricos se conservan. Las antiguas rutas GET/PUT de edición manual se
+retiran; la confirmación documental queda como único recorrido de actualización.
+
 Ajuste de I-145 (27 de septiembre de 2026), por instrucción del responsable, sitúa el único
 acceso al asistente curricular de I-145 en **Coordinación → Malla**. El botón deja de
 ser global en las pantallas de Coordinación; permisos y alcance por carrera no cambian.
@@ -213,7 +221,8 @@ del origen vivo; la ausencia bloquea el envío solo si el formato utiliza ese da
 La implementación local agrega cabecera y filas relacionadas, no atributos arbitrarios
 de malla ni versiones de fuentes. No confirma cantidad de unidades, límite de habilidades,
 reglas APE ni generación de unidades mediante IA. I-145 incorpora el recorrido
-documental general; el registro manual de I-144 queda como mantenimiento puntual.
+documental general; el registro manual de I-144 y sus rutas fueron retirados por I-147.
+La base histórica permanece como respaldo de lectura.
 Los aliases anteriores de resultados/fuente/ubicación priorizan el concepto genérico
 `resultados_aprendizaje` (lista/asignatura) confirmado en la fotografía y conservan
 el origen I-144 cuando aquel no existe; no se duplican datos vigentes.

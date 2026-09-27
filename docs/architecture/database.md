@@ -121,8 +121,10 @@ fuente, localizador y confirmación de Coordinación) y `resultados_aprendizaje_
 asignatura y usuario confirmador con borrado restringido; sus filas tienen cascada.
 Eliminar una materia sin dependencias elimina antes su cabecera. Una materia programada
 conserva los bloqueos de borrado existentes. No son atributos arbitrarios de malla.
+I-147 conserva estas tablas para lectura histórica y retira su escritura pública;
+los resultados nuevos se confirman en `valores_curriculares` mediante importación.
 
-La escritura reemplaza la lista en una transacción y compara una huella de lo consultado
+La escritura histórica I-144 reemplazaba la lista en una transacción y comparaba una huella de lo consultado
 para detectar concurrencia. `contexto_academico.subject.learning_outcomes` fotografía
 contenido, orden y procedencia al generar cada sílabo. La exportación resuelve los datos
 desde esa fotografía, sin consultas al catálogo vivo. El catálogo de variables expone

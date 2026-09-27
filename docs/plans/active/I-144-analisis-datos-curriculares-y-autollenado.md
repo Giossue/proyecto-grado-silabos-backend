@@ -40,6 +40,9 @@ datos reales automáticamente ni se presupone la autoridad de los documentos adj
 
 ### Contrato, migración y límites
 
+Este contrato GET/PUT fue retirado por I-147. El texto siguiente documenta la primera
+entrega I-144 y no representa una ruta vigente; las tablas y fotografías perduran.
+
 - GET/PUT `/api/v1/coordination/academic/subjects/{subject}/learning-outcomes`.
 - PUT: `source_name`, `source_locator`, `outcomes: [{id?, text}]`, `confirmed: true`,
   `expected_fingerprint` (nulo en primer registro); `confirm_purge` en correcciones que

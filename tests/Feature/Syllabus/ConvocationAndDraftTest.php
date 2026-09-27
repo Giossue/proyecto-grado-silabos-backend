@@ -121,13 +121,15 @@ class ConvocationAndDraftTest extends TestCase
     public function test_confirmed_curricular_outcomes_are_frozen_with_the_syllabus_and_resolved_in_order(): void
     {
         $scheduled = ScheduledSubject::query()->firstOrFail();
-        $this->actingAsCoordinator()->putJson(route('api.v1.coordination.academic.subjects.learning-outcomes.update', $scheduled->asignatura_id), [
-            'source_name' => 'Proyecto de carrera de prueba',
-            'source_locator' => 'Página 12, ficha de la asignatura',
-            'outcomes' => [['text' => 'Compara alternativas de diseño.'], ['text' => 'Justifica una arquitectura.']],
-            'confirmed' => true,
-            'expected_fingerprint' => null,
-        ])->assertOk();
+        $base = SubjectLearningOutcomeBase::query()->create([
+            'asignatura_id' => $scheduled->asignatura_id,
+            'nombre_fuente' => 'Proyecto de carrera de prueba',
+            'localizador_fuente' => 'Página 12, ficha de la asignatura',
+            'confirmado_por' => $this->coordinator->id,
+            'confirmado_en' => now(),
+        ]);
+        $base->outcomes()->create(['texto_resultado' => 'Compara alternativas de diseño.', 'posicion_resultado' => 1]);
+        $base->outcomes()->create(['texto_resultado' => 'Justifica una arquitectura.', 'posicion_resultado' => 2]);
 
         $syllabus = $this->openConvocationAndGetSyllabus();
         $snapshot = app(SyllabusSnapshot::class)->build($syllabus);

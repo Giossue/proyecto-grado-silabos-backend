@@ -7,6 +7,7 @@ use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectLearningOutcomeBase;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Application\ActiveRole;
@@ -22,6 +23,7 @@ final class CurricularImportsViewData
         private readonly ActiveRole $roles,
         private readonly ProcessLocks $locks,
         private readonly CanonicalHasher $hasher,
+        private readonly ConfirmedCurricularValues $confirmedValues,
     ) {}
 
     public function role(Request $request): RoleAssignment
@@ -53,6 +55,7 @@ final class CurricularImportsViewData
                 ])->all(),
             'subjects' => Subject::query()->where('carrera_id', $careerId)->orderBy('nombre')->get(['id', 'nombre', 'codigo_asignatura'])
                 ->map(fn (Subject $subject): array => ['id' => $subject->id, 'name' => $subject->nombre, 'code' => $subject->codigo_asignatura])->all(),
+            'current_values' => $this->confirmedValues->forCareer($careerId),
             'sources' => AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)
                 ->whereNotIn('estado_ingesta', ['pendiente', 'en_ejecucion', 'fallida'])
                 ->whereNotNull('contenido_fuente_academica')->where('contenido', '!=', '')->orderBy('nombre')->get(['id', 'nombre'])
@@ -90,6 +93,9 @@ final class CurricularImportsViewData
             'documents' => $import->documentos_importacion, 'proposal' => $import->propuesta_importacion,
             // También detecta otra importación aplicada después de consultar esta.
             'current_values' => CurricularValue::query()->where('carrera_id', $import->carrera_id)->orderBy('id')->get()->toArray(),
+            'previous_outcomes' => SubjectLearningOutcomeBase::query()->with('outcomes')
+                ->whereHas('subject', fn ($query) => $query->where('carrera_id', $import->carrera_id))
+                ->orderBy('id')->get()->toArray(),
         ]);
     }
 
@@ -103,12 +109,22 @@ final class CurricularImportsViewData
         $definitions = array_column($proposal['definitions'], null, 'key');
         $current = CurricularValue::query()->with('concept')->where('carrera_id', $import->carrera_id)->get()
             ->keyBy(fn (CurricularValue $value): string => $value->concept->clave_concepto.':'.($value->asignatura_id ?? 'career'));
+        $previousOutcomes = SubjectLearningOutcomeBase::query()->with('outcomes')
+            ->whereHas('subject', fn ($query) => $query->where('carrera_id', $import->carrera_id))
+            ->get()->keyBy('asignatura_id');
         foreach ($proposal['values'] as &$row) {
-            $unresolved = ($definitions[$row['concept_key']]['scope'] ?? null) === 'asignatura' && $row['subject_id'] === null;
+            $definition = $definitions[$row['concept_key']] ?? [];
+            $unresolved = ($definition['scope'] ?? null) === 'asignatura' && $row['subject_id'] === null;
             $value = $unresolved ? null : $current->get($row['concept_key'].':'.($row['subject_id'] ?? 'career'));
-            $row['current_value'] = $value?->valor_curricular;
-            $row['change'] = $unresolved ? null : ($value === null ? 'new'
-                : ($this->hasher->hash($value->valor_curricular) === $this->hasher->hash($row['value']) ? 'unchanged' : 'replace'));
+            $legacy = $value === null && ! $unresolved && $row['subject_id'] !== null
+                && $row['concept_key'] === 'resultados_aprendizaje' && ($definition['type'] ?? null) === 'lista'
+                && ($definition['scope'] ?? null) === 'asignatura'
+                ? $previousOutcomes->get($row['subject_id']) : null;
+            $currentValue = $value !== null ? $value->valor_curricular
+                : ($legacy !== null ? $legacy->outcomes->pluck('texto_resultado')->values()->all() : null);
+            $row['current_value'] = $currentValue;
+            $row['change'] = $unresolved ? null : ($currentValue === null ? 'new'
+                : ($this->hasher->hash($currentValue) === $this->hasher->hash($row['value']) ? 'unchanged' : 'replace'));
         }
 
         return $proposal;

@@ -39,6 +39,9 @@ it('mantiene el contrato OpenAPI sincronizado con las rutas públicas v1', funct
                 ->and($path)->not->toContain('/fields/{field}/ai');
         }
         expect($committed['components']['schemas'])->not->toHaveKey('SourceDocument')
+            ->and($committed['components']['schemas'])->not->toHaveKey('SubjectLearningOutcomes')
+            ->and($committed['components']['schemas'])->not->toHaveKey('SubjectLearningOutcomesInput')
+            ->and($committed['paths'])->not->toHaveKey('/api/v1/coordination/academic/subjects/{subject}/learning-outcomes')
             ->and($committed['paths']['/api/v1/coordination/curricular-imports/{import}/documents/{source}/original']['get']['responses']['200']['content'])
             ->toHaveKeys(['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     } finally {

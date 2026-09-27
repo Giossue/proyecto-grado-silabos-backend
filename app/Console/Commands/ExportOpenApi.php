@@ -50,8 +50,6 @@ class ExportOpenApi extends Command
                     ],
                 ],
                 'schemas' => [
-                    'SubjectLearningOutcomes' => $this->learningOutcomesSchema(),
-                    'SubjectLearningOutcomesInput' => $this->learningOutcomesInputSchema(),
                     ...$this->curricularImportSchemas(),
                     'Message' => [
                         'type' => 'object',
@@ -119,7 +117,6 @@ class ExportOpenApi extends Command
         $isCurricularOriginal = $name === 'api.v1.coordination.curricular-imports.documents.original';
         $isSignatureUpload = $name === 'api.v1.signature.store';
         $isPreparePeriod = $name === 'api.v1.coordination.academic.period.prepare';
-        $isLearningOutcomes = str_starts_with($name, 'api.v1.coordination.academic.subjects.learning-outcomes.');
         $isCurricularImport = str_starts_with($name, 'api.v1.coordination.curricular-imports.');
         $isCurricularImportCreate = $name === 'api.v1.coordination.curricular-imports.store';
         $isCurricularImportRetry = $name === 'api.v1.coordination.curricular-imports.retry';
@@ -131,9 +128,6 @@ class ExportOpenApi extends Command
         if ($isCurricularOriginal) {
             $binary = ['schema' => ['type' => 'string', 'format' => 'binary']];
             $successContent = ['application/pdf' => $binary, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => $binary];
-        }
-        if ($isLearningOutcomes) {
-            $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectLearningOutcomes']]];
         }
         if ($isCurricularImport && ! $isCurricularOriginal) {
             $schema = str_ends_with($name, '.index') ? 'CurricularImportsIndex' : 'CurricularImport';
@@ -156,12 +150,6 @@ class ExportOpenApi extends Command
         if ($parameters !== []) {
             $operation['parameters'] = $parameters;
         }
-        if ($isLearningOutcomes) {
-            $operation['responses']['404'] = $this->errorResponse('La asignatura no pertenece a la carrera activa o no existe.');
-            if ($method === 'PUT') {
-                $operation['responses']['409'] = $this->errorResponse('Los resultados cambiaron desde la consulta; vuelva a cargarlos.');
-            }
-        }
         if ($isCurricularImport) {
             $operation['responses']['404'] = $this->errorResponse('El registro o la materia no pertenecen a la carrera activa o no existen.');
             $operation['responses']['409'] = $this->errorResponse('La propuesta, las fuentes o la base curricular cambiaron; consulte de nuevo antes de confirmar.');
@@ -172,8 +160,6 @@ class ExportOpenApi extends Command
                 $content = ['multipart/form-data' => ['schema' => ['$ref' => '#/components/schemas/CurricularImportInput']]];
             } elseif ($isCurricularImport) {
                 $content = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/CurricularImportApplyInput']]];
-            } elseif ($isLearningOutcomes) {
-                $content = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectLearningOutcomesInput']]];
             } elseif ($isLogoUpload) {
                 $content = ['multipart/form-data' => ['schema' => [
                     'type' => 'object',
@@ -216,7 +202,7 @@ class ExportOpenApi extends Command
                 ]]];
             }
             $operation['requestBody'] = [
-                'required' => $isPreparePeriod || $isLearningOutcomes || $isCurricularImport,
+                'required' => $isPreparePeriod || $isCurricularImport,
                 'content' => $content,
             ];
         }
@@ -225,60 +211,6 @@ class ExportOpenApi extends Command
         }
 
         return $operation;
-    }
-
-    /** @return array<string, mixed> */
-    private function learningOutcomesSchema(): array
-    {
-        return [
-            'type' => 'object',
-            'required' => ['subject_id', 'source_name', 'source_locator', 'outcomes', 'confirmed_at', 'confirmed_by', 'fingerprint', 'editable', 'lock_reason'],
-            'properties' => [
-                'subject_id' => ['type' => 'string', 'format' => 'uuid'],
-                'source_name' => ['type' => 'string'],
-                'source_locator' => ['type' => 'string'],
-                'outcomes' => ['type' => 'array', 'items' => [
-                    'type' => 'object', 'required' => ['id', 'text', 'position'],
-                    'properties' => [
-                        'id' => ['type' => 'string', 'format' => 'uuid'],
-                        'text' => ['type' => 'string'],
-                        'position' => ['type' => 'integer', 'minimum' => 1],
-                    ],
-                ]],
-                'confirmed_at' => ['type' => ['string', 'null'], 'format' => 'date-time'],
-                'confirmed_by' => [
-                    'type' => ['object', 'null'], 'required' => ['id', 'name'],
-                    'properties' => ['id' => ['type' => 'string', 'format' => 'uuid'], 'name' => ['type' => 'string']],
-                ],
-                'fingerprint' => ['type' => ['string', 'null'], 'pattern' => '^[a-f0-9]{64}$'],
-                'editable' => ['type' => 'boolean'],
-                'lock_reason' => ['type' => ['string', 'null']],
-                'message' => ['type' => 'string'],
-            ],
-        ];
-    }
-
-    /** @return array<string, mixed> */
-    private function learningOutcomesInputSchema(): array
-    {
-        return [
-            'type' => 'object',
-            'required' => ['source_name', 'source_locator', 'outcomes', 'confirmed', 'expected_fingerprint'],
-            'properties' => [
-                'source_name' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 240],
-                'source_locator' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 500],
-                'outcomes' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 100, 'items' => [
-                    'type' => 'object', 'required' => ['text'], 'additionalProperties' => false,
-                    'properties' => [
-                        'id' => ['type' => 'string', 'format' => 'uuid'],
-                        'text' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 12000],
-                    ],
-                ]],
-                'confirmed' => ['type' => 'boolean', 'const' => true],
-                'expected_fingerprint' => ['type' => ['string', 'null'], 'pattern' => '^[a-f0-9]{64}$'],
-                'confirm_purge' => ['type' => 'boolean'],
-            ],
-        ];
     }
 
     /** @return array<string, array<string, mixed>> */
@@ -306,6 +238,27 @@ class ExportOpenApi extends Command
                         'type' => 'object', 'required' => ['key', 'label'],
                         'properties' => ['key' => ['type' => 'string'], 'label' => ['type' => 'string']],
                     ]],
+                ],
+            ],
+            'ConfirmedCurricularValue' => [
+                'type' => 'object',
+                'required' => ['id', 'key', 'concept_key', 'label', 'type', 'scope', 'columns', 'subject_id',
+                    'subject_name', 'subject_code', 'value', 'evidence', 'confirmed_at', 'origin'],
+                'properties' => [
+                    'id' => $uuid, 'key' => ['type' => 'string'], 'concept_key' => ['type' => 'string'],
+                    'label' => ['type' => 'string'], 'type' => ['type' => 'string', 'enum' => ['texto', 'lista', 'tabla']],
+                    'scope' => ['type' => 'string', 'enum' => ['carrera', 'asignatura']],
+                    'columns' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['key', 'label'],
+                        'properties' => ['key' => ['type' => 'string'], 'label' => ['type' => 'string']]]],
+                    'subject_id' => $nullableUuid, 'subject_name' => $nullableText, 'subject_code' => $nullableText,
+                    'value' => ['description' => 'Texto, lista de textos o tabla confirmada que usa un sílabo nuevo.'],
+                    'evidence' => ['type' => 'array', 'items' => ['type' => 'object',
+                        'required' => ['source_name', 'locator', 'quote'],
+                        'properties' => ['source_name' => ['type' => 'string'], 'locator' => ['type' => 'string'],
+                            'quote' => $nullableText]]],
+                    'confirmed_at' => ['type' => 'string', 'format' => 'date-time'],
+                    'origin' => ['type' => 'string', 'enum' => ['importacion', 'anterior'],
+                        'description' => 'El registro I-144 solo aparece si no lo sustituyó un resultado importado.'],
                 ],
             ],
             'CurricularImportProposal' => [
@@ -352,7 +305,7 @@ class ExportOpenApi extends Command
                 ],
             ],
             'CurricularImportsIndex' => [
-                'type' => 'object', 'required' => ['imports', 'subjects', 'sources', 'lock_reason', 'capabilities'],
+                'type' => 'object', 'required' => ['imports', 'subjects', 'current_values', 'sources', 'lock_reason', 'capabilities'],
                 'properties' => [
                     'imports' => ['type' => 'array', 'items' => [
                         'type' => 'object', 'required' => ['id', 'status', 'created_at', 'applied_at', 'error'],
@@ -361,6 +314,7 @@ class ExportOpenApi extends Command
                     ]],
                     'subjects' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['id', 'name', 'code'],
                         'properties' => ['id' => $uuid, 'name' => ['type' => 'string'], 'code' => ['type' => 'string']]]],
+                    'current_values' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/ConfirmedCurricularValue']],
                     'sources' => ['type' => 'array', 'description' => 'Nombre compatible: documentos internos de ingesta reutilizables de la carrera; no existe CRUD de fuentes.', 'items' => ['type' => 'object', 'required' => ['id', 'name'],
                         'properties' => ['id' => $uuid, 'name' => ['type' => 'string']]]],
                     'lock_reason' => $nullableText,

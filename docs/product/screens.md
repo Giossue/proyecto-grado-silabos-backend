@@ -270,6 +270,11 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   regeneración cuando hay sílabos afectados. Una falla muestra el error y ofrece
   reintentar; las capacidades deshabilitadas y el bloqueo por convocatoria se explican
   junto a la acción. Cambiar de carrera descarta el estado local anterior del asistente.
+  «Datos confirmados» muestra los valores que usará un sílabo nuevo, filtrables por
+  materia o concepto y con procedencia. Cuando faltan resultados importados, muestra
+  los resultados I-144 como registro anterior sin atribuirles un extracto inexistente.
+  La acción manual «Resultados de aprendizaje» desaparece del menú de cada materia;
+  las correcciones nuevas siguen el recorrido de importación y confirmación.
   El botón no aparece en Convocatorias, Materias y paralelos, Asignación docente ni
   otras pantallas.
   En ADM-06 los conceptos confirmados aparecen en el catálogo de datos automáticos.

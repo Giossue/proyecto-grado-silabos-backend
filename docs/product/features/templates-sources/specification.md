@@ -26,6 +26,11 @@
 - Los PDF/XLSX entregados al asistente I-145 y sus documentos JSON internos conservan
   archivo privado, procedencia, huellas y estado de lectura. No son una pantalla de
   edición documental. Pueden reutilizarse en otra importación de la misma carrera.
+- I-147 concentra la consulta de datos efectivos en «Datos confirmados» del asistente.
+  Los resultados importados prevalecen sobre el registro I-144; este permanece visible
+  como respaldo donde aún no haya importación. El menú de materia ya no ofrece su
+  editor manual. La procedencia antigua muestra documento y ubicación sin inventar
+  un extracto.
 - Coordinación confirma por lote los datos extraídos; la evidencia original y las
   selecciones se conservan para revisión y auditoría. La descarga del original está
   autorizada mediante la importación y la carrera activa.
