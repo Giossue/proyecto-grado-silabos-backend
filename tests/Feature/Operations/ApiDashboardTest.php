@@ -58,7 +58,7 @@ class ApiDashboardTest extends TestCase
             ->assertJsonMissingPath('faculty_logo')
             ->assertJsonMissing(['key' => 'faculty_logo'])
             ->assertJsonMissing(['key' => 'sources'])
-            ->assertJsonCount(5, 'setup.steps');
+            ->assertJsonCount(6, 'setup.steps');
     }
 
     public function test_coordinator_dashboard_uses_the_current_period_and_requires_every_parallel_to_have_a_teacher(): void
