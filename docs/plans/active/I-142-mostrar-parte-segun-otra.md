@@ -16,7 +16,9 @@ RF-017..026, RN-009..012, CU-04, CU-05, ADM-06. No depende de una decisión
 1. Una parte que llena el docente puede tener una sola condición: otra parte Sí/No o de
    selección de la misma plantilla es igual a un valor. Se guarda en
    `definiciones_campo.mostrar_si` como `{key, value}`; `null` es «Siempre». Un Sí/No
-   compara con `true`/`false`.
+   compara con `true`/`false`. I-150 limita en ADM-06 las opciones ofrecidas a partes de
+   la misma sección; una condición ya guardada hacia otra sección sigue visible para
+   poder quitarla. El servidor conserva la validación a nivel de plantilla.
 2. Se valida al guardar (`SaveFieldDefinitionRequest.show_when`,
    `SaveTemplateDocumentRequest.properties.*.show_when`): la parte referida existe, es
    de Sí/No o selección, el valor es una de sus opciones y no es la misma parte.
