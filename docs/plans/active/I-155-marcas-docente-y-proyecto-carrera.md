@@ -80,9 +80,18 @@ Respuestas del responsable:
   se tratan como @ProyectoCarrera. Las partes existentes siguen funcionando.
 
 ### Trabajo de la segunda vuelta
-- [ ] Crear párrafo o lista con hoja vacía y sin pregunta inicial; ofrecer solo tres formas.
-- [ ] `variable` con `listStyle`; listas del resolvedor y de la vista sin anidar.
-- [ ] Declaración automática de @ProyectoCarrera (mismo nombre con otra forma → nombre con sufijo).
-- [ ] Menú y atajos sin diálogos; fichas «!Docente», «?Docente», «@ProyectoCarrera».
-- [ ] Sí/No como dos botones en el formulario del docente, también en tablas.
-- [ ] Pruebas, documentación y verificación completas.
+- [x] Crear párrafo o lista con hoja vacía (`blank`) y sin pregunta inicial; ofrecer solo
+      tres formas. La API conserva los tipos anteriores por compatibilidad.
+- [x] `variable` con `listStyle`; listas del resolvedor y de la vista sin anidar.
+- [x] Declaración automática de @ProyectoCarrera (mismo nombre con otra forma → nombre con
+      sufijo «(lista)» o «(texto)»); alcance por asignatura por omisión.
+- [x] Menú y atajos sin diálogos (`useSheetMarks`); fichas «!Docente», «?Docente»,
+      «@ProyectoCarrera» con su nombre interno en la ayuda. Se retiran los diálogos de
+      pregunta nueva y de dato nuevo.
+- [x] Sí/No como dos botones en el formulario del docente, también en tablas.
+- [x] `composer verify` (401 pruebas); lint, typecheck, 225 pruebas de Vitest y build.
+
+### Ajustes posteriores, 2026-09-29
+- [x] Cinta: «Editar» y «Propiedades»; un párrafo o una lista no muestran herramientas de
+      celdas.
+- [x] La forma de una parte no cambia después de crearla (pantalla y API).

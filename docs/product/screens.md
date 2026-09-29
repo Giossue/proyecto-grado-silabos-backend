@@ -305,15 +305,29 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   una falla, «Descartar importación» pide confirmación y elimina la propuesta y sus
   documentos sin cambiar datos confirmados.
 - I-155: ADM-06 deja de preguntar quién llena la parte. Al crear una parte o una sección
-  solo se elige su forma: párrafo, lista con viñetas o numerada que escribe el docente,
-  tabla o texto libre. Toda parte se edita sobre la hoja con «Editar en la hoja»; el
-  menú Insertar y los atajos ofrecen tres marcas que se mezclan en párrafos y celdas:
-  **Dato automático** (`{`, violeta, lo pone el sistema), **!Docente** (`!`, azul
-  punteado, lo llena el docente) y **@ProyectoCarrera** (`@`, ámbar, lo llena
-  Coordinación al importar). «Nuevo dato…» propone como nombre el de la sección y pide
-  forma (lista o texto) y alcance (cada asignatura o toda la carrera). «Filas que agrega
-  el docente» solo aparece dentro de una tabla. En el formulario del docente, una parte
-  con hoja propia se llena sobre esa hoja, igual que en el Word.
+  solo se elige su forma: **Párrafo**, **Lista** (con viñetas) o **Tabla**. Párrafo y
+  lista nacen con la hoja vacía; lo escrito sin marca es fijo. Toda parte se edita sobre
+  la hoja con «Editar». El menú Insertar muestra solo icono y nombre: **Dato
+  automático** (lista de datos del sistema, ficha verde azulada), **Docente** (ficha azul
+  «!Docente»), **Docente: Sí o No** (ficha rosa «?Docente») y **Proyecto de carrera**
+  (ficha ámbar «@ProyectoCarrera»); dentro de una tabla, además, «Filas que agrega el
+  docente». Las fichas del docente llevan borde punteado; las que llegan llenas, continuo.
+  La cinta de una parte seleccionada muestra **Editar** (sobre la hoja), **Propiedades**
+  (nombre, hoja horizontal y condiciones) y **Eliminar parte**. La forma se elige al
+  crear la parte y no cambia: Propiedades la muestra sin permitir editarla y la API
+  rechaza el cambio; para otra forma se elimina la parte y se crea una nueva. Al editar un párrafo o
+  una lista, la cinta solo ofrece Insertar y deshacer/rehacer; las herramientas de celdas
+  aparecen únicamente en partes con tabla.
+  Los atajos `{`, `!`, `?` y `@` hacen lo mismo. Ninguna marca abre un diálogo: su
+  nombre interno sale de lo escrito antes en la misma línea o celda, de la primera celda
+  de la fila, del nombre de la parte o del de la sección, y se ve al pasar el cursor por
+  la ficha. Todo @ProyectoCarrera es por asignatura; en una lista se busca como lista.
+  En una lista, lo fijo, !Docente y @ProyectoCarrera forman una sola lista. En una fila
+  que agrega el docente, !Docente es un dato de esa fila. Un ?Docente puede condicionar
+  otras partes desde «Editar parte». En el formulario del docente, una parte con hoja
+  propia se llena sobre esa hoja, igual que en el Word, y ?Docente se responde con dos
+  botones Sí y No, también dentro de una tabla. Por ahora no se crean preguntas en las
+  que el docente elige de una lista; las existentes siguen funcionando.
 - I-151 (sustituido en su pregunta por I-155): al crear una parte o una sección, ADM-06 preguntaba «¿Quién llena esta parte?»
   sin términos técnicos: **El docente la escribe** (un párrafo, una lista con viñetas,
   una lista numerada o una tabla que se llena por filas), **El docente elige de una

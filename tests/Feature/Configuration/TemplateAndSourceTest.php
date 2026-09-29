@@ -380,7 +380,7 @@ class TemplateAndSourceTest extends TestCase
         // I-32: no hay versiones ni publicación. La plantilla se corrige en el sitio y
         // cada revisión enviada conserva su propia copia.
         $template = $this->createTemplate();
-        $field = $template->fields()->firstOrFail();
+        $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [
@@ -394,6 +394,17 @@ class TemplateAndSourceTest extends TestCase
 
         $this->assertSame('Etiqueta corregida', $field->fresh()->etiqueta);
         $this->assertSame(1, SyllabusTemplate::query()->count());
+
+        // La forma se elige al crear la parte y no cambia (I-155).
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [
+                'block_id' => $field->bloque_plantilla_id,
+                'key' => $field->clave,
+                'label' => 'Etiqueta corregida',
+                'content_type' => 'bulleted_list',
+            ])
+            ->assertJsonValidationErrors(['content_type' => 'La forma de una parte no se cambia. Elimínela y cree una nueva con la forma que necesita.']);
+        $this->assertSame('text', $field->fresh()->block->contentType());
     }
 
     /** I-33 (ajuste 2026-09-03): todo campo es obligatorio; solo se decide ayuda e IA. */
@@ -563,24 +574,21 @@ class TemplateAndSourceTest extends TestCase
     public function test_administrator_designs_a_complex_table_on_a_block(): void
     {
         $version = $this->createTemplate();
-        // La descripción nace como texto: al pasar a tabla expone la tabla mínima.
+        // Una tabla nueva expone la tabla mínima; la forma se elige al crearla (I-155).
         $section = $version->sections()->where('clave', 'descripcion')->firstOrFail();
         $block = $section->blocks()->firstOrFail();
-        $field = $block->fields()->firstOrFail();
-        $sectionIndex = $section->posicion - 1;
 
         $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.template.fields.update', ['template' => $version, 'field' => $field]), [
-                'block_id' => $block->id,
-                'key' => $field->clave,
-                'label' => $field->etiqueta,
+            ->postJson(route('api.v1.admin.template.fields.store', $version), [
+                'section_id' => $section->id,
+                'key' => 'matriz_descripcion',
+                'label' => 'Matriz',
                 'content_type' => 'table',
             ])
             ->assertSuccessful();
-        $this->actingAsAdministrator()
-            ->getJson(route('api.v1.admin.template.show', $version))
-            ->assertJson(fn (Assert $page) => $page->etc()
-                ->where("template.sections.$sectionIndex.blocks.0.table.columns.0.key", 'texto'));
+        $table = collect($this->actingAsAdministrator()->getJson(route('api.v1.admin.template.show', $version))->json('template.sections'))
+            ->flatMap(fn (array $item): array => $item['blocks'])->firstWhere('key', 'matriz_descripcion');
+        $this->assertSame('texto', $table['table']['columns'][0]['key']);
 
         // I-119: la estructura se edita sobre la tabla; el formulario separado ya no existe.
         $this->actingAsAdministrator()

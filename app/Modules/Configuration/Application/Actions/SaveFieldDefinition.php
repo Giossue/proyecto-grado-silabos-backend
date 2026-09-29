@@ -292,8 +292,10 @@ class SaveFieldDefinition
 
         $configuration = $block->getAttribute('configuracion');
 
-        if (is_array($configuration) && isset($configuration['document']) && ($configuration['content_type'] ?? null) !== $contentType) {
-            throw ValidationException::withMessages(['content_type' => 'Esta parte tiene un diseño propio. Use Editar diseño para cambiarla sin perder lo que ya tiene.']);
+        // La forma de una parte se elige al crearla y no cambia (I-155): para otra forma se
+        // elimina la parte y se crea una nueva.
+        if ($block->contentType() !== $contentType) {
+            throw ValidationException::withMessages(['content_type' => 'La forma de una parte no se cambia. Elimínela y cree una nueva con la forma que necesita.']);
         }
 
         $block->update([
