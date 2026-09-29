@@ -36,25 +36,31 @@ Respuestas del responsable:
 ## Trabajo
 
 ### Backend
-- [ ] `ProjectDataUsage`: datos @ProyectoCarrera usados en la plantilla y sus secciones.
-- [ ] `POST admin/template/{template}/project-data`: declara un @ProyectoCarrera (nombre,
-      lista o texto, por asignatura o por carrera) y devuelve la variable.
-- [ ] Importación: `known_concepts` = datos usados, con `sections`; sin datos usados se
-      rechaza.
-- [ ] Apertura de convocatoria: falta de datos del Proyecto de carrera como requisito
-      (`missingAcademicData`, `can_open`, paso del tablero).
-- [ ] Catálogo de variables con `group` (`automatico` | `proyecto_carrera`).
-- [ ] Retirar `content_type: automatic` de creación de partes y secciones.
+- [x] `ProjectDataUsage`: datos @ProyectoCarrera usados en la plantilla y sus secciones.
+- [x] `POST admin/template/{template}/project-data` (`DeclareProjectData`): declara un
+      @ProyectoCarrera (nombre, lista o texto, por asignatura o por carrera) y devuelve la
+      variable; el mismo nombre con la misma forma se reutiliza.
+- [x] Importación: `known_concepts` = datos usados, con `sections`; sin datos usados se
+      rechaza. La propuesta guarda la forma del dato sin las secciones.
+- [x] Apertura de convocatoria: `project_data_missing` en la preparación, `can_open`,
+      `missingAcademicData` y paso `project_data` del tablero. Una lista o texto vacío no
+      cuenta como confirmado.
+- [x] Catálogo: sin campo nuevo; el prefijo `curricular_` ya distingue @ProyectoCarrera.
+- [x] Retirado `content_type: automatic` (y `AutomaticPart`); las formas nuevas son
+      párrafo, listas, tabla y texto libre (un párrafo, ya no una tabla de una celda).
 
 ### Frontend
-- [ ] Menú Insertar: Dato automático, !Docente, @ProyectoCarrera (existentes + nuevo con
-      nombre de la sección). Fichas con prefijo y color propio.
-- [ ] Atajos `!` y `@` en la hoja; `{` para datos automáticos.
-- [ ] Párrafos y listas editables en la hoja, no solo tablas.
-- [ ] Crear parte: solo la forma. Se retira `TemplatePartKindPicker`.
-- [ ] Proyecto de carrera y apertura de convocatoria muestran qué falta.
+- [x] Menú Insertar: Dato automático, !Docente, @ProyectoCarrera (existentes + «Nuevo
+      dato…» con nombre de la sección). Fichas con prefijo (`!`, `@`) y color propio.
+- [x] Atajos `{`, `!` y `@` en la hoja (`useSheetSuggestions`).
+- [x] Párrafos y listas editables en la hoja («Editar en la hoja»), no solo tablas.
+- [x] Crear o editar parte: solo la forma (`TemplatePartFormSelect`). Se retira
+      `TemplatePartKindPicker`.
+- [x] Formulario del docente: toda parte con hoja propia se llena sobre la hoja.
+- [x] COR-16 muestra cada dato con su sección; el tablero enlaza el paso nuevo.
 
 ### Datos, documentación y verificación
-- [ ] Plantilla remota: revisar RA, contenidos mínimos y conducta ética con las marcas.
-- [ ] `DECISIONS_STATUS.md`, `screens.md`, trazabilidad, especificación de plantillas.
-- [ ] `composer verify`; lint, typecheck, Vitest y build del frontend.
+- [x] Plantilla remota: RA, contenidos mínimos y conducta ética ya son hojas con marcas;
+      no requieren cambios. Tras desplegar, la convocatoria exige esos datos confirmados.
+- [x] `DECISIONS_STATUS.md`, `screens.md`, trazabilidad e ingesta curricular.
+- [x] `composer verify` (399 pruebas); lint, typecheck, 222 pruebas de Vitest y build.

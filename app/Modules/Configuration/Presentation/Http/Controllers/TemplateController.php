@@ -167,14 +167,14 @@ class TemplateController extends Controller
                     })->values()->all(),
                 ])->values()->all(),
             ],
+            // Forma de una parte nueva (I-155). Quién llena cada cosa se marca en la hoja:
+            // dato automático, !Docente o @ProyectoCarrera.
             'blockTypes' => [
-                ['value' => 'text', 'label' => 'Texto'],
+                ['value' => 'text', 'label' => 'Párrafo que escribe el docente'],
+                ['value' => 'bulleted_list', 'label' => 'Lista con viñetas que escribe el docente'],
+                ['value' => 'numbered_list', 'label' => 'Lista numerada que escribe el docente'],
                 ['value' => 'table', 'label' => 'Tabla'],
-                ['value' => 'bulleted_list', 'label' => 'Lista con viñetas'],
-                ['value' => 'numbered_list', 'label' => 'Lista numerada'],
-                ...(collect(TemplateVariables::definitions())->contains(fn (array $definition): bool => ($definition['type'] ?? null) === 'lista')
-                    ? [['value' => 'multiple_choice', 'label' => 'Selección del catálogo curricular']] : []),
-                ['value' => 'fixed', 'label' => 'Texto fijo (el docente no lo llena)'],
+                ['value' => 'fixed', 'label' => 'Texto libre, sin nada del docente'],
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
         ];

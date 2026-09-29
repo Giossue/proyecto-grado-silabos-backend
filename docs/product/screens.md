@@ -292,8 +292,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   La acción manual «Resultados de aprendizaje» desaparece del menú de cada materia;
   las correcciones nuevas siguen el recorrido de importación y confirmación.
   Ninguna otra pantalla de Coordinación muestra el antiguo botón flotante.
-  COR-16 muestra qué datos pide la plantilla antes de importar; sin datos declarados
-  por Administración explica el motivo y no permite enviar documentos (I-151).
+  COR-16 muestra qué datos pide la plantilla antes de importar, cada uno con la sección
+  del sílabo donde aparece; sin @ProyectoCarrera en la plantilla explica el motivo y no
+  permite enviar documentos (I-151, I-155). El tablero de Coordinación agrega el paso
+  «Confirmar los datos del Proyecto de carrera», que enlaza a COR-16.
   La importación se guía en cuatro pasos visibles: Documentos, Análisis, Revisión y
   Listo. La carga deja arriba solo los archivos nuevos; los datos que se
   buscarán y la indicación opcional quedan plegados. La revisión pide primero la
@@ -302,8 +304,17 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   confirmados o iniciar otra importación; el detalle queda plegado. En Revisión y ante
   una falla, «Descartar importación» pide confirmación y elimina la propuesta y sus
   documentos sin cambiar datos confirmados.
-  En ADM-06 los datos declarados aparecen en el catálogo de datos automáticos.
-- I-151: al crear una parte o una sección, ADM-06 pregunta «¿Quién llena esta parte?»
+- I-155: ADM-06 deja de preguntar quién llena la parte. Al crear una parte o una sección
+  solo se elige su forma: párrafo, lista con viñetas o numerada que escribe el docente,
+  tabla o texto libre. Toda parte se edita sobre la hoja con «Editar en la hoja»; el
+  menú Insertar y los atajos ofrecen tres marcas que se mezclan en párrafos y celdas:
+  **Dato automático** (`{`, violeta, lo pone el sistema), **!Docente** (`!`, azul
+  punteado, lo llena el docente) y **@ProyectoCarrera** (`@`, ámbar, lo llena
+  Coordinación al importar). «Nuevo dato…» propone como nombre el de la sección y pide
+  forma (lista o texto) y alcance (cada asignatura o toda la carrera). «Filas que agrega
+  el docente» solo aparece dentro de una tabla. En el formulario del docente, una parte
+  con hoja propia se llena sobre esa hoja, igual que en el Word.
+- I-151 (sustituido en su pregunta por I-155): al crear una parte o una sección, ADM-06 preguntaba «¿Quién llena esta parte?»
   sin términos técnicos: **El docente la escribe** (un párrafo, una lista con viñetas,
   una lista numerada o una tabla que se llena por filas), **El docente elige de una
   lista** (listas de los documentos de carrera) o **Sale sola de los documentos de la
@@ -311,7 +322,7 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   forma (lista o texto) y alcance (cada asignatura o toda la carrera) y crea una parte
   fija con ese dato automático. «Editar parte» usa la misma pregunta sin la opción
   automática. Sí/No ya no se ofrece para partes nuevas; las existentes se conservan.
-- I-154: el texto fijo es la cuarta respuesta de «¿Quién llena esta parte?» («Nadie, es
+- I-154 (sustituido por I-155): el texto fijo era la cuarta respuesta de «¿Quién llena esta parte?» («Nadie, es
   un texto fijo»), al crear una parte o una sección. Se retiran la entrada separada
   «Agregar texto fijo» del menú «+» y el botón «Hacer texto fijo» de la cinta de tablas.
   Una parte existente del docente no se convierte en texto fijo; se crea una nueva.

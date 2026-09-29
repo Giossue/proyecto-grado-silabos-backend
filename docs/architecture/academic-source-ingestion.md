@@ -109,7 +109,11 @@ conceptos conocidos e instrucciones de importación, y propone valores con citas
 bloques. Desde I-151 los conceptos conocidos son la lista cerrada que Administración
 declaró en la plantilla: el agente no propone conceptos nuevos, la preparación toma la
 estructura del catálogo y descarta valores de conceptos no declarados, que quedan como
-observación visible. Sin conceptos declarados no se puede solicitar una importación. Cada lote actualiza cursor y progreso en `ejecuciones_trabajo`;
+observación visible. Desde I-155 la lista son los @ProyectoCarrera que la plantilla
+**usa** (`ProjectDataUsage`: variables `curricular_<clave>` de la hoja y listas de
+opciones de preguntas del docente), cada uno con las secciones donde aparece como
+contexto para el agente; un concepto declarado que ninguna parte usa no se busca. Sin
+datos usados no se puede solicitar una importación. Cada lote actualiza cursor y progreso en `ejecuciones_trabajo`;
 solo el recorrido completo publica la propuesta. Un reintento explícito de una
 importación fallida usa `POST /coordination/curricular-imports/{id}/retry`.
 

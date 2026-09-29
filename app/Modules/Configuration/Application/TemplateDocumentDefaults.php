@@ -71,6 +71,12 @@ final class TemplateDocumentDefaults
         return ['type' => 'doc', 'content' => [['type' => 'table', 'attrs' => ['repeatKey' => null], 'content' => $rows]]];
     }
 
+    /** @return array<string, mixed> Texto libre recién creado (I-155): un párrafo que Administración escribe en la hoja. */
+    public static function freeText(): array
+    {
+        return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Escriba aquí el texto.']]]]];
+    }
+
     /** @return array<string, mixed> Contenido fijo recién creado: una celda que Administración reemplaza por su texto. */
     public static function fixedPlaceholder(): array
     {

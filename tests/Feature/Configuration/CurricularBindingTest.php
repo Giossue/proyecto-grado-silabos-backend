@@ -240,8 +240,9 @@ class CurricularBindingTest extends TestCase
             'section_id' => $section->id, 'key' => 'habilidad_invalida', 'label' => 'Habilidad inválida',
             'content_type' => 'multiple_choice', 'options_sources' => ['curricular_perfil'],
         ])->assertUnprocessable()->assertJsonValidationErrors('options_sources');
+        // La selección se arma en la hoja como pregunta !Docente (I-155); no es una forma de parte.
         $this->getJson(route('api.v1.admin.template.index'))->assertOk()
-            ->assertJsonFragment(['value' => 'multiple_choice', 'label' => 'Selección del catálogo curricular']);
+            ->assertJsonMissing(['value' => 'multiple_choice']);
     }
 
     public function test_word_and_pdf_export_frozen_curricular_lists_tables_and_multiple_selections(): void

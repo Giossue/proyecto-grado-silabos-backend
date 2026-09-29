@@ -54,7 +54,7 @@ class SaveTemplateSection
                     $configuration['table'] = TableLayout::default();
                 }
                 if ($contentType === 'fixed') {
-                    $configuration['document'] = TemplateDocumentDefaults::fixedPlaceholder();
+                    $configuration['document'] = TemplateDocumentDefaults::freeText();
                 }
                 $fieldKey = $this->stringValue($fieldData, 'key');
                 $sources = CurricularFieldOptions::fromAttributes($fieldData);

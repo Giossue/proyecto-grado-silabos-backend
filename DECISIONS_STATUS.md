@@ -152,6 +152,16 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 ## Actualizado para esta entrega
 
+I-155 (29 de septiembre de 2026), por instrucción del responsable, sustituye «¿Quién
+llena esta parte?» (I-151, I-154) por marcas en la hoja. Una parte nueva solo elige su
+forma. En la hoja se mezclan texto fijo, **dato automático** (definido en el código),
+**!Docente** (lo llena el docente) y **@ProyectoCarrera** (lo llena Coordinación al
+importar). El nombre de un @ProyectoCarrera nuevo se propone desde la sección. La
+importación busca solo los @ProyectoCarrera que usa la plantilla, con sus secciones como
+contexto. Esos datos son obligatorios como la malla: sin su valor confirmado para la
+carrera o para cada materia programada no se abre la convocatoria. Habilidades blandas
+sigue como pregunta !Docente con opciones de un @ProyectoCarrera. Sin cambios de esquema.
+
 I-152 (28 de septiembre de 2026), por instrucción del responsable, vuelve temporales los
 documentos de importación curricular. La lectura (`fuentes_academicas`), el original y
 las imágenes de OCR viven mientras la importación está abierta; al guardar o descartar se

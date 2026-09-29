@@ -242,7 +242,7 @@ class SaveFieldDefinition
             $configuration['table'] = TableLayout::default();
         }
         if ($contentType === 'fixed') {
-            $configuration['document'] = TemplateDocumentDefaults::fixedPlaceholder();
+            $configuration['document'] = TemplateDocumentDefaults::freeText();
         }
 
         $blockId = (string) Str::uuid();

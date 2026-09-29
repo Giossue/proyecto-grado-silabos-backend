@@ -768,8 +768,10 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame([], TemplateDocument::nodes($block->configuracion['document'], 'field'));
         $this->assertContains('fixed', array_column($this->getJson(route('api.v1.admin.template.show', $template))->json('blockTypes') ?? [], 'value'));
 
+        // Texto libre (I-155): un párrafo que se escribe en la hoja, no una tabla de una celda.
         $document = $block->configuracion['document'];
-        $document['content'][0]['content'][0]['content'][0]['content'][0]['content'][0]['text'] = 'Texto institucional';
+        $this->assertSame('paragraph', $document['content'][0]['type']);
+        $document['content'][0]['content'][0]['text'] = 'Texto institucional';
         $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
             'document' => $document, 'fingerprint' => SaveTemplateDocument::fingerprint($block), 'properties' => [],
         ])->assertSuccessful();
