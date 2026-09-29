@@ -17,8 +17,10 @@ completa Docencia. El diseño queda guardado dentro de la plantilla única.
 
 `TemplateDocumentDefaults::identification` adapta esa cuadrícula inicial a un documento
 editable, reemplazando datos por variables y campos. Se usa sin escritura cuando no
-hay diseño guardado. Los lectores anteriores (`IdentificationCard.vue` y el lector
-Word de identificación) se conservan para sílabos y revisiones anteriores sin diseño.
+hay diseño guardado. I-148 retira los lectores de cuadrícula fija (`IdentificationCard.vue`,
+el lector Word de identificación y la cuadrícula en las API de docente y revisión): el
+documento, la revisión y la exportación dibujan solo el diseño guardado en la plantilla.
+`grid` queda como generador de la plantilla inicial y del ejemplo del constructor.
 
 ## De dónde sale cada dato
 

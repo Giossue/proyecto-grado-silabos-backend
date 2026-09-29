@@ -33,7 +33,6 @@ final class WordRenderContext
     public function __construct(
         public readonly array $appearance = [],
         public readonly bool $hasAppearance = false,
-        public readonly mixed $snapshotIdentification = null,
         public readonly array $templateVariables = [],
         public readonly array $academicContext = [],
     ) {}
@@ -41,16 +40,6 @@ final class WordRenderContext
     public function color(string $key): string
     {
         return ltrim((string) $this->appearance[$key], '#');
-    }
-
-    public function identificationHeaderBackground(): string
-    {
-        return $this->hasAppearance ? $this->color('table_header_background') : WordRenderContext::BLUE;
-    }
-
-    public function identificationHeaderColor(): string
-    {
-        return $this->hasAppearance ? $this->color('table_header_color') : 'FFFFFF';
     }
 
     public function headerBackground(): string

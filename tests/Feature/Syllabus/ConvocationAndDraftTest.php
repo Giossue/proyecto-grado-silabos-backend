@@ -335,7 +335,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('Descripción académica verificable.', $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor);
     }
 
-    public function test_teacher_api_receives_the_document_presentation_and_identification_grid(): void
+    public function test_teacher_api_receives_the_document_presentation_and_template_variables(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
         config(['sanctum.stateful' => ['localhost:5173']]);
@@ -346,8 +346,8 @@ class ConvocationAndDraftTest extends TestCase
             ->assertOk()
             ->assertJsonPath('syllabus.presentation.title', 'PROGRAMA DE ASIGNATURA (SÍLABO)')
             ->assertJsonPath('syllabus.presentation.appearance.font_family', 'Arial')
-            ->assertJsonPath('syllabus.identification.0.0.style', 'blue')
-            ->assertJsonPath('syllabus.identification.0.0.span', 9)
+            ->assertJsonMissingPath('syllabus.identification')
+            ->assertJsonStructure(['syllabus' => ['template_variables']])
             ->assertJsonStructure([
                 'syllabus' => [
                     'presentation' => ['logos' => ['institution', 'faculty']],

@@ -5,15 +5,13 @@ namespace App\Modules\Documents\Infrastructure\Rendering;
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Syllabus\Application\AcademicContextValues;
-use App\Modules\Syllabus\Application\IdentificationCard;
 use PhpOffice\PhpWord\Element\Section;
 
-/** Contenido de cada campo: documento de plantilla, ficha, tabla, lista o texto. */
+/** Contenido de cada campo: documento de plantilla, tabla, lista o texto. */
 final class WordFieldRenderer
 {
     public function __construct(
         private readonly WordRenderContext $context,
-        private readonly WordIdentificationTable $identification,
         private readonly WordDataTable $tables,
     ) {}
 
@@ -64,15 +62,6 @@ final class WordFieldRenderer
             return;
         }
         $rows = WordValues::arrayList($field['rows'] ?? null);
-
-        // Bloque institucional: la ficha ya viene armada en la copia de la revisión.
-        if ($contentType === 'institutional' || ($field['master_source'] ?? null) === 'asignaturas') {
-            if (is_array($this->context->snapshotIdentification)) {
-                $this->identification->render($section, IdentificationCard::grid($this->context->snapshotIdentification));
-
-                return;
-            }
-        }
 
         if ($contentType === 'table' || ($rows !== [] && $contentType === 'text')) {
             $layout = is_array($container['table'] ?? null)

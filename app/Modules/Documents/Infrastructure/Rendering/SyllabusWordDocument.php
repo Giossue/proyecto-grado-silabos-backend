@@ -19,7 +19,7 @@ use PhpOffice\PhpWord\SimpleType\TblWidth;
  * apariencia acotada se lee de la copia de la plantilla incluida en la revisión.
  *
  * Orquesta el documento (hojas, logos, títulos y pie) y delega cada campo en
- * `WordFieldRenderer`, que usa `WordIdentificationTable` y `WordDataTable`.
+ * `WordFieldRenderer`, que usa `WordDataTable`.
  */
 class SyllabusWordDocument
 {
@@ -34,7 +34,6 @@ class SyllabusWordDocument
         $this->context = new WordRenderContext(
             appearance: TemplateAppearance::fromMapping($mapping),
             hasAppearance: is_array($mapping['appearance'] ?? null),
-            snapshotIdentification: $input->snapshot['identification'] ?? null,
             templateVariables: $input->snapshot['template_variables'] ?? [],
             academicContext: is_array($input->snapshot['academic_context'] ?? null)
                 ? $input->snapshot['academic_context']
@@ -42,7 +41,6 @@ class SyllabusWordDocument
         );
         $fields = new WordFieldRenderer(
             $this->context,
-            new WordIdentificationTable($this->context),
             new WordDataTable($this->context),
         );
         $title = TemplateTitleBlock::fromMapping($mapping)['text'];

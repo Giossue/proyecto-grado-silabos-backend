@@ -252,7 +252,7 @@ class ReviewWorkflowTest extends TestCase
             ->assertJsonPath('presentation.appearance.font_family', 'Arial')
             ->assertJsonStructure([
                 'presentation' => ['logos' => ['institution', 'faculty']],
-                'revision' => ['identification', 'snapshot' => ['sections']],
+                'revision' => ['snapshot' => ['sections']],
             ]);
         $this->actingAsTeacher()->getJson(route('api.v1.coordination.reviews.show', $revision))->assertForbidden();
         $this->actingAsAdministrator()->getJson(route('api.v1.coordination.reviews.show', $revision))->assertForbidden();

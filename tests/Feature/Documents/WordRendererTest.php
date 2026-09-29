@@ -314,7 +314,7 @@ class WordRendererTest extends TestCase
             ['data' => ['_unit' => 2, 'contenidos' => 'Clasificación', 'semana' => 6, 'acd' => 1, 'ape' => 1, 'aa' => 3, 'evaluacion' => 'Rúbrica']],
         ];
 
-        return [
+        $snapshot = [
             'schema_version' => 2,
             'template_id' => '01a064a5-1d6d-7196-b189-05376ff0929d',
             'identification' => IdentificationCard::build(
@@ -375,5 +375,10 @@ class WordRendererTest extends TestCase
                 ],
             ],
         ];
+        // La ficha sale de la tabla de la plantilla, no de un diseño fijo del código.
+        $snapshot['template_variables'] = TemplateVariables::resolve(['identification' => $snapshot['identification']]);
+        $snapshot['sections'][0]['blocks'][0]['document'] = TemplateDocumentDefaults::identification();
+
+        return $snapshot;
     }
 }

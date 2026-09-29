@@ -226,7 +226,6 @@ class SyllabusController extends Controller
                     'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
                 ],
             ],
-            'identification' => IdentificationCard::grid(IdentificationCard::fromSyllabus($syllabus)),
             'template_variables' => TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($syllabus), 'academic_context' => $syllabus->contexto_academico]),
             'planning_expectations' => [
                 'teaching_weeks' => AcademicContextValues::scheduledSubject(
