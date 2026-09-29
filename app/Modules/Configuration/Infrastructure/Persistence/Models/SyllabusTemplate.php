@@ -66,10 +66,12 @@ class SyllabusTemplate extends Model
     }
 
     /** @param array<string, mixed>|null $value */
-    public function setDocumentoAttribute(?array $value): void
+    public function setDocumentoAttribute(?array $value): static
     {
         $this->pendingDocument = $value ?? ['version_esquema' => 1, 'secciones' => []];
         $this->documentCache = null;
+
+        return $this;
     }
 
     /** @return array{version_esquema: int, secciones: list<array<string, mixed>>} */
