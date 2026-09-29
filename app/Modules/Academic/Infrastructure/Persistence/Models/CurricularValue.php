@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string $concepto_id
  * @property string $carrera_id
- * @property string|null $asignatura_id
+ * @property string $asignatura_id
  * @property string|list<string>|list<array<string, string>> $valor_curricular
  * @property list<array<string, mixed>> $evidencia_curricular
  * @property string $confirmado_por

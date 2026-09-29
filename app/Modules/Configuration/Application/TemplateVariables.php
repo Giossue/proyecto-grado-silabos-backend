@@ -12,7 +12,7 @@ final class TemplateVariables
      * conceptos vivos: una revisión conserva nombres, tipos y columnas de su momento.
      *
      * @param  array<string, mixed>|null  $snapshot
-     * @return array<string, array{label: string, source: string, equals?: string, list_key?: string, required?: bool, type?: string, scope?: string, columns?: list<array{key: string, label: string}>}>
+     * @return array<string, array{label: string, source: string, equals?: string, list_key?: string, required?: bool, type?: string, columns?: list<array{key: string, label: string}>}>
      */
     public static function definitions(?array $snapshot = null): array
     {
@@ -26,7 +26,6 @@ final class TemplateVariables
                 'source' => 'academic_context.curricular.values.'.$key,
                 'required' => true,
                 'type' => $definition['type'],
-                'scope' => $definition['scope'],
                 'columns' => $definition['columns'] ?? [],
             ];
         }
@@ -77,8 +76,7 @@ final class TemplateVariables
     {
         $definition = data_get($snapshot, 'academic_context.curricular.definitions.resultados_aprendizaje');
         $outcomes = data_get($snapshot, 'academic_context.curricular.values.resultados_aprendizaje');
-        if (! is_array($definition) || ($definition['type'] ?? null) !== 'lista'
-            || ($definition['scope'] ?? null) !== 'asignatura' || ! is_array($outcomes)) {
+        if (! is_array($definition) || ($definition['type'] ?? null) !== 'lista' || ! is_array($outcomes)) {
             return [];
         }
         $sources = [];
@@ -122,7 +120,7 @@ final class TemplateVariables
         return array_intersect_key(self::resolve(['approval' => $approval]), array_flip($keys));
     }
 
-    /** @return list<array{key: string, label: string, sample: string, type?: string, scope?: string}> */
+    /** @return list<array{key: string, label: string, sample: string, type?: string}> */
     public static function catalog(): array
     {
         $samples = self::resolve([
@@ -140,9 +138,8 @@ final class TemplateVariables
         $catalog = [];
         foreach (self::definitions() as $key => $definition) {
             $item = ['key' => $key, 'label' => $definition['label'], 'sample' => $samples[$key] ?? $definition['label']];
-            if (isset($definition['type'], $definition['scope'])) {
+            if (isset($definition['type'])) {
                 $item['type'] = $definition['type'];
-                $item['scope'] = $definition['scope'];
             }
             $catalog[] = $item;
         }

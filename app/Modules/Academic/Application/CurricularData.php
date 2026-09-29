@@ -10,7 +10,7 @@ final class CurricularData
 {
     public const VARIABLE_PREFIX = 'curricular_';
 
-    /** @return array<string, array{key: string, label: string, type: string, scope: string, columns: list<array{key: string, label: string}>}> */
+    /** @return array<string, array{key: string, label: string, type: string, columns: list<array{key: string, label: string}>}> */
     public static function definitions(): array
     {
         $definitions = [];
@@ -19,7 +19,6 @@ final class CurricularData
                 'key' => $concept->clave_concepto,
                 'label' => $concept->etiqueta_concepto,
                 'type' => $concept->tipo_concepto,
-                'scope' => $concept->ambito_concepto,
                 'columns' => $concept->columnas_concepto ?? [],
             ];
         }
@@ -27,7 +26,7 @@ final class CurricularData
         return $definitions;
     }
 
-    /** @return array{definitions: array<string, array{key: string, label: string, type: string, scope: string, columns: list<array{key: string, label: string}>}>, values: array<string, mixed>, evidence: array<string, array<string, mixed>>} */
+    /** @return array{definitions: array<string, array{key: string, label: string, type: string, columns: list<array{key: string, label: string}>}>, values: array<string, mixed>, evidence: array<string, array<string, mixed>>} */
     public function snapshot(string $careerId, string $subjectId): array
     {
         $definitions = self::definitions();
@@ -35,14 +34,10 @@ final class CurricularData
         $evidence = [];
         $records = CurricularValue::query()->with('concept')
             ->where('carrera_id', $careerId)
-            ->where(fn ($query) => $query->whereNull('asignatura_id')->orWhere('asignatura_id', $subjectId))
+            ->where('asignatura_id', $subjectId)
             ->orderBy('concepto_id')->get();
         foreach ($records as $record) {
             $concept = $record->concept;
-            if (($concept->ambito_concepto === 'carrera' && $record->asignatura_id !== null)
-                || ($concept->ambito_concepto === 'asignatura' && $record->asignatura_id !== $subjectId)) {
-                continue;
-            }
             $key = $concept->clave_concepto;
             $values[$key] = $record->valor_curricular;
             $evidence[$key] = [

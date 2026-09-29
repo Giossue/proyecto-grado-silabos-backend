@@ -59,7 +59,7 @@ final class CurricularImportsViewData
             'current_values' => $this->confirmedValues->forCareer($careerId),
             // @ProyectoCarrera que usa la plantilla (I-151, I-155).
             'concepts' => array_values(array_map(
-                fn (array $definition): array => ['key' => $definition['key'], 'label' => $definition['label'], 'type' => $definition['type'], 'scope' => $definition['scope'], 'sections' => $definition['sections']],
+                fn (array $definition): array => ['key' => $definition['key'], 'label' => $definition['label'], 'type' => $definition['type'], 'sections' => $definition['sections']],
                 ProjectDataUsage::used(),
             )),
             'lock_reason' => $this->locks->careerLockReason($careerId),
@@ -113,17 +113,16 @@ final class CurricularImportsViewData
         }
         $definitions = array_column($proposal['definitions'], null, 'key');
         $current = CurricularValue::query()->with('concept')->where('carrera_id', $import->carrera_id)->get()
-            ->keyBy(fn (CurricularValue $value): string => $value->concept->clave_concepto.':'.($value->asignatura_id ?? 'career'));
+            ->keyBy(fn (CurricularValue $value): string => $value->concept->clave_concepto.':'.$value->asignatura_id);
         $previousOutcomes = SubjectLearningOutcomeBase::query()->with('outcomes')
             ->whereHas('subject', fn ($query) => $query->where('carrera_id', $import->carrera_id))
             ->get()->keyBy('asignatura_id');
         foreach ($proposal['values'] as &$row) {
             $definition = $definitions[$row['concept_key']] ?? [];
-            $unresolved = ($definition['scope'] ?? null) === 'asignatura' && $row['subject_id'] === null;
-            $value = $unresolved ? null : $current->get($row['concept_key'].':'.($row['subject_id'] ?? 'career'));
-            $legacy = $value === null && ! $unresolved && $row['subject_id'] !== null
+            $unresolved = $row['subject_id'] === null;
+            $value = $unresolved ? null : $current->get($row['concept_key'].':'.$row['subject_id']);
+            $legacy = $value === null && ! $unresolved
                 && $row['concept_key'] === 'resultados_aprendizaje' && ($definition['type'] ?? null) === 'lista'
-                && ($definition['scope'] ?? null) === 'asignatura'
                 ? $previousOutcomes->get($row['subject_id']) : null;
             $currentValue = $value !== null ? $value->valor_curricular
                 : ($legacy !== null ? $legacy->outcomes->pluck('texto_resultado')->values()->all() : null);

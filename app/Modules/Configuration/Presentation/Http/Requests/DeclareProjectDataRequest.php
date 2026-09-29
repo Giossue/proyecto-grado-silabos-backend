@@ -11,7 +11,6 @@ class DeclareProjectDataRequest extends ManageTemplatesRequest
             'label' => ['required', 'string', 'max:180', 'regex:/[\pL\pN]/u'],
             'type' => ['required', 'in:texto,lista'],
             // Todo sílabo es de una carrera y una asignatura: por omisión, cada asignatura tiene el suyo.
-            'scope' => ['sometimes', 'in:asignatura,carrera'],
         ];
     }
 }

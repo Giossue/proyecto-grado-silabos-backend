@@ -169,21 +169,14 @@ final class CoordinatorConvocationReadiness
         $filled = CurricularValue::query()->with('concept:id,clave_concepto')
             ->where('carrera_id', $careerId)
             ->whereHas('concept', fn (Builder $query) => $query->whereIn('clave_concepto', array_keys($used)))
-            ->where(fn (Builder $query) => $query->whereNull('asignatura_id')->orWhereIn('asignatura_id', $subjectIds))
+            ->whereIn('asignatura_id', $subjectIds)
             ->get()
             ->filter(fn (CurricularValue $value): bool => $value->valor_curricular !== '' && $value->valor_curricular !== [])
-            ->map(fn (CurricularValue $value): string => $value->concept->clave_concepto.'|'.($value->asignatura_id ?? ''))
+            ->map(fn (CurricularValue $value): string => $value->concept->clave_concepto.'|'.$value->asignatura_id)
             ->flip();
         $names = Subject::query()->whereIn('id', $subjectIds)->orderBy('nombre')->pluck('nombre', 'id');
         $missing = [];
         foreach ($used as $key => $definition) {
-            if ($definition['scope'] === 'carrera') {
-                if (! $filled->has($key.'|')) {
-                    $missing[] = "Falta confirmar «{$definition['label']}» en Proyecto de carrera.";
-                }
-
-                continue;
-            }
             $without = $names->filter(fn (string $name, string $id): bool => ! $filled->has($key.'|'.$id))->values();
             if ($without->isNotEmpty()) {
                 $list = $without->take(3)->implode(', ').($without->count() > 3 ? ' y '.($without->count() - 3).' más' : '');

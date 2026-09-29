@@ -15,8 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Declara un dato @ProyectoCarrera (I-155) al insertarlo en la hoja, sin preguntar nada:
- * el nombre sale del contexto y el dato es por asignatura. Un nombre ya declarado con la
- * misma forma se reutiliza; con otra forma se crea «Nombre (lista)» o «Nombre (texto)»,
+ * el nombre sale del contexto y, como todo dato del Proyecto de carrera, es por
+ * asignatura (I-160). Un nombre ya declarado con la misma forma se reutiliza; con otra forma se crea «Nombre (lista)» o «Nombre (texto)»,
  * porque los valores confirmados dependen de la forma.
  */
 final class DeclareProjectData
@@ -28,23 +28,22 @@ final class DeclareProjectData
     ) {}
 
     /**
-     * @param  array{label: string, type: string, scope?: string}  $data
-     * @return array{key: string, label: string, sample: string, type: string, scope: string}
+     * @param  array{label: string, type: string}  $data
+     * @return array{key: string, label: string, sample: string, type: string}
      */
     public function execute(array $data, User $actor, Request $request): array
     {
         $this->locks->assertTemplateEditable();
         $type = $data['type'];
-        $scope = $data['scope'] ?? 'asignatura';
         $base = trim($data['label']);
 
-        $concept = DB::transaction(function () use ($actor, $base, $request, $scope, $type): CurricularConcept {
+        $concept = DB::transaction(function () use ($actor, $base, $request, $type): CurricularConcept {
             foreach ([$base, "{$base} ({$type})"] as $label) {
                 $concept = CurricularConcept::query()->where('clave_concepto', self::keyFor($label))->lockForUpdate()->first();
                 if ($concept === null) {
                     break;
                 }
-                if ($concept->tipo_concepto === $type && $concept->ambito_concepto === $scope) {
+                if ($concept->tipo_concepto === $type) {
                     return $concept;
                 }
             }
@@ -53,7 +52,7 @@ final class DeclareProjectData
             }
             $concept = CurricularConcept::query()->create([
                 'clave_concepto' => self::keyFor($label), 'etiqueta_concepto' => $label,
-                'tipo_concepto' => $type, 'ambito_concepto' => $scope, 'columnas_concepto' => null,
+                'tipo_concepto' => $type, 'columnas_concepto' => null,
             ]);
             $this->audit->execute(
                 actorId: $actor->id, roleAssignmentId: $this->roles->resolve($request)?->id, action: 'curriculo.concepto_declarado',
@@ -66,7 +65,7 @@ final class DeclareProjectData
 
         return [
             'key' => CurricularData::VARIABLE_PREFIX.$concept->clave_concepto, 'label' => $concept->etiqueta_concepto,
-            'sample' => $concept->etiqueta_concepto, 'type' => $concept->tipo_concepto, 'scope' => $concept->ambito_concepto,
+            'sample' => $concept->etiqueta_concepto, 'type' => $concept->tipo_concepto,
         ];
     }
 

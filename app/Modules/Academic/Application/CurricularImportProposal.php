@@ -18,11 +18,11 @@ final class CurricularImportProposal
     {
         $data = Validator::make($proposal, [
             'definitions' => ['present', 'array', 'list', 'max:100'],
+            // «scope» se admite solo en propuestas anteriores a I-160 y se descarta.
             'definitions.*' => ['array:key,label,type,scope,columns'],
             'definitions.*.key' => ['required', 'string', 'regex:/^[a-z][a-z0-9_]{0,99}$/', 'distinct:strict'],
             'definitions.*.label' => ['required', 'string', 'max:180'],
             'definitions.*.type' => ['required', 'in:texto,lista,tabla'],
-            'definitions.*.scope' => ['required', 'in:carrera,asignatura'],
             'definitions.*.columns' => ['sometimes', 'nullable', 'array', 'list', 'max:30'],
             'definitions.*.columns.*' => ['array:key,label'],
             'definitions.*.columns.*.key' => ['required', 'string', 'regex:/^[a-z][a-z0-9_]{0,99}$/'],
@@ -59,7 +59,8 @@ final class CurricularImportProposal
                 $columns = null;
             }
             $definitions[$definition['key']] = [
-                ...$definition, 'label' => trim($definition['label']), 'columns' => $columns,
+                'key' => $definition['key'], 'label' => trim($definition['label']),
+                'type' => $definition['type'], 'columns' => $columns,
             ];
         }
         $rows = [];
@@ -80,13 +81,10 @@ final class CurricularImportProposal
                 $row['issue_code'] = 'invalid_evidence';
                 $row['issue'] = 'El contenido no incluye evidencia verificable.';
             }
-            if ($definition['scope'] === 'asignatura' && $row['subject_id'] === null && $row['issue_code'] === null) {
+            // Todo dato del Proyecto de carrera es de una asignatura (I-160).
+            if ($row['subject_id'] === null && $row['issue_code'] === null) {
                 $row['issue_code'] = 'subject_unmatched';
                 $row['issue'] = 'Seleccione la asignatura que corresponde a este contenido.';
-            }
-            if ($definition['scope'] === 'carrera' && $row['subject_id'] !== null) {
-                $row['issue_code'] = 'conflict';
-                $row['issue'] = 'Un concepto de carrera no puede dirigirse a una asignatura.';
             }
             $rows[] = $row;
         }

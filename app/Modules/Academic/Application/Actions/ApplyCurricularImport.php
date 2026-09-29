@@ -61,10 +61,9 @@ final class ApplyCurricularImport
                 // clave simultáneamente; después se compara siempre su estructura.
                 $concept = CurricularConcept::query()->firstOrCreate(['clave_concepto' => $definition['key']], [
                     'etiqueta_concepto' => $definition['label'], 'tipo_concepto' => $definition['type'],
-                    'ambito_concepto' => $definition['scope'], 'columnas_concepto' => $definition['columns'],
+                    'columnas_concepto' => $definition['columns'],
                 ]);
-                if ($concept->tipo_concepto !== $definition['type'] || $concept->ambito_concepto !== $definition['scope']
-                    || $concept->columnas_concepto !== $definition['columns']) {
+                if ($concept->tipo_concepto !== $definition['type'] || $concept->columnas_concepto !== $definition['columns']) {
                     throw ValidationException::withMessages(['items' => 'La estructura de un concepto ya registrado es distinta. Revise la propuesta antes de confirmar.']);
                 }
                 $current = CurricularValue::query()->where('concepto_id', $concept->id)->where('carrera_id', $career->id)
@@ -107,8 +106,7 @@ final class ApplyCurricularImport
             if ($changes === []) {
                 return $save();
             }
-            $subjects = in_array(null, array_column($changes, 'subject_id'), true)
-                ? null : array_values(array_unique(array_column($changes, 'subject_id')));
+            $subjects = array_values(array_unique(array_column($changes, 'subject_id')));
 
             return $this->work->replace($request, $save, $career->id,
                 reason: 'cambiaron los datos curriculares confirmados desde sus documentos', subjectIds: $subjects);
@@ -165,23 +163,19 @@ final class ApplyCurricularImport
             }
             $definition = $definitions[$row['concept_key']];
             $subjectId = array_key_exists('subject_id', $item) ? $item['subject_id'] : $row['subject_id'];
-            if ($definition['scope'] === 'asignatura') {
-                if ($subjectId === null) {
-                    throw ValidationException::withMessages(["items.{$index}.subject_id" => 'Seleccione la asignatura de este dato.']);
-                }
-                Subject::query()->where('carrera_id', $careerId)->lockForUpdate()->findOrFail($subjectId);
-                if ($row['subject_id'] !== null && $subjectId !== $row['subject_id']) {
-                    throw ValidationException::withMessages(["items.{$index}.subject_id" => 'La asignatura ya fue identificada en la propuesta. No puede redirigir este dato a otra materia.']);
-                }
-            } elseif ($subjectId !== null) {
-                throw ValidationException::withMessages(["items.{$index}.subject_id" => 'Este dato corresponde a la carrera completa.']);
+            if ($subjectId === null) {
+                throw ValidationException::withMessages(["items.{$index}.subject_id" => 'Seleccione la asignatura de este dato.']);
+            }
+            Subject::query()->where('carrera_id', $careerId)->lockForUpdate()->findOrFail($subjectId);
+            if ($row['subject_id'] !== null && $subjectId !== $row['subject_id']) {
+                throw ValidationException::withMessages(["items.{$index}.subject_id" => 'La asignatura ya fue identificada en la propuesta. No puede redirigir este dato a otra materia.']);
             }
             $resolved = ($row['issue_code'] === 'subject_unmatched' && $subjectId !== null)
                 || ($row['issue_code'] === 'source_conflict' && ($item['accept_conflict'] ?? false) === true);
             if ($row['issue_code'] !== null && ! $resolved) {
                 throw ValidationException::withMessages(["items.{$index}" => 'Este dato tiene una excepción pendiente y no se puede confirmar.']);
             }
-            $target = $definition['key'].':'.($subjectId ?? 'career');
+            $target = $definition['key'].':'.$subjectId;
             if (isset($targets[$target])) {
                 throw ValidationException::withMessages(['items' => 'Hay varios datos seleccionados para el mismo concepto y destino. Seleccione solo uno.']);
             }

@@ -228,12 +228,11 @@ class ExportOpenApi extends Command
 
         return [
             'CurricularConceptDefinition' => [
-                'type' => 'object', 'required' => ['key', 'label', 'type', 'scope', 'columns'],
+                'type' => 'object', 'required' => ['key', 'label', 'type', 'columns'],
                 'properties' => [
                     'key' => ['type' => 'string', 'pattern' => '^[a-z][a-z0-9_]{0,99}$'],
                     'label' => ['type' => 'string', 'maxLength' => 180],
                     'type' => ['type' => 'string', 'enum' => ['texto', 'lista', 'tabla']],
-                    'scope' => ['type' => 'string', 'enum' => ['carrera', 'asignatura']],
                     'columns' => ['type' => ['array', 'null'], 'items' => [
                         'type' => 'object', 'required' => ['key', 'label'],
                         'properties' => ['key' => ['type' => 'string'], 'label' => ['type' => 'string']],
@@ -242,15 +241,14 @@ class ExportOpenApi extends Command
             ],
             'ConfirmedCurricularValue' => [
                 'type' => 'object',
-                'required' => ['id', 'key', 'concept_key', 'label', 'type', 'scope', 'columns', 'subject_id',
+                'required' => ['id', 'key', 'concept_key', 'label', 'type', 'columns', 'subject_id',
                     'subject_name', 'subject_code', 'value', 'evidence', 'confirmed_at', 'origin'],
                 'properties' => [
                     'id' => $uuid, 'key' => ['type' => 'string'], 'concept_key' => ['type' => 'string'],
                     'label' => ['type' => 'string'], 'type' => ['type' => 'string', 'enum' => ['texto', 'lista', 'tabla']],
-                    'scope' => ['type' => 'string', 'enum' => ['carrera', 'asignatura']],
                     'columns' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['key', 'label'],
                         'properties' => ['key' => ['type' => 'string'], 'label' => ['type' => 'string']]]],
-                    'subject_id' => $nullableUuid, 'subject_name' => $nullableText, 'subject_code' => $nullableText,
+                    'subject_id' => $uuid, 'subject_name' => $nullableText, 'subject_code' => $nullableText,
                     'value' => ['description' => 'Texto, lista de textos o tabla confirmada que usa un sílabo nuevo.'],
                     'evidence' => ['type' => 'array', 'items' => ['type' => 'object',
                         'required' => ['source_name', 'locator', 'quote'],
@@ -316,9 +314,9 @@ class ExportOpenApi extends Command
                         'properties' => ['id' => $uuid, 'name' => ['type' => 'string'], 'code' => ['type' => 'string']]]],
                     'current_values' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/ConfirmedCurricularValue']],
                     'concepts' => ['type' => 'array', 'description' => 'Datos @ProyectoCarrera que usa la plantilla, con las secciones donde aparecen (I-155); la importación solo busca estos.',
-                        'items' => ['type' => 'object', 'required' => ['key', 'label', 'type', 'scope', 'sections'], 'properties' => [
+                        'items' => ['type' => 'object', 'required' => ['key', 'label', 'type', 'sections'], 'properties' => [
                             'key' => ['type' => 'string'], 'label' => ['type' => 'string'],
-                            'type' => ['type' => 'string', 'enum' => ['texto', 'lista', 'tabla']], 'scope' => ['type' => 'string', 'enum' => ['carrera', 'asignatura']],
+                            'type' => ['type' => 'string', 'enum' => ['texto', 'lista', 'tabla']],
                             'sections' => ['type' => 'array', 'items' => ['type' => 'string']],
                         ]]],
                     'lock_reason' => $nullableText,

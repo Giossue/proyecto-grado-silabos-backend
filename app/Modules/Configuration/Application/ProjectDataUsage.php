@@ -14,7 +14,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 final class ProjectDataUsage
 {
     /**
-     * @return array<string, array{key: string, label: string, type: string, scope: string, columns: list<array{key: string, label: string}>, sections: list<string>}>
+     * @return array<string, array{key: string, label: string, type: string, columns: list<array{key: string, label: string}>, sections: list<string>}>
      */
     public static function used(?SyllabusTemplate $template = null): array
     {

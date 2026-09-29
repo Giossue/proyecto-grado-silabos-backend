@@ -182,17 +182,15 @@ final class PrepareCurricularImport
                 }
             }
             $subject = null;
-            if ($definition['scope'] === 'asignatura') {
-                $code = is_string($candidate['subject_code'] ?? null) ? $this->comparable($candidate['subject_code']) : '';
-                $name = is_string($candidate['subject_name'] ?? null) ? $this->comparable($candidate['subject_name']) : '';
-                $matches = array_values(array_filter($subjects, fn (Subject $item): bool => $code !== ''
-                    ? $this->comparable($item->codigo_asignatura) === $code
-                    : $name !== '' && $this->comparable($item->nombre) === $name));
-                if (count($matches) === 1) {
-                    $subject = $matches[0];
-                    if ($code !== '' && $name !== '' && $this->comparable($subject->nombre) !== $name) {
-                        $subject = null;
-                    }
+            $code = is_string($candidate['subject_code'] ?? null) ? $this->comparable($candidate['subject_code']) : '';
+            $name = is_string($candidate['subject_name'] ?? null) ? $this->comparable($candidate['subject_name']) : '';
+            $matches = array_values(array_filter($subjects, fn (Subject $item): bool => $code !== ''
+                ? $this->comparable($item->codigo_asignatura) === $code
+                : $name !== '' && $this->comparable($item->nombre) === $name));
+            if (count($matches) === 1) {
+                $subject = $matches[0];
+                if ($code !== '' && $name !== '' && $this->comparable($subject->nombre) !== $name) {
+                    $subject = null;
                 }
             }
             $issue = is_string($candidate['issue'] ?? null) && trim($candidate['issue']) !== '' ? $candidate['issue'] : null;
@@ -200,7 +198,7 @@ final class PrepareCurricularImport
             if ($invalidEvidence || $evidence === []) {
                 $issueCode = 'invalid_evidence';
                 $issue = 'El contenido no pudo verificarse completamente en los extractos de la fuente.';
-            } elseif ($definition['scope'] === 'asignatura' && $subject === null && $issueCode === null) {
+            } elseif ($subject === null && $issueCode === null) {
                 $issueCode = 'subject_unmatched';
                 $issue = 'Seleccione la materia que corresponde al nombre encontrado en el documento.';
             }

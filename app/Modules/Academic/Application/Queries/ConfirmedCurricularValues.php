@@ -18,13 +18,11 @@ final class ConfirmedCurricularValues
 
         foreach (CurricularValue::query()->with('concept')->where('carrera_id', $careerId)->get() as $record) {
             $concept = $record->concept;
-            $subject = $record->asignatura_id === null ? null : $subjects->get($record->asignatura_id);
-            if (($concept->ambito_concepto === 'asignatura' && $subject === null)
-                || ($concept->ambito_concepto === 'carrera' && $record->asignatura_id !== null)) {
+            $subject = $subjects->get($record->asignatura_id);
+            if ($subject === null) {
                 continue;
             }
-            if ($concept->clave_concepto === 'resultados_aprendizaje' && $concept->tipo_concepto === 'lista'
-                && $concept->ambito_concepto === 'asignatura') {
+            if ($concept->clave_concepto === 'resultados_aprendizaje' && $concept->tipo_concepto === 'lista') {
                 $importedOutcomes[$subject->id] = true;
             }
             $evidence = [];
@@ -38,9 +36,9 @@ final class ConfirmedCurricularValues
             $values[] = [
                 'id' => $record->id, 'key' => $concept->clave_concepto, 'concept_key' => $concept->clave_concepto,
                 'label' => $concept->etiqueta_concepto, 'type' => $concept->tipo_concepto,
-                'scope' => $concept->ambito_concepto, 'columns' => $concept->columnas_concepto ?? [],
-                'subject_id' => $subject?->id, 'subject_name' => $subject?->nombre,
-                'subject_code' => $subject?->codigo_asignatura,
+                'columns' => $concept->columnas_concepto ?? [],
+                'subject_id' => $subject->id, 'subject_name' => $subject->nombre,
+                'subject_code' => $subject->codigo_asignatura,
                 'value' => $record->valor_curricular, 'evidence' => $evidence,
                 'confirmed_at' => $record->confirmado_en->toIso8601String(), 'origin' => 'importacion',
             ];
@@ -54,7 +52,7 @@ final class ConfirmedCurricularValues
             $values[] = [
                 'id' => $base->id, 'key' => 'resultados_aprendizaje', 'concept_key' => 'resultados_aprendizaje',
                 'label' => 'Resultados de aprendizaje', 'type' => 'lista',
-                'scope' => 'asignatura', 'columns' => [],
+                'columns' => [],
                 'subject_id' => $subject->id, 'subject_name' => $subject->nombre,
                 'subject_code' => $subject->codigo_asignatura,
                 'value' => $base->outcomes->pluck('texto_resultado')->values()->all(),
