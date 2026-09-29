@@ -167,6 +167,7 @@ final class SaveTemplateDocument
                 'titulo' => $request->has('title') ? $request->string('title')->trim()->value() : $block->titulo,
                 'configuracion' => [...$configuration, 'document' => $normalized],
             ]);
+            $this->saveConditions($block, $normalized, $detached);
             $this->saveProperties($block, $request, $detached);
             $this->auditDesign($block, $actor, $request, count(array_unique($used)));
         });
@@ -185,6 +186,32 @@ final class SaveTemplateDocument
         }
 
         return false;
+    }
+
+    /**
+     * «Pedir solo si» vive en la ficha de la hoja (I-158): cada pregunta del docente
+     * toma su condición del documento; sin condición se pide siempre. Se valida
+     * después de crear las preguntas nuevas, para que un Sí/No recién insertado sirva.
+     *
+     * @param  array<string, mixed>  $document
+     * @param  array<string, mixed>  $detached
+     */
+    private function saveConditions(TemplateBlock $block, array $document, array $detached): void
+    {
+        foreach (TemplateDocument::nodes($document, 'field') as $node) {
+            $key = $node['attrs']['key'];
+            if (($node['attrs']['choice'] ?? null) !== null || isset($detached[$key])) {
+                continue;
+            }
+            $condition = $node['attrs']['showWhen'] ?? null;
+            $error = FieldConditions::error($block->plantilla_id, $key, $condition);
+            if ($error !== null) {
+                TemplateDocument::fail($error);
+            }
+            $block->fields()->where('clave', $key)->where('heredado', false)->update([
+                'mostrar_si' => $condition === null ? null : json_encode(FieldConditions::normalize($condition), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            ]);
+        }
     }
 
     /** @param array<string, mixed> $detached */

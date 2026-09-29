@@ -138,7 +138,7 @@ class TemplateController extends Controller
                             'type' => $block->tipo,
                             'content_type' => $block->contentType(),
                             'page_orientation' => $block->pageOrientation(),
-                            'document' => $block->configuracion['document'] ?? null,
+                            'document' => $this->withConditions($block->configuracion['document'] ?? null, $fields),
                             'fingerprint' => SaveTemplateDocument::fingerprint($block),
                             'fields' => $fields
                                 ->reject(fn (FieldDefinition $field) => isset($block->configuracion['detached_fields'][$field->clave]))
@@ -173,6 +173,38 @@ class TemplateController extends Controller
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
         ];
+    }
+
+    /**
+     * La hoja que edita Administración muestra en cada ficha su «Pedir solo si» vigente
+     * (I-158), también para diseños guardados antes de que la condición viviera en ella.
+     *
+     * @param  array<string, mixed>|null  $document
+     * @param  iterable<FieldDefinition>  $fields
+     * @return array<string, mixed>|null
+     */
+    private function withConditions(?array $document, iterable $fields): ?array
+    {
+        if ($document === null) {
+            return null;
+        }
+        $conditions = [];
+        foreach ($fields as $field) {
+            $conditions[$field->clave] = FieldConditions::normalize($field->mostrar_si);
+        }
+        $visit = function (array $node) use (&$visit, $conditions): array {
+            if (($node['type'] ?? null) === 'field' && ($node['attrs']['choice'] ?? null) === null
+                && array_key_exists($node['attrs']['key'] ?? '', $conditions)) {
+                $node['attrs']['showWhen'] = $conditions[$node['attrs']['key']];
+            }
+            if (is_array($node['content'] ?? null)) {
+                $node['content'] = array_map($visit, $node['content']);
+            }
+
+            return $node;
+        };
+
+        return $visit($document);
     }
 
     public function updateAppearance(

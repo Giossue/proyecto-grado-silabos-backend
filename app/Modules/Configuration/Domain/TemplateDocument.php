@@ -123,6 +123,15 @@ final class TemplateDocument
                     self::fail('La condición usa una opción que no pertenece a la parte.');
                 }
                 $node['attrs']['choice'] = $choice;
+                // «Pedir solo si» se define en la ficha de la hoja (I-158).
+                $showWhen = $attrs['showWhen'] ?? null;
+                if ($showWhen !== null) {
+                    if (! is_array($showWhen) || ! is_string($showWhen['key'] ?? null) || ! preg_match('/^[a-z][a-z0-9_]{0,119}$/D', $showWhen['key'])
+                        || ! is_string($showWhen['value'] ?? null) || trim($showWhen['value']) === '' || mb_strlen($showWhen['value']) > 100) {
+                        self::fail('La condición de la parte no es válida.');
+                    }
+                    $node['attrs']['showWhen'] = ['key' => $showWhen['key'], 'value' => trim($showWhen['value'])];
+                }
                 $listStyle = $attrs['listStyle'] ?? null;
                 if (! in_array($listStyle, [null, 'bullet', 'number'], true)) {
                     self::fail('Formato de lista no válido.');
