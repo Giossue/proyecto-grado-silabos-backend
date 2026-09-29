@@ -94,7 +94,7 @@ class ApiDashboardTest extends TestCase
             ->assertJsonPath('setup.steps.3.key', 'teachers')
             ->assertJsonPath('setup.steps.3.done', false)
             ->assertJsonPath('setup.steps.3.hint', '1 de 2 paralelos tienen un docente vigente.')
-            ->assertJsonPath('setup.steps.4.action', null);
+            ->assertJsonPath('setup.steps.5.action', null);
     }
 
     public function test_dashboard_requires_an_active_role(): void

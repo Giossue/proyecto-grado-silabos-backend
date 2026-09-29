@@ -150,6 +150,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.sections.destroy');
             Route::post('admin/template/{template}/fields', [TemplateController::class, 'storeField'])
                 ->middleware('active-role')->name('api.v1.admin.template.fields.store');
+            Route::post('admin/template/{template}/project-data', [TemplateController::class, 'storeProjectData'])
+                ->middleware('active-role')->name('api.v1.admin.template.project-data.store');
             Route::patch('admin/template/{template}/fields/{field}', [TemplateController::class, 'updateField'])
                 ->middleware('active-role')->name('api.v1.admin.template.fields.update');
             Route::patch('admin/template/{template}/blocks/order', [TemplateController::class, 'reorderBlocks'])

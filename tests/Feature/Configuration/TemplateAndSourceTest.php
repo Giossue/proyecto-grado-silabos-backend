@@ -174,7 +174,7 @@ class TemplateAndSourceTest extends TestCase
             ->assertOk()
             ->assertJsonPath('template.titleBlock.text', TemplateTitleBlock::DEFAULT_TEXT)
             ->assertJsonMissing(['value' => 'boolean'])
-            ->assertJsonFragment(['value' => 'automatic', 'label' => 'Sale sola de los documentos de la carrera'])
+            ->assertJsonMissing(['value' => 'automatic'])
             ->assertJsonFragment(['value' => 'fixed', 'label' => 'Texto fijo (el docente no lo llena)'])
             ->assertJsonMissing(['value' => 'multiple_choice'])
             ->assertJsonMissing(['ai_coordinator_configurable' => true]);

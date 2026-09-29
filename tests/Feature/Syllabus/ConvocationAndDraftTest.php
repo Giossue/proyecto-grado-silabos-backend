@@ -3,6 +3,8 @@
 namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularConcept;
+use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectLearningOutcomeBase;
@@ -31,6 +33,7 @@ use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Illuminate\Validation\ValidationException;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\Support\MakesTransparentPng;
+use Tests\Support\UsesProjectData;
 use Tests\TestCase;
 
 class ConvocationAndDraftTest extends TestCase
@@ -38,6 +41,7 @@ class ConvocationAndDraftTest extends TestCase
     use CreatesSyllabusProcess;
     use MakesTransparentPng;
     use RefreshDatabase;
+    use UsesProjectData;
 
     private User $administrator;
 
@@ -282,6 +286,38 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->assertOpeningFails($convocation, 'Falta 1 materia programada sin paralelo.');
         $this->assertSame('preparacion', $convocation->fresh()->estado);
+    }
+
+    public function test_opening_requires_the_project_data_used_by_the_template(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        $subject = ScheduledSubject::query()->firstOrFail()->subject;
+        $outcomes = $this->useProjectData('resultados_de_aprendizaje', 'Resultados de aprendizaje');
+        $profile = $this->useProjectData('perfil_de_egreso', 'Perfil de egreso', 'texto', 'carrera');
+        // Declarado pero sin usar en la hoja: no se exige.
+        CurricularConcept::query()->create(['clave_concepto' => 'convenios', 'etiqueta_concepto' => 'Convenios',
+            'tipo_concepto' => 'lista', 'ambito_concepto' => 'carrera', 'columnas_concepto' => null]);
+
+        $this->assertOpeningFails($convocation, 'Falta confirmar «Perfil de egreso» en Proyecto de carrera.');
+        $readiness = app(CoordinatorConvocationReadiness::class);
+        $this->assertSame([
+            'Falta confirmar «Perfil de egreso» en Proyecto de carrera.',
+            "Falta confirmar «Resultados de aprendizaje» en Proyecto de carrera para {$subject->nombre}.",
+        ], $readiness->inspect($convocation->carrera_id)['project_data_missing']);
+
+        $confirmed = fn ($concept, ?string $subjectId, mixed $value): CurricularValue => CurricularValue::query()->create([
+            'concepto_id' => $concept->id, 'carrera_id' => $convocation->carrera_id, 'asignatura_id' => $subjectId,
+            'valor_curricular' => $value, 'evidencia_curricular' => [['source_id' => 'prueba', 'locator' => 'Página 3', 'quote' => 'Extracto sintético']], 'confirmado_por' => $this->coordinator->id, 'confirmado_en' => now(),
+        ]);
+        $confirmed($profile, null, 'Profesional de software.');
+        // Una lista vacía no cuenta como dato confirmado.
+        $confirmed($outcomes, $subject->id, []);
+        $this->assertOpeningFails($convocation, "Falta confirmar «Resultados de aprendizaje» en Proyecto de carrera para {$subject->nombre}.");
+
+        CurricularValue::query()->where('asignatura_id', $subject->id)->update(['valor_curricular' => json_encode(['Analiza requisitos.'])]);
+        $this->assertSame([], $readiness->inspect($convocation->carrera_id)['project_data_missing']);
+        $this->openPrepared($convocation);
+        $this->assertSame('abierta', $convocation->fresh()->estado);
     }
 
     public function test_opening_is_rejected_without_curriculum_subjects(): void

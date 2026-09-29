@@ -315,10 +315,11 @@ class ExportOpenApi extends Command
                     'subjects' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['id', 'name', 'code'],
                         'properties' => ['id' => $uuid, 'name' => ['type' => 'string'], 'code' => ['type' => 'string']]]],
                     'current_values' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/ConfirmedCurricularValue']],
-                    'concepts' => ['type' => 'array', 'description' => 'Datos que Administración declaró en la plantilla para salir de los documentos de carrera (I-151); la importación solo busca estos.',
-                        'items' => ['type' => 'object', 'required' => ['key', 'label', 'type', 'scope'], 'properties' => [
+                    'concepts' => ['type' => 'array', 'description' => 'Datos @ProyectoCarrera que usa la plantilla, con las secciones donde aparecen (I-155); la importación solo busca estos.',
+                        'items' => ['type' => 'object', 'required' => ['key', 'label', 'type', 'scope', 'sections'], 'properties' => [
                             'key' => ['type' => 'string'], 'label' => ['type' => 'string'],
                             'type' => ['type' => 'string', 'enum' => ['texto', 'lista', 'tabla']], 'scope' => ['type' => 'string', 'enum' => ['carrera', 'asignatura']],
+                            'sections' => ['type' => 'array', 'items' => ['type' => 'string']],
                         ]]],
                     'lock_reason' => $nullableText,
                     'capabilities' => ['type' => 'object', 'required' => ['pdf', 'xlsx', 'extraction'], 'properties' => [

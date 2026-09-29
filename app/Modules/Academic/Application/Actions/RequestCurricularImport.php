@@ -3,7 +3,6 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Academic\Application\CurricularData;
 use App\Modules\Academic\Application\CurricularImportCapabilities;
 use App\Modules\Academic\Application\CurricularWorkbookReader;
 use App\Modules\Academic\Application\Queries\CurricularImportsViewData;
@@ -13,6 +12,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
 use App\Modules\Configuration\Application\AcademicSourceDocument;
 use App\Modules\Configuration\Application\Actions\CreateAcademicSource;
 use App\Modules\Configuration\Application\Actions\RequestAcademicSourceOcr;
+use App\Modules\Configuration\Application\ProjectDataUsage;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -55,9 +55,9 @@ final class RequestCurricularImport
         if (! $capabilities['extraction']) {
             throw ValidationException::withMessages(['files' => 'La extracción con IA no está configurada. Solicite a Administración habilitar el servicio.']);
         }
-        // La plantilla manda (I-151): sin datos declarados no hay nada que buscar.
-        if (CurricularData::definitions() === []) {
-            throw ValidationException::withMessages(['files' => 'Administración aún no definió en la plantilla qué datos salen de los documentos de la carrera.']);
+        // La plantilla manda (I-151, I-155): sin @ProyectoCarrera en la plantilla no hay nada que buscar.
+        if (ProjectDataUsage::used() === []) {
+            throw ValidationException::withMessages(['files' => 'La plantilla del sílabo todavía no tiene datos del Proyecto de carrera. Administración debe agregarlos primero.']);
         }
         $fileHashes = [];
         foreach ($files as $file) {

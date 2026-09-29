@@ -15,6 +15,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use Database\Seeders\DatabaseSeeder;
@@ -26,12 +27,14 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Mockery\MockInterface;
 use RuntimeException;
+use Tests\Support\UsesProjectData;
 use Tests\TestCase;
 use ZipArchive;
 
 class CurricularIngestionTest extends TestCase
 {
     use RefreshDatabase;
+    use UsesProjectData;
 
     private Subject $subject;
 
@@ -43,14 +46,15 @@ class CurricularIngestionTest extends TestCase
         Http::preventStrayRequests();
         $this->seed(DatabaseSeeder::class);
         $this->subject = Subject::query()->firstOrFail();
-        // La plantilla manda (I-151): Administración declaró el dato que se importará.
-        CurricularConcept::query()->create(['clave_concepto' => 'habilidades_blandas', 'etiqueta_concepto' => 'Habilidades blandas',
-            'tipo_concepto' => 'lista', 'ambito_concepto' => 'asignatura', 'columnas_concepto' => null]);
+        // La plantilla manda (I-155): la hoja usa el @ProyectoCarrera que se importará.
+        $this->useProjectData('habilidades_blandas', 'Habilidades blandas');
         $this->asRole('coordinador@silabos.test');
         $this->mock(CurricularExtractionGateway::class, function (MockInterface $mock): void {
             $mock->shouldReceive('available')->andReturn(true);
             $mock->shouldReceive('extract')->andReturnUsing(function (array $input): array {
                 $this->assertSame($this->subject->career->nombre, $input['career']);
+                $this->assertSame(['habilidades_blandas'], array_column($input['known_concepts'], 'key'));
+                $this->assertNotEmpty($input['known_concepts'][0]['sections']);
                 $block = collect($input['blocks'])->first(fn ($block) => str_contains($block['text'], 'Pensamiento crítico'));
 
                 return $this->rawProposal($block, ['Pensamiento crítico']);
@@ -192,8 +196,11 @@ class CurricularIngestionTest extends TestCase
         $this->assertDatabaseCount('valores_curriculares', 0);
     }
 
-    public function test_only_declared_data_is_imported_and_undeclared_data_is_reported(): void
+    public function test_only_data_used_by_the_template_is_imported_and_the_rest_is_reported(): void
     {
+        // Declarado pero sin usar en la hoja: tampoco se importa.
+        CurricularConcept::query()->create(['clave_concepto' => 'convenios', 'etiqueta_concepto' => 'Convenios',
+            'tipo_concepto' => 'lista', 'ambito_concepto' => 'carrera', 'columnas_concepto' => null]);
         $source = $this->source('Pensamiento crítico. Convenio con la empresa Demo.');
         $block = app(CurricularSourceBlocks::class)->forSource($source)[0];
         $raw = $this->rawProposal($block, ['Pensamiento crítico']);
@@ -206,13 +213,18 @@ class CurricularIngestionTest extends TestCase
         $this->assertContains('El documento también trae «Convenios», que la plantilla no pide; no se importó.', $proposal['issues']);
     }
 
-    public function test_import_requires_data_declared_in_the_template(): void
+    public function test_import_requires_project_data_used_by_the_template(): void
     {
-        CurricularConcept::query()->delete();
+        $template = SyllabusTemplate::institutional();
+        foreach ($template->sections() as $section) {
+            $template->updateSectionDocument($section->id, ['bloques' => $section->blocks()
+                ->reject(fn ($block): bool => $block->clave === 'proyecto_habilidades_blandas')->map->toDocument()->values()->all()]);
+        }
+        $this->assertTrue(CurricularConcept::query()->where('clave_concepto', 'habilidades_blandas')->exists());
         $this->post(route('api.v1.coordination.curricular-imports.store'), [
             'files' => [UploadedFile::fake()->createWithContent('Bibliografia.xlsx', 'x')],
         ], ['Accept' => 'application/json'])->assertUnprocessable()
-            ->assertJsonPath('errors.files.0', 'Administración aún no definió en la plantilla qué datos salen de los documentos de la carrera.');
+            ->assertJsonPath('errors.files.0', 'La plantilla del sílabo todavía no tiene datos del Proyecto de carrera. Administración debe agregarlos primero.');
         $this->assertDatabaseCount('importaciones_curriculares', 0);
     }
 

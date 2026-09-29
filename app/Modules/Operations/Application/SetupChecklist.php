@@ -118,6 +118,14 @@ class SetupChecklist
                     $parallelTotal > 0 && $parallelsWithTeacher === $parallelTotal,
                 ),
                 $this->step(
+                    'project_data',
+                    'Confirmar los datos del Proyecto de carrera',
+                    $readiness['project_data_missing'] === []
+                        ? 'Los datos que pide la plantilla están confirmados.'
+                        : $readiness['project_data_missing'][0],
+                    $readiness['project_data_missing'] === [],
+                ),
+                $this->step(
                     'convocation',
                     'Abrir la convocatoria de la carrera',
                     $this->coordinatorConvocationHint($readiness),

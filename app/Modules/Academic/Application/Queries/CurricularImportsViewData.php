@@ -2,13 +2,13 @@
 
 namespace App\Modules\Academic\Application\Queries;
 
-use App\Modules\Academic\Application\CurricularData;
 use App\Modules\Academic\Application\CurricularImportCapabilities;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectLearningOutcomeBase;
+use App\Modules\Configuration\Application\ProjectDataUsage;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Application\ActiveRole;
@@ -57,10 +57,10 @@ final class CurricularImportsViewData
             'subjects' => Subject::query()->where('carrera_id', $careerId)->orderBy('nombre')->get(['id', 'nombre', 'codigo_asignatura'])
                 ->map(fn (Subject $subject): array => ['id' => $subject->id, 'name' => $subject->nombre, 'code' => $subject->codigo_asignatura])->all(),
             'current_values' => $this->confirmedValues->forCareer($careerId),
-            // Datos que la plantilla pide a los documentos de carrera (I-151).
+            // @ProyectoCarrera que usa la plantilla (I-151, I-155).
             'concepts' => array_values(array_map(
-                fn (array $definition): array => ['key' => $definition['key'], 'label' => $definition['label'], 'type' => $definition['type'], 'scope' => $definition['scope']],
-                CurricularData::definitions(),
+                fn (array $definition): array => ['key' => $definition['key'], 'label' => $definition['label'], 'type' => $definition['type'], 'scope' => $definition['scope'], 'sections' => $definition['sections']],
+                ProjectDataUsage::used(),
             )),
             'lock_reason' => $this->locks->careerLockReason($careerId),
             'capabilities' => app(CurricularImportCapabilities::class)->toArray(),

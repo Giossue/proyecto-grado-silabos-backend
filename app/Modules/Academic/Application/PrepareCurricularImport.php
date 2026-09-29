@@ -3,9 +3,9 @@
 namespace App\Modules\Academic\Application;
 
 use App\Modules\Academic\Domain\Contracts\CurricularExtractionGateway;
-use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularConcept;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Configuration\Application\ProjectDataUsage;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Support\CanonicalHasher;
@@ -80,9 +80,8 @@ final class PrepareCurricularImport
             'career' => $import->career->nombre,
             'instruction' => $import->instrucciones_importacion,
             'subjects' => $subjects->map(fn (Subject $subject): array => ['code' => $subject->codigo_asignatura, 'name' => $subject->nombre, 'organization_unit' => $subject->unidad_organizacion_curricular?->label()])->all(),
-            'known_concepts' => CurricularConcept::query()->orderBy('clave_concepto')->get()->map(fn (CurricularConcept $concept): array => [
-                'key' => $concept->clave_concepto, 'label' => $concept->etiqueta_concepto, 'type' => $concept->tipo_concepto, 'scope' => $concept->ambito_concepto, 'columns' => $concept->columnas_concepto,
-            ])->all(),
+            // Solo los @ProyectoCarrera que usa la plantilla, con sus secciones como contexto (I-155).
+            'known_concepts' => array_values(ProjectDataUsage::used()),
             'earlier_definitions' => $raw['definitions'],
             'blocks' => $chunk,
         ];
@@ -136,9 +135,9 @@ final class PrepareCurricularImport
      */
     public function normalize(array $raw, array $blocks, array $subjects): array
     {
-        // Opción A (I-151): la plantilla manda. Solo se importan los datos que Administración
-        // declaró; la estructura sale del catálogo, nunca de la respuesta del agente.
-        $declared = CurricularData::definitions();
+        // La plantilla manda (I-151, I-155): solo se importan los @ProyectoCarrera que usa;
+        // la estructura sale del catálogo, nunca de la respuesta del agente.
+        $declared = ProjectDataUsage::used();
         $labels = [];
         foreach ($raw['definitions'] as $definition) {
             if (is_array($definition) && is_string($definition['key'] ?? null) && is_string($definition['label'] ?? null)) {
@@ -159,7 +158,8 @@ final class PrepareCurricularImport
 
                 continue;
             }
-            $definitions[$definition['key']] = $definition;
+            // Las secciones solo orientan al agente; la propuesta guarda la forma del dato.
+            $definitions[$definition['key']] = array_diff_key($definition, ['sections' => true]);
             $evidence = [];
             $invalidEvidence = false;
             foreach (is_array($candidate['evidence'] ?? null) ? $candidate['evidence'] : [] as $citation) {

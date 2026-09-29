@@ -29,8 +29,7 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
         $field = $this->route('field');
         $fieldId = $field instanceof FieldDefinition ? $field->id : null;
         // La ficha de identificación no se crea desde la paleta, pero sí se le edita la ayuda.
-        // «Sale sola de los documentos» (I-151) solo existe al crear: queda como texto fijo.
-        $types = $fieldId === null ? [...self::TYPES, 'automatic'] : [...self::TYPES, 'institutional'];
+        $types = $fieldId === null ? self::TYPES : [...self::TYPES, 'institutional'];
 
         return [
             'section_id' => [
@@ -81,11 +80,6 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'options_sources' => ['sometimes', 'array', 'list', 'max:20'],
             'options_sources.*' => ['required', 'string', 'max:140', 'distinct'],
             'document_marker' => ['nullable', 'string', 'max:160'],
-            'concept_key' => ['nullable', 'string', 'max:100'],
-            'concept' => ['nullable', 'array:label,type,scope'],
-            'concept.label' => ['required_with:concept', 'string', 'max:180'],
-            'concept.type' => ['required_with:concept', 'in:texto,lista'],
-            'concept.scope' => ['required_with:concept', 'in:asignatura,carrera'],
             'page_orientation' => ['sometimes', 'nullable', 'in:portrait,landscape'],
             // «Mostrar solo si»: null es «Siempre».
             'show_when' => ['sometimes', 'nullable', 'array:key,value'],

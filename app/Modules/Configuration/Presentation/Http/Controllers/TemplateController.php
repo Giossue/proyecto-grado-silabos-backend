@@ -5,6 +5,7 @@ namespace App\Modules\Configuration\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Application\Actions\CreateSyllabusTemplate;
+use App\Modules\Configuration\Application\Actions\DeclareProjectData;
 use App\Modules\Configuration\Application\Actions\DeleteTemplateBlock;
 use App\Modules\Configuration\Application\Actions\DeleteTemplateSection;
 use App\Modules\Configuration\Application\Actions\FormatSyllabusTemplate;
@@ -28,6 +29,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Configuration\Presentation\Http\Requests\CreateTemplateRequest;
+use App\Modules\Configuration\Presentation\Http\Requests\DeclareProjectDataRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ManageTemplatesRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ReorderTemplateBlocksRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ReorderTemplateSectionsRequest;
@@ -172,7 +174,6 @@ class TemplateController extends Controller
                 ['value' => 'numbered_list', 'label' => 'Lista numerada'],
                 ...(collect(TemplateVariables::definitions())->contains(fn (array $definition): bool => ($definition['type'] ?? null) === 'lista')
                     ? [['value' => 'multiple_choice', 'label' => 'Selección del catálogo curricular']] : []),
-                ['value' => 'automatic', 'label' => 'Sale sola de los documentos de la carrera'],
                 ['value' => 'fixed', 'label' => 'Texto fijo (el docente no lo llena)'],
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
@@ -213,6 +214,20 @@ class TemplateController extends Controller
         $action->create($template->id, $request->validated(), $actor, $request);
 
         return $this->success($request, 'Parte agregada a la sección.');
+    }
+
+    /** @ProyectoCarrera nuevo para insertarlo en la hoja (I-155). */
+    public function storeProjectData(
+        SyllabusTemplate $template,
+        DeclareProjectDataRequest $request,
+        DeclareProjectData $action,
+    ): JsonResponse {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        /** @var array{label: string, type: string, scope: string} $data */
+        $data = $request->validated();
+
+        return response()->json(['message' => 'Dato del Proyecto de carrera listo.', 'variable' => $action->execute($data, $actor, $request)], 201);
     }
 
     public function updateField(
