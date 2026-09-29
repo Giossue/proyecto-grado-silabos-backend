@@ -168,6 +168,13 @@ tabla asignatura × dato. El agente de extracción repite una fila por cada mate
 el documento da un dato para un grupo o para toda la carrera. Migración
 `2026_09_29_000158` aplicada en la base remota con respaldo previo.
 
+I-161 (29 de septiembre de 2026): primera prueba del flujo del docente en la base de
+pruebas (convocatorias abiertas, dos docentes con paralelo). Se corrigen la barra de
+formato vacía del Texto libre, las partes con hoja sin título, el nombre de las marcas
+insertadas en celdas con la etiqueta en la línea anterior, el exceso de texto del
+Asistente de unidades y dos marcas mal nombradas de la plantilla remota. Sin cambios de
+esquema ni de API.
+
 I-158 (29 de septiembre de 2026), por instrucción del responsable: «Propiedades de la
 parte» solo cambia nombre y orientación. La condición «pedir solo si…» se define en la
 ficha de la hoja (atributo `showWhen`) y sustituye la configuración de condiciones y
