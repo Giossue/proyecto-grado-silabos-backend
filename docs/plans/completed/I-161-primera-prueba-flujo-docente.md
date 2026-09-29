@@ -46,7 +46,8 @@ hacerlo aparecieron defectos de pantalla y restos de pruebas anteriores en la pl
 - [x] Periodos académicos (Administración): cuando alguna carrera tiene su convocatoria
       en curso en un período, la pantalla muestra el aviso «Edición bloqueada» y las
       acciones de ese período quedan deshabilitadas, igual que en la malla y la
-      plantilla. El servidor devuelve `lock_reason` por período (`ProcessLocks::lockedPeriodReasons`).
+      plantilla. El botón «Nuevo periodo académico» también se ve deshabilitado mientras
+      dure el bloqueo (solo en la pantalla; el servidor no impide crear períodos). El servidor devuelve `lock_reason` por período (`ProcessLocks::lockedPeriodReasons`).
 
 - [x] Pantalla: el sílabo del docente lleva un encabezado fijo como el del editor de
       malla («Volver a mis sílabos», nombre de la materia y botón de tema); el layout ya

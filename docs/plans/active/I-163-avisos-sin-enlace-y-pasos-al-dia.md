@@ -46,3 +46,16 @@ marca leído al tocar y la lista no muestra «Abrir». Sin cambios de esquema ni
 - Servidor: `NotificationLinksTest` (informativo sin destino, accionable con destino);
   `ApiDashboardTest` con 4 pasos del docente. `composer verify` en verde.
 - Pantalla: mapa `setupRoutes.signed`; lint, tipos, pruebas y build en verde.
+
+## Partes de la plantilla (mismo día)
+
+El responsable pidió que **Texto libre** sea solo eso: lo escribe el docente, sin hoja ni
+marcas (datos automáticos, Docente, Proyecto de carrera). Esas marcas viven únicamente en
+**Contenido de la plantilla**, que es donde van las tablas con datos automáticos y del
+Proyecto de carrera.
+
+- [x] El constructor ya no abre la hoja ni el menú Insertar para una parte de Texto libre
+      (`isFreeTextPart` en `templateParts.ts`; `editableOnSheet` la excluye). Solo se le
+      cambia el nombre y la orientación desde Propiedades.
+- [ ] Renombrar «Contenido de la plantilla»: pendiente de decisión del responsable.
+
