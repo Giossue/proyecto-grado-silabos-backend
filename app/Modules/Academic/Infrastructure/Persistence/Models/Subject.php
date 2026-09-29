@@ -21,12 +21,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property StudyModality|null $modalidad
  * @property string|null $creditos
  * @property-read int|null $horas_totales Columna generada: ACD + APE + AA (I-132).
- * @property string|null $horas_proyecto
- * @property string|null $horas_ap
  * @property string|null $horas_ac
  * @property string|null $horas_pae
  * @property string|null $horas_aa
- * @property string|null $horas_paec
  * @property bool $activo
  * @property string $carrera_id
  * @property-read Career $career
@@ -61,12 +58,9 @@ class Subject extends Model
         'unidad_organizacion_curricular',
         'modalidad',
         'creditos',
-        'horas_proyecto',
-        'horas_ap',
         'horas_ac',
         'horas_pae',
         'horas_aa',
-        'horas_paec',
         'activo',
     ];
 
@@ -80,12 +74,9 @@ class Subject extends Model
             'orden_en_ciclo' => 'integer',
             'creditos' => 'decimal:2',
             'horas_totales' => 'integer',
-            'horas_proyecto' => 'decimal:2',
-            'horas_ap' => 'decimal:2',
             'horas_ac' => 'decimal:2',
             'horas_pae' => 'decimal:2',
             'horas_aa' => 'decimal:2',
-            'horas_paec' => 'decimal:2',
             'activo' => 'boolean',
         ];
     }

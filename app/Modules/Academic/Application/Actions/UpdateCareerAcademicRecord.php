@@ -35,12 +35,9 @@ class UpdateCareerAcademicRecord
         'unidad_organizacion_curricular' => 'Unidad de organización curricular',
         'creditos' => 'Créditos',
         'horas_totales' => 'Horas totales',
-        'horas_proyecto' => 'Horas de proyecto',
-        'horas_ap' => 'Horas AP',
         'horas_ac' => 'Horas AC',
         'horas_pae' => 'Horas PAE',
         'horas_aa' => 'Horas AA',
-        'horas_paec' => 'Horas PAEC',
         'periodo_academico_id' => 'Periodo académico',
         'asignatura_id' => 'Materia',
         'modalidad' => 'Modalidad',
@@ -219,12 +216,9 @@ class UpdateCareerAcademicRecord
         $optional = [
             'position' => 'orden_en_ciclo',
             'organization_unit' => 'unidad_organizacion_curricular',
-            'hours_project' => 'horas_proyecto',
-            'hours_ap' => 'horas_ap',
             'horas_ac' => 'horas_ac',
             'horas_pae' => 'horas_pae',
             'horas_aa' => 'horas_aa',
-            'hours_paec' => 'horas_paec',
         ];
 
         foreach ($optional as $input => $attribute) {

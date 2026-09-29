@@ -146,12 +146,9 @@ class CreateAcademicRecord
             'unidad_organizacion_curricular' => $data['organization_unit'] ?? null,
             'modalidad' => $this->inheritance->subjectModality($data),
             'creditos' => $data['creditos'] ?? null,
-            'horas_proyecto' => $data['hours_project'] ?? null,
-            'horas_ap' => $data['hours_ap'] ?? null,
             'horas_ac' => $data['horas_ac'] ?? null,
             'horas_pae' => $data['horas_pae'] ?? null,
             'horas_aa' => $data['horas_aa'] ?? null,
-            'horas_paec' => $data['hours_paec'] ?? null,
             'activo' => true,
         ]);
 

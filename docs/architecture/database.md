@@ -104,8 +104,8 @@ documental configurable en conceptos y valores curriculares relacionados, descri
 más abajo. ACD, APE, AA, créditos y total son un
 conjunto fijo; `total_horas_asignatura` es una columna generada `STORED` igual a
 `round(horas_ac + horas_pae + horas_aa)` (I-132) y no se escribe desde la aplicación.
-`horas_proyecto`, `horas_ap` y `horas_paec` no participan del total. La migración
-`000100` trasladó a `horas_pae` el saldo de las filas cuyo total superaba la suma de
+Las columnas `horas_proyecto`, `horas_ap` y `horas_paec`, heredadas del sistema anterior
+(I-11) y sin dato ni pantalla, se retiraron en I-162. La migración `000100` trasladó a `horas_pae` el saldo de las filas cuyo total superaba la suma de
 componentes (prácticas preprofesionales y de servicio comunitario), sin perder horas.
 `asignaturas.ciclo` y `orden_en_ciclo` determinan la posición reproducible del lienzo.
 Las coordenadas de pantalla no se persisten. `requisitos_asignatura.tipo` conserva la

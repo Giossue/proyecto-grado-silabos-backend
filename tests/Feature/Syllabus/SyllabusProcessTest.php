@@ -618,12 +618,9 @@ class SyllabusProcessTest extends TestCase
             'modality' => $subject->modalidad?->value,
             'creditos' => $subject->creditos,
             'horas_totales' => $subject->horas_totales,
-            'hours_project' => $subject->horas_proyecto,
-            'hours_ap' => $subject->horas_ap,
             'horas_ac' => $subject->horas_ac,
             'horas_pae' => $subject->horas_pae,
             'horas_aa' => $subject->horas_aa,
-            'hours_paec' => $subject->horas_paec,
         ];
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.update', ['asignatura', $subject->id]), $payload)

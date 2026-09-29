@@ -36,6 +36,10 @@ hacerlo aparecieron defectos de pantalla y restos de pruebas anteriores en la pl
       institucional, guardando por la API (con regeneración confirmada de los dos sílabos
       de prueba) y reanudándola.
 
+- [x] Pantalla: al abrir un sílabo «sin iniciar», el borrador se inicia solo y aparece el
+      formulario; se retiran la tarjeta «Listo para iniciar» y el botón «Iniciar
+      borrador». Si la convocatoria está en pausa, se muestra el motivo como antes.
+
 ## Pendiente
 
 - [ ] Desplegar la pantalla con estas correcciones.

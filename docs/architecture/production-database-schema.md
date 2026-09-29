@@ -162,12 +162,9 @@ ciclo_asignatura SMALLINT NULL
 creditos_asignatura NUMERIC NULL
 total_horas_asignatura SMALLINT NULL
 asignatura_activa BOOLEAN NOT NULL
-horas_proyecto NUMERIC NULL
-horas_ap NUMERIC NULL
 horas_ac NUMERIC NULL
 horas_pae NUMERIC NULL
 horas_aa NUMERIC NULL
-horas_paec NUMERIC NULL
 orden_asignatura_en_ciclo SMALLINT NOT NULL
 unidad_organizativa_curricular_asignatura VARCHAR NULL
 modalidad_asignatura VARCHAR NULL

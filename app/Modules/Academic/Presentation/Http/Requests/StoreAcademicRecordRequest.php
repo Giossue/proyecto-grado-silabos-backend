@@ -132,12 +132,9 @@ class StoreAcademicRecordRequest extends FormRequest
             'modality' => ['nullable', 'string', Rule::in(StudyModality::values())],
             'creditos' => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'horas_totales' => ['required', 'integer', 'min:0', 'max:32767'],
-            'hours_project' => ['nullable', 'numeric', 'min:0', 'max:9999.99'],
-            'hours_ap' => ['nullable', 'numeric', 'min:0', 'max:9999.99'],
             'horas_ac' => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'horas_pae' => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'horas_aa' => ['required', 'numeric', 'min:0', 'max:9999.99'],
-            'hours_paec' => ['nullable', 'numeric', 'min:0', 'max:9999.99'],
         ];
 
         return $rules;

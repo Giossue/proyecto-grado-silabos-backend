@@ -17,24 +17,18 @@ final class CurriculumSystemFields
 
     /** @var array<string, string> */
     public const ATTRIBUTES = [
-        'hours_project' => 'horas_proyecto',
-        'hours_ap' => 'horas_ap',
         'horas_ac' => 'horas_ac',
         'horas_pae' => 'horas_pae',
         'horas_aa' => 'horas_aa',
-        'hours_paec' => 'horas_paec',
         'creditos' => 'creditos',
         'horas_totales' => 'horas_totales',
     ];
 
     /** @var array<string, string> */
     public const LABELS = [
-        'hours_project' => 'Horas de proyecto',
-        'hours_ap' => 'Horas AP',
         'horas_ac' => 'Horas AC / ACD',
         'horas_pae' => 'Horas PAE / APE',
         'horas_aa' => 'Horas AA',
-        'hours_paec' => 'Horas PAEC',
         'creditos' => 'Créditos',
         'horas_totales' => 'Horas totales',
     ];
