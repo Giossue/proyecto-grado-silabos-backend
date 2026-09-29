@@ -290,7 +290,7 @@ class SyllabusTemplate extends Model
             ->orderBy('posicion')->orderBy('clave')->get()
             ->groupBy('seccion_plantilla_id');
 
-        return DB::table('secciones_plantilla')->where('plantilla_id', $this->id)
+        return array_values(DB::table('secciones_plantilla')->where('plantilla_id', $this->id)
             ->orderBy('posicion')->orderBy('clave')->get()
             ->map(fn (object $section): array => [
                 'id' => $section->id, 'clave' => $section->clave, 'titulo' => $section->titulo,
@@ -300,7 +300,7 @@ class SyllabusTemplate extends Model
                     'posicion' => (int) $block->posicion,
                     'configuracion' => is_string($block->configuracion) ? json_decode($block->configuracion, true, 512, JSON_THROW_ON_ERROR) : [],
                 ])->values()->all(),
-            ])->values()->all();
+            ])->all());
     }
 
     /** @param array<string, mixed> $document */
