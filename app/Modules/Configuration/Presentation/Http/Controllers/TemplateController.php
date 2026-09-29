@@ -170,9 +170,9 @@ class TemplateController extends Controller
                 ['value' => 'table', 'label' => 'Tabla'],
                 ['value' => 'bulleted_list', 'label' => 'Lista con viñetas'],
                 ['value' => 'numbered_list', 'label' => 'Lista numerada'],
-                ['value' => 'boolean', 'label' => 'Sí / No'],
                 ...(collect(TemplateVariables::definitions())->contains(fn (array $definition): bool => ($definition['type'] ?? null) === 'lista')
                     ? [['value' => 'multiple_choice', 'label' => 'Selección del catálogo curricular']] : []),
+                ['value' => 'automatic', 'label' => 'Sale sola de los documentos de la carrera'],
                 ['value' => 'fixed', 'label' => 'Texto fijo (el docente no lo llena)'],
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),

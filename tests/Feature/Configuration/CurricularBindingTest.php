@@ -16,6 +16,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
+use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Syllabus\Application\AcademicContextSnapshot;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Application\RequiredAcademicTemplateData;
@@ -343,6 +344,40 @@ class CurricularBindingTest extends TestCase
             'valor_curricular' => $value, 'evidencia_curricular' => [['source_id' => 'prueba', 'locator' => 'Página 3', 'quote' => 'Extracto sintético']],
             'confirmado_por' => $this->coordinator->id, 'confirmado_en' => now(),
         ]);
+    }
+
+    public function test_automatic_part_declares_the_curricular_data_and_reuses_it_in_sections(): void
+    {
+        $this->asRole('admin@silabos.test');
+        $template = SyllabusTemplate::institutional();
+        $section = $template->sections->firstWhere('clave', 'bibliografia');
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id, 'key' => 'bibliografia_automatica', 'label' => 'Bibliografía básica',
+            'content_type' => 'automatic', 'concept' => ['label' => 'Bibliografía básica', 'type' => 'lista', 'scope' => 'asignatura'],
+        ])->assertOk();
+        $concept = CurricularConcept::query()->where('clave_concepto', 'bibliografia_basica')->firstOrFail();
+        $this->assertSame(['lista', 'asignatura'], [$concept->tipo_concepto, $concept->ambito_concepto]);
+        $block = $template->fresh()->sections->firstWhere('clave', 'bibliografia')->blocks()->firstWhere('clave', 'bibliografia_automatica');
+        $this->assertSame('fixed', $block->configuracion['content_type']);
+        $this->assertStringContainsString('"id":"curricular_bibliografia_basica"', json_encode($block->configuracion['document']));
+        $this->assertFalse(FieldDefinition::query()->where('clave', 'bibliografia_automatica')->exists());
+        $this->assertTrue(AuditEvent::query()->where('accion', 'curriculo.concepto_declarado')->exists());
+
+        // Una sección nueva reutiliza el dato declarado; el mismo nombre con otra forma se rechaza.
+        $this->postJson(route('api.v1.admin.template.sections.store', $template), [
+            'title' => 'Lecturas', 'key' => 'lecturas',
+            'fields' => [['key' => 'lecturas_automaticas', 'label' => '', 'content_type' => 'automatic', 'concept_key' => 'bibliografia_basica']],
+        ])->assertOk();
+        $this->assertSame(1, CurricularConcept::query()->count());
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id, 'key' => 'bibliografia_texto', 'label' => 'Otra',
+            'content_type' => 'automatic', 'concept' => ['label' => 'Bibliografía básica', 'type' => 'texto', 'scope' => 'asignatura'],
+        ])->assertUnprocessable()->assertJsonValidationErrors('concept');
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id, 'key' => 'sin_dato', 'label' => 'Sin dato', 'content_type' => 'automatic',
+        ])->assertUnprocessable()->assertJsonValidationErrors('concept');
+        $this->getJson(route('api.v1.admin.template.index'))->assertOk()
+            ->assertJsonFragment(['key' => 'curricular_bibliografia_basica', 'label' => 'Bibliografía básica', 'type' => 'lista', 'scope' => 'asignatura']);
     }
 
     private function asRole(string $email): void

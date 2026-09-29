@@ -105,8 +105,11 @@ almacén privado. Los tipos admitidos se anuncian mediante `capabilities` en el 
 `PrepareCurricularImportJob`, en la cola `integraciones`, espera la lectura de todos
 los documentos y avanza por lotes acotados. `CurricularSourceBlocks` identifica bloques
 y filas de tablas con localizadores. El gateway recibe carrera, catálogo de materias,
-conceptos conocidos e instrucciones de importación, y propone conceptos/valores con
-citas a esos bloques. Cada lote actualiza cursor y progreso en `ejecuciones_trabajo`;
+conceptos conocidos e instrucciones de importación, y propone valores con citas a esos
+bloques. Desde I-151 los conceptos conocidos son la lista cerrada que Administración
+declaró en la plantilla: el agente no propone conceptos nuevos, la preparación toma la
+estructura del catálogo y descarta valores de conceptos no declarados, que quedan como
+observación visible. Sin conceptos declarados no se puede solicitar una importación. Cada lote actualiza cursor y progreso en `ejecuciones_trabajo`;
 solo el recorrido completo publica la propuesta. Un reintento explícito de una
 importación fallida usa `POST /coordination/curricular-imports/{id}/retry`.
 

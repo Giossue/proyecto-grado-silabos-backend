@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\AutomaticPart;
 use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
@@ -103,6 +104,27 @@ class SaveFieldDefinition
                 return $field;
             }
 
+            // Parte que sale sola de los documentos: texto fijo con el dato declarado.
+            if ($field === null && $contentType === 'automatic') {
+                ['concept' => $concept, 'declared' => $declared] = AutomaticPart::concept($data);
+                $block = $this->createBlock($template, $data, 'fixed');
+                $block->update(['configuracion' => [...($block->configuracion ?? []), 'document' => AutomaticPart::document($concept)]]);
+                $this->applyOrientation($block, $data);
+                if ($declared) {
+                    $this->audit->execute(
+                        actorId: $actor->id, roleAssignmentId: $activeRole?->id, action: 'curriculo.concepto_declarado',
+                        resourceType: 'concepto_curricular', resourceId: $concept->id, result: 'exito',
+                        correlationId: $request->attributes->getString('correlation_id') ?: null,
+                    );
+                }
+                $this->audit->execute(
+                    actorId: $actor->id, roleAssignmentId: $activeRole?->id, action: 'plantilla.bloque_creado',
+                    resourceType: 'bloque_plantilla', resourceId: $block->id, result: 'exito',
+                    correlationId: $request->attributes->getString('correlation_id') ?: null,
+                );
+
+                return null;
+            }
             if ($field !== null && $contentType === 'fixed') {
                 throw ValidationException::withMessages(['content_type' => 'Una parte que llena el docente no se puede cambiar a texto fijo. Agregue un texto fijo nuevo.']);
             }

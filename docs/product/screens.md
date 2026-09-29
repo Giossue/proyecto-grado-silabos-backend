@@ -290,7 +290,17 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   La acción manual «Resultados de aprendizaje» desaparece del menú de cada materia;
   las correcciones nuevas siguen el recorrido de importación y confirmación.
   Ninguna otra pantalla de Coordinación muestra el antiguo botón flotante.
-  En ADM-06 los conceptos confirmados aparecen en el catálogo de datos automáticos.
+  COR-16 muestra qué datos pide la plantilla antes de importar; sin datos declarados
+  por Administración explica el motivo y no permite enviar documentos (I-151).
+  En ADM-06 los datos declarados aparecen en el catálogo de datos automáticos.
+- I-151: al crear una parte o una sección, ADM-06 pregunta «¿Quién llena esta parte?»
+  sin términos técnicos: **El docente la escribe** (un párrafo, una lista con viñetas,
+  una lista numerada o una tabla que se llena por filas), **El docente elige de una
+  lista** (listas de los documentos de carrera) o **Sale sola de los documentos de la
+  carrera**. Esta última elige un dato ya declarado o declara uno nuevo con nombre,
+  forma (lista o texto) y alcance (cada asignatura o toda la carrera) y crea una parte
+  fija con ese dato automático. «Editar parte» usa la misma pregunta sin la opción
+  automática. Sí/No ya no se ofrece para partes nuevas; las existentes se conservan.
   Los campos de selección docente pueden obtener opciones de una o varias listas
   curriculares, por ejemplo habilidades de asignatura y transversales. Cada sílabo
   usa su copia de esas opciones, y el docente elige de ella sin escribir el catálogo.

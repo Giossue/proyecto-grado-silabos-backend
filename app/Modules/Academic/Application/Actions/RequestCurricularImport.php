@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Application\CurricularData;
 use App\Modules\Academic\Application\CurricularImportCapabilities;
 use App\Modules\Academic\Application\CurricularWorkbookReader;
 use App\Modules\Academic\Application\Queries\CurricularImportsViewData;
@@ -51,6 +52,10 @@ final class RequestCurricularImport
         $capabilities = $this->capabilities->toArray();
         if (! $capabilities['extraction']) {
             throw ValidationException::withMessages(['files' => 'La extracción con IA no está configurada. Solicite a Administración habilitar el servicio.']);
+        }
+        // La plantilla manda (I-151): sin datos declarados no hay nada que buscar.
+        if (CurricularData::definitions() === []) {
+            throw ValidationException::withMessages(['files' => 'Administración aún no definió en la plantilla qué datos salen de los documentos de la carrera.']);
         }
         $sources = AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)->whereKey($sourceIds)->get();
         abort_unless($sources->count() === count($sourceIds), 404);

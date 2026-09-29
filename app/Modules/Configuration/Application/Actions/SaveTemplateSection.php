@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\AutomaticPart;
 use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Domain\TableLayout;
@@ -45,16 +46,26 @@ class SaveTemplateSection
             $sectionId = (string) Str::uuid();
             $blocks = [];
             $fieldDefinitions = [];
+            $declared = [];
 
             foreach ($this->fields($data) as $fieldPosition => $fieldData) {
                 $blockId = (string) Str::uuid();
                 $contentType = $this->stringValue($fieldData, 'content_type');
+                // Una parte que sale sola de los documentos queda como texto fijo con su dato.
+                $automatic = $contentType === 'automatic';
+                if ($automatic) {
+                    ['concept' => $concept, 'declared' => $isNew] = AutomaticPart::concept($fieldData, "fields.{$fieldPosition}.concept");
+                    if ($isNew) {
+                        $declared[] = $concept->id;
+                    }
+                    $contentType = 'fixed';
+                }
                 $configuration = ['content_type' => $contentType];
                 if ($contentType === 'table') {
                     $configuration['table'] = TableLayout::default();
                 }
                 if ($contentType === 'fixed') {
-                    $configuration['document'] = TemplateDocumentDefaults::fixedPlaceholder();
+                    $configuration['document'] = $automatic ? AutomaticPart::document($concept) : TemplateDocumentDefaults::fixedPlaceholder();
                 }
                 $fieldKey = $this->stringValue($fieldData, 'key');
                 $sources = CurricularFieldOptions::fromAttributes($fieldData);
@@ -122,6 +133,14 @@ class SaveTemplateSection
             }
 
             $section = $template->fresh()->sectionOrFail($sectionId);
+
+            foreach ($declared as $conceptId) {
+                $this->audit->execute(
+                    actorId: $actor->id, roleAssignmentId: $activeRole?->id, action: 'curriculo.concepto_declarado',
+                    resourceType: 'concepto_curricular', resourceId: $conceptId, result: 'exito',
+                    correlationId: $request->attributes->getString('correlation_id') ?: null,
+                );
+            }
 
             $this->audit->execute(
                 actorId: $actor->id,

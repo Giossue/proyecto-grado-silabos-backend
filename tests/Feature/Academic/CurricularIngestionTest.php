@@ -9,6 +9,7 @@ use App\Modules\Academic\Application\PrepareCurricularImport;
 use App\Modules\Academic\Domain\Contracts\CurricularExtractionGateway;
 use App\Modules\Academic\Infrastructure\Gateways\HostedCurricularExtractionGateway;
 use App\Modules\Academic\Infrastructure\Jobs\PrepareCurricularImportJob;
+use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularConcept;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
@@ -41,6 +42,9 @@ class CurricularIngestionTest extends TestCase
         Http::preventStrayRequests();
         $this->seed(DatabaseSeeder::class);
         $this->subject = Subject::query()->firstOrFail();
+        // La plantilla manda (I-151): Administración declaró el dato que se importará.
+        CurricularConcept::query()->create(['clave_concepto' => 'habilidades_blandas', 'etiqueta_concepto' => 'Habilidades blandas',
+            'tipo_concepto' => 'lista', 'ambito_concepto' => 'asignatura', 'columnas_concepto' => null]);
         $this->asRole('coordinador@silabos.test');
         $this->mock(CurricularExtractionGateway::class, function (MockInterface $mock): void {
             $mock->shouldReceive('available')->andReturn(true);
@@ -61,7 +65,7 @@ class CurricularIngestionTest extends TestCase
             ->assertAccepted()->assertJsonPath('status', 'pendiente')->assertJsonPath('proposal', null);
         $import = CurricularImport::query()->findOrFail($response->json('id'));
         $this->assertDatabaseCount('valores_curriculares', 0);
-        $this->assertDatabaseCount('conceptos_curriculares', 0);
+        $this->assertDatabaseCount('conceptos_curriculares', 1); // Solo el dato declarado por Administración.
         $this->assertDatabaseCount('documentos_ia', 0);
         Queue::assertPushed(PrepareCurricularImportJob::class, fn ($job) => $job->importId === $import->id);
         $object = StoredObject::query()->where('clasificacion', 'curricular_workbook')->firstOrFail();
@@ -81,7 +85,7 @@ class CurricularIngestionTest extends TestCase
         $this->assertSame($this->subject->id, $detail->json('proposal.values.0.subject_id'));
         $this->assertSame('Recursos!A2:C2', $detail->json('proposal.values.0.evidence.0.locator'));
         $this->assertDatabaseCount('valores_curriculares', 0);
-        $this->assertDatabaseCount('conceptos_curriculares', 0);
+        $this->assertDatabaseCount('conceptos_curriculares', 1); // Solo el dato declarado por Administración.
         $this->postJson($this->showUrl($import).'/apply', [
             'confirmed' => true, 'expected_fingerprint' => $detail->json('fingerprint'),
             'items' => [['id' => $detail->json('proposal.values.0.id')]],
@@ -149,7 +153,7 @@ class CurricularIngestionTest extends TestCase
         } catch (RuntimeException $exception) {
             $this->assertStringContainsString('fuente cambió', $exception->getMessage());
         }
-        $this->assertDatabaseCount('conceptos_curriculares', 0);
+        $this->assertDatabaseCount('conceptos_curriculares', 1); // Solo el dato declarado por Administración.
         $this->assertDatabaseCount('valores_curriculares', 0);
     }
 
@@ -185,6 +189,30 @@ class CurricularIngestionTest extends TestCase
         $this->assertSame('lista', CurricularImport::query()->findOrFail($retryId)->estado_importacion);
         $this->assertSame('fallida', $previous->fresh()->estado_importacion);
         $this->assertDatabaseCount('valores_curriculares', 0);
+    }
+
+    public function test_only_declared_data_is_imported_and_undeclared_data_is_reported(): void
+    {
+        $source = $this->source('Pensamiento crítico. Convenio con la empresa Demo.');
+        $block = app(CurricularSourceBlocks::class)->forSource($source)[0];
+        $raw = $this->rawProposal($block, ['Pensamiento crítico']);
+        $raw['definitions'][] = ['key' => 'convenios', 'label' => 'Convenios', 'type' => 'lista', 'scope' => 'carrera', 'columns' => []];
+        $raw['values'][] = ['concept_key' => 'convenios', 'subject_code' => null, 'subject_name' => null, 'value' => ['Convenio con la empresa Demo.'],
+            'evidence' => [['block_id' => $block['id'], 'quote' => 'Convenio con la empresa Demo.']], 'issue' => null];
+        $proposal = app(PrepareCurricularImport::class)->normalize($raw, [$block], [$this->subject]);
+        $this->assertSame(['habilidades_blandas'], array_column($proposal['values'], 'concept_key'));
+        $this->assertSame(['habilidades_blandas'], array_column($proposal['definitions'], 'key'));
+        $this->assertContains('El documento también trae «Convenios», que la plantilla no pide; no se importó.', $proposal['issues']);
+    }
+
+    public function test_import_requires_data_declared_in_the_template(): void
+    {
+        CurricularConcept::query()->delete();
+        $this->post(route('api.v1.coordination.curricular-imports.store'), [
+            'files' => [UploadedFile::fake()->createWithContent('Bibliografia.xlsx', 'x')],
+        ], ['Accept' => 'application/json'])->assertUnprocessable()
+            ->assertJsonPath('errors.files.0', 'Administración aún no definió en la plantilla qué datos salen de los documentos de la carrera.');
+        $this->assertDatabaseCount('importaciones_curriculares', 0);
     }
 
     public function test_partial_lists_from_one_source_merge_but_different_sources_remain_explicit_conflicts(): void

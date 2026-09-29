@@ -305,7 +305,7 @@ class ExportOpenApi extends Command
                 ],
             ],
             'CurricularImportsIndex' => [
-                'type' => 'object', 'required' => ['imports', 'subjects', 'current_values', 'sources', 'lock_reason', 'capabilities'],
+                'type' => 'object', 'required' => ['imports', 'subjects', 'current_values', 'concepts', 'sources', 'lock_reason', 'capabilities'],
                 'properties' => [
                     'imports' => ['type' => 'array', 'items' => [
                         'type' => 'object', 'required' => ['id', 'status', 'created_at', 'applied_at', 'error'],
@@ -315,6 +315,11 @@ class ExportOpenApi extends Command
                     'subjects' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['id', 'name', 'code'],
                         'properties' => ['id' => $uuid, 'name' => ['type' => 'string'], 'code' => ['type' => 'string']]]],
                     'current_values' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/ConfirmedCurricularValue']],
+                    'concepts' => ['type' => 'array', 'description' => 'Datos que Administración declaró en la plantilla para salir de los documentos de carrera (I-151); la importación solo busca estos.',
+                        'items' => ['type' => 'object', 'required' => ['key', 'label', 'type', 'scope'], 'properties' => [
+                            'key' => ['type' => 'string'], 'label' => ['type' => 'string'],
+                            'type' => ['type' => 'string', 'enum' => ['texto', 'lista', 'tabla']], 'scope' => ['type' => 'string', 'enum' => ['carrera', 'asignatura']],
+                        ]]],
                     'sources' => ['type' => 'array', 'description' => 'Nombre compatible: documentos internos de ingesta reutilizables de la carrera; no existe CRUD de fuentes.', 'items' => ['type' => 'object', 'required' => ['id', 'name'],
                         'properties' => ['id' => $uuid, 'name' => ['type' => 'string']]]],
                     'lock_reason' => $nullableText,

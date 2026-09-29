@@ -152,6 +152,12 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 ## Actualizado para esta entrega
 
+I-151 (28 de septiembre de 2026), por instrucción del responsable, adopta «la plantilla
+manda»: Administración declara en ADM-06 qué datos salen de los documentos de carrera
+(parte **Sale sola de los documentos de la carrera**) y la importación de COR-16 solo
+extrae esos datos. ADM-06 pregunta «¿Quién llena esta parte?» en lenguaje simple y deja
+de ofrecer Sí/No para partes nuevas. Sin cambios de esquema.
+
 I-149 (28 de septiembre de 2026), por instrucción del responsable, saca de la malla el
 asistente curricular y crea **Coordinación → Proyecto de carrera** (COR-16), una pantalla
 propia con Datos confirmados, Importar e Historial. La revisión relaciona una sola vez

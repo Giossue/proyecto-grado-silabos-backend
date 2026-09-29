@@ -9,7 +9,7 @@ use Illuminate\Validation\Validator;
 
 class SaveTemplateSectionRequest extends ManageTemplatesRequest
 {
-    private const CONTENT_TYPES = ['text', 'table', 'bulleted_list', 'numbered_list', 'boolean', 'fixed', 'multiple_choice'];
+    private const CONTENT_TYPES = ['text', 'table', 'bulleted_list', 'numbered_list', 'boolean', 'fixed', 'multiple_choice', 'automatic'];
 
     /** @return array<string, list<mixed>> */
     public function rules(): array
@@ -39,7 +39,7 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
                 },
             ],
             'fields' => [Rule::requiredIf($sectionId === null && ! $this->filled('first_field_label')), 'nullable', 'array', 'min:1', 'max:20'],
-            'fields.*' => ['required', 'array:key,label,help,content_type,options,options_source,options_sources,ai_enabled'],
+            'fields.*' => ['required', 'array:key,label,help,content_type,options,options_source,options_sources,ai_enabled,concept_key,concept'],
             'fields.*.label' => ['nullable', 'string', 'max:180'],
             'fields.*.key' => [
                 'required',
@@ -59,6 +59,11 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
             'fields.*.options.*.value' => ['required', 'string', 'max:120', 'distinct'],
             'fields.*.options.*.label' => ['required', 'string', 'max:180'],
             'fields.*.ai_enabled' => ['nullable', 'boolean'],
+            'fields.*.concept_key' => ['nullable', 'string', 'max:100'],
+            'fields.*.concept' => ['nullable', 'array:label,type,scope'],
+            'fields.*.concept.label' => ['required_with:fields.*.concept', 'string', 'max:180'],
+            'fields.*.concept.type' => ['required_with:fields.*.concept', 'in:texto,lista'],
+            'fields.*.concept.scope' => ['required_with:fields.*.concept', 'in:asignatura,carrera'],
             'first_field_label' => [Rule::requiredIf($requiresLegacyField), 'nullable', 'string', 'max:180'],
             'first_field_key' => [
                 Rule::requiredIf($requiresLegacyField),

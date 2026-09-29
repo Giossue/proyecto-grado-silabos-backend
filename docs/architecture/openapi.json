@@ -6241,6 +6241,7 @@
                     "imports",
                     "subjects",
                     "current_values",
+                    "concepts",
                     "sources",
                     "lock_reason",
                     "capabilities"
@@ -6319,6 +6320,42 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/ConfirmedCurricularValue"
+                        }
+                    },
+                    "concepts": {
+                        "type": "array",
+                        "description": "Datos que Administración declaró en la plantilla para salir de los documentos de carrera (I-151); la importación solo busca estos.",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "key",
+                                "label",
+                                "type",
+                                "scope"
+                            ],
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string",
+                                    "enum": [
+                                        "texto",
+                                        "lista",
+                                        "tabla"
+                                    ]
+                                },
+                                "scope": {
+                                    "type": "string",
+                                    "enum": [
+                                        "carrera",
+                                        "asignatura"
+                                    ]
+                                }
+                            }
                         }
                     },
                     "sources": {

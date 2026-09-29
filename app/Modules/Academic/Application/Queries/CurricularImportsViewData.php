@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Application\Queries;
 
+use App\Modules\Academic\Application\CurricularData;
 use App\Modules\Academic\Application\CurricularImportCapabilities;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
@@ -56,6 +57,11 @@ final class CurricularImportsViewData
             'subjects' => Subject::query()->where('carrera_id', $careerId)->orderBy('nombre')->get(['id', 'nombre', 'codigo_asignatura'])
                 ->map(fn (Subject $subject): array => ['id' => $subject->id, 'name' => $subject->nombre, 'code' => $subject->codigo_asignatura])->all(),
             'current_values' => $this->confirmedValues->forCareer($careerId),
+            // Datos que la plantilla pide a los documentos de carrera (I-151).
+            'concepts' => array_values(array_map(
+                fn (array $definition): array => ['key' => $definition['key'], 'label' => $definition['label'], 'type' => $definition['type'], 'scope' => $definition['scope']],
+                CurricularData::definitions(),
+            )),
             'sources' => AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)
                 ->whereNotIn('estado_ingesta', ['pendiente', 'en_ejecucion', 'fallida'])
                 ->whereNotNull('contenido_fuente_academica')->where('contenido', '!=', '')->orderBy('nombre')->get(['id', 'nombre'])

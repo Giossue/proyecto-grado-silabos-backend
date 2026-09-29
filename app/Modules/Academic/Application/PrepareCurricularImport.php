@@ -136,27 +136,30 @@ final class PrepareCurricularImport
      */
     public function normalize(array $raw, array $blocks, array $subjects): array
     {
-        $definitions = [];
+        // Opción A (I-151): la plantilla manda. Solo se importan los datos que Administración
+        // declaró; la estructura sale del catálogo, nunca de la respuesta del agente.
+        $declared = CurricularData::definitions();
+        $labels = [];
         foreach ($raw['definitions'] as $definition) {
-            if (! is_array($definition) || ! is_string($definition['key'] ?? null)) {
-                throw new RuntimeException('La extracción contiene conceptos inválidos.');
+            if (is_array($definition) && is_string($definition['key'] ?? null) && is_string($definition['label'] ?? null)) {
+                $labels[$definition['key']] = trim($definition['label']);
             }
-            $key = $definition['key'];
-            if (isset($definitions[$key]) && (($definitions[$key]['type'] ?? null) !== ($definition['type'] ?? null) || ($definitions[$key]['scope'] ?? null) !== ($definition['scope'] ?? null) || ($definitions[$key]['columns'] ?? []) !== ($definition['columns'] ?? []))) {
-                throw new RuntimeException('La extracción propuso estructuras incompatibles para un mismo concepto.');
-            }
-            $definitions[$key] = $definition;
         }
+        $definitions = [];
+        $undeclared = [];
         $byId = array_column($blocks, null, 'id');
         $rows = [];
         foreach ($raw['values'] as $candidate) {
             if (! is_array($candidate) || ! is_string($candidate['concept_key'] ?? null) || ! array_key_exists('value', $candidate)) {
                 throw new RuntimeException('La extracción contiene registros incompletos.');
             }
-            $definition = $definitions[$candidate['concept_key']] ?? null;
+            $definition = $declared[$candidate['concept_key']] ?? null;
             if ($definition === null) {
-                throw new RuntimeException('Un dato extraído no declara su estructura.');
+                $undeclared[$candidate['concept_key']] = $labels[$candidate['concept_key']] ?? $candidate['concept_key'];
+
+                continue;
             }
+            $definitions[$definition['key']] = $definition;
             $evidence = [];
             $invalidEvidence = false;
             foreach (is_array($candidate['evidence'] ?? null) ? $candidate['evidence'] : [] as $citation) {
@@ -179,7 +182,7 @@ final class PrepareCurricularImport
                 }
             }
             $subject = null;
-            if (($definition['scope'] ?? null) === 'asignatura') {
+            if ($definition['scope'] === 'asignatura') {
                 $code = is_string($candidate['subject_code'] ?? null) ? $this->comparable($candidate['subject_code']) : '';
                 $name = is_string($candidate['subject_name'] ?? null) ? $this->comparable($candidate['subject_name']) : '';
                 $matches = array_values(array_filter($subjects, fn (Subject $item): bool => $code !== ''
@@ -197,7 +200,7 @@ final class PrepareCurricularImport
             if ($invalidEvidence || $evidence === []) {
                 $issueCode = 'invalid_evidence';
                 $issue = 'El contenido no pudo verificarse completamente en los extractos de la fuente.';
-            } elseif (($definition['scope'] ?? null) === 'asignatura' && $subject === null && $issueCode === null) {
+            } elseif ($definition['scope'] === 'asignatura' && $subject === null && $issueCode === null) {
                 $issueCode = 'subject_unmatched';
                 $issue = 'Seleccione la materia que corresponde al nombre encontrado en el documento.';
             }
@@ -244,6 +247,10 @@ final class PrepareCurricularImport
                     $merged[$key]['issue'] = 'Hay valores distintos para este dato. Revise las fuentes y seleccione una sola alternativa.';
                 }
             }
+        }
+
+        foreach ($undeclared as $label) {
+            $raw['issues'][] = "El documento también trae «{$label}», que la plantilla no pide; no se importó.";
         }
 
         return $this->proposals->normalize(['definitions' => array_values($definitions), 'values' => array_values($merged), 'issues' => array_values(array_unique($raw['issues']))]);
