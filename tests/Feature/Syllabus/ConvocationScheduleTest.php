@@ -284,8 +284,7 @@ class ConvocationScheduleTest extends TestCase
         })->filter()->values();
 
         return match (true) {
-            $field->clave === 'unidades' => ['version_bloqueo' => $lockVersion, 'rows' => $this->validPlanningRowsPayload()],
-            $field->tipo === 'repetible' => ['version_bloqueo' => $lockVersion, 'rows' => [['data' => ['texto' => "Contenido {$field->clave}"]]]],
+            $field->tipo === 'texto_libre' => ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")],
             $field->tipo === 'booleano' => ['version_bloqueo' => $lockVersion, 'value' => true],
             $field->tipo === 'numero' => ['version_bloqueo' => $lockVersion, 'value' => 1],
             $field->tipo === 'fecha' => ['version_bloqueo' => $lockVersion, 'value' => now()->toDateString()],

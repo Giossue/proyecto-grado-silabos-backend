@@ -490,7 +490,7 @@ class SyllabusProcessTest extends TestCase
             'key' => 'anexos',
             'first_field_label' => 'Anexo',
             'first_field_key' => 'anexo',
-            'first_field_content_type' => 'text',
+            'first_field_content_type' => 'free_text',
         ];
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $sectionPayload)
@@ -532,7 +532,7 @@ class SyllabusProcessTest extends TestCase
             'key' => 'anexos',
             'first_field_label' => 'Anexo',
             'first_field_key' => 'anexo',
-            'first_field_content_type' => 'text',
+            'first_field_content_type' => 'free_text',
         ];
 
         // Sin confirmar: nada cambia y el servidor devuelve la cifra.

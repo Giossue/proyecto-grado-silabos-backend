@@ -272,13 +272,7 @@ class ReviewWorkflowTest extends TestCase
     {
         [$syllabus, $firstRevision] = $this->submitValidDraft();
         $field = $this->editableScalarField($syllabus);
-        $repeatableField = FieldDefinition::query()
-            ->where('tipo', 'repetible')
-            ->firstOrFail();
-        $stableRowId = $syllabus->rows()
-            ->where('definicion_campo_id', $repeatableField->id)
-            ->firstOrFail()
-            ->id;
+        $freeTextField = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
         $firstSnapshot = $firstRevision->fotografia;
 
         // Sin observaciones pendientes no hay corrección que solicitar.
@@ -324,14 +318,10 @@ class ReviewWorkflowTest extends TestCase
             'value' => 'Descripción corregida con evidencia académica.',
         ])->assertOk();
         $syllabus->refresh();
-        $rowUpdate = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $repeatableField]), [
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $freeTextField]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
-            'rows' => [
-                ['id' => $stableRowId, 'data' => ['texto' => 'Fila corregida y estable']],
-                ['data' => ['texto' => 'Fila nueva de la corrección']],
-            ],
+            'value' => $this->freeTextValue('Bibliografía básica corregida.'),
         ])->assertOk();
-        $newRowId = $rowUpdate->json('rows.1.id');
         $syllabus->refresh();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo,
@@ -344,10 +334,10 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame($firstRevision->id, $secondRevision->revision_anterior_id);
         $comparison = app(RevisionDiff::class)->compare($firstRevision, $secondRevision);
         $this->assertGreaterThan(0, $comparison['changed_fields']);
-        $repeatableChange = collect($comparison['changes'])->firstWhere('type', 'repetible');
-        $this->assertSame($stableRowId, $repeatableChange['before']['rows'][0]['id'], 'La fila estable no coincide en el snapshot anterior.');
-        $this->assertSame($stableRowId, $repeatableChange['after']['rows'][0]['id'], 'La fila estable no coincide en el snapshot posterior.');
-        $this->assertSame($newRowId, $repeatableChange['after']['rows'][1]['id'], 'La fila nueva no coincide en el snapshot posterior.');
+        // El Texto libre (I-156) se compara como documento completo.
+        $freeTextChange = collect($comparison['changes'])->firstWhere('field_key', 'bibliografia');
+        $this->assertEquals($this->freeTextValue('Contenido académico bibliografia'), $freeTextChange['before']['value']);
+        $this->assertEquals($this->freeTextValue('Bibliografía básica corregida.'), $freeTextChange['after']['value']);
 
         $this->actingAsTeacher()
             ->getJson(route('api.v1.coordination.reviews.compare', [$firstRevision, $secondRevision]))
@@ -550,8 +540,7 @@ class ReviewWorkflowTest extends TestCase
         })->filter()->values();
 
         return match (true) {
-            $field->clave === 'unidades' => ['version_bloqueo' => $lockVersion, 'rows' => $this->validPlanningRowsPayload()],
-            $field->tipo === 'repetible' => ['version_bloqueo' => $lockVersion, 'rows' => [['data' => ['texto' => "Contenido {$field->clave}"]]]],
+            $field->tipo === 'texto_libre' => ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")],
             $field->tipo === 'booleano' => ['version_bloqueo' => $lockVersion, 'value' => true],
             $field->tipo === 'numero' => ['version_bloqueo' => $lockVersion, 'value' => 1],
             $field->tipo === 'fecha' => ['version_bloqueo' => $lockVersion, 'value' => now()->toDateString()],
@@ -580,7 +569,6 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame(0, $fresh->version_bloqueo);
         // Solo quedan los valores heredados de la malla; lo escrito se descartó.
         $this->assertSame(0, $fresh->values()->where('heredado', false)->count());
-        $this->assertSame(0, $fresh->rows()->count());
         // La revisión enviada es historial y sigue ahí.
         $this->assertDatabaseHas('revisiones_silabo', ['id' => $revision->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
@@ -684,8 +672,8 @@ class ReviewWorkflowTest extends TestCase
         return FieldDefinition::query()
             ->where('heredado', false)
             ->where('editable_docente', true)
-            // Este helper escribe texto libre: una selección Sí/No no es intercambiable.
-            ->where('clave', 'objetivo_general')
+            // Este helper escribe texto plano: el Texto libre y el Sí/No usan otra forma.
+            ->where('clave', 'formacion_experiencia')
             ->firstOrFail();
     }
 

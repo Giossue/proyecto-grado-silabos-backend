@@ -357,7 +357,7 @@ class ConvocationAndDraftTest extends TestCase
 
         $response = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => 1,
-            'value' => 'Descripción académica verificable.',
+            'value' => $this->freeTextValue('Descripción académica verificable.'),
         ])->assertOk();
 
         $this->assertSame(2, $response->json('version_bloqueo'));
@@ -365,25 +365,20 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => 1,
-            'value' => 'Escritura obsoleta.',
+            'value' => $this->freeTextValue('Escritura obsoleta.'),
         ])->assertConflict()
             ->assertJsonPath('code', 'conflicto_version_borrador')
             ->assertJsonPath('version_bloqueo_actual', 2);
 
-        $this->assertSame('Descripción académica verificable.', $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor);
+        $this->assertEquals($this->freeTextValue('Descripción académica verificable.'), $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor);
     }
 
     public function test_teacher_writes_free_text_with_lists_and_tables_and_empty_text_is_missing(): void
     {
-        // Texto libre (I-156): la descripción pasa a ser una parte que el docente escribe como quiera.
-        $convocation = $this->createPreparedConvocation();
+        // Texto libre (I-156): la descripción del formato oficial la escribe el docente como quiera.
+        $syllabus = $this->openConvocationAndGetSyllabus();
         $field = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
-        $field->update(['tipo' => 'texto_libre']);
-        SyllabusTemplate::institutional()->updateBlockDocument($field->bloque_plantilla_id, ['configuracion' => [
-            ...$field->block->configuracion, 'document' => TemplateDocumentDefaults::freeTextSheet('descripcion', 'Descripción'),
-        ]]);
-        $this->openPrepared($convocation);
-        $syllabus = Syllabus::query()->firstOrFail();
+        $this->assertSame('texto_libre', $field->tipo);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $url = route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]);
         $paragraph = fn (string $text, array $marks = []): array => ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text, 'marks' => $marks]]];
@@ -434,7 +429,7 @@ class ConvocationAndDraftTest extends TestCase
             ->assertJsonStructure([
                 'syllabus' => [
                     'presentation' => ['logos' => ['institution', 'faculty']],
-                    'sections' => [['blocks' => [['table', 'fields']]]],
+                    'sections' => [['blocks' => [['document', 'fields']]]],
                 ],
             ]);
     }
@@ -507,7 +502,7 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $firstRun = ValidationRun::query()->latest('completado_en')->firstOrFail();
-        $this->assertSame('planning-curricular-v5', $firstRun->version_reglas);
+        $this->assertSame('free-text-v6', $firstRun->version_reglas);
         $this->assertGreaterThan(0, $firstRun->errores_bloqueantes);
 
         $requiredEditable = FieldDefinition::query()
@@ -515,11 +510,7 @@ class ConvocationAndDraftTest extends TestCase
             ->get();
         foreach ($requiredEditable as $field) {
             $payload = match (true) {
-                $field->clave === 'unidades' => [
-                    'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
-                    'rows' => $this->validPlanningRows(),
-                ],
-                $field->tipo === 'repetible' => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'rows' => [['data' => ['texto' => "Contenido {$field->clave}"]]]],
+                $field->tipo === 'texto_libre' => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue("Contenido {$field->clave}")],
                 $field->tipo === 'seleccion_unica' => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => (string) ($field->opciones[0] ?? '')],
                 default => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => "Contenido {$field->clave}"],
             };
@@ -541,7 +532,7 @@ class ConvocationAndDraftTest extends TestCase
         // El borrador acepta texto largo y campos vacíos: no hay límites configurables.
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $text]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
-            'value' => str_repeat('Objetivo amplio. ', 200),
+            'value' => $this->freeTextValue(str_repeat('Objetivo amplio. ', 200)),
         ])->assertOk();
 
         $detail = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
@@ -637,122 +628,9 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('error', $messages[$inherited->id]->first()->severidad);
     }
 
-    public function test_planning_with_wrong_hours_can_be_saved_but_fails_deterministic_validation(): void
-    {
-        $syllabus = $this->openConvocationAndGetSyllabus();
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
-        $field = FieldDefinition::query()
-            ->where('clave', 'unidades')
-            ->firstOrFail();
-        $rows = $this->validPlanningRows();
-        $rows[1]['data']['acd'] = 2;
 
-        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
-            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
-            'rows' => $rows,
-        ])->assertOk();
 
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
-        $run = ValidationRun::query()->latest('completado_en')->firstOrFail();
 
-        $this->assertGreaterThan(0, $run->errores_bloqueantes);
-        $this->assertDatabaseHas('resultados_validacion', [
-            'ejecucion_validacion_id' => $run->id,
-            'definicion_campo_id' => $field->id,
-            'codigo_resultado_validacion' => 'horas_planificacion_no_coinciden',
-            'severidad_resultado_validacion' => 'error',
-        ]);
-    }
-
-    public function test_repeatable_rows_keep_identity_when_an_earlier_row_is_removed(): void
-    {
-        $syllabus = $this->openConvocationAndGetSyllabus();
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
-        $syllabus->refresh();
-        $field = FieldDefinition::query()
-            ->where('tipo', 'repetible')
-            ->firstOrFail();
-
-        $created = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
-            'version_bloqueo' => $syllabus->version_bloqueo,
-            'rows' => [
-                ['data' => ['texto' => 'Primera fila']],
-                ['data' => ['texto' => 'Segunda fila']],
-            ],
-        ])->assertOk();
-        $secondRowId = $created->json('rows.1.id');
-
-        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
-            'version_bloqueo' => $created->json('version_bloqueo'),
-            'rows' => [
-                ['id' => $secondRowId, 'data' => ['texto' => 'Segunda fila ajustada']],
-            ],
-        ])->assertOk()
-            ->assertJsonCount(1, 'rows')
-            ->assertJsonPath('rows.0.id', $secondRowId)
-            ->assertJsonPath('rows.0.position', 1);
-
-        $this->assertDatabaseMissing('filas_repetibles', ['datos_fila_repetible->texto' => 'Primera fila']);
-        $this->assertDatabaseHas('filas_repetibles', [
-            'id' => $secondRowId,
-            'posicion_fila_repetible' => 1,
-            'datos_fila_repetible->texto' => 'Segunda fila ajustada',
-        ]);
-    }
-
-    public function test_saved_rows_keep_the_draft_shape_and_empty_rows_survive(): void
-    {
-        $syllabus = $this->openConvocationAndGetSyllabus();
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
-        $syllabus->refresh();
-        $field = FieldDefinition::query()
-            ->where('tipo', 'repetible')
-            ->firstOrFail();
-
-        // «Agregar fila» envía una fila vacía; el editor reemplaza sus filas con la
-        // respuesta, así que debe llegar con `data`/`position` como en la carga.
-        $saved = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
-            'version_bloqueo' => $syllabus->version_bloqueo,
-            'rows' => [['data' => ['texto' => '']]],
-        ])->assertOk()
-            ->assertJsonCount(1, 'rows')
-            ->assertJsonPath('rows.0.position', 1)
-            ->assertJsonMissingPath('rows.0.datos');
-        $this->assertIsArray($saved->json('rows.0.data'));
-
-        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
-            ->assertOk();
-        $this->assertDatabaseHas('filas_repetibles', ['id' => $saved->json('rows.0.id')]);
-    }
-
-    public function test_teacher_fills_table_cells_by_column_and_unit(): void
-    {
-        $syllabus = $this->openConvocationAndGetSyllabus();
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
-        $syllabus->refresh();
-        $field = FieldDefinition::query()
-            ->where('tipo', 'repetible')
-            ->firstOrFail();
-
-        // I-34: una celda por columna, unidad y fila de cabecera de la unidad.
-        $saved = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
-            'version_bloqueo' => $syllabus->version_bloqueo,
-            'rows' => [
-                ['data' => ['_unit' => 1, '_kind' => 'unit', 'nombre' => 'Fundamentos']],
-                ['data' => ['_unit' => 1, 'contenidos' => 'Socialización', 'acd' => 2, 'ape' => 1.5, 'aa' => '']],
-            ],
-        ])->assertOk();
-
-        $this->assertSame('unit', $saved->json('rows.0.data._kind'));
-        $this->assertSame(2, $saved->json('rows.1.data.acd'));
-        $this->assertSame(1.5, $saved->json('rows.1.data.ape'));
-
-        // Una celda no puede ser una estructura anidada.
-        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
-            'version_bloqueo' => $saved->json('version_bloqueo'),
-            'rows' => [['data' => ['contenidos' => ['no' => 'permitido']]]],
-        ])->assertUnprocessable()->assertJsonValidationErrors(['rows.0.data.contenidos']);
-    }
 
     public function test_role_navigation_endpoints_do_not_mix_coordinator_and_teacher_privileges(): void
     {
@@ -811,28 +689,6 @@ class ConvocationAndDraftTest extends TestCase
         return Syllabus::query()->firstOrFail();
     }
 
-    /** @return list<array{data: array<string, int|string>}> */
-    private function validPlanningRows(): array
-    {
-        $rows = [['data' => [
-            '_unit' => 1,
-            '_kind' => 'unit',
-            'nombre' => 'Unidad integrada',
-            'resultados' => 'Resultado de aprendizaje verificable',
-        ]]];
-        for ($week = 1; $week <= 16; $week++) {
-            $rows[] = ['data' => [
-                '_unit' => 1,
-                'semana' => $week,
-                'acd' => 4,
-                'ape' => 2,
-                'aa' => 6,
-                'contenidos' => "Contenido de la semana {$week}",
-            ]];
-        }
-
-        return $rows;
-    }
 
     private function actingAsAdministrator(): static
     {
