@@ -308,17 +308,18 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   solo se elige su forma: **Párrafo**, **Lista** (con viñetas) o **Tabla**. Párrafo y
   lista nacen con la hoja vacía; lo escrito sin marca es fijo. Toda parte se edita sobre
   la hoja con «Editar». El menú Insertar muestra solo icono y nombre: **Dato
-  automático** (lista de datos del sistema, ficha verde azulada), **Docente** (ficha azul
-  «!Docente»), **Docente: Sí o No** (ficha rosa «?Docente») y **Proyecto de carrera**
-  (ficha ámbar «@ProyectoCarrera»); dentro de una tabla, además, «Filas que agrega el
-  docente». Las fichas del docente llevan borde punteado; las que llegan llenas, continuo.
+  automático** (lista de datos del sistema, ficha verde azulada), **Docente** (ficha
+  azul), **Docente: Sí o No** (ficha rosa) y **Proyecto de carrera** (ficha ámbar). Las
+  fichas muestran ese nombre, sin símbolos; las del docente llevan borde punteado y las
+  que llegan llenas, continuo. Las marcas se insertan solo desde Insertar de la cinta: no
+  hay atajos de teclado.
   La cinta de una parte seleccionada muestra **Editar** (sobre la hoja), **Propiedades**
   (nombre, hoja horizontal y condiciones) y **Eliminar parte**. La forma se elige al
   crear la parte y no cambia: Propiedades la muestra sin permitir editarla y la API
   rechaza el cambio; para otra forma se elimina la parte y se crea una nueva. Al editar un párrafo o
   una lista, la cinta solo ofrece Insertar y deshacer/rehacer; las herramientas de celdas
   aparecen únicamente en partes con tabla.
-  Los atajos `{`, `!`, `?` y `@` hacen lo mismo. Ninguna marca abre un diálogo: su
+  Ninguna marca abre un diálogo: su
   nombre interno sale de lo escrito antes en la misma línea o celda, de la primera celda
   de la fila, del nombre de la parte o del de la sección, y se ve al pasar el cursor por
   la ficha. Todo @ProyectoCarrera es por asignatura; en una lista se busca como lista.

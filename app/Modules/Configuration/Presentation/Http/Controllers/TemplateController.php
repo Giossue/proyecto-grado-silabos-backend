@@ -167,12 +167,11 @@ class TemplateController extends Controller
                     })->values()->all(),
                 ])->values()->all(),
             ],
-            // Forma de una parte nueva (I-155). Quién llena cada cosa se marca en la hoja:
-            // dato automático, !Docente, ?Docente (Sí o No) o @ProyectoCarrera.
+            // Formas de una parte nueva (I-156): lo escribe el docente o lo arma
+            // Administración en la hoja con sus marcas.
             'blockTypes' => [
-                ['value' => 'text', 'label' => 'Párrafo'],
-                ['value' => 'bulleted_list', 'label' => 'Lista'],
-                ['value' => 'table', 'label' => 'Tabla'],
+                ['value' => 'free_text', 'label' => 'Texto libre'],
+                ['value' => 'template', 'label' => 'Contenido de la plantilla'],
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
         ];

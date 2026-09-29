@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -42,7 +43,9 @@ class UpdateDraftField
                 FieldValue::query()->updateOrCreate([
                     'silabo_id' => $locked->id,
                     'definicion_campo_id' => $field->id,
-                ], ['valor' => $data['value'] ?? null, 'heredado' => false, 'origen' => null]);
+                ], ['valor' => $field->tipo === 'texto_libre' && isset($data['value'])
+                    ? FreeText::normalize($data['value'])
+                    : ($data['value'] ?? null), 'heredado' => false, 'origen' => null]);
             }
 
             $locked->update([

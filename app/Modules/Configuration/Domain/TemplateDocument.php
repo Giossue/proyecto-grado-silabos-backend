@@ -9,7 +9,7 @@ final class TemplateDocument
 {
     public const FONTS = ['Arial', 'Calibri', 'Times New Roman', 'Verdana', 'Georgia'];
 
-    public const FIELD_TYPES = ['texto_corto', 'texto_largo', 'numero', 'fecha', 'seleccion_unica', 'seleccion_multiple'];
+    public const FIELD_TYPES = ['texto_corto', 'texto_largo', 'texto_libre', 'numero', 'fecha', 'seleccion_unica', 'seleccion_multiple'];
 
     public const CELL_ALIGNMENTS = ['left', 'center', 'right', 'justify'];
 

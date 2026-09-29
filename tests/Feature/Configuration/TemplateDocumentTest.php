@@ -306,26 +306,37 @@ class TemplateDocumentTest extends TestCase
         ]]]], ['curricular_normas']);
     }
 
-    public function test_new_paragraph_and_list_parts_start_as_blank_sheets(): void
+    public function test_new_parts_are_free_text_or_template_content(): void
     {
+        // I-156: el docente escribe el Texto libre; el Contenido de la plantilla nace vacío.
         $template = $this->template();
         $section = $template->sections()->firstWhere('clave', 'etica');
         $admin = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
         $this->actingAs($admin)->withSession(['active_role_assignment_id' => $admin->roleAssignments()->firstOrFail()->id]);
-        foreach (['text' => 'paragraph', 'bulleted_list' => 'bulletList'] as $type => $node) {
-            $this->postJson(route('api.v1.admin.template.fields.store', $template), [
-                'section_id' => $section->id, 'key' => "hoja_{$type}", 'label' => '', 'content_type' => $type, 'blank' => true,
-            ])->assertSuccessful();
-            $block = $template->fresh()->blocks()->firstWhere('clave', "hoja_{$type}");
-            $this->assertSame($type, $block->configuredContentType());
-            $this->assertCount(0, $block->fields);
-            $this->assertSame($node, $block->configuracion['document']['content'][0]['type']);
-        }
-        $this->postJson(route('api.v1.admin.template.sections.store', $template), [
-            'title' => 'Normas', 'key' => 'normas', 'fields' => [['key' => 'normas_lista', 'label' => '', 'content_type' => 'bulleted_list', 'blank' => true]],
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id, 'key' => 'normas_propias', 'label' => '', 'content_type' => 'free_text',
         ])->assertSuccessful();
-        $this->assertFalse($template->fields()->where('clave', 'normas_lista')->exists());
-        $this->assertSame(['text', 'bulleted_list', 'table'], array_column(
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id, 'key' => 'normas_fijas', 'label' => 'Normas', 'content_type' => 'template',
+        ])->assertSuccessful();
+
+        $free = $template->fresh()->blocks()->firstWhere('clave', 'normas_propias');
+        $field = $free->fields->sole();
+        $this->assertSame(['text', 'texto_libre', $section->titulo], [$free->configuredContentType(), $field->tipo, $field->etiqueta]);
+        $this->assertSame('texto_libre', TemplateDocument::nodes($free->configuracion['document'], 'field')[0]['attrs']['kind']);
+        $blank = $template->fresh()->blocks()->firstWhere('clave', 'normas_fijas');
+        $this->assertCount(0, $blank->fields);
+        $this->assertSame([['type' => 'paragraph', 'content' => []]], $blank->configuracion['document']['content']);
+
+        $this->postJson(route('api.v1.admin.template.sections.store', $template), [
+            'title' => 'Normas de clase', 'key' => 'normas', 'fields' => [
+                ['key' => 'normas_docente', 'label' => '', 'content_type' => 'free_text'],
+                ['key' => 'normas_plantilla', 'label' => '', 'content_type' => 'template'],
+            ],
+        ])->assertSuccessful();
+        $this->assertSame('Normas de clase', $template->fields()->where('clave', 'normas_docente')->sole()->etiqueta);
+        $this->assertFalse($template->fields()->where('clave', 'normas_plantilla')->exists());
+        $this->assertSame(['free_text', 'template'], array_column(
             $this->getJson(route('api.v1.admin.template.show', $template))->json('blockTypes'), 'value',
         ));
     }

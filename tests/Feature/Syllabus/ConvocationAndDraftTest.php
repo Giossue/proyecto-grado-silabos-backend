@@ -10,8 +10,10 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectLearningOutcomeBase;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
+use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -369,6 +371,51 @@ class ConvocationAndDraftTest extends TestCase
             ->assertJsonPath('version_bloqueo_actual', 2);
 
         $this->assertSame('Descripción académica verificable.', $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor);
+    }
+
+    public function test_teacher_writes_free_text_with_lists_and_tables_and_empty_text_is_missing(): void
+    {
+        // Texto libre (I-156): la descripción pasa a ser una parte que el docente escribe como quiera.
+        $convocation = $this->createPreparedConvocation();
+        $field = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
+        $field->update(['tipo' => 'texto_libre']);
+        SyllabusTemplate::institutional()->updateBlockDocument($field->bloque_plantilla_id, ['configuracion' => [
+            ...$field->block->configuracion, 'document' => TemplateDocumentDefaults::freeTextSheet('descripcion', 'Descripción'),
+        ]]);
+        $this->openPrepared($convocation);
+        $syllabus = Syllabus::query()->firstOrFail();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $url = route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]);
+        $paragraph = fn (string $text, array $marks = []): array => ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text, 'marks' => $marks]]];
+
+        $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => ['type' => 'doc', 'content' => [
+            ['type' => 'paragraph', 'content' => [['type' => 'variable', 'attrs' => ['id' => 'nombre_asignatura']]]],
+        ]]])->assertUnprocessable()->assertJsonValidationErrors(['value' => 'El texto libre contiene un elemento no permitido.']);
+
+        $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]]])->assertOk();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
+        $this->assertTrue(ValidationRun::query()->latest('completado_en')->firstOrFail()->results()
+            ->where('definicion_campo_id', $field->id)->where('codigo', 'campo_obligatorio_faltante')->exists());
+
+        $value = ['type' => 'doc', 'content' => [
+            $paragraph('Enfoque práctico.', [['type' => 'bold'], ['type' => 'textStyle', 'attrs' => ['color' => '#FF0000']]]),
+            ['type' => 'bulletList', 'content' => [['type' => 'listItem', 'content' => [$paragraph('Semana 1: requisitos')]]]],
+            ['type' => 'table', 'content' => [['type' => 'tableRow', 'content' => [
+                ['type' => 'tableHeader', 'attrs' => ['colspan' => 1, 'rowspan' => 1, 'backgroundColor' => '#000000'], 'content' => [$paragraph('Unidad')]],
+                ['type' => 'tableCell', 'attrs' => ['colspan' => 1, 'rowspan' => 1], 'content' => [$paragraph('Pruebas')]],
+            ]]]],
+        ]];
+        $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $value])->assertOk();
+        $stored = $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor;
+        // Solo negrita y cursiva; sin colores ni estilos de celda.
+        $this->assertSame([['type' => 'bold']], $stored['content'][0]['content'][0]['marks']);
+        $this->assertSame(['colspan' => 1, 'rowspan' => 1], $stored['content'][2]['content'][0]['content'][0]['attrs']);
+
+        $resolved = TemplateDocumentResolver::resolve(TemplateDocumentDefaults::freeTextSheet('descripcion', 'Descripción'), [
+            ['key' => 'descripcion', 'type' => 'texto_libre', 'value' => $stored],
+        ], [], null);
+        $this->assertSame(['paragraph', 'bulletList', 'table'], array_column($resolved['content'], 'type'));
+        $this->assertSame("Enfoque práctico.\n• Semana 1: requisitos\nUnidad | Pruebas", FreeText::plainText($stored));
     }
 
     public function test_teacher_api_receives_the_document_presentation_and_template_variables(): void

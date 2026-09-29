@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Application;
 
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TableLayout;
 
 /** Sustituye referencias solo con valores de una fotografía, nunca consultando datos vivos. */
@@ -41,6 +42,10 @@ final class TemplateDocumentResolver
                     }
                 } else {
                     $field = $byKey[$attrs['key']] ?? [];
+                    // Texto libre (I-156): sus párrafos, listas y tablas entran como bloques.
+                    if (($field['type'] ?? $attrs['kind'] ?? null) === 'texto_libre') {
+                        return FreeText::blocks($field['value'] ?? null);
+                    }
                     if (($attrs['listStyle'] ?? null) !== null) {
                         $items = ($field['type'] ?? null) === 'repetible' || ($field['rows'] ?? []) !== []
                             ? array_map(fn ($row) => self::display($row['data']['texto'] ?? ''), $field['rows'] ?? [])
@@ -127,7 +132,7 @@ final class TemplateDocumentResolver
                     $parts = [];
                     $inline = [];
                     foreach ($children as $child) {
-                        if (in_array($child['type'], ['bulletList', 'orderedList'], true)) {
+                        if (in_array($child['type'], ['bulletList', 'orderedList', 'table', 'paragraph'], true)) {
                             if ($inline !== []) {
                                 $parts[] = [...$node, 'content' => $inline];
                                 $inline = [];
@@ -245,6 +250,10 @@ final class TemplateDocumentResolver
 
     public static function display(mixed $value): string
     {
+        if (FreeText::isDocument($value)) {
+            /** @var array<string, mixed> $value */
+            return FreeText::plainText($value);
+        }
         if (is_bool($value)) {
             return $value ? 'Sí' : 'No';
         }

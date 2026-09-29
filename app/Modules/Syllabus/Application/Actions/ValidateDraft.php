@@ -5,6 +5,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 use App\Models\User;
 use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -185,6 +186,12 @@ class ValidateDraft
 
     private function filled(mixed $value): bool
     {
+        // Un texto libre sin letras cuenta como vacío (I-156).
+        if (FreeText::isDocument($value)) {
+            /** @var array<string, mixed> $value */
+            return ! FreeText::isEmpty($value);
+        }
+
         return $value !== null && (! is_string($value) || trim($value) !== '') && (! is_array($value) || $value !== []);
     }
 }

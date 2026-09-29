@@ -3,11 +3,13 @@
 namespace App\Modules\Syllabus\Presentation\Http\Requests;
 
 use App\Modules\Configuration\Application\CurricularFieldOptions;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class UpdateDraftFieldRequest extends FormRequest
 {
@@ -96,6 +98,18 @@ class UpdateDraftFieldRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail): void {
                     if (is_string($value) && preg_match('/<\/?[a-z][^>]*>/i', $value) === 1) {
                         $fail('Use texto; el HTML no está permitido.');
+                    }
+                },
+            ],
+            // Texto libre (I-156): documento con párrafos, listas y tablas simples.
+            'texto_libre' => [
+                $presence,
+                'array',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    try {
+                        FreeText::normalize($value, $attribute);
+                    } catch (ValidationException $exception) {
+                        $fail((string) collect($exception->errors())->flatten()->first());
                     }
                 },
             ],

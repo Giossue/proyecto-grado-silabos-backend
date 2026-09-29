@@ -3,6 +3,7 @@
 namespace App\Modules\Documents\Application;
 
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
@@ -62,6 +63,11 @@ class SyllabusDocumentContent
     {
         if ($value === null || $value === '') {
             return 'Sin contenido';
+        }
+        // Texto libre (I-156): una línea por párrafo, elemento o fila.
+        if (FreeText::isDocument($value)) {
+            /** @var array<string, mixed> $value */
+            return FreeText::plainText($value);
         }
         if (is_bool($value)) {
             return $value ? 'Sí' : 'No';

@@ -103,18 +103,33 @@ class SaveFieldDefinition
                 return $field;
             }
 
-            // Hoja vacía (I-155): párrafo o lista sin pregunta inicial; las marcas se ponen en la hoja.
-            if ($field === null && ($data['blank'] ?? false) === true && in_array($contentType, ['text', 'bulleted_list'], true)) {
-                $block = $this->createBlock($template, $data, $contentType);
-                $block->update(['configuracion' => [...$block->configuracion, 'document' => TemplateDocumentDefaults::blankSheet($contentType)]]);
+            // Formas de una parte nueva (I-156): «Texto libre» lo escribe el docente;
+            // «Contenido de la plantilla» nace como hoja vacía donde Administración escribe
+            // y pone sus marcas.
+            if ($field === null && in_array($contentType, ['free_text', 'template'], true)) {
+                $block = $this->createBlock($template, $data, 'text');
+                $label = $data['label'] !== '' ? $data['label'] : $block->section->titulo;
+                $block->update(['configuracion' => [...$block->configuracion, 'document' => $contentType === 'free_text'
+                    ? TemplateDocumentDefaults::freeTextSheet($data['key'], $label)
+                    : TemplateDocumentDefaults::blankSheet('text')]]);
                 $this->applyOrientation($block, $data);
                 $this->audit->execute(
                     actorId: $actor->id, roleAssignmentId: $activeRole?->id, action: 'plantilla.bloque_creado',
                     resourceType: 'bloque_plantilla', resourceId: $block->id, result: 'exito',
                     correlationId: $request->attributes->getString('correlation_id') ?: null,
                 );
+                if ($contentType === 'template') {
+                    return null;
+                }
+                $field = FieldDefinition::query()->create([
+                    'plantilla_id' => $template->id, 'bloque_plantilla_id' => $block->id, 'clave' => $data['key'],
+                    'etiqueta' => $label, 'ayuda' => $data['help'] ?? null, 'tipo' => 'texto_libre',
+                    'heredado' => false, 'editable_docente' => true, 'ia_habilitada' => (bool) ($data['ai_enabled'] ?? false),
+                    'posicion' => 1, ...$condition,
+                ]);
+                $this->auditField($field, 'plantilla.campo_creado', $actor, $activeRole?->id, $request);
 
-                return null;
+                return $field;
             }
             if ($field !== null && $contentType === 'fixed') {
                 throw ValidationException::withMessages(['content_type' => 'Una parte que llena el docente no se puede cambiar a texto fijo. Agregue un texto fijo nuevo.']);

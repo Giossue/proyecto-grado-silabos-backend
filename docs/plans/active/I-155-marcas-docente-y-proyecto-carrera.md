@@ -95,3 +95,7 @@ Respuestas del responsable:
 - [x] Cinta: «Editar» y «Propiedades»; un párrafo o una lista no muestran herramientas de
       celdas.
 - [x] La forma de una parte no cambia después de crearla (pantalla y API).
+- [x] Sin atajos de teclado (`{`, `!`, `?`, `@`): las marcas se insertan solo desde
+      Insertar de la cinta y la ficha muestra su nombre sin símbolos («Docente», «Docente:
+      Sí o No», «Proyecto de carrera»). Se retiran `useSheetSuggestions` y
+      `@tiptap/suggestion`.

@@ -2,6 +2,8 @@
 
 namespace App\Modules\Documents\Infrastructure\Rendering;
 
+use App\Modules\Configuration\Domain\FreeText;
+
 /** Lectura tolerante de los valores del snapshot para escribirlos en Word. */
 final class WordValues
 {
@@ -37,6 +39,11 @@ final class WordValues
     {
         if ($value === null || $value === '') {
             return '';
+        }
+        // Texto libre (I-156): una línea por párrafo, elemento o fila.
+        if (FreeText::isDocument($value)) {
+            /** @var array<string, mixed> $value */
+            return FreeText::plainText($value);
         }
         if (is_bool($value)) {
             return $value ? 'Sí' : 'No';

@@ -86,6 +86,18 @@ final class TemplateDocumentDefaults
             : $paragraph]];
     }
 
+    /**
+     * Hoja de una parte «Texto libre» (I-156): solo el espacio donde escribe el docente.
+     *
+     * @return array<string, mixed>
+     */
+    public static function freeTextSheet(string $key, string $label): array
+    {
+        return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [[
+            'type' => 'field', 'attrs' => ['key' => $key, 'label' => $label, 'kind' => 'texto_libre'],
+        ]]]]];
+    }
+
     /** @return array<string, mixed> Texto libre recién creado (I-155): un párrafo que Administración escribe en la hoja. */
     public static function freeText(): array
     {

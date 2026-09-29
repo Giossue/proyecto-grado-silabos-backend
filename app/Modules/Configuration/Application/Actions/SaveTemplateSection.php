@@ -56,12 +56,17 @@ class SaveTemplateSection
                 if ($contentType === 'fixed') {
                     $configuration['document'] = TemplateDocumentDefaults::freeText();
                 }
-                // Hoja vacía (I-155): el párrafo o la lista no nace con una pregunta del docente.
-                $blank = ($fieldData['blank'] ?? false) === true && in_array($contentType, ['text', 'bulleted_list'], true);
-                if ($blank) {
-                    $configuration['document'] = TemplateDocumentDefaults::blankSheet($contentType);
-                }
+                // Formas de una parte nueva (I-156): Texto libre o Contenido de la plantilla.
                 $fieldKey = $this->stringValue($fieldData, 'key');
+                $fieldLabel = trim((string) ($fieldData['label'] ?? ''));
+                $blank = $contentType === 'template';
+                $freeText = $contentType === 'free_text';
+                if ($blank || $freeText) {
+                    $contentType = 'text';
+                    $configuration = ['content_type' => 'text', 'document' => $freeText
+                        ? TemplateDocumentDefaults::freeTextSheet($fieldKey, $fieldLabel !== '' ? $fieldLabel : $this->stringValue($data, 'title'))
+                        : TemplateDocumentDefaults::blankSheet('text')];
+                }
                 $sources = CurricularFieldOptions::fromAttributes($fieldData);
                 foreach ($sources as $source) {
                     if ($contentType !== 'multiple_choice' || ! CurricularFieldOptions::sourceIsAllowed($source)) {
@@ -69,7 +74,6 @@ class SaveTemplateSection
                     }
                     $configuration['options_sources'] = [$fieldKey => $sources];
                 }
-                $fieldLabel = trim((string) ($fieldData['label'] ?? ''));
                 $blocks[] = [
                     'id' => $blockId,
                     'clave' => $fieldKey,
@@ -85,8 +89,8 @@ class SaveTemplateSection
                     'plantilla_id' => $template->id,
                     'bloque_plantilla_id' => $blockId,
                     'clave' => $fieldKey,
-                    'etiqueta' => $fieldLabel,
-                    'tipo' => match ($contentType) {
+                    'etiqueta' => $freeText && $fieldLabel === '' ? $this->stringValue($data, 'title') : $fieldLabel,
+                    'tipo' => $freeText ? 'texto_libre' : match ($contentType) {
                         'text' => 'texto_largo',
                         'boolean' => 'booleano',
                         'multiple_choice' => 'seleccion_multiple',
