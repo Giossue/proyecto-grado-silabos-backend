@@ -370,14 +370,17 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   de sus fechas en `America/Guayaquil`. Los períodos finalizados permanecen como historial:
   sus materias, paralelos, responsables y sílabos se consultan, pero no se preparan, crean,
   editan, deshabilitan, eliminan ni relevan.
-- COR-13 usa una única entrada **Malla**. Si existe, la ruta abre directamente el
-  constructor **Interactivo**; si no existe, muestra el estado vacío universal y la acción
+- COR-13 usa una única entrada **Malla**. Si existe, la ruta abre directamente la
+  vista interactiva de lectura; si no existe, muestra el estado vacío universal y la acción
   para crearla. No presenta pestañas de modo, buscador, filtros, cards, paginación,
   publicación ni número de versión. Materias, campos y relaciones se consultan y mantienen
   dentro de esa malla. COR-14 conserva una única entrada
   **Materias y paralelos**; los paralelos se agregan desde las acciones de cada materia.
-- COR-13 presenta **Configurar malla** como acción primaria del encabezado. La malla activa
-  o inactiva sigue siendo editable; eliminar se rechaza cuando existen materias programadas
+- COR-13 abre en vista de lectura y ofrece **Editar malla** en el encabezado. Antes de
+  entrar al modo de edición consulta de nuevo el bloqueo de la convocatoria. Dentro de
+  ese modo muestra **Configurar ciclos** y **Volver a la vista**; al salir oculta altas,
+  menús y gestos de edición. La malla activa o inactiva sigue siendo editable cuando la
+  convocatoria lo permite; eliminar se rechaza cuando existen materias programadas
   o sílabos y explica que debe deshabilitarse. Editar una asignación cambia docente o
   paralelo; la vigencia laboral se gestiona en la cuenta, nunca nombre o correo desde esta
   pantalla.
@@ -392,8 +395,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   los totales flotantes inician visibles y se pueden contraer temporalmente; en móvil se
   consultan desde su botón. El lienzo no muestra minimapa; conserva los controles de zoom
   y el desplazamiento. En oscuro, lienzo, ciclos y tarjetas se distinguen por superficie y
-  borde, con textos y metadatos legibles. «Configurar malla» es la acción primaria del
-  encabezado y solo edita la cantidad de ciclos; los campos de la tarjeta (ACD, APE, AA,
+  borde, con textos y metadatos legibles. «Configurar ciclos» solo aparece en el modo de
+  edición y solo edita la cantidad de ciclos; los campos de la tarjeta (ACD, APE, AA,
   CRED, TOTAL) los fija el reglamento y nacen con la malla. Al crear o editar una materia,
   todos los campos activos son obligatorios, las magnitudes se presentan en una fila
   compacta y **TOTAL** se calcula con la suma de los componentes de horas, sin incluir
