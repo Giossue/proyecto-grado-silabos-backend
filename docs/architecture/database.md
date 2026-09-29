@@ -80,12 +80,13 @@ fechas.
 `programaciones_asignatura` relaciona cada período con una asignatura mediante claves
 foráneas. La modalidad no es tabla sino
 columna de texto con valores fijos (`carreras.modalidad` base, `asignaturas.modalidad`
-opcional, `programaciones_asignatura.modalidad` copia heredada; migraciones `000034` y
-`000052`, I-37/I-62). La programación conserva además `campus_programacion`, una copia
-textual obligatoria del campus de la facultad al momento de prepararla; el sílabo toma
-esa fotografía para su contexto institucional (I-106, migración `000093`). La jerarquía
-que presenta ADM-04 es una proyección de lectura y no una desnormalización de la
-persistencia.
+opcional; migraciones `000034` y `000052`, I-37/I-62). Desde I-164 (migración `000159`)
+la programación **no guarda** campus ni modalidad: el modelo `ScheduledSubject` los deriva
+de la materia, su carrera y su facultad, y el sílabo toma esa lectura como fotografía en
+su contexto institucional al crearse o regenerarse. Antes existían `campus_programacion`
+y `modalidad_programacion_asignatura` como copias que había que refrescar a mano. La
+jerarquía que presenta ADM-04 es una proyección de lectura y no una desnormalización de
+la persistencia.
 
 `paralelos` no tiene estado propio: antes de tener historia se elimina y, una vez que
 participa en un sílabo, se conserva. Su operatividad se deriva del período y de su

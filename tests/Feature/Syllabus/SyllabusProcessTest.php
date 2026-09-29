@@ -758,7 +758,8 @@ class SyllabusProcessTest extends TestCase
             ])
             ->assertSuccessful();
         $this->assertSame(CampusLocation::Chimbo, $faculty->fresh()->campus);
-        $this->assertSame(CampusLocation::Chimbo->value, $scheduledSubject->fresh()->getRawOriginal('campus_programacion'));
+        // El campus de la programación se deriva de la facultad: cambia con ella.
+        $this->assertSame(CampusLocation::Chimbo->value, $scheduledSubject->fresh()->campus_programacion);
         $syllabus = Syllabus::query()->findOrFail($syllabusId);
         $this->assertSame('Facultad renombrada', data_get($syllabus->contexto_academico, 'career.faculty'));
         $this->assertSame(

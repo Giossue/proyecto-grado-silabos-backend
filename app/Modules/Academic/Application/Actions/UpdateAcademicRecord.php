@@ -5,12 +5,10 @@ namespace App\Modules\Academic\Application\Actions;
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodLabel;
 use App\Modules\Academic\Application\AcademicPeriodWeeks;
-use App\Modules\Academic\Application\ScheduledSubjectInheritance;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -67,7 +65,6 @@ class UpdateAcademicRecord
         private readonly AcademicPeriodLabel $periodLabel,
         private readonly AcademicPeriodWeeks $periodWeeks,
         private readonly InProgressWork $work,
-        private readonly ScheduledSubjectInheritance $inheritance,
         private readonly ProcessLocks $locks,
     ) {}
 
@@ -119,7 +116,6 @@ class UpdateAcademicRecord
                 $auditMetadata = $this->auditContext($record, $dirty, $entity);
                 $record->save();
                 if ($record instanceof Faculty || $record instanceof Career) {
-                    $this->refreshScheduledInheritance($record);
                     $this->work->refreshIdentification(
                         $record instanceof Faculty
                             ? array_values(Career::query()->where('facultad_id', $record->id)->pluck('id')->map(fn ($id): string => (string) $id)->all())
@@ -144,21 +140,6 @@ class UpdateAcademicRecord
             return $record instanceof AcademicPeriod
                 ? $this->work->replace($request, $change, null, $periodId)
                 : $change();
-        });
-    }
-
-    private function refreshScheduledInheritance(Faculty|Career $record): void
-    {
-        $query = ScheduledSubject::query()->with('subject.career.faculty');
-        $record instanceof Faculty
-            ? $query->whereHas('subject.career', fn ($career) => $career->where('facultad_id', $record->id))
-            : $query->whereHas('subject', fn ($subject) => $subject->where('carrera_id', $record->id));
-
-        $query->lockForUpdate()->get()->each(function (ScheduledSubject $scheduled): void {
-            $scheduled->update([
-                'campus_programacion' => $this->inheritance->campusFor($scheduled->subject->career),
-                'modalidad' => $this->inheritance->modalityFor($scheduled->subject),
-            ]);
         });
     }
 

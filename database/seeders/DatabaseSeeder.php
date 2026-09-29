@@ -69,11 +69,7 @@ class DatabaseSeeder extends Seeder
                     'periodo_academico_id' => $period->id,
                     'asignatura_id' => $subject->id,
                 ],
-                [
-                    'campus_programacion' => CampusLocation::Matriz->value,
-                    'modalidad' => StudyModality::Presencial,
-                    'activo' => true,
-                ],
+                ['activo' => true],
             );
             $parallel = Parallel::query()->firstOrCreate(
                 ['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => 'A'],

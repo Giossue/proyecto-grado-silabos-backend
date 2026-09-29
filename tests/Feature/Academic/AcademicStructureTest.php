@@ -54,7 +54,7 @@ class AcademicStructureTest extends TestCase
         $this->assertFalse(Schema::hasTable('campus'));
         $this->assertTrue(Schema::hasColumn('facultades', 'campus_facultad'));
         $this->assertFalse(Schema::hasColumn('carreras', 'campus_id'));
-        $this->assertTrue(Schema::hasColumn('programaciones_asignatura', 'campus_programacion'));
+        $this->assertFalse(Schema::hasColumn('programaciones_asignatura', 'campus_programacion'));
         $this->assertFalse(Schema::hasColumn('programaciones_asignatura', 'campus_id'));
         $this->assertFalse(Schema::hasColumn('facultades', 'codigo_facultad'));
         $this->assertFalse(Schema::hasColumn('carreras', 'codigo_malla'));
@@ -521,8 +521,6 @@ class AcademicStructureTest extends TestCase
         $scheduled = ScheduledSubject::query()->create([
             'periodo_academico_id' => $period->id,
             'asignatura_id' => $subject->id,
-            'campus_programacion' => $career->faculty->campus->value,
-            'modalidad' => StudyModality::Presencial,
             'activo' => false,
         ]);
 

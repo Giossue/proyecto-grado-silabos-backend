@@ -278,8 +278,6 @@ class ConvocationAndDraftTest extends TestCase
         ScheduledSubject::query()->create([
             'asignatura_id' => $other->id,
             'periodo_academico_id' => $scheduledSubject->periodo_academico_id,
-            'campus_programacion' => $scheduledSubject->campus_programacion,
-            'modalidad' => $scheduledSubject->modalidad,
             'activo' => true,
         ]);
 

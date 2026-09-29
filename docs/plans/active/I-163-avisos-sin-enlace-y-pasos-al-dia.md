@@ -63,3 +63,8 @@ Proyecto de carrera.
 - [x] Menú de Convocatorias: «Conservado por actividad docente» pasa a «No se puede
       eliminar: ya hay sílabos iniciados».
 
+## Cabecera de página
+
+- [x] La cabecera común de las pantallas con menú lateral (`AppSidebarHeader`) ya no
+      muestra el título de la página; conserva el botón del menú, el avance de puesta en
+      marcha, la campana y el tema. El título sigue estando en cada pantalla.

@@ -187,21 +187,14 @@ UNIQUE (asignatura_id, requisito_id, tipo_requisito_asignatura)
 
 ## programaciones_asignatura
 
-**Contexto:** programación de una asignatura en período con fotografía del campus heredado.
+**Contexto:** programación de una asignatura en período. Campus y modalidad se derivan de
+la materia, su carrera y su facultad (I-164); no se guardan aquí.
 
 ~~~text
 id UUID (PK)
 periodo_academico_id UUID (FK → periodos_academicos.id) NOT NULL
 asignatura_id UUID (FK → asignaturas.id) NOT NULL
-campus_programacion VARCHAR NOT NULL CHECK (campus_programacion IN (
-  'Campus Matriz Dr. Gabriel Galarza López',
-  'Campus Laguacoto',
-  'Campus CENI (Centro de Eventos Nacionales e Internacionales)',
-  'Extensión San Miguel',
-  'Sede Chimbo'
-))
 programacion_asignatura_activa BOOLEAN NOT NULL
-modalidad_programacion_asignatura VARCHAR NOT NULL
 
 UNIQUE (periodo_academico_id, asignatura_id)
 ~~~

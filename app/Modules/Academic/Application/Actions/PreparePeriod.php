@@ -48,7 +48,8 @@ class PreparePeriod
             $career = Career::query()->whereKey($careerId)->with('faculty')->lockForUpdate()->firstOrFail();
             $period = AcademicPeriod::query()->whereKey($data['period_id'])->lockForUpdate()->firstOrFail();
             $this->periodPlanning->assertMayPlan($period);
-            $campus = $this->inheritance->campusFor($career);
+            // Solo valida que la facultad tenga campus; ya no se copia en la programación (I-164).
+            $this->inheritance->campusFor($career);
             $settingsBySubject = collect($data['subjects'])->keyBy('id');
             $subjectsQuery = Subject::query()
                 ->where('activo', true)
@@ -118,11 +119,10 @@ class PreparePeriod
                     ]);
                 }
                 if ($scheduledSubject === null) {
+                    $this->inheritance->modalityFor($subject);
                     $scheduledSubject = ScheduledSubject::query()->create([
                         'periodo_academico_id' => $period->id,
                         'asignatura_id' => $subject->id,
-                        'campus_programacion' => $campus->value,
-                        'modalidad' => $this->inheritance->modalityFor($subject),
                         'activo' => true,
                     ]);
                     $this->audit->execute(
