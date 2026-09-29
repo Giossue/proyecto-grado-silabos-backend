@@ -150,8 +150,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   la hoja y añade una cinta contextual: al seleccionar un bloque, campo o tabla muestra
   únicamente sus acciones. El editor de celdas trabaja dentro de la hoja y no encierra
   el documento en un diálogo de pantalla completa. Durante esta edición no se muestran
-  el sidebar ni el encabezado administrativo: una cabecera fija de ancho completo reúne
-  la salida a la vista normal y la cinta, mientras la hoja se desplaza por debajo.
+  el sidebar ni el encabezado administrativo: una sola cabecera fija de ancho completo
+  reúne **Volver a la vista**, las acciones contextuales y **Documento**, sin fila ni
+  etiqueta adicional de selección, mientras la hoja se desplaza por debajo.
 - En una tabla, **Fondo de celda** y **Color de fuente** son controles distintos y se
   aplican a la celda o las celdas seleccionadas.
 - ADM-06 presenta el título principal como un bloque raíz único y siempre primero.
