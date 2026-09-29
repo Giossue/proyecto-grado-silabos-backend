@@ -225,7 +225,7 @@ class TemplateDocumentTest extends TestCase
     public function test_teacher_and_coordinator_cannot_change_the_design(): void
     {
         $template = $this->template();
-        // Un bloque sin diseño guardado: la ficha de identificación ya nace con uno.
+        // Texto libre del formato oficial: su hoja no cambia sin Administración.
         $block = $template->fields()->where('clave', 'objetivo_general')->firstOrFail()->block;
         $design = $block->configuracion['document'];
         foreach (['docente@silabos.test', 'coordinador@silabos.test'] as $email) {
@@ -241,6 +241,7 @@ class TemplateDocumentTest extends TestCase
     {
         $template = $this->template();
         $block = $template->fields()->where('clave', 'objetivo_general')->firstOrFail()->block;
+        $design = $block->configuracion['document'];
         $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
         foreach ([
             ['type' => 'paragraph', 'content' => [['type' => 'variable', 'attrs' => ['id' => 'secreto_inexistente']]]],

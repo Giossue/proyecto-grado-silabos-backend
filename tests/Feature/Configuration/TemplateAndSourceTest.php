@@ -75,10 +75,11 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame(['Indicadores de evaluación', 'Escala de valoración', 'Recuperación y aprobación'], $blocks->pluck('titulo')->all());
         // I-138: indicadores y escala son contenido fijo con los valores UEB, sin campos.
         $this->assertSame(['fixed', 'fixed', 'text'], $blocks->map->configuredContentType()->all());
+        $this->assertSame('texto_libre', $template->fields()->where('clave', 'recuperacion')->sole()->tipo);
         $this->assertArrayNotHasKey('table', $blocks->first()->configuracion);
         $this->assertNull($template->fields()->where('clave', 'indicadores_evaluacion')->first());
         $this->assertDatabaseCount('valores_campo', 0);
-        $this->assertDatabaseCount('filas_repetibles', 0);
+        $this->assertFalse(Schema::hasTable('filas_repetibles'));
         $this->assertEquals(
             TemplateAppearance::defaults(),
             $template->mapeo_documento['appearance'],
@@ -115,7 +116,7 @@ class TemplateAndSourceTest extends TestCase
                 ->where('processLock', null));
     }
 
-    public function test_administrator_creates_a_block_as_a_container_of_typed_fields(): void
+    public function test_administrator_creates_a_section_with_free_text_and_template_content(): void
     {
         $template = $this->createTemplate();
 
@@ -129,38 +130,23 @@ class TemplateAndSourceTest extends TestCase
                         'key' => 'resumen_resultados',
                         'label' => 'Resumen',
                         'help' => 'Sintetice los resultados esperados.',
-                        'content_type' => 'text',
+                        'content_type' => 'free_text',
                         'ai_enabled' => true,
                     ],
-                    ['key' => 'matriz_evidencias', 'label' => 'Matriz de evidencias', 'content_type' => 'table'],
-                    ['key' => 'acciones_mejora', 'label' => 'Acciones de mejora', 'content_type' => 'numbered_list'],
-                    ['key' => 'requiere_adaptacion', 'label' => 'Requiere adaptación', 'content_type' => 'boolean'],
+                    ['key' => 'nota_resultados', 'label' => 'Nota', 'content_type' => 'template'],
                 ],
             ])
-            ->assertSuccessful()
             ->assertSuccessful();
 
-        $section = $template->fresh()->sections()
-            ->where('clave', 'bloque_resultados')
-            ->firstOrFail();
+        $section = $template->fresh()->sections()->where('clave', 'bloque_resultados')->firstOrFail();
         $blocks = $section->blocks()->orderBy('posicion');
-
         $this->assertSame(2, $section->posicion);
-        $this->assertSame(
-            ['Resumen', 'Matriz de evidencias', 'Acciones de mejora', 'Requiere adaptación'],
-            $blocks->pluck('titulo')->all(),
-        );
-        $this->assertSame(
-            ['text', 'table', 'numbered_list', 'boolean'],
-            $blocks->pluck('configuracion')->map(fn (array $configuration): string => $configuration['content_type'])->all(),
-        );
-        $this->assertSame(
-            ['resumen_resultados', 'matriz_evidencias', 'acciones_mejora', 'requiere_adaptacion'],
-            $blocks->pluck('clave')->all(),
-        );
-        $this->assertSame('texto', $blocks[1]->configuracion['table']['columns'][0]['key']);
+        $this->assertSame(['Resumen', 'Nota'], $blocks->pluck('titulo')->all());
+        // I-156: las dos formas se guardan como partes con hoja propia.
+        $this->assertSame(['text', 'text'], $blocks->map->configuredContentType()->all());
+        $this->assertSame('texto_libre', $blocks[0]->fields->sole()->tipo);
+        $this->assertCount(0, $blocks[1]->fields);
         $this->assertFalse(Schema::hasColumn('definiciones_campo', 'obligatorio'));
-        $this->assertSame('booleano', $blocks[3]->fields->firstOrFail()->tipo);
         $this->assertSame('Sintetice los resultados esperados.', $blocks[0]->fields->firstOrFail()->ayuda);
         $this->assertTrue($blocks[0]->fields->firstOrFail()->ia_habilitada);
         // I-116: Administración decide la IA; Coordinación no guarda una preferencia propia.
@@ -173,8 +159,6 @@ class TemplateAndSourceTest extends TestCase
             ->getJson(route('api.v1.admin.template.index'))
             ->assertOk()
             ->assertJsonPath('template.titleBlock.text', TemplateTitleBlock::DEFAULT_TEXT)
-            ->assertJsonMissing(['value' => 'boolean'])
-            ->assertJsonMissing(['value' => 'automatic'])
             // Dos formas de parte (I-156): lo escribe el docente o lo arma Administración.
             ->assertJsonPath('blockTypes', [
                 ['value' => 'free_text', 'label' => 'Texto libre'],
@@ -186,37 +170,19 @@ class TemplateAndSourceTest extends TestCase
             ->postJson(route('api.v1.admin.template.sections.store', $template), [
                 'title' => 'Bloque inválido',
                 'key' => 'bloque_invalido',
-                'fields' => [
-                    ['key' => 'resumen_resultados', 'label' => 'Clave repetida', 'content_type' => 'text'],
-                ],
+                'fields' => [['key' => 'resumen_resultados', 'label' => 'Clave repetida', 'content_type' => 'free_text']],
             ])
             ->assertJsonValidationErrors('fields.0.key');
-
         $this->assertNull($template->fresh()->sections()->firstWhere('clave', 'bloque_invalido'));
 
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.template.fields.store', $template), [
-                'section_id' => $section->id,
-                'key' => 'seleccion_multiple_nueva',
-                'label' => 'Selección múltiple',
-                'content_type' => 'multiple_choice',
-                'options' => [
-                    ['value' => 'proyecto', 'label' => 'Proyecto'],
-                    ['value' => 'examen', 'label' => 'Examen'],
-                ],
-            ])
-            ->assertJsonValidationErrors(['content_type' => 'Seleccione un catálogo curricular para la nueva selección múltiple.']);
-
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.template.sections.store', $template), [
-                'title' => 'Con selección múltiple',
-                'key' => 'bloque_seleccion',
-                'fields' => [[
-                    'key' => 'modalidades', 'label' => 'Modalidades', 'content_type' => 'multiple_choice',
-                    'options' => [['value' => 'a', 'label' => 'A'], ['value' => 'b', 'label' => 'B']],
-                ]],
-            ])
-            ->assertJsonValidationErrors('fields.0.content_type');
+        // Las formas anteriores ya no se crean: tablas y listas del docente son Texto libre.
+        foreach (['text', 'table', 'bulleted_list', 'numbered_list', 'boolean', 'fixed', 'multiple_choice'] as $legacy) {
+            $this->actingAsAdministrator()
+                ->postJson(route('api.v1.admin.template.fields.store', $template), [
+                    'section_id' => $section->id, 'key' => "parte_{$legacy}", 'label' => 'Parte', 'content_type' => $legacy,
+                ])
+                ->assertJsonValidationErrors('content_type');
+        }
     }
 
     public function test_only_administrator_updates_controlled_template_appearance(): void
@@ -400,7 +366,7 @@ class TemplateAndSourceTest extends TestCase
                 'block_id' => $field->bloque_plantilla_id,
                 'key' => $field->clave,
                 'label' => 'Etiqueta corregida',
-                'content_type' => 'bulleted_list',
+                'content_type' => 'fixed',
             ])
             ->assertJsonValidationErrors(['content_type' => 'La forma de una parte no se cambia. Elimínela y cree una nueva con la forma que necesita.']);
         $this->assertSame('text', $field->fresh()->block->contentType());

@@ -67,7 +67,10 @@ class SaveFieldDefinition
             $customBlock = $field?->block;
             if ($field !== null && $customBlock !== null && is_array($customBlock->configuracion['document'] ?? null)) {
                 abort_unless($customBlock->id === $this->stringValue($data, 'block_id'), 404);
-                if ($contentType !== $customBlock->configuredContentType() || $data['key'] !== $field->clave) {
+                if ($contentType !== $customBlock->configuredContentType()) {
+                    throw ValidationException::withMessages(['content_type' => 'La forma de una parte no se cambia. Elimínela y cree una nueva con la forma que necesita.']);
+                }
+                if ($data['key'] !== $field->clave) {
                     throw ValidationException::withMessages(['content_type' => 'Use Editar diseño para cambiar la estructura y las partes de esta sección.']);
                 }
                 if (isset($customBlock->configuracion['detached_fields'][$field->clave])) {
