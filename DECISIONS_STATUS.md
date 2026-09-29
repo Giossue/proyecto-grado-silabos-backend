@@ -160,6 +160,14 @@ compartido visible en la hoja. Sustituye el menú «¿Cuándo se pide?» de cada
 I-158. La ficha de identificación de la base remota se reparó con sus preguntas
 oficiales de discapacidad. Sin cambios de esquema ni de API.
 
+I-160 (29 de septiembre de 2026), por instrucción del responsable al ver la pantalla
+Proyecto de carrera dividida en «Datos de toda la carrera» y «Datos por asignatura»: no
+existe ningún dato «de toda la carrera». Se retira el ámbito de los conceptos
+curriculares (`ambito_concepto`), todo valor exige asignatura y la pantalla es una sola
+tabla asignatura × dato. El agente de extracción repite una fila por cada materia cuando
+el documento da un dato para un grupo o para toda la carrera. Migración
+`2026_09_29_000158` aplicada en la base remota con respaldo previo.
+
 I-158 (29 de septiembre de 2026), por instrucción del responsable: «Propiedades de la
 parte» solo cambia nombre y orientación. La condición «pedir solo si…» se define en la
 ficha de la hoja (atributo `showWhen`) y sustituye la configuración de condiciones y

@@ -137,15 +137,18 @@ expedientes con aprobación, incluidas las revisiones aprobadas enlazadas tras r
 
 La migración `2026_09_27_000145_create_curricular_imports` incorpora:
 
-- `conceptos_curriculares`: clave global única, etiqueta, tipo `texto|lista|tabla`,
-  ámbito `carrera|asignatura` y columnas declaradas para tablas. Un trigger impide
-  cambiar clave, tipo, ámbito o columnas después de crear el concepto.
-- `valores_curriculares`: FK de concepto/carrera/asignatura, contenido JSONB,
-  evidencia y persona/fecha de confirmación. Índices parciales hacen único el valor
-  por concepto/carrera para ámbito carrera y por concepto/asignatura para ámbito
-  asignatura. La FK compuesta `(asignatura_id,carrera_id)` impide mezclar carreras;
-  un trigger comprueba ámbito y tipo JSON general. La aplicación valida cada texto,
-  elemento de lista y celda, incluidas las claves exactas de columnas.
+- `conceptos_curriculares`: clave global única, etiqueta, tipo `texto|lista|tabla` y
+  columnas declaradas para tablas. Un trigger impide cambiar clave, tipo o columnas
+  después de crear el concepto. Desde I-160 (`2026_09_29_000158`) no existe ámbito:
+  todo dato del Proyecto de carrera es de una asignatura; la columna `ambito_concepto`
+  se eliminó.
+- `valores_curriculares`: FK de concepto/carrera/asignatura (obligatoria desde I-160),
+  contenido JSONB, evidencia y persona/fecha de confirmación. El valor es único por
+  concepto y asignatura. La FK compuesta `(asignatura_id,carrera_id)` impide mezclar
+  carreras; un trigger comprueba el tipo JSON general. La aplicación valida cada texto,
+  elemento de lista y celda, incluidas las claves exactas de columnas. La migración
+  I-160 copió cualquier valor «de toda la carrera» a las asignaturas de esa carrera que
+  no tenían el suyo y borró los valores sin asignatura.
 - `importaciones_curriculares`: carrera, solicitante, clave de idempotencia,
   estado `pendiente|en_ejecucion|lista|aplicada|fallida`, documentos con huellas,
   instrucciones opcionales, propuesta, selección aplicada y fechas. La combinación
@@ -166,7 +169,7 @@ carrera/asignatura al generar cada sílabo. La resolución de `curricular_{clave
 opciones docentes usa esa copia. Los datos ausentes bloquean el envío cuando el
 formato los requiere, sin consultar la base viva para completar una revisión histórica.
 Los aliases I-144 de resultados, fuente y ubicación priorizan el concepto genérico
-`resultados_aprendizaje` de tipo lista y ámbito asignatura cuando existe en la
+`resultados_aprendizaje` de tipo lista cuando existe en la
 fotografía. En su ausencia conservan la base fotografiada I-144. No se sincronizan ni
 duplican filas entre ambos modelos actuales.
 Corregir valores durante una pausa usa `InProgressWork` con el conjunto de materias

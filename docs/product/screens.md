@@ -286,10 +286,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   reintentar; las capacidades deshabilitadas y el bloqueo por convocatoria se explican
   junto a la acción. Cambiar de carrera descarta el estado local anterior.
   I-157: COR-16 es una sola vista, sin pestañas, historial ni etiquetas. Muestra el
-  Proyecto de carrera como tabla: «Datos de toda la carrera» (Dato, Contenido) y «Datos
-  por asignatura» (una fila por asignatura en orden alfabético y una columna por cada
-  dato que pide la plantilla); lo que falta dice «Sin dato» y la procedencia se ve al
-  pasar el cursor. El botón principal de la cabecera, **Importar documentos**, abre el
+  Proyecto de carrera como una sola tabla (I-160: todo dato es de una asignatura): una
+  fila por asignatura en orden alfabético y una columna por cada dato que pide la
+  plantilla; lo que falta dice «Sin dato» y la procedencia se ve al pasar el cursor. El botón principal de la cabecera, **Importar documentos**, abre el
   paso a paso en un modal (Documentos, Análisis, Revisión, Listo). La importación en
   curso se conserva: el botón pasa a **Continuar importación** y el modal abre en el
   paso donde quedó; dentro se puede reintentar o descartar con confirmación. Al guardar,
@@ -360,7 +359,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   una lista numerada o una tabla que se llena por filas), **El docente elige de una
   lista** (listas de los documentos de carrera) o **Sale sola de los documentos de la
   carrera**. Esta última elige un dato ya declarado o declara uno nuevo con nombre,
-  forma (lista o texto) y alcance (cada asignatura o toda la carrera) y crea una parte
+  forma (lista o texto) y alcance (cada asignatura o toda la carrera; el alcance
+  desaparece en I-160) y crea una parte
   fija con ese dato automático. «Editar parte» usa la misma pregunta sin la opción
   automática. Sí/No ya no se ofrece para partes nuevas; las existentes se conservan.
 - I-154 (sustituido por I-155): el texto fijo era la cuarta respuesta de «¿Quién llena esta parte?» («Nadie, es
