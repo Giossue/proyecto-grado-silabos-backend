@@ -154,7 +154,8 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 I-159 (29 de septiembre de 2026), por instrucción del responsable tras mostrar el sistema
 a usuarios: las condiciones se configuran como preguntas de seguimiento desde la pregunta
-Sí/No («Si responde Sí, pedir también: …»), limitadas a la misma parte y con un número
+Sí/No («Si responde Sí, pedir también: …»), limitadas a las preguntas cercanas (en tablas, el bloque de filas unidas por celdas
+combinadas; fuera de tablas, la misma parte) y con un número
 compartido visible en la hoja. Sustituye el menú «¿Cuándo se pide?» de cada ficha de
 I-158. La ficha de identificación de la base remota se reparó con sus preguntas
 oficiales de discapacidad. Sin cambios de esquema ni de API.

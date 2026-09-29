@@ -26,3 +26,11 @@ plantillas de DocuSign o PandaDoc).
       `discapacidad_tipo` y `discapacidad_adaptacion` como seguimiento de «Sí»; las cuatro
       preguntas de prueba quedan retiradas del formulario.
 - [x] Lint, typecheck, 223 pruebas de Vitest y build; el servidor no cambió.
+- [x] Ajuste tras revisar la hoja real: cada casilla «X» habla solo de su respuesta («Si
+      marca «No», pedir también:», sin elegir respuesta) y avisa si una pregunta ya está
+      atada a la otra («ahora con «Sí»»).
+- [x] Candidatas sin nombres fijos en el código: si la pregunta está en una tabla, solo las
+      fichas «Docente» de su bloque de filas (filas unidas por celdas combinadas, como
+      «ESTUDIANTES CON DISCAPACIDAD»); fuera de tablas, toda la parte. Una ya atada fuera
+      del bloque se sigue mostrando para poder quitarla. En la ficha real ya no aparece
+      «Formación y experiencia». Pruebas en `sheetConditions.test.ts`.
