@@ -37,9 +37,11 @@ class AcademicStructureViewData
         $processesByPeriod = SyllabusProcess::query()
             ->get(['id', 'periodo_academico_id', 'estado'])
             ->keyBy('periodo_academico_id');
+        // Un período con convocatorias en curso no se edita; la pantalla muestra el aviso.
+        $lockedPeriods = $this->locks->lockedPeriodReasons();
 
         return [
-            'lock_reason' => null,
+            'lock_reason' => $lockedPeriods === [] ? null : reset($lockedPeriods),
             'catalogs' => [
                 'faculties' => Faculty::query()
                     ->with('logoObject')
@@ -78,7 +80,7 @@ class AcademicStructureViewData
                 'periods' => AcademicPeriod::query()
                     ->orderByDesc('fecha_inicio')
                     ->get()
-                    ->map(function (AcademicPeriod $period) use ($processesByPeriod): array {
+                    ->map(function (AcademicPeriod $period) use ($lockedPeriods, $processesByPeriod): array {
                         $process = $processesByPeriod->get($period->id);
 
                         return [
@@ -93,6 +95,7 @@ class AcademicStructureViewData
                                 'id' => $process->id,
                                 'state' => $process->estado,
                             ] : null,
+                            'lock_reason' => $lockedPeriods[$period->id] ?? null,
                         ];
                     }),
             ],

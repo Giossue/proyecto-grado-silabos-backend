@@ -76,6 +76,22 @@ class ProcessLocks
         }
     }
 
+    /**
+     * Períodos con alguna convocatoria de carrera en curso: sus datos no se editan
+     * hasta que Administración pause el proceso (mismo criterio que
+     * assertInstitutionalRecordEditable).
+     *
+     * @return array<string, string> período => motivo
+     */
+    public function lockedPeriodReasons(): array
+    {
+        $periodIds = Convocation::query()->running()
+            ->join('convocatorias_universidad', 'convocatorias_universidad.id', '=', 'convocatorias_carreras.proceso_id')
+            ->distinct()->pluck('convocatorias_universidad.periodo_academico_id');
+
+        return $periodIds->mapWithKeys(fn (string $id): array => [$id => self::CONVOCATION_LOCK_REASON])->all();
+    }
+
     /** @param list<string> $careerIds */
     public function assertInstitutionalRecordEditable(array $careerIds = [], ?string $periodId = null): void
     {

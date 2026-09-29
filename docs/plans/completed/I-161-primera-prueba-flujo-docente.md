@@ -40,6 +40,14 @@ hacerlo aparecieron defectos de pantalla y restos de pruebas anteriores en la pl
       formulario; se retiran la tarjeta «Listo para iniciar» y el botón «Iniciar
       borrador». Si la convocatoria está en pausa, se muestra el motivo como antes.
 
+- [x] Pantalla: cada sección del formulario del docente se muestra como tarjeta (mismo
+      fondo que la ficha de identificación), con un separador entre secciones.
+
+- [x] Periodos académicos (Administración): cuando alguna carrera tiene su convocatoria
+      en curso en un período, la pantalla muestra el aviso «Edición bloqueada» y las
+      acciones de ese período quedan deshabilitadas, igual que en la malla y la
+      plantilla. El servidor devuelve `lock_reason` por período (`ProcessLocks::lockedPeriodReasons`).
+
 ## Pendiente
 
 - [ ] Desplegar la pantalla con estas correcciones.

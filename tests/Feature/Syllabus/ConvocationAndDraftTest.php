@@ -319,8 +319,15 @@ class ConvocationAndDraftTest extends TestCase
 
         CurricularValue::query()->where('concepto_id', $outcomes->id)->update(['valor_curricular' => json_encode(['Analiza requisitos.'])]);
         $this->assertSame([], $readiness->inspect($convocation->carrera_id)['project_data_missing']);
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.academic.index'))
+            ->assertOk()->assertJsonPath('lock_reason', null)->assertJsonPath('catalogs.periods.0.lock_reason', null);
         $this->openPrepared($convocation);
         $this->assertSame('abierta', $convocation->fresh()->estado);
+
+        // Con la convocatoria en curso, el período queda bloqueado y la pantalla lo avisa.
+        $this->actingAsAdministrator()->getJson(route('api.v1.admin.academic.index'))
+            ->assertOk()->assertJsonPath('lock_reason', 'Convocatoria activa')
+            ->assertJsonPath('catalogs.periods.0.lock_reason', 'Convocatoria activa');
     }
 
     public function test_opening_is_rejected_without_curriculum_subjects(): void
