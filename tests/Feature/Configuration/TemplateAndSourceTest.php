@@ -175,8 +175,12 @@ class TemplateAndSourceTest extends TestCase
             ->assertJsonPath('template.titleBlock.text', TemplateTitleBlock::DEFAULT_TEXT)
             ->assertJsonMissing(['value' => 'boolean'])
             ->assertJsonMissing(['value' => 'automatic'])
-            ->assertJsonFragment(['value' => 'fixed', 'label' => 'Texto libre, sin nada del docente'])
-            ->assertJsonMissing(['value' => 'multiple_choice'])
+            // Tres formas de parte (I-155); quién llena se marca en la hoja.
+            ->assertJsonPath('blockTypes', [
+                ['value' => 'text', 'label' => 'Párrafo'],
+                ['value' => 'bulleted_list', 'label' => 'Lista'],
+                ['value' => 'table', 'label' => 'Tabla'],
+            ])
             ->assertJsonMissing(['ai_coordinator_configurable' => true]);
 
         $this->actingAsAdministrator()

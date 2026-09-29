@@ -64,3 +64,25 @@ Respuestas del responsable:
       no requieren cambios. Tras desplegar, la convocatoria exige esos datos confirmados.
 - [x] `DECISIONS_STATUS.md`, `screens.md`, trazabilidad e ingesta curricular.
 - [x] `composer verify` (399 pruebas); lint, typecheck, 222 pruebas de Vitest y build.
+
+## Ajuste del responsable, 2026-09-29 (segunda vuelta)
+
+- Formas de una parte: solo **Párrafo**, **Lista** (con viñetas) y **Tabla**. La parte
+  empieza vacía; lo escrito sin marca es fijo y el docente no lo edita.
+- Marcas sin diálogos: **Dato automático** (se elige de la lista), **!Docente** (texto
+  libre), **?Docente** (el docente responde Sí o No; sirve de condición) y
+  **@ProyectoCarrera**. El nombre interno se toma del contexto: texto previo en la misma
+  línea o celda, primera celda de la fila, nombre de la parte o de la sección. Todo
+  @ProyectoCarrera es por asignatura; en una lista se busca como lista, si no como texto.
+- En una lista, !Docente y @ProyectoCarrera se vuelven elementos de la misma lista.
+- En una fila que agrega el docente, !Docente es un dato de esa fila.
+- Se retira por ahora «el docente elige de una lista» para partes nuevas; las habilidades
+  se tratan como @ProyectoCarrera. Las partes existentes siguen funcionando.
+
+### Trabajo de la segunda vuelta
+- [ ] Crear párrafo o lista con hoja vacía y sin pregunta inicial; ofrecer solo tres formas.
+- [ ] `variable` con `listStyle`; listas del resolvedor y de la vista sin anidar.
+- [ ] Declaración automática de @ProyectoCarrera (mismo nombre con otra forma → nombre con sufijo).
+- [ ] Menú y atajos sin diálogos; fichas «!Docente», «?Docente», «@ProyectoCarrera».
+- [ ] Sí/No como dos botones en el formulario del docente, también en tablas.
+- [ ] Pruebas, documentación y verificación completas.

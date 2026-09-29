@@ -71,6 +71,21 @@ final class TemplateDocumentDefaults
         return ['type' => 'doc', 'content' => [['type' => 'table', 'attrs' => ['repeatKey' => null], 'content' => $rows]]];
     }
 
+    /**
+     * Hoja vacía de una parte nueva (I-155): un párrafo o una lista con viñetas donde
+     * Administración escribe y pone sus marcas. Lo escrito sin marca es fijo.
+     *
+     * @return array<string, mixed>
+     */
+    public static function blankSheet(string $contentType): array
+    {
+        $paragraph = ['type' => 'paragraph', 'content' => []];
+
+        return ['type' => 'doc', 'content' => [$contentType === 'bulleted_list'
+            ? ['type' => 'bulletList', 'content' => [['type' => 'listItem', 'content' => [$paragraph]]]]
+            : $paragraph]];
+    }
+
     /** @return array<string, mixed> Texto libre recién creado (I-155): un párrafo que Administración escribe en la hoja. */
     public static function freeText(): array
     {

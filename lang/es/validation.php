@@ -217,6 +217,8 @@ return [
         'fields.*.options_sources.*' => 'catálogo de opciones del campo',
         // Dato @ProyectoCarrera declarado desde la hoja (I-155).
         'scope' => 'alcance del dato',
+        'blank' => 'hoja vacía',
+        'fields.*.blank' => 'hoja vacía de la parte',
         'options.*' => 'opción',
         'options.*.label' => 'texto de la opción',
         'options.*.value' => 'valor de la opción',

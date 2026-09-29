@@ -56,6 +56,11 @@ class SaveTemplateSection
                 if ($contentType === 'fixed') {
                     $configuration['document'] = TemplateDocumentDefaults::freeText();
                 }
+                // Hoja vacía (I-155): el párrafo o la lista no nace con una pregunta del docente.
+                $blank = ($fieldData['blank'] ?? false) === true && in_array($contentType, ['text', 'bulleted_list'], true);
+                if ($blank) {
+                    $configuration['document'] = TemplateDocumentDefaults::blankSheet($contentType);
+                }
                 $fieldKey = $this->stringValue($fieldData, 'key');
                 $sources = CurricularFieldOptions::fromAttributes($fieldData);
                 foreach ($sources as $source) {
@@ -72,8 +77,8 @@ class SaveTemplateSection
                     'configuracion' => $configuration,
                     'posicion' => $fieldPosition + 1,
                 ];
-                // El contenido fijo no tiene campos del docente.
-                if ($contentType === 'fixed') {
+                // El contenido fijo y la hoja vacía no tienen campos del docente.
+                if ($contentType === 'fixed' || $blank) {
                     continue;
                 }
                 $fieldDefinitions[] = [

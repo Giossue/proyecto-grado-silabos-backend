@@ -168,13 +168,11 @@ class TemplateController extends Controller
                 ])->values()->all(),
             ],
             // Forma de una parte nueva (I-155). Quién llena cada cosa se marca en la hoja:
-            // dato automático, !Docente o @ProyectoCarrera.
+            // dato automático, !Docente, ?Docente (Sí o No) o @ProyectoCarrera.
             'blockTypes' => [
-                ['value' => 'text', 'label' => 'Párrafo que escribe el docente'],
-                ['value' => 'bulleted_list', 'label' => 'Lista con viñetas que escribe el docente'],
-                ['value' => 'numbered_list', 'label' => 'Lista numerada que escribe el docente'],
+                ['value' => 'text', 'label' => 'Párrafo'],
+                ['value' => 'bulleted_list', 'label' => 'Lista'],
                 ['value' => 'table', 'label' => 'Tabla'],
-                ['value' => 'fixed', 'label' => 'Texto libre, sin nada del docente'],
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
         ];
@@ -224,7 +222,7 @@ class TemplateController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var array{label: string, type: string, scope: string} $data */
+        /** @var array{label: string, type: string, scope?: string} $data */
         $data = $request->validated();
 
         return response()->json(['message' => 'Dato del Proyecto de carrera listo.', 'variable' => $action->execute($data, $actor, $request)], 201);

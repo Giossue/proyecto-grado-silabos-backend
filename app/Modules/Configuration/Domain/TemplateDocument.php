@@ -57,6 +57,14 @@ final class TemplateDocument
                     self::fail('Seleccione una variable del catálogo.');
                 }
                 $node['attrs'] = ['id' => $key, 'label' => $key];
+                // Un @ProyectoCarrera dentro de una lista se vuelve elementos de esa lista (I-155).
+                $listStyle = $attrs['listStyle'] ?? null;
+                if ($listStyle !== null) {
+                    if (! in_array($listStyle, ['bullet', 'number'], true)) {
+                        self::fail('El formato de lista del dato no es válido.');
+                    }
+                    $node['attrs']['listStyle'] = $listStyle;
+                }
             }
             if (in_array($type, ['field', 'column'], true)) {
                 if ($type === 'column' && ! $repeated) {

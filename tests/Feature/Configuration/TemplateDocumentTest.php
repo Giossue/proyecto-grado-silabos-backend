@@ -279,6 +279,57 @@ class TemplateDocumentTest extends TestCase
         $this->assertCount(2, TemplateDocument::nodes($resolved, 'listItem'));
     }
 
+    public function test_marks_inside_a_list_become_items_of_the_same_list(): void
+    {
+        // Lista con un elemento fijo, un !Docente y un @ProyectoCarrera (I-155).
+        $item = fn (array $content): array => ['type' => 'listItem', 'content' => [['type' => 'paragraph', 'content' => $content]]];
+        $document = ['type' => 'doc', 'content' => [['type' => 'bulletList', 'content' => [
+            $item([['type' => 'text', 'text' => 'Respeto en clase']]),
+            $item([['type' => 'field', 'attrs' => ['key' => 'normas', 'label' => 'Normas', 'kind' => 'texto_largo', 'listStyle' => 'bullet']]]),
+            $item([['type' => 'variable', 'attrs' => ['id' => 'curricular_normas', 'label' => 'x', 'listStyle' => 'bullet']]]),
+        ]]]];
+        $normalized = TemplateDocument::normalize($document, ['curricular_normas']);
+        $this->assertSame('bullet', TemplateDocument::nodes($normalized, 'variable')[0]['attrs']['listStyle']);
+
+        $resolved = TemplateDocumentResolver::resolve($normalized, [['key' => 'normas', 'value' => "Puntualidad\nHonestidad"]], [
+            'curricular_normas' => "1. Trabajo en equipo\n2. Ética profesional",
+        ], null);
+
+        $this->assertCount(1, TemplateDocument::nodes($resolved, 'bulletList'));
+        $this->assertSame(
+            ['Respeto en clase', 'Puntualidad', 'Honestidad', 'Trabajo en equipo', 'Ética profesional'],
+            array_map(fn (array $node): string => $node['text'], TemplateDocument::nodes($resolved, 'text')),
+        );
+        $this->expectException(ValidationException::class);
+        TemplateDocument::normalize(['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [
+            ['type' => 'variable', 'attrs' => ['id' => 'curricular_normas', 'listStyle' => 'tabla']],
+        ]]]], ['curricular_normas']);
+    }
+
+    public function test_new_paragraph_and_list_parts_start_as_blank_sheets(): void
+    {
+        $template = $this->template();
+        $section = $template->sections()->firstWhere('clave', 'etica');
+        $admin = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
+        $this->actingAs($admin)->withSession(['active_role_assignment_id' => $admin->roleAssignments()->firstOrFail()->id]);
+        foreach (['text' => 'paragraph', 'bulleted_list' => 'bulletList'] as $type => $node) {
+            $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+                'section_id' => $section->id, 'key' => "hoja_{$type}", 'label' => '', 'content_type' => $type, 'blank' => true,
+            ])->assertSuccessful();
+            $block = $template->fresh()->blocks()->firstWhere('clave', "hoja_{$type}");
+            $this->assertSame($type, $block->configuredContentType());
+            $this->assertCount(0, $block->fields);
+            $this->assertSame($node, $block->configuracion['document']['content'][0]['type']);
+        }
+        $this->postJson(route('api.v1.admin.template.sections.store', $template), [
+            'title' => 'Normas', 'key' => 'normas', 'fields' => [['key' => 'normas_lista', 'label' => '', 'content_type' => 'bulleted_list', 'blank' => true]],
+        ])->assertSuccessful();
+        $this->assertFalse($template->fields()->where('clave', 'normas_lista')->exists());
+        $this->assertSame(['text', 'bulleted_list', 'table'], array_column(
+            $this->getJson(route('api.v1.admin.template.show', $template))->json('blockTypes'), 'value',
+        ));
+    }
+
     public function test_cell_style_uses_global_typography_and_ignores_legacy_cell_size(): void
     {
         $document = $this->document();
@@ -766,7 +817,8 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame('narrativa', $block->tipo);
         $this->assertCount(0, $block->fields);
         $this->assertSame([], TemplateDocument::nodes($block->configuracion['document'], 'field'));
-        $this->assertContains('fixed', array_column($this->getJson(route('api.v1.admin.template.show', $template))->json('blockTypes') ?? [], 'value'));
+        // Ya no se ofrece como forma (I-155): un párrafo sin marcas es texto fijo.
+        $this->assertNotContains('fixed', array_column($this->getJson(route('api.v1.admin.template.show', $template))->json('blockTypes') ?? [], 'value'));
 
         // Texto libre (I-155): un párrafo que se escribe en la hoja, no una tabla de una celda.
         $document = $block->configuracion['document'];

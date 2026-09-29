@@ -103,6 +103,19 @@ class SaveFieldDefinition
                 return $field;
             }
 
+            // Hoja vacía (I-155): párrafo o lista sin pregunta inicial; las marcas se ponen en la hoja.
+            if ($field === null && ($data['blank'] ?? false) === true && in_array($contentType, ['text', 'bulleted_list'], true)) {
+                $block = $this->createBlock($template, $data, $contentType);
+                $block->update(['configuracion' => [...$block->configuracion, 'document' => TemplateDocumentDefaults::blankSheet($contentType)]]);
+                $this->applyOrientation($block, $data);
+                $this->audit->execute(
+                    actorId: $actor->id, roleAssignmentId: $activeRole?->id, action: 'plantilla.bloque_creado',
+                    resourceType: 'bloque_plantilla', resourceId: $block->id, result: 'exito',
+                    correlationId: $request->attributes->getString('correlation_id') ?: null,
+                );
+
+                return null;
+            }
             if ($field !== null && $contentType === 'fixed') {
                 throw ValidationException::withMessages(['content_type' => 'Una parte que llena el docente no se puede cambiar a texto fijo. Agregue un texto fijo nuevo.']);
             }

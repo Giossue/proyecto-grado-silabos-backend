@@ -81,6 +81,7 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'options_sources.*' => ['required', 'string', 'max:140', 'distinct'],
             'document_marker' => ['nullable', 'string', 'max:160'],
             'page_orientation' => ['sometimes', 'nullable', 'in:portrait,landscape'],
+            'blank' => ['sometimes', 'boolean'],
             // «Mostrar solo si»: null es «Siempre».
             'show_when' => ['sometimes', 'nullable', 'array:key,value'],
         ];

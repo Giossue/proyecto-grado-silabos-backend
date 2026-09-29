@@ -28,6 +28,12 @@ final class TemplateDocumentResolver
                 $value = '';
                 if ($type === 'variable') {
                     $value = $variables[$attrs['id']] ?? '';
+                    if (($attrs['listStyle'] ?? null) !== null) {
+                        // Una lista ya numerada se reparte en elementos sin repetir su número.
+                        $items = array_map(fn (string $line): string => (string) preg_replace('/^\d+\.\s+/u', '', $line), preg_split('/\R/u', $value) ?: []);
+
+                        return [self::listNode($node, $items)];
+                    }
                 } elseif ($type === 'column') {
                     $value = self::display($data[$attrs['key']] ?? null);
                     if (($attrs['listStyle'] ?? null) !== null) {
@@ -114,6 +120,9 @@ final class TemplateDocumentResolver
                     $children = [...$children, ...$visit($child, $data)];
                 }
                 $node['content'] = $children;
+                if (in_array($type, ['bulletList', 'orderedList'], true)) {
+                    $node['content'] = self::flattenItems($children);
+                }
                 if ($type === 'paragraph') {
                     $parts = [];
                     $inline = [];
@@ -194,6 +203,30 @@ final class TemplateDocumentResolver
                 $row('tableCell', $values),
             ]],
         ];
+    }
+
+    /**
+     * Un elemento que solo contiene la lista de un !Docente o un @ProyectoCarrera aporta
+     * sus elementos a la lista que lo contiene: se ve como una sola lista (I-155).
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @return list<array<string, mixed>>
+     */
+    private static function flattenItems(array $items): array
+    {
+        $flat = [];
+        foreach ($items as $item) {
+            $content = $item['content'] ?? [];
+            if (($item['type'] ?? null) === 'listItem' && count($content) === 1
+                && in_array($content[0]['type'] ?? null, ['bulletList', 'orderedList'], true)) {
+                array_push($flat, ...($content[0]['content'] ?? []));
+
+                continue;
+            }
+            $flat[] = $item;
+        }
+
+        return $flat;
     }
 
     /** @param array<string, mixed> $node

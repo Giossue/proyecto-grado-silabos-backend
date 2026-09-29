@@ -359,16 +359,20 @@ class CurricularBindingTest extends TestCase
         ]);
         $this->assertTrue(AuditEvent::query()->where('accion', 'curriculo.concepto_declarado')->exists());
 
-        // El mismo nombre con la misma forma se reutiliza; con otra forma se rechaza.
+        // El mismo nombre con la misma forma se reutiliza; sin alcance, es por asignatura.
         $this->postJson(route('api.v1.admin.template.project-data.store', $template), [
-            'label' => 'Bibliografía  básica', 'type' => 'lista', 'scope' => 'asignatura',
+            'label' => 'Bibliografía  básica', 'type' => 'lista',
         ])->assertCreated()->assertJsonPath('variable.key', 'curricular_bibliografia_basica');
         $this->assertSame(1, CurricularConcept::query()->count());
+        // Con otra forma nace un dato propio, sin preguntar nada.
         $this->postJson(route('api.v1.admin.template.project-data.store', $template), [
-            'label' => 'Bibliografía básica', 'type' => 'texto', 'scope' => 'asignatura',
-        ])->assertUnprocessable()->assertJsonValidationErrors('label');
+            'label' => 'Bibliografía básica', 'type' => 'texto',
+        ])->assertCreated()->assertJsonPath('variable', [
+            'key' => 'curricular_bibliografia_basica_texto', 'label' => 'Bibliografía básica (texto)', 'sample' => 'Bibliografía básica (texto)',
+            'type' => 'texto', 'scope' => 'asignatura',
+        ]);
         $this->postJson(route('api.v1.admin.template.project-data.store', $template), [
-            'label' => '¿?', 'type' => 'lista', 'scope' => 'asignatura',
+            'label' => '¿?', 'type' => 'lista',
         ])->assertUnprocessable()->assertJsonValidationErrors('label');
 
         // «Sale sola de los documentos» ya no es una forma de parte (I-155).
