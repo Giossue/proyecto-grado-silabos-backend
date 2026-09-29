@@ -125,7 +125,7 @@ class SaveFieldDefinition
                 return $field;
             }
             if ($field === null) {
-                throw ValidationException::withMessages(['content_type' => 'Elija Texto libre o Contenido de la plantilla.']);
+                throw ValidationException::withMessages(['content_type' => 'Elija Texto libre o Personalizado.']);
             }
             $block = $this->updateBlock($field, $template, $data, $contentType);
             $this->applyOrientation($block, $data);

@@ -57,5 +57,9 @@ Proyecto de carrera.
 - [x] El constructor ya no abre la hoja ni el menú Insertar para una parte de Texto libre
       (`isFreeTextPart` en `templateParts.ts`; `editableOnSheet` la excluye). Solo se le
       cambia el nombre y la orientación desde Propiedades.
-- [ ] Renombrar «Contenido de la plantilla»: pendiente de decisión del responsable.
+- [x] «Contenido de la plantilla» pasa a llamarse **«Personalizado»** (pantalla, servidor,
+      pruebas y documentación de pantallas). Los planes anteriores conservan el nombre
+      con que se decidió cada cosa.
+- [x] Menú de Convocatorias: «Conservado por actividad docente» pasa a «No se puede
+      eliminar: ya hay sílabos iniciados».
 

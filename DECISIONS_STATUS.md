@@ -181,6 +181,10 @@ cerrado) no llevan enlace; los que piden actuar conservan su destino. Los pasos 
 «Puesta en marcha» se actualizan al sistema vigente: logo obligatorio, plantilla con Texto
 libre y Contenido de la plantilla, datos del Proyecto de carrera, borrador que se inicia
 solo y un paso nuevo para firmar el sílabo aprobado. Sin cambios de esquema ni de API.
+El mismo día, el responsable decide que Texto libre no lleva hoja ni marcas (solo lo
+escribe el docente) y que la otra forma de parte se llama «Personalizado» (antes
+«Contenido de la plantilla»): ahí van tablas, datos automáticos, huecos Docente y
+Proyecto de carrera.
 
 I-158 (29 de septiembre de 2026), por instrucción del responsable: «Propiedades de la
 parte» solo cambia nombre y orientación. La condición «pedir solo si…» se define en la

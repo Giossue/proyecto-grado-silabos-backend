@@ -163,7 +163,7 @@ class TemplateController extends Controller
             ],
             'blockTypes' => [
                 ['value' => 'free_text', 'label' => 'Texto libre'],
-                ['value' => 'template', 'label' => 'Contenido de la plantilla'],
+                ['value' => 'template', 'label' => 'Personalizado'],
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
         ];

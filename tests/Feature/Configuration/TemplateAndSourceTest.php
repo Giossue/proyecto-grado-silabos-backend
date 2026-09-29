@@ -158,7 +158,7 @@ class TemplateAndSourceTest extends TestCase
             ->assertJsonPath('template.titleBlock.text', TemplateTitleBlock::DEFAULT_TEXT)
             ->assertJsonPath('blockTypes', [
                 ['value' => 'free_text', 'label' => 'Texto libre'],
-                ['value' => 'template', 'label' => 'Contenido de la plantilla'],
+                ['value' => 'template', 'label' => 'Personalizado'],
             ])
             ->assertJsonMissing(['ai_coordinator_configurable' => true]);
 

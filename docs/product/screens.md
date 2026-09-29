@@ -248,7 +248,7 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 - I-156 retira las tablas repetibles y la planificación automática: lo que sigue en
   este apartado sobre filas, unidades, totales y semanas describe el comportamiento
   anterior. La planificación y toda tabla o lista del docente se escriben como Texto
-  libre; las tablas de Contenido de la plantilla son fijas.
+  libre; las tablas de Personalizado son fijas.
 - (Anterior a I-156) Las tablas repetibles conservaban sus unidades, columnas tipadas y sumas. El diseño
   distingue cabecera fija, datos, datos de unidad y total: se combinan celdas dentro
   de cada grupo, sin atravesar grupos que se repiten distintas cantidades de veces.
@@ -328,7 +328,7 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   pregunta y sus dependientes llevan el mismo número (①, ②…) y se resaltan juntas al pasar
   el cursor. Se guarda con la hoja (atributo `showWhen` de cada dependiente).
 - I-156: al crear una parte o una sección solo se elige **Texto libre** (lo escribe el
-  docente) o **Contenido de la plantilla** (hoja vacía que arma Administración). En la
+  docente) o **Personalizado** (hoja vacía que arma Administración). En la
   hoja, Insertar ofrece Tabla, Lista, Dato automático, Docente, Docente: Sí o No y
   Proyecto de carrera; ya no ofrece «Filas que agrega el docente». El docente escribe el
   Texto libre en un editor con barra simple: Negrita, Cursiva, Lista con viñetas, Lista
@@ -492,7 +492,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   aparece en pausa; **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
   explica la consecuencia y **Pausar** exige motivo. **Prorrogar plazo** solicita
   únicamente una nueva fecha límite de entrega y el motivo; no permite cambiar el inicio.
-  **Eliminar** aparece cuando ningún docente ha iniciado un sílabo y confirma que se
+  **Eliminar** aparece cuando ningún docente ha iniciado un sílabo (si no, el menú muestra
+  «No se puede eliminar: ya hay sílabos iniciados») y confirma que se
   retirarán la convocatoria institucional, sus alcances y los expedientes sin iniciar.
   Si hubo cualquier inicio docente, el menú informa que el proceso se conserva por
   actividad docente y el servidor rechaza igualmente un borrado forzado.
