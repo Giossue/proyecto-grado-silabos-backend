@@ -151,3 +151,13 @@ Parte de esto llegó en los commits `ce4682b` y `e4f894f` del frontend.
   (administración y docente, escrituras interceptadas) en `/tmp/auditoria-plantilla/despues/`.
 - [ ] Pendiente fuera de este plan: Escape no cierra algunos diálogos cuando el cursor está
   en un campo de texto.
+
+## Corrección del borrado de partes y secciones (28 de septiembre de 2026)
+
+- [x] La confirmación global de regeneración se presenta sobre el diálogo de borrado;
+  así se puede confirmar la solicitud que el servidor devuelve como `purge_required`.
+- [x] El texto del borrado indica que los sílabos en curso afectados pueden rehacerse
+  previa confirmación; conserva los expedientes con aprobación y los procesos cerrados
+  conforme a I-118/I-144.
+- [ ] Comprobar el flujo visual en la pantalla real antes de cerrar la aceptación de
+  interfaz de PV-19.
