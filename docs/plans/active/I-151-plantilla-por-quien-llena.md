@@ -20,7 +20,7 @@ datos.
     elige un dato ya declarado o se declara uno nuevo (nombre, texto o lista, por
     asignatura o de toda la carrera). El tipo `automatic` solo existe al crear; se
     guarda como parte fija (`fixed`) con una variable `curricular_*`.
-  - **Texto fijo**: se conserva como acción propia.
+  - **Texto fijo**: I-154 lo integra como cuarta respuesta, «Nadie, es un texto fijo».
 - Sí/No deja de ofrecerse al crear partes. Las partes Sí/No existentes y su uso en
   «Mostrar solo si» siguen funcionando.
 - Extracción: el agente recibe los datos declarados y no propone conceptos nuevos. La

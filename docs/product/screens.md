@@ -310,6 +310,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   forma (lista o texto) y alcance (cada asignatura o toda la carrera) y crea una parte
   fija con ese dato automático. «Editar parte» usa la misma pregunta sin la opción
   automática. Sí/No ya no se ofrece para partes nuevas; las existentes se conservan.
+- I-154: el texto fijo es la cuarta respuesta de «¿Quién llena esta parte?» («Nadie, es
+  un texto fijo»), al crear una parte o una sección. Se retiran la entrada separada
+  «Agregar texto fijo» del menú «+» y el botón «Hacer texto fijo» de la cinta de tablas.
+  Una parte existente del docente no se convierte en texto fijo; se crea una nueva.
 - I-153: en «Editar parte», las condiciones se configuran desde la pregunta: «Si en
   «Estudiantes con discapacidad» responden [Sí], pedir también:» con casillas para las
   preguntas de la misma sección; lo no marcado se pide siempre. Una parte con varias
@@ -392,6 +396,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   paralelo; la vigencia laboral se gestiona en la cuenta, nunca nombre o correo desde esta
   pantalla.
 - COR-13 abre la malla en una página completa con ciclos, tarjetas, totales y relaciones.
+  El pad del portátil desplaza el lienzo en ambos ejes con dos dedos, sin cambiar la escala;
+  el zoom se conserva en los controles y en el pellizco cuando el navegador lo admite.
   El lienzo permite zoom, desplazamiento, conexión y reubicación, además de crear una
   materia desde el control al final de su ciclo y editarla desde las acciones de su
   tarjeta. Ambos formularios se abren en el diálogo compartido y no cubren las tarjetas.
