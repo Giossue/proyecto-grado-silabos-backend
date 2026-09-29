@@ -4017,6 +4017,79 @@
             }
         },
         "/api/v1/coordination/curricular-imports/{import}": {
+            "delete": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_curricular-imports_destroy",
+                "summary": "api.v1.coordination.curricular-imports.destroy",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CurricularImport"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    },
+                    "404": {
+                        "description": "El registro o la materia no pertenecen a la carrera activa o no existen.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "La propuesta, las fuentes o la base curricular cambiaron; consulte de nuevo antes de confirmar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "import",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CurricularImportApplyInput"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            },
             "get": {
                 "tags": [
                     "Coordinación"
@@ -6242,7 +6315,6 @@
                     "subjects",
                     "current_values",
                     "concepts",
-                    "sources",
                     "lock_reason",
                     "capabilities"
                 ],
@@ -6358,26 +6430,6 @@
                             }
                         }
                     },
-                    "sources": {
-                        "type": "array",
-                        "description": "Nombre compatible: documentos internos de ingesta reutilizables de la carrera; no existe CRUD de fuentes.",
-                        "items": {
-                            "type": "object",
-                            "required": [
-                                "id",
-                                "name"
-                            ],
-                            "properties": {
-                                "id": {
-                                    "type": "string",
-                                    "format": "uuid"
-                                },
-                                "name": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
                     "lock_reason": {
                         "type": [
                             "string",
@@ -6407,18 +6459,10 @@
             },
             "CurricularImportInput": {
                 "type": "object",
-                "anyOf": [
-                    {
-                        "required": [
-                            "files"
-                        ]
-                    },
-                    {
-                        "required": [
-                            "source_ids"
-                        ]
-                    }
+                "required": [
+                    "files"
                 ],
+                "description": "Cada importación trae sus archivos; los documentos son temporales y se eliminan al guardar o descartar (I-152).",
                 "properties": {
                     "files": {
                         "type": "array",
@@ -6429,17 +6473,6 @@
                             "format": "binary"
                         },
                         "description": "Hasta 10 archivos PDF/XLSX privados, de hasta 20 MiB cada uno y 30 MiB combinados."
-                    },
-                    "source_ids": {
-                        "type": "array",
-                        "description": "IDs de documentos internos de ingesta previos de la carrera activa.",
-                        "minItems": 1,
-                        "maxItems": 10,
-                        "uniqueItems": true,
-                        "items": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
                     },
                     "instruction": {
                         "type": [

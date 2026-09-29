@@ -16,10 +16,8 @@ final class RequestCurricularImportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'files' => ['required_without:source_ids', 'array', 'min:1', 'max:10'],
+            'files' => ['required', 'array', 'min:1', 'max:10'],
             'files.*' => ['required', 'file', 'mimes:pdf,xlsx', 'max:20480'],
-            'source_ids' => ['required_without:files', 'array', 'list', 'min:1', 'max:10'],
-            'source_ids.*' => ['required', 'uuid', 'distinct:strict'],
             'instruction' => ['sometimes', 'nullable', 'string', 'max:4000'],
         ];
     }
@@ -27,7 +25,7 @@ final class RequestCurricularImportRequest extends FormRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['files' => 'documentos', 'files.*' => 'archivo', 'source_ids' => 'documentos seleccionados', 'source_ids.*' => 'documento', 'instruction' => 'indicación para la importación'];
+        return ['files' => 'documentos', 'files.*' => 'archivo', 'instruction' => 'indicación para la importación'];
     }
 
     /** @return list<callable(Validator): void> */

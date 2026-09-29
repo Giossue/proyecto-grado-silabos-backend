@@ -62,10 +62,6 @@ final class CurricularImportsViewData
                 fn (array $definition): array => ['key' => $definition['key'], 'label' => $definition['label'], 'type' => $definition['type'], 'scope' => $definition['scope']],
                 CurricularData::definitions(),
             )),
-            'sources' => AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)
-                ->whereNotIn('estado_ingesta', ['pendiente', 'en_ejecucion', 'fallida'])
-                ->whereNotNull('contenido_fuente_academica')->where('contenido', '!=', '')->orderBy('nombre')->get(['id', 'nombre'])
-                ->map(fn (AcademicSource $source): array => ['id' => $source->id, 'name' => $source->nombre])->all(),
             'lock_reason' => $this->locks->careerLockReason($careerId),
             'capabilities' => app(CurricularImportCapabilities::class)->toArray(),
         ];
@@ -75,6 +71,9 @@ final class CurricularImportsViewData
     public function detail(CurricularImport $import): array
     {
         $lockReason = $this->locks->careerLockReason($import->carrera_id);
+        // Tras guardar o descartar, los documentos temporales ya no existen (I-152).
+        $available = AcademicSource::query()->where('carrera_id', $import->carrera_id)
+            ->whereIn('id', array_column($import->documentos_importacion, 'source_id'))->pluck('id')->all();
         $originalNames = StoredObject::query()->where('carrera_id', $import->carrera_id)
             ->whereIn('id', array_column($import->documentos_importacion, 'original_object_id'))
             ->pluck('nombre_logico', 'id');
@@ -83,7 +82,7 @@ final class CurricularImportsViewData
             'id' => $import->id, 'career_id' => $import->carrera_id, 'status' => $import->estado_importacion,
             'documents' => array_map(fn (array $document): array => [...$document,
                 'original_name' => $originalNames->get($document['original_object_id'] ?? ''),
-                'original_url' => isset($document['original_object_id'])
+                'original_url' => isset($document['original_object_id']) && in_array($document['source_id'] ?? null, $available, true)
                     ? route('api.v1.coordination.curricular-imports.documents.original', ['import' => $import->id, 'source' => $document['source_id']]) : null,
             ], $import->documentos_importacion), 'proposal' => $this->proposalWithCurrentValues($import),
             'applied_items' => $import->seleccion_aplicada ?? [],

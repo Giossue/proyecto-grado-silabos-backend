@@ -41,10 +41,12 @@ final class RequestCurricularImport
         private readonly RecordAuditEvent $audit,
     ) {}
 
-    /** @param list<UploadedFile> $files
-     * @param  list<string>  $sourceIds
+    /**
+     * Cada importación trae sus propios archivos: los documentos son temporales (I-152).
+     *
+     * @param  list<UploadedFile>  $files
      */
-    public function execute(array $files, array $sourceIds, ?string $instruction, User $actor, Request $request): CurricularImport
+    public function execute(array $files, ?string $instruction, User $actor, Request $request): CurricularImport
     {
         $role = $this->view->role($request);
         $careerId = (string) $role->carrera_id;
@@ -56,15 +58,6 @@ final class RequestCurricularImport
         // La plantilla manda (I-151): sin datos declarados no hay nada que buscar.
         if (CurricularData::definitions() === []) {
             throw ValidationException::withMessages(['files' => 'Administración aún no definió en la plantilla qué datos salen de los documentos de la carrera.']);
-        }
-        $sources = AcademicSource::query()->where('carrera_id', $careerId)->where('activo', true)->whereKey($sourceIds)->get();
-        abort_unless($sources->count() === count($sourceIds), 404);
-        $sourceHashes = [];
-        foreach ($sources as $source) {
-            if (trim($source->contenido ?? '') === '' || in_array($source->estado_ingesta, ['pendiente', 'en_ejecucion', 'fallida'], true)) {
-                throw ValidationException::withMessages(['source_ids' => 'Los documentos seleccionados deben terminar su lectura correctamente antes de reutilizarlos.']);
-            }
-            $sourceHashes[$source->id] = $this->hasher->hash($source->documento ?? []);
         }
         $fileHashes = [];
         foreach ($files as $file) {
@@ -79,37 +72,21 @@ final class RequestCurricularImport
             $fileHashes[] = $hash;
         }
         sort($fileHashes);
-        ksort($sourceHashes);
-        $key = $this->hasher->hash(['version' => 'curricular-v1', 'career' => $careerId, 'files' => $fileHashes, 'sources' => $sourceHashes, 'instruction' => trim($instruction ?? '')]);
+        $key = $this->hasher->hash(['version' => 'curricular-v1', 'career' => $careerId, 'files' => $fileHashes, 'sources' => [], 'instruction' => trim($instruction ?? '')]);
 
-        return DB::transaction(function () use ($actor, $careerId, $files, $instruction, $key, $request, $role, $sources): CurricularImport {
+        return DB::transaction(function () use ($actor, $careerId, $files, $instruction, $key, $request, $role): CurricularImport {
             Career::query()->whereKey($careerId)->lockForUpdate()->firstOrFail();
             $this->locks->assertCareerEditable($careerId);
             $existing = CurricularImport::query()->where('carrera_id', $careerId)->where('clave_idempotencia_importacion', $key)->first();
-            if ($existing !== null) {
+            // Un reenvío mientras la importación sigue abierta es la misma solicitud. Si ya se
+            // guardó, sus documentos temporales se eliminaron: el mismo archivo se analiza de nuevo.
+            if ($existing !== null && $existing->estado_importacion !== 'aplicada') {
                 return $existing;
             }
-            $documentRecords = [];
-            foreach ($sources as $source) {
-                $hash = $this->hasher->hash($source->documento ?? []);
-                $original = $source->objeto_pdf_id;
-                if ($original === null) {
-                    $previous = CurricularImport::query()->where('carrera_id', $careerId)
-                        ->whereJsonContains('documentos_importacion', [['source_id' => $source->id, 'hash' => $hash]])
-                        ->orderByDesc('solicitado_en')->get(['documentos_importacion']);
-                    foreach ($previous as $candidate) {
-                        foreach ($candidate->documentos_importacion as $document) {
-                            if ($document['source_id'] === $source->id && ($document['hash'] ?? null) === $hash && isset($document['original_object_id'])) {
-                                $original = $document['original_object_id'];
-                                break 2;
-                            }
-                        }
-                    }
-                }
-                $documentRecords[] = ['source_id' => $source->id, 'name' => $source->nombre, 'hash' => $hash,
-                    'kind' => $source->objeto_pdf_id !== null ? 'pdf' : 'source',
-                    'execution_id' => null, 'original_object_id' => $original];
+            if ($existing !== null) {
+                $key = $this->hasher->hash(['previous' => $key, 'attempt' => (string) Str::uuid()]);
             }
+            $documentRecords = [];
             foreach ($files as $file) {
                 $kind = strtolower($file->getClientOriginalExtension());
                 $baseName = Str::limit(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), 180, '') ?: 'Documento curricular';

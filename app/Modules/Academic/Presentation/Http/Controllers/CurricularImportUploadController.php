@@ -44,7 +44,7 @@ final class CurricularImportUploadController extends Controller
         abort_unless($actor instanceof User, 401);
         $files = $request->file('files', []);
         abort_unless(is_array($files), 422);
-        $import = $action->execute(array_values($files), $request->validated('source_ids', []), $request->validated('instruction'), $actor, $request);
+        $import = $action->execute(array_values($files), $request->validated('instruction'), $actor, $request);
 
         return response()->json($view->detail($import), 202);
     }

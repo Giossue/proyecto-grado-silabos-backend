@@ -5,6 +5,7 @@ namespace App\Modules\Academic\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Academic\Application\Actions\ApplyCurricularImport;
+use App\Modules\Academic\Application\Actions\DiscardCurricularImport;
 use App\Modules\Academic\Application\Queries\CurricularImportsViewData;
 use App\Modules\Academic\Presentation\Http\Requests\ApplyCurricularImportRequest;
 use App\Modules\Academic\Presentation\Http\Requests\ManageCareerAcademicStructureRequest;
@@ -31,5 +32,14 @@ class CurricularImportsController extends Controller
         $saved = $action->execute($import, $data, $actor, $request);
 
         return response()->json([...$view->detail($saved), 'message' => 'Datos curriculares confirmados.']);
+    }
+
+    public function destroy(string $import, ManageCareerAcademicStructureRequest $request, DiscardCurricularImport $action): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $action->execute($import, $actor, $request);
+
+        return response()->json(['message' => 'Importación descartada. Sus documentos se eliminaron.']);
     }
 }

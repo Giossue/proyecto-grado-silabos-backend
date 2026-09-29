@@ -190,6 +190,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware(['active-role', 'throttle:source-ocr'])->name('api.v1.coordination.curricular-imports.store');
             Route::get('coordination/curricular-imports/{import}', [CurricularImportsController::class, 'show'])
                 ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.curricular-imports.show');
+            Route::delete('coordination/curricular-imports/{import}', [CurricularImportsController::class, 'destroy'])
+                ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.curricular-imports.destroy');
             Route::post('coordination/curricular-imports/{import}/apply', [CurricularImportsController::class, 'apply'])
                 ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.curricular-imports.apply');
             Route::get('coordination/curricular-imports/{import}/documents/{source}/original', [CurricularImportUploadController::class, 'original'])

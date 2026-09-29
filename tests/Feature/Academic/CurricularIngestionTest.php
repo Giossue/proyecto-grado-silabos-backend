@@ -3,6 +3,7 @@
 namespace Tests\Feature\Academic;
 
 use App\Models\User;
+use App\Modules\Academic\Application\Actions\ReleaseCurricularImportDocuments;
 use App\Modules\Academic\Application\CurricularSourceBlocks;
 use App\Modules\Academic\Application\CurricularWorkbookReader;
 use App\Modules\Academic\Application\PrepareCurricularImport;
@@ -113,13 +114,21 @@ class CurricularIngestionTest extends TestCase
         $this->assertSame(1, JobExecution::query()->where('tipo', 'curriculo.extraer')->count());
         $this->assertSame(1, StoredObject::query()->where('clasificacion', 'curricular_workbook')->count());
         Queue::assertPushed(PrepareCurricularImportJob::class, 1);
+        // Guardada la importación, sus documentos temporales se eliminan (I-152) y el mismo
+        // archivo se analiza de nuevo en lugar de devolver la importación cerrada.
         $this->travel(61)->seconds();
-        $source = AcademicSource::query()->firstOrFail();
-        $third = $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertAccepted()->json('id');
-        $reused = CurricularImport::query()->findOrFail($third);
-        $this->assertSame(CurricularImport::query()->findOrFail($first)->documentos_importacion[0]['original_object_id'], $reused->documentos_importacion[0]['original_object_id']);
-        $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertAccepted()->assertJsonPath('id', $third);
+        $import = CurricularImport::query()->findOrFail($first);
+        $path = StoredObject::query()->where('clasificacion', 'curricular_workbook')->firstOrFail()->ruta_interna;
+        $import->update(['estado_importacion' => 'aplicada']);
+        app(ReleaseCurricularImportDocuments::class)->execute($import->fresh());
+        $this->assertDatabaseCount('fuentes_academicas', 0);
+        Storage::disk('private')->assertMissing($path);
+        $third = $this->postJson($this->storeUrl(), ['files' => [$file]])->assertAccepted()->json('id');
+        $this->assertNotSame($first, $third);
         $this->assertDatabaseCount('fuentes_academicas', 1);
+        Storage::disk('private')->assertExists($path);
+        $this->postJson($this->storeUrl(), ['source_ids' => [AcademicSource::query()->firstOrFail()->id]])
+            ->assertUnprocessable()->assertJsonValidationErrors('files');
     }
 
     public function test_upload_and_existing_sources_enforce_coordinator_role_and_career_scope(): void
@@ -129,23 +138,16 @@ class CurricularIngestionTest extends TestCase
             $this->postJson($this->storeUrl(), ['files' => [$this->workbook()]])->assertForbidden();
         }
         $this->asRole('coordinador@silabos.test');
+        // Sin reutilización (I-152): un documento de otra importación no se puede volver a pedir.
         $source = $this->source('Pensamiento crítico');
-        $otherCareer = $this->subject->career->replicate();
-        $otherCareer->codigo_carrera = 'OTRA';
-        $otherCareer->nombre = 'Otra carrera';
-        $otherCareer->save();
-        $source->update(['carrera_id' => $otherCareer->id]);
-        $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertNotFound();
-        $source->update(['carrera_id' => $this->subject->carrera_id, 'activo' => false]);
-        $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertNotFound();
+        $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertUnprocessable()->assertJsonValidationErrors('files');
         $this->assertDatabaseCount('importaciones_curriculares', 0);
         $this->assertDatabaseCount('valores_curriculares', 0);
     }
 
     public function test_source_change_after_request_is_rejected_before_extraction_can_change_curriculum(): void
     {
-        $source = $this->source('Pensamiento crítico');
-        $id = $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertAccepted()->json('id');
+        [$id, $source] = $this->uploaded();
         $source->update(['documento' => ['type' => 'doc', 'content' => []]]);
         try {
             app(PrepareCurricularImport::class)->step($id);
@@ -174,8 +176,7 @@ class CurricularIngestionTest extends TestCase
 
     public function test_failed_attempt_retries_once_with_new_identity_and_old_jobs_cannot_fail_the_new_attempt(): void
     {
-        $source = $this->source('Pensamiento crítico');
-        $id = $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertAccepted()->json('id');
+        [$id, $source] = $this->uploaded();
         app(PrepareCurricularImport::class)->fail($id);
         $previous = CurricularImport::query()->findOrFail($id);
         $this->assertSame('fallida', $previous->estado_importacion);
@@ -304,8 +305,7 @@ class CurricularIngestionTest extends TestCase
 
     public function test_source_ocr_or_pdf_changes_during_extraction_invalidate_the_final_proposal_commit(): void
     {
-        $source = $this->source('Pensamiento crítico');
-        $id = $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertAccepted()->json('id');
+        [$id, $source] = $this->uploaded();
         $import = CurricularImport::query()->findOrFail($id);
         $original = StoredObject::query()->create([
             'disco' => 'private', 'ruta_interna' => 'pruebas/ingesta-original.pdf', 'nombre_logico' => 'original.pdf', 'mime' => 'application/pdf',
@@ -383,6 +383,15 @@ class CurricularIngestionTest extends TestCase
     {
         $user = User::query()->where('correo_electronico', $email)->firstOrFail();
         $this->actingAs($user)->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id]);
+    }
+
+    /** @return array{0: string, 1: AcademicSource} Importación recién subida y su documento temporal. */
+    private function uploaded(): array
+    {
+        $id = $this->postJson($this->storeUrl(), ['files' => [$this->workbook()]])->assertAccepted()->json('id');
+        $sourceId = CurricularImport::query()->findOrFail($id)->documentos_importacion[0]['source_id'];
+
+        return [$id, AcademicSource::query()->findOrFail($sourceId)];
     }
 
     private function storeUrl(): string

@@ -53,9 +53,16 @@ class CurricularImportsTest extends TestCase
         $this->role = $this->coordinator->roleAssignments()->firstOrFail();
         $this->subject = Subject::query()->firstOrFail();
         $this->actingAs($this->coordinator)->withSession(['active_role_assignment_id' => $this->role->id]);
+        $this->source = $this->newSource();
+    }
+
+    /** Documento temporal de una importación (I-152): cada importación tiene el suyo. */
+    private function newSource(string $name = 'Proyecto de carrera'): AcademicSource
+    {
         $text = 'Evalúa la calidad del software. Pensamiento crítico. Bibliografía institucional. Resultado actualizado.';
-        $this->source = AcademicSource::query()->create([
-            'carrera_id' => $this->subject->carrera_id, 'nombre' => 'Proyecto de carrera', 'activo' => true,
+
+        return AcademicSource::query()->create([
+            'carrera_id' => $this->subject->carrera_id, 'nombre' => $name, 'activo' => true,
             'contenido' => $text,
             'documento' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'attrs' => ['sourcePage' => 141], 'content' => [['type' => 'text', 'text' => $text]]]]],
         ]);
@@ -75,7 +82,7 @@ class CurricularImportsTest extends TestCase
         $this->assertDatabaseCount('valores_curriculares', 0);
         $this->getJson(route('api.v1.coordination.curricular-imports.index'))->assertOk()
             ->assertJsonPath('imports.0.status', 'lista')->assertJsonPath('subjects.0.code', $this->subject->codigo_asignatura)
-            ->assertJsonPath('sources.0.id', $this->source->id)->assertJsonStructure(['capabilities' => ['pdf', 'xlsx', 'extraction']]);
+            ->assertJsonMissingPath('sources')->assertJsonStructure(['capabilities' => ['pdf', 'xlsx', 'extraction']]);
         $payload = $this->payload($import, array_slice($proposal['values'], 0, 3));
         $this->postJson($this->url($import).'/apply', $payload)->assertOk()
             ->assertJsonPath('status', 'aplicada')->assertJsonPath('editable', false)->assertJsonCount(3, 'applied_items');
@@ -94,6 +101,29 @@ class CurricularImportsTest extends TestCase
         $this->assertStringNotContainsString('Evalúa', json_encode($audit->getAttributes(), JSON_UNESCAPED_UNICODE));
         $this->postJson($this->url($import).'/apply', $payload)->assertConflict();
         $this->assertDatabaseCount('valores_curriculares', 3);
+        // Documentos temporales (I-152): tras guardar se elimina la lectura; el dato conserva su procedencia.
+        $this->assertDatabaseMissing('fuentes_academicas', ['id' => $this->source->id]);
+        $this->assertSame('Proyecto de carrera', $value->fresh()->evidencia_curricular[0]['source_name']);
+        $this->assertSame('Evalúa la calidad del software.', $value->fresh()->evidencia_curricular[0]['quote']);
+        $this->getJson($this->url($import))->assertOk()->assertJsonPath('documents.0.original_url', null);
+    }
+
+    public function test_discarding_removes_the_import_and_its_documents_but_keeps_shared_ones(): void
+    {
+        $shared = $this->staged();
+        $import = $this->staged();
+        $this->deleteJson($this->url($import))->assertOk();
+        $this->assertModelMissing($import);
+        // Otra importación abierta usa el mismo documento: se conserva hasta que termine.
+        $this->assertModelExists($this->source);
+        $this->deleteJson($this->url($shared))->assertOk();
+        $this->assertModelMissing($this->source);
+        $this->assertTrue(AuditEvent::query()->where('accion', 'academico.importacion_curricular.descartada')->exists());
+        $this->source = $this->newSource();
+        $applied = $this->staged();
+        $this->postJson($this->url($applied).'/apply', $this->payload($applied))->assertOk();
+        $this->deleteJson($this->url($applied))->assertConflict()->assertJsonPath('code', 'importacion_curricular_no_descartable');
+        $this->assertDatabaseCount('valores_curriculares', 1);
     }
 
     public function test_assistant_shows_effective_outcomes_and_replaces_legacy_fallback_without_deleting_it(): void
@@ -299,6 +329,11 @@ class CurricularImportsTest extends TestCase
         $this->assertSame('Evalúa la calidad del software.', CurricularValue::query()->firstOrFail()->valor_curricular);
 
         foreach (['conflict', 'invalid_value', 'invalid_evidence'] as $issue) {
+            // El documento de la importación guardada ya se eliminó (I-152).
+            $this->source = $this->newSource("Proyecto de carrera ({$issue})");
+            $proposal = $this->proposal();
+            $proposal['values'][0]['subject_id'] = null;
+            $proposal['values'][0]['subject_name'] = 'Nombre sin coincidencia';
             $proposal['values'][0]['issue'] = 'Necesita otra revisión.';
             $proposal['values'][0]['issue_code'] = $issue;
             $blocked = $this->staged($proposal);

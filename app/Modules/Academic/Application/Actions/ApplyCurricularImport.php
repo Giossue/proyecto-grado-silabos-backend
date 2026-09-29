@@ -32,6 +32,7 @@ final class ApplyCurricularImport
         private readonly InProgressWork $work,
         private readonly CanonicalHasher $hasher,
         private readonly RecordAuditEvent $audit,
+        private readonly ReleaseCurricularImportDocuments $release,
     ) {}
 
     /** @param array{expected_fingerprint: string, confirmed: bool, items: list<array{id: string, subject_id?: string|null, accept_conflict?: bool}>, confirm_purge?: bool} $data */
@@ -98,6 +99,8 @@ final class ApplyCurricularImport
                         'proposal_fingerprint' => $data['expected_fingerprint'],
                     ], correlationId: $request->attributes->getString('correlation_id') ?: null,
                 );
+                // Documentos temporales (I-152): tras confirmar, se eliminan lectura y originales.
+                DB::afterCommit(fn () => $this->release->execute($import));
 
                 return $import;
             };

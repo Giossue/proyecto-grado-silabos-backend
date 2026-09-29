@@ -305,7 +305,7 @@ class ExportOpenApi extends Command
                 ],
             ],
             'CurricularImportsIndex' => [
-                'type' => 'object', 'required' => ['imports', 'subjects', 'current_values', 'concepts', 'sources', 'lock_reason', 'capabilities'],
+                'type' => 'object', 'required' => ['imports', 'subjects', 'current_values', 'concepts', 'lock_reason', 'capabilities'],
                 'properties' => [
                     'imports' => ['type' => 'array', 'items' => [
                         'type' => 'object', 'required' => ['id', 'status', 'created_at', 'applied_at', 'error'],
@@ -320,8 +320,6 @@ class ExportOpenApi extends Command
                             'key' => ['type' => 'string'], 'label' => ['type' => 'string'],
                             'type' => ['type' => 'string', 'enum' => ['texto', 'lista', 'tabla']], 'scope' => ['type' => 'string', 'enum' => ['carrera', 'asignatura']],
                         ]]],
-                    'sources' => ['type' => 'array', 'description' => 'Nombre compatible: documentos internos de ingesta reutilizables de la carrera; no existe CRUD de fuentes.', 'items' => ['type' => 'object', 'required' => ['id', 'name'],
-                        'properties' => ['id' => $uuid, 'name' => ['type' => 'string']]]],
                     'lock_reason' => $nullableText,
                     'capabilities' => ['type' => 'object', 'required' => ['pdf', 'xlsx', 'extraction'], 'properties' => [
                         'pdf' => ['type' => 'boolean'], 'xlsx' => ['type' => 'boolean'], 'extraction' => ['type' => 'boolean'],
@@ -329,11 +327,11 @@ class ExportOpenApi extends Command
                 ],
             ],
             'CurricularImportInput' => [
-                'type' => 'object', 'anyOf' => [['required' => ['files']], ['required' => ['source_ids']]],
+                'type' => 'object', 'required' => ['files'],
+                'description' => 'Cada importación trae sus archivos; los documentos son temporales y se eliminan al guardar o descartar (I-152).',
                 'properties' => [
                     'files' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 10, 'items' => ['type' => 'string', 'format' => 'binary'],
                         'description' => 'Hasta 10 archivos PDF/XLSX privados, de hasta 20 MiB cada uno y 30 MiB combinados.'],
-                    'source_ids' => ['type' => 'array', 'description' => 'IDs de documentos internos de ingesta previos de la carrera activa.', 'minItems' => 1, 'maxItems' => 10, 'uniqueItems' => true, 'items' => $uuid],
                     'instruction' => ['type' => ['string', 'null'], 'maxLength' => 4000],
                 ],
             ],
