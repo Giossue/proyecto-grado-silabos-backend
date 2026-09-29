@@ -129,7 +129,6 @@ final class TemplateDocumentWord
         $table = $target->addTable(['borderSize' => 4, 'borderColor' => self::TABLE_BORDER, 'cellMargin' => 50, 'width' => 5000, 'unit' => TblWidth::PERCENT]);
         $merged = [];
         foreach ($rows as $rowIndex => $source) {
-            $role = $source['attrs']['rowRole'] ?? null;
             $isRepeatingHeader = array_reduce(
                 $source['content'],
                 fn (bool $carry, array $cell): bool => $carry && $cell['type'] === 'tableHeader',
@@ -160,8 +159,8 @@ final class TemplateDocumentWord
                 $span = $attrs['colspan'] ?? 1;
                 $height = $attrs['rowspan'] ?? 1;
                 $cellWidth = (int) array_sum(array_slice($widths, $column, $span));
-                $isHeader = $cell['type'] === 'tableHeader'
-                    || ($role === null && $rowIndex === 0);
+                // Sin roles de fila (I-156): la cabecera se marca con celdas de encabezado.
+                $isHeader = $cell['type'] === 'tableHeader';
                 $options = [
                     'gridSpan' => $span,
                     'valign' => 'center',
@@ -240,8 +239,7 @@ final class TemplateDocumentWord
                     'width' => (int) array_sum(array_slice($widths, $column, $span)),
                     'row' => $r,
                     'rows' => max(1, (int) ($cell['attrs']['rowspan'] ?? 1)),
-                    'header' => $cell['type'] === 'tableHeader'
-                        || (($row['attrs']['rowRole'] ?? null) === null && $r === 0),
+                    'header' => $cell['type'] === 'tableHeader',
                 ];
                 $column += $span;
             }
