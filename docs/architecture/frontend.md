@@ -27,10 +27,10 @@ arranque para que el mismo bundle apunte al backend de cada ambiente.
 
 I-146 retira COR-11, su editor documental y los paneles/acciones del revisor de IA.
 La SPA conserva el chat para elaborar contenido y unidades desde el contexto académico
-confirmado del sílabo. La importación curricular I-145 permite cargar PDF/XLSX o
-reutilizar documentos previos de ingesta y revisar candidatos por lote. El original se
-consulta mediante una descarga privada autorizada por importación, sin recuperar el
-CRUD de fuentes. Los nombres wire `sources`/`source_ids` permanecen por compatibilidad
+confirmado del sílabo. La importación curricular I-145 permite cargar PDF/XLSX y
+revisar candidatos por lote; cada importación trae sus archivos (I-152). Mientras está
+abierta, el original se consulta mediante una descarga privada autorizada; al guardar o
+descartar, sus documentos se eliminan. Los nombres wire `sources`/`source_ids` permanecen por compatibilidad
 interna; las etiquetas de producto los presentan como documentos de ingesta.
 I-147 retira del lienzo de Malla el editor manual de resultados de aprendizaje. La
 sección «Datos confirmados» del asistente presenta valores efectivos de la carrera y

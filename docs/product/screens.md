@@ -260,12 +260,13 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   solo lectura; una incoherencia con 48 horas por crédito se reporta como configuración.
   En ADM-06 aún no existe una materia contra la cual comparar, por lo que el resumen no
   se muestra. Aparece únicamente dentro de un sílabo real con contexto de malla.
-  I-146 retira COR-11 y su editor de fuentes. Los originales PDF/XLSX de importaciones
-  curriculares se descargan de forma privada y autorizada desde el detalle del lote.
+  I-146 retira COR-11 y su editor de fuentes. Mientras una importación está abierta, sus
+  originales PDF/XLSX se descargan de forma privada y autorizada desde su detalle; al
+  guardar o descartar se eliminan (I-152).
   I-149 lleva el recorrido de I-145 a COR-16, **Coordinación → Proyecto de carrera**,
   una pantalla propia de la carrera activa; COR-13 ya no muestra el botón flotante
   **Asistente curricular**. La pantalla recibe PDF/XLSX o
-  documentos de ingesta previos de esa carrera y ofrece un recorrido con
+  ofrece un recorrido con
   carga, estado del procesamiento y revisión de la propuesta. No pide transcribir
   contenidos ni indicar manualmente la procedencia de cada dato. Las filas muestran
   materia, contenido propuesto, fuente/localizador/extracto y contenido vigente cuando
@@ -284,8 +285,8 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   los resultados I-144 como registro anterior sin atribuirles un extracto inexistente.
   La pantalla distingue Datos confirmados, Importar e Historial mediante pestañas con
   estado activo. Abre en la importación en curso si existe; si no, en Datos confirmados
-  cuando la carrera ya tiene datos, o en Importar. La carga presenta primero archivos
-  nuevos y documentos anteriores; una indicación adicional se abre solo si se necesita.
+  cuando la carrera ya tiene datos, o en Importar. La carga presenta solo archivos
+  nuevos; una indicación adicional se abre solo si se necesita.
   El pie de la revisión mantiene visible la acción de guardar, también en móvil.
   La acción manual «Resultados de aprendizaje» desaparece del menú de cada materia;
   las correcciones nuevas siguen el recorrido de importación y confirmación.
@@ -293,11 +294,13 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   COR-16 muestra qué datos pide la plantilla antes de importar; sin datos declarados
   por Administración explica el motivo y no permite enviar documentos (I-151).
   La importación se guía en cuatro pasos visibles: Documentos, Análisis, Revisión y
-  Listo. La carga deja arriba solo archivos y documentos anteriores; los datos que se
+  Listo. La carga deja arriba solo los archivos nuevos; los datos que se
   buscarán y la indicación opcional quedan plegados. La revisión pide primero la
   materia de cada nombre sin coincidencia («Continuar») y después la elección de datos,
   con regreso a las materias. Al guardar, el último paso ofrece ver los datos
-  confirmados o iniciar otra importación; el detalle queda plegado.
+  confirmados o iniciar otra importación; el detalle queda plegado. En Revisión y ante
+  una falla, «Descartar importación» pide confirmación y elimina la propuesta y sus
+  documentos sin cambiar datos confirmados.
   En ADM-06 los datos declarados aparecen en el catálogo de datos automáticos.
 - I-151: al crear una parte o una sección, ADM-06 pregunta «¿Quién llena esta parte?»
   sin términos técnicos: **El docente la escribe** (un párrafo, una lista con viñetas,

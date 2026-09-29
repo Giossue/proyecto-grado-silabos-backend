@@ -152,6 +152,16 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 ## Actualizado para esta entrega
 
+I-152 (28 de septiembre de 2026), por instrucción del responsable, vuelve temporales los
+documentos de importación curricular. La lectura (`fuentes_academicas`), el original y
+las imágenes de OCR viven mientras la importación está abierta; al guardar o descartar se
+eliminan, salvo que otra importación abierta los use. `objetos_almacenados` sigue siendo
+de solo agregar por regla de la base: su ficha (nombre, tamaño y huella, sin contenido)
+permanece como constancia. Se agrega «Descartar importación» y se retira «Reutilizar
+documentos». Sustituye la conservación de documentos de ingesta de I-145 y la descarga
+permanente de originales de I-146; los datos confirmados conservan extracto, ubicación y
+nombre del documento.
+
 I-151 (28 de septiembre de 2026), por instrucción del responsable, adopta «la plantilla
 manda»: Administración declara en ADM-06 qué datos salen de los documentos de carrera
 (parte **Sale sola de los documentos de la carrera**) y la importación de COR-16 solo
@@ -187,7 +197,7 @@ feedback del revisor. Los párrafos históricos que describen esas funciones no 
 requisitos vigentes. La orden procede del responsable del producto, sin atribuirla al
 tutor ni a la institución.
 
-I-145 continúa recibiendo PDF/XLSX y permite reutilizar documentos internos de ingesta.
+I-145 continúa recibiendo PDF/XLSX. I-152 retira la reutilización de documentos y los vuelve temporales.
 Los nombres de contrato `sources`/`source_ids` se conservan por compatibilidad; ya no
 representan un CRUD de Fuentes académicas. Los originales tienen descarga privada por
 importación. No se elimina evidencia histórica, contenido curricular confirmado ni

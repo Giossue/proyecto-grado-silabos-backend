@@ -23,9 +23,11 @@
   inmutable del documento, sus campos y valores.
 - I-146 retira Fuentes académicas como módulo de gestión, editor y requisito para abrir
   una convocatoria. No hay CRUD público de fuentes ni recuperación vectorial del revisor.
-- Los PDF/XLSX entregados al asistente I-145 y sus documentos JSON internos conservan
-  archivo privado, procedencia, huellas y estado de lectura. No son una pantalla de
-  edición documental. Pueden reutilizarse en otra importación de la misma carrera.
+- Los PDF/XLSX entregados al asistente I-145 y sus documentos JSON internos son
+  temporales (I-152): existen mientras la importación está abierta y se eliminan al
+  guardar o descartar, salvo que otra importación abierta los use. No se reutilizan en
+  otras importaciones; cada dato confirmado conserva extracto, ubicación y nombre del
+  documento.
 - I-147 concentra la consulta de datos efectivos en «Datos confirmados» del asistente.
   Los resultados importados prevalecen sobre el registro I-144; este permanece visible
   como respaldo donde aún no haya importación. El menú de materia ya no ofrece su

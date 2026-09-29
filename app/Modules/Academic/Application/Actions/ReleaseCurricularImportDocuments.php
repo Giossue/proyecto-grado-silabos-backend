@@ -44,7 +44,7 @@ final class ReleaseCurricularImportDocuments
                     }
                     $source->delete();
                 }
-                foreach (array_unique(array_filter($objectIds)) as $objectId) {
+                foreach (array_unique(array_filter($objectIds, is_string(...))) as $objectId) {
                     if (in_array($objectId, $usedObjects, true)) {
                         continue;
                     }

@@ -104,8 +104,9 @@ y `composer verify` para cambios amplios, riesgosos o cuando se soliciten expres
   conservan; el cambio y la regeneración son una sola transacción (I-118, aclarada
   en I-144). Corregir resultados de aprendizaje limita el reinicio a su asignatura.
   I-146 retira el CRUD de Fuentes académicas y el revisor de IA con recuperación
-  vectorial. I-145 conserva documentos privados internos de ingesta y evidencia histórica;
-  el chat de elaboración usa el contexto académico y curricular fotografiado del sílabo.
+  vectorial. I-152 vuelve temporales los documentos de importación: su lectura y sus
+  archivos se eliminan al guardar o descartar; los datos confirmados conservan extracto y
+  procedencia. El chat de elaboración usa el contexto académico y curricular fotografiado del sílabo.
 - Las validaciones determinísticas y las recomendaciones de IA son conceptos separados.
 - La extracción curricular conserva fuente y extracto; una persona confirma los datos.
 - El chat de IA propone contenido y unidades desde el contexto autorizado del sílabo;

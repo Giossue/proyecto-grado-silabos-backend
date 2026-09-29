@@ -113,6 +113,15 @@ observación visible. Sin conceptos declarados no se puede solicitar una importa
 solo el recorrido completo publica la propuesta. Un reintento explícito de una
 importación fallida usa `POST /coordination/curricular-imports/{id}/retry`.
 
+Desde I-152 los documentos son temporales. `ReleaseCurricularImportDocuments` se ejecuta
+después de confirmar una aplicación y al descartar una importación (`DELETE
+/coordination/curricular-imports/{id}`, solo en estado `lista` o `fallida`). Elimina las
+filas de `fuentes_academicas` y los archivos físicos (original, PDF de OCR e imágenes
+`academic-sources/{id}/`) que ninguna otra importación abierta use. Las fichas de
+`objetos_almacenados` permanecen porque la tabla es de solo agregar. Un nuevo envío del
+mismo archivo tras una importación aplicada crea otra importación; solo un reenvío
+mientras sigue abierta devuelve la existente.
+
 La validación comprueba tipos, coincidencia de materias y que el contenido citado
 exista en los bloques. La comparación normalizada exige texto no vacío y palabras
 completas; «10» no valida una fuente que solo dice «100». Un código/nombre ambiguo,
