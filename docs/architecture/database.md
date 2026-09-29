@@ -251,7 +251,9 @@ el período de una convocatoria universitaria que ya tiene convocatorias de carr
 migración `000027` creó un proceso por cada convocatoria existente con su propia
 plantilla y fechas. El estado `pausada` de la convocatoria y `pausado` del proceso
 detienen el trabajo docente sin borrar nada.
-Cada sílabo cubre exactamente un paralelo: `silabos.paralelo_id` es obligatorio y único
+Desde I-164 (migración `000160`) `silabos` ya no guarda `asignatura_id`: la materia se
+lee del paralelo (paralelo → programación → materia; `Syllabus::subject` es derivado y
+`Syllabus::forSubjects()` filtra por esa vía). Cada sílabo cubre exactamente un paralelo: `silabos.paralelo_id` es obligatorio y único
 junto con `convocatoria_id`. La migración `000099` (I-131) retiró `alcances_silabo`
 (la materia programada se deriva de `paralelos.programacion_asignatura_id`) y
 `silabos.carrera_id` (la carrera es la de `convocatorias_carreras`); la vista

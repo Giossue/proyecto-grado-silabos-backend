@@ -377,7 +377,7 @@ class PrepareTestingEnvironmentCommand extends Command
 
         $this->table(['Docente', 'Materia', 'Paralelo', 'Estado sílabo'], Syllabus::query()
             ->whereHas('convocation', fn ($q) => $q->where('carrera_id', $career->id))
-            ->with(['subject', 'parallel.teacherAssignments' => fn ($q) => $q->where('activo', true)->with('roleAssignment.user')])
+            ->with(['parallel.scheduledSubject.subject', 'parallel.teacherAssignments' => fn ($q) => $q->where('activo', true)->with('roleAssignment.user')])
             ->get()
             ->map(fn (Syllabus $syllabus): array => [
                 $syllabus->parallel->teacherAssignments->first()?->roleAssignment->user->correo_electronico ?? '-',

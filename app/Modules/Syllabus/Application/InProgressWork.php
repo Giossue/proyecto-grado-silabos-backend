@@ -244,15 +244,16 @@ final class InProgressWork
 
     public function refreshSubjects(string $careerId): int
     {
-        $syllabi = $this->inProgress($careerId)->with('career')->lockForUpdate()->get();
+        $syllabi = $this->inProgress($careerId)->with(['career', 'parallel.scheduledSubject'])->lockForUpdate()->get();
+        $subjectIdOf = fn (Syllabus $syllabus): string => $syllabus->parallel->scheduledSubject->asignatura_id;
         $subjects = Subject::query()
-            ->whereKey($syllabi->pluck('asignatura_id')->unique()->values()->all())
+            ->whereKey($syllabi->map($subjectIdOf)->unique()->values()->all())
             ->with('requirements.requirement')
             ->get()
             ->keyBy('id');
 
         foreach ($syllabi as $syllabus) {
-            $subject = $subjects->get($syllabus->asignatura_id);
+            $subject = $subjects->get($subjectIdOf($syllabus));
             if (! $subject instanceof Subject) {
                 continue;
             }
@@ -300,8 +301,8 @@ final class InProgressWork
     {
         return Syllabus::query()->where('estado', '!=', 'aprobado')
             ->whereDoesntHave('approvals')
-            ->when($subjectId !== null, fn (Builder $query) => $query->where('asignatura_id', $subjectId))
-            ->when($subjectIds !== null, fn (Builder $query) => $query->whereIn('asignatura_id', $subjectIds))
+            ->when($subjectId !== null, fn (Builder $query) => $query->forSubjects([$subjectId]))
+            ->when($subjectIds !== null, fn (Builder $query) => $query->forSubjects($subjectIds))
             ->whereHas('convocation', fn (Builder $query) => $query
                 ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
                 ->whereHas('process', fn (Builder $process) => $process

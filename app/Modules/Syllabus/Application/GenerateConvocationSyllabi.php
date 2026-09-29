@@ -88,7 +88,6 @@ final class GenerateConvocationSyllabi
         $syllabus = Syllabus::query()->create([
             'convocatoria_id' => $convocation->id,
             'paralelo_id' => $parallel->id,
-            'asignatura_id' => $scheduledSubject->subject->id,
             'contexto_academico' => $this->academicContext->build($scheduledSubject),
             'estado' => 'sin_iniciar',
         ]);

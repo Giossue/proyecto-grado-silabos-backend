@@ -84,7 +84,7 @@ class AiAssistanceTest extends TestCase
         $source = $this->legacySource();
         $document = AiDocument::query()->create(['contenido_documento' => 'NO ENVIAR: contenido externo del índice.',
             'metadatos_documento' => ['fuente_academica_id' => $source->id, 'carrera_id' => $source->carrera_id]]);
-        Subject::query()->whereKey($this->syllabus->asignatura_id)->update(['nombre' => 'NOMBRE VIVO MODIFICADO']);
+        Subject::query()->whereKey($this->syllabus->subject->id)->update(['nombre' => 'NOMBRE VIVO MODIFICADO']);
         DB::enableQueryLog();
         $items = app(BuildSyllabusChatContext::class)->build($this->syllabus->fresh());
         $queries = implode(' ', array_column(DB::getQueryLog(), 'query'));
@@ -250,7 +250,7 @@ class AiAssistanceTest extends TestCase
             'values' => ['resultados_aprendizaje' => ['Evalúa la calidad del software.']], 'evidence' => []];
         $convocation = Convocation::query()->create(['carrera_id' => $scheduled->subject->carrera_id, 'proceso_id' => $this->openSyllabusProcess($template->id)->id, 'estado' => 'abierta']);
         $this->syllabus = Syllabus::query()->create(['convocatoria_id' => $convocation->id, 'paralelo_id' => $parallel->id,
-            'asignatura_id' => $scheduled->asignatura_id, 'contexto_academico' => $context, 'estado' => 'borrador', 'version_bloqueo' => 0, 'iniciado_en' => now()]);
+            'contexto_academico' => $context, 'estado' => 'borrador', 'version_bloqueo' => 0, 'iniciado_en' => now()]);
         FieldValue::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $this->planning->id, 'heredado' => false,
             'valor' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Tema de unidad existente']]]]]]);
         FieldValue::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $private->id,

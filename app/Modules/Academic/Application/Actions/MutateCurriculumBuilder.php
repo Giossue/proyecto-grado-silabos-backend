@@ -137,7 +137,7 @@ class MutateCurriculumBuilder
                 ->findOrFail($subjectId);
 
             $scheduledSubjects = $subject->scheduledSubjects()->count();
-            $syllabi = Syllabus::query()->where('asignatura_id', $subject->id)->count();
+            $syllabi = Syllabus::query()->forSubjects([$subject->id])->count();
             if ($scheduledSubjects > 0 || $syllabi > 0) {
                 $blockers = [];
                 if ($scheduledSubjects > 0) {

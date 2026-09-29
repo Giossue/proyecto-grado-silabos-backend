@@ -561,14 +561,14 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame(9, data_get($syllabus->fresh()->contexto_academico, 'curriculum.cycle_count'));
         $this->assertSame(9, $career->fresh()->cantidad_ciclos_malla);
 
-        $other = Subject::query()->findOrFail($syllabus->asignatura_id)->replicate();
+        $other = Subject::query()->findOrFail($syllabus->subject->id)->replicate();
         $other->codigo_asignatura = 'SW-699';
         $other->nombre = 'Materia correquisito';
         $other->orden_en_ciclo = 99;
         $other->save();
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.curriculum.requirements.store', $career->id), [
-                'subject_id' => $syllabus->asignatura_id,
+                'subject_id' => $syllabus->subject->id,
                 'requirement_id' => $other->id,
                 'type' => 'correquisito',
             ])
@@ -584,7 +584,7 @@ class SyllabusProcessTest extends TestCase
         $convocation = $this->openedConvocation();
         $career = Career::query()->firstOrFail();
         $syllabus = Syllabus::query()->firstOrFail();
-        $subject = Subject::query()->findOrFail($syllabus->asignatura_id);
+        $subject = Subject::query()->findOrFail($syllabus->subject->id);
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección del nombre de una materia.'])
             ->assertSuccessful();

@@ -434,7 +434,6 @@ class ReviewWorkflowTest extends TestCase
         $otherSyllabus = Syllabus::query()->create([
             'convocatoria_id' => $syllabus->convocatoria_id,
             'paralelo_id' => $otherParallel->id,
-            'asignatura_id' => $syllabus->asignatura_id,
             'estado' => 'en_revision',
             'version_bloqueo' => 1,
             'iniciado_en' => now(),

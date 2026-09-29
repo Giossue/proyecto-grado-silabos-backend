@@ -5,6 +5,7 @@ namespace App\Modules\Syllabus\Infrastructure\Persistence\Models;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
+use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
@@ -27,7 +28,8 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
  * @property CarbonImmutable|null $iniciado_en
  * @property CarbonImmutable|null $guardado_en
  * @property-read Convocation $convocation
- * @property-read Subject $subject
+ * @property-read Subject $subject Materia del paralelo (derivada, I-164).
+ * @property-read ScheduledSubject $scheduledSubject
  * @property-read Career $career
  * @property-read Parallel $parallel
  * @property string $paralelo_id
@@ -47,7 +49,7 @@ class Syllabus extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'convocatoria_id', 'paralelo_id', 'asignatura_id', 'estado',
+        'convocatoria_id', 'paralelo_id', 'estado',
         'contexto_academico', 'version_bloqueo', 'iniciado_en', 'guardado_en',
     ];
 
@@ -82,10 +84,30 @@ class Syllabus extends Model
         return $this->belongsTo(Convocation::class, 'convocatoria_id');
     }
 
-    /** @return BelongsTo<Subject, $this> */
-    public function subject(): BelongsTo
+    /** @return HasOneThrough<ScheduledSubject, Parallel, $this> Programación a la que pertenece el paralelo. */
+    public function scheduledSubject(): HasOneThrough
     {
-        return $this->belongsTo(Subject::class, 'asignatura_id');
+        return $this->hasOneThrough(ScheduledSubject::class, Parallel::class, 'id', 'id', 'paralelo_id', 'programacion_asignatura_id');
+    }
+
+    // La materia sale del paralelo (I-164): ya no se guarda en el sílabo.
+    public function getSubjectAttribute(): Subject
+    {
+        $this->loadMissing('parallel.scheduledSubject.subject');
+
+        return $this->parallel->scheduledSubject->subject;
+    }
+
+    /**
+     * Sílabos de estas materias, a través de su paralelo.
+     *
+     * @param  Builder<Syllabus>  $query
+     * @param  list<string>  $subjectIds
+     * @return Builder<Syllabus>
+     */
+    public function scopeForSubjects(Builder $query, array $subjectIds): Builder
+    {
+        return $query->whereHas('parallel.scheduledSubject', fn (Builder $scheduled) => $scheduled->whereIn('asignatura_id', $subjectIds));
     }
 
     /** @return HasOneThrough<Career, Convocation, $this> */

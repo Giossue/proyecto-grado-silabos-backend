@@ -365,7 +365,6 @@ UNIQUE (carrera_id, proceso_id)
 id UUID (PK)
 convocatoria_id UUID (FK → convocatorias_carreras.id) NOT NULL
 paralelo_id UUID (FK → paralelos.id) NOT NULL
-asignatura_id UUID (FK → asignaturas.id) NOT NULL
 estado_silabo VARCHAR NOT NULL
 version_bloqueo INTEGER NOT NULL
 iniciado_en TIMESTAMPTZ NULL
@@ -377,7 +376,8 @@ plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
 `UNIQUE (convocatoria_id, paralelo_id)`. La carrera se obtiene de
 `convocatorias_carreras.carrera_id` y la materia programada de
 `paralelos.programacion_asignatura_id`; I-131 (`000099`) retiró `alcances_silabo` y
-`silabos.carrera_id`.
+`silabos.carrera_id`, e I-164 (`000160`) retiró `silabos.asignatura_id`, que duplicaba la
+materia del paralelo.
 
 ## docentes_vigentes_silabo (vista)
 
