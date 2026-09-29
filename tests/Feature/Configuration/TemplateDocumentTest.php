@@ -342,6 +342,42 @@ class TemplateDocumentTest extends TestCase
         ));
     }
 
+    public function test_conditions_are_defined_on_the_sheet_marks(): void
+    {
+        // I-158: «Pedir solo si…» vive en la ficha de la hoja, no en Propiedades.
+        $template = $this->template();
+        $section = $template->sections()->firstWhere('clave', 'etica');
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id, 'key' => 'practicas', 'label' => 'Prácticas', 'content_type' => 'template',
+        ])->assertSuccessful();
+        $block = $template->fresh()->blocks()->firstWhere('clave', 'practicas');
+        $sheet = fn (?array $showWhen): array => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [
+            ['type' => 'text', 'text' => '¿Hay prácticas? '],
+            ['type' => 'field', 'attrs' => ['key' => 'hay_practicas', 'label' => 'Hay prácticas', 'kind' => 'seleccion_unica', 'options' => ['Sí', 'No']]],
+            ['type' => 'text', 'text' => ' Detalle: '],
+            ['type' => 'field', 'attrs' => ['key' => 'detalle_practicas', 'label' => 'Detalle', 'kind' => 'texto_largo', 'showWhen' => $showWhen]],
+        ]]]];
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
+
+        // El Sí/No recién insertado ya sirve de condición en la misma edición.
+        $this->patchJson($url, ['document' => $sheet(['key' => 'hay_practicas', 'value' => 'Sí']), 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
+            ->assertSuccessful();
+        $detail = $template->fields()->where('clave', 'detalle_practicas')->sole();
+        $this->assertSame(['key' => 'hay_practicas', 'value' => 'Sí'], $detail->mostrar_si);
+        $this->assertNull($template->fields()->where('clave', 'hay_practicas')->sole()->mostrar_si);
+
+        // La hoja que ve Administración trae la condición en su ficha.
+        $shown = collect($this->getJson(route('api.v1.admin.template.show', $template))->json('template.sections'))
+            ->flatMap(fn (array $item): array => $item['blocks'])->firstWhere('key', 'practicas');
+        $this->assertSame(['key' => 'hay_practicas', 'value' => 'Sí'], TemplateDocument::nodes($shown['document'], 'field')[1]['attrs']['showWhen']);
+
+        $block = $block->fresh();
+        $this->patchJson($url, ['document' => $sheet(['key' => 'hay_practicas', 'value' => 'Quizá']), 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
+            ->assertJsonValidationErrors(['document' => 'El valor elegido no es una opción de esa parte.']);
+        $this->patchJson($url, ['document' => $sheet(null), 'fingerprint' => SaveTemplateDocument::fingerprint($block)])->assertSuccessful();
+        $this->assertNull($detail->fresh()->mostrar_si);
+    }
+
     public function test_cell_style_uses_global_typography_and_ignores_legacy_cell_size(): void
     {
         $document = $this->document();
