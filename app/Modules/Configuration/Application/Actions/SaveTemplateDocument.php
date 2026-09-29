@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -128,151 +127,8 @@ final class SaveTemplateDocument
                 }
                 $toCreate[$key] = $definition;
             }
-            foreach (TemplateDocument::nodes($normalized, 'table') as $table) {
-                $key = $table['attrs']['repeatKey'] ?? null;
-                if ($key === null || isset($fields[$key])) {
-                    continue;
-                }
-                $label = $table['attrs']['repeatLabel'] ?? null;
-                if (! is_string($label) || $label === ''
-                    || FieldDefinition::query()->where('plantilla_id', $block->plantilla_id)->where('clave', $key)->exists()) {
-                    TemplateDocument::fail('No se reconoce el origen de las filas de la tabla.');
-                }
-                $definition = [
-                    'key' => $key,
-                    'label' => $label,
-                    'kind' => 'repetible',
-                    'options' => null,
-                ];
-                if (isset($toCreate[$key]) && $toCreate[$key] !== $definition) {
-                    TemplateDocument::fail('Dos partes distintas tienen el mismo nombre. Cambie el nombre de una.');
-                }
-                $toCreate[$key] = $definition;
-                $labels[$key] = $label;
-            }
             $configuration = $block->configuracion ?? [];
             $configuration['options_sources'] = array_filter($optionSources, static fn (array $sources): bool => $sources !== []);
-            $layout = TableLayout::fromBlock($block);
-            if ($layout === null && collect(TemplateDocument::nodes($normalized, 'table'))->contains(
-                fn (array $table): bool => ($table['attrs']['repeatKey'] ?? null) !== null,
-            )) {
-                $layout = TableLayout::default();
-            }
-            $columnKeys = [];
-            $headerKeys = [];
-            $summedKeys = [];
-            $hasTotalRow = false;
-            $groupByUnit = (bool) ($layout['repeat']['enabled'] ?? false);
-            $visualStructure = false;
-            foreach (TemplateDocument::nodes($normalized, 'table') as $table) {
-                $key = $table['attrs']['repeatKey'];
-                if ($key === null) {
-                    if (TemplateDocument::nodes($table, 'column') !== []) {
-                        TemplateDocument::fail('Las partes de fila deben estar dentro de su tabla.');
-                    }
-
-                    continue;
-                }
-                $existingRepeatField = isset($fields[$key]) && $fields[$key]->tipo === 'repetible';
-                $newRepeatField = ($toCreate[$key]['kind'] ?? null) === 'repetible';
-                if ((! $existingRepeatField && ! $newRepeatField) || $layout === null) {
-                    TemplateDocument::fail('No se reconoce el origen de las filas de la tabla.');
-                }
-                if (is_bool($table['attrs']['groupByUnit'] ?? null)) {
-                    $groupByUnit = $table['attrs']['groupByUnit'];
-                }
-                $visualStructure = $visualStructure || ($table['attrs']['visualStructure'] ?? false) === true;
-                $used[] = $key;
-                $hasRecords = false;
-                $recordKeys = [];
-                $totalKeys = [];
-                foreach ($table['content'] as $row) {
-                    $role = $row['attrs']['rowRole'];
-                    $hasRecords = $hasRecords || $role === 'record';
-                    $hasTotalRow = $hasTotalRow || $role === 'total';
-                    foreach (TemplateDocument::nodes($row, 'column') as $node) {
-                        $attrs = $node['attrs'];
-                        if ($role === 'unit') {
-                            $headerKeys[$attrs['key']] = ['key' => $attrs['key'], 'label' => $attrs['label']];
-                        } elseif (in_array($role, ['record', 'total'], true)) {
-                            if (! in_array($attrs['kind'], ['texto_largo', 'numero'], true)) {
-                                TemplateDocument::fail('Las columnas admiten texto o número.');
-                            }
-                            // Un total solo suma números; un texto ahí quedaría siempre vacío.
-                            if ($role === 'total' && $attrs['kind'] !== 'numero') {
-                                TemplateDocument::fail('La fila de totales solo admite datos numéricos.');
-                            }
-                            $knownColumn = $columnKeys[$attrs['key']] ?? null;
-                            if ($knownColumn !== null
-                                && ($knownColumn['label'] !== $attrs['label'] || $knownColumn['kind'] !== $attrs['kind'])) {
-                                TemplateDocument::fail('Una columna debe mantener el mismo nombre y tipo en toda la tabla.');
-                            }
-                            if ($knownColumn !== null
-                                && ($knownColumn['role'] ?? null) !== null
-                                && ($attrs['role'] ?? null) !== null
-                                && $knownColumn['role'] !== $attrs['role']) {
-                                TemplateDocument::fail('Una columna debe conservar la misma función en toda la tabla.');
-                            }
-                            if ($role === 'total' && ! TableLayout::summable('number', $attrs['role'] ?? null, $attrs['key'], $attrs['label'])) {
-                                TemplateDocument::fail("La columna «{$attrs['label']}» no se suma; quítela de la fila de totales.");
-                            }
-                            $columnKeys[$attrs['key']] = [
-                                ...($knownColumn ?? $attrs),
-                                'role' => $attrs['role'] ?? $knownColumn['role'] ?? null,
-                                'sum' => $role === 'total'
-                                    ? true
-                                    : ($attrs['sum'] ?? $knownColumn['sum'] ?? null),
-                            ];
-                            if ($role === 'record') {
-                                $recordKeys[] = $attrs['key'];
-                            } else {
-                                $totalKeys[] = $attrs['key'];
-                                $summedKeys[] = $attrs['key'];
-                            }
-                        } else {
-                            TemplateDocument::fail('Una columna debe estar en una fila de datos, de unidad o de total.');
-                        }
-                    }
-                }
-                if (! $hasRecords || $recordKeys === []) {
-                    TemplateDocument::fail('La tabla necesita al menos una fila que llene el docente.');
-                }
-                if (array_diff($totalKeys, $recordKeys) !== [] || array_intersect(array_keys($headerKeys), $recordKeys) !== []) {
-                    TemplateDocument::fail('Los totales deben sumar columnas que llena el docente, y las columnas de unidad necesitan su propio nombre.');
-                }
-            }
-            if ($layout !== null && $columnKeys !== []) {
-                $known = array_column($layout['columns'], null, 'key');
-                $columns = [];
-                foreach ($columnKeys as $key => $attrs) {
-                    $type = $attrs['kind'] === 'numero' ? 'number' : 'text';
-                    if (isset($known[$key]) && $known[$key]['type'] !== $type) {
-                        TemplateDocument::fail('No cambie el tipo de una columna que ya existe; agregue una columna nueva.');
-                    }
-                    $columns[] = [
-                        'key' => $key, 'label' => $attrs['label'], 'type' => $type,
-                        'group' => $known[$key]['group'] ?? null,
-                        'band' => $known[$key]['band'] ?? null,
-                        'sum' => $visualStructure
-                            ? in_array($key, $summedKeys, true)
-                            : ($attrs['sum'] ?? $known[$key]['sum'] ?? false),
-                        'width' => $known[$key]['width'] ?? null,
-                        'role' => $attrs['role'] ?? $known[$key]['role'] ?? null,
-                    ];
-                }
-                $configuration['table'] = TableLayout::normalize([
-                    ...$layout, 'columns' => $columns,
-                    'header_fields' => array_values($headerKeys),
-                    'totals' => [
-                        ...$layout['totals'],
-                        'enabled' => $visualStructure ? $hasTotalRow : $layout['totals']['enabled'],
-                    ],
-                    'repeat' => [
-                        ...$layout['repeat'],
-                        'enabled' => $visualStructure ? $groupByUnit : $layout['repeat']['enabled'],
-                    ],
-                ]);
-            }
             foreach ($labels as $key => $label) {
                 $fields->get($key)?->update(['etiqueta' => $label]);
             }
@@ -319,7 +175,7 @@ final class SaveTemplateDocument
     /** @param array<string, mixed> $node */
     private static function hasContent(array $node): bool
     {
-        if (in_array($node['type'] ?? null, ['text', 'variable', 'field', 'column', 'table'], true)) {
+        if (in_array($node['type'] ?? null, ['text', 'variable', 'field', 'table'], true)) {
             return true;
         }
         foreach ((array) ($node['content'] ?? []) as $child) {
@@ -383,7 +239,7 @@ final class SaveTemplateDocument
             }
         }
         $visit = function (array $node) use (&$visit, $labels, $sources): array {
-            if (in_array($node['type'] ?? null, ['field', 'column'], true)
+            if (($node['type'] ?? null) === 'field'
                 && isset($labels[$node['attrs']['key'] ?? null])) {
                 $node['attrs']['label'] = $labels[$node['attrs']['key']];
             }

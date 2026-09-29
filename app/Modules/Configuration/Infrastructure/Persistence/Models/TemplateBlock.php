@@ -2,7 +2,6 @@
 
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
-use App\Modules\Configuration\Domain\TableLayout;
 use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -22,7 +21,7 @@ final class TemplateBlock implements UrlRoutable
 
     public string $clave;
 
-    /** Derivado de `configuracion.content_type`; el JSON del bloque no lo guarda (I-138). */
+    /** Siempre `narrativa` desde I-156; el JSON del bloque no lo guarda (I-138). */
     public string $tipo;
 
     public string $titulo;
@@ -116,22 +115,11 @@ final class TemplateBlock implements UrlRoutable
         return $this->configuredContentType() ?? 'text';
     }
 
-    /** Tipo de almacenamiento del bloque: sus filas se guardan como repetibles o no. */
-    public static function kindFor(string $contentType): string
-    {
-        return in_array($contentType, ['table', 'bulleted_list', 'numbered_list'], true) ? 'repetible' : 'narrativa';
-    }
-
     public function pageOrientation(): ?string
     {
         $orientation = $this->configuracion['page_orientation'] ?? null;
-        if (in_array($orientation, ['portrait', 'landscape'], true)) {
-            return $orientation;
-        }
 
-        $layout = TableLayout::fromBlock($this);
-
-        return $layout !== null && TableLayout::isPlanning($layout) ? 'landscape' : null;
+        return in_array($orientation, ['portrait', 'landscape'], true) ? $orientation : null;
     }
 
     /** @return array<string, mixed> */
@@ -190,7 +178,8 @@ final class TemplateBlock implements UrlRoutable
         $this->clave = (string) $data['clave'];
         $this->titulo = (string) $data['titulo'];
         $this->configuracion = is_array($data['configuracion'] ?? null) ? $data['configuracion'] : [];
-        $this->tipo = self::kindFor($this->contentType());
+        // Sin filas repetibles (I-156), todo bloque se guarda como contenido narrativo.
+        $this->tipo = 'narrativa';
         $this->posicion = (int) ($data['posicion'] ?? 1);
     }
 }

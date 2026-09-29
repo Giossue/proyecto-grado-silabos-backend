@@ -25,7 +25,7 @@ final class TemplateDocument
             self::fail('El diseño pasa el límite de 2 MB. Divida el contenido en varias secciones.');
         }
         $count = 0;
-        $visit = function (mixed $raw, string $parent, int $depth, bool $insideTable = false, bool $repeated = false) use (&$visit, &$count, $variables): array {
+        $visit = function (mixed $raw, string $parent, int $depth, bool $insideTable = false) use (&$visit, &$count, $variables): array {
             if (++$count > 6000 || $depth > 12 || ! is_array($raw)) {
                 self::fail('El diseño es demasiado grande o está mal formado.');
             }
@@ -33,7 +33,7 @@ final class TemplateDocument
             $allowed = match ($parent) {
                 '' => ['doc'],
                 'doc', 'tableCell', 'tableHeader' => ['paragraph', 'table', 'bulletList', 'orderedList'],
-                'paragraph' => ['text', 'hardBreak', 'variable', 'field', 'column'],
+                'paragraph' => ['text', 'hardBreak', 'variable', 'field'],
                 'table' => ['tableRow'],
                 'tableRow' => ['tableCell', 'tableHeader'],
                 'bulletList', 'orderedList' => ['listItem'],
@@ -66,10 +66,7 @@ final class TemplateDocument
                     $node['attrs']['listStyle'] = $listStyle;
                 }
             }
-            if (in_array($type, ['field', 'column'], true)) {
-                if ($type === 'column' && ! $repeated) {
-                    self::fail('Las partes de fila deben estar dentro de su tabla.');
-                }
+            if ($type === 'field') {
                 $key = $attrs['key'] ?? '';
                 $label = $attrs['label'] ?? '';
                 $kind = $attrs['kind'] ?? 'texto_largo';
@@ -78,7 +75,7 @@ final class TemplateDocument
                 $kind = $kind === 'markdown' ? 'texto_largo' : $kind;
                 if (! is_string($key) || ! preg_match('/^[a-z][a-z0-9_]{0,119}$/D', $key)
                     || ! is_string($label) || trim($label) === '' || mb_strlen($label) > 180
-                    || ! in_array($kind, [...self::FIELD_TYPES, 'repetible', 'seleccion_unica', 'referencia_maestra', 'booleano'], true)) {
+                    || ! in_array($kind, [...self::FIELD_TYPES, 'referencia_maestra', 'booleano'], true)) {
                     self::fail('Cada parte necesita un nombre y un tipo válido.');
                 }
                 $node['attrs'] = ['key' => $key, 'label' => trim($label), 'kind' => $kind];
@@ -89,7 +86,7 @@ final class TemplateDocument
                     self::fail('Seleccione hasta veinte listas curriculares como origen de las opciones.');
                 }
                 foreach ($optionsSources as $source) {
-                    if ($type !== 'field' || ! $choiceType || ! is_string($source)
+                    if (! $choiceType || ! is_string($source)
                         || ! str_starts_with($source, 'curricular_') || ! in_array($source, $variables, true)) {
                         self::fail('Seleccione una lista curricular válida como origen de las opciones.');
                     }
@@ -131,18 +128,6 @@ final class TemplateDocument
                     self::fail('Formato de lista no válido.');
                 }
                 $node['attrs']['listStyle'] = $listStyle;
-                if ($type === 'column') {
-                    $role = $attrs['role'] ?? null;
-                    $sum = $attrs['sum'] ?? null;
-                    if ($role !== null && (! is_string($role) || ! in_array($role, TableLayout::COLUMN_ROLES, true))) {
-                        self::fail('Función de columna no permitida.');
-                    }
-                    if ($sum !== null && ! is_bool($sum)) {
-                        self::fail('Totalización de columna no válida.');
-                    }
-                    $node['attrs']['role'] = $role;
-                    $node['attrs']['sum'] = $sum;
-                }
             }
             if ($type === 'paragraph') {
                 $align = $attrs['textAlign'] ?? 'left';
@@ -151,44 +136,14 @@ final class TemplateDocument
                 }
                 $node['attrs'] = ['textAlign' => $align];
             }
-            if ($type === 'table') {
-                $key = $attrs['repeatKey'] ?? null;
-                if ($key !== null && (! is_string($key) || ! preg_match('/^[a-z][a-z0-9_]{0,119}$/D', $key))) {
-                    self::fail('La tabla no tiene una parte válida.');
-                }
-                $repeatLabel = $attrs['repeatLabel'] ?? null;
-                if ($repeatLabel !== null && ($key === null || ! is_string($repeatLabel) || trim($repeatLabel) === '' || mb_strlen($repeatLabel) > 180)) {
-                    self::fail('La tabla repetible no tiene un nombre válido.');
-                }
-                $groupByUnit = $attrs['groupByUnit'] ?? null;
-                if ($groupByUnit !== null && ! is_bool($groupByUnit)) {
-                    self::fail('La agrupación por unidades no es válida.');
-                }
-                $visualStructure = $attrs['visualStructure'] ?? null;
-                if ($visualStructure !== null && ! is_bool($visualStructure)) {
-                    self::fail('El origen visual de la estructura no es válido.');
-                }
-                $node['attrs'] = [
-                    'repeatKey' => $key,
-                    'groupByUnit' => $groupByUnit,
-                    'visualStructure' => $visualStructure,
-                ];
-                if ($repeatLabel !== null) {
-                    $node['attrs']['repeatLabel'] = trim($repeatLabel);
-                }
-                if ($insideTable && $key !== null) {
-                    self::fail('Una tabla repetible no puede estar dentro de otra tabla.');
-                }
-                $insideTable = true;
-                $repeated = $key !== null;
+            // Las filas que agregaba el docente ya no existen (I-156): una tabla es fija.
+            if ($type === 'table' && ($attrs['repeatKey'] ?? null) !== null) {
+                self::fail('La tabla usa filas que agrega el docente; use Texto libre para eso.');
             }
-            if ($type === 'tableRow') {
-                $role = $attrs['rowRole'] ?? 'fixed';
-                if (! in_array($role, ['fixed', 'record', 'unit', 'total'], true)) {
-                    self::fail('Tipo de fila no permitido.');
-                }
-                $node['attrs'] = ['rowRole' => $role];
+            if ($type === 'tableRow' && ! in_array($attrs['rowRole'] ?? 'fixed', [null, 'fixed'], true)) {
+                self::fail('La tabla usa filas que agrega el docente; use Texto libre para eso.');
             }
+            $insideTable = $insideTable || $type === 'table';
             if (in_array($type, ['tableCell', 'tableHeader'], true)) {
                 $span = $attrs['colspan'] ?? 1;
                 $rows = $attrs['rowspan'] ?? 1;
@@ -238,7 +193,7 @@ final class TemplateDocument
                 ];
             }
             if (isset($raw['marks'])) {
-                if (! in_array($type, ['text', 'variable', 'field', 'column'], true) || ! is_array($raw['marks']) || count($raw['marks']) > 4) {
+                if (! in_array($type, ['text', 'variable', 'field'], true) || ! is_array($raw['marks']) || count($raw['marks']) > 4) {
                     self::fail('Formato de texto no válido.');
                 }
                 $marks = [];
@@ -277,7 +232,7 @@ final class TemplateDocument
                 if (! is_array($raw['content']) || ! array_is_list($raw['content'])) {
                     self::fail('Contenido del diseño no válido.');
                 }
-                $node['content'] = array_map(fn ($child) => $visit($child, $type, $depth + 1, $insideTable, $repeated), $raw['content']);
+                $node['content'] = array_map(fn ($child) => $visit($child, $type, $depth + 1, $insideTable), $raw['content']);
             }
             if ($type === 'tableRow') {
                 $node['content'] ??= [];
@@ -316,9 +271,6 @@ final class TemplateDocument
                     self::fail('Una celda combinada sale de la tabla.');
                 }
                 for ($y = $r; $y < $r + $height; $y++) {
-                    if ($table['attrs']['repeatKey'] !== null && $rows[$y]['attrs']['rowRole'] !== $row['attrs']['rowRole']) {
-                        self::fail('Combine dentro de la cabecera o dentro de las filas repetibles; no entre ambas, porque su cantidad varía por docente.');
-                    }
                     for ($x = $column; $x < $column + $span; $x++) {
                         if (isset($occupied[$y][$x])) {
                             self::fail('Hay celdas combinadas superpuestas.');

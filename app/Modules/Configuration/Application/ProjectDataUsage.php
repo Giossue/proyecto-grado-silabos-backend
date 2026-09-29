@@ -54,7 +54,7 @@ final class ProjectDataUsage
             foreach (TemplateDocument::nodes($document, 'variable') as $node) {
                 $variables[] = $node['attrs']['id'] ?? null;
             }
-            foreach ([...TemplateDocument::nodes($document, 'field'), ...TemplateDocument::nodes($document, 'column')] as $node) {
+            foreach (TemplateDocument::nodes($document, 'field') as $node) {
                 array_push($variables, ...CurricularFieldOptions::fromAttributes($node['attrs'] ?? []));
             }
         } else {

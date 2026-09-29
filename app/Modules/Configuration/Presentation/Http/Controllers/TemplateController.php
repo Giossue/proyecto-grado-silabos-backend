@@ -21,7 +21,6 @@ use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -139,7 +138,6 @@ class TemplateController extends Controller
                             'type' => $block->tipo,
                             'content_type' => $block->contentType(),
                             'page_orientation' => $block->pageOrientation(),
-                            'table' => TableLayout::fromBlock($block),
                             'document' => $block->configuracion['document'] ?? null,
                             'fingerprint' => SaveTemplateDocument::fingerprint($block),
                             'fields' => $fields

@@ -31,8 +31,8 @@ class RevisionDiff
                 'label' => $new['label'] ?? $old['label'] ?? '',
                 'type' => $new['type'] ?? $old['type'] ?? '',
                 'change' => $old === null ? 'added' : ($new === null ? 'removed' : 'modified'),
-                'before' => $old === null ? null : ['value' => $old['value'], 'rows' => $old['rows']],
-                'after' => $new === null ? null : ['value' => $new['value'], 'rows' => $new['rows']],
+                'before' => $old === null ? null : ['value' => $old['value']],
+                'after' => $new === null ? null : ['value' => $new['value']],
             ];
         }
 
@@ -60,8 +60,6 @@ class RevisionDiff
                     if ($sectionKey === '' || $fieldKey === '') {
                         continue;
                     }
-                    $rows = $this->arrayList($field['rows'] ?? null);
-                    usort($rows, fn (array $left, array $right): int => ((int) ($left['position'] ?? 0)) <=> ((int) ($right['position'] ?? 0)));
                     $fields["{$sectionKey}.{$fieldKey}"] = [
                         'section_key' => $sectionKey,
                         'section_title' => $sectionTitle,
@@ -69,7 +67,6 @@ class RevisionDiff
                         'label' => is_string($field['label'] ?? null) ? $field['label'] : $fieldKey,
                         'type' => is_string($field['type'] ?? null) ? $field['type'] : '',
                         'value' => $field['value'] ?? null,
-                        'rows' => $rows,
                     ];
                 }
             }

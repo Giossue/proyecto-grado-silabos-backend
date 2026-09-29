@@ -31,7 +31,7 @@ class SyllabusDocumentContent
             foreach ($this->arrayList($section['blocks'] ?? null) as $block) {
                 $lines[] = '  '.$this->string($block['title'] ?? null, 'Bloque');
                 if (is_array($block['document'] ?? null)) {
-                    $resolved = TemplateDocumentResolver::resolve($block['document'], $this->arrayList($block['fields'] ?? null), $input->snapshot['template_variables'] ?? [], $block['table'] ?? null);
+                    $resolved = TemplateDocumentResolver::resolve($block['document'], $this->arrayList($block['fields'] ?? null), $input->snapshot['template_variables'] ?? []);
                     foreach (TemplateDocument::nodes($resolved, 'paragraph') as $paragraph) {
                         $lines[] = implode('', array_column(TemplateDocument::nodes($paragraph, 'text'), 'text'));
                     }
@@ -41,16 +41,7 @@ class SyllabusDocumentContent
                 foreach ($this->arrayList($block['fields'] ?? null) as $field) {
                     $label = $this->string($field['label'] ?? null, 'Campo');
                     $hidden = ($field['hidden'] ?? false) === true;
-                    $rows = $hidden ? [] : $this->arrayList($field['rows'] ?? null);
-                    if ($rows === []) {
-                        $lines[] = '    '.$label.': '.($hidden ? '' : $this->display($field['value'] ?? null));
-
-                        continue;
-                    }
-                    $lines[] = '    '.$label.':';
-                    foreach ($rows as $index => $row) {
-                        $lines[] = '      '.($index + 1).'. '.$this->display($row['data'] ?? null);
-                    }
+                    $lines[] = '    '.$label.': '.($hidden ? '' : $this->display($field['value'] ?? null));
                 }
             }
             $lines[] = '';

@@ -3,17 +3,12 @@
 namespace App\Modules\Documents\Infrastructure\Rendering;
 
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
-use App\Modules\Configuration\Domain\TableLayout;
-use App\Modules\Syllabus\Application\AcademicContextValues;
 use PhpOffice\PhpWord\Element\Section;
 
-/** Contenido de cada campo: documento de plantilla, tabla, lista o texto. */
+/** Contenido de cada campo: documento de plantilla o texto. */
 final class WordFieldRenderer
 {
-    public function __construct(
-        private readonly WordRenderContext $context,
-        private readonly WordDataTable $tables,
-    ) {}
+    public function __construct(private readonly WordRenderContext $context) {}
 
     /**
      * Una parte sin nombre en la plantilla no imprime subtítulo.
@@ -43,15 +38,8 @@ final class WordFieldRenderer
             );
         }
 
-        $contentType = WordValues::string($container['content_type'] ?? null, 'text');
         if (is_array($container['document'] ?? null)) {
-            $resolved = TemplateDocumentResolver::resolve(
-                $container['document'],
-                $fields,
-                $this->context->templateVariables,
-                $container['table'] ?? null,
-                $this->planningExpectations(),
-            );
+            $resolved = TemplateDocumentResolver::resolve($container['document'], $fields, $this->context->templateVariables);
             (new TemplateDocumentWord(
                 $this->context->hasAppearance ? (string) $this->context->appearance['body_alignment'] : null,
                 $this->context->hasAppearance ? $this->context->color('table_header_background') : null,
@@ -61,29 +49,6 @@ final class WordFieldRenderer
 
             return;
         }
-        $rows = WordValues::arrayList($field['rows'] ?? null);
-
-        if ($contentType === 'table' || ($rows !== [] && $contentType === 'text')) {
-            $layout = is_array($container['table'] ?? null)
-                ? TableLayout::normalize($container['table'])
-                : TableLayout::default();
-            $this->tables->render($section, $layout, $rows);
-
-            return;
-        }
-
-        if ($contentType === 'bulleted_list' || $contentType === 'numbered_list') {
-            $style = $contentType === 'numbered_list' ? 'silabo-numbers' : 'silabo-bullets';
-            if ($rows === []) {
-                $section->addText('Sin contenido', ['italic' => true, 'color' => '595959']);
-            }
-            foreach ($rows as $row) {
-                $section->addListItem(WordValues::cell(WordValues::rowData($row), 'texto'), 0, [], $style, ['spaceAfter' => 60]);
-            }
-
-            return;
-        }
-
         // Una parte oculta por «Mostrar solo si» no imprime valor.
         if (($field['hidden'] ?? false) === true) {
             return;
@@ -112,17 +77,5 @@ final class WordFieldRenderer
             }
             $section->addText($trimmed);
         }
-    }
-
-    /** @return array<string, mixed> */
-    private function planningExpectations(): array
-    {
-        return [
-            'teaching_weeks' => AcademicContextValues::scheduledSubject($this->context->academicContext, 'teaching_weeks'),
-            'credits' => data_get($this->context->academicContext, 'subject.credits'),
-            'hours_acd' => data_get($this->context->academicContext, 'subject.hours_ac'),
-            'hours_ape' => data_get($this->context->academicContext, 'subject.hours_pae'),
-            'hours_aa' => data_get($this->context->academicContext, 'subject.hours_aa'),
-        ];
     }
 }

@@ -7,34 +7,6 @@ use App\Modules\Configuration\Domain\FreeText;
 /** Lectura tolerante de los valores del snapshot para escribirlos en Word. */
 final class WordValues
 {
-    /** @param list<array<string, mixed>> $rows */
-    public static function sum(array $rows, string $key): string
-    {
-        $sum = 0.0;
-        foreach ($rows as $row) {
-            $value = $row[$key] ?? null;
-            if (is_numeric($value)) {
-                $sum += (float) $value;
-            }
-        }
-
-        return $sum == floor($sum) ? (string) (int) $sum : rtrim(rtrim(number_format($sum, 2, '.', ''), '0'), '.');
-    }
-
-    /** @return array<string, mixed> */
-    public static function rowData(mixed $row): array
-    {
-        $data = is_array($row) ? ($row['data'] ?? $row) : null;
-
-        return is_array($data) ? $data : [];
-    }
-
-    /** @param array<string, mixed> $data */
-    public static function cell(array $data, string $key): string
-    {
-        return self::display($data[$key] ?? null);
-    }
-
     public static function display(mixed $value): string
     {
         if ($value === null || $value === '') {

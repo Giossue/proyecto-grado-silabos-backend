@@ -3,7 +3,6 @@
 namespace App\Modules\Documents\Infrastructure\Rendering;
 
 use App\Modules\Configuration\Application\InstitutionalLogos;
-use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
@@ -19,7 +18,7 @@ use PhpOffice\PhpWord\SimpleType\TblWidth;
  * apariencia acotada se lee de la copia de la plantilla incluida en la revisión.
  *
  * Orquesta el documento (hojas, logos, títulos y pie) y delega cada campo en
- * `WordFieldRenderer`, que usa `WordDataTable`.
+ * `WordFieldRenderer`.
  */
 class SyllabusWordDocument
 {
@@ -39,10 +38,7 @@ class SyllabusWordDocument
                 ? $input->snapshot['academic_context']
                 : [],
         );
-        $fields = new WordFieldRenderer(
-            $this->context,
-            new WordDataTable($this->context),
-        );
+        $fields = new WordFieldRenderer($this->context);
         $title = TemplateTitleBlock::fromMapping($mapping)['text'];
         $margin = (int) round(Converter::cmToTwip((float) $this->context->appearance['margin_cm']));
         $pageWidth = $this->context->appearance['orientation'] === 'landscape' ? 15840 : 12240;
@@ -158,12 +154,6 @@ class SyllabusWordDocument
             $orientation = $block['page_orientation'] ?? null;
             if (in_array($orientation, ['portrait', 'landscape'], true)) {
                 return $orientation;
-            }
-            if (is_array($block['table'] ?? null)) {
-                $layout = TableLayout::normalize($block['table']);
-                if (TableLayout::isPlanning($layout)) {
-                    return 'landscape';
-                }
             }
         }
 

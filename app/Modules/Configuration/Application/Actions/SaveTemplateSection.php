@@ -3,9 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
-use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
@@ -46,61 +44,36 @@ class SaveTemplateSection
             $blocks = [];
             $fieldDefinitions = [];
 
+            // Formas de una parte nueva (I-156): Texto libre o Contenido de la plantilla.
             foreach ($this->fields($data) as $fieldPosition => $fieldData) {
                 $blockId = (string) Str::uuid();
-                $contentType = $this->stringValue($fieldData, 'content_type');
-                $configuration = ['content_type' => $contentType];
-                if ($contentType === 'table') {
-                    $configuration['table'] = TableLayout::default();
-                }
-                if ($contentType === 'fixed') {
-                    $configuration['document'] = TemplateDocumentDefaults::freeText();
-                }
-                // Formas de una parte nueva (I-156): Texto libre o Contenido de la plantilla.
                 $fieldKey = $this->stringValue($fieldData, 'key');
                 $fieldLabel = trim((string) ($fieldData['label'] ?? ''));
-                $blank = $contentType === 'template';
-                $freeText = $contentType === 'free_text';
-                if ($blank || $freeText) {
-                    $contentType = 'text';
-                    $configuration = ['content_type' => 'text', 'document' => $freeText
-                        ? TemplateDocumentDefaults::freeTextSheet($fieldKey, $fieldLabel !== '' ? $fieldLabel : $this->stringValue($data, 'title'))
-                        : TemplateDocumentDefaults::blankSheet('text')];
-                }
-                $sources = CurricularFieldOptions::fromAttributes($fieldData);
-                foreach ($sources as $source) {
-                    if ($contentType !== 'multiple_choice' || ! CurricularFieldOptions::sourceIsAllowed($source)) {
-                        throw ValidationException::withMessages(['options_source' => 'Seleccione una lista curricular para una pregunta de selección.']);
-                    }
-                    $configuration['options_sources'] = [$fieldKey => $sources];
-                }
+                $freeText = $this->stringValue($fieldData, 'content_type') === 'free_text';
+                $label = $fieldLabel !== '' ? $fieldLabel : $this->stringValue($data, 'title');
                 $blocks[] = [
                     'id' => $blockId,
                     'clave' => $fieldKey,
                     'titulo' => $fieldLabel,
-                    'configuracion' => $configuration,
+                    'configuracion' => ['content_type' => 'text', 'document' => $freeText
+                        ? TemplateDocumentDefaults::freeTextSheet($fieldKey, $label)
+                        : TemplateDocumentDefaults::blankSheet()],
                     'posicion' => $fieldPosition + 1,
                 ];
-                // El contenido fijo y la hoja vacía no tienen campos del docente.
-                if ($contentType === 'fixed' || $blank) {
+                // El Contenido de la plantilla no nace con preguntas del docente.
+                if (! $freeText) {
                     continue;
                 }
                 $fieldDefinitions[] = [
                     'plantilla_id' => $template->id,
                     'bloque_plantilla_id' => $blockId,
                     'clave' => $fieldKey,
-                    'etiqueta' => $freeText && $fieldLabel === '' ? $this->stringValue($data, 'title') : $fieldLabel,
-                    'tipo' => $freeText ? 'texto_libre' : match ($contentType) {
-                        'text' => 'texto_largo',
-                        'boolean' => 'booleano',
-                        'multiple_choice' => 'seleccion_multiple',
-                        default => 'repetible',
-                    },
+                    'etiqueta' => $label,
+                    'tipo' => 'texto_libre',
                     'ayuda' => $fieldData['help'] ?? null,
                     'heredado' => false,
                     'editable_docente' => true,
                     'ia_habilitada' => (bool) ($fieldData['ai_enabled'] ?? false),
-                    'opciones' => $sources === [] ? ($fieldData['options'] ?? null) : null,
                     'posicion' => 1,
                 ];
             }

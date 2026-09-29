@@ -8,7 +8,6 @@ use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -16,7 +15,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
-use App\Modules\Syllabus\Application\AcademicContextValues;
 use App\Modules\Syllabus\Application\Actions\StartDraft;
 use App\Modules\Syllabus\Application\Actions\SubmitSyllabus;
 use App\Modules\Syllabus\Application\Actions\UpdateDraftField;
@@ -24,14 +22,12 @@ use App\Modules\Syllabus\Application\Actions\ValidateDraft;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
 use App\Modules\Syllabus\Presentation\Http\Requests\SubmitSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\UpdateDraftFieldRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewSyllabiRequest;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -147,13 +143,6 @@ class SyllabusController extends Controller
             'message' => 'Borrador guardado.',
             'version_bloqueo' => $updated->version_bloqueo,
             'guardado_en' => $updated->guardado_en?->toIso8601String(),
-            // Misma forma que la carga del borrador (`id`, `data`, `position`): el
-            // editor reemplaza sus filas con esta respuesta y otra forma las borraba.
-            'rows' => $field->tipo === 'repetible'
-                ? $updated->rows()->where('definicion_campo_id', $field->id)->orderBy('posicion')->get(['id', 'datos', 'posicion'])
-                    ->map(fn (RepeatableRow $row): array => ['id' => $row->id, 'data' => $row->datos, 'position' => $row->posicion])
-                    ->values()
-                : [],
         ]);
     }
 
@@ -188,7 +177,7 @@ class SyllabusController extends Controller
     {
         $syllabus->load([
             'convocation.career', 'convocation.process.academicPeriod', 'subject', 'parallel', 'teachers:id,nombre,correo_electronico',
-            'values', 'rows',
+            'values',
             'validationRuns' => fn ($query) => $query->with('results')->latest('completado_en')->limit(1),
             'revisions' => fn ($query) => $query->with([
                 'submitter:id,nombre', 'approval.approver:id,nombre',
@@ -197,7 +186,6 @@ class SyllabusController extends Controller
             'reopenings' => fn ($query) => $query->with('reopener:id,nombre')->latest('reabierto_en'),
         ]);
         $values = $syllabus->values->keyBy('definicion_campo_id');
-        $rows = $syllabus->rows->groupBy('definicion_campo_id');
         $lastValidation = $syllabus->validationRuns->first();
         $template = SyllabusTemplate::institutional();
 
@@ -227,19 +215,8 @@ class SyllabusController extends Controller
                 ],
             ],
             'template_variables' => TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($syllabus), 'academic_context' => $syllabus->contexto_academico]),
-            'planning_expectations' => [
-                'teaching_weeks' => AcademicContextValues::scheduledSubject(
-                    $syllabus->contexto_academico ?? [],
-                    'teaching_weeks',
-                ) ?? $syllabus->convocation->process->academicPeriod->semanas_lectivas,
-                'credits' => data_get($syllabus->contexto_academico, 'subject.credits'),
-                'total_hours' => data_get($syllabus->contexto_academico, 'subject.total_hours'),
-                'hours_acd' => data_get($syllabus->contexto_academico, 'subject.hours_ac'),
-                'hours_ape' => data_get($syllabus->contexto_academico, 'subject.hours_pae'),
-                'hours_aa' => data_get($syllabus->contexto_academico, 'subject.hours_aa'),
-            ],
             'sections' => $template->sections
-                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, $rows, $syllabus->contexto_academico ?? []))
+                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, $syllabus->contexto_academico ?? []))
                 ->values(),
             'validation' => $lastValidation instanceof ValidationRun ? [
                 'completed_at' => $lastValidation->completado_en->toIso8601String(),
@@ -319,15 +296,14 @@ class SyllabusController extends Controller
 
     /**
      * @param  Collection<string, FieldValue>  $values
-     * @param  Collection<string, EloquentCollection<int, RepeatableRow>>  $rows
      * @param  array<string, mixed>  $academicContext
      * @return array<string, mixed>
      */
-    private function sectionPayload(TemplateSection $section, $values, $rows, array $academicContext): array
+    private function sectionPayload(TemplateSection $section, $values, array $academicContext): array
     {
         $blocks = [];
         foreach ($section->blocks as $block) {
-            $blocks[] = $this->blockPayload($block, $values, $rows, $academicContext);
+            $blocks[] = $this->blockPayload($block, $values, $academicContext);
         }
 
         return [
@@ -341,25 +317,16 @@ class SyllabusController extends Controller
 
     /**
      * @param  Collection<string, FieldValue>  $values
-     * @param  Collection<string, EloquentCollection<int, RepeatableRow>>  $rows
      * @param  array<string, mixed>  $academicContext
      * @return array<string, mixed>
      */
-    private function blockPayload(TemplateBlock $block, Collection $values, Collection $rows, array $academicContext): array
+    private function blockPayload(TemplateBlock $block, Collection $values, array $academicContext): array
     {
         $fields = [];
         foreach ($block->fields as $field) {
             // Un campo retirado del diseño ya no es parte del formulario (I-116).
             if (isset($block->configuracion['detached_fields'][$field->clave])) {
                 continue;
-            }
-            $fieldRows = [];
-            foreach ($rows->get($field->id) ?? [] as $row) {
-                $fieldRows[] = [
-                    'id' => $row->id,
-                    'data' => $row->datos,
-                    'position' => $row->posicion,
-                ];
             }
             $fields[] = [
                 'id' => $field->id,
@@ -378,7 +345,6 @@ class SyllabusController extends Controller
                 'ai_enabled' => $field->ia_habilitada
                     && in_array($field->tipo, ['texto_corto', 'texto_largo', 'texto_libre'], true),
                 'value' => $values->get($field->id)?->valor,
-                'rows' => $fieldRows,
             ];
         }
 
@@ -386,7 +352,6 @@ class SyllabusController extends Controller
             'id' => $block->id,
             'title' => $block->titulo,
             'content_type' => $block->contentType(),
-            'table' => TableLayout::fromBlock($block),
             'page_orientation' => $block->pageOrientation(),
             'document' => $block->configuracion['document'] ?? null,
             'fields' => $fields,

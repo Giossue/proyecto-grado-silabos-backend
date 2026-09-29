@@ -5,13 +5,11 @@ namespace App\Modules\Syllabus\Application;
 use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 
 class SyllabusSnapshot
@@ -19,16 +17,8 @@ class SyllabusSnapshot
     /** @return array<string, mixed> */
     public function build(Syllabus $syllabus): array
     {
-        $syllabus->loadMissing(['values', 'rows']);
+        $syllabus->loadMissing('values');
         $values = $syllabus->values->keyBy('definicion_campo_id');
-        $rows = $syllabus->rows
-            ->sortBy(fn (RepeatableRow $row): string => sprintf(
-                '%s:%05d:%s',
-                $row->definicion_campo_id,
-                $row->posicion,
-                $row->id,
-            ))
-            ->groupBy('definicion_campo_id');
 
         $identification = IdentificationCard::fromSyllabus($syllabus);
 
@@ -42,7 +32,8 @@ class SyllabusSnapshot
         ));
 
         return [
-            'schema_version' => 5,
+            // 6: sin filas repetibles ni esquema de tabla (I-156).
+            'schema_version' => 6,
             'template_id' => $template->id,
             'template_name' => SyllabusTemplate::INSTITUTIONAL_NAME,
             // La copia lleva también el mapa del documento: la revisión se exporta desde
@@ -61,9 +52,6 @@ class SyllabusSnapshot
                         'title' => $block->titulo,
                         'content_type' => $block->contentType(),
                         'page_orientation' => $block->pageOrientation(),
-                        // El esquema de la tabla viaja con la copia: el documento se
-                        // exporta con las columnas que el docente llenó.
-                        'table' => TableLayout::fromBlock($block),
                         'document' => $block->configuracion['document'] ?? null,
                         'fields' => $block->fields->map(fn (FieldDefinition $field): array => [
                             'show_when' => FieldConditions::normalize($field->mostrar_si),
@@ -79,11 +67,6 @@ class SyllabusSnapshot
                             'master_source' => $field->origen_maestro,
                             'document_marker' => $field->marcador_documento,
                             'value' => $values->get($field->id)?->valor,
-                            'rows' => ($rows->get($field->id) ?? collect())->map(fn (RepeatableRow $row): array => [
-                                'id' => $row->id,
-                                'position' => $row->posicion,
-                                'data' => $row->datos,
-                            ])->values()->all(),
                         ])->values()->all(),
                     ])->values()->all(),
                 ])->values()->all(),
@@ -94,7 +77,6 @@ class SyllabusSnapshot
     public function restore(Syllabus $syllabus, array $snapshot): void
     {
         $fieldIds = [];
-        $rowsToRestore = [];
         foreach ($this->sections($snapshot) as $section) {
             foreach ($this->blocks($section) as $block) {
                 foreach ($this->fields($block) as $field) {
@@ -111,32 +93,11 @@ class SyllabusSnapshot
                         'heredado' => (bool) ($field['inherited'] ?? false),
                         'origen' => null,
                     ]);
-                    foreach ($this->rows($field) as $row) {
-                        if (is_string($row['id'] ?? null) && is_array($row['data'] ?? null)) {
-                            $rowsToRestore[] = [
-                                'id' => $row['id'],
-                                'field_id' => $definitionId,
-                                'position' => is_int($row['position'] ?? null) ? $row['position'] : 1,
-                                'data' => $row['data'],
-                            ];
-                        }
-                    }
                 }
             }
         }
 
         FieldValue::query()->where('silabo_id', $syllabus->id)->whereNotIn('definicion_campo_id', $fieldIds)->delete();
-        RepeatableRow::query()->where('silabo_id', $syllabus->id)->delete();
-        foreach ($rowsToRestore as $rowData) {
-            $row = new RepeatableRow;
-            $row->id = $rowData['id'];
-            $row->fill([
-                'silabo_id' => $syllabus->id,
-                'definicion_campo_id' => $rowData['field_id'],
-                'datos' => $rowData['data'],
-                'posicion' => $rowData['position'],
-            ])->save();
-        }
     }
 
     /**
@@ -164,15 +125,6 @@ class SyllabusSnapshot
     private function fields(array $value): array
     {
         return $this->arrayList($value['fields'] ?? null);
-    }
-
-    /**
-     * @param  array<string, mixed>  $value
-     * @return list<array<string, mixed>>
-     */
-    private function rows(array $value): array
-    {
-        return $this->arrayList($value['rows'] ?? null);
     }
 
     /** @return list<array<string, mixed>> */

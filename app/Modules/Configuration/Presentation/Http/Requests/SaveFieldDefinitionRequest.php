@@ -11,18 +11,11 @@ use Illuminate\Validation\Validator;
 
 class SaveFieldDefinitionRequest extends ManageTemplatesRequest
 {
-    private const TYPES = [
-        'text',
-        'table',
-        'bulleted_list',
-        'numbered_list',
-        'boolean',
-        'fixed',
-        'multiple_choice',
-        // Formas de una parte nueva (I-156).
-        'free_text',
-        'template',
-    ];
+    // Formas de una parte nueva (I-156).
+    private const NEW_FORMS = ['free_text', 'template'];
+
+    // Formas guardadas que se editan; la forma no cambia después de crear (I-155).
+    private const SAVED_FORMS = ['text', 'fixed', 'boolean', 'multiple_choice', 'institutional'];
 
     /** @return array<string, list<mixed>> */
     public function rules(): array
@@ -31,8 +24,7 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
         $templateId = $template instanceof SyllabusTemplate ? $template->id : $template;
         $field = $this->route('field');
         $fieldId = $field instanceof FieldDefinition ? $field->id : null;
-        // La ficha de identificación no se crea desde la paleta, pero sí se le edita la ayuda.
-        $types = $fieldId === null ? self::TYPES : [...self::TYPES, 'institutional'];
+        $types = $fieldId === null ? self::NEW_FORMS : self::SAVED_FORMS;
 
         return [
             'section_id' => [
@@ -114,9 +106,6 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             if ($sources !== [] && $this->input('content_type') !== 'multiple_choice'
                 && (! $field instanceof FieldDefinition || ! in_array($field->tipo, CurricularFieldOptions::CHOICE_TYPES, true))) {
                 $validator->errors()->add('options_sources', 'Solo una pregunta de selección admite opciones curriculares.');
-            }
-            if (! $field instanceof FieldDefinition && $this->input('content_type') === 'multiple_choice' && $sources === []) {
-                $validator->errors()->add('content_type', 'Seleccione un catálogo curricular para la nueva selección múltiple.');
             }
             if (($this->input('content_type') === 'multiple_choice'
                 || ($field instanceof FieldDefinition && in_array($field->tipo, CurricularFieldOptions::CHOICE_TYPES, true)))

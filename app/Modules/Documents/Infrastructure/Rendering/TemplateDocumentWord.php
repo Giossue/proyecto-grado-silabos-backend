@@ -33,11 +33,6 @@ final class TemplateDocumentWord
         ?string $alignmentOverride = null,
         bool $insideTable = false,
     ): void {
-        if ($node['type'] === 'pageBreak') {
-            $target->addPageBreak();
-
-            return;
-        }
         if ($node['type'] === 'table') {
             $this->table($target, $node, $width);
 
@@ -135,12 +130,11 @@ final class TemplateDocumentWord
         $merged = [];
         foreach ($rows as $rowIndex => $source) {
             $role = $source['attrs']['rowRole'] ?? null;
-            $isRepeatingHeader = $role === 'unit'
-                || array_reduce(
-                    $source['content'],
-                    fn (bool $carry, array $cell): bool => $carry && $cell['type'] === 'tableHeader',
-                    true,
-                );
+            $isRepeatingHeader = array_reduce(
+                $source['content'],
+                fn (bool $carry, array $cell): bool => $carry && $cell['type'] === 'tableHeader',
+                true,
+            );
             $row = $table->addRow($rowHeights[$rowIndex] ?? null, $isRepeatingHeader ? ['tblHeader' => true] : []);
             $cells = $source['content'];
             $column = 0;
@@ -166,8 +160,7 @@ final class TemplateDocumentWord
                 $span = $attrs['colspan'] ?? 1;
                 $height = $attrs['rowspan'] ?? 1;
                 $cellWidth = (int) array_sum(array_slice($widths, $column, $span));
-                $isHeader = $role === 'unit'
-                    || $cell['type'] === 'tableHeader'
+                $isHeader = $cell['type'] === 'tableHeader'
                     || ($role === null && $rowIndex === 0);
                 $options = [
                     'gridSpan' => $span,
@@ -247,8 +240,7 @@ final class TemplateDocumentWord
                     'width' => (int) array_sum(array_slice($widths, $column, $span)),
                     'row' => $r,
                     'rows' => max(1, (int) ($cell['attrs']['rowspan'] ?? 1)),
-                    'header' => ($row['attrs']['rowRole'] ?? null) === 'unit'
-                        || $cell['type'] === 'tableHeader'
+                    'header' => $cell['type'] === 'tableHeader'
                         || (($row['attrs']['rowRole'] ?? null) === null && $r === 0),
                 ];
                 $column += $span;

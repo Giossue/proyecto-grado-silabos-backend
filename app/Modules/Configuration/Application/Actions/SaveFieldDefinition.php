@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
-use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
@@ -111,7 +110,7 @@ class SaveFieldDefinition
                 $label = $data['label'] !== '' ? $data['label'] : $block->section->titulo;
                 $block->update(['configuracion' => [...$block->configuracion, 'document' => $contentType === 'free_text'
                     ? TemplateDocumentDefaults::freeTextSheet($data['key'], $label)
-                    : TemplateDocumentDefaults::blankSheet('text')]]);
+                    : TemplateDocumentDefaults::blankSheet()]]);
                 $this->applyOrientation($block, $data);
                 $this->audit->execute(
                     actorId: $actor->id, roleAssignmentId: $activeRole?->id, action: 'plantilla.bloque_creado',
@@ -131,30 +130,15 @@ class SaveFieldDefinition
 
                 return $field;
             }
-            if ($field !== null && $contentType === 'fixed') {
-                throw ValidationException::withMessages(['content_type' => 'Una parte que llena el docente no se puede cambiar a texto fijo. Agregue un texto fijo nuevo.']);
+            // Una parte nueva solo nace como Texto libre o Contenido de la plantilla (I-156).
+            if ($field === null) {
+                throw ValidationException::withMessages(['content_type' => 'Elija Texto libre o Contenido de la plantilla.']);
             }
-            $block = $field === null
-                ? $this->createBlock($template, $data, $contentType)
-                : $this->updateBlock($field, $template, $data, $contentType);
+            $block = $this->updateBlock($field, $template, $data, $contentType);
             $this->applyOrientation($block, $data);
-            // El contenido fijo no tiene campos: Administración escribe su texto en el diseño.
-            if ($contentType === 'fixed') {
-                $this->audit->execute(
-                    actorId: $actor->id,
-                    roleAssignmentId: $activeRole?->id,
-                    action: 'plantilla.bloque_creado',
-                    resourceType: 'bloque_plantilla',
-                    resourceId: $block->id,
-                    result: 'exito',
-                    correlationId: $request->attributes->getString('correlation_id') ?: null,
-                );
-
-                return null;
-            }
             // Todo campo es obligatorio y lo llena el docente salvo lo heredado de la
             // malla, que nace así con la plantilla y no se cambia desde aquí (I-33).
-            $inherited = $field !== null && $field->heredado;
+            $inherited = $field->heredado;
             $attributes = [
                 'plantilla_id' => $template->id,
                 'bloque_plantilla_id' => $block->id,
@@ -163,27 +147,17 @@ class SaveFieldDefinition
                 'ayuda' => $data['help'] ?? null,
                 'tipo' => $this->fieldType($contentType),
                 'heredado' => $inherited,
-                'origen_maestro' => $field !== null && $field->heredado ? $field->origen_maestro : null,
+                'origen_maestro' => $field->heredado ? $field->origen_maestro : null,
                 'editable_docente' => ! $inherited,
-                'ia_habilitada' => (bool) ($data['ai_enabled'] ?? ($field !== null ? $field->ia_habilitada : false)),
-                'opciones' => $contentType === 'multiple_choice' ? ($data['options'] ?? $field?->opciones) : null,
-                'marcador_documento' => $field !== null ? $field->marcador_documento : null,
+                'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
+                'opciones' => $contentType === 'multiple_choice' ? ($data['options'] ?? $field->opciones) : null,
+                'marcador_documento' => $field->marcador_documento,
                 ...$condition,
             ];
 
-            if ($field === null) {
-                $attributes['posicion'] = ((int) FieldDefinition::query()
-                    ->where('bloque_plantilla_id', $block->id)
-                    ->max('posicion')) + 1;
-                $field = FieldDefinition::query()->create($attributes);
-                $action = 'plantilla.campo_creado';
-            } else {
-                $field->update($attributes);
-                $action = 'plantilla.campo_actualizado';
-            }
-
+            $field->update($attributes);
             $this->applyOptionsSource($block, $field, $data);
-            $this->auditField($field, $action, $actor, $activeRole?->id, $request);
+            $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
             return $field;
         });
@@ -266,12 +240,6 @@ class SaveFieldDefinition
             $blocks->count() + 1,
         );
         $configuration = ['content_type' => $contentType];
-        if ($contentType === 'table') {
-            $configuration['table'] = TableLayout::default();
-        }
-        if ($contentType === 'fixed') {
-            $configuration['document'] = TemplateDocumentDefaults::freeText();
-        }
 
         $blockId = (string) Str::uuid();
         $orderedBlocks = $blocks
@@ -331,7 +299,7 @@ class SaveFieldDefinition
             'institutional' => 'referencia_maestra',
             'boolean' => 'booleano',
             'multiple_choice' => 'seleccion_multiple',
-            default => 'repetible',
+            default => 'texto_largo',
         };
     }
 

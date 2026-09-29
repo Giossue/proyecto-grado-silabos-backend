@@ -72,18 +72,14 @@ final class TemplateDocumentDefaults
     }
 
     /**
-     * Hoja vacía de una parte nueva (I-155): un párrafo o una lista con viñetas donde
-     * Administración escribe y pone sus marcas. Lo escrito sin marca es fijo.
+     * Hoja vacía de «Contenido de la plantilla» (I-156): Administración escribe y pone
+     * sus marcas; lo escrito sin marca es fijo.
      *
      * @return array<string, mixed>
      */
-    public static function blankSheet(string $contentType): array
+    public static function blankSheet(): array
     {
-        $paragraph = ['type' => 'paragraph', 'content' => []];
-
-        return ['type' => 'doc', 'content' => [$contentType === 'bulleted_list'
-            ? ['type' => 'bulletList', 'content' => [['type' => 'listItem', 'content' => [$paragraph]]]]
-            : $paragraph]];
+        return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => []]]];
     }
 
     /**
@@ -96,12 +92,6 @@ final class TemplateDocumentDefaults
         return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [[
             'type' => 'field', 'attrs' => ['key' => $key, 'label' => $label, 'kind' => 'texto_libre'],
         ]]]]];
-    }
-
-    /** @return array<string, mixed> Texto libre recién creado (I-155): un párrafo que Administración escribe en la hoja. */
-    public static function freeText(): array
-    {
-        return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Escriba aquí el texto.']]]]];
     }
 
     /** @return array<string, mixed> Contenido fijo recién creado: una celda que Administración reemplaza por su texto. */
