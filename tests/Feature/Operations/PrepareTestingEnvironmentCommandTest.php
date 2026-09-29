@@ -87,7 +87,7 @@ class PrepareTestingEnvironmentCommandTest extends TestCase
 
         $this->assertSame('abierta', Convocation::query()->value('estado'));
         $this->assertSame(3, Syllabus::query()->count());
-        $byTeacher = Syllabus::query()->with(['subject', 'parallel.teacherAssignments.roleAssignment.user'])->get()
+        $byTeacher = Syllabus::query()->with(['parallel.scheduledSubject.subject', 'parallel.teacherAssignments.roleAssignment.user'])->get()
             ->mapWithKeys(fn (Syllabus $s): array => [$s->parallel->teacherAssignments->first()->roleAssignment->user->correo_electronico => $s->subject->nombre]);
         $this->assertSame('Calidad de Software', $byTeacher['docente1.pruebas@ueb.edu.ec']);
         $this->assertSame('Cálculo I', $byTeacher['docente2.pruebas@ueb.edu.ec']);

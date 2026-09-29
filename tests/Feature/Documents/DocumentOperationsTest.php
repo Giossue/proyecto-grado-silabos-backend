@@ -178,8 +178,8 @@ class DocumentOperationsTest extends TestCase
         $this->assertStringContainsString(now()->setTimezone('America/Guayaquil')->format('d-m-Y'), $documentXml);
 
         $input = new DocumentRenderInput(
-            subject: $syllabus->subject()->valueOrFail('nombre'),
-            subjectCode: $syllabus->subject()->valueOrFail('codigo_asignatura'),
+            subject: $syllabus->subject->nombre,
+            subjectCode: $syllabus->subject->codigo_asignatura,
             academicPeriod: $syllabus->convocation->process->academicPeriod()->valueOrFail('codigo'),
             revisionNumber: $revision->numero_revision,
             revisionFingerprint: $revision->huella_sha256,

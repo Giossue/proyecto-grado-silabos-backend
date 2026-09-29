@@ -110,7 +110,7 @@ final class InProgressWork
         ?array $subjectIds = null,
     ): array {
         $syllabi = $this->inProgress($careerIds, $periodId, $subjectId, $subjectIds)->with('convocation:id,carrera_id')->lockForUpdate()
-            ->get(['id', 'convocatoria_id', 'asignatura_id', 'contexto_academico']);
+            ->get(['id', 'convocatoria_id', 'paralelo_id', 'contexto_academico']);
         if ($syllabi->isEmpty()) {
             return ['deleted' => 0, 'generated' => 0];
         }

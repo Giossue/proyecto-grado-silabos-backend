@@ -415,9 +415,9 @@ class CurricularImportsTest extends TestCase
         $second = $this->additionalSubject('SW-SEGUNDA');
         $third = $this->additionalSubject('SW-TERCERA');
         $convocation = $this->convocation();
-        $original = Syllabus::query()->where('asignatura_id', $this->subject->id)->firstOrFail();
-        $untouched = Syllabus::query()->where('asignatura_id', $third->id)->firstOrFail();
-        $approved = Syllabus::query()->where('asignatura_id', $second->id)->firstOrFail();
+        $original = Syllabus::query()->forSubjects([$this->subject->id])->firstOrFail();
+        $untouched = Syllabus::query()->forSubjects([$third->id])->firstOrFail();
+        $approved = Syllabus::query()->forSubjects([$second->id])->firstOrFail();
         $context = $approved->contexto_academico;
         $snapshot = app(SyllabusSnapshot::class)->build($approved);
         $revision = SyllabusRevision::query()->create([

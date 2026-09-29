@@ -70,7 +70,7 @@ class GenerateSyllabusExportJob implements ShouldQueue
 
         $artifact = ExportArtifact::query()->with([
             'revision',
-            'syllabus.subject',
+            'syllabus.parallel.scheduledSubject.subject',
             'syllabus.convocation.process.academicPeriod',
         ])->findOrFail($this->artifactId);
         $approval = Approval::query()->with('approver')->where('revision_silabo_id', $artifact->revision_silabo_id)->first();

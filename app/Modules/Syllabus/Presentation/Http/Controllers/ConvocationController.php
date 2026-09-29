@@ -85,8 +85,10 @@ class ConvocationController extends Controller
         abort_unless($request->user()?->can('view', $convocation) === true, 403);
         $convocation->load(['career', 'process.academicPeriod']);
         $syllabi = $convocation->syllabi()
-            ->with(['subject:id,nombre,codigo_asignatura', 'parallel:id,codigo', 'teachers:id,nombre'])
-            ->orderBy('asignatura_id')->get();
+            ->with(['parallel:id,codigo,programacion_asignatura_id', 'parallel.scheduledSubject.subject:id,nombre,codigo_asignatura', 'teachers:id,nombre'])
+            ->get()
+            ->sortBy(fn ($syllabus): string => $syllabus->subject->nombre.'|'.$syllabus->parallel->codigo)
+            ->values();
 
         $payload = [
             'convocation' => [
