@@ -305,8 +305,9 @@ class AcademicStructureViewData
                         'period_status' => $this->periodPlanning->status($scheduledSubject->academicPeriod),
                         'period_status_label' => $this->periodPlanning->label($scheduledSubject->academicPeriod),
                         'period_planning_enabled' => $periodPlanningEnabled,
+                        // Derivados de la facultad y la carrera; pueden faltar si la malla se retiró.
                         'campus_name' => $scheduledSubject->campus_programacion,
-                        'modality_name' => $scheduledSubject->modalidad->label(),
+                        'modality_name' => $scheduledSubject->modalidad?->label(),
                         'parallels' => $scheduledSubject->parallels
                             ->map(fn (Parallel $parallel): array => [
                                 'id' => $parallel->id,
