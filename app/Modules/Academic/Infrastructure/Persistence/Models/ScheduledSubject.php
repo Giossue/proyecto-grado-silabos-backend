@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Infrastructure\Persistence\Models;
 
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Support\Database\MapsLegacyColumnNames;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -43,15 +44,18 @@ class ScheduledSubject extends Model
     public function getCampusProgramacionAttribute(): ?string
     {
         $this->loadMissing('subject.career.faculty');
+        // La carrera o la facultad pueden faltar en datos incompletos: entonces no hay campus.
+        $campus = data_get($this->subject, 'career.faculty.campus');
 
-        return $this->subject->career->faculty?->campus?->value;
+        return $campus instanceof CampusLocation ? $campus->value : null;
     }
 
     public function getModalidadAttribute(): ?StudyModality
     {
         $this->loadMissing('subject.career');
+        $modality = $this->subject->modalidad ?? data_get($this->subject, 'career.modalidad');
 
-        return $this->subject->modalidad ?? $this->subject->career->modalidad;
+        return $modality instanceof StudyModality ? $modality : null;
     }
 
     /** @return BelongsTo<AcademicPeriod, $this> */
