@@ -22,7 +22,9 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 | Retiro de CRUD de fuentes y condición para convocar | RF-027..036, CU-05/06, COR-11 | `OpenApiContractTest`, `TemplateAndSourceTest`, `ConvocationAndDraftTest` y pruebas de preparación/apertura | Implementación y verificación en plan I-146 |
 | Retiro de revisión IA/RAG, conservación del chat | RF-046..054, CU-08, DOC-06, RN-028..030 | `AiAssistanceTest`: rutas retiradas, contexto fotografiado, aislamiento del historial y trabajos antiguos inertes | Implementación y verificación en plan I-146 |
 | Originales privados de importación | I-145, RNF-001..010/024 | `CurricularIngestionTest` y `AcademicSourceOcrTest`: PDF/XLSX privados y procedencia sin índice ni embeddings | Implementación y verificación en plan I-146 |
-| Datos curriculares efectivos en un solo asistente | I-147, RF-017..026/034..045, RN-009..016, COR-13 | `CurricularImportsTest`: prioridad documental, respaldo I-144, alcance por carrera y conflicto; `CurricularImportAssistant.test.ts`: contenido y procedencia visibles | Implementación y verificación en plan I-147 |
+| Datos curriculares efectivos en un solo asistente | I-147, RF-017..026/034..045, RN-009..016, COR-16 | `CurricularImportsTest`: prioridad documental, respaldo I-144, alcance por carrera y conflicto; `CoordinationCurricularProjectPage.test.ts`: contenido y procedencia visibles | Implementación y verificación en plan I-147; ubicación en plan I-149 |
+| Pantalla Proyecto de carrera y relación única por nombre | I-149, RF-017..026, CU-04/CU-05, COR-13, COR-16 | `CoordinationCurricularProjectPage.test.ts`: pestañas, vista inicial, carga, reintento y descarga; `CurricularImportReview.test.ts`: relación única, filtro de pendientes y selección; `router.test.ts`, `AppShell.test.ts` y e2e de navegación | Implementación y verificación en plan I-149 |
+| Identificación solo desde la plantilla | I-148, I-33, I-34, I-71 | `WordRendererTest`, `ReviewWorkflowTest`, `ConvocationAndDraftTest`; `CoordinationReviewDetailPage.test.ts` | Implementación y verificación en plan I-148 |
 
 ## Cadena
 

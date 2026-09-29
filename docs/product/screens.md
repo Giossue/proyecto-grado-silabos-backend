@@ -48,6 +48,7 @@ en el inventario como identificador histórico.
 | COR-13 | Malla, constructor visual/formulario y materias de la carrera |
 | COR-14 | Materias programadas en el período y sus paralelos            |
 | COR-15 | Asignaciones docentes de la carrera                           |
+| COR-16 | Proyecto de carrera: documentos y datos curriculares confirmados |
 
 En COR-15, una sola acción **Gestionar docente** reúne **Crear docente** y **Asignar
 docente**. Crear abre el formulario compartido de cuentas en modo docente de la carrera
@@ -261,30 +262,34 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   se muestra. Aparece únicamente dentro de un sílabo real con contexto de malla.
   I-146 retira COR-11 y su editor de fuentes. Los originales PDF/XLSX de importaciones
   curriculares se descargan de forma privada y autorizada desde el detalle del lote.
-  I-145 sitúa el botón flotante **Asistente curricular** únicamente en COR-13,
-  **Coordinación → Malla**, para la carrera activa. El asistente recibe PDF/XLSX o
-  documentos de ingesta previos de esa carrera y abre un recorrido con
+  I-149 lleva el recorrido de I-145 a COR-16, **Coordinación → Proyecto de carrera**,
+  una pantalla propia de la carrera activa; COR-13 ya no muestra el botón flotante
+  **Asistente curricular**. La pantalla recibe PDF/XLSX o
+  documentos de ingesta previos de esa carrera y ofrece un recorrido con
   carga, estado del procesamiento y revisión de la propuesta. No pide transcribir
   contenidos ni indicar manualmente la procedencia de cada dato. Las filas muestran
   materia, contenido propuesto, fuente/localizador/extracto y contenido vigente cuando
-  existe, distinguiendo incorporaciones y reemplazos. Una materia sin coincidencia
-  permite elegir el destino; una discrepancia exige elegir un candidato y confirmar
-  esa decisión. Los errores de evidencia o estructura mantienen la fila excluida.
+  existe, distinguiendo incorporaciones y reemplazos. La revisión resume cuántos datos
+  están listos y cuántos requieren revisión, agrupa por materia (plegadas salvo las que
+  tienen pendientes) y permite mostrar solo lo pendiente. Cada nombre del documento sin
+  coincidencia se relaciona una sola vez con su materia de la malla y la elección se
+  aplica a todos sus datos, que quedan seleccionados si no tienen otra observación;
+  una discrepancia exige además confirmar esa decisión. Los errores de evidencia o estructura mantienen la fila excluida.
   El envío aplica únicamente las filas seleccionadas y conserva la confirmación de
   regeneración cuando hay sílabos afectados. Una falla muestra el error y ofrece
   reintentar; las capacidades deshabilitadas y el bloqueo por convocatoria se explican
-  junto a la acción. Cambiar de carrera descarta el estado local anterior del asistente.
+  junto a la acción. Cambiar de carrera descarta el estado local anterior.
   «Datos confirmados» muestra los valores que usará un sílabo nuevo, filtrables por
   materia o concepto y con procedencia. Cuando faltan resultados importados, muestra
   los resultados I-144 como registro anterior sin atribuirles un extracto inexistente.
-  El panel distingue Importar, Historial y Datos confirmados mediante pestañas con
-  estado activo. La carga presenta primero archivos nuevos y documentos anteriores;
-  una indicación adicional se abre solo si se necesita. El pie mantiene visible la
-  acción principal y explica cuándo falta elegir un documento, también en móvil.
+  La pantalla distingue Datos confirmados, Importar e Historial mediante pestañas con
+  estado activo. Abre en la importación en curso si existe; si no, en Datos confirmados
+  cuando la carrera ya tiene datos, o en Importar. La carga presenta primero archivos
+  nuevos y documentos anteriores; una indicación adicional se abre solo si se necesita.
+  El pie de la revisión mantiene visible la acción de guardar, también en móvil.
   La acción manual «Resultados de aprendizaje» desaparece del menú de cada materia;
   las correcciones nuevas siguen el recorrido de importación y confirmación.
-  El botón no aparece en Convocatorias, Materias y paralelos, Asignación docente ni
-  otras pantallas.
+  Ninguna otra pantalla de Coordinación muestra el antiguo botón flotante.
   En ADM-06 los conceptos confirmados aparecen en el catálogo de datos automáticos.
   Los campos de selección docente pueden obtener opciones de una o varias listas
   curriculares, por ejemplo habilidades de asignatura y transversales. Cada sílabo

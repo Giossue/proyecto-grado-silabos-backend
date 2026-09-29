@@ -152,6 +152,16 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 ## Actualizado para esta entrega
 
+I-149 (28 de septiembre de 2026), por instrucción del responsable, saca de la malla el
+asistente curricular y crea **Coordinación → Proyecto de carrera** (COR-16), una pantalla
+propia con Datos confirmados, Importar e Historial. La revisión relaciona una sola vez
+cada materia nombrada de otra forma en el documento. API, permisos y alcance por carrera
+no cambian. Sustituye el ajuste de I-145 que situaba el botón en Malla.
+
+I-148 (28 de septiembre de 2026), por instrucción del responsable, dibuja la ficha de
+identificación solo desde el diseño de la plantilla; se retiran la cuadrícula fija del
+Word y de las respuestas de docente y revisión.
+
 I-147 (27 de septiembre de 2026), por instrucción del responsable, retira de la malla
 el editor manual de «Resultados de aprendizaje». El asistente curricular de Malla
 presenta los datos confirmados que usará un sílabo nuevo, incluida su procedencia.
