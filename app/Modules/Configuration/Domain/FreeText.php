@@ -91,6 +91,57 @@ final class FreeText
     }
 
     /**
+     * Texto libre a partir de texto plano: un párrafo por línea (I-156).
+     *
+     * @return array<string, mixed>
+     */
+    public static function fromText(string $text): array
+    {
+        $paragraphs = [];
+        foreach (preg_split('/\R/u', trim($text)) ?: [] as $line) {
+            $paragraphs[] = trim($line) === '' ? ['type' => 'paragraph'] : ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $line]]];
+        }
+
+        return ['type' => 'doc', 'content' => $paragraphs === [] ? [['type' => 'paragraph']] : $paragraphs];
+    }
+
+    /**
+     * Texto libre a partir de filas: lista si hay una sola columna; tabla con encabezado
+     * si hay varias. Conserva lo que el docente ya había escrito por filas (I-156).
+     *
+     * @param  list<array{key: string, label: string}>  $columns
+     * @param  list<array<string, mixed>>  $rows
+     * @return array<string, mixed>
+     */
+    public static function fromRows(array $columns, array $rows, bool $numbered = false): array
+    {
+        $cell = fn (mixed $value): string => is_scalar($value) ? trim((string) $value) : '';
+        $paragraph = fn (string $text): array => $text === '' ? ['type' => 'paragraph'] : ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]];
+        $rows = array_values(array_filter($rows, fn (array $row): bool => array_filter(
+            array_map(fn (array $column): string => $cell($row[$column['key']] ?? null), $columns),
+            fn (string $text): bool => $text !== '',
+        ) !== []));
+        if ($rows === []) {
+            return ['type' => 'doc', 'content' => [['type' => 'paragraph']]];
+        }
+        if (count($columns) === 1) {
+            return ['type' => 'doc', 'content' => [['type' => $numbered ? 'orderedList' : 'bulletList', 'content' => array_map(
+                fn (array $row): array => ['type' => 'listItem', 'content' => [$paragraph($cell($row[$columns[0]['key']] ?? null))]],
+                $rows,
+            )]]];
+        }
+        $tableRow = fn (array $cells, string $type): array => ['type' => 'tableRow', 'content' => array_map(
+            fn (string $text): array => ['type' => $type, 'attrs' => ['colspan' => 1, 'rowspan' => 1], 'content' => [$paragraph($text)]],
+            $cells,
+        )];
+
+        return ['type' => 'doc', 'content' => [['type' => 'table', 'content' => [
+            $tableRow(array_map(fn (array $column): string => $column['label'], $columns), 'tableHeader'),
+            ...array_map(fn (array $row): array => $tableRow(array_map(fn (array $column): string => $cell($row[$column['key']] ?? null), $columns), 'tableCell'), $rows),
+        ]]]];
+    }
+
+    /**
      * Bloques del documento para insertarlos en la hoja del sílabo.
      *
      * @return list<array<string, mixed>>

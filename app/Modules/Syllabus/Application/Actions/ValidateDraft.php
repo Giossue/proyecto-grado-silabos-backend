@@ -6,14 +6,11 @@ use App\Models\User;
 use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Domain\FreeText;
-use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\AcademicContextValues;
 use App\Modules\Syllabus\Application\RequiredAcademicTemplateData;
-use App\Modules\Syllabus\Domain\PlanningTable;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationResult;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
@@ -22,7 +19,8 @@ use Illuminate\Support\Facades\DB;
 
 class ValidateDraft
 {
-    public const RULE_VERSION = 'planning-curricular-v5';
+    // I-156: sin reglas de planificación; el docente la escribe como Texto libre.
+    public const RULE_VERSION = 'free-text-v6';
 
     public function __construct(
         private readonly ActiveRole $roles,
@@ -38,15 +36,7 @@ class ValidateDraft
                 ->with('template')
                 ->get();
             $values = $locked->values()->get()->keyBy('definicion_campo_id');
-            $rows = $locked->rows()->orderBy('posicion')->get()->groupBy('definicion_campo_id');
             $academicContext = $locked->contexto_academico ?? [];
-            if (AcademicContextValues::scheduledSubject($academicContext, 'teaching_weeks') === null) {
-                data_set(
-                    $academicContext,
-                    'scheduled_subject.teaching_weeks',
-                    $locked->convocation->process->academicPeriod->semanas_lectivas,
-                );
-            }
             $issues = $this->academicTemplateData->issues($academicContext);
             // «Mostrar solo si»: una parte oculta no se pide al docente.
             $hidden = array_flip(FieldConditions::hiddenKeys(
@@ -84,12 +74,8 @@ class ValidateDraft
                         ];
                     }
                 }
-                $fieldRows = $rows->get($field->id, collect());
                 // Todo campo del formulario es obligatorio al enviar; el borrador se guarda siempre.
-                $missing = $field->tipo === 'repetible'
-                    ? $fieldRows->isEmpty()
-                    : ! $this->filled($values->get($field->id)?->valor);
-                if ($missing) {
+                if (! $this->filled($values->get($field->id)?->valor)) {
                     $issues[] = [
                         'field_id' => $field->id,
                         'code' => $field->heredado ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
@@ -100,18 +86,6 @@ class ValidateDraft
                             ? "Avise a Coordinación: falta el dato «{$field->displayName()}» en la información de la carrera."
                             : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
                     ];
-                }
-
-                $layout = $field->tipo === 'repetible' ? TableLayout::fromBlock($field->block) : null;
-                if ($layout !== null && PlanningTable::applies($layout)) {
-                    foreach (PlanningTable::issues($layout, $fieldRows, $academicContext) as $planningIssue) {
-                        $issues[] = [
-                            'field_id' => $field->id,
-                            'code' => $planningIssue['code'],
-                            'severity' => 'error',
-                            'message' => $planningIssue['message'],
-                        ];
-                    }
                 }
             }
 
@@ -176,10 +150,7 @@ class ValidateDraft
         if (! is_array($document)) {
             return true;
         }
-        $keys = [
-            ...array_map(static fn (array $node): mixed => $node['attrs']['key'] ?? null, TemplateDocument::nodes($document, 'field')),
-            ...array_map(static fn (array $node): mixed => $node['attrs']['repeatKey'] ?? null, TemplateDocument::nodes($document, 'table')),
-        ];
+        $keys = array_map(static fn (array $node): mixed => $node['attrs']['key'] ?? null, TemplateDocument::nodes($document, 'field'));
 
         return in_array($field->clave, $keys, true);
     }

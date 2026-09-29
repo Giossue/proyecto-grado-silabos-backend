@@ -2,7 +2,8 @@
 
 return [
     /*
-     * Datos iniciales de la única plantilla institucional. Se mantienen fuera de
+     * Datos iniciales de la única plantilla institucional. Todo lo que llena el docente
+     * es Texto libre (I-156); lo fijo trae su contenido UEB. Se mantienen fuera de
      * las acciones HTTP para que el formato inicial se pueda instalar con un seed
      * idempotente y no quede acoplado al controlador.
      */
@@ -11,43 +12,43 @@ return [
             ['asignatura', 'Identificación institucional', 'institutional', null],
         ]],
         ['descripcion', 'Descripción de la asignatura', [
-            ['descripcion', 'Descripción de la asignatura', 'text', null],
+            ['descripcion', 'Descripción de la asignatura', 'free_text', null],
         ]],
         ['objetivos', 'Objetivo(s) de la asignatura', [
-            ['objetivo_general', 'Objetivo general', 'text', null],
-            ['objetivos_especificos', 'Objetivos específicos', 'bulleted_list', null],
+            ['objetivo_general', 'Objetivo general', 'free_text', null],
+            ['objetivos_especificos', 'Objetivos específicos', 'free_text', null],
         ]],
         ['resultados', 'Resultados de aprendizaje de la asignatura', [
-            ['resultados_aprendizaje', 'Resultados de aprendizaje', 'bulleted_list', null],
+            ['resultados_aprendizaje', 'Resultados de aprendizaje', 'free_text', null],
         ]],
         ['habilidades', 'Habilidades blandas de la asignatura', [
-            ['habilidades_blandas', 'Habilidades blandas', 'text', null],
+            ['habilidades_blandas', 'Habilidades blandas', 'free_text', null],
         ]],
         ['planificacion', 'Distribución y planificación de las unidades curriculares', [
-            ['unidades', 'Planificación de unidades', 'table', 'planificacion'],
+            ['unidades', 'Planificación de unidades', 'free_text', null],
         ]],
         ['metodologia', 'Metodología y ambientes de aprendizaje', [
-            ['metodologia', 'Métodos de enseñanza-aprendizaje', 'numbered_list', null],
-            ['tecnicas_ensenanza', 'Técnicas de enseñanza', 'text', null],
-            ['recursos_medios', 'Recursos y medios didácticos', 'bulleted_list', null],
-            ['herramientas_tic', 'Herramientas pedagógicas, TAC e inteligencia artificial', 'bulleted_list', null],
-            ['ambientes_aprendizaje', 'Ambientes o escenarios de aprendizaje', 'bulleted_list', null],
+            ['metodologia', 'Métodos de enseñanza-aprendizaje', 'free_text', null],
+            ['tecnicas_ensenanza', 'Técnicas de enseñanza', 'free_text', null],
+            ['recursos_medios', 'Recursos y medios didácticos', 'free_text', null],
+            ['herramientas_tic', 'Herramientas pedagógicas, TAC e inteligencia artificial', 'free_text', null],
+            ['ambientes_aprendizaje', 'Ambientes o escenarios de aprendizaje', 'free_text', null],
         ]],
         ['evaluacion', 'Evaluación de los aprendizajes', [
             // Contenido fijo: valores UEB que el docente no llena (I-138).
             ['indicadores_evaluacion', 'Indicadores de evaluación', 'fixed', 'indicadores'],
             ['componentes_evaluacion', 'Escala de valoración', 'fixed', 'escala'],
-            ['recuperacion', 'Recuperación y aprobación', 'text', null],
+            ['recuperacion', 'Recuperación y aprobación', 'free_text', null],
         ]],
         ['perfil_egreso', 'Relación de la asignatura con los resultados de aprendizaje del perfil de egreso', [
-            ['contribucion_perfil', 'Contribución al perfil de egreso', 'table', 'perfil'],
+            ['contribucion_perfil', 'Contribución al perfil de egreso', 'free_text', null],
         ]],
         ['etica', 'Conducta y comportamiento ético', [
-            ['conducta_etica', 'Conducta y comportamiento ético', 'text', null],
+            ['conducta_etica', 'Conducta y comportamiento ético', 'free_text', null],
         ]],
         ['bibliografia', 'Bibliografía', [
-            ['bibliografia', 'Bibliografía básica', 'table', 'bibliografia'],
-            ['bibliografia_complementaria', 'Bibliografía complementaria', 'table', 'bibliografia'],
+            ['bibliografia', 'Bibliografía básica', 'free_text', null],
+            ['bibliografia_complementaria', 'Bibliografía complementaria', 'free_text', null],
         ]],
         ['revision', 'Revisión y aprobación', [
             ['firmas', 'Revisión y aprobación', 'fixed', 'firmas'],

@@ -9,7 +9,6 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +21,7 @@ class UpdateDraftField
         private readonly RecordAuditEvent $audit,
     ) {}
 
-    /** @param array{version_bloqueo: int, value?: mixed, rows?: list<array{id?: string|null, data: array<string, mixed>}>} $data */
+    /** @param array{version_bloqueo: int, value?: mixed} $data */
     public function execute(Syllabus $syllabus, FieldDefinition $field, array $data, User $actor, Request $request): Syllabus
     {
         return DB::transaction(function () use ($actor, $data, $field, $request, $syllabus): Syllabus {
@@ -37,16 +36,12 @@ class UpdateDraftField
                 throw ValidationException::withMessages(['field' => 'Esta parte la llena el sistema; el docente no puede cambiarla.']);
             }
 
-            if ($field->tipo === 'repetible') {
-                $this->syncRows($locked, $field, $data['rows'] ?? []);
-            } else {
-                FieldValue::query()->updateOrCreate([
-                    'silabo_id' => $locked->id,
-                    'definicion_campo_id' => $field->id,
-                ], ['valor' => $field->tipo === 'texto_libre' && isset($data['value'])
-                    ? FreeText::normalize($data['value'])
-                    : ($data['value'] ?? null), 'heredado' => false, 'origen' => null]);
-            }
+            FieldValue::query()->updateOrCreate([
+                'silabo_id' => $locked->id,
+                'definicion_campo_id' => $field->id,
+            ], ['valor' => $field->tipo === 'texto_libre' && isset($data['value'])
+                ? FreeText::normalize($data['value'])
+                : ($data['value'] ?? null), 'heredado' => false, 'origen' => null]);
 
             $locked->update([
                 'version_bloqueo' => $locked->version_bloqueo + 1,
@@ -66,57 +61,5 @@ class UpdateDraftField
 
             return $locked;
         });
-    }
-
-    /** @param list<array{id?: string|null, data: array<string, mixed>}> $rows */
-    private function syncRows(Syllabus $syllabus, FieldDefinition $field, array $rows): void
-    {
-        $existingRows = RepeatableRow::query()
-            ->where('silabo_id', $syllabus->id)
-            ->where('definicion_campo_id', $field->id)
-            ->get()
-            ->keyBy('id');
-        $requestedIds = collect($rows)
-            ->map(fn (array $row): ?string => $row['id'] ?? null)
-            ->filter()
-            ->values();
-
-        foreach ($requestedIds as $rowId) {
-            if (! $existingRows->has($rowId)) {
-                throw ValidationException::withMessages(['rows' => 'Una fila ya no existe; recarga el borrador.']);
-            }
-        }
-
-        $deleteQuery = RepeatableRow::query()
-            ->where('silabo_id', $syllabus->id)
-            ->where('definicion_campo_id', $field->id);
-        if ($requestedIds->isNotEmpty()) {
-            $deleteQuery->whereNotIn('id', $requestedIds);
-        }
-        $deleteQuery->delete();
-
-        RepeatableRow::query()
-            ->whereIn('id', $requestedIds)
-            ->increment('posicion', 1000);
-
-        foreach ($rows as $position => $row) {
-            $rowId = $row['id'] ?? null;
-            $model = $rowId !== null ? $existingRows->get($rowId) : null;
-            if ($model !== null) {
-                RepeatableRow::query()->whereKey($model->id)->update([
-                    'datos' => $row['data'],
-                    'posicion' => $position + 1,
-                ]);
-
-                continue;
-            }
-
-            RepeatableRow::query()->create([
-                'silabo_id' => $syllabus->id,
-                'definicion_campo_id' => $field->id,
-                'datos' => $row['data'],
-                'posicion' => $position + 1,
-            ]);
-        }
     }
 }

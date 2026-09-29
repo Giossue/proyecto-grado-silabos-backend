@@ -24,13 +24,16 @@ las pantallas académicas lo usan.
 
 ## Etapa 1 — Agregar lo nuevo
 
-- [ ] Tipo `texto_libre`: migración del CHECK, validación y normalización del documento
-      del docente, vacío cuenta como faltante, texto plano para IA y PDF.
-- [ ] Resolvedor y Word: el Texto libre entra como bloques (párrafos, listas, tablas).
-- [ ] Crear parte: «Texto libre» o «Contenido de la plantilla» (hoja vacía); se retira `blank`.
-- [ ] Editor del docente con barra simple (negrita, cursiva, viñetas, numeración, tabla).
-- [ ] Hoja de Administración: Insertar Tabla y Lista; sin «Filas que agrega el docente».
-- [ ] Pruebas, documentación y verificación.
+- [x] Tipo `texto_libre`: migración del CHECK (000156), `FreeText` valida y normaliza
+      (solo negrita/cursiva, celdas con colspan/rowspan), vacío cuenta como faltante, texto
+      plano para IA, PDF y Word.
+- [x] Resolvedor y Word: el Texto libre entra como bloques (párrafos, listas, tablas).
+- [x] Crear parte: `free_text` o `template` (hoja vacía); se retira `blank`.
+- [x] Editor del docente (`FreeTextEditor`) y lectura (`renderFreeText`).
+- [x] Hoja de Administración: Insertar Tabla y Lista; sin «Filas que agrega el docente»
+      (se retira `TemplateTableNewDataSheet`). Se retiran `@tiptap/extension-mention` y
+      `@tiptap/suggestion`, ya sin uso.
+- [x] `composer verify` (402 pruebas); lint, typecheck, 228 pruebas de Vitest y build.
 
 ## Etapa 2 — Quitar lo viejo
 

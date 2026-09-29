@@ -31,22 +31,6 @@ class UpdateDraftFieldRequest extends FormRequest
         $rules = [
             'version_bloqueo' => ['required', 'integer', 'min:0'],
             'value' => $valueRules,
-            // Hasta 52 semanas más cabeceras de unidad, con margen para otras listas.
-            'rows' => ['nullable', 'array', 'max:250'],
-            'rows.*.id' => ['nullable', 'uuid'],
-            // Una celda por columna (I-34); `_unit` agrupa filas por unidad y `_kind`
-            // marca la fila de cabecera de la unidad.
-            'rows.*.data' => ['required_with:rows', 'array'],
-            'rows.*.data.*' => ['nullable', function (string $attribute, mixed $value, Closure $fail): void {
-                if (! is_scalar($value)) {
-                    $fail('Cada celda debe ser un texto o un número.');
-
-                    return;
-                }
-                if (is_string($value) && mb_strlen($value) > 10000) {
-                    $fail('La celda supera los 10 000 caracteres.');
-                }
-            }],
         ];
         if ($field instanceof FieldDefinition && $field->tipo === 'seleccion_multiple') {
             $rules['value.*'] = ['string', 'distinct', Rule::in($this->allowedOptions($field))];
@@ -55,28 +39,12 @@ class UpdateDraftFieldRequest extends FormRequest
         return $rules;
     }
 
-    /** @return array{version_bloqueo: int, value?: mixed, rows?: list<array{id?: string|null, data: array<string, mixed>}>} */
+    /** @return array{version_bloqueo: int, value?: mixed} */
     public function draftData(): array
     {
         $payload = ['version_bloqueo' => $this->integer('version_bloqueo')];
         if ($this->exists('value')) {
             $payload['value'] = $this->input('value');
-        }
-
-        $inputRows = $this->input('rows');
-        if (is_array($inputRows)) {
-            $rows = [];
-            foreach ($inputRows as $inputRow) {
-                if (! is_array($inputRow) || ! is_array($inputRow['data'] ?? null)) {
-                    continue;
-                }
-                $row = ['data' => $inputRow['data']];
-                if (is_string($inputRow['id'] ?? null)) {
-                    $row['id'] = $inputRow['id'];
-                }
-                $rows[] = $row;
-            }
-            $payload['rows'] = $rows;
         }
 
         return $payload;
@@ -118,7 +86,6 @@ class UpdateDraftFieldRequest extends FormRequest
             'seleccion_unica' => [$presence, 'string', Rule::in($this->allowedOptions($field))],
             'seleccion_multiple' => [$presence, 'array', 'list', 'max:50'],
             'booleano' => [$presence, 'boolean'],
-            'repetible' => ['prohibited'],
             'referencia_maestra', 'calculo' => ['nullable'],
             default => ['prohibited'],
         };

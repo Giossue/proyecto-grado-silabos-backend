@@ -152,6 +152,16 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 ## Actualizado para esta entrega
 
+I-156 (29 de septiembre de 2026), por instrucción del responsable y su tutor, deja dos
+formas de parte: **Texto libre** (el docente escribe con párrafos, negrita, cursiva,
+viñetas, numeración y tablas simples; se guarda como documento JSON validado) y
+**Contenido de la plantilla** (hoja vacía que Administración arma con texto, tablas,
+listas y las marcas de I-155). Se retira «Filas que agrega el docente». La planificación
+de unidades se va: cada docente la escribe a mano, sin sumas ni revisiones automáticas
+(sustituye I-57, I-58, I-63, I-66 e I-143; I-109 se conserva para las pantallas
+académicas). El retiro del código de filas repetibles y planificación se hace en una
+segunda etapa del plan I-156.
+
 I-155 (29 de septiembre de 2026), por instrucción del responsable, sustituye «¿Quién
 llena esta parte?» (I-151, I-154) por marcas en la hoja. Una parte nueva solo elige su
 forma: párrafo, lista o tabla. En la hoja se mezclan texto fijo, **dato automático**

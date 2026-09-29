@@ -146,12 +146,6 @@ class Syllabus extends Model
         return $this->hasMany(FieldValue::class, 'silabo_id');
     }
 
-    /** @return HasMany<RepeatableRow, $this> */
-    public function rows(): HasMany
-    {
-        return $this->hasMany(RepeatableRow::class, 'silabo_id');
-    }
-
     /** @return HasMany<ValidationRun, $this> */
     public function validationRuns(): HasMany
     {

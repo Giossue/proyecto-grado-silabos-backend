@@ -13,7 +13,6 @@ use App\Modules\Syllabus\Application\AcademicContextSnapshot;
 use App\Modules\Syllabus\Application\InheritMasterValues;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
 use Illuminate\Http\Request;
@@ -78,12 +77,10 @@ class ResetSyllabus
             $discarded = [
                 'previous_state' => $locked->estado,
                 'discarded_values' => $locked->values()->count(),
-                'discarded_rows' => $locked->rows()->count(),
             ];
 
             // Lo escrito se descarta; las revisiones enviadas siguen ahí como historial.
             FieldValue::query()->where('silabo_id', $locked->id)->delete();
-            RepeatableRow::query()->where('silabo_id', $locked->id)->delete();
             ValidationRun::query()->where('silabo_id', $locked->id)->get()->each->delete();
 
             // Se vuelve a tomar la fotografía: la malla y la plantilla pudieron cambiar.

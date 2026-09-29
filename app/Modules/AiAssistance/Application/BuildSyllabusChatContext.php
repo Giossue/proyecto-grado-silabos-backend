@@ -3,7 +3,7 @@
 namespace App\Modules\AiAssistance\Application;
 
 use App\Modules\Academic\Application\CurricularData;
-use App\Modules\Configuration\Domain\TableLayout;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Support\CanonicalHasher;
@@ -12,14 +12,14 @@ use Illuminate\Support\Str;
 /** Contexto fotografiado para proponer contenido de unidades; sin RAG ni datos personales. */
 class BuildSyllabusChatContext
 {
-    public const VERSION = 'curricular-units-v1';
+    public const VERSION = 'curricular-free-text-v2';
 
     public function __construct(private readonly CanonicalHasher $hasher) {}
 
     /** @return list<array{id: string, type: string, label: string, excerpt: string, fingerprint: string, field_id: string|null, source_id: null, fragment_id: null}> */
     public function build(Syllabus $syllabus): array
     {
-        $syllabus->loadMissing('rows');
+        $syllabus->loadMissing('values');
         $context = $syllabus->contexto_academico ?? [];
         $academic = [];
         foreach ([
@@ -58,24 +58,18 @@ class BuildSyllabusChatContext
                 $curricularItems[] = $this->item('dato_curricular', 'Resultados de aprendizaje confirmados', implode("\n", $texts));
             }
         }
+        // Lo que el docente ya escribió como Texto libre (I-156), incluida su planificación.
         foreach (SyllabusTemplate::institutional()->sections->sortBy('posicion') as $section) {
             foreach ($section->blocks->sortBy('posicion') as $block) {
-                $layout = TableLayout::fromBlock($block);
-                if ($layout === null) {
-                    continue;
-                }
-                // En TableLayout, repeat agrupa por unidad; las filas repetibles genéricas no lo habilitan.
-                $groupsByUnit = $layout['repeat']['enabled'];
-                if (! TableLayout::isPlanning($layout) && ! $groupsByUnit) {
-                    continue;
-                }
                 foreach ($block->fields->sortBy('posicion') as $field) {
-                    if ($field->tipo !== 'repetible') {
-                        continue;
+                    $value = $syllabus->values->firstWhere('definicion_campo_id', $field->id)?->valor;
+                    if ($field->tipo === 'texto_libre' && FreeText::isDocument($value)) {
+                        /** @var array<string, mixed> $value */
+                        $content = trim(FreeText::plainText($value));
+                        if ($content !== '') {
+                            $items[] = $this->item('seccion_silabo', $field->displayName(), $content, $field->id);
+                        }
                     }
-                    $rows = $syllabus->rows->where('definicion_campo_id', $field->id)->sortBy('posicion')->pluck('datos')->values()->all();
-                    $content = $this->hasher->json(['columns' => $layout['columns'], 'unit_fields' => $layout['header_fields'], 'rows' => $rows]);
-                    $items[] = $this->item('seccion_silabo', $field->displayName(), $content, $field->id);
                 }
             }
         }

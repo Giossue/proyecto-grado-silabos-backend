@@ -2,7 +2,6 @@
 
 namespace App\Modules\Configuration\Application;
 
-use App\Modules\Configuration\Domain\TablePresets;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -100,11 +99,9 @@ final class SyllabusTemplateProvisioner
                         'firmas' => TemplateDocumentDefaults::signatures(),
                         default => TemplateDocumentDefaults::fixedPlaceholder(),
                     };
-                } elseif ($preset !== null) {
-                    $configuration['table'] = TablePresets::layout($preset);
                 }
-                if ($preset === 'planificacion') {
-                    $configuration['page_orientation'] = 'landscape';
+                if ($contentType === 'free_text') {
+                    $configuration = ['content_type' => 'text', 'document' => TemplateDocumentDefaults::freeTextSheet($fieldKey, $label)];
                 }
                 if ($contentType === 'institutional') {
                     $configuration['document'] = TemplateDocumentDefaults::identification();
@@ -132,7 +129,7 @@ final class SyllabusTemplateProvisioner
                     'heredado' => $origin !== null,
                     'origen_maestro' => $origin,
                     'editable_docente' => $origin === null,
-                    'ia_habilitada' => $contentType === 'text',
+                    'ia_habilitada' => $contentType === 'free_text',
                     'posicion' => 1,
                 ];
 
@@ -183,8 +180,7 @@ final class SyllabusTemplateProvisioner
     {
         return match ($contentType) {
             'institutional' => 'referencia_maestra',
-            'text' => 'texto_largo',
-            default => 'repetible',
+            default => 'texto_libre',
         };
     }
 }

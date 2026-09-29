@@ -304,6 +304,13 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   confirmados o iniciar otra importación; el detalle queda plegado. En Revisión y ante
   una falla, «Descartar importación» pide confirmación y elimina la propuesta y sus
   documentos sin cambiar datos confirmados.
+- I-156: al crear una parte o una sección solo se elige **Texto libre** (lo escribe el
+  docente) o **Contenido de la plantilla** (hoja vacía que arma Administración). En la
+  hoja, Insertar ofrece Tabla, Lista, Dato automático, Docente, Docente: Sí o No y
+  Proyecto de carrera; ya no ofrece «Filas que agrega el docente». El docente escribe el
+  Texto libre en un editor con barra simple: Negrita, Cursiva, Lista con viñetas, Lista
+  numerada e Insertar tabla (con Fila, Columna, Quitar fila, Quitar columna y Quitar
+  tabla dentro de una tabla). La revisión y el Word muestran ese texto con su formato.
 - I-155: ADM-06 deja de preguntar quién llena la parte. Al crear una parte o una sección
   solo se elige su forma: **Párrafo**, **Lista** (con viñetas) o **Tabla**. Párrafo y
   lista nacen con la hoja vacía; lo escrito sin marca es fijo. Toda parte se edita sobre
