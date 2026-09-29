@@ -185,9 +185,11 @@ técnica directa, no en confirmación escrita de la UEB.
 
 ## 4. Estado de los planes
 
-Los planes siguen en `docs/plans/active/` a propósito. El propio criterio del proyecto lo
-exige: _«Un plan no se mueve por código escrito; se mueve cuando cumple Definition of
-Done»_, y la Definition of Done incluye la revisión manual de interfaz del punto 2.
+El 2026-09-29 el responsable decidió mover todos los planes a `docs/plans/completed/`
+para dejar `docs/plans/active/` vacío y arrancar limpio. La tabla siguiente se conserva
+como registro de lo que cada plan todavía tenía pendiente según la Definition of Done
+(revisión manual de interfaz del punto 2, validaciones `PV`); esos pendientes no
+desaparecen por el traslado.
 
 | Plan       | Implementación         | Qué falta para cerrarlo                                        |
 | ---------- | ---------------------- | -------------------------------------------------------------- |

@@ -351,7 +351,7 @@ reemplaza únicamente la selección automática de todas las fuentes establecida
 no modifica su congelación durante un alcance abierto ni la evidencia histórica. Chat y
 revisión integral usarán el mismo contexto autorizado, con citas a fuentes y secciones,
 y continuarán siendo asistencia opcional que no bloquea el envío. La implementación está
-planificada en `docs/plans/active/I-72-asistente-ia-contextual.md`; no cierra `PV-02`,
+planificada en `docs/plans/completed/I-72-asistente-ia-contextual.md`; no cierra `PV-02`,
 `PV-13`, `PV-14` ni `PV-18`.
 
 I-73 (14 de septiembre de 2026) incorpora, por decisión explícita del responsable del

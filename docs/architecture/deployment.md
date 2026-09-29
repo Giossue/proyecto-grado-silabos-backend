@@ -61,6 +61,25 @@ La secuencia reproducible y sus límites están en
 - base y almacenamiento con mínimo privilegio;
 - ningún secreto en imagen, repositorio, log o frontend.
 
+## Gotenberg (PDF fiel para la firma electrónica, I-139)
+
+El PDF que se firma sale del DOCX convertido por LibreOffice detrás de Gotenberg. Sin
+`GOTENBERG_URL` el sistema usa un PDF de texto de respaldo (válido para pruebas locales,
+no para firmar en serio). En Dokploy:
+
+1. En el mismo proyecto del servidor, crear un servicio **Docker** con la imagen
+   `gotenberg/gotenberg:8` (puerto interno 3000). No necesita dominio público ni
+   volúmenes; basta con que esté en la misma red que el servidor Laravel.
+2. Opcional: limitar recursos (LibreOffice usa ~1 GB de RAM al convertir) y pasar
+   `--api-timeout=120s` como argumento del contenedor.
+3. En las variables del servidor: `GOTENBERG_URL=http://<nombre-del-servicio>:3000`
+   (Dokploy resuelve el nombre del servicio dentro del proyecto) y, si hace falta,
+   `GOTENBERG_TIMEOUT=90`. Redesplegar el servidor.
+4. Comprobar: `curl http://<nombre-del-servicio>:3000/health` desde el contenedor del
+   servidor responde `{"status":"up"}`; después, descargar el PDF de una revisión
+   aprobada y verificar que ya no es el PDF de respaldo (conserva tablas y formato del
+   DOCX).
+
 ## Workers
 
 Los jobs usan colas nombradas: `critica`, `notificaciones`, `documentos`, `ia` e
