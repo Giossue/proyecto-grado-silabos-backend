@@ -311,6 +311,16 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   confirmados o iniciar otra importación; el detalle queda plegado. En Revisión y ante
   una falla, «Descartar importación» pide confirmación y elimina la propuesta y sus
   documentos sin cambiar datos confirmados.
+- I-158: «Propiedades de la parte» solo tiene **Nombre** y **Hoja horizontal**, en todas
+  las partes. Se retiran de Propiedades la lista de preguntas, sus nombres, las
+  condiciones y las listas curriculares.
+- I-159 (preguntas de seguimiento, como Google Forms o HubSpot): la regla se define en la
+  pregunta que se responde. Al hacer clic en una ficha «Docente: Sí o No» —o en una casilla
+  «X si … = Sí/No» del formato UEB— aparece «Si responde [Sí | No], pedir también:» con
+  casillas para las fichas «Docente» de esa misma parte, nombradas por el texto que tienen
+  al lado; lo que no se marca se pide siempre. Las fichas «Docente» no tienen menú. La
+  pregunta y sus dependientes llevan el mismo número (①, ②…) y se resaltan juntas al pasar
+  el cursor. Se guarda con la hoja (atributo `showWhen` de cada dependiente).
 - I-156: al crear una parte o una sección solo se elige **Texto libre** (lo escribe el
   docente) o **Contenido de la plantilla** (hoja vacía que arma Administración). En la
   hoja, Insertar ofrece Tabla, Lista, Dato automático, Docente, Docente: Sí o No y
