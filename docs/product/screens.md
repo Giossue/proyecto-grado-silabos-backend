@@ -140,7 +140,7 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
 - DOC-04 ubica el único **Asistente IA** en una columna fija a la derecha del formulario
   en escritorio, nunca uno por sección o campo. En pantallas estrechas se conserva dentro
   del flujo, después del formulario. El chat propone contenido y unidades desde el
-  contexto académico/curricular fotografiado y las tablas de planificación. No presenta
+  contexto académico/curricular fotografiado y el Texto libre del docente (I-156). No presenta
   fuentes ni revisión automática; la edición y el envío continúan disponibles mientras
   el chat procesa o falla. La ruta de detalle docente usa una superficie documental sin sidebar ni
   encabezado autenticado global; conserva únicamente el cambio de tema y el formulario
@@ -240,7 +240,11 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   autoguardado y el único estado de guardado visible se mantiene en el encabezado.
 - ADM-06 no mezcla lectura y edición: la ruta normal nunca monta controles mutables. La
   ruta `/editar` reutiliza los mismos bloques, campos y documentos persistidos.
-- Las tablas repetibles conservan sus unidades, columnas tipadas y sumas. El diseño
+- I-156 retira las tablas repetibles y la planificación automática: lo que sigue en
+  este apartado sobre filas, unidades, totales y semanas describe el comportamiento
+  anterior. La planificación y toda tabla o lista del docente se escriben como Texto
+  libre; las tablas de Contenido de la plantilla son fijas.
+- (Anterior a I-156) Las tablas repetibles conservaban sus unidades, columnas tipadas y sumas. El diseño
   distingue cabecera fija, datos, datos de unidad y total: se combinan celdas dentro
   de cada grupo, sin atravesar grupos que se repiten distintas cantidades de veces.
   En ADM-06 se configura sobre la tabla: la cinta clasifica la fila seleccionada, activa

@@ -418,19 +418,10 @@ origen_valor_campo VARCHAR NULL
 UNIQUE (silabo_id, definicion_campo_id)
 ~~~
 
-## filas_repetibles
+## filas_repetibles (retirada)
 
-**Contexto:** filas ordenadas de campos tipo tabla o repetibles.
-
-~~~text
-id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-definicion_campo_id UUID (FK → definiciones_campo.id) NOT NULL
-datos_fila_repetible JSONB NOT NULL
-posicion_fila_repetible SMALLINT NOT NULL
-
-UNIQUE (silabo_id, definicion_campo_id, posicion_fila_repetible)
-~~~
+I-156 la elimina (migración `000157`): lo que el docente escribía por filas se convirtió
+en Texto libre (`valores_campo.valor_campo`, documento JSON) antes de borrarla.
 
 ## ejecuciones_validacion
 
@@ -474,7 +465,6 @@ convocatorias_carreras 1:N silabos
 paralelos 1:N silabos (uno por convocatoria de carrera)
 silabos N:M usuarios mediante la vista docentes_vigentes_silabo (derivada del paralelo y sus asignaciones)
 silabos N:M definiciones_campo mediante valores_campo
-silabos 1:N filas_repetibles
 silabos 1:N ejecuciones_validacion
 ejecuciones_validacion 1:N resultados_validacion
 ~~~

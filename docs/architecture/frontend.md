@@ -17,7 +17,7 @@ archivos.
 
 ## Responsabilidades de la SPA
 
-La SPA presenta navegación por rol, formularios, editor documental, tablas repetibles,
+La SPA presenta navegación por rol, formularios, editor documental, Texto libre del docente (I-156),
 revisión, documentos y asistencia de IA. Las rutas y controles sólo mejoran la
 experiencia: autorización, alcance y transiciones siempre se comprueban en Laravel.
 

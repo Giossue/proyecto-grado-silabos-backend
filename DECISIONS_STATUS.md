@@ -159,8 +159,12 @@ viñetas, numeración y tablas simples; se guarda como documento JSON validado) 
 listas y las marcas de I-155). Se retira «Filas que agrega el docente». La planificación
 de unidades se va: cada docente la escribe a mano, sin sumas ni revisiones automáticas
 (sustituye I-57, I-58, I-63, I-66 e I-143; I-109 se conserva para las pantallas
-académicas). El retiro del código de filas repetibles y planificación se hace en una
-segunda etapa del plan I-156.
+académicas). Segunda etapa aplicada: el formato oficial usa Texto libre en todas las
+partes del docente, se retiran las filas repetibles (tabla `filas_repetibles`, tipo
+`repetible`, tablas con `repeatKey`), las reglas de planificación y los atajos de
+teclado. La migración `000157` convirtió lo ya escrito (una columna → lista, varias →
+tabla) y se aplicó en la base remota el 29 de septiembre de 2026, con respaldo previo.
+Las fotografías de revisiones anteriores no se modifican.
 
 I-155 (29 de septiembre de 2026), por instrucción del responsable, sustituye «¿Quién
 llena esta parte?» (I-151, I-154) por marcas en la hoja. Una parte nueva solo elige su

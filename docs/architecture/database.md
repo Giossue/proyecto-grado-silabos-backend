@@ -226,7 +226,8 @@ privados `academic_source_image`; Base64 y URLs firmadas no se persisten.
 
 `convocatorias_universidad`, `convocatorias_carreras`,
 `silabos`, vista `docentes_vigentes_silabo` (I-130),
-`revisiones_silabo`, `filas_repetibles`, `valores_campo`, `transiciones_estado`.
+`revisiones_silabo`, `valores_campo`, `transiciones_estado`. I-156 retira
+`filas_repetibles`: el Texto libre del docente vive en `valores_campo` como documento JSON.
 
 I-146 elimina las fuentes como requisito para convocar. No se seleccionan ni se consultan
 para revisión por IA. La migración histórica `000113` ya había eliminado

@@ -23,7 +23,7 @@ Son metas propuestas hasta la validación de volumen/infraestructura.
 
 - cola de revisión con relaciones N+1;
 - editor cargando todas las revisiones/evidencias;
-- diffs de tablas repetibles grandes;
+- diffs de Texto libre extenso;
 - reportes sin índices o sin paginación;
 - render DOCX/PDF en petición web;
 - IA sin límite de concurrencia;

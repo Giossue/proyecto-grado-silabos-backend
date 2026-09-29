@@ -44,7 +44,7 @@ No necesitan Laravel completo si la regla puede probarse aisladamente.
 
 Las pruebas de componentes y flujos de navegador viven en el repositorio frontend. Allí
 `npm test`, `npm run typecheck` y `npm run build` cubren el contrato del cliente, los
-editores documentales, tablas repetibles, selección múltiple, booleanos, observaciones e
+editores documentales, Texto libre, selección múltiple, booleanos, observaciones e
 IA. La aceptación con documentos y dispositivos reales continúa registrada en PV-19.
 
 La persistencia se verifica aquí con `TemplateDocumentTest` y `ReviewWorkflowTest` sobre
@@ -94,7 +94,7 @@ cortado o desalineado.
 I-146 retira el revisor y RAG. La cobertura vigente del chat comprueba:
 
 - autorización por docente/carrera, límites e idempotencia;
-- contexto académico/curricular fotografiado y tablas de planificación sin datos personales;
+- contexto académico/curricular fotografiado y Texto libre del docente sin datos personales;
 - ausencia de recuperación textual/vectorial y de nuevas indexaciones/embeddings;
 - historia previa conservada, pero excluida de nuevas llamadas al proveedor;
 - referencias inventadas, salida malformada o demasiado grande;

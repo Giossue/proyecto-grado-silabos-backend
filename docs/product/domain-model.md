@@ -168,7 +168,8 @@ El contenido dinámico usa definiciones de campo más valores y filas repetibles
 por plantilla:
 
 - `ValorCampo` para valores escalares/estructurados;
-- `FilaRepetible` para listas y tablas;
+- Texto libre (documento JSON en `ValorCampo`) para listas y tablas del docente; I-156
+  retira `FilaRepetible`;
 - referencias explícitas a `DefinicionCampo` y `VersionPlantilla`.
 
 ### Revisión

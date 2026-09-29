@@ -10,7 +10,7 @@ como mínimo las doce áreas identificadas en la línea base.
 | 3 | Objetivos | objetivo general y específicos | lista estructurada + narrativa |
 | 4 | Resultados de aprendizaje | resultados y relación con asignatura/programa | referencias estructuradas, orden y trazabilidad |
 | 5 | Habilidades blandas | habilidades y forma de desarrollo | catálogo/selección + justificación |
-| 6 | Unidades y planificación | unidades, contenidos, resultados, horas, actividades, recursos y semanas | tablas repetibles, cálculos y validaciones |
+| 6 | Unidades y planificación | unidades, contenidos, resultados, horas, actividades, recursos y semanas | Texto libre del docente, sin cálculos (I-156) |
 | 7 | Metodología y ambientes | estrategias, ambientes, TIC/TAC/IA y recursos | selección estructurada + narrativa |
 | 8 | Evaluación | componentes, técnicas, instrumentos, ponderaciones y evidencias | tablas, cálculos, reglas de suma/redondeo |
 | 9 | Perfil de egreso | contribución de la asignatura al perfil | referencias a fuente + narrativa |
@@ -39,14 +39,14 @@ son una cantidad fija del formato.
 - La plantilla decide orden, etiquetas, visibilidad y obligatoriedad sin ejecutar DDL.
 - Datos heredados muestran la fuente y se bloquean para el docente.
 - Cálculos guardan la regla/versión utilizada y se vuelven a validar en servidor.
-- Tablas/listas repetibles usan IDs de fila estables para diff y concurrencia.
+- Desde I-156 no hay tablas ni listas repetibles: el docente escribe Texto libre
+  (párrafos, listas y tablas simples) y la comparación de revisiones usa el documento completo.
 - Campos narrativos usan el diseño JSON validado de la plantilla; no aceptan HTML arbitrario
   ni obligan al docente a escribir una sintaxis de marcado.
 - Resultados, habilidades, horas, créditos, TIC/TAC/IA y bibliografía se estructuran si
   deben buscarse, calcularse o verificarse.
-- La sección 6 admite cualquier cantidad de unidades y distribuye las semanas lectivas
-  del período. Sus totales ACD/APE/AA deben coincidir con la malla; `créditos × 48`
-  verifica el total académico y no es un campo editable del sílabo.
+- La sección 6 la escribe cada docente a mano (I-156): no se suman horas ni se revisan
+  semanas contra la malla.
 - La sección 12 refleja revisiones/aprobaciones del dominio; una plantilla no puede
   falsificar una aprobación mediante texto editable.
 

@@ -37,10 +37,19 @@ las pantallas académicas lo usan.
 
 ## Etapa 2 — Quitar lo viejo
 
-- [ ] Formato oficial: listas, tablas del docente y planificación como Texto libre.
-- [ ] Retiro de `PlanningTable`, reglas de planificación, `planning_expectations`,
-      resumen de planificación y contexto de unidades de la IA.
-- [ ] Retiro de filas repetibles: tablas con `repeatKey`, nodos `column`, `repetible`,
-      `filas_repetibles`, `SyllabusTableEditor`, `SyllabusTableView`, `WordDataTable`.
-- [ ] Plantilla remota de pruebas convertida (respaldo previo).
-- [ ] Pruebas, documentación y verificación.
+- [x] Formato oficial: listas, tablas del docente y planificación como Texto libre.
+- [x] Retiro de `PlanningTable`, `TableLayout`, `TablePresets`, reglas de planificación
+      (`RULE_VERSION` `free-text-v6`), `planning_expectations`, resumen de planificación;
+      la IA usa como contexto el Texto libre del docente (`curricular-free-text-v2`).
+- [x] Retiro de filas repetibles: tablas con `repeatKey`, nodos `column`, roles de fila,
+      `repetible`, `filas_repetibles`, `RepeatableRow`, `SyllabusTableEditor`,
+      `SyllabusTableView`, `WordDataTable`; crear partes solo acepta `free_text` y
+      `template`; en Word la cabecera de tabla sale solo de celdas de encabezado.
+- [x] Migración `000157`: convierte bloques y valores, borra `filas_repetibles` y ajusta
+      el CHECK. Aplicada en la base remota el 2026-09-29 tras `pg_dump`
+      (`temp/respaldos/`, fuera de git). La fotografía de revisiones no se toca.
+- [x] `composer verify` (379 pruebas); lint, typecheck, 225 pruebas de Vitest y build.
+- [ ] Desplegar backend y frontend: la base remota ya no tiene `filas_repetibles` y el
+      código desplegado anterior la usa.
+- Pendiente de decisión: «Habilidades blandas» sigue como selección múltiple en la
+  plantilla remota; puede pasar a Proyecto de carrera si el responsable lo pide.
