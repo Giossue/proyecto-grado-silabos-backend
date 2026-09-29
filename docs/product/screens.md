@@ -292,6 +292,12 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   Ninguna otra pantalla de Coordinación muestra el antiguo botón flotante.
   COR-16 muestra qué datos pide la plantilla antes de importar; sin datos declarados
   por Administración explica el motivo y no permite enviar documentos (I-151).
+  La importación se guía en cuatro pasos visibles: Documentos, Análisis, Revisión y
+  Listo. La carga deja arriba solo archivos y documentos anteriores; los datos que se
+  buscarán y la indicación opcional quedan plegados. La revisión pide primero la
+  materia de cada nombre sin coincidencia («Continuar») y después la elección de datos,
+  con regreso a las materias. Al guardar, el último paso ofrece ver los datos
+  confirmados o iniciar otra importación; el detalle queda plegado.
   En ADM-06 los datos declarados aparecen en el catálogo de datos automáticos.
 - I-151: al crear una parte o una sección, ADM-06 pregunta «¿Quién llena esta parte?»
   sin términos técnicos: **El docente la escribe** (un párrafo, una lista con viñetas,

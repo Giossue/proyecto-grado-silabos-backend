@@ -27,7 +27,8 @@ datos.
   preparación descarta valores de conceptos no declarados y los informa como
   observación. Sin datos declarados no se puede solicitar una importación. La
   aplicación conserva su comprobación de estructura.
-- COR-16 muestra qué datos buscará la importación.
+- COR-16 muestra qué datos buscará la importación y guía el recorrido en cuatro pasos
+  (Documentos, Análisis, Revisión y Listo), con menos carga visual en la carga.
 - Sin cambios de esquema: `conceptos_curriculares` ya existe.
 
 ## Trabajo
@@ -42,4 +43,4 @@ datos.
 ## Verificación
 
 - Backend: `composer verify` completo (Pint, PHPStan y 397 pruebas).
-- Frontend: lint, typecheck, 217 pruebas de Vitest y build.
+- Frontend: lint, typecheck, 218 pruebas de Vitest y build.
