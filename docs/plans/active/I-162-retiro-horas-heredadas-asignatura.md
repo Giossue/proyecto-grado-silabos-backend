@@ -31,8 +31,8 @@ conserva.
 - [x] Servidor sin `hours_project`/`hours_ap`/`hours_paec` ni sus columnas.
 - [x] Prueba `SyllabusProcessTest` sin esas claves en el payload.
 - [x] Docs: `database.md` y `production-database-schema.md`.
-- [ ] Pint, PHPStan y pruebas en verde.
-- [ ] Base remota: respaldo `temp/respaldos/silabos_ueb_db-2026-09-29-antes-I162.dump` y
+- [x] Pint, PHPStan y 380 pruebas en verde.
+- [x] Base remota: respaldo `temp/respaldos/silabos_ueb_db-2026-09-29-antes-I162.dump` y
       migración aplicada.
 - [ ] Desplegar servidor.
 
