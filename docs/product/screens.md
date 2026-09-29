@@ -310,6 +310,12 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   forma (lista o texto) y alcance (cada asignatura o toda la carrera) y crea una parte
   fija con ese dato automático. «Editar parte» usa la misma pregunta sin la opción
   automática. Sí/No ya no se ofrece para partes nuevas; las existentes se conservan.
+- I-153: en «Editar parte», las condiciones se configuran desde la pregunta: «Si en
+  «Estudiantes con discapacidad» responden [Sí], pedir también:» con casillas para las
+  preguntas de la misma sección; lo no marcado se pide siempre. Una parte con varias
+  preguntas del docente (por ejemplo, la ficha de identificación) muestra «Preguntas que
+  llena el docente» para cambiar el nombre de cada una, incluida «Formación y
+  experiencia».
   Los campos de selección docente pueden obtener opciones de una o varias listas
   curriculares, por ejemplo habilidades de asignatura y transversales. Cada sílabo
   usa su copia de esas opciones, y el docente elige de ella sin escribir el catálogo.
@@ -378,8 +384,9 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   **Materias y paralelos**; los paralelos se agregan desde las acciones de cada materia.
 - COR-13 abre en vista de lectura y ofrece **Editar malla** en el encabezado. Antes de
   entrar al modo de edición consulta de nuevo el bloqueo de la convocatoria. Dentro de
-  ese modo muestra **Configurar ciclos** y **Volver a la vista**; al salir oculta altas,
-  menús y gestos de edición. La malla activa o inactiva sigue siendo editable cuando la
+  ese modo oculta el sidebar y el encabezado global; su propia barra muestra **Configurar
+  ciclos**, **Volver a la vista** y el cambio entre tema claro y oscuro. Al salir oculta
+  altas, menús y gestos de edición. La malla activa o inactiva sigue siendo editable cuando la
   convocatoria lo permite; eliminar se rechaza cuando existen materias programadas
   o sílabos y explica que debe deshabilitarse. Editar una asignación cambia docente o
   paralelo; la vigencia laboral se gestiona en la cuenta, nunca nombre o correo desde esta

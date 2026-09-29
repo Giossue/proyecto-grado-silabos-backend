@@ -19,6 +19,9 @@ RF-017..026, RN-009..012, CU-04, CU-05, ADM-06. No depende de una decisión
    compara con `true`/`false`. I-150 limita en ADM-06 las opciones ofrecidas a partes de
    la misma sección; una condición ya guardada hacia otra sección sigue visible para
    poder quitarla. El servidor conserva la validación a nivel de plantilla.
+   I-153 cambia solo la forma de configurarlo en ADM-06: desde la pregunta («Si en
+   "Estudiantes con discapacidad" responden [Sí], pedir también: ☑ Tipo de discapacidad
+   ☑ Adaptación curricular»). Lo no marcado se pide siempre. El dato guardado no cambia.
 2. Se valida al guardar (`SaveFieldDefinitionRequest.show_when`,
    `SaveTemplateDocumentRequest.properties.*.show_when`): la parte referida existe, es
    de Sí/No o selección, el valor es una de sus opciones y no es la misma parte.
