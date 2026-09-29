@@ -229,16 +229,51 @@ programaciones_asignatura 1:N paralelos
 
 ## plantilla_silabo
 
-**Contexto:** plantilla institucional que define el documento de sílabo.
+**Contexto:** plantilla institucional que define el documento de sílabo. Desde I-164
+(migración `000161`) las secciones y partes viven en tablas propias; aquí quedan solo la
+apariencia (`mapeo_documento_plantilla`) y el contador de revisión.
 
 ~~~text
 id UUID (PK)
-documento_plantilla JSONB NOT NULL
 mapeo_documento_plantilla JSONB NULL
 revision_configuracion BIGINT NOT NULL DEFAULT 1
 
 UNIQUE constante: existe solo una plantilla
-CHECK: versión de esquema 1 y `secciones` es un arreglo
+TRIGGER: cambiar la apariencia, una sección, una parte o una pregunta sube revision_configuracion
+~~~
+
+## secciones_plantilla
+
+**Contexto:** sección de la plantilla (I-164; antes embebida en `documento_plantilla`).
+
+~~~text
+id UUID (PK)
+plantilla_id UUID (FK → plantilla_silabo.id, ON DELETE CASCADE) NOT NULL
+clave VARCHAR(120) NOT NULL
+titulo VARCHAR(180) NOT NULL
+descripcion TEXT NULL
+posicion SMALLINT NOT NULL
+
+UNIQUE (plantilla_id, clave)
+~~~
+
+## bloques_plantilla
+
+**Contexto:** parte de una sección (Texto libre o Personalizado). `configuracion` guarda
+`content_type`, `page_orientation`, el diseño de la hoja (`document`, JSON de ProseMirror),
+`options_sources` y `detached_fields`: el diseño es un documento y sigue en JSON a
+propósito.
+
+~~~text
+id UUID (PK)
+seccion_plantilla_id UUID (FK → secciones_plantilla.id, ON DELETE CASCADE) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.id, ON DELETE CASCADE) NOT NULL
+clave VARCHAR(120) NOT NULL
+titulo VARCHAR(180) NOT NULL DEFAULT ''
+posicion SMALLINT NOT NULL
+configuracion JSONB NOT NULL
+
+UNIQUE (plantilla_id, clave)
 ~~~
 
 ## definiciones_campo
@@ -247,7 +282,7 @@ CHECK: versión de esquema 1 y `secciones` es un arreglo
 
 ~~~text
 id UUID (PK)
-bloque_plantilla_id UUID NOT NULL
+bloque_plantilla_id UUID (FK → bloques_plantilla.id, ON DELETE CASCADE) NOT NULL
 clave_definicion_campo VARCHAR NOT NULL
 etiqueta_definicion_campo VARCHAR NOT NULL
 ayuda_definicion_campo TEXT NULL
@@ -263,7 +298,6 @@ plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
 
 UNIQUE (plantilla_id, clave_definicion_campo)
 UNIQUE (bloque_plantilla_id, posicion_definicion_campo)
-TRIGGER: bloque_plantilla_id debe existir dentro de documento_plantilla
 ~~~
 
 ## fuentes_academicas

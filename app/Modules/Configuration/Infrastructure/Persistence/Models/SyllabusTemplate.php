@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property string $id
- * @property array<string, mixed> $documento
+ * @property array{version_esquema: int, secciones: list<array<string, mixed>>} $documento Armado desde las tablas (I-164).
  * @property array<string, mixed>|null $mapeo_documento
  * @property int $revision_configuracion
  * @property-read EmbeddedTemplateCollection<int, TemplateSection> $sections
@@ -21,9 +22,19 @@ class SyllabusTemplate extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'documento' => 'documento_plantilla',
         'mapeo_documento' => 'mapeo_documento_plantilla',
     ];
+
+    /**
+     * Secciones y partes viven en `secciones_plantilla` y `bloques_plantilla` (I-164); aquí se
+     * arman como un documento para que el resto del código siga leyendo y escribiendo igual.
+     *
+     * @var array{version_esquema: int, secciones: list<array<string, mixed>>}|null
+     */
+    private ?array $documentCache = null;
+
+    /** @var array<string, mixed>|null Documento asignado antes de guardar; se vuelca al guardar. */
+    private ?array $pendingDocument = null;
 
     public const INSTITUTIONAL_NAME = 'Plantilla institucional de sílabo';
 
@@ -38,10 +49,40 @@ class SyllabusTemplate extends Model
     protected function casts(): array
     {
         return [
-            'documento' => 'array',
             'mapeo_documento' => 'array',
             'revision_configuracion' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $template): void {
+            if ($template->pendingDocument !== null) {
+                $document = $template->pendingDocument;
+                $template->pendingDocument = null;
+                $template->syncDocument($document);
+            }
+        });
+    }
+
+    /** @param array<string, mixed>|null $value */
+    public function setDocumentoAttribute(?array $value): void
+    {
+        $this->pendingDocument = $value ?? ['version_esquema' => 1, 'secciones' => []];
+        $this->documentCache = null;
+    }
+
+    /** @return array{version_esquema: int, secciones: list<array<string, mixed>>} */
+    public function getDocumentoAttribute(): array
+    {
+        return $this->document();
+    }
+
+    public function refresh(): static
+    {
+        $this->documentCache = null;
+
+        return parent::refresh();
     }
 
     public static function institutional(): self
@@ -232,18 +273,82 @@ class SyllabusTemplate extends Model
     /** @return array{version_esquema: int, secciones: list<array<string, mixed>>} */
     public function document(): array
     {
-        $document = $this->getAttribute('documento');
+        if ($this->pendingDocument !== null) {
+            return ['version_esquema' => 1, 'secciones' => array_values($this->pendingDocument['secciones'] ?? [])];
+        }
+        if ($this->documentCache === null) {
+            $this->documentCache = ['version_esquema' => 1, 'secciones' => $this->exists ? $this->loadSections() : []];
+        }
 
-        return is_array($document)
-            ? ['version_esquema' => 1, 'secciones' => array_values($document['secciones'] ?? [])]
-            : ['version_esquema' => 1, 'secciones' => []];
+        return $this->documentCache;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function loadSections(): array
+    {
+        $blocks = DB::table('bloques_plantilla')->where('plantilla_id', $this->id)
+            ->orderBy('posicion')->orderBy('clave')->get()
+            ->groupBy('seccion_plantilla_id');
+
+        return DB::table('secciones_plantilla')->where('plantilla_id', $this->id)
+            ->orderBy('posicion')->orderBy('clave')->get()
+            ->map(fn (object $section): array => [
+                'id' => $section->id, 'clave' => $section->clave, 'titulo' => $section->titulo,
+                'descripcion' => $section->descripcion, 'posicion' => (int) $section->posicion,
+                'bloques' => ($blocks->get($section->id) ?? collect())->map(fn (object $block): array => [
+                    'id' => $block->id, 'clave' => $block->clave, 'titulo' => $block->titulo,
+                    'posicion' => (int) $block->posicion,
+                    'configuracion' => is_string($block->configuracion) ? json_decode($block->configuracion, true, 512, JSON_THROW_ON_ERROR) : [],
+                ])->values()->all(),
+            ])->values()->all();
     }
 
     /** @param array<string, mixed> $document */
     private function saveDocument(array $document): void
     {
-        $this->setAttribute('documento', $document);
-        $this->save();
-        $this->refresh();
+        $this->syncDocument($document);
+    }
+
+    /**
+     * Vuelca el documento a las tablas: primero retira lo que ya no está (así una parte nueva
+     * puede reutilizar una clave) y después inserta o actualiza cada sección y parte.
+     *
+     * @param  array<string, mixed>  $document
+     */
+    private function syncDocument(array $document): void
+    {
+        $sections = array_values(is_array($document['secciones'] ?? null) ? $document['secciones'] : []);
+        DB::transaction(function () use ($sections): void {
+            $sectionIds = array_map(fn (array $section): string => (string) $section['id'], $sections);
+            $blockIds = [];
+            foreach ($sections as $section) {
+                foreach (array_values(is_array($section['bloques'] ?? null) ? $section['bloques'] : []) as $block) {
+                    $blockIds[] = (string) $block['id'];
+                }
+            }
+            DB::table('bloques_plantilla')->where('plantilla_id', $this->id)->whereNotIn('id', $blockIds)->delete();
+            DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->whereNotIn('id', $sectionIds)->delete();
+
+            foreach ($sections as $sectionIndex => $section) {
+                DB::table('secciones_plantilla')->updateOrInsert(['id' => (string) $section['id']], [
+                    'plantilla_id' => $this->id,
+                    'clave' => (string) $section['clave'],
+                    'titulo' => (string) ($section['titulo'] ?? ''),
+                    'descripcion' => is_string($section['descripcion'] ?? null) ? $section['descripcion'] : null,
+                    'posicion' => (int) ($section['posicion'] ?? $sectionIndex + 1),
+                ]);
+                foreach (array_values(is_array($section['bloques'] ?? null) ? $section['bloques'] : []) as $blockIndex => $block) {
+                    DB::table('bloques_plantilla')->updateOrInsert(['id' => (string) $block['id']], [
+                        'seccion_plantilla_id' => (string) $section['id'],
+                        'plantilla_id' => $this->id,
+                        'clave' => (string) $block['clave'],
+                        'titulo' => (string) ($block['titulo'] ?? ''),
+                        'posicion' => (int) ($block['posicion'] ?? $blockIndex + 1),
+                        'configuracion' => json_encode(is_array($block['configuracion'] ?? null) ? $block['configuracion'] : [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+                    ]);
+                }
+            }
+        });
+        $this->documentCache = null;
     }
 }

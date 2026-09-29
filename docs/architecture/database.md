@@ -193,10 +193,12 @@ excepcional del agregado elegible completo cuando una base institucional se corr
 el ámbito correspondiente pausado; fuera de esa transacción los triggers conservan la
 inmutabilidad. La aclaración I-144 excluye expedientes con aprobación conservada, aunque
 hayan sido reabiertos, y procesos cerrados.
-`plantilla_silabo.documento_plantilla` guarda en JSONB versionado la composición visual
-de secciones, bloques y tablas (I-111). Las definiciones de campo siguen en filas y
-`bloque_plantilla_id` apunta al UUID estable del bloque embebido; triggers de PostgreSQL
-impiden referencias huérfanas en ambas direcciones. `definiciones_campo.plantilla_id`
+Desde I-164 (migración `000161`) las secciones y partes de la plantilla son filas de
+`secciones_plantilla` y `bloques_plantilla` (antes, JSON en `documento_plantilla`, I-111);
+`definiciones_campo.bloque_plantilla_id` es una llave foránea real. Solo el diseño de cada
+hoja (`bloques_plantilla.configuracion.document`) sigue en JSON, porque es un documento.
+El modelo `SyllabusTemplate` arma y vuelca ese árbol (`sections()`, `blocks()`,
+`documento`), así que la aplicación y la API no cambiaron. `definiciones_campo.plantilla_id`
 es la única referencia persistida a la plantilla: `silabos`, `convocatorias_universidad`,
 `artefactos_exportacion` y el historial de IA ya no la guardan (I-132, I-135) y la aplicación la
 resuelve con `SyllabusTemplate::institutional()`. La exportación renderiza desde
