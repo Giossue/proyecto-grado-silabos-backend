@@ -175,6 +175,13 @@ insertadas en celdas con la etiqueta en la línea anterior, el exceso de texto d
 Asistente de unidades y dos marcas mal nombradas de la plantilla remota. Sin cambios de
 esquema ni de API.
 
+I-163 (29 de septiembre de 2026), por instrucción del responsable: los avisos solo
+informativos (cuenta activada, plazo extendido, proceso o convocatoria en pausa, proceso
+cerrado) no llevan enlace; los que piden actuar conservan su destino. Los pasos de
+«Puesta en marcha» se actualizan al sistema vigente: logo obligatorio, plantilla con Texto
+libre y Contenido de la plantilla, datos del Proyecto de carrera, borrador que se inicia
+solo y un paso nuevo para firmar el sílabo aprobado. Sin cambios de esquema ni de API.
+
 I-158 (29 de septiembre de 2026), por instrucción del responsable: «Propiedades de la
 parte» solo cambia nombre y orientación. La condición «pedir solo si…» se define en la
 ficha de la hoja (atributo `showWhen`) y sustituye la configuración de condiciones y

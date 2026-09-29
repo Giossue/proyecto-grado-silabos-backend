@@ -445,10 +445,11 @@ class ManagedUserTest extends TestCase
             'password_confirmation' => 'Nueva-clave-2026!',
         ])->assertOk();
         $notice = $this->assertNotified($this->administrator->id, 'usuario.activado', "{$pending->nombre} activó su cuenta");
+        // «Cuenta activada» es solo informativo (I-163): se marca leído y no lleva a ninguna pantalla.
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.notifications.open', $notice))
             ->assertOk()
-            ->assertJsonPath('path', '/admin/usuarios?q='.urlencode($pending->correo_electronico));
+            ->assertJsonPath('path', null);
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.activation.resend', $pending))
             ->assertForbidden();

@@ -85,7 +85,10 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   logo, la campana de avisos, el tema y el menú de usuario con «Cerrar sesión». Cada aviso
   indica el ámbito en que se abrirá («Docencia · Software») y al abrirlo el servidor
   activa ese rol antes de navegar; «Ver todas las notificaciones» aparece recién con un
-  ámbito activo. La carrera activa se muestra bajo el nombre de usuario y puede
+  ámbito activo. Los avisos solo informativos (cuenta activada, plazo extendido, proceso o
+  convocatoria en pausa, proceso cerrado) no llevan enlace ni botón «Abrir» (I-163); los
+  que piden actuar (sílabos por elaborar, corrección, aprobación, firma, reanudación,
+  nuevo rol, coordinación asignada) abren la pantalla donde se actúa. La carrera activa se muestra bajo el nombre de usuario y puede
   cambiarse desde un `Sheet` en ese mismo menú.
 - El selector de tema del encabezado alterna únicamente entre claro y oscuro; no existe
   la opción «Sistema». Sin preferencia guardada, la aplicación arranca en claro.
@@ -197,10 +200,12 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   del inicio cuenta hacia esa fecha y durante la apertura cuenta hacia la entrega. Una pausa
   o un vencimiento se nombra sin mostrar cero días como si el plazo siguiera vigente.
 - El Panel de cada rol muestra primero sus indicadores y debajo «Puesta en marcha»:
-  barra de progreso y los pasos en orden (Administración: facultades, carreras,
-  modalidades, periodo, cuentas,
-  coordinadores, plantilla, proceso; Coordinación: malla, materias programadas, paralelos,
-  docentes, convocatoria; Docencia: recibir, iniciar, enviar). Coordinación calcula
+  barra de progreso y los pasos en orden (Administración: facultades con logo, carreras,
+  periodo, cuentas, coordinadores, plantilla, convocatoria institucional; Coordinación:
+  malla, materias programadas, paralelos, docentes, datos del Proyecto de carrera,
+  convocatoria; Docencia: recibir, abrir, enviar, firmar). I-163 actualiza los textos al
+  sistema vigente (logo obligatorio, plantilla con Texto libre y Contenido de la
+  plantilla, borrador que se inicia solo, firma electrónica del sílabo aprobado). Coordinación calcula
   los pasos contra el período institucional vigente y solo los completa cuando todas las
   materias programadas tienen paralelos y todos los paralelos tienen docente vigente. Si
   todo está listo, el último paso permite iniciar la convocatoria desde el mismo Panel.

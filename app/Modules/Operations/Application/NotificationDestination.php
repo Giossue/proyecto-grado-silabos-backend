@@ -23,6 +23,18 @@ final class NotificationDestination
 {
     private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'coordinacion.asignada'];
 
+    /**
+     * Avisos solo informativos (I-163): no piden hacer nada, así que no llevan enlace.
+     * Los demás llevan a la pantalla donde se actúa (revisar, corregir, firmar, continuar).
+     */
+    public const INFORMATIONAL_EVENTS = [
+        'usuario.activado',
+        'proceso.plazo_extendido',
+        'proceso.pausado',
+        'proceso.cerrado',
+        'convocatoria.pausada',
+    ];
+
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly SyllabusNavigationLookup $syllabi,
@@ -36,6 +48,9 @@ final class NotificationDestination
      */
     public function resolve(InternalNotification $notification, User $user, ?RoleAssignment $active, ?Collection $eligible = null): ?array
     {
+        if (in_array($notification->tipo, self::INFORMATIONAL_EVENTS, true)) {
+            return null;
+        }
         if ($notification->tipo_recurso === 'asignacion_rol') {
             return ['assignment' => null, 'path' => '/rol'];
         }
