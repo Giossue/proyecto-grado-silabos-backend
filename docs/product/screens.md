@@ -316,7 +316,7 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   condiciones y las listas curriculares.
 - I-159 (preguntas de seguimiento, como Google Forms o HubSpot): la regla se define en la
   pregunta que se responde. Al hacer clic en una ficha «Docente: Sí o No» —o en una casilla
-  «X si … = Sí/No» del formato UEB— aparece «Si responde [Sí | No], pedir también:» con
+  «X» del formato UEB, que en la hoja se ve como «X ①» con su significado en el aviso— aparece «Si responde [Sí | No], pedir también:» con
   casillas para las fichas «Docente» cercanas, nombradas por el texto que tienen al lado;
   lo que no se marca se pide siempre. Cada casilla «X» habla solo de su respuesta («Si
   marca «Sí», pedir también:»). Cercanas: si la pregunta está en una tabla, las de su

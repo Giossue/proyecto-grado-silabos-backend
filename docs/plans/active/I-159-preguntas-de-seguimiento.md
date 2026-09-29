@@ -34,3 +34,5 @@ plantillas de DocuSign o PandaDoc).
       «ESTUDIANTES CON DISCAPACIDAD»); fuera de tablas, toda la parte. Una ya atada fuera
       del bloque se sigue mostrando para poder quitarla. En la ficha real ya no aparece
       «Formación y experiencia». Pruebas en `sheetConditions.test.ts`.
+- [x] La casilla «X» se veía cortada en celdas angostas (solo «X», sin su número): ahora la
+      ficha dice «X ①» y el aviso explica «Se marca con X si el docente responde Sí en …».
