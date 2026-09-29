@@ -152,6 +152,12 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 ## Actualizado para esta entrega
 
+I-157 (29 de septiembre de 2026), por instrucción del responsable, simplifica COR-16:
+una sola vista con el Proyecto de carrera como tabla (por asignatura y de toda la
+carrera), sin pestañas, historial ni etiquetas. «Importar documentos» abre el paso a
+paso en un modal que retoma la importación en curso y permite descartarla. Sin
+cambios de API.
+
 I-156 (29 de septiembre de 2026), por instrucción del responsable y su tutor, deja dos
 formas de parte: **Texto libre** (el docente escribe con párrafos, negrita, cursiva,
 viñetas, numeración y tablas simples; se guarda como documento JSON validado) y

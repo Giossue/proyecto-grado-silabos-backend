@@ -285,13 +285,16 @@ paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
   regeneración cuando hay sílabos afectados. Una falla muestra el error y ofrece
   reintentar; las capacidades deshabilitadas y el bloqueo por convocatoria se explican
   junto a la acción. Cambiar de carrera descarta el estado local anterior.
-  «Datos confirmados» muestra los valores que usará un sílabo nuevo, filtrables por
-  materia o concepto y con procedencia. Cuando faltan resultados importados, muestra
-  los resultados I-144 como registro anterior sin atribuirles un extracto inexistente.
-  La pantalla distingue Datos confirmados, Importar e Historial mediante pestañas con
-  estado activo. Abre en la importación en curso si existe; si no, en Datos confirmados
-  cuando la carrera ya tiene datos, o en Importar. La carga presenta solo archivos
-  nuevos; una indicación adicional se abre solo si se necesita.
+  I-157: COR-16 es una sola vista, sin pestañas, historial ni etiquetas. Muestra el
+  Proyecto de carrera como tabla: «Datos de toda la carrera» (Dato, Contenido) y «Datos
+  por asignatura» (una fila por asignatura en orden alfabético y una columna por cada
+  dato que pide la plantilla); lo que falta dice «Sin dato» y la procedencia se ve al
+  pasar el cursor. El botón principal de la cabecera, **Importar documentos**, abre el
+  paso a paso en un modal (Documentos, Análisis, Revisión, Listo). La importación en
+  curso se conserva: el botón pasa a **Continuar importación** y el modal abre en el
+  paso donde quedó; dentro se puede reintentar o descartar con confirmación. Al guardar,
+  la tabla se actualiza y el siguiente ingreso empieza por los documentos. La carga
+  presenta solo archivos nuevos; una indicación adicional se abre solo si se necesita.
   El pie de la revisión mantiene visible la acción de guardar, también en móvil.
   La acción manual «Resultados de aprendizaje» desaparece del menú de cada materia;
   las correcciones nuevas siguen el recorrido de importación y confirmación.
