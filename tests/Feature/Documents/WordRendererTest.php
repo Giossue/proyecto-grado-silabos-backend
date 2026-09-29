@@ -9,7 +9,6 @@ use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Application\SyllabusDocumentContent;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
-use App\Modules\Documents\Infrastructure\Rendering\PhpWordDocumentRenderer;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use DOMDocument;
 use DOMElement;
@@ -17,7 +16,7 @@ use DOMXPath;
 use Tests\TestCase;
 use ZipArchive;
 
-/** I-34: el DOCX reproduce tablas complejas (agrupaciones, unidades, totales) y es reproducible. */
+/** El DOCX aplica la apariencia congelada y dibuja el Texto libre con sus listas y tablas (I-156). */
 class WordRendererTest extends TestCase
 {
     public function test_applies_the_frozen_template_appearance_to_docx(): void
@@ -85,88 +84,6 @@ class WordRendererTest extends TestCase
         $this->assertStringContainsString('w:sz w:val="24"', $stylesXml);
     }
 
-    public function test_renders_grouped_headers_units_and_totals_deterministically(): void
-    {
-        $renderer = app(DocumentRenderer::class);
-        $this->assertInstanceOf(PhpWordDocumentRenderer::class, $renderer);
-
-        $input = new DocumentRenderInput(
-            subject: 'Inteligencia Artificial',
-            subjectCode: 'SW-P7-037',
-            academicPeriod: 'Marzo – Julio 2026',
-            revisionNumber: 3,
-            revisionFingerprint: str_repeat('ab', 32),
-            generatedAt: '2026-09-02T20:00:00-05:00',
-            locale: 'es-EC',
-            snapshot: $this->snapshot(),
-        );
-        $this->assertSame(
-            TemplateTitleBlock::DEFAULT_TEXT,
-            app(SyllabusDocumentContent::class)->lines($input)[0],
-        );
-
-        $first = $renderer->render($input);
-        $second = $renderer->render($input);
-        $this->assertSame($first->docx->fingerprint(), $second->docx->fingerprint());
-        $this->assertSame($first->pdf->fingerprint(), $second->pdf->fingerprint());
-
-        $temporary = tempnam(sys_get_temp_dir(), 'silabos-test-');
-        $this->assertNotFalse($temporary);
-        file_put_contents($temporary, $first->docx->bytes);
-        $zip = new ZipArchive;
-        $this->assertTrue($zip->open($temporary) === true);
-        $document = $zip->getFromName('word/document.xml');
-        $zip->close();
-        @unlink($temporary);
-        $this->assertIsString($document);
-        $this->assertStringContainsString(TemplateTitleBlock::DEFAULT_TEXT, $document);
-
-        // Ficha de identificación institucional desde la copia de la revisión.
-        $this->assertStringContainsString('FACULTAD', $document);
-        $this->assertStringContainsString('Ciencias Administrativas', $document);
-        $this->assertStringContainsString('SW-P6-032', $document);
-        $this->assertStringContainsString('docente@ueb.edu.ec', $document);
-
-        // Bloque y campo numerados, metadatos y texto libre.
-        $this->assertStringContainsString('2. Unidades y planificación', $document);
-        // Sección con un solo campo: sin subtítulo «2.1»; con varios, sí se numeran.
-        $this->assertStringNotContainsString('2.1 Planificación', $document);
-        $this->assertStringContainsString('3.1 Descripción', $document);
-        $this->assertStringContainsString('Descripción libre', $document);
-        $this->assertStringContainsString(str_repeat('ab', 32), $document);
-
-        // Cabecera combinada: agrupamiento de cuatro columnas y grupo de dos.
-        $this->assertStringContainsString('Horas por semana', $document);
-        $this->assertStringContainsString('<w:gridSpan w:val="4"/>', $document);
-        $this->assertStringContainsString('<w:gridSpan w:val="2"/>', $document);
-        $this->assertStringContainsString('<w:vMerge w:val="restart"/>', $document);
-        $this->assertStringContainsString('<w:vMerge w:val="continue"/>', $document);
-        $this->assertStringContainsString('<w:tblHeader w:val="1"/>', $document);
-        $this->assertStringContainsString('<w:keepNext w:val="1"/>', $document);
-
-        // Dos unidades con su cabecera y totales sumados por unidad.
-        $this->assertSame(2, substr_count($document, 'Unidad No.'));
-        $this->assertStringContainsString('Fundamentos teóricos', $document);
-        $this->assertStringContainsString('Aprendizaje automático', $document);
-        $this->assertSame(2, substr_count($document, 'Total, horas'));
-        $this->assertStringContainsString('>4<', $document);
-        $this->assertStringContainsString('>2.5<', $document);
-        // Las semanas no suman (5 + 6 no aparece) y el formato oficial pinta las cabeceras
-        // en azul claro con texto azul y los totales en un azul más oscuro.
-        $this->assertStringNotContainsString('>11<', $document);
-        $this->assertStringContainsString('w:fill="DBE5F1"', $document);
-        $this->assertStringContainsString('w:fill="B8CCE4"', $document);
-        $this->assertStringContainsString('w:color w:val="365F91"', $document);
-        // La planificación abre una sección horizontal aunque el documento general sea
-        // vertical, y cada unidad posterior comienza en una página nueva.
-        $this->assertStringContainsString('w:orient="landscape"', $document);
-        $this->assertStringContainsString('<w:br w:type="page"/>', $document);
-
-        // Lista con viñetas del segundo bloque.
-        $this->assertStringContainsString('Primer objetivo', $document);
-        $this->assertStringContainsString('<w:numPr>', $document);
-    }
-
     public function test_unnamed_part_prints_no_subtitle_and_keeps_numbering_consecutive(): void
     {
         $snapshot = $this->snapshot();
@@ -175,7 +92,7 @@ class WordRendererTest extends TestCase
             'title' => '',
             'content_type' => 'text',
             'table' => null,
-            'fields' => [['key' => 'parte_sin_nombre', 'label' => '', 'type' => 'texto_largo', 'value' => 'Contenido sin subtítulo', 'rows' => []]],
+            'fields' => [['key' => 'parte_sin_nombre', 'label' => '', 'type' => 'texto_largo', 'value' => 'Contenido sin subtítulo']],
         ]]);
         $result = app(DocumentRenderer::class)->render(new DocumentRenderInput(
             subject: 'Inteligencia Artificial',
@@ -287,32 +204,21 @@ class WordRendererTest extends TestCase
     /** @return array<string, mixed> */
     private function snapshot(): array
     {
-        $table = [
-            'columns' => [
-                ['key' => 'contenidos', 'label' => 'Contenidos temáticos', 'type' => 'text'],
-                ['key' => 'semana', 'label' => 'Semanas (16)', 'type' => 'number', 'band' => 'horas', 'sum' => false],
-                ['key' => 'acd', 'label' => 'ACD', 'type' => 'number', 'group' => 'docencia', 'band' => 'horas'],
-                ['key' => 'ape', 'label' => 'APE', 'type' => 'number', 'group' => 'estudiante', 'band' => 'horas'],
-                ['key' => 'aa', 'label' => 'AA', 'type' => 'number', 'group' => 'estudiante', 'band' => 'horas'],
-                ['key' => 'evaluacion', 'label' => 'Evaluación', 'type' => 'text'],
-            ],
-            'groups' => [
-                ['key' => 'docencia', 'label' => 'Docencia'],
-                ['key' => 'estudiante', 'label' => 'Estudiante'],
-            ],
-            'bands' => [['key' => 'horas', 'label' => 'Horas por semana']],
-            'header_fields' => [['key' => 'nombre', 'label' => 'Nombre de la unidad']],
-            'totals' => ['enabled' => true, 'label' => 'Total, horas'],
-            'repeat' => ['enabled' => true, 'label' => 'Unidad'],
-        ];
-        $rows = [
-            ['data' => ['_unit' => 1, '_kind' => 'unit', 'nombre' => 'Fundamentos teóricos']],
-            ['data' => ['_unit' => 1, 'contenidos' => 'Socialización', 'semana' => 1, 'acd' => 2, 'ape' => 1, 'aa' => 3, 'evaluacion' => 'Ficha']],
-            ['data' => ['_unit' => 1, 'contenidos' => 'Conceptos', 'semana' => 2, 'acd' => 2, 'ape' => 1, 'aa' => 3, 'evaluacion' => 'Ficha']],
-            ['data' => ['_unit' => 2, '_kind' => 'unit', 'nombre' => 'Aprendizaje automático']],
-            ['data' => ['_unit' => 2, 'contenidos' => 'Regresión', 'semana' => 5, 'acd' => '1.5', 'ape' => 1, 'aa' => 3, 'evaluacion' => 'Rúbrica']],
-            ['data' => ['_unit' => 2, 'contenidos' => 'Clasificación', 'semana' => 6, 'acd' => 1, 'ape' => 1, 'aa' => 3, 'evaluacion' => 'Rúbrica']],
-        ];
+        // I-156: lo que escribe el docente es Texto libre, con sus listas y tablas.
+        $paragraph = fn (string $text): array => ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]];
+        $cell = fn (string $text, string $type = 'tableCell'): array => ['type' => $type, 'attrs' => ['colspan' => 1, 'rowspan' => 1], 'content' => [$paragraph($text)]];
+        $planning = ['type' => 'doc', 'content' => [
+            $paragraph('Unidad 1: Fundamentos teóricos'),
+            ['type' => 'table', 'content' => [
+                ['type' => 'tableRow', 'content' => [$cell('Contenidos', 'tableHeader'), $cell('Semana', 'tableHeader')]],
+                ['type' => 'tableRow', 'content' => [$cell('Socialización'), $cell('1')]],
+            ]],
+        ]];
+        $objectives = ['type' => 'doc', 'content' => [['type' => 'bulletList', 'content' => [
+            ['type' => 'listItem', 'content' => [$paragraph('Primer objetivo')]],
+            ['type' => 'listItem', 'content' => [$paragraph('Segundo objetivo')]],
+        ]]]];
+        $sheet = fn (string $key, string $label): array => TemplateDocumentDefaults::freeTextSheet($key, $label);
 
         $snapshot = [
             'schema_version' => 2,
@@ -335,8 +241,7 @@ class WordRendererTest extends TestCase
                         'key' => 'identificacion_principal',
                         'title' => 'Identificación institucional',
                         'content_type' => 'institutional',
-                        'table' => null,
-                        'fields' => [['key' => 'asignatura', 'label' => 'Identificación institucional', 'type' => 'repetible', 'inherited' => true, 'master_source' => 'asignaturas', 'value' => ['codigo' => 'SW-P7-037'], 'rows' => []]],
+                        'fields' => [['key' => 'asignatura', 'label' => 'Identificación institucional', 'type' => 'referencia_maestra', 'inherited' => true, 'master_source' => 'asignaturas', 'value' => ['codigo' => 'SW-P7-037']]],
                     ]],
                 ],
                 [
@@ -345,9 +250,9 @@ class WordRendererTest extends TestCase
                     'blocks' => [[
                         'key' => 'unidades_principal',
                         'title' => 'Planificación',
-                        'content_type' => 'table',
-                        'table' => $table,
-                        'fields' => [['key' => 'planificacion', 'label' => 'Planificación', 'type' => 'repetible', 'value' => null, 'rows' => $rows]],
+                        'content_type' => 'text',
+                        'document' => $sheet('planificacion', 'Planificación'),
+                        'fields' => [['key' => 'planificacion', 'label' => 'Planificación', 'type' => 'texto_libre', 'value' => $planning]],
                     ]],
                 ],
                 [
@@ -358,18 +263,14 @@ class WordRendererTest extends TestCase
                             'key' => 'descripcion_principal',
                             'title' => 'Descripción',
                             'content_type' => 'text',
-                            'table' => null,
-                            'fields' => [['key' => 'descripcion', 'label' => 'Descripción', 'type' => 'texto_largo', 'value' => "Descripción libre\n- Punto uno", 'rows' => []]],
+                            'fields' => [['key' => 'descripcion', 'label' => 'Descripción', 'type' => 'texto_largo', 'value' => "Descripción libre\n- Punto uno"]],
                         ],
                         [
                             'key' => 'objetivos',
                             'title' => 'Objetivos',
-                            'content_type' => 'bulleted_list',
-                            'table' => null,
-                            'fields' => [['key' => 'objetivos', 'label' => 'Objetivos', 'type' => 'repetible', 'value' => null, 'rows' => [
-                                ['data' => ['texto' => 'Primer objetivo']],
-                                ['data' => ['texto' => 'Segundo objetivo']],
-                            ]]],
+                            'content_type' => 'text',
+                            'document' => $sheet('objetivos', 'Objetivos'),
+                            'fields' => [['key' => 'objetivos', 'label' => 'Objetivos', 'type' => 'texto_libre', 'value' => $objectives]],
                         ],
                     ],
                 ],

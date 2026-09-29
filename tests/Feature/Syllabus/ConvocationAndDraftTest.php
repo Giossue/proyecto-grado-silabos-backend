@@ -628,10 +628,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('error', $messages[$inherited->id]->first()->severidad);
     }
 
-
-
-
-
     public function test_role_navigation_endpoints_do_not_mix_coordinator_and_teacher_privileges(): void
     {
         $this->actingAsTeacher()->getJson(route('api.v1.coordination.convocations.index'))->assertForbidden();
@@ -688,7 +684,6 @@ class ConvocationAndDraftTest extends TestCase
 
         return Syllabus::query()->firstOrFail();
     }
-
 
     private function actingAsAdministrator(): static
     {

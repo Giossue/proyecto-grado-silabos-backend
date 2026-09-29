@@ -7,7 +7,6 @@ use App\Modules\Configuration\Application\Actions\SaveTemplateDocument;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\TableLayout;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -382,8 +381,6 @@ class TemplateDocumentTest extends TestCase
         }
     }
 
-
-
     public function test_text_field_list_format_exports_lines_as_items(): void
     {
         $doc = ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [[
@@ -460,9 +457,6 @@ class TemplateDocumentTest extends TestCase
         }
         $this->assertStringNotContainsString('@nombre_carrera', $bundle->pdf->bytes);
     }
-
-
-
 
     public function test_design_properties_save_atomically_and_reject_foreign_fields_and_stale_edits(): void
     {
@@ -586,7 +580,6 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame('landscape', $block->fresh()->pageOrientation());
     }
 
-
     public function test_fields_have_no_optional_flag_or_limits(): void
     {
         $template = $this->template();
@@ -607,8 +600,6 @@ class TemplateDocumentTest extends TestCase
         $this->assertTrue($shown['required']);
         $this->assertArrayNotHasKey('rules', $shown);
     }
-
-
 
     public function test_administration_decides_ai_reading_on_identification(): void
     {
@@ -663,7 +654,6 @@ class TemplateDocumentTest extends TestCase
         $save(null)->assertSuccessful();
         $this->assertNull($formation->fresh()->mostrar_si);
     }
-
 
     private function template(): SyllabusTemplate
     {

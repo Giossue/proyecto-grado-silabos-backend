@@ -285,7 +285,7 @@ class DocumentSignatureTest extends TestCase
                     'title' => 'Contenido académico',
                     'fields' => [[
                         'key' => 'descripcion', 'label' => 'Descripción', 'type' => 'text',
-                        'inherited' => false, 'value' => 'Contenido para firmar', 'rows' => [],
+                        'inherited' => false, 'value' => 'Contenido para firmar',
                     ]],
                 ]],
             ]],

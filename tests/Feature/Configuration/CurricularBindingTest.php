@@ -211,7 +211,6 @@ class CurricularBindingTest extends TestCase
         $this->assertSame([], CurricularFieldOptions::fromAttributes(['options_sources' => [], 'options_source' => 'curricular_habilidades']));
     }
 
-
     public function test_word_and_pdf_export_frozen_curricular_lists_tables_and_multiple_selections(): void
     {
         $outcomes = $this->concept('resultados', 'lista');
@@ -231,7 +230,7 @@ class CurricularBindingTest extends TestCase
             snapshot: ['template_variables' => $variables, 'academic_context' => $context, 'sections' => [[
                 'title' => 'Currículo', 'blocks' => [[
                     'title' => 'Datos confirmados', 'document' => $document,
-                    'fields' => [['key' => 'elegidas', 'type' => 'seleccion_multiple', 'value' => ['Comunicación', 'Colaboración'], 'rows' => []]],
+                    'fields' => [['key' => 'elegidas', 'type' => 'seleccion_multiple', 'value' => ['Comunicación', 'Colaboración']]],
                 ]],
             ]]],
         );

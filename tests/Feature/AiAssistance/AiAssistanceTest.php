@@ -21,6 +21,7 @@ use App\Modules\AiAssistance\Infrastructure\Jobs\AnswerSyllabusChatJob;
 use App\Modules\AiAssistance\Infrastructure\Jobs\EmbedAcademicSourceJob;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiDocument;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
+use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -29,7 +30,6 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Application\AcademicContextSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\RepeatableRow;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
@@ -108,7 +108,7 @@ class AiAssistanceTest extends TestCase
     {
         $this->getJson($this->url())->assertOk()->assertJsonPath('conversation', null)->assertJsonPath('available', true)
             ->assertJsonMissingPath('review')->assertJsonMissingPath('review_results');
-        $beforeRows = RepeatableRow::query()->get()->toArray();
+        $beforeValues = FieldValue::query()->get()->toArray();
         $key = (string) Str::uuid();
         $payload = ['message' => 'Propón contenidos para una unidad.', 'idempotency_key' => $key];
         $id = $this->postJson($this->url().'/messages', $payload)->assertAccepted()->json('assistant_message_id');
@@ -124,7 +124,7 @@ class AiAssistanceTest extends TestCase
         (new AnswerSyllabusChatJob($id))->handle($gateway);
         $this->getJson($this->url())->assertOk()->assertJsonPath('conversation.messages.1.status', 'completado')
             ->assertJsonPath('conversation.messages.1.citations.0.type', 'contexto_academico');
-        $this->assertSame($beforeRows, RepeatableRow::query()->get()->toArray());
+        $this->assertSame($beforeValues, FieldValue::query()->get()->toArray());
         $this->assertSame(0, $this->syllabus->fresh()->version_bloqueo);
         $this->deleteJson($this->url())->assertOk();
         $this->getJson($this->url())->assertJsonPath('conversation.hidden', true)->assertJsonCount(2, 'conversation.messages');
@@ -234,25 +234,15 @@ class AiAssistanceTest extends TestCase
     {
         $template = SyllabusTemplate::query()->create(['nombre' => 'Plantilla de unidades', 'activo' => true]);
         $section = $template->appendSection(['id' => (string) Str::uuid(), 'clave' => 'planificacion', 'titulo' => 'Planificación', 'posicion' => 1, 'bloques' => []]);
-        $block = $template->appendBlock($section->id, ['id' => (string) Str::uuid(), 'clave' => 'unidades', 'tipo' => 'tabla', 'titulo' => 'Unidades', 'posicion' => 1,
-            'configuracion' => ['content_type' => 'table', 'table' => [
-                'columns' => [['key' => 'contenido', 'label' => 'Contenido', 'type' => 'text']],
-                'repeat' => ['enabled' => true], 'header_fields' => [['key' => 'titulo', 'label' => 'Título']],
-            ]]]);
+        // I-156: la planificación es Texto libre del docente.
+        $block = $template->appendBlock($section->id, ['id' => (string) Str::uuid(), 'clave' => 'unidades', 'tipo' => 'narrativa', 'titulo' => 'Unidades', 'posicion' => 1,
+            'configuracion' => ['content_type' => 'text', 'document' => TemplateDocumentDefaults::freeTextSheet('unidades', 'Planificación por unidades')]]);
         $this->planning = FieldDefinition::query()->create(['plantilla_id' => $template->id, 'bloque_plantilla_id' => $block->id,
-            'clave' => 'unidades', 'etiqueta' => 'Planificación por unidades', 'tipo' => 'repetible', 'heredado' => false,
+            'clave' => 'unidades', 'etiqueta' => 'Planificación por unidades', 'tipo' => 'texto_libre', 'heredado' => false,
             'editable_docente' => true, 'ia_habilitada' => false, 'posicion' => 1]);
         $privateBlock = $template->appendBlock($section->id, ['id' => (string) Str::uuid(), 'clave' => 'contacto', 'tipo' => 'narrativa', 'titulo' => 'Otros campos', 'posicion' => 2, 'configuracion' => []]);
         $private = FieldDefinition::query()->create(['plantilla_id' => $template->id, 'bloque_plantilla_id' => $privateBlock->id,
             'clave' => 'contacto', 'etiqueta' => 'Contacto', 'tipo' => 'texto_largo', 'heredado' => false,
-            'editable_docente' => true, 'ia_habilitada' => true, 'posicion' => 1]);
-        $genericBlock = $template->appendBlock($section->id, ['id' => (string) Str::uuid(), 'clave' => 'tutorias', 'tipo' => 'tabla', 'titulo' => 'Tutorías', 'posicion' => 3,
-            'configuracion' => ['content_type' => 'table', 'table' => [
-                'columns' => [['key' => 'contacto', 'label' => 'Contacto', 'type' => 'text']],
-                'repeat' => ['enabled' => false],
-            ]]]);
-        $generic = FieldDefinition::query()->create(['plantilla_id' => $template->id, 'bloque_plantilla_id' => $genericBlock->id,
-            'clave' => 'tutorias', 'etiqueta' => 'Tutorías', 'tipo' => 'repetible', 'heredado' => false,
             'editable_docente' => true, 'ia_habilitada' => true, 'posicion' => 1]);
         $parallel = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail()->parallel;
         $scheduled = $parallel->scheduledSubject;
@@ -263,10 +253,8 @@ class AiAssistanceTest extends TestCase
         $convocation = Convocation::query()->create(['carrera_id' => $scheduled->subject->carrera_id, 'proceso_id' => $this->openSyllabusProcess($template->id)->id, 'estado' => 'abierta']);
         $this->syllabus = Syllabus::query()->create(['convocatoria_id' => $convocation->id, 'paralelo_id' => $parallel->id,
             'asignatura_id' => $scheduled->asignatura_id, 'contexto_academico' => $context, 'estado' => 'borrador', 'version_bloqueo' => 0, 'iniciado_en' => now()]);
-        RepeatableRow::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $this->planning->id,
-            'posicion' => 0, 'datos' => ['_unit' => 1, 'contenido' => 'Tema de unidad existente']]);
-        RepeatableRow::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $generic->id,
-            'posicion' => 0, 'datos' => ['contacto' => 'NO ENVIAR: tabla repetible sin unidades']]);
+        FieldValue::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $this->planning->id, 'heredado' => false,
+            'valor' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Tema de unidad existente']]]]]]);
         FieldValue::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $private->id,
             'valor' => 'NO ENVIAR: '.$this->teacher->correo_electronico, 'heredado' => false]);
     }
