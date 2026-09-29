@@ -35,6 +35,16 @@ Respaldo previo: `~/silabos-respaldos/2026-09-28-antes-de-borrar-periodo.dump`.
   carrera (resultados de aprendizaje). Sin esos datos, los datos automáticos obligatorios
   quedan vacíos y un sílabo nuevo no podría enviarse.
 
+## Ajustes posteriores en la base remota (2026-09-28, I-151/I-154)
+
+- «Resultados de aprendizaje» pasa a una parte «Sale sola de los documentos» con el dato
+  declarado `resultados_de_aprendizaje` (lista, por asignatura), para que la importación
+  lo busque. Reemplaza la variable anterior `resultados_aprendizaje_asignatura`.
+- Se agrega «Contenidos mínimos» (`contenidos_minimos`, lista, por asignatura) al inicio
+  de la sección de unidades.
+- «Conducta y comportamiento ético» pasa a texto fijo con el texto institucional del
+  sílabo real de Calidad de Software, sin los apartados propios de clases virtuales.
+
 ## Trabajo
 
 - [x] Altura máxima y desplazamiento en `DialogContent`.
