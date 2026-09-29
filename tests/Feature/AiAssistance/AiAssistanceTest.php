@@ -248,7 +248,7 @@ class AiAssistanceTest extends TestCase
         $scheduled = $parallel->scheduledSubject;
         $context = app(AcademicContextSnapshot::class)->build($scheduled);
         $context['career']['name'] = 'Software';
-        $context['curricular'] = ['definitions' => ['resultados_aprendizaje' => ['key' => 'resultados_aprendizaje', 'label' => 'Resultados', 'type' => 'lista', 'scope' => 'asignatura', 'columns' => []]],
+        $context['curricular'] = ['definitions' => ['resultados_aprendizaje' => ['key' => 'resultados_aprendizaje', 'label' => 'Resultados', 'type' => 'lista', 'columns' => []]],
             'values' => ['resultados_aprendizaje' => ['Evalúa la calidad del software.']], 'evidence' => []];
         $convocation = Convocation::query()->create(['carrera_id' => $scheduled->subject->carrera_id, 'proceso_id' => $this->openSyllabusProcess($template->id)->id, 'estado' => 'abierta']);
         $this->syllabus = Syllabus::query()->create(['convocatoria_id' => $convocation->id, 'paralelo_id' => $parallel->id,

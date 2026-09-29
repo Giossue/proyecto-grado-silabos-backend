@@ -11,10 +11,10 @@ use Illuminate\Support\Str;
 trait UsesProjectData
 {
     /** Declara el dato, si hace falta, y lo agrega como parte fija de la primera sección. */
-    private function useProjectData(string $key, string $label, string $type = 'lista', string $scope = 'asignatura'): CurricularConcept
+    private function useProjectData(string $key, string $label, string $type = 'lista'): CurricularConcept
     {
         $concept = CurricularConcept::query()->firstOrCreate(['clave_concepto' => $key], [
-            'etiqueta_concepto' => $label, 'tipo_concepto' => $type, 'ambito_concepto' => $scope,
+            'etiqueta_concepto' => $label, 'tipo_concepto' => $type,
             'columnas_concepto' => $type === 'tabla' ? [['key' => 'texto', 'label' => 'Texto']] : null,
         ]);
         if (! SyllabusTemplate::query()->exists()) {

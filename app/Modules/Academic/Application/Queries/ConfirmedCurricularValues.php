@@ -62,9 +62,9 @@ final class ConfirmedCurricularValues
         }
 
         usort($values, fn (array $a, array $b): int => [
-            $a['subject_name'] ?? '', $a['label'], $a['id'],
+            $a['subject_name'], $a['label'], $a['id'],
         ] <=> [
-            $b['subject_name'] ?? '', $b['label'], $b['id'],
+            $b['subject_name'], $b['label'], $b['id'],
         ]);
 
         return $values;

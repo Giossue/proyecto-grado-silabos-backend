@@ -52,7 +52,14 @@ final class CurricularImportProposal
                 if ($columns === null || $columns === [] || count(array_unique(array_column($columns, 'key'))) !== count($columns)) {
                     throw ValidationException::withMessages(["definitions.{$index}.columns" => 'La tabla necesita columnas con claves únicas.']);
                 }
-                $columns = array_map(fn (array $column): array => ['key' => $column['key'], 'label' => trim($column['label'])], $columns);
+                $normalized = [];
+                foreach ($columns as $column) {
+                    if (! is_string($column['key']) || ! is_string($column['label'])) {
+                        throw ValidationException::withMessages(["definitions.{$index}.columns" => 'Cada columna necesita clave y nombre.']);
+                    }
+                    $normalized[] = ['key' => $column['key'], 'label' => trim($column['label'])];
+                }
+                $columns = $normalized;
             } elseif ($columns !== null && $columns !== []) {
                 throw ValidationException::withMessages(["definitions.{$index}.columns" => 'Solo las tablas admiten columnas.']);
             } else {

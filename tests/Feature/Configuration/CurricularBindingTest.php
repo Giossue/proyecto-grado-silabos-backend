@@ -51,9 +51,9 @@ class CurricularBindingTest extends TestCase
 
     public function test_new_concepts_resolve_by_career_and_subject_without_changing_php_and_freeze_their_schema(): void
     {
-        $shared = $this->concept('perfil_nuevo', 'texto', 'carrera');
+        $shared = $this->concept('perfil_nuevo', 'texto');
         $skills = $this->concept('habilidades', 'lista');
-        $books = $this->concept('bibliografia', 'tabla', 'asignatura', [
+        $books = $this->concept('bibliografia', 'tabla', [
             ['key' => 'titulo', 'label' => 'Título'], ['key' => 'autor', 'label' => 'Autor'],
         ]);
         $this->value($shared, 'Perfil común de la carrera.');
@@ -67,7 +67,11 @@ class CurricularBindingTest extends TestCase
         $otherCareer->codigo_carrera = 'OTRA';
         $otherCareer->nombre = 'Otra carrera';
         $otherCareer->save();
-        $careerValue = $this->value($shared, 'Solo otra carrera.', careerId: $otherCareer->id);
+        $otherCareerSubject = $this->subject->replicate();
+        $otherCareerSubject->carrera_id = $otherCareer->id;
+        $otherCareerSubject->codigo_asignatura = 'OTRA-1';
+        $otherCareerSubject->save();
+        $careerValue = $this->value($shared, 'Solo otra carrera.', $otherCareerSubject, $otherCareer->id);
         $context = app(AcademicContextSnapshot::class)->build(ScheduledSubject::query()->firstOrFail());
         $snapshot = ['academic_context' => $context];
         $resolved = TemplateVariables::resolve($snapshot);
@@ -77,7 +81,7 @@ class CurricularBindingTest extends TestCase
         $this->assertSame($this->coordinator->id, data_get($context, 'curricular.evidence.habilidades.confirmed_by'));
         $this->assertSame('Página 3', data_get($context, 'curricular.evidence.habilidades.sources.0.locator'));
         $this->assertSame(['Solo otra asignatura'], app(CurricularData::class)->snapshot($this->subject->carrera_id, $other->id)['values']['habilidades']);
-        $this->assertSame($careerValue->valor_curricular, app(CurricularData::class)->snapshot($otherCareer->id, $other->id)['values']['perfil_nuevo']);
+        $this->assertSame($careerValue->valor_curricular, app(CurricularData::class)->snapshot($otherCareer->id, $otherCareerSubject->id)['values']['perfil_nuevo']);
 
         $skillValue->update(['valor_curricular' => ['Catálogo posterior']]);
         $skills->update(['etiqueta_concepto' => 'Etiqueta posterior']);
@@ -101,7 +105,7 @@ class CurricularBindingTest extends TestCase
         $this->assertSame([], app(RequiredAcademicTemplateData::class)->issues($context));
         $this->asRole('admin@silabos.test');
         $this->getJson(route('api.v1.admin.template.index'))->assertOk()->assertJsonFragment([
-            'key' => 'curricular_contenido_nuevo', 'label' => 'Contenido nuevo', 'type' => 'texto', 'scope' => 'asignatura', 'sample' => 'Contenido nuevo',
+            'key' => 'curricular_contenido_nuevo', 'label' => 'Contenido nuevo', 'type' => 'texto', 'sample' => 'Contenido nuevo',
         ]);
         $document = $this->document([['type' => 'variable', 'attrs' => ['id' => 'curricular_contenido_nuevo']]]);
         $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
@@ -171,7 +175,7 @@ class CurricularBindingTest extends TestCase
     public function test_binding_rejects_non_list_concepts_and_properties_preserve_existing_question_type(): void
     {
         $list = $this->concept('habilidades', 'lista');
-        $this->concept('perfil', 'texto', 'carrera');
+        $this->concept('perfil', 'texto');
         $field = $this->createQuestion('seleccion_multiple');
         $block = $field->block;
         $template = SyllabusTemplate::institutional();
@@ -188,10 +192,10 @@ class CurricularBindingTest extends TestCase
         $this->assertSame('curricular_'.$list->clave_concepto, CurricularFieldOptions::source($field->fresh()));
     }
 
-    public function test_question_combines_subject_and_career_lists_and_requires_every_bound_catalog(): void
+    public function test_question_combines_several_project_lists_and_requires_every_bound_catalog(): void
     {
         $subjectConcept = $this->concept('habilidades', 'lista');
-        $careerConcept = $this->concept('transversales', 'lista', 'carrera');
+        $careerConcept = $this->concept('transversales', 'lista');
         $this->value($subjectConcept, ['Pensamiento crítico', 'Comunicación']);
         $this->value($careerConcept, ['Comunicación', 'Colaboración']);
         $sources = ['curricular_habilidades', 'curricular_transversales'];
@@ -204,6 +208,7 @@ class CurricularBindingTest extends TestCase
         $other->codigo_asignatura = 'SW-UNION-OTRA';
         $other->save();
         $this->value($subjectConcept, ['Solo otra asignatura'], $other);
+        $this->value($careerConcept, ['Comunicación', 'Colaboración'], $other);
         $otherContext = ['curricular' => app(CurricularData::class)->snapshot($this->subject->carrera_id, $other->id)];
         $this->assertSame(['Solo otra asignatura', 'Comunicación', 'Colaboración'], CurricularFieldOptions::values($field, $otherContext));
         unset($context['curricular']['values']['transversales']);
@@ -214,7 +219,7 @@ class CurricularBindingTest extends TestCase
     public function test_word_and_pdf_export_frozen_curricular_lists_tables_and_multiple_selections(): void
     {
         $outcomes = $this->concept('resultados', 'lista');
-        $books = $this->concept('bibliografia', 'tabla', 'asignatura', [['key' => 'titulo', 'label' => 'Título']]);
+        $books = $this->concept('bibliografia', 'tabla', [['key' => 'titulo', 'label' => 'Título']]);
         $this->value($outcomes, ['Analiza A & B.', 'Evalúa el producto.']);
         $this->value($books, [['titulo' => 'Libro confirmado']]);
         $context = app(AcademicContextSnapshot::class)->build(ScheduledSubject::query()->firstOrFail());
@@ -295,11 +300,11 @@ class CurricularBindingTest extends TestCase
     }
 
     /** @param list<array{key: string, label: string}>|null $columns */
-    private function concept(string $key, string $type, string $scope = 'asignatura', ?array $columns = null): CurricularConcept
+    private function concept(string $key, string $type, ?array $columns = null): CurricularConcept
     {
         return CurricularConcept::query()->create([
             'clave_concepto' => $key, 'etiqueta_concepto' => ucfirst(str_replace('_', ' ', $key)),
-            'tipo_concepto' => $type, 'ambito_concepto' => $scope, 'columnas_concepto' => $columns,
+            'tipo_concepto' => $type, 'columnas_concepto' => $columns,
         ]);
     }
 
@@ -307,7 +312,7 @@ class CurricularBindingTest extends TestCase
     {
         return CurricularValue::query()->create([
             'concepto_id' => $concept->id, 'carrera_id' => $careerId ?? $this->subject->carrera_id,
-            'asignatura_id' => $concept->ambito_concepto === 'carrera' ? null : ($subject ?? $this->subject)->id,
+            'asignatura_id' => ($subject ?? $this->subject)->id,
             'valor_curricular' => $value, 'evidencia_curricular' => [['source_id' => 'prueba', 'locator' => 'Página 3', 'quote' => 'Extracto sintético']],
             'confirmado_por' => $this->coordinator->id, 'confirmado_en' => now(),
         ]);
@@ -318,14 +323,14 @@ class CurricularBindingTest extends TestCase
         $this->asRole('admin@silabos.test');
         $template = SyllabusTemplate::institutional();
         $this->postJson(route('api.v1.admin.template.project-data.store', $template), [
-            'label' => 'Bibliografía básica', 'type' => 'lista', 'scope' => 'asignatura',
+            'label' => 'Bibliografía básica', 'type' => 'lista',
         ])->assertCreated()->assertJsonPath('variable', [
             'key' => 'curricular_bibliografia_basica', 'label' => 'Bibliografía básica', 'sample' => 'Bibliografía básica',
-            'type' => 'lista', 'scope' => 'asignatura',
+            'type' => 'lista',
         ]);
         $this->assertTrue(AuditEvent::query()->where('accion', 'curriculo.concepto_declarado')->exists());
 
-        // El mismo nombre con la misma forma se reutiliza; sin alcance, es por asignatura.
+        // El mismo nombre con la misma forma se reutiliza; todo dato es por asignatura.
         $this->postJson(route('api.v1.admin.template.project-data.store', $template), [
             'label' => 'Bibliografía  básica', 'type' => 'lista',
         ])->assertCreated()->assertJsonPath('variable.key', 'curricular_bibliografia_basica');
@@ -335,7 +340,7 @@ class CurricularBindingTest extends TestCase
             'label' => 'Bibliografía básica', 'type' => 'texto',
         ])->assertCreated()->assertJsonPath('variable', [
             'key' => 'curricular_bibliografia_basica_texto', 'label' => 'Bibliografía básica (texto)', 'sample' => 'Bibliografía básica (texto)',
-            'type' => 'texto', 'scope' => 'asignatura',
+            'type' => 'texto',
         ]);
         $this->postJson(route('api.v1.admin.template.project-data.store', $template), [
             'label' => '¿?', 'type' => 'lista',
@@ -347,11 +352,11 @@ class CurricularBindingTest extends TestCase
             'section_id' => $section->id, 'key' => 'bibliografia_automatica', 'label' => 'Bibliografía', 'content_type' => 'automatic',
         ])->assertUnprocessable()->assertJsonValidationErrors('content_type');
         $this->getJson(route('api.v1.admin.template.index'))->assertOk()
-            ->assertJsonFragment(['key' => 'curricular_bibliografia_basica', 'label' => 'Bibliografía básica', 'type' => 'lista', 'scope' => 'asignatura']);
+            ->assertJsonFragment(['key' => 'curricular_bibliografia_basica', 'label' => 'Bibliografía básica', 'type' => 'lista']);
 
         $this->asRole('coordinador@silabos.test');
         $this->postJson(route('api.v1.admin.template.project-data.store', $template), [
-            'label' => 'Otro dato', 'type' => 'lista', 'scope' => 'asignatura',
+            'label' => 'Otro dato', 'type' => 'lista',
         ])->assertForbidden();
     }
 

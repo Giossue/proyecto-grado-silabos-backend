@@ -5901,7 +5901,6 @@
                     "key",
                     "label",
                     "type",
-                    "scope",
                     "columns"
                 ],
                 "properties": {
@@ -5919,13 +5918,6 @@
                             "texto",
                             "lista",
                             "tabla"
-                        ]
-                    },
-                    "scope": {
-                        "type": "string",
-                        "enum": [
-                            "carrera",
-                            "asignatura"
                         ]
                     },
                     "columns": {
@@ -5959,7 +5951,6 @@
                     "concept_key",
                     "label",
                     "type",
-                    "scope",
                     "columns",
                     "subject_id",
                     "subject_name",
@@ -5991,13 +5982,6 @@
                             "tabla"
                         ]
                     },
-                    "scope": {
-                        "type": "string",
-                        "enum": [
-                            "carrera",
-                            "asignatura"
-                        ]
-                    },
                     "columns": {
                         "type": "array",
                         "items": {
@@ -6017,10 +6001,7 @@
                         }
                     },
                     "subject_id": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
                         "format": "uuid"
                     },
                     "subject_name": {
@@ -6459,7 +6440,6 @@
                                 "key",
                                 "label",
                                 "type",
-                                "scope",
                                 "sections"
                             ],
                             "properties": {
@@ -6475,13 +6455,6 @@
                                         "texto",
                                         "lista",
                                         "tabla"
-                                    ]
-                                },
-                                "scope": {
-                                    "type": "string",
-                                    "enum": [
-                                        "carrera",
-                                        "asignatura"
                                     ]
                                 },
                                 "sections": {

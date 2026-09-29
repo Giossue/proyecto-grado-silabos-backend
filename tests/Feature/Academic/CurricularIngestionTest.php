@@ -200,11 +200,11 @@ class CurricularIngestionTest extends TestCase
     {
         // Declarado pero sin usar en la hoja: tampoco se importa.
         CurricularConcept::query()->create(['clave_concepto' => 'convenios', 'etiqueta_concepto' => 'Convenios',
-            'tipo_concepto' => 'lista', 'ambito_concepto' => 'carrera', 'columnas_concepto' => null]);
+            'tipo_concepto' => 'lista', 'columnas_concepto' => null]);
         $source = $this->source('Pensamiento crítico. Convenio con la empresa Demo.');
         $block = app(CurricularSourceBlocks::class)->forSource($source)[0];
         $raw = $this->rawProposal($block, ['Pensamiento crítico']);
-        $raw['definitions'][] = ['key' => 'convenios', 'label' => 'Convenios', 'type' => 'lista', 'scope' => 'carrera', 'columns' => []];
+        $raw['definitions'][] = ['key' => 'convenios', 'label' => 'Convenios', 'type' => 'lista', 'columns' => []];
         $raw['values'][] = ['concept_key' => 'convenios', 'subject_code' => null, 'subject_name' => null, 'value' => ['Convenio con la empresa Demo.'],
             'evidence' => [['block_id' => $block['id'], 'quote' => 'Convenio con la empresa Demo.']], 'issue' => null];
         $proposal = app(PrepareCurricularImport::class)->normalize($raw, [$block], [$this->subject]);
@@ -372,7 +372,7 @@ class CurricularIngestionTest extends TestCase
     private function rawProposal(array $block, array $values): array
     {
         return [
-            'definitions' => [['key' => 'habilidades_blandas', 'label' => 'Habilidades blandas', 'type' => 'lista', 'scope' => 'asignatura', 'columns' => []]],
+            'definitions' => [['key' => 'habilidades_blandas', 'label' => 'Habilidades blandas', 'type' => 'lista', 'columns' => []]],
             'values' => [[
                 'concept_key' => 'habilidades_blandas', 'subject_code' => $this->subject->codigo_asignatura,
                 'subject_name' => $this->subject->nombre, 'value' => $values,

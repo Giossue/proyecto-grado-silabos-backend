@@ -170,7 +170,7 @@ final class ApplyCurricularImport
             if ($row['subject_id'] !== null && $subjectId !== $row['subject_id']) {
                 throw ValidationException::withMessages(["items.{$index}.subject_id" => 'La asignatura ya fue identificada en la propuesta. No puede redirigir este dato a otra materia.']);
             }
-            $resolved = ($row['issue_code'] === 'subject_unmatched' && $subjectId !== null)
+            $resolved = $row['issue_code'] === 'subject_unmatched'
                 || ($row['issue_code'] === 'source_conflict' && ($item['accept_conflict'] ?? false) === true);
             if ($row['issue_code'] !== null && ! $resolved) {
                 throw ValidationException::withMessages(["items.{$index}" => 'Este dato tiene una excepción pendiente y no se puede confirmar.']);

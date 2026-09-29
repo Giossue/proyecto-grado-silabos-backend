@@ -71,13 +71,13 @@ class CurricularImportsTest extends TestCase
     public function test_stages_typed_data_and_applies_only_selected_rows_with_source_evidence(): void
     {
         $proposal = $this->proposal();
-        $proposal['definitions'][] = ['key' => 'habilidades', 'label' => 'Habilidades', 'type' => 'lista', 'scope' => 'asignatura'];
-        $proposal['definitions'][] = ['key' => 'bibliografia', 'label' => 'Bibliografía', 'type' => 'tabla', 'scope' => 'carrera',
+        $proposal['definitions'][] = ['key' => 'habilidades', 'label' => 'Habilidades', 'type' => 'lista'];
+        $proposal['definitions'][] = ['key' => 'bibliografia', 'label' => 'Bibliografía', 'type' => 'tabla',
             'columns' => [['key' => 'titulo', 'label' => 'Título'], ['key' => 'autor', 'label' => 'Autor']]];
-        $proposal['definitions'][] = ['key' => 'omitido', 'label' => 'Omitido', 'type' => 'texto', 'scope' => 'carrera'];
+        $proposal['definitions'][] = ['key' => 'omitido', 'label' => 'Omitido', 'type' => 'texto'];
         $proposal['values'][] = $this->row('habilidades', ['Pensamiento crítico.']);
-        $proposal['values'][] = $this->row('bibliografia', [['titulo' => 'Bibliografía institucional.', 'autor' => '']], null);
-        $proposal['values'][] = $this->row('omitido', 'Dato no seleccionado.', null);
+        $proposal['values'][] = $this->row('bibliografia', [['titulo' => 'Bibliografía institucional.', 'autor' => '']]);
+        $proposal['values'][] = $this->row('omitido', 'Dato no seleccionado.');
         $import = $this->staged($proposal);
         $this->assertDatabaseCount('valores_curriculares', 0);
         $this->getJson(route('api.v1.coordination.curricular-imports.index'))->assertOk()
@@ -95,7 +95,7 @@ class CurricularImportsTest extends TestCase
         $this->assertSame(app(CanonicalHasher::class)->hash($this->source->documento), $value->evidencia_curricular[0]['source_hash']);
         $this->assertSame($this->coordinator->id, $value->confirmado_por);
         $table = CurricularValue::query()->whereHas('concept', fn ($q) => $q->where('clave_concepto', 'bibliografia'))->firstOrFail();
-        $this->assertNull($table->asignatura_id);
+        $this->assertSame($this->subject->id, $table->asignatura_id);
         $this->assertSame([['autor' => '', 'titulo' => 'Bibliografía institucional.']], $table->valor_curricular);
         $audit = AuditEvent::query()->where('accion', 'academico.importacion_curricular.aplicada')->firstOrFail();
         $this->assertStringNotContainsString('Evalúa', json_encode($audit->getAttributes(), JSON_UNESCAPED_UNICODE));
@@ -150,7 +150,7 @@ class CurricularImportsTest extends TestCase
             ->assertJsonPath('current_values.0.evidence.0.quote', null);
 
         $proposal = [
-            'definitions' => [['key' => 'resultados_aprendizaje', 'label' => 'Resultados de aprendizaje', 'type' => 'lista', 'scope' => 'asignatura']],
+            'definitions' => [['key' => 'resultados_aprendizaje', 'label' => 'Resultados de aprendizaje', 'type' => 'lista']],
             'values' => [$this->row('resultados_aprendizaje', ['Evalúa la calidad del software.'])], 'issues' => [],
         ];
         $import = $this->staged($proposal);
@@ -403,10 +403,10 @@ class CurricularImportsTest extends TestCase
     public function test_global_concept_structure_conflict_rolls_back_all_selected_values(): void
     {
         CurricularConcept::query()->create(['clave_concepto' => 'resultados', 'etiqueta_concepto' => 'Resultados previos',
-            'tipo_concepto' => 'lista', 'ambito_concepto' => 'asignatura']);
+            'tipo_concepto' => 'lista']);
         $proposal = $this->proposal();
-        array_unshift($proposal['definitions'], ['key' => 'nuevo', 'label' => 'Nuevo', 'type' => 'texto', 'scope' => 'carrera']);
-        array_unshift($proposal['values'], $this->row('nuevo', 'Pensamiento crítico.', null));
+        array_unshift($proposal['definitions'], ['key' => 'nuevo', 'label' => 'Nuevo', 'type' => 'texto']);
+        array_unshift($proposal['values'], $this->row('nuevo', 'Pensamiento crítico.'));
         $import = $this->staged($proposal);
         $this->postJson($this->url($import).'/apply', $this->payload($import))->assertUnprocessable()->assertJsonValidationErrors('items');
         $this->assertDatabaseMissing('conceptos_curriculares', ['clave_concepto' => 'nuevo']);
@@ -496,6 +496,13 @@ class CurricularImportsTest extends TestCase
             $this->assertSame('23503', $exception->errorInfo[0]);
         }
         try {
+            // Ya no existen datos de toda la carrera (I-160): todo valor es de una asignatura.
+            DB::transaction(fn () => $value->update(['asignatura_id' => null]));
+            $this->fail('La base debe exigir la asignatura de cada dato.');
+        } catch (QueryException $exception) {
+            $this->assertSame('23502', $exception->errorInfo[0]);
+        }
+        try {
             DB::transaction(fn () => $value->concept->update(['tipo_concepto' => 'lista']));
             $this->fail('La estructura del concepto debe conservarse.');
         } catch (QueryException $exception) {
@@ -506,7 +513,7 @@ class CurricularImportsTest extends TestCase
     /** @return array<string, mixed> */
     private function proposal(): array
     {
-        return ['definitions' => [['key' => 'resultados', 'label' => 'Resultados de aprendizaje', 'type' => 'texto', 'scope' => 'asignatura']],
+        return ['definitions' => [['key' => 'resultados', 'label' => 'Resultados de aprendizaje', 'type' => 'texto']],
             'values' => [$this->row('resultados', 'Evalúa la calidad del software.')], 'issues' => []];
     }
 

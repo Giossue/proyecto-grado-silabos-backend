@@ -295,28 +295,29 @@ class ConvocationAndDraftTest extends TestCase
         $convocation = $this->createPreparedConvocation();
         $subject = ScheduledSubject::query()->firstOrFail()->subject;
         $outcomes = $this->useProjectData('resultados_de_aprendizaje', 'Resultados de aprendizaje');
-        $profile = $this->useProjectData('perfil_de_egreso', 'Perfil de egreso', 'texto', 'carrera');
+        $profile = $this->useProjectData('perfil_de_egreso', 'Perfil de egreso', 'texto');
         // Declarado pero sin usar en la hoja: no se exige.
         CurricularConcept::query()->create(['clave_concepto' => 'convenios', 'etiqueta_concepto' => 'Convenios',
-            'tipo_concepto' => 'lista', 'ambito_concepto' => 'carrera', 'columnas_concepto' => null]);
+            'tipo_concepto' => 'lista', 'columnas_concepto' => null]);
 
-        $this->assertOpeningFails($convocation, 'Falta confirmar «Perfil de egreso» en Proyecto de carrera.');
+        // Todo dato del Proyecto de carrera es por asignatura (I-160).
+        $this->assertOpeningFails($convocation, "Falta confirmar «Perfil de egreso» en Proyecto de carrera para {$subject->nombre}.");
         $readiness = app(CoordinatorConvocationReadiness::class);
         $this->assertSame([
-            'Falta confirmar «Perfil de egreso» en Proyecto de carrera.',
+            "Falta confirmar «Perfil de egreso» en Proyecto de carrera para {$subject->nombre}.",
             "Falta confirmar «Resultados de aprendizaje» en Proyecto de carrera para {$subject->nombre}.",
         ], $readiness->inspect($convocation->carrera_id)['project_data_missing']);
 
-        $confirmed = fn ($concept, ?string $subjectId, mixed $value): CurricularValue => CurricularValue::query()->create([
+        $confirmed = fn ($concept, string $subjectId, mixed $value): CurricularValue => CurricularValue::query()->create([
             'concepto_id' => $concept->id, 'carrera_id' => $convocation->carrera_id, 'asignatura_id' => $subjectId,
             'valor_curricular' => $value, 'evidencia_curricular' => [['source_id' => 'prueba', 'locator' => 'Página 3', 'quote' => 'Extracto sintético']], 'confirmado_por' => $this->coordinator->id, 'confirmado_en' => now(),
         ]);
-        $confirmed($profile, null, 'Profesional de software.');
+        $confirmed($profile, $subject->id, 'Profesional de software.');
         // Una lista vacía no cuenta como dato confirmado.
         $confirmed($outcomes, $subject->id, []);
         $this->assertOpeningFails($convocation, "Falta confirmar «Resultados de aprendizaje» en Proyecto de carrera para {$subject->nombre}.");
 
-        CurricularValue::query()->where('asignatura_id', $subject->id)->update(['valor_curricular' => json_encode(['Analiza requisitos.'])]);
+        CurricularValue::query()->where('concepto_id', $outcomes->id)->update(['valor_curricular' => json_encode(['Analiza requisitos.'])]);
         $this->assertSame([], $readiness->inspect($convocation->carrera_id)['project_data_missing']);
         $this->openPrepared($convocation);
         $this->assertSame('abierta', $convocation->fresh()->estado);
