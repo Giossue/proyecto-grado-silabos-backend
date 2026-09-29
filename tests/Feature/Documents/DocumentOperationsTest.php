@@ -543,7 +543,6 @@ class DocumentOperationsTest extends TestCase
                         'type' => 'text',
                         'inherited' => false,
                         'value' => 'Contenido academico verificable',
-                        'rows' => [],
                     ]],
                 ]],
             ], [
