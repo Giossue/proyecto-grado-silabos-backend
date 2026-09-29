@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
 
-/** One bounded extraction request per queue job; progress lives in PostgreSQL. */
 final class PrepareCurricularImport
 {
     public function __construct(
@@ -80,7 +79,6 @@ final class PrepareCurricularImport
             'career' => $import->career->nombre,
             'instruction' => $import->instrucciones_importacion,
             'subjects' => $subjects->map(fn (Subject $subject): array => ['code' => $subject->codigo_asignatura, 'name' => $subject->nombre, 'organization_unit' => $subject->unidad_organizacion_curricular?->label()])->all(),
-            // Solo los @ProyectoCarrera que usa la plantilla, con sus secciones como contexto (I-155).
             'known_concepts' => array_values(ProjectDataUsage::used()),
             'earlier_definitions' => $raw['definitions'],
             'blocks' => $chunk,
@@ -128,15 +126,14 @@ final class PrepareCurricularImport
         });
     }
 
-    /** @param array<string, mixed> $raw
+    /**
+     * @param  array<string, mixed>  $raw
      * @param  list<array{id:string,source_id:string,source_name:string,locator:string,text:string}>  $blocks
      * @param  list<Subject>  $subjects
      * @return array<string, mixed>
      */
     public function normalize(array $raw, array $blocks, array $subjects): array
     {
-        // La plantilla manda (I-151, I-155): solo se importan los @ProyectoCarrera que usa;
-        // la estructura sale del catálogo, nunca de la respuesta del agente.
         $declared = ProjectDataUsage::used();
         $labels = [];
         foreach ($raw['definitions'] as $definition) {
@@ -158,7 +155,6 @@ final class PrepareCurricularImport
 
                 continue;
             }
-            // Las secciones solo orientan al agente; la propuesta guarda la forma del dato.
             $definitions[$definition['key']] = array_diff_key($definition, ['sections' => true]);
             $evidence = [];
             $invalidEvidence = false;
@@ -174,7 +170,6 @@ final class PrepareCurricularImport
             }
             $quoted = $this->comparable(implode(' ', array_column($evidence, 'quote')));
             foreach ($this->leaves($candidate['value']) as $leaf) {
-                // Labels plus definitions may be copied from separate evidence blocks.
                 foreach (preg_split('/\s+[—–]\s+/u', $leaf) ?: [$leaf] as $part) {
                     if (trim($part) !== '' && ! $this->contains($quoted, $part)) {
                         $invalidEvidence = true;
@@ -207,7 +202,6 @@ final class PrepareCurricularImport
                 'subject_id' => $subject?->id, 'subject_name' => $subject->nombre ?? (is_string($candidate['subject_name'] ?? null) ? $candidate['subject_name'] : null),
                 'value' => $candidate['value'], 'evidence' => $evidence, 'issue' => $issue, 'issue_code' => $issueCode,
             ];
-            // Exact repeated extraction is idempotent. Different source values remain visible.
             $rowKey = $this->hasher->hash([$row['concept_key'], $row['subject_id'], $row['subject_name'], $row['value'], $row['issue_code']]);
             if (isset($rows[$rowKey])) {
                 $rows[$rowKey]['evidence'] = array_values(array_unique([...$rows[$rowKey]['evidence'], ...$evidence], SORT_REGULAR));
@@ -216,8 +210,6 @@ final class PrepareCurricularImport
             }
         }
 
-        // Lists/tables split across pages in one source form one value. Different
-        // documents retain separate alternatives for an explicit source decision.
         $merged = [];
         foreach ($rows as $row) {
             $sourceIds = array_values(array_unique(array_column($row['evidence'], 'source_id')));

@@ -55,7 +55,6 @@ class SyllabusDocumentContent
         if ($value === null || $value === '') {
             return 'Sin contenido';
         }
-        // Texto libre (I-156): una línea por párrafo, elemento o fila.
         if (FreeText::isDocument($value)) {
             /** @var array<string, mixed> $value */
             return FreeText::plainText($value);

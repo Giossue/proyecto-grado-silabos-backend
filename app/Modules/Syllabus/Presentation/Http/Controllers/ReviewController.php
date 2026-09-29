@@ -261,7 +261,6 @@ class ReviewController extends Controller
                 'justification' => $revision->correctionRequest->justificacion,
                 'requested_at' => $revision->correctionRequest->solicitado_en->toIso8601String(),
             ],
-            // Con la convocatoria cerrada la revisión es solo de consulta (SyllabusPolicy::decide).
             'decisions_allowed' => $decisionsAllowed,
             'reset' => [
                 'allowed' => $decisionsAllowed && in_array($syllabus->estado, ResetSyllabus::RESETTABLE_STATES, true),
@@ -279,7 +278,6 @@ class ReviewController extends Controller
     {
         $payload = [];
         foreach ($syllabus->revisions->sortBy('numero_revision') as $revision) {
-            // Una solicitud de corrección incluye todas las observaciones de su revisión.
             $requested = $revision->correctionRequest !== null;
             foreach ($revision->observations as $observation) {
                 $payload[] = [

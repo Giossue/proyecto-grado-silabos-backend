@@ -6,11 +6,7 @@ use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
-/**
- * Bloque embebido dentro de `plantilla_silabo.documento_plantilla`.
- *
- * @property-read Collection<int, FieldDefinition> $fields
- */
+/** @property-read Collection<int, FieldDefinition> $fields */
 final class TemplateBlock implements UrlRoutable
 {
     public string $id;
@@ -21,7 +17,6 @@ final class TemplateBlock implements UrlRoutable
 
     public string $clave;
 
-    /** Siempre `narrativa` desde I-156; el JSON del bloque no lo guarda (I-138). */
     public string $tipo;
 
     public string $titulo;
@@ -178,7 +173,6 @@ final class TemplateBlock implements UrlRoutable
         $this->clave = (string) $data['clave'];
         $this->titulo = (string) $data['titulo'];
         $this->configuracion = is_array($data['configuracion'] ?? null) ? $data['configuracion'] : [];
-        // Sin filas repetibles (I-156), todo bloque se guarda como contenido narrativo.
         $this->tipo = 'narrativa';
         $this->posicion = (int) ($data['posicion'] ?? 1);
     }

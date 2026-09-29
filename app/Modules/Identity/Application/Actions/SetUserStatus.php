@@ -34,8 +34,6 @@ class SetUserStatus
 
             if (! $active) {
                 DB::table('sesiones')->where('user_id', $target->id)->delete();
-                // Ningún paralelo queda a nombre de alguien que ya no está (I-39); sus
-                // sílabos en curso ya tienen otro docente, porque `ensureMayDeactivate` lo exige.
                 $closedTeacherAssignments = DB::table('asignaciones_paralelo')
                     ->whereIn('asignacion_rol_id', RoleAssignment::query()->where('usuario_id', $target->id)->select('id'))
                     ->where('docente_paralelo_activo', true)
@@ -61,13 +59,7 @@ class SetUserStatus
         });
     }
 
-    /**
-     * Quien ya no está no coordina: la carrera queda sin coordinación visible y el
-     * checklist y las convocatorias dejan de contarla hasta que Administración nombre
-     * a otra persona desde Carreras.
-     *
-     * @return list<string>
-     */
+    /** @return list<string> */
     private function closeCoordinations(User $target): array
     {
         $closed = [];
@@ -86,11 +78,6 @@ class SetUserStatus
         return $closed;
     }
 
-    /**
-     * Desactivar no puede dejar huérfano nada: ni la administración de la institución ni
-     * un sílabo en curso. Lo segundo lo resuelve Coordinación asignando
-     * otro docente a sus paralelos: el sílabo sigue al paralelo (I-130).
-     */
     private function ensureMayDeactivate(User $target): void
     {
         $isAdministrator = RoleAssignment::query()

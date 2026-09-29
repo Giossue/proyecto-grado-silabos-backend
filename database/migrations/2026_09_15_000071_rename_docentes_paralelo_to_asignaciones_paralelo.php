@@ -6,10 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * La fila representa una asignación operativa a un paralelo, no a un docente
-     * directamente: el docente se deriva de su asignación de rol.
-     */
     public function up(): void
     {
         Schema::rename('docentes_paralelo', 'asignaciones_paralelo');

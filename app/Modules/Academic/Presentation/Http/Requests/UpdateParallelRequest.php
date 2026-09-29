@@ -8,7 +8,6 @@ use App\Modules\Identity\Application\ActiveRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/** Todo paralelo conserva código y jornada al editarse. */
 class UpdateParallelRequest extends FormRequest
 {
     protected function prepareForValidation(): void

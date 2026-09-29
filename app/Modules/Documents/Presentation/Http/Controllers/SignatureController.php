@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/** I-139. Estado, PDF vigente y registro de la firma electrónica de una revisión aprobada. */
 class SignatureController extends Controller
 {
     public function show(

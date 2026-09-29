@@ -23,7 +23,6 @@ use Illuminate\Support\Collection;
  */
 final class IdentificationCard
 {
-    /** Claves de los campos del bloque que llena el docente y se imprimen en la ficha. */
     public const INPUT_KEYS = [
         'discapacidad_tiene' => 'disability',
         'discapacidad_tipo' => 'disability_type',
@@ -31,10 +30,8 @@ final class IdentificationCard
         'formacion_experiencia' => 'formation',
     ];
 
-    /** Jornada del paralelo tal como la escribe el formato. */
     public const SHIFT_LABELS = ['matutina' => 'Matutina', 'vespertina' => 'Vespertina', 'nocturna' => 'Nocturna'];
 
-    /** Anchos de las 9 columnas del formato, en porcentaje. */
     public const WIDTHS = [15.9, 9.4, 4.6, 3.7, 8.5, 4.3, 13.8, 16.5, 23.2];
 
     /** @return Data */
@@ -126,9 +123,6 @@ final class IdentificationCard
     }
 
     /**
-     * La cuadrícula del formato oficial, fila por fila. Cada celda sabe cuántas
-     * columnas y filas abarca; las tapadas por una combinación vertical no se emiten.
-     *
      * @param  array<string, mixed>  $data
      * @return list<list<Cell>>
      */
@@ -163,16 +157,11 @@ final class IdentificationCard
             [$number(self::number($v('hours_ac')), 3), $number(self::number($v('hours_pae')), 2), $number(self::number($v('hours_aa'))), $number(self::number($v('total_hours')))],
             [$small('TOTAL, CRÉDITOS', 6, 1, true), $number(self::number($v('credits')), 1, true)],
             [$label('NOMBRE DEL DOCENTE', 2), $value($v('teacher'), 5), $small('CORREO INSTITUCIONAL'), $value($v('email'))],
-            // Última fila del formato: etiqueta en negrita y, debajo, el texto del docente.
             [self::cell("FORMACIÓN Y EXPERIENCIA ACADÉMICA – INVESTIGATIVA:\n".$v('formation'), 9, 1, 'plain', false, false, false)],
         ];
     }
 
-    /**
-     * Valores escritos por el docente en los campos del bloque de identificación.
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private static function inputs(Syllabus $syllabus): array
     {
         $definitions = FieldDefinition::query()
@@ -191,8 +180,6 @@ final class IdentificationCard
         foreach ($definitions as $definition) {
             $inputs[$definition->clave] = $values->get($definition->id)?->valor;
         }
-        // «Mostrar solo si»: una parte oculta sale vacía en la ficha (p. ej. el tipo de
-        // discapacidad cuando la respuesta es «No»).
         foreach (FieldConditions::hiddenKeys($definitions, $inputs) as $key) {
             $inputs[$key] = null;
         }
@@ -213,10 +200,6 @@ final class IdentificationCard
         return is_numeric($value) && isset($names[(int) $value]) ? $names[(int) $value] : self::text($value);
     }
 
-    /**
-     * Horas y créditos sin ceros sobrantes: «32.00» se muestra «32» y «2.50», «2.5».
-     * Un texto que no es número se devuelve tal cual.
-     */
     public static function number(string $value): string
     {
         $value = trim($value);

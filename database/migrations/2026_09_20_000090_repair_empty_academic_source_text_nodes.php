@@ -44,7 +44,6 @@ return new class extends Migration
     {
         DB::statement('ALTER TABLE fuentes_academicas DROP CONSTRAINT IF EXISTS fuentes_academicas_sin_texto_vacio_check');
 
-        // Empty text nodes were invalid ProseMirror data and cannot be restored safely.
     }
 
     /**

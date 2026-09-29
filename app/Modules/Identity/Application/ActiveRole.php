@@ -28,8 +28,6 @@ class ActiveRole
             return null;
         }
 
-        // Administración se activa sola si es la única opción. Coordinación y Docencia
-        // siempre eligen su ámbito al iniciar la sesión, aunque hoy solo tengan uno (I-121).
         if (! is_string($assignmentId)) {
             return $this->activateSoleRole($user, $request);
         }
@@ -46,8 +44,6 @@ class ActiveRole
             return $assignment;
         }
 
-        // El identificador guardado dejó de servir: la asignación venció, se revocó o
-        // pertenece a otra persona. Se descarta y se vuelve a la regla del rol único.
         $request->session()->forget('active_role_assignment_id');
 
         return $this->activateSoleRole($user, $request);
@@ -58,11 +54,7 @@ class ActiveRole
         return $this->resolve($request)?->role->codigo_rol === $role->value;
     }
 
-    /**
-     * Asignaciones vigentes que la persona puede activar.
-     *
-     * @return Collection<int, RoleAssignment>
-     */
+    /** @return Collection<int, RoleAssignment> */
     public function eligible(User $user): Collection
     {
         if (! $user->activo) {

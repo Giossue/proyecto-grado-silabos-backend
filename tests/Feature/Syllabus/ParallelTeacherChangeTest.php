@@ -21,11 +21,6 @@ use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
 
-/**
- * I-130: el sílabo pertenece al paralelo, no a una persona. Su docente es quien tiene hoy
- * la asignación vigente del paralelo. Quitar a un docente y asignar otro, incluso con la
- * convocatoria en curso, no toca el sílabo: el nuevo docente continúa donde quedó.
- */
 class ParallelTeacherChangeTest extends TestCase
 {
     use AssertsInternalNotifications;
@@ -70,7 +65,6 @@ class ParallelTeacherChangeTest extends TestCase
         $this->removeAssignment($assignment)->assertSuccessful();
         $this->assertDatabaseMissing('asignaciones_paralelo', ['id' => $assignment->id]);
 
-        // Sin docente vigente, nadie edita; el sílabo queda intacto.
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.index'))
             ->assertOk()->assertJsonCount(0, 'syllabi.data');
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertForbidden();

@@ -11,13 +11,6 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/**
- * Guardado único del panel «Editar cuenta»: identidad siempre; estado y rol solo si vienen.
- *
- * El panel reúne lo que antes eran tres acciones separadas. La política no cambia con la
- * unificación: la identidad la corrige Administración incluso sobre su propia cuenta; el
- * estado y los roles excluyen la autogestión.
- */
 class ManagedUserUpdateTest extends TestCase
 {
     use RefreshDatabase;
@@ -129,7 +122,6 @@ class ManagedUserUpdateTest extends TestCase
         $this->assertSame('DOCENTE RENOMBRADA', $this->teacher->nombre);
         $this->assertTrue($this->teacher->activo);
         $this->assertSame($assignmentsBefore, $this->teacher->roleAssignments()->count());
-        // El estado no cambió, así que no se inventa un evento de activación.
         $this->assertDatabaseMissing('eventos_auditoria', [
             'accion_evento_auditoria' => 'usuario.activado',
             'recurso_id' => $this->teacher->id,
@@ -147,8 +139,6 @@ class ManagedUserUpdateTest extends TestCase
 
         $this->assertSame('ADMINISTRACIÓN RENOMBRADA', $this->administrator->fresh()->nombre);
 
-        // Tocar el propio estado o concederse un rol se rechaza completo: la
-        // desactivación y los privilegios de la propia cuenta son de otra administración.
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->administrator), [
                 'nombre' => 'Administración Renombrada',
@@ -196,7 +186,6 @@ class ManagedUserUpdateTest extends TestCase
     {
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
 
-        // La carrera solo admite una coordinación activa: se retira antes a quien la ejerce.
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->coordinator), [...$this->identityOf($this->coordinator), 'active' => false])
             ->assertSuccessful();
@@ -212,8 +201,6 @@ class ManagedUserUpdateTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
 
-        // Desactivar cierra también la coordinación recién concedida: la carrera no queda
-        // a nombre de una cuenta inactiva.
         $this->assertDatabaseHas('usuarios', ['id' => $this->teacher->id, 'usuario_activo' => false]);
         $this->assertFalse(CoordinatorAssignment::query()
             ->where('usuario_id', $this->teacher->id)

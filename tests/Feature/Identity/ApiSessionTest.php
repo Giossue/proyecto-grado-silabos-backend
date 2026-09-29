@@ -27,7 +27,6 @@ class ApiSessionTest extends TestCase
         config(['sanctum.stateful' => ['localhost:5173']]);
     }
 
-    /** I-121: Docencia elige su ámbito aunque solo tenga uno; Administración entra directo. */
     public function test_authenticated_teacher_receives_a_session_payload_and_must_choose_its_sole_role(): void
     {
         $this->seed(DatabaseSeeder::class);
@@ -135,7 +134,6 @@ class ApiSessionTest extends TestCase
             ->assertJsonPath('user.email_verified', true)
             ->assertJsonPath('user.can_edit_identity', true);
 
-        // El correo de una cuenta activada no cambia nunca, ni siquiera por su titular.
         $this->actingAs($administrator)
             ->withoutMiddleware(ValidateCsrfToken::class)
             ->withHeader('Origin', 'http://localhost:5173')

@@ -1,15 +1,10 @@
 <?php
 
-/**
- * Reglas de I-15. Protegen decisiones que se toman una vez y se olvidan: dónde vive el
- * calendario, qué bloquea el plazo y qué no puede perderse en un relevo.
- */
 it('lee el calendario de la convocatoria institucional sin copiarlo por carrera', function (): void {
     $root = dirname(__DIR__, 2);
     $schedule = (string) file_get_contents($root.'/app/Modules/Syllabus/Application/ConvocationSchedule.php');
     $create = (string) file_get_contents($root.'/app/Modules/Syllabus/Application/Actions/CreateConvocation.php');
 
-    // I-132: una copia por carrera dejaba dos sitios donde buscar la misma fecha.
     expect($schedule)
         ->toContain('process->inicia_en')
         ->toContain('process->entrega_en');
@@ -24,7 +19,6 @@ it('bloquea el envio por plazo en la accion y no en el controlador', function ()
     );
 
     expect($submit)->toContain('assertOpenForSubmission');
-    // Si la comprobación viviera en el controlador, cualquier otra entrada la esquivaría.
     expect($controller)->not->toContain('assertOpenForSubmission');
 });
 
@@ -37,7 +31,6 @@ it('conserva la fecha anterior y el motivo al prorrogar', function (): void {
         ->toContain("'previous_due_at'")
         ->toContain("'reason'")
         ->toContain('proceso_silabos.plazo_extendido')
-        // Adelantar la fecha dejaría fuera de plazo a quien ya estaba dentro.
         ->toContain('lessThanOrEqualTo');
 });
 
@@ -46,6 +39,5 @@ it('marca la aprobacion hecha por quien redacto', function (): void {
         dirname(__DIR__, 2).'/app/Modules/Syllabus/Application/Actions/ApproveSyllabus.php',
     );
 
-    // DT-10 la permite. No se impide, pero tiene que ser consultable.
     expect($approve)->toContain("'self_approved'");
 });

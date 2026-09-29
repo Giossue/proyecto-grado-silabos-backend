@@ -5,7 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/** I-42: la relación laboral es de la persona, no de cada paralelo. */
 return new class extends Migration
 {
     public function up(): void
@@ -15,8 +14,6 @@ return new class extends Migration
             $table->date('vigente_hasta')->nullable()->after('vigente_desde');
         });
 
-        // Si una cuenta tenía varios paralelos, el rango laboral más amplio conserva su
-        // acceso histórico sin cerrar artificialmente intervalos que antes estaban abiertos.
         DB::statement(<<<'SQL'
             UPDATE usuarios AS usuario
             SET vigente_desde = resumen.primera_fecha,

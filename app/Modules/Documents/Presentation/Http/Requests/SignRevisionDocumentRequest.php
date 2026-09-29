@@ -5,7 +5,6 @@ namespace App\Modules\Documents\Presentation\Http\Requests;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Foundation\Http\FormRequest;
 
-/** I-139. Solo llega el PDF ya firmado; el certificado y su clave se quedan en el navegador. */
 class SignRevisionDocumentRequest extends FormRequest
 {
     public function authorize(): bool

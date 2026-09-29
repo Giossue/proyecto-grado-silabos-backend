@@ -19,8 +19,6 @@ return new class extends Migration
             ->count();
         $storedValues = DB::table('valores_campo_asignatura')->count();
 
-        // No hay conversión segura para una columna inventada ni para datos EAV. La
-        // migración se niega a perderlos: hay que modelarlos como atributo fijo antes.
         if ($customDefinitions > 0 || $storedValues > 0) {
             throw new RuntimeException(
                 "No se pueden retirar los campos dinámicos: {$customDefinitions} definiciones libres y {$storedValues} valores requieren migración explícita.",

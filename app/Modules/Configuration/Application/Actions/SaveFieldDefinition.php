@@ -54,12 +54,9 @@ class SaveFieldDefinition
 
         return $this->work->replace($request, function () use ($actor, $activeRole, $data, $field, $request, $templateId): ?FieldDefinition {
             $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
-            // Un campo nuevo o cambiado altera el formato que los docentes están llenando.
 
             $contentType = $this->stringValue($data, 'content_type');
-            // Una parte sin nombre se guarda con etiqueta vacía y no muestra subtítulo.
             $data['label'] = trim((string) ($data['label'] ?? ''));
-            // «Mostrar solo si» solo cambia cuando la petición lo trae.
             $condition = array_key_exists('show_when', $data)
                 ? ['mostrar_si' => FieldConditions::normalize($data['show_when'])]
                 : [];
@@ -76,7 +73,6 @@ class SaveFieldDefinition
                 if (isset($customBlock->configuracion['detached_fields'][$field->clave])) {
                     throw ValidationException::withMessages(['field' => 'Esta parte se quitó del diseño; ya no está en el formulario.']);
                 }
-                // Las propiedades no convierten un número o fecha en texto ni alteran su referencia.
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
                     'opciones' => CurricularFieldOptions::fromAttributes($data) !== [] ? null : ($data['options'] ?? $field->opciones),
@@ -90,8 +86,6 @@ class SaveFieldDefinition
                 return $field;
             }
 
-            // Ficha de identificación: su estructura no se toca; cambian etiqueta, ayuda y
-            // si la IA lee el campo.
             if ($field !== null && $contentType === 'institutional') {
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
@@ -105,9 +99,6 @@ class SaveFieldDefinition
                 return $field;
             }
 
-            // Formas de una parte nueva (I-156): «Texto libre» lo escribe el docente;
-            // «Contenido de la plantilla» nace como hoja vacía donde Administración escribe
-            // y pone sus marcas.
             if ($field === null && in_array($contentType, ['free_text', 'template'], true)) {
                 $block = $this->createBlock($template, $data, 'text');
                 $label = $data['label'] !== '' ? $data['label'] : $block->section->titulo;
@@ -133,14 +124,11 @@ class SaveFieldDefinition
 
                 return $field;
             }
-            // Una parte nueva solo nace como Texto libre o Contenido de la plantilla (I-156).
             if ($field === null) {
                 throw ValidationException::withMessages(['content_type' => 'Elija Texto libre o Contenido de la plantilla.']);
             }
             $block = $this->updateBlock($field, $template, $data, $contentType);
             $this->applyOrientation($block, $data);
-            // Todo campo es obligatorio y lo llena el docente salvo lo heredado de la
-            // malla, que nace así con la plantilla y no se cambia desde aquí (I-33).
             $inherited = $field->heredado;
             $attributes = [
                 'plantilla_id' => $template->id,
@@ -278,8 +266,6 @@ class SaveFieldDefinition
 
         $configuration = $block->getAttribute('configuracion');
 
-        // La forma de una parte se elige al crearla y no cambia (I-155): para otra forma se
-        // elimina la parte y se crea una nueva.
         if ($block->contentType() !== $contentType) {
             throw ValidationException::withMessages(['content_type' => 'La forma de una parte no se cambia. Elimínela y cree una nueva con la forma que necesita.']);
         }

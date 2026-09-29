@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-160: todo dato del Proyecto de carrera es por asignatura; ya no existe «de toda la
- * carrera». Un valor guardado para toda la carrera se copia a cada asignatura de esa
- * carrera que todavía no tiene el suyo, y se retira el ámbito del concepto.
- */
 return new class extends Migration
 {
     public function up(): void

@@ -4,12 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * La modalidad es un dato de la carrera (el CES la aprueba así, RRA arts. 70-74) y no
- * de cada oferta. Una modalidad marcada «combina por asignatura» (híbrida, art. 74A)
- * deja que cada materia de la malla indique la suya. La oferta hereda la modalidad de
- * la materia o de la carrera; su columna se conserva porque el sílabo la copia (I-35).
- */
 return new class extends Migration
 {
     public function up(): void

@@ -18,7 +18,6 @@ class PasswordRecoveryController extends Controller
             'correo_electronico' => Str::lower($request->string('email')->toString()),
         ]);
 
-        // La misma respuesta evita confirmar si un correo pertenece al sistema.
         return response()->json([
             'message' => 'Si el correo pertenece a una cuenta activa, recibirá un enlace para restablecer su contraseña.',
         ], 202);

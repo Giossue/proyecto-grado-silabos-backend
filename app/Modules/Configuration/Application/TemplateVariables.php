@@ -8,9 +8,6 @@ use App\Modules\Syllabus\Application\IdentificationCard;
 final class TemplateVariables
 {
     /**
-     * Sin fotografía devuelve el catálogo de diseño actual. Con fotografía nunca lee
-     * conceptos vivos: una revisión conserva nombres, tipos y columnas de su momento.
-     *
      * @param  array<string, mixed>|null  $snapshot
      * @return array<string, array{label: string, source: string, equals?: string, list_key?: string, required?: bool, type?: string, columns?: list<array{key: string, label: string}>}>
      */
@@ -33,7 +30,8 @@ final class TemplateVariables
         return $definitions;
     }
 
-    /** @param array<string, mixed> $snapshot
+    /**
+     * @param  array<string, mixed>  $snapshot
      * @return array<string, string>
      */
     public static function resolve(array $snapshot): array
@@ -65,10 +63,6 @@ final class TemplateVariables
     }
 
     /**
-     * Compatibilidad I-144: el dato documental confirmado tiene prioridad sobre la
-     * base manual cuando ambos están presentes en la misma fotografía del sílabo.
-     * Nunca toma el contenido ni las referencias de otra fuente o del catálogo vivo.
-     *
      * @param  array<string, mixed>  $snapshot
      * @return array<string, string>
      */
@@ -104,9 +98,6 @@ final class TemplateVariables
     }
 
     /**
-     * Variables de firma resueltas al exportar una revisión aprobada. Sobrescriben las de
-     * la fotografía, que se tomó al enviar y no podía conocerlas.
-     *
      * @param  array{submitted_on: string, coordinator: string, approved_on: string}  $approval
      * @return array<string, string>
      */

@@ -6,10 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Los campos existentes conservan el comportamiento previamente acordado: la
-     * carrera puede sustituir el valor heredado cuando se implemente I-72.2.
-     */
     public function up(): void
     {
         Schema::table('definiciones_campo', function (Blueprint $table) {

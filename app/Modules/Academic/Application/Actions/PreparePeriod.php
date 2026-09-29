@@ -21,10 +21,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Programa materias pendientes con sus paralelos y docentes confirmados. La operación
- * completa se revierte si alguna asignación no es válida.
- */
 class PreparePeriod
 {
     public function __construct(

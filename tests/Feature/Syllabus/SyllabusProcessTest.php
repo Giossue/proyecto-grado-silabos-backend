@@ -26,12 +26,6 @@ use Illuminate\Testing\TestResponse;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\TestCase;
 
-/**
- * I-31: el calendario académico oficial obliga a toda la universidad. Administración abre
- * el proceso; Coordinación convoca a su carrera dentro de él; la pausa —institucional o
- * de carrera— es lo que permite corregir plantilla, malla y fuentes sin que el trabajo
- * docente siga avanzando sobre una base que está cambiando.
- */
 class SyllabusProcessTest extends TestCase
 {
     use ConfiguresFacultyLogos;
@@ -60,7 +54,6 @@ class SyllabusProcessTest extends TestCase
 
         $this->assertTrue(Schema::hasColumns('convocatorias_carreras', ['id', 'carrera_id', 'proceso_id', 'estado_convocatoria_carrera']));
         $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['id', 'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado_convocatoria_universidad']));
-        // I-132: la plantilla es única y no se referencia por fila.
         foreach (['silabos', 'convocatorias_universidad', 'artefactos_exportacion', 'historial_ia'] as $table) {
             $this->assertFalse(Schema::hasColumn($table, 'plantilla_id'));
         }
@@ -166,8 +159,6 @@ class SyllabusProcessTest extends TestCase
             ->postJson(route('api.v1.teacher.syllabi.start', $syllabus))
             ->assertSuccessful();
 
-        // Aunque un reinicio devuelva el expediente al estado inicial, el evento
-        // inmutable de inicio conserva la actividad docente y protege el proceso.
         $syllabus->update([
             'estado' => 'sin_iniciar',
             'version_bloqueo' => 0,
@@ -380,8 +371,6 @@ class SyllabusProcessTest extends TestCase
         $first = $this->createProcess($template, 'Primero');
         $this->assertSame('abierto', $first->estado);
 
-        // Mientras una convocatoria esté abierta no se puede crear otra, ni siquiera
-        // para un período diferente.
         $otherPeriod = AcademicPeriod::query()->create([
             'codigo' => 'I-46-ALTERNO',
             'fecha_inicio' => '2027-01-01',
@@ -392,7 +381,6 @@ class SyllabusProcessTest extends TestCase
             'period_id' => $otherPeriod->id,
         ])->assertJsonValidationErrors('process');
 
-        // En pausa sigue ocupando el lugar: pausar no es cerrar.
         $this->transition($first, 'pausar', 'Corrección de la sección de evaluación.')->assertSuccessful();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             ...$this->processPayload($template),
@@ -403,7 +391,6 @@ class SyllabusProcessTest extends TestCase
         $second = $this->createProcess($template, 'Segundo', $otherPeriod->id);
         $this->assertSame('abierto', $second->estado);
 
-        // Cada período conserva una sola convocatoria, aunque la anterior ya cerró.
         $this->transition($second, 'cerrar')->assertSuccessful();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             ...$this->processPayload($template),
@@ -454,7 +441,6 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()->withHeader('Origin', 'http://localhost:5173')
             ->postJson(route('api.v1.coordination.convocations.store'), [
-                // El cliente no puede sustituir el período ni reactivar la antigua selección de fuentes.
                 'process_id' => $process->id,
                 'period_id' => $otherPeriod->id,
                 'source_ids' => [],
@@ -467,12 +453,10 @@ class SyllabusProcessTest extends TestCase
         $this->getJson(route('api.v1.coordination.convocations.show', $convocation))->assertOk()->assertJsonMissingPath('convocation.sources');
         $this->assertDatabaseCount('fuentes_academicas', 3);
         $this->assertFalse(Schema::hasTable('fuentes_convocatoria'));
-        // I-132: la convocatoria de carrera no copia las fechas del proceso.
         $this->assertFalse(Schema::hasTable('fechas_limite_convocatoria'));
 
         $this->assertDatabaseCount('silabos', 1);
 
-        // La unicidad también vive en PostgreSQL, por si una mutación evita el caso de uso.
         $this->expectException(QueryException::class);
         Convocation::query()->create([
             'carrera_id' => $convocation->carrera_id,
@@ -535,13 +519,11 @@ class SyllabusProcessTest extends TestCase
             'first_field_content_type' => 'free_text',
         ];
 
-        // Sin confirmar: nada cambia y el servidor devuelve la cifra.
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $sectionPayload)
             ->assertJsonValidationErrors(['purge_required', 'purge_count']);
         $this->assertDatabaseCount('silabos', 1);
         $this->assertSame(12, $template->sections()->count());
 
-        // Confirmado: el expediente anterior se reemplaza y el cambio se aplica.
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.template.sections.store', $template), [...$sectionPayload, 'confirm_purge' => 1])
             ->assertSuccessful()
@@ -551,7 +533,6 @@ class SyllabusProcessTest extends TestCase
         $this->assertDatabaseHas('silabos', ['estado_silabo' => 'sin_iniciar']);
         $this->assertSame(13, $template->fresh()->sections()->count());
 
-        // El docente vigente recibe el aviso; apunta a la carrera y sobrevive al borrado.
         $notice = JobExecution::query()
             ->where('tipo', 'notificacion.interna')
             ->whereJsonContains('entrada_ejecucion_trabajo', ['tipo_evento' => 'silabo.regenerado'])
@@ -580,7 +561,6 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame(9, data_get($syllabus->fresh()->contexto_academico, 'curriculum.cycle_count'));
         $this->assertSame(9, $career->fresh()->cantidad_ciclos_malla);
 
-        // Materia sin programar: su creación tampoco reinicia nada.
         $other = Subject::query()->findOrFail($syllabus->asignatura_id)->replicate();
         $other->codigo_asignatura = 'SW-699';
         $other->nombre = 'Materia correquisito';
@@ -641,7 +621,6 @@ class SyllabusProcessTest extends TestCase
             data_get($syllabus->fresh()->contexto_academico, 'subject.position'),
         );
 
-        // Cambiar la carga académica sí reinicia los sílabos en curso.
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.update', ['asignatura', $subject->id]), [
                 ...$payload,
@@ -660,7 +639,6 @@ class SyllabusProcessTest extends TestCase
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección de la malla con un sílabo aprobado.'])
             ->assertSuccessful();
 
-        // Sin expedientes en curso no hay nada que confirmar y el aprobado se conserva.
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), ['cycle_count' => 9])
             ->assertSuccessful();
@@ -708,7 +686,6 @@ class SyllabusProcessTest extends TestCase
                 ->where('curriculum.editable', false)
                 ->where('curriculum.lock_reason', 'Convocatoria activa'));
 
-        // Pausar la convocatoria de la carrera libera su malla y sus datos curriculares.
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), [
                 'reason' => 'Corrección de las horas de dos materias antes de continuar.',
@@ -717,8 +694,6 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful();
         $this->assertSame('pausada', $convocation->fresh()->estado);
 
-        // Con la convocatoria pausada la malla se edita; como hay un expediente sin
-        // enviar, el cambio pide confirmación y lo borra (I-32).
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), [
                 'cycle_count' => 10,
@@ -739,8 +714,6 @@ class SyllabusProcessTest extends TestCase
         $convocation = $this->openedConvocation();
         $scheduledSubject = ScheduledSubject::query()->firstOrFail();
 
-        // Una convocatoria abierta no admite alterar su programación ni añadir paralelos:
-        // los docentes ya recibieron los alcances generados al abrirla.
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.parallels.store'), [
                 'scheduled_subject_id' => $scheduledSubject->id,
@@ -748,7 +721,6 @@ class SyllabusProcessTest extends TestCase
                 'shift' => 'matutina',
             ])
             ->assertJsonValidationErrors('process');
-        // Tampoco se edita ni elimina un paralelo mientras la convocatoria está abierta.
         $parallel = $scheduledSubject->parallels()->firstOrFail();
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.parallels.update', $parallel), ['code' => 'Z', 'shift' => 'nocturna'])
@@ -757,7 +729,6 @@ class SyllabusProcessTest extends TestCase
             ->deleteJson(route('api.v1.coordination.academic.parallels.destroy', $parallel))
             ->assertJsonValidationErrors('process');
 
-        // Los registros nuevos siguen disponibles durante el proceso.
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
                 'nombre' => 'Facultad creada durante el proceso',
@@ -779,8 +750,6 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Corrección institucional del campus.'])
             ->assertSuccessful();
-        // Nombre, campus y logo de la facultad son de presentación: no piden confirmar
-        // purga ni reinician los sílabos en curso; solo se actualiza su ficha (I-127).
         $syllabusId = Syllabus::query()->firstOrFail()->id;
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.academic.update', ['facultad', $faculty->id]), [
@@ -797,7 +766,6 @@ class SyllabusProcessTest extends TestCase
             data_get($syllabus->contexto_academico, 'scheduled_subject.campus'),
         );
 
-        // La convocatoria ya pausada permite completar su programación.
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.parallels.store'), [
                 'scheduled_subject_id' => $scheduledSubject->id,
@@ -833,7 +801,6 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))->assertSuccessful();
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
 
-        // La pausa institucional detiene también a una convocatoria que sigue abierta.
         $process = $convocation->process()->firstOrFail();
         $this->transition($process, 'pausar', 'Ajuste institucional de la plantilla.')->assertSuccessful();
         $this->assertSame('abierta', $convocation->fresh()->estado);
@@ -842,7 +809,6 @@ class SyllabusProcessTest extends TestCase
             'value' => 'Tampoco debe guardarse durante la pausa institucional.',
         ])->assertForbidden();
 
-        // Y mientras dure, la carrera no puede reanudar por su cuenta.
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Pausa propia mientras tanto.'])
             ->assertSuccessful();
@@ -869,7 +835,6 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsCoordinator()->patch('/coordinacion/convocatorias/'.$convocation->id, $payload)->assertNotFound();
         $this->assertSame($convocation->career->nombre.' · '.$convocation->process->academicPeriod->codigo, $convocation->fresh()->nombre);
 
-        // Cerrar no es de la carrera: lo decide Administración cerrando el proceso.
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'cerrar']))->assertNotFound();
         $syllabus = Syllabus::query()->firstOrFail();
         $this->transition($convocation->process()->firstOrFail(), 'cerrar')->assertSuccessful();

@@ -7,7 +7,6 @@ use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 
-/** Los datos curriculares solo se exigen cuando el formato los utiliza. */
 final class RequiredAcademicTemplateData
 {
     /**

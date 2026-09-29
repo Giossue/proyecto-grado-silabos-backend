@@ -15,7 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/** Elimina una convocatoria institucional que nunca recibió actividad docente. */
 final class DeleteSyllabusProcess
 {
     public function __construct(

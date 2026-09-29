@@ -30,9 +30,6 @@ class EmailVerificationController extends Controller
         abort_unless($user instanceof User, 401);
 
         if (! $user->hasVerifiedEmail()) {
-            // Una cuenta que nunca se activó se completa con la invitación (define contraseña
-            // y verifica el correo a la vez). Mandar aquí la verificación simple dejaría la
-            // invitación pendiente inservible y habría dos enlaces para lo mismo.
             $pending = ActivationInvitation::query()->where('usuario_id', $user->id)->latest(ActivationInvitation::CREATED_AT)->first();
             $activated = ActivationInvitation::query()->where('usuario_id', $user->id)->whereNotNull('usada_en')->exists();
 

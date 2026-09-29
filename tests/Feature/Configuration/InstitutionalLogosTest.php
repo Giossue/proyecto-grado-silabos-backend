@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Storage;
 use Tests\Support\MakesTransparentPng;
 use Tests\TestCase;
 
-/** I-34/I-125: logos del encabezado ajustados a la medida fija al guardar. */
 class InstitutionalLogosTest extends TestCase
 {
     use MakesTransparentPng;
@@ -48,7 +47,6 @@ class InstitutionalLogosTest extends TestCase
         Storage::disk('private')->assertExists('logos/institucion.png');
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'institucion.logo_actualizado']);
 
-        // Sin sesión: la imagen es pública.
         $this->get(route('logos.institution'))
             ->assertOk()
             ->assertHeader('Content-Type', 'image/png')
@@ -62,7 +60,6 @@ class InstitutionalLogosTest extends TestCase
             ->assertJsonValidationErrors('logo');
         Storage::disk('private')->assertMissing('logos/institucion.png');
 
-        // Otra medida y otra proporción: se escala y se centra sobre lienzo transparente.
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.template.logo.store'), ['logo' => $this->transparentPng(1600, 400)])
             ->assertSuccessful()
@@ -108,7 +105,6 @@ class InstitutionalLogosTest extends TestCase
         $faculties = collect(app(AcademicStructureViewData::class)->governance()['catalogs']['faculties'])->keyBy('nombre');
         $this->assertIsString($faculties->get('Con logo')['logo_url']);
 
-        // Sin subida propia, la facultad muestra el logo de fábrica.
         $legacy = Faculty::query()->where('nombre', '!=', 'Con logo')->firstOrFail();
         $this->get(route('logos.faculty', $legacy))->assertOk();
     }
@@ -164,7 +160,6 @@ class InstitutionalLogosTest extends TestCase
         ]);
     }
 
-    /** El archivo guardado tiene la medida fija y conserva el canal alfa (tipo de color 6). */
     private function assertStoredPngHasSize(string $path, int $width, int $height): void
     {
         Storage::disk('private')->assertExists($path);

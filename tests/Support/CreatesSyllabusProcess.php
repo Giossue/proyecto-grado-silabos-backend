@@ -6,14 +6,8 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Carbon\CarbonInterface;
 
-/**
- * Desde I-31 toda convocatoria cuelga de un proceso institucional abierto. Como solo
- * puede haber uno en curso, el ayudante reutiliza el existente y le ajusta plantilla y
- * fechas en lugar de crear otro.
- */
 trait CreatesSyllabusProcess
 {
-    /** Texto libre del docente (I-156): un párrafo. */
     protected function freeTextValue(string $text): array
     {
         return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]]]];

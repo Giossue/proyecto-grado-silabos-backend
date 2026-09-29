@@ -6,7 +6,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-/** Sirve los logos del encabezado; sin sesión, porque son imagen pública de la institución. */
 class LogoController
 {
     public function __construct(private readonly InstitutionalLogos $logos) {}

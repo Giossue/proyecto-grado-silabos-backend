@@ -26,7 +26,6 @@ Route::get('/health/ready', ReadinessController::class)
     ])
     ->name('health.ready');
 
-// Recursos institucionales públicos utilizados por el documento y la SPA.
 Route::get('logos/institucion', [LogoController::class, 'institution'])->name('logos.institution');
 Route::get('logos/facultad/{faculty}', [LogoController::class, 'faculty'])
     ->whereUuid('faculty')

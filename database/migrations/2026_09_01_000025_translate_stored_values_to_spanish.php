@@ -3,22 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Traduce a español los valores almacenados en inglés (I-28): estados, tipos, acciones
- * de auditoría, discriminadores de recurso, colas y claves con prefijo semántico.
- *
- * - Los CHECK constraints se recrean con el vocabulario nuevo (y el prefijo
- *   `campanias_` obsoleto pasa a `convocatorias_`).
- * - Los triggers de inmutabilidad se desactivan solo durante el UPDATE: es un cambio de
- *   representación del histórico, no de contenido; la migración es el registro auditable.
- * - Los índices parciales cuyo predicado fija valores (`estado IN (...)`,
- *   `decision = 'applied'`) se recrean con los valores traducidos.
- * - Las funciones PL/pgSQL que comparan estados se redefinen con el vocabulario nuevo.
- * - Todo mapa usa CASE con ELSE conservador: un valor histórico fuera del vocabulario
- *   conocido se conserva tal cual (verificar DISTINCT antes de aplicar en remoto).
- * - Las claves internas de los JSONB (fotografías de revisiones, contenido del outbox,
- *   metadatos) NO se tocan: son evidencia sellada (deuda registrada en I-28).
- */
 return new class extends Migration
 {
     private const RECURSOS = [
@@ -137,11 +121,7 @@ return new class extends Migration
         'approved' => 'aprobado',
     ];
 
-    /**
-     * Acciones de auditoría compuestas: academic.{entidad}.{evento}.
-     *
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     private function accionesAuditoria(): array
     {
         $acciones = self::ACCIONES_AUDITORIA;
@@ -161,11 +141,7 @@ return new class extends Migration
         return $acciones;
     }
 
-    /**
-     * [tabla => [columna => mapa]] para las traducciones directas por CASE.
-     *
-     * @return array<string, array<string, array<string, string>>>
-     */
+    /** @return array<string, array<string, array<string, string>>> */
     private function mapas(): array
     {
         $sustento = [
@@ -289,7 +265,6 @@ return new class extends Migration
         ];
     }
 
-    /** Prefijos semánticos dentro de claves de idempotencia y deduplicación. */
     private const PREFIJOS = [
         'ejecuciones_trabajo' => [
             'clave_idempotencia' => [
@@ -311,7 +286,6 @@ return new class extends Migration
         ],
     ];
 
-    /** Tablas con triggers de inmutabilidad/validación que bloquean el UPDATE. */
     private const TABLAS_PROTEGIDAS = [
         'eventos_salientes', 'eventos_auditoria', 'transiciones_silabo',
         'objetos_almacenados', 'artefactos_exportacion', 'ejecuciones_ia',
@@ -539,8 +513,6 @@ return new class extends Migration
             DB::statement("ALTER TABLE {$tabla} ALTER COLUMN {$columna} SET DEFAULT '{$valor}'");
         }
 
-        // El default 'draft' de versiones_malla quedó inválido desde la migración 000018
-        // (el CHECK vigente no lo admite): se elimina en lugar de traducirse.
         if ($inverso) {
             DB::statement("ALTER TABLE versiones_malla ALTER COLUMN estado SET DEFAULT 'draft'");
         } else {

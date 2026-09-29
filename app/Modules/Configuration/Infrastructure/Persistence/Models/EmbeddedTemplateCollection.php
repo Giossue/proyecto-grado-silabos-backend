@@ -5,9 +5,6 @@ namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 use Illuminate\Support\Collection;
 
 /**
- * Colección que conserva la interfaz de lectura usada antes por relaciones Eloquent,
- * aunque secciones y bloques ahora vivan dentro del documento JSONB.
- *
  * @template TKey of array-key
  * @template TValue
  *

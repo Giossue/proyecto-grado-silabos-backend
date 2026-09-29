@@ -13,13 +13,6 @@ use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\SimpleType\Jc;
 use PhpOffice\PhpWord\SimpleType\TblWidth;
 
-/**
- * Arma el sílabo en Word con hoja carta, títulos numerados y tablas complejas. La
- * apariencia acotada se lee de la copia de la plantilla incluida en la revisión.
- *
- * Orquesta el documento (hojas, logos, títulos y pie) y delega cada campo en
- * `WordFieldRenderer`.
- */
 class SyllabusWordDocument
 {
     private WordRenderContext $context;
@@ -56,7 +49,6 @@ class SyllabusWordDocument
         $word->setDefaultFontColor($this->context->color('text_color'));
         $word->setDefaultParagraphStyle($paragraph);
 
-        // Fechas fijas: el mismo contenido produce los mismos bytes (huella estable).
         $timestamp = strtotime($input->generatedAt) ?: 0;
         $info = $word->getDocInfo();
         $info->setCreator('Sílabos UEB');
@@ -118,8 +110,6 @@ class SyllabusWordDocument
             $containers = WordValues::arrayList($block['blocks'] ?? null);
             $partNumber = 0;
             foreach ($containers as $container) {
-                // Un solo campo en la sección: basta el título de la sección. Una parte sin
-                // nombre no lleva subtítulo ni consume número (6.1, 6.2 siguen seguidos).
                 $numbered = count($containers) > 1 && WordFieldRenderer::hasTitle($container);
                 $fields->render($section, $container, $numbered ? $number.'.'.(++$partNumber) : null);
             }
@@ -160,7 +150,6 @@ class SyllabusWordDocument
         return (string) $this->context->appearance['orientation'];
     }
 
-    /** Encabezado: logo de la universidad y logo de la facultad de la carrera. */
     private function logos(Section $section, DocumentRenderInput $input): void
     {
         $facultyId = data_get($input->snapshot, 'academic_context.career.faculty_id');
@@ -183,7 +172,6 @@ class SyllabusWordDocument
         }
     }
 
-    /** Pie con la trazabilidad de la revisión: huella y fecha, en letra pequeña. */
     private function metadata(Section $section, DocumentRenderInput $input): void
     {
         $section->addText(

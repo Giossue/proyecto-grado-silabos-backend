@@ -6,7 +6,6 @@ use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiDocument;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Support\Collection;
 
-/** I-146: ninguna llamada antigua recupera documentos ni calcula embeddings. */
 class RetrieveAiEvidence
 {
     /** @return Collection<int, AiDocument> */

@@ -26,7 +26,6 @@ final class SaveTemplateAppearance
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        // La apariencia se lee en vivo de la plantilla al presentar y exportar: no purga.
         DB::transaction(function () use ($activeRole, $actor, $appearance, $request, $template): void {
             $locked = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
             $mapping = $locked->mapeo_documento ?? [];

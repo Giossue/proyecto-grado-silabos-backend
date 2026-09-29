@@ -9,10 +9,6 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
-/**
- * «Preparar período» recibe toda la malla pendiente, con paralelos y docentes
- * opcionales, en un solo envío. El caso de uso comprueba la completitud.
- */
 class PreparePeriodRequest extends FormRequest
 {
     protected function prepareForValidation(): void
@@ -83,12 +79,7 @@ class PreparePeriodRequest extends FormRequest
         return false;
     }
 
-    /**
-     * Un paralelo no se repite dentro de la misma materia; «A» sí puede existir en
-     * varias materias (la regla `distinct` comparaba todas las materias juntas).
-     *
-     * @return list<\Closure(Validator): void>
-     */
+    /** @return list<\Closure(Validator): void> */
     public function after(): array
     {
         return [function (Validator $validator): void {

@@ -52,15 +52,11 @@ class ManagedUserController extends Controller
                     ->whereRaw('nombre_usuario ILIKE ?', ["%{$term}%"])
                     ->orWhereRaw('correo_electronico ILIKE ?', ["%{$term}%"]),
             ))
-            // Una cuenta pendiente aún no ha demostrado que controla su correo y no puede
-            // entrar al producto hasta completar la invitación.
             ->when($status === 'active', fn (Builder $query) => $query
                 ->where('activo', true)->whereNotNull('correo_verificado_en'))
             ->when($status === 'pending', fn (Builder $query) => $query
                 ->where('activo', true)->whereNull('correo_verificado_en'))
             ->when($status === 'inactive', fn (Builder $query) => $query->where('activo', false))
-            // El alcance efectivo vive en `RoleAssignment`, así que se resuelve allí y
-            // aquí solo se compara con la lista de identidades que devuelve.
             ->when($role, fn (Builder $query, string $code) => $query->whereIn(
                 'id',
                 RoleAssignment::query()
@@ -75,8 +71,6 @@ class ManagedUserController extends Controller
                     ->where('carrera_id', $careerId)
                     ->select('usuario_id'),
             ))
-            // Se cargan también las asignaciones archivadas: las columnas siguen
-            // mostrando solo las vigentes y el panel de lectura muestra el historial.
             ->with(['roleAssignments' => fn ($query) => $query
                 ->with(['career:id,nombre'])
                 ->orderByDesc('asignado_en')])
@@ -151,7 +145,6 @@ class ManagedUserController extends Controller
         );
     }
 
-    /** Reemite una invitación; el alcance de la policy permite Administración o su carrera. */
     public function resendActivation(User $user, Request $request, ResendManagedUserActivation $action): JsonResponse
     {
         Gate::authorize('managePending', $user);
@@ -164,7 +157,6 @@ class ManagedUserController extends Controller
         return response()->json(['message' => $message]);
     }
 
-    /** Borra una cuenta pendiente de activación sin actividad; con historia, se desactiva. */
     public function destroy(User $user, Request $request, DeleteManagedUser $action): JsonResponse
     {
         Gate::authorize('managePending', $user);
@@ -175,9 +167,6 @@ class ManagedUserController extends Controller
         return response()->json(['message' => 'Cuenta eliminada.']);
     }
 
-    /**
-     * Guardado único del panel de edición: identidad siempre; rol y estado solo si vienen.
-     */
     public function update(
         User $user,
         UpdateManagedUserRequest $request,
@@ -190,9 +179,6 @@ class ManagedUserController extends Controller
         $validated = $request->validated();
         $wasActive = $user->activo;
 
-        // Una sola transacción: identidad, rol nuevo y estado quedan coherentes o no
-        // queda nada. El estado va al final para que una desactivación cierre también
-        // un nombramiento concedido en este mismo guardado.
         DB::transaction(function () use ($actor, $assignRole, $request, $setStatus, $updateProfile, $user, $validated, $wasActive): void {
             $updateProfile->execute($user, $request->profileData(), $actor, $request);
 

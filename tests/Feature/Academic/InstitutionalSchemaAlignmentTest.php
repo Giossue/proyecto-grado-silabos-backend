@@ -8,9 +8,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/**
- * Verifica el período institucional que conserva el producto.
- */
 class InstitutionalSchemaAlignmentTest extends TestCase
 {
     use RefreshDatabase;

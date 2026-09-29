@@ -116,12 +116,7 @@ class DeliverInternalNotificationJob implements ShouldQueue
         });
     }
 
-    /**
-     * Los avisos de I-120 llegan redactados; los del flujo del sílabo se redactan aquí
-     * con el nombre vigente de la asignatura.
-     *
-     * @return array{string, string, string, string}
-     */
+    /** @return array{string, string, string, string} */
     private function content(JobExecution $execution): array
     {
         $title = $execution->entrada['titulo'] ?? null;

@@ -3,13 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * «Campaña» se sustituye por «convocatoria»: es el término que usa la Coordinación para
- * un proceso académico con plazo, y no arrastra el tono comercial del anterior.
- *
- * Las migraciones anteriores conservan los nombres con los que se creó el esquema; el
- * cambio se aplica aquí para no reescribir la historia.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -22,14 +15,9 @@ return new class extends Migration
             DB::statement("ALTER TABLE {$tabla} RENAME COLUMN campania_id TO convocatoria_id");
         }
 
-        // Renombrar una tabla no reescribe el cuerpo de las funciones que la consultan.
         $this->redefinirValidacionEvidencia();
     }
 
-    /**
-     * Misma regla que fijó I-06, con los nombres nuevos: una evidencia solo puede citar
-     * una fuente activa, vigente y seleccionada por la convocatoria del expediente.
-     */
     private function redefinirValidacionEvidencia(): void
     {
         DB::unprepared(<<<'SQL'

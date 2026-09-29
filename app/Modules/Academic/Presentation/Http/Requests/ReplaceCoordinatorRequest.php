@@ -7,7 +7,6 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/** Reemplazar (o nombrar) la coordinación de una carrera: solo Administración (I-39). */
 class ReplaceCoordinatorRequest extends FormRequest
 {
     public function authorize(): bool

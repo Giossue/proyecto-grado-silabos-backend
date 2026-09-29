@@ -10,7 +10,6 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Symfony\Component\Mime\Email;
 
-/** Envía el enlace de activación sin transportar ni revelar una contraseña. */
 class ManagedUserActivationMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
@@ -27,8 +26,6 @@ class ManagedUserActivationMail extends Mailable implements ShouldQueue
         return new Envelope(
             subject: 'Active su cuenta en '.config('app.name'),
             using: [function (Email $message): void {
-                // Clientes como Gmail pueden usar estos encabezados como señal de
-                // prioridad, aunque la etiqueta final siempre depende del receptor.
                 $message->getHeaders()->addTextHeader('Importance', 'high');
                 $message->getHeaders()->addTextHeader('X-Priority', '1');
                 $message->getHeaders()->addTextHeader('Priority', 'urgent');

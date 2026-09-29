@@ -88,32 +88,19 @@ class Syllabus extends Model
         return $this->belongsTo(Subject::class, 'asignatura_id');
     }
 
-    /**
-     * La carrera se deriva de la convocatoria de carrera (I-131).
-     *
-     * @return HasOneThrough<Career, Convocation, $this>
-     */
+    /** @return HasOneThrough<Career, Convocation, $this> */
     public function career(): HasOneThrough
     {
         return $this->hasOneThrough(Career::class, Convocation::class, 'id', 'id', 'convocatoria_id', 'carrera_id');
     }
 
-    /**
-     * Paralelo que cubre el sílabo: exactamente uno por sílabo y convocatoria (I-131).
-     *
-     * @return BelongsTo<Parallel, $this>
-     */
+    /** @return BelongsTo<Parallel, $this> */
     public function parallel(): BelongsTo
     {
         return $this->belongsTo(Parallel::class, 'paralelo_id');
     }
 
-    /**
-     * Docentes vigentes: quien tiene hoy la asignación activa de un paralelo del sílabo.
-     * El sílabo pertenece al paralelo, no a una persona (I-130).
-     *
-     * @return HasMany<CurrentSyllabusTeacher, $this>
-     */
+    /** @return HasMany<CurrentSyllabusTeacher, $this> */
     public function currentTeachers(): HasMany
     {
         return $this->hasMany(CurrentSyllabusTeacher::class, 'silabo_id');
@@ -125,12 +112,7 @@ class Syllabus extends Model
         return $this->belongsToMany(User::class, 'docentes_vigentes_silabo', 'silabo_id', 'usuario_id');
     }
 
-    /**
-     * Sílabos que el usuario puede trabajar hoy como docente vigente de alguno de sus
-     * paralelos. No mira el rol activo de la sesión; eso lo resuelve quien consulta.
-     *
-     * @param  Builder<Syllabus>  $query
-     */
+    /** @param  Builder<Syllabus>  $query */
     public function scopeWhereCurrentTeacher(Builder $query, User|string $user): void
     {
         $userId = $user instanceof User ? $user->id : $user;

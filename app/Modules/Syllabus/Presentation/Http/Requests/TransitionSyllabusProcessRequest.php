@@ -28,7 +28,6 @@ class TransitionSyllabusProcessRequest extends FormRequest
     /** @return array<string, list<mixed>> */
     public function rules(): array
     {
-        // Pausar detiene a toda la universidad: el motivo tiene que quedar escrito.
         return $this->transition() === TransitionSyllabusProcess::PAUSE
             ? ['reason' => ['required', 'string', 'min:10', 'max:500']]
             : ['reason' => ['nullable', 'string', 'max:500']];

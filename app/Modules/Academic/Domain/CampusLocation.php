@@ -2,10 +2,6 @@
 
 namespace App\Modules\Academic\Domain;
 
-/**
- * Ubicaciones institucionales admitidas. El campus pertenece a una facultad y no
- * tiene código ni catálogo administrable.
- */
 enum CampusLocation: string
 {
     case Matriz = 'Campus Matriz Dr. Gabriel Galarza López';

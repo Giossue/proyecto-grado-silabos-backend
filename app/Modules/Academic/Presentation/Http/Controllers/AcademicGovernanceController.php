@@ -52,7 +52,6 @@ class AcademicGovernanceController extends Controller
         return response()->json(['message' => 'Registro institucional creado.'], 201);
     }
 
-    /** Nombra o reemplaza la coordinación de una carrera en un paso (I-39). */
     public function replaceCoordinator(
         Career $career,
         ReplaceCoordinatorRequest $request,

@@ -10,9 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * Invitación de activación. El token en claro solo vive en el correo; la base conserva
- * únicamente su huella para que una filtración no permita activar cuentas directamente.
- *
  * @property string $id
  * @property string $usuario_id
  * @property string $huella_activacion

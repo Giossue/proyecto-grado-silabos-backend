@@ -101,7 +101,6 @@ final class AcademicSourceDocument
                 throw ValidationException::withMessages(['document' => 'El documento contiene texto inválido.']);
             }
             $text = $node['text'];
-            // Laravel converts empty request strings to null before validation.
             if ($text === '' || $text === null) {
                 return null;
             }

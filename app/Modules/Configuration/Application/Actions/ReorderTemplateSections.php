@@ -24,7 +24,6 @@ class ReorderTemplateSections
     public function execute(SyllabusTemplate $template, array $sectionIds, User $actor, Request $request): void
     {
         $activeRole = $this->roles->resolve($request);
-        // Con el proceso institucional abierto, el formato está en uso: se pausa antes.
         $this->locks->assertTemplateEditable();
 
         $this->work->replace($request, function () use ($activeRole, $actor, $request, $sectionIds, $template): void {

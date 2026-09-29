@@ -141,9 +141,6 @@ class UpdateAcademicRecord
                 return $record;
             };
 
-            // Facultad y carrera solo aportan datos de presentación (nombre, código,
-            // campus, modalidad, logo): se actualiza la ficha sin borrar el trabajo en
-            // curso. El período cambia las semanas lectivas y sí reinicia los sílabos.
             return $record instanceof AcademicPeriod
                 ? $this->work->replace($request, $change, null, $periodId)
                 : $change();

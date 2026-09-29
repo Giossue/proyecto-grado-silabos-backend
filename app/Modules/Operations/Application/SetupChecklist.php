@@ -29,11 +29,7 @@ class SetupChecklist
 {
     public function __construct(private readonly CoordinatorConvocationReadiness $coordinatorReadiness) {}
 
-    /**
-     * Resumen para el encabezado: cuánto falta según el rol activo.
-     *
-     * @return array{title: string, done: int, total: int}|null
-     */
+    /** @return array{title: string, done: int, total: int}|null */
     public function summaryFor(User $user, RoleAssignment $assignment): ?array
     {
         $checklist = match ($assignment->role->codigo_rol) {

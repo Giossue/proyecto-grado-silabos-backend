@@ -6,10 +6,6 @@ use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Http\UploadedFile;
 
-/**
- * Un logo «sin fondo» es un PNG con canal alfa. Se lee el tipo de color de la
- * cabecera PNG (byte 25): 4 = gris con alfa, 6 = color con alfa.
- */
 final class TransparentPng implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void

@@ -56,7 +56,6 @@ class CurricularImportsTest extends TestCase
         $this->source = $this->newSource();
     }
 
-    /** Documento temporal de una importación (I-152): cada importación tiene el suyo. */
     private function newSource(string $name = 'Proyecto de carrera'): AcademicSource
     {
         $text = 'Evalúa la calidad del software. Pensamiento crítico. Bibliografía institucional. Resultado actualizado.';
@@ -101,7 +100,6 @@ class CurricularImportsTest extends TestCase
         $this->assertStringNotContainsString('Evalúa', json_encode($audit->getAttributes(), JSON_UNESCAPED_UNICODE));
         $this->postJson($this->url($import).'/apply', $payload)->assertConflict();
         $this->assertDatabaseCount('valores_curriculares', 3);
-        // Documentos temporales (I-152): tras guardar se elimina la lectura; el dato conserva su procedencia.
         $this->assertDatabaseMissing('fuentes_academicas', ['id' => $this->source->id]);
         $this->assertSame('Proyecto de carrera', $value->fresh()->evidencia_curricular[0]['source_name']);
         $this->assertSame('Evalúa la calidad del software.', $value->fresh()->evidencia_curricular[0]['quote']);
@@ -114,7 +112,6 @@ class CurricularImportsTest extends TestCase
         $import = $this->staged();
         $this->deleteJson($this->url($import))->assertOk();
         $this->assertModelMissing($import);
-        // Otra importación abierta usa el mismo documento: se conserva hasta que termine.
         $this->assertModelExists($this->source);
         $this->deleteJson($this->url($shared))->assertOk();
         $this->assertModelMissing($this->source);
@@ -329,7 +326,6 @@ class CurricularImportsTest extends TestCase
         $this->assertSame('Evalúa la calidad del software.', CurricularValue::query()->firstOrFail()->valor_curricular);
 
         foreach (['conflict', 'invalid_value', 'invalid_evidence'] as $issue) {
-            // El documento de la importación guardada ya se eliminó (I-152).
             $this->source = $this->newSource("Proyecto de carrera ({$issue})");
             $proposal = $this->proposal();
             $proposal['values'][0]['subject_id'] = null;
@@ -496,7 +492,6 @@ class CurricularImportsTest extends TestCase
             $this->assertSame('23503', $exception->errorInfo[0]);
         }
         try {
-            // Ya no existen datos de toda la carrera (I-160): todo valor es de una asignatura.
             DB::transaction(fn () => $value->update(['asignatura_id' => null]));
             $this->fail('La base debe exigir la asignatura de cada dato.');
         } catch (QueryException $exception) {
@@ -537,7 +532,8 @@ class CurricularImportsTest extends TestCase
         ]);
     }
 
-    /** @param list<array<string, mixed>>|null $rows
+    /**
+     * @param  list<array<string, mixed>>|null  $rows
      * @return array<string, mixed>
      */
     private function payload(CurricularImport $import, ?array $rows = null): array

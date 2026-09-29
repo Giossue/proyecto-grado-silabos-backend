@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-133. PostgreSQL no indexa las llaves foráneas por su cuenta: sin índice, filtrar por
- * la relación o borrar el registro padre recorre la tabla hija completa. Se indexa cada
- * llave foránea de una columna que aún no encabezaba ningún índice.
- */
 return new class extends Migration
 {
     /** @var list<array{0: string, 1: string}> */

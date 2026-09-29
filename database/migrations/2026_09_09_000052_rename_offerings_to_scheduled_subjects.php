@@ -5,10 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-62: «oferta académica» se reserva para carreras/programas aprobados por el CES.
- * Esta tabla representa la programación interna de una asignatura en un período.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -64,8 +60,6 @@ return new class extends Migration
             UNIQUE (periodo_academico_id, asignatura_id)
         SQL);
 
-        // Los eventos ya escritos son evidencia histórica append-only. Conservan el
-        // vocabulario vigente cuando ocurrieron; los eventos nuevos usan la terminología I-62.
     }
 
     public function down(): void

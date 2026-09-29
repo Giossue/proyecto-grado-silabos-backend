@@ -89,11 +89,7 @@ class UpdateCareerAcademicRecord
             || $activeRole->carrera_id === null) {
             throw new AuthorizationException('No puede editar este registro con el rol activo.');
         }
-        // Toda la estructura de carrera queda congelada mientras sus docentes trabajan.
         $this->locks->assertCareerEditable($activeRole->carrera_id);
-        // Nombre, código, ciclo, orden o unidad de una materia son presentación: se
-        // refrescan en la ficha de los sílabos en curso sin reiniciarlos. Solo los
-        // datos que cambian la carga académica (créditos, horas, modalidad) purgan.
         $cosmeticSubject = $entity === 'asignatura'
             && $this->onlyPresentationChanges($recordId, $data, $activeRole->carrera_id);
         $careerScope = $entity === 'asignatura' && ! $cosmeticSubject ? $activeRole->carrera_id : [];
@@ -122,7 +118,6 @@ class UpdateCareerAcademicRecord
 
             $metadata = $this->auditContext($record, $dirty);
             $record->save();
-            // El total de horas es una columna generada: se relee tras guardar.
             $record->refresh();
 
             $this->audit->execute(
@@ -150,7 +145,6 @@ class UpdateCareerAcademicRecord
         if (! $subject instanceof Subject) {
             return false;
         }
-        // Solo se aplican los datos de carga académica: si ninguno cambia, lo demás es presentación.
         $subject->fill(array_diff_key(
             $this->subjectAttributes($data, $subject),
             array_flip(self::PRESENTATION_SUBJECT_FIELDS),
@@ -186,7 +180,8 @@ class UpdateCareerAcademicRecord
         }
     }
 
-    /** @param array<string, mixed> $data
+    /**
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function attributes(string $entity, array $data, string $careerId, Model $record): array
@@ -197,7 +192,8 @@ class UpdateCareerAcademicRecord
         };
     }
 
-    /** @param array<string, mixed> $data
+    /**
+     * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
     private function subjectAttributes(array $data, Model $record): array
@@ -245,7 +241,8 @@ class UpdateCareerAcademicRecord
         }
     }
 
-    /** @param array<string, mixed> $dirty
+    /**
+     * @param  array<string, mixed>  $dirty
      * @return array<string, bool|float|int|string|null>
      */
     private function auditContext(Model $record, array $dirty): array
@@ -262,7 +259,6 @@ class UpdateCareerAcademicRecord
             $metadata["before_{$auditKey}"] = $this->scalarValue($record->getRawOriginal($field));
             $metadata["after_{$auditKey}"] = $this->scalarValue($record->getAttribute($field));
         }
-        // El total es generado por la base; se audita cuando cambia alguno de sus componentes.
         if ($record instanceof Subject && array_intersect(CurriculumSystemFields::TOTAL_HOUR_COMPONENT_KEYS, array_keys($dirty)) !== []) {
             $after = (int) round(CurriculumSystemFields::totalHours($record->only(CurriculumSystemFields::TOTAL_HOUR_COMPONENT_KEYS)));
             if ($after !== $record->horas_totales) {

@@ -50,16 +50,11 @@ use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         $this->app->bind(CurricularExtractionGateway::class, HostedCurricularExtractionGateway::class);
         $this->app->bind(RoleEligibility::class, AcademicRoleEligibility::class);
         $this->app->bind(DocumentRenderer::class, PhpWordDocumentRenderer::class);
-        // I-146: análisis editorial y recuperación vectorial retirados. Estas
-        // vinculaciones conservan compatibilidad sin reactivar servicios antiguos.
         $this->app->bind(AiAnalysisGateway::class, DisabledAiAnalysisGateway::class);
         $this->app->bind(AiChatGateway::class, function (): AiChatGateway {
             return match ((string) config('ai.driver')) {
@@ -79,17 +74,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AcademicSourceFigureCropper::class, PopplerAcademicSourceFigureCropper::class);
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         $this->configureDefaults();
     }
 
-    /**
-     * Configure default behaviors for production-ready applications.
-     */
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);

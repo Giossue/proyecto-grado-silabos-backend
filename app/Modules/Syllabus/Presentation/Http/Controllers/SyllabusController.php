@@ -54,8 +54,6 @@ class SyllabusController extends Controller
         $syllabi = Syllabus::query()
             ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $activeRole?->carrera_id))
             ->whereCurrentTeacher($user)
-                // La búsqueda mira la asignatura y la convocatoria, que es como se
-                // recuerda un expediente: por la materia y por el periodo en que se pidió.
             ->when($search, fn ($query, string $term) => $query->where(
                 fn ($outer) => $outer
                     ->whereRaw("contexto_academico_silabo->'subject'->>'name' ILIKE ?", ["%{$term}%"])
@@ -202,7 +200,6 @@ class SyllabusController extends Controller
             ...$this->teacherEditability($syllabus),
             'parallels' => [$syllabus->parallel->codigo],
             'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
-            // I-139: revisión aprobada vigente, la que el docente firma electrónicamente.
             'approved_revision_id' => $syllabus->estado === 'aprobado'
                 ? $syllabus->revisions()->whereHas('approval')->latest('numero_revision')->value('id')
                 : null,
@@ -246,12 +243,7 @@ class SyllabusController extends Controller
         ];
     }
 
-    /**
-     * Indica al editor docente si puede escribir ahora y, si no, por qué. Reutiliza la
-     * política (`start`/`edit`) para no duplicar la regla; el motivo solo explica.
-     *
-     * @return array{editable: bool, edit_block_reason: string|null}
-     */
+    /** @return array{editable: bool, edit_block_reason: string|null} */
     private function teacherEditability(Syllabus $syllabus): array
     {
         $user = request()->user();
@@ -276,7 +268,6 @@ class SyllabusController extends Controller
     {
         $payload = [];
         foreach ($syllabus->revisions->sortBy('numero_revision') as $revision) {
-            // Una solicitud de corrección incluye todas las observaciones de su revisión.
             $requested = $revision->correctionRequest !== null;
             foreach ($revision->observations as $observation) {
                 $payload[] = [
@@ -324,7 +315,6 @@ class SyllabusController extends Controller
     {
         $fields = [];
         foreach ($block->fields as $field) {
-            // Un campo retirado del diseño ya no es parte del formulario (I-116).
             if (isset($block->configuracion['detached_fields'][$field->clave])) {
                 continue;
             }
@@ -337,7 +327,6 @@ class SyllabusController extends Controller
                 'options' => CurricularFieldOptions::options($field, $academicContext),
                 'options_source' => CurricularFieldOptions::source($field),
                 'options_sources' => CurricularFieldOptions::sources($field),
-                // «Mostrar solo si»: la hoja oculta la parte mientras no se cumple.
                 'show_when' => FieldConditions::normalize($field->mostrar_si),
                 'required' => true,
                 'inherited' => $field->heredado,

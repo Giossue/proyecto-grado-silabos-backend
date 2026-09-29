@@ -5,17 +5,6 @@ use App\Modules\Configuration\Domain\TableLayout;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-138: constructor de plantilla más simple. Idempotente: volver a ejecutarla no cambia
- * una plantilla ya convertida.
- *
- * - El bloque guarda su tipo una sola vez (`configuracion.content_type`); se quita `tipo`.
- * - Se retira el bloque «Estado de revisión» (`flow`): su lugar lo toma una tabla fija con
- *   las variables de firma. Sus definiciones solo tenían valores del sistema.
- * - «Indicadores de evaluación» y «Escala de valoración» pasan a contenido fijo con los
- *   valores UEB. Sus campos quedan retirados (no se borran filas del docente).
- * - Las tablas no guardan nombres de repetición o totales apagados, ni suman semana o año.
- */
 return new class extends Migration
 {
     private const FIXED_TABLES = [
@@ -32,10 +21,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Solo devuelve `tipo` a cada bloque para que las migraciones anteriores puedan
-     * revertirse. Los contenidos fijos y el estado de revisión retirado no se reconstruyen.
-     */
     public function down(): void
     {
         foreach (DB::table('plantilla_silabo')->get(['id', 'documento_plantilla']) as $template) {
@@ -94,7 +79,6 @@ return new class extends Migration
                     }
                 }
 
-                // Solo se conserva lo que se restaura al volver a usar un campo retirado.
                 if (is_array($configuration['detached_fields'] ?? null)) {
                     $configuration['detached_fields'] = array_map(
                         fn (mixed $saved): array => array_intersect_key(is_array($saved) ? $saved : [], array_flip(['editable_docente', 'ia_habilitada'])),
@@ -115,7 +99,6 @@ return new class extends Migration
         ]);
         DB::table('definiciones_campo')->whereIn('id', $detach)->update(['editable_docente' => false, 'ia_habilitada' => false]);
         if ($flowFieldIds !== []) {
-            // El estado de revisión era un valor del sistema, no trabajo del docente.
             DB::table('resultados_validacion')->whereIn('definicion_campo_id', $flowFieldIds)->update(['definicion_campo_id' => null]);
             DB::table('valores_campo')->whereIn('definicion_campo_id', $flowFieldIds)->delete();
             DB::table('filas_repetibles')->whereIn('definicion_campo_id', $flowFieldIds)->delete();

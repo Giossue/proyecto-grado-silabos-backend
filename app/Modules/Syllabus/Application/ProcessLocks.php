@@ -6,19 +6,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Qué se congela mientras el trabajo docente avanza.
- *
- * Con el proceso institucional abierto, la plantilla no cambia: los docentes están
- * llenando ese formato. Los catálogos institucionales y las cuentas siguen operativos.
- * Con una convocatoria abierta, la malla y las fuentes de esa carrera no cambian: los
- * sílabos se apoyan en ellas. Para editarlas la coordinación pausa su convocatoria; la
- * pausa institucional del proceso no basta. Los registros institucionales (período)
- * sí se liberan con la pausa del proceso.
- *
- * Las razones se devuelven como texto para que la interfaz explique el bloqueo con las
- * mismas palabras con las que el servidor lo rechaza.
- */
 class ProcessLocks
 {
     private const PROCESS_LOCK_REASON = 'Proceso activo';
@@ -76,13 +63,7 @@ class ProcessLocks
         }
     }
 
-    /**
-     * Períodos con alguna convocatoria de carrera en curso: sus datos no se editan
-     * hasta que Administración pause el proceso (mismo criterio que
-     * assertInstitutionalRecordEditable).
-     *
-     * @return array<string, string> período => motivo
-     */
+    /** @return array<string, string> período => motivo */
     public function lockedPeriodReasons(): array
     {
         $periodIds = Convocation::query()->running()

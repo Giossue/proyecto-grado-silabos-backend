@@ -78,7 +78,6 @@ class CareerAcademicStructureController extends Controller
         return $this->success($request, 'Registro académico creado dentro de su carrera.');
     }
 
-    /** Crea varios paralelos de una misma programación de asignatura en una operación atómica (I-40). */
     public function storeParallels(
         StoreParallelsRequest $request,
         CreateParallels $action,
@@ -92,7 +91,6 @@ class CareerAcademicStructureController extends Controller
         return $this->success($request, "{$created} paralelos creados dentro de su carrera.");
     }
 
-    /** Corrige código y jornada de un paralelo sin sílabo. */
     public function updateParallel(
         string $parallel,
         UpdateParallelRequest $request,
@@ -107,7 +105,6 @@ class CareerAcademicStructureController extends Controller
         return $this->success($request, 'Paralelo actualizado.');
     }
 
-    /** Elimina un paralelo sin sílabo ni docente asignado. */
     public function destroyParallel(
         string $parallel,
         ManageCareerAcademicStructureRequest $request,
@@ -118,7 +115,6 @@ class CareerAcademicStructureController extends Controller
         return $this->success($request, 'Paralelo eliminado.');
     }
 
-    /** Prepara de forma atómica las materias y paralelos seleccionados para un período. */
     public function preparePeriod(
         PreparePeriodRequest $request,
         PreparePeriod $action,

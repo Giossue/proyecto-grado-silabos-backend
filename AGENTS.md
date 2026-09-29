@@ -134,6 +134,12 @@ y `composer verify` para cambios amplios, riesgosos o cuando se soliciten expres
 - No registres secretos, documentos completos, prompts sensibles ni datos personales
   innecesarios en logs.
 - No modifiques archivos generados manualmente.
+- No escribas comentarios en el código, ni en backend ni en frontend: ni `//`, `#`,
+  `/* */`, `<!-- -->` ni docblocks de prosa. Lo que haga falta explicar va en `docs/` o
+  en el plan. Solo se admiten anotaciones que una herramienta lee: etiquetas de tipo
+  (`@var`, `@param`, `@return`, `@property`) y directivas (`@ts-expect-error`,
+  `eslint-disable`, `@phpstan-ignore`). `python3 temp/scripts/comentarios.py` lista los
+  comentarios que existan y con `--delete` los quita.
 
 ## Trabajo de interfaz
 

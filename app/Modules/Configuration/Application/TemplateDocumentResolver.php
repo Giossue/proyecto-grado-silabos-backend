@@ -4,10 +4,10 @@ namespace App\Modules\Configuration\Application;
 
 use App\Modules\Configuration\Domain\FreeText;
 
-/** Sustituye referencias solo con valores de una fotografía, nunca consultando datos vivos. */
 final class TemplateDocumentResolver
 {
-    /** @param array<string, mixed> $document
+    /**
+     * @param  array<string, mixed>  $document
      * @param  list<array<string, mixed>>  $fields
      * @param  array<string, string>  $variables
      * @return array<string, mixed>
@@ -16,7 +16,6 @@ final class TemplateDocumentResolver
     {
         $byKey = [];
         foreach ($fields as $field) {
-            // Una parte oculta por «Mostrar solo si» sale vacía.
             $byKey[$field['key']] = ($field['hidden'] ?? false) === true ? [...$field, 'value' => null] : $field;
         }
         $visit = function (array $node) use (&$visit, $byKey, $variables): array {
@@ -27,14 +26,12 @@ final class TemplateDocumentResolver
                 if ($type === 'variable') {
                     $value = $variables[$attrs['id']] ?? '';
                     if (($attrs['listStyle'] ?? null) !== null) {
-                        // Una lista ya numerada se reparte en elementos sin repetir su número.
                         $items = array_map(fn (string $line): string => (string) preg_replace('/^\d+\.\s+/u', '', $line), preg_split('/\R/u', $value) ?: []);
 
                         return [self::listNode($node, $items)];
                     }
                 } else {
                     $field = $byKey[$attrs['key']] ?? [];
-                    // Texto libre (I-156): sus párrafos, listas y tablas entran como bloques.
                     if (($field['type'] ?? $attrs['kind'] ?? null) === 'texto_libre') {
                         return FreeText::blocks($field['value'] ?? null);
                     }
@@ -89,9 +86,6 @@ final class TemplateDocumentResolver
     }
 
     /**
-     * Un elemento que solo contiene la lista de un !Docente o un @ProyectoCarrera aporta
-     * sus elementos a la lista que lo contiene: se ve como una sola lista (I-155).
-     *
      * @param  list<array<string, mixed>>  $items
      * @return list<array<string, mixed>>
      */
@@ -112,7 +106,8 @@ final class TemplateDocumentResolver
         return $flat;
     }
 
-    /** @param array<string, mixed> $node
+    /**
+     * @param  array<string, mixed>  $node
      * @param  list<string>  $items
      * @return array<string, mixed>
      */

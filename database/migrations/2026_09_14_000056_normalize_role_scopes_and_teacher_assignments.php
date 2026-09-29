@@ -7,10 +7,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Conserva RBAC con alcance en `asignaciones_rol` y elimina la coordinación
-     * duplicada. La asignación operativa a paralelo queda respaldada por el rol docente.
-     */
     public function up(): void
     {
         if (Schema::hasTable('asignaciones_docente')) {

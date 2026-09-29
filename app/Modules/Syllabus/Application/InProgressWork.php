@@ -18,13 +18,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Reinicia los expedientes cuya base institucional cambia durante una pausa.
- *
- * La confirmación, el cambio de la base, el borrado completo y la regeneración deben
- * vivir en la misma transacción exterior. Las revisiones siguen siendo inmutables en el
- * flujo normal; esta es la única excepción, habilitada localmente por la transacción.
- */
 final class InProgressWork
 {
     public const CONFIRMATION_FIELD = 'confirm_purge';
@@ -36,7 +29,8 @@ final class InProgressWork
         private readonly ScheduleInternalNotification $notifications,
     ) {}
 
-    /** @param string|list<string>|null $careerIds
+    /**
+     * @param  string|list<string>|null  $careerIds
      * @param  list<string>|null  $subjectIds
      */
     public function count(string|array|null $careerIds = null, ?string $periodId = null, ?string $subjectId = null, ?array $subjectIds = null): int
@@ -45,9 +39,6 @@ final class InProgressWork
     }
 
     /**
-     * Devuelve cuántos expedientes deberán reemplazarse. No borra antes de que el
-     * cambio institucional haya sido validado y guardado.
-     *
      * @param  string|list<string>|null  $careerIds
      * @param  list<string>|null  $subjectIds
      */
@@ -106,10 +97,6 @@ final class InProgressWork
     }
 
     /**
-     * Elimina cada agregado afectado y lo vuelve a generar con la base vigente.
-     * Debe llamarse después de guardar el cambio y dentro de esa misma transacción.
-     * Cada docente vigente del expediente recibe un aviso de que perdió su contenido.
-     *
      * @param  string|list<string>|null  $careerIds
      * @param  list<string>|null  $subjectIds
      * @return array{deleted: int, generated: int}
@@ -130,12 +117,10 @@ final class InProgressWork
 
         $convocationIds = $syllabi->pluck('convocatoria_id')->unique()->values()->all();
         $syllabusIds = array_values(array_map('strval', $syllabi->pluck('id')->all()));
-        // Los destinatarios se resuelven antes del borrado: después el sílabo ya no existe.
         $teachers = $this->currentTeachers($syllabusIds);
         $this->deleteAggregates($syllabusIds);
         foreach ($syllabi as $syllabus) {
             $subject = $syllabus->academicSubjectName();
-            // El aviso apunta a la carrera: el borrado del expediente no lo alcanza.
             $this->notifications->execute(
                 eventType: 'silabo.regenerado',
                 deduplicationKey: "silabo.regenerado:{$syllabus->id}:".Str::uuid(),
@@ -163,14 +148,11 @@ final class InProgressWork
     }
 
     /**
-     * Docentes con responsabilidad activa sobre algún paralelo del expediente.
-     *
      * @param  list<string>  $syllabusIds
      * @return array<string, list<string>>
      */
     private function currentTeachers(array $syllabusIds): array
     {
-        // Misma regla que permisos y avisos: la vista de docentes vigentes del paralelo.
         return DB::table('docentes_vigentes_silabo')
             ->whereIn('silabo_id', $syllabusIds)
             ->distinct()
@@ -185,7 +167,6 @@ final class InProgressWork
     {
         DB::statement("SET LOCAL app.reinicio_institucional = 'on'");
         $revisionIds = DB::table('revisiones_silabo')->whereIn('silabo_id', $syllabusIds)->pluck('id')->all();
-        // I-135: todo el historial de IA del sílabo cuelga de sesiones `silabo:{id}:…`.
         foreach ($syllabusIds as $syllabusId) {
             DB::table('historial_ia')->where('sesion_id', 'like', "silabo:{$syllabusId}:%")->delete();
         }
@@ -193,7 +174,6 @@ final class InProgressWork
         $exports = DB::table('artefactos_exportacion')
             ->whereIn('revision_silabo_id', $revisionIds)
             ->get(['id', 'objeto_docx_id', 'objeto_pdf_id']);
-        // I-139: las firmas y sus PDF firmados caen con la exportación que firmaron.
         $signatures = DB::table('firmas_documento')->whereIn('artefacto_exportacion_id', $exports->pluck('id')->all());
         $objectIds = $exports->flatMap(fn ($export) => [$export->objeto_docx_id, $export->objeto_pdf_id])
             ->merge((clone $signatures)->pluck('objeto_almacenado_id'))
@@ -223,13 +203,7 @@ final class InProgressWork
         Syllabus::query()->whereKey($syllabusIds)->delete();
     }
 
-    /**
-     * Actualiza los datos de presentación de la ficha (facultad, carrera, campus y
-     * modalidad) de los expedientes en curso sin tocar borradores, revisiones,
-     * aprobaciones ni análisis de IA. Los logos se leen en vivo al exportar.
-     *
-     * @param  list<string>  $careerIds
-     */
+    /** @param  list<string>  $careerIds */
     public function refreshIdentification(array $careerIds): int
     {
         if ($careerIds === []) {
@@ -268,12 +242,6 @@ final class InProgressWork
         return $syllabi->count();
     }
 
-    /**
-     * Actualiza en los expedientes en curso de la carrera los datos de presentación de
-     * la materia (nombre, código, ciclo, orden, unidad y requisitos por código) y la
-     * cantidad de ciclos de la malla sin
-     * reiniciar el trabajo docente. Se usa para cambios cosméticos de la malla.
-     */
     public function refreshSubjects(string $careerId): int
     {
         $syllabi = $this->inProgress($careerId)->with('career')->lockForUpdate()->get();
@@ -323,14 +291,13 @@ final class InProgressWork
         return $syllabi->count();
     }
 
-    /** @param string|list<string>|null $careerIds
+    /**
+     * @param  string|list<string>|null  $careerIds
      * @param  list<string>|null  $subjectIds
      * @return Builder<Syllabus>
      */
     private function inProgress(string|array|null $careerIds, ?string $periodId = null, ?string $subjectId = null, ?array $subjectIds = null): Builder
     {
-        // Una aprobación protege el expediente aunque esté reabierto: su historial
-        // no puede desaparecer ni cambiar de contexto al corregir una base.
         return Syllabus::query()->where('estado', '!=', 'aprobado')
             ->whereDoesntHave('approvals')
             ->when($subjectId !== null, fn (Builder $query) => $query->where('asignatura_id', $subjectId))

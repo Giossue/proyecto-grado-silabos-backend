@@ -144,8 +144,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('Página 12, ficha de la asignatura', $snapshot['template_variables']['ubicacion_resultados_aprendizaje']);
         $this->assertSame($this->coordinator->id, data_get($snapshot, 'academic_context.subject.learning_outcomes.confirmed_by.id'));
 
-        // Simula una corrección posterior del dato vivo: la lectura del expediente
-        // y la exportación siguen utilizando la copia con la que se creó.
         $base = SubjectLearningOutcomeBase::query()->firstOrFail();
         $base->outcomes()->firstOrFail()->update(['texto_resultado' => 'Texto curricular posterior.']);
         $base->update(['nombre_fuente' => 'Otra fuente posterior']);
@@ -241,7 +239,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertTrue(Syllabus::query()->whereKey($original->id)->exists());
         $this->assertTrue(Syllabus::query()->where('paralelo_id', $parallel->id)->exists());
 
-        // Idempotente: una segunda pasada no duplica expedientes.
         $this->assertSame(0, app(GenerateConvocationSyllabi::class)->execute($convocation->fresh()));
         $this->assertSame(2, Syllabus::query()->count());
     }
@@ -296,11 +293,9 @@ class ConvocationAndDraftTest extends TestCase
         $subject = ScheduledSubject::query()->firstOrFail()->subject;
         $outcomes = $this->useProjectData('resultados_de_aprendizaje', 'Resultados de aprendizaje');
         $profile = $this->useProjectData('perfil_de_egreso', 'Perfil de egreso', 'texto');
-        // Declarado pero sin usar en la hoja: no se exige.
         CurricularConcept::query()->create(['clave_concepto' => 'convenios', 'etiqueta_concepto' => 'Convenios',
             'tipo_concepto' => 'lista', 'columnas_concepto' => null]);
 
-        // Todo dato del Proyecto de carrera es por asignatura (I-160).
         $this->assertOpeningFails($convocation, "Falta confirmar «Perfil de egreso» en Proyecto de carrera para {$subject->nombre}.");
         $readiness = app(CoordinatorConvocationReadiness::class);
         $this->assertSame([
@@ -313,7 +308,6 @@ class ConvocationAndDraftTest extends TestCase
             'valor_curricular' => $value, 'evidencia_curricular' => [['source_id' => 'prueba', 'locator' => 'Página 3', 'quote' => 'Extracto sintético']], 'confirmado_por' => $this->coordinator->id, 'confirmado_en' => now(),
         ]);
         $confirmed($profile, $subject->id, 'Profesional de software.');
-        // Una lista vacía no cuenta como dato confirmado.
         $confirmed($outcomes, $subject->id, []);
         $this->assertOpeningFails($convocation, "Falta confirmar «Resultados de aprendizaje» en Proyecto de carrera para {$subject->nombre}.");
 
@@ -324,7 +318,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->openPrepared($convocation);
         $this->assertSame('abierta', $convocation->fresh()->estado);
 
-        // Con la convocatoria en curso, el período queda bloqueado y la pantalla lo avisa.
         $this->actingAsAdministrator()->getJson(route('api.v1.admin.academic.index'))
             ->assertOk()->assertJsonPath('lock_reason', 'Convocatoria activa')
             ->assertJsonPath('catalogs.periods.0.lock_reason', 'Convocatoria activa');
@@ -383,7 +376,6 @@ class ConvocationAndDraftTest extends TestCase
 
     public function test_teacher_writes_free_text_with_lists_and_tables_and_empty_text_is_missing(): void
     {
-        // Texto libre (I-156): la descripción del formato oficial la escribe el docente como quiera.
         $syllabus = $this->openConvocationAndGetSyllabus();
         $field = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
         $this->assertSame('texto_libre', $field->tipo);
@@ -410,7 +402,6 @@ class ConvocationAndDraftTest extends TestCase
         ]];
         $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $value])->assertOk();
         $stored = $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor;
-        // Solo negrita y cursiva; sin colores ni estilos de celda.
         $this->assertSame([['type' => 'bold']], $stored['content'][0]['content'][0]['marks']);
         $this->assertSame(['colspan' => 1, 'rowspan' => 1], $stored['content'][2]['content'][0]['content'][0]['attrs']);
 
@@ -537,7 +528,6 @@ class ConvocationAndDraftTest extends TestCase
         $text = FieldDefinition::query()->where('clave', 'objetivo_general')->firstOrFail();
         $empty = FieldDefinition::query()->where('clave', 'habilidades_blandas')->firstOrFail();
 
-        // El borrador acepta texto largo y campos vacíos: no hay límites configurables.
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $text]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'value' => $this->freeTextValue(str_repeat('Objetivo amplio. ', 200)),
@@ -576,12 +566,10 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame(['key' => 'discapacidad_tiene', 'value' => 'Sí'], $fields['discapacidad_tipo']['show_when']);
         $this->assertNull($fields['discapacidad_tiene']['show_when']);
 
-        // Con «Sí», las dos partes aparecen y son obligatorias.
         $save($has, 'Sí');
         $this->assertContains($type->id, $missing());
         $this->assertContains($adaptation->id, $missing());
 
-        // Llenas y luego «No»: se ocultan, no se piden y su valor se conserva.
         $save($type, 'Visual');
         $save($adaptation, 'Material ampliado');
         $save($has, 'No');
@@ -589,7 +577,6 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertNotContains($adaptation->id, $missing());
         $this->assertSame('Visual', $syllabus->values()->where('definicion_campo_id', $type->id)->value('valor'));
 
-        // En el documento, la parte oculta sale vacía.
         $snapshot = app(SyllabusSnapshot::class)->build($syllabus->fresh());
         $this->assertSame('', $snapshot['identification']['disability_type']);
         $block = collect($snapshot['sections'])->flatMap(fn ($section) => $section['blocks'])
@@ -612,7 +599,6 @@ class ConvocationAndDraftTest extends TestCase
         $template = SyllabusTemplate::query()->firstOrFail();
         $fixedBlock = $template->blocks()->first(fn ($block): bool => $block->contentType() === 'fixed');
         $this->assertNotNull($fixedBlock);
-        // Una definición antigua dentro de un texto fijo no se le pide al docente.
         $inFixed = FieldDefinition::query()->create([
             'plantilla_id' => $template->id, 'bloque_plantilla_id' => $fixedBlock->id, 'clave' => 'resto_fijo',
             'etiqueta' => 'Resto de texto fijo', 'tipo' => 'texto_largo', 'heredado' => false,
@@ -659,8 +645,6 @@ class ConvocationAndDraftTest extends TestCase
                 'estado' => SyllabusProcess::STATE_OPEN,
             ]);
 
-        // Esta ayuda prepara el estado previo para probar OpenConvocation en aislamiento.
-        // El alta real de una carrera siempre pasa por CreateConvocation y abre de forma atómica.
         $convocation = Convocation::query()->create([
             'carrera_id' => $this->coordinatorContext->carrera_id,
             'proceso_id' => $process->id,
@@ -700,7 +684,6 @@ class ConvocationAndDraftTest extends TestCase
         return $this;
     }
 
-    /** El alta real abre dentro de CreateConvocation; aquí se ejercita OpenConvocation aislada. */
     private function openPrepared(Convocation $convocation): void
     {
         $request = Request::create('/');

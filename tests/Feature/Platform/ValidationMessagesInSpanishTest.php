@@ -6,13 +6,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
-/*
- * Ningún mensaje de validación que ve el usuario puede exponer nombres técnicos de
- * campos (`properties.0.label`, `teacher_user_id`) ni frases en inglés. Se recorren
- * todas las FormRequest y se validan con datos vacíos e inválidos.
- */
-
-/** Claves de una palabra que ya se leen bien en español. */
 const ATRIBUTOS_YA_EN_ESPANOL = ['nombre', 'activo', 'estado', 'carrera', 'periodo', 'fecha', 'numero', 'campus', 'facultad', 'creditos'];
 
 /** @return list<class-string<FormRequest>> */
@@ -47,7 +40,6 @@ function datosInvalidosPara(array $reglas): array
 {
     $datos = [];
     foreach (array_keys($reglas) as $clave) {
-        // Cada hoja recibe un valor de tipo equivocado; los comodines se vuelven índice 0.
         Arr::set($datos, str_replace('*', '0', $clave), ['__invalido__' => true]);
     }
 
@@ -75,7 +67,6 @@ it('muestra mensajes de validación sin nombres técnicos ni inglés', function 
             /** @var FormRequest $solicitud */
             $solicitud = $clase::create('/', 'POST', []);
             $solicitud->setContainer(app());
-            // Contexto mínimo: sesión y un usuario, como en una petición autenticada real.
             $solicitud->setLaravelSession(app('session.store'));
             $usuario = User::factory()->create();
             $solicitud->setUserResolver(fn () => $usuario);
@@ -83,7 +74,6 @@ it('muestra mensajes de validación sin nombres técnicos ni inglés', function 
         } catch (Throwable $e) {
             fwrite(STDERR, "OMITIDA {$clase}: {$e->getMessage()}\n");
 
-            // Reglas que dependen de la ruta o del usuario autenticado: se omiten aquí.
             continue;
         }
         if ($reglas === []) {
@@ -94,7 +84,7 @@ it('muestra mensajes de validación sin nombres técnicos ni inglés', function 
         $nombres = Validator::make([], $reglas, [], $solicitud->attributes());
         foreach (array_keys($reglas) as $clave) {
             if (str_contains($clave, '.') && ! str_contains($clave, '*')) {
-                continue; // mensajes personalizados «campo.regla»
+                continue;
             }
             $concreta = str_replace('*', '0', $clave);
             $visible = $nombres->getDisplayableAttribute($concreta);

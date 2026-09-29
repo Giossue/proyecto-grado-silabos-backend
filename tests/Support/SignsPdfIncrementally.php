@@ -6,11 +6,6 @@ use OpenSSLAsymmetricKey;
 use OpenSSLCertificate;
 use RuntimeException;
 
-/**
- * I-139. Firma un PDF como lo hace el navegador, pero en PHP: agrega una actualización
- * incremental con un diccionario `/Sig` y un CMS separado (OpenSSL) sobre el `ByteRange`.
- * El certificado se autogenera en cada prueba; nunca hay llaves reales en el repositorio.
- */
 trait SignsPdfIncrementally
 {
     /** @return array{certificate: OpenSSLCertificate, key: OpenSSLAsymmetricKey} */

@@ -81,11 +81,7 @@ class Subject extends Model
         ];
     }
 
-    /**
-     * `total_horas_asignatura` es una columna generada: PostgreSQL rechaza copiarla.
-     *
-     * @param  array<int, string>|null  $except
-     */
+    /** @param  array<int, string>|null  $except */
     public function replicate(?array $except = null): static
     {
         return parent::replicate([...($except ?? []), 'total_horas_asignatura']);

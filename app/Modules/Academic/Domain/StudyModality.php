@@ -2,11 +2,6 @@
 
 namespace App\Modules\Academic\Domain;
 
-/**
- * Modalidades de estudio del Reglamento de Régimen Académico (arts. 70-74). Son las
- * únicas que existen en Ecuador, así que van en código y no en un catálogo. La
- * modalidad aprobada de la carrera se conserva aunque una materia use otra distinta.
- */
 enum StudyModality: string
 {
     case Presencial = 'presencial';

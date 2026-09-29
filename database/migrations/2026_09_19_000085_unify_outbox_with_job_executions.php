@@ -72,7 +72,6 @@ return new class extends Migration
                 'clave_deduplicacion' => $event->clave_deduplicacion,
                 'ocurrido_en' => $event->ocurrido_en,
                 'disponible_en' => $event->disponible_en,
-                // Permite terminar de forma segura trabajos serializados antes de I-90.
                 'evento_saliente_id' => $event->id,
             ], JSON_THROW_ON_ERROR);
             $execution = DB::table('ejecuciones_trabajo')

@@ -16,7 +16,6 @@ use DOMXPath;
 use Tests\TestCase;
 use ZipArchive;
 
-/** El DOCX aplica la apariencia congelada y dibuja el Texto libre con sus listas y tablas (I-156). */
 class WordRendererTest extends TestCase
 {
     public function test_applies_the_frozen_template_appearance_to_docx(): void
@@ -122,12 +121,6 @@ class WordRendererTest extends TestCase
         $this->assertStringNotContainsString('Campo', $document);
     }
 
-    /**
-     * Regresión del desborde en PDF: PhpWord armaba `w:tblGrid` con la fila de más celdas
-     * sin contar `gridSpan`, y LibreOffice pintaba el texto sobre la celda vecina. Cada
-     * tabla debe tener tantas columnas como su fila más ancha, anchos que sumen el ancho
-     * útil y diseño fijo; las marcas vacías de la ficha quedan vacías.
-     */
     public function test_table_grids_match_cells_and_fill_the_usable_width(): void
     {
         $snapshot = $this->snapshot();
@@ -178,7 +171,6 @@ class WordRendererTest extends TestCase
             $total = array_sum($grid);
             $this->assertSame('fixed', $xpath->evaluate('string(w:tblPr/w:tblLayout/@w:type)', $table));
             $this->assertSame((string) $total, $xpath->evaluate('string(w:tblPr/w:tblW/@w:w)', $table));
-            // Ancho útil de la hoja (Carta con márgenes); nunca más ancho que la página.
             $this->assertContains($total, [9406, 9405, 9404, 13006, 13007, 13005, 13004], 'La tabla no ocupa el ancho útil.');
             foreach ($xpath->query('w:tr', $table) ?: [] as $row) {
                 $columns = 0;
@@ -204,7 +196,6 @@ class WordRendererTest extends TestCase
     /** @return array<string, mixed> */
     private function snapshot(): array
     {
-        // I-156: lo que escribe el docente es Texto libre, con sus listas y tablas.
         $paragraph = fn (string $text): array => ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]];
         $cell = fn (string $text, string $type = 'tableCell'): array => ['type' => $type, 'attrs' => ['colspan' => 1, 'rowspan' => 1], 'content' => [$paragraph($text)]];
         $planning = ['type' => 'doc', 'content' => [
@@ -276,7 +267,6 @@ class WordRendererTest extends TestCase
                 ],
             ],
         ];
-        // La ficha sale de la tabla de la plantilla, no de un diseño fijo del código.
         $snapshot['template_variables'] = TemplateVariables::resolve(['identification' => $snapshot['identification']]);
         $snapshot['sections'][0]['blocks'][0]['document'] = TemplateDocumentDefaults::identification();
 

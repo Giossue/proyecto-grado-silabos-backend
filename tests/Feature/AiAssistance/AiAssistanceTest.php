@@ -41,7 +41,6 @@ use Illuminate\Support\Str;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
 
-/** I-146 sustituye revisión/RAG por ayuda para preparar contenido de unidades. */
 class AiAssistanceTest extends TestCase
 {
     use CreatesSyllabusProcess, RefreshDatabase;
@@ -234,7 +233,6 @@ class AiAssistanceTest extends TestCase
     {
         $template = SyllabusTemplate::query()->create(['nombre' => 'Plantilla de unidades', 'activo' => true]);
         $section = $template->appendSection(['id' => (string) Str::uuid(), 'clave' => 'planificacion', 'titulo' => 'Planificación', 'posicion' => 1, 'bloques' => []]);
-        // I-156: la planificación es Texto libre del docente.
         $block = $template->appendBlock($section->id, ['id' => (string) Str::uuid(), 'clave' => 'unidades', 'tipo' => 'narrativa', 'titulo' => 'Unidades', 'posicion' => 1,
             'configuracion' => ['content_type' => 'text', 'document' => TemplateDocumentDefaults::freeTextSheet('unidades', 'Planificación por unidades')]]);
         $this->planning = FieldDefinition::query()->create(['plantilla_id' => $template->id, 'bloque_plantilla_id' => $block->id,

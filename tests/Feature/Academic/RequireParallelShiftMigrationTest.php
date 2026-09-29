@@ -9,7 +9,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-/** Los paralelos existentes sin jornada quedan en «matutina» y la columna pasa a NOT NULL. */
 class RequireParallelShiftMigrationTest extends TestCase
 {
     use RefreshDatabase;

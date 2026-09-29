@@ -32,10 +32,6 @@ class IssueActivationInvitation
             ->exists();
     }
 
-    /**
-     * Emite una invitación nueva e invalida cualquiera anterior. Nunca devuelve el
-     * token: solo la cola de correo recibe el valor en claro.
-     */
     public function execute(User $target, User $actor, Request $request, string $reason): ActivationInvitation
     {
         $activeRole = $this->roles->resolve($request);

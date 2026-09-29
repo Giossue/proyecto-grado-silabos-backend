@@ -224,7 +224,6 @@ class TemplateDocumentTest extends TestCase
     public function test_teacher_and_coordinator_cannot_change_the_design(): void
     {
         $template = $this->template();
-        // Texto libre del formato oficial: su hoja no cambia sin Administración.
         $block = $template->fields()->where('clave', 'objetivo_general')->firstOrFail()->block;
         $design = $block->configuracion['document'];
         foreach (['docente@silabos.test', 'coordinador@silabos.test'] as $email) {
@@ -282,7 +281,6 @@ class TemplateDocumentTest extends TestCase
 
     public function test_marks_inside_a_list_become_items_of_the_same_list(): void
     {
-        // Lista con un elemento fijo, un !Docente y un @ProyectoCarrera (I-155).
         $item = fn (array $content): array => ['type' => 'listItem', 'content' => [['type' => 'paragraph', 'content' => $content]]];
         $document = ['type' => 'doc', 'content' => [['type' => 'bulletList', 'content' => [
             $item([['type' => 'text', 'text' => 'Respeto en clase']]),
@@ -309,7 +307,6 @@ class TemplateDocumentTest extends TestCase
 
     public function test_new_parts_are_free_text_or_template_content(): void
     {
-        // I-156: el docente escribe el Texto libre; el Contenido de la plantilla nace vacío.
         $template = $this->template();
         $section = $template->sections()->firstWhere('clave', 'etica');
         $admin = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
@@ -344,7 +341,6 @@ class TemplateDocumentTest extends TestCase
 
     public function test_conditions_are_defined_on_the_sheet_marks(): void
     {
-        // I-158: «Pedir solo si…» vive en la ficha de la hoja, no en Propiedades.
         $template = $this->template();
         $section = $template->sections()->firstWhere('clave', 'etica');
         $this->postJson(route('api.v1.admin.template.fields.store', $template), [
@@ -359,14 +355,12 @@ class TemplateDocumentTest extends TestCase
         ]]]];
         $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
 
-        // El Sí/No recién insertado ya sirve de condición en la misma edición.
         $this->patchJson($url, ['document' => $sheet(['key' => 'hay_practicas', 'value' => 'Sí']), 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
             ->assertSuccessful();
         $detail = $template->fields()->where('clave', 'detalle_practicas')->sole();
         $this->assertSame(['key' => 'hay_practicas', 'value' => 'Sí'], $detail->mostrar_si);
         $this->assertNull($template->fields()->where('clave', 'hay_practicas')->sole()->mostrar_si);
 
-        // La hoja que ve Administración trae la condición en su ficha.
         $shown = collect($this->getJson(route('api.v1.admin.template.show', $template))->json('template.sections'))
             ->flatMap(fn (array $item): array => $item['blocks'])->firstWhere('key', 'practicas');
         $this->assertSame(['key' => 'hay_practicas', 'value' => 'Sí'], TemplateDocument::nodes($shown['document'], 'field')[1]['attrs']['showWhen']);
@@ -535,7 +529,6 @@ class TemplateDocumentTest extends TestCase
         $field->update(['heredado' => true]);
         $payload = ['document' => $this->document(), 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
             'properties' => [['key' => $field->clave, 'label' => $field->etiqueta, 'help' => null, 'ai_enabled' => true]]];
-        // I-119: Administración decide si el agente lee también los datos heredados.
         $this->patch($url, $payload)->assertSuccessful();
         $this->assertTrue($field->fresh()->ia_habilitada);
         $field->update(['heredado' => false]);
@@ -583,7 +576,6 @@ class TemplateDocumentTest extends TestCase
         $this->getJson(route('api.v1.admin.template.show', $template))
             ->assertJsonFragment(['page_orientation' => 'landscape']);
 
-        // Sin el campo, la orientación elegida se conserva.
         $this->patchJson($url, $payload)->assertSuccessful();
         $this->assertSame('landscape', $block->fresh()->pageOrientation());
 
@@ -596,7 +588,6 @@ class TemplateDocumentTest extends TestCase
     public function test_fixed_text_can_be_landscape_and_is_not_saved_empty(): void
     {
         $template = $this->template();
-        // Contenido fijo del formato oficial: los indicadores de evaluación UEB.
         $block = $template->blocks()->firstWhere('clave', 'evaluacion_principal');
         $this->assertSame('fixed', $block->configuredContentType());
         $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
@@ -667,7 +658,6 @@ class TemplateDocumentTest extends TestCase
         $type = $template->fields()->where('clave', 'discapacidad_tipo')->firstOrFail();
         $formation = $template->fields()->where('clave', 'formacion_experiencia')->firstOrFail();
         $block = $type->block;
-        // La plantilla por defecto ya pide el tipo solo cuando hay estudiantes con discapacidad.
         $this->assertSame(['key' => 'discapacidad_tiene', 'value' => 'Sí'], $type->mostrar_si);
         $this->assertNull($formation->mostrar_si);
         $payload = $this->getJson(route('api.v1.admin.template.show', $template))->json();

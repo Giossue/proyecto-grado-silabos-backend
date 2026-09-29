@@ -5,29 +5,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Alinea la estructura académica con la fuente institucional SIANET (PostgreSQL 10,
- * base `bdsianet`), verificada sobre el respaldo del 23 de junio de 2025.
- *
- * Cubre las brechas confirmadas contra datos reales, no contra el DDL:
- *  1. `periodo_lectivo.cod_carr` es NOT NULL: 1462 periodos, 49 nombres, 100 carreras.
- *  2. La jerarquía real es facultad -> escuela -> carrera.
- *  4. La asignatura tiene doble identidad: `cod_oculto` (entero, destino de las FK)
- *     y `cod_asig` (texto, p. ej. SFT-P-614).
- *  5. El ciclo vive en `detalles_malla.ciclo`, no en la asignatura.
- *  6. `malla` no tiene versión numérica, solo descripción y vigencia.
- *  7. Las horas vienen desglosadas en seis columnas.
- *  8. Campus y modalidad son texto libre que no respeta el catálogo `centro`.
- * 10. La identidad del docente es la cédula `ci_doc`.
- *
- * Las brechas 3 y 9 no requieren cambio estructural: la oferta académica se deriva de
- * `asignatura_docente` y los prerequisitos de `asignaturas.secuencia` en el mapper.
- */
 return new class extends Migration
 {
     public function up(): void
     {
-        // --- Brecha 2: nivel `escuela` entre facultad y carrera ---------------------
         Schema::create('escuelas', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('facultad_id')->constrained('facultades')->restrictOnDelete();
@@ -36,8 +17,6 @@ return new class extends Migration
             $table->boolean('activo')->default(true)->index();
             $table->timestampsTz();
 
-            // Permite la clave ajena compuesta que impide reasignar una carrera a una
-            // escuela de otra facultad.
             $table->unique(['id', 'facultad_id'], 'escuela_identidad_facultad_unica');
         });
 
@@ -53,7 +32,6 @@ return new class extends Migration
                 ON UPDATE RESTRICT ON DELETE RESTRICT
             SQL);
 
-        // --- Brecha 1: el periodo académico pertenece a una carrera -----------------
         Schema::table('periodos_academicos', function (Blueprint $table) {
             $table->foreignUuid('carrera_id')->nullable()->after('id')
                 ->constrained('carreras')->restrictOnDelete();
@@ -61,8 +39,6 @@ return new class extends Migration
             $table->unsignedSmallInteger('anio')->nullable()->after('fecha_fin');
         });
 
-        // `codigo` deja de ser único global: un mismo nombre de periodo existe una vez
-        // por carrera en la fuente institucional.
         DB::statement('ALTER TABLE periodos_academicos DROP CONSTRAINT IF EXISTS periodos_academicos_codigo_unique');
         DB::statement('DROP INDEX IF EXISTS periodos_academicos_codigo_unique');
         DB::statement(<<<'SQL'
@@ -78,7 +54,6 @@ return new class extends Migration
                 ON periodos_academicos (codigo_institucional) WHERE codigo_institucional IS NOT NULL
             SQL);
 
-        // --- Brecha 6: la malla institucional no tiene versión numérica -------------
         Schema::table('versiones_malla', function (Blueprint $table) {
             $table->string('codigo_institucional', 80)->nullable()->after('codigo');
             $table->text('descripcion')->nullable()->after('codigo_institucional');
@@ -89,7 +64,6 @@ return new class extends Migration
                 ON versiones_malla (codigo_institucional) WHERE codigo_institucional IS NOT NULL
             SQL);
 
-        // --- Brechas 4, 5 y 7: identidad, ciclo y desglose de horas -----------------
         Schema::table('asignaturas', function (Blueprint $table) {
             $table->renameColumn('nivel', 'ciclo');
         });
@@ -119,7 +93,6 @@ return new class extends Migration
         DB::statement("COMMENT ON COLUMN asignaturas.horas_aa IS 'SIANET asignaturas.horas_aa; expansión de la sigla POR VALIDAR con la UEB'");
         DB::statement("COMMENT ON COLUMN asignaturas.horas_paec IS 'SIANET asignaturas.horas_paec; expansión de la sigla POR VALIDAR con la UEB'");
 
-        // --- Brechas 3 y 10: trazabilidad de la asignación docente ------------------
         Schema::table('asignaciones_docente', function (Blueprint $table) {
             $table->string('codigo_institucional', 40)->nullable()->after('paralelo_id');
         });
@@ -140,10 +113,6 @@ return new class extends Migration
             SQL);
         DB::statement("COMMENT ON COLUMN usuarios.documento_identidad IS 'SIANET docente.ci_doc: cédula usada para reconciliar identidad institucional'");
 
-        // --- Brecha 8: alias de texto libre hacia catálogos normalizados ------------
-        // La fuente escribe MATRIZ, GUARANDA, SAN MIGUEL o LAS NAVES en texto libre y
-        // su propio catálogo `centro` no cubre esos valores. El catálogo normalizado se
-        // conserva y la conciliación ocurre aquí, de forma auditable.
         Schema::create('alias_institucionales', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('tipo_entidad', 60);

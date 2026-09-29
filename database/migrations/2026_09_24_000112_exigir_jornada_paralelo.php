@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Todo paralelo tiene código y jornada: «Sin jornada» deja de ser válido. Los paralelos
- * existentes sin jornada quedan en «matutina» (valor por defecto de la preparación del
- * período) y la columna pasa a NOT NULL. Idempotente.
- */
 return new class extends Migration
 {
     public function up(): void

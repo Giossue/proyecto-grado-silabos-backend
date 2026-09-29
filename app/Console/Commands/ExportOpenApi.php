@@ -167,7 +167,6 @@ class ExportOpenApi extends Command
                     'properties' => ['logo' => ['type' => 'string', 'format' => 'binary']],
                 ]]];
             } elseif ($isSignatureUpload) {
-                // I-139: solo viaja el PDF firmado; el certificado y su clave no salen del navegador.
                 $content = ['multipart/form-data' => ['schema' => [
                     'type' => 'object',
                     'required' => ['signed_pdf', 'base_sha256'],

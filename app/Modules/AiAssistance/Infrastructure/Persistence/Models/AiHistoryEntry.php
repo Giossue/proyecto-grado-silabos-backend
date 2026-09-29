@@ -8,17 +8,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Memoria de la IA (I-135): cada fila es un mensaje JSON dentro de una sesión.
- *
- * Sesiones:
- * - `silabo:{id}:campo:{campo}`: análisis de un campo (`tipo = analisis`) y decisiones
- *   de la persona sobre sus recomendaciones (`tipo = decision`).
- * - `silabo:{id}:revision`: revisiones integrales (`tipo = revision`).
- * - `silabo:{id}:usuario:{usuario}`: chat (`tipo = mensaje`) y ocultamientos.
- *
- * `mensaje_ia.entrada` es la entrada fijada e inmutable; un mensaje terminal no cambia
- * (trigger `proteger_historial_ia`).
- *
  * @property string $id
  * @property string $sesion_id
  * @property array<string, mixed> $mensaje_ia
@@ -28,7 +17,6 @@ class AiHistoryEntry extends Model
 {
     use HasUuids;
 
-    /** Estados que todavía admiten cambios. */
     public const OPEN_STATES = ['pendiente', 'en_ejecucion'];
 
     public $timestamps = false;
@@ -78,8 +66,6 @@ class AiHistoryEntry extends Model
     }
 
     /**
-     * Análisis de todos los campos de un sílabo.
-     *
      * @param  Builder<AiHistoryEntry>  $query
      * @return Builder<AiHistoryEntry>
      */
@@ -111,7 +97,6 @@ class AiHistoryEntry extends Model
         return is_array($input) ? ($input[$key] ?? null) : null;
     }
 
-    /** Identificador o texto obligatorio de la entrada fijada. */
     public function inputString(string $key): string
     {
         $value = $this->input($key);

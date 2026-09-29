@@ -4,19 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-132. Elimina datos derivados que podían divergir de su fuente:
- *
- * - `asignaturas.total_horas_asignatura` pasa a columna generada ACD + APE + AA (la misma
- *   fórmula que `CurriculumSystemFields::totalHours`). Antes de convertirla, el saldo que
- *   el total registraba por encima de sus componentes se conserva en `horas_pae`, de modo
- *   que ninguna fila pierde horas (POR VALIDAR con la UEB la ubicación del saldo).
- * - `fechas_limite_convocatoria` era una copia por carrera de `inicia_en` y `entrega_en`
- *   de la convocatoria institucional; la prórroga ya se aplica a todo el proceso.
- * - `plantilla_id` en sílabos, convocatorias institucionales, artefactos y ejecuciones de
- *   IA solo podía apuntar a la plantilla única (I-25/I-32); cada revisión conserva su copia
- *   de la estructura en `revisiones_silabo.fotografia`.
- */
 return new class extends Migration
 {
     private const TEMPLATE_TABLES = [
@@ -41,8 +28,6 @@ return new class extends Migration
             DB::statement("ALTER TABLE {$table} ALTER COLUMN plantilla_id SET NOT NULL");
             DB::statement("ALTER TABLE {$table} ADD CONSTRAINT ".self::TEMPLATE_TABLES[$table].' FOREIGN KEY (plantilla_id) REFERENCES plantilla_silabo(id) ON DELETE RESTRICT');
         }
-        // Las comprobaciones de plantilla en triggers no se restauran: con una sola
-        // plantilla eran siempre verdaderas.
 
         DB::statement(<<<'SQL'
             CREATE TABLE fechas_limite_convocatoria (
@@ -69,7 +54,6 @@ return new class extends Migration
 
     private function generateSubjectTotalHours(): void
     {
-        // Conserva el total registrado: el saldo que no explican ACD, APE y AA pasa a APE.
         DB::statement(<<<'SQL'
             UPDATE asignaturas
             SET horas_pae = COALESCE(horas_pae, 0)
@@ -87,7 +71,6 @@ return new class extends Migration
 
     private function dropConvocationDeadlines(): void
     {
-        // Una prórroga nunca quita tiempo: si alguna copia quedó por delante, la institucional la alcanza.
         DB::statement(<<<'SQL'
             UPDATE convocatorias_universidad p
             SET entrega_en = f.vence_en
@@ -119,7 +102,6 @@ return new class extends Migration
             ', plantilla_ejecucion' => '',
             "        SELECT plantilla_id INTO plantilla_campo\n        FROM definiciones_campo WHERE id = NEW.definicion_campo_id;\n        IF plantilla_campo IS DISTINCT FROM plantilla_ejecucion THEN" => '        IF NOT EXISTS (SELECT 1 FROM definiciones_campo WHERE id = NEW.definicion_campo_id) THEN',
         ]);
-        // Dos variantes: con o sin `artefactos_exportacion.silabo_id` (2026_09_24_000099).
         $this->rewriteFunction('validar_artefacto_exportacion', [
             "    SELECT s.plantilla_id\n    INTO plantilla_silabo\n    FROM revisiones_silabo r\n    JOIN silabos s ON s.id = r.silabo_id\n    WHERE r.id = NEW.revision_silabo_id;\n    IF plantilla_silabo IS DISTINCT FROM NEW.plantilla_id THEN\n        RAISE EXCEPTION 'El artefacto no coincide con la revisión y plantilla del sílabo' USING ERRCODE = '23514';\n    END IF;\n" => '',
             ', s.plantilla_id' => '',
@@ -134,13 +116,7 @@ return new class extends Migration
         }
     }
 
-    /**
-     * Edita la función vigente en lugar de reescribirla completa: otras migraciones del
-     * mismo lote pueden haber cambiado partes ajenas a `plantilla_id`. Los fragmentos
-     * ausentes se omiten, pero al final no puede quedar ninguna referencia a la columna.
-     *
-     * @param  array<string, string>  $replacements
-     */
+    /** @param  array<string, string>  $replacements */
     private function rewriteFunction(string $name, array $replacements): void
     {
         $definition = (string) DB::scalar('SELECT pg_get_functiondef(?::regproc)', [$name]);

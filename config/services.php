@@ -2,18 +2,6 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Third Party Services
-    |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Resend, Postmark, AWS, and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
-    */
-
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
@@ -28,8 +16,6 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    // I-139: PDF fiel desde el DOCX con LibreOffice detrás de Gotenberg. Sin URL se
-    // conserva el PDF de texto de respaldo (pruebas y entorno local).
     'gotenberg' => [
         'url' => env('GOTENBERG_URL'),
         'timeout' => (int) env('GOTENBERG_TIMEOUT', 90),

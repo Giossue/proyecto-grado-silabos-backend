@@ -32,7 +32,6 @@ class AcademicContextSnapshot
         return [
             'schema_version' => 5,
             'curricular' => $this->curricularData->snapshot($career->id, $subject->id),
-            // La ficha de identificación (I-34) sale de aquí: carrera, facultad y requisitos.
             'career' => [
                 'id' => $career->id,
                 'code' => $career->codigo_carrera,

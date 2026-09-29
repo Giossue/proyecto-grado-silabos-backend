@@ -63,7 +63,6 @@ class Career extends Model
         return $this->hasMany(CoordinatorAssignment::class, 'carrera_id');
     }
 
-    /** Materias que forman la estructura curricular única de esta carrera. */
     /** @return HasMany<Subject, $this> */
     public function subjects(): HasMany
     {

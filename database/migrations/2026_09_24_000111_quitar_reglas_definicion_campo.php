@@ -4,12 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Todo el sílabo lo llena el docente salvo el contenido fijo de la plantilla: no hay
- * campos opcionales ni límites (caracteres o filas) configurables. Se retira la columna
- * de reglas por campo y cualquier resto de esas claves en la configuración de bloques.
- * Idempotente: volver a ejecutarla no cambia nada.
- */
 return new class extends Migration
 {
     private const RULE_KEYS = ['rules', 'required', 'max_length', 'min_rows', 'max_rows'];
@@ -55,7 +49,6 @@ return new class extends Migration
         });
     }
 
-    /** Devuelve la columna vacía; las reglas retiradas no se reconstruyen. */
     public function down(): void
     {
         if (! Schema::hasColumn('definiciones_campo', 'reglas_definicion_campo')) {

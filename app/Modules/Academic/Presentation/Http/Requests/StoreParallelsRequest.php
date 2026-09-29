@@ -9,7 +9,6 @@ use App\Modules\Identity\Application\ActiveRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/** Crea varios paralelos de una programación de asignatura en una operación atómica. */
 class StoreParallelsRequest extends FormRequest
 {
     protected function prepareForValidation(): void

@@ -3,16 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-131: retira datos derivables alrededor del sílabo.
- *
- * - `alcances_silabo` → `silabos.paralelo_id`: cada sílabo cubre exactamente un paralelo.
- * - `silabos.carrera_id`: se deriva de la convocatoria de carrera.
- * - `silabo_id` en aprobaciones, reaperturas, solicitudes de corrección y artefactos de
- *   exportación: se deriva de la revisión.
- *
- * Todo paso valida que la copia coincida con el origen antes de retirarla.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -152,8 +142,6 @@ return new class extends Migration
             }
         }
 
-        // Las claves de idempotencia seguían siendo únicas por sílabo; se comprueban por la
-        // revisión porque la columna desaparece. Las acciones bloquean el sílabo antes.
         DB::statement(<<<'SQL'
             CREATE OR REPLACE FUNCTION validar_relaciones_flujo() RETURNS trigger AS $$
             DECLARE

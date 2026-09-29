@@ -20,7 +20,6 @@ class UserPolicy
         return $this->viewAny($actor);
     }
 
-    /** Alta delegada: no concede administración de cuentas ni elección de otro rol. */
     public function createCareerTeacher(User $actor): bool
     {
         $activeRole = $this->roles->resolve(request());
@@ -40,7 +39,6 @@ class UserPolicy
         return $this->viewAny($actor) && $actor->id !== $target->id;
     }
 
-    /** Reenviar la invitación o borrar: solo cuentas que aún no verificaron el correo. */
     public function managePending(User $actor, User $target): bool
     {
         if (! $actor->activo || $actor->id === $target->id || ! $target->activo || $target->hasVerifiedEmail()) {
@@ -61,14 +59,6 @@ class UserPolicy
                 ->exists();
     }
 
-    /**
-     * Corregir el nombre o el correo de una cuenta. Es distinto de `update`, que gobierna
-     * el estado y los roles: aquí no se toca lo que alguien puede hacer, solo cómo se le
-     * nombra y por dónde se le escribe.
-     *
-     * La identidad de la cuenta pertenece a Administración. Coordinar una carrera o ser
-     * titular de la cuenta no concede permiso para cambiar nombre o correo.
-     */
     public function updateProfileData(User $actor, User $target): bool
     {
         if (! $actor->activo) {

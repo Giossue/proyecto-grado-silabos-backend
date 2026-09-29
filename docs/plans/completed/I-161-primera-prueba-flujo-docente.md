@@ -48,6 +48,15 @@ hacerlo aparecieron defectos de pantalla y restos de pruebas anteriores en la pl
       acciones de ese período quedan deshabilitadas, igual que en la malla y la
       plantilla. El servidor devuelve `lock_reason` por período (`ProcessLocks::lockedPeriodReasons`).
 
+- [x] Pantalla: el sílabo del docente lleva un encabezado fijo como el del editor de
+      malla («Volver a mis sílabos», nombre de la materia y botón de tema); el layout ya
+      no pone el botón de tema flotante.
+
+- [x] Editar facultad: si ya hay logo se muestra la imagen con una «X»; la zona de
+      arrastre aparece solo al quitarlo. Quitarlo sin subir otro no deja guardar (el logo
+      es obligatorio) y cancelar deja todo como estaba. El servidor no cambia: solo recibe
+      un logo cuando se sube uno nuevo.
+
 ## Pendiente
 
 - [ ] Desplegar la pantalla con estas correcciones.

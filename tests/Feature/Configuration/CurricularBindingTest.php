@@ -148,7 +148,6 @@ class CurricularBindingTest extends TestCase
         $this->assertSame($payload['options'], $fieldSnapshot['options']);
         $this->assertSame(['Pensamiento crítico', 'Comunicación', 'Colaboración'], $fieldSnapshot['value']);
         $this->assertSame('curricular_habilidades', $fieldSnapshot['options_source']);
-        // Un valor alterado fuera del formulario también se rechaza al validar el envío.
         $syllabus->values()->where('definicion_campo_id', $field->id)->update(['valor_campo' => json_encode(['No elegible'])]);
         $this->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertOk()->assertJsonFragment(['code' => 'seleccion_curricular_invalida']);
     }
@@ -239,7 +238,6 @@ class CurricularBindingTest extends TestCase
                 ]],
             ]]],
         );
-        // La exportación conserva su fotografía aunque se corrijan posteriormente los datos vivos.
         CurricularValue::query()->where('concepto_id', $outcomes->id)->firstOrFail()->update(['valor_curricular' => ['Texto posterior']]);
         $bundle = app(DocumentRenderer::class)->render($input);
         $path = tempnam(sys_get_temp_dir(), 'curricular-export-');
@@ -330,12 +328,10 @@ class CurricularBindingTest extends TestCase
         ]);
         $this->assertTrue(AuditEvent::query()->where('accion', 'curriculo.concepto_declarado')->exists());
 
-        // El mismo nombre con la misma forma se reutiliza; todo dato es por asignatura.
         $this->postJson(route('api.v1.admin.template.project-data.store', $template), [
             'label' => 'Bibliografía  básica', 'type' => 'lista',
         ])->assertCreated()->assertJsonPath('variable.key', 'curricular_bibliografia_basica');
         $this->assertSame(1, CurricularConcept::query()->count());
-        // Con otra forma nace un dato propio, sin preguntar nada.
         $this->postJson(route('api.v1.admin.template.project-data.store', $template), [
             'label' => 'Bibliografía básica', 'type' => 'texto',
         ])->assertCreated()->assertJsonPath('variable', [
@@ -346,7 +342,6 @@ class CurricularBindingTest extends TestCase
             'label' => '¿?', 'type' => 'lista',
         ])->assertUnprocessable()->assertJsonValidationErrors('label');
 
-        // «Sale sola de los documentos» ya no es una forma de parte (I-155).
         $section = $template->sections->firstWhere('clave', 'bibliografia');
         $this->postJson(route('api.v1.admin.template.fields.store', $template), [
             'section_id' => $section->id, 'key' => 'bibliografia_automatica', 'label' => 'Bibliografía', 'content_type' => 'automatic',
@@ -383,7 +378,8 @@ class CurricularBindingTest extends TestCase
         return FieldDefinition::query()->where('clave', 'seleccion_habilidades')->firstOrFail();
     }
 
-    /** @param list<array<string, mixed>> $content
+    /**
+     * @param  list<array<string, mixed>>  $content
      * @return array<string, mixed>
      */
     private function document(array $content): array

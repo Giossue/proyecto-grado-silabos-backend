@@ -10,10 +10,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Gestiona el contenedor único de la plantilla y la instalación explícita de su
- * formato oficial, sin mezclar datos de seed con autorización HTTP.
- */
 final class SyllabusTemplateProvisioner
 {
     public function createEmpty(): SyllabusTemplate
@@ -21,7 +17,6 @@ final class SyllabusTemplateProvisioner
         return DB::transaction(fn (): SyllabusTemplate => $this->newTemplate());
     }
 
-    /** Instala el formato oficial al crear una plantilla desde un seed explícito. */
     public function createWithOfficialFormat(): SyllabusTemplate
     {
         return DB::transaction(function (): SyllabusTemplate {
@@ -32,10 +27,6 @@ final class SyllabusTemplateProvisioner
         });
     }
 
-    /**
-     * Aplica el formato oficial únicamente a un contenedor que todavía está vacío.
-     * Así el botón no puede sobrescribir una plantilla que el administrador ya editó.
-     */
     public function format(SyllabusTemplate $template): SyllabusTemplate
     {
         return DB::transaction(function () use ($template): SyllabusTemplate {
@@ -114,7 +105,6 @@ final class SyllabusTemplateProvisioner
                     'configuracion' => $configuration,
                     'posicion' => $blockPosition + 1,
                 ];
-                // El contenido fijo no tiene campo del docente.
                 if ($contentType === 'fixed') {
                     continue;
                 }

@@ -40,8 +40,6 @@ class CreateCareerTeacher
 
             if ($user === null) {
                 try {
-                    // El caso existente abre un savepoint: la colisión de correo no
-                    // deja abortada esta transacción ni altera el alta administrativa.
                     $user = $this->createUser->execute([
                         ...$data,
                         'correo_electronico' => $email,
@@ -50,8 +48,6 @@ class CreateCareerTeacher
                     ], $actor, $request);
                     $created = true;
                 } catch (UniqueConstraintViolationException $exception) {
-                    // Otra alta simultánea pudo crear la misma identidad mientras
-                    // esperábamos el índice único. Reutilizarla no cambia su acceso.
                     $user = $this->findAccount($email) ?? throw $exception;
                 }
             }
@@ -77,7 +73,6 @@ class CreateCareerTeacher
                 'rol' => RoleCode::Teacher->value,
                 'carrera_id' => $careerId,
             ];
-            // Puede haber asignaciones históricas inactivas junto a una vigente.
             $assignment = RoleAssignment::query()->where($identity)->orderByDesc('activo')->first();
 
             if ($assignment !== null && ! $assignment->activo) {
@@ -103,8 +98,6 @@ class CreateCareerTeacher
                 );
             }
 
-            // Una identidad pendiente que se incorpora desde Coordinación puede
-            // necesitar una nueva invitación si la anterior ya venció.
             if (! $user->hasVerifiedEmail() && ! ActivationInvitation::query()
                 ->where('usuario_id', $user->id)
                 ->whereNull('usada_en')
@@ -120,7 +113,6 @@ class CreateCareerTeacher
 
     private function findAccount(string $email): ?User
     {
-        // También respeta el correo histórico si originalmente usaba mayúsculas.
         return User::query()->whereRaw('lower(correo_electronico) = ?', [$email])->lockForUpdate()->first();
     }
 }

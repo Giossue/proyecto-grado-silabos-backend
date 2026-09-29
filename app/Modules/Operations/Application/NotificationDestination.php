@@ -21,7 +21,6 @@ use Illuminate\Support\Collection;
  */
 final class NotificationDestination
 {
-    /** Avisos dirigidos a Coordinación aunque la persona también enseñe esa materia. */
     private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'coordinacion.asignada'];
 
     public function __construct(
@@ -51,7 +50,6 @@ final class NotificationDestination
         return $options[0] ?? null;
     }
 
-    /** Nombre del ámbito en que se abrirá el aviso, para distinguir roles en la lista. */
     public static function contextLabel(?RoleAssignment $assignment): ?string
     {
         if ($assignment === null) {
@@ -95,7 +93,6 @@ final class NotificationDestination
                 ? $this->withRole($eligible, RoleCode::Coordinator, [$id], '/coordinacion/revisiones')
                 : $this->withRole($eligible, RoleCode::Teacher, [$id], '/docente/mis-silabos'),
             'usuario' => [
-                // No hay ficha por cuenta: la lista de Usuarios se abre filtrada por ella.
                 ...$this->withRole($eligible, RoleCode::Administrator, null, '/admin/usuarios?'.http_build_query(['q' => User::query()->whereKey($id)->value('correo_electronico') ?? ''])),
                 ...$this->withRole($eligible, RoleCode::Coordinator, null, '/coordinacion/asignaciones-docentes'),
             ],
@@ -165,9 +162,6 @@ final class NotificationDestination
     }
 
     /**
-     * La docencia de un sílabo depende de su asignación de paralelo vigente, no solo de
-     * tener un rol docente en la carrera.
-     *
      * @param  Collection<int, RoleAssignment>  $eligible
      * @return list<Destination>
      */

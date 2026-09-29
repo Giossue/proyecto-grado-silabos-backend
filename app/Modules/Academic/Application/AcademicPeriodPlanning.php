@@ -9,7 +9,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 
-/** Estado temporal derivado y puerta de escritura de la planificación académica. */
 final class AcademicPeriodPlanning
 {
     public const UPCOMING = 'proximo';

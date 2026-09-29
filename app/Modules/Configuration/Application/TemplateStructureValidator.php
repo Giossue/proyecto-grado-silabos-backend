@@ -7,10 +7,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Lo que antes se comprobaba al publicar una versión se comprueba ahora al abrir o
- * reanudar el proceso: es el momento en que la plantilla empieza a usarse de verdad.
- */
 class TemplateStructureValidator
 {
     /** @var list<string> */

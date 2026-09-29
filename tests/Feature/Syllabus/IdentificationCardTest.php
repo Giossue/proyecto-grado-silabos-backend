@@ -6,11 +6,6 @@ use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use Tests\TestCase;
 
-/**
- * La ficha de identificación es el formato oficial calcado: esta prueba fija la
- * cuadrícula para que un cambio accidental se note. Si el formato cambia de verdad,
- * se actualiza aquí a propósito (docs/product/identificacion-institucional.md).
- */
 class IdentificationCardTest extends TestCase
 {
     public function test_build_takes_every_value_from_the_academic_context(): void
@@ -52,7 +47,6 @@ class IdentificationCardTest extends TestCase
     {
         $grid = IdentificationCard::grid(IdentificationCard::sample());
 
-        // 18 filas; cada una completa las 9 columnas contando las combinaciones verticales.
         $this->assertCount(18, $grid);
         $occupied = [];
         foreach ($grid as $rowIndex => $cells) {
@@ -116,7 +110,6 @@ class IdentificationCardTest extends TestCase
         $this->assertSame(['32', '16.5', '48', '100', '2'], [$data['hours_ac'], $data['hours_pae'], $data['hours_aa'], $data['total_hours'], $data['credits']]);
         $this->assertSame('Pendiente', IdentificationCard::number('Pendiente'));
 
-        // Fotografías antiguas guardaron «32.00»: las variables también se limpian.
         $variables = TemplateVariables::resolve(['identification' => ['hours_ac' => '32.00', 'credits' => '2.50']]);
         $this->assertSame('32', $variables['horas_docencia']);
         $this->assertSame('2.5', $variables['creditos_asignatura']);

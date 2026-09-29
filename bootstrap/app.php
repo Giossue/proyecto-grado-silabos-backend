@@ -22,22 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'active-role' => RequireActiveRole::class,
         ]);
 
-        // El frontend separado usa la sesión de primera parte de Sanctum. Las cookies
-        // siguen siendo HttpOnly; el navegador obtiene antes el token CSRF de Sanctum.
         $middleware->statefulApi();
 
-        // Traefik descifra el TLS y entrega la petición por HTTP dentro de la red de
-        // Docker. Sin esto Laravel cree que la conexión es insegura y genera todas las
-        // direcciones con «http://»: el navegador bloquea esos archivos por contenido
-        // mixto y la página queda en blanco.
-        //
-        // Se confía en cualquier proxy porque la aplicación solo es alcanzable a través
-        // del suyo: el puerto 8080 del contenedor no está expuesto fuera de esa red.
         $middleware->trustProxies(at: '*');
 
-        // Fuera de desarrollo se acepta el host declarado en APP_URL (y sus
-        // subdominios). Dokploy consulta la vida por loopback dentro del contenedor;
-        // esos dos hosts exactos no se exponen como hosts públicos válidos.
         $middleware->trustHosts(at: ['^127\\.0\\.0\\.1$', '^localhost$']);
 
         $middleware->web(append: [

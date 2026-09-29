@@ -7,13 +7,6 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/**
- * Edición unificada de una cuenta: identidad siempre; estado y rol solo si vienen.
- *
- * Corregir nombre y correo lo autoriza `updateProfileData`, que admite la propia cuenta.
- * Tocar el estado o conceder un rol exige además `update`, que excluye la autogestión:
- * nadie se desactiva ni se concede roles a sí mismo.
- */
 class UpdateManagedUserRequest extends FormRequest
 {
     public function authorize(): bool
@@ -41,14 +34,11 @@ class UpdateManagedUserRequest extends FormRequest
                 'string',
                 'email',
                 'max:255',
-                // Se excluye la propia cuenta: guardar sin tocar el correo no puede
-                // fallar por duplicado consigo misma.
                 Rule::unique('usuarios', 'correo_electronico')->ignore(
                     $target instanceof User ? $target->id : null,
                 ),
             ],
             'active' => ['sometimes', 'required', 'boolean'],
-            // El bloque de rol es opcional, pero si llega, llega completo.
             'role_code' => ['sometimes', 'required', Rule::enum(RoleCode::class)],
             'career_id' => [
                 'exclude_without:role_code',

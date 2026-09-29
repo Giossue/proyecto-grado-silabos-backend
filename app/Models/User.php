@@ -19,11 +19,6 @@ use Illuminate\Support\Carbon;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
- * Las columnas físicas están en español (I-28). Laravel y Fortify esperan los nombres
- * del starter en varios puntos internos, así que este modelo declara los puentes:
- * `$authPasswordName`, `$rememberTokenName`, los overrides de correo/verificación y los
- * accessors que traducen los atributos `two_factor_*` que Fortify fija por literal.
- *
  * @property string $id
  * @property string $nombre
  * @property string $correo_electronico
@@ -94,10 +89,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->correo_electronico;
     }
 
-    /** Fortify lee y escribe `two_factor_secret` por literal.
-     *
-     * @return Attribute<string|null, string|null>
-     */
+    /** @return Attribute<string|null, string|null> */
     protected function twoFactorSecret(): Attribute
     {
         return Attribute::make(
@@ -118,7 +110,6 @@ class User extends Authenticatable implements MustVerifyEmailContract
     /** @return Attribute<mixed, mixed> */
     protected function twoFactorConfirmedAt(): Attribute
     {
-        // El valor del mutator no pasa por casts(): se serializa aquí mismo.
         return Attribute::make(
             get: fn (mixed $value, array $attributes): mixed => $attributes['dos_factores_confirmado_en'] ?? null,
             set: fn (mixed $value): array => [
@@ -127,11 +118,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         );
     }
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     protected function casts(): array
     {
         return [

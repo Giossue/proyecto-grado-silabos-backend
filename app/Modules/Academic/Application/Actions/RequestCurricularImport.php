@@ -41,11 +41,7 @@ final class RequestCurricularImport
         private readonly RecordAuditEvent $audit,
     ) {}
 
-    /**
-     * Cada importación trae sus propios archivos: los documentos son temporales (I-152).
-     *
-     * @param  list<UploadedFile>  $files
-     */
+    /** @param  list<UploadedFile>  $files */
     public function execute(array $files, ?string $instruction, User $actor, Request $request): CurricularImport
     {
         $role = $this->view->role($request);
@@ -55,7 +51,6 @@ final class RequestCurricularImport
         if (! $capabilities['extraction']) {
             throw ValidationException::withMessages(['files' => 'La extracción con IA no está configurada. Solicite a Administración habilitar el servicio.']);
         }
-        // La plantilla manda (I-151, I-155): sin @ProyectoCarrera en la plantilla no hay nada que buscar.
         if (ProjectDataUsage::used() === []) {
             throw ValidationException::withMessages(['files' => 'La plantilla del sílabo todavía no tiene datos del Proyecto de carrera. Administración debe agregarlos primero.']);
         }
@@ -78,8 +73,6 @@ final class RequestCurricularImport
             Career::query()->whereKey($careerId)->lockForUpdate()->firstOrFail();
             $this->locks->assertCareerEditable($careerId);
             $existing = CurricularImport::query()->where('carrera_id', $careerId)->where('clave_idempotencia_importacion', $key)->first();
-            // Un reenvío mientras la importación sigue abierta es la misma solicitud. Si ya se
-            // guardó, sus documentos temporales se eliminaron: el mismo archivo se analiza de nuevo.
             if ($existing !== null && $existing->estado_importacion !== 'aplicada') {
                 return $existing;
             }

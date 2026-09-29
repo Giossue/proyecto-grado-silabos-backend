@@ -57,7 +57,6 @@ final class CurricularImportsViewData
             'subjects' => Subject::query()->where('carrera_id', $careerId)->orderBy('nombre')->get(['id', 'nombre', 'codigo_asignatura'])
                 ->map(fn (Subject $subject): array => ['id' => $subject->id, 'name' => $subject->nombre, 'code' => $subject->codigo_asignatura])->all(),
             'current_values' => $this->confirmedValues->forCareer($careerId),
-            // @ProyectoCarrera que usa la plantilla (I-151, I-155).
             'concepts' => array_values(array_map(
                 fn (array $definition): array => ['key' => $definition['key'], 'label' => $definition['label'], 'type' => $definition['type'], 'sections' => $definition['sections']],
                 ProjectDataUsage::used(),
@@ -71,7 +70,6 @@ final class CurricularImportsViewData
     public function detail(CurricularImport $import): array
     {
         $lockReason = $this->locks->careerLockReason($import->carrera_id);
-        // Tras guardar o descartar, los documentos temporales ya no existen (I-152).
         $available = AcademicSource::query()->where('carrera_id', $import->carrera_id)
             ->whereIn('id', array_column($import->documentos_importacion, 'source_id'))->pluck('id')->all();
         $originalNames = StoredObject::query()->where('carrera_id', $import->carrera_id)
@@ -96,7 +94,6 @@ final class CurricularImportsViewData
         return $this->hasher->hash([
             'id' => $import->id, 'status' => $import->estado_importacion,
             'documents' => $import->documentos_importacion, 'proposal' => $import->propuesta_importacion,
-            // También detecta otra importación aplicada después de consultar esta.
             'current_values' => CurricularValue::query()->where('carrera_id', $import->carrera_id)->orderBy('id')->get()->toArray(),
             'previous_outcomes' => SubjectLearningOutcomeBase::query()->with('outcomes')
                 ->whereHas('subject', fn ($query) => $query->where('carrera_id', $import->carrera_id))

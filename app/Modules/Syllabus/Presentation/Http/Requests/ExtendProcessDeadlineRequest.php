@@ -16,7 +16,6 @@ class ExtendProcessDeadlineRequest extends FormRequest
             && $this->user()?->can('extendDeadline', $process) === true;
     }
 
-    /** Una prórroga a fecha sola vale hasta el final de ese día. */
     protected function prepareForValidation(): void
     {
         $this->merge(['due_at' => ProcessDates::endOfDay($this->input('due_at'))]);
@@ -28,8 +27,6 @@ class ExtendProcessDeadlineRequest extends FormRequest
         return [
             'stage' => ['prohibited'],
             'due_at' => ['required', 'date'],
-            // El motivo es obligatorio: una prórroga es una excepción y debe poder
-            // explicarse después sin depender de la memoria de quien la concedió.
             'reason' => ['required', 'string', 'min:10', 'max:500'],
         ];
     }

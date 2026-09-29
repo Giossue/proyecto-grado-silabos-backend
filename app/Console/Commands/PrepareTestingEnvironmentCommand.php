@@ -41,11 +41,6 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
-/**
- * Deja una base de pruebas lista para recorrer el flujo con dos docentes. Solo usa las
- * acciones de aplicación, así que respeta las mismas reglas y auditoría que la interfaz.
- * Es idempotente: reutiliza lo existente y nunca borra datos previos.
- */
 class PrepareTestingEnvironmentCommand extends Command
 {
     public const COORDINATOR_EMAIL = 'coordinador.pruebas@ueb.edu.ec';
@@ -99,7 +94,6 @@ class PrepareTestingEnvironmentCommand extends Command
 
         $this->inspect($career);
 
-        // Las invitaciones se capturan para activar las cuentas de prueba sin enviar correo.
         Mail::fake();
 
         $admin = RoleAssignment::query()->effective()->where('rol', RoleCode::Administrator->value)
@@ -209,13 +203,11 @@ class PrepareTestingEnvironmentCommand extends Command
         return $user->fresh();
     }
 
-    /** Activa por el mismo camino del enlace de invitación, con la contraseña de prueba. */
     private function activate(User $user, RoleAssignment $issuer, string $password): void
     {
         if ($user->hasVerifiedEmail()) {
             return;
         }
-        // Una invitación nueva deja un enlace conocido; la anterior queda invalidada.
         app(IssueActivationInvitation::class)->execute($user, $issuer->user, $this->requestAs($issuer), 'pruebas');
         $mail = Mail::queued(ManagedUserActivationMail::class, fn ($mail): bool => $mail->hasTo($user->correo_electronico))->last()
             ?? throw new RuntimeException("No se generó la invitación de {$user->correo_electronico}.");
@@ -265,8 +257,6 @@ class PrepareTestingEnvironmentCommand extends Command
     }
 
     /**
-     * Uno con Calidad de Software si está en la malla y el otro con una materia distinta.
-     *
      * @param  list<User>  $teachers
      * @return list<Subject>
      */
@@ -296,11 +286,6 @@ class PrepareTestingEnvironmentCommand extends Command
             ->first();
     }
 
-    /**
-     * Preparar el período exige incluir toda la malla pendiente. Las programaciones que
-     * quedan vacías se retiran enseguida para no dejar materias sin docente, que
-     * impedirían abrir la convocatoria.
-     */
     private function scheduleSubject(Career $career, AcademicPeriod $period, RoleAssignment $coordinator, Subject $subject, User $teacher): void
     {
         $before = ScheduledSubject::query()->where('periodo_academico_id', $period->id)->pluck('id');
@@ -410,7 +395,6 @@ class PrepareTestingEnvironmentCommand extends Command
         return $request;
     }
 
-    /** Las acciones y políticas leen el rol activo de la petición en curso. */
     private function requestAs(RoleAssignment $assignment): Request
     {
         $request = $this->freshRequest();

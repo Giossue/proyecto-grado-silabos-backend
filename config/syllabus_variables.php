@@ -1,7 +1,5 @@
 <?php
 
-// Catálogo único: clave pública => etiqueta y ruta dentro de la fotografía del sílabo.
-// Para exponer otro dato ya fotografiado basta agregar una entrada aquí.
 return [
     'nombre_facultad' => ['label' => 'Nombre de la facultad', 'source' => 'identification.faculty'],
     'nombre_carrera' => ['label' => 'Nombre de la carrera', 'source' => 'identification.career'],
@@ -34,7 +32,6 @@ return [
     'marca_unidad_basica' => ['label' => 'Marca de unidad básica', 'source' => 'identification.organization_unit', 'equals' => 'Unidad básica'],
     'marca_unidad_profesional' => ['label' => 'Marca de unidad profesional', 'source' => 'identification.organization_unit', 'equals' => 'Unidad profesional'],
     'marca_unidad_titulacion' => ['label' => 'Marca de unidad de integración curricular', 'source' => 'identification.organization_unit', 'equals' => 'Unidad de integración curricular'],
-    // Firmas: se conocen al aprobar, así que se llenan al exportar (vacías antes).
     'fecha_entrega' => ['label' => 'Fecha de entrega del sílabo', 'source' => 'approval.submitted_on'],
     'nombre_coordinador' => ['label' => 'Nombre de quien aprobó (coordinación)', 'source' => 'approval.coordinator'],
     'fecha_revision' => ['label' => 'Fecha de revisión (aprobación)', 'source' => 'approval.approved_on'],

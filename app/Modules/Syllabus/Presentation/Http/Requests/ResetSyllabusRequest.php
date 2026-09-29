@@ -22,7 +22,6 @@ class ResetSyllabusRequest extends FormRequest
     /** @return array<string, list<mixed>> */
     public function rules(): array
     {
-        // Se descarta trabajo ajeno: el motivo tiene que quedar escrito.
         return ['reason' => ['required', 'string', 'min:10', 'max:2000']];
     }
 

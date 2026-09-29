@@ -16,13 +16,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Ciclo del proceso institucional: abierto ⇄ pausado → cerrado.
- *
- * Pausar detiene a toda la universidad —envíos y ediciones docentes— y es lo que
- * habilita cambiar la plantilla; por eso pide motivo. Reanudar vuelve a comprobar la
- * plantilla: pudo cambiarse durante la pausa. Cerrar es definitivo.
- */
 class TransitionSyllabusProcess
 {
     public const PAUSE = 'pausar';
@@ -71,7 +64,6 @@ class TransitionSyllabusProcess
             }
 
             if ($rule['to'] === SyllabusProcess::STATE_OPEN) {
-                // Lo que antes garantizaba «publicar»: la plantilla se usa completa o no se usa.
                 $this->templateStructure->assertUsable(SyllabusTemplate::institutional(), 'process');
             }
 

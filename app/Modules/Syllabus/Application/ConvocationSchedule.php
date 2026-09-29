@@ -7,15 +7,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 
-/**
- * El calendario de una convocatoria de carrera es el de su convocatoria institucional:
- * `inicia_en` habilita la entrega y `entrega_en` la cierra. Desde I-132 no se copia por
- * carrera; la prórroga de Administración mueve la fecha del proceso y alcanza a todas.
- *
- * El reglamento de la UEB exige que la planificación microcurricular esté programada
- * antes de iniciar el periodo académico. Estas fechas son la forma de cumplirlo, y por eso
- * el vencimiento bloquea de verdad en lugar de quedar como aviso.
- */
 class ConvocationSchedule
 {
     public const STAGE_START = 'inicio';
@@ -32,12 +23,7 @@ class ConvocationSchedule
         return $convocation->process->entrega_en;
     }
 
-    /**
-     * Se comprueba en el envío y no en la edición: quien se pasó del plazo puede seguir
-     * trabajando, pero no entregar hasta que coordinación prorrogue.
-     *
-     * @throws ValidationException
-     */
+    /** @throws ValidationException */
     public function assertOpenForSubmission(Convocation $convocation): void
     {
         $this->assertNotPaused($convocation);
@@ -63,12 +49,7 @@ class ConvocationSchedule
         }
     }
 
-    /**
-     * Una pausa detiene el reloj para todos: nadie entrega mientras la carrera o la
-     * universidad están corrigiendo la base sobre la que se trabaja.
-     *
-     * @throws ValidationException
-     */
+    /** @throws ValidationException */
     public function assertNotPaused(Convocation $convocation): void
     {
         if ($convocation->estado === Convocation::STATE_PAUSED) {

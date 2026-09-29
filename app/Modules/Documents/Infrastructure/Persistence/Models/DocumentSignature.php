@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
 /**
- * I-139. Firma electrónica aceptada sobre el PDF de un artefacto de exportación.
- *
  * @property string $id
  * @property string $artefacto_exportacion_id
  * @property string $rol_firma

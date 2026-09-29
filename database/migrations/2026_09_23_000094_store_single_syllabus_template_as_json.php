@@ -5,11 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-111: la única plantilla institucional vive en una tabla singular y conserva
- * secciones y bloques como un documento JSONB. Los UUID de bloque permanecen
- * estables para no invalidar definiciones, respuestas ni fotografías históricas.
- */
 return new class extends Migration
 {
     public function up(): void

@@ -16,12 +16,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Pausa y reanudación por carrera. El cierre no es de la carrera: lo decide
- * Administración cerrando el proceso, que detiene a todas las convocatorias. La pausa es lo que permite a Coordinación corregir
- * su malla o sus datos curriculares sin que los docentes sigan trabajando sobre lo que cambia; no
- * toca a las demás carreras. Reanudar exige que el proceso institucional siga abierto.
- */
 class TransitionConvocation
 {
     public const PAUSE = 'pausar';
@@ -70,7 +64,6 @@ class TransitionConvocation
                 ]);
             }
 
-            // Los paralelos creados durante la pausa nacen con su expediente al reanudar.
             $generated = $to === Convocation::STATE_OPEN ? $this->generator->execute($locked) : 0;
 
             $locked->update(['estado' => $to]);
@@ -94,7 +87,6 @@ class TransitionConvocation
         });
     }
 
-    /** Los sílabos aprobados no se detienen con la pausa: esos docentes no reciben aviso. */
     private function notifyTeachers(Convocation $convocation, string $to, Request $request): void
     {
         $career = $convocation->career()->value('nombre');

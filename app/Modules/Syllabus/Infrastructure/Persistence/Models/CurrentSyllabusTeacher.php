@@ -10,11 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Docente vigente de un sílabo, derivado de la vista `docentes_vigentes_silabo`: quien
- * tiene hoy la asignación activa de alguno de los paralelos del sílabo con su rol
- * docente activo. Es de solo lectura; para cambiar el docente se cambia la asignación
- * del paralelo.
- *
  * @property string $silabo_id
  * @property string $usuario_id
  * @property string $asignacion_rol_id
@@ -59,11 +54,7 @@ class CurrentSyllabusTeacher extends Model
         return $this->belongsTo(TeacherAssignment::class, 'asignacion_paralelo_id');
     }
 
-    /**
-     * Solo docentes con cuenta activa: una cuenta desactivada no edita ni recibe avisos.
-     *
-     * @param  Builder<CurrentSyllabusTeacher>  $query
-     */
+    /** @param  Builder<CurrentSyllabusTeacher>  $query */
     public function scopeWithActiveUser(Builder $query): void
     {
         $query->whereHas('user', fn (Builder $user): Builder => $user->where('activo', true));

@@ -5,11 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * La ficha de identificación del sílabo (formato oficial) pide la jornada del
- * paralelo: matutina, vespertina o nocturna. Es un dato del paralelo, no del
- * expediente, así que vive aquí y la ficha lo lee de la malla (I-34).
- */
 return new class extends Migration
 {
     public function up(): void

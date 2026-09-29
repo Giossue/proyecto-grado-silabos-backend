@@ -203,9 +203,7 @@ PROMPT;
         );
     }
 
-    /**
-     * @return array{index: int, markdown: string, blocks: array<string, string>, images: list<array{url: string, id: string}>}
-     */
+    /** @return array{index: int, markdown: string, blocks: array<string, string>, images: list<array{url: string, id: string}>} */
     private function preparePage(AcademicSourceOcrPage $page): array
     {
         $blocks = [];
@@ -246,9 +244,7 @@ PROMPT;
         throw new AcademicSourceOcrContractException('DeepSeek devolvió una página que no pertenece al lote.');
     }
 
-    /**
-     * @param  array<string, string>  $blocks
-     */
+    /** @param  array<string, string>  $blocks */
     private function restoreBlocks(string $markdown, array $blocks): string
     {
         foreach ($blocks as $placeholder => $original) {
@@ -261,9 +257,7 @@ PROMPT;
         return trim($markdown);
     }
 
-    /**
-     * @return list<array{url: string, id: string}>
-     */
+    /** @return list<array{url: string, id: string}> */
     private function visionImages(AcademicSourceOcrPage $page): array
     {
         $images = [];

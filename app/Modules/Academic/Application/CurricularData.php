@@ -5,7 +5,6 @@ namespace App\Modules\Academic\Application;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularConcept;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 
-/** Lectura de datos confirmados; la resolución documental trabaja solo con su fotografía. */
 final class CurricularData
 {
     public const VARIABLE_PREFIX = 'curricular_';

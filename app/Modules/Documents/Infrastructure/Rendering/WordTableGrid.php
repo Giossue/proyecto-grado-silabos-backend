@@ -6,16 +6,6 @@ use DOMDocument;
 use DOMElement;
 use DOMXPath;
 
-/**
- * Corrige la rejilla (`w:tblGrid`) de cada tabla del DOCX.
- *
- * PhpWord arma la rejilla con los anchos de la fila que tiene más celdas, sin mirar
- * `gridSpan`: si esa fila combina columnas, la rejilla queda con menos columnas o con
- * anchos equivocados y LibreOffice (Gotenberg) dibuja el texto fuera de su celda. Aquí
- * la rejilla se recalcula con los bordes reales de todas las filas (suma acumulada de
- * `tcW` y `gridSpan`), las celdas se ajustan a esa rejilla y el diseño queda fijo para
- * que el texto se acomode dentro del ancho declarado.
- */
 final class WordTableGrid
 {
     private const NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
@@ -58,7 +48,6 @@ final class WordTableGrid
         $previous = 0;
         for ($column = 1; $column <= $count; $column++) {
             if (! isset($edges[$column])) {
-                // Borde que ninguna fila marca: se reparte el tramo hasta el siguiente conocido.
                 $next = $column + 1;
                 while (! isset($edges[$next])) {
                     $next++;
@@ -91,13 +80,10 @@ final class WordTableGrid
             $column->setAttributeNS(self::NS, 'w:type', 'dxa');
             $newGrid->appendChild($column);
         }
-        // El esquema pide `w:tblPr` antes de `w:tblGrid`; PhpWord los escribe al revés.
         $grid?->parentNode?->removeChild($grid);
         $properties = self::first($xpath, 'w:tblPr', $table);
         $table->insertBefore($newGrid, $properties !== null ? $properties->nextSibling : $table->firstChild);
 
-        // Ancho total en twips y diseño fijo: LibreOffice respeta las columnas y parte las
-        // líneas dentro de la celda en vez de ensancharla sobre la vecina.
         if ($properties instanceof DOMElement) {
             $tableWidth = self::first($xpath, 'w:tblW', $properties);
             if ($tableWidth instanceof DOMElement) {
@@ -110,7 +96,6 @@ final class WordTableGrid
             }
         }
 
-        // Cada celda mide exactamente lo que ocupan sus columnas.
         foreach (self::rows($xpath, $table) as $cells) {
             $column = 0;
             foreach ($cells as $cell) {

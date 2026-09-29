@@ -27,7 +27,6 @@ class TransitionConvocationRequest extends FormRequest
     /** @return array<string, list<mixed>> */
     public function rules(): array
     {
-        // Pausar detiene a los docentes de la carrera: el motivo tiene que quedar escrito.
         return $this->transition() === TransitionConvocation::PAUSE
             ? ['reason' => ['required', 'string', 'min:10', 'max:500']]
             : ['reason' => ['nullable', 'string', 'max:500']];

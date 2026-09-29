@@ -20,12 +20,8 @@ class IndexUsersRequest extends FormRequest
     {
         return [
             'q' => ['nullable', 'string', 'max:120'],
-            // «Pendiente de activación» es un estado propio: la cuenta está activa pero nadie ha
-            // entrado con ella. Sin filtro no hay forma de encontrarlas en una lista larga.
             'status' => ['nullable', Rule::in(['all', 'active', 'pending', 'inactive'])],
             'role' => ['nullable', Rule::in(['all', ...array_column(RoleCode::cases(), 'value')])],
-            // Acepta «all» o el identificador de una carrera; el controlador descarta
-            // cualquier otra cosa, que como filtro solo produce una lista vacía.
             'career' => ['nullable', 'string', 'max:36'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];

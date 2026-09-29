@@ -5,14 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-48: el producto usa la estructura Facultad -> Carrera.
- *
- * `escuelas` provenía de la fuente SIANET pero no representa una entidad operativa ni
- * una ubicación física en el sistema de sílabos. Campus conserva ese último papel.
- *
- * Es irreversible: los registros de escuelas solo se recuperan desde el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void

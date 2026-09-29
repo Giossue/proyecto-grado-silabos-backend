@@ -8,14 +8,6 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Documentos temporales (I-152): la lectura, el original y las imágenes de una
- * importación solo viven mientras la importación está abierta. Al guardar o descartar
- * se eliminan la lectura (`fuentes_academicas`) y los archivos; los datos confirmados
- * conservan su propio extracto y procedencia. `objetos_almacenados` es de solo agregar
- * por regla de la base: su ficha (nombre, tamaño y huella, sin contenido) permanece como
- * constancia. Un archivo que otra importación abierta todavía usa se conserva.
- */
 final class ReleaseCurricularImportDocuments
 {
     private const OPEN = ['pendiente', 'en_ejecucion', 'lista', 'fallida'];
@@ -36,7 +28,6 @@ final class ReleaseCurricularImportDocuments
                     : null;
                 $objectIds = [$document['original_object_id'] ?? null, $source?->objeto_pdf_id];
                 if ($source !== null) {
-                    // Imágenes extraídas por la lectura OCR de este documento.
                     $assets = StoredObject::query()->where('carrera_id', $import->carrera_id)
                         ->where('ruta_interna', 'like', "academic-sources/{$source->id}/%")->get();
                     foreach ($assets as $asset) {
@@ -57,7 +48,6 @@ final class ReleaseCurricularImportDocuments
 
             return $paths;
         });
-        // Los archivos se borran solo después de confirmar la base: un fallo no deja lecturas sin archivo.
         foreach ($paths as [$disk, $path]) {
             Storage::disk($disk)->delete($path);
         }

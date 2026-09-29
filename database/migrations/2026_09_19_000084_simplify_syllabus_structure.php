@@ -5,13 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-85: la plantilla tiene una raíz única y una sola tabla de componentes.
- *
- * Las claves de las secciones y los bloques se conservan para no invalidar
- * fotografías ni valores existentes. Los UUID de ambos niveles pasan a la tabla
- * unificada; los campos conservan el UUID de su bloque como componente padre.
- */
 return new class extends Migration
 {
     public function up(): void

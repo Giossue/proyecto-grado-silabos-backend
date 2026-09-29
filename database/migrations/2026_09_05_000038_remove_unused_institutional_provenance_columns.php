@@ -5,16 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-47: retira metadatos de procedencia SIANET que no participan en el producto.
- *
- * La integración institucional fue retirada y el sistema trabaja con sus identificadores
- * operativos: código visible de materia, código de período y código de malla. Estos
- * campos no se leen ni escriben desde los casos de uso actuales.
- *
- * Es irreversible: los valores eliminados solo pueden recuperarse desde el respaldo
- * tomado antes de ejecutarla.
- */
 return new class extends Migration
 {
     public function up(): void

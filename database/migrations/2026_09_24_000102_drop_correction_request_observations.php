@@ -3,16 +3,10 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-134: una solicitud de corrección envía todas las observaciones abiertas de su
- * revisión, así que la tabla puente que registraba un subconjunto es redundante.
- * Las observaciones incluidas se derivan de observaciones_revision.revision_silabo_id.
- */
 return new class extends Migration
 {
     public function up(): void
     {
-        // DROP TABLE elimina también el trigger validar_solicitud_observacion.
         DB::statement('DROP TABLE IF EXISTS solicitud_correccion_observaciones');
 
         DB::statement(<<<'SQL'
@@ -128,7 +122,6 @@ return new class extends Migration
             FOR EACH ROW EXECUTE FUNCTION validar_relaciones_flujo()
             SQL);
 
-        // Reconstruye el vínculo derivado: cada solicitud incluía las observaciones de su revisión.
         DB::statement(<<<'SQL'
             INSERT INTO solicitud_correccion_observaciones (id, solicitud_correccion_id, observacion_revision_id)
             SELECT gen_random_uuid(), s.id, o.id

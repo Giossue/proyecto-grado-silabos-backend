@@ -7,7 +7,6 @@ use Illuminate\Validation\Rule;
 
 class SaveTemplateSectionRequest extends ManageTemplatesRequest
 {
-    // Formas de una parte nueva (I-156).
     private const CONTENT_TYPES = ['free_text', 'template'];
 
     /** @return array<string, list<mixed>> */

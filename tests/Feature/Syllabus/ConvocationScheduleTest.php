@@ -22,11 +22,6 @@ use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
 
-/**
- * El reglamento de la UEB exige que la planificación microcurricular esté programada
- * antes de iniciar el periodo académico. Estas fechas son la forma de cumplirlo, así que
- * el vencimiento tiene que bloquear de verdad y la prórroga tiene que dejar rastro.
- */
 class ConvocationScheduleTest extends TestCase
 {
     use AssertsInternalNotifications;
@@ -65,7 +60,6 @@ class ConvocationScheduleTest extends TestCase
         $convocation = $this->prepareConvocation();
         $schedule = app(ConvocationSchedule::class);
 
-        // I-132: la carrera no copia las fechas; las lee de la convocatoria institucional.
         $this->assertFalse(Schema::hasTable('fechas_limite_convocatoria'));
         $this->assertTrue($schedule->startsAt($convocation)->equalTo($convocation->process->inicia_en));
         $this->assertTrue($schedule->draftDeadline($convocation)->equalTo($convocation->process->entrega_en));
@@ -73,8 +67,6 @@ class ConvocationScheduleTest extends TestCase
 
     public function test_the_deadline_cannot_be_set_before_the_start(): void
     {
-        // Desde I-31 las fechas las fija Administración en el proceso institucional; la
-        // convocatoria las hereda y solo puede prorrogarlas hacia adelante.
         [$template] = $this->publishedConfiguration();
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
@@ -115,7 +107,6 @@ class ConvocationScheduleTest extends TestCase
     {
         $syllabus = $this->createValidDraft();
         $convocation = $this->expireDeadline($syllabus);
-        // La fecha vencida es la del proceso: la prórroga es institucional (I-32).
         $previous = $convocation->process->entrega_en;
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
@@ -130,12 +121,10 @@ class ConvocationScheduleTest extends TestCase
         $this->assertSame(1, $event->metadatos['convocations_reached']);
         $this->assertSame('borrador', $event->metadatos['stage']);
         $this->assertStringContainsString('licencia', $event->metadatos['reason']);
-        // Se enteran quienes todavía tienen algo que entregar o revisar.
         $this->assertNotified($this->teacher->id, 'proceso.plazo_extendido', 'se amplió hasta el');
         $this->assertNotified($this->coordinator->id, 'proceso.plazo_extendido', 'se amplió hasta el');
         $this->assertNotNotified($this->administrator->id, 'proceso.plazo_extendido');
 
-        // Con el plazo movido, el envío que antes rebotaba ahora entra.
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
@@ -165,7 +154,6 @@ class ConvocationScheduleTest extends TestCase
 
     public function test_only_administration_extends_a_deadline(): void
     {
-        // El calendario es de la universidad: ni la coordinación ni un docente lo mueven.
         $convocation = $this->prepareConvocation();
         $payload = [
             'due_at' => now()->addMonths(2)->toIso8601String(),
@@ -211,7 +199,6 @@ class ConvocationScheduleTest extends TestCase
         ])->assertSuccessful();
 
         $this->assertNotified($this->coordinator->id, 'proceso.abierto', 'Ya puede iniciar la de su carrera; la entrega vence el');
-        // Los docentes se enteran cuando su carrera abre su convocatoria, no antes.
         $this->assertNotNotified($this->teacher->id, 'proceso.abierto');
     }
 

@@ -40,9 +40,7 @@ final class CoordinatorConvocationReadiness
 {
     public function __construct(private readonly InstitutionalLogos $logos) {}
 
-    /**
-     * @return CoordinatorReadiness
-     */
+    /** @return CoordinatorReadiness */
     public function inspect(string $careerId): array
     {
         $career = Career::query()->with('faculty')->withCount('subjects')->findOrFail($careerId);
@@ -123,8 +121,6 @@ final class CoordinatorConvocationReadiness
     }
 
     /**
-     * Mensajes simples de lo que falta en datos académicos para abrir la convocatoria.
-     *
      * @param  CoordinatorReadiness  $readiness
      * @return list<string>
      */
@@ -154,9 +150,6 @@ final class CoordinatorConvocationReadiness
     }
 
     /**
-     * Los @ProyectoCarrera que usa la plantilla son obligatorios, como la malla (I-155):
-     * Coordinación los confirma para la carrera y para cada materia programada.
-     *
      * @param  list<string>  $subjectIds
      * @return list<string>
      */
@@ -189,7 +182,6 @@ final class CoordinatorConvocationReadiness
         return $missing;
     }
 
-    /** Rechaza abrir cuando faltan datos académicos; usa el mismo cálculo que ve Coordinación. */
     public function assertAcademicDataReady(string $careerId): void
     {
         $missing = $this->missingAcademicData($this->inspect($careerId));

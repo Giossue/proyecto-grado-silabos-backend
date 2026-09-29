@@ -4,10 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-116: Administración decide en la plantilla qué campos usan IA. Coordinación ya
- * no sustituye ese valor por carrera; la IA solo sugiere y el docente decide.
- */
 return new class extends Migration
 {
     public function up(): void

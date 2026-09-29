@@ -7,10 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Vuelve a emitir la invitación de activación de una cuenta pendiente. El enlace anterior
- * deja de funcionar y la contraseña solo la define el titular.
- */
 class ResendManagedUserActivation
 {
     public function __construct(

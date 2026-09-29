@@ -51,8 +51,6 @@ class ApproveSyllabus
                 throw ValidationException::withMessages(['revision' => 'Solo puede aprobarse la revisión vigente.']);
             }
 
-            // Aprobar es la decisión final de Coordinación: da por resueltas sus propias
-            // observaciones pendientes en lugar de exigir verificarlas una a una.
             $resolved = ReviewObservation::query()
                 ->whereHas('revision', fn ($query) => $query->where('silabo_id', $syllabus->id))
                 ->where('estado', '!=', 'verificada')
@@ -88,8 +86,6 @@ class ApproveSyllabus
                     'to_state' => 'aprobado',
                     'resolved_observations' => $resolved,
                     'fingerprint' => $fingerprint,
-                    // DT-10 permite que quien redacta apruebe. No se impide, pero el caso
-                    // queda distinguible para poder reportarlo sin reconstruirlo.
                     'self_approved' => $revision->enviado_por === $actor->id,
                 ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,

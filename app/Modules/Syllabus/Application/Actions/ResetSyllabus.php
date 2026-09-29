@@ -19,18 +19,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Reiniciar un sílabo: el docente empieza de cero.
- *
- * Es la respuesta a «ya lo presentó y justo cambió la base»: la coordinación descarta lo
- * hecho, el expediente vuelve a «Sin iniciar» y toma de nuevo la malla, la programación y la
- * plantilla tal como están ahora. Las revisiones enviadas, las observaciones y las
- * transiciones no se tocan —son evidencia y la base no las deja borrar—; lo que se pierde
- * es el borrador actual, y por eso pide motivo y queda en auditoría con el avance
- * descartado.
- *
- * Un sílabo aprobado no se reinicia: para eso está reabrir, que conserva la aprobación.
- */
 class ResetSyllabus
 {
     /** @var list<string> */
@@ -79,11 +67,9 @@ class ResetSyllabus
                 'discarded_values' => $locked->values()->count(),
             ];
 
-            // Lo escrito se descarta; las revisiones enviadas siguen ahí como historial.
             FieldValue::query()->where('silabo_id', $locked->id)->delete();
             ValidationRun::query()->where('silabo_id', $locked->id)->get()->each->delete();
 
-            // Se vuelve a tomar la fotografía: la malla y la plantilla pudieron cambiar.
             $locked->update([
                 'estado' => 'sin_iniciar',
                 'version_bloqueo' => 0,

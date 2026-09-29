@@ -18,11 +18,9 @@ class SaveTemplateDocumentRequest extends ManageTemplatesRequest
             'properties' => ['sometimes', 'array', 'max:500'],
             'properties.*' => ['required', 'array:key,label,help,ai_enabled,show_when,options_source,options_sources'],
             'properties.*.key' => ['required', 'string', 'distinct', 'max:180'],
-            // El nombre de una parte es opcional: vacía, la parte no lleva subtítulo.
             'properties.*.label' => ['present', 'nullable', 'string', 'max:180'],
             'properties.*.help' => ['present', 'nullable', 'string', 'max:2000'],
             'properties.*.ai_enabled' => ['sometimes', 'boolean'],
-            // «Mostrar solo si»: null es «Siempre».
             'properties.*.show_when' => ['sometimes', 'nullable', 'array:key,value'],
             'properties.*.options_source' => ['sometimes', 'nullable', 'string', 'max:140'],
             'properties.*.options_sources' => ['sometimes', 'array', 'list', 'max:20'],

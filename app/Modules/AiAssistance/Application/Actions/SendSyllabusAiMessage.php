@@ -13,10 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-/**
- * El chat vive en la sesión `silabo:{id}:usuario:{usuario}`: la pregunta y la respuesta
- * pendiente (con su evidencia fijada) son dos mensajes consecutivos.
- */
 class SendSyllabusAiMessage
 {
     public function __construct(

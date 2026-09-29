@@ -11,19 +11,12 @@ use PhpOffice\PhpWord\IOFactory;
 use RuntimeException;
 use ZipArchive;
 
-/**
- * DOCX con formato completo vía PhpWord (I-34). El PDF sale del mismo DOCX convertido
- * con LibreOffice (Gotenberg, I-139) o, sin ese servicio, es el PDF de texto plano de
- * respaldo. Los bytes son reproducibles: fechas fijas en el documento y en el paquete ZIP.
- */
 class PhpWordDocumentRenderer implements DocumentRenderer
 {
     public const VERSION = 'phpword-docx-v4+text-pdf-v2';
 
-    /** I-139: el PDF es el DOCX convertido por LibreOffice (Gotenberg). */
     public const VERSION_GOTENBERG = 'phpword-docx-v4+libreoffice-pdf-v1';
 
-    /** Marca de tiempo fija para las entradas del ZIP (1980-01-01, la mínima válida). */
     private const ZIP_MTIME = 315532800;
 
     public function __construct(
@@ -75,7 +68,6 @@ class PhpWordDocumentRenderer implements DocumentRenderer
             if ($zip->open($temporary) !== true) {
                 throw new RuntimeException('No se pudo releer el documento DOCX.');
             }
-            // PhpWord sortea el `nsid` de cada lista: se reemplaza por uno secuencial.
             $numbering = $zip->getFromName('word/numbering.xml');
             if (is_string($numbering)) {
                 $counter = 0;
@@ -90,7 +82,6 @@ class PhpWordDocumentRenderer implements DocumentRenderer
                     $zip->addFromString('word/numbering.xml', $stable);
                 }
             }
-            // Rejilla de tablas coherente con las celdas combinadas (evita desbordes en PDF).
             $document = $zip->getFromName('word/document.xml');
             if (is_string($document)) {
                 $zip->addFromString('word/document.xml', WordTableGrid::fix($document));

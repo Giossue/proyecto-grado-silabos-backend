@@ -10,10 +10,6 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Descarta una importación que no se guardará (I-152): se elimina junto con sus
- * documentos temporales. No cambia datos confirmados ni sílabos.
- */
 final class DiscardCurricularImport
 {
     public function __construct(

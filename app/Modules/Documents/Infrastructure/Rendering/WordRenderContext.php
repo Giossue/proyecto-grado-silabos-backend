@@ -4,24 +4,18 @@ namespace App\Modules\Documents\Infrastructure\Rendering;
 
 use PhpOffice\PhpWord\SimpleType\Jc;
 
-/**
- * Estado compartido por las secciones del sílabo en Word: apariencia de la plantilla,
- * datos del snapshot y ancho útil de la hoja actual (cambia con la orientación).
- */
 final class WordRenderContext
 {
     public const BLUE = '4F81BD';
 
     public const LIGHT_BLUE = 'DBE5F1';
 
-    /** Fila de totales del formato oficial. */
     public const TOTAL_BLUE = 'B8CCE4';
 
     public const HEADER_TEXT = '365F91';
 
     public const TABLE_BORDER = '000000';
 
-    /** Ancho útil de la hoja en twips, según orientación y márgenes. */
     public int $contentWidth = 9406;
 
     /**

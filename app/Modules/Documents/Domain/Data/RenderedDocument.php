@@ -9,7 +9,6 @@ final readonly class RenderedDocument
         public string $mime,
         public string $extension,
         public string $bytes,
-        /** I-139: un conversor externo no garantiza bytes idénticos entre reintentos. */
         public bool $reproducible = true,
     ) {}
 

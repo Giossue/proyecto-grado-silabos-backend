@@ -6,16 +6,9 @@ use App\Modules\Academic\Application\CurricularData;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 
-/**
- * Datos @ProyectoCarrera que usa la plantilla (I-155). Un dato se usa cuando la hoja de
- * una parte lo muestra (`variable curricular_<clave>`) o cuando una pregunta del docente
- * toma de él sus opciones. La relación no se guarda: se lee de la plantilla vigente.
- */
 final class ProjectDataUsage
 {
-    /**
-     * @return array<string, array{key: string, label: string, type: string, columns: list<array{key: string, label: string}>, sections: list<string>}>
-     */
+    /** @return array<string, array{key: string, label: string, type: string, columns: list<array{key: string, label: string}>, sections: list<string>}> */
     public static function used(?SyllabusTemplate $template = null): array
     {
         $template ??= SyllabusTemplate::query()->first();

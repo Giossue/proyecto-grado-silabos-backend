@@ -40,7 +40,6 @@ class ConvocationPolicy
         return $this->view($user, $convocation) && $convocation->estado === Convocation::STATE_PAUSED;
     }
 
-    /** Se corrige antes de abrir o en pausa: nunca con los docentes trabajando. */
     public function update(User $user, Convocation $convocation): bool
     {
         return false;

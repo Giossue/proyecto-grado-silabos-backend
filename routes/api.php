@@ -71,9 +71,6 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('authentication/sessions/{session}', [SessionManagementController::class, 'destroy'])
             ->name('api.v1.authentication.sessions.destroy');
 
-        // La SPA oculta el producto mientras el correo no esté verificado, pero la
-        // frontera de seguridad también debe vivir en servidor: un cliente HTTP no
-        // puede eludirla llamando directamente a la API.
         Route::middleware('verified')->group(function (): void {
             Route::put('active-role', [SessionController::class, 'selectActiveRole'])
                 ->name('api.v1.active-role.update');
@@ -267,7 +264,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.documents.store');
             Route::get('exports/{artifact}/{format}', [DocumentController::class, 'download'])
                 ->middleware('active-role')->whereIn('format', ['docx', 'pdf'])->name('api.v1.documents.download');
-            // I-139: firma electrónica en el navegador; el servidor solo valida el PDF firmado.
             Route::get('revisions/{revision}/signature', [SignatureController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.signature.show');
             Route::get('revisions/{revision}/signature/pdf', [SignatureController::class, 'pdf'])

@@ -41,7 +41,6 @@ final class ApplyCurricularImport
         $role = $this->view->role($request);
 
         return DB::transaction(function () use ($actor, $data, $id, $request, $role): CurricularImport {
-            // Serializa importaciones distintas que puedan modificar la misma base.
             $career = Career::query()->where('activo', true)->lockForUpdate()->findOrFail($role->carrera_id);
             $import = CurricularImport::query()->where('carrera_id', $career->id)->lockForUpdate()->findOrFail($id);
             $this->locks->assertCareerEditable($career->id);
@@ -57,8 +56,6 @@ final class ApplyCurricularImport
             $changes = [];
             foreach ($rows as $row) {
                 $definition = $row['definition'];
-                // createOrFirst usa un savepoint ante una carrera que cree la misma
-                // clave simultáneamente; después se compara siempre su estructura.
                 $concept = CurricularConcept::query()->firstOrCreate(['clave_concepto' => $definition['key']], [
                     'etiqueta_concepto' => $definition['label'], 'tipo_concepto' => $definition['type'],
                     'columnas_concepto' => $definition['columns'],
@@ -98,7 +95,6 @@ final class ApplyCurricularImport
                         'proposal_fingerprint' => $data['expected_fingerprint'],
                     ], correlationId: $request->attributes->getString('correlation_id') ?: null,
                 );
-                // Documentos temporales (I-152): tras confirmar, se eliminan lectura y originales.
                 DB::afterCommit(fn () => $this->release->execute($import));
 
                 return $import;
@@ -145,7 +141,8 @@ final class ApplyCurricularImport
         return $documents;
     }
 
-    /** @param array<string, mixed> $proposal
+    /**
+     * @param  array<string, mixed>  $proposal
      * @param  list<array{id: string, subject_id?: string|null, accept_conflict?: bool}>  $items
      * @param  array<string, array{blocks: array<string, string>, hash: string, name: string}>  $documents
      * @return list<array<string, mixed>>

@@ -16,7 +16,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/** Alta atómica de paralelos de una sola programación de asignatura. */
 class CreateParallels
 {
     public function __construct(
@@ -26,9 +25,7 @@ class CreateParallels
         private readonly AcademicPeriodPlanning $periodPlanning,
     ) {}
 
-    /**
-     * @param  array{scheduled_subject_id: string, codes: list<string>, shift: string}  $data
-     */
+    /** @param  array{scheduled_subject_id: string, codes: list<string>, shift: string}  $data */
     public function execute(array $data, User $actor, Request $request): int
     {
         $activeRole = $this->roles->resolve($request);

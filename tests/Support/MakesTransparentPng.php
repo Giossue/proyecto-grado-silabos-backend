@@ -4,7 +4,6 @@ namespace Tests\Support;
 
 use Illuminate\Http\UploadedFile;
 
-/** Genera PNG de prueba transparentes u opacos para las reglas de cada tipo de logo. */
 trait MakesTransparentPng
 {
     protected function transparentPng(int $width, int $height, string $name = 'logo.png'): UploadedFile

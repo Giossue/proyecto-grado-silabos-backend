@@ -44,28 +44,14 @@ class Convocation extends Model
         'carrera_id', 'proceso_id', 'estado',
     ];
 
-    /**
-     * En curso: abierta por su carrera y con el proceso institucional abierto. Es la
-     * única condición que habilita el trabajo docente y, por lo mismo, la que congela
-     * malla y fuentes de la carrera.
-     *
-     * @param  Builder<Convocation>  $query
-     */
+    /** @param  Builder<Convocation>  $query */
     public function scopeRunning(Builder $query): void
     {
         $query->where('estado', self::STATE_OPEN)
             ->whereHas('process', fn (Builder $process) => $process->where('estado', SyllabusProcess::STATE_OPEN));
     }
 
-    /**
-     * Congela la malla y las fuentes de la carrera: la convocatoria sigue abierta por su
-     * coordinación dentro de un proceso vigente (abierto o pausado). Una pausa
-     * institucional no libera las carreras: solo la pausa de la propia convocatoria
-     * (o no tener convocatoria vigente) habilita editar sus bases. A diferencia de
-     * `running`, no decide si los docentes pueden editar.
-     *
-     * @param  Builder<Convocation>  $query
-     */
+    /** @param  Builder<Convocation>  $query */
     public function scopeLockingCareerData(Builder $query): void
     {
         $query->where('estado', self::STATE_OPEN)
@@ -111,12 +97,7 @@ class Convocation extends Model
         return $this->belongsTo(Career::class, 'carrera_id');
     }
 
-    /**
-     * La IA usa todas las fuentes activas de la carrera; con la convocatoria abierta
-     * quedan congeladas por ProcessLocks, así que no hace falta copiarlas.
-     *
-     * @return HasMany<AcademicSource, $this>
-     */
+    /** @return HasMany<AcademicSource, $this> */
     public function sources(): HasMany
     {
         return $this->hasMany(AcademicSource::class, 'carrera_id', 'carrera_id')

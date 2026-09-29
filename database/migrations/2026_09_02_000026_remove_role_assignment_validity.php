@@ -9,9 +9,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Al retirar la programación automática, las asignaciones que ya no estaban
-        // efectivas se archivan. Así no se reactivan roles históricos ni se crean
-        // duplicados al imponer una sola asignación activa por alcance.
         DB::statement(<<<'SQL'
             UPDATE asignaciones_rol
             SET activo = false

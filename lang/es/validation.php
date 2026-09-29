@@ -1,10 +1,5 @@
 <?php
 
-/*
- * Mensajes de validación en español. La aplicación fija APP_LOCALE=es con
- * fallback es: sin este archivo el framework muestra la clave cruda
- * («validation.required») porque no publica traducciones para es.
- */
 return [
     'accepted' => 'El campo :attribute debe ser aceptado.',
     'accepted_if' => 'El campo :attribute debe ser aceptado cuando :other sea :value.',
@@ -149,10 +144,6 @@ return [
 
     'custom' => [],
 
-    /*
-     * Nombres visibles de los campos: sin ellos los mensajes mostrarían la clave
-     * técnica («hours ac») en lugar del nombre con el que la interfaz los rotula.
-     */
     'attributes' => [
         'code' => 'código',
         'name' => 'nombre',
@@ -212,7 +203,6 @@ return [
         'fields.*.options_source' => 'catálogo de opciones del campo',
         'fields.*.options_sources' => 'catálogos de opciones del campo',
         'fields.*.options_sources.*' => 'catálogo de opciones del campo',
-        // Dato @ProyectoCarrera declarado desde la hoja (I-155).
         'scope' => 'alcance del dato',
         'options.*' => 'opción',
         'options.*.label' => 'texto de la opción',

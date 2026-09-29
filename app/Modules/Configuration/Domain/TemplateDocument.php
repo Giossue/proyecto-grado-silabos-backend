@@ -4,7 +4,6 @@ namespace App\Modules\Configuration\Domain;
 
 use Illuminate\Validation\ValidationException;
 
-/** Contrato de presentación independiente del HTML y del motor de edición. */
 final class TemplateDocument
 {
     public const FONTS = ['Arial', 'Calibri', 'Times New Roman', 'Verdana', 'Georgia'];
@@ -15,7 +14,8 @@ final class TemplateDocument
 
     public const CELL_BORDER_STYLES = ['thin', 'thick', 'none'];
 
-    /** @param array<string, mixed> $document
+    /**
+     * @param  array<string, mixed>  $document
      * @param  list<string>  $variables
      * @return array<string, mixed>
      */
@@ -57,7 +57,6 @@ final class TemplateDocument
                     self::fail('Seleccione una variable del catálogo.');
                 }
                 $node['attrs'] = ['id' => $key, 'label' => $key];
-                // Un @ProyectoCarrera dentro de una lista se vuelve elementos de esa lista (I-155).
                 $listStyle = $attrs['listStyle'] ?? null;
                 if ($listStyle !== null) {
                     if (! in_array($listStyle, ['bullet', 'number'], true)) {
@@ -70,8 +69,6 @@ final class TemplateDocument
                 $key = $attrs['key'] ?? '';
                 $label = $attrs['label'] ?? '';
                 $kind = $attrs['kind'] ?? 'texto_largo';
-                // Diseños anteriores podían guardar este alias. El contrato actual
-                // solo conserva texto estructurado como texto largo.
                 $kind = $kind === 'markdown' ? 'texto_largo' : $kind;
                 if (! is_string($key) || ! preg_match('/^[a-z][a-z0-9_]{0,119}$/D', $key)
                     || ! is_string($label) || trim($label) === '' || mb_strlen($label) > 180
@@ -99,8 +96,6 @@ final class TemplateDocument
                 $node['attrs']['options_sources'] = $optionsSources;
                 $node['attrs']['options_source'] = count($optionsSources) === 1 ? $optionsSources[0] : null;
                 $rawOptions = $attrs['options'] ?? null;
-                // Versiones anteriores del editor serializaban `[]` también para
-                // texto y número. En esos tipos equivale a no tener opciones.
                 if ((! $choiceType || $hasOptionsSources) && $rawOptions === []) {
                     $rawOptions = null;
                 }
@@ -123,7 +118,6 @@ final class TemplateDocument
                     self::fail('La condición usa una opción que no pertenece a la parte.');
                 }
                 $node['attrs']['choice'] = $choice;
-                // «Pedir solo si» se define en la ficha de la hoja (I-158).
                 $showWhen = $attrs['showWhen'] ?? null;
                 if ($showWhen !== null) {
                     if (! is_array($showWhen) || ! is_string($showWhen['key'] ?? null) || ! preg_match('/^[a-z][a-z0-9_]{0,119}$/D', $showWhen['key'])
@@ -145,7 +139,6 @@ final class TemplateDocument
                 }
                 $node['attrs'] = ['textAlign' => $align];
             }
-            // Las filas que agregaba el docente ya no existen (I-156): una tabla es fija.
             if ($type === 'table' && ($attrs['repeatKey'] ?? null) !== null) {
                 self::fail('La tabla usa filas que agrega el docente; use Texto libre para eso.');
             }
@@ -297,7 +290,8 @@ final class TemplateDocument
         }
     }
 
-    /** @param array<string, mixed> $document
+    /**
+     * @param  array<string, mixed>  $document
      * @return list<array<string, mixed>>
      */
     public static function nodes(array $document, string $type): array

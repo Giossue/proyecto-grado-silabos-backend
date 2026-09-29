@@ -3,18 +3,10 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-136: transiciones_silabo duplicaba eventos_auditoria y la aplicación nunca la
- * leía. Cada cambio de estado del sílabo queda en eventos_auditoria con
- * from_state/to_state en sus metadatos.
- *
- * Es irreversible: el historial eliminado solo se recupera desde el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void
     {
-        // DROP TABLE elimina también sus triggers.
         DB::statement('DROP TABLE IF EXISTS transiciones_silabo');
 
         DB::statement(<<<'SQL'

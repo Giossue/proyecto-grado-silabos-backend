@@ -13,10 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Elimina un paralelo sin actividad: sin sílabo ni docente asignado (vigente o
- * histórico). La materia programada conserva al menos un paralelo.
- */
 class DeleteParallel
 {
     public function __construct(

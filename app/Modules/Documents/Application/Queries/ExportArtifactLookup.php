@@ -4,7 +4,6 @@ namespace App\Modules\Documents\Application\Queries;
 
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 
-/** Consulta pública: revisión y sílabo de un artefacto exportado, para los avisos. */
 class ExportArtifactLookup
 {
     /** @return array{revision_id: string, syllabus_id: string}|null */

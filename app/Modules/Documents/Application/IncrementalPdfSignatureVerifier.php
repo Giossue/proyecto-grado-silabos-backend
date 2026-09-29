@@ -7,18 +7,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
-/**
- * I-139. Comprueba, sin llaves privadas, que un PDF firmado en el navegador sea el PDF
- * anterior más una actualización incremental con exactamente una firma nueva:
- *
- * 1. empieza con los bytes exactos del PDF anterior (las firmas previas siguen válidas);
- * 2. la firma nueva está en la parte agregada y su `ByteRange` cubre todo el archivo
- *    salvo el propio `/Contents`;
- * 3. el CMS/PKCS#7 separado verifica con OpenSSL contra esos bytes;
- * 4. el certificado firmante está vigente.
- *
- * La cadena de confianza contra las CA ecuatorianas queda POR VALIDAR (ver plan I-139).
- */
 class IncrementalPdfSignatureVerifier
 {
     public function verify(string $previous, string $signed): SignerCertificate
@@ -56,7 +44,6 @@ class IncrementalPdfSignatureVerifier
         );
     }
 
-    /** El `/Contents` se rellena con ceros: se recorta al largo que declara el DER. */
     private function der(string $binary): string
     {
         if (strlen($binary) < 2 || ord($binary[0]) !== 0x30) {
@@ -95,7 +82,6 @@ class IncrementalPdfSignatureVerifier
             file_put_contents($contentFile, $content);
             file_put_contents($signatureFile, $der);
             while (openssl_error_string() !== false) {
-                // Se limpia la cola de errores de OpenSSL antes de verificar.
             }
             $valid = openssl_cms_verify(
                 $contentFile,

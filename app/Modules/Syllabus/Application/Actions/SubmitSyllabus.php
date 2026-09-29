@@ -45,8 +45,6 @@ class SubmitSyllabus
             throw ValidationException::withMessages(['syllabus' => 'El expediente no está listo para envío.']);
         }
 
-        // El plazo se comprueba antes de validar el contenido: no tiene sentido pedirle a
-        // alguien que corrija errores de un envío que de todos modos no se va a admitir.
         $this->schedule->assertOpenForSubmission($syllabus->convocation()->firstOrFail());
 
         if ($syllabus->version_bloqueo !== $expectedLockVersion) {

@@ -7,10 +7,6 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 
-/**
- * El calendario institucional es de Administración. Coordinación lo consulta al iniciar
- * el alcance de su carrera, pero no lo crea ni lo mueve de estado.
- */
 class SyllabusProcessPolicy
 {
     public function __construct(private readonly ActiveRole $roles) {}

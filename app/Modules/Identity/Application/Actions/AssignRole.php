@@ -32,10 +32,6 @@ class AssignRole
                 throw ValidationException::withMessages(['role_code' => 'El rol indicado no es válido.']);
             }
 
-            // Administración es una asignación exclusiva. Se bloquean las filas
-            // actuales para que la validación de aplicación sea consistente dentro
-            // de esta transacción; el trigger de PostgreSQL cubre escrituras directas
-            // y carreras que lleguen desde otra transacción.
             $activeRoles = RoleAssignment::query()
                 ->where('usuario_id', $target->id)
                 ->effective()
@@ -101,7 +97,6 @@ class AssignRole
                 ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
-            // Una cuenta por activar ya recibe su invitación; solo se avisa a quien ya entra.
             if ($notify && $granted && $target->activo && $target->hasVerifiedEmail()) {
                 $this->notifyGrantedRole($target, $assignment, $request);
             }

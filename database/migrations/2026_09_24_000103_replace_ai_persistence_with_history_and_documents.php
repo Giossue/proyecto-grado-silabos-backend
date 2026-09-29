@@ -3,18 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-135: la persistencia de IA pasa de once tablas a dos, con el patrón estándar de
- * memoria de agente + almacén vectorial:
- *
- * - `historial_ia`: cada fila es un mensaje JSON de una sesión (`sesion_id`). Las
- *   sugerencias por campo, la revisión integral, las decisiones de la persona y el chat
- *   son mensajes de sesiones distintas.
- * - `documentos_ia`: fragmentos de las fuentes académicas con metadatos y embedding.
- *
- * La base remota no tenía filas en las tablas de IA; los fragmentos locales, si existen,
- * se copian al almacén vectorial conservando su embedding.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -41,10 +29,7 @@ return new class extends Migration
                 )
             )
             SQL);
-        // Índice principal de la memoria: una sesión se lee completa y en orden; el
-        // operador de patrón permite además purgar por prefijo `silabo:{id}:`.
         DB::statement('CREATE INDEX historial_ia_sesion_idx ON historial_ia (sesion_id text_pattern_ops, enviado_en)');
-        // Invariantes de idempotencia que antes vivían en restricciones de cada tabla.
         DB::statement(<<<'SQL'
             CREATE UNIQUE INDEX historial_ia_analisis_idempotencia_unica ON historial_ia (
                 sesion_id,
@@ -75,8 +60,6 @@ return new class extends Migration
             ) WHERE mensaje_ia ->> 'tipo' = 'decision' AND mensaje_ia -> 'entrada' ->> 'decision' = 'aplicada'
             SQL);
 
-        // La entrada fijada nunca cambia y un mensaje terminal es inmutable. Solo el
-        // reinicio institucional confirmado (I-118) puede borrar historial.
         DB::statement(<<<'SQL'
             CREATE OR REPLACE FUNCTION proteger_historial_ia() RETURNS trigger LANGUAGE plpgsql AS $$
             BEGIN
@@ -127,7 +110,6 @@ return new class extends Migration
             CREATE INDEX documentos_ia_fuente_idx
             ON documentos_ia ((metadatos_documento ->> 'fuente_academica_id'), ((metadatos_documento ->> 'posicion')::integer))
             SQL);
-        // Respaldo léxico cuando no hay embeddings disponibles.
         DB::statement(<<<'SQL'
             CREATE INDEX documentos_ia_busqueda_idx ON documentos_ia USING gin (
                 to_tsvector('spanish'::regconfig, coalesce(metadatos_documento ->> 'titulo', '') || ' ' || contenido_documento)
@@ -153,7 +135,6 @@ return new class extends Migration
             JOIN fuentes_academicas s ON s.id = f.fuente_academica_id
             SQL);
 
-        // Sin llaves foráneas dentro del JSON, dos triggers reemplazan las cascadas.
         DB::statement(<<<'SQL'
             CREATE OR REPLACE FUNCTION eliminar_documentos_ia_de_fuente() RETURNS trigger LANGUAGE plpgsql AS $$
             BEGIN
@@ -181,7 +162,6 @@ return new class extends Migration
             FOR EACH ROW EXECUTE FUNCTION eliminar_historial_ia_de_silabo()
             SQL);
 
-        // Sus triggers se van con las tablas; las funciones de validación eran exclusivas.
         foreach ([
             'citas_mensaje_ia', 'evidencias_mensaje_ia', 'mensajes_ia', 'conversaciones_ia',
             'retroalimentacion_ia', 'recomendacion_evidencias_ia', 'recomendaciones_ia',

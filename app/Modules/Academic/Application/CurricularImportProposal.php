@@ -5,20 +5,16 @@ namespace App\Modules\Academic\Application;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Contrato común de extracción y aplicación. Los errores de una fila se conservan
- * en la propuesta para que no desaparezcan silenciosamente durante la revisión.
- */
 final class CurricularImportProposal
 {
-    /** @param array<string, mixed> $proposal
+    /**
+     * @param  array<string, mixed>  $proposal
      * @return array<string, mixed>
      */
     public function normalize(array $proposal): array
     {
         $data = Validator::make($proposal, [
             'definitions' => ['present', 'array', 'list', 'max:100'],
-            // «scope» se admite solo en propuestas anteriores a I-160 y se descarta.
             'definitions.*' => ['array:key,label,type,scope,columns'],
             'definitions.*.key' => ['required', 'string', 'regex:/^[a-z][a-z0-9_]{0,99}$/', 'distinct:strict'],
             'definitions.*.label' => ['required', 'string', 'max:180'],
@@ -88,7 +84,6 @@ final class CurricularImportProposal
                 $row['issue_code'] = 'invalid_evidence';
                 $row['issue'] = 'El contenido no incluye evidencia verificable.';
             }
-            // Todo dato del Proyecto de carrera es de una asignatura (I-160).
             if ($row['subject_id'] === null && $row['issue_code'] === null) {
                 $row['issue_code'] = 'subject_unmatched';
                 $row['issue'] = 'Seleccione la asignatura que corresponde a este contenido.';
@@ -99,7 +94,8 @@ final class CurricularImportProposal
         return ['definitions' => array_values($definitions), 'values' => $rows, 'issues' => $data['issues']];
     }
 
-    /** @param list<array{key: string, label: string}>|null $columns
+    /**
+     * @param  list<array{key: string, label: string}>|null  $columns
      * @return string|list<string>|list<array<string, string>>
      */
     public function value(string $type, ?array $columns, mixed $value): string|array
@@ -124,7 +120,6 @@ final class CurricularImportProposal
             }
             $normalized = [];
             foreach ($keys as $key) {
-                // Las celdas vacías son válidas; no se inventa contenido ausente.
                 $normalized[$key] = $this->text($row[$key], allowEmpty: true);
             }
             $rows[] = $normalized;

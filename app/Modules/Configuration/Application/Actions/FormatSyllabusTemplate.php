@@ -10,7 +10,6 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
 
-/** Aplica el formato oficial a una plantilla que aún no tiene estructura. */
 final class FormatSyllabusTemplate
 {
     public function __construct(

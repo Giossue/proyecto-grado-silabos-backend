@@ -7,7 +7,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/** La plantilla guardada recibe «Mostrar solo si» en discapacidad, sin pisar lo configurado. */
 class ShowWhenMigrationTest extends TestCase
 {
     use RefreshDatabase;

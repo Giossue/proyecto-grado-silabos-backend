@@ -7,7 +7,6 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/** I-116: el uso de IA por campo lo decide Administración en la plantilla. */
 class AdministrationDecidesAiTest extends TestCase
 {
     use RefreshDatabase;

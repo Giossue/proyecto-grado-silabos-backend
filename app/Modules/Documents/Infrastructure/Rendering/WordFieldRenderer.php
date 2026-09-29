@@ -5,16 +5,11 @@ namespace App\Modules\Documents\Infrastructure\Rendering;
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use PhpOffice\PhpWord\Element\Section;
 
-/** Contenido de cada campo: documento de plantilla o texto. */
 final class WordFieldRenderer
 {
     public function __construct(private readonly WordRenderContext $context) {}
 
-    /**
-     * Una parte sin nombre en la plantilla no imprime subtítulo.
-     *
-     * @param  array<string, mixed>  $container
-     */
+    /** @param  array<string, mixed>  $container */
     public static function hasTitle(array $container): bool
     {
         return WordValues::string($container['title'] ?? null, '') !== '';
@@ -49,7 +44,6 @@ final class WordFieldRenderer
 
             return;
         }
-        // Una parte oculta por «Mostrar solo si» no imprime valor.
         if (($field['hidden'] ?? false) === true) {
             return;
         }

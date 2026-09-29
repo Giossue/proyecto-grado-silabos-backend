@@ -38,7 +38,6 @@ final class RetryCurricularImport
             app(ProcessLocks::class)->assertCareerEditable($previous->carrera_id);
             $previous = CurricularImport::query()->lockForUpdate()->findOrFail($previous->id);
             abort_unless($previous->estado_importacion === 'fallida', 409, 'Solo se puede reintentar una lectura fallida.');
-            // A separate attempt keeps delayed jobs from overwriting the new attempt.
             $retryKey = hash('sha256', 'curricular-retry:'.$previous->id);
             $existing = CurricularImport::query()->where('carrera_id', $previous->carrera_id)->where('clave_idempotencia_importacion', $retryKey)->first();
             if ($existing !== null) {

@@ -10,21 +10,11 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Str;
 use RuntimeException;
 
-/**
- * Programa un aviso interno con el texto ya redactado. Es el mismo mecanismo que
- * `ScheduleWorkflowNotification` —trabajo pendiente en la transacción del cambio y
- * entrega idempotente después del commit—, pero sin atarse a un sílabo: sirve para
- * convocatorias, procesos y cuentas (I-120).
- */
 class ScheduleInternalNotification
 {
     public function __construct(private readonly CanonicalHasher $hasher) {}
 
-    /**
-     * Devuelve `null` si no queda nadie a quien avisar: no se crea un trabajo vacío.
-     *
-     * @param  list<string>  $recipientIds
-     */
+    /** @param  list<string>  $recipientIds */
     public function execute(
         string $eventType,
         string $deduplicationKey,
@@ -77,7 +67,6 @@ class ScheduleInternalNotification
         return $execution;
     }
 
-    /** Fecha legible para el mensaje, en la hora de Ecuador: «30 de septiembre de 2026, 23:59». */
     public function date(CarbonInterface $at): string
     {
         return CarbonImmutable::instance($at)

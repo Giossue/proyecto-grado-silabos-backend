@@ -13,7 +13,6 @@ use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Tests\Support\AssertsInternalNotifications;
 use Tests\TestCase;
 
-/** I-39: cambiar quién coordina una carrera es un solo paso; la carrera no pierde nada. */
 class CoordinatorReplacementTest extends TestCase
 {
     use AssertsInternalNotifications;
@@ -57,18 +56,14 @@ class CoordinatorReplacementTest extends TestCase
             ->assertSuccessful();
 
         $this->assertTrue(CoordinatorAssignment::query()->effective()->where('carrera_id', $this->career->id)->where('usuario_id', $incoming->id)->exists());
-        // Rol de coordinación: cerrado para quien sale, concedido a quien entra; el de docente del entrante sigue.
         $this->assertDatabaseHas('asignaciones_rol', ['usuario_id' => $this->coordinator->id, 'rol' => RoleCode::Coordinator->value, 'carrera_id' => $this->career->id, 'asignacion_rol_activa' => false]);
         $this->assertDatabaseHas('asignaciones_rol', ['usuario_id' => $incoming->id, 'rol' => RoleCode::Coordinator->value, 'carrera_id' => $this->career->id, 'asignacion_rol_activa' => true]);
         $this->assertSame(2, RoleAssignment::query()->effective()->where('usuario_id', $incoming->id)->count());
-        // Reemplazar no desactiva la cuenta saliente: eso se decide aparte en Usuarios.
         $this->assertTrue($this->coordinator->fresh()->activo);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'academico.coordinacion.reemplazada', 'recurso_id' => $this->career->id]);
-        // Un solo aviso: el de coordinación, no además el genérico de rol nuevo.
         $this->assertNotified($incoming->id, 'coordinacion.asignada', "Se le asignó la coordinación de {$this->career->nombre}.");
         $this->assertNotNotified($incoming->id, 'usuario.rol_asignado');
 
-        // La misma persona no se reemplaza a sí misma.
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.careers.coordinator.replace', $this->career), ['incoming_user_id' => $incoming->id])
             ->assertJsonValidationErrors('incoming_user_id');

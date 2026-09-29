@@ -13,8 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
- * Documento de apoyo que la Coordinación entrega a los docentes de su carrera.
- *
  * @property string $id
  * @property string $carrera_id
  * @property string $nombre

@@ -20,11 +20,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * El borrado se permite solo antes de que un registro entre a un expediente. Así no
- * existe un estado oculto que esconda datos: lo prescindible desaparece y la historia queda
- * protegida por sus propias relaciones.
- */
 class DeleteAcademicRecord
 {
     public function __construct(
@@ -48,8 +43,6 @@ class DeleteAcademicRecord
             if ($entity !== 'asignacion_docente') {
                 throw new AuthorizationException('Este registro no admite eliminación desde Coordinación.');
             }
-            // Quitar un docente de un paralelo se permite con la convocatoria en curso: el
-            // sílabo sigue al paralelo y quien se asigne después continúa (I-130).
         } else {
             throw new AuthorizationException('No puede eliminar este registro con el rol activo.');
         }
@@ -99,7 +92,6 @@ class DeleteAcademicRecord
                 || DB::table('asignaciones_rol')->where('carrera_id', $record->getKey())->exists(),
             'periodo' => ScheduledSubject::query()->where('periodo_academico_id', $record->getKey())->exists()
                 || DB::table('convocatorias_universidad')->where('periodo_academico_id', $record->getKey())->exists(),
-            // El sílabo pertenece al paralelo: quitar al docente no toca su contenido (I-130).
             'asignacion_docente' => false,
             default => true,
         };

@@ -2,10 +2,6 @@
 
 namespace App\Modules\Configuration\Domain;
 
-/**
- * Apariencia acotada del documento. Los valores son portables entre la vista HTML y
- * PHPWord; no se guardan reglas CSS ni nombres de clase enviados por el navegador.
- */
 final class TemplateAppearance
 {
     public const FONTS = ['Arial', 'Calibri', 'Times New Roman', 'Verdana', 'Georgia'];
@@ -109,7 +105,6 @@ final class TemplateAppearance
         $value['body_font_size'] = self::allowedInteger($value['body_font_size'], self::BODY_SIZES, $defaults['body_font_size']);
         $value['title_font_size'] = self::allowedInteger($value['title_font_size'], self::TITLE_SIZES, $defaults['title_font_size']);
         $value['section_font_size'] = self::allowedInteger($value['section_font_size'], self::SECTION_SIZES, $defaults['section_font_size']);
-        // Campos, variables y texto comparten una sola escala dentro del documento.
         $value['field_font_size'] = $value['body_font_size'];
 
         foreach (['text_color', 'accent_color', 'table_header_background', 'table_header_color'] as $key) {

@@ -6,13 +6,6 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * La tabla de control del migrador no puede renombrarse dentro de una migración: el
- * repositorio de migraciones se consulta antes de ejecutarlas y, si la tabla configurada
- * (`migraciones`) no existiera, el migrador la crearía vacía y consideraría pendiente
- * todo el historial. Este comando corre antes de `migrate` (entrypoint del contenedor o
- * procedimiento remoto de hardening.md) y es idempotente.
- */
 class RenameMigrationsTableCommand extends Command
 {
     protected $signature = 'db:rename-migrations-table {--force : No pedir confirmación (producción)}';

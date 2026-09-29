@@ -95,7 +95,6 @@ class ReviewWorkflowTest extends TestCase
         ])->assertSuccessful();
         $this->assertSame($snapshot, $revision->fresh()->fotografia);
         $this->assertSame($fingerprint, $revision->fresh()->huella_sha256);
-        // Retirar un campo tampoco borra sus valores ni sus referencias históricas.
         $objective = SyllabusTemplate::institutional()->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $objectiveBlock = $objective->block;
         $this->patchJson(route('api.v1.admin.template.blocks.document.update', [SyllabusTemplate::institutional(), $objectiveBlock]), [
@@ -127,8 +126,6 @@ class ReviewWorkflowTest extends TestCase
         ])->assertSuccessful();
         $approvalId = Approval::query()->firstOrFail()->id;
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'pausar']), ['reason' => 'Ajustar el diseño de la plantilla'])->assertSuccessful();
-        // Un sílabo aprobado nunca se purga: el cambio se guarda sin pedir confirmación
-        // y la aprobación, su revisión y el expediente se conservan (igual que ResetSyllabus).
         $this->patch($url, $payload)->assertSuccessful();
         $this->assertNotSame($block->configuracion['document'], $block->fresh()->configuracion['document']);
         $this->assertDatabaseHas('silabos', ['id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
@@ -275,7 +272,6 @@ class ReviewWorkflowTest extends TestCase
         $freeTextField = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
         $firstSnapshot = $firstRevision->fotografia;
 
-        // Sin observaciones pendientes no hay corrección que solicitar.
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $firstRevision), [
             'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
         ])->assertUnprocessable()->assertJsonPath(
@@ -307,9 +303,7 @@ class ReviewWorkflowTest extends TestCase
                 ->where('syllabus.observations.0.requested', true)
                 ->where('syllabus.observations.1.requested', true));
 
-        // Solo Coordinación escribe observaciones: el docente corrige y reenvía.
         $this->assertFalse(Route::has('api.v1.teacher.syllabi.observations.respond'));
-        // Tampoco hay verificación aparte: aprobar da por resueltas las observaciones.
         $this->assertFalse(Route::has('api.v1.coordination.reviews.observations.verify'));
 
         $syllabus->refresh();
@@ -334,7 +328,6 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame($firstRevision->id, $secondRevision->revision_anterior_id);
         $comparison = app(RevisionDiff::class)->compare($firstRevision, $secondRevision);
         $this->assertGreaterThan(0, $comparison['changed_fields']);
-        // El Texto libre (I-156) se compara como documento completo.
         $freeTextChange = collect($comparison['changes'])->firstWhere('field_key', 'bibliografia');
         $this->assertEquals($this->freeTextValue('Contenido académico bibliografia'), $freeTextChange['before']['value']);
         $this->assertEquals($this->freeTextValue('Bibliografía básica corregida.'), $freeTextChange['after']['value']);
@@ -469,8 +462,6 @@ class ReviewWorkflowTest extends TestCase
             $this->assertSame('en_revision', $syllabus->fresh()->estado);
         }
 
-        // La clave de idempotencia de una aprobación es única por sílabo (I-131): el
-        // sílabo se deriva de la revisión, así que la comprueba el trigger.
         $key = (string) Str::uuid();
         $approve = fn (SyllabusRevision $target) => Approval::query()->create([
             'revision_silabo_id' => $target->id,
@@ -567,18 +558,14 @@ class ReviewWorkflowTest extends TestCase
         $fresh = $syllabus->fresh();
         $this->assertSame('sin_iniciar', $fresh->estado);
         $this->assertSame(0, $fresh->version_bloqueo);
-        // Solo quedan los valores heredados de la malla; lo escrito se descartó.
         $this->assertSame(0, $fresh->values()->where('heredado', false)->count());
-        // La revisión enviada es historial y sigue ahí.
         $this->assertDatabaseHas('revisiones_silabo', ['id' => $revision->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
         $this->assertWorkflowNotification($syllabus->id, 'silabo.reiniciado');
 
-        // El docente vuelve a empezar de cero.
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
 
-        // Sin trabajo que descartar no hay nada que reiniciar; y el docente nunca puede.
         $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Intento no autorizado.'])->assertForbidden();
     }
 
@@ -587,7 +574,6 @@ class ReviewWorkflowTest extends TestCase
         [$syllabus, $revision] = $this->submitValidDraft();
         $message = 'La convocatoria está cerrada: la revisión queda solo para consulta y no admite decisiones.';
 
-        // En pausa la revisión sigue: Coordinación decide aunque los docentes no editen.
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$syllabus->convocation, 'pausar']), ['reason' => 'Ajuste de la malla durante la revisión.'])->assertSuccessful();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $revision), [
             'content' => 'Observación registrada durante la pausa.',
@@ -672,7 +658,6 @@ class ReviewWorkflowTest extends TestCase
         return FieldDefinition::query()
             ->where('heredado', false)
             ->where('editable_docente', true)
-            // Este helper escribe texto plano: el Texto libre y el Sí/No usan otra forma.
             ->where('clave', 'formacion_experiencia')
             ->firstOrFail();
     }

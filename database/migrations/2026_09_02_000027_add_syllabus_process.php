@@ -6,13 +6,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-/**
- * El calendario académico oficial obliga a toda la universidad, así que abrir el proceso
- * de elaboración de sílabos deja de ser una decisión de cada carrera. Administración abre
- * un proceso con plantilla y fechas; cada convocatoria de carrera cuelga de él y hereda
- * ambas cosas. La pausa existe para poder corregir plantilla, malla o fuentes sin que el
- * trabajo docente siga avanzando sobre una base que está cambiando.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -36,8 +29,6 @@ return new class extends Migration
 
         DB::statement("ALTER TABLE procesos_silabos ADD CONSTRAINT procesos_silabos_estado_check CHECK (estado IN ('preparacion', 'abierto', 'pausado', 'cerrado'))");
         DB::statement('ALTER TABLE procesos_silabos ADD CONSTRAINT procesos_silabos_fechas_check CHECK (entrega_en > inicia_en)');
-        // Un solo proceso en curso: dos calendarios institucionales a la vez no tendrían
-        // a quién obligar. Los cerrados y los que se preparan para después no compiten.
         DB::statement("CREATE UNIQUE INDEX procesos_silabos_en_curso_unico ON procesos_silabos ((1)) WHERE estado IN ('abierto', 'pausado')");
 
         Schema::table('convocatorias', function (Blueprint $table): void {
@@ -65,13 +56,6 @@ return new class extends Migration
         Schema::dropIfExists('procesos_silabos');
     }
 
-    /**
-     * Cada convocatoria existente ya fijó plantilla y fechas por su cuenta: se le crea el
-     * proceso que hoy la habría amparado, con esos mismos valores, para no reescribir lo
-     * que ya se abrió. Varias convocatorias abiertas de distinta carrera pueden coincidir
-     * en el tiempo: comparten proceso si comparten plantilla, para respetar la unicidad
-     * del proceso en curso.
-     */
     private function backfillProcesses(): void
     {
         $convocations = DB::table('convocatorias')
@@ -104,8 +88,6 @@ return new class extends Migration
                 continue;
             }
 
-            // Solo el primero abierto puede quedar en curso; el resto se conserva cerrado
-            // para no violar la unicidad, sin alterar la convocatoria ni sus expedientes.
             if ($state === 'abierto' && $runningByTemplate !== []) {
                 $state = 'cerrado';
             }

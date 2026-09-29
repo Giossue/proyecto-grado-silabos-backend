@@ -161,7 +161,6 @@ class AcademicStructureTest extends TestCase
 
     public function test_period_start_date_must_be_today_or_later(): void
     {
-        // En Ecuador todavía es 23 de septiembre aunque la aplicación opere en UTC.
         $this->travelTo(CarbonImmutable::parse('2026-09-24 03:00:00', 'UTC'));
 
         $this->actingAsAdministrator()

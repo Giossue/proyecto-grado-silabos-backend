@@ -31,7 +31,6 @@ class ConvocationController extends Controller
         $payload = [
             'filters' => ['q' => $search ?: null, 'state' => $state],
             'convocations' => SyllabusProcess::query()
-                // La convocatoria se identifica por el período institucional que abarca.
                 ->when($search, fn ($query, string $term) => $query->where(
                     fn ($outer) => $outer->whereHas('academicPeriod', fn ($period) => $period
                         ->whereRaw('codigo_periodo_academico ILIKE ?', ["%{$term}%"])),

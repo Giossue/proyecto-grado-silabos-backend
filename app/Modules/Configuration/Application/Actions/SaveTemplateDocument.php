@@ -145,8 +145,6 @@ final class SaveTemplateDocument
                     'posicion' => ++$position,
                 ]);
             }
-            // Las definiciones pueden estar referenciadas por datos y evidencia históricos.
-            // Retirarlas del formulario no debe borrar esos datos ni dejar campos ocultos obligatorios.
             $detached = $configuration['detached_fields'] ?? [];
             foreach ($block->fields->where('heredado', false) as $field) {
                 if (in_array($field->clave, $used, true)) {
@@ -189,10 +187,6 @@ final class SaveTemplateDocument
     }
 
     /**
-     * «Pedir solo si» vive en la ficha de la hoja (I-158): cada pregunta del docente
-     * toma su condición del documento; sin condición se pide siempre. Se valida
-     * después de crear las preguntas nuevas, para que un Sí/No recién insertado sirva.
-     *
      * @param  array<string, mixed>  $document
      * @param  array<string, mixed>  $detached
      */
@@ -220,8 +214,6 @@ final class SaveTemplateDocument
         foreach ($request->input('properties', []) as $property) {
             $attributes = ['etiqueta' => $property['label'] ?? '', 'ayuda' => $property['help']];
             if (array_key_exists('ai_enabled', $property)) {
-                // Un campo retirado conserva su configuración para una futura restauración,
-                // pero no vuelve a habilitarse en el formulario actual.
                 if (isset($detached[$property['key']])) {
                     $detached[$property['key']]['ia_habilitada'] = $property['ai_enabled'];
                 } else {
@@ -249,7 +241,8 @@ final class SaveTemplateDocument
         ]);
     }
 
-    /** @param array<string, mixed> $document
+    /**
+     * @param  array<string, mixed>  $document
      * @param  list<array<string, mixed>>  $properties
      * @return array<string, mixed>
      */

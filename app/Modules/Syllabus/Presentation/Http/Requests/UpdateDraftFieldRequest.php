@@ -53,8 +53,6 @@ class UpdateDraftFieldRequest extends FormRequest
     /** @return list<mixed> */
     private function valueRules(FieldDefinition $field): array
     {
-        // El borrador puede guardarse incompleto; la obligatoriedad se comprueba al
-        // validar o enviar el sílabo.
         $presence = 'nullable';
 
         return match ($field->tipo) {
@@ -69,7 +67,6 @@ class UpdateDraftFieldRequest extends FormRequest
                     }
                 },
             ],
-            // Texto libre (I-156): documento con párrafos, listas y tablas simples.
             'texto_libre' => [
                 $presence,
                 'array',

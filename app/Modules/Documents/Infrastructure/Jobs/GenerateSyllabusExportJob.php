@@ -206,7 +206,6 @@ class GenerateSyllabusExportJob implements ShouldQueue
         ];
         $existing = StoredObject::query()->where('disco', 'private')->where('ruta_interna', $path)->first();
         if ($existing !== null && ! $document->reproducible) {
-            // Reintento tras guardar el PDF convertido: se conserva el primero (I-139).
             return $existing;
         }
         if ($existing !== null) {
@@ -232,12 +231,7 @@ class GenerateSyllabusExportJob implements ShouldQueue
         }
     }
 
-    /**
-     * Completa las variables de firma (fecha de entrega, coordinación y fecha de revisión)
-     * para que la plantilla las ubique donde quiera, p. ej. en "Revisión y aprobación".
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function withSignatures(SyllabusRevision $revision, Approval $approval): array
     {
         $snapshot = $revision->fotografia;

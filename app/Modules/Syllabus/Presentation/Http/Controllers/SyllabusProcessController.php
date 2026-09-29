@@ -49,7 +49,6 @@ class SyllabusProcessController extends Controller
                     'configurable' => $process->isConfigurable(),
                     'deletable' => $deleteProcess->isDeletable($process),
                 ]),
-            // La plantilla es una sola: se informa cuál es, no se elige.
             'template' => $template?->hasStructure()
                 ? SyllabusTemplate::INSTITUTIONAL_NAME
                 : null,

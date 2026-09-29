@@ -53,7 +53,6 @@ class OpenConvocation
                     'convocation' => 'Administración debe cargar el logo de la facultad antes de que Coordinación abra la convocatoria.',
                 ]);
             }
-            // El calendario lo marca Administración: sin proceso abierto no hay a qué convocar.
             if ($convocation->process->estado !== SyllabusProcess::STATE_OPEN) {
                 throw ValidationException::withMessages(['convocation' => match ($convocation->process->estado) {
                     SyllabusProcess::STATE_PAUSED => 'El proceso institucional está en pausa. Podrá abrir cuando Administración lo reanude.',
@@ -84,7 +83,6 @@ class OpenConvocation
         });
     }
 
-    /** Cada docente recibe su propio aviso: la cantidad de sílabos es distinta para cada uno. */
     private function notifyTeachers(Convocation $convocation, Request $request): void
     {
         $deadline = $this->schedule->draftDeadline($convocation);

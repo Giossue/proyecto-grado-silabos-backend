@@ -16,13 +16,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * La prórroga es de Administración porque el calendario es de la universidad, no de
- * cada carrera. Se mueve la entrega del proceso, que es la fecha que leen todas sus
- * convocatorias; es una excepción, así que exige motivo y conserva la fecha
- * anterior en auditoría. Solo hacia adelante: adelantar dejaría fuera de plazo a quien
- * ya estaba dentro. El inicio se corrige al editar un proceso en preparación o pausa.
- */
 class ExtendProcessDeadline
 {
     public function __construct(
@@ -64,8 +57,6 @@ class ExtendProcessDeadline
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
             $locked->update(['entrega_en' => $requested]);
 
-            // Las convocatorias de carrera leen la fecha del proceso (I-132): la prórroga
-            // las alcanza a todas sin copiarla.
             $reached = Convocation::query()->where('proceso_id', $locked->id)->count();
 
             $this->audit->execute(
@@ -90,7 +81,6 @@ class ExtendProcessDeadline
         });
     }
 
-    /** Avisa a quien todavía tiene algo que entregar: Coordinación y docentes sin aprobar. */
     private function notify(SyllabusProcess $process, CarbonImmutable $dueAt, Request $request): void
     {
         $this->notifications->execute(

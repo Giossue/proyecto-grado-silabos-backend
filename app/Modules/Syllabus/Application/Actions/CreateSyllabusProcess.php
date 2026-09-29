@@ -16,7 +16,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/** Administración crea y abre el único proceso institucional vigente. */
 class CreateSyllabusProcess
 {
     public function __construct(
@@ -114,7 +113,6 @@ class CreateSyllabusProcess
         });
     }
 
-    /** La plantilla es una sola (I-32): el proceso la toma tal como está. */
     public static function institutionalTemplate(): SyllabusTemplate
     {
         $template = SyllabusTemplate::query()->first();

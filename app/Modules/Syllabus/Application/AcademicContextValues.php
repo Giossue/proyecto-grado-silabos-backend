@@ -2,7 +2,6 @@
 
 namespace App\Modules\Syllabus\Application;
 
-/** Lee fotografías actuales y las históricas que aún usaban la clave `offering`. */
 final class AcademicContextValues
 {
     /** @param array<string, mixed> $context */

@@ -9,7 +9,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Support\CanonicalHasher;
 use Illuminate\Support\Str;
 
-/** Contexto fotografiado para proponer contenido de unidades; sin RAG ni datos personales. */
 class BuildSyllabusChatContext
 {
     public const VERSION = 'curricular-free-text-v2';
@@ -50,7 +49,6 @@ class BuildSyllabusChatContext
                 $curricularItems[] = $this->item('dato_curricular', (string) ($definition['label'] ?? $key), $content);
             }
         }
-        // Compatibilidad con sílabos anteriores a la importación genérica.
         if (! is_array($values) || ! array_key_exists('resultados_aprendizaje', $values)) {
             $outcomes = data_get($context, 'subject.learning_outcomes.outcomes', []);
             $texts = is_array($outcomes) ? array_filter(array_column($outcomes, 'text'), 'is_string') : [];
@@ -58,7 +56,6 @@ class BuildSyllabusChatContext
                 $curricularItems[] = $this->item('dato_curricular', 'Resultados de aprendizaje confirmados', implode("\n", $texts));
             }
         }
-        // Lo que el docente ya escribió como Texto libre (I-156), incluida su planificación.
         foreach (SyllabusTemplate::institutional()->sections->sortBy('posicion') as $section) {
             foreach ($section->blocks->sortBy('posicion') as $block) {
                 foreach ($block->fields->sortBy('posicion') as $field) {

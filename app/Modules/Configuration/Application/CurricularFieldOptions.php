@@ -6,12 +6,12 @@ use App\Modules\Academic\Application\CurricularData;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 
-/** El origen pertenece al diseño; las opciones efectivas, a la fotografía del sílabo. */
 final class CurricularFieldOptions
 {
     public const CHOICE_TYPES = ['seleccion_unica', 'seleccion_multiple'];
 
-    /** @param array<string, mixed> $data
+    /**
+     * @param  array<string, mixed>  $data
      * @return list<string>
      */
     public static function fromAttributes(array $data): array
@@ -43,7 +43,6 @@ final class CurricularFieldOptions
             : self::fromAttributes(['options_source' => $source]);
     }
 
-    /** Alias compatible para los diseños con un solo origen. */
     public static function source(FieldDefinition $field): ?string
     {
         $sources = self::sources($field);
@@ -57,7 +56,8 @@ final class CurricularFieldOptions
             && (TemplateVariables::definitions()[$source]['type'] ?? null) === 'lista';
     }
 
-    /** @param array<string, mixed> $academicContext
+    /**
+     * @param  array<string, mixed>  $academicContext
      * @return list<array{value: string, label: string}>
      */
     public static function options(FieldDefinition $field, array $academicContext = []): array
@@ -67,8 +67,6 @@ final class CurricularFieldOptions
         foreach ($sources as $source) {
             $key = substr($source, strlen(CurricularData::VARIABLE_PREFIX));
             $raw = data_get($academicContext, 'curricular.values.'.$key);
-            // Cada catálogo vinculado es parte de la pregunta: nunca ofrecer una unión
-            // parcial que omita silenciosamente los datos de una de sus fuentes.
             if (! str_starts_with($source, CurricularData::VARIABLE_PREFIX)
                 || data_get($academicContext, 'curricular.definitions.'.$key.'.type') !== 'lista'
                 || ! is_array($raw) || $raw === []) {
@@ -95,7 +93,8 @@ final class CurricularFieldOptions
         return array_values($normalized);
     }
 
-    /** @param array<string, mixed> $academicContext
+    /**
+     * @param  array<string, mixed>  $academicContext
      * @return list<string>
      */
     public static function values(FieldDefinition $field, array $academicContext = []): array

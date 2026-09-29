@@ -21,9 +21,6 @@ return new class extends Migration
             $table->index(['usuario_id', 'expira_en']);
         });
 
-        // Las cuentas que todavía dependían de la contraseña temporal deben volver a
-        // activar su correo mediante el nuevo enlace. Las cuentas ya activadas no se
-        // modifican.
         DB::table('usuarios')
             ->where('debe_cambiar_contrasena', true)
             ->update(['correo_verificado_en' => null]);

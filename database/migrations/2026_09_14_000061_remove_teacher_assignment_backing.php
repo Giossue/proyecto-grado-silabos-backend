@@ -7,11 +7,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * La responsabilidad sobre un paralelo no conserva el documento administrativo
-     * del relevo. Si alguna instalación aún lo hubiera registrado, se detiene para
-     * que se respalde antes de retirar sus columnas.
-     */
     public function up(): void
     {
         if (! Schema::hasColumn('docentes_paralelo', 'sustento_tipo')) {

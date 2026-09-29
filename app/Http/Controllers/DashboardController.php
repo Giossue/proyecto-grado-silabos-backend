@@ -51,7 +51,6 @@ class DashboardController extends Controller
             default => [],
         };
 
-        // Puesta en marcha: lo que falta para que el rol pueda trabajar, en orden.
         $checklist = match (true) {
             $activeRole === null || ! $user instanceof User => null,
             $activeRole->role->codigo_rol === RoleCode::Administrator->value => $setup->forAdministrator(),
@@ -80,9 +79,6 @@ class DashboardController extends Controller
     }
 
     /**
-     * Los enlaces de puesta en marcha pertenecían a las rutas web/Inertia. La SPA recibe
-     * solo información de dominio y decide una ruta propia cuando ese módulo exista.
-     *
      * @param  array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null, deadline: array<string, mixed>|null, coordinationConvocation: array<string, mixed>|null}  $payload
      * @return array{metrics: array<int, array<string, mixed>>, setup: array<string, mixed>|null, deadline: array<string, mixed>|null, coordination_convocation: array<string, mixed>|null}
      */
@@ -111,12 +107,7 @@ class DashboardController extends Controller
         ];
     }
 
-    /**
-     * Indicadores del proceso en curso para toda la institución: cuánto va, cuánto
-     * queda y dónde hay que empujar.
-     *
-     * @return list<array{key: string, label: string, value: int, suffix: string|null, hint: string}>
-     */
+    /** @return list<array{key: string, label: string, value: int, suffix: string|null, hint: string}> */
     private function administratorMetrics(): array
     {
         $process = SyllabusProcess::query()->inProgress()->first();
@@ -266,9 +257,7 @@ class DashboardController extends Controller
         return $this->deadlinePayload($process, $convocation, $startsAt, $dueAt);
     }
 
-    /**
-     * @return DeadlinePayload
-     */
+    /** @return DeadlinePayload */
     private function deadlinePayload(
         SyllabusProcess $process,
         ?Convocation $convocation,

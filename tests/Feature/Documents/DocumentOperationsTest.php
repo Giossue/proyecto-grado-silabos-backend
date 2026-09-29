@@ -174,7 +174,6 @@ class DocumentOperationsTest extends TestCase
         $this->assertIsString($documentXml);
         $this->assertStringContainsString($revision->huella_sha256, $documentXml);
         $this->assertStringContainsString('Contenido academico verificable', $documentXml);
-        // Firmas (I-138): nombres y fechas se resuelven al exportar la revisión aprobada.
         $this->assertStringContainsString($this->coordinator->nombre, $documentXml);
         $this->assertStringContainsString(now()->setTimezone('America/Guayaquil')->format('d-m-Y'), $documentXml);
 
@@ -392,10 +391,6 @@ class DocumentOperationsTest extends TestCase
             ->assertJsonPath('path', "/docente/mis-silabos/{$syllabus->id}");
     }
 
-    /**
-     * I-121: sin ámbito elegido la persona ve sus avisos; abrir uno activa en el servidor
-     * el rol que corresponde, con auditoría, y nunca abre avisos ajenos.
-     */
     public function test_opening_a_notification_before_choosing_a_scope_activates_the_matching_role(): void
     {
         [$syllabus] = $this->approvedRevision();

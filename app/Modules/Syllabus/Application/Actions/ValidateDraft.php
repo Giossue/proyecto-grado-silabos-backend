@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\DB;
 
 class ValidateDraft
 {
-    // I-156: sin reglas de planificación; el docente la escribe como Texto libre.
     public const RULE_VERSION = 'free-text-v6';
 
     public function __construct(
@@ -38,7 +37,6 @@ class ValidateDraft
             $values = $locked->values()->get()->keyBy('definicion_campo_id');
             $academicContext = $locked->contexto_academico ?? [];
             $issues = $this->academicTemplateData->issues($academicContext);
-            // «Mostrar solo si»: una parte oculta no se pide al docente.
             $hidden = array_flip(FieldConditions::hiddenKeys(
                 $fields,
                 $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->clave => $values->get($field->id)?->valor])->all(),
@@ -74,14 +72,11 @@ class ValidateDraft
                         ];
                     }
                 }
-                // Todo campo del formulario es obligatorio al enviar; el borrador se guarda siempre.
                 if (! $this->filled($values->get($field->id)?->valor)) {
                     $issues[] = [
                         'field_id' => $field->id,
                         'code' => $field->heredado ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
                         'severity' => 'error',
-                        // El docente no puede llenar un dato institucional: sigue bloqueando,
-                        // pero el mensaje le dice a quién acudir.
                         'message' => $field->heredado
                             ? "Avise a Coordinación: falta el dato «{$field->displayName()}» en la información de la carrera."
                             : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
@@ -124,11 +119,6 @@ class ValidateDraft
         });
     }
 
-    /**
-     * Solo se exige lo que el docente llena, más los datos institucionales heredados
-     * (que bloquean con aviso a Coordinación). No se exige el texto fijo, las partes
-     * que el docente no edita ni las definiciones que ya no aparecen en el documento.
-     */
     private function requiredFromTeacher(FieldDefinition $field): bool
     {
         $block = $field->block;
@@ -157,7 +147,6 @@ class ValidateDraft
 
     private function filled(mixed $value): bool
     {
-        // Un texto libre sin letras cuenta como vacío (I-156).
         if (FreeText::isDocument($value)) {
             /** @var array<string, mixed> $value */
             return ! FreeText::isEmpty($value);

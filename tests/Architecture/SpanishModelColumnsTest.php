@@ -6,11 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
-/**
- * I-28: los identificadores del esquema son 100 % español. Todo modelo Eloquent debe
- * no puede volver a introducir marcas técnicas genéricas ni claves inglesas en
- * `$fillable`. Las siglas técnicas (id, uuid, mime, url, ip) no cuentan.
- */
 class SpanishModelColumnsTest extends TestCase
 {
     /** @var list<string> */

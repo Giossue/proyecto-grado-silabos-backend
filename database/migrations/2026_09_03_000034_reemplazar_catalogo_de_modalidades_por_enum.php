@@ -5,12 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Las modalidades las fija el Reglamento de Régimen Académico (presencial,
- * semipresencial, en línea, a distancia; híbrida es la combinación): dejan de ser un
- * catálogo editable y pasan a una columna de texto con valores fijos en carrera,
- * materia y oferta. Lo existente se traduce por el nombre del catálogo (I-37).
- */
 return new class extends Migration
 {
     private const TABLES = ['carreras', 'asignaturas', 'ofertas_academicas'];
@@ -34,7 +28,6 @@ return new class extends Migration
                 $blueprint->dropConstrainedForeignId('modalidad_id');
             });
         }
-        // La oferta siempre se dicta de alguna forma; lo que no tenía catálogo se asume presencial.
         DB::table('ofertas_academicas')->whereNull('modalidad')->update(['modalidad' => 'presencial']);
         Schema::table('ofertas_academicas', function (Blueprint $blueprint): void {
             $blueprint->string('modalidad', 20)->nullable(false)->change();

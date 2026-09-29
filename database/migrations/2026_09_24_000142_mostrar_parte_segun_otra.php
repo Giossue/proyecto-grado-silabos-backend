@@ -4,12 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * «Mostrar solo si»: una parte del docente puede depender de otra parte Sí/No o de
- * selección. Agrega la columna y, en la plantilla guardada, hace que «Tipo de
- * discapacidad» y «Adaptación curricular» solo se pidan cuando «Estudiantes con
- * discapacidad» es «Sí». Idempotente: no toca una condición ya configurada.
- */
 return new class extends Migration
 {
     private const DEPENDENTS = ['discapacidad_tipo', 'discapacidad_adaptacion'];

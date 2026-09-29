@@ -2,10 +2,6 @@
 
 namespace App\Modules\Academic\Domain;
 
-/**
- * Catálogo funcional de unidades usado por la malla de Software UEB. Cada materia elige
- * una; el ciclo no asigna ni restringe esa elección.
- */
 enum CurricularUnit: string
 {
     case Basica = 'basica';
@@ -21,10 +17,6 @@ enum CurricularUnit: string
         };
     }
 
-    /**
-     * Reconoce el valor, la etiqueta o un texto histórico («Unidad Básica»,
-     * «Unidad de Titulación») guardado en fotografías anteriores al enum.
-     */
     public static function tryFromText(?string $text): ?self
     {
         $text = mb_strtolower(trim((string) $text));

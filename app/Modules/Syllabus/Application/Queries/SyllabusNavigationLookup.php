@@ -6,10 +6,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\CurrentSyllabusTeacher;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 
-/**
- * Consulta pública de solo lectura para que otros módulos (avisos) sepan a qué ámbito
- * pertenece un sílabo sin tocar los modelos de este módulo. Devuelve identificadores.
- */
 class SyllabusNavigationLookup
 {
     public function exists(string $syllabusId): bool
@@ -31,11 +27,7 @@ class SyllabusNavigationLookup
         return is_string($revision) ? $revision : null;
     }
 
-    /**
-     * Asignaciones de rol con las que la persona es docente vigente del sílabo.
-     *
-     * @return array<int, mixed>
-     */
+    /** @return array<int, mixed> */
     public function teacherAssignmentIds(string $syllabusId, string $userId): array
     {
         return CurrentSyllabusTeacher::query()

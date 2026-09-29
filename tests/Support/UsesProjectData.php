@@ -7,10 +7,8 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use Database\Seeders\SyllabusTemplateSeeder;
 use Illuminate\Support\Str;
 
-/** La plantilla manda (I-155): un dato del Proyecto de carrera cuenta solo si la hoja lo usa. */
 trait UsesProjectData
 {
-    /** Declara el dato, si hace falta, y lo agrega como parte fija de la primera sección. */
     private function useProjectData(string $key, string $label, string $type = 'lista'): CurricularConcept
     {
         $concept = CurricularConcept::query()->firstOrCreate(['clave_concepto' => $key], [

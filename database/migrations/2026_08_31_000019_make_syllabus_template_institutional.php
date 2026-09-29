@@ -14,8 +14,6 @@ return new class extends Migration
             $table->boolean('es_institucional')->default(false)->index();
         });
 
-        // Los registros previos se conservan como históricos. La restricción protege la
-        // única plantilla institucional que puede usarse en nuevas convocatorias.
         DB::statement(
             'CREATE UNIQUE INDEX plantillas_silabo_una_institucional ON plantillas_silabo (es_institucional) WHERE es_institucional',
         );

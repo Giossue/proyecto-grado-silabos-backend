@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/** Texto libre del docente (I-156): un documento con párrafos, listas y tablas simples. */
 return new class extends Migration
 {
     public function up(): void

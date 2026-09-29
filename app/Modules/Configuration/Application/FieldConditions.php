@@ -14,7 +14,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
  */
 final class FieldConditions
 {
-    /** Tipos de parte que pueden servir de condición. */
     public const CHOICE_TYPES = ['seleccion_unica', 'booleano'];
 
     /** @return Condition|null */
@@ -46,7 +45,6 @@ final class FieldConditions
         return $values;
     }
 
-    /** Mensaje de error en español simple, o null si la condición es válida. */
     public static function error(string $templateId, string $ownKey, mixed $raw): ?string
     {
         if ($raw === null) {
@@ -80,9 +78,6 @@ final class FieldConditions
     }
 
     /**
-     * Claves de las partes ocultas con los valores actuales. Una condición que apunta a
-     * una parte que ya no existe o que dejó de ser de selección no oculta nada.
-     *
      * @param  iterable<FieldDefinition>  $fields  Todas las definiciones de la plantilla.
      * @param  array<string, mixed>  $valuesByKey
      * @return list<string>

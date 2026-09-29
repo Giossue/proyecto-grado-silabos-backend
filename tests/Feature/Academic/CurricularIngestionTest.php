@@ -46,7 +46,6 @@ class CurricularIngestionTest extends TestCase
         Http::preventStrayRequests();
         $this->seed(DatabaseSeeder::class);
         $this->subject = Subject::query()->firstOrFail();
-        // La plantilla manda (I-155): la hoja usa el @ProyectoCarrera que se importará.
         $this->useProjectData('habilidades_blandas', 'Habilidades blandas');
         $this->asRole('coordinador@silabos.test');
         $this->mock(CurricularExtractionGateway::class, function (MockInterface $mock): void {
@@ -70,7 +69,7 @@ class CurricularIngestionTest extends TestCase
             ->assertAccepted()->assertJsonPath('status', 'pendiente')->assertJsonPath('proposal', null);
         $import = CurricularImport::query()->findOrFail($response->json('id'));
         $this->assertDatabaseCount('valores_curriculares', 0);
-        $this->assertDatabaseCount('conceptos_curriculares', 1); // Solo el dato declarado por Administración.
+        $this->assertDatabaseCount('conceptos_curriculares', 1);
         $this->assertDatabaseCount('documentos_ia', 0);
         Queue::assertPushed(PrepareCurricularImportJob::class, fn ($job) => $job->importId === $import->id);
         $object = StoredObject::query()->where('clasificacion', 'curricular_workbook')->firstOrFail();
@@ -90,7 +89,7 @@ class CurricularIngestionTest extends TestCase
         $this->assertSame($this->subject->id, $detail->json('proposal.values.0.subject_id'));
         $this->assertSame('Recursos!A2:C2', $detail->json('proposal.values.0.evidence.0.locator'));
         $this->assertDatabaseCount('valores_curriculares', 0);
-        $this->assertDatabaseCount('conceptos_curriculares', 1); // Solo el dato declarado por Administración.
+        $this->assertDatabaseCount('conceptos_curriculares', 1);
         $this->postJson($this->showUrl($import).'/apply', [
             'confirmed' => true, 'expected_fingerprint' => $detail->json('fingerprint'),
             'items' => [['id' => $detail->json('proposal.values.0.id')]],
@@ -118,8 +117,6 @@ class CurricularIngestionTest extends TestCase
         $this->assertSame(1, JobExecution::query()->where('tipo', 'curriculo.extraer')->count());
         $this->assertSame(1, StoredObject::query()->where('clasificacion', 'curricular_workbook')->count());
         Queue::assertPushed(PrepareCurricularImportJob::class, 1);
-        // Guardada la importación, sus documentos temporales se eliminan (I-152) y el mismo
-        // archivo se analiza de nuevo en lugar de devolver la importación cerrada.
         $this->travel(61)->seconds();
         $import = CurricularImport::query()->findOrFail($first);
         $path = StoredObject::query()->where('clasificacion', 'curricular_workbook')->firstOrFail()->ruta_interna;
@@ -142,7 +139,6 @@ class CurricularIngestionTest extends TestCase
             $this->postJson($this->storeUrl(), ['files' => [$this->workbook()]])->assertForbidden();
         }
         $this->asRole('coordinador@silabos.test');
-        // Sin reutilización (I-152): un documento de otra importación no se puede volver a pedir.
         $source = $this->source('Pensamiento crítico');
         $this->postJson($this->storeUrl(), ['source_ids' => [$source->id]])->assertUnprocessable()->assertJsonValidationErrors('files');
         $this->assertDatabaseCount('importaciones_curriculares', 0);
@@ -159,7 +155,7 @@ class CurricularIngestionTest extends TestCase
         } catch (RuntimeException $exception) {
             $this->assertStringContainsString('fuente cambió', $exception->getMessage());
         }
-        $this->assertDatabaseCount('conceptos_curriculares', 1); // Solo el dato declarado por Administración.
+        $this->assertDatabaseCount('conceptos_curriculares', 1);
         $this->assertDatabaseCount('valores_curriculares', 0);
     }
 
@@ -198,7 +194,6 @@ class CurricularIngestionTest extends TestCase
 
     public function test_only_data_used_by_the_template_is_imported_and_the_rest_is_reported(): void
     {
-        // Declarado pero sin usar en la hoja: tampoco se importa.
         CurricularConcept::query()->create(['clave_concepto' => 'convenios', 'etiqueta_concepto' => 'Convenios',
             'tipo_concepto' => 'lista', 'columnas_concepto' => null]);
         $source = $this->source('Pensamiento crítico. Convenio con la empresa Demo.');
@@ -365,7 +360,8 @@ class CurricularIngestionTest extends TestCase
         Http::assertNothingSent();
     }
 
-    /** @param array<string, mixed> $block
+    /**
+     * @param  array<string, mixed>  $block
      * @param  list<string>  $values
      * @return array<string, mixed>
      */

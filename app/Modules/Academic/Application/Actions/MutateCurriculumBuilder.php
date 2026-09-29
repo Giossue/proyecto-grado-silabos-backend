@@ -54,7 +54,6 @@ class MutateCurriculumBuilder
                 'before_cycle_count' => $beforeCycleCount,
                 'after_cycle_count' => $cycleCount,
             ]);
-            // Solo cambian datos de presentación de la ficha: se refrescan sin purgar.
             $this->work->refreshSubjects($role->carrera_id);
 
             return $career;
@@ -98,7 +97,6 @@ class MutateCurriculumBuilder
                 'requirement_id' => $requirement->requisito_id,
                 'type' => $requirement->tipo,
             ]);
-            // Solo cambian datos de presentación de la ficha: se refrescan sin purgar.
             $this->work->refreshSubjects($role->carrera_id);
 
             return $requirement;
@@ -121,7 +119,6 @@ class MutateCurriculumBuilder
             $metadata = ['career_id' => $career->id, 'type' => $requirement->tipo];
             $requirement->delete();
             $this->record($actor, $role, $request, 'academico.requisito_asignatura.eliminacion', 'requisito_asignatura', $requirementId, $metadata);
-            // Solo cambian datos de presentación de la ficha: se refrescan sin purgar.
             $this->work->refreshSubjects($role->carrera_id);
         });
     }
@@ -134,15 +131,11 @@ class MutateCurriculumBuilder
     ): void {
         DB::transaction(function () use ($actor, $curriculumId, $subjectId, $request): void {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
-            // Solo se elimina una materia sin programaciones ni sílabos: no hay trabajo
-            // que reiniciar. Sus requisitos sí aparecían en fichas de otras materias.
             $subject = Subject::query()
                 ->where('carrera_id', $career->id)
                 ->lockForUpdate()
                 ->findOrFail($subjectId);
 
-            // Indicar cada dependencia permite entender por qué se protege la materia.
-            // dónde: se nombra lo que hay y cuánto, que es lo que permite ir a revisarlo.
             $scheduledSubjects = $subject->scheduledSubjects()->count();
             $syllabi = Syllabus::query()->where('asignatura_id', $subject->id)->count();
             if ($scheduledSubjects > 0 || $syllabi > 0) {
@@ -173,8 +166,6 @@ class MutateCurriculumBuilder
                 'code' => $subject->codigo_asignatura,
                 'name' => $subject->nombre,
             ];
-            // Sin programaciones ni sílabos, la base curricular no tiene historia
-            // independiente. Sus resultados se eliminan por cascada con la cabecera.
             $subject->learningOutcomeBase()->delete();
             CurricularValue::query()->where('asignatura_id', $subject->id)->delete();
             $subject->delete();
@@ -188,7 +179,6 @@ class MutateCurriculumBuilder
     {
         return DB::transaction(function () use ($actor, $curriculumId, $data, $request): Subject {
             [$role, $career] = $this->currentCareer($curriculumId, $request);
-            // Mover una tarjeta es presentación: se refresca la ficha, no se purga.
             if ((int) $data['cycle'] > $career->cantidad_ciclos_malla) {
                 throw ValidationException::withMessages(['cycle' => 'El ciclo excede la configuración de la malla.']);
             }
@@ -242,7 +232,6 @@ class MutateCurriculumBuilder
             || $role->carrera_id === null) {
             throw new AuthorizationException('Solo la coordinación activa puede modificar la malla.');
         }
-        // Con una convocatoria en curso los sílabos se apoyan en la malla: se pausa antes.
         $this->locks->assertCareerEditable($role->carrera_id);
 
         $career = Career::query()->whereKey($role->carrera_id)->lockForUpdate()->findOrFail($curriculumId);

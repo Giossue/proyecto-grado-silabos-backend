@@ -14,7 +14,8 @@ final class TemplateTitleBlock
         return ['text' => self::DEFAULT_TEXT];
     }
 
-    /** @param array<string, mixed>|null $mapping
+    /**
+     * @param  array<string, mixed>|null  $mapping
      * @return array{text: string}
      */
     public static function fromMapping(?array $mapping): array

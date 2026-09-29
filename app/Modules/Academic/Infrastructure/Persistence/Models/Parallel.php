@@ -28,7 +28,6 @@ class Parallel extends Model
     protected $table = 'paralelos';
 
     /** @var list<string> */
-    /** Jornadas del formato oficial del sílabo. */
     public const SHIFTS = ['matutina', 'vespertina', 'nocturna'];
 
     /** @var list<string> */

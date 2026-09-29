@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/** Coordinación inicia el alcance heredado del proceso institucional. */
 class CreateConvocation
 {
     public function __construct(

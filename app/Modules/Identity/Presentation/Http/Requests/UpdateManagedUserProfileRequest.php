@@ -28,8 +28,6 @@ class UpdateManagedUserProfileRequest extends FormRequest
                 'string',
                 'email',
                 'max:255',
-                // Se excluye la propia cuenta: guardar sin tocar el correo no puede
-                // fallar por duplicado consigo misma.
                 Rule::unique('usuarios', 'correo_electronico')->ignore(
                     $target instanceof User ? $target->id : null,
                 ),

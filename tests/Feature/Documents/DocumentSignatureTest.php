@@ -39,7 +39,6 @@ use Tests\Support\CreatesSyllabusProcess;
 use Tests\Support\SignsPdfIncrementally;
 use Tests\TestCase;
 
-/** I-139. Firma electrónica en el navegador: el servidor solo valida el PDF firmado. */
 class DocumentSignatureTest extends TestCase
 {
     use AssertsInternalNotifications;
@@ -83,7 +82,6 @@ class DocumentSignatureTest extends TestCase
         $original = $this->currentPdf($revision, 'teacher');
         $this->assertSame(hash('sha256', $original), $status->json('document.sha256'));
 
-        // Coordinación no firma antes que el docente.
         $this->actingAsCoordinator()->getJson(route('api.v1.signature.show', $revision))
             ->assertOk()->assertJsonPath('can_sign', false)->assertJsonPath('my_role', 'coordinacion');
         $this->upload($revision, $this->signPdfIncrementally($original, $coordinatorCredentials), hash('sha256', $original), 'coordinator')
@@ -101,7 +99,6 @@ class DocumentSignatureTest extends TestCase
             ->assertJsonPath('signatures.0.certificate_holder', 'DOCENTE DE PRUEBA');
         $this->assertSame($teacherSigned, $this->currentPdf($revision, 'coordinator'));
 
-        // Una firma calculada sobre el PDF original ya no sirve: el vigente es el del docente.
         $this->upload($revision, $this->signPdfIncrementally($original, $coordinatorCredentials), hash('sha256', $original), 'coordinator')
             ->assertJsonValidationErrors(['signed_pdf' => 'El documento cambió mientras firmaba. Descárguelo de nuevo y vuelva a firmar.']);
 
@@ -129,22 +126,18 @@ class DocumentSignatureTest extends TestCase
         $original = $this->currentPdf($revision, 'teacher');
         $base = hash('sha256', $original);
 
-        // Se alteró el PDF de origen: ya no empieza con los bytes vigentes.
         $tampered = $this->signPdfIncrementally(str_replace('%PDF-1.4', '%PDF-1.5', $original), $credentials);
         $this->upload($revision, $tampered, $base, 'teacher')
             ->assertJsonValidationErrors(['signed_pdf' => 'El PDF firmado no parte del documento vigente. Descárguelo de nuevo y vuelva a firmar.']);
 
-        // Se cambió un byte después de firmar: el CMS deja de verificar.
         $signed = $this->signPdfIncrementally($original, $credentials);
         $afterSigning = substr_replace($signed, 'X', strlen($signed) - 10, 1);
         $this->upload($revision, $afterSigning, $base, 'teacher')
             ->assertJsonValidationErrors(['signed_pdf' => 'La firma no corresponde al documento: el PDF fue alterado o la firma es inválida.']);
 
-        // Se agregó contenido después de la firma: el ByteRange ya no cubre todo el archivo.
         $this->upload($revision, $signed."\n% agregado\n", $base, 'teacher')
             ->assertJsonValidationErrors(['signed_pdf' => 'La firma nueva no cubre el documento completo.']);
 
-        // Sin firma nueva.
         $this->upload($revision, $original."\n% sin firma\n%%EOF\n", $base, 'teacher')
             ->assertJsonValidationErrors(['signed_pdf' => 'El PDF debe agregar exactamente una firma nueva.']);
 

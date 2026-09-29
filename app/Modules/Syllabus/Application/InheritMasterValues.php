@@ -8,10 +8,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Support\Collection;
 
-/**
- * Los campos heredados se copian de la malla y la programación de asignatura al crear el expediente —y al
- * reiniciarlo—: es la fotografía de la que parte el docente.
- */
 class InheritMasterValues
 {
     /** @param Collection<int, FieldDefinition> $fields */

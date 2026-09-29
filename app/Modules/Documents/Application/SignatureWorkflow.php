@@ -14,15 +14,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 
-/**
- * I-139. Reglas del proceso de firma de una revisión aprobada:
- *
- * - se firma el PDF de un artefacto de exportación completado: el que ya tenga firmas o,
- *   si ninguno, el más reciente;
- * - orden fijo: docente vigente del sílabo y después coordinación vigente de la carrera;
- * - el PDF vigente es el último firmado o, sin firmas, el exportado;
- * - reabrir la aprobación anula el proceso de esa revisión.
- */
 class SignatureWorkflow
 {
     public const STATE_NO_DOCUMENT = 'sin_documento';
@@ -64,7 +55,6 @@ class SignatureWorkflow
         return DocumentSignature::query()
             ->where('artefacto_exportacion_id', $artifact->id)
             ->with(['signer:id,nombre', 'storedObject'])
-            // El orden es fijo: 'docente' antes que 'coordinacion'.
             ->orderByDesc('rol_firma')
             ->get();
     }
@@ -88,7 +78,6 @@ class SignatureWorkflow
         return $last instanceof DocumentSignature ? $last->storedObject : $artifact->pdfObject()->first();
     }
 
-    /** Reabrir conserva la aprobación, pero su proceso de firma queda anulado. */
     public function voided(SyllabusRevision $revision): bool
     {
         $approval = Approval::query()->where('revision_silabo_id', $revision->id)->first();
@@ -116,10 +105,6 @@ class SignatureWorkflow
         return $next === DocumentSignature::ROLE_TEACHER ? self::STATE_PENDING_TEACHER : self::STATE_PENDING_COORDINATION;
     }
 
-    /**
-     * Rol con el que la persona puede firmar esta revisión según su rol activo: el
-     * docente vigente del sílabo o la coordinación vigente de la carrera.
-     */
     public function roleOf(User $user, SyllabusRevision $revision, Request $request): ?string
     {
         $active = $this->roles->resolve($request);

@@ -27,8 +27,6 @@ class HostedAiAnalysisGatewayTest extends TestCase
             ]),
         ]);
 
-        // El adaptador conserva el contrato histórico; el puerto de análisis vivo
-        // permanece deshabilitado desde I-146, independientemente del proveedor.
         $result = (new HostedAiAnalysisGateway)->analyze($this->input());
 
         $this->assertInstanceOf(DisabledAiAnalysisGateway::class, app(AiAnalysisGateway::class));

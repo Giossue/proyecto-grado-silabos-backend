@@ -24,11 +24,9 @@ class DeleteTemplateSection
     public function execute(TemplateSection $section, User $actor, Request $request): void
     {
         $activeRole = $this->roles->resolve($request);
-        // Con el proceso institucional abierto, el formato está en uso: se pausa antes.
         $this->locks->assertTemplateEditable();
 
         $this->work->replace($request, function () use ($activeRole, $actor, $request, $section): void {
-            // Una sección menos cambia el formato que los docentes están llenando.
 
             $template = SyllabusTemplate::query()->whereKey($section->plantilla_id)->lockForUpdate()->firstOrFail();
             $lockedSection = $template->sectionOrFail($section->id);

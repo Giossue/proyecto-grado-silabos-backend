@@ -4,10 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * El CES aprueba cada carrera para una sede: el campus es de la carrera, como la
- * modalidad, y las ofertas lo heredan en vez de pedirlo cada periodo (I-36).
- */
 return new class extends Migration
 {
     public function up(): void

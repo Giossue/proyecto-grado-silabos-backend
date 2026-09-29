@@ -7,8 +7,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // La migración conserva los valores de los borradores; solo cambia el
-        // discriminador de presentación a su equivalente actual.
         DB::table('definiciones_campo')
             ->where('tipo_definicion_campo', 'markdown')
             ->update(['tipo_definicion_campo' => 'texto_largo']);
@@ -66,8 +64,6 @@ return new class extends Migration
             ))
             SQL);
 
-        // Los datos no vuelven a llamarse Markdown porque texto largo es el
-        // equivalente canónico y no existe una forma segura de distinguirlos.
     }
 
     private function normalizeLegacyKinds(mixed $value, bool &$changed): mixed

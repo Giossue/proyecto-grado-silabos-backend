@@ -13,9 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Proceso institucional de elaboración de sílabos: el calendario que obliga a todas las
- * carreras. Fija la plantilla y las fechas; cada convocatoria de carrera cuelga de él.
- *
  * @property string $id
  * @property string $periodo_academico_id
  * @property CarbonImmutable $inicia_en
@@ -68,11 +65,7 @@ class SyllabusProcess extends Model
             : ($this->academicPeriod()->value('codigo') ?? 'Período'));
     }
 
-    /**
-     * Abierto o pausado: ocupa el único lugar de proceso vigente.
-     *
-     * @param  Builder<SyllabusProcess>  $query
-     */
+    /** @param  Builder<SyllabusProcess>  $query */
     public function scopeInProgress(Builder $query): void
     {
         $query->whereIn('estado', [self::STATE_OPEN, self::STATE_PAUSED]);
@@ -83,7 +76,6 @@ class SyllabusProcess extends Model
         return $this->estado === self::STATE_OPEN;
     }
 
-    /** Solo se reconfigura mientras el trabajo institucional está detenido. */
     public function isConfigurable(): bool
     {
         return $this->estado === self::STATE_PAUSED;

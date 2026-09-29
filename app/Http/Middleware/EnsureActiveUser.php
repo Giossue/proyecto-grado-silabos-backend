@@ -10,9 +10,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureActiveUser
 {
-    /**
-     * Revoke an existing session as soon as its account is deactivated.
-     */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();

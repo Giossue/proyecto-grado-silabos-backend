@@ -5,12 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * La unidad de organización curricular la fija el Reglamento de Régimen Académico
- * (básica, profesional, integración curricular): deja de ser texto libre y pasa a
- * valores fijos con CHECK, igual que la modalidad (I-37). Lo existente se traduce por
- * el texto guardado; lo que no se reconoce queda vacío para que Coordinación lo corrija.
- */
 return new class extends Migration
 {
     private const COLUMN = 'unidad_organizativa_curricular_asignatura';

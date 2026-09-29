@@ -29,8 +29,6 @@ class CreateManagedUser
             $user = User::query()->create([
                 'nombre' => PersonName::normalize($data['nombre']),
                 'correo_electronico' => mb_strtolower($data['correo_electronico']),
-                // La cuenta no tiene una contraseña utilizable hasta que su titular
-                // complete la invitación. El valor aleatorio nunca se comunica.
                 'contrasena' => Hash::make(Str::random(64)),
                 'activo' => true,
                 'correo_verificado_en' => null,
@@ -50,7 +48,6 @@ class CreateManagedUser
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
-            // Después del commit: el correo nunca sale si el alta se deshace.
             $this->invitations->execute($user, $actor, $request, 'alta');
 
             return $user;

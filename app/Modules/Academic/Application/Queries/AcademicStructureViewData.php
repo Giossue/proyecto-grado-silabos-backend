@@ -37,7 +37,6 @@ class AcademicStructureViewData
         $processesByPeriod = SyllabusProcess::query()
             ->get(['id', 'periodo_academico_id', 'estado'])
             ->keyBy('periodo_academico_id');
-        // Un período con convocatorias en curso no se edita; la pantalla muestra el aviso.
         $lockedPeriods = $this->locks->lockedPeriodReasons();
 
         return [
@@ -63,13 +62,10 @@ class AcademicStructureViewData
                     ->map(fn (Career $career) => [
                         'id' => $career->id,
                         'faculty_id' => $career->facultad_id,
-                        // Quién coordina hoy: la acción «Reemplazar coordinador» parte de aquí.
                         'coordinator' => $career->coordinatorAssignments->first()?->user === null ? null : [
                             'id' => $career->coordinatorAssignments->first()->user->id,
                             'name' => $career->coordinatorAssignments->first()->user->nombre,
                         ],
-                        // Modalidad base aprobada por Administración; las excepciones de
-                        // materias no modifican este dato de la carrera.
                         'modality' => $career->modalidad?->value,
                         'modality_label' => $career->modalidad?->label(),
                         'campus_name' => $career->faculty?->campus->value,
@@ -106,9 +102,6 @@ class AcademicStructureViewData
                     ->orderBy('nombre')
                     ->get(['id', 'nombre']),
                 'campusOptions' => CampusLocation::options(),
-                // Cualquier cuenta activa puede asumir una coordinación (el rol se concede al
-                // nombrarla), incluso recién creada y pendiente de activar; Administración no
-                // coordina carreras.
                 'coordinatorUsers' => User::query()
                     ->where('activo', true)
                     ->whereNotIn('id', RoleAssignment::query()
@@ -153,15 +146,12 @@ class AcademicStructureViewData
             ->firstOrFail();
         $definitions = collect(CurriculumSystemFields::fixedDefinitions());
         $subjectIds = $career->subjects->pluck('id');
-        // La malla se congela mientras una convocatoria de la carrera está en curso; la
-        // razón viaja a la pantalla para que explique el bloqueo con las mismas palabras.
         $lockReason = $this->locks->careerLockReason($careerId);
 
         return [
             'career' => [
                 'id' => $career->id,
                 'name' => $career->nombre,
-                // Base aprobada de la carrera; una materia puede tener una excepción.
                 'modality' => $career->modalidad === null ? null : [
                     'value' => $career->modalidad->value,
                     'label' => $career->modalidad->label(),
@@ -322,7 +312,6 @@ class AcademicStructureViewData
                                 'id' => $parallel->id,
                                 'code' => $parallel->codigo,
                                 'shift' => $this->parallelShift($parallel),
-                                // Sin sílabo se corrige código y jornada; sin docente además se elimina.
                                 'editable' => ! $parallelsWithSyllabus->has($parallel->id),
                                 'deletable' => ! $parallelsWithSyllabus->has($parallel->id) && ! $parallelsWithTeacher->has($parallel->id),
                             ])
@@ -404,12 +393,8 @@ class AcademicStructureViewData
                     'period_status' => $this->periodPlanning->status($assignment->parallel->scheduledSubject->academicPeriod),
                     'period_planning_enabled' => $this->periodPlanning->mayPlan($assignment->parallel->scheduledSubject->academicPeriod),
                     'active' => $assignment->activo,
-                    // Quitar o cambiar al docente no toca el sílabo del paralelo: solo un
-                    // período finalizado lo impide, no la convocatoria en curso (I-130).
                     'editable' => $this->periodPlanning->mayPlan($assignment->parallel->scheduledSubject->academicPeriod),
                 ]),
-            // Todo docente activo con rol docente vigente en la carrera, tenga o no
-            // paralelo: la lista de Coordinación muestra también a quien aún no dicta.
             'careerTeachers' => RoleAssignment::query()
                 ->effective()
                 ->where('carrera_id', $careerId)
@@ -449,7 +434,6 @@ class AcademicStructureViewData
                         'scheduledSubject.subject',
                         fn ($query) => $query->where('carrera_id', $careerId),
                     )
-                    // Solo paralelos sin docente vigente: se asigna tras quitar al anterior.
                     ->whereDoesntHave('teacherAssignments', fn ($query) => $query->where('activo', true))
                     ->with([
                         'scheduledSubject.subject:id,codigo_asignatura,nombre',

@@ -59,11 +59,6 @@ class NotificationController extends Controller
         return response()->json(['message' => 'Notificación marcada como leída.']);
     }
 
-    /**
-     * Abrir un aviso lo marca como leído y, si la pantalla pertenece a otro de sus roles,
-     * activa ese rol en el servidor antes de devolver el destino (I-121). La SPA nunca
-     * navega a una ruta calculada para un rol distinto del activo.
-     */
     public function open(
         InternalNotification $notification,
         MarkNotificationReadRequest $request,

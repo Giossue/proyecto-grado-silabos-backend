@@ -3,16 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Renombra a español las tablas de framework que sí están en uso (I-28):
- * `sessions` → `sesiones`, `failed_jobs` → `trabajos_fallidos` y
- * `password_reset_tokens` → `restablecimientos_contrasena`. Los nombres nuevos se fijan
- * en `config/session.php`, `config/queue.php` y `config/auth.php`.
- *
- * Las columnas internas de estas tablas las escriben los drivers de Laravel con nombres
- * fijos y se conservan (límite registrado en deuda técnica). PostgreSQL no renombra
- * índices, constraints ni secuencias junto con la tabla, así que se renombran aparte.
- */
 return new class extends Migration
 {
     public function up(): void

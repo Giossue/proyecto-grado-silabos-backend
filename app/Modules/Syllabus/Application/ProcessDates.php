@@ -4,10 +4,6 @@ namespace App\Modules\Syllabus\Application;
 
 use Illuminate\Support\Carbon;
 
-/**
- * Fechas del calendario de sílabos sin hora: un día empieza a las 00:00 y termina a
- * las 23:59:59. Si el valor ya trae hora (integraciones, pruebas), se respeta.
- */
 final class ProcessDates
 {
     private const DATE_ONLY = '/^\d{4}-\d{2}-\d{2}$/';

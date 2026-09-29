@@ -20,12 +20,7 @@ class WorkflowNotificationRecipients
         return is_string($careerId) ? $this->coordinatorsForCareer($careerId) : [];
     }
 
-    /**
-     * Coordinación de las carreras de un proceso: las que ya tienen convocatoria o, si
-     * el proceso recién se abre, todas las carreras activas.
-     *
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function coordinatorsForProcess(SyllabusProcess $process): array
     {
         $careerIds = Convocation::query()->where('proceso_id', $process->id)->pluck('carrera_id');
@@ -43,12 +38,7 @@ class WorkflowNotificationRecipients
         return $this->uniqueStrings($ids);
     }
 
-    /**
-     * Docentes con sílabos sin aprobar en el proceso: los que una pausa, una reanudación,
-     * una prórroga o el cierre afectan.
-     *
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function teachersWithPendingWork(SyllabusProcess $process): array
     {
         $convocationIds = $this->uniqueStrings(
@@ -83,9 +73,6 @@ class WorkflowNotificationRecipients
     }
 
     /**
-     * Docentes vigentes de las convocatorias indicadas y cuántos sílabos tiene cada uno.
-     * `$exceptStates` deja fuera, por ejemplo, los sílabos ya aprobados.
-     *
      * @param  list<string>  $convocationIds
      * @param  list<string>  $exceptStates
      * @return array<string, int>

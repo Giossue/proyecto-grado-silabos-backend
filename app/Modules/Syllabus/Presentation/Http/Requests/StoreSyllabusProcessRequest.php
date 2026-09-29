@@ -16,11 +16,6 @@ class StoreSyllabusProcessRequest extends FormRequest
         return $this->user()?->can('create', SyllabusProcess::class) === true;
     }
 
-    /**
-     * Las fechas llegan sin hora: el proceso empieza a las 00:00 del día de inicio y
-     * recibe entregas hasta el final del día límite. Se resuelve antes de validar para
-     * que «posterior a hoy» compare contra el final del día, no contra su madrugada.
-     */
     protected function prepareForValidation(): void
     {
         $this->merge([
@@ -39,11 +34,7 @@ class StoreSyllabusProcessRequest extends FormRequest
         ];
     }
 
-    /**
-     * La elaboración ocurre dentro del período: ninguna fecha pasa de su último día.
-     *
-     * @return list<\Closure(Validator): void>
-     */
+    /** @return list<\Closure(Validator): void> */
     public function after(): array
     {
         return [function (Validator $validator): void {

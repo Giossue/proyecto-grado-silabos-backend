@@ -5,20 +5,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Convierte las fuentes académicas en documentos de coordinación (I-26).
- *
- * Una fuente deja de ser un expediente versionado con fragmentos y conflictos: es un
- * solo documento Markdown con nombre, descripción y notas internas, editado por la
- * Coordinación de la carrera. Las convocatorias fijan la fuente y la evidencia de IA
- * conserva su propia fotografía (nombre, extracto y huella), por lo que editar la
- * fuente después no reescribe análisis pasados.
- */
 return new class extends Migration
 {
     public function up(): void
     {
-        // Los triggers que vigilaban versiones y fragmentos sobrevivirían al borrado.
         DB::unprepared('DROP FUNCTION IF EXISTS validar_evidencia_ia() CASCADE');
         DB::unprepared('DROP FUNCTION IF EXISTS proteger_fragmento_fuente_activa() CASCADE');
 
@@ -42,10 +32,6 @@ return new class extends Migration
         $this->redefineEvidenceValidation();
     }
 
-    /**
-     * El contenido existente no se pierde: la versión más representativa de cada fuente
-     * (la activa, o la más reciente) se aplana a Markdown, fragmento por fragmento.
-     */
     private function composeContentFromFragments(): void
     {
         foreach (DB::table('fuentes_academicas')->pluck('id') as $sourceId) {
@@ -86,7 +72,6 @@ return new class extends Migration
         }
     }
 
-    /** Las convocatorias pasan de fijar una versión concreta a fijar la fuente. */
     private function repointConvocationPins(): void
     {
         Schema::table('fuentes_convocatoria', function (Blueprint $table) {
@@ -103,7 +88,6 @@ return new class extends Migration
             WHERE vf.id = fc.version_fuente_id
             SQL);
 
-        // Dos versiones de la misma fuente en una convocatoria colapsan en una fila.
         DB::statement(<<<'SQL'
             DELETE FROM fuentes_convocatoria a
             USING fuentes_convocatoria b
@@ -119,11 +103,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * La evidencia ya guardaba su propia copia (nombre, extracto y huella); solo pierden
-     * sentido las columnas que apuntaban a versiones y fragmentos. Las filas históricas
-     * conservan su fotografía intacta bajo el nuevo nombre de la huella.
-     */
     private function reshapeAiEvidence(): void
     {
         Schema::table('evidencias_ia', function (Blueprint $table) {
@@ -140,11 +119,6 @@ return new class extends Migration
         DB::statement('ALTER TABLE evidencias_ia RENAME COLUMN huella_fragmento TO huella_contenido');
     }
 
-    /**
-     * Misma regla que fijó I-06, sin versiones: una evidencia solo puede citar una
-     * fuente activa fijada por la convocatoria del expediente, y solo mientras la
-     * ejecución sigue pendiente.
-     */
     private function redefineEvidenceValidation(): void
     {
         DB::unprepared(<<<'SQL'
@@ -185,8 +159,5 @@ return new class extends Migration
             SQL);
     }
 
-    public function down(): void
-    {
-        // Sin reverso: recuperar el versionado sería reconstruir el módulo anterior.
-    }
+    public function down(): void {}
 };

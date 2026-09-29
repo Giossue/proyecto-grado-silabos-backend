@@ -10,11 +10,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Genera desde las fuentes maestras vigentes los sílabos de una convocatoria. Es
- * idempotente: un paralelo que ya tiene expediente en la convocatoria no se toca, de
- * modo que al reanudar solo nacen los sílabos de paralelos creados durante la pausa.
- */
 final class GenerateConvocationSyllabi
 {
     public function __construct(

@@ -3,25 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Renombra a español todos los identificadores en inglés de las tablas propias (I-28):
- * timestamps de Eloquent, columnas de `ejecuciones_trabajo`, familia `lock_version`,
- * `snapshot`, `locale`, `gateway`/`renderer`, `correlation_id`, y la tabla
- * `eventos_outbox` → `eventos_salientes` con `payload` → `contenido`.
- *
- * Reglas aplicadas:
- * - `created_at`/`updated_at` → `creado_en`/`actualizado_en`.
- * - Donde `creado_en` ya existe como marca de dominio (`notificaciones_internas`,
- *   `objetos_almacenados`, `observaciones_revision`), el `created_at` de Eloquent pasa a
- *   `registrado_en` (momento de inserción de la fila); no se elimina ninguna columna.
- * - `ALTER TABLE … RENAME COLUMN` actualiza índices y constraints pero NO los cuerpos de
- *   funciones PL/pgSQL (precedente I-14): `proteger_payload_outbox()` y
- *   `validar_ejecucion_ia()` se redefinen aquí mismo. Los valores de estado siguen en
- *   inglés hasta la migración 000025.
- */
 return new class extends Migration
 {
-    /** Tablas con el par completo created_at/updated_at → creado_en/actualizado_en. */
     private const PARES = [
         'roles', 'facultades', 'escuelas', 'campus', 'modalidades', 'periodos_academicos',
         'carreras', 'asignaciones_rol', 'asignaciones_coordinador', 'asignaciones_docente',
@@ -37,19 +20,16 @@ return new class extends Migration
         'eventos_salientes',
     ];
 
-    /** Tablas donde `creado_en` de dominio ya existe: created_at → registrado_en. */
     private const REGISTRADO_CON_ACTUALIZADO = ['objetos_almacenados', 'observaciones_revision'];
 
     private const REGISTRADO_SOLO = ['notificaciones_internas'];
 
-    /** Tablas append-only con solo created_at y sin colisión: → creado_en. */
     private const CREADO_SOLO = [
         'eventos_auditoria', 'transiciones_silabo', 'solicitud_correccion_observaciones',
         'evidencias_ia', 'recomendaciones_ia', 'recomendacion_evidencias_ia',
         'retroalimentacion_ia',
     ];
 
-    /** Renombres de columnas de dominio adicionales, por tabla. */
     private const COLUMNAS = [
         'ejecuciones_trabajo' => [
             'type' => 'tipo',
@@ -92,7 +72,6 @@ return new class extends Migration
         ],
     ];
 
-    /** Índices y constraints cuyo nombre arrastra columnas o tabla renombradas. */
     private const INDICES = [
         'eventos_outbox_pkey' => 'eventos_salientes_pkey',
         'eventos_outbox_clave_deduplicacion_unique' => 'eventos_salientes_clave_deduplicacion_unique',
@@ -142,11 +121,6 @@ return new class extends Migration
         $this->redefinirFuncionesConColumnasNuevas();
     }
 
-    /**
-     * Los cuerpos PL/pgSQL conservan los nombres antiguos tras el RENAME; sin esta
-     * redefinición, el trigger del outbox y el de ejecuciones de IA fallarían en
-     * ejecución («record NEW has no field payload»), no al migrar.
-     */
     private function redefinirFuncionesConColumnasNuevas(): void
     {
         DB::unprepared(<<<'SQL'

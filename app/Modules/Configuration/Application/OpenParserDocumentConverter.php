@@ -144,8 +144,6 @@ final class OpenParserDocumentConverter
 
         $node = ['type' => $type, 'attrs' => $attrs];
 
-        // ProseMirror rejects text nodes whose value is an empty string. Empty table
-        // cells are valid, but they must contain an empty paragraph instead.
         $inline = $this->inlineContent($text);
         if ($inline !== []) {
             $node['content'] = $inline;

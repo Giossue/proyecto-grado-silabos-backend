@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /** La cuenta inactiva conserva historial de rol, pero no bloquea una coordinación nueva. */
     public function up(): void
     {
         DB::unprepared(<<<'SQL'
@@ -42,8 +41,5 @@ return new class extends Migration
         SQL);
     }
 
-    public function down(): void
-    {
-        // La migración 000058 conserva la versión base de la función al revertir 000059.
-    }
+    public function down(): void {}
 };

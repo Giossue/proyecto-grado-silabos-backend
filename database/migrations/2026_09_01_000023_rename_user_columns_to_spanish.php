@@ -3,13 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Renombra a español las columnas de `usuarios` heredadas del starter (I-28).
- *
- * El modelo `App\Models\User` declara los puentes que Laravel y Fortify necesitan
- * ($authPasswordName, $rememberTokenName, overrides de correo/verificación y accessors
- * para los atributos `two_factor_*` que Fortify fija internamente).
- */
 return new class extends Migration
 {
     private const RENOMBRES = [

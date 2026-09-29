@@ -63,7 +63,6 @@ class ActivateManagedUser
         });
     }
 
-    /** Quien creó la cuenta sabe así que ya puede contar con esa persona. */
     private function notifyIssuer(ActivationInvitation $invitation, User $user, Request $request): void
     {
         $role = $user->roleAssignments()->where('activo', true)->first()?->role->nombre_rol;

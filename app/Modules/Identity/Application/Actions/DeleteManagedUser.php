@@ -9,15 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Borra una cuenta que nunca se estrenó y no dejó rastro: solo su rol, su carrera y, si
- * acaso, un nombramiento de coordinación. Cualquier otra huella (sílabos, asignaciones
- * docentes, revisiones, auditoría como actor) la vuelve historia y entonces se desactiva,
- * no se borra (I-38).
- */
 class DeleteManagedUser
 {
-    /** Tablas donde una cuenta deja historia que no se puede borrar. */
     private const TRACES = [
         'asignaciones_paralelo' => 'asignacion_rol_id',
         'eventos_auditoria' => 'actor_usuario_id',

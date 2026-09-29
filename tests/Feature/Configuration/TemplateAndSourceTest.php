@@ -73,7 +73,6 @@ class TemplateAndSourceTest extends TestCase
         $evaluation = $template->sections()->where('clave', 'evaluacion')->firstOrFail();
         $blocks = $evaluation->blocks()->orderBy('posicion');
         $this->assertSame(['Indicadores de evaluación', 'Escala de valoración', 'Recuperación y aprobación'], $blocks->pluck('titulo')->all());
-        // I-138: indicadores y escala son contenido fijo con los valores UEB, sin campos.
         $this->assertSame(['fixed', 'fixed', 'text'], $blocks->map->configuredContentType()->all());
         $this->assertSame('texto_libre', $template->fields()->where('clave', 'recuperacion')->sole()->tipo);
         $this->assertArrayNotHasKey('table', $blocks->first()->configuracion);
@@ -142,14 +141,12 @@ class TemplateAndSourceTest extends TestCase
         $blocks = $section->blocks()->orderBy('posicion');
         $this->assertSame(2, $section->posicion);
         $this->assertSame(['Resumen', 'Nota'], $blocks->pluck('titulo')->all());
-        // I-156: las dos formas se guardan como partes con hoja propia.
         $this->assertSame(['text', 'text'], $blocks->map->configuredContentType()->all());
         $this->assertSame('texto_libre', $blocks[0]->fields->sole()->tipo);
         $this->assertCount(0, $blocks[1]->fields);
         $this->assertFalse(Schema::hasColumn('definiciones_campo', 'obligatorio'));
         $this->assertSame('Sintetice los resultados esperados.', $blocks[0]->fields->firstOrFail()->ayuda);
         $this->assertTrue($blocks[0]->fields->firstOrFail()->ia_habilitada);
-        // I-116: Administración decide la IA; Coordinación no guarda una preferencia propia.
         $this->assertFalse(Schema::hasColumn('definiciones_campo', 'ia_coordinacion_configurable'));
         $this->assertFalse(Schema::hasTable('preferencias_ia_carrera'));
 
@@ -159,7 +156,6 @@ class TemplateAndSourceTest extends TestCase
             ->getJson(route('api.v1.admin.template.index'))
             ->assertOk()
             ->assertJsonPath('template.titleBlock.text', TemplateTitleBlock::DEFAULT_TEXT)
-            // Dos formas de parte (I-156): lo escribe el docente o lo arma Administración.
             ->assertJsonPath('blockTypes', [
                 ['value' => 'free_text', 'label' => 'Texto libre'],
                 ['value' => 'template', 'label' => 'Contenido de la plantilla'],
@@ -175,7 +171,6 @@ class TemplateAndSourceTest extends TestCase
             ->assertJsonValidationErrors('fields.0.key');
         $this->assertNull($template->fresh()->sections()->firstWhere('clave', 'bloque_invalido'));
 
-        // Las formas anteriores ya no se crean: tablas y listas del docente son Texto libre.
         foreach (['text', 'table', 'bulleted_list', 'numbered_list', 'boolean', 'fixed', 'multiple_choice'] as $legacy) {
             $this->actingAsAdministrator()
                 ->postJson(route('api.v1.admin.template.fields.store', $template), [
@@ -342,8 +337,6 @@ class TemplateAndSourceTest extends TestCase
 
     public function test_template_is_edited_in_place_without_publishing(): void
     {
-        // I-32: no hay versiones ni publicación. La plantilla se corrige en el sitio y
-        // cada revisión enviada conserva su propia copia.
         $template = $this->createTemplate();
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
 
@@ -360,7 +353,6 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame('Etiqueta corregida', $field->fresh()->etiqueta);
         $this->assertSame(1, SyllabusTemplate::query()->count());
 
-        // La forma se elige al crear la parte y no cambia (I-155).
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [
                 'block_id' => $field->bloque_plantilla_id,
@@ -372,7 +364,6 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame('text', $field->fresh()->block->contentType());
     }
 
-    /** I-33 (ajuste 2026-09-03): todo campo es obligatorio; solo se decide ayuda e IA. */
     public function test_field_properties_are_help_and_ai_only_and_every_field_stays_required(): void
     {
         $template = $this->createTemplate();
@@ -401,7 +392,6 @@ class TemplateAndSourceTest extends TestCase
         $this->assertFalse($field->heredado);
         $this->assertNull($field->origen_maestro);
 
-        // La ficha de identificación es un bloque fijo: admite ayuda y conserva su origen.
         $identification = $template->fields()->where('clave', 'asignatura')->firstOrFail();
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.template.fields.update', [$template, $identification]), [
@@ -418,7 +408,6 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame('Se llena sola desde la malla y la programación de asignatura.', $identification->ayuda);
         $this->assertTrue($identification->heredado);
         $this->assertSame('asignaturas', $identification->origen_maestro);
-        // I-119: la casilla decide si el agente lee la ficha; la decide Administración.
         $this->assertTrue($identification->ia_habilitada);
     }
 
@@ -437,10 +426,8 @@ class TemplateAndSourceTest extends TestCase
             ->assertSuccessful();
 
         $field = FieldDefinition::query()->where('plantilla_id', $version->id)->where('clave', 'parte_sin_nombre')->firstOrFail();
-        // El Texto libre sin nombre toma el de la sección para hablarle al docente (I-156).
         $this->assertSame($section->titulo, $field->etiqueta);
         $this->assertSame('', $field->block?->titulo);
-        // Los mensajes al docente usan el nombre de la sección cuando la parte no tiene.
         $this->assertSame($section->titulo, $field->displayName());
 
         $this->actingAsAdministrator()
@@ -489,7 +476,6 @@ class TemplateAndSourceTest extends TestCase
 
         $block = $version->fresh()->sections()->whereKey($section->id)->firstOrFail()
             ->blocks()->where('titulo', 'Estrategias de aprendizaje')->firstOrFail();
-        // I-156: sin filas repetibles, todo bloque es narrativo y el docente escribe Texto libre.
         $this->assertSame('narrativa', $block->tipo);
         $this->assertSame('text', $block->configuracion['content_type']);
         $this->assertSame('texto_libre', $block->fields()->firstOrFail()->tipo);
@@ -542,7 +528,6 @@ class TemplateAndSourceTest extends TestCase
         $version = $this->createTemplate();
         $block = $version->sections()->where('clave', 'descripcion')->firstOrFail()->blocks()->firstOrFail();
 
-        // I-119: la estructura se edita sobre la hoja; el formulario separado ya no existe.
         $this->actingAsAdministrator()
             ->patchJson("/api/v1/admin/template/{$version->id}/blocks/{$block->id}/table", ['columns' => []])
             ->assertNotFound();

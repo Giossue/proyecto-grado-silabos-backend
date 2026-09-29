@@ -4,14 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Elimina las tablas de colas y caché del driver `database` (I-28).
- *
- * Todos los entornos operan colas y caché sobre Redis (`QUEUE_CONNECTION=redis`,
- * `CACHE_STORE=redis`) y el proyecto no usa `Bus::batch`, así que `jobs`,
- * `job_batches`, `cache` y `cache_locks` no tienen lector ni escritor. Si un entorno
- * futuro volviera al driver `database`, este `down()` las recrea con su forma original.
- */
 return new class extends Migration
 {
     public function up(): void

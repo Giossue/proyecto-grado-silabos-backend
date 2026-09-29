@@ -35,7 +35,6 @@ class TeacherAssignment extends Model
     /** @var list<string> */
     protected $fillable = [
         'asignacion_rol_id',
-        // Entrada de casos de uso/UI; antes de guardar se traduce al rol con alcance.
         'usuario_id',
         'paralelo_id',
         'activo',
@@ -54,9 +53,6 @@ class TeacherAssignment extends Model
                 return;
             }
 
-            // `usuario_id` solo es una entrada de compatibilidad. El accessor deriva el
-            // valor para registros persistidos, así que al crear hay que leer el atributo
-            // crudo antes de que exista `asignacion_rol_id`.
             $userId = $assignment->getAttributes()['usuario_id'] ?? null;
             $careerId = Parallel::query()
                 ->whereKey($assignment->paralelo_id)
@@ -81,11 +77,7 @@ class TeacherAssignment extends Model
         return $this->belongsTo(RoleAssignment::class, 'asignacion_rol_id');
     }
 
-    /**
-     * Usuario derivado del rol que respalda la responsabilidad de paralelo.
-     *
-     * @return Attribute<string|null, string|null>
-     */
+    /** @return Attribute<string|null, string|null> */
     protected function usuarioId(): Attribute
     {
         return Attribute::make(

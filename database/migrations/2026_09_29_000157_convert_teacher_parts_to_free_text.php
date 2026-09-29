@@ -6,12 +6,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
-/**
- * I-156: las partes que llena el docente pasan a Texto libre y se retiran las filas
- * repetibles. Lo ya escrito se conserva: las filas de una sola columna se vuelven una
- * lista y las de varias, una tabla con encabezado; el texto largo, párrafos. Las
- * fotografías de revisiones enviadas no se tocan.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -31,7 +25,6 @@ return new class extends Migration
                     'documento_plantilla' => json_encode($document, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
                 ]);
             }
-            // Ninguna pregunta queda como filas repetibles.
             DB::table('definiciones_campo')->where('tipo_definicion_campo', 'repetible')->update(['tipo_definicion_campo' => 'texto_libre']);
         });
 

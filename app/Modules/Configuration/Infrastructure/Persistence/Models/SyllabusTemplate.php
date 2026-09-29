@@ -9,9 +9,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * La plantilla institucional. Una sola, editable en el sitio (I-32): cada revisión
- * enviada conserva su propia copia de la estructura, así que aquí no hay versiones.
- *
  * @property string $id
  * @property array<string, mixed> $documento
  * @property array<string, mixed>|null $mapeo_documento
@@ -47,10 +44,6 @@ class SyllabusTemplate extends Model
         ];
     }
 
-    /**
-     * La plantilla institucional es única (I-25/I-32): sílabos, procesos, exportaciones
-     * y ejecuciones de IA no guardan referencia a ella (I-132).
-     */
     public static function institutional(): self
     {
         return self::query()->firstOrFail();

@@ -1,12 +1,6 @@
 <?php
 
 return [
-    /*
-     * Datos iniciales de la única plantilla institucional. Todo lo que llena el docente
-     * es Texto libre (I-156); lo fijo trae su contenido UEB. Se mantienen fuera de
-     * las acciones HTTP para que el formato inicial se pueda instalar con un seed
-     * idempotente y no quede acoplado al controlador.
-     */
     'baseline' => [
         ['identificacion', 'Identificación institucional', [
             ['asignatura', 'Identificación institucional', 'institutional', null],
@@ -35,7 +29,6 @@ return [
             ['ambientes_aprendizaje', 'Ambientes o escenarios de aprendizaje', 'free_text', null],
         ]],
         ['evaluacion', 'Evaluación de los aprendizajes', [
-            // Contenido fijo: valores UEB que el docente no llena (I-138).
             ['indicadores_evaluacion', 'Indicadores de evaluación', 'fixed', 'indicadores'],
             ['componentes_evaluacion', 'Escala de valoración', 'fixed', 'escala'],
             ['recuperacion', 'Recuperación y aprobación', 'free_text', null],
@@ -55,7 +48,6 @@ return [
         ]],
     ],
 
-    // Quinto valor: «Mostrar solo si» (otra parte de selección y su valor), o null.
     'identification_inputs' => [
         ['discapacidad_tiene', 'Estudiantes con discapacidad', 'seleccion_unica', ['Sí', 'No'], null],
         ['discapacidad_tipo', 'Tipo de discapacidad', 'texto_corto', null, ['key' => 'discapacidad_tiene', 'value' => 'Sí']],

@@ -7,15 +7,6 @@ use DOMDocument;
 use Symfony\Component\Process\Process;
 use Throwable;
 
-/**
- * I-139. Ubica el sello visible de cada firma. Busca en el PDF las palabras «Firma:» de
- * la tabla «Revisión y aprobación» (la primera es del docente y la segunda de
- * coordinación) y deja el sello justo encima, dentro de la celda, como FirmaEC. Sin esas
- * palabras, el sello va debajo del último texto de la última página.
- *
- * Usa `pdftotext -bbox` (poppler-utils, incluido en la imagen). Si no está disponible el
- * navegador aplica su propia posición de respaldo.
- */
 class SignatureStampLocator
 {
     private const WIDTH = 190.0;
@@ -36,7 +27,6 @@ class SignatureStampLocator
             if (count($labels) < 1) {
                 continue;
             }
-            // Las celdas de una fila comparten altura: se ordena por fila y luego de izquierda a derecha.
             usort($labels, fn (array $a, array $b): int => [round($a['yMin'] / 4), $a['xMin']] <=> [round($b['yMin'] / 4), $b['xMin']]);
             if (! isset($labels[$index])) {
                 break;

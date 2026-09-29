@@ -3,12 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-139. Firma electrónica en el navegador: cada fila es una firma aceptada sobre el PDF
- * de un artefacto de exportación. El orden es fijo (docente y después coordinación) y
- * cada rol firma una sola vez por artefacto. El PDF firmado es un objeto privado nuevo;
- * el certificado se describe para auditoría, nunca se guarda la llave.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -31,8 +25,6 @@ return new class extends Migration
                 CONSTRAINT firmas_documento_objeto_unico UNIQUE (objeto_almacenado_id)
             )
             SQL);
-        // Toda llave foránea encabeza un índice (I-133); las otras dos ya lo hacen por
-        // sus restricciones únicas.
         DB::statement('CREATE INDEX firmas_documento_usuario_id_index ON firmas_documento (usuario_id)');
     }
 

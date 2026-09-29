@@ -5,10 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-51: una cuenta no tiene un intervalo laboral estable; su disponibilidad actual
- * vive en `activo` y en sus asignaciones operativas.
- */
 return new class extends Migration
 {
     public function up(): void

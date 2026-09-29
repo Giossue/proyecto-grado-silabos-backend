@@ -11,10 +11,8 @@ use Illuminate\Validation\Validator;
 
 class SaveFieldDefinitionRequest extends ManageTemplatesRequest
 {
-    // Formas de una parte nueva (I-156).
     private const NEW_FORMS = ['free_text', 'template'];
 
-    // Formas guardadas que se editan; la forma no cambia después de crear (I-155).
     private const SAVED_FORMS = ['text', 'fixed', 'boolean', 'multiple_choice', 'institutional'];
 
     /** @return array<string, list<mixed>> */
@@ -59,7 +57,6 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
                     ->where('plantilla_id', $templateId)
                     ->ignore($fieldId),
             ],
-            // El nombre de una parte es opcional: sin nombre no se imprime subtítulo.
             'label' => ['nullable', 'string', 'max:180'],
             'help' => ['nullable', 'string', 'max:2000'],
             'content_type' => ['required', Rule::in($types)],
@@ -76,7 +73,6 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'options_sources.*' => ['required', 'string', 'max:140', 'distinct'],
             'document_marker' => ['nullable', 'string', 'max:160'],
             'page_orientation' => ['sometimes', 'nullable', 'in:portrait,landscape'],
-            // «Mostrar solo si»: null es «Siempre».
             'show_when' => ['sometimes', 'nullable', 'array:key,value'],
         ];
     }

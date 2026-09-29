@@ -58,8 +58,6 @@ class SetAcademicRecordStatus
         if (! $activeRole instanceof RoleAssignment || ! AcademicStructurePermissions::mayChangeStatus($activeRole, $entity)) {
             throw new AuthorizationException('No puede cambiar este registro con el rol activo.');
         }
-        // Cambiar el docente de un paralelo no altera sílabos: se admite con la convocatoria
-        // en curso (I-130).
         if (AcademicStructurePermissions::isCareerContext($activeRole) && $entity !== 'asignacion_docente') {
             $this->locks->assertCareerEditable($activeRole->carrera_id);
         }

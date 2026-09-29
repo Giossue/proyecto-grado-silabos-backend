@@ -12,11 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Corrige el código y la jornada de un paralelo mientras no tenga sílabo. Con la
- * convocatoria abierta la estructura de la carrera queda congelada (ProcessLocks) y un
- * período finalizado es solo lectura. El código es único dentro de la materia.
- */
 class UpdateParallel
 {
     public function __construct(

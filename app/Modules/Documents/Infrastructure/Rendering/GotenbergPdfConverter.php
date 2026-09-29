@@ -6,14 +6,6 @@ use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Throwable;
 
-/**
- * I-139. Convierte el DOCX exportado en un PDF fiel con LibreOffice detrás de Gotenberg
- * (`POST /forms/libreoffice/convert`). Solo se usa cuando `GOTENBERG_URL` existe.
- *
- * LibreOffice escribe la fecha de creación y un `/ID` al azar: se reemplazan, con la
- * misma longitud para no mover ninguna posición del archivo, por valores derivados de la
- * solicitud y del DOCX. Así la misma revisión vuelve a dar los mismos bytes.
- */
 class GotenbergPdfConverter
 {
     public function enabled(): bool

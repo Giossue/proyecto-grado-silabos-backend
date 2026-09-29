@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/** I-62: completa el vocabulario técnico sin modificar datos ni nulabilidad. */
 return new class extends Migration
 {
     /** @var array<string, string> */

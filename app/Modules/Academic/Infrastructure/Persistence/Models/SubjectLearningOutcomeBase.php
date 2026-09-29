@@ -55,11 +55,7 @@ class SubjectLearningOutcomeBase extends Model
         return $this->hasMany(SubjectLearningOutcome::class, 'base_resultados_id')->orderBy('posicion_resultado');
     }
 
-    /**
-     * La fotografía conserva contenido y procedencia sin consultar nuevamente la base.
-     *
-     * @return array{source_name: string, source_locator: string, confirmed_at: string, confirmed_by: array{id: string, name: string}, outcomes: list<array{id: string, text: string, position: int}>}
-     */
+    /** @return array{source_name: string, source_locator: string, confirmed_at: string, confirmed_by: array{id: string, name: string}, outcomes: list<array{id: string, text: string, position: int}>} */
     public function snapshot(): array
     {
         $this->loadMissing(['outcomes', 'confirmedBy']);

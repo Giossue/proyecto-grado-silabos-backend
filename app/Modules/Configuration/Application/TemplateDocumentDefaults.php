@@ -4,7 +4,6 @@ namespace App\Modules\Configuration\Application;
 
 use App\Modules\Syllabus\Application\IdentificationCard;
 
-/** Adaptación de la ficha histórica; solo crea la propuesta, nunca escribe al leer. */
 final class TemplateDocumentDefaults
 {
     /** @return array<string, mixed> */
@@ -71,22 +70,13 @@ final class TemplateDocumentDefaults
         return ['type' => 'doc', 'content' => [['type' => 'table', 'attrs' => ['repeatKey' => null], 'content' => $rows]]];
     }
 
-    /**
-     * Hoja vacía de «Contenido de la plantilla» (I-156): Administración escribe y pone
-     * sus marcas; lo escrito sin marca es fijo.
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public static function blankSheet(): array
     {
         return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => []]]];
     }
 
-    /**
-     * Hoja de una parte «Texto libre» (I-156): solo el espacio donde escribe el docente.
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public static function freeTextSheet(string $key, string $label): array
     {
         return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [[
@@ -135,12 +125,7 @@ final class TemplateDocumentDefaults
         ], 1);
     }
 
-    /**
-     * Revisión y aprobación: solo nombres y fechas. `fecha_entrega`, `nombre_coordinador`
-     * y `fecha_revision` se llenan al exportar la revisión aprobada.
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public static function signatures(): array
     {
         return self::fixedTable([
@@ -152,9 +137,6 @@ final class TemplateDocumentDefaults
     }
 
     /**
-     * Tabla sin campos del docente. Cada celda es [texto, colspan, rowspan]; el texto
-     * admite `[[variable:clave]]`. Las primeras `$headerRows` filas van sombreadas.
-     *
      * @param  list<list<array{0: string, 1?: int, 2?: int}>>  $rows
      * @return array<string, mixed>
      */

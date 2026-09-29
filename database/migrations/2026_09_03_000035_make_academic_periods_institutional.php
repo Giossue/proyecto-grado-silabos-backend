@@ -5,12 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-41: el período académico es institucional, no de cada carrera. Un proceso de
- * sílabos fija cuál período se trabaja y las convocatorias lo heredan. La consolidación
- * solo une filas de igual código cuando sus fechas son iguales: elegir una fecha distinta
- * destruiría evidencia académica.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -119,8 +113,6 @@ return new class extends Migration
 
     private function addPeriodConsistencyTriggers(): void
     {
-        // Las funciones no se eliminan cuando una base de pruebas reconstruye sus tablas.
-        // Retirarlas explícitamente hace segura una nueva ejecución de las migraciones.
         DB::statement('DROP TRIGGER IF EXISTS convocatorias_periodo_del_proceso ON convocatorias');
         DB::statement('DROP TRIGGER IF EXISTS procesos_periodo_sin_convocatorias ON procesos_silabos');
         DB::statement('DROP FUNCTION IF EXISTS validar_periodo_convocatoria_proceso()');

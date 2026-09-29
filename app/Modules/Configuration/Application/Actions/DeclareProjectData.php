@@ -13,12 +13,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Declara un dato @ProyectoCarrera (I-155) al insertarlo en la hoja, sin preguntar nada:
- * el nombre sale del contexto y, como todo dato del Proyecto de carrera, es por
- * asignatura (I-160). Un nombre ya declarado con la misma forma se reutiliza; con otra forma se crea «Nombre (lista)» o «Nombre (texto)»,
- * porque los valores confirmados dependen de la forma.
- */
 final class DeclareProjectData
 {
     public function __construct(
@@ -69,7 +63,6 @@ final class DeclareProjectData
         ];
     }
 
-    /** Clave estable del dato: el nombre en minúsculas, sin tildes y con guiones bajos. */
     public static function keyFor(string $label): string
     {
         $key = rtrim(Str::limit(trim((string) preg_replace('/[^a-z0-9]+/', '_', strtolower(Str::ascii($label))), '_'), 90, ''), '_');

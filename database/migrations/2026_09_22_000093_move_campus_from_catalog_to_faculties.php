@@ -82,7 +82,8 @@ return new class extends Migration
         return $mapping;
     }
 
-    /** @param array<string, string> $campusById
+    /**
+     * @param  array<string, string>  $campusById
      * @return array<string, string>
      */
     private function facultyLocations(array $campusById): array

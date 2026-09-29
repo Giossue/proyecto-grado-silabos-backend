@@ -18,10 +18,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
-/**
- * I-139. Registra el PDF que la persona firmó en su navegador. El servidor nunca ve la
- * llave: solo comprueba que el archivo sea el PDF vigente más una firma válida.
- */
 class AcceptDocumentSignature
 {
     public function __construct(
@@ -48,7 +44,6 @@ class AcceptDocumentSignature
             return DB::transaction(function () use ($actor, $baseFingerprint, $request, $revision, $role, $signedPdf, &$path): DocumentSignature {
                 $artifact = $this->workflow->artifactFor($revision);
                 if ($artifact !== null) {
-                    // Serializa las firmas del mismo artefacto.
                     $artifact = ExportArtifact::query()->lockForUpdate()->findOrFail($artifact->id);
                 }
                 $signatures = $this->workflow->signatures($artifact);
@@ -144,7 +139,6 @@ class AcceptDocumentSignature
                 return $signature;
             });
         } catch (\Throwable $exception) {
-            // Un PDF escrito para una transacción que no llegó a confirmarse no debe quedar suelto.
             if (is_string($path) && ! DocumentSignature::query()->whereHas('storedObject', fn ($query) => $query->where('ruta_interna', $path))->exists()) {
                 Storage::disk('private')->delete($path);
             }

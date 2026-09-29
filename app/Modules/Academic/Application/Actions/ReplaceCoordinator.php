@@ -64,12 +64,9 @@ class ReplaceCoordinator
             $roleRemoved = false;
             if ($current !== null) {
                 $current->update(['activo' => false]);
-                // `CoordinatorAssignment` ya es la vista tipada de la asignación RBAC;
-                // no existe un segundo nombramiento que cerrar.
                 $roleRemoved = true;
             }
 
-            // La asignación RBAC con alcance de carrera es la coordinación efectiva.
             $this->assignRole->execute($incoming, [
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $lockedCareer->id,

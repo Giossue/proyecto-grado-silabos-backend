@@ -2,11 +2,6 @@
 
 namespace App\Modules\Documents\Infrastructure\Rendering;
 
-/**
- * PDF mínimo de texto plano, sin dependencias: una fuente Helvetica y saltos por
- * página. Sirve como respaldo verificable mientras el PDF con formato completo
- * queda pendiente de decisión (DOC: motor de PDF).
- */
 class PlainTextPdf
 {
     /** @param list<string> $lines */

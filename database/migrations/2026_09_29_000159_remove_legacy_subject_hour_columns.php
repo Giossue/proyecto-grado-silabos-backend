@@ -4,11 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-162: `horas_proyecto`, `horas_ap` y `horas_paec` venían del sistema anterior (I-11).
- * La malla vigente reparte las horas de cada materia solo en ACD, APE y AA; ninguna
- * pantalla las llenaba y todas las filas estaban en NULL. Idempotente.
- */
 return new class extends Migration
 {
     private const COLUMNS = ['horas_proyecto', 'horas_ap', 'horas_paec'];
@@ -24,7 +19,6 @@ return new class extends Migration
         });
     }
 
-    /** Devuelve las columnas vacías; el dato retirado no se reconstruye. */
     public function down(): void
     {
         Schema::table('asignaturas', function (Blueprint $table): void {

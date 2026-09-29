@@ -10,7 +10,6 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
 
-/** Crea únicamente el contenedor vacío de la plantilla institucional. */
 class CreateSyllabusTemplate
 {
     public function __construct(

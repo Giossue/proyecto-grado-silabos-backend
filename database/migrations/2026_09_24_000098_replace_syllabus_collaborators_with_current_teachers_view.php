@@ -3,14 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-130: el sílabo pertenece al paralelo, no a una persona. Su docente es quien tiene
- * hoy la asignación vigente del paralelo; la copia por sílabo (`colaboradores_silabo`)
- * desaparece. El historial de quién trabajó queda en revisiones y auditoría.
- *
- * La vista deriva la relación sílabo → docente vigente desde los alcances del sílabo,
- * las asignaciones de paralelo activas y el rol docente activo. Es de solo lectura.
- */
 return new class extends Migration
 {
     public function up(): void

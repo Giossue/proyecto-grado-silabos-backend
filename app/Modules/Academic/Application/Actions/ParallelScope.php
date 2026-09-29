@@ -9,7 +9,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Validation\ValidationException;
 
-/** Alcance compartido por la edición y el borrado de un paralelo desde Coordinación. */
 final class ParallelScope
 {
     public static function careerId(?RoleAssignment $role): string

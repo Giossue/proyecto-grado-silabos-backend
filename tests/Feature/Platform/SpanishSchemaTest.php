@@ -3,13 +3,6 @@
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-28: el esquema físico completo queda en español. Este test recorre el esquema real
- * que producen las migraciones y falla si un identificador o un valor de CHECK vuelve a
- * introducir inglés. Excepciones documentadas: las columnas internas de las tablas que
- * los drivers de Laravel escriben con nombres fijos (sesiones, trabajos_fallidos,
- * restablecimientos_contrasena, migraciones) y las siglas técnicas.
- */
 $partesInglesas = [
     'created', 'updated', 'deleted', 'name', 'email', 'password', 'active', 'status',
     'type', 'queue', 'payload', 'attempts', 'progress', 'started', 'finished', 'locale',

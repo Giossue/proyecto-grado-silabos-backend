@@ -8,7 +8,6 @@ use DOMXPath;
 use Illuminate\Validation\ValidationException;
 use ZipArchive;
 
-/** Reads cell values and merge ranges, never formulas, macros or external resources. */
 final class CurricularWorkbookReader
 {
     /** @return array<string, mixed> */
@@ -118,7 +117,6 @@ final class CurricularWorkbookReader
                         }
                         $formulas = $xpath->query('./*[local-name()="f"]', $cell);
                         if ($formulas !== false && $formulas->length > 0) {
-                            // Cached results are labelled explicitly; no calculation is performed.
                             $value = $value === '' ? '[fórmula sin resultado guardado]' : $value.' [resultado guardado de fórmula]';
                         }
                         if (trim($value) !== '') {

@@ -5,7 +5,6 @@ namespace App\Modules\Academic\Application\Queries;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 
-/** Proyección de los datos que usaría un sílabo nuevo de la carrera. */
 final class ConfirmedCurricularValues
 {
     /** @return list<array<string, mixed>> */

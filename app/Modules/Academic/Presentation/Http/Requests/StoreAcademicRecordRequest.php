@@ -51,7 +51,6 @@ class StoreAcademicRecordRequest extends FormRequest
             ],
             'carrera' => [
                 'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'id')->where('facultad_activa', true)],
-                // La modalidad la aprueba el CES por carrera; las programaciones la heredan (I-35).
                 'modality' => ['required', 'string', Rule::in(StudyModality::values())],
                 'code' => ['required', 'string', 'max:80', Rule::unique('carreras', 'codigo_carrera')],
                 'nombre' => ['required', 'string', 'max:180'],
@@ -128,7 +127,6 @@ class StoreAcademicRecordRequest extends FormRequest
             'cycle' => ['required', 'integer', 'min:1', 'max:30'],
             'position' => ['nullable', 'integer', 'min:0', 'max:999'],
             'organization_unit' => ['required', 'string', Rule::in(CurricularUnit::values())],
-            // Vacío = la de la carrera; otra modalidad es una excepción de la materia.
             'modality' => ['nullable', 'string', Rule::in(StudyModality::values())],
             'creditos' => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'horas_totales' => ['required', 'integer', 'min:0', 'max:32767'],

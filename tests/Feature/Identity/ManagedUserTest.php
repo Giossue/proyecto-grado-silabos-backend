@@ -77,7 +77,6 @@ class ManagedUserTest extends TestCase
     {
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
 
-        // Por rol: solo quien lo tenga vigente.
         $this->actingAsAdministrator()
             ->getJson(route('api.v1.admin.users.index', ['role' => RoleCode::Coordinator->value]))
             ->assertOk()
@@ -86,13 +85,11 @@ class ManagedUserTest extends TestCase
                 ->where('users.data.0.correo_electronico', 'coordinador@silabos.test')
                 ->where('filters.role', RoleCode::Coordinator->value));
 
-        // Por carrera: la administración no cuelga de ninguna, así que queda fuera.
         $this->actingAsAdministrator()
             ->getJson(route('api.v1.admin.users.index', ['career' => $career->id]))
             ->assertOk()
             ->assertJson(fn (Assert $page) => $page->etc()->has('users.data', 2));
 
-        // «Pendiente de activación» es distinto de «activo»: las cuentas sembradas ya se usaron.
         $this->actingAsAdministrator()
             ->getJson(route('api.v1.admin.users.index', ['status' => 'pending']))
             ->assertOk()
@@ -113,7 +110,6 @@ class ManagedUserTest extends TestCase
                 ->has('users.data', 1)
                 ->where('users.data.0.correo_electronico', 'sin.estrenar@silabos.test'));
 
-        // Y deja de contarse entre las activas, que es lo que dice su insignia.
         $this->actingAsAdministrator()
             ->getJson(route('api.v1.admin.users.index', ['status' => 'active']))
             ->assertOk()
@@ -127,14 +123,12 @@ class ManagedUserTest extends TestCase
             ->assertOk()
             ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('users.data.0.roles.0.name', 'Administrador')
-                // La administración gobierna el sistema entero: su rol no tiene carrera.
                 ->where('users.data.0.careers.0', null));
     }
 
     public function test_the_list_carries_the_read_only_file_of_each_account(): void
     {
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
-        // Un rol retirado deja de contar entre los vigentes, pero la ficha lo conserva.
         $archived = $teacher->roleAssignments()->firstOrFail();
         $archived->update(['activo' => false]);
 
@@ -210,7 +204,6 @@ class ManagedUserTest extends TestCase
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
 
-        // Con la carrera ya coordinada, la concesión se rechaza y lo dice.
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $teacher), [
                 ...$this->identityOf($teacher),
@@ -223,8 +216,6 @@ class ManagedUserTest extends TestCase
             ->patchJson(route('api.v1.admin.users.update', $this->coordinatorHolder()), [...$this->identityOf($this->coordinatorHolder()), 'active' => false])
             ->assertSuccessful();
 
-        // Al desactivarse quien la ejercía, su coordinación se cierra: la carrera queda
-        // sin coordinación y la auditoría dice cuál se cerró.
         $this->assertFalse(CoordinatorAssignment::query()
             ->where('usuario_id', $this->coordinatorHolder()->id)
             ->where('activo', true)
@@ -250,7 +241,6 @@ class ManagedUserTest extends TestCase
             ->where('usuario_id', $teacher->id)
             ->where('carrera_id', $career->id)
             ->exists());
-        // La cuenta ya estaba activa: se entera de que tiene otro ámbito de trabajo.
         $granted = $this->assertNotified($teacher->id, 'usuario.rol_asignado', "Ahora también puede ingresar como Coordinador en {$career->nombre}.");
         $this->assertSame('asignacion_rol', $granted->tipo_recurso);
     }
@@ -266,8 +256,6 @@ class ManagedUserTest extends TestCase
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
         $previousAssignmentId = $teacher->roleAssignments()->firstOrFail()->id;
 
-        // Conceder la coordinación abre el nombramiento, y la base no admite dos activos
-        // en la misma carrera: primero se retira a quien la ejerce.
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->coordinatorHolder()), [...$this->identityOf($this->coordinatorHolder()), 'active' => false])
             ->assertSuccessful();
@@ -422,7 +410,6 @@ class ManagedUserTest extends TestCase
         $this->assertTrue($this->administrator->fresh()->activo);
     }
 
-    /** Una cuenta no verificada puede recibir una invitación nueva, invalidando la anterior. */
     public function test_a_pending_account_gets_a_new_activation_invitation(): void
     {
         Mail::fake();
@@ -445,7 +432,6 @@ class ManagedUserTest extends TestCase
         Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo('pendiente@silabos.test'));
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.invitacion_activacion_enviada', 'recurso_id' => $pending->id]);
 
-        // Activada por su titular: ya no se reenvía nada.
         $activationUrl = '';
         Mail::assertQueued(ManagedUserActivationMail::class, function (ManagedUserActivationMail $mail) use (&$activationUrl): bool {
             $activationUrl = $mail->activationUrl;
@@ -458,9 +444,7 @@ class ManagedUserTest extends TestCase
             'password' => 'Nueva-clave-2026!',
             'password_confirmation' => 'Nueva-clave-2026!',
         ])->assertOk();
-        // Quien emitió la invitación sabe que la cuenta ya está en uso.
         $notice = $this->assertNotified($this->administrator->id, 'usuario.activado', "{$pending->nombre} activó su cuenta");
-        // No hay ficha por cuenta: el aviso abre Usuarios filtrado por esa persona.
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.notifications.open', $notice))
             ->assertOk()
@@ -486,7 +470,6 @@ class ManagedUserTest extends TestCase
         Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo('corregido@silabos.test'));
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.invitacion_activacion_enviada', 'recurso_id' => $pending->id]);
 
-        // Solo cambiar el nombre no reenvía nada.
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $pending), [
                 'nombre' => 'Nombre Corregido',
@@ -507,14 +490,12 @@ class ManagedUserTest extends TestCase
         $this->assertDatabaseMissing('asignaciones_rol', ['usuario_id' => $pending->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.eliminado', 'recurso_id' => $pending->id]);
 
-        // Una cuenta activada no se borra.
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.users.destroy', $teacher))
             ->assertForbidden();
         $this->assertDatabaseHas('usuarios', ['id' => $teacher->id]);
 
-        // Pendiente pero con huella (asignación docente): tampoco.
         $assigned = $this->pendingTeacher('asignado@silabos.test');
         $parallel = Parallel::query()->create([
             'programacion_asignatura_id' => ScheduledSubject::query()->firstOrFail()->id,
@@ -547,7 +528,6 @@ class ManagedUserTest extends TestCase
         return User::query()->where('correo_electronico', $email)->firstOrFail();
     }
 
-    /** I-39: archivar nunca deja la institución sin administración ni un paralelo a nombre de quien se fue. */
     public function test_the_last_administrator_cannot_be_archived_and_archiving_closes_teacher_assignments(): void
     {
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
@@ -559,15 +539,12 @@ class ManagedUserTest extends TestCase
             'activo' => true,
         ]);
 
-        // Con dos administraciones, archivar la segunda es válido…
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $secondAdmin), ['nombre' => $secondAdmin->nombre, 'correo_electronico' => $secondAdmin->correo_electronico, 'active' => 0])
             ->assertSuccessful()
             ->assertSuccessful();
         $this->assertFalse($secondAdmin->fresh()->activo);
 
-        // Con la segunda archivada, la primera es la única administración: ni siquiera el
-        // reemplazo de coordinación con archivo podría cerrarla (`SetUserStatus` lo rechaza).
         $this->expectExceptionMessageMatches('/única cuenta de administración/');
         try {
             app(SetUserStatus::class)
@@ -580,7 +557,6 @@ class ManagedUserTest extends TestCase
     public function test_archiving_a_teacher_without_syllabi_in_progress_closes_its_assignments(): void
     {
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
-        // Un docente con paralelos pero sin sílabos en curso se archiva y sus asignaciones se cierran.
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->assertTrue(TeacherAssignment::query()->forUser($teacher->id)->where('activo', true)->exists());
         $this->actingAsAdministrator()

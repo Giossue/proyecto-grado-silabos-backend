@@ -28,12 +28,10 @@ class SaveTemplateSection
     public function create(string $templateId, array $data, User $actor, Request $request): TemplateSection
     {
         $activeRole = $this->roles->resolve($request);
-        // Con el proceso institucional abierto, el formato está en uso: se pausa antes.
         $this->locks->assertTemplateEditable();
 
         return $this->work->replace($request, function () use ($activeRole, $actor, $data, $request, $templateId): TemplateSection {
             $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
-            // Una sección nueva cambia el formato que los docentes están llenando.
 
             $sections = $template->sections()->sortBy('posicion')->values();
             $position = min(
@@ -44,7 +42,6 @@ class SaveTemplateSection
             $blocks = [];
             $fieldDefinitions = [];
 
-            // Formas de una parte nueva (I-156): Texto libre o Contenido de la plantilla.
             foreach ($this->fields($data) as $fieldPosition => $fieldData) {
                 $blockId = (string) Str::uuid();
                 $fieldKey = $this->stringValue($fieldData, 'key');
@@ -60,7 +57,6 @@ class SaveTemplateSection
                         : TemplateDocumentDefaults::blankSheet()],
                     'posicion' => $fieldPosition + 1,
                 ];
-                // El Contenido de la plantilla no nace con preguntas del docente.
                 if (! $freeText) {
                     continue;
                 }
@@ -123,7 +119,6 @@ class SaveTemplateSection
     public function update(TemplateSection $section, array $data, User $actor, Request $request): TemplateSection
     {
         $activeRole = $this->roles->resolve($request);
-        // Con el proceso institucional abierto, el formato está en uso: se pausa antes.
         $this->locks->assertTemplateEditable();
 
         return $this->work->replace($request, function () use ($activeRole, $actor, $data, $request, $section): TemplateSection {

@@ -5,14 +5,12 @@ namespace App\Modules\Documents\Infrastructure\Rendering;
 use PhpOffice\PhpWord\Element\AbstractContainer;
 use PhpOffice\PhpWord\SimpleType\TblWidth;
 
-/** Renderiza el contrato validado; no importa HTML, recursos remotos ni estilos arbitrarios. */
 final class TemplateDocumentWord
 {
     private const TABLE_BORDER = '000000';
 
     private const TABLE_MIN_FONT_SIZE = 7;
 
-    /** Margen izquierdo + derecho de cada celda, en twips. */
     private const CELL_MARGINS = 100;
 
     private ?int $tableFontSize = null;
@@ -116,7 +114,6 @@ final class TemplateDocumentWord
         $outerFontSize = $this->tableFontSize;
         $cellTexts = $this->cellTexts($rows, $widths);
         $tableFontSize = $this->fontSizeThatFits($cellTexts);
-        // Texto vertical: las filas que cubre deben sumar al menos lo que mide la palabra.
         $rowHeights = [];
         foreach ($cellTexts as $cellText) {
             if ($cellText['header'] && $this->rotates($cellText['text'], $cellText['width'], $tableFontSize ?? $this->bodyFontSize)) {
@@ -159,7 +156,6 @@ final class TemplateDocumentWord
                 $span = $attrs['colspan'] ?? 1;
                 $height = $attrs['rowspan'] ?? 1;
                 $cellWidth = (int) array_sum(array_slice($widths, $column, $span));
-                // Sin roles de fila (I-156): la cabecera se marca con celdas de encabezado.
                 $isHeader = $cell['type'] === 'tableHeader';
                 $options = [
                     'gridSpan' => $span,
@@ -180,8 +176,6 @@ final class TemplateDocumentWord
                         'options' => [...$options, 'vMerge' => 'continue'],
                     ];
                 }
-                // Palabra que no cabe ni con la letra de la tabla: esa celda baja un punto más
-                // y, si es cabecera y aun así no cabe, se escribe en vertical como el formato UEB.
                 $available = $cellWidth - self::CELL_MARGINS;
                 $longest = $this->longestWord($this->plainText($cell));
                 $this->tableFontSize = $tableFontSize;
@@ -211,9 +205,6 @@ final class TemplateDocumentWord
     }
 
     /**
-     * Texto de cada celda con el ancho que ocupa, respetando las celdas tapadas por
-     * combinaciones verticales.
-     *
      * @param  list<array<string, mixed>>  $rows
      * @param  list<int>  $widths
      * @return list<array{text: string, width: int, row: int, rows: int, header: bool}>
@@ -248,15 +239,9 @@ final class TemplateDocumentWord
         return $texts;
     }
 
-    /**
-     * Tamaño de letra de la tabla: el del cuerpo (null, se hereda) salvo que alguna palabra
-     * no quepa en su celda; entonces se reduce hasta el mínimo para no invadir la vecina.
-     *
-     * @param  list<array{text: string, width: int, row: int, rows: int, header: bool}>  $cells
-     */
+    /** @param  list<array{text: string, width: int, row: int, rows: int, header: bool}>  $cells */
     private function fontSizeThatFits(array $cells): ?int
     {
-        // Una celda que no cabría ni con el mínimo se trata aparte y no achica toda la tabla.
         $cells = array_filter(
             $cells,
             fn (array $cell): bool => self::wordWidth($this->longestWord($cell['text']), self::TABLE_MIN_FONT_SIZE) <= $cell['width'] - self::CELL_MARGINS,
@@ -277,7 +262,6 @@ final class TemplateDocumentWord
         return self::TABLE_MIN_FONT_SIZE;
     }
 
-    /** Cabecera cuya palabra más larga no cabe ni con un punto menos que el mínimo. */
     private function rotates(string $text, int $width, int $tableFontSize): bool
     {
         $longest = $this->longestWord($text);
@@ -299,7 +283,6 @@ final class TemplateDocumentWord
         return $longest;
     }
 
-    /** Ancho estimado (twips) de una palabra en Arial negrita: mayúsculas más anchas. */
     public static function wordWidth(string $word, int $size): int
     {
         $em = $size * 20;

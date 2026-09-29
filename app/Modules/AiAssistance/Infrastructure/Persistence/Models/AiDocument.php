@@ -7,10 +7,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Almacén vectorial de la IA (I-135): un fragmento de fuente académica con sus
- * metadatos (`fuente_academica_id`, `carrera_id`, `titulo`, `ruta_encabezados`,
- * `posicion`, páginas, bloques de origen y `huella`) y su embedding.
- *
  * @property string $id
  * @property string $contenido_documento
  * @property array<string, mixed> $metadatos_documento

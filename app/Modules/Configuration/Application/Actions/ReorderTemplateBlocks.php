@@ -29,7 +29,6 @@ class ReorderTemplateBlocks
         Request $request,
     ): void {
         $activeRole = $this->roles->resolve($request);
-        // Con el proceso institucional abierto, el formato está en uso: se pausa antes.
         $this->locks->assertTemplateEditable();
 
         $this->work->replace($request, function () use ($activeRole, $actor, $blockIds, $request, $sectionId, $template): void {

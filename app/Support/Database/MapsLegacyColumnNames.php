@@ -4,15 +4,6 @@ namespace App\Support\Database;
 
 use Illuminate\Database\Eloquent\Builder;
 
-/**
- * Permite migrar nombres físicos explícitos sin cambiar contratos de entrada o salida
- * en una sola entrega. Cada modelo declara `LEGACY_COLUMN_ALIASES` como
- * `nombre_anterior => nombre_fisico`.
- *
- * El alias existe solo en la capa de persistencia de la aplicación: PostgreSQL conserva
- * exclusivamente la columna explícita. Los casos de uso nuevos deben usar el nombre
- * físico; los alias permiten retirar las referencias antiguas de forma segura.
- */
 trait MapsLegacyColumnNames
 {
     /** @return array<string, string> */

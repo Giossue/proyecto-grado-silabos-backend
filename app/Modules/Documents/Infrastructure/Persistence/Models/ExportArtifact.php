@@ -60,11 +60,7 @@ class ExportArtifact extends Model
         return $this->belongsTo(SyllabusRevision::class, 'revision_silabo_id');
     }
 
-    /**
-     * El sílabo se deriva de la revisión exportada (I-131).
-     *
-     * @return HasOneThrough<Syllabus, SyllabusRevision, $this>
-     */
+    /** @return HasOneThrough<Syllabus, SyllabusRevision, $this> */
     public function syllabus(): HasOneThrough
     {
         return $this->hasOneThrough(Syllabus::class, SyllabusRevision::class, 'id', 'id', 'revision_silabo_id', 'silabo_id');

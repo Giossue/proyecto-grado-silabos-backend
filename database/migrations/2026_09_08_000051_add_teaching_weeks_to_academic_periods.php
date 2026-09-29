@@ -10,8 +10,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('periodos_academicos', function (Blueprint $table): void {
-            // Los periodos existentes corresponden al formato institucional vigente
-            // de 16 semanas. Los nuevos registros deben declarar el valor en la UI.
             $table->unsignedSmallInteger('semanas_lectivas')->default(16)->after('fecha_fin');
         });
 

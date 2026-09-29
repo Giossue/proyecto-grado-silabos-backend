@@ -4,11 +4,6 @@ namespace App\Modules\Configuration\Domain;
 
 use Illuminate\Validation\ValidationException;
 
-/**
- * Texto libre del docente (I-156): párrafos, negrita y cursiva, saltos de línea,
- * listas con viñetas o numeradas y tablas simples. Se guarda como documento JSON en el
- * valor del campo; nunca admite marcas de la plantilla ni estilos de celda.
- */
 final class FreeText
 {
     private const MAX_NODES = 5000;
@@ -61,12 +56,7 @@ final class FreeText
         return trim(self::plainText($document)) === '';
     }
 
-    /**
-     * Texto sin formato para la IA y el resumen del expediente: una línea por párrafo,
-     * elemento de lista o fila de tabla.
-     *
-     * @param  array<string, mixed>  $node
-     */
+    /** @param  array<string, mixed>  $node */
     public static function plainText(array $node): string
     {
         $type = $node['type'] ?? null;
@@ -90,11 +80,7 @@ final class FreeText
         return implode($type === 'paragraph' ? '' : "\n", $children);
     }
 
-    /**
-     * Texto libre a partir de texto plano: un párrafo por línea (I-156).
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public static function fromText(string $text): array
     {
         $paragraphs = [];
@@ -106,9 +92,6 @@ final class FreeText
     }
 
     /**
-     * Texto libre a partir de filas: lista si hay una sola columna; tabla con encabezado
-     * si hay varias. Conserva lo que el docente ya había escrito por filas (I-156).
-     *
      * @param  list<array{key: string, label: string}>  $columns
      * @param  list<array<string, mixed>>  $rows
      * @return array<string, mixed>
@@ -141,11 +124,7 @@ final class FreeText
         ]]]];
     }
 
-    /**
-     * Bloques del documento para insertarlos en la hoja del sílabo.
-     *
-     * @return list<array<string, mixed>>
-     */
+    /** @return list<array<string, mixed>> */
     public static function blocks(mixed $value): array
     {
         if (! self::isDocument($value)) {
@@ -204,7 +183,6 @@ final class FreeText
             }
             $content[] = self::node($child, $type, $depth + 1, $count, $characters, $attribute);
         }
-        // Una lista, tabla o celda sin contenido no se puede dibujar; un párrafo vacío sí.
         if ($content === [] && $type !== 'paragraph') {
             if ($type === 'doc') {
                 return ['type' => 'doc', 'content' => [['type' => 'paragraph']]];

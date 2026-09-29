@@ -24,11 +24,9 @@ class DeleteTemplateBlock
     public function execute(TemplateBlock $block, User $actor, Request $request): void
     {
         $activeRole = $this->roles->resolve($request);
-        // Con el proceso institucional abierto, el formato está en uso: se pausa antes.
         $this->locks->assertTemplateEditable();
 
         $this->work->replace($request, function () use ($activeRole, $actor, $block, $request): void {
-            // Un bloque menos cambia el formato que los docentes están llenando.
 
             $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
             $lockedBlock = $template->blockOrFail($block->id);

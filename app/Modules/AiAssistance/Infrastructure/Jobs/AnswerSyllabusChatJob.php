@@ -52,8 +52,6 @@ class AnswerSyllabusChatJob implements ShouldQueue
         if ($message === null) {
             return;
         }
-        // Un mensaje anterior al retiro puede contener fuentes RAG fotografiadas.
-        // Se conserva su entrada, pero no se envía a un proveedor bajo el flujo nuevo.
         if ($message->input('context_version') !== BuildSyllabusChatContext::VERSION) {
             $this->finishFailed('contexto_ia_retirado', 'La solicitud pertenece al asistente anterior. Envíe otra pregunta para preparar las unidades.');
 

@@ -45,7 +45,6 @@ class RequestSyllabusCorrection
                 throw ValidationException::withMessages(['revision' => 'Esta revisión ya tiene una solicitud de corrección.']);
             }
 
-            // La solicitud envía todas las observaciones abiertas de la revisión vigente.
             $observations = ReviewObservation::query()
                 ->where('revision_silabo_id', $revision->id)
                 ->where('estado', 'abierta')

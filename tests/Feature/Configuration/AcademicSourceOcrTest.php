@@ -196,7 +196,6 @@ final class AcademicSourceOcrTest extends TestCase
 
     public function test_html_entities_from_the_ocr_are_not_shown_as_text_in_table_cells(): void
     {
-        // PaddleOCR entrega el texto de la celda ya escapado (p. ej. `5 &#x27;A&#x27;`).
         $this->fakeCompletedJob([[
             'id' => 'table', 'kind' => 'table', 'locations' => [],
             'row_count' => 1, 'column_count' => 1,

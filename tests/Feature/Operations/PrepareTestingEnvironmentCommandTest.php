@@ -68,7 +68,6 @@ class PrepareTestingEnvironmentCommandTest extends TestCase
             $this->assertTrue(RoleAssignment::query()->effective()->where('usuario_id', $user->id)
                 ->where('rol', 'docente')->where('carrera_id', $this->career->id)->exists());
         }
-        // Las materias programadas vacías se retiran: solo quedan las que tienen docente.
         $this->assertSame(
             ['Arquitectura de Software', 'Calidad de Software', 'Cálculo I'],
             ScheduledSubject::query()->with('subject')->get()->pluck('subject.nombre')->sort()->values()->all(),
@@ -76,7 +75,6 @@ class PrepareTestingEnvironmentCommandTest extends TestCase
         $this->assertSame(SyllabusProcess::STATE_OPEN, SyllabusProcess::query()->value('estado'));
         $this->assertSame(1, Convocation::query()->count());
         $this->assertDatabaseCount('fuentes_academicas', 0);
-        // La coordinación vigente se reutiliza; no se crea otra.
         $this->assertFalse(User::query()->where('correo_electronico', PrepareTestingEnvironmentCommand::COORDINATOR_EMAIL)->exists());
     }
 

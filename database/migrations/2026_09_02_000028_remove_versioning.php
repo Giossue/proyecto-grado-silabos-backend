@@ -5,20 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Adiós a las versiones (I-32).
- *
- * Cada revisión enviada guarda una copia completa de la plantilla con la que se hizo, y
- * los sílabos sin enviar se borran cuando la plantilla o la malla cambian. Con eso, las
- * versiones ya no protegen nada: solo añadían botones y estados. La plantilla pasa a ser
- * una sola que se edita en el sitio; la malla, que ya era una por carrera, deja de
- * llamarse «versión».
- *
- * Datos: se conserva la última versión publicada de cada plantilla (o la última si no
- * hay publicada) y se descartan las demás. Si algún sílabo, convocatoria, proceso,
- * exportación o ejecución de IA apunta a una versión descartada, la migración se detiene:
- * ese caso requiere decisión humana, no un borrado silencioso.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -36,7 +22,6 @@ return new class extends Migration
         );
     }
 
-    /** Los guardas de «versión publicada» dejan de tener sentido: la plantilla se edita en el sitio. */
     private function dropPublishedGuards(): void
     {
         DB::unprepared(<<<'SQL'
@@ -95,14 +80,11 @@ return new class extends Migration
                     ->update(['plantilla_id' => $template->id]);
             }
 
-            // Las versiones descartadas se llevan su estructura (cascada) y nada más:
-            // ya se comprobó que ningún expediente las usa.
             if ($discarded->isNotEmpty()) {
                 DB::table('versiones_plantilla')->whereIn('id', $discarded)->delete();
             }
         }
 
-        // Los triggers de consistencia leen `version_plantilla_id`; se rehacen después.
         DB::unprepared(<<<'SQL'
             DROP TRIGGER IF EXISTS validar_y_proteger_ejecucion_ia ON ejecuciones_ia;
             DROP TRIGGER IF EXISTS validar_artefacto_exportacion ON artefactos_exportacion;
@@ -191,7 +173,6 @@ return new class extends Migration
         DB::statement('ALTER INDEX IF EXISTS definiciones_campo_malla_version_malla_id_posicion_index RENAME TO definiciones_campo_malla_malla_id_posicion_index');
     }
 
-    /** Los mismos guardas de coherencia de antes, leyendo `plantilla_id`. */
     private function recreateConsistencyTriggers(bool $usingVersions): void
     {
         $column = $usingVersions ? 'version_plantilla_id' : 'plantilla_id';

@@ -6,9 +6,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 
 final class CurriculumSystemFields
 {
-    /**
-     * @var list<string>
-     */
+    /** @var list<string> */
     public const TOTAL_HOUR_COMPONENT_KEYS = [
         'horas_ac',
         'horas_pae',
@@ -33,11 +31,7 @@ final class CurriculumSystemFields
         'horas_totales' => 'Horas totales',
     ];
 
-    /**
-     * Campos fijos de una asignatura. No son configurables por carrera ni malla.
-     *
-     * @return list<array{key: string, label: string, type: string, system_key: string, position: int, totalizable: bool}>
-     */
+    /** @return list<array{key: string, label: string, type: string, system_key: string, position: int, totalizable: bool}> */
     public static function fixedDefinitions(): array
     {
         return [

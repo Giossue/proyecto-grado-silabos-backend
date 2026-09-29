@@ -4,7 +4,6 @@ namespace App\Modules\Identity\Domain;
 
 use App\Modules\Identity\Domain\Enums\RoleCode;
 
-/** Valor de presentación derivado del enum fijo; no representa una tabla ni relación. */
 final readonly class FixedRole
 {
     private function __construct(

@@ -5,12 +5,6 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * `asignaciones_rol` es genérica: docentes pueden repetirse por carrera, pero una
-     * carrera solo puede tener una coordinación activa. PostgreSQL no permite un índice
-     * parcial que dependa de `roles.codigo`, por lo que la invariante se protege con un
-     * trigger sobre la tabla normalizada.
-     */
     public function up(): void
     {
         $duplicates = DB::selectOne(<<<'SQL'

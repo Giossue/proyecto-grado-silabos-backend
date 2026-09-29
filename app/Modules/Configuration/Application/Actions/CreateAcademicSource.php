@@ -26,7 +26,6 @@ class CreateAcademicSource
         if ($activeRole?->role->codigo_rol !== RoleCode::Coordinator->value || $activeRole->carrera_id === null) {
             abort(403);
         }
-        // Con una convocatoria en curso los sílabos se apoyan en las fuentes: se pausa antes.
         $this->locks->assertCareerEditable($activeRole->carrera_id);
 
         return DB::transaction(function () use ($actor, $activeRole, $data, $request): AcademicSource {

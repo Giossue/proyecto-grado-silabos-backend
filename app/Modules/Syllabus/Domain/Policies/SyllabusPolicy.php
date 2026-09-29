@@ -57,7 +57,6 @@ class SyllabusPolicy
             && in_array($syllabus->estado, ['borrador', 'correccion_solicitada', 'en_revision'], true);
     }
 
-    /** Descartar lo presentado para que el docente lo rehaga: coordinación de la carrera, nunca sobre aprobados. */
     public function reset(User $user, Syllabus $syllabus): Response
     {
         if (! in_array($syllabus->estado, ['borrador', 'en_revision', 'correccion_solicitada'], true)) {
@@ -67,11 +66,6 @@ class SyllabusPolicy
         return $this->decide($user, $syllabus);
     }
 
-    /**
-     * Decidir sobre un expediente (observar, pedir corrección, aprobar, reabrir,
-     * reiniciar) exige que la convocatoria de la carrera siga viva: abierta o en pausa.
-     * Cerrada, la revisión queda solo para consulta.
-     */
     public function decide(User $user, Syllabus $syllabus): Response
     {
         if (! $this->review($user, $syllabus)) {
@@ -105,8 +99,6 @@ class SyllabusPolicy
         return $user->activo
             && $activeRole?->role->codigo_rol === RoleCode::Teacher->value
             && $activeRole->carrera_id === $syllabus->convocation()->value('carrera_id')
-            // En curso: abierta por la carrera y con el proceso institucional abierto. Una
-            // pausa en cualquiera de los dos niveles detiene la edición.
             && $syllabus->convocation()->running()->exists()
             && $this->hasCurrentCollaboration($user, $syllabus);
     }

@@ -24,23 +24,17 @@ class SyllabusSnapshot
 
         $template = SyllabusTemplate::institutional();
         $definitions = FieldDefinition::query()->where('plantilla_id', $template->id)->get();
-        // «Mostrar solo si»: una parte oculta sale vacía en el documento, pero su valor
-        // se conserva en la copia para no perder el trabajo del docente.
         $hidden = array_flip(FieldConditions::hiddenKeys(
             $definitions,
             $definitions->mapWithKeys(fn (FieldDefinition $field): array => [$field->clave => $values->get($field->id)?->valor])->all(),
         ));
 
         return [
-            // 6: sin filas repetibles ni esquema de tabla (I-156).
             'schema_version' => 6,
             'template_id' => $template->id,
             'template_name' => SyllabusTemplate::INSTITUTIONAL_NAME,
-            // La copia lleva también el mapa del documento: la revisión se exporta desde
-            // sí misma aunque la plantilla haya cambiado después.
             'document_mapping' => $template->mapeo_documento,
             'academic_context' => $syllabus->contexto_academico,
-            // Ficha de identificación ya armada: el documento no vuelve a consultar la malla.
             'identification' => $identification,
             'template_variables' => TemplateVariables::resolve(['identification' => $identification, 'academic_context' => $syllabus->contexto_academico]),
             'sections' => $template->sections

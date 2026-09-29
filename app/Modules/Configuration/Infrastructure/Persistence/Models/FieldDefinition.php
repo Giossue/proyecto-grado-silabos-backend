@@ -90,7 +90,6 @@ class FieldDefinition extends Model
             : null;
     }
 
-    /** Nombre para mensajes: una parte sin nombre toma el de su sección. */
     public function displayName(): string
     {
         $label = trim((string) $this->etiqueta);

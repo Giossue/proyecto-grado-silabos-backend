@@ -49,10 +49,6 @@ use Illuminate\Support\Facades\DB;
 
 class TemplateController extends Controller
 {
-    /**
-     * Una sola plantilla (I-32): si existe se abre directo, como la malla de una
-     * carrera. La lista solo aparece cuando todavía no hay nada que abrir.
-     */
     public function index(ManageTemplatesRequest $request, ProcessLocks $locks, InstitutionalLogos $logos): JsonResponse
     {
         $template = SyllabusTemplate::query()->first();
@@ -165,8 +161,6 @@ class TemplateController extends Controller
                     })->values()->all(),
                 ])->values()->all(),
             ],
-            // Formas de una parte nueva (I-156): lo escribe el docente o lo arma
-            // Administración en la hoja con sus marcas.
             'blockTypes' => [
                 ['value' => 'free_text', 'label' => 'Texto libre'],
                 ['value' => 'template', 'label' => 'Contenido de la plantilla'],
@@ -176,9 +170,6 @@ class TemplateController extends Controller
     }
 
     /**
-     * La hoja que edita Administración muestra en cada ficha su «Pedir solo si» vigente
-     * (I-158), también para diseños guardados antes de que la condición viviera en ella.
-     *
      * @param  array<string, mixed>|null  $document
      * @param  iterable<FieldDefinition>  $fields
      * @return array<string, mixed>|null
@@ -332,7 +323,6 @@ class TemplateController extends Controller
         return $this->success($request, 'Orden de secciones actualizado.');
     }
 
-    /** Reemplaza el logo de la universidad que encabeza todos los sílabos. */
     public function storeLogo(
         StoreInstitutionLogoRequest $request,
         InstitutionalLogos $logos,
@@ -345,7 +335,6 @@ class TemplateController extends Controller
         $file = $request->file('logo');
         abort_unless($file instanceof UploadedFile, 422);
         $locks->assertTemplateEditable();
-        // El logo se lee en vivo al mostrar y exportar: no reinicia los sílabos en curso.
         DB::transaction(function () use ($actor, $audit, $file, $logos, $request, $roles): void {
             $logos->storeInstitution($file);
             $template = SyllabusTemplate::query()->first();

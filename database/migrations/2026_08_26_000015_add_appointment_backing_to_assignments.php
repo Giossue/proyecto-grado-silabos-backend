@@ -7,20 +7,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Un relevo de docente y un encargo de coordinación no se sostienen en la palabra de
-     * quien los registra: los respalda una acción de personal o una resolución. Se guarda
-     * su referencia junto a la asignación, que es donde se consulta, y no solo en el
-     * evento de auditoría.
-     *
-     * La coordinación distingue además titular de encargado. La institución los trata
-     * como cargos distintos —el catálogo de dignidades de la fuente duplica cada uno con
-     * el sufijo «(E)»— aunque sus atribuciones sean las mismas.
-     *
-     * El calendario de la convocatoria gana la etapa `start`: el reglamento vigente de la
-     * UEB exige que la planificación esté programada antes de iniciar el periodo, así que
-     * el inicio es una fecha del proceso y no solo un dato informativo.
-     */
     public function up(): void
     {
         Schema::table('asignaciones_docente', function (Blueprint $table): void {
@@ -38,7 +24,6 @@ return new class extends Migration
 
         DB::statement("ALTER TABLE asignaciones_coordinador ADD CONSTRAINT asignaciones_coordinador_calidad_check CHECK (calidad IN ('titular', 'encargado'))");
 
-        // Un encargo sin fecha de fin no es un encargo: es una titularidad sin nombrar.
         DB::statement('ALTER TABLE asignaciones_coordinador ADD CONSTRAINT asignaciones_coordinador_encargo_check CHECK (calidad <> \'encargado\' OR vigente_hasta IS NOT NULL)');
 
         DB::statement('ALTER TABLE fechas_limite_convocatoria DROP CONSTRAINT fechas_limite_etapa_check');

@@ -9,13 +9,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Logos que encabezan el sílabo: el de la universidad (uno, reemplazable por
- * Administración) y el de cada facultad. El logo de facultad es obligatorio al crearla
- * y solo Administración lo gestiona. Ambos usan transparencia y el sistema los ajusta a
- * una medida fija conservando la proporción, centrados sobre un lienzo transparente.
- * Viven en el disco privado y se sirven por ruta propia; el Word los lee del disco.
- */
 class InstitutionalLogos
 {
     public const DISK = 'private';
@@ -29,8 +22,6 @@ class InstitutionalLogos
     private const INSTITUTION_PATH = 'logos/institucion.png';
 
     /**
-     * La medida no se exige porque `fit()` la ajusta al guardar.
-     *
      * @param  array{width: positive-int, height: positive-int}  $size
      * @return list<mixed>
      */
@@ -75,12 +66,7 @@ class InstitutionalLogos
         return $path;
     }
 
-    /**
-     * Ajusta el PNG a la medida: se escala conservando la proporción hasta caber y se
-     * centra sobre un lienzo transparente del tamaño exacto.
-     *
-     * @param  array{width: positive-int, height: positive-int}  $size
-     */
+    /** @param  array{width: positive-int, height: positive-int}  $size */
     public static function fit(UploadedFile $file, array $size): string
     {
         $source = @imagecreatefrompng($file->getRealPath());
@@ -127,7 +113,6 @@ class InstitutionalLogos
         return $png;
     }
 
-    /** Ruta absoluta del logo de la universidad; el de fábrica si nadie subió uno. */
     public function institutionPath(): string
     {
         $disk = Storage::disk(self::DISK);
@@ -137,7 +122,6 @@ class InstitutionalLogos
             : public_path('images/silabo/logo-universidad.png');
     }
 
-    /** Ruta absoluta del logo de la facultad; el de fábrica si no tiene o no existe. */
     public function facultyPath(?Faculty $faculty): string
     {
         $logo = $faculty?->logoObject;
@@ -154,7 +138,6 @@ class InstitutionalLogos
         return $this->facultyPath($facultyId === null ? null : Faculty::query()->find($facultyId));
     }
 
-    /** El logo propio existe; el archivo de muestra no completa la puesta en marcha. */
     public function facultyIsConfigured(?Faculty $faculty): bool
     {
         $logo = $faculty?->logoObject;
@@ -166,7 +149,6 @@ class InstitutionalLogos
             && Storage::disk($logo->disco)->exists($path);
     }
 
-    /** Marca de versión para que el navegador no cachee un logo reemplazado. */
     public function version(string $absolutePath): string
     {
         $time = @filemtime($absolutePath);
