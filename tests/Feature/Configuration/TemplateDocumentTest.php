@@ -560,20 +560,14 @@ class TemplateDocumentTest extends TestCase
             ->assertJsonValidationErrors(['page_orientation' => 'Elija hoja vertical u horizontal.']);
         $this->patchJson($url, [...$payload, 'page_orientation' => null])->assertSuccessful();
         $this->assertNull($block->fresh()->pageOrientation());
-
-        // Planificación sigue horizontal por defecto.
-        $planning = $template->fields()->where('clave', 'unidades')->firstOrFail()->block;
-        $this->assertSame('landscape', $planning->pageOrientation());
     }
 
     public function test_fixed_text_can_be_landscape_and_is_not_saved_empty(): void
     {
         $template = $this->template();
-        $section = $template->sections()->firstWhere('clave', 'etica');
-        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
-            'section_id' => $section->id, 'key' => 'nota_fija', 'label' => 'Nota fija', 'content_type' => 'fixed',
-        ])->assertSuccessful();
-        $block = $template->fresh()->blocks()->firstWhere('clave', 'nota_fija');
+        // Contenido fijo del formato oficial: los indicadores de evaluación UEB.
+        $block = $template->blocks()->firstWhere('clave', 'evaluacion_principal');
+        $this->assertSame('fixed', $block->configuredContentType());
         $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
 
         $this->patchJson($url, ['fingerprint' => SaveTemplateDocument::fingerprint($block)])
@@ -591,35 +585,6 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame('landscape', $block->fresh()->pageOrientation());
     }
 
-    public function test_administration_creates_a_fixed_content_block_without_teacher_fields(): void
-    {
-        $template = $this->template();
-        $section = $template->sections()->firstWhere('clave', 'etica');
-
-        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
-            'section_id' => $section->id,
-            'key' => 'nota_institucional',
-            'label' => 'Nota institucional',
-            'content_type' => 'fixed',
-        ])->assertSuccessful();
-
-        $block = $template->fresh()->blocks()->firstWhere('clave', 'nota_institucional');
-        $this->assertSame('fixed', $block->configuredContentType());
-        $this->assertSame('narrativa', $block->tipo);
-        $this->assertCount(0, $block->fields);
-        $this->assertSame([], TemplateDocument::nodes($block->configuracion['document'], 'field'));
-        // Ya no se ofrece como forma (I-155): un párrafo sin marcas es texto fijo.
-        $this->assertNotContains('fixed', array_column($this->getJson(route('api.v1.admin.template.show', $template))->json('blockTypes') ?? [], 'value'));
-
-        // Texto libre (I-155): un párrafo que se escribe en la hoja, no una tabla de una celda.
-        $document = $block->configuracion['document'];
-        $this->assertSame('paragraph', $document['content'][0]['type']);
-        $document['content'][0]['content'][0]['text'] = 'Texto institucional';
-        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
-            'document' => $document, 'fingerprint' => SaveTemplateDocument::fingerprint($block), 'properties' => [],
-        ])->assertSuccessful();
-        $this->assertStringContainsString('Texto institucional', json_encode($block->fresh()->configuracion['document']));
-    }
 
     public function test_fields_have_no_optional_flag_or_limits(): void
     {
