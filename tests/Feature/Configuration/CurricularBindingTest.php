@@ -211,39 +211,6 @@ class CurricularBindingTest extends TestCase
         $this->assertSame([], CurricularFieldOptions::fromAttributes(['options_sources' => [], 'options_source' => 'curricular_habilidades']));
     }
 
-    public function test_section_and_block_creation_support_curricular_catalogs_and_reject_text_sources(): void
-    {
-        $this->concept('habilidades', 'lista');
-        $this->concept('transversales', 'lista', 'carrera');
-        $this->concept('perfil', 'texto');
-        $this->asRole('admin@silabos.test');
-        $template = SyllabusTemplate::institutional();
-        $sources = ['curricular_habilidades', 'curricular_transversales'];
-        $this->postJson(route('api.v1.admin.template.sections.store', $template), [
-            'title' => 'Selecciones', 'key' => 'selecciones',
-            'fields' => [
-                ['key' => 'habilidad_uno', 'label' => 'Habilidad uno', 'content_type' => 'multiple_choice', 'options_sources' => $sources],
-                ['key' => 'habilidad_dos', 'label' => 'Habilidad dos', 'content_type' => 'multiple_choice', 'options_sources' => $sources],
-            ],
-        ])->assertOk();
-        $one = FieldDefinition::query()->where('clave', 'habilidad_uno')->firstOrFail();
-        $this->assertSame($sources, CurricularFieldOptions::sources($one));
-        $this->assertSame('seleccion_multiple', $one->tipo);
-        $section = $template->fresh()->sections->firstWhere('clave', 'selecciones');
-        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
-            'section_id' => $section->id, 'key' => 'habilidad_tres', 'label' => 'Habilidad tres',
-            'content_type' => 'multiple_choice', 'options_sources' => $sources,
-        ])->assertOk();
-        $three = FieldDefinition::query()->where('clave', 'habilidad_tres')->firstOrFail();
-        $this->assertSame($sources, CurricularFieldOptions::sources($three));
-        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
-            'section_id' => $section->id, 'key' => 'habilidad_invalida', 'label' => 'Habilidad inválida',
-            'content_type' => 'multiple_choice', 'options_sources' => ['curricular_perfil'],
-        ])->assertUnprocessable()->assertJsonValidationErrors('options_sources');
-        // La selección se arma en la hoja como pregunta !Docente (I-155); no es una forma de parte.
-        $this->getJson(route('api.v1.admin.template.index'))->assertOk()
-            ->assertJsonMissing(['value' => 'multiple_choice']);
-    }
 
     public function test_word_and_pdf_export_frozen_curricular_lists_tables_and_multiple_selections(): void
     {

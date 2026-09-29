@@ -432,12 +432,13 @@ class TemplateAndSourceTest extends TestCase
                 'section_id' => $section->id,
                 'key' => 'parte_sin_nombre',
                 'label' => '',
-                'content_type' => 'text',
+                'content_type' => 'free_text',
             ])
             ->assertSuccessful();
 
         $field = FieldDefinition::query()->where('plantilla_id', $version->id)->where('clave', 'parte_sin_nombre')->firstOrFail();
-        $this->assertSame('', $field->etiqueta);
+        // El Texto libre sin nombre toma el de la sección para hablarle al docente (I-156).
+        $this->assertSame($section->titulo, $field->etiqueta);
         $this->assertSame('', $field->block?->titulo);
         // Los mensajes al docente usan el nombre de la sección cuando la parte no tiene.
         $this->assertSame($section->titulo, $field->displayName());
@@ -456,7 +457,7 @@ class TemplateAndSourceTest extends TestCase
             ->postJson(route('api.v1.admin.template.sections.store', $version), [
                 'title' => '',
                 'key' => 'seccion_sin_titulo',
-                'fields' => [['key' => 'parte_de_seccion', 'label' => null, 'content_type' => 'text']],
+                'fields' => [['key' => 'parte_de_seccion', 'label' => null, 'content_type' => 'free_text']],
             ])
             ->assertJsonValidationErrors('title')
             ->assertJsonMissingValidationErrors('fields.0.label');
@@ -465,10 +466,10 @@ class TemplateAndSourceTest extends TestCase
             ->postJson(route('api.v1.admin.template.sections.store', $version), [
                 'title' => 'Sección con parte sin nombre',
                 'key' => 'seccion_parte_sin_nombre',
-                'fields' => [['key' => 'parte_de_seccion', 'label' => null, 'content_type' => 'text']],
+                'fields' => [['key' => 'parte_de_seccion', 'label' => null, 'content_type' => 'free_text']],
             ])
             ->assertSuccessful();
-        $this->assertSame('', FieldDefinition::query()->where('plantilla_id', $version->id)->where('clave', 'parte_de_seccion')->value('etiqueta_definicion_campo'));
+        $this->assertSame('Sección con parte sin nombre', FieldDefinition::query()->where('plantilla_id', $version->id)->where('clave', 'parte_de_seccion')->value('etiqueta_definicion_campo'));
     }
 
     public function test_template_blocks_use_document_content_types(): void
@@ -481,17 +482,17 @@ class TemplateAndSourceTest extends TestCase
                 'section_id' => $section->id,
                 'key' => 'estrategias_aprendizaje',
                 'label' => 'Estrategias de aprendizaje',
-                'content_type' => 'bulleted_list',
-                'teacher_editable' => true,
+                'content_type' => 'free_text',
                 'position' => 1,
             ])
             ->assertSuccessful();
 
         $block = $version->fresh()->sections()->whereKey($section->id)->firstOrFail()
             ->blocks()->where('titulo', 'Estrategias de aprendizaje')->firstOrFail();
-        $this->assertSame('repetible', $block->tipo);
-        $this->assertSame('bulleted_list', $block->configuracion['content_type']);
-        $this->assertSame('repetible', $block->fields()->firstOrFail()->tipo);
+        // I-156: sin filas repetibles, todo bloque es narrativo y el docente escribe Texto libre.
+        $this->assertSame('narrativa', $block->tipo);
+        $this->assertSame('text', $block->configuracion['content_type']);
+        $this->assertSame('texto_libre', $block->fields()->firstOrFail()->tipo);
         $this->assertSame(1, $block->posicion);
     }
 
@@ -506,7 +507,7 @@ class TemplateAndSourceTest extends TestCase
                 'section_id' => $section->id,
                 'key' => 'objetivos_especificos_reorden',
                 'label' => 'Objetivos específicos',
-                'content_type' => 'numbered_list',
+                'content_type' => 'free_text',
             ])
             ->assertSuccessful();
 
@@ -536,26 +537,12 @@ class TemplateAndSourceTest extends TestCase
         $this->assertDatabaseMissing('definiciones_campo', ['bloque_plantilla_id' => $second->id]);
     }
 
-    public function test_administrator_designs_a_complex_table_on_a_block(): void
+    public function test_table_structure_form_no_longer_exists(): void
     {
         $version = $this->createTemplate();
-        // Una tabla nueva expone la tabla mínima; la forma se elige al crearla (I-155).
-        $section = $version->sections()->where('clave', 'descripcion')->firstOrFail();
-        $block = $section->blocks()->firstOrFail();
+        $block = $version->sections()->where('clave', 'descripcion')->firstOrFail()->blocks()->firstOrFail();
 
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.template.fields.store', $version), [
-                'section_id' => $section->id,
-                'key' => 'matriz_descripcion',
-                'label' => 'Matriz',
-                'content_type' => 'table',
-            ])
-            ->assertSuccessful();
-        $table = collect($this->actingAsAdministrator()->getJson(route('api.v1.admin.template.show', $version))->json('template.sections'))
-            ->flatMap(fn (array $item): array => $item['blocks'])->firstWhere('key', 'matriz_descripcion');
-        $this->assertSame('texto', $table['table']['columns'][0]['key']);
-
-        // I-119: la estructura se edita sobre la tabla; el formulario separado ya no existe.
+        // I-119: la estructura se edita sobre la hoja; el formulario separado ya no existe.
         $this->actingAsAdministrator()
             ->patchJson("/api/v1/admin/template/{$version->id}/blocks/{$block->id}/table", ['columns' => []])
             ->assertNotFound();
@@ -572,7 +559,7 @@ class TemplateAndSourceTest extends TestCase
                 'key' => 'recursos_materiales',
                 'first_field_label' => 'Recursos principales',
                 'first_field_key' => 'recursos_principales',
-                'first_field_content_type' => 'table',
+                'first_field_content_type' => 'free_text',
                 'position' => 2,
             ])
             ->assertSuccessful();
