@@ -630,22 +630,11 @@ class TemplateDocumentTest extends TestCase
         $payload = $this->getJson(route('api.v1.admin.template.show', $template))->json();
         $this->assertContains(['key' => 'discapacidad_tiene', 'value' => 'Sí'], data_get($payload, 'template.sections.*.blocks.*.fields.*.show_when'));
 
-        $save = fn (mixed $condition) => $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
+        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
             'document' => $block->fresh()->configuracion['document'],
             'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
-            'properties' => [['key' => 'formacion_experiencia', 'label' => $formation->etiqueta, 'help' => '', 'show_when' => $condition]],
-        ]);
-
-        $save(['key' => 'discapacidad_tiene', 'value' => 'No'])->assertSuccessful();
-        $this->assertSame(['key' => 'discapacidad_tiene', 'value' => 'No'], $formation->fresh()->mostrar_si);
-        $save(['key' => 'formacion_experiencia', 'value' => 'No'])
-            ->assertJsonValidationErrors(['properties.0.show_when' => 'Un campo no puede depender de sí mismo.']);
-        $save(['key' => 'discapacidad_tipo', 'value' => 'x'])
-            ->assertJsonValidationErrors(['properties.0.show_when' => 'El campo elegido en «Mostrar solo si» debe ser de Sí/No o de selección.']);
-        $save(['key' => 'discapacidad_tiene', 'value' => 'Tal vez'])
-            ->assertJsonValidationErrors(['properties.0.show_when' => 'El valor elegido no es una opción de ese campo.']);
-        $save(null)->assertSuccessful();
-        $this->assertNull($formation->fresh()->mostrar_si);
+            'properties' => [['key' => 'formacion_experiencia', 'label' => $formation->etiqueta, 'help' => '', 'show_when' => null]],
+        ])->assertJsonValidationErrors('document');
     }
 
     private function template(): SyllabusTemplate

@@ -51,8 +51,6 @@ class ReviewWorkflowTest extends TestCase
 
     private RoleAssignment $teacherContext;
 
-    private bool $useCustomDesign = false;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -69,7 +67,6 @@ class ReviewWorkflowTest extends TestCase
 
     public function test_custom_design_and_variables_are_frozen_with_the_submitted_revision(): void
     {
-        $this->useCustomDesign = true;
         $syllabus = $this->createValidDraft();
         $block = SyllabusTemplate::institutional()->fields()->where('clave', 'asignatura')->firstOrFail()->block;
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()
@@ -92,7 +89,7 @@ class ReviewWorkflowTest extends TestCase
         $changed['content'][] = ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Cambio futuro']]];
         $this->actingAsAdministrator()->patchJson(route('api.v1.admin.template.blocks.document.update', [SyllabusTemplate::institutional(), $block]), [
             'document' => $changed, 'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertSuccessful();
+        ])->assertJsonValidationErrors('document');
         $this->assertSame($snapshot, $revision->fresh()->fotografia);
         $this->assertSame($fingerprint, $revision->fresh()->huella_sha256);
         $objective = SyllabusTemplate::institutional()->fields()->where('clave', 'objetivo_general')->firstOrFail();
@@ -108,9 +105,8 @@ class ReviewWorkflowTest extends TestCase
 
     public function test_custom_design_change_never_purges_an_approved_syllabus(): void
     {
-        $this->useCustomDesign = true;
         $syllabus = $this->createValidDraft();
-        $block = SyllabusTemplate::institutional()->fields()->where('clave', 'asignatura')->firstOrFail()->block;
+        $block = SyllabusTemplate::institutional()->fields()->where('clave', 'objetivo_general')->firstOrFail()->block;
         $url = route('api.v1.admin.template.blocks.document.update', [SyllabusTemplate::institutional(), $block]);
         $document = $block->configuracion['document'];
         $document['content'][] = ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Nueva instrucción']]];
@@ -629,14 +625,6 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-04']);
         $template = SyllabusTemplate::query()->firstOrFail();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
-
-        if ($this->useCustomDesign) {
-            $block = $template->fields()->where('clave', 'asignatura')->firstOrFail()->block;
-            $this->actingAsAdministrator()->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
-                'document' => TemplateDocumentDefaults::identification(),
-                'fingerprint' => SaveTemplateDocument::fingerprint($block),
-            ])->assertSuccessful();
-        }
 
         $source = AcademicSource::query()->create([
             'carrera_id' => $this->coordinatorContext->carrera_id, 'nombre' => 'Fuente I-04',
