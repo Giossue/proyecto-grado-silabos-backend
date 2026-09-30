@@ -206,7 +206,7 @@ class AiAssistanceTest extends TestCase
     private function job(string $type): JobExecution
     {
         return JobExecution::query()->create(['tipo' => $type, 'cola' => 'ia', 'estado' => 'pendiente', 'clave_idempotencia' => (string) Str::uuid(),
-            'correlacion_id' => (string) Str::uuid(), 'tipo_recurso' => 'mensaje_ia', 'recurso_id' => (string) Str::uuid(),
+            'tipo_recurso' => 'mensaje_ia', 'recurso_id' => (string) Str::uuid(),
             'intentos' => 0, 'intentos_maximos' => 1, 'progreso' => 0]);
     }
 

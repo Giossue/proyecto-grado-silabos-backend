@@ -129,7 +129,7 @@ final class RequestCurricularImport
             ]);
             JobExecution::query()->create([
                 'tipo' => 'curriculo.extraer', 'cola' => 'integraciones', 'estado' => 'pendiente', 'clave_idempotencia' => 'curriculo.extraer:'.$import->id,
-                'correlacion_id' => (string) Str::uuid(), 'tipo_recurso' => 'importacion_curricular', 'recurso_id' => $import->id,
+                'tipo_recurso' => 'importacion_curricular', 'recurso_id' => $import->id,
                 'entrada' => ['import_id' => $import->id], 'intentos' => 0, 'intentos_maximos' => 3, 'progreso' => 0,
             ]);
             $this->audit->execute(actorId: $actor->id, roleAssignmentId: $role->id, action: 'curriculo.importacion_solicitada', resourceType: 'importacion_curricular', resourceId: $import->id, result: 'exito', metadata: ['document_count' => count($documentRecords)]);

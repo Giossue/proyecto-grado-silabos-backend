@@ -48,7 +48,6 @@ class SendToLibrary
                 'enviado_en' => now(),
             ]);
             $revision->loadMissing('syllabus');
-            $correlationId = $request->attributes->getString('correlation_id') ?: null;
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $this->roles->resolve($request)?->id,

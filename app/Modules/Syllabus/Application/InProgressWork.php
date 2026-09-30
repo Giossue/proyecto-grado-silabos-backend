@@ -86,7 +86,6 @@ final class InProgressWork
                     $careerIds,
                     $periodId,
                     $reason,
-                    $request->attributes->getString('correlation_id') ?: null,
                     $subjectId,
                     $subjectIds,
                 );
@@ -105,7 +104,6 @@ final class InProgressWork
         string|array|null $careerIds = null,
         ?string $periodId = null,
         ?string $reason = null,
-        ?string $correlationId = null,
         ?string $subjectId = null,
         ?array $subjectIds = null,
     ): array {

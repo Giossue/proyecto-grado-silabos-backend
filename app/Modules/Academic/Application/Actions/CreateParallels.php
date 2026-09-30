@@ -36,7 +36,7 @@ class CreateParallels
         }
         $this->locks->assertCareerEditable($activeRole->carrera_id);
 
-        return DB::transaction(function () use ($data, $actor, $request, $activeRole): int {
+        return DB::transaction(function () use ($data, $actor, $activeRole): int {
             $scheduledSubject = ScheduledSubject::query()
                 ->whereKey($data['scheduled_subject_id'])
                 ->where('activo', true)
@@ -59,7 +59,6 @@ class CreateParallels
                 ]);
             }
 
-            $correlationId = $request->attributes->getString('correlation_id') ?: null;
             foreach ($codes as $code) {
                 $parallel = Parallel::query()->create([
                     'programacion_asignatura_id' => $scheduledSubject->id,

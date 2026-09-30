@@ -41,7 +41,7 @@ class ResetSyllabus
             abort(403);
         }
 
-        return DB::transaction(function () use ($activeRole, $actor, $request, $syllabus): Syllabus {
+        return DB::transaction(function () use ($activeRole, $actor, $syllabus): Syllabus {
             $locked = Syllabus::query()
                 ->lockForUpdate()
                 ->with(['convocation', 'parallel.scheduledSubject'])
@@ -83,7 +83,6 @@ class ResetSyllabus
                 $scheduledSubject,
             );
 
-            $correlationId = $request->attributes->getString('correlation_id') ?: null;
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $activeRole->id,

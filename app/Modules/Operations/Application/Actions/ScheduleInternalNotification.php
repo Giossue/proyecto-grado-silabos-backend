@@ -7,7 +7,6 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Support\CanonicalHasher;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 class ScheduleInternalNotification
@@ -23,7 +22,6 @@ class ScheduleInternalNotification
         string $message,
         string $resourceType,
         string $resourceId,
-        ?string $correlationId,
     ): ?JobExecution {
         $recipientIds = array_values(array_unique($recipientIds));
         if ($recipientIds === []) {
@@ -42,9 +40,6 @@ class ScheduleInternalNotification
                 'tipo' => 'notificacion.interna',
                 'cola' => 'notificaciones',
                 'estado' => 'pendiente',
-                'correlacion_id' => is_string($correlationId) && Str::isUuid($correlationId)
-                    ? $correlationId
-                    : (string) Str::uuid(),
                 'tipo_recurso' => $resourceType,
                 'recurso_id' => $resourceId,
                 'entrada' => $entrada,

@@ -14,7 +14,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class RequestSyllabusExport
@@ -65,13 +64,11 @@ class RequestSyllabusExport
                 'solicitado_por' => $actor->id,
                 'solicitado_en' => now(),
             ]);
-            $correlationId = $request->attributes->getString('correlation_id');
             $execution = JobExecution::query()->create([
                 'tipo' => 'documento.exportacion',
                 'cola' => 'documentos',
                 'estado' => 'pendiente',
                 'clave_idempotencia' => "documento.exportacion:{$lockedRevision->id}:{$idempotencyKey}",
-                'correlacion_id' => Str::isUuid($correlationId) ? $correlationId : (string) Str::uuid(),
                 'tipo_recurso' => 'artefacto_exportacion',
                 'recurso_id' => $artifact->id,
                 'intentos' => 0,

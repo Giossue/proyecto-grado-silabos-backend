@@ -44,7 +44,7 @@ class PreparePeriod
         $careerId = $activeRole->carrera_id;
         $this->locks->assertCareerEditable($careerId);
 
-        return DB::transaction(function () use ($actor, $activeRole, $careerId, $data, $request): array {
+        return DB::transaction(function () use ($actor, $activeRole, $careerId, $data): array {
             $career = Career::query()->whereKey($careerId)->with('faculty')->lockForUpdate()->firstOrFail();
             $period = AcademicPeriod::query()->whereKey($data['period_id'])->lockForUpdate()->firstOrFail();
             $this->periodPlanning->assertMayPlan($period);
@@ -106,7 +106,6 @@ class PreparePeriod
                 ->whereIn('asignatura_id', $subjects->pluck('id'))
                 ->get()
                 ->keyBy('asignatura_id');
-            $correlationId = $request->attributes->getString('correlation_id') ?: null;
             $scheduledSubjects = 0;
             $parallels = 0;
             $assignments = 0;

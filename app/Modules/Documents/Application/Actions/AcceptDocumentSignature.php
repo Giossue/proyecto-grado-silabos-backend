@@ -109,7 +109,6 @@ class AcceptDocumentSignature
                     'firmado_en' => now(),
                 ]);
 
-                $correlationId = $request->attributes->getString('correlation_id') ?: null;
                 $this->audit->execute(
                     actorId: $actor->id,
                     roleAssignmentId: $this->roles->resolve($request)?->id,

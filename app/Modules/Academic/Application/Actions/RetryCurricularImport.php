@@ -19,7 +19,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class RetryCurricularImport
@@ -92,7 +91,7 @@ final class RetryCurricularImport
             ]);
             JobExecution::query()->create([
                 'tipo' => 'curriculo.extraer', 'cola' => 'integraciones', 'estado' => 'pendiente', 'clave_idempotencia' => 'curriculo.extraer:'.$import->id,
-                'correlacion_id' => (string) Str::uuid(), 'tipo_recurso' => 'importacion_curricular', 'recurso_id' => $import->id,
+                'tipo_recurso' => 'importacion_curricular', 'recurso_id' => $import->id,
                 'entrada' => ['import_id' => $import->id, 'retry_of' => $previous->id], 'intentos' => 0, 'intentos_maximos' => 3, 'progreso' => 0,
             ]);
             app(RecordAuditEvent::class)->execute(actorId: $actor->id, roleAssignmentId: $view->role($request)->id,

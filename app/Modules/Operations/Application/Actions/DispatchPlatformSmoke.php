@@ -5,20 +5,18 @@ namespace App\Modules\Operations\Application\Actions;
 use App\Modules\Operations\Infrastructure\Jobs\PlatformSmokeJob;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class DispatchPlatformSmoke
 {
-    public function execute(string $idempotencyKey, ?string $correlationId = null): JobExecution
+    public function execute(string $idempotencyKey): JobExecution
     {
-        return DB::transaction(function () use ($idempotencyKey, $correlationId): JobExecution {
+        return DB::transaction(function () use ($idempotencyKey): JobExecution {
             $execution = JobExecution::query()->firstOrCreate(
                 ['clave_idempotencia' => $idempotencyKey],
                 [
                     'tipo' => 'plataforma.verificacion',
                     'cola' => 'critica',
                     'estado' => 'pendiente',
-                    'correlacion_id' => $correlationId ?? (string) Str::uuid(),
                 ],
             );
 

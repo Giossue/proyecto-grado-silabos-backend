@@ -6,7 +6,6 @@ use App\Modules\Operations\Infrastructure\Jobs\DeliverInternalNotificationJob;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Support\CanonicalHasher;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 class ScheduleWorkflowNotification
@@ -20,7 +19,6 @@ class ScheduleWorkflowNotification
         string $deduplicationKey,
         array $recipientIds,
         ?int $revisionNumber,
-        ?string $correlationId,
     ): JobExecution {
         $entrada = [
             'tipo_evento' => $eventType,
@@ -34,9 +32,6 @@ class ScheduleWorkflowNotification
                 'tipo' => 'notificacion.interna',
                 'cola' => 'notificaciones',
                 'estado' => 'pendiente',
-                'correlacion_id' => is_string($correlationId) && Str::isUuid($correlationId)
-                    ? $correlationId
-                    : (string) Str::uuid(),
                 'tipo_recurso' => 'silabo',
                 'recurso_id' => $syllabus->id,
                 'entrada' => $entrada,

@@ -46,7 +46,7 @@ final class RequestAcademicSourceOcr
         $dispatch = false;
 
         $execution = DB::transaction(function () use (
-            $activeRole, $actor, $adapterVersion, $model, $normalizerVersion, $pathInfo, $request, $source, &$dispatch,
+            $activeRole, $actor, $adapterVersion, $model, $normalizerVersion, $pathInfo, $source, &$dispatch,
         ): JobExecution {
             $lockedSource = AcademicSource::query()->lockForUpdate()->findOrFail($source->id);
             $object = StoredObject::query()->firstOrCreate(
@@ -69,7 +69,6 @@ final class RequestAcademicSourceOcr
 
             $requestFingerprint = hash('sha256', "{$pathInfo['hash']}:{$model}:{$adapterVersion}");
             $key = "fuente.openparser:{$lockedSource->id}:{$requestFingerprint}";
-            $correlationId = $request->attributes->getString('correlation_id');
             $execution = JobExecution::query()->where('clave_idempotencia', $key)->lockForUpdate()->first();
             if ($execution === null) {
                 $execution = JobExecution::query()->create([
@@ -77,7 +76,6 @@ final class RequestAcademicSourceOcr
                     'cola' => 'integraciones',
                     'estado' => 'pendiente',
                     'clave_idempotencia' => $key,
-                    'correlacion_id' => Str::isUuid($correlationId) ? $correlationId : (string) Str::uuid(),
                     'tipo_recurso' => 'fuente_academica',
                     'recurso_id' => $lockedSource->id,
                     'entrada' => [

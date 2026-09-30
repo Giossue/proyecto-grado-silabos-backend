@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $cola
  * @property string $estado
  * @property string $clave_idempotencia
- * @property string|null $correlacion_id
  * @property string|null $tipo_recurso
  * @property string|null $recurso_id
  * @property array<string, mixed>|null $entrada
@@ -50,7 +49,6 @@ class JobExecution extends Model
         'cola',
         'estado',
         'clave_idempotencia',
-        'correlacion_id',
         'tipo_recurso',
         'recurso_id',
         'entrada',

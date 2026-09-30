@@ -22,7 +22,7 @@ class SendSyllabusAiMessage
 
     public function execute(Syllabus $syllabus, User $actor, string $content, string $idempotencyKey, Request $request): AiHistoryEntry
     {
-        return DB::transaction(function () use ($actor, $content, $idempotencyKey, $request, $syllabus): AiHistoryEntry {
+        return DB::transaction(function () use ($actor, $content, $idempotencyKey, $syllabus): AiHistoryEntry {
             $locked = Syllabus::query()->lockForUpdate()->findOrFail($syllabus->id);
             $session = AiHistoryEntry::chatSession($locked->id, $actor->id);
             $existing = AiHistoryEntry::query()
@@ -64,13 +64,11 @@ class SendSyllabusAiMessage
             ], $this->context->build($locked));
 
             $answerId = (string) Str::uuid();
-            $correlationId = $request->attributes->getString('correlation_id');
             $job = JobExecution::query()->create([
                 'tipo' => 'ia.chat',
                 'cola' => 'ia',
                 'estado' => 'pendiente',
                 'clave_idempotencia' => "ia.chat:{$answerId}",
-                'correlacion_id' => Str::isUuid($correlationId) ? $correlationId : (string) Str::uuid(),
                 'tipo_recurso' => 'mensaje_ia',
                 'recurso_id' => $answerId,
                 'intentos' => 0,
