@@ -5,7 +5,10 @@
 Auditoría completada el 2026-09-29. El frontend tiene shadcn-vue y colores globales,
 pero todavía conserva controles construidos fuera de sus primitivas, colores locales,
 ejemplos fijos y valores repetidos. La inspección y el diagnóstico están terminados;
-las correcciones propuestas no se han implementado.
+las correcciones se implementaron posteriormente por autorización «ok arregla todo».
+Su cierre y evidencia están en
+`FE-SHADCN-2026-09-29-componentes-y-tokens-compartidos.md`. Las tablas siguientes
+conservan el diagnóstico original; no representan incidencias frontend pendientes.
 
 Solicitud del responsable del producto: analizar todo el frontend y determinar si
 los datos de negocio, estilos y controles respetan una base reutilizable con colores

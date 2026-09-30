@@ -62,8 +62,7 @@ no se confunden con controles visibles o datos ficticios. `contract:check` recon
 PATCH real; no omite endpoints.
 
 La evidencia de la corrección autorizada tras AUD-FE-2026-09-29 se mantiene en
-`docs/plans/active/FE-SHADCN-2026-09-29-componentes-y-tokens-compartidos.md` mientras
-se cierra su comprobación final. La revisión local en Chromium cubre teclado, foco,
+`docs/plans/completed/FE-SHADCN-2026-09-29-componentes-y-tokens-compartidos.md`. La revisión local en Chromium cubre teclado, foco,
 evidencia, zoom, arrastre y layouts en claro/oscuro a 360, 768 y 1440 px; no sustituye
 la aceptación institucional de PV-07/PV-19.
 
