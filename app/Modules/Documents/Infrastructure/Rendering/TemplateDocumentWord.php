@@ -113,7 +113,7 @@ final class TemplateDocumentWord
         $widths = array_values(array_map(fn ($weight) => (int) round($width * $weight / array_sum($weights)), $weights));
         $outerFontSize = $this->tableFontSize;
         $cellTexts = $this->cellTexts($rows, $widths);
-        $tableFontSize = $this->fontSizeThatFits($cellTexts);
+        $tableFontSize = is_int($node['attrs']['fontSize'] ?? null) ? $node['attrs']['fontSize'] : $this->fontSizeThatFits($cellTexts);
         $rowHeights = [];
         foreach ($cellTexts as $cellText) {
             if ($cellText['header'] && $this->rotates($cellText['text'], $cellText['width'], $tableFontSize ?? $this->bodyFontSize)) {
