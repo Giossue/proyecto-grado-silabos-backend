@@ -88,7 +88,7 @@ class ConvocationAndDraftTest extends TestCase
         $master = $syllabus->values()->whereHas('field', fn ($field) => $field->where('heredado', true))->firstOrFail();
         $this->assertSame('Arquitectura de Software', $master->valor['nombre']);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'convocatoria.abierta',
+            'accion' => 'convocatoria.abierta',
             'recurso_id' => $convocation->id,
         ]);
 
@@ -249,7 +249,7 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->assertSame('preparacion', $convocation->fresh()->estado);
         $this->assertDatabaseCount('silabos', 0);
-        $this->assertDatabaseMissing('eventos_auditoria', ['accion_evento_auditoria' => 'convocatoria.abierta']);
+        $this->assertDatabaseMissing('eventos_auditoria', ['accion' => 'convocatoria.abierta']);
     }
 
     public function test_opening_reports_how_many_parallels_lack_a_teacher(): void
@@ -370,7 +370,7 @@ class ConvocationAndDraftTest extends TestCase
             $this->freeTextValue('Descripción compartida.'),
             $second->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor,
         );
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'silabo.contenido_copiado', 'recurso_id' => $second->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.contenido_copiado', 'recurso_id' => $second->id]);
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.copy-from', [$second, $first]), [
             'version_bloqueo' => $second->version_bloqueo - 1,

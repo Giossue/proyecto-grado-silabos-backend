@@ -24,16 +24,17 @@ class InternalNotification extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'tipo' => 'tipo_notificacion_interna',
-        'titulo' => 'titulo_notificacion_interna',
-        'mensaje' => 'mensaje_notificacion_interna',
+        'tipo' => 'tipo_notificacion',
+        'titulo' => 'titulo_notificacion',
+        'mensaje' => 'mensaje_notificacion',
+        'clave_deduplicacion' => 'clave_unica',
     ];
 
     public const CREATED_AT = 'notificado_en';
 
     public const UPDATED_AT = null;
 
-    protected $table = 'notificaciones_internas';
+    protected $table = 'notificaciones';
 
     /** @var list<string> */
     protected $fillable = [

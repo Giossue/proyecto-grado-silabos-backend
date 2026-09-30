@@ -342,7 +342,7 @@ class ApiSessionTest extends TestCase
 
         $this->assertAuthenticatedAs($user);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'sesion.iniciada',
+            'accion' => 'sesion.iniciada',
             'recurso_id' => $user->id,
         ]);
     }

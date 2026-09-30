@@ -159,10 +159,10 @@ class ReviewWorkflowTest extends TestCase
         $this->assertNotEmpty($revision->fotografia['sections']);
         $this->assertSame(app(CanonicalHasher::class)->hash($revision->fotografia), $revision->huella_sha256);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'silabo.enviado',
+            'accion' => 'silabo.enviado',
             'recurso_id' => $revision->id,
-            'metadatos_evento_auditoria->from_state' => 'borrador',
-            'metadatos_evento_auditoria->to_state' => 'en_revision',
+            'detalles->from_state' => 'borrador',
+            'detalles->to_state' => 'en_revision',
         ]);
         $this->assertWorkflowNotification($syllabus->id, 'silabo.enviado');
 
@@ -207,7 +207,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('revisiones_silabo', 0);
         $this->assertDatabaseCount('ejecuciones_validacion', 1);
-        $this->assertDatabaseMissing('eventos_auditoria', ['accion_evento_auditoria' => 'silabo.enviado']);
+        $this->assertDatabaseMissing('eventos_auditoria', ['accion' => 'silabo.enviado']);
     }
 
     public function test_cp_f_stale_submission_returns_to_confirmation_without_creating_evidence(): void
@@ -555,7 +555,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame(0, $fresh->version_bloqueo);
         $this->assertSame(0, $fresh->values()->whereHas('field', fn ($field) => $field->where('heredado', false))->count());
         $this->assertDatabaseHas('revisiones_silabo', ['id' => $revision->id]);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
         $this->assertWorkflowNotification($syllabus->id, 'silabo.reiniciado');
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
@@ -606,7 +606,7 @@ class ReviewWorkflowTest extends TestCase
             ->where('tipo', 'notificacion.interna')
             ->where('tipo_recurso', 'silabo')
             ->where('recurso_id', $syllabusId)
-            ->whereJsonContains('entrada_ejecucion_trabajo', ['tipo_evento' => $eventType])
+            ->whereJsonContains('datos_entrada', ['tipo_evento' => $eventType])
             ->exists());
     }
 

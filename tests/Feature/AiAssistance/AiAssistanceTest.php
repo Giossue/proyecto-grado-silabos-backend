@@ -65,7 +65,7 @@ class AiAssistanceTest extends TestCase
         $this->postJson($field)->assertNotFound();
         $this->postJson($field.'/'.Str::uuid().'/decision')->assertNotFound();
         $this->postJson($field.'/'.Str::uuid().'/apply')->assertNotFound();
-        $this->assertDatabaseCount('historial_ia', 0);
+        $this->assertDatabaseCount('mensajes_ia', 0);
         Queue::assertNothingPushed();
     }
 
@@ -111,14 +111,14 @@ class AiAssistanceTest extends TestCase
         $this->assertSame(0, $this->syllabus->fresh()->version_bloqueo);
         $this->deleteJson($this->url())->assertOk();
         $this->getJson($this->url())->assertJsonPath('conversation.hidden', true)->assertJsonCount(2, 'conversation.messages');
-        $this->assertDatabaseCount('historial_ia', 3);
+        $this->assertDatabaseCount('mensajes_ia', 3);
     }
 
     public function test_pending_legacy_chat_is_not_sent_and_new_context_does_not_replay_legacy_history(): void
     {
-        $question = AiHistoryEntry::query()->create(['sesion_id' => AiHistoryEntry::chatSession($this->syllabus->id, $this->teacher->id),
-            'mensaje_ia' => ['tipo' => 'mensaje', 'rol' => 'usuario', 'estado' => 'completado', 'entrada' => ['contenido' => 'Historial RAG que no debe enviarse.']]]);
-        $old = AiHistoryEntry::query()->create(['sesion_id' => $question->sesion_id, 'mensaje_ia' => [
+        $question = AiHistoryEntry::query()->create(['conversacion_id' => AiHistoryEntry::chatSession($this->syllabus->id, $this->teacher->id),
+            'contenido_mensaje' => ['tipo' => 'mensaje', 'rol' => 'usuario', 'estado' => 'completado', 'entrada' => ['contenido' => 'Historial RAG que no debe enviarse.']]]);
+        $old = AiHistoryEntry::query()->create(['conversacion_id' => $question->conversacion_id, 'contenido_mensaje' => [
             'tipo' => 'mensaje', 'rol' => 'asistente', 'estado' => 'pendiente', 'entrada' => [
                 'respuesta_a_id' => $question->id, 'ejecucion_trabajo_id' => $this->job('ia.chat')->id,
                 'evidencia' => [['id' => 'legacy', 'tipo' => 'fuente_academica', 'etiqueta' => 'Fuente', 'extracto' => 'NO ENVIAR']],
@@ -166,7 +166,7 @@ class AiAssistanceTest extends TestCase
         $this->actingAs($coordinator)->withSession(['active_role_assignment_id' => $coordinator->roleAssignments()->firstOrFail()->id]);
         $this->getJson($this->url())->assertForbidden();
         $this->postJson($this->url().'/messages', ['message' => 'Texto.', 'idempotency_key' => (string) Str::uuid()])->assertForbidden();
-        $question = AiHistoryEntry::query()->where('mensaje_ia->rol', 'usuario')->firstOrFail();
+        $question = AiHistoryEntry::query()->where('contenido_mensaje->rol', 'usuario')->firstOrFail();
         try {
             DB::transaction(fn () => $question->amend(['contenido' => 'Historia sobrescrita']));
             $this->fail('El historial terminal no puede reescribirse.');

@@ -147,7 +147,7 @@ class TemplateDocumentTest extends TestCase
         $this->patch($url, ['document' => $doc, 'fingerprint' => $fingerprint])
             ->assertJsonValidationErrors('fingerprint');
         $this->assertSame($saved, $block->fresh()->configuracion['document']);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'plantilla.diseno_actualizado', 'recurso_id' => $block->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.diseno_actualizado', 'recurso_id' => $block->id]);
     }
 
     public function test_a_part_can_be_saved_without_a_name(): void

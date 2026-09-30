@@ -66,7 +66,7 @@ class TemplateAndSourceTest extends TestCase
         $this->assertCount(12, $template->sections());
         $this->assertCount(21, $template->fields()->get(), 'Incluye la ficha, las tablas del docente y los campos del PDF; el contenido fijo no tiene campos.');
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'plantilla.formateada',
+            'accion' => 'plantilla.formateada',
             'recurso_id' => $template->id,
         ]);
 
@@ -215,7 +215,7 @@ class TemplateAndSourceTest extends TestCase
         ];
         $this->assertEquals($expected, $template->fresh()->mapeo_documento['appearance']);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'plantilla.apariencia_actualizada',
+            'accion' => 'plantilla.apariencia_actualizada',
             'recurso_id' => $template->id,
         ]);
 
@@ -254,7 +254,7 @@ class TemplateAndSourceTest extends TestCase
             $template->mapeo_documento['title_block'],
         );
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'plantilla.titulo_actualizado',
+            'accion' => 'plantilla.titulo_actualizado',
             'recurso_id' => $template->id,
         ]);
 

@@ -178,11 +178,11 @@ class ManagedUserTest extends TestCase
             'asignacion_rol_activa' => true,
         ]);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'actor_usuario_id' => $this->administrator->id,
+            'usuario_id' => $this->administrator->id,
             'asignacion_rol_id' => $this->administratorContext->id,
-            'accion_evento_auditoria' => 'usuario.creado',
+            'accion' => 'usuario.creado',
             'recurso_id' => $created->id,
-            'resultado_evento_auditoria' => 'exito',
+            'resultado' => 'exito',
         ]);
     }
 
@@ -222,7 +222,7 @@ class ManagedUserTest extends TestCase
             ->exists());
         $this->assertFalse(CoordinatorAssignment::query()->effective()->where('carrera_id', $career->id)->exists());
         $event = DB::table('eventos_auditoria')
-            ->where('accion_evento_auditoria', 'usuario.desactivado')
+            ->where('accion', 'usuario.desactivado')
             ->where('recurso_id', $this->coordinatorHolder()->id)
             ->firstOrFail();
         $this->assertStringContainsString($career->nombre, (string) json_encode($event));
@@ -277,7 +277,7 @@ class ManagedUserTest extends TestCase
             'asignacion_rol_activa' => true,
         ]);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'usuario.rol_asignado',
+            'accion' => 'usuario.rol_asignado',
             'recurso_id' => $teacher->id,
         ]);
     }
@@ -395,9 +395,9 @@ class ManagedUserTest extends TestCase
         $this->assertDatabaseMissing('sesiones', ['id' => 'teacher-session-to-revoke']);
         $this->assertDatabaseHas('asignaciones_rol', ['id' => $roleAssignmentId]);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'usuario.desactivado',
+            'accion' => 'usuario.desactivado',
             'recurso_id' => $teacher->id,
-            'resultado_evento_auditoria' => 'exito',
+            'resultado' => 'exito',
         ]);
     }
 
@@ -430,7 +430,7 @@ class ManagedUserTest extends TestCase
         $this->assertNull($current->usada_en);
         Mail::assertQueuedCount(2);
         Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo('pendiente@silabos.test'));
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.invitacion_activacion_enviada', 'recurso_id' => $pending->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.invitacion_activacion_enviada', 'recurso_id' => $pending->id]);
 
         $activationUrl = '';
         Mail::assertQueued(ManagedUserActivationMail::class, function (ManagedUserActivationMail $mail) use (&$activationUrl): bool {
@@ -469,7 +469,7 @@ class ManagedUserTest extends TestCase
             ->assertSuccessful();
 
         Mail::assertQueued(ManagedUserActivationMail::class, fn (ManagedUserActivationMail $mail): bool => $mail->hasTo('corregido@silabos.test'));
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.invitacion_activacion_enviada', 'recurso_id' => $pending->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.invitacion_activacion_enviada', 'recurso_id' => $pending->id]);
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $pending), [
@@ -489,7 +489,7 @@ class ManagedUserTest extends TestCase
             ->assertSuccessful();
         $this->assertDatabaseMissing('usuarios', ['id' => $pending->id]);
         $this->assertDatabaseMissing('asignaciones_rol', ['usuario_id' => $pending->id]);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.eliminado', 'recurso_id' => $pending->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.eliminado', 'recurso_id' => $pending->id]);
 
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->actingAsAdministrator()

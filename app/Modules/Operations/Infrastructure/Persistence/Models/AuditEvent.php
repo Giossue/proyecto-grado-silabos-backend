@@ -29,9 +29,8 @@ class AuditEvent extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'accion' => 'accion_evento_auditoria',
-        'resultado' => 'resultado_evento_auditoria',
-        'metadatos' => 'metadatos_evento_auditoria',
+        'actor_usuario_id' => 'usuario_id',
+        'metadatos' => 'detalles',
     ];
 
     public $timestamps = false;
@@ -62,7 +61,7 @@ class AuditEvent extends Model
     /** @return BelongsTo<User, $this> */
     public function actor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'actor_usuario_id');
+        return $this->belongsTo(User::class, 'usuario_id');
     }
 
     /** @return BelongsTo<RoleAssignment, $this> */

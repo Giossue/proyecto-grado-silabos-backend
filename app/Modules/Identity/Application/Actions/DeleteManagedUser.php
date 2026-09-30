@@ -13,7 +13,7 @@ class DeleteManagedUser
 {
     private const TRACES = [
         'asignaciones_paralelo' => 'asignacion_rol_id',
-        'eventos_auditoria' => 'actor_usuario_id',
+        'eventos_auditoria' => 'usuario_id',
         'observaciones_revision' => 'creado_por',
         'revisiones_silabo' => 'enviado_por',
         'exportaciones_silabo' => 'solicitado_por',
@@ -53,7 +53,7 @@ class DeleteManagedUser
 
             $email = $locked->correo_electronico;
             $name = $locked->nombre;
-            foreach (['notificaciones_internas' => 'usuario_id', 'sesiones' => 'user_id', 'asignaciones_rol' => 'usuario_id'] as $table => $column) {
+            foreach (['notificaciones' => 'usuario_id', 'sesiones' => 'user_id', 'asignaciones_rol' => 'usuario_id'] as $table => $column) {
                 DB::table($table)->where($column, $locked->id)->delete();
             }
             $locked->delete();

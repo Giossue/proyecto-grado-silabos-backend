@@ -21,7 +21,7 @@ class AiChatController extends Controller
         $session = AiHistoryEntry::chatSession($syllabus->id, $actor->id);
         $chat = AiHistoryEntry::query()
             ->session($session)
-            ->whereIn('mensaje_ia->tipo', ['mensaje', 'ocultamiento'])
+            ->whereIn('contenido_mensaje->tipo', ['mensaje', 'ocultamiento'])
             ->orderBy('enviado_en')
             ->get();
         $messages = [];
@@ -77,8 +77,8 @@ class AiChatController extends Controller
         $last = AiHistoryEntry::query()->session($session)->latest('enviado_en')->first();
         if ($last !== null && $last->type() !== 'ocultamiento') {
             AiHistoryEntry::query()->create([
-                'sesion_id' => $session,
-                'mensaje_ia' => [
+                'conversacion_id' => $session,
+                'contenido_mensaje' => [
                     'tipo' => 'ocultamiento',
                     'estado' => 'registrada',
                     'entrada' => ['usuario_id' => $actor->id],

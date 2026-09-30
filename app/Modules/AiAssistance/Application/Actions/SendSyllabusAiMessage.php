@@ -28,18 +28,18 @@ class SendSyllabusAiMessage
             $existing = AiHistoryEntry::query()
                 ->session($session)
                 ->ofType('mensaje')
-                ->where('mensaje_ia->rol', 'usuario')
-                ->where('mensaje_ia->entrada->clave_idempotencia', $idempotencyKey)
+                ->where('contenido_mensaje->rol', 'usuario')
+                ->where('contenido_mensaje->entrada->clave_idempotencia', $idempotencyKey)
                 ->first();
             if ($existing !== null) {
                 return AiHistoryEntry::query()
                     ->session($session)
-                    ->where('mensaje_ia->entrada->respuesta_a_id', $existing->id)
+                    ->where('contenido_mensaje->entrada->respuesta_a_id', $existing->id)
                     ->firstOrFail();
             }
             $question = AiHistoryEntry::query()->create([
-                'sesion_id' => $session,
-                'mensaje_ia' => [
+                'conversacion_id' => $session,
+                'contenido_mensaje' => [
                     'tipo' => 'mensaje',
                     'rol' => 'usuario',
                     'estado' => 'completado',
@@ -77,8 +77,8 @@ class SendSyllabusAiMessage
             ]);
             $answer = AiHistoryEntry::query()->create([
                 'id' => $answerId,
-                'sesion_id' => $session,
-                'mensaje_ia' => [
+                'conversacion_id' => $session,
+                'contenido_mensaje' => [
                     'tipo' => 'mensaje',
                     'rol' => 'asistente',
                     'estado' => 'pendiente',
