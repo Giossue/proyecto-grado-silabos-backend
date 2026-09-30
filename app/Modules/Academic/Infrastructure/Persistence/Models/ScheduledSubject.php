@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property string $id
+ * @property string $periodo_academico_id
+ * @property string $asignatura_id
  * @property bool $activo
  * @property int $parallels_count
  * @property-read AcademicPeriod $academicPeriod
@@ -24,12 +26,12 @@ class ScheduledSubject extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'activo' => 'programacion_asignatura_activa',
+        'activo' => 'asignatura_ofertada_activa',
     ];
 
     public $timestamps = false;
 
-    protected $table = 'programaciones_asignatura';
+    protected $table = 'asignaturas_ofertadas';
 
     /** @var list<string> */
     protected $fillable = ['periodo_academico_id', 'asignatura_id', 'activo'];
@@ -73,6 +75,6 @@ class ScheduledSubject extends Model
     /** @return HasMany<Parallel, $this> */
     public function parallels(): HasMany
     {
-        return $this->hasMany(Parallel::class, 'programacion_asignatura_id');
+        return $this->hasMany(Parallel::class, 'asignatura_ofertada_id');
     }
 }

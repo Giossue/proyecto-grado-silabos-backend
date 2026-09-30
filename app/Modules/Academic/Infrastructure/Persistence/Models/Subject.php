@@ -38,7 +38,10 @@ class Subject extends Model
         'horas_totales' => 'total_horas_asignatura',
         'activo' => 'asignatura_activa',
         'orden_en_ciclo' => 'orden_asignatura_en_ciclo',
-        'unidad_organizacion_curricular' => 'unidad_organizativa_curricular_asignatura',
+        'unidad_organizacion_curricular' => 'unidad_curricular_asignatura',
+        'horas_ac' => 'horas_docencia',
+        'horas_pae' => 'horas_practicas',
+        'horas_aa' => 'horas_autonomas',
         'modalidad' => 'modalidad_asignatura',
     ];
 

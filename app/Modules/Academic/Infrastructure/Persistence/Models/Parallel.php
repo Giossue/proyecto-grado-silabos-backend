@@ -21,6 +21,7 @@ class Parallel extends Model
     protected const LEGACY_COLUMN_ALIASES = [
         'codigo' => 'codigo_paralelo',
         'jornada' => 'jornada_paralelo',
+        'programacion_asignatura_id' => 'asignatura_ofertada_id',
     ];
 
     public $timestamps = false;
@@ -42,7 +43,7 @@ class Parallel extends Model
     /** @return BelongsTo<ScheduledSubject, $this> */
     public function scheduledSubject(): BelongsTo
     {
-        return $this->belongsTo(ScheduledSubject::class, 'programacion_asignatura_id');
+        return $this->belongsTo(ScheduledSubject::class, 'asignatura_ofertada_id');
     }
 
     /** @return HasMany<TeacherAssignment, $this> */

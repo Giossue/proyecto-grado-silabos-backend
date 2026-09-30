@@ -69,12 +69,12 @@ class AcademicStructureTest extends TestCase
         $this->assertFalse(Schema::hasTable('campus'));
         $this->assertTrue(Schema::hasColumn('facultades', 'campus_facultad'));
         $this->assertFalse(Schema::hasColumn('carreras', 'campus_id'));
-        $this->assertFalse(Schema::hasColumn('programaciones_asignatura', 'campus_programacion'));
-        $this->assertFalse(Schema::hasColumn('programaciones_asignatura', 'campus_id'));
+        $this->assertFalse(Schema::hasColumn('asignaturas_ofertadas', 'campus_programacion'));
+        $this->assertFalse(Schema::hasColumn('asignaturas_ofertadas', 'campus_id'));
         $this->assertFalse(Schema::hasColumn('facultades', 'codigo_facultad'));
         $this->assertFalse(Schema::hasColumn('carreras', 'codigo_malla'));
         $this->assertTrue(Schema::hasColumn('carreras', 'codigo_carrera'));
-        $this->assertTrue(Schema::hasColumn('carreras', 'cantidad_ciclos_malla'));
+        $this->assertTrue(Schema::hasColumn('carreras', 'numero_ciclos'));
         $this->assertTrue(Schema::hasColumn('asignaturas', 'carrera_id'));
         $this->assertFalse(Schema::hasColumn('silabos', 'carrera_id'));
         $this->assertFalse(Schema::hasColumn('asignaturas', 'malla_id'));
@@ -130,7 +130,7 @@ class AcademicStructureTest extends TestCase
 
         $this->assertDatabaseHas('carreras', [
             'codigo_carrera' => 'CARR-DEMO',
-            'cantidad_ciclos_malla' => 9,
+            'numero_ciclos' => 9,
         ]);
     }
 
@@ -234,7 +234,7 @@ class AcademicStructureTest extends TestCase
 
         $this->assertDatabaseHas('carreras', [
             'id' => $career->id,
-            'cantidad_ciclos_malla' => 10,
+            'numero_ciclos' => 10,
         ]);
         $this->assertDatabaseHas('asignaturas', [
             'carrera_id' => $career->id,
@@ -443,7 +443,7 @@ class AcademicStructureTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('subjects');
 
-        $this->assertDatabaseMissing('programaciones_asignatura', ['asignatura_id' => $subject->id]);
+        $this->assertDatabaseMissing('asignaturas_ofertadas', ['asignatura_id' => $subject->id]);
     }
 
     public function test_preparing_a_period_requires_every_pending_active_subject(): void
@@ -469,8 +469,8 @@ class AcademicStructureTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('subjects');
 
-        $this->assertDatabaseMissing('programaciones_asignatura', ['asignatura_id' => $first->id]);
-        $this->assertDatabaseMissing('programaciones_asignatura', ['asignatura_id' => $second->id]);
+        $this->assertDatabaseMissing('asignaturas_ofertadas', ['asignatura_id' => $first->id]);
+        $this->assertDatabaseMissing('asignaturas_ofertadas', ['asignatura_id' => $second->id]);
     }
 
     public function test_preparing_a_period_rejects_duplicate_parallel_codes_after_normalization(): void
@@ -496,7 +496,7 @@ class AcademicStructureTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['subjects.0.parallels' => 'Hay paralelos repetidos en la misma materia.']);
 
-        $this->assertDatabaseMissing('programaciones_asignatura', ['asignatura_id' => $subject->id]);
+        $this->assertDatabaseMissing('asignaturas_ofertadas', ['asignatura_id' => $subject->id]);
     }
 
     public function test_the_same_parallel_code_is_allowed_in_different_subjects(): void
@@ -520,8 +520,8 @@ class AcademicStructureTest extends TestCase
             ])
             ->assertSuccessful();
 
-        $this->assertDatabaseHas('programaciones_asignatura', ['asignatura_id' => $first->id]);
-        $this->assertDatabaseHas('programaciones_asignatura', ['asignatura_id' => $second->id]);
+        $this->assertDatabaseHas('asignaturas_ofertadas', ['asignatura_id' => $first->id]);
+        $this->assertDatabaseHas('asignaturas_ofertadas', ['asignatura_id' => $second->id]);
     }
 
     public function test_preparing_a_period_does_not_reuse_an_inactive_scheduled_subject(): void
@@ -551,7 +551,7 @@ class AcademicStructureTest extends TestCase
             ->assertJsonValidationErrors('subjects');
 
         $this->assertFalse($scheduled->fresh()->activo);
-        $this->assertDatabaseMissing('paralelos', ['programacion_asignatura_id' => $scheduled->id]);
+        $this->assertDatabaseMissing('paralelos', ['asignatura_ofertada_id' => $scheduled->id]);
     }
 
     public function test_every_parallel_requires_a_shift_when_preparing_or_creating(): void

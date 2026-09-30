@@ -29,6 +29,7 @@ class Career extends Model
         'nombre' => 'nombre_carrera',
         'activo' => 'carrera_activa',
         'modalidad' => 'modalidad_carrera',
+        'cantidad_ciclos_malla' => 'numero_ciclos',
     ];
 
     public $timestamps = false;

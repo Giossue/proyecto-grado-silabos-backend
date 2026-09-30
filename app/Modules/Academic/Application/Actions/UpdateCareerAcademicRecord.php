@@ -35,13 +35,13 @@ class UpdateCareerAcademicRecord
         'unidad_organizacion_curricular' => 'Unidad de organización curricular',
         'creditos' => 'Créditos',
         'horas_totales' => 'Horas totales',
-        'horas_ac' => 'Horas AC',
-        'horas_pae' => 'Horas PAE',
-        'horas_aa' => 'Horas AA',
+        'horas_docencia' => 'Horas AC',
+        'horas_practicas' => 'Horas PAE',
+        'horas_autonomas' => 'Horas AA',
         'periodo_academico_id' => 'Periodo académico',
         'asignatura_id' => 'Materia',
         'modalidad' => 'Modalidad',
-        'programacion_asignatura_id' => 'Programación de asignatura',
+        'asignatura_ofertada_id' => 'Programación de asignatura',
         'usuario_id' => 'Docente',
         'paralelo_id' => 'Paralelo',
     ];
@@ -63,6 +63,9 @@ class UpdateCareerAcademicRecord
         'modalidad' => 'modality',
         'creditos' => 'credits',
         'horas_totales' => 'total_hours',
+        'horas_docencia' => 'horas_ac',
+        'horas_practicas' => 'horas_pae',
+        'horas_autonomas' => 'horas_aa',
     ];
 
     public function __construct(
@@ -258,7 +261,7 @@ class UpdateCareerAcademicRecord
             $metadata["before_{$auditKey}"] = $this->scalarValue($record->getRawOriginal($field));
             $metadata["after_{$auditKey}"] = $this->scalarValue($record->getAttribute($field));
         }
-        if ($record instanceof Subject && array_intersect(CurriculumSystemFields::TOTAL_HOUR_COMPONENT_KEYS, array_keys($dirty)) !== []) {
+        if ($record instanceof Subject && array_intersect(array_map($record->mappedColumn(...), CurriculumSystemFields::TOTAL_HOUR_COMPONENT_KEYS), array_keys($dirty)) !== []) {
             $after = (int) round(CurriculumSystemFields::totalHours($record->only(CurriculumSystemFields::TOTAL_HOUR_COMPONENT_KEYS)));
             if ($after !== $record->horas_totales) {
                 $metadata['changed_fields'] .= ', '.self::FIELD_LABELS['horas_totales'];
