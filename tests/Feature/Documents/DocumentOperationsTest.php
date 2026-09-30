@@ -92,7 +92,7 @@ class DocumentOperationsTest extends TestCase
             'idempotency_key' => $key,
         ])->assertSuccessful();
 
-        $this->assertDatabaseCount('artefactos_exportacion', 1);
+        $this->assertDatabaseCount('exportaciones_silabo', 1);
         $this->assertDatabaseCount('ejecuciones_trabajo', 1);
         Queue::assertPushed(GenerateSyllabusExportJob::class, 1);
         $artifact = ExportArtifact::query()->firstOrFail();
@@ -126,7 +126,7 @@ class DocumentOperationsTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.documents.store', $unapproved), [
             'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('revision');
-        $this->assertDatabaseCount('artefactos_exportacion', 1);
+        $this->assertDatabaseCount('exportaciones_silabo', 1);
     }
 
     public function test_cp_f_job_generates_consistent_private_documents_and_reauthorizes_download(): void
@@ -148,7 +148,7 @@ class DocumentOperationsTest extends TestCase
         $this->assertSame('completado', $artifact->estado);
         $this->assertSame('completada', $artifact->execution->estado);
         $this->assertSame(100, $artifact->execution->progreso);
-        $this->assertDatabaseCount('objetos_almacenados', 2);
+        $this->assertDatabaseCount('archivos', 2);
         $docx = $artifact->docxObject;
         $pdf = $artifact->pdfObject;
         $this->assertInstanceOf(StoredObject::class, $docx);
@@ -197,7 +197,7 @@ class DocumentOperationsTest extends TestCase
             app(RecordAuditEvent::class),
             app(DocumentBundleValidator::class),
         );
-        $this->assertDatabaseCount('objetos_almacenados', 2);
+        $this->assertDatabaseCount('archivos', 2);
         $this->assertSame($docxBytes, Storage::disk('private')->get($docx->ruta_interna));
         $this->assertDatabaseHas('notificaciones_internas', [
             'usuario_id' => $this->teacher->id,
@@ -221,8 +221,8 @@ class DocumentOperationsTest extends TestCase
             $this->assertSame('completado', $artifact->fresh()->estado);
         }
         try {
-            DB::transaction(fn () => DB::table('objetos_almacenados')
-                ->where('id', $docx->id)->update(['nombre_logico' => 'alterado.docx']));
+            DB::transaction(fn () => DB::table('archivos')
+                ->where('id', $docx->id)->update(['nombre_archivo' => 'alterado.docx']));
             $this->fail('PostgreSQL permitió reescribir un objeto publicado.');
         } catch (QueryException) {
             $this->assertSame($docx->nombre_logico, $docx->fresh()->nombre_logico);

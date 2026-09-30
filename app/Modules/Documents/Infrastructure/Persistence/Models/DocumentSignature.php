@@ -3,6 +3,7 @@
 namespace App\Modules\Documents\Infrastructure\Persistence\Models;
 
 use App\Models\User;
+use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -27,7 +28,18 @@ use LogicException;
  */
 class DocumentSignature extends Model
 {
-    use HasUuids;
+    use HasUuids, MapsLegacyColumnNames;
+
+    protected const LEGACY_COLUMN_ALIASES = [
+        'artefacto_exportacion_id' => 'exportacion_silabo_id',
+        'rol_firma' => 'firmado_como',
+        'objeto_almacenado_id' => 'archivo_firmado_id',
+        'certificado_titular' => 'nombre_en_certificado',
+        'certificado_serie' => 'numero_certificado',
+        'certificado_emisor' => 'entidad_emisora',
+        'certificado_vence_en' => 'certificado_valido_hasta',
+        'huella_sha256' => 'huella_archivo',
+    ];
 
     public const ROLE_TEACHER = 'docente';
 
@@ -57,13 +69,13 @@ class DocumentSignature extends Model
     /** @return BelongsTo<ExportArtifact, $this> */
     public function artifact(): BelongsTo
     {
-        return $this->belongsTo(ExportArtifact::class, 'artefacto_exportacion_id');
+        return $this->belongsTo(ExportArtifact::class, 'exportacion_silabo_id');
     }
 
     /** @return BelongsTo<StoredObject, $this> */
     public function storedObject(): BelongsTo
     {
-        return $this->belongsTo(StoredObject::class, 'objeto_almacenado_id');
+        return $this->belongsTo(StoredObject::class, 'archivo_firmado_id');
     }
 
     /** @return BelongsTo<User, $this> */

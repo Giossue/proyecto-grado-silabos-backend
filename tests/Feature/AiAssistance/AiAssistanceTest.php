@@ -82,7 +82,7 @@ class AiAssistanceTest extends TestCase
         $this->assertStringContainsString('Tema de unidad existente', $text);
         $this->assertStringNotContainsString('NOMBRE VIVO MODIFICADO', $text);
         $this->assertStringNotContainsString($this->teacher->correo_electronico, $text);
-        $this->assertStringNotContainsString('fuentes_academicas', $queries);
+        $this->assertStringNotContainsString('documentos_importacion', $queries);
         $this->assertEqualsCanonicalizing(['contexto_academico', 'dato_curricular', 'seccion_silabo'], array_column($items, 'type'));
         $this->assertSame([$this->planning->id], array_values(array_filter(array_column($items, 'field_id'))));
     }

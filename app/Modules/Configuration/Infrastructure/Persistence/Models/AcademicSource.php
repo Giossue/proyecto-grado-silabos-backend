@@ -27,16 +27,17 @@ class AcademicSource extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'nombre' => 'nombre_fuente_academica',
-        'documento' => 'documento_fuente_academica',
-        'activo' => 'fuente_academica_activa',
-        'estado_ingesta' => 'estado_ingesta_fuente',
-        'ingesta_actualizada_en' => 'ingesta_actualizada_en',
+        'nombre' => 'nombre_documento',
+        'documento' => 'contenido_documento',
+        'activo' => 'documento_activo',
+        'objeto_pdf_id' => 'archivo_pdf_id',
+        'estado_ingesta' => 'estado_lectura',
+        'ingesta_actualizada_en' => 'lectura_actualizada_en',
     ];
 
     public $timestamps = false;
 
-    protected $table = 'fuentes_academicas';
+    protected $table = 'documentos_importacion';
 
     /** @var list<string> */
     protected $fillable = [
@@ -68,7 +69,7 @@ class AcademicSource extends Model
     /** @return BelongsTo<StoredObject, $this> */
     public function pdfObject(): BelongsTo
     {
-        return $this->belongsTo(StoredObject::class, 'objeto_pdf_id');
+        return $this->belongsTo(StoredObject::class, 'archivo_pdf_id');
     }
 
     /** @return HasOne<JobExecution, $this> */

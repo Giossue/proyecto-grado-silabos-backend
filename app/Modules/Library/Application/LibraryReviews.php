@@ -24,9 +24,9 @@ final class LibraryReviews
         CASE
             WHEN EXISTS (
                 SELECT 1 FROM firmas_documento firma
-                JOIN artefactos_exportacion artefacto ON artefacto.id = firma.artefacto_exportacion_id
-                WHERE artefacto.revision_silabo_id = envios_biblioteca.revision_silabo_id
-                  AND firma.rol_firma = 'biblioteca'
+                JOIN exportaciones_silabo exportacion ON exportacion.id = firma.exportacion_silabo_id
+                WHERE exportacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
+                  AND firma.firmado_como = 'biblioteca'
             ) THEN 'firmado'
             WHEN reapertura.origen_reapertura = 'biblioteca' THEN 'comentado'
             WHEN reapertura.id IS NOT NULL THEN 'anulado'

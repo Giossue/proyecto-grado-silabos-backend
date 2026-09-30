@@ -54,7 +54,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->assertTrue(Schema::hasColumns('convocatorias_carreras', ['id', 'carrera_id', 'convocatoria_universidad_id', 'estado_convocatoria_carrera']));
         $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['id', 'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado_convocatoria_universidad']));
-        foreach (['silabos', 'convocatorias_universidad', 'artefactos_exportacion', 'historial_ia'] as $table) {
+        foreach (['silabos', 'convocatorias_universidad', 'exportaciones_silabo', 'historial_ia'] as $table) {
             $this->assertFalse(Schema::hasColumn($table, 'plantilla_id'));
         }
         $this->assertFalse(Schema::hasColumn('convocatorias_carreras', 'creado_en'));
@@ -448,7 +448,7 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame($process->periodo_academico_id, $convocation->process->periodo_academico_id);
         $this->assertSame('abierta', $convocation->estado);
         $this->getJson(route('api.v1.coordination.convocations.show', $convocation))->assertOk()->assertJsonMissingPath('convocation.sources');
-        $this->assertDatabaseCount('fuentes_academicas', 3);
+        $this->assertDatabaseCount('documentos_importacion', 3);
         $this->assertFalse(Schema::hasTable('fuentes_convocatoria'));
         $this->assertFalse(Schema::hasTable('fechas_limite_convocatoria'));
 

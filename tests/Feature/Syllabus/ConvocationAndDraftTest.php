@@ -335,7 +335,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsCoordinator();
         $this->assertSame('abierta', $convocation->fresh()->estado);
         $this->assertDatabaseCount('silabos', 1);
-        $this->assertDatabaseCount('fuentes_academicas', 0);
+        $this->assertDatabaseCount('documentos_importacion', 0);
         $this->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))->assertOk();
         $this->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))->assertOk();
         $this->assertSame('abierta', $convocation->fresh()->estado);

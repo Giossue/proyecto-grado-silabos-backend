@@ -19,6 +19,7 @@ class Faculty extends Model
         'nombre' => 'nombre_facultad',
         'activo' => 'facultad_activa',
         'campus' => 'campus_facultad',
+        'logo_objeto_id' => 'logo_archivo_id',
     ];
 
     public $timestamps = false;
@@ -37,7 +38,7 @@ class Faculty extends Model
     /** @return BelongsTo<StoredObject, $this> */
     public function logoObject(): BelongsTo
     {
-        return $this->belongsTo(StoredObject::class, 'logo_objeto_id');
+        return $this->belongsTo(StoredObject::class, 'logo_archivo_id');
     }
 
     /** @return HasMany<Career, $this> */

@@ -112,7 +112,7 @@ class CurricularIngestionTest extends TestCase
         $second = $this->postJson($this->storeUrl(), ['files' => [$file]])->assertAccepted()->json('id');
         $this->assertSame($first, $second);
         $this->assertDatabaseCount('importaciones_curriculares', 1);
-        $this->assertDatabaseCount('fuentes_academicas', 1);
+        $this->assertDatabaseCount('documentos_importacion', 1);
         $this->assertSame(1, JobExecution::query()->where('tipo', 'curriculo.extraer')->count());
         $this->assertSame(1, StoredObject::query()->where('clasificacion', 'curricular_workbook')->count());
         Queue::assertPushed(PrepareCurricularImportJob::class, 1);
@@ -121,11 +121,11 @@ class CurricularIngestionTest extends TestCase
         $path = StoredObject::query()->where('clasificacion', 'curricular_workbook')->firstOrFail()->ruta_interna;
         $import->update(['estado_importacion' => 'aplicada']);
         app(ReleaseCurricularImportDocuments::class)->execute($import->fresh());
-        $this->assertDatabaseCount('fuentes_academicas', 0);
+        $this->assertDatabaseCount('documentos_importacion', 0);
         Storage::disk('private')->assertMissing($path);
         $third = $this->postJson($this->storeUrl(), ['files' => [$file]])->assertAccepted()->json('id');
         $this->assertNotSame($first, $third);
-        $this->assertDatabaseCount('fuentes_academicas', 1);
+        $this->assertDatabaseCount('documentos_importacion', 1);
         Storage::disk('private')->assertExists($path);
         $this->postJson($this->storeUrl(), ['source_ids' => [AcademicSource::query()->firstOrFail()->id]])
             ->assertUnprocessable()->assertJsonValidationErrors('files');
@@ -303,7 +303,7 @@ class CurricularIngestionTest extends TestCase
         $previousDocument = $source->documento;
         $second = $this->postJson($this->storeUrl(), ['files' => [$this->workbook(content: 'Comunicación')]])->assertAccepted()->json('id');
         $this->assertNotSame($first, $second);
-        $this->assertDatabaseCount('fuentes_academicas', 2);
+        $this->assertDatabaseCount('documentos_importacion', 2);
         $this->assertDatabaseCount('importaciones_curriculares', 2);
         $this->assertSame($previousDocument, $source->fresh()->documento);
         $this->assertSame('recursos (2)', AcademicSource::query()->whereKeyNot($source->id)->firstOrFail()->nombre);
@@ -354,7 +354,7 @@ class CurricularIngestionTest extends TestCase
             UploadedFile::fake()->create('segundo.pdf', 16000, 'application/pdf'),
         ]])->assertUnprocessable()->assertJsonValidationErrors('files');
         $this->assertDatabaseCount('importaciones_curriculares', 0);
-        $this->assertDatabaseCount('fuentes_academicas', 0);
+        $this->assertDatabaseCount('documentos_importacion', 0);
         Queue::assertNotPushed(PrepareCurricularImportJob::class);
         Http::assertNothingSent();
     }

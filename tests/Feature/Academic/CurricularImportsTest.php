@@ -98,7 +98,7 @@ class CurricularImportsTest extends TestCase
         $this->assertStringNotContainsString('Evalúa', json_encode($audit->getAttributes(), JSON_UNESCAPED_UNICODE));
         $this->postJson($this->url($import).'/apply', $payload)->assertConflict();
         $this->assertDatabaseCount('valores_curriculares', 3);
-        $this->assertDatabaseMissing('fuentes_academicas', ['id' => $this->source->id]);
+        $this->assertDatabaseMissing('documentos_importacion', ['id' => $this->source->id]);
         $this->assertSame('Proyecto de carrera', $value->fresh()->evidencia_curricular[0]['source_name']);
         $this->assertSame('Evalúa la calidad del software.', $value->fresh()->evidencia_curricular[0]['quote']);
         $this->getJson($this->url($import))->assertOk()->assertJsonPath('documents.0.original_url', null);

@@ -288,8 +288,8 @@ final class AcademicSourceOcrTest extends TestCase
         $source = $this->createSource();
 
         $this->expectException(QueryException::class);
-        DB::table('fuentes_academicas')->where('id', $source->id)->update([
-            'documento_fuente_academica' => json_encode([
+        DB::table('documentos_importacion')->where('id', $source->id)->update([
+            'contenido_documento' => json_encode([
                 'schemaVersion' => 1,
                 'type' => 'doc',
                 'content' => [[
@@ -334,7 +334,7 @@ final class AcademicSourceOcrTest extends TestCase
             ['paragraph', 'sourceImage', 'paragraph'],
             array_column($source->fresh()->documento['content'], 'type'),
         );
-        $this->assertDatabaseCount('objetos_almacenados', 2);
+        $this->assertDatabaseCount('archivos', 2);
     }
 
     public function test_empty_result_fails_without_replacing_previous_document(): void

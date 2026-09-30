@@ -45,7 +45,7 @@ class AcademicStructureViewData
                 'faculties' => Faculty::query()
                     ->with('logoObject')
                     ->orderBy('nombre')
-                    ->get(['id', 'nombre', 'campus_facultad', 'logo_objeto_id', 'activo'])
+                    ->get(['id', 'nombre', 'campus_facultad', 'logo_archivo_id', 'activo'])
                     ->map(fn (Faculty $faculty): array => [
                         'id' => $faculty->id,
                         'nombre' => $faculty->nombre,

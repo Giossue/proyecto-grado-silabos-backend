@@ -16,19 +16,29 @@ use LogicException;
  * @property string $mime
  * @property int $tamano_bytes
  * @property string $huella_sha256
+ * @property string $clasificacion
+ * @property string|null $propietario_usuario_id
+ * @property string|null $carrera_id
  * @property CarbonImmutable $almacenado_en
  */
 class StoredObject extends Model
 {
     use HasUuids, MapsLegacyColumnNames;
 
-    protected const LEGACY_COLUMN_ALIASES = [];
+    protected const LEGACY_COLUMN_ALIASES = [
+        'nombre_logico' => 'nombre_archivo',
+        'mime' => 'tipo_archivo',
+        'clasificacion' => 'categoria',
+        'propietario_usuario_id' => 'subido_por',
+        'ruta_interna' => 'ruta_archivo',
+        'huella_sha256' => 'huella_archivo',
+    ];
 
     public const CREATED_AT = 'almacenado_en';
 
     public const UPDATED_AT = null;
 
-    protected $table = 'objetos_almacenados';
+    protected $table = 'archivos';
 
     /** @var list<string> */
     protected $fillable = [

@@ -86,7 +86,7 @@ class DeleteAcademicRecord
         $hasDependencies = match ($entity) {
             'facultad' => Career::query()->where('facultad_id', $record->getKey())->exists(),
             'carrera' => Subject::query()->where('carrera_id', $record->getKey())->exists()
-                || DB::table('fuentes_academicas')->where('carrera_id', $record->getKey())->exists()
+                || DB::table('documentos_importacion')->where('carrera_id', $record->getKey())->exists()
                 || DB::table('convocatorias_carreras')->where('carrera_id', $record->getKey())->exists()
                 || DB::table('asignaciones_rol')->where('carrera_id', $record->getKey())->exists(),
             'periodo' => ScheduledSubject::query()->where('periodo_academico_id', $record->getKey())->exists()

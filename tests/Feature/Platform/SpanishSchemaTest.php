@@ -140,15 +140,38 @@ it('I-80 persiste los tres roles fijos en la asignación y no en un catálogo', 
         ->toContain('asignaciones_rol_alcance_valido_check');
 });
 
-it('I-81 referencia el logo de facultad como objeto almacenado', function () {
-    expect(Schema::hasColumn('facultades', 'logo_objeto_id'))->toBeTrue()
+it('I-81 referencia el logo de facultad como archivo', function () {
+    expect(Schema::hasColumn('facultades', 'logo_archivo_id'))->toBeTrue()
         ->and(Schema::hasColumn('facultades', 'ruta_logo_facultad'))->toBeFalse();
 
     $restricciones = collect(DB::select(
         "SELECT conname FROM pg_constraint WHERE conrelid = 'facultades'::regclass",
     ))->pluck('conname');
 
-    expect($restricciones)->toContain('facultades_logo_objeto_id_foreign');
+    expect($restricciones)->toContain('facultades_logo_archivo_id_foreign');
+});
+
+it('I-175 usa nombres claros para archivos, exportaciones, firmas y documentos de importación', function () {
+    foreach (['objetos_almacenados', 'artefactos_exportacion', 'fuentes_academicas'] as $tabla) {
+        expect(Schema::hasTable($tabla))->toBeFalse();
+    }
+
+    expect(Schema::hasColumns('archivos', ['nombre_archivo', 'tipo_archivo', 'categoria', 'subido_por', 'ruta_archivo', 'huella_archivo']))->toBeTrue()
+        ->and(Schema::hasColumns('exportaciones_silabo', ['archivo_word_id', 'archivo_pdf_id', 'version_generador', 'estado_exportacion', 'trabajo_id', 'clave_solicitud']))->toBeTrue()
+        ->and(Schema::hasColumns('firmas_documento', [
+            'exportacion_silabo_id', 'firmado_como', 'archivo_firmado_id', 'nombre_en_certificado',
+            'numero_certificado', 'entidad_emisora', 'certificado_valido_hasta', 'huella_archivo',
+        ]))->toBeTrue()
+        ->and(Schema::hasColumns('documentos_importacion', [
+            'nombre_documento', 'documento_activo', 'archivo_pdf_id', 'estado_lectura', 'lectura_actualizada_en', 'contenido_documento',
+        ]))->toBeTrue();
+
+    $restricciones = collect(DB::select(
+        "SELECT conname FROM pg_constraint WHERE conrelid IN ('archivos'::regclass, 'exportaciones_silabo'::regclass, 'firmas_documento'::regclass, 'documentos_importacion'::regclass)",
+    ))->pluck('conname');
+
+    expect($restricciones)->toContain('archivos_pkey', 'exportaciones_silabo_trabajo_id_foreign', 'firmas_documento_exportacion_silabo_id_foreign', 'documentos_importacion_archivo_pdf_id_foreign')
+        ->and($restricciones->filter(fn (string $nombre): bool => str_contains($nombre, 'objeto') || str_contains($nombre, 'artefacto') || str_contains($nombre, 'fuente')))->toBeEmpty();
 });
 
 it('I-107 guarda ciclos en la carrera y retira códigos de facultad y malla', function () {

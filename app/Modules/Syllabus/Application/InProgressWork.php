@@ -168,20 +168,20 @@ final class InProgressWork
             DB::table('historial_ia')->where('sesion_id', 'like', "silabo:{$syllabusId}:%")->delete();
         }
 
-        $exports = DB::table('artefactos_exportacion')
+        $exports = DB::table('exportaciones_silabo')
             ->whereIn('revision_silabo_id', $revisionIds)
-            ->get(['id', 'objeto_docx_id', 'objeto_pdf_id']);
-        $signatures = DB::table('firmas_documento')->whereIn('artefacto_exportacion_id', $exports->pluck('id')->all());
-        $objectIds = $exports->flatMap(fn ($export) => [$export->objeto_docx_id, $export->objeto_pdf_id])
-            ->merge((clone $signatures)->pluck('objeto_almacenado_id'))
+            ->get(['id', 'archivo_word_id', 'archivo_pdf_id']);
+        $signatures = DB::table('firmas_documento')->whereIn('exportacion_silabo_id', $exports->pluck('id')->all());
+        $objectIds = $exports->flatMap(fn ($export) => [$export->archivo_word_id, $export->archivo_pdf_id])
+            ->merge((clone $signatures)->pluck('archivo_firmado_id'))
             ->filter()->unique()->values()->all();
-        $objects = DB::table('objetos_almacenados')->whereIn('id', $objectIds)->get(['disco', 'ruta_interna']);
+        $objects = DB::table('archivos')->whereIn('id', $objectIds)->get(['disco', 'ruta_archivo']);
         $signatures->delete();
-        DB::table('artefactos_exportacion')->whereIn('revision_silabo_id', $revisionIds)->delete();
-        DB::table('objetos_almacenados')->whereIn('id', $objectIds)->delete();
+        DB::table('exportaciones_silabo')->whereIn('revision_silabo_id', $revisionIds)->delete();
+        DB::table('archivos')->whereIn('id', $objectIds)->delete();
         DB::afterCommit(function () use ($objects): void {
             foreach ($objects as $object) {
-                Storage::disk($object->disco)->delete($object->ruta_interna);
+                Storage::disk($object->disco)->delete($object->ruta_archivo);
             }
         });
 

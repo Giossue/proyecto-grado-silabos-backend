@@ -16,8 +16,8 @@ class DeleteManagedUser
         'eventos_auditoria' => 'actor_usuario_id',
         'observaciones_revision' => 'creado_por',
         'revisiones_silabo' => 'enviado_por',
-        'artefactos_exportacion' => 'solicitado_por',
-        'objetos_almacenados' => 'propietario_usuario_id',
+        'exportaciones_silabo' => 'solicitado_por',
+        'archivos' => 'subido_por',
         'firmas_documento' => 'usuario_id',
     ];
 

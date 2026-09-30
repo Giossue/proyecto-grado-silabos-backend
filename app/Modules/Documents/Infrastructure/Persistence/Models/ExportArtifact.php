@@ -34,11 +34,18 @@ class ExportArtifact extends Model
 {
     use HasUuids, MapsLegacyColumnNames;
 
-    protected const LEGACY_COLUMN_ALIASES = ['estado' => 'estado_artefacto_exportacion'];
+    protected const LEGACY_COLUMN_ALIASES = [
+        'estado' => 'estado_exportacion',
+        'objeto_docx_id' => 'archivo_word_id',
+        'objeto_pdf_id' => 'archivo_pdf_id',
+        'version_renderizador' => 'version_generador',
+        'ejecucion_trabajo_id' => 'trabajo_id',
+        'clave_idempotencia' => 'clave_solicitud',
+    ];
 
     public $timestamps = false;
 
-    protected $table = 'artefactos_exportacion';
+    protected $table = 'exportaciones_silabo';
 
     /** @var list<string> */
     protected $fillable = [
@@ -69,19 +76,19 @@ class ExportArtifact extends Model
     /** @return BelongsTo<JobExecution, $this> */
     public function execution(): BelongsTo
     {
-        return $this->belongsTo(JobExecution::class, 'ejecucion_trabajo_id');
+        return $this->belongsTo(JobExecution::class, 'trabajo_id');
     }
 
     /** @return BelongsTo<StoredObject, $this> */
     public function docxObject(): BelongsTo
     {
-        return $this->belongsTo(StoredObject::class, 'objeto_docx_id');
+        return $this->belongsTo(StoredObject::class, 'archivo_word_id');
     }
 
     /** @return BelongsTo<StoredObject, $this> */
     public function pdfObject(): BelongsTo
     {
-        return $this->belongsTo(StoredObject::class, 'objeto_pdf_id');
+        return $this->belongsTo(StoredObject::class, 'archivo_pdf_id');
     }
 
     /** @return BelongsTo<User, $this> */
@@ -93,7 +100,7 @@ class ExportArtifact extends Model
     protected static function booted(): void
     {
         static::updating(function (ExportArtifact $artifact): void {
-            if ($artifact->getOriginal('estado_artefacto_exportacion') === 'completado') {
+            if ($artifact->getOriginal('estado_exportacion') === 'completado') {
                 throw new LogicException('Un artefacto completado es inmutable.');
             }
         });
