@@ -95,7 +95,7 @@ class ReopenSyllabus
     private function existingReopening(Syllabus $syllabus, string $key, User $actor): ?Reopening
     {
         $reopening = $syllabus->reopenings()
-            ->where('reaperturas.clave_idempotencia', $key)
+            ->where('reaperturas.clave_solicitud', $key)
             ->first();
         if ($reopening !== null && $reopening->reabierto_por !== $actor->id) {
             abort(403);

@@ -40,7 +40,7 @@ class CommentBibliography
 
         return DB::transaction(function () use ($actor, $comment, $idempotencyKey, $request, $revision): Reopening {
             $syllabus = Syllabus::query()->lockForUpdate()->findOrFail($revision->silabo_id);
-            $existing = $syllabus->reopenings()->where('reaperturas.clave_idempotencia', $idempotencyKey)->first();
+            $existing = $syllabus->reopenings()->where('reaperturas.clave_solicitud', $idempotencyKey)->first();
             if ($existing !== null) {
                 abort_if($existing->reabierto_por !== $actor->id, 403);
 

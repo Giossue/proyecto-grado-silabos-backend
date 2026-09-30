@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Infrastructure\Persistence\Models;
 
 use App\Models\User;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Concerns\ImmutableRecord;
+use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -21,7 +22,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Reopening extends Model
 {
-    use HasUuids;
+    use HasUuids, MapsLegacyColumnNames;
+
+    protected const LEGACY_COLUMN_ALIASES = ['clave_idempotencia' => 'clave_solicitud'];
+
     use ImmutableRecord;
 
     public const ORIGIN_COORDINATION = 'coordinacion';

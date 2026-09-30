@@ -94,7 +94,7 @@ class SubmitBibliographyCorrection
                 ]),
                 'aprobado_por' => $baseApproval->aprobado_por,
                 'aprobado_en' => $approvedAt,
-                'aprobacion_base_id' => $baseApproval->id,
+                'aprobacion_anterior_id' => $baseApproval->id,
             ]);
             $locked->update([
                 'estado' => 'aprobado',

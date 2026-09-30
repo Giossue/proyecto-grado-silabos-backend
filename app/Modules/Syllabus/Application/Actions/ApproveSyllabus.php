@@ -104,7 +104,7 @@ class ApproveSyllabus
     private function existingApproval(Syllabus $syllabus, string $key, User $actor): ?Approval
     {
         $approval = $syllabus->approvals()
-            ->where('aprobaciones.clave_idempotencia', $key)
+            ->where('aprobaciones.clave_solicitud', $key)
             ->first();
         if ($approval !== null && $approval->aprobado_por !== $actor->id) {
             abort(403);

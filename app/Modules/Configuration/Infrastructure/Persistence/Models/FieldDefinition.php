@@ -35,9 +35,9 @@ class FieldDefinition extends Model
         'opciones' => 'opciones_definicion_campo',
         'posicion' => 'posicion_definicion_campo',
         'heredado' => 'heredado_definicion_campo',
-        'origen_maestro' => 'origen_maestro_definicion_campo',
+        'origen_maestro' => 'origen_dato_definicion_campo',
         'editable_docente' => 'editable_docente_definicion_campo',
-        'mostrar_si' => 'mostrar_si_definicion_campo',
+        'mostrar_si' => 'condicion_definicion_campo',
     ];
 
     public $timestamps = false;

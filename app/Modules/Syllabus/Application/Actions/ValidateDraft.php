@@ -96,7 +96,7 @@ class ValidateDraft
             ]);
             foreach ($issues as $issue) {
                 ValidationResult::query()->create([
-                    'ejecucion_validacion_id' => $run->id,
+                    'validacion_silabo_id' => $run->id,
                     'definicion_campo_id' => $issue['field_id'],
                     'codigo' => $issue['code'],
                     'severidad' => $issue['severity'],

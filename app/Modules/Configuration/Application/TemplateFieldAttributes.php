@@ -68,8 +68,8 @@ final class TemplateFieldAttributes
                 $list = is_array($list) ? array_values($list) : [$list];
                 $hydrated['options_sources'] = $list;
                 $hydrated['options_source'] = count($list) === 1 ? $list[0] : null;
-                $condition = is_string($definition->mostrar_si_definicion_campo ?? null)
-                    ? json_decode($definition->mostrar_si_definicion_campo, true)
+                $condition = is_string($definition->condicion_definicion_campo ?? null)
+                    ? json_decode($definition->condicion_definicion_campo, true)
                     : null;
                 $hydrated['showWhen'] = FieldConditions::normalize($condition);
             }
