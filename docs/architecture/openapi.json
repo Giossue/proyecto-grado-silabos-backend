@@ -71,7 +71,16 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "required": [
+                                        "options"
+                                    ],
+                                    "properties": {
+                                        "options": {
+                                            "$ref": "#/components/schemas/AcademicUiOptions"
+                                        }
+                                    },
+                                    "additionalProperties": true
                                 }
                             }
                         }
@@ -2778,7 +2787,16 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "required": [
+                                        "options"
+                                    ],
+                                    "properties": {
+                                        "options": {
+                                            "$ref": "#/components/schemas/AcademicUiOptions"
+                                        }
+                                    },
+                                    "additionalProperties": true
                                 }
                             }
                         }
@@ -3369,7 +3387,16 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "required": [
+                                        "options"
+                                    ],
+                                    "properties": {
+                                        "options": {
+                                            "$ref": "#/components/schemas/AcademicUiOptions"
+                                        }
+                                    },
+                                    "additionalProperties": true
                                 }
                             }
                         }
@@ -3460,7 +3487,16 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "required": [
+                                        "options"
+                                    ],
+                                    "properties": {
+                                        "options": {
+                                            "$ref": "#/components/schemas/AcademicUiOptions"
+                                        }
+                                    },
+                                    "additionalProperties": true
                                 }
                             }
                         }
@@ -6815,6 +6851,66 @@
                         "type": "boolean"
                     }
                 }
+            },
+            "AcademicUiOptions": {
+                "type": "object",
+                "required": [
+                    "modalityOptions",
+                    "shiftOptions"
+                ],
+                "properties": {
+                    "modalityOptions": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "value",
+                                "label"
+                            ],
+                            "properties": {
+                                "value": {
+                                    "type": "string",
+                                    "enum": [
+                                        "presencial",
+                                        "semipresencial",
+                                        "en_linea",
+                                        "a_distancia",
+                                        "hibrida"
+                                    ]
+                                },
+                                "label": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "shiftOptions": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "value",
+                                "label"
+                            ],
+                            "properties": {
+                                "value": {
+                                    "type": "string",
+                                    "enum": [
+                                        "matutina",
+                                        "vespertina",
+                                        "nocturna"
+                                    ]
+                                },
+                                "label": {
+                                    "type": "string"
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    }
+                },
+                "additionalProperties": true
             },
             "Message": {
                 "type": "object",

@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Modules\Academic\Domain\StudyModality;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use Illuminate\Console\Command;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -51,6 +53,15 @@ class ExportOpenApi extends Command
                 ],
                 'schemas' => [
                     ...$this->curricularImportSchemas(),
+                    'AcademicUiOptions' => [
+                        'type' => 'object',
+                        'required' => ['modalityOptions', 'shiftOptions'],
+                        'properties' => [
+                            'modalityOptions' => $this->catalogOptions(StudyModality::values()),
+                            'shiftOptions' => $this->catalogOptions(Parallel::SHIFTS),
+                        ],
+                        'additionalProperties' => true,
+                    ],
                     'Message' => [
                         'type' => 'object',
                         'required' => ['message'],
@@ -133,6 +144,19 @@ class ExportOpenApi extends Command
             $schema = str_ends_with($name, '.index') ? 'CurricularImportsIndex' : 'CurricularImport';
             $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/'.$schema]]];
         }
+        if ($method === 'GET' && in_array($name, [
+            'api.v1.admin.academic.index',
+            'api.v1.coordination.academic.curriculum.show',
+            'api.v1.coordination.academic.scheduled-subjects.index',
+            'api.v1.coordination.academic.teacher-assignments.index',
+        ], true)) {
+            $successContent = ['application/json' => ['schema' => [
+                'type' => 'object',
+                'required' => ['options'],
+                'properties' => ['options' => ['$ref' => '#/components/schemas/AcademicUiOptions']],
+                'additionalProperties' => true,
+            ]]];
+        }
         $operation = [
             'tags' => [$tag],
             'operationId' => str_replace('.', '_', $name),
@@ -210,6 +234,25 @@ class ExportOpenApi extends Command
         }
 
         return $operation;
+    }
+
+    /** @param list<string> $values
+     * @return array<string, mixed>
+     */
+    private function catalogOptions(array $values): array
+    {
+        return [
+            'type' => 'array',
+            'items' => [
+                'type' => 'object',
+                'required' => ['value', 'label'],
+                'properties' => [
+                    'value' => ['type' => 'string', 'enum' => $values],
+                    'label' => ['type' => 'string'],
+                ],
+                'additionalProperties' => false,
+            ],
+        ];
     }
 
     /** @return array<string, array<string, mixed>> */

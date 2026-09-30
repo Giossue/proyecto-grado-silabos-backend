@@ -96,7 +96,7 @@ class AcademicStructureViewData
                     }),
             ],
             'options' => [
-                ...$this->emptyOptions(),
+                ...$this->baseOptions(),
                 'faculties' => Faculty::query()
                     ->where('activo', true)
                     ->orderBy('nombre')
@@ -121,7 +121,7 @@ class AcademicStructureViewData
 
         return [
             'career' => ['id' => $career->id, 'name' => $career->nombre],
-            'options' => $this->emptyOptions(),
+            'options' => $this->baseOptions(),
         ];
     }
 
@@ -226,7 +226,7 @@ class AcademicStructureViewData
                 ]),
             'modalityOptions' => StudyModality::options(),
             'organizationUnitOptions' => CurricularUnit::options(),
-            'options' => $this->emptyOptions(),
+            'options' => $this->baseOptions(),
         ];
     }
 
@@ -323,7 +323,7 @@ class AcademicStructureViewData
                     ];
                 }),
             'options' => [
-                ...$this->emptyOptions(),
+                ...$this->baseOptions(),
                 'periods' => $periods
                     ->map(fn (AcademicPeriod $period): array => [
                         'id' => $period->id,
@@ -429,7 +429,7 @@ class AcademicStructureViewData
                 ->unique('id')
                 ->values(),
             'options' => [
-                ...$this->emptyOptions(),
+                ...$this->baseOptions(),
                 'parallels' => Parallel::query()
                     ->whereHas(
                         'scheduledSubject.subject',
@@ -478,7 +478,7 @@ class AcademicStructureViewData
     }
 
     /** @return array<string, list<array{value: string, label: string}>> */
-    private function emptyOptions(): array
+    private function baseOptions(): array
     {
         return [
             'faculties' => [],

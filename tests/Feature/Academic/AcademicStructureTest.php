@@ -45,6 +45,21 @@ class AcademicStructureTest extends TestCase
         $this->coordinatorContext = $this->coordinator->roleAssignments()->firstOrFail();
     }
 
+    public function test_academic_forms_receive_authoritative_modality_and_shift_options(): void
+    {
+        $this->actingAsAdministrator()
+            ->getJson(route('api.v1.admin.academic.index'))
+            ->assertOk()
+            ->assertJsonPath('options.modalityOptions', StudyModality::options())
+            ->assertJsonPath('options.shiftOptions', Parallel::shiftOptions());
+
+        $this->actingAsCoordinator()
+            ->getJson(route('api.v1.coordination.academic.scheduled-subjects.index'))
+            ->assertOk()
+            ->assertJsonPath('options.modalityOptions', StudyModality::options())
+            ->assertJsonPath('options.shiftOptions', Parallel::shiftOptions());
+    }
+
     public function test_curricular_structure_belongs_directly_to_a_career(): void
     {
         $career = Career::query()->firstOrFail();
