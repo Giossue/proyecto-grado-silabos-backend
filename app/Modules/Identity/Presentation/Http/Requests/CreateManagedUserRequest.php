@@ -25,7 +25,7 @@ class CreateManagedUserRequest extends FormRequest
             'role_code' => ['required', Rule::enum(RoleCode::class)],
             'career_id' => [
                 'nullable',
-                'required_unless:role_code,'.RoleCode::Administrator->value,
+                'required_unless:role_code,'.RoleCode::Administrator->value.','.RoleCode::Librarian->value,
                 'uuid',
                 Rule::exists('carreras', 'id')->where('carrera_activa', true),
             ],

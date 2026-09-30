@@ -18,6 +18,7 @@ use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionManagementC
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\TwoFactorController;
 use App\Modules\Identity\Presentation\Http\Controllers\CareerTeacherController;
 use App\Modules\Identity\Presentation\Http\Controllers\ManagedUserController;
+use App\Modules\Library\Presentation\Http\Controllers\LibraryReviewController;
 use App\Modules\Operations\Presentation\Http\Controllers\AuditEventController;
 use App\Modules\Operations\Presentation\Http\Controllers\JobExecutionController;
 use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
@@ -270,6 +271,14 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.signature.pdf');
             Route::post('revisions/{revision}/signature', [SignatureController::class, 'store'])
                 ->middleware('active-role')->name('api.v1.signature.store');
+            Route::post('revisions/{revision}/library-submission', [LibraryReviewController::class, 'send'])
+                ->middleware('active-role')->name('api.v1.library.submission.store');
+            Route::get('library/reviews', [LibraryReviewController::class, 'index'])
+                ->middleware('active-role')->name('api.v1.library.reviews.index');
+            Route::get('library/reviews/{revision}', [LibraryReviewController::class, 'show'])
+                ->middleware('active-role')->name('api.v1.library.reviews.show');
+            Route::post('library/reviews/{revision}/comments', [LibraryReviewController::class, 'comment'])
+                ->middleware('active-role')->name('api.v1.library.reviews.comments.store');
         });
     });
 });

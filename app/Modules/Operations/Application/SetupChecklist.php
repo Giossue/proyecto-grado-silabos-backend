@@ -54,7 +54,7 @@ class SetupChecklist
         $careerCount = (clone $careers)->count();
         $accounts = User::query()->where('activo', true)->whereHas('roleAssignments', fn (Builder $query) => $query
             ->where('activo', true)
-            ->where('rol', '!=', 'administrador'))->count();
+            ->whereIn('rol', [RoleCode::Coordinator->value, RoleCode::Teacher->value]))->count();
         $template = SyllabusTemplate::query()->first();
         $templateReady = $template?->hasStructure() ?? false;
 

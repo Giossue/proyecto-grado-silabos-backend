@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Library\Application\LibraryReviews;
 use App\Modules\Operations\Application\SetupChecklist;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
@@ -35,6 +36,7 @@ class DashboardController extends Controller
         SetupChecklist $setup,
         ConvocationSchedule $schedule,
         CoordinatorConvocationReadiness $readiness,
+        LibraryReviews $libraryReviews,
     ): JsonResponse {
         $activeRole = $roles->resolve($request);
         $user = $request->user();
@@ -48,6 +50,7 @@ class DashboardController extends Controller
             $activeRole->role->codigo_rol === RoleCode::Administrator->value => $this->administratorMetrics(),
             $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorMetrics($coordinatorReadiness),
             $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherMetrics($user, $activeRole->carrera_id),
+            $activeRole->role->codigo_rol === RoleCode::Librarian->value => $this->librarianMetrics($libraryReviews),
             default => [],
         };
 
@@ -176,6 +179,36 @@ class DashboardController extends Controller
                 'value' => (clone $syllabi)->where('estado', 'sin_iniciar')->count(),
                 'suffix' => null,
                 'hint' => 'Docentes que todavía no empiezan',
+            ],
+        ];
+    }
+
+    /** @return list<array{key: string, label: string, value: int, suffix: string|null, hint: string}> */
+    private function librarianMetrics(LibraryReviews $reviews): array
+    {
+        $counts = $reviews->counts();
+
+        return [
+            [
+                'key' => 'library_pending',
+                'label' => 'Por verificar',
+                'value' => $counts[LibraryReviews::STATE_PENDING],
+                'suffix' => null,
+                'hint' => $counts[LibraryReviews::STATE_PENDING] === 0 ? 'Nada pendiente por ahora' : 'Sílabos con la bibliografía por revisar y firmar',
+            ],
+            [
+                'key' => 'library_commented',
+                'label' => 'Con comentario',
+                'value' => $counts[LibraryReviews::STATE_COMMENTED],
+                'suffix' => null,
+                'hint' => 'Devueltos al docente para corregir la bibliografía',
+            ],
+            [
+                'key' => 'library_signed',
+                'label' => 'Firmados',
+                'value' => $counts[LibraryReviews::STATE_SIGNED],
+                'suffix' => null,
+                'hint' => 'Sílabos con la firma de biblioteca',
             ],
         ];
     }

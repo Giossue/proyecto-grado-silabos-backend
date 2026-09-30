@@ -72,7 +72,7 @@ class ValidateDraft
                         ];
                     }
                 }
-                if (! $this->filled($values->get($field->id)?->valor)) {
+                if (! self::filled($values->get($field->id)?->valor)) {
                     $issues[] = [
                         'field_id' => $field->id,
                         'code' => $field->heredado ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
@@ -145,7 +145,7 @@ class ValidateDraft
         return in_array($field->clave, $keys, true);
     }
 
-    private function filled(mixed $value): bool
+    public static function filled(mixed $value): bool
     {
         if (FreeText::isDocument($value)) {
             /** @var array<string, mixed> $value */

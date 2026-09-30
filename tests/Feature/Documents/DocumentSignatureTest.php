@@ -54,6 +54,10 @@ class DocumentSignatureTest extends TestCase
 
     private RoleAssignment $teacherContext;
 
+    private User $librarian;
+
+    private RoleAssignment $librarianContext;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -64,13 +68,17 @@ class DocumentSignatureTest extends TestCase
         $this->coordinatorContext = $this->coordinator->roleAssignments()->firstOrFail();
         $this->teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->teacherContext = $this->teacher->roleAssignments()->firstOrFail();
+        $this->librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
+        $this->librarianContext = $this->librarian->roleAssignments()->firstOrFail();
     }
 
-    public function test_docente_y_despues_coordinacion_firman_el_pdf_de_la_revision_aprobada(): void
+    public function test_docente_coordinacion_y_biblioteca_firman_el_pdf_de_la_revision_aprobada(): void
     {
         [, $revision] = $this->exportedRevision();
         $teacherCredentials = $this->makeSigningCertificate('DOCENTE DE PRUEBA');
         $coordinatorCredentials = $this->makeSigningCertificate('COORDINACION DE PRUEBA');
+        $librarianCredentials = $this->makeSigningCertificate('BIBLIOTECA DE PRUEBA');
+        $this->actingAsLibrarian()->getJson(route('api.v1.signature.show', $revision))->assertForbidden();
 
         $status = $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
             ->assertOk()
@@ -102,19 +110,53 @@ class DocumentSignatureTest extends TestCase
         $this->upload($revision, $this->signPdfIncrementally($original, $coordinatorCredentials), hash('sha256', $original), 'coordinator')
             ->assertJsonValidationErrors(['signed_pdf' => 'El documento cambió mientras firmaba. Descárguelo de nuevo y vuelva a firmar.']);
 
-        $finalPdf = $this->signPdfIncrementally($teacherSigned, $coordinatorCredentials);
-        $this->upload($revision, $finalPdf, hash('sha256', $teacherSigned), 'coordinator')->assertCreated();
-        $this->assertNotified($this->teacher->id, 'silabo.firmado', 'firmó electrónicamente');
+        $coordinationPdf = $this->signPdfIncrementally($teacherSigned, $coordinatorCredentials);
+        $this->upload($revision, $coordinationPdf, hash('sha256', $teacherSigned), 'coordinator')->assertCreated();
+        $this->assertNotified($this->teacher->id, 'silabo.firmado_coordinacion', 'Envíelo a biblioteca');
+        $this->assertNotNotified($this->teacher->id, 'silabo.firmado');
+
+        $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
+            ->assertOk()
+            ->assertJsonPath('state', 'pendiente_envio_biblioteca')
+            ->assertJsonPath('next_role', 'biblioteca')
+            ->assertJsonPath('can_sign', false)
+            ->assertJsonPath('can_send_to_library', true)
+            ->assertJsonPath('library', null);
+        $this->upload($revision, $this->signPdfIncrementally($coordinationPdf, $librarianCredentials), hash('sha256', $coordinationPdf), 'teacher')
+            ->assertJsonValidationErrors(['signed_pdf' => 'Su firma ya está registrada; ahora firma biblioteca.']);
+
+        $this->actingAsCoordinator()->postJson(route('api.v1.library.submission.store', $revision))->assertForbidden();
+        $this->actingAsTeacher()->postJson(route('api.v1.library.submission.store', $revision))->assertCreated();
+        $this->actingAsTeacher()->postJson(route('api.v1.library.submission.store', $revision))->assertCreated();
+        $this->assertDatabaseCount('envios_biblioteca', 1);
+        $this->assertNotified($this->librarian->id, 'biblioteca.enviado', 'verificar su bibliografía');
+
+        $status = $this->actingAsLibrarian()->getJson(route('api.v1.signature.show', $revision))
+            ->assertOk()
+            ->assertJsonPath('state', 'pendiente_biblioteca')
+            ->assertJsonPath('my_role', 'biblioteca')
+            ->assertJsonPath('can_sign', true)
+            ->assertJsonPath('library.sent_by', $this->teacher->nombre);
+        $this->assertIsArray($status->json('stamp'));
+        $this->assertSame($coordinationPdf, $this->currentPdf($revision, 'librarian'));
+
+        $finalPdf = $this->signPdfIncrementally($coordinationPdf, $librarianCredentials);
+        $this->upload($revision, $finalPdf, hash('sha256', $coordinationPdf), 'librarian')->assertCreated();
+        $this->assertNotified($this->teacher->id, 'silabo.firmado', 'Biblioteca firmó');
+        $this->assertNotified($this->coordinator->id, 'silabo.firmado', 'Biblioteca firmó');
 
         $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
             ->assertOk()
             ->assertJsonPath('state', 'firmado')
             ->assertJsonPath('can_sign', false)
-            ->assertJsonCount(2, 'signatures')
-            ->assertJsonPath('signatures.1.role', 'coordinacion');
+            ->assertJsonPath('can_send_to_library', false)
+            ->assertJsonCount(3, 'signatures')
+            ->assertJsonPath('signatures.0.role', 'docente')
+            ->assertJsonPath('signatures.1.role', 'coordinacion')
+            ->assertJsonPath('signatures.2.role', 'biblioteca');
         $this->assertSame($finalPdf, $this->currentPdf($revision, 'teacher'));
-        $this->assertSame(2, DocumentSignature::query()->count());
-        $this->assertSame(2, AuditEvent::query()->where('accion', 'documento.firmado')->count());
+        $this->assertSame(3, DocumentSignature::query()->count());
+        $this->assertSame(3, AuditEvent::query()->where('accion', 'documento.firmado')->count());
         $this->upload($revision, $this->signPdfIncrementally($finalPdf, $teacherCredentials), hash('sha256', $finalPdf), 'teacher')
             ->assertJsonValidationErrors(['signed_pdf' => 'El documento ya tiene todas las firmas.']);
     }
@@ -226,7 +268,7 @@ class DocumentSignatureTest extends TestCase
 
     private function upload(SyllabusRevision $revision, string $pdf, string $base, string $as): TestResponse
     {
-        $as === 'teacher' ? $this->actingAsTeacher() : $this->actingAsCoordinator();
+        $this->actingAsRole($as);
 
         return $this->post(route('api.v1.signature.store', $revision), [
             'signed_pdf' => UploadedFile::fake()->createWithContent('firmado.pdf', $pdf),
@@ -236,7 +278,7 @@ class DocumentSignatureTest extends TestCase
 
     private function currentPdf(SyllabusRevision $revision, string $as): string
     {
-        $as === 'teacher' ? $this->actingAsTeacher() : $this->actingAsCoordinator();
+        $this->actingAsRole($as);
 
         return $this->get(route('api.v1.signature.pdf', $revision))->assertOk()->streamedContent();
     }
@@ -313,6 +355,22 @@ class DocumentSignatureTest extends TestCase
         );
 
         return [$syllabus->fresh(), $revision->fresh()];
+    }
+
+    private function actingAsRole(string $as): static
+    {
+        return match ($as) {
+            'teacher' => $this->actingAsTeacher(),
+            'librarian' => $this->actingAsLibrarian(),
+            default => $this->actingAsCoordinator(),
+        };
+    }
+
+    private function actingAsLibrarian(): static
+    {
+        $this->actingAs($this->librarian)->withSession(['active_role_assignment_id' => $this->librarianContext->id]);
+
+        return $this;
     }
 
     private function actingAsCoordinator(): static

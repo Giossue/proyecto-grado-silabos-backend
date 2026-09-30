@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $revision_aprobada_id
  * @property string $clave_idempotencia
  * @property string $causa
+ * @property string $origen_reapertura
  * @property string $reabierto_por
  * @property CarbonImmutable $reabierto_en
  */
@@ -23,6 +24,10 @@ class Reopening extends Model
     use HasUuids;
     use ImmutableRecord;
 
+    public const ORIGIN_COORDINATION = 'coordinacion';
+
+    public const ORIGIN_LIBRARY = 'biblioteca';
+
     public $timestamps = false;
 
     protected $table = 'reaperturas';
@@ -30,8 +35,11 @@ class Reopening extends Model
     /** @var list<string> */
     protected $fillable = [
         'aprobacion_id', 'revision_aprobada_id', 'clave_idempotencia',
-        'causa', 'reabierto_por', 'reabierto_en',
+        'causa', 'reabierto_por', 'reabierto_en', 'origen_reapertura',
     ];
+
+    /** @var array<string, mixed> */
+    protected $attributes = ['origen_reapertura' => self::ORIGIN_COORDINATION];
 
     /** @return array<string, string> */
     protected function casts(): array

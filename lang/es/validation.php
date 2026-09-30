@@ -313,6 +313,7 @@ return [
         'recovery_code' => 'código de recuperación',
         'remember' => 'recordarme',
         'idempotency_key' => 'identificador de la solicitud',
+        'comment' => 'comentario',
         'return_to_editor' => 'volver al editor',
         '*.label' => 'nombre',
         '*.code' => 'código',

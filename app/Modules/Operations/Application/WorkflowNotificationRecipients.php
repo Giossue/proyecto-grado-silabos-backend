@@ -4,6 +4,8 @@ namespace App\Modules\Operations\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
+use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\CurrentSyllabusTeacher;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -54,6 +56,19 @@ class WorkflowNotificationRecipients
         $ids = CoordinatorAssignment::query()
             ->where('carrera_id', $careerId)
             ->effective()
+            ->whereHas('user', fn ($query) => $query->where('activo', true))
+            ->pluck('usuario_id')
+            ->all();
+
+        return $this->uniqueStrings($ids);
+    }
+
+    /** @return list<string> */
+    public function librarians(): array
+    {
+        $ids = RoleAssignment::query()
+            ->effective()
+            ->where('rol', RoleCode::Librarian->value)
             ->whereHas('user', fn ($query) => $query->where('activo', true))
             ->pluck('usuario_id')
             ->all();

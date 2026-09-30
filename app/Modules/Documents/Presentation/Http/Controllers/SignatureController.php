@@ -31,12 +31,14 @@ class SignatureController extends Controller
         $artifact = $workflow->artifactFor($revision);
         $signatures = $workflow->signatures($artifact);
         $state = $workflow->state($revision, $artifact, $signatures);
-        $next = in_array($state, [SignatureWorkflow::STATE_PENDING_TEACHER, SignatureWorkflow::STATE_PENDING_COORDINATION], true)
+        $next = in_array($state, SignatureWorkflow::PENDING_STATES, true)
             ? $workflow->nextRole($signatures)
             : null;
         $role = $workflow->roleOf($actor, $revision, $request);
         $current = $artifact === null ? null : $workflow->currentPdf($artifact, $signatures);
-        $canSign = $next !== null && $next === $role && $current !== null;
+        $canSign = $next !== null && $next === $role && $current !== null
+            && $state !== SignatureWorkflow::STATE_PENDING_LIBRARY_SUBMISSION;
+        $submission = $workflow->submission($artifact);
         $stamp = null;
         if ($canSign && Storage::disk($current->disco)->exists($current->ruta_interna)) {
             $stamp = $stamps->locate((string) Storage::disk($current->disco)->get($current->ruta_interna), $next);
@@ -47,6 +49,12 @@ class SignatureController extends Controller
             'next_role' => $next,
             'my_role' => $role,
             'can_sign' => $canSign,
+            'can_send_to_library' => $state === SignatureWorkflow::STATE_PENDING_LIBRARY_SUBMISSION
+                && $role === DocumentSignature::ROLE_TEACHER,
+            'library' => $submission === null ? null : [
+                'sent_at' => $submission->enviado_en->toIso8601String(),
+                'sent_by' => $submission->sender->nombre,
+            ],
             'artifact_id' => $artifact?->id,
             'document' => $current === null ? null : [
                 'sha256' => $current->huella_sha256,
@@ -124,9 +132,11 @@ class SignatureController extends Controller
         );
 
         return response()->json([
-            'message' => $signature->rol_firma === DocumentSignature::ROLE_TEACHER
-                ? 'Firma registrada. Coordinación ya puede firmar el sílabo.'
-                : 'Firma registrada. El sílabo quedó firmado por docente y coordinación.',
+            'message' => match ($signature->rol_firma) {
+                DocumentSignature::ROLE_TEACHER => 'Firma registrada. Coordinación ya puede firmar el sílabo.',
+                DocumentSignature::ROLE_COORDINATION => 'Firma registrada. El docente ya puede enviar el sílabo a biblioteca.',
+                default => 'Firma registrada. El sílabo quedó firmado por docente, coordinación y biblioteca.',
+            },
             'signature_id' => $signature->id,
         ], 201);
     }

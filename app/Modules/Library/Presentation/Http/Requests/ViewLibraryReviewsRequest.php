@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Modules\Library\Presentation\Http\Requests;
+
+use App\Modules\Library\Application\LibraryReviews;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
+
+class ViewLibraryReviewsRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return Gate::allows('review-library');
+    }
+
+    /** @return array<string, list<mixed>> */
+    public function rules(): array
+    {
+        return [
+            'state' => ['nullable', 'string', Rule::in(LibraryReviews::STATES)],
+            'q' => ['nullable', 'string', 'max:100'],
+        ];
+    }
+}

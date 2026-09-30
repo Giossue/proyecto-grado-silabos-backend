@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $clave_idempotencia
  * @property string $huella_sha256
  * @property string $aprobado_por
+ * @property string|null $aprobacion_base_id
  * @property CarbonImmutable $aprobado_en
  * @property-read SyllabusRevision $revision
  */
@@ -31,7 +32,7 @@ class Approval extends Model
     /** @var list<string> */
     protected $fillable = [
         'revision_silabo_id', 'clave_idempotencia', 'huella_sha256',
-        'aprobado_por', 'aprobado_en',
+        'aprobado_por', 'aprobado_en', 'aprobacion_base_id',
     ];
 
     /** @return array<string, string> */
@@ -50,6 +51,12 @@ class Approval extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'aprobado_por');
+    }
+
+    /** @return BelongsTo<Approval, $this> */
+    public function baseApproval(): BelongsTo
+    {
+        return $this->belongsTo(Approval::class, 'aprobacion_base_id');
     }
 
     /** @return HasOne<Reopening, $this> */

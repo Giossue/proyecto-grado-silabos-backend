@@ -158,9 +158,25 @@ class DeliverInternalNotificationJob implements ShouldQueue
                 'Sílabo listo para su firma',
                 "El docente firmó electrónicamente el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Falta la firma de coordinación.",
             ],
+            'silabo.firmado_coordinacion' => [
+                'Envíe el sílabo a biblioteca',
+                "Coordinación firmó electrónicamente el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Envíelo a biblioteca para que verifique la bibliografía.",
+            ],
             'silabo.firmado' => [
                 'Sílabo firmado',
-                "Coordinación firmó electrónicamente el sílabo {$syllabus->subject->nombre}{$revisionLabel}. El PDF firmado ya está disponible.",
+                "Biblioteca firmó electrónicamente el sílabo {$syllabus->subject->nombre}{$revisionLabel}. El PDF con las tres firmas ya está disponible.",
+            ],
+            'biblioteca.enviado' => [
+                'Bibliografía por verificar',
+                "El docente envió el sílabo {$syllabus->subject->nombre}{$revisionLabel} para verificar su bibliografía.",
+            ],
+            'biblioteca.comentado' => [
+                'Biblioteca pidió corregir la bibliografía',
+                "Biblioteca comentó la bibliografía del sílabo {$syllabus->subject->nombre}{$revisionLabel}. Corríjala y reenvíela.",
+            ],
+            'silabo.bibliografia_corregida' => [
+                'Bibliografía corregida',
+                "El docente corrigió la bibliografía del sílabo {$syllabus->subject->nombre}{$revisionLabel} por pedido de biblioteca. Cuando el docente firme el nuevo PDF, firme usted también.",
             ],
             'silabo.reiniciado' => [
                 'Sílabo reiniciado',

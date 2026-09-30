@@ -269,6 +269,7 @@ class ReviewController extends Controller
                 'cause' => $latestReopening->causa,
                 'reopened_at' => $latestReopening->reabierto_en->toIso8601String(),
                 'reopened_by' => $latestReopening->reopener->nombre,
+                'origin' => $latestReopening->origen_reapertura,
             ],
         ];
     }

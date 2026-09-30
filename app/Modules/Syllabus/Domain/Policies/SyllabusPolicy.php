@@ -5,6 +5,8 @@ namespace App\Modules\Syllabus\Domain\Policies;
 use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
+use App\Modules\Syllabus\Application\BibliographyCorrection;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Auth\Access\Response;
@@ -32,6 +34,11 @@ class SyllabusPolicy
         if ($activeRole->role->codigo_rol === RoleCode::Coordinator->value) {
             return $activeRole->carrera_id === $syllabus->convocation()->value('carrera_id');
         }
+        if ($activeRole->role->codigo_rol === RoleCode::Librarian->value) {
+            return LibrarySubmission::query()
+                ->whereHas('artifact.revision', fn ($revision) => $revision->where('silabo_id', $syllabus->id))
+                ->exists();
+        }
         if ($activeRole->role->codigo_rol !== RoleCode::Teacher->value
             || $activeRole->carrera_id !== $syllabus->convocation()->value('carrera_id')) {
             return false;
@@ -47,14 +54,14 @@ class SyllabusPolicy
 
     public function edit(User $user, Syllabus $syllabus): bool
     {
-        return $this->canTeacherEdit($user, $syllabus)
-            && in_array($syllabus->estado, ['borrador', 'correccion_solicitada'], true);
+        return $this->inLibraryCorrection($user, $syllabus) || ($this->canTeacherEdit($user, $syllabus)
+            && in_array($syllabus->estado, ['borrador', 'correccion_solicitada'], true));
     }
 
     public function submit(User $user, Syllabus $syllabus): bool
     {
-        return $this->canTeacherEdit($user, $syllabus)
-            && in_array($syllabus->estado, ['borrador', 'correccion_solicitada', 'en_revision'], true);
+        return $this->inLibraryCorrection($user, $syllabus) || ($this->canTeacherEdit($user, $syllabus)
+            && in_array($syllabus->estado, ['borrador', 'correccion_solicitada', 'en_revision'], true));
     }
 
     public function reset(User $user, Syllabus $syllabus): Response
@@ -94,12 +101,24 @@ class SyllabusPolicy
 
     private function canTeacherEdit(User $user, Syllabus $syllabus): bool
     {
+        return $this->isCurrentTeacher($user, $syllabus)
+            && $syllabus->convocation()->running()->exists();
+    }
+
+    private function inLibraryCorrection(User $user, Syllabus $syllabus): bool
+    {
+        return $syllabus->estado === 'correccion_solicitada'
+            && $this->isCurrentTeacher($user, $syllabus)
+            && BibliographyCorrection::requested($syllabus);
+    }
+
+    private function isCurrentTeacher(User $user, Syllabus $syllabus): bool
+    {
         $activeRole = $this->roles->resolve(request());
 
         return $user->activo
             && $activeRole?->role->codigo_rol === RoleCode::Teacher->value
             && $activeRole->carrera_id === $syllabus->convocation()->value('carrera_id')
-            && $syllabus->convocation()->running()->exists()
             && $this->hasCurrentCollaboration($user, $syllabus);
     }
 

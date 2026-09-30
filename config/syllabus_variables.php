@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Documents\Domain\SignatureAnchor;
+
 return [
     'nombre_facultad' => ['label' => 'Nombre de la facultad', 'source' => 'identification.faculty'],
     'nombre_carrera' => ['label' => 'Nombre de la carrera', 'source' => 'identification.career'],
@@ -35,4 +37,7 @@ return [
     'fecha_entrega' => ['label' => 'Fecha de entrega del sílabo', 'source' => 'approval.submitted_on'],
     'nombre_coordinador' => ['label' => 'Nombre de quien aprobó (coordinación)', 'source' => 'approval.coordinator'],
     'fecha_revision' => ['label' => 'Fecha de revisión (aprobación)', 'source' => 'approval.approved_on'],
+    'firma_docente' => ['label' => 'Firma del docente', 'source' => 'signature.docente', 'text' => SignatureAnchor::text('docente')],
+    'firma_coordinador' => ['label' => 'Firma de coordinación', 'source' => 'signature.coordinacion', 'text' => SignatureAnchor::text('coordinacion')],
+    'firma_bibliotecario' => ['label' => 'Firma de biblioteca', 'source' => 'signature.biblioteca', 'text' => SignatureAnchor::text('biblioteca')],
 ];

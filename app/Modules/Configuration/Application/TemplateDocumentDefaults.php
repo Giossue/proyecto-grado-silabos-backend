@@ -129,10 +129,11 @@ final class TemplateDocumentDefaults
     public static function signatures(): array
     {
         return self::fixedTable([
-            [['Elaborado por'], ['Revisado y aprobado por']],
-            [['[[variable:nombre_docente]]'], ['[[variable:nombre_coordinador]]']],
-            [['Docente de la asignatura'], ['Coordinación de carrera']],
-            [['Fecha de entrega: [[variable:fecha_entrega]]'], ['Fecha de revisión: [[variable:fecha_revision]]']],
+            [['Elaborado por'], ['Revisado y aprobado por'], ['Bibliografía verificada por']],
+            [['[[variable:firma_docente]]'], ['[[variable:firma_coordinador]]'], ['[[variable:firma_bibliotecario]]']],
+            [['[[variable:nombre_docente]]'], ['[[variable:nombre_coordinador]]'], ['Nombre en la firma electrónica']],
+            [['Docente de la asignatura'], ['Coordinación de carrera'], ['Biblioteca']],
+            [['Fecha de entrega: [[variable:fecha_entrega]]'], ['Fecha de revisión: [[variable:fecha_revision]]'], ['Fecha en la firma electrónica']],
         ], 1);
     }
 

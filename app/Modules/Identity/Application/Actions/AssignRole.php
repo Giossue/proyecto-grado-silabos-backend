@@ -51,9 +51,7 @@ class AssignRole
                 ]);
             }
 
-            $careerId = $data['role_code'] === RoleCode::Administrator->value
-                ? null
-                : ($data['career_id'] ?? null);
+            $careerId = $role->hasCareerScope() ? ($data['career_id'] ?? null) : null;
             if ($data['role_code'] === RoleCode::Coordinator->value) {
                 $alreadyCoordinated = RoleAssignment::query()
                     ->effective()

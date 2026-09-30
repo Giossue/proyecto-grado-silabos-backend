@@ -8,6 +8,7 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
@@ -21,6 +22,17 @@ class SignatureWorkflow
     public const STATE_PENDING_TEACHER = 'pendiente_docente';
 
     public const STATE_PENDING_COORDINATION = 'pendiente_coordinacion';
+
+    public const STATE_PENDING_LIBRARY_SUBMISSION = 'pendiente_envio_biblioteca';
+
+    public const STATE_PENDING_LIBRARY = 'pendiente_biblioteca';
+
+    public const PENDING_STATES = [
+        self::STATE_PENDING_TEACHER,
+        self::STATE_PENDING_COORDINATION,
+        self::STATE_PENDING_LIBRARY_SUBMISSION,
+        self::STATE_PENDING_LIBRARY,
+    ];
 
     public const STATE_SIGNED = 'firmado';
 
@@ -55,19 +67,29 @@ class SignatureWorkflow
         return DocumentSignature::query()
             ->where('artefacto_exportacion_id', $artifact->id)
             ->with(['signer:id,nombre', 'storedObject'])
-            ->orderByDesc('rol_firma')
-            ->get();
+            ->get()
+            ->sortBy(fn (DocumentSignature $signature): int|false => array_search($signature->rol_firma, DocumentSignature::ORDER, true))
+            ->values();
     }
 
     /** @param Collection<int, DocumentSignature> $signatures */
     public function nextRole(Collection $signatures): ?string
     {
         $roles = $signatures->pluck('rol_firma')->all();
-        if (! in_array(DocumentSignature::ROLE_TEACHER, $roles, true)) {
-            return DocumentSignature::ROLE_TEACHER;
+        foreach (DocumentSignature::ORDER as $role) {
+            if (! in_array($role, $roles, true)) {
+                return $role;
+            }
         }
 
-        return in_array(DocumentSignature::ROLE_COORDINATION, $roles, true) ? null : DocumentSignature::ROLE_COORDINATION;
+        return null;
+    }
+
+    public function submission(?ExportArtifact $artifact): ?LibrarySubmission
+    {
+        return $artifact === null
+            ? null
+            : LibrarySubmission::query()->where('artefacto_exportacion_id', $artifact->id)->with('sender:id,nombre')->first();
     }
 
     /** @param Collection<int, DocumentSignature> $signatures */
@@ -102,7 +124,11 @@ class SignatureWorkflow
             return self::STATE_NO_DOCUMENT;
         }
 
-        return $next === DocumentSignature::ROLE_TEACHER ? self::STATE_PENDING_TEACHER : self::STATE_PENDING_COORDINATION;
+        return match ($next) {
+            DocumentSignature::ROLE_TEACHER => self::STATE_PENDING_TEACHER,
+            DocumentSignature::ROLE_COORDINATION => self::STATE_PENDING_COORDINATION,
+            default => $this->submission($artifact) === null ? self::STATE_PENDING_LIBRARY_SUBMISSION : self::STATE_PENDING_LIBRARY,
+        };
     }
 
     public function roleOf(User $user, SyllabusRevision $revision, Request $request): ?string
@@ -119,6 +145,9 @@ class SignatureWorkflow
             && $user->can('review', $syllabus)
             && in_array($user->id, $this->recipients->coordinatorsFor($syllabus), true)) {
             return DocumentSignature::ROLE_COORDINATION;
+        }
+        if ($active->role->codigo_rol === RoleCode::Librarian->value) {
+            return $user->can('view', $syllabus) ? DocumentSignature::ROLE_LIBRARY : null;
         }
 
         return null;

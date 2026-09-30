@@ -7,6 +7,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
+use App\Modules\Syllabus\Application\BibliographyCorrection;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
@@ -28,6 +29,7 @@ class SubmitSyllabus
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
+        private readonly SubmitBibliographyCorrection $bibliographyCorrection,
     ) {}
 
     public function execute(
@@ -43,6 +45,9 @@ class SubmitSyllabus
         }
         if (! in_array($syllabus->estado, ['borrador', 'correccion_solicitada'], true)) {
             throw ValidationException::withMessages(['syllabus' => 'El expediente no está listo para envío.']);
+        }
+        if (BibliographyCorrection::requested($syllabus)) {
+            return $this->bibliographyCorrection->execute($syllabus, $expectedLockVersion, $idempotencyKey, $actor, $request);
         }
 
         $this->schedule->assertOpenForSubmission($syllabus->convocation()->firstOrFail());

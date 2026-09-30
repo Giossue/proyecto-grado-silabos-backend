@@ -560,7 +560,10 @@ class TemplateDocumentTest extends TestCase
         }
         $this->assertStringContainsString('Recuperación', json_encode($blocks->get('Escala de valoración')->configuracion['document'], JSON_UNESCAPED_UNICODE));
         $signatures = array_column(array_column(TemplateDocument::nodes($blocks->get('Revisión y aprobación')->configuracion['document'], 'variable'), 'attrs'), 'id');
-        $this->assertEqualsCanonicalizing(['nombre_docente', 'nombre_coordinador', 'fecha_entrega', 'fecha_revision'], $signatures);
+        $this->assertEqualsCanonicalizing([
+            'firma_docente', 'firma_coordinador', 'firma_bibliotecario',
+            'nombre_docente', 'nombre_coordinador', 'fecha_entrega', 'fecha_revision',
+        ], $signatures);
     }
 
     public function test_administration_turns_a_part_to_landscape_and_back(): void

@@ -9,7 +9,7 @@ final class TemplateVariables
 {
     /**
      * @param  array<string, mixed>|null  $snapshot
-     * @return array<string, array{label: string, source: string, equals?: string, list_key?: string, required?: bool, type?: string, columns?: list<array{key: string, label: string}>}>
+     * @return array<string, array{label: string, source: string, text?: string, equals?: string, list_key?: string, required?: bool, type?: string, columns?: list<array{key: string, label: string}>}>
      */
     public static function definitions(?array $snapshot = null): array
     {
@@ -39,7 +39,7 @@ final class TemplateVariables
         $values = [];
         foreach (self::definitions($snapshot) as $key => $definition) {
             $value = data_get($snapshot, $definition['source']);
-            $text = is_scalar($value) ? (string) $value : '';
+            $text = $definition['text'] ?? (is_scalar($value) ? (string) $value : '');
             if (isset($definition['type'])) {
                 $text = CurricularData::display($value, $definition);
             }

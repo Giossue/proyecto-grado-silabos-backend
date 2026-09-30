@@ -59,9 +59,10 @@ class AcceptDocumentSignature
                     $this->fail('El documento ya tiene todas las firmas.');
                 }
                 if ($expected !== $role) {
-                    $this->fail($expected === DocumentSignature::ROLE_TEACHER
-                        ? 'Primero debe firmar el docente.'
-                        : 'Su firma ya está registrada; ahora firma la coordinación.');
+                    $this->fail($this->outOfTurn($expected, $role));
+                }
+                if ($state === SignatureWorkflow::STATE_PENDING_LIBRARY_SUBMISSION) {
+                    $this->fail('El docente todavía no envía el sílabo a biblioteca.');
                 }
 
                 $current = $this->workflow->currentPdf($artifact, $signatures);
@@ -124,14 +125,19 @@ class AcceptDocumentSignature
                     ],
                     correlationId: $correlationId,
                 );
-                $finished = $role === DocumentSignature::ROLE_COORDINATION;
+                [$eventType, $recipientIds] = match ($role) {
+                    DocumentSignature::ROLE_TEACHER => ['silabo.firmado_docente', $this->recipients->coordinatorsFor($syllabus)],
+                    DocumentSignature::ROLE_COORDINATION => ['silabo.firmado_coordinacion', $this->recipients->teachersFor($syllabus)],
+                    default => ['silabo.firmado', [
+                        ...$this->recipients->teachersFor($syllabus),
+                        ...$this->recipients->coordinatorsFor($syllabus),
+                    ]],
+                };
                 $this->notifications->execute(
                     syllabus: $syllabus,
-                    eventType: $finished ? 'silabo.firmado' : 'silabo.firmado_docente',
+                    eventType: $eventType,
                     deduplicationKey: "documento.firmado:{$signature->id}",
-                    recipientIds: $finished
-                        ? $this->recipients->teachersFor($syllabus)
-                        : $this->recipients->coordinatorsFor($syllabus),
+                    recipientIds: $recipientIds,
                     revisionNumber: $revision->numero_revision,
                     correlationId: $correlationId,
                 );
@@ -144,6 +150,16 @@ class AcceptDocumentSignature
             }
             throw $exception;
         }
+    }
+
+    private function outOfTurn(string $expected, string $role): string
+    {
+        return match (true) {
+            $expected === DocumentSignature::ROLE_TEACHER => 'Primero debe firmar el docente.',
+            $expected === DocumentSignature::ROLE_COORDINATION && $role === DocumentSignature::ROLE_LIBRARY => 'Primero debe firmar la coordinación.',
+            $expected === DocumentSignature::ROLE_COORDINATION => 'Su firma ya está registrada; ahora firma la coordinación.',
+            default => 'Su firma ya está registrada; ahora firma biblioteca.',
+        };
     }
 
     private function fail(string $message): never

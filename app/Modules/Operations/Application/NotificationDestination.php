@@ -33,7 +33,10 @@ final class NotificationDestination
         'proceso.pausado',
         'proceso.cerrado',
         'convocatoria.pausada',
+        'silabo.bibliografia_corregida',
     ];
+
+    private const LIBRARY_EVENTS = ['biblioteca.enviado'];
 
     public function __construct(
         private readonly ActiveRole $roles,
@@ -75,6 +78,7 @@ final class NotificationDestination
         return match ($assignment->role->codigo_rol) {
             RoleCode::Coordinator->value => 'Coordinación'.($career !== null ? " · {$career}" : ''),
             RoleCode::Teacher->value => 'Docencia'.($career !== null ? " · {$career}" : ''),
+            RoleCode::Librarian->value => 'Biblioteca',
             default => 'Administración',
         };
     }
@@ -126,6 +130,9 @@ final class NotificationDestination
         }
         $careerId = $this->syllabi->careerId($syllabusId);
         $revision = $this->syllabi->latestRevisionId($syllabusId);
+        if (in_array($notification->tipo, self::LIBRARY_EVENTS, true)) {
+            return $this->withRole($eligible, RoleCode::Librarian, null, $revision !== null ? "/biblioteca/revisiones/{$revision}" : '/biblioteca/revisiones');
+        }
         $teacher = $this->teacherOptions($syllabusId, $user, $eligible, "/docente/mis-silabos/{$syllabusId}");
         $coordinator = $this->withRole(
             $eligible,

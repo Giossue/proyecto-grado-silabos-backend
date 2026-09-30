@@ -15,10 +15,12 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Library\Presentation\Http\Controllers\LibraryReviewController;
 use App\Modules\Syllabus\Application\Actions\StartDraft;
 use App\Modules\Syllabus\Application\Actions\SubmitSyllabus;
 use App\Modules\Syllabus\Application\Actions\UpdateDraftField;
 use App\Modules\Syllabus\Application\Actions\ValidateDraft;
+use App\Modules\Syllabus\Application\BibliographyCorrection;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -239,7 +241,10 @@ class SyllabusController extends Controller
                 'cause' => $syllabus->reopenings->first()->causa,
                 'reopened_at' => $syllabus->reopenings->first()->reabierto_en->toIso8601String(),
                 'reopened_by' => $syllabus->reopenings->first()->reopener->nombre,
+                'origin' => $syllabus->reopenings->first()->origen_reapertura,
             ],
+            'library_correction' => BibliographyCorrection::requested($syllabus),
+            'library_comments' => LibraryReviewController::comments($syllabus),
         ];
     }
 
