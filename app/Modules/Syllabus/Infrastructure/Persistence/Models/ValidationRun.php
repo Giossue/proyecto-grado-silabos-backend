@@ -21,14 +21,15 @@ class ValidationRun extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'estado' => 'estado_ejecucion_validacion',
+        'estado' => 'estado_validacion',
+        'version_bloqueo' => 'version_borrador',
         'advertencias' => 'cantidad_advertencias_validacion',
         'errores_bloqueantes' => 'cantidad_errores_validacion',
     ];
 
     public $timestamps = false;
 
-    protected $table = 'ejecuciones_validacion';
+    protected $table = 'validaciones_silabo';
 
     /** @var list<string> */
     protected $fillable = [
@@ -50,6 +51,6 @@ class ValidationRun extends Model
     /** @return HasMany<ValidationResult, $this> */
     public function results(): HasMany
     {
-        return $this->hasMany(ValidationResult::class, 'ejecucion_validacion_id');
+        return $this->hasMany(ValidationResult::class, 'validacion_silabo_id');
     }
 }

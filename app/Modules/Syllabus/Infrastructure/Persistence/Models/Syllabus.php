@@ -41,7 +41,8 @@ class Syllabus extends Model
     protected const LEGACY_COLUMN_ALIASES = [
         'estado' => 'estado_silabo',
         'convocatoria_id' => 'convocatoria_carrera_id',
-        'contexto_academico' => 'contexto_academico_silabo',
+        'contexto_academico' => 'datos_academicos_silabo',
+        'version_bloqueo' => 'version_borrador',
     ];
 
     public $timestamps = false;

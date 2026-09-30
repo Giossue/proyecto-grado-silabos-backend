@@ -27,7 +27,7 @@ return new class extends Migration
         DB::statement('ALTER TABLE definiciones_campo ADD CONSTRAINT definiciones_campo_campo_misma_plantilla_foreign FOREIGN KEY (campo_plantilla_id, plantilla_id) REFERENCES campos_plantilla (id, plantilla_id) ON DELETE RESTRICT');
 
         DB::unprepared(<<<'SQL'
-            CREATE FUNCTION validar_condicion_definicion() RETURNS trigger
+            CREATE OR REPLACE FUNCTION validar_condicion_definicion() RETURNS trigger
             LANGUAGE plpgsql AS $$
             BEGIN
                 IF NEW.mostrar_si_definicion_campo IS NOT NULL AND NOT EXISTS (
@@ -47,7 +47,7 @@ return new class extends Migration
             DEFERRABLE INITIALLY DEFERRED
             FOR EACH ROW EXECUTE FUNCTION validar_condicion_definicion();
 
-            CREATE FUNCTION propagar_clave_condicion() RETURNS trigger
+            CREATE OR REPLACE FUNCTION propagar_clave_condicion() RETURNS trigger
             LANGUAGE plpgsql AS $$
             BEGIN
                 IF TG_OP = 'DELETE' THEN

@@ -21,5 +21,5 @@ class ValidationResult extends Model
     protected $table = 'resultados_validacion';
 
     /** @var list<string> */
-    protected $fillable = ['ejecucion_validacion_id', 'definicion_campo_id', 'codigo', 'severidad', 'mensaje'];
+    protected $fillable = ['validacion_silabo_id', 'definicion_campo_id', 'codigo', 'severidad', 'mensaje'];
 }

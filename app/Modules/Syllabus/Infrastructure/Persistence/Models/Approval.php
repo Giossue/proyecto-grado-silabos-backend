@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Infrastructure\Persistence\Models;
 
 use App\Models\User;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Concerns\ImmutableRecord;
+use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -16,13 +17,19 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $clave_idempotencia
  * @property string $huella_sha256
  * @property string $aprobado_por
- * @property string|null $aprobacion_base_id
+ * @property string|null $aprobacion_anterior_id
  * @property CarbonImmutable $aprobado_en
  * @property-read SyllabusRevision $revision
  */
 class Approval extends Model
 {
-    use HasUuids;
+    use HasUuids, MapsLegacyColumnNames;
+
+    protected const LEGACY_COLUMN_ALIASES = [
+        'huella_sha256' => 'huella_contenido',
+        'clave_idempotencia' => 'clave_solicitud',
+    ];
+
     use ImmutableRecord;
 
     public $timestamps = false;
@@ -32,7 +39,7 @@ class Approval extends Model
     /** @var list<string> */
     protected $fillable = [
         'revision_silabo_id', 'clave_idempotencia', 'huella_sha256',
-        'aprobado_por', 'aprobado_en', 'aprobacion_base_id',
+        'aprobado_por', 'aprobado_en', 'aprobacion_anterior_id',
     ];
 
     /** @return array<string, string> */
@@ -56,7 +63,7 @@ class Approval extends Model
     /** @return BelongsTo<Approval, $this> */
     public function baseApproval(): BelongsTo
     {
-        return $this->belongsTo(Approval::class, 'aprobacion_base_id');
+        return $this->belongsTo(Approval::class, 'aprobacion_anterior_id');
     }
 
     /** @return HasOne<Reopening, $this> */

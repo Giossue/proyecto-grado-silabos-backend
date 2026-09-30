@@ -139,7 +139,7 @@ class LibraryReviewTest extends TestCase
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
         $approval = Approval::query()->where('revision_silabo_id', $corrected->id)->firstOrFail();
         $base = Approval::query()->where('revision_silabo_id', $revision->id)->firstOrFail();
-        $this->assertSame($base->id, $approval->aprobacion_base_id);
+        $this->assertSame($base->id, $approval->aprobacion_anterior_id);
         $this->assertSame($base->aprobado_por, $approval->aprobado_por);
         $this->assertNotified($this->people['coordinator'][0]->id, 'silabo.bibliografia_corregida');
 

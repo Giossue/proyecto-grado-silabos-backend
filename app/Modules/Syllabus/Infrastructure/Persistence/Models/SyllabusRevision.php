@@ -30,7 +30,12 @@ class SyllabusRevision extends Model
 {
     use HasUuids, MapsLegacyColumnNames;
 
-    protected const LEGACY_COLUMN_ALIASES = ['fotografia' => 'fotografia_revision_silabo'];
+    protected const LEGACY_COLUMN_ALIASES = [
+        'fotografia' => 'contenido_enviado',
+        'huella_sha256' => 'huella_contenido',
+        'version_bloqueo_origen' => 'version_borrador',
+        'clave_idempotencia' => 'clave_solicitud',
+    ];
 
     use ImmutableRecord;
 

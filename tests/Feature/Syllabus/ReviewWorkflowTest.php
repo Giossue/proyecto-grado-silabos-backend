@@ -188,7 +188,7 @@ class ReviewWorkflowTest extends TestCase
         try {
             DB::transaction(fn () => DB::table('revisiones_silabo')
                 ->where('id', $revision->id)
-                ->update(['huella_sha256' => str_repeat('0', 64)]));
+                ->update(['huella_contenido' => str_repeat('0', 64)]));
             $this->fail('PostgreSQL permitió modificar una revisión histórica.');
         } catch (QueryException) {
             $this->assertSame($originalFingerprint, $revision->fresh()->huella_sha256);
@@ -206,7 +206,7 @@ class ReviewWorkflowTest extends TestCase
 
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('revisiones_silabo', 0);
-        $this->assertDatabaseCount('ejecuciones_validacion', 1);
+        $this->assertDatabaseCount('validaciones_silabo', 1);
         $this->assertDatabaseMissing('eventos_auditoria', ['accion' => 'silabo.enviado']);
     }
 
@@ -214,7 +214,7 @@ class ReviewWorkflowTest extends TestCase
     {
         $syllabus = $this->createValidDraft();
         $staleVersion = $syllabus->version_bloqueo;
-        $syllabus->increment('version_bloqueo');
+        $syllabus->increment('version_borrador');
 
         $this->actingAsTeacher()
             ->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
@@ -226,7 +226,7 @@ class ReviewWorkflowTest extends TestCase
 
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('revisiones_silabo', 0);
-        $this->assertDatabaseCount('ejecuciones_validacion', 0);
+        $this->assertDatabaseCount('validaciones_silabo', 0);
     }
 
     public function test_cp_f_review_workspace_enforces_role_and_record_scope(): void
