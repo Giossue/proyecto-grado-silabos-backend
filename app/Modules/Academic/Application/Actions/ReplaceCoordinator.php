@@ -84,7 +84,6 @@ class ReplaceCoordinator
                     'incoming_user_id' => $incoming->id,
                     'role_removed' => $roleRemoved,
                 ],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             $this->notifyIncoming($lockedCareer, $incoming, $request);
@@ -110,7 +109,6 @@ class ReplaceCoordinator
             message: "Se le asignó la coordinación de {$career->nombre}.{$waiting}",
             resourceType: 'carrera',
             resourceId: $career->id,
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
     }
 }

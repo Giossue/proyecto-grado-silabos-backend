@@ -71,7 +71,7 @@ final class ApplyCurricularImport
                 }
                 $changes[] = [...$row, 'concept' => $concept, 'current' => $current];
             }
-            $save = function () use ($actor, $career, $changes, $data, $import, $request, $role, $rows): CurricularImport {
+            $save = function () use ($actor, $career, $changes, $data, $import, $role, $rows): CurricularImport {
                 foreach ($changes as $change) {
                     $value = $change['current'] ?? new CurricularValue([
                         'concepto_id' => $change['concept']->id, 'carrera_id' => $career->id, 'asignatura_id' => $change['subject_id'],
@@ -93,7 +93,7 @@ final class ApplyCurricularImport
                     result: 'exito', metadata: [
                         'career_id' => $career->id, 'selected_count' => count($data['items']), 'changed_count' => count($changes),
                         'proposal_fingerprint' => $data['expected_fingerprint'],
-                    ], correlationId: $request->attributes->getString('correlation_id') ?: null,
+                    ],
                 );
                 DB::afterCommit(fn () => $this->release->execute($import));
 

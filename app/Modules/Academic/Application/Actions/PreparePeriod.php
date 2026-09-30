@@ -133,7 +133,6 @@ class PreparePeriod
                         resourceId: $scheduledSubject->id,
                         result: 'exito',
                         metadata: ['period_prepared' => true],
-                        correlationId: $correlationId,
                     );
                     $scheduledSubjects++;
                 }
@@ -162,7 +161,6 @@ class PreparePeriod
                         resourceId: $parallel->id,
                         result: 'exito',
                         metadata: ['period_prepared' => true, 'bulk' => true],
-                        correlationId: $correlationId,
                     );
                     $parallels++;
                     $teacherId = $parallelSetting['teacher_user_id'] ?? null;
@@ -180,7 +178,6 @@ class PreparePeriod
                             resourceId: $assignment->id,
                             result: 'exito',
                             metadata: ['period_prepared' => true, 'bulk' => true],
-                            correlationId: $correlationId,
                         );
                         $assignments++;
                     }

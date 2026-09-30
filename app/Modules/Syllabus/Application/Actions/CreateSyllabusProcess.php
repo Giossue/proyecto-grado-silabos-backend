@@ -49,7 +49,7 @@ class CreateSyllabusProcess
             throw ValidationException::withMessages(['process' => "La estructura institucional no está lista: {$withoutCoordinator} carrera(s) sin coordinación activa."]);
         }
 
-        return DB::transaction(function () use ($actor, $activeRole, $data, $request, $template): SyllabusProcess {
+        return DB::transaction(function () use ($actor, $activeRole, $data, $template): SyllabusProcess {
             $active = SyllabusProcess::query()
                 ->inProgress()
                 ->with('academicPeriod:id,codigo')
@@ -85,7 +85,6 @@ class CreateSyllabusProcess
                     'starts_at' => $process->inicia_en->toIso8601String(),
                     'due_at' => $process->entrega_en->toIso8601String(),
                 ],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             $this->audit->execute(
@@ -96,7 +95,6 @@ class CreateSyllabusProcess
                 resourceId: $process->id,
                 result: 'exito',
                 metadata: ['previous_state' => null],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifications->execute(
                 eventType: 'proceso.abierto',
@@ -106,7 +104,6 @@ class CreateSyllabusProcess
                 message: "Se abrió la convocatoria institucional «{$process->nombre}». Ya puede iniciar la de su carrera; la entrega vence el {$this->notifications->date($process->entrega_en)}.",
                 resourceType: 'proceso_silabos',
                 resourceId: $process->id,
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $process;

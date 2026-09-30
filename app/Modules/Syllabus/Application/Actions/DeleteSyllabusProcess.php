@@ -33,7 +33,7 @@ final class DeleteSyllabusProcess
         abort_unless($activeRole?->role->codigo_rol === RoleCode::Administrator->value, 403);
 
         try {
-            DB::transaction(function () use ($activeRole, $actor, $process, $request): void {
+            DB::transaction(function () use ($activeRole, $actor, $process): void {
                 $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
                 $convocations = Convocation::query()
                     ->where('proceso_id', $locked->id)
@@ -72,7 +72,6 @@ final class DeleteSyllabusProcess
                         'deleted_convocations' => $convocationCount,
                         'deleted_unstarted_syllabi' => $syllabusCount,
                     ],
-                    correlationId: $request->attributes->getString('correlation_id') ?: null,
                 );
             });
         } catch (QueryException $exception) {

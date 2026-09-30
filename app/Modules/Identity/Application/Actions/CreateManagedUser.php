@@ -45,7 +45,6 @@ class CreateManagedUser
                 metadata: [
                     'initial_role' => $data['role_code'],
                 ],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             $this->invitations->execute($user, $actor, $request, 'alta');

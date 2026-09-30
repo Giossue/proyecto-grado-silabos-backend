@@ -54,7 +54,7 @@ class CreateAcademicRecord
             $this->locks->assertCareerEditable($activeRole->carrera_id);
         }
 
-        return $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity, $request): Model {
+        return $this->work->replace($request, function () use ($actor, $activeRole, $data, $entity): Model {
             $record = $this->create($entity, $data, $activeRole);
 
             $this->audit->execute(
@@ -64,7 +64,6 @@ class CreateAcademicRecord
                 resourceType: $entity,
                 resourceId: (string) $record->getKey(),
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $record;

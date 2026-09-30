@@ -28,7 +28,7 @@ class CreateAcademicSource
         }
         $this->locks->assertCareerEditable($activeRole->carrera_id);
 
-        return DB::transaction(function () use ($actor, $activeRole, $data, $request): AcademicSource {
+        return DB::transaction(function () use ($actor, $activeRole, $data): AcademicSource {
             $source = AcademicSource::query()->create([
                 'carrera_id' => $activeRole->carrera_id,
                 'nombre' => $data['nombre'],
@@ -42,7 +42,6 @@ class CreateAcademicSource
                 resourceType: 'fuente_academica',
                 resourceId: $source->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $source;

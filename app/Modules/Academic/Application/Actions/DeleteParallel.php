@@ -28,7 +28,7 @@ class DeleteParallel
         $careerId = ParallelScope::careerId($role);
         $this->locks->assertCareerEditable($careerId);
 
-        DB::transaction(function () use ($actor, $careerId, $parallelId, $request, $role): void {
+        DB::transaction(function () use ($actor, $careerId, $parallelId, $role): void {
             $parallel = ParallelScope::find($parallelId, $careerId);
             $this->periodPlanning->assertParallelMayChange($parallel);
             ParallelScope::assertWithoutSyllabus($parallel, 'El paralelo ya tiene sílabo y no puede eliminarse.');
@@ -56,7 +56,6 @@ class DeleteParallel
                 resourceId: $parallelId,
                 result: 'exito',
                 metadata: ['name' => $code],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         });
     }

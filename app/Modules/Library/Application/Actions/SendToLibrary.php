@@ -57,7 +57,6 @@ class SendToLibrary
                 resourceId: $submission->id,
                 result: 'exito',
                 metadata: ['revision_number' => $revision->numero_revision],
-                correlationId: $correlationId,
             );
             $this->notifications->execute(
                 syllabus: $revision->syllabus,
@@ -65,7 +64,6 @@ class SendToLibrary
                 deduplicationKey: "biblioteca.enviado:{$submission->id}",
                 recipientIds: $this->recipients->librarians(),
                 revisionNumber: $revision->numero_revision,
-                correlationId: $correlationId,
             );
 
             return $submission;

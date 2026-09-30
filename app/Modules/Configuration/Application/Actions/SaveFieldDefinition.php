@@ -107,7 +107,6 @@ class SaveFieldDefinition
                 $this->audit->execute(
                     actorId: $actor->id, roleAssignmentId: $activeRole?->id, action: 'plantilla.bloque_creado',
                     resourceType: 'bloque_plantilla', resourceId: $block->id, result: 'exito',
-                    correlationId: $request->attributes->getString('correlation_id') ?: null,
                 );
                 if ($contentType === 'template') {
                     return null;
@@ -212,7 +211,6 @@ class SaveFieldDefinition
             resourceType: 'definicion_campo',
             resourceId: $field->id,
             result: 'exito',
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
     }
 

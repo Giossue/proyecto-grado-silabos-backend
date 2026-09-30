@@ -31,7 +31,7 @@ class ReorderTemplateBlocks
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        $this->work->replace($request, function () use ($activeRole, $actor, $blockIds, $request, $sectionId, $template): void {
+        $this->work->replace($request, function () use ($activeRole, $actor, $blockIds, $sectionId, $template): void {
             $lockedTemplate = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
 
             $section = $lockedTemplate->sectionOrFail($sectionId);
@@ -50,7 +50,6 @@ class ReorderTemplateBlocks
                 resourceType: 'plantilla_silabo',
                 resourceId: $lockedTemplate->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         });
     }

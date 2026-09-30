@@ -37,7 +37,7 @@ class DeleteScheduledSubject
         }
         $this->locks->assertCareerEditable($role->carrera_id);
 
-        DB::transaction(function () use ($actor, $scheduledSubjectId, $request, $role): void {
+        DB::transaction(function () use ($actor, $scheduledSubjectId, $role): void {
             $scheduledSubject = ScheduledSubject::query()
                 ->whereHas('subject', fn ($query) => $query->where('carrera_id', $role->carrera_id))
                 ->lockForUpdate()
@@ -77,7 +77,6 @@ class DeleteScheduledSubject
                     'deleted_parallels' => $parallelIds->count(),
                     'deleted_teacher_assignments' => $assignmentIds->count(),
                 ],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         });
     }

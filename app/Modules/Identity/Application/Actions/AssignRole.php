@@ -93,7 +93,6 @@ class AssignRole
                     'role' => $data['role_code'],
                     'career_id' => $careerId,
                 ],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             if ($notify && $granted && $target->activo && $target->hasVerifiedEmail()) {
                 $this->notifyGrantedRole($target, $assignment, $request);
@@ -116,7 +115,6 @@ class AssignRole
             message: "Ahora también puede ingresar como {$assignment->role->nombre_rol}{$scope}. Cámbielo desde el selector de ámbito.",
             resourceType: 'asignacion_rol',
             resourceId: $assignment->id,
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
     }
 }

@@ -60,7 +60,6 @@ class UpdateDraftField
                 resourceId: $locked->id,
                 result: 'exito',
                 metadata: ['field_key' => $field->clave, 'lock_version' => $locked->version_bloqueo],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $locked;

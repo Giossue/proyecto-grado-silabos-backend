@@ -104,7 +104,6 @@ class SendSyllabusAiMessage
                 resourceId: $answer->id,
                 result: 'exito',
                 metadata: ['syllabus_id' => $locked->id, 'draft_version' => $locked->version_bloqueo],
-                correlationId: $job->correlacion_id,
             );
 
             return $answer->refresh();

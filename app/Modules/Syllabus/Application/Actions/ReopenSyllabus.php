@@ -79,7 +79,6 @@ class ReopenSyllabus
                 resourceId: $reopening->id,
                 result: 'exito',
                 metadata: ['revision_number' => $approval->revision->numero_revision, 'from_state' => 'aprobado', 'to_state' => 'correccion_solicitada', 'approval_id' => $approval->id],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifications->execute(
                 syllabus: $locked,
@@ -87,7 +86,6 @@ class ReopenSyllabus
                 deduplicationKey: "silabo.reabierto:{$reopening->id}",
                 recipientIds: $this->recipients->teachersFor($locked),
                 revisionNumber: $approval->revision->numero_revision,
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $reopening;

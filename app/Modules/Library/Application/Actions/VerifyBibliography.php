@@ -51,7 +51,6 @@ class VerifyBibliography
                 resourceId: $submission->id,
                 result: 'exito',
                 metadata: ['revision_number' => $revision->numero_revision],
-                correlationId: $correlationId,
             );
             $this->notifications->execute(
                 syllabus: $syllabus,
@@ -59,7 +58,6 @@ class VerifyBibliography
                 deduplicationKey: "biblioteca.verificado:{$submission->id}",
                 recipientIds: $this->recipients->teachersFor($syllabus),
                 revisionNumber: $revision->numero_revision,
-                correlationId: $correlationId,
             );
 
             return $submission;

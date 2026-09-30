@@ -88,7 +88,6 @@ class ApproveSyllabus
                     'fingerprint' => $fingerprint,
                     'self_approved' => $revision->enviado_por === $actor->id,
                 ],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifications->execute(
                 syllabus: $syllabus,
@@ -96,7 +95,6 @@ class ApproveSyllabus
                 deduplicationKey: "silabo.aprobado:{$approval->id}",
                 recipientIds: $this->recipients->teachersFor($syllabus),
                 revisionNumber: $revision->numero_revision,
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $approval;

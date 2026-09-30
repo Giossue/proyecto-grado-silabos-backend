@@ -60,7 +60,6 @@ class UpdateManagedUserProfile
                     'name_changed' => $previous['name'] !== $name,
                     'email_changed' => $previous['email'] !== $email,
                 ],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             if ($previous['email'] !== $email && ! $previous['verified']) {

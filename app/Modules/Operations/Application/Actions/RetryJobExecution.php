@@ -99,7 +99,6 @@ class RetryJobExecution
                 'previous_attempts' => $previousAttempts,
                 'previous_error_code' => $previousErrorCode,
             ],
-            correlationId: $execution->correlacion_id,
         );
     }
 }

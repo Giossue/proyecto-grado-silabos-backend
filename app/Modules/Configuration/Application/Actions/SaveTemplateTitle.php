@@ -25,7 +25,7 @@ final class SaveTemplateTitle
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        $this->work->replace($request, function () use ($activeRole, $actor, $request, $template, $title): void {
+        $this->work->replace($request, function () use ($activeRole, $actor, $template, $title): void {
             $locked = SyllabusTemplate::query()
                 ->whereKey($template->id)
                 ->lockForUpdate()
@@ -41,7 +41,6 @@ final class SaveTemplateTitle
                 resourceType: 'plantilla_silabo',
                 resourceId: $locked->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         });
     }

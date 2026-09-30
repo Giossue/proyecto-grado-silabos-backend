@@ -38,7 +38,6 @@ class SelectActiveRole
                 resourceId: $assignment->id,
                 result: 'exito',
                 metadata: ['role' => $assignment->role->codigo_rol],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             $request->session()->put('active_role_assignment_id', $assignment->id);

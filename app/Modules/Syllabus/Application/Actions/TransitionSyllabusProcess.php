@@ -79,7 +79,6 @@ class TransitionSyllabusProcess
                 resourceId: $locked->id,
                 result: 'exito',
                 metadata: ['previous_state' => $previous],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notify($locked, $rule['to'], $request);
 
@@ -106,7 +105,6 @@ class TransitionSyllabusProcess
             message: $message,
             resourceType: 'proceso_silabos',
             resourceId: $process->id,
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
     }
 }

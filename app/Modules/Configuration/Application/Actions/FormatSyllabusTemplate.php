@@ -32,7 +32,6 @@ final class FormatSyllabusTemplate
             resourceType: 'plantilla_silabo',
             resourceId: $formatted->id,
             result: 'exito',
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
 
         return $formatted;

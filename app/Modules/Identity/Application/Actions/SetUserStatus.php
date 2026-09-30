@@ -22,7 +22,7 @@ class SetUserStatus
     {
         $activeRole = $this->roles->resolve($request);
 
-        return DB::transaction(function () use ($active, $actor, $activeRole, $request, $target): User {
+        return DB::transaction(function () use ($active, $actor, $activeRole, $target): User {
             if (! $active) {
                 $this->ensureMayDeactivate($target);
             }
@@ -52,7 +52,6 @@ class SetUserStatus
                     'closed_teacher_assignments' => $closedTeacherAssignments,
                     'closed_coordinations' => implode(', ', $closedCoordinations),
                 ],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $target;

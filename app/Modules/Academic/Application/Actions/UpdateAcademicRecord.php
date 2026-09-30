@@ -96,7 +96,7 @@ class UpdateAcademicRecord
                 $periodId,
             );
 
-            $change = function () use ($actor, $activeRole, $data, $entity, $record, $request): Model {
+            $change = function () use ($actor, $activeRole, $data, $entity, $record): Model {
                 $attributes = $this->attributes($entity, $data);
 
                 if ($entity === 'carrera') {
@@ -131,7 +131,6 @@ class UpdateAcademicRecord
                     resourceId: (string) $record->getKey(),
                     result: 'exito',
                     metadata: $auditMetadata,
-                    correlationId: $request->attributes->getString('correlation_id') ?: null,
                 );
 
                 return $record;

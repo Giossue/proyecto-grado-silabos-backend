@@ -74,7 +74,6 @@ class CreateParallels
                     resourceId: $parallel->id,
                     result: 'exito',
                     metadata: ['bulk' => true],
-                    correlationId: $correlationId,
                 );
             }
 

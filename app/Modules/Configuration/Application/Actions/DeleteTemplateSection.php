@@ -26,7 +26,7 @@ class DeleteTemplateSection
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        $this->work->replace($request, function () use ($activeRole, $actor, $request, $section): void {
+        $this->work->replace($request, function () use ($activeRole, $actor, $section): void {
 
             $template = SyllabusTemplate::query()->whereKey($section->plantilla_id)->lockForUpdate()->firstOrFail();
             $lockedSection = $template->sectionOrFail($section->id);
@@ -43,7 +43,6 @@ class DeleteTemplateSection
                 resourceType: 'seccion_plantilla',
                 resourceId: $section->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         });
     }

@@ -50,7 +50,6 @@ class AddReviewObservation
                 resourceId: $observation->id,
                 result: 'exito',
                 metadata: ['revision_number' => $revision->numero_revision],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $observation;

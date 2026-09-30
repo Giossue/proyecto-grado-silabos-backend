@@ -20,7 +20,6 @@ use LogicException;
  * @property string|null $recurso_id
  * @property string $resultado
  * @property array<string, mixed>|null $metadatos
- * @property string|null $correlacion_id
  * @property CarbonImmutable $ocurrido_en
  * @property-read User|null $actor
  * @property-read RoleAssignment|null $roleAssignment
@@ -48,7 +47,6 @@ class AuditEvent extends Model
         'recurso_id',
         'resultado',
         'metadatos',
-        'correlacion_id',
         'ocurrido_en',
     ];
 

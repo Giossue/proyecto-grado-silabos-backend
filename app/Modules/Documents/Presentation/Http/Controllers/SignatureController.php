@@ -99,7 +99,6 @@ class SignatureController extends Controller
                 'revision_number' => $revision->numero_revision,
                 'object_id' => $object->id,
             ],
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
         $code = Str::slug($revision->syllabus->academicSubjectCode()) ?: 'asignatura';
         $suffix = $signatures->isEmpty() ? '' : '-firmado';

@@ -1,0 +1,262 @@
+erDiagram
+    usuarios {
+        uuid id PK
+    }
+    asignaciones_rol {
+        uuid id PK
+        uuid usuario_id FK
+        uuid carrera_id FK
+    }
+    invitaciones_activacion {
+        uuid id PK
+        uuid usuario_id FK
+        uuid emitida_por_usuario_id FK
+    }
+    restablecimientos_contrasena {
+    }
+    sesiones {
+        varchar id PK
+        uuid user_id FK
+    }
+    eventos_auditoria {
+        uuid id PK
+        uuid actor_usuario_id FK
+        uuid asignacion_rol_id FK
+    }
+    notificaciones_internas {
+        uuid id PK
+        uuid usuario_id FK
+    }
+    ejecuciones_trabajo {
+        uuid id PK
+    }
+    trabajos_fallidos {
+        bigint id PK
+    }
+    objetos_almacenados {
+        uuid id PK
+        uuid propietario_usuario_id FK
+        uuid carrera_id FK
+    }
+    migraciones {
+        integer id PK
+    }
+    facultades {
+        uuid id PK
+        uuid logo_objeto_id FK
+    }
+    carreras {
+        uuid id PK
+        uuid facultad_id FK
+    }
+    asignaturas {
+        uuid id PK
+        uuid carrera_id FK
+    }
+    requisitos_asignatura {
+        uuid id PK
+        uuid asignatura_id FK
+        uuid requisito_id FK
+    }
+    periodos_academicos {
+        uuid id PK
+    }
+    programaciones_asignatura {
+        uuid id PK
+        uuid periodo_academico_id FK
+        uuid asignatura_id FK
+    }
+    paralelos {
+        uuid id PK
+        uuid programacion_asignatura_id FK
+    }
+    asignaciones_paralelo {
+        uuid id PK
+        uuid paralelo_id FK
+        uuid asignacion_rol_id FK
+    }
+    conceptos_curriculares {
+        uuid id PK
+    }
+    valores_curriculares {
+        uuid id PK
+        uuid concepto_id FK
+        uuid asignatura_id FK
+        uuid confirmado_por FK
+    }
+    importaciones_curriculares {
+        uuid id PK
+        uuid carrera_id FK
+        uuid solicitado_por FK
+    }
+    fuentes_academicas {
+        uuid id PK
+        uuid carrera_id FK
+        uuid objeto_pdf_id FK
+    }
+    plantilla_silabo {
+        uuid id PK
+    }
+    secciones_plantilla {
+        uuid id PK
+        uuid plantilla_id FK
+    }
+    campos_plantilla {
+        uuid id PK
+        uuid seccion_plantilla_id FK
+        uuid plantilla_id FK
+    }
+    definiciones_campo {
+        uuid id PK
+        uuid campo_plantilla_id FK
+        uuid plantilla_id FK
+    }
+    convocatorias_universidad {
+        uuid id PK
+        uuid periodo_academico_id FK
+    }
+    convocatorias_carreras {
+        uuid id PK
+        uuid carrera_id FK
+        uuid convocatoria_universidad_id FK
+    }
+    silabos {
+        uuid id PK
+        uuid convocatoria_carrera_id FK
+        uuid paralelo_id FK
+    }
+    valores_campo {
+        uuid id PK
+        uuid silabo_id FK
+        uuid definicion_campo_id FK
+    }
+    revisiones_silabo {
+        uuid id PK
+        uuid silabo_id FK
+        uuid revision_anterior_id FK
+        uuid enviado_por FK
+        uuid reapertura_id FK
+    }
+    observaciones_revision {
+        uuid id PK
+        uuid revision_silabo_id FK
+        uuid creado_por FK
+    }
+    solicitudes_correccion {
+        uuid id PK
+        uuid revision_silabo_id FK
+        uuid solicitado_por FK
+    }
+    aprobaciones {
+        uuid id PK
+        uuid revision_silabo_id FK
+        uuid aprobado_por FK
+        uuid aprobacion_base_id FK
+    }
+    reaperturas {
+        uuid id PK
+        uuid aprobacion_id FK
+        uuid revision_aprobada_id FK
+        uuid reabierto_por FK
+    }
+    ejecuciones_validacion {
+        uuid id PK
+        uuid silabo_id FK
+        uuid ejecutado_por FK
+    }
+    resultados_validacion {
+        uuid id PK
+        uuid ejecucion_validacion_id FK
+        uuid definicion_campo_id FK
+    }
+    envios_biblioteca {
+        uuid id PK
+        uuid revision_silabo_id FK
+        uuid enviado_por FK
+        uuid verificado_por FK
+    }
+    historial_ia {
+        uuid id PK
+    }
+    artefactos_exportacion {
+        uuid id PK
+        uuid revision_silabo_id FK
+        uuid ejecucion_trabajo_id FK
+        uuid objeto_docx_id FK
+        uuid objeto_pdf_id FK
+        uuid solicitado_por FK
+    }
+    firmas_documento {
+        uuid id PK
+        uuid artefacto_exportacion_id FK
+        uuid usuario_id FK
+        uuid objeto_almacenado_id FK
+    }
+    revisiones_silabo ||--o| aprobaciones : "revision_silabo_id"
+    usuarios ||--o{ aprobaciones : "aprobado_por"
+    aprobaciones |o--o{ aprobaciones : "aprobacion_base_id"
+    objetos_almacenados |o--o| artefactos_exportacion : "objeto_pdf_id"
+    revisiones_silabo ||--o{ artefactos_exportacion : "revision_silabo_id"
+    usuarios ||--o{ artefactos_exportacion : "solicitado_por"
+    ejecuciones_trabajo |o--o| artefactos_exportacion : "ejecucion_trabajo_id"
+    objetos_almacenados |o--o| artefactos_exportacion : "objeto_docx_id"
+    asignaciones_rol ||--o{ asignaciones_paralelo : "asignacion_rol_id"
+    paralelos ||--o{ asignaciones_paralelo : "paralelo_id"
+    carreras |o--o{ asignaciones_rol : "carrera_id"
+    usuarios ||--o{ asignaciones_rol : "usuario_id"
+    carreras ||--o{ asignaturas : "carrera_id"
+    secciones_plantilla ||--o{ campos_plantilla : "seccion_plantilla_id"
+    plantilla_silabo ||--o{ campos_plantilla : "plantilla_id"
+    facultades ||--o{ carreras : "facultad_id"
+    carreras ||--o{ convocatorias_carreras : "carrera_id"
+    convocatorias_universidad ||--o{ convocatorias_carreras : "convocatoria_universidad_id"
+    periodos_academicos ||--o{ convocatorias_universidad : "periodo_academico_id"
+    plantilla_silabo ||--o{ definiciones_campo : "plantilla_id"
+    campos_plantilla ||--o{ definiciones_campo : "campo_plantilla_id"
+    silabos ||--o{ ejecuciones_validacion : "silabo_id"
+    usuarios ||--o{ ejecuciones_validacion : "ejecutado_por"
+    usuarios ||--o{ envios_biblioteca : "enviado_por"
+    usuarios |o--o{ envios_biblioteca : "verificado_por"
+    revisiones_silabo ||--o| envios_biblioteca : "revision_silabo_id"
+    asignaciones_rol |o--o{ eventos_auditoria : "asignacion_rol_id"
+    usuarios |o--o{ eventos_auditoria : "actor_usuario_id"
+    objetos_almacenados |o--o{ facultades : "logo_objeto_id"
+    artefactos_exportacion ||--o{ firmas_documento : "artefacto_exportacion_id"
+    objetos_almacenados ||--o| firmas_documento : "objeto_almacenado_id"
+    usuarios ||--o{ firmas_documento : "usuario_id"
+    objetos_almacenados |o--o{ fuentes_academicas : "objeto_pdf_id"
+    carreras ||--o{ fuentes_academicas : "carrera_id"
+    usuarios ||--o{ importaciones_curriculares : "solicitado_por"
+    carreras ||--o{ importaciones_curriculares : "carrera_id"
+    usuarios |o--o{ invitaciones_activacion : "emitida_por_usuario_id"
+    usuarios ||--o{ invitaciones_activacion : "usuario_id"
+    usuarios ||--o{ notificaciones_internas : "usuario_id"
+    carreras |o--o{ objetos_almacenados : "carrera_id"
+    usuarios |o--o{ objetos_almacenados : "propietario_usuario_id"
+    usuarios ||--o{ observaciones_revision : "creado_por"
+    revisiones_silabo ||--o{ observaciones_revision : "revision_silabo_id"
+    programaciones_asignatura ||--o{ paralelos : "programacion_asignatura_id"
+    periodos_academicos ||--o{ programaciones_asignatura : "periodo_academico_id"
+    asignaturas ||--o{ programaciones_asignatura : "asignatura_id"
+    aprobaciones ||--o| reaperturas : "aprobacion_id"
+    revisiones_silabo ||--o{ reaperturas : "revision_aprobada_id"
+    usuarios ||--o{ reaperturas : "reabierto_por"
+    asignaturas ||--o{ requisitos_asignatura : "requisito_id"
+    asignaturas ||--o{ requisitos_asignatura : "asignatura_id"
+    definiciones_campo |o--o{ resultados_validacion : "definicion_campo_id"
+    ejecuciones_validacion ||--o{ resultados_validacion : "ejecucion_validacion_id"
+    silabos ||--o{ revisiones_silabo : "silabo_id"
+    usuarios ||--o{ revisiones_silabo : "enviado_por"
+    reaperturas |o--o{ revisiones_silabo : "reapertura_id"
+    revisiones_silabo |o--o{ revisiones_silabo : "revision_anterior_id"
+    plantilla_silabo ||--o{ secciones_plantilla : "plantilla_id"
+    usuarios |o--o{ sesiones : "user_id"
+    convocatorias_carreras ||--o{ silabos : "convocatoria_carrera_id"
+    paralelos ||--o{ silabos : "paralelo_id"
+    usuarios ||--o{ solicitudes_correccion : "solicitado_por"
+    revisiones_silabo ||--o| solicitudes_correccion : "revision_silabo_id"
+    definiciones_campo ||--o{ valores_campo : "definicion_campo_id"
+    silabos ||--o{ valores_campo : "silabo_id"
+    conceptos_curriculares ||--o{ valores_curriculares : "concepto_id"
+    usuarios ||--o{ valores_curriculares : "confirmado_por"
+    asignaturas ||--o{ valores_curriculares : "asignatura_id"

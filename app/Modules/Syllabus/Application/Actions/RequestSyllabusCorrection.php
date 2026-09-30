@@ -77,7 +77,6 @@ class RequestSyllabusCorrection
                 resourceId: $correction->id,
                 result: 'exito',
                 metadata: ['revision_number' => $revision->numero_revision, 'from_state' => 'en_revision', 'to_state' => 'correccion_solicitada', 'observation_count' => $observations->count()],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifications->execute(
                 syllabus: $syllabus,
@@ -85,7 +84,6 @@ class RequestSyllabusCorrection
                 deduplicationKey: "silabo.correccion_solicitada:{$correction->id}",
                 recipientIds: $this->recipients->teachersFor($syllabus),
                 revisionNumber: $revision->numero_revision,
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $correction;

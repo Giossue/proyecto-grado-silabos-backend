@@ -47,7 +47,7 @@ class DeleteAcademicRecord
             throw new AuthorizationException('No puede eliminar este registro con el rol activo.');
         }
 
-        DB::transaction(function () use ($actor, $entity, $recordId, $request, $role): void {
+        DB::transaction(function () use ($actor, $entity, $recordId, $role): void {
             $record = AcademicStructurePermissions::isGovernanceContext($role)
                 ? match ($entity) {
                     'facultad' => Faculty::query()->lockForUpdate()->findOrFail($recordId),
@@ -77,7 +77,6 @@ class DeleteAcademicRecord
                 resourceId: $recordId,
                 result: 'exito',
                 metadata: $metadata,
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         });
     }

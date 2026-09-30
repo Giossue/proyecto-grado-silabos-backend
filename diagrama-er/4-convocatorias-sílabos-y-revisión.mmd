@@ -1,0 +1,155 @@
+erDiagram
+    convocatorias_universidad {
+        uuid id PK
+        timestamptz inicia_en
+        timestamptz entrega_en
+        varchar estado_convocatoria_universidad
+        uuid periodo_academico_id FK
+    }
+    convocatorias_carreras {
+        uuid id PK
+        uuid carrera_id FK
+        varchar estado_convocatoria_carrera
+        uuid convocatoria_universidad_id FK
+    }
+    silabos {
+        uuid id PK
+        uuid convocatoria_carrera_id FK
+        varchar estado_silabo
+        integer version_bloqueo
+        timestamptz iniciado_en
+        timestamptz guardado_en
+        jsonb contexto_academico_silabo
+        uuid paralelo_id FK
+    }
+    valores_campo {
+        uuid id PK
+        uuid silabo_id FK
+        uuid definicion_campo_id FK
+        jsonb valor_campo
+    }
+    revisiones_silabo {
+        uuid id PK
+        uuid silabo_id FK
+        uuid revision_anterior_id FK
+        smallint numero_revision
+        uuid clave_idempotencia
+        integer version_bloqueo_origen
+        jsonb fotografia_revision_silabo
+        char huella_sha256
+        uuid enviado_por FK
+        timestamptz enviado_en
+        uuid reapertura_id FK
+    }
+    observaciones_revision {
+        uuid id PK
+        uuid revision_silabo_id FK
+        varchar clave_seccion
+        varchar clave_campo
+        text contenido_observacion_revision
+        varchar estado_observacion_revision
+        uuid creado_por FK
+        timestamptz observado_en
+    }
+    solicitudes_correccion {
+        uuid id PK
+        uuid revision_silabo_id FK
+        text justificacion_solicitud_correccion
+        uuid solicitado_por FK
+        timestamptz solicitado_en
+    }
+    aprobaciones {
+        uuid id PK
+        uuid revision_silabo_id FK
+        uuid clave_idempotencia
+        char huella_sha256
+        uuid aprobado_por FK
+        timestamptz aprobado_en
+        uuid aprobacion_base_id FK
+    }
+    reaperturas {
+        uuid id PK
+        uuid aprobacion_id FK
+        uuid revision_aprobada_id FK
+        uuid clave_idempotencia
+        text causa
+        uuid reabierto_por FK
+        timestamptz reabierto_en
+        varchar origen_reapertura
+    }
+    ejecuciones_validacion {
+        uuid id PK
+        uuid silabo_id FK
+        uuid ejecutado_por FK
+        varchar version_reglas
+        varchar estado_ejecucion_validacion
+        integer version_bloqueo
+        smallint cantidad_errores_validacion
+        smallint cantidad_advertencias_validacion
+        timestamptz completado_en
+    }
+    resultados_validacion {
+        uuid id PK
+        uuid ejecucion_validacion_id FK
+        uuid definicion_campo_id FK
+        varchar codigo_resultado_validacion
+        varchar severidad_resultado_validacion
+        varchar mensaje_resultado_validacion
+    }
+    envios_biblioteca {
+        uuid id PK
+        uuid revision_silabo_id FK
+        uuid enviado_por FK
+        timestamptz enviado_en
+        uuid verificado_por FK
+        timestamptz verificado_en
+    }
+    historial_ia {
+        uuid id PK
+        text sesion_id
+        jsonb mensaje_ia
+        timestamptz enviado_en
+    }
+    carreras {
+        uuid id PK
+    }
+    definiciones_campo {
+        uuid id PK
+    }
+    paralelos {
+        uuid id PK
+    }
+    periodos_academicos {
+        uuid id PK
+    }
+    usuarios {
+        uuid id PK
+    }
+    revisiones_silabo ||--o| aprobaciones : "revision_silabo_id"
+    usuarios ||--o{ aprobaciones : "aprobado_por"
+    aprobaciones |o--o{ aprobaciones : "aprobacion_base_id"
+    carreras ||--o{ convocatorias_carreras : "carrera_id"
+    convocatorias_universidad ||--o{ convocatorias_carreras : "convocatoria_universidad_id"
+    periodos_academicos ||--o{ convocatorias_universidad : "periodo_academico_id"
+    silabos ||--o{ ejecuciones_validacion : "silabo_id"
+    usuarios ||--o{ ejecuciones_validacion : "ejecutado_por"
+    usuarios ||--o{ envios_biblioteca : "enviado_por"
+    usuarios |o--o{ envios_biblioteca : "verificado_por"
+    revisiones_silabo ||--o| envios_biblioteca : "revision_silabo_id"
+    usuarios ||--o{ observaciones_revision : "creado_por"
+    revisiones_silabo ||--o{ observaciones_revision : "revision_silabo_id"
+    aprobaciones ||--o| reaperturas : "aprobacion_id"
+    revisiones_silabo ||--o{ reaperturas : "revision_aprobada_id"
+    usuarios ||--o{ reaperturas : "reabierto_por"
+    definiciones_campo |o--o{ resultados_validacion : "definicion_campo_id"
+    ejecuciones_validacion ||--o{ resultados_validacion : "ejecucion_validacion_id"
+    silabos ||--o{ revisiones_silabo : "silabo_id"
+    usuarios ||--o{ revisiones_silabo : "enviado_por"
+    reaperturas |o--o{ revisiones_silabo : "reapertura_id"
+    revisiones_silabo |o--o{ revisiones_silabo : "revision_anterior_id"
+    convocatorias_carreras ||--o{ silabos : "convocatoria_carrera_id"
+    paralelos ||--o{ silabos : "paralelo_id"
+    usuarios ||--o{ solicitudes_correccion : "solicitado_por"
+    revisiones_silabo ||--o| solicitudes_correccion : "revision_silabo_id"
+    definiciones_campo ||--o{ valores_campo : "definicion_campo_id"
+    silabos ||--o{ valores_campo : "silabo_id"

@@ -91,7 +91,6 @@ class RequestSyllabusExport
                     'revision_number' => $lockedRevision->numero_revision,
                     'renderer_version' => $artifact->version_renderizador,
                 ],
-                correlationId: $execution->correlacion_id,
             );
 
             return $artifact->refresh();

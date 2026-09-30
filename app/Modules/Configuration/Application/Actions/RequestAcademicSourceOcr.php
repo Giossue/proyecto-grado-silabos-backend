@@ -125,7 +125,6 @@ final class RequestAcademicSourceOcr
                     'model' => $model,
                     'normalizer' => $normalizerVersion,
                 ],
-                correlationId: $execution->correlacion_id,
             );
 
             return $execution;

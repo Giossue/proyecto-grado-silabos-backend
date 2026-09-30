@@ -79,7 +79,6 @@ class SessionController extends Controller
             resourceType: 'usuario',
             resourceId: $user->id,
             result: 'exito',
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
 
         return response()->json($this->sessionPayload($user, $request));
@@ -97,7 +96,6 @@ class SessionController extends Controller
                 resourceType: 'usuario',
                 resourceId: $user->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         }
 
@@ -122,7 +120,6 @@ class SessionController extends Controller
             resourceType: 'usuario',
             resourceId: $user->id,
             result: 'exito',
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
 
         return response()->json($this->sessionPayload($user->fresh(), $request));

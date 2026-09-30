@@ -130,7 +130,6 @@ final class InProgressWork
                     .'. Se perdió el contenido anterior (borrador, revisiones y análisis de IA); debe completarlo otra vez.',
                 resourceType: 'carrera',
                 resourceId: (string) $syllabus->convocation->carrera_id,
-                correlationId: $correlationId,
             );
         }
 

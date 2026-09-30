@@ -118,7 +118,6 @@ class SubmitBibliographyCorrection
                     'approval_id' => $approval->id,
                     'base_approval_id' => $baseApproval->id,
                 ],
-                correlationId: $correlationId,
             );
             $this->notifications->execute(
                 syllabus: $locked,
@@ -126,7 +125,6 @@ class SubmitBibliographyCorrection
                 deduplicationKey: "silabo.bibliografia_corregida:{$revision->id}",
                 recipientIds: $this->recipients->coordinatorsFor($locked),
                 revisionNumber: $revision->numero_revision,
-                correlationId: $correlationId,
             );
 
             return $revision;

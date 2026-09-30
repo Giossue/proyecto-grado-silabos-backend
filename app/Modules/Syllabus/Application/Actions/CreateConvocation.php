@@ -47,7 +47,6 @@ class CreateConvocation
                 action: 'convocatoria.iniciada', resourceType: 'convocatoria', resourceId: $convocation->id,
                 result: 'exito',
                 metadata: ['process_id' => $process->id, 'period_id' => $process->periodo_academico_id],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $this->open->execute($convocation->id, $actor, $request);

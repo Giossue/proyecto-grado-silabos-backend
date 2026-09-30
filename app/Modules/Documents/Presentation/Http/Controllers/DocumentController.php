@@ -114,7 +114,6 @@ class DocumentController extends Controller
                 'revision_number' => $artifact->revision->numero_revision,
                 'object_id' => $object->id,
             ],
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
         $code = Str::slug($artifact->revision->syllabus->academicSubjectCode()) ?: 'asignatura';
         $filename = "silabo-{$code}-revision-{$artifact->revision->numero_revision}.{$format}";

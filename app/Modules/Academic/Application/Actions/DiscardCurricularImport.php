@@ -21,7 +21,7 @@ final class DiscardCurricularImport
     public function execute(string $id, User $actor, Request $request): void
     {
         $role = $this->view->role($request);
-        $import = DB::transaction(function () use ($actor, $id, $request, $role): CurricularImport {
+        $import = DB::transaction(function () use ($actor, $id, $role): CurricularImport {
             $import = CurricularImport::query()->where('carrera_id', $role->carrera_id)->lockForUpdate()->findOrFail($id);
             if (! in_array($import->estado_importacion, ['lista', 'fallida'], true)) {
                 throw new HttpResponseException(response()->json([
@@ -34,7 +34,6 @@ final class DiscardCurricularImport
                 actorId: $actor->id, roleAssignmentId: $role->id,
                 action: 'academico.importacion_curricular.descartada', resourceType: 'importacion_curricular', resourceId: $import->id,
                 result: 'exito', metadata: ['career_id' => $import->carrera_id, 'documents' => count($import->documentos_importacion)],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $import;

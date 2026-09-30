@@ -150,7 +150,6 @@ class GenerateSyllabusExportJob implements ShouldQueue
                     'docx_object_id' => $docx->id,
                     'pdf_object_id' => $pdf->id,
                 ],
-                correlationId: $execution->correlacion_id,
             );
         });
     }
@@ -181,7 +180,6 @@ class GenerateSyllabusExportJob implements ShouldQueue
                     resourceId: $artifact->id,
                     result: 'fallido',
                     metadata: ['error_code' => 'exportacion_documento_fallida'],
-                    correlationId: $execution->correlacion_id,
                 );
             }
         });

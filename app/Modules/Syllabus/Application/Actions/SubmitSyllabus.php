@@ -120,7 +120,6 @@ class SubmitSyllabus
                 resourceId: $revision->id,
                 result: 'exito',
                 metadata: ['revision_number' => $revision->numero_revision, 'from_state' => $from, 'to_state' => 'en_revision', 'fingerprint' => $revision->huella_sha256],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $eventType = $action === 'enviar' ? 'silabo.enviado' : 'silabo.reenviado';
             $this->notifications->execute(
@@ -129,7 +128,6 @@ class SubmitSyllabus
                 deduplicationKey: "{$eventType}:{$revision->id}",
                 recipientIds: $this->recipients->coordinatorsFor($locked),
                 revisionNumber: $revision->numero_revision,
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $revision;

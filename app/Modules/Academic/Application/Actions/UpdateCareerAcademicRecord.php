@@ -94,7 +94,7 @@ class UpdateCareerAcademicRecord
             && $this->onlyPresentationChanges($recordId, $data, $activeRole->carrera_id);
         $careerScope = $entity === 'asignatura' && ! $cosmeticSubject ? $activeRole->carrera_id : [];
 
-        return $this->work->replace($request, function () use ($actor, $activeRole, $cosmeticSubject, $data, $entity, $recordId, $request): Model {
+        return $this->work->replace($request, function () use ($actor, $activeRole, $cosmeticSubject, $data, $entity, $recordId): Model {
             $record = $this->scopedRecord($entity, $recordId, $activeRole->carrera_id);
             $this->assertPeriodMayChange($record);
             $this->ensureMutable($entity, $record);
@@ -128,7 +128,6 @@ class UpdateCareerAcademicRecord
                 resourceId: (string) $record->getKey(),
                 result: 'exito',
                 metadata: $metadata,
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             if ($cosmeticSubject) {
                 $this->work->refreshSubjects($activeRole->carrera_id);

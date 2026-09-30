@@ -64,7 +64,6 @@ class UpdateParallel
                     'before_shift' => $before['shift'],
                     'after_shift' => $parallel->jornada,
                 ],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $parallel;

@@ -57,7 +57,6 @@ class ActivateManagedUser
                 resourceType: 'usuario',
                 resourceId: $user->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifyIssuer($invitation, $user, $request);
         });
@@ -76,7 +75,6 @@ class ActivateManagedUser
             message: "{$user->nombre} activó su cuenta{$as}.",
             resourceType: 'usuario',
             resourceId: $user->id,
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
     }
 }

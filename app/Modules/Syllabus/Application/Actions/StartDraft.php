@@ -33,7 +33,6 @@ class StartDraft
                 resourceType: 'silabo',
                 resourceId: $syllabus->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $syllabus;

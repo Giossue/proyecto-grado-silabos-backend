@@ -92,7 +92,6 @@ class ResetSyllabus
                 resourceId: $locked->id,
                 result: 'exito',
                 metadata: $discarded,
-                correlationId: $correlationId,
             );
             $this->notifications->execute(
                 syllabus: $locked,
@@ -100,7 +99,6 @@ class ResetSyllabus
                 deduplicationKey: 'silabo.reiniciado:'.$locked->id.':'.now()->timestamp,
                 recipientIds: $this->recipients->teachersFor($locked),
                 revisionNumber: null,
-                correlationId: $correlationId,
             );
 
             return $locked->refresh();

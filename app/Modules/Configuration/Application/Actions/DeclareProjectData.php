@@ -51,7 +51,6 @@ final class DeclareProjectData
             $this->audit->execute(
                 actorId: $actor->id, roleAssignmentId: $this->roles->resolve($request)?->id, action: 'curriculo.concepto_declarado',
                 resourceType: 'concepto_curricular', resourceId: $concept->id, result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $concept;

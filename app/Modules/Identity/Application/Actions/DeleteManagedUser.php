@@ -30,7 +30,7 @@ class DeleteManagedUser
     {
         $activeRole = $this->roles->resolve($request);
 
-        DB::transaction(function () use ($activeRole, $actor, $request, $target): void {
+        DB::transaction(function () use ($activeRole, $actor, $target): void {
             $locked = User::query()->lockForUpdate()->findOrFail($target->id);
             if ($locked->hasVerifiedEmail()) {
                 throw ValidationException::withMessages([
@@ -66,7 +66,6 @@ class DeleteManagedUser
                 resourceId: $target->id,
                 result: 'exito',
                 metadata: ['email' => $email, 'name' => $name],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         });
     }

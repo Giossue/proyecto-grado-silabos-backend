@@ -121,7 +121,6 @@ class TwoFactorController extends Controller
             resourceType: 'usuario',
             resourceId: $user->id,
             result: 'exito',
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
 
         return response()->json(['message' => 'Segundo factor verificado.']);

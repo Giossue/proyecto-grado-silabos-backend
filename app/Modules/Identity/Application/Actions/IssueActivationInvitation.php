@@ -36,7 +36,7 @@ class IssueActivationInvitation
     {
         $activeRole = $this->roles->resolve($request);
 
-        return DB::transaction(function () use ($activeRole, $actor, $reason, $request, $target): ActivationInvitation {
+        return DB::transaction(function () use ($activeRole, $actor, $reason, $target): ActivationInvitation {
             $user = User::query()->lockForUpdate()->findOrFail($target->id);
 
             if (! $user->activo || $user->hasVerifiedEmail()) {
@@ -68,7 +68,6 @@ class IssueActivationInvitation
                 resourceId: $user->id,
                 result: 'exito',
                 metadata: ['reason' => $reason],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             $assignment = $user->roleAssignments()

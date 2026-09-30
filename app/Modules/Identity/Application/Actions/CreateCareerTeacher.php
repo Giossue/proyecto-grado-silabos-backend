@@ -94,7 +94,6 @@ class CreateCareerTeacher
                     resourceId: $user->id,
                     result: 'exito',
                     metadata: ['carrera_id' => $careerId, 'cuenta_creada' => $created],
-                    correlationId: $request->attributes->getString('correlation_id') ?: null,
                 );
             }
 

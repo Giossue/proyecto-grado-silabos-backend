@@ -75,7 +75,6 @@ class TransitionConvocation
                 resourceId: $locked->id,
                 result: 'exito',
                 metadata: $generated > 0 ? ['generated_count' => $generated] : [],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifyTeachers($locked, $to, $request);
 
@@ -98,7 +97,6 @@ class TransitionConvocation
             message: $message,
             resourceType: 'convocatoria',
             resourceId: $convocation->id,
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
     }
 }

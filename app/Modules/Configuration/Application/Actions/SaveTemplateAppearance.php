@@ -26,7 +26,7 @@ final class SaveTemplateAppearance
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        DB::transaction(function () use ($activeRole, $actor, $appearance, $request, $template): void {
+        DB::transaction(function () use ($activeRole, $actor, $appearance, $template): void {
             $locked = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
             $mapping = $locked->mapeo_documento ?? [];
             $mapping['appearance'] = TemplateAppearance::normalize($appearance);
@@ -39,7 +39,6 @@ final class SaveTemplateAppearance
                 resourceType: 'plantilla_silabo',
                 resourceId: $locked->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         });
     }

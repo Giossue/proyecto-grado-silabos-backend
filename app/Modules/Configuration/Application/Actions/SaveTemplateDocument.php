@@ -277,7 +277,6 @@ final class SaveTemplateDocument
             roleAssignmentId: $this->roles->resolve($request)?->id,
             action: 'plantilla.diseno_actualizado', resourceType: 'bloque_plantilla',
             resourceId: $block->id, result: 'exito',
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
             metadata: ['fields' => $fields],
         );
     }

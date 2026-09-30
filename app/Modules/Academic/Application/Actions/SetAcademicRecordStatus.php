@@ -65,7 +65,7 @@ class SetAcademicRecordStatus
             ? $activeRole->carrera_id
             : [];
 
-        return $this->work->replace($request, function () use ($active, $actor, $activeRole, $entity, $modelClass, $recordId, $request): Model {
+        return $this->work->replace($request, function () use ($active, $actor, $activeRole, $entity, $modelClass, $recordId): Model {
             $record = AcademicStructurePermissions::isCareerContext($activeRole)
                 ? $this->findCareerRecord($entity, $recordId, $activeRole->carrera_id)
                 : $modelClass::query()->lockForUpdate()->findOrFail($recordId);
@@ -95,7 +95,6 @@ class SetAcademicRecordStatus
                 resourceId: (string) $record->getKey(),
                 result: 'exito',
                 metadata: ['active' => $active],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $record;

@@ -75,7 +75,6 @@ class OpenConvocation
                 resourceId: $convocation->id,
                 result: 'exito',
                 metadata: ['generated_count' => $generated],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifyTeachers($convocation, $request);
 
@@ -98,7 +97,6 @@ class OpenConvocation
                 message: "Se abrió la convocatoria de {$convocation->career->nombre}. Tiene {$syllabi}{$due}.",
                 resourceType: 'convocatoria',
                 resourceId: $convocation->id,
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         }
     }

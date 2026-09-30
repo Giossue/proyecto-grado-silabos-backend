@@ -314,7 +314,6 @@ class TemplateController extends Controller
                 resourceType: 'plantilla_silabo',
                 resourceId: $template?->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         });
 

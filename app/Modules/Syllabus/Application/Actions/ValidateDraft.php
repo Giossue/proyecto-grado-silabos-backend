@@ -112,7 +112,6 @@ class ValidateDraft
                 resourceId: $locked->id,
                 result: 'exito',
                 metadata: ['rule_version' => self::RULE_VERSION, 'blocking_errors' => count($issues)],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $run->load('results');

@@ -71,7 +71,6 @@ class ExtendProcessDeadline
                     'new_due_at' => $requested->toIso8601String(),
                     'convocations_reached' => $reached,
                 ],
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notify($locked, $requested, $request);
 
@@ -92,7 +91,6 @@ class ExtendProcessDeadline
             message: "La entrega de sílabos del proceso «{$process->nombre}» se amplió hasta el {$this->notifications->date($dueAt)}.",
             resourceType: 'proceso_silabos',
             resourceId: $process->id,
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
     }
 }

@@ -26,7 +26,7 @@ class DeleteTemplateBlock
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        $this->work->replace($request, function () use ($activeRole, $actor, $block, $request): void {
+        $this->work->replace($request, function () use ($activeRole, $actor, $block): void {
 
             $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
             $lockedBlock = $template->blockOrFail($block->id);
@@ -43,7 +43,6 @@ class DeleteTemplateBlock
                 resourceType: 'bloque_plantilla',
                 resourceId: $block->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
         });
     }

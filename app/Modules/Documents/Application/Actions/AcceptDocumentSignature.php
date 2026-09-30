@@ -126,7 +126,6 @@ class AcceptDocumentSignature
                         'certificate_serial' => $certificate->serial,
                         'sha256' => $fingerprint,
                     ],
-                    correlationId: $correlationId,
                 );
                 [$eventType, $recipientIds] = match ($role) {
                     DocumentSignature::ROLE_TEACHER => ['silabo.firmado_docente', $this->recipients->coordinatorsFor($syllabus)],
@@ -142,7 +141,6 @@ class AcceptDocumentSignature
                     deduplicationKey: "documento.firmado:{$signature->id}",
                     recipientIds: $recipientIds,
                     revisionNumber: $revision->numero_revision,
-                    correlationId: $correlationId,
                 );
 
                 return $signature;

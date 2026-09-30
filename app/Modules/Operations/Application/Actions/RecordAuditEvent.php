@@ -15,7 +15,6 @@ class RecordAuditEvent
         ?string $resourceId,
         string $result,
         array $metadata = [],
-        ?string $correlationId = null,
     ): AuditEvent {
         return AuditEvent::query()->create([
             'actor_usuario_id' => $actorId,
@@ -25,7 +24,6 @@ class RecordAuditEvent
             'recurso_id' => $resourceId,
             'resultado' => $result,
             'metadatos' => $metadata,
-            'correlacion_id' => $correlationId,
             'ocurrido_en' => now(),
         ]);
     }

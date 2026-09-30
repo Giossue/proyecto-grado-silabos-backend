@@ -30,7 +30,7 @@ class SaveTemplateSection
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        return $this->work->replace($request, function () use ($activeRole, $actor, $data, $request, $templateId): TemplateSection {
+        return $this->work->replace($request, function () use ($activeRole, $actor, $data, $templateId): TemplateSection {
             $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
 
             $sections = $template->sections()->sortBy('posicion')->values();
@@ -107,7 +107,6 @@ class SaveTemplateSection
                 resourceType: 'seccion_plantilla',
                 resourceId: $section->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $section;
@@ -120,7 +119,7 @@ class SaveTemplateSection
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        return $this->work->replace($request, function () use ($activeRole, $actor, $data, $request, $section): TemplateSection {
+        return $this->work->replace($request, function () use ($activeRole, $actor, $data, $section): TemplateSection {
             $template = SyllabusTemplate::query()->whereKey($section->plantilla_id)->lockForUpdate()->firstOrFail();
             $section = $template->updateSectionDocument($section->id, [
                 'titulo' => $this->stringValue($data, 'title'),
@@ -133,7 +132,6 @@ class SaveTemplateSection
                 resourceType: 'seccion_plantilla',
                 resourceId: $section->id,
                 result: 'exito',
-                correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
 
             return $section;

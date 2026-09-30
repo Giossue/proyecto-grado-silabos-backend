@@ -83,7 +83,6 @@ class CommentBibliography
                     'to_state' => 'correccion_solicitada',
                     'approval_id' => $approval->id,
                 ],
-                correlationId: $correlationId,
             );
             $this->notifications->execute(
                 syllabus: $syllabus,
@@ -91,7 +90,6 @@ class CommentBibliography
                 deduplicationKey: "biblioteca.comentado:{$reopening->id}",
                 recipientIds: $this->recipients->teachersFor($syllabus),
                 revisionNumber: $revision->numero_revision,
-                correlationId: $correlationId,
             );
 
             return $reopening;

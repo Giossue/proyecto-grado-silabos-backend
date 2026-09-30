@@ -76,7 +76,6 @@ final class AcademicSourceOcrExecutionFinalizer
                     'page_count' => count($result->pages),
                     'image_count' => $materialized['image_count'],
                 ],
-                correlationId: $lockedExecution->correlacion_id,
             );
         });
     }
@@ -109,7 +108,6 @@ final class AcademicSourceOcrExecutionFinalizer
                 resourceId: $execution->recurso_id,
                 result: 'fallido',
                 metadata: ['error_code' => $code],
-                correlationId: $execution->correlacion_id,
             );
         });
     }

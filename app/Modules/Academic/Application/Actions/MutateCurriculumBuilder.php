@@ -288,7 +288,6 @@ class MutateCurriculumBuilder
             resourceId: $resourceId,
             result: 'exito',
             metadata: $metadata,
-            correlationId: $request->attributes->getString('correlation_id') ?: null,
         );
     }
 }
