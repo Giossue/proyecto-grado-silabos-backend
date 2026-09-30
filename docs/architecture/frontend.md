@@ -25,6 +25,48 @@ Los componentes reutilizables, pruebas Vitest, estilos, Dockerfile y configuraci
 Nginx pertenecen al repositorio frontend. Sus variables públicas se inyectan en el
 arranque para que el mismo bundle apunte al backend de cada ambiente.
 
+## Componentes, tema y datos compartidos
+
+Las acciones y campos visibles se componen con las primitivas locales shadcn-vue de
+`src/components/ui`; los componentes de dominio reúnen esas primitivas sin duplicar
+sus controles. `ChoiceGroup` y `BooleanChoice` usan `RadioGroup`; `EvidenceDisclosure`
+usa `Collapsible`; `StepProgress` usa `Badge` y `Separator`; los avances usan `Progress`.
+`FeedbackAlert`, `EmptyState` y `CommentEntry` comparten errores, vacíos e historiales.
+La salida de un sílabo cuyo autoguardado falla usa `UnsavedChangesDialog` y una respuesta
+asíncrona. El aviso de cierre de pestaña sigue siendo responsabilidad del navegador.
+
+`styles.css` centraliza el tema, el avatar, el logo, las dimensiones de layouts y los
+niveles de superposición. `WorkspaceLayout` comparte la composición de sílabo y revisión
+con sus skeletons. `documentPalette.ts` mantiene los colores que se serializan y
+establece sus variables CSS durante el arranque; `documentDefaults.ts` reúne los
+valores documentales por defecto. Los colores del papel conservan su identidad en ambos
+temas. La geometría calculada y los motores Tiptap/Vue Flow permanecen conforme a
+ADR-0006/0007 e I-101; los controles de zoom del lienzo son `Button` con `Tooltip`.
+
+Las opciones `options.modalityOptions` y `options.shiftOptions` se reciben de la API
+académica y se describen en `AcademicUiOptions` de OpenAPI. La SPA no mantiene otro
+catálogo de modalidades o jornadas. Las etiquetas de estados, los límites de formulario
+y el formato de fechas se reúnen en utilidades compartidas; Laravel mantiene la
+validación y las decisiones del dominio. La previsualización de plantilla utiliza su
+metadata sin inventar fechas, asignaturas o datos institucionales. La URL de API es
+obligatoria fuera de desarrollo; el fallback local sólo se permite en desarrollo.
+
+`npm run lint` verifica las reglas locales `shared-components` y `semantic-styles`
+mediante cuatro casos de regresión y luego revisa el código. Detectan controles visibles
+HTML propios, confirmaciones nativas de ruta, tooltips `title`, paletas locales,
+colores literales en componentes, dimensiones arbitrarias y apilamientos locales.
+Las primitivas, los fixtures, la paleta documental central y el adaptador de PDF tienen
+su alcance específico. Los campos ocultos de transporte/archivo y las medidas calculadas
+no se confunden con controles visibles o datos ficticios. `contract:check` reconoce
+`POST` multipart con `_method=PATCH` en el mismo cuerpo y bloque, y verifica la operación
+PATCH real; no omite endpoints.
+
+La evidencia de la corrección autorizada tras AUD-FE-2026-09-29 se mantiene en
+`docs/plans/active/FE-SHADCN-2026-09-29-componentes-y-tokens-compartidos.md` mientras
+se cierra su comprobación final. La revisión local en Chromium cubre teclado, foco,
+evidencia, zoom, arrastre y layouts en claro/oscuro a 360, 768 y 1440 px; no sustituye
+la aceptación institucional de PV-07/PV-19.
+
 I-146 retira COR-11, su editor documental y los paneles/acciones del revisor de IA.
 La SPA conserva el chat para elaborar contenido y unidades desde el contexto académico
 confirmado del sílabo. La importación curricular I-145 permite cargar PDF/XLSX y

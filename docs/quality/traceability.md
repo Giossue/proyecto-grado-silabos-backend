@@ -383,3 +383,29 @@ No cambies primero el test para acomodar código y luego reescribas el requisito
 Puede ser: resultado CI, reporte de test, captura, documento renderizado, log anonimizado,
 acta/validación o métrica reproducible. Debe incluir versión/commit, ambiente, fecha y
 responsable cuando corresponda.
+
+
+## Componentes, tokens y metadata compartidos, 2026-09-29
+
+La autorización «ok arregla todo» posterior a AUD-FE-2026-09-29 aplica a
+RF-001..026/034..075, RNF-018..023/029..034, UI-01..04, las pantallas ADM/COR/DOC/BIB
+vigentes y sus CP-F/CP-N de formulario, navegación y accesibilidad. Conserva las
+invariantes RN-001..034 y los motores ADR-0006/0007 de I-101.
+
+`ChoiceGroup`/`BooleanChoice`, `EvidenceDisclosure`, `StepProgress`, `Progress`,
+`FeedbackAlert`, `EmptyState`, `CommentEntry`, `WorkspaceLayout` y los controles shadcn
+del lienzo sustituyen las composiciones duplicadas auditadas. `UnsavedChangesDialog`
+resuelve el descarte cuando falla el autoguardado. Los tokens globales comparten colores,
+dimensiones, estilo documental y superposición. Las modalidades/jornadas provienen de
+`AcademicStructureViewData` y `Parallel::shiftOptions`; `AcademicUiOptions` documenta
+su respuesta y `AcademicStructureTest` verifica los catálogos enviados a los formularios.
+
+La evidencia incluye `TeacherSyllabusDetailPage.test.ts`, `DocumentSignatureCard.test.ts`,
+`SyllabusUnitAssistant.test.ts`, `CurricularImportReview.test.ts`, `dateDisplay.test.ts`,
+los casos locales de ESLint y del verificador multipart, `frontend-components.spec.ts`
+y `curriculum-drag.spec.ts`. Estos últimos usan datos sintéticos y respuestas HTTP
+interceptadas con una URL local; comprueban teclado, foco, capas de diálogos, zoom,
+arrastre y los layouts en ambos temas y tres anchos. PV-07/PV-19 permanecen abiertos
+para aceptación real. Los dos fallos generales de backend relacionados con I-164/I-78
+quedan en `docs/plans/pending-work.md`; la comprobación específica de API/OpenAPI pasa.
+El plan FE-SHADCN-2026-09-29 conserva el detalle y el resultado final de cada comando.

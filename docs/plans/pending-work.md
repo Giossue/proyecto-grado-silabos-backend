@@ -4,6 +4,23 @@ Corte histórico del 30 de agosto de 2026, con actualización I-56 a continuaci�
 Este documento separa lo que falta según de quién
 depende, porque son cosas de naturaleza distinta y no se resuelven igual.
 
+## Verificación de normalización de plantillas, 2026-09-29
+
+La ejecución local de `composer verify` durante FE-SHADCN-2026-09-29 pasó secretos,
+Pint y PHPStan, pero registró 385 pruebas satisfactorias de 387 y dos incidencias
+relacionadas con I-164: `TemplateJsonMigrationTest` todavía supone la columna retirada
+`documento_plantilla`; `SpanishSchemaTest` detecta ocho atributos físicos genéricos en
+`secciones_plantilla`/`bloques_plantilla`. Esas migraciones y pruebas no se modificaron
+como parte de la corrección frontend. La comprobación de metadata académica y OpenAPI
+pasó sus 26 pruebas específicas.
+
+Corresponde al mantenimiento de I-164/I-78 adaptar la prueba histórica a la
+normalización irreversible y resolver la nomenclatura del esquema conforme a sus
+fuentes durables. No se debe silenciar la puerta, editar migraciones ya aplicadas ni
+revertir la normalización en una base compartida. La corrección de componentes no
+certifica una release del backend; la puerta completa debe volver a ejecutarse tras
+resolver estas incidencias. PostgreSQL usado: base local aislada `silabos_ueb_test`.
+
 ## Retirada de fuentes y del revisor de IA, 2026-09-27 (I-146)
 
 Por instrucción expresa del responsable del producto se retiran el CRUD de Fuentes
