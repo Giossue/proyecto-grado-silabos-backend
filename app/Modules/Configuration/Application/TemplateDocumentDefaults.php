@@ -10,7 +10,7 @@ final class TemplateDocumentDefaults
     public static function identification(): array
     {
         $data = IdentificationCard::sample();
-        foreach (TemplateVariables::definitions([]) as $key => $definition) {
+        foreach (TemplateVariables::definitions() as $key => $definition) {
             if (! isset($definition['equals']) && str_starts_with($definition['source'], 'identification.')) {
                 $data[substr($definition['source'], 15)] = '[[variable:'.$key.']]';
             }

@@ -282,13 +282,13 @@ class TemplateDocumentTest extends TestCase
         $document = ['type' => 'doc', 'content' => [['type' => 'bulletList', 'content' => [
             $item([['type' => 'text', 'text' => 'Respeto en clase']]),
             $item([['type' => 'field', 'attrs' => ['key' => 'normas', 'label' => 'Normas', 'kind' => 'texto_largo', 'listStyle' => 'bullet']]]),
-            $item([['type' => 'variable', 'attrs' => ['id' => 'curricular_normas', 'label' => 'x', 'listStyle' => 'bullet']]]),
+            $item([['type' => 'variable', 'attrs' => ['id' => 'lista_normas', 'label' => 'x', 'listStyle' => 'bullet']]]),
         ]]]];
-        $normalized = TemplateDocument::normalize($document, ['curricular_normas']);
+        $normalized = TemplateDocument::normalize($document, ['lista_normas']);
         $this->assertSame('bullet', TemplateDocument::nodes($normalized, 'variable')[0]['attrs']['listStyle']);
 
         $resolved = TemplateDocumentResolver::resolve($normalized, [['key' => 'normas', 'value' => "Puntualidad\nHonestidad"]], [
-            'curricular_normas' => "1. Trabajo en equipo\n2. Ética profesional",
+            'lista_normas' => "1. Trabajo en equipo\n2. Ética profesional",
         ], null);
 
         $this->assertCount(1, TemplateDocument::nodes($resolved, 'bulletList'));
@@ -298,8 +298,8 @@ class TemplateDocumentTest extends TestCase
         );
         $this->expectException(ValidationException::class);
         TemplateDocument::normalize(['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [
-            ['type' => 'variable', 'attrs' => ['id' => 'curricular_normas', 'listStyle' => 'tabla']],
-        ]]]], ['curricular_normas']);
+            ['type' => 'variable', 'attrs' => ['id' => 'lista_normas', 'listStyle' => 'tabla']],
+        ]]]], ['lista_normas']);
     }
 
     public function test_new_parts_are_free_text_or_template_content(): void

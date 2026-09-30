@@ -136,8 +136,8 @@ class ConvocationController extends Controller
         $action->execute($convocation, $transition, $actor, $request);
 
         $message = $transition === TransitionConvocation::PAUSE
-            ? 'Convocatoria en pausa. Los docentes de la carrera no editan ni envían; la malla y los datos curriculares quedan editables.'
-            : 'Convocatoria reanudada. Los docentes vuelven a trabajar, los paralelos nuevos ya tienen su sílabo y la malla y los datos curriculares quedan protegidos.';
+            ? 'Convocatoria en pausa. Los docentes de la carrera no editan ni envían; la malla queda editable.'
+            : 'Convocatoria reanudada. Los docentes vuelven a trabajar, los paralelos nuevos ya tienen su sílabo y la malla queda protegida.';
 
         return response()->json(['message' => $message]);
     }

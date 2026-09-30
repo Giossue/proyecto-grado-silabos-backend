@@ -2,7 +2,7 @@
 
 namespace App\Modules\Syllabus\Presentation\Http\Requests;
 
-use App\Modules\Configuration\Application\CurricularFieldOptions;
+use App\Modules\Configuration\Application\FieldOptions;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -91,8 +91,6 @@ class UpdateDraftFieldRequest extends FormRequest
     /** @return list<string> */
     private function allowedOptions(FieldDefinition $field): array
     {
-        $syllabus = $this->route('syllabus');
-
-        return CurricularFieldOptions::values($field, $syllabus instanceof Syllabus ? ($syllabus->contexto_academico ?? []) : []);
+        return FieldOptions::values($field);
     }
 }

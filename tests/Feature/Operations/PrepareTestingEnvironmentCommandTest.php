@@ -74,7 +74,6 @@ class PrepareTestingEnvironmentCommandTest extends TestCase
         );
         $this->assertSame(SyllabusProcess::STATE_OPEN, SyllabusProcess::query()->value('estado'));
         $this->assertSame(1, Convocation::query()->count());
-        $this->assertDatabaseCount('documentos_importacion', 0);
         $this->assertFalse(User::query()->where('correo_electronico', PrepareTestingEnvironmentCommand::COORDINATOR_EMAIL)->exists());
     }
 

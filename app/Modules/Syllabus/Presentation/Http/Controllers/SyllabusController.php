@@ -4,8 +4,8 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
+use App\Modules\Configuration\Application\FieldOptions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TemplateAppearance;
@@ -232,9 +232,9 @@ class SyllabusController extends Controller
                     'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
                 ],
             ],
-            'template_variables' => TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($syllabus), 'academic_context' => $syllabus->contexto_academico]),
+            'template_variables' => TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($syllabus)]),
             'sections' => $template->sections
-                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, $syllabus->contexto_academico ?? []))
+                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values))
                 ->values(),
             'validation' => $lastValidation instanceof ValidationRun ? [
                 'completed_at' => $lastValidation->completado_en->toIso8601String(),
@@ -328,14 +328,13 @@ class SyllabusController extends Controller
 
     /**
      * @param  Collection<string, FieldValue>  $values
-     * @param  array<string, mixed>  $academicContext
      * @return array<string, mixed>
      */
-    private function sectionPayload(TemplateSection $section, $values, array $academicContext): array
+    private function sectionPayload(TemplateSection $section, $values): array
     {
         $blocks = [];
         foreach ($section->blocks as $block) {
-            $blocks[] = $this->blockPayload($block, $values, $academicContext);
+            $blocks[] = $this->blockPayload($block, $values);
         }
 
         return [
@@ -349,10 +348,9 @@ class SyllabusController extends Controller
 
     /**
      * @param  Collection<string, FieldValue>  $values
-     * @param  array<string, mixed>  $academicContext
      * @return array<string, mixed>
      */
-    private function blockPayload(TemplateBlock $block, Collection $values, array $academicContext): array
+    private function blockPayload(TemplateBlock $block, Collection $values): array
     {
         $fields = [];
         foreach ($block->fields as $field) {
@@ -365,9 +363,7 @@ class SyllabusController extends Controller
                 'label' => $field->etiqueta,
                 'help' => $field->ayuda,
                 'type' => $field->tipo,
-                'options' => CurricularFieldOptions::options($field, $academicContext),
-                'options_source' => CurricularFieldOptions::source($field),
-                'options_sources' => CurricularFieldOptions::sources($field),
+                'options' => FieldOptions::options($field),
                 'show_when' => FieldConditions::normalize($field->mostrar_si),
                 'required' => true,
                 'inherited' => $field->heredado,

@@ -3,7 +3,6 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TemplateDocument;
@@ -19,6 +18,8 @@ use Illuminate\Validation\ValidationException;
 
 final class SaveTemplateDocument
 {
+    private const CHOICE_TYPES = ['seleccion_unica', 'seleccion_multiple'];
+
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
@@ -71,35 +72,21 @@ final class SaveTemplateDocument
             $used = [];
             $toCreate = [];
             $labels = [];
-            $optionSources = [];
             foreach (TemplateDocument::nodes($normalized, 'field') as $node) {
                 $attrs = $node['attrs'];
                 $key = $attrs['key'];
-                $source = CurricularFieldOptions::fromAttributes($attrs);
-                foreach ($source as $sourceKey) {
-                    if (! CurricularFieldOptions::sourceIsAllowed($sourceKey)) {
-                        TemplateDocument::fail('El origen de opciones debe ser un concepto curricular de tipo lista.');
-                    }
-                }
-                if (array_key_exists($key, $optionSources) && $optionSources[$key] !== $source) {
-                    TemplateDocument::fail('Un campo debe conservar el mismo origen de opciones en todas sus apariciones.');
-                }
-                $optionSources[$key] = $source;
                 if (isset($labels[$key]) && $labels[$key] !== $attrs['label']) {
                     TemplateDocument::fail('Un campo debe conservar el mismo nombre en todas sus apariciones.');
                 }
                 $labels[$key] = $attrs['label'];
                 $used[] = $key;
                 if (isset($fields[$key])) {
-                    if ($source !== [] && ! in_array($fields[$key]->tipo, CurricularFieldOptions::CHOICE_TYPES, true)) {
-                        TemplateDocument::fail('Agregue una pregunta de selección para usar opciones curriculares.');
-                    }
-                    if (in_array($fields[$key]->tipo, CurricularFieldOptions::CHOICE_TYPES, true)) {
+                    if (in_array($fields[$key]->tipo, self::CHOICE_TYPES, true)) {
                         $staticOptions = $attrs['options'] ?? $fields[$key]->opciones;
-                        if ($source === [] && ($staticOptions === null || $staticOptions === [])) {
-                            TemplateDocument::fail('Un campo de selección necesita opciones fijas o una lista curricular.');
+                        if ($staticOptions === null || $staticOptions === []) {
+                            TemplateDocument::fail('Un campo de selección necesita sus opciones.');
                         }
-                        $fields[$key]->update(['opciones' => $source === [] ? $staticOptions : null]);
+                        $fields[$key]->update(['opciones' => $staticOptions]);
                     }
                     $choice = $attrs['choice'] ?? null;
                     if ($choice !== null && ! in_array($choice, $this->optionValues($fields[$key]), true)) {
@@ -112,17 +99,14 @@ final class SaveTemplateDocument
                     || FieldDefinition::query()->where('plantilla_id', $block->plantilla_id)->where('clave', $key)->exists()) {
                     TemplateDocument::fail('El campo pertenece a otra sección o su tipo no está permitido.');
                 }
-                if ($attrs['kind'] === 'seleccion_multiple' && $source === []) {
-                    TemplateDocument::fail('Seleccione un catálogo curricular para la nueva selección múltiple.');
-                }
                 $definition = [
                     'key' => $attrs['key'],
                     'label' => $attrs['label'],
                     'kind' => $attrs['kind'],
                     'options' => $attrs['options'] ?? null,
                 ];
-                if (in_array($attrs['kind'], CurricularFieldOptions::CHOICE_TYPES, true)
-                    && $definition['options'] === null && $source === []) {
+                if (in_array($attrs['kind'], self::CHOICE_TYPES, true)
+                    && $definition['options'] === null) {
                     TemplateDocument::fail('Un campo de selección necesita sus opciones.');
                 }
                 if (isset($toCreate[$key]) && $toCreate[$key] !== $definition) {
@@ -131,7 +115,6 @@ final class SaveTemplateDocument
                 $toCreate[$key] = $definition;
             }
             $configuration = $block->configuracion ?? [];
-            $configuration['options_sources'] = array_filter($optionSources, static fn (array $sources): bool => $sources !== []);
             foreach ($labels as $key => $label) {
                 $fields->get($key)?->update(['etiqueta' => $label]);
             }
@@ -241,27 +224,15 @@ final class SaveTemplateDocument
     private function applyPropertyLabels(array $document, array $properties, bool $applyLabels = true): array
     {
         $labels = [];
-        $sources = [];
         foreach ($properties as $property) {
             if ($applyLabels) {
                 $labels[$property['key']] = trim($property['label']);
             }
-            if (array_key_exists('options_source', $property) || array_key_exists('options_sources', $property)) {
-                $sources[$property['key']] = CurricularFieldOptions::fromAttributes($property);
-            }
         }
-        $visit = function (array $node) use (&$visit, $labels, $sources): array {
+        $visit = function (array $node) use (&$visit, $labels): array {
             if (($node['type'] ?? null) === 'field'
                 && isset($labels[$node['attrs']['key'] ?? null])) {
                 $node['attrs']['label'] = $labels[$node['attrs']['key']];
-            }
-            if (($node['type'] ?? null) === 'field' && array_key_exists($node['attrs']['key'], $sources)) {
-                $fieldSources = $sources[$node['attrs']['key']];
-                $node['attrs']['options_sources'] = $fieldSources;
-                $node['attrs']['options_source'] = count($fieldSources) === 1 ? $fieldSources[0] : null;
-                if ($fieldSources !== []) {
-                    $node['attrs']['options'] = null;
-                }
             }
             if (isset($node['content'])) {
                 $node['content'] = array_map($visit, $node['content']);

@@ -23,8 +23,6 @@ it('mantiene el contrato OpenAPI sincronizado con las rutas públicas v1', funct
                 '/api/v1/admin/template/{template}/sections',
                 '/api/v1/teacher/syllabi/{syllabus}',
                 '/api/v1/teacher/syllabi/{syllabus}/ai-chat',
-                '/api/v1/coordination/curricular-imports',
-                '/api/v1/coordination/curricular-imports/{import}/documents/{source}/original',
                 '/api/v1/coordination/reviews/{revision}',
                 '/api/v1/exports/{artifact}/{format}',
             ])
@@ -35,15 +33,15 @@ it('mantiene el contrato OpenAPI sincronizado con las rutas públicas v1', funct
             ->toHaveKey('application/octet-stream');
         foreach (array_keys($committed['paths']) as $path) {
             expect($path)->not->toStartWith('/api/v1/coordination/sources')
+                ->and($path)->not->toStartWith('/api/v1/coordination/curricular-imports')
+                ->and($path)->not->toEndWith('/project-data')
                 ->and($path)->not->toEndWith('/ai-review')
                 ->and($path)->not->toContain('/fields/{field}/ai');
         }
         expect($committed['components']['schemas'])->not->toHaveKey('SourceDocument')
             ->and($committed['components']['schemas'])->not->toHaveKey('SubjectLearningOutcomes')
             ->and($committed['components']['schemas'])->not->toHaveKey('SubjectLearningOutcomesInput')
-            ->and($committed['paths'])->not->toHaveKey('/api/v1/coordination/academic/subjects/{subject}/learning-outcomes')
-            ->and($committed['paths']['/api/v1/coordination/curricular-imports/{import}/documents/{source}/original']['get']['responses']['200']['content'])
-            ->toHaveKeys(['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+            ->and($committed['paths'])->not->toHaveKey('/api/v1/coordination/academic/subjects/{subject}/learning-outcomes');
     } finally {
         if (is_string($temporaryPath) && file_exists($temporaryPath)) {
             unlink($temporaryPath);

@@ -2,8 +2,8 @@
 
 namespace App\Modules\Syllabus\Application;
 
-use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
+use App\Modules\Configuration\Application\FieldOptions;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -54,9 +54,7 @@ class SyllabusSnapshot
                             'key' => $field->clave,
                             'label' => $field->etiqueta,
                             'type' => $field->tipo,
-                            'options_source' => CurricularFieldOptions::source($field),
-                            'options_sources' => CurricularFieldOptions::sources($field),
-                            'options' => CurricularFieldOptions::options($field, $syllabus->contexto_academico ?? []),
+                            'options' => FieldOptions::options($field),
                             'inherited' => $field->heredado,
                             'master_source' => $field->origen_maestro,
                             'value' => $values->get($field->id)?->valor,

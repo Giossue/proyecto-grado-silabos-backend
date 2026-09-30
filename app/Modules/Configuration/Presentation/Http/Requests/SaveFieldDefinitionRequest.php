@@ -2,7 +2,6 @@
 
 namespace App\Modules\Configuration\Presentation\Http\Requests;
 
-use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -67,9 +66,6 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'options.*' => ['required', 'array:value,label'],
             'options.*.value' => ['required', 'string', 'max:120', 'distinct'],
             'options.*.label' => ['required', 'string', 'max:180'],
-            'options_source' => ['sometimes', 'nullable', 'string', 'max:140'],
-            'options_sources' => ['sometimes', 'array', 'list', 'max:20'],
-            'options_sources.*' => ['required', 'string', 'max:140', 'distinct'],
             'page_orientation' => ['sometimes', 'nullable', 'in:portrait,landscape'],
             'show_when' => ['sometimes', 'nullable', 'array:key,value'],
         ];
@@ -89,25 +85,10 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
     {
         return [function (Validator $validator): void {
             $field = $this->route('field');
-            $sources = $this->has('options_sources') || $this->has('options_source')
-                ? CurricularFieldOptions::fromAttributes($this->all())
-                : ($field instanceof FieldDefinition ? CurricularFieldOptions::sources($field) : []);
-            foreach ($sources as $source) {
-                if (! CurricularFieldOptions::sourceIsAllowed($source)) {
-                    $validator->errors()->add('options_sources', 'Seleccione listas curriculares disponibles.');
-                }
-            }
-            if ($sources !== [] && $this->input('content_type') !== 'multiple_choice'
-                && (! $field instanceof FieldDefinition || ! in_array($field->tipo, CurricularFieldOptions::CHOICE_TYPES, true))) {
-                $validator->errors()->add('options_sources', 'Solo una pregunta de selección admite opciones curriculares.');
-            }
             if (($this->input('content_type') === 'multiple_choice'
-                || ($field instanceof FieldDefinition && in_array($field->tipo, CurricularFieldOptions::CHOICE_TYPES, true)))
-                && $sources === [] && count((array) $this->input('options', $field instanceof FieldDefinition ? $field->opciones : [])) < 2) {
+                || ($field instanceof FieldDefinition && in_array($field->tipo, ['seleccion_unica', 'seleccion_multiple'], true)))
+                && count((array) $this->input('options', $field instanceof FieldDefinition ? $field->opciones : [])) < 2) {
                 $validator->errors()->add('options', 'Agregue al menos dos opciones.');
-            }
-            if ($sources !== [] && $this->input('options') !== null && $this->input('options') !== []) {
-                $validator->errors()->add('options', 'Las opciones provienen de las listas curriculares.');
             }
             if ($this->has('show_when') && $this->input('show_when') !== null) {
                 $template = $this->route('template');

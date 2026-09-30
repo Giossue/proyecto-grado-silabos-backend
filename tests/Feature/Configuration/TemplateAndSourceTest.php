@@ -581,7 +581,6 @@ class TemplateAndSourceTest extends TestCase
             $this->putJson('/api/v1/coordination/sources/'.$id.'/content', ['content' => 'Retirada'])->assertNotFound();
             $this->postJson('/api/v1/coordination/sources/'.$id.'/pdf')->assertNotFound();
         }
-        $this->assertDatabaseCount('documentos_importacion', 0);
     }
 
     private function createTemplate(): SyllabusTemplate

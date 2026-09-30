@@ -254,59 +254,6 @@ Actualizado el 2026-09-30: **42 tablas** y 70 relaciones.
 | `asignado_en` | timestamptz | no |  |
 | `asignacion_rol_id` | uuid | no | FK → `asignaciones_rol` |
 
-### conceptos_curriculares
-
-| Columna | Tipo | ¿Vacío? | Llave |
-|---|---|---|---|
-| `id` | uuid | no | PK |
-| `clave_concepto` | varchar | no |  |
-| `etiqueta_concepto` | varchar | no |  |
-| `tipo_concepto` | varchar | no |  |
-| `columnas_concepto` | jsonb | sí |  |
-
-### valores_curriculares
-
-| Columna | Tipo | ¿Vacío? | Llave |
-|---|---|---|---|
-| `id` | uuid | no | PK |
-| `concepto_id` | uuid | no | FK → `conceptos_curriculares` |
-| `carrera_id` | uuid | no |  |
-| `asignatura_id` | uuid | no | FK → `asignaturas` |
-| `valor_curricular` | jsonb | no |  |
-| `evidencia_curricular` | jsonb | no |  |
-| `confirmado_por` | uuid | no | FK → `usuarios` |
-| `confirmado_en` | timestamptz | no |  |
-
-### importaciones_curriculares
-
-| Columna | Tipo | ¿Vacío? | Llave |
-|---|---|---|---|
-| `id` | uuid | no | PK |
-| `carrera_id` | uuid | no | FK → `carreras` |
-| `solicitado_por` | uuid | no | FK → `usuarios` |
-| `estado_importacion` | varchar | no |  |
-| `clave_solicitud` | char | sí |  |
-| `documentos_importacion` | jsonb | no |  |
-| `propuesta_importacion` | jsonb | sí |  |
-| `seleccion_aplicada` | jsonb | sí |  |
-| `instrucciones_importacion` | text | sí |  |
-| `mensaje_error_importacion` | text | sí |  |
-| `solicitado_en` | timestamptz | no |  |
-| `aplicado_en` | timestamptz | sí |  |
-
-### documentos_importacion
-
-| Columna | Tipo | ¿Vacío? | Llave |
-|---|---|---|---|
-| `id` | uuid | no | PK |
-| `carrera_id` | uuid | no | FK → `carreras` |
-| `nombre_documento` | varchar | no |  |
-| `documento_activo` | boolean | no |  |
-| `archivo_pdf_id` | uuid | sí | FK → `archivos` |
-| `estado_lectura` | varchar | no |  |
-| `lectura_actualizada_en` | timestamptz | sí |  |
-| `contenido_documento` | jsonb | no |  |
-
 ### Relaciones: Estructura académica
 
 - asignaciones_paralelo.asignacion_rol_id → asignaciones_rol
@@ -315,17 +262,10 @@ Actualizado el 2026-09-30: **42 tablas** y 70 relaciones.
 - asignaturas_ofertadas.asignatura_id → asignaturas
 - asignaturas_ofertadas.periodo_academico_id → periodos_academicos
 - carreras.facultad_id → facultades
-- documentos_importacion.archivo_pdf_id → archivos
-- documentos_importacion.carrera_id → carreras
 - facultades.logo_archivo_id → archivos
-- importaciones_curriculares.carrera_id → carreras
-- importaciones_curriculares.solicitado_por → usuarios
 - paralelos.asignatura_ofertada_id → asignaturas_ofertadas
 - requisitos_asignatura.asignatura_id → asignaturas
 - requisitos_asignatura.requisito_id → asignaturas
-- valores_curriculares.asignatura_id → asignaturas
-- valores_curriculares.concepto_id → conceptos_curriculares
-- valores_curriculares.confirmado_por → usuarios
 
 ## Plantilla del sílabo
 

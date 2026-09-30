@@ -7,7 +7,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Configuration\Application\Actions\SaveTemplateDocument;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -608,7 +607,7 @@ class ReviewWorkflowTest extends TestCase
 
     private function createStartedDraft(): Syllabus
     {
-        [$template, $source] = $this->publishedConfiguration();
+        $template = $this->publishedConfiguration();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id, now()->subDay()->toIso8601String(), now()->addMonth()->toIso8601String())->id,
         ])->assertSuccessful();
@@ -619,19 +618,13 @@ class ReviewWorkflowTest extends TestCase
         return $syllabus->fresh();
     }
 
-    /** @return array{SyllabusTemplate, AcademicSource} */
-    private function publishedConfiguration(): array
+    private function publishedConfiguration(): SyllabusTemplate
     {
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-04']);
         $template = SyllabusTemplate::query()->firstOrFail();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
 
-        $source = AcademicSource::query()->create([
-            'carrera_id' => $this->coordinatorContext->carrera_id, 'nombre' => 'Fuente I-04',
-            'activo' => true, 'contenido' => 'Evidencia histórica conservada.',
-        ]);
-
-        return [$template->fresh(), $source->fresh()];
+        return $template->fresh();
     }
 
     private function editableScalarField(Syllabus $syllabus): FieldDefinition

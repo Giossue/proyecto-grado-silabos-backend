@@ -77,26 +77,8 @@ final class TemplateDocument
                 }
                 $node['attrs'] = ['key' => $key, 'label' => trim($label), 'kind' => $kind];
                 $choiceType = in_array($kind, ['seleccion_unica', 'seleccion_multiple'], true);
-                $legacySource = $attrs['options_source'] ?? null;
-                $optionsSources = $attrs['options_sources'] ?? ($legacySource === null ? [] : [$legacySource]);
-                if (! is_array($optionsSources) || ! array_is_list($optionsSources) || count($optionsSources) > 20) {
-                    self::fail('Seleccione hasta veinte listas curriculares como origen de las opciones.');
-                }
-                foreach ($optionsSources as $source) {
-                    if (! $choiceType || ! is_string($source)
-                        || ! str_starts_with($source, 'curricular_') || ! in_array($source, $variables, true)) {
-                        self::fail('Seleccione una lista curricular válida como origen de las opciones.');
-                    }
-                }
-                if (! array_key_exists('options_sources', $attrs) && $legacySource !== null && ! is_string($legacySource)) {
-                    self::fail('Los orígenes de opciones no coinciden.');
-                }
-                $optionsSources = array_values(array_unique($optionsSources));
-                $hasOptionsSources = $optionsSources !== [];
-                $node['attrs']['options_sources'] = $optionsSources;
-                $node['attrs']['options_source'] = count($optionsSources) === 1 ? $optionsSources[0] : null;
                 $rawOptions = $attrs['options'] ?? null;
-                if ((! $choiceType || $hasOptionsSources) && $rawOptions === []) {
+                if (! $choiceType && $rawOptions === []) {
                     $rawOptions = null;
                 }
                 $options = self::options($rawOptions);
@@ -104,11 +86,8 @@ final class TemplateDocument
                     self::fail('Solo un campo de selección admite opciones.');
                 }
                 $node['attrs']['options'] = $options;
-                if ($hasOptionsSources && $options !== null) {
-                    self::fail('Las opciones provienen de la lista curricular; retire las opciones manuales.');
-                }
                 $choice = $attrs['choice'] ?? null;
-                if ($choice !== null && ($hasOptionsSources || $kind === 'seleccion_multiple')) {
+                if ($choice !== null && $kind === 'seleccion_multiple') {
                     self::fail('Las marcas condicionales solo admiten selección única con opciones fijas.');
                 }
                 if ($choice !== null && (! is_string($choice) || trim($choice) === '' || mb_strlen($choice) > 100)) {

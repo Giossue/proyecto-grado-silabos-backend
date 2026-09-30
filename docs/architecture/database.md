@@ -103,9 +103,7 @@ define la cantidad de ciclos de la única estructura de esa carrera. El código 
 de identidad es `carreras.codigo_carrera`; no existe código de malla.
 `asignaturas.carrera_id` las relaciona directamente. Los
 atributos académicos de `asignaturas` son fijos y tipados: ninguna carrera agrega
-columnas o redefine esos atributos mediante valores EAV. I-145 admite contenido
-documental configurable en conceptos y valores curriculares relacionados, descritos
-más abajo. ACD, APE, AA, créditos y total son un
+columnas o redefine esos atributos mediante valores EAV. ACD, APE, AA, créditos y total son un
 conjunto fijo; `total_horas_asignatura` es una columna generada `STORED` igual a
 `round(horas_ac + horas_pae + horas_aa)` (I-132) y no se escribe desde la aplicación.
 Las columnas `horas_proyecto`, `horas_ap` y `horas_paec`, heredadas del sistema anterior
@@ -117,7 +115,7 @@ conserva la semántica explícita de cada flecha: un `CHECK` la limita a `prerre
 `correquisito` y, desde I-168, un par de materias tiene un solo tipo (`requisitos_asignatura_par_unico`).
 
 `silabos.contexto_academico_silabo` (alias `contexto_academico`) guarda la lectura JSON de la
-estructura curricular, la asignatura, su programación y los datos curriculares al crear el
+estructura curricular, la asignatura y su programación al crear el
 expediente. No es evidencia inmutable: `InProgressWork` la vuelve a sincronizar cuando una
 corrección autorizada con el ámbito pausado cambia la carrera, la materia o su programación,
 y `ResetSyllabus` la reconstruye. La evidencia inmutable es
@@ -126,58 +124,23 @@ ni permite reconstruir autorizaciones.
 
 I-144 guardaba resultados de aprendizaje en `bases_resultados_asignatura` y
 `resultados_aprendizaje_asignatura`; I-147 retiró su escritura y I-168 (migración `000166`)
-eliminó ambas tablas, que estaban vacías. Los resultados se confirman en
-`valores_curriculares` (concepto `resultados_aprendizaje`). Los sílabos antiguos que
-fotografiaron `subject.learning_outcomes` se siguen leyendo desde esa copia. Si el formato
-usa resultados y su copia está vacía, la validación impide enviar.
+eliminó ambas tablas, que estaban vacías.
 
-### Datos curriculares documentales (I-145)
+### Proyecto de carrera retirado (I-169)
 
-La migración `2026_09_27_000145_create_curricular_imports` incorpora:
-
-- `conceptos_curriculares`: clave global única, etiqueta, tipo `texto|lista|tabla` y
-  columnas declaradas para tablas. Un trigger impide cambiar clave, tipo o columnas
-  después de crear el concepto. Desde I-160 (`2026_09_29_000158`) no existe ámbito:
-  todo dato del Proyecto de carrera es de una asignatura; la columna `ambito_concepto`
-  se eliminó.
-- `valores_curriculares`: FK de concepto/carrera/asignatura (obligatoria desde I-160),
-  contenido JSONB, evidencia y persona/fecha de confirmación. El valor es único por
-  concepto y asignatura. La FK compuesta `(asignatura_id,carrera_id)` impide mezclar
-  carreras; un trigger comprueba el tipo JSON general. La aplicación valida cada texto,
-  elemento de lista y celda, incluidas las claves exactas de columnas. La migración
-  I-160 copió cualquier valor «de toda la carrera» a las asignaturas de esa carrera que
-  no tenían el suyo y borró los valores sin asignatura.
-- `importaciones_curriculares`: carrera, solicitante, clave de idempotencia,
-  estado `pendiente|en_ejecucion|lista|aplicada|fallida`, documentos con huellas,
-  instrucciones opcionales, propuesta, selección aplicada y fechas. La combinación
-  carrera/clave de idempotencia es única. Sus filas representan operaciones de
-  importación, sin reintroducir versiones de malla ni de fuente.
-
-La propuesta no es contenido vigente. `ApplyCurricularImport` bloquea carrera,
-importación, fuentes y destinos, coteja la huella consultada y verifica de nuevo los
-documentos activos. Esa huella incluye los valores actuales de la carrera para
-detectar otra importación aplicada entre consulta y confirmación. Solo se aceptan
-IDs de filas existentes, una fila por concepto/destino y materias de la carrera.
-La selección aplicada conserva IDs, asignaturas resueltas y aceptación de discrepancia.
-La auditoría general contiene conteos y huellas; el contenido vive en las tablas
-autorizadas, no en logs.
-
-`contexto_academico.curricular` fotografía definiciones, valores y evidencia de la
-carrera/asignatura al generar cada sílabo. La resolución de `curricular_{clave}` y de
-opciones docentes usa esa copia. Los datos ausentes bloquean el envío cuando el
-formato los requiere, sin consultar la base viva para completar una revisión histórica.
-Las variables de resultados, fuente y ubicación salen del concepto
-`resultados_aprendizaje` de tipo lista; solo los sílabos antiguos conservan la copia I-144.
-Corregir valores durante una pausa usa `InProgressWork` con el conjunto de materias
-afectadas; un valor de carrera afecta a toda esa carrera. Los expedientes con
-aprobación conservada quedan fuera del reemplazo. Borrar una materia sin programación
-ni sílabos elimina sus valores actuales y conserva el registro de importación.
+La migración `2026_09_30_000182_remove_career_project_data` eliminó
+`conceptos_curriculares`, `valores_curriculares`, `importaciones_curriculares` y
+`documentos_importacion` (antes `fuentes_academicas`), con sus funciones
+`proteger_forma_concepto_curricular` y `validar_tipo_valor_curricular`, los archivos
+`curricular_*`/`academic_source_*`, las variables `curricular_*` y de resultados de
+aprendizaje de las hojas, `configuracion.options_sources` y la clave `curricular` de
+`silabos.datos_academicos_silabo`. Lo que antes venía del Proyecto de carrera ahora lo
+escribe el docente en campos que el administrador pone en la plantilla; los campos de
+selección solo tienen opciones fijas.
 
 ### Plantilla y documentos internos de ingesta
 
-`plantilla_silabo`, `secciones_plantilla`, `campos_plantilla`, `definiciones_campo` y
-`fuentes_academicas` (nombre físico histórico del documento temporal de importación
-I-145/I-152). I-168 eliminó `documentos_ia`, su trigger y la extensión `vector`: la
+`plantilla_silabo`, `secciones_plantilla`, `campos_plantilla` y `definiciones_campo`. I-168 eliminó `documentos_ia`, su trigger y la extensión `vector`: la
 búsqueda vectorial retirada en I-146 no tenía datos.
 
 `plantilla_silabo` no referencia una carrera y solo admite una fila. El índice único
@@ -213,7 +176,7 @@ almacenamiento se deriva de él (I-138).
 Desde I-168 (migración `000170`) cada dato del docente se describe **una sola vez**, en
 `definiciones_campo`: nombre, tipo, opciones y condición. El JSON de la hoja solo guarda,
 en cada nodo `field`, su `key` y lo que es de diseño (`choice` para una marca X y
-`listStyle`); los orígenes de opciones viven en `configuracion.options_sources`.
+`listStyle`).
 `TemplateFieldAttributes` completa los nodos al leer (`SyllabusTemplate::loadSections`) y
 los recorta al guardar (`syncDocument`), así que el editor y las fotografías siguen
 recibiendo el nodo completo. `configuracion.detached_fields` conserva, por clave, si un
@@ -236,21 +199,6 @@ leía), `valores_campo.heredado` y `origen_valor_campo` (copias de la definició
 `plantilla_silabo.revision_configuracion` con sus cuatro triggers `tocar_revision_*`.
 No hay reglas por campo: `reglas_definicion_campo` se eliminó (migración `000111`). Todo
 campo del docente es obligatorio al enviar; el estado `borrador` puede quedar incompleto.
-
-`fuentes_academicas` conserva un documento temporal de importación por fila: nombre único
-por carrera y `documento_fuente_academica` JSON interno. Desde I-146 se escribe mediante
-la ingesta I-145 y no mediante un editor o CRUD público. I-168 retiró
-`contenido_fuente_academica` (la proyección textual del índice vectorial),
-`version_documento_fuente` y `descripcion_fuente_academica`; el texto se deriva del
-documento con `AcademicSourceDocument::text()`. La migración `000054` retira
-`notas_internas`; las tablas `versiones_fuente`, `fragmentos_fuente` y `conflictos_fuente`
-se retiraron en la migración `000020`.
-I-95/I-96 incorporan el PDF privado y producen el documento JSON con OpenParser sobre
-`paddleocr-vl-1.6`. La
-migración `000089` agrega el documento versionado, procedencia por fragmento y retira
-`extracciones_fuente_academica`; el estado remoto vive en `ejecuciones_trabajo`. Las
-tablas conservan `rowspan`/`colspan` y las imágenes raster se guardan como objetos
-privados `academic_source_image`; Base64 y URLs firmadas no se persisten.
 
 ### Convocatorias y sílabos
 
@@ -418,8 +366,8 @@ seeder dos veces. Las asignaciones activas se reutilizan para conservar la idemp
 
 ### Invariantes de IA
 
-El chat usa contexto académico/curricular y tablas de unidades/planificación, con
-`context_version=curricular-units-v1`; no recupera fuentes ni aplica recomendaciones.
+El chat usa el contexto académico de la asignatura y el Texto libre del sílabo, con
+`context_version=free-text-v3`; no recupera fuentes ni aplica recomendaciones.
 
 - una clave idempotente no crea dos preguntas dentro de la misma sesión;
 - cada respuesta conserva evidencia propia y únicamente puede citar IDs de ese conjunto;

@@ -4,8 +4,6 @@ use App\Http\Controllers\DashboardController;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
 use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
-use App\Modules\Academic\Presentation\Http\Controllers\CurricularImportsController;
-use App\Modules\Academic\Presentation\Http\Controllers\CurricularImportUploadController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
@@ -148,8 +146,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.sections.destroy');
             Route::post('admin/template/{template}/fields', [TemplateController::class, 'storeField'])
                 ->middleware('active-role')->name('api.v1.admin.template.fields.store');
-            Route::post('admin/template/{template}/project-data', [TemplateController::class, 'storeProjectData'])
-                ->middleware('active-role')->name('api.v1.admin.template.project-data.store');
             Route::patch('admin/template/{template}/fields/{field}', [TemplateController::class, 'updateField'])
                 ->middleware('active-role')->name('api.v1.admin.template.fields.update');
             Route::patch('admin/template/{template}/blocks/order', [TemplateController::class, 'reorderBlocks'])
@@ -184,20 +180,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.reviews.reset');
             Route::get('coordination/academic/curriculum/{curriculum}', [CareerAcademicStructureController::class, 'curriculumBuilder'])
                 ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.show');
-            Route::get('coordination/curricular-imports', [CurricularImportsController::class, 'index'])
-                ->middleware('active-role')->name('api.v1.coordination.curricular-imports.index');
-            Route::post('coordination/curricular-imports', [CurricularImportUploadController::class, 'store'])
-                ->middleware(['active-role', 'throttle:source-ocr'])->name('api.v1.coordination.curricular-imports.store');
-            Route::get('coordination/curricular-imports/{import}', [CurricularImportsController::class, 'show'])
-                ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.curricular-imports.show');
-            Route::delete('coordination/curricular-imports/{import}', [CurricularImportsController::class, 'destroy'])
-                ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.curricular-imports.destroy');
-            Route::post('coordination/curricular-imports/{import}/apply', [CurricularImportsController::class, 'apply'])
-                ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.curricular-imports.apply');
-            Route::get('coordination/curricular-imports/{import}/documents/{source}/original', [CurricularImportUploadController::class, 'original'])
-                ->middleware('active-role')->whereUuid(['import', 'source'])->name('api.v1.coordination.curricular-imports.documents.original');
-            Route::post('coordination/curricular-imports/{import}/retry', [CurricularImportUploadController::class, 'retry'])
-                ->middleware(['active-role', 'throttle:source-ocr'])->whereUuid('import')->name('api.v1.coordination.curricular-imports.retry');
             Route::get('coordination/academic/scheduled-subjects', [CareerAcademicStructureController::class, 'scheduledSubjects'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-subjects.index');
             Route::get('coordination/academic/teacher-assignments', [CareerAcademicStructureController::class, 'teacherAssignments'])

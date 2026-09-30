@@ -2,14 +2,11 @@
 
 namespace App\Modules\Syllabus\Application;
 
-use App\Modules\Academic\Application\CurricularData;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 
 class AcademicContextSnapshot
 {
-    public function __construct(private readonly CurricularData $curricularData) {}
-
     /** @return array<string, mixed> */
     public function build(ScheduledSubject $scheduledSubject): array
     {
@@ -29,7 +26,6 @@ class AcademicContextSnapshot
 
         return [
             'schema_version' => 5,
-            'curricular' => $this->curricularData->snapshot($career->id, $subject->id),
             'career' => [
                 'id' => $career->id,
                 'code' => $career->codigo_carrera,

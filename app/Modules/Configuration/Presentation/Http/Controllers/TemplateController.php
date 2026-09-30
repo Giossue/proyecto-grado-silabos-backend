@@ -5,7 +5,6 @@ namespace App\Modules\Configuration\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Application\Actions\CreateSyllabusTemplate;
-use App\Modules\Configuration\Application\Actions\DeclareProjectData;
 use App\Modules\Configuration\Application\Actions\DeleteTemplateBlock;
 use App\Modules\Configuration\Application\Actions\DeleteTemplateSection;
 use App\Modules\Configuration\Application\Actions\FormatSyllabusTemplate;
@@ -16,8 +15,8 @@ use App\Modules\Configuration\Application\Actions\SaveTemplateAppearance;
 use App\Modules\Configuration\Application\Actions\SaveTemplateDocument;
 use App\Modules\Configuration\Application\Actions\SaveTemplateSection;
 use App\Modules\Configuration\Application\Actions\SaveTemplateTitle;
-use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
+use App\Modules\Configuration\Application\FieldOptions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
@@ -28,7 +27,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Configuration\Presentation\Http\Requests\CreateTemplateRequest;
-use App\Modules\Configuration\Presentation\Http\Requests\DeclareProjectDataRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ManageTemplatesRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ReorderTemplateBlocksRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ReorderTemplateSectionsRequest;
@@ -143,9 +141,7 @@ class TemplateController extends Controller
                                     'label' => $field->etiqueta,
                                     'help' => $field->ayuda,
                                     'type' => $field->tipo,
-                                    'options' => CurricularFieldOptions::options($field),
-                                    'options_source' => CurricularFieldOptions::source($field),
-                                    'options_sources' => CurricularFieldOptions::sources($field),
+                                    'options' => FieldOptions::options($field),
                                     'show_when' => FieldConditions::normalize($field->mostrar_si),
                                     'required' => true,
                                     'inherited' => $field->heredado,
@@ -199,20 +195,6 @@ class TemplateController extends Controller
         $action->create($template->id, $request->validated(), $actor, $request);
 
         return $this->success($request, 'Campo agregado a la sección.');
-    }
-
-    /** @ProyectoCarrera nuevo para insertarlo en la hoja (I-155). */
-    public function storeProjectData(
-        SyllabusTemplate $template,
-        DeclareProjectDataRequest $request,
-        DeclareProjectData $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        /** @var array{label: string, type: string} $data */
-        $data = $request->validated();
-
-        return response()->json(['message' => 'Dato del Proyecto de carrera listo.', 'variable' => $action->execute($data, $actor, $request)], 201);
     }
 
     public function updateField(

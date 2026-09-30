@@ -2,7 +2,6 @@
 
 namespace App\Modules\AiAssistance\Application;
 
-use App\Modules\Academic\Application\CurricularData;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -11,7 +10,7 @@ use Illuminate\Support\Str;
 
 class BuildSyllabusChatContext
 {
-    public const VERSION = 'curricular-free-text-v2';
+    public const VERSION = 'free-text-v3';
 
     public function __construct(private readonly CanonicalHasher $hasher) {}
 
@@ -37,25 +36,6 @@ class BuildSyllabusChatContext
         if ($academic !== []) {
             $items[] = $this->item('contexto_academico', 'Carrera y asignatura', implode("\n", $academic));
         }
-        $definitions = data_get($context, 'curricular.definitions', []);
-        $values = data_get($context, 'curricular.values', []);
-        $curricularItems = [];
-        foreach (is_array($definitions) ? $definitions : [] as $key => $definition) {
-            if (! is_array($definition) || ! is_array($values) || ! array_key_exists($key, $values)) {
-                continue;
-            }
-            $content = CurricularData::display($values[$key], $definition);
-            if ($content !== '') {
-                $curricularItems[] = $this->item('dato_curricular', (string) ($definition['label'] ?? $key), $content);
-            }
-        }
-        if (! is_array($values) || ! array_key_exists('resultados_aprendizaje', $values)) {
-            $outcomes = data_get($context, 'subject.learning_outcomes.outcomes', []);
-            $texts = is_array($outcomes) ? array_filter(array_column($outcomes, 'text'), 'is_string') : [];
-            if ($texts !== []) {
-                $curricularItems[] = $this->item('dato_curricular', 'Resultados de aprendizaje confirmados', implode("\n", $texts));
-            }
-        }
         foreach (SyllabusTemplate::institutional()->sections->sortBy('posicion') as $section) {
             foreach ($section->blocks->sortBy('posicion') as $block) {
                 foreach ($block->fields->sortBy('posicion') as $field) {
@@ -71,7 +51,7 @@ class BuildSyllabusChatContext
             }
         }
 
-        return array_slice([...$items, ...$curricularItems], 0, max(1, (int) config('ai.limits.evidence_items')));
+        return array_slice($items, 0, max(1, (int) config('ai.limits.evidence_items')));
     }
 
     /** @return array{id: string, type: string, label: string, excerpt: string, fingerprint: string, field_id: string|null, source_id: null, fragment_id: null} */

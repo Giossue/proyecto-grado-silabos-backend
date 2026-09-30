@@ -4,21 +4,11 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
-use App\Modules\Academic\Domain\Contracts\CurricularExtractionGateway;
 use App\Modules\Academic\Infrastructure\Access\AcademicRoleEligibility;
-use App\Modules\Academic\Infrastructure\Gateways\HostedCurricularExtractionGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiChatGateway;
-use App\Modules\Configuration\Application\Contracts\AcademicSourceFigureCropper;
-use App\Modules\Configuration\Domain\Contracts\AcademicSourceDocumentNormalizer;
-use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
-use App\Modules\Configuration\Infrastructure\Documents\PopplerAcademicSourceFigureCropper;
-use App\Modules\Configuration\Infrastructure\Gateways\DeepSeekAcademicSourceDocumentNormalizer;
-use App\Modules\Configuration\Infrastructure\Gateways\DisabledAcademicSourceDocumentNormalizer;
-use App\Modules\Configuration\Infrastructure\Gateways\OpenParserAcademicSourceGateway;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Policies\ExportArtifactPolicy;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
@@ -49,7 +39,6 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(CurricularExtractionGateway::class, HostedCurricularExtractionGateway::class);
         $this->app->bind(RoleEligibility::class, AcademicRoleEligibility::class);
         $this->app->bind(DocumentRenderer::class, PhpWordDocumentRenderer::class);
         $this->app->bind(AiChatGateway::class, function (): AiChatGateway {
@@ -59,14 +48,6 @@ class AppServiceProvider extends ServiceProvider
                 default => app(DisabledAiChatGateway::class),
             };
         });
-        $this->app->bind(AcademicSourceDocumentNormalizer::class, function (): AcademicSourceDocumentNormalizer {
-            return (bool) config('ai.source_normalization.enabled')
-                && strtolower((string) config('ai.source_normalization.driver')) === 'deepseek'
-                ? app(DeepSeekAcademicSourceDocumentNormalizer::class)
-                : app(DisabledAcademicSourceDocumentNormalizer::class);
-        });
-        $this->app->bind(AcademicSourceOcrGateway::class, OpenParserAcademicSourceGateway::class);
-        $this->app->bind(AcademicSourceFigureCropper::class, PopplerAcademicSourceFigureCropper::class);
     }
 
     public function boot(): void
@@ -121,14 +102,6 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute((int) config('ai.limits.requests_per_minute'))
                 ->by("ai-analysis:{$actorKey}:{$syllabusKey}");
-        });
-        RateLimiter::for('source-ocr', function (Request $request): Limit {
-            $user = $request->user();
-            $source = $request->route('source');
-            $actorKey = $user instanceof User ? $user->id : (string) $request->ip();
-            $sourceKey = $source instanceof AcademicSource ? $source->id : 'unknown';
-
-            return Limit::perMinute(3)->by("source-ocr:{$actorKey}:{$sourceKey}");
         });
 
         DB::prohibitDestructiveCommands(

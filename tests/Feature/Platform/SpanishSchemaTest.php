@@ -152,7 +152,7 @@ it('I-81 referencia el logo de facultad como archivo', function () {
     expect($restricciones)->toContain('facultades_logo_archivo_id_foreign');
 });
 
-it('I-175 usa nombres claros para archivos, exportaciones, firmas y documentos de importación', function () {
+it('I-175 usa nombres claros para archivos, exportaciones y firmas', function () {
     foreach (['objetos_almacenados', 'artefactos_exportacion', 'fuentes_academicas'] as $tabla) {
         expect(Schema::hasTable($tabla))->toBeFalse();
     }
@@ -162,17 +162,21 @@ it('I-175 usa nombres claros para archivos, exportaciones, firmas y documentos d
         ->and(Schema::hasColumns('firmas_documento', [
             'exportacion_silabo_id', 'firmado_como', 'archivo_firmado_id', 'nombre_en_certificado',
             'numero_certificado', 'entidad_emisora', 'certificado_valido_hasta', 'hash_archivo',
-        ]))->toBeTrue()
-        ->and(Schema::hasColumns('documentos_importacion', [
-            'nombre_documento', 'documento_activo', 'archivo_pdf_id', 'estado_lectura', 'lectura_actualizada_en', 'contenido_documento',
         ]))->toBeTrue();
 
     $restricciones = collect(DB::select(
-        "SELECT conname FROM pg_constraint WHERE conrelid IN ('archivos'::regclass, 'exportaciones_silabo'::regclass, 'firmas_documento'::regclass, 'documentos_importacion'::regclass)",
+        "SELECT conname FROM pg_constraint WHERE conrelid IN ('archivos'::regclass, 'exportaciones_silabo'::regclass, 'firmas_documento'::regclass)",
     ))->pluck('conname');
 
-    expect($restricciones)->toContain('archivos_pkey', 'exportaciones_silabo_trabajo_id_foreign', 'firmas_documento_exportacion_silabo_id_foreign', 'documentos_importacion_archivo_pdf_id_foreign')
+    expect($restricciones)->toContain('archivos_pkey', 'exportaciones_silabo_trabajo_id_foreign', 'firmas_documento_exportacion_silabo_id_foreign')
         ->and($restricciones->filter(fn (string $nombre): bool => str_contains($nombre, 'objeto') || str_contains($nombre, 'artefacto') || str_contains($nombre, 'fuente')))->toBeEmpty();
+});
+
+it('I-169 retira las tablas del Proyecto de carrera', function () {
+    foreach (['conceptos_curriculares', 'valores_curriculares', 'importaciones_curriculares', 'documentos_importacion'] as $tabla) {
+        expect(Schema::hasTable($tabla))->toBeFalse();
+    }
+    expect(DB::table('pg_proc')->whereIn('proname', ['proteger_forma_concepto_curricular', 'validar_tipo_valor_curricular'])->exists())->toBeFalse();
 });
 
 it('I-107 guarda ciclos en la carrera y retira códigos de facultad y malla', function () {

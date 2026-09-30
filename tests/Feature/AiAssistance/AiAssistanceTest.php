@@ -78,12 +78,10 @@ class AiAssistanceTest extends TestCase
         DB::disableQueryLog();
         $text = implode("\n", array_column($items, 'excerpt'));
         $this->assertStringContainsString('Carrera: Software', $text);
-        $this->assertStringContainsString('Evalúa la calidad del software.', $text);
         $this->assertStringContainsString('Tema de unidad existente', $text);
         $this->assertStringNotContainsString('NOMBRE VIVO MODIFICADO', $text);
         $this->assertStringNotContainsString($this->teacher->correo_electronico, $text);
-        $this->assertStringNotContainsString('documentos_importacion', $queries);
-        $this->assertEqualsCanonicalizing(['contexto_academico', 'dato_curricular', 'seccion_silabo'], array_column($items, 'type'));
+        $this->assertEqualsCanonicalizing(['contexto_academico', 'seccion_silabo'], array_column($items, 'type'));
         $this->assertSame([$this->planning->id], array_values(array_filter(array_column($items, 'field_id'))));
     }
 
@@ -192,8 +190,6 @@ class AiAssistanceTest extends TestCase
         $scheduled = $parallel->scheduledSubject;
         $context = app(AcademicContextSnapshot::class)->build($scheduled);
         $context['career']['name'] = 'Software';
-        $context['curricular'] = ['definitions' => ['resultados_aprendizaje' => ['key' => 'resultados_aprendizaje', 'label' => 'Resultados', 'type' => 'lista', 'columns' => []]],
-            'values' => ['resultados_aprendizaje' => ['Evalúa la calidad del software.']], 'evidence' => []];
         $convocation = Convocation::query()->create(['carrera_id' => $scheduled->subject->carrera_id, 'proceso_id' => $this->openSyllabusProcess($template->id)->id, 'estado' => 'abierta']);
         $this->syllabus = Syllabus::query()->create(['convocatoria_id' => $convocation->id, 'paralelo_id' => $parallel->id,
             'contexto_academico' => $context, 'estado' => 'borrador', 'version_bloqueo' => 0, 'iniciado_en' => now()]);

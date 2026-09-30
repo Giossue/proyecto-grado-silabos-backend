@@ -5,7 +5,6 @@ namespace Tests\Feature\Syllabus;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -224,7 +223,7 @@ class ParallelTeacherChangeTest extends TestCase
 
     private function openedSyllabus(): Syllabus
     {
-        [$template, $source] = $this->publishedConfiguration();
+        $template = $this->publishedConfiguration();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id, now()->subDay()->toIso8601String(), now()->addMonth()->toIso8601String())->id,
         ])->assertSuccessful();
@@ -249,18 +248,13 @@ class ParallelTeacherChangeTest extends TestCase
         };
     }
 
-    /** @return array{SyllabusTemplate, AcademicSource} */
-    private function publishedConfiguration(): array
+    private function publishedConfiguration(): SyllabusTemplate
     {
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla cambio docente']);
         $template = SyllabusTemplate::query()->firstOrFail();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
-        $source = AcademicSource::query()->create([
-            'carrera_id' => $this->coordinatorContext->carrera_id, 'nombre' => 'Fuente cambio docente',
-            'activo' => true, 'contenido' => 'Evidencia histórica conservada.',
-        ]);
 
-        return [$template->fresh(), $source->fresh()];
+        return $template->fresh();
     }
 
     private function actingAsAdministrator(): static

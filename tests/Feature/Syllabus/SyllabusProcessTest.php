@@ -9,7 +9,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -290,7 +289,6 @@ class SyllabusProcessTest extends TestCase
     public function test_coordination_lists_the_institutional_process_before_and_after_starting_its_career(): void
     {
         $process = $this->openProcess();
-        $source = $this->coordinatorSource();
 
         $this->actingAsCoordinator()->getJson(route('api.v1.coordination.convocations.index', ['state' => 'sin_iniciar']))
             ->assertOk()->assertJson(fn (Assert $page) => $page->etc()
@@ -324,7 +322,6 @@ class SyllabusProcessTest extends TestCase
     public function test_dashboards_expose_the_shared_deadline_and_allow_coordination_to_open_its_scope(): void
     {
         $process = $this->openProcess();
-        $source = $this->coordinatorSource();
 
         $this->actingAsCoordinator()
             ->getJson(route('api.v1.dashboard.show'))
@@ -334,8 +331,8 @@ class SyllabusProcessTest extends TestCase
             ->assertJsonPath('coordination_convocation.process_id', $process->id)
             ->assertJsonPath('coordination_convocation.can_open', true)
             ->assertJsonMissingPath('coordination_convocation.available_sources')
-            ->assertJsonCount(6, 'setup.steps')
-            ->assertJsonPath('setup.steps.5.action', 'open_convocation');
+            ->assertJsonCount(5, 'setup.steps')
+            ->assertJsonPath('setup.steps.4.action', 'open_convocation');
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
@@ -415,21 +412,6 @@ class SyllabusProcessTest extends TestCase
     {
         $template = $this->publishedTemplate();
         $process = $this->createProcess($template, 'Elaboración 2026-2027');
-        $this->coordinatorSource();
-        AcademicSource::query()->create([
-            'carrera_id' => $this->coordinatorContext->carrera_id,
-            'nombre' => 'Fuente activa no elegida',
-            'descripcion' => 'No debe incorporarse implícitamente.',
-            'contenido' => 'Contenido fuera de la selección de esta convocatoria.',
-            'activo' => true,
-        ]);
-        AcademicSource::query()->create([
-            'carrera_id' => $this->coordinatorContext->carrera_id,
-            'nombre' => 'Fuente inactiva',
-            'descripcion' => 'No puede incorporarse a una convocatoria nueva.',
-            'contenido' => 'Contenido inactivo.',
-            'activo' => false,
-        ]);
         $otherPeriod = AcademicPeriod::query()->create([
             'codigo' => 'I-41-ALTERNO',
             'fecha_inicio' => '2027-01-01',
@@ -448,7 +430,6 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame($process->periodo_academico_id, $convocation->process->periodo_academico_id);
         $this->assertSame('abierta', $convocation->estado);
         $this->getJson(route('api.v1.coordination.convocations.show', $convocation))->assertOk()->assertJsonMissingPath('convocation.sources');
-        $this->assertDatabaseCount('documentos_importacion', 3);
         $this->assertFalse(Schema::hasTable('fuentes_convocatoria'));
         $this->assertFalse(Schema::hasTable('fechas_limite_convocatoria'));
 
@@ -825,7 +806,6 @@ class SyllabusProcessTest extends TestCase
     public function test_coordinator_cannot_edit_a_convocation_and_only_administration_closes_the_process(): void
     {
         $convocation = $this->openedConvocation();
-        $source = AcademicSource::query()->firstOrFail();
         $payload = ['process_id' => $convocation->proceso_id];
 
         $this->actingAsCoordinator()->patch('/coordinacion/convocatorias/'.$convocation->id, $payload)->assertNotFound();
@@ -870,7 +850,6 @@ class SyllabusProcessTest extends TestCase
     private function openedConvocation(): Convocation
     {
         $process = $this->openProcess();
-        $source = $this->coordinatorSource();
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $process->id,
@@ -892,16 +871,6 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
 
         return $template->fresh();
-    }
-
-    private function coordinatorSource(): AcademicSource
-    {
-        $source = AcademicSource::query()->create([
-            'carrera_id' => $this->coordinatorContext->carrera_id, 'nombre' => 'Fuente I-31',
-            'activo' => true, 'contenido' => 'Evidencia histórica conservada.',
-        ]);
-
-        return $source->fresh();
     }
 
     private function actingAsAdministrator(): static

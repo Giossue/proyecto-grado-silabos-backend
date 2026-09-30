@@ -67,7 +67,7 @@ class SetupChecklist
                 $this->step('periods', 'Registrar el periodo académico', 'El periodo que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists()),
                 $this->step('accounts', 'Crear las cuentas de coordinadores y docentes', 'Al menos las de coordinación; los docentes también puede crearlos cada Coordinación y los asigna a sus paralelos.', $accounts > 0),
                 $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0),
-                $this->step('template', 'Armar la plantilla del sílabo', 'Secciones con campos de Texto libre (las escribe el docente) o Personalizado (hoja con datos automáticos, marcas Docente y Proyecto de carrera).', $templateReady),
+                $this->step('template', 'Armar la plantilla del sílabo', 'Secciones con campos de Texto libre (las escribe el docente) o Personalizado (hoja con datos automáticos y campos que llena el docente).', $templateReady),
                 $this->step('process', 'Abrir la convocatoria institucional', 'Desde Periodos académicos, en la fila del período, confirme las fechas de entrega; cada Coordinación abrirá después la de su carrera.', SyllabusProcess::query()->exists()),
             ],
         );
@@ -113,14 +113,6 @@ class SetupChecklist
                     'Asignar un docente a cada paralelo',
                     $parallelTotal === 0 ? 'Primero cree los paralelos del período.' : "{$parallelsWithTeacher} de {$parallelTotal} paralelos tienen un docente vigente.",
                     $parallelTotal > 0 && $parallelsWithTeacher === $parallelTotal,
-                ),
-                $this->step(
-                    'project_data',
-                    'Importar los datos del Proyecto de carrera',
-                    $readiness['project_data_missing'] === []
-                        ? 'Los datos que pide la plantilla están confirmados para todas las materias programadas.'
-                        : $readiness['project_data_missing'][0].' Suba el proyecto de carrera desde Proyecto de carrera y confirme lo encontrado.',
-                    $readiness['project_data_missing'] === [],
                 ),
                 $this->step(
                     'convocation',
@@ -175,7 +167,7 @@ class SetupChecklist
             $total === 0 ? 'Cuando Coordinación abra la convocatoria, aquí aparecerán sus sílabos.' : 'Cada sílabo se abre, se completa, se envía a revisión y, una vez aprobado, se firma.',
             [
                 $this->step('assigned', 'Recibir los sílabos asignados', $total > 0 ? "{$total} asignados." : 'Los asigna Coordinación al abrir la convocatoria.', $total > 0),
-                $this->step('started', 'Abrir cada sílabo', $total > 0 ? "{$started} de {$total} abiertos." : 'Al abrirlo, el borrador se inicia solo con los datos de la malla y del Proyecto de carrera.', $total > 0 && $started === $total),
+                $this->step('started', 'Abrir cada sílabo', $total > 0 ? "{$started} de {$total} abiertos." : 'Al abrirlo, el borrador se inicia solo con los datos de la malla.', $total > 0 && $started === $total),
                 $this->step('submitted', 'Completar y enviar a revisión', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega. El asistente de unidades ayuda a redactar.', $total > 0 && $submitted === $total),
                 $this->step('signed', 'Firmar electrónicamente el sílabo aprobado', $approved > 0 ? "{$signed} de {$approved} aprobados firmados." : 'Cuando Coordinación lo apruebe, fírmelo con su certificado (.p12); después firma Coordinación.', $total > 0 && $approved === $total && $signed === $approved),
             ],

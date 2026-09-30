@@ -3,14 +3,12 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Application\CurricularFieldOptions;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\RequiredAcademicTemplateData;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationResult;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
@@ -24,7 +22,6 @@ class ValidateDraft
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
-        private readonly RequiredAcademicTemplateData $academicTemplateData,
     ) {}
 
     public function execute(Syllabus $syllabus, User $actor, Request $request): ValidationRun
@@ -35,8 +32,7 @@ class ValidateDraft
                 ->with('template')
                 ->get();
             $values = $locked->values()->get()->keyBy('definicion_campo_id');
-            $academicContext = $locked->contexto_academico ?? [];
-            $issues = $this->academicTemplateData->issues($academicContext);
+            $issues = [];
             $hidden = array_flip(FieldConditions::hiddenKeys(
                 $fields,
                 $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->clave => $values->get($field->id)?->valor])->all(),
@@ -45,32 +41,6 @@ class ValidateDraft
             foreach ($fields as $field) {
                 if (isset($hidden[$field->clave]) || ! $this->requiredFromTeacher($field)) {
                     continue;
-                }
-                $optionsSource = CurricularFieldOptions::sources($field);
-                if ($optionsSource !== []) {
-                    $allowed = CurricularFieldOptions::values($field, $academicContext);
-                    $value = $values->get($field->id)?->valor;
-                    $selection = is_array($value) ? $value : ($value === null ? [] : [$value]);
-                    if ($allowed === []) {
-                        $issues[] = [
-                            'field_id' => $field->id,
-                            'code' => 'catalogo_curricular_faltante',
-                            'severity' => 'error',
-                            'message' => "Avise a Coordinación: falta el catálogo curricular de «{$field->displayName()}» para esta asignatura.",
-                        ];
-
-                        continue;
-                    }
-                    if (($value !== null && $field->tipo === 'seleccion_multiple' && (! is_array($value) || ! array_is_list($value)))
-                        || ($value !== null && $field->tipo === 'seleccion_unica' && ! is_string($value))
-                        || array_filter($selection, static fn (mixed $item): bool => ! is_string($item) || ! in_array($item, $allowed, true)) !== []) {
-                        $issues[] = [
-                            'field_id' => $field->id,
-                            'code' => 'seleccion_curricular_invalida',
-                            'severity' => 'error',
-                            'message' => "«{$field->displayName()}» contiene una opción que no corresponde al catálogo curricular de esta asignatura.",
-                        ];
-                    }
                 }
                 if (! self::filled($values->get($field->id)?->valor)) {
                     $issues[] = [

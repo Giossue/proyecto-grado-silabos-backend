@@ -3,12 +3,9 @@
 namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
-use App\Modules\Configuration\Application\ProjectDataUsage;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
@@ -29,7 +26,6 @@ use Illuminate\Validation\ValidationException;
  *   scheduled_with_parallels: int,
  *   parallel_total: int,
  *   parallels_with_teacher: int,
- *   project_data_missing: list<string>,
  *   template_ready: bool,
  *   faculty_logo_ready: bool,
  *   deadline_open: bool,
@@ -58,7 +54,6 @@ final class CoordinatorConvocationReadiness
                 fn (Builder $query) => $query->whereRaw('1 = 0'),
             );
         $scheduledTotal = (clone $scheduledSubjects)->count();
-        $scheduledSubjectIds = array_values(array_unique(array_filter((clone $scheduledSubjects)->pluck('asignatura_id')->all(), is_string(...))));
         $scheduledWithParallels = (clone $scheduledSubjects)->whereHas('parallels')->count();
 
         $parallels = Parallel::query()
@@ -88,7 +83,6 @@ final class CoordinatorConvocationReadiness
             ->first();
         $template = SyllabusTemplate::query()->first();
         $templateReady = $process !== null && ($template?->hasStructure() ?? false);
-        $projectDataMissing = $this->missingProjectData($careerId, $scheduledSubjectIds, $template);
         $facultyLogoReady = $this->logos->facultyIsConfigured($career->faculty);
         $deadlineOpen = $process !== null && now()->startOfDay()->lessThanOrEqualTo($process->entrega_en->copy()->startOfDay());
 
@@ -100,7 +94,6 @@ final class CoordinatorConvocationReadiness
             && $scheduledWithParallels === $scheduledTotal
             && $parallelTotal > 0
             && $parallelsWithTeacher === $parallelTotal
-            && $projectDataMissing === []
             && $templateReady
             && $facultyLogoReady;
 
@@ -112,7 +105,6 @@ final class CoordinatorConvocationReadiness
             'scheduled_with_parallels' => $scheduledWithParallels,
             'parallel_total' => $parallelTotal,
             'parallels_with_teacher' => $parallelsWithTeacher,
-            'project_data_missing' => $projectDataMissing,
             'template_ready' => $templateReady,
             'faculty_logo_ready' => $facultyLogoReady,
             'deadline_open' => $deadlineOpen,
@@ -144,39 +136,6 @@ final class CoordinatorConvocationReadiness
             $missing[] = $withoutTeacher === 1
                 ? 'Falta 1 paralelo sin docente.'
                 : "Faltan {$withoutTeacher} paralelos sin docente.";
-        }
-
-        return [...$missing, ...$readiness['project_data_missing']];
-    }
-
-    /**
-     * @param  list<string>  $subjectIds
-     * @return list<string>
-     */
-    private function missingProjectData(string $careerId, array $subjectIds, ?SyllabusTemplate $template): array
-    {
-        $used = $template === null ? [] : ProjectDataUsage::used($template);
-        if ($used === []) {
-            return [];
-        }
-        $filled = CurricularValue::query()->with('concept:id,clave_concepto')
-            ->where('carrera_id', $careerId)
-            ->whereHas('concept', fn (Builder $query) => $query->whereIn('clave_concepto', array_keys($used)))
-            ->whereIn('asignatura_id', $subjectIds)
-            ->get()
-            ->filter(fn (CurricularValue $value): bool => $value->valor_curricular !== '' && $value->valor_curricular !== [])
-            ->map(fn (CurricularValue $value): string => $value->concept->clave_concepto.'|'.$value->asignatura_id)
-            ->flip();
-        $names = Subject::query()->whereIn('id', $subjectIds)->orderBy('nombre')->pluck('nombre', 'id');
-        $missing = [];
-        foreach ($used as $key => $definition) {
-            $without = $names->filter(fn (string $name, string $id): bool => ! $filled->has($key.'|'.$id))->values();
-            if ($without->isNotEmpty()) {
-                $list = $without->take(3)->implode(', ').($without->count() > 3 ? ' y '.($without->count() - 3).' más' : '');
-                $missing[] = $without->count() === 1
-                    ? "Falta confirmar «{$definition['label']}» en Proyecto de carrera para {$list}."
-                    : "Falta confirmar «{$definition['label']}» en Proyecto de carrera para {$without->count()} materias: {$list}.";
-            }
         }
 
         return $missing;

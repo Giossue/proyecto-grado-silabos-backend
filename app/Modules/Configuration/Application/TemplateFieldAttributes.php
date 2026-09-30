@@ -28,25 +28,9 @@ final class TemplateFieldAttributes
         if (! is_array($configuration['document'] ?? null)) {
             return $configuration;
         }
-        $sources = is_array($configuration['options_sources'] ?? null) ? $configuration['options_sources'] : [];
-        $configuration['document'] = self::map($configuration['document'], function (array $attrs) use (&$sources): array {
-            $key = $attrs['key'] ?? null;
-            if (is_string($key) && ($attrs['choice'] ?? null) === null
-                && (array_key_exists('options_sources', $attrs) || array_key_exists('options_source', $attrs))) {
-                $list = CurricularFieldOptions::fromAttributes($attrs);
-                if ($list === []) {
-                    unset($sources[$key]);
-                } else {
-                    $sources[$key] = $list;
-                }
-            }
-
+        $configuration['document'] = self::map($configuration['document'], function (array $attrs): array {
             return array_intersect_key($attrs, array_flip(self::STORED));
         });
-        $configuration['options_sources'] = $sources;
-        if ($sources === []) {
-            unset($configuration['options_sources']);
-        }
 
         return $configuration;
     }
@@ -61,8 +45,7 @@ final class TemplateFieldAttributes
         if (! is_array($configuration['document'] ?? null)) {
             return $configuration;
         }
-        $sources = is_array($configuration['options_sources'] ?? null) ? $configuration['options_sources'] : [];
-        $configuration['document'] = self::map($configuration['document'], function (array $attrs) use ($definitions, $sources): array {
+        $configuration['document'] = self::map($configuration['document'], function (array $attrs) use ($definitions): array {
             $definition = $definitions[$attrs['key'] ?? ''] ?? null;
             if ($definition === null) {
                 return $attrs;
@@ -77,10 +60,6 @@ final class TemplateFieldAttributes
                 'options' => is_array($options) ? $options : null,
             ];
             if (($attrs['choice'] ?? null) === null) {
-                $list = $sources[$attrs['key']] ?? [];
-                $list = is_array($list) ? array_values($list) : [$list];
-                $hydrated['options_sources'] = $list;
-                $hydrated['options_source'] = count($list) === 1 ? $list[0] : null;
                 $condition = is_string($definition->condicion_definicion_campo ?? null)
                     ? json_decode($definition->condicion_definicion_campo, true)
                     : null;

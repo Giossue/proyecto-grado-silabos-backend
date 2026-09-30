@@ -4,7 +4,6 @@ namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -67,7 +66,7 @@ class ConvocationScheduleTest extends TestCase
 
     public function test_the_deadline_cannot_be_set_before_the_start(): void
     {
-        [$template] = $this->publishedConfiguration();
+        $template = $this->publishedConfiguration();
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             'nombre' => 'Proceso invertido',
@@ -234,7 +233,7 @@ class ConvocationScheduleTest extends TestCase
 
     private function prepareConvocation(?CarbonInterface $startsAt = null): Convocation
     {
-        [$template, $source] = $this->publishedConfiguration();
+        $template = $this->publishedConfiguration();
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id, $startsAt ?? now()->subDay(), now()->addMonth())->id,
@@ -265,19 +264,13 @@ class ConvocationScheduleTest extends TestCase
         };
     }
 
-    /** @return array{SyllabusTemplate, AcademicSource} */
-    private function publishedConfiguration(): array
+    private function publishedConfiguration(): SyllabusTemplate
     {
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-15']);
         $template = SyllabusTemplate::query()->firstOrFail();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
 
-        $source = AcademicSource::query()->create([
-            'carrera_id' => $this->coordinatorContext->carrera_id, 'nombre' => 'Fuente I-15',
-            'activo' => true, 'contenido' => 'Evidencia histórica conservada.',
-        ]);
-
-        return [$template->fresh(), $source->fresh()];
+        return $template->fresh();
     }
 
     private function actingAsAdministrator(): static

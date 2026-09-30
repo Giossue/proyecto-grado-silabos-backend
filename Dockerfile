@@ -31,7 +31,6 @@ FROM docker.io/library/php:8.4-fpm-alpine3.23 AS runtime
 RUN apk add --no-cache \
         nginx \
         supervisor \
-        poppler-utils \
         libpq-dev \
         icu-dev \
         libzip-dev \
