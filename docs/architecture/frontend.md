@@ -35,6 +35,11 @@ usa `Collapsible`; `StepProgress` usa `Badge` y `Separator`; los avances usan `P
 La salida de un sílabo cuyo autoguardado falla usa `UnsavedChangesDialog` y una respuesta
 asíncrona. El aviso de cierre de pestaña sigue siendo responsabilidad del navegador.
 
+Todo botón principal (variante por defecto o `destructive`) de páginas, sheets y diálogos
+lleva un icono `lucide` al inicio con `data-icon="inline-start"`; mientras procesa, el
+`Spinner` reemplaza al icono. `FormSheetActions` aplica `Check` si no recibe otro icono.
+Los botones secundarios (`outline`, `ghost`, `link`) no lo requieren.
+
 `styles.css` centraliza el tema, el avatar, el logo, las dimensiones de layouts y los
 niveles de superposición. `WorkspaceLayout` comparte la composición de sílabo y revisión
 con sus skeletons. `documentPalette.ts` mantiene los colores que se serializan y
