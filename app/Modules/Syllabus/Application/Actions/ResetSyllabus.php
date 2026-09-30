@@ -33,7 +33,7 @@ class ResetSyllabus
         private readonly InheritMasterValues $inherit,
     ) {}
 
-    public function execute(Syllabus $syllabus, string $reason, User $actor, Request $request): Syllabus
+    public function execute(Syllabus $syllabus, User $actor, Request $request): Syllabus
     {
         $activeRole = $this->roles->resolve($request);
         if ($activeRole?->role->codigo_rol !== RoleCode::Coordinator->value
@@ -41,7 +41,7 @@ class ResetSyllabus
             abort(403);
         }
 
-        return DB::transaction(function () use ($activeRole, $actor, $reason, $request, $syllabus): Syllabus {
+        return DB::transaction(function () use ($activeRole, $actor, $request, $syllabus): Syllabus {
             $locked = Syllabus::query()
                 ->lockForUpdate()
                 ->with(['convocation', 'parallel.scheduledSubject'])
@@ -91,7 +91,7 @@ class ResetSyllabus
                 resourceType: 'silabo',
                 resourceId: $locked->id,
                 result: 'exito',
-                metadata: [...$discarded, 'reason' => $reason],
+                metadata: $discarded,
                 correlationId: $correlationId,
             );
             $this->notifications->execute(

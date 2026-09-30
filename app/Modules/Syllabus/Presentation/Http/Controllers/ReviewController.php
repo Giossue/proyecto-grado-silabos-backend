@@ -305,7 +305,7 @@ class ReviewController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute($syllabus, $request->string('reason')->toString(), $actor, $request);
+        $action->execute($syllabus, $actor, $request);
 
         $message = 'Sílabo reiniciado. El docente empieza de cero con la malla y la plantilla actuales; el historial se conserva.';
 

@@ -27,7 +27,6 @@ class ExtendProcessDeadlineRequest extends FormRequest
         return [
             'stage' => ['prohibited'],
             'due_at' => ['required', 'date'],
-            'reason' => ['required', 'string', 'min:10', 'max:500'],
         ];
     }
 
@@ -36,8 +35,6 @@ class ExtendProcessDeadlineRequest extends FormRequest
     {
         return [
             'stage.prohibited' => 'La prórroga solo modifica la fecha límite de entrega.',
-            'reason.required' => 'Indique el motivo de la prórroga.',
-            'reason.min' => 'El motivo debe explicar la excepción, no solo nombrarla.',
         ];
     }
 }

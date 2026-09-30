@@ -22,15 +22,6 @@ class ResetSyllabusRequest extends FormRequest
     /** @return array<string, list<mixed>> */
     public function rules(): array
     {
-        return ['reason' => ['required', 'string', 'min:10', 'max:2000']];
-    }
-
-    /** @return array<string, string> */
-    public function messages(): array
-    {
-        return [
-            'reason.required' => 'Indique el motivo del reinicio.',
-            'reason.min' => 'El motivo debe explicar por qué se descarta el trabajo, no solo nombrarlo.',
-        ];
+        return [];
     }
 }

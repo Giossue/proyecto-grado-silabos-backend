@@ -99,12 +99,11 @@ class SyllabusProcessController extends Controller
         $action->execute(
             $process,
             $request->string('due_at')->toString(),
-            $request->string('reason')->toString(),
             $actor,
             $request,
         );
 
-        return response()->json(['message' => 'Plazo prorrogado para todas las convocatorias del proceso. El motivo queda registrado en auditoría.']);
+        return response()->json(['message' => 'Plazo prorrogado para todas las convocatorias del proceso.']);
     }
 
     public function transition(

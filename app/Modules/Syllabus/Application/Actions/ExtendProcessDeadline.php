@@ -28,7 +28,6 @@ class ExtendProcessDeadline
     public function execute(
         SyllabusProcess $process,
         string $newDueAt,
-        string $reason,
         User $actor,
         Request $request,
     ): SyllabusProcess {
@@ -53,7 +52,7 @@ class ExtendProcessDeadline
             throw ValidationException::withMessages(['due_at' => 'La nueva fecha ya pasó.']);
         }
 
-        return DB::transaction(function () use ($activeRole, $actor, $previous, $process, $reason, $request, $requested, $stage): SyllabusProcess {
+        return DB::transaction(function () use ($activeRole, $actor, $previous, $process, $request, $requested, $stage): SyllabusProcess {
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
             $locked->update(['entrega_en' => $requested]);
 
@@ -70,7 +69,6 @@ class ExtendProcessDeadline
                     'stage' => $stage,
                     'previous_due_at' => $previous->toIso8601String(),
                     'new_due_at' => $requested->toIso8601String(),
-                    'reason' => $reason,
                     'convocations_reached' => $reached,
                 ],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,

@@ -111,7 +111,6 @@ class ConvocationScheduleTest extends TestCase
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
             'due_at' => now()->addWeek()->toIso8601String(),
-            'reason' => 'Relevo de docente por licencia médica del titular.',
         ])->assertSuccessful()->assertSuccessful();
 
         $event = AuditEvent::query()
@@ -120,7 +119,7 @@ class ConvocationScheduleTest extends TestCase
         $this->assertSame($previous->toIso8601String(), $event->metadatos['previous_due_at']);
         $this->assertSame(1, $event->metadatos['convocations_reached']);
         $this->assertSame('borrador', $event->metadatos['stage']);
-        $this->assertStringContainsString('licencia', $event->metadatos['reason']);
+        $this->assertArrayNotHasKey('reason', $event->metadatos);
         $this->assertNotified($this->teacher->id, 'proceso.plazo_extendido', 'se amplió hasta el');
         $this->assertNotified($this->coordinator->id, 'proceso.plazo_extendido', 'se amplió hasta el');
         $this->assertNotNotified($this->administrator->id, 'proceso.plazo_extendido');
@@ -138,18 +137,7 @@ class ConvocationScheduleTest extends TestCase
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
             'due_at' => now()->addDay()->toIso8601String(),
-            'reason' => 'Quiero adelantar el cierre porque ya casi todos entregaron.',
         ])->assertJsonValidationErrors('due_at');
-    }
-
-    public function test_the_extension_requires_a_written_reason(): void
-    {
-        $convocation = $this->prepareConvocation();
-
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
-            'due_at' => now()->addMonths(2)->toIso8601String(),
-            'reason' => 'porque sí',
-        ])->assertJsonValidationErrors('reason');
     }
 
     public function test_only_administration_extends_a_deadline(): void
@@ -157,7 +145,6 @@ class ConvocationScheduleTest extends TestCase
         $convocation = $this->prepareConvocation();
         $payload = [
             'due_at' => now()->addMonths(2)->toIso8601String(),
-            'reason' => 'Ampliación por relevo docente en dos paralelos.',
         ];
 
         $this->actingAsTeacher()
@@ -178,7 +165,6 @@ class ConvocationScheduleTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $process), [
             'stage' => 'inicio',
             'due_at' => now()->addMonths(2)->toIso8601String(),
-            'reason' => 'Se intenta retrasar el inicio desde un cliente desactualizado.',
         ])->assertJsonValidationErrors([
             'stage' => 'La prórroga solo modifica la fecha límite de entrega.',
         ]);

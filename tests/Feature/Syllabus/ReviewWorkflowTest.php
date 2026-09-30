@@ -546,11 +546,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame('en_revision', $syllabus->estado);
 
         $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Corto'])
-            ->assertJsonValidationErrors('reason');
-
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'La malla cambió las horas de la materia después de la entrega.'])
+            ->postJson(route('api.v1.coordination.reviews.reset', $syllabus))
             ->assertSuccessful()
             ->assertSuccessful();
 
@@ -565,7 +561,7 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
 
-        $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Intento no autorizado.'])->assertForbidden();
+        $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.reset', $syllabus))->assertForbidden();
     }
 
     public function test_closed_convocation_keeps_the_review_read_only(): void
@@ -593,9 +589,7 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => (string) Str::uuid(),
         ])->assertForbidden()->assertJsonPath('message', $message);
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), [
-            'reason' => 'La malla cambió las horas de la materia después de la entrega.',
-        ])->assertForbidden()->assertJsonPath('message', $message);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus))->assertForbidden()->assertJsonPath('message', $message);
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reopen', $syllabus), [
             'cause' => 'Intento de reabrir con la convocatoria cerrada.',
             'idempotency_key' => (string) Str::uuid(),
