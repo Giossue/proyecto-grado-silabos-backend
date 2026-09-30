@@ -69,41 +69,41 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
-| `actor_usuario_id` | uuid | sí | FK → `usuarios` |
+| `usuario_id` | uuid | sí | FK → `usuarios` |
 | `asignacion_rol_id` | uuid | sí | FK → `asignaciones_rol` |
-| `accion_evento_auditoria` | varchar | no |  |
+| `accion` | varchar | no |  |
 | `tipo_recurso` | varchar | no |  |
 | `recurso_id` | uuid | sí |  |
-| `resultado_evento_auditoria` | varchar | no |  |
-| `metadatos_evento_auditoria` | jsonb | sí |  |
+| `resultado` | varchar | no |  |
+| `detalles` | jsonb | sí |  |
 | `ocurrido_en` | timestamptz | no |  |
 
-### notificaciones_internas
+### notificaciones
 
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
 | `usuario_id` | uuid | no | FK → `usuarios` |
-| `clave_deduplicacion` | varchar | no |  |
-| `tipo_notificacion_interna` | varchar | no |  |
-| `titulo_notificacion_interna` | varchar | no |  |
-| `mensaje_notificacion_interna` | text | no |  |
+| `clave_unica` | varchar | no |  |
+| `tipo_notificacion` | varchar | no |  |
+| `titulo_notificacion` | varchar | no |  |
+| `mensaje_notificacion` | text | no |  |
 | `tipo_recurso` | varchar | sí |  |
 | `recurso_id` | uuid | sí |  |
 | `leido_en` | timestamptz | sí |  |
 | `notificado_en` | timestamptz | no |  |
 
-### ejecuciones_trabajo
+### trabajos_en_cola
 
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
-| `tipo_ejecucion_trabajo` | varchar | no |  |
-| `estado_ejecucion_trabajo` | varchar | no |  |
-| `clave_idempotencia` | varchar | no |  |
+| `tipo_trabajo` | varchar | no |  |
+| `estado_trabajo` | varchar | no |  |
+| `clave_solicitud` | varchar | no |  |
 | `intentos` | smallint | no |  |
 | `progreso` | smallint | no |  |
-| `resultado_ejecucion_trabajo` | jsonb | sí |  |
+| `resultado_trabajo` | jsonb | sí |  |
 | `codigo_error` | varchar | sí |  |
 | `mensaje_error` | text | sí |  |
 | `iniciado_en` | timestamptz | sí |  |
@@ -113,7 +113,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `tipo_recurso` | varchar | sí |  |
 | `recurso_id` | uuid | sí |  |
 | `intentos_maximos` | smallint | no |  |
-| `entrada_ejecucion_trabajo` | jsonb | sí |  |
+| `datos_entrada` | jsonb | sí |  |
 
 ### trabajos_fallidos
 
@@ -127,19 +127,19 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `exception` | text | no |  |
 | `failed_at` | timestamp_without_time_zone | no |  |
 
-### objetos_almacenados
+### archivos
 
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
 | `disco` | varchar | no |  |
-| `ruta_interna` | varchar | no |  |
-| `nombre_logico` | varchar | no |  |
-| `mime` | varchar | no |  |
+| `ruta_archivo` | varchar | no |  |
+| `nombre_archivo` | varchar | no |  |
+| `tipo_archivo` | varchar | no |  |
 | `tamano_bytes` | bigint | no |  |
-| `huella_sha256` | char | no |  |
-| `clasificacion` | varchar | no |  |
-| `propietario_usuario_id` | uuid | sí | FK → `usuarios` |
+| `huella_archivo` | char | no |  |
+| `categoria` | varchar | no |  |
+| `subido_por` | uuid | sí | FK → `usuarios` |
 | `carrera_id` | uuid | sí | FK → `carreras` |
 | `almacenado_en` | timestamptz | no |  |
 
@@ -155,15 +155,15 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 
 | Tabla | Columna | Apunta a | Cardinalidad (padre → hijos) |
 |---|---|---|---|
+| `archivos` | `carrera_id` | `carreras` | 0 o 1 → muchos |
+| `archivos` | `subido_por` | `usuarios` | 0 o 1 → muchos |
 | `asignaciones_rol` | `carrera_id` | `carreras` | 0 o 1 → muchos |
 | `asignaciones_rol` | `usuario_id` | `usuarios` | 1 → muchos |
-| `eventos_auditoria` | `actor_usuario_id` | `usuarios` | 0 o 1 → muchos |
 | `eventos_auditoria` | `asignacion_rol_id` | `asignaciones_rol` | 0 o 1 → muchos |
+| `eventos_auditoria` | `usuario_id` | `usuarios` | 0 o 1 → muchos |
 | `invitaciones_activacion` | `emitida_por_usuario_id` | `usuarios` | 0 o 1 → muchos |
 | `invitaciones_activacion` | `usuario_id` | `usuarios` | 1 → muchos |
-| `notificaciones_internas` | `usuario_id` | `usuarios` | 1 → muchos |
-| `objetos_almacenados` | `carrera_id` | `carreras` | 0 o 1 → muchos |
-| `objetos_almacenados` | `propietario_usuario_id` | `usuarios` | 0 o 1 → muchos |
+| `notificaciones` | `usuario_id` | `usuarios` | 1 → muchos |
 | `sesiones` | `user_id` | `usuarios` | 0 o 1 → muchos |
 
 ## Estructura académica
@@ -175,7 +175,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `id` | uuid | no | PK |
 | `nombre_facultad` | varchar | no |  |
 | `facultad_activa` | boolean | no |  |
-| `logo_objeto_id` | uuid | sí | FK → `objetos_almacenados` |
+| `logo_archivo_id` | uuid | sí | FK → `archivos` |
 | `campus_facultad` | varchar | no |  |
 
 ### carreras
@@ -188,7 +188,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `nombre_carrera` | varchar | no |  |
 | `carrera_activa` | boolean | no |  |
 | `modalidad_carrera` | enum modalidad_estudio | sí |  |
-| `cantidad_ciclos_malla` | smallint | no |  |
+| `numero_ciclos` | smallint | no |  |
 
 ### asignaturas
 
@@ -200,11 +200,11 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `ciclo_asignatura` | smallint | sí |  |
 | `creditos_asignatura` | numeric | sí |  |
 | `asignatura_activa` | boolean | no |  |
-| `horas_ac` | numeric | sí |  |
-| `horas_pae` | numeric | sí |  |
-| `horas_aa` | numeric | sí |  |
+| `horas_docencia` | numeric | sí |  |
+| `horas_practicas` | numeric | sí |  |
+| `horas_autonomas` | numeric | sí |  |
 | `orden_asignatura_en_ciclo` | smallint | no |  |
-| `unidad_organizativa_curricular_asignatura` | varchar | sí |  |
+| `unidad_curricular_asignatura` | varchar | sí |  |
 | `modalidad_asignatura` | enum modalidad_estudio | sí |  |
 | `carrera_id` | uuid | no | FK → `carreras` |
 | `total_horas_asignatura` | smallint | sí |  |
@@ -228,21 +228,21 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `fecha_fin_periodo` | date | no |  |
 | `cantidad_semanas_lectivas` | smallint | no |  |
 
-### programaciones_asignatura
+### asignaturas_ofertadas
 
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
 | `periodo_academico_id` | uuid | no | FK → `periodos_academicos` |
 | `asignatura_id` | uuid | no | FK → `asignaturas` |
-| `programacion_asignatura_activa` | boolean | no |  |
+| `asignatura_ofertada_activa` | boolean | no |  |
 
 ### paralelos
 
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
-| `programacion_asignatura_id` | uuid | no | FK → `programaciones_asignatura` |
+| `asignatura_ofertada_id` | uuid | no | FK → `asignaturas_ofertadas` |
 | `codigo_paralelo` | varchar | no |  |
 | `jornada_paralelo` | varchar | no |  |
 
@@ -287,7 +287,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `carrera_id` | uuid | no | FK → `carreras` |
 | `solicitado_por` | uuid | no | FK → `usuarios` |
 | `estado_importacion` | varchar | no |  |
-| `clave_idempotencia_importacion` | char | sí |  |
+| `clave_solicitud` | char | sí |  |
 | `documentos_importacion` | jsonb | no |  |
 | `propuesta_importacion` | jsonb | sí |  |
 | `seleccion_aplicada` | jsonb | sí |  |
@@ -296,18 +296,18 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `solicitado_en` | timestamptz | no |  |
 | `aplicado_en` | timestamptz | sí |  |
 
-### fuentes_academicas
+### documentos_importacion
 
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
 | `carrera_id` | uuid | no | FK → `carreras` |
-| `nombre_fuente_academica` | varchar | no |  |
-| `fuente_academica_activa` | boolean | no |  |
-| `objeto_pdf_id` | uuid | sí | FK → `objetos_almacenados` |
-| `estado_ingesta_fuente` | varchar | no |  |
-| `ingesta_actualizada_en` | timestamptz | sí |  |
-| `documento_fuente_academica` | jsonb | no |  |
+| `nombre_documento` | varchar | no |  |
+| `documento_activo` | boolean | no |  |
+| `archivo_pdf_id` | uuid | sí | FK → `archivos` |
+| `estado_lectura` | varchar | no |  |
+| `lectura_actualizada_en` | timestamptz | sí |  |
+| `contenido_documento` | jsonb | no |  |
 
 ### Relaciones: Estructura académica
 
@@ -316,15 +316,15 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `asignaciones_paralelo` | `asignacion_rol_id` | `asignaciones_rol` | 1 → muchos |
 | `asignaciones_paralelo` | `paralelo_id` | `paralelos` | 1 → muchos |
 | `asignaturas` | `carrera_id` | `carreras` | 1 → muchos |
+| `asignaturas_ofertadas` | `asignatura_id` | `asignaturas` | 1 → muchos |
+| `asignaturas_ofertadas` | `periodo_academico_id` | `periodos_academicos` | 1 → muchos |
 | `carreras` | `facultad_id` | `facultades` | 1 → muchos |
-| `facultades` | `logo_objeto_id` | `objetos_almacenados` | 0 o 1 → muchos |
-| `fuentes_academicas` | `carrera_id` | `carreras` | 1 → muchos |
-| `fuentes_academicas` | `objeto_pdf_id` | `objetos_almacenados` | 0 o 1 → muchos |
+| `documentos_importacion` | `archivo_pdf_id` | `archivos` | 0 o 1 → muchos |
+| `documentos_importacion` | `carrera_id` | `carreras` | 1 → muchos |
+| `facultades` | `logo_archivo_id` | `archivos` | 0 o 1 → muchos |
 | `importaciones_curriculares` | `carrera_id` | `carreras` | 1 → muchos |
 | `importaciones_curriculares` | `solicitado_por` | `usuarios` | 1 → muchos |
-| `paralelos` | `programacion_asignatura_id` | `programaciones_asignatura` | 1 → muchos |
-| `programaciones_asignatura` | `asignatura_id` | `asignaturas` | 1 → muchos |
-| `programaciones_asignatura` | `periodo_academico_id` | `periodos_academicos` | 1 → muchos |
+| `paralelos` | `asignatura_ofertada_id` | `asignaturas_ofertadas` | 1 → muchos |
 | `requisitos_asignatura` | `asignatura_id` | `asignaturas` | 1 → muchos |
 | `requisitos_asignatura` | `requisito_id` | `asignaturas` | 1 → muchos |
 | `valores_curriculares` | `asignatura_id` | `asignaturas` | 1 → muchos |
@@ -374,12 +374,12 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `ayuda_definicion_campo` | text | sí |  |
 | `tipo_definicion_campo` | varchar | no |  |
 | `heredado_definicion_campo` | boolean | no |  |
-| `origen_maestro_definicion_campo` | varchar | sí |  |
+| `origen_dato_definicion_campo` | varchar | sí |  |
 | `editable_docente_definicion_campo` | boolean | no |  |
 | `opciones_definicion_campo` | jsonb | sí |  |
 | `posicion_definicion_campo` | smallint | no |  |
 | `plantilla_id` | uuid | no | FK → `plantilla_silabo` |
-| `mostrar_si_definicion_campo` | jsonb | sí |  |
+| `condicion_definicion_campo` | jsonb | sí |  |
 
 ### Relaciones: Plantilla del sílabo
 
@@ -398,8 +398,8 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
-| `inicia_en` | timestamptz | no |  |
-| `entrega_en` | timestamptz | no |  |
+| `fecha_inicio` | timestamptz | no |  |
+| `fecha_entrega` | timestamptz | no |  |
 | `estado_convocatoria_universidad` | varchar | no |  |
 | `periodo_academico_id` | uuid | no | FK → `periodos_academicos` |
 
@@ -419,10 +419,10 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `id` | uuid | no | PK |
 | `convocatoria_carrera_id` | uuid | no | FK → `convocatorias_carreras` |
 | `estado_silabo` | varchar | no |  |
-| `version_bloqueo` | integer | no |  |
+| `version_borrador` | integer | no |  |
 | `iniciado_en` | timestamptz | sí |  |
 | `guardado_en` | timestamptz | sí |  |
-| `contexto_academico_silabo` | jsonb | no |  |
+| `datos_academicos_silabo` | jsonb | no |  |
 | `paralelo_id` | uuid | no | FK → `paralelos` |
 
 ### valores_campo
@@ -442,10 +442,10 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `silabo_id` | uuid | no | FK → `silabos` |
 | `revision_anterior_id` | uuid | sí | FK → `revisiones_silabo` |
 | `numero_revision` | smallint | no |  |
-| `clave_idempotencia` | uuid | no |  |
-| `version_bloqueo_origen` | integer | no |  |
-| `fotografia_revision_silabo` | jsonb | no |  |
-| `huella_sha256` | char | no |  |
+| `clave_solicitud` | uuid | no |  |
+| `version_borrador` | integer | no |  |
+| `contenido_enviado` | jsonb | no |  |
+| `huella_contenido` | char | no |  |
 | `enviado_por` | uuid | no | FK → `usuarios` |
 | `enviado_en` | timestamptz | no |  |
 | `reapertura_id` | uuid | sí | FK → `reaperturas` |
@@ -479,11 +479,11 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 |---|---|---|---|
 | `id` | uuid | no | PK |
 | `revision_silabo_id` | uuid | no | FK → `revisiones_silabo` |
-| `clave_idempotencia` | uuid | no |  |
-| `huella_sha256` | char | no |  |
+| `clave_solicitud` | uuid | no |  |
+| `huella_contenido` | char | no |  |
 | `aprobado_por` | uuid | no | FK → `usuarios` |
 | `aprobado_en` | timestamptz | no |  |
-| `aprobacion_base_id` | uuid | sí | FK → `aprobaciones` |
+| `aprobacion_anterior_id` | uuid | sí | FK → `aprobaciones` |
 
 ### reaperturas
 
@@ -492,13 +492,13 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `id` | uuid | no | PK |
 | `aprobacion_id` | uuid | no | FK → `aprobaciones` |
 | `revision_aprobada_id` | uuid | no | FK → `revisiones_silabo` |
-| `clave_idempotencia` | uuid | no |  |
+| `clave_solicitud` | uuid | no |  |
 | `causa` | text | no |  |
 | `reabierto_por` | uuid | no | FK → `usuarios` |
 | `reabierto_en` | timestamptz | no |  |
 | `origen_reapertura` | varchar | no |  |
 
-### ejecuciones_validacion
+### validaciones_silabo
 
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
@@ -506,8 +506,8 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `silabo_id` | uuid | no | FK → `silabos` |
 | `ejecutado_por` | uuid | no | FK → `usuarios` |
 | `version_reglas` | varchar | no |  |
-| `estado_ejecucion_validacion` | varchar | no |  |
-| `version_bloqueo` | integer | no |  |
+| `estado_validacion` | varchar | no |  |
+| `version_borrador` | integer | no |  |
 | `cantidad_errores_validacion` | smallint | no |  |
 | `cantidad_advertencias_validacion` | smallint | no |  |
 | `completado_en` | timestamptz | no |  |
@@ -517,7 +517,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
-| `ejecucion_validacion_id` | uuid | no | FK → `ejecuciones_validacion` |
+| `validacion_silabo_id` | uuid | no | FK → `validaciones_silabo` |
 | `definicion_campo_id` | uuid | sí | FK → `definiciones_campo` |
 | `codigo_resultado_validacion` | varchar | no |  |
 | `severidad_resultado_validacion` | varchar | no |  |
@@ -534,27 +534,25 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `verificado_por` | uuid | sí | FK → `usuarios` |
 | `verificado_en` | timestamptz | sí |  |
 
-### historial_ia
+### mensajes_ia
 
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
-| `sesion_id` | text | no |  |
-| `mensaje_ia` | jsonb | no |  |
+| `conversacion_id` | text | no |  |
+| `contenido_mensaje` | jsonb | no |  |
 | `enviado_en` | timestamptz | no |  |
 
 ### Relaciones: Convocatorias, sílabos y revisión
 
 | Tabla | Columna | Apunta a | Cardinalidad (padre → hijos) |
 |---|---|---|---|
-| `aprobaciones` | `aprobacion_base_id` | `aprobaciones` | 0 o 1 → muchos |
+| `aprobaciones` | `aprobacion_anterior_id` | `aprobaciones` | 0 o 1 → muchos |
 | `aprobaciones` | `aprobado_por` | `usuarios` | 1 → muchos |
 | `aprobaciones` | `revision_silabo_id` | `revisiones_silabo` | 1 → 0 o 1 |
 | `convocatorias_carreras` | `carrera_id` | `carreras` | 1 → muchos |
 | `convocatorias_carreras` | `convocatoria_universidad_id` | `convocatorias_universidad` | 1 → muchos |
 | `convocatorias_universidad` | `periodo_academico_id` | `periodos_academicos` | 1 → muchos |
-| `ejecuciones_validacion` | `ejecutado_por` | `usuarios` | 1 → muchos |
-| `ejecuciones_validacion` | `silabo_id` | `silabos` | 1 → muchos |
 | `envios_biblioteca` | `enviado_por` | `usuarios` | 1 → muchos |
 | `envios_biblioteca` | `revision_silabo_id` | `revisiones_silabo` | 1 → 0 o 1 |
 | `envios_biblioteca` | `verificado_por` | `usuarios` | 0 o 1 → muchos |
@@ -564,7 +562,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `reaperturas` | `reabierto_por` | `usuarios` | 1 → muchos |
 | `reaperturas` | `revision_aprobada_id` | `revisiones_silabo` | 1 → muchos |
 | `resultados_validacion` | `definicion_campo_id` | `definiciones_campo` | 0 o 1 → muchos |
-| `resultados_validacion` | `ejecucion_validacion_id` | `ejecuciones_validacion` | 1 → muchos |
+| `resultados_validacion` | `validacion_silabo_id` | `validaciones_silabo` | 1 → muchos |
 | `revisiones_silabo` | `enviado_por` | `usuarios` | 1 → muchos |
 | `revisiones_silabo` | `reapertura_id` | `reaperturas` | 0 o 1 → muchos |
 | `revisiones_silabo` | `revision_anterior_id` | `revisiones_silabo` | 0 o 1 → muchos |
@@ -573,24 +571,26 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `silabos` | `paralelo_id` | `paralelos` | 1 → muchos |
 | `solicitudes_correccion` | `revision_silabo_id` | `revisiones_silabo` | 1 → 0 o 1 |
 | `solicitudes_correccion` | `solicitado_por` | `usuarios` | 1 → muchos |
+| `validaciones_silabo` | `ejecutado_por` | `usuarios` | 1 → muchos |
+| `validaciones_silabo` | `silabo_id` | `silabos` | 1 → muchos |
 | `valores_campo` | `definicion_campo_id` | `definiciones_campo` | 1 → muchos |
 | `valores_campo` | `silabo_id` | `silabos` | 1 → muchos |
 
 ## Documentos y firmas
 
-### artefactos_exportacion
+### exportaciones_silabo
 
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
 | `revision_silabo_id` | uuid | no | FK → `revisiones_silabo` |
-| `ejecucion_trabajo_id` | uuid | sí | FK → `ejecuciones_trabajo` |
-| `objeto_docx_id` | uuid | sí | FK → `objetos_almacenados` |
-| `objeto_pdf_id` | uuid | sí | FK → `objetos_almacenados` |
-| `version_renderizador` | varchar | no |  |
+| `trabajo_id` | uuid | sí | FK → `trabajos_en_cola` |
+| `archivo_word_id` | uuid | sí | FK → `archivos` |
+| `archivo_pdf_id` | uuid | sí | FK → `archivos` |
+| `version_generador` | varchar | no |  |
 | `idioma` | varchar | no |  |
-| `clave_idempotencia` | uuid | no |  |
-| `estado_artefacto_exportacion` | varchar | no |  |
+| `clave_solicitud` | uuid | no |  |
+| `estado_exportacion` | varchar | no |  |
 | `solicitado_por` | uuid | no | FK → `usuarios` |
 | `solicitado_en` | timestamptz | no |  |
 | `completado_en` | timestamptz | sí |  |
@@ -600,26 +600,26 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
-| `artefacto_exportacion_id` | uuid | no | FK → `artefactos_exportacion` |
-| `rol_firma` | varchar | no |  |
+| `exportacion_silabo_id` | uuid | no | FK → `exportaciones_silabo` |
+| `firmado_como` | varchar | no |  |
 | `usuario_id` | uuid | no | FK → `usuarios` |
-| `objeto_almacenado_id` | uuid | no | FK → `objetos_almacenados` |
-| `certificado_titular` | varchar | no |  |
-| `certificado_serie` | varchar | no |  |
-| `certificado_emisor` | varchar | no |  |
-| `certificado_vence_en` | timestamptz | no |  |
-| `huella_sha256` | char | no |  |
+| `archivo_firmado_id` | uuid | no | FK → `archivos` |
+| `nombre_en_certificado` | varchar | no |  |
+| `numero_certificado` | varchar | no |  |
+| `entidad_emisora` | varchar | no |  |
+| `certificado_valido_hasta` | timestamptz | no |  |
+| `huella_archivo` | char | no |  |
 | `firmado_en` | timestamptz | no |  |
 
 ### Relaciones: Documentos y firmas
 
 | Tabla | Columna | Apunta a | Cardinalidad (padre → hijos) |
 |---|---|---|---|
-| `artefactos_exportacion` | `ejecucion_trabajo_id` | `ejecuciones_trabajo` | 0 o 1 → 0 o 1 |
-| `artefactos_exportacion` | `objeto_docx_id` | `objetos_almacenados` | 0 o 1 → 0 o 1 |
-| `artefactos_exportacion` | `objeto_pdf_id` | `objetos_almacenados` | 0 o 1 → 0 o 1 |
-| `artefactos_exportacion` | `revision_silabo_id` | `revisiones_silabo` | 1 → muchos |
-| `artefactos_exportacion` | `solicitado_por` | `usuarios` | 1 → muchos |
-| `firmas_documento` | `artefacto_exportacion_id` | `artefactos_exportacion` | 1 → muchos |
-| `firmas_documento` | `objeto_almacenado_id` | `objetos_almacenados` | 1 → 0 o 1 |
+| `exportaciones_silabo` | `archivo_pdf_id` | `archivos` | 0 o 1 → 0 o 1 |
+| `exportaciones_silabo` | `archivo_word_id` | `archivos` | 0 o 1 → 0 o 1 |
+| `exportaciones_silabo` | `revision_silabo_id` | `revisiones_silabo` | 1 → muchos |
+| `exportaciones_silabo` | `solicitado_por` | `usuarios` | 1 → muchos |
+| `exportaciones_silabo` | `trabajo_id` | `trabajos_en_cola` | 0 o 1 → 0 o 1 |
+| `firmas_documento` | `archivo_firmado_id` | `archivos` | 1 → 0 o 1 |
+| `firmas_documento` | `exportacion_silabo_id` | `exportaciones_silabo` | 1 → muchos |
 | `firmas_documento` | `usuario_id` | `usuarios` | 1 → muchos |
