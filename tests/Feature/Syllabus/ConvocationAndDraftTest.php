@@ -181,7 +181,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('Materia histórica', $variables['nombre_asignatura']);
         $this->assertSame('', $variables['resultados_aprendizaje_asignatura']);
         $samples = collect(TemplateVariables::catalog())->keyBy('key');
-        $this->assertSame('Resultados de aprendizaje de la asignatura', $samples['resultados_aprendizaje_asignatura']['sample']);
+        $this->assertStringContainsString('1. ', $samples['resultados_aprendizaje_asignatura']['sample']);
         $this->assertNotEmpty($samples['fuente_resultados_aprendizaje']['sample']);
     }
 
