@@ -1,6 +1,6 @@
 # Modelo entidad-relación de la base de datos
 
-Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 relaciones.
+Actualizado el 2026-09-30: **42 tablas** y 70 relaciones.
 
 **Llave:** `PK` = identificador; `FK → tabla` = apunta a otra tabla. **¿Vacío?:** si puede quedar sin valor.
 
@@ -38,7 +38,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 |---|---|---|---|
 | `id` | uuid | no | PK |
 | `usuario_id` | uuid | no | FK → `usuarios` |
-| `huella_activacion` | char | no |  |
+| `hash_activacion` | char | no |  |
 | `expira_en` | timestamptz | no |  |
 | `usada_en` | timestamptz | sí |  |
 | `invalidada_en` | timestamptz | sí |  |
@@ -137,7 +137,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `nombre_archivo` | varchar | no |  |
 | `tipo_archivo` | varchar | no |  |
 | `tamano_bytes` | bigint | no |  |
-| `huella_archivo` | char | no |  |
+| `hash_archivo` | char | no |  |
 | `categoria` | varchar | no |  |
 | `subido_por` | uuid | sí | FK → `usuarios` |
 | `carrera_id` | uuid | sí | FK → `carreras` |
@@ -445,7 +445,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `clave_solicitud` | uuid | no |  |
 | `version_borrador` | integer | no |  |
 | `contenido_enviado` | jsonb | no |  |
-| `huella_contenido` | char | no |  |
+| `hash_contenido` | char | no |  |
 | `enviado_por` | uuid | no | FK → `usuarios` |
 | `enviado_en` | timestamptz | no |  |
 | `reapertura_id` | uuid | sí | FK → `reaperturas` |
@@ -480,7 +480,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `id` | uuid | no | PK |
 | `revision_silabo_id` | uuid | no | FK → `revisiones_silabo` |
 | `clave_solicitud` | uuid | no |  |
-| `huella_contenido` | char | no |  |
+| `hash_contenido` | char | no |  |
 | `aprobado_por` | uuid | no | FK → `usuarios` |
 | `aprobado_en` | timestamptz | no |  |
 | `aprobacion_anterior_id` | uuid | sí | FK → `aprobaciones` |
@@ -539,9 +539,10 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | Columna | Tipo | ¿Vacío? | Llave |
 |---|---|---|---|
 | `id` | uuid | no | PK |
-| `conversacion_id` | text | no |  |
 | `contenido_mensaje` | jsonb | no |  |
 | `enviado_en` | timestamptz | no |  |
+| `silabo_id` | uuid | no | FK → `silabos` |
+| `usuario_id` | uuid | no | FK → `usuarios` |
 
 ### Relaciones: Convocatorias, sílabos y revisión
 
@@ -556,6 +557,8 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `envios_biblioteca` | `enviado_por` | `usuarios` | 1 → muchos |
 | `envios_biblioteca` | `revision_silabo_id` | `revisiones_silabo` | 1 → 0 o 1 |
 | `envios_biblioteca` | `verificado_por` | `usuarios` | 0 o 1 → muchos |
+| `mensajes_ia` | `silabo_id` | `silabos` | 1 → muchos |
+| `mensajes_ia` | `usuario_id` | `usuarios` | 1 → muchos |
 | `observaciones_revision` | `creado_por` | `usuarios` | 1 → muchos |
 | `observaciones_revision` | `revision_silabo_id` | `revisiones_silabo` | 1 → muchos |
 | `reaperturas` | `aprobacion_id` | `aprobaciones` | 1 → 0 o 1 |
@@ -608,7 +611,7 @@ Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 re
 | `numero_certificado` | varchar | no |  |
 | `entidad_emisora` | varchar | no |  |
 | `certificado_valido_hasta` | timestamptz | no |  |
-| `huella_archivo` | char | no |  |
+| `hash_archivo` | char | no |  |
 | `firmado_en` | timestamptz | no |  |
 
 ### Relaciones: Documentos y firmas
