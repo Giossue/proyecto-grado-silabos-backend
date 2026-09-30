@@ -37,7 +37,7 @@ class LibraryReviewController extends Controller
             ->with('sender:id,nombre')
             ->paginate(15)
             ->withQueryString();
-        $syllabi = $this->syllabi(collect($page->items())->pluck('silabo_id')->all());
+        $syllabi = $this->syllabi(array_values(collect($page->items())->pluck('silabo_id')->all()));
 
         return response()->json([
             'filters' => ['q' => $search ?: null, 'state' => $state],
@@ -111,7 +111,7 @@ class LibraryReviewController extends Controller
     /** @return list<array{comment: string, commented_at: string, commented_by: string, revision_number: int}> */
     public static function comments(Syllabus $syllabus): array
     {
-        return Reopening::query()
+        return array_values(Reopening::query()
             ->where('origen_reapertura', Reopening::ORIGIN_LIBRARY)
             ->whereHas('approvedRevision', fn ($query) => $query->where('silabo_id', $syllabus->id))
             ->with(['reopener:id,nombre', 'approvedRevision:id,numero_revision'])
@@ -123,8 +123,7 @@ class LibraryReviewController extends Controller
                 'commented_by' => $reopening->reopener->nombre,
                 'revision_number' => $reopening->approvedRevision->numero_revision,
             ])
-            ->values()
-            ->all();
+            ->all());
     }
 
     /**
