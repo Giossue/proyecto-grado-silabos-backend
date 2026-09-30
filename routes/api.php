@@ -244,6 +244,9 @@ Route::prefix('v1')->group(function (): void {
             Route::patch('teacher/syllabi/{syllabus}/fields/{field}', [SyllabusController::class, 'updateField'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.fields.update');
+            Route::post('teacher/syllabi/{syllabus}/copy-from/{source}', [SyllabusController::class, 'copyFrom'])
+                ->middleware('active-role')
+                ->name('api.v1.teacher.syllabi.copy-from');
             Route::post('teacher/syllabi/{syllabus}/validate', [SyllabusController::class, 'validateDraft'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.validate');

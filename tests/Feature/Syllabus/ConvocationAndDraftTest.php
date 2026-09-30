@@ -345,6 +345,60 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('abierta', $convocation->fresh()->estado);
     }
 
+    public function test_teacher_copies_content_between_own_parallels_of_the_same_subject(): void
+    {
+        [$first, $second] = $this->openConvocationWithTwoParallels();
+        $field = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
+
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $first))
+            ->assertOk()->assertJsonPath('syllabus.copy_sources', []);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $first))->assertSuccessful();
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$first, $field]), [
+            'version_bloqueo' => 1,
+            'value' => $this->freeTextValue('Descripción compartida.'),
+        ])->assertOk();
+
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $second))
+            ->assertOk()
+            ->assertJsonPath('syllabus.copy_sources.0.id', $first->id)
+            ->assertJsonPath('syllabus.copy_sources.0.parallel', $first->parallel->codigo);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.copy-from', [$second, $first]), [
+            'version_bloqueo' => $second->version_bloqueo,
+        ])->assertOk()->assertJsonPath('syllabus.state', 'borrador');
+
+        $second->refresh();
+        $this->assertSame('borrador', $second->estado);
+        $this->assertEquals(
+            $this->freeTextValue('Descripción compartida.'),
+            $second->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor,
+        );
+        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'silabo.contenido_copiado', 'recurso_id' => $second->id]);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.copy-from', [$second, $first]), [
+            'version_bloqueo' => $second->version_bloqueo - 1,
+        ])->assertConflict();
+    }
+
+    public function test_copy_is_rejected_into_a_sent_syllabus_or_from_one_not_started(): void
+    {
+        [$first, $second] = $this->openConvocationWithTwoParallels();
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.copy-from', [$second, $first]), [
+            'version_bloqueo' => $second->version_bloqueo,
+        ])->assertUnprocessable();
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $first))->assertSuccessful();
+        $second->update(['estado' => 'en_revision']);
+
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $second))
+            ->assertOk()->assertJsonPath('syllabus.copy_sources', []);
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.copy-from', [$second, $first]), [
+            'version_bloqueo' => $second->version_bloqueo,
+        ])->assertForbidden();
+    }
+
     public function test_teacher_starts_autosaves_and_stale_version_returns_recoverable_conflict(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
@@ -673,6 +727,28 @@ class ConvocationAndDraftTest extends TestCase
         $this->openPrepared($convocation);
 
         return Syllabus::query()->firstOrFail();
+    }
+
+    /** @return array{Syllabus, Syllabus} */
+    private function openConvocationWithTwoParallels(): array
+    {
+        $scheduledSubject = ScheduledSubject::query()->firstOrFail();
+        $parallel = Parallel::query()->create([
+            'programacion_asignatura_id' => $scheduledSubject->id,
+            'codigo' => 'Z',
+            'jornada' => 'matutina',
+        ]);
+        TeacherAssignment::query()->create([
+            'usuario_id' => $this->teacher->id,
+            'paralelo_id' => $parallel->id,
+            'activo' => true,
+        ]);
+        $this->openPrepared($this->createPreparedConvocation());
+
+        return [
+            Syllabus::query()->where('paralelo_id', '!=', $parallel->id)->firstOrFail(),
+            Syllabus::query()->where('paralelo_id', $parallel->id)->firstOrFail(),
+        ];
     }
 
     private function actingAsAdministrator(): static

@@ -16,6 +16,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Library\Presentation\Http\Controllers\LibraryReviewController;
+use App\Modules\Syllabus\Application\Actions\CopySyllabusContent;
 use App\Modules\Syllabus\Application\Actions\StartDraft;
 use App\Modules\Syllabus\Application\Actions\SubmitSyllabus;
 use App\Modules\Syllabus\Application\Actions\UpdateDraftField;
@@ -27,6 +28,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
+use App\Modules\Syllabus\Presentation\Http\Requests\CopySyllabusContentRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\SubmitSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\UpdateDraftFieldRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewSyllabiRequest;
@@ -146,6 +148,22 @@ class SyllabusController extends Controller
         ]);
     }
 
+    public function copyFrom(
+        Syllabus $syllabus,
+        Syllabus $source,
+        CopySyllabusContentRequest $request,
+        CopySyllabusContent $action,
+    ): JsonResponse {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $updated = $action->execute($syllabus, $source, $request->integer('version_bloqueo'), $actor, $request);
+
+        return response()->json([
+            'message' => "Contenido copiado desde el paralelo {$source->parallel->codigo}.",
+            'syllabus' => $this->syllabusPayload($updated),
+        ]);
+    }
+
     public function validateDraft(Syllabus $syllabus, Request $request, ValidateDraft $action): JsonResponse
     {
         abort_unless($request->user()?->can('edit', $syllabus) === true, 403);
@@ -201,6 +219,7 @@ class SyllabusController extends Controller
             'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
             ...$this->teacherEditability($syllabus),
             'parallels' => [$syllabus->parallel->codigo],
+            'copy_sources' => $this->copySources($syllabus),
             'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
             'approved_revision_id' => $syllabus->estado === 'aprobado'
                 ? $syllabus->revisions()->whereHas('approval')->latest('numero_revision')->value('id')
@@ -246,6 +265,23 @@ class SyllabusController extends Controller
             'library_correction' => BibliographyCorrection::requested($syllabus),
             'library_comments' => LibraryReviewController::comments($syllabus),
         ];
+    }
+
+    /** @return list<array{id: string, parallel: string, state: string}> */
+    private function copySources(Syllabus $syllabus): array
+    {
+        $user = request()->user();
+        $ability = $syllabus->estado === 'sin_iniciar' ? 'start' : 'edit';
+        if (! $user instanceof User || ! Gate::forUser($user)->allows($ability, $syllabus)) {
+            return [];
+        }
+
+        return array_values(CopySyllabusContent::sources($syllabus, $user)
+            ->map(fn (Syllabus $source): array => [
+                'id' => $source->id,
+                'parallel' => $source->parallel->codigo,
+                'state' => $source->estado,
+            ])->all());
     }
 
     /** @return array{editable: bool, edit_block_reason: string|null} */

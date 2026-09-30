@@ -137,6 +137,10 @@ periodo académico.
 - Las observaciones apuntan a la revisión observada.
 - La corrección parte de una copia controlada y produce otra revisión al reenviar.
 - Un coordinador siempre revisa el contenido exacto enviado, no el borrador posterior.
+- Copiar entre paralelos (I-167): si el docente tiene la misma asignatura en más de un
+  paralelo, puede copiar a un sílabo «Sin iniciar» o «Borrador» lo que escribió en otro
+  paralelo suyo ya iniciado. Solo se copian los campos que llena el docente; cada sílabo
+  conserva su envío, revisión y firmas. Un sílabo ya enviado no se sobrescribe.
 
 ## IA en el ciclo
 
