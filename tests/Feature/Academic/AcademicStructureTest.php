@@ -600,7 +600,7 @@ class AcademicStructureTest extends TestCase
         $parallel->refresh();
         $this->assertSame('D', $parallel->codigo);
         $this->assertSame('nocturna', $parallel->jornada);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'academico.paralelo.actualizacion', 'recurso_id' => $parallel->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.paralelo.actualizacion', 'recurso_id' => $parallel->id]);
 
     }
 
@@ -619,7 +619,7 @@ class AcademicStructureTest extends TestCase
 
         $this->assertDatabaseMissing('paralelos', ['id' => $free->id]);
         $this->assertDatabaseHas('paralelos', ['id' => $withTeacher->id]);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'academico.paralelo.eliminacion', 'recurso_id' => $free->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.paralelo.eliminacion', 'recurso_id' => $free->id]);
     }
 
     public function test_coordinator_cannot_change_a_parallel_of_another_career(): void

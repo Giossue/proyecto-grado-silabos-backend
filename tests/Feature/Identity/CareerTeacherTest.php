@@ -60,7 +60,7 @@ class CareerTeacherTest extends TestCase
         $this->assertSame($user->nombre, $user->fresh()->nombre);
         $this->assertSame(1, $user->roleAssignments()->count());
         Mail::assertQueued(ManagedUserActivationMail::class, 1);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'usuario.docente_incorporado', 'actor_usuario_id' => $this->coordinator->id, 'recurso_id' => $user->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.docente_incorporado', 'usuario_id' => $this->coordinator->id, 'recurso_id' => $user->id]);
     }
 
     public function test_coordinator_can_create_a_teacher_through_the_api_contract(): void

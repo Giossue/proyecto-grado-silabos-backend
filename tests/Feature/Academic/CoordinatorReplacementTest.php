@@ -60,7 +60,7 @@ class CoordinatorReplacementTest extends TestCase
         $this->assertDatabaseHas('asignaciones_rol', ['usuario_id' => $incoming->id, 'rol' => RoleCode::Coordinator->value, 'carrera_id' => $this->career->id, 'asignacion_rol_activa' => true]);
         $this->assertSame(2, RoleAssignment::query()->effective()->where('usuario_id', $incoming->id)->count());
         $this->assertTrue($this->coordinator->fresh()->activo);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'academico.coordinacion.reemplazada', 'recurso_id' => $this->career->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.coordinacion.reemplazada', 'recurso_id' => $this->career->id]);
         $this->assertNotified($incoming->id, 'coordinacion.asignada', "Se le asignó la coordinación de {$this->career->nombre}.");
         $this->assertNotNotified($incoming->id, 'usuario.rol_asignado');
 

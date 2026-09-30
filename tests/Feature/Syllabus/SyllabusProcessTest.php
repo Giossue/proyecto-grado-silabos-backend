@@ -54,7 +54,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->assertTrue(Schema::hasColumns('convocatorias_carreras', ['id', 'carrera_id', 'convocatoria_universidad_id', 'estado_convocatoria_carrera']));
         $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['id', 'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado_convocatoria_universidad']));
-        foreach (['silabos', 'convocatorias_universidad', 'artefactos_exportacion', 'historial_ia'] as $table) {
+        foreach (['silabos', 'convocatorias_universidad', 'artefactos_exportacion', 'mensajes_ia'] as $table) {
             $this->assertFalse(Schema::hasColumn($table, 'plantilla_id'));
         }
         $this->assertFalse(Schema::hasColumn('convocatorias_carreras', 'creado_en'));
@@ -91,7 +91,7 @@ class SyllabusProcessTest extends TestCase
         $process = SyllabusProcess::query()->firstOrFail();
         $this->assertSame('abierto', $process->estado);
         $this->assertSame($process->academicPeriod->codigo, $process->nombre);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'proceso_silabos.creado', 'recurso_id' => $process->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'proceso_silabos.creado', 'recurso_id' => $process->id]);
 
         $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.index'))
             ->assertOk()
@@ -104,11 +104,11 @@ class SyllabusProcessTest extends TestCase
             ->assertJsonPath('catalogs.periods.0.institutional_process.id', $process->id)
             ->assertJsonPath('catalogs.periods.0.institutional_process.state', SyllabusProcess::STATE_OPEN);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'proceso_silabos.creado',
+            'accion' => 'proceso_silabos.creado',
             'recurso_id' => $process->id,
         ]);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'proceso_silabos.abierto',
+            'accion' => 'proceso_silabos.abierto',
             'recurso_id' => $process->id,
         ]);
     }
@@ -144,7 +144,7 @@ class SyllabusProcessTest extends TestCase
             $this->assertDatabaseMissing('silabos', ['id' => $syllabusId]);
         }
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'proceso_silabos.eliminado',
+            'accion' => 'proceso_silabos.eliminado',
             'recurso_id' => $process->id,
         ]);
     }
@@ -218,7 +218,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->assertDatabaseCount('convocatorias_universidad', 0);
         $this->assertDatabaseMissing('eventos_auditoria', [
-            'accion_evento_auditoria' => 'proceso_silabos.creado',
+            'accion' => 'proceso_silabos.creado',
         ]);
     }
 
@@ -406,7 +406,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->assertSame('pausado', $process->fresh()->estado);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'proceso_silabos.pausado',
+            'accion' => 'proceso_silabos.pausado',
             'recurso_id' => $process->id,
         ]);
     }
@@ -532,7 +532,7 @@ class SyllabusProcessTest extends TestCase
 
         $notice = JobExecution::query()
             ->where('tipo', 'notificacion.interna')
-            ->whereJsonContains('entrada_ejecucion_trabajo', ['tipo_evento' => 'silabo.regenerado'])
+            ->whereJsonContains('datos_entrada', ['tipo_evento' => 'silabo.regenerado'])
             ->sole();
         $this->assertSame('carrera', $notice->tipo_recurso);
         $this->assertSame($convocation->carrera_id, $notice->recurso_id);
@@ -580,7 +580,7 @@ class SyllabusProcessTest extends TestCase
             ])
             ->assertJsonValidationErrors('requirement_id');
         $this->assertFalse(JobExecution::query()
-            ->whereJsonContains('entrada_ejecucion_trabajo', ['tipo_evento' => 'silabo.regenerado'])->exists());
+            ->whereJsonContains('datos_entrada', ['tipo_evento' => 'silabo.regenerado'])->exists());
     }
 
     public function test_cosmetic_curriculum_changes_refresh_the_card_without_purging(): void

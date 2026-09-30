@@ -93,7 +93,7 @@ class DocumentOperationsTest extends TestCase
         ])->assertSuccessful();
 
         $this->assertDatabaseCount('artefactos_exportacion', 1);
-        $this->assertDatabaseCount('ejecuciones_trabajo', 1);
+        $this->assertDatabaseCount('trabajos_en_cola', 1);
         Queue::assertPushed(GenerateSyllabusExportJob::class, 1);
         $artifact = ExportArtifact::query()->firstOrFail();
         $this->assertSame($revision->id, $artifact->revision_silabo_id);
@@ -199,9 +199,9 @@ class DocumentOperationsTest extends TestCase
         );
         $this->assertDatabaseCount('objetos_almacenados', 2);
         $this->assertSame($docxBytes, Storage::disk('private')->get($docx->ruta_interna));
-        $this->assertDatabaseHas('notificaciones_internas', [
+        $this->assertDatabaseHas('notificaciones', [
             'usuario_id' => $this->teacher->id,
-            'tipo_notificacion_interna' => 'documento.exportacion.completada',
+            'tipo_notificacion' => 'documento.exportacion.completada',
         ]);
 
         $this->actingAsTeacher()
@@ -249,8 +249,8 @@ class DocumentOperationsTest extends TestCase
         $this->assertSame(3, $execution->intentos);
         $this->assertStringNotContainsString('SECRET', (string) $execution->mensaje_error);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'documento.exportacion_fallida',
-            'resultado_evento_auditoria' => 'fallido',
+            'accion' => 'documento.exportacion_fallida',
+            'resultado' => 'fallido',
         ]);
         $this->actingAsAdministrator()
             ->getJson(route('api.v1.admin.job-executions.index', ['q' => 'Generación documental']))
@@ -302,7 +302,7 @@ class DocumentOperationsTest extends TestCase
         $job->handle();
         $job->handle();
 
-        $this->assertDatabaseCount('notificaciones_internas', 1);
+        $this->assertDatabaseCount('notificaciones', 1);
         $notification = InternalNotification::query()->firstOrFail();
         $this->assertSame($this->coordinator->id, $notification->usuario_id);
         $this->assertSame('completada', $first->fresh()->estado);
@@ -326,16 +326,16 @@ class DocumentOperationsTest extends TestCase
         Mail::assertNothingSent();
 
         try {
-            DB::transaction(fn () => DB::table('notificaciones_internas')
-                ->where('id', $notification->id)->update(['titulo_notificacion_interna' => 'Alterado']));
+            DB::transaction(fn () => DB::table('notificaciones')
+                ->where('id', $notification->id)->update(['titulo_notificacion' => 'Alterado']));
             $this->fail('PostgreSQL permitió alterar una notificación entregada.');
         } catch (QueryException) {
             $this->assertSame('Sílabo aprobado', $notification->fresh()->titulo);
         }
         try {
-            DB::transaction(fn () => DB::table('ejecuciones_trabajo')
+            DB::transaction(fn () => DB::table('trabajos_en_cola')
                 ->where('id', $first->id)
-                ->update(['entrada_ejecucion_trabajo' => json_encode(['destinatarios_ids' => []])]));
+                ->update(['datos_entrada' => json_encode(['destinatarios_ids' => []])]));
             $this->fail('PostgreSQL permitió alterar la entrada del trabajo.');
         } catch (QueryException) {
             $this->assertSame([$this->coordinator->id], $first->fresh()->entrada['destinatarios_ids']);
@@ -428,7 +428,7 @@ class DocumentOperationsTest extends TestCase
             ->assertJsonPath('active_role.id', $this->teacherContext->id);
         $this->assertNotNull($notification->fresh()->leido_en);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'rol_activo.seleccionado',
+            'accion' => 'rol_activo.seleccionado',
             'recurso_id' => $this->teacherContext->id,
         ]);
     }
@@ -497,7 +497,7 @@ class DocumentOperationsTest extends TestCase
         }
         try {
             DB::transaction(fn () => DB::table('eventos_auditoria')
-                ->where('id', $event->id)->update(['resultado_evento_auditoria' => 'fallida']));
+                ->where('id', $event->id)->update(['resultado' => 'fallida']));
             $this->fail('PostgreSQL permitió modificar auditoría histórica.');
         } catch (QueryException) {
             $this->assertSame('exito', $event->fresh()->resultado);

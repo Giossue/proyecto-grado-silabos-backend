@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property string $id
- * @property string $sesion_id
- * @property array<string, mixed> $mensaje_ia
+ * @property string $conversacion_id
+ * @property array<string, mixed> $contenido_mensaje
  * @property CarbonImmutable $enviado_en
  */
 class AiHistoryEntry extends Model
@@ -21,15 +21,15 @@ class AiHistoryEntry extends Model
 
     public $timestamps = false;
 
-    protected $table = 'historial_ia';
+    protected $table = 'mensajes_ia';
 
     /** @var list<string> */
-    protected $fillable = ['id', 'sesion_id', 'mensaje_ia'];
+    protected $fillable = ['id', 'conversacion_id', 'contenido_mensaje'];
 
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['mensaje_ia' => 'array', 'enviado_en' => 'immutable_datetime'];
+        return ['contenido_mensaje' => 'array', 'enviado_en' => 'immutable_datetime'];
     }
 
     public static function chatSession(string $syllabusId, string $userId): string
@@ -43,7 +43,7 @@ class AiHistoryEntry extends Model
      */
     public function scopeSession(Builder $query, string $session): Builder
     {
-        return $query->where('sesion_id', $session);
+        return $query->where('conversacion_id', $session);
     }
 
     /**
@@ -52,17 +52,17 @@ class AiHistoryEntry extends Model
      */
     public function scopeOfType(Builder $query, string $type): Builder
     {
-        return $query->where('mensaje_ia->tipo', $type);
+        return $query->where('contenido_mensaje->tipo', $type);
     }
 
     public function type(): string
     {
-        return (string) ($this->mensaje_ia['tipo'] ?? '');
+        return (string) ($this->contenido_mensaje['tipo'] ?? '');
     }
 
     public function state(): string
     {
-        return (string) ($this->mensaje_ia['estado'] ?? '');
+        return (string) ($this->contenido_mensaje['estado'] ?? '');
     }
 
     public function isOpen(): bool
@@ -72,7 +72,7 @@ class AiHistoryEntry extends Model
 
     public function input(string $key): mixed
     {
-        $input = $this->mensaje_ia['entrada'] ?? [];
+        $input = $this->contenido_mensaje['entrada'] ?? [];
 
         return is_array($input) ? ($input[$key] ?? null) : null;
     }
@@ -86,19 +86,19 @@ class AiHistoryEntry extends Model
 
     public function part(string $key): mixed
     {
-        return $this->mensaje_ia[$key] ?? null;
+        return $this->contenido_mensaje[$key] ?? null;
     }
 
     /** @param array<string, mixed> $changes */
     public function amend(array $changes): void
     {
-        $this->update(['mensaje_ia' => array_replace($this->mensaje_ia, $changes)]);
+        $this->update(['contenido_mensaje' => array_replace($this->contenido_mensaje, $changes)]);
     }
 
     /** @return list<array<string, mixed>> */
     public function recommendations(): array
     {
-        $items = $this->mensaje_ia['recomendaciones'] ?? [];
+        $items = $this->contenido_mensaje['recomendaciones'] ?? [];
 
         return is_array($items) ? array_values(array_filter($items, 'is_array')) : [];
     }

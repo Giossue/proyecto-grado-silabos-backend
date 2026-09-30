@@ -53,11 +53,11 @@ class ManagedUserUpdateTest extends TestCase
         $this->assertSame('docente@silabos.test', $this->teacher->correo_electronico);
         $this->assertFalse($this->teacher->activo);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'usuario.perfil_actualizado',
+            'accion' => 'usuario.perfil_actualizado',
             'recurso_id' => $this->teacher->id,
         ]);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'usuario.desactivado',
+            'accion' => 'usuario.desactivado',
             'recurso_id' => $this->teacher->id,
         ]);
     }
@@ -101,7 +101,7 @@ class ManagedUserUpdateTest extends TestCase
             'asignacion_rol_activa' => true,
         ]);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'usuario.rol_asignado',
+            'accion' => 'usuario.rol_asignado',
             'recurso_id' => $this->coordinator->id,
         ]);
     }
@@ -123,7 +123,7 @@ class ManagedUserUpdateTest extends TestCase
         $this->assertTrue($this->teacher->activo);
         $this->assertSame($assignmentsBefore, $this->teacher->roleAssignments()->count());
         $this->assertDatabaseMissing('eventos_auditoria', [
-            'accion_evento_auditoria' => 'usuario.activado',
+            'accion' => 'usuario.activado',
             'recurso_id' => $this->teacher->id,
         ]);
     }

@@ -94,7 +94,7 @@ it('I-78 usa nombres explícitos para todos los atributos genéricos de dominio'
         'semanas_lectivas', 'numero_ciclos', 'creditos', 'horas_totales',
         'orden_en_ciclo', 'unidad_organizacion_curricular', 'mapeo_documento',
         'configuracion', 'datos', 'advertencias', 'extracto', 'decision',
-        'fotografia', 'justificacion', 'accion', 'metadatos', 'resultado', 'mensaje',
+        'fotografia', 'justificacion', 'metadatos', 'mensaje',
     ];
 
     $columnas = DB::table('information_schema.columns')
@@ -203,4 +203,32 @@ it('I-62 persiste la programación de asignaturas con nombres e invariante propi
         ->toContain('programaciones_asignatura_asignatura_id_foreign')
         ->toContain('programaciones_asignatura_id_not_null')
         ->not->toContain('ofertas_academicas_id_not_null');
+});
+
+it('I-176 nombra con claridad trabajos, notificaciones, auditoría y mensajes de IA', function () {
+    expect(Schema::hasTable('trabajos_en_cola'))->toBeTrue()
+        ->and(Schema::hasTable('ejecuciones_trabajo'))->toBeFalse()
+        ->and(Schema::hasTable('notificaciones'))->toBeTrue()
+        ->and(Schema::hasTable('notificaciones_internas'))->toBeFalse()
+        ->and(Schema::hasTable('mensajes_ia'))->toBeTrue()
+        ->and(Schema::hasTable('historial_ia'))->toBeFalse()
+        ->and(Schema::hasColumns('trabajos_en_cola', ['tipo_trabajo', 'estado_trabajo', 'resultado_trabajo', 'datos_entrada', 'clave_solicitud']))->toBeTrue()
+        ->and(Schema::hasColumns('notificaciones', ['tipo_notificacion', 'titulo_notificacion', 'mensaje_notificacion', 'clave_unica']))->toBeTrue()
+        ->and(Schema::hasColumns('eventos_auditoria', ['usuario_id', 'accion', 'resultado', 'detalles']))->toBeTrue()
+        ->and(Schema::hasColumns('mensajes_ia', ['conversacion_id', 'contenido_mensaje']))->toBeTrue();
+
+    $restricciones = collect(DB::select(
+        "SELECT conname FROM pg_constraint
+         WHERE conrelid IN ('trabajos_en_cola'::regclass, 'notificaciones'::regclass, 'eventos_auditoria'::regclass, 'mensajes_ia'::regclass)",
+    ))->pluck('conname');
+
+    expect($restricciones)
+        ->toContain('trabajos_en_cola_pkey')
+        ->toContain('trabajos_en_cola_clave_solicitud_unique')
+        ->toContain('notificaciones_usuario_id_foreign')
+        ->toContain('eventos_auditoria_usuario_id_foreign')
+        ->toContain('mensajes_ia_contenido_mensaje_check')
+        ->and($restricciones->filter(fn (string $nombre): bool => str_starts_with($nombre, 'ejecuciones_trabajo_')
+            || str_starts_with($nombre, 'notificaciones_internas_')
+            || str_starts_with($nombre, 'historial_ia_'))->all())->toBe([]);
 });

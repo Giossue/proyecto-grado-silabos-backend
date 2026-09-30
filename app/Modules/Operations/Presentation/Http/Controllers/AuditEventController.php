@@ -32,7 +32,7 @@ class AuditEventController extends Controller
         if ($search !== '') {
             $escaped = addcslashes($search, '%_\\');
             $query->where(fn ($builder) => $builder
-                ->where('accion_evento_auditoria', 'ilike', "%{$escaped}%")
+                ->where('accion', 'ilike', "%{$escaped}%")
                 ->orWhereHas('actor', fn ($actor) => $actor->where('nombre', 'ilike', "%{$escaped}%")));
         }
         if ($from !== '') {

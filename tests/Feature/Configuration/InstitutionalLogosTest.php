@@ -45,7 +45,7 @@ class InstitutionalLogosTest extends TestCase
             ->assertSuccessful();
 
         Storage::disk('private')->assertExists('logos/institucion.png');
-        $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'institucion.logo_actualizado']);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'institucion.logo_actualizado']);
 
         $this->get(route('logos.institution'))
             ->assertOk()
@@ -154,7 +154,7 @@ class InstitutionalLogosTest extends TestCase
         $this->assertStringStartsWith("logos/facultades/{$faculty->id}/", $logo->ruta_interna);
         $this->assertStoredPngHasSize($logo->ruta_interna, 600, 180);
         $this->assertDatabaseHas('eventos_auditoria', [
-            'accion_evento_auditoria' => 'academico.facultad.actualizacion',
+            'accion' => 'academico.facultad.actualizacion',
             'recurso_id' => $faculty->id,
             'asignacion_rol_id' => $this->administratorContext->id,
         ]);

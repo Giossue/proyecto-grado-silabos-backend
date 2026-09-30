@@ -31,17 +31,18 @@ class JobExecution extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'tipo' => 'tipo_ejecucion_trabajo',
-        'estado' => 'estado_ejecucion_trabajo',
-        'resultado' => 'resultado_ejecucion_trabajo',
-        'entrada' => 'entrada_ejecucion_trabajo',
+        'tipo' => 'tipo_trabajo',
+        'estado' => 'estado_trabajo',
+        'resultado' => 'resultado_trabajo',
+        'entrada' => 'datos_entrada',
+        'clave_idempotencia' => 'clave_solicitud',
     ];
 
     public const CREATED_AT = 'encolado_en';
 
     public const UPDATED_AT = null;
 
-    protected $table = 'ejecuciones_trabajo';
+    protected $table = 'trabajos_en_cola';
 
     /** @var list<string> */
     protected $fillable = [
