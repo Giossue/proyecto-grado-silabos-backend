@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property string $id
- * @property string $conversacion_id
+ * @property string $silabo_id
+ * @property string $usuario_id
  * @property array<string, mixed> $contenido_mensaje
  * @property CarbonImmutable $enviado_en
  */
@@ -24,7 +25,7 @@ class AiHistoryEntry extends Model
     protected $table = 'mensajes_ia';
 
     /** @var list<string> */
-    protected $fillable = ['id', 'conversacion_id', 'contenido_mensaje'];
+    protected $fillable = ['id', 'silabo_id', 'usuario_id', 'contenido_mensaje'];
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -32,18 +33,20 @@ class AiHistoryEntry extends Model
         return ['contenido_mensaje' => 'array', 'enviado_en' => 'immutable_datetime'];
     }
 
-    public static function chatSession(string $syllabusId, string $userId): string
+    /** @return array{silabo_id: string, usuario_id: string} */
+    public static function chatSession(string $syllabusId, string $userId): array
     {
-        return "silabo:{$syllabusId}:usuario:{$userId}";
+        return ['silabo_id' => $syllabusId, 'usuario_id' => $userId];
     }
 
     /**
      * @param  Builder<AiHistoryEntry>  $query
+     * @param  array{silabo_id: string, usuario_id: string}  $session
      * @return Builder<AiHistoryEntry>
      */
-    public function scopeSession(Builder $query, string $session): Builder
+    public function scopeSession(Builder $query, array $session): Builder
     {
-        return $query->where('conversacion_id', $session);
+        return $query->where($session);
     }
 
     /**

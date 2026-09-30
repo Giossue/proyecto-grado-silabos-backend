@@ -38,7 +38,7 @@ class SendSyllabusAiMessage
                     ->firstOrFail();
             }
             $question = AiHistoryEntry::query()->create([
-                'conversacion_id' => $session,
+                ...$session,
                 'contenido_mensaje' => [
                     'tipo' => 'mensaje',
                     'rol' => 'usuario',
@@ -77,7 +77,7 @@ class SendSyllabusAiMessage
             ]);
             $answer = AiHistoryEntry::query()->create([
                 'id' => $answerId,
-                'conversacion_id' => $session,
+                ...$session,
                 'contenido_mensaje' => [
                     'tipo' => 'mensaje',
                     'rol' => 'asistente',

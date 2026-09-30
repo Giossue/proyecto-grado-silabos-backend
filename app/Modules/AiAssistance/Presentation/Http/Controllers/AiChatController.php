@@ -77,7 +77,7 @@ class AiChatController extends Controller
         $last = AiHistoryEntry::query()->session($session)->latest('enviado_en')->first();
         if ($last !== null && $last->type() !== 'ocultamiento') {
             AiHistoryEntry::query()->create([
-                'conversacion_id' => $session,
+                ...$session,
                 'contenido_mensaje' => [
                     'tipo' => 'ocultamiento',
                     'estado' => 'registrada',

@@ -164,9 +164,7 @@ final class InProgressWork
     {
         DB::statement("SET LOCAL app.reinicio_institucional = 'on'");
         $revisionIds = DB::table('revisiones_silabo')->whereIn('silabo_id', $syllabusIds)->pluck('id')->all();
-        foreach ($syllabusIds as $syllabusId) {
-            DB::table('mensajes_ia')->where('conversacion_id', 'like', "silabo:{$syllabusId}:%")->delete();
-        }
+        DB::table('mensajes_ia')->whereIn('silabo_id', $syllabusIds)->delete();
 
         $exports = DB::table('exportaciones_silabo')
             ->whereIn('revision_silabo_id', $revisionIds)

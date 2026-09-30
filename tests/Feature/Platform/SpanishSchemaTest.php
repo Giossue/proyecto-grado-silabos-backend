@@ -241,7 +241,7 @@ it('I-176 nombra con claridad trabajos, notificaciones, auditoría y mensajes de
         ->and(Schema::hasColumns('trabajos_en_cola', ['tipo_trabajo', 'estado_trabajo', 'resultado_trabajo', 'datos_entrada', 'clave_solicitud']))->toBeTrue()
         ->and(Schema::hasColumns('notificaciones', ['tipo_notificacion', 'titulo_notificacion', 'mensaje_notificacion', 'clave_unica']))->toBeTrue()
         ->and(Schema::hasColumns('eventos_auditoria', ['usuario_id', 'accion', 'resultado', 'detalles']))->toBeTrue()
-        ->and(Schema::hasColumns('mensajes_ia', ['conversacion_id', 'contenido_mensaje']))->toBeTrue();
+        ->and(Schema::hasColumns('mensajes_ia', ['silabo_id', 'usuario_id', 'contenido_mensaje']))->toBeTrue();
 
     $restricciones = collect(DB::select(
         "SELECT conname FROM pg_constraint

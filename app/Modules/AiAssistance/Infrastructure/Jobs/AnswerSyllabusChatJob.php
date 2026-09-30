@@ -59,7 +59,7 @@ class AnswerSyllabusChatJob implements ShouldQueue
         }
         $question = AiHistoryEntry::query()->findOrFail($message->inputString('respuesta_a_id'))->input('contenido');
         $completed = AiHistoryEntry::query()
-            ->session($message->conversacion_id)
+            ->session(['silabo_id' => $message->silabo_id, 'usuario_id' => $message->usuario_id])
             ->ofType('mensaje')
             ->whereKeyNot($message->id)
             ->where('contenido_mensaje->estado', 'completado')
