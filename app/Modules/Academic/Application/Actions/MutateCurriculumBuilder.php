@@ -86,8 +86,12 @@ class MutateCurriculumBuilder
             $requirement = SubjectRequirement::query()->firstOrCreate([
                 'asignatura_id' => $data['subject_id'],
                 'requisito_id' => $data['requirement_id'],
-                'tipo' => $data['type'],
-            ]);
+            ], ['tipo' => $data['type']]);
+            if ($requirement->tipo !== $data['type']) {
+                throw ValidationException::withMessages([
+                    'requirement_id' => 'Esa materia ya está registrada con otro tipo de requisito.',
+                ]);
+            }
             if (! $requirement->wasRecentlyCreated) {
                 return $requirement;
             }
@@ -166,7 +170,6 @@ class MutateCurriculumBuilder
                 'code' => $subject->codigo_asignatura,
                 'name' => $subject->nombre,
             ];
-            $subject->learningOutcomeBase()->delete();
             CurricularValue::query()->where('asignatura_id', $subject->id)->delete();
             $subject->delete();
             $this->record($actor, $role, $request, 'academico.asignatura.eliminacion', 'asignatura', $subjectId, $metadata);

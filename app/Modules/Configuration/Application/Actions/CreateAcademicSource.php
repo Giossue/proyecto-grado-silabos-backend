@@ -32,7 +32,6 @@ class CreateAcademicSource
             $source = AcademicSource::query()->create([
                 'carrera_id' => $activeRole->carrera_id,
                 'nombre' => $data['nombre'],
-                'descripcion' => $data['description'] ?? null,
                 'activo' => true,
             ]);
 

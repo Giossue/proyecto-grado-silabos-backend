@@ -11,7 +11,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectLearningOutcomeBase;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
@@ -62,7 +61,6 @@ class CurricularImportsTest extends TestCase
 
         return AcademicSource::query()->create([
             'carrera_id' => $this->subject->carrera_id, 'nombre' => $name, 'activo' => true,
-            'contenido' => $text,
             'documento' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'attrs' => ['sourcePage' => 141], 'content' => [['type' => 'text', 'text' => $text]]]]],
         ]);
     }
@@ -123,59 +121,11 @@ class CurricularImportsTest extends TestCase
         $this->assertDatabaseCount('valores_curriculares', 1);
     }
 
-    public function test_assistant_shows_effective_outcomes_and_replaces_legacy_fallback_without_deleting_it(): void
-    {
-        $base = SubjectLearningOutcomeBase::query()->create([
-            'asignatura_id' => $this->subject->id, 'nombre_fuente' => 'Registro anterior',
-            'localizador_fuente' => 'Página 12', 'confirmado_por' => $this->coordinator->id,
-            'confirmado_en' => now(),
-        ]);
-        $base->outcomes()->create(['texto_resultado' => 'Resultado manual anterior.', 'posicion_resultado' => 1]);
-        $foreign = $this->otherSubject();
-        $foreignBase = SubjectLearningOutcomeBase::query()->create([
-            'asignatura_id' => $foreign->id, 'nombre_fuente' => 'Fuente de otra carrera',
-            'localizador_fuente' => 'Página 90', 'confirmado_por' => $this->coordinator->id,
-            'confirmado_en' => now(),
-        ]);
-        $foreignBase->outcomes()->create(['texto_resultado' => 'Resultado ajeno.', 'posicion_resultado' => 1]);
-
-        $index = route('api.v1.coordination.curricular-imports.index');
-        $this->getJson($index)->assertOk()->assertJsonCount(1, 'current_values')
-            ->assertJsonPath('current_values.0.origin', 'anterior')
-            ->assertJsonPath('current_values.0.value.0', 'Resultado manual anterior.')
-            ->assertJsonPath('current_values.0.evidence.0.source_name', 'Registro anterior')
-            ->assertJsonPath('current_values.0.evidence.0.quote', null);
-
-        $proposal = [
-            'definitions' => [['key' => 'resultados_aprendizaje', 'label' => 'Resultados de aprendizaje', 'type' => 'lista']],
-            'values' => [$this->row('resultados_aprendizaje', ['Evalúa la calidad del software.'])], 'issues' => [],
-        ];
-        $import = $this->staged($proposal);
-        $this->getJson($this->url($import))->assertOk()
-            ->assertJsonPath('proposal.values.0.change', 'replace')
-            ->assertJsonPath('proposal.values.0.current_value.0', 'Resultado manual anterior.');
-        $stale = $this->payload($import);
-        $base->outcomes()->firstOrFail()->update(['texto_resultado' => 'Resultado manual corregido.']);
-        $this->postJson($this->url($import).'/apply', $stale)->assertConflict()
-            ->assertJsonPath('code', 'conflicto_importacion_curricular');
-        $this->getJson($this->url($import))->assertJsonPath('proposal.values.0.current_value.0', 'Resultado manual corregido.');
-        $this->postJson($this->url($import).'/apply', $this->payload($import))->assertOk();
-
-        $this->getJson($index)->assertOk()->assertJsonCount(1, 'current_values')
-            ->assertJsonPath('current_values.0.origin', 'importacion')
-            ->assertJsonPath('current_values.0.value.0', 'Evalúa la calidad del software.')
-            ->assertJsonPath('current_values.0.evidence.0.source_name', 'Proyecto de carrera')
-            ->assertJsonPath('current_values.0.evidence.0.quote', 'Evalúa la calidad del software.');
-        $this->assertDatabaseHas('bases_resultados_asignatura', ['id' => $base->id]);
-        $this->assertDatabaseHas('bases_resultados_asignatura', ['id' => $foreignBase->id]);
-    }
-
     public function test_previous_manual_learning_outcomes_routes_are_retired(): void
     {
         $path = '/api/v1/coordination/academic/subjects/'.$this->subject->id.'/learning-outcomes';
         $this->getJson($path)->assertNotFound();
         $this->putJson($path, ['outcomes' => [['text' => 'No debe guardarse.']]])->assertNotFound();
-        $this->assertDatabaseCount('bases_resultados_asignatura', 0);
     }
 
     public function test_requires_explicit_confirmation_fingerprint_and_known_selected_ids(): void
@@ -384,7 +334,7 @@ class CurricularImportsTest extends TestCase
     public function test_evidence_requires_nonempty_complete_normalized_words(): void
     {
         $text = 'La materia tiene 100 horas.';
-        $this->source->update(['contenido' => $text, 'documento' => ['type' => 'doc', 'content' => [
+        $this->source->update(['documento' => ['type' => 'doc', 'content' => [
             ['type' => 'paragraph', 'attrs' => ['sourcePage' => 141], 'content' => [['type' => 'text', 'text' => $text]]],
         ]]]);
         foreach (['10', '---'] as $quote) {

@@ -7,13 +7,10 @@ use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\Contracts\CurricularExtractionGateway;
 use App\Modules\Academic\Infrastructure\Access\AcademicRoleEligibility;
 use App\Modules\Academic\Infrastructure\Gateways\HostedCurricularExtractionGateway;
-use App\Modules\AiAssistance\Domain\Contracts\AcademicSourceEmbeddingGateway;
-use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiAnalysisGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAcademicSourceEmbeddingGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAnalysisGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAnalysisGateway;
+use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiChatGateway;
+use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiChatGateway;
+use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiChatGateway;
 use App\Modules\Configuration\Application\Contracts\AcademicSourceFigureCropper;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceDocumentNormalizer;
 use App\Modules\Configuration\Domain\Contracts\AcademicSourceOcrGateway;
@@ -55,15 +52,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CurricularExtractionGateway::class, HostedCurricularExtractionGateway::class);
         $this->app->bind(RoleEligibility::class, AcademicRoleEligibility::class);
         $this->app->bind(DocumentRenderer::class, PhpWordDocumentRenderer::class);
-        $this->app->bind(AiAnalysisGateway::class, DisabledAiAnalysisGateway::class);
         $this->app->bind(AiChatGateway::class, function (): AiChatGateway {
             return match ((string) config('ai.driver')) {
-                'baseline' => app(BaselineAiAnalysisGateway::class),
-                'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiAnalysisGateway::class),
-                default => app(DisabledAiAnalysisGateway::class),
+                'baseline' => app(BaselineAiChatGateway::class),
+                'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiChatGateway::class),
+                default => app(DisabledAiChatGateway::class),
             };
         });
-        $this->app->bind(AcademicSourceEmbeddingGateway::class, DisabledAcademicSourceEmbeddingGateway::class);
         $this->app->bind(AcademicSourceDocumentNormalizer::class, function (): AcademicSourceDocumentNormalizer {
             return (bool) config('ai.source_normalization.enabled')
                 && strtolower((string) config('ai.source_normalization.driver')) === 'deepseek'

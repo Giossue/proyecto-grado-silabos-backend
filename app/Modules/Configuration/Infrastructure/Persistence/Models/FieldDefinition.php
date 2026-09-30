@@ -18,9 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $heredado
  * @property string|null $origen_maestro
  * @property bool $editable_docente
- * @property bool $ia_habilitada
  * @property list<mixed>|null $opciones
- * @property string|null $marcador_documento
  * @property array<string, mixed>|null $mostrar_si
  * @property int $posicion
  * @property-read TemplateBlock|null $block
@@ -36,6 +34,10 @@ class FieldDefinition extends Model
         'tipo' => 'tipo_definicion_campo',
         'opciones' => 'opciones_definicion_campo',
         'posicion' => 'posicion_definicion_campo',
+        'heredado' => 'heredado_definicion_campo',
+        'origen_maestro' => 'origen_maestro_definicion_campo',
+        'editable_docente' => 'editable_docente_definicion_campo',
+        'mostrar_si' => 'mostrar_si_definicion_campo',
     ];
 
     public $timestamps = false;
@@ -53,9 +55,7 @@ class FieldDefinition extends Model
         'heredado',
         'origen_maestro',
         'editable_docente',
-        'ia_habilitada',
         'opciones',
-        'marcador_documento',
         'mostrar_si',
         'posicion',
     ];
@@ -66,7 +66,6 @@ class FieldDefinition extends Model
         return [
             'heredado' => 'boolean',
             'editable_docente' => 'boolean',
-            'ia_habilitada' => 'boolean',
             'opciones' => 'array',
             'mostrar_si' => 'array',
             'posicion' => 'integer',

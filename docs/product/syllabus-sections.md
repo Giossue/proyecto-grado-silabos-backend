@@ -58,5 +58,4 @@ son una cantidad fija del formato.
 4. Repetibles definen clave/orden y columnas accesibles.
 5. Valores heredados apuntan a maestros existentes.
 6. Permisos no permiten editar evidencia o campos institucionales.
-7. Marcadores DOCX obligatorios tienen correspondencia.
-8. La previsualización cubre vacío, valores largos y máximos representativos.
+7. La previsualización cubre vacío, valores largos y máximos representativos.

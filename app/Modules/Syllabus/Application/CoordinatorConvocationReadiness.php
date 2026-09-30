@@ -72,7 +72,7 @@ final class CoordinatorConvocationReadiness
                 ->whereHas('subject', fn (Builder $subject) => $subject->where('carrera_id', $careerId)));
         $parallelTotal = (clone $parallels)->count();
         $parallelsWithTeacher = (clone $parallels)->whereHas('teacherAssignments', fn (Builder $assignment) => $assignment
-            ->where('asignaciones_paralelo.docente_paralelo_activo', true)
+            ->where('asignaciones_paralelo.asignacion_paralelo_activa', true)
             ->whereHas('roleAssignment', fn (Builder $role) => $role
                 ->where('asignaciones_rol.asignacion_rol_activa', true)
                 ->where('asignaciones_rol.rol', RoleCode::Teacher->value)

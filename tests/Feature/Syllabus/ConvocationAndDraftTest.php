@@ -7,7 +7,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularConcept;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectLearningOutcomeBase;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
@@ -86,7 +85,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertArrayNotHasKey('code', data_get($syllabus->contexto_academico, 'curriculum'));
         $this->assertNotNull($syllabus->parallel);
         $this->assertCount(1, $syllabus->currentTeachers()->get());
-        $master = $syllabus->values()->where('heredado', true)->firstOrFail();
+        $master = $syllabus->values()->whereHas('field', fn ($field) => $field->where('heredado', true))->firstOrFail();
         $this->assertSame('Arquitectura de Software', $master->valor['nombre']);
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion_evento_auditoria' => 'convocatoria.abierta',
@@ -127,26 +126,23 @@ class ConvocationAndDraftTest extends TestCase
     public function test_confirmed_curricular_outcomes_are_frozen_with_the_syllabus_and_resolved_in_order(): void
     {
         $scheduled = ScheduledSubject::query()->firstOrFail();
-        $base = SubjectLearningOutcomeBase::query()->create([
-            'asignatura_id' => $scheduled->asignatura_id,
-            'nombre_fuente' => 'Proyecto de carrera de prueba',
-            'localizador_fuente' => 'Página 12, ficha de la asignatura',
-            'confirmado_por' => $this->coordinator->id,
-            'confirmado_en' => now(),
+        $concept = CurricularConcept::query()->firstOrCreate(['clave_concepto' => 'resultados_aprendizaje'], [
+            'etiqueta_concepto' => 'Resultados de aprendizaje', 'tipo_concepto' => 'lista', 'columnas_concepto' => null,
         ]);
-        $base->outcomes()->create(['texto_resultado' => 'Compara alternativas de diseño.', 'posicion_resultado' => 1]);
-        $base->outcomes()->create(['texto_resultado' => 'Justifica una arquitectura.', 'posicion_resultado' => 2]);
+        $value = CurricularValue::query()->updateOrCreate(['concepto_id' => $concept->id, 'asignatura_id' => $scheduled->asignatura_id], [
+            'carrera_id' => $scheduled->subject->carrera_id,
+            'valor_curricular' => ['Compara alternativas de diseño.', 'Justifica una arquitectura.'],
+            'evidencia_curricular' => [['source_name' => 'Proyecto de carrera de prueba', 'locator' => 'Página 12, ficha de la asignatura', 'quote' => null]],
+            'confirmado_por' => $this->coordinator->id, 'confirmado_en' => now(),
+        ]);
 
         $syllabus = $this->openConvocationAndGetSyllabus();
         $snapshot = app(SyllabusSnapshot::class)->build($syllabus);
         $this->assertSame("1. Compara alternativas de diseño.\n2. Justifica una arquitectura.", $snapshot['template_variables']['resultados_aprendizaje_asignatura']);
         $this->assertSame('Proyecto de carrera de prueba', $snapshot['template_variables']['fuente_resultados_aprendizaje']);
-        $this->assertSame('Página 12, ficha de la asignatura', $snapshot['template_variables']['ubicacion_resultados_aprendizaje']);
-        $this->assertSame($this->coordinator->id, data_get($snapshot, 'academic_context.subject.learning_outcomes.confirmed_by.id'));
+        $this->assertSame('Proyecto de carrera de prueba — Página 12, ficha de la asignatura', $snapshot['template_variables']['ubicacion_resultados_aprendizaje']);
 
-        $base = SubjectLearningOutcomeBase::query()->firstOrFail();
-        $base->outcomes()->firstOrFail()->update(['texto_resultado' => 'Texto curricular posterior.']);
-        $base->update(['nombre_fuente' => 'Otra fuente posterior']);
+        $value->update(['valor_curricular' => ['Texto curricular posterior.'], 'evidencia_curricular' => [['source_name' => 'Otra fuente posterior', 'locator' => '', 'quote' => null]]]);
         $this->assertSame($snapshot['template_variables'], app(SyllabusSnapshot::class)->build($syllabus->fresh())['template_variables']);
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertOk()
@@ -654,7 +650,7 @@ class ConvocationAndDraftTest extends TestCase
         $inFixed = FieldDefinition::query()->create([
             'plantilla_id' => $template->id, 'campo_plantilla_id' => $fixedBlock->id, 'clave' => 'resto_fijo',
             'etiqueta' => 'Resto de texto fijo', 'tipo' => 'texto_largo', 'heredado' => false,
-            'editable_docente' => true, 'ia_habilitada' => false, 'posicion' => 99,
+            'editable_docente' => true, 'posicion' => 99,
         ]);
         $locked = FieldDefinition::query()->where('heredado', false)->where('clave', 'habilidades_blandas')->firstOrFail();
         $locked->update(['editable_docente' => false]);

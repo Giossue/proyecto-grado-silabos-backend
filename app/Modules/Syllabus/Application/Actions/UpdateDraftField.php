@@ -45,7 +45,7 @@ class UpdateDraftField
                 'definicion_campo_id' => $field->id,
             ], ['valor' => $field->tipo === 'texto_libre' && isset($data['value'])
                 ? FreeText::normalize($data['value'])
-                : ($data['value'] ?? null), 'heredado' => false, 'origen' => null]);
+                : ($data['value'] ?? null)]);
 
             $locked->update([
                 'version_bloqueo' => $locked->version_bloqueo + 1,

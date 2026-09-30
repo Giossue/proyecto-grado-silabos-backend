@@ -130,7 +130,6 @@ class TemplateAndSourceTest extends TestCase
                         'label' => 'Resumen',
                         'help' => 'Sintetice los resultados esperados.',
                         'content_type' => 'free_text',
-                        'ai_enabled' => true,
                     ],
                     ['key' => 'nota_resultados', 'label' => 'Nota', 'content_type' => 'template'],
                 ],
@@ -146,7 +145,6 @@ class TemplateAndSourceTest extends TestCase
         $this->assertCount(0, $blocks[1]->fields);
         $this->assertFalse(Schema::hasColumn('definiciones_campo', 'obligatorio'));
         $this->assertSame('Sintetice los resultados esperados.', $blocks[0]->fields->firstOrFail()->ayuda);
-        $this->assertTrue($blocks[0]->fields->firstOrFail()->ia_habilitada);
         $this->assertFalse(Schema::hasColumn('definiciones_campo', 'ia_coordinacion_configurable'));
         $this->assertFalse(Schema::hasTable('preferencias_ia_carrera'));
 
@@ -317,7 +315,6 @@ class TemplateAndSourceTest extends TestCase
             'tipo' => 'texto_largo',
             'heredado' => false,
             'editable_docente' => true,
-            'ia_habilitada' => false,
             'posicion' => 1,
         ]);
     }
@@ -377,7 +374,6 @@ class TemplateAndSourceTest extends TestCase
                 'label' => $field->etiqueta,
                 'content_type' => 'text',
                 'help' => 'Redáctelo en infinitivo.',
-                'ai_enabled' => 1,
                 'required' => 0,
                 'teacher_editable' => 0,
                 'inherited' => 1,
@@ -387,7 +383,6 @@ class TemplateAndSourceTest extends TestCase
             ->assertSuccessful();
         $field->refresh();
         $this->assertSame('Redáctelo en infinitivo.', $field->ayuda);
-        $this->assertTrue($field->ia_habilitada);
         $this->assertTrue($field->editable_docente);
         $this->assertFalse($field->heredado);
         $this->assertNull($field->origen_maestro);
@@ -400,7 +395,6 @@ class TemplateAndSourceTest extends TestCase
                 'label' => $identification->etiqueta,
                 'content_type' => 'institutional',
                 'help' => 'Se llena sola desde la malla y la programación de asignatura.',
-                'ai_enabled' => 1,
             ])
             ->assertSuccessful()
             ->assertSuccessful();
@@ -408,7 +402,6 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame('Se llena sola desde la malla y la programación de asignatura.', $identification->ayuda);
         $this->assertTrue($identification->heredado);
         $this->assertSame('asignaturas', $identification->origen_maestro);
-        $this->assertTrue($identification->ia_habilitada);
     }
 
     public function test_a_part_may_have_no_name_but_a_section_still_needs_one(): void

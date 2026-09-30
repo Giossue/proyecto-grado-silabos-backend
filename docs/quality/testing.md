@@ -95,7 +95,7 @@ I-146 retira el revisor y RAG. La cobertura vigente del chat comprueba:
 
 - autorización por docente/carrera, límites e idempotencia;
 - contexto académico/curricular fotografiado y Texto libre del docente sin datos personales;
-- ausencia de recuperación textual/vectorial y de nuevas indexaciones/embeddings;
+- ausencia de recuperación textual/vectorial (su código y tablas se borraron en I-168);
 - historia previa conservada, pero excluida de nuevas llamadas al proveedor;
 - referencias inventadas, salida malformada o demasiado grande;
 - prompt injection tratado como datos y ausencia de modificación/decisión automática;

@@ -98,7 +98,7 @@ final class RequestCurricularImport
                     } catch (RuntimeException $exception) {
                         throw ValidationException::withMessages(['files' => $exception->getMessage()]);
                     }
-                    $source->update(['documento' => $document, 'version_documento' => 1, 'contenido' => $this->documents->text($document), 'estado_ingesta' => 'completada', 'ingesta_actualizada_en' => now()]);
+                    $source->update(['documento' => $document, 'estado_ingesta' => 'completada', 'ingesta_actualizada_en' => now()]);
                     $hash = hash_file('sha256', (string) $file->getRealPath());
                     $path = 'curricular-imports/'.$careerId.'/'.$hash.'.xlsx';
                     if (! Storage::disk('private')->exists($path)) {

@@ -82,7 +82,7 @@ class ReviewWorkflowTest extends TestCase
         ])->assertSuccessful();
         $revision = SyllabusRevision::query()->firstOrFail();
         $snapshot = $revision->fotografia;
-        $this->assertSame($block->configuracion['document'], $snapshot['sections'][0]['blocks'][0]['document']);
+        $this->assertEquals($block->configuracion['document'], $snapshot['sections'][0]['blocks'][0]['document']);
         $this->assertSame('Arquitectura de Software', $snapshot['template_variables']['nombre_asignatura']);
         $this->assertSame('docente@silabos.test', $snapshot['template_variables']['correo_docente']);
         $fingerprint = $revision->huella_sha256;
@@ -553,7 +553,7 @@ class ReviewWorkflowTest extends TestCase
         $fresh = $syllabus->fresh();
         $this->assertSame('sin_iniciar', $fresh->estado);
         $this->assertSame(0, $fresh->version_bloqueo);
-        $this->assertSame(0, $fresh->values()->where('heredado', false)->count());
+        $this->assertSame(0, $fresh->values()->whereHas('field', fn ($field) => $field->where('heredado', false))->count());
         $this->assertDatabaseHas('revisiones_silabo', ['id' => $revision->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion_evento_auditoria' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
         $this->assertWorkflowNotification($syllabus->id, 'silabo.reiniciado');

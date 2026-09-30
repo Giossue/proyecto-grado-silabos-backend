@@ -4,7 +4,6 @@ namespace Tests\Feature\Configuration;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
-use App\Modules\AiAssistance\Infrastructure\Jobs\EmbedAcademicSourceJob;
 use App\Modules\Configuration\Application\AcademicSourceDocument;
 use App\Modules\Configuration\Application\AcademicSourceOcrExecutionFinalizer;
 use App\Modules\Configuration\Application\Actions\RequestAcademicSourceOcr;
@@ -80,11 +79,9 @@ final class AcademicSourceOcrTest extends TestCase
         $this->assertSame('Marco institucional', $source->documento['content'][0]['content'][0]['text']);
         $this->assertSame(3, $source->documento['content'][1]['attrs']['level']);
         $this->assertSame('Resultado', $source->documento['content'][1]['content'][0]['text']);
-        $this->assertStringContainsString('Diseña software seguro.', (string) $source->contenido);
+        $this->assertStringContainsString('Diseña software seguro.', app(AcademicSourceDocument::class)->text($source->documento));
         $this->assertSame('completada', $execution->fresh()->estado);
         $this->assertSame(100, $execution->fresh()->progreso);
-        $this->assertDatabaseCount('documentos_ia', 0);
-        Queue::assertNotPushed(EmbedAcademicSourceJob::class);
         Http::assertSent(fn ($request): bool => $request->url() === 'https://openparser.test/parse/async'
             && $request->hasHeader('Authorization', 'Bearer test-token')
             && $request->hasHeader('Idempotency-Key'));
@@ -101,7 +98,7 @@ final class AcademicSourceOcrTest extends TestCase
         $this->assertSame('fuente_modificada', $old->fresh()->codigo_error);
         $this->assertSame($currentObject, $source->fresh()->objeto_pdf_id);
         $this->assertSame('pendiente', $source->fresh()->estado_ingesta);
-        $this->assertStringNotContainsString('Contenido del archivo anterior.', $source->fresh()->contenido ?? '');
+        $this->assertStringNotContainsString('Contenido del archivo anterior.', app(AcademicSourceDocument::class)->text($source->fresh()->documento ?? []));
         app(AcademicSourceOcrExecutionFinalizer::class)->fail($old->id, 'fallo_tardio', 'Falló el intento anterior.');
         $this->assertSame('pendiente', $source->fresh()->estado_ingesta);
     }
@@ -191,7 +188,7 @@ final class AcademicSourceOcrTest extends TestCase
         $source->refresh();
         $content = $source->documento['content'][0]['content'][0]['content'][0]['content'][0]['content'];
         $this->assertSame(['text', 'hardBreak', 'text', 'hardBreak', 'text'], array_column($content, 'type'));
-        $this->assertSame("Liderazgo\nAutocontrol\nToma de decisiones", $source->contenido);
+        $this->assertSame("Liderazgo\nAutocontrol\nToma de decisiones", app(AcademicSourceDocument::class)->text($source->documento));
     }
 
     public function test_html_entities_from_the_ocr_are_not_shown_as_text_in_table_cells(): void
@@ -206,7 +203,7 @@ final class AcademicSourceOcrTest extends TestCase
 
         $this->runJobs(JobExecution::query()->firstOrFail());
 
-        $this->assertSame("5 'A' & B", $source->refresh()->contenido);
+        $this->assertSame("5 'A' & B", app(AcademicSourceDocument::class)->text($source->refresh()->documento));
     }
 
     public function test_provider_markdown_is_used_when_the_document_graph_has_no_elements(): void
@@ -280,7 +277,7 @@ final class AcademicSourceOcrTest extends TestCase
                 ]],
             ]],
         ]);
-        $source->update(['documento' => $document, 'contenido' => $documents->text($document)]);
+        $source->update(['documento' => $document]);
 
         $paragraph = $source->fresh()->documento['content'][0]['content'][0]['content'][0]['content'][0];
         $this->assertSame(['type' => 'paragraph'], $paragraph);

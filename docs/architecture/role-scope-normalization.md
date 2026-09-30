@@ -20,7 +20,7 @@ usuario_id UUID (FK → usuarios.id) NOT NULL
 rol_id UUID (FK → roles.id) NOT NULL
 carrera_id UUID (FK → carreras.id) NULL
 asignacion_rol_activa BOOLEAN NOT NULL DEFAULT TRUE
-asignado_en TIMESTAMPTZ NULL
+asignado_en TIMESTAMPTZ NOT NULL
 
 UNIQUE parcial (usuario_id, rol_id, carrera_id) WHEN asignacion_rol_activa
 ```
@@ -43,10 +43,10 @@ una tabla de roles: exige que una asignación RBAC de rol `docente` respalde el 
 id UUID (PK)
 asignacion_rol_id UUID (FK → asignaciones_rol.id) NOT NULL
 paralelo_id UUID (FK → paralelos.id) NOT NULL
-docente_paralelo_activo BOOLEAN NOT NULL DEFAULT TRUE
-asignado_en TIMESTAMPTZ NULL
+asignacion_paralelo_activa BOOLEAN NOT NULL DEFAULT TRUE
+asignado_en TIMESTAMPTZ NOT NULL
 
-UNIQUE parcial (paralelo_id) WHEN docente_paralelo_activo
+UNIQUE parcial (paralelo_id) WHEN asignacion_paralelo_activa
 ```
 
 La aplicación verifica que la asignación de rol sea `docente`, esté activa y pertenezca a

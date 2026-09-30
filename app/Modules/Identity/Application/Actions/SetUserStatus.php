@@ -36,8 +36,8 @@ class SetUserStatus
                 DB::table('sesiones')->where('user_id', $target->id)->delete();
                 $closedTeacherAssignments = DB::table('asignaciones_paralelo')
                     ->whereIn('asignacion_rol_id', RoleAssignment::query()->where('usuario_id', $target->id)->select('id'))
-                    ->where('docente_paralelo_activo', true)
-                    ->update(['docente_paralelo_activo' => false]);
+                    ->where('asignacion_paralelo_activa', true)
+                    ->update(['asignacion_paralelo_activa' => false]);
                 $closedCoordinations = $this->closeCoordinations($target);
             }
 
@@ -101,7 +101,7 @@ class SetUserStatus
 
         $inProgress = DB::table('docentes_vigentes_silabo')
             ->join('silabos', 'silabos.id', '=', 'docentes_vigentes_silabo.silabo_id')
-            ->join('convocatorias_carreras', 'convocatorias_carreras.id', '=', 'silabos.convocatoria_id')
+            ->join('convocatorias_carreras', 'convocatorias_carreras.id', '=', 'silabos.convocatoria_carrera_id')
             ->join('carreras', 'carreras.id', '=', 'convocatorias_carreras.carrera_id')
             ->where('docentes_vigentes_silabo.usuario_id', $target->id)
             ->whereIn('silabos.estado_silabo', ['borrador', 'en_revision', 'correccion_solicitada'])

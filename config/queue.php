@@ -2,21 +2,12 @@
 
 return [
 
-    'default' => env('QUEUE_CONNECTION', 'database'),
+    'default' => env('QUEUE_CONNECTION', 'redis'),
 
     'connections' => [
 
         'sync' => [
             'driver' => 'sync',
-        ],
-
-        'database' => [
-            'driver' => 'database',
-            'connection' => env('DB_QUEUE_CONNECTION'),
-            'table' => env('DB_QUEUE_TABLE', 'cola_trabajos'),
-            'queue' => env('DB_QUEUE', 'general'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
-            'after_commit' => false,
         ],
 
         'beanstalkd' => [
@@ -59,16 +50,11 @@ return [
         'failover' => [
             'driver' => 'failover',
             'connections' => [
-                'database',
+                'redis',
                 'deferred',
             ],
         ],
 
-    ],
-
-    'batching' => [
-        'database' => env('DB_CONNECTION', 'pgsql'),
-        'table' => 'lotes_trabajos',
     ],
 
     'failed' => [

@@ -50,18 +50,6 @@ class TemplateStructureValidator
                 }
             }
         }
-
-        $requiredMarkers = $template->mapeo_documento['required_markers'] ?? [];
-        if (is_array($requiredMarkers)) {
-            $mappedMarkers = $template->fields()->pluck('marcador_documento')->filter()->all();
-            $unmapped = array_diff($requiredMarkers, $mappedMarkers);
-
-            if ($unmapped !== []) {
-                throw ValidationException::withMessages([
-                    $errorKey => 'Al documento de la plantilla le faltan campos: '.implode(', ', $unmapped).'.',
-                ]);
-            }
-        }
     }
 
     private function assertField(FieldDefinition $field, TemplateBlock $block, string $errorKey): void

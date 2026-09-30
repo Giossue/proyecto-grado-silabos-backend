@@ -40,6 +40,7 @@ class Syllabus extends Model
 
     protected const LEGACY_COLUMN_ALIASES = [
         'estado' => 'estado_silabo',
+        'convocatoria_id' => 'convocatoria_carrera_id',
         'contexto_academico' => 'contexto_academico_silabo',
     ];
 
@@ -81,7 +82,7 @@ class Syllabus extends Model
     /** @return BelongsTo<Convocation, $this> */
     public function convocation(): BelongsTo
     {
-        return $this->belongsTo(Convocation::class, 'convocatoria_id');
+        return $this->belongsTo(Convocation::class, 'convocatoria_carrera_id');
     }
 
     /** @return HasOneThrough<ScheduledSubject, Parallel, $this> Programación a la que pertenece el paralelo. */
@@ -113,7 +114,7 @@ class Syllabus extends Model
     /** @return HasOneThrough<Career, Convocation, $this> */
     public function career(): HasOneThrough
     {
-        return $this->hasOneThrough(Career::class, Convocation::class, 'id', 'id', 'convocatoria_id', 'carrera_id');
+        return $this->hasOneThrough(Career::class, Convocation::class, 'id', 'id', 'convocatoria_carrera_id', 'carrera_id');
     }
 
     /** @return BelongsTo<Parallel, $this> */

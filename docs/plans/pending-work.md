@@ -10,7 +10,8 @@ Por instrucción expresa del responsable del producto se retiran el CRUD de Fuen
 académicas, el requisito de fuentes para convocar y el revisor de IA basado en una
 base vectorizada. Se conserva la importación documental I-145 y su evidencia interna,
 la generación asistida de contenido/unidades mediante chat y la configuración técnica
-de IA. La retirada no elimina datos históricos ni implica migración destructiva.
+de IA. I-168 (migraciones `000166` a `000170`) borró después el código, las tablas y la
+configuración que quedaban de ese alcance retirado.
 
 La implementación y verificación corresponden al plan I-146. Las tareas antiguas de
 activar embeddings, reconstruir el índice o terminar el revisor dejan de ser pendientes

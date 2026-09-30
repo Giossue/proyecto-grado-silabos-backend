@@ -23,6 +23,7 @@ class ValidationRun extends Model
     protected const LEGACY_COLUMN_ALIASES = [
         'estado' => 'estado_ejecucion_validacion',
         'advertencias' => 'cantidad_advertencias_validacion',
+        'errores_bloqueantes' => 'cantidad_errores_validacion',
     ];
 
     public $timestamps = false;

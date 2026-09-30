@@ -16,8 +16,6 @@ class AcademicContextSnapshot
         $scheduledSubject->loadMissing([
             'subject.career.faculty',
             'subject.requirements.requirement',
-            'subject.learningOutcomeBase.outcomes',
-            'subject.learningOutcomeBase.confirmedBy',
             'academicPeriod',
         ]);
         $subject = $scheduledSubject->subject;
@@ -57,7 +55,6 @@ class AcademicContextSnapshot
                 'hours_aa' => $subject->horas_aa,
                 'prerequisites' => $requirementCodes('prerrequisito'),
                 'corequisites' => $requirementCodes('correquisito'),
-                'learning_outcomes' => $subject->learningOutcomeBase?->snapshot(),
             ],
             'scheduled_subject' => [
                 'id' => $scheduledSubject->id,

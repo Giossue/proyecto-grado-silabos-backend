@@ -63,7 +63,6 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'inherited' => ['nullable', 'boolean'],
             'master_source' => ['nullable', 'required_if:inherited,true', 'string', 'max:100'],
             'teacher_editable' => ['nullable', 'boolean'],
-            'ai_enabled' => ['nullable', 'boolean'],
             'options' => ['nullable', 'array', 'max:50'],
             'options.*' => ['required', 'array:value,label'],
             'options.*.value' => ['required', 'string', 'max:120', 'distinct'],
@@ -71,7 +70,6 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'options_source' => ['sometimes', 'nullable', 'string', 'max:140'],
             'options_sources' => ['sometimes', 'array', 'list', 'max:20'],
             'options_sources.*' => ['required', 'string', 'max:140', 'distinct'],
-            'document_marker' => ['nullable', 'string', 'max:160'],
             'page_orientation' => ['sometimes', 'nullable', 'in:portrait,landscape'],
             'show_when' => ['sometimes', 'nullable', 'array:key,value'],
         ];

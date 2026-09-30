@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Platform;
 
-use App\Modules\AiAssistance\Infrastructure\Jobs\AnalyzeSyllabusFieldJob;
+use App\Modules\AiAssistance\Infrastructure\Jobs\AnswerSyllabusChatJob;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
 use App\Modules\Operations\Application\Actions\DispatchPlatformSmoke;
 use App\Modules\Operations\Infrastructure\Jobs\DeliverInternalNotificationJob;
@@ -53,7 +53,7 @@ class JobDispatchTest extends TestCase
             new PlatformSmokeJob('00000000-0000-0000-0000-000000000001'),
             new DeliverInternalNotificationJob('00000000-0000-0000-0000-000000000002'),
             new GenerateSyllabusExportJob('00000000-0000-0000-0000-000000000003'),
-            new AnalyzeSyllabusFieldJob('00000000-0000-0000-0000-000000000004'),
+            new AnswerSyllabusChatJob('00000000-0000-0000-0000-000000000004'),
         ];
         $longestJobTimeout = max(array_map(
             static fn (object $job): int => $job->timeout,

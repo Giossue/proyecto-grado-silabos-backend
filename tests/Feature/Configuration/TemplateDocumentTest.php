@@ -129,7 +129,6 @@ class TemplateDocumentTest extends TestCase
                 'key' => 'respuesta_extra',
                 'label' => 'Cantidad configurada',
                 'help' => 'Indique una cantidad.',
-                'ai_enabled' => true,
             ]],
         ])
             ->assertSuccessful()->assertSuccessful();
@@ -139,10 +138,9 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame('numero', $new->tipo);
         $this->assertSame('Cantidad configurada', $new->etiqueta);
         $this->assertSame('Indique una cantidad.', $new->ayuda);
-        $this->assertTrue($new->ia_habilitada);
         $this->patchJson(route('api.v1.admin.template.fields.update', [$template, $new]), [
             'block_id' => $block->id, 'key' => $new->clave, 'label' => $new->etiqueta,
-            'content_type' => 'text', 'help' => 'Indique una cantidad.', 'ai_enabled' => false,
+            'content_type' => 'text', 'help' => 'Indique una cantidad.',
         ])->assertSuccessful();
         $this->assertSame('numero', $new->fresh()->tipo);
         $saved = $block->fresh()->configuracion['document'];
@@ -166,7 +164,6 @@ class TemplateDocumentTest extends TestCase
                 'key' => 'objetivo_general',
                 'label' => '',
                 'help' => null,
-                'ai_enabled' => false,
             ]],
         ])->assertSuccessful();
 
@@ -500,7 +497,6 @@ class TemplateDocumentTest extends TestCase
                 'key' => $field->clave,
                 'label' => 'Objetivo actualizado',
                 'help' => 'Ayuda actualizada.',
-                'ai_enabled' => true,
             ]]];
         $this->patch($url, [...$payload, 'properties' => [...$payload['properties'], ['key' => 'descripcion', 'label' => 'Campo ajeno', 'help' => 'No debe guardarse.']]])
             ->assertJsonValidationErrors('properties.1.key');
@@ -514,30 +510,22 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame('Objetivo actualizado', $field->fresh()->etiqueta);
         $savedFields = TemplateDocument::nodes($block->fresh()->configuracion['document'], 'field');
         $this->assertSame('Objetivo actualizado', collect($savedFields)->firstWhere('attrs.key', $field->clave)['attrs']['label']);
-        $this->assertTrue($field->fresh()->ia_habilitada);
         $this->assertSame($field->tipo, $field->fresh()->tipo);
         $this->patch($url, [...$payload, 'title' => 'Cambio obsoleto'])->assertJsonValidationErrors('fingerprint');
         $this->assertSame('Nuevo título', $block->fresh()->titulo);
     }
 
-    public function test_properties_enable_ai_on_inherited_fields_but_never_reactivate_removed_fields(): void
+    public function test_removed_fields_are_never_reactivated(): void
     {
         $template = $this->template();
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $block = $field->block;
         $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
-        $field->update(['heredado' => true]);
-        $payload = ['document' => $this->document(), 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
-            'properties' => [['key' => $field->clave, 'label' => $field->etiqueta, 'help' => null, 'ai_enabled' => true]]];
+        $payload = ['document' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]], 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
+            'properties' => [['key' => $field->clave, 'label' => $field->etiqueta, 'help' => null]]];
         $this->patch($url, $payload)->assertSuccessful();
-        $this->assertTrue($field->fresh()->ia_habilitada);
-        $field->update(['heredado' => false]);
-        $payload['fingerprint'] = SaveTemplateDocument::fingerprint($block->fresh());
-        $payload['document'] = ['type' => 'doc', 'content' => [['type' => 'paragraph']]];
-        $this->patch($url, $payload)->assertSuccessful();
-        $this->assertFalse($field->fresh()->ia_habilitada);
         $this->assertFalse($field->fresh()->editable_docente);
-        $this->assertTrue($block->fresh()->configuracion['detached_fields'][$field->clave]['ia_habilitada']);
+        $this->assertTrue($block->fresh()->configuracion['detached_fields'][$field->clave]['editable_docente']);
     }
 
     public function test_official_format_has_fixed_evaluation_tables_and_signatures_without_flow(): void
@@ -629,30 +617,6 @@ class TemplateDocumentTest extends TestCase
             ->flatMap(fn ($section) => $section['blocks'])->flatMap(fn ($block) => $block['fields'])->firstWhere('key', 'objetivos_especificos');
         $this->assertTrue($shown['required']);
         $this->assertArrayNotHasKey('rules', $shown);
-    }
-
-    public function test_administration_decides_ai_reading_on_identification(): void
-    {
-        $template = $this->template();
-        $identification = $template->fields()->where('clave', 'asignatura')->firstOrFail();
-        $formation = $template->fields()->where('clave', 'formacion_experiencia')->firstOrFail();
-        $block = $identification->block;
-        $properties = fn (bool $enabled): array => [
-            ['key' => 'asignatura', 'label' => $identification->etiqueta, 'help' => '', 'ai_enabled' => $enabled],
-            ['key' => 'formacion_experiencia', 'label' => $formation->etiqueta, 'help' => '', 'ai_enabled' => $enabled],
-        ];
-        $save = fn (bool $enabled) => $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
-            'document' => $block->fresh()->configuracion['document'],
-            'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
-            'properties' => $properties($enabled),
-        ]);
-
-        $save(true)->assertSuccessful();
-        $this->assertTrue($identification->fresh()->ia_habilitada);
-        $this->assertTrue($formation->fresh()->ia_habilitada);
-        $save(false)->assertSuccessful();
-        $this->assertFalse($identification->fresh()->ia_habilitada);
-        $this->assertFalse($formation->fresh()->ia_habilitada);
     }
 
     public function test_administration_sets_show_only_if_on_a_part(): void

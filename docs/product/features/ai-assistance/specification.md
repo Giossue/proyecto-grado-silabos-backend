@@ -5,13 +5,13 @@
 El responsable del producto retiró el revisor de IA del sílabo y la consulta de una base
 vectorizada de Fuentes académicas. Esta decisión sustituye el análisis por campo, la
 revisión integral, sus recomendaciones aplicables y su retroalimentación como funciones
-activas. Los registros anteriores se conservan como evidencia histórica.
+activas. I-168 borró su código, sus mensajes en `historial_ia` y la tabla `documentos_ia`.
 
 Se mantiene el chat para ayudar al docente a elaborar contenido y unidades de la
 planificación. Su contexto procede de la carrera, la asignatura y los datos curriculares
 confirmados fotografiados en el sílabo, junto con las tablas de unidades y planificación.
 Incluye las horas y semanas del contexto académico. El asistente no recupera documentos
-de `documentos_ia` ni depende del CRUD retirado de fuentes.
+ni depende del CRUD retirado de fuentes.
 
 ## Trazabilidad
 
@@ -26,8 +26,8 @@ de `documentos_ia` ni depende del CRUD retirado de fuentes.
 
 - Solo el docente asignado y autorizado consulta o envía mensajes del sílabo.
 - El contexto del chat se limita a carrera, asignatura, horas, semanas, datos curriculares
-  fotografiados y estructura/filas de las tablas de unidades o planificación. No usa la
-  casilla histórica `ia_habilitada` ni otros campos como permiso de lectura. La plantilla
+  fotografiados y estructura/filas de las tablas de unidades o planificación. No usa
+  otros campos como permiso de lectura. La plantilla
   y la configuración técnica del chat conservan sus permisos actuales.
 - Carrera, materia y datos curriculares se toman de la fotografía del expediente;
   cambios posteriores en la base no sustituyen ese contexto histórico.

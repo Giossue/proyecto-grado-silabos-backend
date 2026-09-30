@@ -17,7 +17,7 @@
 | PV-11 | Conservación, backup, RPO y RTO | Técnico/autoridad | P2 producción |
 | PV-12 | Base legal, finalidad y aviso de privacidad | UEB/datos | P0 datos sensibles, P2 producción |
 | PV-13 | Hardware disponible para IA local | Personal técnico/autores | P0 selección IA |
-| PV-14 | Modelos de extracción y generación | Autores/evaluación experta | I-146 retira embeddings/revisor; evaluación pendiente de servicios vigentes |
+| PV-14 | Modelos de extracción y generación | Autores/evaluación experta | I-146/I-168 retiran embeddings y revisor; evaluación pendiente de servicios vigentes |
 | PV-15 | Correo institucional y contenido de avisos | Técnico/coordinación | P1 notificación externa; mecanismo listo, transporte en `log` |
 | PV-16 | Edición excepcional de contenido por coordinador | Coordinación | P0 permisos I-04 |
 | PV-17 | Instrumento/población para medir proceso actual | Dirección/autores | P1 línea base |

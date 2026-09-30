@@ -90,6 +90,6 @@ class SyllabusProcess extends Model
     /** @return HasMany<Convocation, $this> */
     public function convocations(): HasMany
     {
-        return $this->hasMany(Convocation::class, 'proceso_id');
+        return $this->hasMany(Convocation::class, 'convocatoria_universidad_id');
     }
 }

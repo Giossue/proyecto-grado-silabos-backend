@@ -74,8 +74,6 @@ class CopySyllabusContent
                     'silabo_id' => $locked->id,
                     'definicion_campo_id' => $value->definicion_campo_id,
                     'valor' => $value->valor,
-                    'heredado' => false,
-                    'origen' => null,
                 ]);
             }
 

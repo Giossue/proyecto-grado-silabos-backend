@@ -27,7 +27,7 @@ final class AcademicSourceOcrExecutionFinalizer
             throw new AcademicSourceOcrContractException('OpenParser no devolvió contenido utilizable.');
         }
 
-        DB::transaction(function () use ($document, $execution, $materialized, $result, $text): void {
+        DB::transaction(function () use ($document, $execution, $materialized, $result): void {
             $lockedExecution = JobExecution::query()->lockForUpdate()->findOrFail($execution->id);
             if ($lockedExecution->estado === 'completada') {
                 return;
@@ -43,8 +43,6 @@ final class AcademicSourceOcrExecutionFinalizer
             }
             $source->update([
                 'documento' => $document,
-                'version_documento' => 1,
-                'contenido' => $text,
                 'objeto_pdf_id' => $lockedExecution->entrada['pdf_object_id'] ?? $source->objeto_pdf_id,
                 'estado_ingesta' => 'completada',
                 'ingesta_actualizada_en' => now(),

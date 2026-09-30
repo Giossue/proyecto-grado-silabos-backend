@@ -10,19 +10,14 @@ final class ConfirmedCurricularValues
     /** @return list<array<string, mixed>> */
     public function forCareer(string $careerId): array
     {
-        $subjects = Subject::query()->where('carrera_id', $careerId)
-            ->with('learningOutcomeBase.outcomes')->get()->keyBy('id');
+        $subjects = Subject::query()->where('carrera_id', $careerId)->get()->keyBy('id');
         $values = [];
-        $importedOutcomes = [];
 
         foreach (CurricularValue::query()->with('concept')->where('carrera_id', $careerId)->get() as $record) {
             $concept = $record->concept;
             $subject = $subjects->get($record->asignatura_id);
             if ($subject === null) {
                 continue;
-            }
-            if ($concept->clave_concepto === 'resultados_aprendizaje' && $concept->tipo_concepto === 'lista') {
-                $importedOutcomes[$subject->id] = true;
             }
             $evidence = [];
             foreach ($record->evidencia_curricular as $citation) {
@@ -40,23 +35,6 @@ final class ConfirmedCurricularValues
                 'subject_code' => $subject->codigo_asignatura,
                 'value' => $record->valor_curricular, 'evidence' => $evidence,
                 'confirmed_at' => $record->confirmado_en->toIso8601String(), 'origin' => 'importacion',
-            ];
-        }
-
-        foreach ($subjects as $subject) {
-            $base = $subject->learningOutcomeBase;
-            if ($base === null || isset($importedOutcomes[$subject->id])) {
-                continue;
-            }
-            $values[] = [
-                'id' => $base->id, 'key' => 'resultados_aprendizaje', 'concept_key' => 'resultados_aprendizaje',
-                'label' => 'Resultados de aprendizaje', 'type' => 'lista',
-                'columns' => [],
-                'subject_id' => $subject->id, 'subject_name' => $subject->nombre,
-                'subject_code' => $subject->codigo_asignatura,
-                'value' => $base->outcomes->pluck('texto_resultado')->values()->all(),
-                'evidence' => [['source_name' => $base->nombre_fuente, 'locator' => $base->localizador_fuente, 'quote' => null]],
-                'confirmed_at' => $base->confirmado_en->toIso8601String(), 'origin' => 'anterior',
             ];
         }
 

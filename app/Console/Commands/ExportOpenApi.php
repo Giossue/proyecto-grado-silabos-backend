@@ -297,8 +297,7 @@ class ExportOpenApi extends Command
                         'properties' => ['source_name' => ['type' => 'string'], 'locator' => ['type' => 'string'],
                             'quote' => $nullableText]]],
                     'confirmed_at' => ['type' => 'string', 'format' => 'date-time'],
-                    'origin' => ['type' => 'string', 'enum' => ['importacion', 'anterior'],
-                        'description' => 'El registro I-144 solo aparece si no lo sustituyó un resultado importado.'],
+                    'origin' => ['type' => 'string', 'enum' => ['importacion']],
                 ],
             ],
             'CurricularImportProposal' => [

@@ -7,9 +7,10 @@ fotografiado del sílabo. La extracción curricular I-145 propone datos desde do
 aportados por Coordinación. Son flujos separados con confirmación humana.
 
 Se retiraron el revisor por campo, la revisión integral, sus operaciones de aplicación y
-feedback, y la recuperación textual/vectorial de Fuentes académicas. No se activan
-embeddings ni se consulta `documentos_ia` para el chat. Las tablas y los mensajes antiguos
-se conservan como historia; su existencia no habilita funcionalidad retirada.
+feedback, y la recuperación textual/vectorial de Fuentes académicas. I-168 borró su
+código, la tabla `documentos_ia`, la extensión `vector` y la configuración de embeddings
+y del revisor. Los gateways del chat son `HostedAiChatGateway`, `BaselineAiChatGateway`
+y `DisabledAiChatGateway`.
 
 ## Fronteras
 
@@ -31,8 +32,7 @@ Coordinación → confirma selección → datos curriculares vigentes → nuevos
 
 - Carrera, asignatura, horas y semanas del expediente; datos curriculares confirmados
   fotografiados; estructura y filas de tablas de unidades/planificación.
-- No se leen otros campos ni se usa la casilla histórica `ia_habilitada` para ampliar
-  ese contexto. La versión `curricular-units-v1` separa las preguntas nuevas del historial
+- No se leen otros campos para ampliar ese contexto. La versión `curricular-units-v1` separa las preguntas nuevas del historial
   anterior, que permanece visible y no se envía al proveedor. Los trabajos de chat
   anteriores a esa versión terminan sin invocar el gateway.
 - Ninguna búsqueda en documentos vivos ni recuperación vectorial.
@@ -66,8 +66,7 @@ respuestas, logs o mensajes de error.
 Cada llamada limita tamaño, tiempo, intentos y salida. La respuesta se valida contra el
 contrato del flujo y se rechazan referencias ajenas. La clave de idempotencia incluye el
 contexto, contenido, modelo e instrucciones relevantes; el historial no se recalcula
-silenciosamente. Los trabajos del revisor y de embeddings anteriores a I-146 terminan
-sin generar nuevos resultados del flujo retirado.
+silenciosamente.
 
 La indisponibilidad del proveedor afecta solo al servicio de IA correspondiente. La
 elaboración manual, validación, envío, revisión humana y aprobación continúan. La IA no
@@ -75,12 +74,10 @@ califica, aprueba ni bloquea el proceso académico.
 
 ## Persistencia e historia
 
-`historial_ia` conserva conversaciones y evidencia de ejecuciones anteriores; las
-restricciones de inmutabilidad y la protección de aprobados permanecen. Los nuevos
-mensajes usan contexto autorizado del expediente. `documentos_ia` y sus índices son
-estructuras históricas inactivas para este producto; I-146 no ordena borrarlas ni aplicar
-una migración destructiva.
+`historial_ia` conserva solo el chat: sesiones `silabo:{id}:usuario:{usuario}`, tipos
+`mensaje` y `ocultamiento`. Las restricciones de inmutabilidad y la protección de
+aprobados permanecen. Los mensajes usan contexto autorizado del expediente. I-168 quitó
+los mensajes e índices del revisor y la tabla `documentos_ia`.
 
 PV-12, PV-13, PV-14 y PV-18 siguen delimitando privacidad, capacidad y evaluación de los
-servicios vigentes. La elección de embeddings y la evaluación del revisor retirado dejan
-de ser puertas de implementación activas. La evidencia de retirada está en el plan I-146.
+servicios vigentes. Embeddings y revisor ya no existen en el código. La evidencia de retirada está en el plan I-146.

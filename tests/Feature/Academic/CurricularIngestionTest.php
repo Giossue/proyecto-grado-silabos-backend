@@ -14,6 +14,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularConcept;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularImport;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CurricularValue;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Configuration\Application\AcademicSourceDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
@@ -63,14 +64,12 @@ class CurricularIngestionTest extends TestCase
 
     public function test_xlsx_upload_prepares_verifiable_private_proposal_and_only_confirmation_changes_curriculum(): void
     {
-        config(['ai.embeddings.driver' => 'openai']);
         $file = $this->workbook();
         $response = $this->postJson($this->storeUrl(), ['files' => [$file], 'instruction' => 'Leer las habilidades de la materia.'])
             ->assertAccepted()->assertJsonPath('status', 'pendiente')->assertJsonPath('proposal', null);
         $import = CurricularImport::query()->findOrFail($response->json('id'));
         $this->assertDatabaseCount('valores_curriculares', 0);
         $this->assertDatabaseCount('conceptos_curriculares', 1);
-        $this->assertDatabaseCount('documentos_ia', 0);
         Queue::assertPushed(PrepareCurricularImportJob::class, fn ($job) => $job->importId === $import->id);
         $object = StoredObject::query()->where('clasificacion', 'curricular_workbook')->firstOrFail();
         $this->assertSame('private', $object->disco);
@@ -81,8 +80,8 @@ class CurricularIngestionTest extends TestCase
         $download = $response->json('documents.0.original_url');
         $this->get($download)->assertOk()->assertDownload('recursos.xlsx');
         $source = AcademicSource::query()->findOrFail($import->documentos_importacion[0]['source_id']);
-        $this->assertStringContainsString('A2:', $source->contenido);
-        $this->assertStringContainsString('Hoja «Recursos»', $source->contenido);
+        $this->assertStringContainsString('A2:', app(AcademicSourceDocument::class)->text($source->documento));
+        $this->assertStringContainsString('Hoja «Recursos»', app(AcademicSourceDocument::class)->text($source->documento));
         $this->assertTrue(app(PrepareCurricularImport::class)->step($import->id));
         $detail = $this->getJson($this->showUrl($import))->assertOk()->assertJsonPath('status', 'lista');
         $this->assertNull($detail->json('proposal.values.0.issue_code'));
@@ -382,7 +381,7 @@ class CurricularIngestionTest extends TestCase
     {
         return AcademicSource::query()->create([
             'carrera_id' => $this->subject->carrera_id, 'nombre' => 'Fuente sintética '.(AcademicSource::query()->count() + 1), 'activo' => true,
-            'estado_ingesta' => 'completada', 'contenido' => $text,
+            'estado_ingesta' => 'completada',
             'documento' => ['schemaVersion' => 1, 'type' => 'doc', 'content' => [['type' => 'paragraph', 'attrs' => ['sourcePage' => 3], 'content' => [['type' => 'text', 'text' => $text]]]]],
         ]);
     }

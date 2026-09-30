@@ -3,7 +3,6 @@
 namespace App\Modules\Syllabus\Infrastructure\Persistence\Models;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Support\Database\MapsLegacyColumnNames;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -25,7 +24,10 @@ class Convocation extends Model
 {
     use HasUuids, MapsLegacyColumnNames;
 
-    protected const LEGACY_COLUMN_ALIASES = ['estado' => 'estado_convocatoria_carrera'];
+    protected const LEGACY_COLUMN_ALIASES = [
+        'estado' => 'estado_convocatoria_carrera',
+        'proceso_id' => 'convocatoria_universidad_id',
+    ];
 
     public $timestamps = false;
 
@@ -70,7 +72,7 @@ class Convocation extends Model
     /** @return BelongsTo<SyllabusProcess, $this> */
     public function process(): BelongsTo
     {
-        return $this->belongsTo(SyllabusProcess::class, 'proceso_id');
+        return $this->belongsTo(SyllabusProcess::class, 'convocatoria_universidad_id');
     }
 
     /** @return Attribute<string, never> */
@@ -97,16 +99,9 @@ class Convocation extends Model
         return $this->belongsTo(Career::class, 'carrera_id');
     }
 
-    /** @return HasMany<AcademicSource, $this> */
-    public function sources(): HasMany
-    {
-        return $this->hasMany(AcademicSource::class, 'carrera_id', 'carrera_id')
-            ->where('fuentes_academicas.activo', true);
-    }
-
     /** @return HasMany<Syllabus, $this> */
     public function syllabi(): HasMany
     {
-        return $this->hasMany(Syllabus::class, 'convocatoria_id');
+        return $this->hasMany(Syllabus::class, 'convocatoria_carrera_id');
     }
 }

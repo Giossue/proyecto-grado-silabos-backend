@@ -6399,10 +6399,8 @@
                     "origin": {
                         "type": "string",
                         "enum": [
-                            "importacion",
-                            "anterior"
-                        ],
-                        "description": "El registro I-144 solo aparece si no lo sustituyó un resultado importado."
+                            "importacion"
+                        ]
                     }
                 }
             },

@@ -119,7 +119,6 @@ final class SyllabusTemplateProvisioner
                     'heredado' => $origin !== null,
                     'origen_maestro' => $origin,
                     'editable_docente' => $origin === null,
-                    'ia_habilitada' => $contentType === 'free_text',
                     'posicion' => 1,
                 ];
 
@@ -138,7 +137,6 @@ final class SyllabusTemplateProvisioner
                         'heredado' => false,
                         'origen_maestro' => null,
                         'editable_docente' => true,
-                        'ia_habilitada' => $inputType === 'texto_largo',
                         'opciones' => $options,
                         'mostrar_si' => $input[4] ?? null,
                         'posicion' => $inputPosition + 2,

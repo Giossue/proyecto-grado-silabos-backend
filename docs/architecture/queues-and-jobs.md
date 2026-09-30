@@ -2,7 +2,7 @@
 
 ## Usos
 
-- análisis de IA;
+- respuestas del chat de IA;
 - generación DOCX/PDF;
 - notificaciones externas;
 - tareas de mantenimiento y reportes pesados.
@@ -35,6 +35,8 @@ El payload contiene IDs y versiones, no objetos enormes ni secretos.
 - El consumidor marca la ejecución de forma idempotente.
 - Reintentar no crea otra revisión, aprobación, notificación o artefacto lógico.
 - PostgreSQL conserva el estado funcional; Redis puede vaciarse/reconstruirse.
+- Colas y caché usan Redis por defecto; I-168 quitó las conexiones `database`, que
+  apuntaban a tablas inexistentes.
 
 ### Idempotencia de ingesta PDF
 
@@ -65,14 +67,8 @@ payload sensible. Alertas mínimas:
 
 Reprocesar desde interfaz requiere permiso, confirma impacto y conserva todos los intentos.
 
-## Trabajo `ia.analisis`
+## Trabajo del chat de IA
 
-I-06 registra el recurso funcional antes de despachar `AnalyzeSyllabusFieldJob` a la cola
-`ia`. El payload contiene solo el UUID de la ejecución. Entrada, evidencia, parámetros,
-estado e intentos viven en PostgreSQL. El job es idempotente frente a estados terminales,
-tiene tres intentos, timeout de 60 segundos y backoff 5/30/120.
-
-Los errores de contrato no se reintentan: terminan con `contrato_ia_invalido`. Una caída o
-timeout del gateway usa los reintentos del worker y, al agotarlos, guarda
-`servicio_ia_no_disponible` sin copiar el mensaje técnico. Conflicto, evidencia vacía o
-exceso de evidencia son resultados no concluyentes, no fallos de la cola.
+`AnswerSyllabusChatJob` responde en la cola `ia` a una pregunta ya registrada en
+`historial_ia`. I-168 borró `AnalyzeSyllabusFieldJob` y `EmbedAcademicSourceJob` junto con
+el revisor y los embeddings retirados en I-146.

@@ -140,37 +140,24 @@ estas variables hay que redesplegar o reiniciar el contenedor completo para reco
 la caché de configuración y para que los workers usen el proveedor nuevo. Cada URL y
 modelo debe corresponder al proveedor de su bloque de configuración.
 
-Activar un proveedor alojado envía el campo del sílabo y los extractos de las fuentes
-seleccionadas a ese tercero. Antes de hacerlo con información institucional deben estar
+Activar un proveedor alojado envía la pregunta del chat y el contexto autorizado del
+sílabo a ese tercero. Antes de hacerlo con información institucional deben estar
 acordados el proveedor, región, retención y tratamiento de datos. Un error del proveedor
-solo deshabilita temporalmente las recomendaciones; no bloquea el flujo del sílabo.
+solo deshabilita temporalmente el chat; no bloquea el flujo del sílabo.
 
-### Embeddings de fuentes académicas
+### Embeddings y extensión vector (retirados)
 
-Los embeddings se guardan en la columna vectorial de
-`fragmentos_fuente_academica`; no se crea una tabla adicional. El valor seguro por
-defecto mantiene este proceso desactivado:
-
-```text
-EMBEDDINGS_DRIVER=disabled
-EMBEDDINGS_BASE_URL=https://api.openai.com/v1
-EMBEDDINGS_MODEL=text-embedding-3-small
-EMBEDDINGS_API_KEY=<secreto de embeddings>
-EMBEDDINGS_CONNECT_TIMEOUT=5
-EMBEDDINGS_TIMEOUT=60
-```
-
-Para activarlo con OpenAI, cambia `EMBEDDINGS_DRIVER=openai` y configura la clave como
-secreto. La migración `000087` requiere la extensión `vector` de pgvector; la imagen
-local del repositorio ya usa `docker.io/pgvector/pgvector:0.8.6-pg18-trixie`. En PostgreSQL
-administrado hay que habilitar pgvector antes de migrar. Tras activar el driver,
-redespliega para que la caché de configuración y el worker de la cola `ia` reciban el
-cambio.
+I-168 eliminó los embeddings, la tabla `documentos_ia` y sus variables `EMBEDDINGS_*`.
+La migración `000166` borra la extensión `vector`; la aplicación ya no la usa. Aviso: en
+una base nueva la migración histórica `000087` todavía ejecuta
+`CREATE EXTENSION IF NOT EXISTS vector`, así que la instalación desde cero sigue
+necesitando pgvector disponible en el servidor (la imagen local
+`docker.io/pgvector/pgvector:0.8.6-pg18-trixie` ya lo trae). Una base ya migrada no lo
+necesita después de `000166`.
 
 OpenParser es el paso anterior para convertir cada PDF en un documento JSON estructurado;
 se usa `paddleocr-vl-1.6` y la salida `openparser@1`. El documento ordenado permanece en
-`fuentes_academicas`; los fragmentos derivados y sus vectores se reconstruyen en
-`fragmentos_fuente_academica`. Configura `OPENPARSER_ENABLED=true` y
+`fuentes_academicas`. Configura `OPENPARSER_ENABLED=true` y
 `OPENPARSER_API_KEY` solo después de resolver PV-12/PV-14. La imagen necesita
 `poppler-utils` para recortar del PDF privado las figuras que solo traigan coordenadas.
 

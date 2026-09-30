@@ -44,7 +44,7 @@ class ExportArtifact extends Model
     protected $fillable = [
         'revision_silabo_id', 'ejecucion_trabajo_id',
         'objeto_docx_id', 'objeto_pdf_id', 'version_renderizador', 'idioma',
-        'clave_idempotencia', 'estado', 'solicitado_por', 'asignacion_rol_id',
+        'clave_idempotencia', 'estado', 'solicitado_por',
         'solicitado_en', 'completado_en',
     ];
 

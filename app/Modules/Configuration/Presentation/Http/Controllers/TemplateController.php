@@ -134,7 +134,7 @@ class TemplateController extends Controller
                             'type' => $block->tipo,
                             'content_type' => $block->contentType(),
                             'page_orientation' => $block->pageOrientation(),
-                            'document' => $this->withConditions($block->configuracion['document'] ?? null, $fields),
+                            'document' => $block->configuracion['document'] ?? null,
                             'fingerprint' => SaveTemplateDocument::fingerprint($block),
                             'fields' => $fields
                                 ->reject(fn (FieldDefinition $field) => isset($block->configuracion['detached_fields'][$field->clave]))
@@ -153,8 +153,6 @@ class TemplateController extends Controller
                                     'inherited' => $field->heredado,
                                     'master_source' => $field->origen_maestro,
                                     'teacher_editable' => $field->editable_docente,
-                                    'ai_enabled' => $field->ia_habilitada,
-                                    'document_marker' => $field->marcador_documento,
                                     'content_type' => $block->contentType(),
                                 ])->values()->all(),
                         ];
@@ -167,35 +165,6 @@ class TemplateController extends Controller
             ],
             'appearanceOptions' => TemplateAppearance::catalog(),
         ];
-    }
-
-    /**
-     * @param  array<string, mixed>|null  $document
-     * @param  iterable<FieldDefinition>  $fields
-     * @return array<string, mixed>|null
-     */
-    private function withConditions(?array $document, iterable $fields): ?array
-    {
-        if ($document === null) {
-            return null;
-        }
-        $conditions = [];
-        foreach ($fields as $field) {
-            $conditions[$field->clave] = FieldConditions::normalize($field->mostrar_si);
-        }
-        $visit = function (array $node) use (&$visit, $conditions): array {
-            if (($node['type'] ?? null) === 'field' && ($node['attrs']['choice'] ?? null) === null
-                && array_key_exists($node['attrs']['key'] ?? '', $conditions)) {
-                $node['attrs']['showWhen'] = $conditions[$node['attrs']['key']];
-            }
-            if (is_array($node['content'] ?? null)) {
-                $node['content'] = array_map($visit, $node['content']);
-            }
-
-            return $node;
-        };
-
-        return $visit($document);
     }
 
     public function updateAppearance(

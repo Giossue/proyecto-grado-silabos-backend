@@ -141,7 +141,6 @@ final class SaveTemplateDocument
                     'etiqueta' => $attrs['label'], 'tipo' => $attrs['kind'],
                     'opciones' => $attrs['options'],
                     'heredado' => false, 'editable_docente' => true,
-                    'ia_habilitada' => false,
                     'posicion' => ++$position,
                 ]);
             }
@@ -153,11 +152,8 @@ final class SaveTemplateDocument
                         unset($detached[$field->clave]);
                     }
                 } else {
-                    $detached[$field->clave] ??= $field->only([
-                        'editable_docente',
-                        'ia_habilitada',
-                    ]);
-                    $field->update(['editable_docente' => false, 'ia_habilitada' => false]);
+                    $detached[$field->clave] ??= $field->only(['editable_docente']);
+                    $field->update(['editable_docente' => false]);
                 }
             }
             $configuration['detached_fields'] = $detached;
@@ -213,13 +209,6 @@ final class SaveTemplateDocument
     {
         foreach ($request->input('properties', []) as $property) {
             $attributes = ['etiqueta' => $property['label'] ?? '', 'ayuda' => $property['help']];
-            if (array_key_exists('ai_enabled', $property)) {
-                if (isset($detached[$property['key']])) {
-                    $detached[$property['key']]['ia_habilitada'] = $property['ai_enabled'];
-                } else {
-                    $attributes['ia_habilitada'] = $property['ai_enabled'];
-                }
-            }
             if (array_key_exists('show_when', $property) && ! isset($detached[$property['key']])) {
                 $condition = FieldConditions::normalize($property['show_when']);
                 $attributes['mostrar_si'] = $condition === null ? null : json_encode($condition, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);

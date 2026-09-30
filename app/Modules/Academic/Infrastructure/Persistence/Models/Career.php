@@ -72,6 +72,6 @@ class Career extends Model
     /** @return HasManyThrough<Syllabus, Convocation, $this> Sílabos de sus convocatorias (I-131). */
     public function syllabi(): HasManyThrough
     {
-        return $this->hasManyThrough(Syllabus::class, Convocation::class, 'carrera_id', 'convocatoria_id');
+        return $this->hasManyThrough(Syllabus::class, Convocation::class, 'carrera_id', 'convocatoria_carrera_id');
     }
 }

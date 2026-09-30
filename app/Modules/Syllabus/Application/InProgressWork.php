@@ -223,8 +223,8 @@ final class InProgressWork
             if ($scheduled instanceof ScheduledSubject) {
                 data_set($context, 'scheduled_subject.campus', $scheduled->campus_programacion);
                 data_set($context, 'scheduled_subject.modality', $scheduled->modalidad->label());
-                $syllabus->values()->get()
-                    ->filter(fn (FieldValue $value): bool => $value->origen === 'asignaturas')
+                $syllabus->values()->with('field')->get()
+                    ->filter(fn (FieldValue $value): bool => $value->field->origen_maestro === 'asignaturas')
                     ->each(function (FieldValue $value) use ($scheduled): void {
                         $current = is_array($value->valor) ? $value->valor : [];
                         $value->update(['valor' => [
@@ -276,8 +276,8 @@ final class InProgressWork
             $syllabus->contexto_academico = $context;
             $syllabus->save();
 
-            $syllabus->values()->get()
-                ->filter(fn (FieldValue $value): bool => $value->origen === 'asignaturas')
+            $syllabus->values()->with('field')->get()
+                ->filter(fn (FieldValue $value): bool => $value->field->origen_maestro === 'asignaturas')
                 ->each(function (FieldValue $value) use ($subject): void {
                     $current = is_array($value->valor) ? $value->valor : [];
                     $value->update(['valor' => [

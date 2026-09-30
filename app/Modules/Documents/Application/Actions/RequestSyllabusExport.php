@@ -63,7 +63,6 @@ class RequestSyllabusExport
                 'clave_idempotencia' => $idempotencyKey,
                 'estado' => 'pendiente',
                 'solicitado_por' => $actor->id,
-                'asignacion_rol_id' => $activeRole?->id,
                 'solicitado_en' => now(),
             ]);
             $correlationId = $request->attributes->getString('correlation_id');

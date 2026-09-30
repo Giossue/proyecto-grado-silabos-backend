@@ -482,6 +482,12 @@ class DocumentOperationsTest extends TestCase
                 ->where('events.total', 1)
                 ->where('events.data.0.action', 'Materia programada')
                 ->where('events.data.0.resource', 'Programación de asignatura'));
+        $this->actingAsAdministrator()
+            ->getJson(route('api.v1.admin.audit-events.index', ['action' => 'academico.oferta.creacion', 'result' => 'exito']))
+            ->assertOk()->assertJsonPath('events.total', 1);
+        $this->actingAsAdministrator()
+            ->getJson(route('api.v1.admin.audit-events.index', ['action' => 'academico.oferta.creacion', 'result' => 'fallido']))
+            ->assertOk()->assertJsonPath('events.total', 0);
 
         try {
             $event->update(['resultado' => 'fallida']);

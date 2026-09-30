@@ -76,7 +76,6 @@ class SaveFieldDefinition
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
                     'opciones' => CurricularFieldOptions::fromAttributes($data) !== [] ? null : ($data['options'] ?? $field->opciones),
-                    'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
                     ...$condition,
                 ]);
                 $this->applyOrientation($customBlock, $data);
@@ -89,7 +88,6 @@ class SaveFieldDefinition
             if ($field !== null && $contentType === 'institutional') {
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
-                    'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
                     ...$condition,
                 ]);
                 $block = $template->updateBlockDocument($field->campo_plantilla_id, ['titulo' => $data['label']]);
@@ -117,7 +115,7 @@ class SaveFieldDefinition
                 $field = FieldDefinition::query()->create([
                     'plantilla_id' => $template->id, 'campo_plantilla_id' => $block->id, 'clave' => $data['key'],
                     'etiqueta' => $label, 'ayuda' => $data['help'] ?? null, 'tipo' => 'texto_libre',
-                    'heredado' => false, 'editable_docente' => true, 'ia_habilitada' => (bool) ($data['ai_enabled'] ?? false),
+                    'heredado' => false, 'editable_docente' => true,
                     'posicion' => 1, ...$condition,
                 ]);
                 $this->auditField($field, 'plantilla.campo_creado', $actor, $activeRole?->id, $request);
@@ -140,9 +138,7 @@ class SaveFieldDefinition
                 'heredado' => $inherited,
                 'origen_maestro' => $field->heredado ? $field->origen_maestro : null,
                 'editable_docente' => ! $inherited,
-                'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
                 'opciones' => $contentType === 'multiple_choice' ? ($data['options'] ?? $field->opciones) : null,
-                'marcador_documento' => $field->marcador_documento,
                 ...$condition,
             ];
 

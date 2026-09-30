@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
+use App\Modules\Configuration\Application\TemplateFieldAttributes;
 use App\Support\Database\MapsLegacyColumnNames;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,6 @@ use Illuminate\Support\Facades\DB;
  * @property string $id
  * @property array{version_esquema: int, secciones: list<array<string, mixed>>} $documento Armado desde las tablas (I-164).
  * @property array<string, mixed>|null $mapeo_documento
- * @property int $revision_configuracion
  * @property-read EmbeddedTemplateCollection<int, TemplateSection> $sections
  * @property-read EmbeddedTemplateCollection<int, TemplateBlock> $blocks
  */
@@ -50,7 +50,6 @@ class SyllabusTemplate extends Model
     {
         return [
             'mapeo_documento' => 'array',
-            'revision_configuracion' => 'integer',
         ];
     }
 
@@ -291,6 +290,9 @@ class SyllabusTemplate extends Model
         $blocks = DB::table('campos_plantilla')->where('plantilla_id', $this->id)
             ->orderBy('posicion_campo_plantilla')->orderBy('clave_campo_plantilla')->get()
             ->groupBy('seccion_plantilla_id');
+        $definitions = DB::table('definiciones_campo')->where('plantilla_id', $this->id)->get()
+            ->groupBy('campo_plantilla_id')
+            ->map(fn ($rows) => $rows->keyBy('clave_definicion_campo')->all());
 
         return array_values(DB::table('secciones_plantilla')->where('plantilla_id', $this->id)
             ->orderBy('posicion_seccion_plantilla')->orderBy('clave_seccion_plantilla')->get()
@@ -300,7 +302,10 @@ class SyllabusTemplate extends Model
                 'bloques' => ($blocks->get($section->id) ?? collect())->map(fn (object $block): array => [
                     'id' => $block->id, 'clave' => $block->clave_campo_plantilla, 'titulo' => $block->titulo_campo_plantilla,
                     'posicion' => (int) $block->posicion_campo_plantilla,
-                    'configuracion' => is_string($block->configuracion_campo_plantilla) ? json_decode($block->configuracion_campo_plantilla, true, 512, JSON_THROW_ON_ERROR) : [],
+                    'configuracion' => TemplateFieldAttributes::hydrate(
+                        is_string($block->configuracion_campo_plantilla) ? json_decode($block->configuracion_campo_plantilla, true, 512, JSON_THROW_ON_ERROR) : [],
+                        $definitions->get($block->id, []),
+                    ),
                 ])->values()->all(),
             ])->all());
     }
@@ -346,7 +351,7 @@ class SyllabusTemplate extends Model
                         'clave_campo_plantilla' => (string) $block['clave'],
                         'titulo_campo_plantilla' => (string) ($block['titulo'] ?? ''),
                         'posicion_campo_plantilla' => (int) ($block['posicion'] ?? $blockIndex + 1),
-                        'configuracion_campo_plantilla' => json_encode(is_array($block['configuracion'] ?? null) ? $block['configuracion'] : [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+                        'configuracion_campo_plantilla' => json_encode(TemplateFieldAttributes::store(is_array($block['configuracion'] ?? null) ? $block['configuracion'] : []), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                     ]);
                 }
             }

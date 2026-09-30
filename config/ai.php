@@ -2,14 +2,6 @@
 
 return [
     'driver' => env('AI_DRIVER', 'disabled'),
-    'contract_version' => 'ai-analysis-v1',
-    'instruction_version' => 'ueb-editorial-v1',
-    'http' => [
-        'url' => env('AI_LOCAL_URL', 'http://127.0.0.1:8081/v1/analyze'),
-        'expected_version' => env('AI_LOCAL_VERSION', 'local-http-v1'),
-        'connect_timeout_seconds' => (int) env('AI_CONNECT_TIMEOUT', 2),
-        'timeout_seconds' => (int) env('AI_TIMEOUT', 20),
-    ],
     'hosted' => [
         'base_url' => env('AI_BASE_URL'),
         'model' => env('AI_MODEL'),
@@ -32,24 +24,9 @@ return [
         'max_page_output_characters' => (int) env('AI_SOURCE_NORMALIZATION_MAX_PAGE_OUTPUT_CHARACTERS', 200000),
         'max_image_bytes' => (int) env('AI_SOURCE_NORMALIZATION_MAX_IMAGE_BYTES', 2097152),
     ],
-    'embeddings' => [
-        'driver' => 'disabled',
-        'base_url' => env('EMBEDDINGS_BASE_URL', 'https://api.openai.com/v1'),
-        'model' => env('EMBEDDINGS_MODEL', 'text-embedding-3-small'),
-        'api_key' => env('EMBEDDINGS_API_KEY', env('AI_API_KEY')),
-        'dimensions' => 1536,
-        'connect_timeout_seconds' => (int) env('EMBEDDINGS_CONNECT_TIMEOUT', 5),
-        'timeout_seconds' => (int) env('EMBEDDINGS_TIMEOUT', 60),
-        'batch_size' => 32,
-    ],
     'limits' => [
-        'input_characters' => 50000,
         'evidence_items' => 50,
         'evidence_excerpt_characters' => 12000,
-        'source_fragment_characters' => 4000,
-        'recommendations' => 5,
-        'explanation_characters' => 4000,
-        'suggested_text_characters' => 50000,
         'response_bytes' => 262144,
         'requests_per_minute' => 6,
         'chat_message_characters' => 4000,

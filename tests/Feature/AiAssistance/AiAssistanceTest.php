@@ -6,23 +6,13 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\AiAssistance\Application\BuildSyllabusChatContext;
-use App\Modules\AiAssistance\Application\IndexAcademicSource;
-use App\Modules\AiAssistance\Application\RetrieveAiEvidence;
-use App\Modules\AiAssistance\Domain\Contracts\AcademicSourceEmbeddingGateway;
-use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Domain\Data\AiChatInput;
 use App\Modules\AiAssistance\Domain\Data\AiChatResult;
 use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
-use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAcademicSourceEmbeddingGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAnalysisGateway;
-use App\Modules\AiAssistance\Infrastructure\Jobs\AnalyzeSyllabusFieldJob;
 use App\Modules\AiAssistance\Infrastructure\Jobs\AnswerSyllabusChatJob;
-use App\Modules\AiAssistance\Infrastructure\Jobs\EmbedAcademicSourceJob;
-use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiDocument;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\AcademicSource;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -81,9 +71,6 @@ class AiAssistanceTest extends TestCase
 
     public function test_unit_context_uses_frozen_curriculum_and_planning_without_sources_or_personal_fields(): void
     {
-        $source = $this->legacySource();
-        $document = AiDocument::query()->create(['contenido_documento' => 'NO ENVIAR: contenido externo del índice.',
-            'metadatos_documento' => ['fuente_academica_id' => $source->id, 'carrera_id' => $source->carrera_id]]);
         Subject::query()->whereKey($this->syllabus->subject->id)->update(['nombre' => 'NOMBRE VIVO MODIFICADO']);
         DB::enableQueryLog();
         $items = app(BuildSyllabusChatContext::class)->build($this->syllabus->fresh());
@@ -94,13 +81,10 @@ class AiAssistanceTest extends TestCase
         $this->assertStringContainsString('Evalúa la calidad del software.', $text);
         $this->assertStringContainsString('Tema de unidad existente', $text);
         $this->assertStringNotContainsString('NOMBRE VIVO MODIFICADO', $text);
-        $this->assertStringNotContainsString('NO ENVIAR', $text);
         $this->assertStringNotContainsString($this->teacher->correo_electronico, $text);
         $this->assertStringNotContainsString('fuentes_academicas', $queries);
-        $this->assertStringNotContainsString('documentos_ia', $queries);
         $this->assertEqualsCanonicalizing(['contexto_academico', 'dato_curricular', 'seccion_silabo'], array_column($items, 'type'));
         $this->assertSame([$this->planning->id], array_values(array_filter(array_column($items, 'field_id'))));
-        $this->assertDatabaseHas('documentos_ia', ['id' => $document->id]);
     }
 
     public function test_chat_proposes_units_asynchronously_once_without_modifying_the_syllabus(): void
@@ -128,44 +112,6 @@ class AiAssistanceTest extends TestCase
         $this->deleteJson($this->url())->assertOk();
         $this->getJson($this->url())->assertJsonPath('conversation.hidden', true)->assertJsonCount(2, 'conversation.messages');
         $this->assertDatabaseCount('historial_ia', 3);
-    }
-
-    public function test_legacy_indexing_and_embedding_jobs_are_inert_even_if_old_settings_are_enabled(): void
-    {
-        config(['ai.embeddings.driver' => 'openai', 'ai.driver' => 'openai']);
-        $source = $this->legacySource();
-        $document = AiDocument::query()->create(['contenido_documento' => 'Evidencia archivada',
-            'metadatos_documento' => ['fuente_academica_id' => $source->id]]);
-        $this->assertSame(0, app(IndexAcademicSource::class)->execute($source));
-        $this->assertTrue(app(RetrieveAiEvidence::class)->forSyllabus($this->syllabus, 'consulta', 10)->isEmpty());
-        (new EmbedAcademicSourceJob($source->id))->handle();
-        $this->assertInstanceOf(DisabledAcademicSourceEmbeddingGateway::class, app(AcademicSourceEmbeddingGateway::class));
-        $this->assertInstanceOf(DisabledAiAnalysisGateway::class, app(AiAnalysisGateway::class));
-        $this->assertSame('Evidencia archivada', $document->fresh()->contenido_documento);
-        Queue::assertNothingPushed();
-        Http::assertNothingSent();
-    }
-
-    public function test_pending_analysis_jobs_retire_without_touching_terminal_history(): void
-    {
-        $job = $this->job('ia.analizar');
-        $review = AiHistoryEntry::query()->create(['sesion_id' => AiHistoryEntry::reviewSession($this->syllabus->id),
-            'mensaje_ia' => ['tipo' => 'revision', 'estado' => 'pendiente', 'entrada' => ['silabo_id' => $this->syllabus->id]]]);
-        $analysis = AiHistoryEntry::query()->create(['sesion_id' => AiHistoryEntry::fieldSession($this->syllabus->id, $this->planning->id),
-            'mensaje_ia' => ['tipo' => 'analisis', 'estado' => 'pendiente', 'entrada' => [
-                'evidencia' => [['id' => 'legacy', 'tipo' => 'fuente_academica', 'extracto' => 'Historia conservada']],
-                'revision_id' => $review->id, 'ejecucion_trabajo_id' => $job->id]]]);
-        $evidence = $analysis->evidence();
-        (new AnalyzeSyllabusFieldJob($analysis->id))->handle();
-        $this->assertSame('fallida', $analysis->fresh()->state());
-        $this->assertSame('revision_ia_retirada', $analysis->fresh()->part('codigo_error'));
-        $this->assertSame($evidence, $analysis->fresh()->evidence());
-        $this->assertSame('fallida', $job->fresh()->estado);
-        $this->assertSame('fallida', $review->fresh()->state());
-        $terminal = $analysis->fresh()->mensaje_ia;
-        (new AnalyzeSyllabusFieldJob($analysis->id))->handle();
-        $this->assertSame($terminal, $analysis->fresh()->mensaje_ia);
-        Http::assertNothingSent();
     }
 
     public function test_pending_legacy_chat_is_not_sent_and_new_context_does_not_replay_legacy_history(): void
@@ -237,11 +183,11 @@ class AiAssistanceTest extends TestCase
             'configuracion' => ['content_type' => 'text', 'document' => TemplateDocumentDefaults::freeTextSheet('unidades', 'Planificación por unidades')]]);
         $this->planning = FieldDefinition::query()->create(['plantilla_id' => $template->id, 'campo_plantilla_id' => $block->id,
             'clave' => 'unidades', 'etiqueta' => 'Planificación por unidades', 'tipo' => 'texto_libre', 'heredado' => false,
-            'editable_docente' => true, 'ia_habilitada' => false, 'posicion' => 1]);
+            'editable_docente' => true, 'posicion' => 1]);
         $privateBlock = $template->appendBlock($section->id, ['id' => (string) Str::uuid(), 'clave' => 'contacto', 'tipo' => 'narrativa', 'titulo' => 'Otros campos', 'posicion' => 2, 'configuracion' => []]);
         $private = FieldDefinition::query()->create(['plantilla_id' => $template->id, 'campo_plantilla_id' => $privateBlock->id,
             'clave' => 'contacto', 'etiqueta' => 'Contacto', 'tipo' => 'texto_largo', 'heredado' => false,
-            'editable_docente' => true, 'ia_habilitada' => true, 'posicion' => 1]);
+            'editable_docente' => true, 'posicion' => 1]);
         $parallel = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail()->parallel;
         $scheduled = $parallel->scheduledSubject;
         $context = app(AcademicContextSnapshot::class)->build($scheduled);
@@ -251,16 +197,10 @@ class AiAssistanceTest extends TestCase
         $convocation = Convocation::query()->create(['carrera_id' => $scheduled->subject->carrera_id, 'proceso_id' => $this->openSyllabusProcess($template->id)->id, 'estado' => 'abierta']);
         $this->syllabus = Syllabus::query()->create(['convocatoria_id' => $convocation->id, 'paralelo_id' => $parallel->id,
             'contexto_academico' => $context, 'estado' => 'borrador', 'version_bloqueo' => 0, 'iniciado_en' => now()]);
-        FieldValue::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $this->planning->id, 'heredado' => false,
+        FieldValue::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $this->planning->id,
             'valor' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Tema de unidad existente']]]]]]);
         FieldValue::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $private->id,
-            'valor' => 'NO ENVIAR: '.$this->teacher->correo_electronico, 'heredado' => false]);
-    }
-
-    private function legacySource(): AcademicSource
-    {
-        return AcademicSource::query()->create(['carrera_id' => $this->syllabus->convocation->carrera_id,
-            'nombre' => 'Fuente antigua', 'contenido' => 'Fuente no utilizada', 'activo' => true]);
+            'valor' => 'NO ENVIAR: '.$this->teacher->correo_electronico]);
     }
 
     private function job(string $type): JobExecution

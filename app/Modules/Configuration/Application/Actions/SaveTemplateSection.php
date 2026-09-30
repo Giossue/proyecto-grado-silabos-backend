@@ -69,7 +69,6 @@ class SaveTemplateSection
                     'ayuda' => $fieldData['help'] ?? null,
                     'heredado' => false,
                     'editable_docente' => true,
-                    'ia_habilitada' => (bool) ($fieldData['ai_enabled'] ?? false),
                     'posicion' => 1,
                 ];
             }

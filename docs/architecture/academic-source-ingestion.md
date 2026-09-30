@@ -24,8 +24,8 @@ por defecto (`OPENPARSER_ENABLED=false`) hasta resolver PV-12 y PV-14.
 - No se usa `/extract`, Mistral, Docling ni un proveedor de respaldo. Si DeepSeek está
   configurado para la normalización y devuelve un resultado vacío, inválido o incompleto,
   la ingesta falla y conserva el documento anterior.
-- `contenido_fuente_academica` es texto derivado para extracción y compatibilidad; el
-  documento interno canónico es `documento_fuente_academica`.
+- El documento interno canónico es `documento_fuente_academica`. I-168 retiró el texto
+  derivado `contenido_fuente_academica`.
 
 ## Flujo
 
@@ -48,11 +48,11 @@ por defecto (`OPENPARSER_ENABLED=false`) hasta resolver PV-12 y PV-14.
    desde el PDF privado.
 8. Las imágenes se validan y guardan como objetos privados `academic_source_image` en su
    posición lógica.
-9. Una transacción guarda el documento interno completo y deriva su texto. Los trabajos
+9. Una transacción guarda el documento interno completo. Los trabajos
    comprueban que el archivo y la solicitud siguen vigentes para evitar resultados tardíos
    que sobrescriban otro documento.
-10. I-146 elimina la indexación textual/vectorial y el despacho de embeddings. La lectura
-    alimenta exclusivamente la propuesta curricular de I-145.
+10. I-146 retiró la indexación textual/vectorial y los embeddings; I-168 borró su código.
+    La lectura alimenta exclusivamente la propuesta curricular de I-145.
 
 ### Idempotencia y reprocesamiento
 
@@ -82,13 +82,12 @@ No se exponen las rutas privadas del almacenamiento ni se recupera el CRUD docum
 ## Persistencia
 
 `fuentes_academicas` conserva su nombre físico por compatibilidad: metadatos, documento
-JSON completo, texto derivado, PDF vigente y estado de ingesta. Desde I-146 representa
+JSON completo, PDF vigente y estado de ingesta. Desde I-146 representa
 un documento interno de la importación; no un catálogo editable por una pantalla pública.
-`documentos_ia` y sus índices anteriores permanecen como estructuras históricas inactivas;
-esta ingesta no los reconstruye ni los consulta.
+I-168 eliminó la tabla `documentos_ia` y la extensión `vector`.
 
 Los trabajos usan `ejecuciones_trabajo`. PDF, XLSX e imágenes reutilizan
-`objetos_almacenados` privados. La retirada no elimina documentos, evidencia ni tablas.
+`objetos_almacenados` privados.
 
 ## Extracción de datos curriculares (I-145)
 

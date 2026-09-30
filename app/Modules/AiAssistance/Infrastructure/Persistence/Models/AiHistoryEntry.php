@@ -32,16 +32,6 @@ class AiHistoryEntry extends Model
         return ['mensaje_ia' => 'array', 'enviado_en' => 'immutable_datetime'];
     }
 
-    public static function fieldSession(string $syllabusId, string $fieldId): string
-    {
-        return "silabo:{$syllabusId}:campo:{$fieldId}";
-    }
-
-    public static function reviewSession(string $syllabusId): string
-    {
-        return "silabo:{$syllabusId}:revision";
-    }
-
     public static function chatSession(string $syllabusId, string $userId): string
     {
         return "silabo:{$syllabusId}:usuario:{$userId}";
@@ -63,16 +53,6 @@ class AiHistoryEntry extends Model
     public function scopeOfType(Builder $query, string $type): Builder
     {
         return $query->where('mensaje_ia->tipo', $type);
-    }
-
-    /**
-     * @param  Builder<AiHistoryEntry>  $query
-     * @return Builder<AiHistoryEntry>
-     */
-    public function scopeFieldAnalysesOf(Builder $query, string $syllabusId): Builder
-    {
-        return $query->where('sesion_id', 'like', "silabo:{$syllabusId}:campo:%")
-            ->where('mensaje_ia->tipo', 'analisis');
     }
 
     public function type(): string

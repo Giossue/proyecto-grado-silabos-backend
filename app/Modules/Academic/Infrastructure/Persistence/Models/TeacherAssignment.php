@@ -23,7 +23,7 @@ class TeacherAssignment extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'activo' => 'docente_paralelo_activo',
+        'activo' => 'asignacion_paralelo_activa',
     ];
 
     public const CREATED_AT = 'asignado_en';

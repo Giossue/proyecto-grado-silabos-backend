@@ -52,7 +52,7 @@ class SyllabusProcessTest extends TestCase
             $this->assertFalse(Schema::hasColumn('convocatorias_universidad', $column));
         }
 
-        $this->assertTrue(Schema::hasColumns('convocatorias_carreras', ['id', 'carrera_id', 'proceso_id', 'estado_convocatoria_carrera']));
+        $this->assertTrue(Schema::hasColumns('convocatorias_carreras', ['id', 'carrera_id', 'convocatoria_universidad_id', 'estado_convocatoria_carrera']));
         $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['id', 'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado_convocatoria_universidad']));
         foreach (['silabos', 'convocatorias_universidad', 'artefactos_exportacion', 'historial_ia'] as $table) {
             $this->assertFalse(Schema::hasColumn($table, 'plantilla_id'));
@@ -572,6 +572,13 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful();
         $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
         $this->assertContains($other->codigo_asignatura, data_get($syllabus->fresh()->contexto_academico, 'subject.corequisites'));
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.curriculum.requirements.store', $career->id), [
+                'subject_id' => $syllabus->subject->id,
+                'requirement_id' => $other->id,
+                'type' => 'prerrequisito',
+            ])
+            ->assertJsonValidationErrors('requirement_id');
         $this->assertFalse(JobExecution::query()
             ->whereJsonContains('entrada_ejecucion_trabajo', ['tipo_evento' => 'silabo.regenerado'])->exists());
     }

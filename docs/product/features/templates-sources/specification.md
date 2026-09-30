@@ -77,7 +77,6 @@
   una materia ambigua permite asociación explícita dentro de la carrera. Una
   discrepancia documental exige elegir una fila y aceptar la decisión. Esto no fija
   precedencia institucional ni resuelve cardinalidad de habilidades o reglas APE.
-- No se abre un proceso con marcador DOCX obligatorio sin mapeo.
 - Un sílabo histórico sigue renderizando después de editar la plantilla viva.
 - Modificar la plantilla con un proceso institucional abierto falla en servidor.
 - Los campos editables vacíos bloquean el envío; un borrador incompleto puede guardarse.

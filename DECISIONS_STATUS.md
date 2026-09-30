@@ -129,12 +129,12 @@ tutor ni a la institución.
 I-145 continúa recibiendo PDF/XLSX. I-152 retira la reutilización de documentos y los vuelve temporales.
 Los nombres de contrato `sources`/`source_ids` se conservan por compatibilidad; ya no
 representan un CRUD de Fuentes académicas. Los originales tienen descarga privada por
-importación. No se elimina evidencia histórica, contenido curricular confirmado ni
-almacenamiento existente como parte de esta retirada.
+importación. I-146 no eliminó evidencia; I-168 borró después la tabla `documentos_ia`, la
+extensión `vector` y el código del revisor. El contenido curricular confirmado se conserva.
 
 El chat conservado ayuda a elaborar contenido y unidades desde carrera, asignatura,
 horas, semanas, datos curriculares confirmados y tablas de unidades/planificación del
-sílabo. La casilla histórica `ia_habilitada` no amplía ese contexto; las preguntas nuevas
+sílabo. I-168 eliminó la casilla `ia_habilitada`; las preguntas nuevas
 usan `curricular-units-v1` y no envían al proveedor el historial anterior. No consulta el índice
 vectorial ni ejecuta revisión académica. La configuración del proveedor sigue disponible;
 no se cambian permisos de aprobación ni validaciones determinísticas. La verificación

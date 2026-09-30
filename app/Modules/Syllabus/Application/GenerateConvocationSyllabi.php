@@ -31,7 +31,7 @@ final class GenerateConvocationSyllabi
                 'subject.career.faculty',
                 'parallels' => fn ($query) => $query->lockForUpdate()->with([
                     'teacherAssignments' => fn ($assignmentQuery) => $assignmentQuery
-                        ->where('asignaciones_paralelo.docente_paralelo_activo', true)
+                        ->where('asignaciones_paralelo.asignacion_paralelo_activa', true)
                         ->whereHas('roleAssignment', fn ($roleQuery) => $roleQuery
                             ->where('asignaciones_rol.asignacion_rol_activa', true)
                             ->where('asignaciones_rol.rol', RoleCode::Teacher->value)

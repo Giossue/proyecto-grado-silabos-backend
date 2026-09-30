@@ -59,7 +59,6 @@ class SyllabusSnapshot
                             'options' => CurricularFieldOptions::options($field, $syllabus->contexto_academico ?? []),
                             'inherited' => $field->heredado,
                             'master_source' => $field->origen_maestro,
-                            'document_marker' => $field->marcador_documento,
                             'value' => $values->get($field->id)?->valor,
                         ])->values()->all(),
                     ])->values()->all(),
@@ -84,8 +83,6 @@ class SyllabusSnapshot
                         'definicion_campo_id' => $definitionId,
                     ], [
                         'valor' => $field['value'] ?? null,
-                        'heredado' => (bool) ($field['inherited'] ?? false),
-                        'origen' => null,
                     ]);
                 }
             }

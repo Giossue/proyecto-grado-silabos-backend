@@ -16,10 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $id
  * @property string $carrera_id
  * @property string $nombre
- * @property string|null $descripcion
- * @property string|null $contenido
  * @property array<string, mixed> $documento
- * @property int $version_documento
  * @property bool $activo
  * @property string|null $objeto_pdf_id
  * @property string $estado_ingesta
@@ -31,10 +28,7 @@ class AcademicSource extends Model
 
     protected const LEGACY_COLUMN_ALIASES = [
         'nombre' => 'nombre_fuente_academica',
-        'descripcion' => 'descripcion_fuente_academica',
-        'contenido' => 'contenido_fuente_academica',
         'documento' => 'documento_fuente_academica',
-        'version_documento' => 'version_documento_fuente',
         'activo' => 'fuente_academica_activa',
         'estado_ingesta' => 'estado_ingesta_fuente',
         'ingesta_actualizada_en' => 'ingesta_actualizada_en',
@@ -48,10 +42,7 @@ class AcademicSource extends Model
     protected $fillable = [
         'carrera_id',
         'nombre',
-        'descripcion',
-        'contenido',
         'documento',
-        'version_documento',
         'activo',
         'objeto_pdf_id',
         'estado_ingesta',
@@ -64,7 +55,6 @@ class AcademicSource extends Model
         return [
             'activo' => 'boolean',
             'documento' => 'array',
-            'version_documento' => 'integer',
             'ingesta_actualizada_en' => 'immutable_datetime',
         ];
     }

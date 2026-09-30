@@ -51,7 +51,7 @@ las versiones de Laravel/Vue ni requiere servidor de documentos. Véase ADR-0007
 ## Decisiones deliberadamente abiertas
 
 - motor DOCX/PDF y estrategia de fidelidad (`PV-07`);
-- modelo de embeddings/generación y runtime del servicio (`PV-13`, `PV-14`);
+- modelo de generación y runtime del servicio (`PV-13`, `PV-14`);
 - SSO o credenciales administradas (`PV-09` y decisión institucional adicional);
 - proveedor de almacenamiento, correo y observabilidad;
 - Pest/PHPUnit y Vitest según lo que entregue/admita el starter al bootstrap;

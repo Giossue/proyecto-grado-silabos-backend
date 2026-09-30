@@ -32,8 +32,6 @@ class InheritMasterValues
                 'silabo_id' => $syllabus->id,
                 'definicion_campo_id' => $field->id,
                 'valor' => $value,
-                'heredado' => true,
-                'origen' => $field->origen_maestro,
             ]);
         }
     }

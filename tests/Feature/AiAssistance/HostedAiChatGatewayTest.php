@@ -2,21 +2,16 @@
 
 namespace Tests\Feature\AiAssistance;
 
-use App\Modules\AiAssistance\Application\AiResultContract;
-use App\Modules\AiAssistance\Domain\Contracts\AiAnalysisGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
-use App\Modules\AiAssistance\Domain\Data\AiAnalysisInput;
 use App\Modules\AiAssistance\Domain\Data\AiChatInput;
-use App\Modules\AiAssistance\Domain\Data\AiEvidenceInput;
 use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
-use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAnalysisGateway;
-use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAnalysisGateway;
+use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiChatGateway;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
-class HostedAiAnalysisGatewayTest extends TestCase
+class HostedAiChatGatewayTest extends TestCase
 {
     public function test_openai_uses_responses_with_structured_output_and_no_reasoning_options(): void
     {
@@ -27,11 +22,11 @@ class HostedAiAnalysisGatewayTest extends TestCase
             ]),
         ]);
 
-        $result = (new HostedAiAnalysisGateway)->analyze($this->input());
+        $result = (new HostedAiChatGateway)->reply($this->input());
 
-        $this->assertInstanceOf(DisabledAiAnalysisGateway::class, app(AiAnalysisGateway::class));
+        $this->assertInstanceOf(HostedAiChatGateway::class, app(AiChatGateway::class));
         $this->assertSame('openai:gpt-test', $result->gatewayVersion);
-        app(AiResultContract::class)->validate($this->input($result->requestId), $result);
+        $this->assertSame(['evidence-1'], $result->citationIds);
         Http::assertSent(function (Request $request): bool {
             $data = $request->data();
 
@@ -53,7 +48,7 @@ class HostedAiAnalysisGatewayTest extends TestCase
             ]),
         ]);
 
-        $result = (new HostedAiAnalysisGateway)->analyze($this->input());
+        $result = (new HostedAiChatGateway)->reply($this->input());
 
         $this->assertSame('claude:claude-test', $result->gatewayVersion);
         Http::assertSent(function (Request $request): bool {
@@ -77,7 +72,7 @@ class HostedAiAnalysisGatewayTest extends TestCase
             ]),
         ]);
 
-        $result = (new HostedAiAnalysisGateway)->analyze($this->input());
+        $result = (new HostedAiChatGateway)->reply($this->input());
 
         $this->assertSame('claude:claude-test', $result->gatewayVersion);
     }
@@ -91,7 +86,7 @@ class HostedAiAnalysisGatewayTest extends TestCase
             ]),
         ]);
 
-        $result = (new HostedAiAnalysisGateway)->analyze($this->input());
+        $result = (new HostedAiChatGateway)->reply($this->input());
 
         $this->assertSame('deepseek:deepseek-test', $result->gatewayVersion);
         Http::assertSent(function (Request $request): bool {
@@ -110,7 +105,7 @@ class HostedAiAnalysisGatewayTest extends TestCase
         $this->configure('openai', 'http://api.openai.com/v1', 'gpt-test');
 
         try {
-            (new HostedAiAnalysisGateway)->analyze($this->input());
+            (new HostedAiChatGateway)->reply($this->input());
             $this->fail('El gateway aceptó una URL sin HTTPS.');
         } catch (AiGatewayUnavailable $exception) {
             $this->assertStringNotContainsString('secret-test-key', $exception->getMessage());
@@ -118,7 +113,7 @@ class HostedAiAnalysisGatewayTest extends TestCase
 
         config(['ai.hosted.base_url' => 'https://api.openai.com/v1', 'ai.hosted.api_key' => '']);
         try {
-            (new HostedAiAnalysisGateway)->analyze($this->input());
+            (new HostedAiChatGateway)->reply($this->input());
             $this->fail('El gateway aceptó una configuración sin clave.');
         } catch (AiGatewayUnavailable $exception) {
             $this->assertStringNotContainsString('secret-test-key', $exception->getMessage());
@@ -135,7 +130,7 @@ class HostedAiAnalysisGatewayTest extends TestCase
         ]);
 
         try {
-            (new HostedAiAnalysisGateway)->analyze($this->input());
+            (new HostedAiChatGateway)->reply($this->input());
             $this->fail('El gateway debía degradar el error remoto.');
         } catch (AiGatewayUnavailable $exception) {
             $this->assertStringNotContainsString('secret-test-key', $exception->getMessage());
@@ -182,34 +177,22 @@ class HostedAiAnalysisGatewayTest extends TestCase
         ]);
     }
 
-    private function input(?string $requestId = null): AiAnalysisInput
+    private function input(): AiChatInput
     {
-        return new AiAnalysisInput(
-            $requestId ?? (string) Str::uuid(),
-            'ai-analysis-v1',
-            'ueb-editorial-v1',
-            'objetivo_general',
-            'Objetivo general',
-            'Comprender los fundamentos.',
-            hash('sha256', 'Comprender los fundamentos.'),
+        return new AiChatInput(
+            (string) Str::uuid(),
+            '¿Qué temas propones?',
             'es-EC',
-            [new AiEvidenceInput('evidence-1', 'source-1', 'Reglamento', 'Debe ser verificable.', hash('sha256', 'evidence'))],
-            5,
+            [],
+            [['id' => 'evidence-1', 'type' => 'seccion_silabo', 'label' => 'Objetivo', 'excerpt' => 'Comprender los fundamentos.']],
         );
     }
 
     private function completedOutput(): string
     {
         return json_encode([
-            'status' => 'completed',
-            'inconclusive_reason' => null,
-            'recommendations' => [[
-                'type' => 'clarity',
-                'title' => 'Use un verbo observable',
-                'explanation' => 'La fuente exige un resultado verificable.',
-                'suggested_text' => 'Explicar los fundamentos mediante un caso aplicado.',
-                'evidence_ids' => ['evidence-1'],
-            ]],
+            'answer' => 'Propongo iniciar con los fundamentos.',
+            'citation_ids' => ['evidence-1'],
         ], JSON_THROW_ON_ERROR);
     }
 }
