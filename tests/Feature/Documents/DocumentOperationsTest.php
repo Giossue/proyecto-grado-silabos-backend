@@ -347,8 +347,6 @@ class DocumentOperationsTest extends TestCase
         [$syllabus, $revision] = $this->approvedRevision();
         $artifact = ExportArtifact::query()->create([
             'revision_silabo_id' => $revision->id,
-            'version_renderizador' => 'test',
-            'idioma' => 'es-EC',
             'clave_idempotencia' => (string) Str::uuid(),
             'estado' => 'pendiente',
             'solicitado_por' => $this->coordinator->id,

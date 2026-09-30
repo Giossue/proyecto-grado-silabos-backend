@@ -57,8 +57,6 @@ class RequestSyllabusExport
             $activeRole = $this->roles->resolve($request);
             $artifact = ExportArtifact::query()->create([
                 'revision_silabo_id' => $lockedRevision->id,
-                'version_renderizador' => $this->renderer->version(),
-                'idioma' => 'es-EC',
                 'clave_idempotencia' => $idempotencyKey,
                 'estado' => 'pendiente',
                 'solicitado_por' => $actor->id,
@@ -86,7 +84,7 @@ class RequestSyllabusExport
                 result: 'exito',
                 metadata: [
                     'revision_number' => $lockedRevision->numero_revision,
-                    'renderer_version' => $artifact->version_renderizador,
+                    'renderer_version' => $this->renderer->version(),
                 ],
             );
 

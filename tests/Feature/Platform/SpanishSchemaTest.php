@@ -158,7 +158,7 @@ it('I-175 usa nombres claros para archivos, exportaciones, firmas y documentos d
     }
 
     expect(Schema::hasColumns('archivos', ['nombre_archivo', 'tipo_archivo', 'categoria', 'subido_por', 'ruta_archivo', 'hash_archivo']))->toBeTrue()
-        ->and(Schema::hasColumns('exportaciones_silabo', ['archivo_word_id', 'archivo_pdf_id', 'version_generador', 'estado_exportacion', 'trabajo_id', 'clave_solicitud']))->toBeTrue()
+        ->and(Schema::hasColumns('exportaciones_silabo', ['archivo_word_id', 'archivo_pdf_id', 'estado_exportacion', 'trabajo_id', 'clave_solicitud']))->toBeTrue()
         ->and(Schema::hasColumns('firmas_documento', [
             'exportacion_silabo_id', 'firmado_como', 'archivo_firmado_id', 'nombre_en_certificado',
             'numero_certificado', 'entidad_emisora', 'certificado_valido_hasta', 'hash_archivo',

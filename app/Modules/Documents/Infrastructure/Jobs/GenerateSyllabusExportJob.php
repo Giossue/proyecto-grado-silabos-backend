@@ -87,12 +87,9 @@ class GenerateSyllabusExportJob implements ShouldQueue
             revisionNumber: $revision->numero_revision,
             revisionFingerprint: $revision->huella_sha256,
             generatedAt: $artifact->solicitado_en->toIso8601String(),
-            locale: $artifact->idioma,
+            locale: 'es-EC',
             snapshot: $this->withSignatures($revision, $approval),
         ));
-        if ($renderer->version() !== $artifact->version_renderizador) {
-            throw new RuntimeException('La versión del renderer no coincide con la solicitud.');
-        }
         $validator->validate($bundle);
 
         $basePath = "exports/{$revision->id}/{$artifact->id}";

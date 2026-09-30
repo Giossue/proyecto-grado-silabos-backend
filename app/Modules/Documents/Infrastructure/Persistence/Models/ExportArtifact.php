@@ -20,8 +20,6 @@ use LogicException;
  * @property string|null $ejecucion_trabajo_id
  * @property string|null $objeto_docx_id
  * @property string|null $objeto_pdf_id
- * @property string $version_renderizador
- * @property string $idioma
  * @property string $clave_idempotencia
  * @property string $estado
  * @property string $solicitado_por
@@ -38,7 +36,6 @@ class ExportArtifact extends Model
         'estado' => 'estado_exportacion',
         'objeto_docx_id' => 'archivo_word_id',
         'objeto_pdf_id' => 'archivo_pdf_id',
-        'version_renderizador' => 'version_generador',
         'ejecucion_trabajo_id' => 'trabajo_id',
         'clave_idempotencia' => 'clave_solicitud',
     ];
@@ -50,7 +47,7 @@ class ExportArtifact extends Model
     /** @var list<string> */
     protected $fillable = [
         'revision_silabo_id', 'ejecucion_trabajo_id',
-        'objeto_docx_id', 'objeto_pdf_id', 'version_renderizador', 'idioma',
+        'objeto_docx_id', 'objeto_pdf_id',
         'clave_idempotencia', 'estado', 'solicitado_por',
         'solicitado_en', 'completado_en',
     ];
