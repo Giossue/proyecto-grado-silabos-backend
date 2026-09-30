@@ -32,7 +32,7 @@ class DeleteTemplateSection
             $lockedSection = $template->sectionOrFail($section->id);
             FieldDefinition::query()
                 ->where('plantilla_id', $template->id)
-                ->whereIn('bloque_plantilla_id', $lockedSection->blocks()->pluck('id'))
+                ->whereIn('campo_plantilla_id', $lockedSection->blocks()->pluck('id'))
                 ->delete();
             $template->removeSectionDocument($lockedSection->id);
 

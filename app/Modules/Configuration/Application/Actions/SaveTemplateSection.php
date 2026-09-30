@@ -62,7 +62,7 @@ class SaveTemplateSection
                 }
                 $fieldDefinitions[] = [
                     'plantilla_id' => $template->id,
-                    'bloque_plantilla_id' => $blockId,
+                    'campo_plantilla_id' => $blockId,
                     'clave' => $fieldKey,
                     'etiqueta' => $label,
                     'tipo' => 'texto_libre',

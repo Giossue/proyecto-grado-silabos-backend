@@ -194,16 +194,19 @@ excepcional del agregado elegible completo cuando una base institucional se corr
 el ámbito correspondiente pausado; fuera de esa transacción los triggers conservan la
 inmutabilidad. La aclaración I-144 excluye expedientes con aprobación conservada, aunque
 hayan sido reabiertos, y procesos cerrados.
-Desde I-164 (migración `000161`) las secciones y partes de la plantilla son filas de
-`secciones_plantilla` y `bloques_plantilla` (antes, JSON en `documento_plantilla`, I-111);
-`definiciones_campo.bloque_plantilla_id` es una llave foránea real. Solo el diseño de cada
-hoja (`bloques_plantilla.configuracion.document`) sigue en JSON, porque es un documento.
+Desde I-164 (migración `000161`) las secciones y campos de la plantilla son filas de
+`secciones_plantilla` y `campos_plantilla` (antes, JSON en `documento_plantilla`, I-111);
+`definiciones_campo.campo_plantilla_id` es una llave foránea real. I-166 (migración
+`000165`) renombró `bloques_plantilla` a `campos_plantilla` y dio nombres explícitos a las
+columnas de ambas tablas. Solo el diseño de cada hoja
+(`campos_plantilla.configuracion_campo_plantilla.document`) sigue en JSON, porque es un
+documento.
 El modelo `SyllabusTemplate` arma y vuelca ese árbol (`sections()`, `blocks()`,
 `documento`), así que la aplicación y la API no cambiaron. `definiciones_campo.plantilla_id`
 es la única referencia persistida a la plantilla: `silabos`, `convocatorias_universidad`,
 `artefactos_exportacion` y el historial de IA ya no la guardan (I-132, I-135) y la aplicación la
 resuelve con `SyllabusTemplate::institutional()`. La exportación renderiza desde
-`revisiones_silabo.fotografia`, no desde la plantilla vigente. Cada bloque guarda su tipo una
+`revisiones_silabo.fotografia`, no desde la plantilla vigente. Cada campo guarda su tipo una
 sola vez en `configuracion.content_type` (`text`, `table`, listas, `institutional` o `fixed` =
 contenido fijo sin campos); el tipo de almacenamiento se deriva de él (I-138).
 No hay reglas por campo: `reglas_definicion_campo` se eliminó (migración `000111`). Todo

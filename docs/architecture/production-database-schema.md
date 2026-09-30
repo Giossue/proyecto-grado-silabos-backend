@@ -230,7 +230,7 @@ programaciones_asignatura 1:N paralelos
 ## plantilla_silabo
 
 **Contexto:** plantilla institucional que define el documento de sílabo. Desde I-164
-(migración `000161`) las secciones y partes viven en tablas propias; aquí quedan solo la
+(migración `000161`) las secciones y campos viven en tablas propias; aquí quedan solo la
 apariencia (`mapeo_documento_plantilla`) y el contador de revisión.
 
 ~~~text
@@ -239,27 +239,30 @@ mapeo_documento_plantilla JSONB NULL
 revision_configuracion BIGINT NOT NULL DEFAULT 1
 
 UNIQUE constante: existe solo una plantilla
-TRIGGER: cambiar la apariencia, una sección, una parte o una pregunta sube revision_configuracion
+TRIGGER: cambiar la apariencia, una sección, un campo o una pregunta sube revision_configuracion
 ~~~
 
 ## secciones_plantilla
 
 **Contexto:** sección de la plantilla (I-164; antes embebida en `documento_plantilla`).
+I-166 da nombres explícitos a sus columnas.
 
 ~~~text
 id UUID (PK)
 plantilla_id UUID (FK → plantilla_silabo.id, ON DELETE CASCADE) NOT NULL
-clave VARCHAR(120) NOT NULL
-titulo VARCHAR(180) NOT NULL
-descripcion TEXT NULL
-posicion SMALLINT NOT NULL
+clave_seccion_plantilla VARCHAR(120) NOT NULL
+titulo_seccion_plantilla VARCHAR(180) NOT NULL
+descripcion_seccion_plantilla TEXT NULL
+posicion_seccion_plantilla SMALLINT NOT NULL
 
-UNIQUE (plantilla_id, clave)
+UNIQUE (plantilla_id, clave_seccion_plantilla)
 ~~~
 
-## bloques_plantilla
+## campos_plantilla
 
-**Contexto:** parte de una sección (Texto libre o Personalizado). `configuracion` guarda
+**Contexto:** campo de una sección (Texto libre o Personalizado). Se llamó
+`bloques_plantilla` hasta I-166 (migración `000165`), que también nombró sus columnas de
+forma explícita. `configuracion_campo_plantilla` guarda
 `content_type`, `page_orientation`, el diseño de la hoja (`document`, JSON de ProseMirror),
 `options_sources` y `detached_fields`: el diseño es un documento y sigue en JSON a
 propósito.
@@ -268,21 +271,23 @@ propósito.
 id UUID (PK)
 seccion_plantilla_id UUID (FK → secciones_plantilla.id, ON DELETE CASCADE) NOT NULL
 plantilla_id UUID (FK → plantilla_silabo.id, ON DELETE CASCADE) NOT NULL
-clave VARCHAR(120) NOT NULL
-titulo VARCHAR(180) NOT NULL DEFAULT ''
-posicion SMALLINT NOT NULL
-configuracion JSONB NOT NULL
+clave_campo_plantilla VARCHAR(120) NOT NULL
+titulo_campo_plantilla VARCHAR(180) NOT NULL DEFAULT ''
+posicion_campo_plantilla SMALLINT NOT NULL
+configuracion_campo_plantilla JSONB NOT NULL
 
-UNIQUE (plantilla_id, clave)
+UNIQUE (plantilla_id, clave_campo_plantilla)
+TRIGGER tocar_revision_por_campo: sube plantilla_silabo.revision_configuracion
 ~~~
 
 ## definiciones_campo
 
-**Contexto:** definición de cada campo del sílabo, sus reglas y configuración IA.
+**Contexto:** cada pregunta o dato que guarda un campo de la plantilla, con sus reglas y
+configuración IA.
 
 ~~~text
 id UUID (PK)
-bloque_plantilla_id UUID (FK → bloques_plantilla.id, ON DELETE CASCADE) NOT NULL
+campo_plantilla_id UUID (FK → campos_plantilla.id, ON DELETE CASCADE) NOT NULL
 clave_definicion_campo VARCHAR NOT NULL
 etiqueta_definicion_campo VARCHAR NOT NULL
 ayuda_definicion_campo TEXT NULL
@@ -297,7 +302,7 @@ posicion_definicion_campo SMALLINT NOT NULL
 plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
 
 UNIQUE (plantilla_id, clave_definicion_campo)
-UNIQUE (bloque_plantilla_id, posicion_definicion_campo)
+UNIQUE (campo_plantilla_id, posicion_definicion_campo)
 ~~~
 
 ## fuentes_academicas

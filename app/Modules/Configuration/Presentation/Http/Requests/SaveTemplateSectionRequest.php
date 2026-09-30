@@ -72,8 +72,8 @@ class SaveTemplateSectionRequest extends ManageTemplatesRequest
     public function messages(): array
     {
         return [
-            'fields.*.content_type.in' => 'Elija un tipo de parte de la lista.',
-            'first_field_content_type.in' => 'Elija un tipo de parte de la lista.',
+            'fields.*.content_type.in' => 'Elija un tipo de campo de la lista.',
+            'first_field_content_type.in' => 'Elija un tipo de campo de la lista.',
         ];
     }
 }

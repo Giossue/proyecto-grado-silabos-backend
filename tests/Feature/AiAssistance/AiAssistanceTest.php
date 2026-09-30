@@ -235,11 +235,11 @@ class AiAssistanceTest extends TestCase
         $section = $template->appendSection(['id' => (string) Str::uuid(), 'clave' => 'planificacion', 'titulo' => 'Planificación', 'posicion' => 1, 'bloques' => []]);
         $block = $template->appendBlock($section->id, ['id' => (string) Str::uuid(), 'clave' => 'unidades', 'tipo' => 'narrativa', 'titulo' => 'Unidades', 'posicion' => 1,
             'configuracion' => ['content_type' => 'text', 'document' => TemplateDocumentDefaults::freeTextSheet('unidades', 'Planificación por unidades')]]);
-        $this->planning = FieldDefinition::query()->create(['plantilla_id' => $template->id, 'bloque_plantilla_id' => $block->id,
+        $this->planning = FieldDefinition::query()->create(['plantilla_id' => $template->id, 'campo_plantilla_id' => $block->id,
             'clave' => 'unidades', 'etiqueta' => 'Planificación por unidades', 'tipo' => 'texto_libre', 'heredado' => false,
             'editable_docente' => true, 'ia_habilitada' => false, 'posicion' => 1]);
         $privateBlock = $template->appendBlock($section->id, ['id' => (string) Str::uuid(), 'clave' => 'contacto', 'tipo' => 'narrativa', 'titulo' => 'Otros campos', 'posicion' => 2, 'configuracion' => []]);
-        $private = FieldDefinition::query()->create(['plantilla_id' => $template->id, 'bloque_plantilla_id' => $privateBlock->id,
+        $private = FieldDefinition::query()->create(['plantilla_id' => $template->id, 'campo_plantilla_id' => $privateBlock->id,
             'clave' => 'contacto', 'etiqueta' => 'Contacto', 'tipo' => 'texto_largo', 'heredado' => false,
             'editable_docente' => true, 'ia_habilitada' => true, 'posicion' => 1]);
         $parallel = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail()->parallel;

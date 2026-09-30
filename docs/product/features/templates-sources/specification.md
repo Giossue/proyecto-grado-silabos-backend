@@ -55,7 +55,7 @@
 - I-144 añade al catálogo automático resultados de aprendizaje de la asignatura,
   nombre de su fuente y ubicación. Administración puede insertarlos en contenido fijo;
   el valor sale de la fotografía académica del sílabo. Los resultados se muestran
-  numerados en su orden confirmado. No se convierte automáticamente una parte editable
+  numerados en su orden confirmado. No se convierte automáticamente un campo editable
   existente ni se sustituye una plantilla durante la migración.
 - Si una plantilla utiliza esa variable sin resultados fotografiados, la validación
   indica que Coordinación debe corregir la base.

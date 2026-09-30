@@ -26,7 +26,7 @@ class SyllabusTemplate extends Model
     ];
 
     /**
-     * Secciones y partes viven en `secciones_plantilla` y `bloques_plantilla` (I-164); aquí se
+     * Secciones y campos viven en `secciones_plantilla` y `campos_plantilla` (I-164, I-166); aquí se
      * arman como un documento para que el resto del código siga leyendo y escribiendo igual.
      *
      * @var array{version_esquema: int, secciones: list<array<string, mixed>>}|null
@@ -288,19 +288,19 @@ class SyllabusTemplate extends Model
     /** @return list<array<string, mixed>> */
     private function loadSections(): array
     {
-        $blocks = DB::table('bloques_plantilla')->where('plantilla_id', $this->id)
-            ->orderBy('posicion')->orderBy('clave')->get()
+        $blocks = DB::table('campos_plantilla')->where('plantilla_id', $this->id)
+            ->orderBy('posicion_campo_plantilla')->orderBy('clave_campo_plantilla')->get()
             ->groupBy('seccion_plantilla_id');
 
         return array_values(DB::table('secciones_plantilla')->where('plantilla_id', $this->id)
-            ->orderBy('posicion')->orderBy('clave')->get()
+            ->orderBy('posicion_seccion_plantilla')->orderBy('clave_seccion_plantilla')->get()
             ->map(fn (object $section): array => [
-                'id' => $section->id, 'clave' => $section->clave, 'titulo' => $section->titulo,
-                'descripcion' => $section->descripcion, 'posicion' => (int) $section->posicion,
+                'id' => $section->id, 'clave' => $section->clave_seccion_plantilla, 'titulo' => $section->titulo_seccion_plantilla,
+                'descripcion' => $section->descripcion_seccion_plantilla, 'posicion' => (int) $section->posicion_seccion_plantilla,
                 'bloques' => ($blocks->get($section->id) ?? collect())->map(fn (object $block): array => [
-                    'id' => $block->id, 'clave' => $block->clave, 'titulo' => $block->titulo,
-                    'posicion' => (int) $block->posicion,
-                    'configuracion' => is_string($block->configuracion) ? json_decode($block->configuracion, true, 512, JSON_THROW_ON_ERROR) : [],
+                    'id' => $block->id, 'clave' => $block->clave_campo_plantilla, 'titulo' => $block->titulo_campo_plantilla,
+                    'posicion' => (int) $block->posicion_campo_plantilla,
+                    'configuracion' => is_string($block->configuracion_campo_plantilla) ? json_decode($block->configuracion_campo_plantilla, true, 512, JSON_THROW_ON_ERROR) : [],
                 ])->values()->all(),
             ])->all());
     }
@@ -312,8 +312,8 @@ class SyllabusTemplate extends Model
     }
 
     /**
-     * Vuelca el documento a las tablas: primero retira lo que ya no está (así una parte nueva
-     * puede reutilizar una clave) y después inserta o actualiza cada sección y parte.
+     * Vuelca el documento a las tablas: primero retira lo que ya no está (así un campo nuevo
+     * puede reutilizar una clave) y después inserta o actualiza cada sección y campo.
      *
      * @param  array<string, mixed>  $document
      */
@@ -328,25 +328,25 @@ class SyllabusTemplate extends Model
                     $blockIds[] = (string) $block['id'];
                 }
             }
-            DB::table('bloques_plantilla')->where('plantilla_id', $this->id)->whereNotIn('id', $blockIds)->delete();
+            DB::table('campos_plantilla')->where('plantilla_id', $this->id)->whereNotIn('id', $blockIds)->delete();
             DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->whereNotIn('id', $sectionIds)->delete();
 
             foreach ($sections as $sectionIndex => $section) {
                 DB::table('secciones_plantilla')->updateOrInsert(['id' => (string) $section['id']], [
                     'plantilla_id' => $this->id,
-                    'clave' => (string) $section['clave'],
-                    'titulo' => (string) ($section['titulo'] ?? ''),
-                    'descripcion' => is_string($section['descripcion'] ?? null) ? $section['descripcion'] : null,
-                    'posicion' => (int) ($section['posicion'] ?? $sectionIndex + 1),
+                    'clave_seccion_plantilla' => (string) $section['clave'],
+                    'titulo_seccion_plantilla' => (string) ($section['titulo'] ?? ''),
+                    'descripcion_seccion_plantilla' => is_string($section['descripcion'] ?? null) ? $section['descripcion'] : null,
+                    'posicion_seccion_plantilla' => (int) ($section['posicion'] ?? $sectionIndex + 1),
                 ]);
                 foreach (array_values(is_array($section['bloques'] ?? null) ? $section['bloques'] : []) as $blockIndex => $block) {
-                    DB::table('bloques_plantilla')->updateOrInsert(['id' => (string) $block['id']], [
+                    DB::table('campos_plantilla')->updateOrInsert(['id' => (string) $block['id']], [
                         'seccion_plantilla_id' => (string) $section['id'],
                         'plantilla_id' => $this->id,
-                        'clave' => (string) $block['clave'],
-                        'titulo' => (string) ($block['titulo'] ?? ''),
-                        'posicion' => (int) ($block['posicion'] ?? $blockIndex + 1),
-                        'configuracion' => json_encode(is_array($block['configuracion'] ?? null) ? $block['configuracion'] : [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+                        'clave_campo_plantilla' => (string) $block['clave'],
+                        'titulo_campo_plantilla' => (string) ($block['titulo'] ?? ''),
+                        'posicion_campo_plantilla' => (int) ($block['posicion'] ?? $blockIndex + 1),
+                        'configuracion_campo_plantilla' => json_encode(is_array($block['configuracion'] ?? null) ? $block['configuracion'] : [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                     ]);
                 }
             }

@@ -154,7 +154,7 @@ class SyllabusController extends Controller
 
         $message = $run->errores_bloqueantes === 0
             ? 'Validación completada sin errores bloqueantes.'
-            : 'Validación completada. Revise las partes señaladas.';
+            : 'Validación completada. Revise los campos señalados.';
 
         return response()->json([
             'message' => $message,

@@ -42,7 +42,7 @@ class TemplateStructureValidator
 
             foreach ($section->blocks as $block) {
                 if ($block->fields->isEmpty() && ! is_array($block->configuracion['document'] ?? null)) {
-                    throw ValidationException::withMessages([$errorKey => "La sección «{$block->titulo}» de la plantilla no tiene partes."]);
+                    throw ValidationException::withMessages([$errorKey => "La sección «{$block->titulo}» de la plantilla no tiene campos."]);
                 }
 
                 foreach ($block->fields as $field) {
@@ -58,7 +58,7 @@ class TemplateStructureValidator
 
             if ($unmapped !== []) {
                 throw ValidationException::withMessages([
-                    $errorKey => 'Al documento de la plantilla le faltan partes: '.implode(', ', $unmapped).'.',
+                    $errorKey => 'Al documento de la plantilla le faltan campos: '.implode(', ', $unmapped).'.',
                 ]);
             }
         }

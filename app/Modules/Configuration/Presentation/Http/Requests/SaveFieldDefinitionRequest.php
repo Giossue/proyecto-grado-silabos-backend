@@ -81,7 +81,7 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
     public function messages(): array
     {
         return [
-            'content_type.in' => 'Elija un tipo de parte de la lista.',
+            'content_type.in' => 'Elija un tipo de campo de la lista.',
             'page_orientation.in' => 'Elija hoja vertical u horizontal.',
         ];
     }

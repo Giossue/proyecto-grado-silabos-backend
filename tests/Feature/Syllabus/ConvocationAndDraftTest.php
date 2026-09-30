@@ -598,7 +598,7 @@ class ConvocationAndDraftTest extends TestCase
         $fixedBlock = $template->blocks()->first(fn ($block): bool => $block->contentType() === 'fixed');
         $this->assertNotNull($fixedBlock);
         $inFixed = FieldDefinition::query()->create([
-            'plantilla_id' => $template->id, 'bloque_plantilla_id' => $fixedBlock->id, 'clave' => 'resto_fijo',
+            'plantilla_id' => $template->id, 'campo_plantilla_id' => $fixedBlock->id, 'clave' => 'resto_fijo',
             'etiqueta' => 'Resto de texto fijo', 'tipo' => 'texto_largo', 'heredado' => false,
             'editable_docente' => true, 'ia_habilitada' => false, 'posicion' => 99,
         ]);

@@ -65,13 +65,13 @@ class SaveFieldDefinition
             if ($field !== null && $customBlock !== null && is_array($customBlock->configuracion['document'] ?? null)) {
                 abort_unless($customBlock->id === $this->stringValue($data, 'block_id'), 404);
                 if ($contentType !== $customBlock->configuredContentType()) {
-                    throw ValidationException::withMessages(['content_type' => 'La forma de una parte no se cambia. Elimínela y cree una nueva con la forma que necesita.']);
+                    throw ValidationException::withMessages(['content_type' => 'La forma de un campo no se cambia. Elimínelo y cree uno nuevo con la forma que necesita.']);
                 }
                 if ($data['key'] !== $field->clave) {
-                    throw ValidationException::withMessages(['content_type' => 'Use Editar diseño para cambiar la estructura y las partes de esta sección.']);
+                    throw ValidationException::withMessages(['content_type' => 'Use Editar diseño para cambiar la estructura y los campos de esta sección.']);
                 }
                 if (isset($customBlock->configuracion['detached_fields'][$field->clave])) {
-                    throw ValidationException::withMessages(['field' => 'Esta parte se quitó del diseño; ya no está en el formulario.']);
+                    throw ValidationException::withMessages(['field' => 'Este campo se quitó del diseño; ya no está en el formulario.']);
                 }
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
@@ -92,7 +92,7 @@ class SaveFieldDefinition
                     'ia_habilitada' => (bool) ($data['ai_enabled'] ?? $field->ia_habilitada),
                     ...$condition,
                 ]);
-                $block = $template->updateBlockDocument($field->bloque_plantilla_id, ['titulo' => $data['label']]);
+                $block = $template->updateBlockDocument($field->campo_plantilla_id, ['titulo' => $data['label']]);
                 $this->applyOrientation($block, $data);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
@@ -115,7 +115,7 @@ class SaveFieldDefinition
                     return null;
                 }
                 $field = FieldDefinition::query()->create([
-                    'plantilla_id' => $template->id, 'bloque_plantilla_id' => $block->id, 'clave' => $data['key'],
+                    'plantilla_id' => $template->id, 'campo_plantilla_id' => $block->id, 'clave' => $data['key'],
                     'etiqueta' => $label, 'ayuda' => $data['help'] ?? null, 'tipo' => 'texto_libre',
                     'heredado' => false, 'editable_docente' => true, 'ia_habilitada' => (bool) ($data['ai_enabled'] ?? false),
                     'posicion' => 1, ...$condition,
@@ -132,7 +132,7 @@ class SaveFieldDefinition
             $inherited = $field->heredado;
             $attributes = [
                 'plantilla_id' => $template->id,
-                'bloque_plantilla_id' => $block->id,
+                'campo_plantilla_id' => $block->id,
                 'clave' => $data['key'],
                 'etiqueta' => $data['label'],
                 'ayuda' => $data['help'] ?? null,
@@ -262,12 +262,12 @@ class SaveFieldDefinition
     ): TemplateBlock {
         $blockId = $this->stringValue($data, 'block_id');
         $block = $template->blockOrFail($blockId);
-        abort_unless($block->id === $field->bloque_plantilla_id, 404);
+        abort_unless($block->id === $field->campo_plantilla_id, 404);
 
         $configuration = $block->getAttribute('configuracion');
 
         if ($block->contentType() !== $contentType) {
-            throw ValidationException::withMessages(['content_type' => 'La forma de una parte no se cambia. Elimínela y cree una nueva con la forma que necesita.']);
+            throw ValidationException::withMessages(['content_type' => 'La forma de un campo no se cambia. Elimínelo y cree uno nuevo con la forma que necesita.']);
         }
 
         $block->update([

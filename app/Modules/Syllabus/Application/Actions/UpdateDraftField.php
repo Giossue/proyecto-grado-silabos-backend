@@ -34,7 +34,7 @@ class UpdateDraftField
                 throw ValidationException::withMessages(['syllabus' => 'El expediente no está en estado editable.']);
             }
             if ($field->heredado || ! $field->editable_docente || $field->tipo === 'calculo') {
-                throw ValidationException::withMessages(['field' => 'Esta parte la llena el sistema; el docente no puede cambiarla.']);
+                throw ValidationException::withMessages(['field' => 'Este campo lo llena el sistema; el docente no puede cambiarlo.']);
             }
             if (BibliographyCorrection::requested($locked) && ! BibliographyCorrection::includes($field)) {
                 throw ValidationException::withMessages(['field' => 'Biblioteca solo pidió corregir la bibliografía; el resto del sílabo ya está aprobado.']);

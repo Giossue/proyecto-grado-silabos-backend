@@ -40,7 +40,7 @@ final class TemplateBlock implements UrlRoutable
     {
         return FieldDefinition::query()
             ->where('plantilla_id', $this->plantilla_id)
-            ->where('bloque_plantilla_id', $this->id)
+            ->where('campo_plantilla_id', $this->id)
             ->orderBy('posicion');
     }
 

@@ -349,8 +349,8 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   confirmados o iniciar otra importación; el detalle queda plegado. En Revisión y ante
   una falla, «Descartar importación» pide confirmación y elimina la propuesta y sus
   documentos sin cambiar datos confirmados.
-- I-158: «Propiedades de la parte» solo tiene **Nombre** y **Hoja horizontal**, en todas
-  las partes. Se retiran de Propiedades la lista de preguntas, sus nombres, las
+- I-158: «Propiedades del campo» solo tiene **Nombre** y **Hoja horizontal**, en todos
+  los campos. Se retiran de Propiedades la lista de preguntas, sus nombres, las
   condiciones y las listas curriculares.
 - I-159 (preguntas de seguimiento, como Google Forms o HubSpot): la regla se define en la
   pregunta que se responde. Al hacer clic en una ficha «Docente: Sí o No» —o en una casilla
@@ -358,57 +358,57 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   casillas para las fichas «Docente» cercanas, nombradas por el texto que tienen al lado;
   lo que no se marca se pide siempre. Cada casilla «X» habla solo de su respuesta («Si
   marca «Sí», pedir también:»). Cercanas: si la pregunta está en una tabla, las de su
-  bloque de filas (filas unidas por celdas combinadas); fuera de tablas, toda la parte. Las fichas «Docente» no tienen menú. La
+  bloque de filas (filas unidas por celdas combinadas); fuera de tablas, todo el campo. Las fichas «Docente» no tienen menú. La
   pregunta y sus dependientes llevan el mismo número (①, ②…) y se resaltan juntas al pasar
   el cursor. Se guarda con la hoja (atributo `showWhen` de cada dependiente).
-- I-156: al crear una parte o una sección solo se elige **Texto libre** (lo escribe el
+- I-156: al crear un campo o una sección solo se elige **Texto libre** (lo escribe el
   docente) o **Personalizado** (hoja vacía que arma Administración). En la
   hoja, Insertar ofrece Tabla, Lista, Dato automático, Docente, Docente: Sí o No y
   Proyecto de carrera; ya no ofrece «Filas que agrega el docente». El docente escribe el
   Texto libre en un editor con barra simple: Negrita, Cursiva, Lista con viñetas, Lista
   numerada e Insertar tabla (con Fila, Columna, Quitar fila, Quitar columna y Quitar
   tabla dentro de una tabla). La revisión y el Word muestran ese texto con su formato.
-- I-155: ADM-06 deja de preguntar quién llena la parte. Al crear una parte o una sección
+- I-155: ADM-06 deja de preguntar quién llena el campo. Al crear un campo o una sección
   solo se elige su forma: **Párrafo**, **Lista** (con viñetas) o **Tabla**. Párrafo y
-  lista nacen con la hoja vacía; lo escrito sin marca es fijo. Toda parte se edita sobre
+  lista nacen con la hoja vacía; lo escrito sin marca es fijo. Todo campo se edita sobre
   la hoja con «Editar». El menú Insertar muestra solo icono y nombre: **Dato
   automático** (lista de datos del sistema, ficha verde azulada), **Docente** (ficha
   azul), **Docente: Sí o No** (ficha rosa) y **Proyecto de carrera** (ficha ámbar). Las
   fichas muestran ese nombre, sin símbolos; las del docente llevan borde punteado y las
   que llegan llenas, continuo. Las marcas se insertan solo desde Insertar de la cinta: no
   hay atajos de teclado.
-  La cinta de una parte seleccionada muestra **Editar** (sobre la hoja), **Propiedades**
-  (nombre, hoja horizontal y condiciones) y **Eliminar parte**. La forma se elige al
-  crear la parte y no cambia: Propiedades la muestra sin permitir editarla y la API
-  rechaza el cambio; para otra forma se elimina la parte y se crea una nueva. Al editar un párrafo o
+  La cinta de un campo seleccionado muestra **Editar** (sobre la hoja), **Propiedades**
+  (nombre, hoja horizontal y condiciones) y **Eliminar campo**. La forma se elige al
+  crear el campo y no cambia: Propiedades la muestra sin permitir editarla y la API
+  rechaza el cambio; para otra forma se elimina el campo y se crea uno nuevo. Al editar un párrafo o
   una lista, la cinta solo ofrece Insertar y deshacer/rehacer; las herramientas de celdas
-  aparecen únicamente en partes con tabla.
+  aparecen únicamente en campos con tabla.
   Ninguna marca abre un diálogo: su
   nombre interno sale de lo escrito antes en la misma línea o celda, de la primera celda
-  de la fila, del nombre de la parte o del de la sección, y se ve al pasar el cursor por
+  de la fila, del nombre del campo o del de la sección, y se ve al pasar el cursor por
   la ficha. Todo @ProyectoCarrera es por asignatura; en una lista se busca como lista.
   En una lista, lo fijo, !Docente y @ProyectoCarrera forman una sola lista. En una fila
   que agrega el docente, !Docente es un dato de esa fila. Un ?Docente puede condicionar
-  otras partes desde «Editar parte». En el formulario del docente, una parte con hoja
+  otros campos desde «Editar campo». En el formulario del docente, un campo con hoja
   propia se llena sobre esa hoja, igual que en el Word, y ?Docente se responde con dos
   botones Sí y No, también dentro de una tabla. Por ahora no se crean preguntas en las
   que el docente elige de una lista; las existentes siguen funcionando.
-- I-151 (sustituido en su pregunta por I-155): al crear una parte o una sección, ADM-06 preguntaba «¿Quién llena esta parte?»
-  sin términos técnicos: **El docente la escribe** (un párrafo, una lista con viñetas,
+- I-151 (sustituido en su pregunta por I-155): al crear un campo o una sección, ADM-06 preguntaba «¿Quién llena este campo?»
+  sin términos técnicos: **El docente lo escribe** (un párrafo, una lista con viñetas,
   una lista numerada o una tabla que se llena por filas), **El docente elige de una
   lista** (listas de los documentos de carrera) o **Sale sola de los documentos de la
   carrera**. Esta última elige un dato ya declarado o declara uno nuevo con nombre,
   forma (lista o texto) y alcance (cada asignatura o toda la carrera; el alcance
-  desaparece en I-160) y crea una parte
-  fija con ese dato automático. «Editar parte» usa la misma pregunta sin la opción
-  automática. Sí/No ya no se ofrece para partes nuevas; las existentes se conservan.
-- I-154 (sustituido por I-155): el texto fijo era la cuarta respuesta de «¿Quién llena esta parte?» («Nadie, es
-  un texto fijo»), al crear una parte o una sección. Se retiran la entrada separada
+  desaparece en I-160) y crea un campo
+  fijo con ese dato automático. «Editar campo» usa la misma pregunta sin la opción
+  automática. Sí/No ya no se ofrece para campos nuevos; los existentes se conservan.
+- I-154 (sustituido por I-155): el texto fijo era la cuarta respuesta de «¿Quién llena este campo?» («Nadie, es
+  un texto fijo»), al crear un campo o una sección. Se retiran la entrada separada
   «Agregar texto fijo» del menú «+» y el botón «Hacer texto fijo» de la cinta de tablas.
-  Una parte existente del docente no se convierte en texto fijo; se crea una nueva.
-- I-153: en «Editar parte», las condiciones se configuran desde la pregunta: «Si en
+  Un campo existente del docente no se convierte en texto fijo; se crea uno nuevo.
+- I-153: en «Editar campo», las condiciones se configuran desde la pregunta: «Si en
   «Estudiantes con discapacidad» responden [Sí], pedir también:» con casillas para las
-  preguntas de la misma sección; lo no marcado se pide siempre. Una parte con varias
+  preguntas de la misma sección; lo no marcado se pide siempre. Un campo con varias
   preguntas del docente (por ejemplo, la ficha de identificación) muestra «Preguntas que
   llena el docente» para cambiar el nombre de cada una, incluida «Formación y
   experiencia».

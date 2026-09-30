@@ -112,7 +112,7 @@ estructura del catálogo y descarta valores de conceptos no declarados, que qued
 observación visible. Desde I-155 la lista son los @ProyectoCarrera que la plantilla
 **usa** (`ProjectDataUsage`: variables `curricular_<clave>` de la hoja y listas de
 opciones de preguntas del docente), cada uno con las secciones donde aparece como
-contexto para el agente; un concepto declarado que ninguna parte usa no se busca. Sin
+contexto para el agente; un concepto declarado que ningún campo usa no se busca. Sin
 datos usados no se puede solicitar una importación. Cada lote actualiza cursor y progreso en `ejecuciones_trabajo`;
 solo el recorrido completo publica la propuesta. Un reintento explícito de una
 importación fallida usa `POST /coordination/curricular-imports/{id}/retry`.

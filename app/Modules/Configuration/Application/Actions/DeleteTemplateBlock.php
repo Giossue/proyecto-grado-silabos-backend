@@ -32,7 +32,7 @@ class DeleteTemplateBlock
             $lockedBlock = $template->blockOrFail($block->id);
             FieldDefinition::query()
                 ->where('plantilla_id', $template->id)
-                ->where('bloque_plantilla_id', $lockedBlock->id)
+                ->where('campo_plantilla_id', $lockedBlock->id)
                 ->delete();
             $template->removeBlockDocument($lockedBlock->id);
 

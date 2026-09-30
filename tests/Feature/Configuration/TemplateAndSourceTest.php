@@ -311,7 +311,7 @@ class TemplateAndSourceTest extends TestCase
         $this->expectException(QueryException::class);
         FieldDefinition::query()->create([
             'plantilla_id' => $template->id,
-            'bloque_plantilla_id' => (string) Str::uuid(),
+            'campo_plantilla_id' => (string) Str::uuid(),
             'clave' => 'campo_huerfano',
             'etiqueta' => 'Campo huérfano',
             'tipo' => 'texto_largo',
@@ -342,7 +342,7 @@ class TemplateAndSourceTest extends TestCase
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [
-                'block_id' => $field->bloque_plantilla_id,
+                'block_id' => $field->campo_plantilla_id,
                 'key' => $field->clave,
                 'label' => 'Etiqueta corregida',
                 'content_type' => 'text',
@@ -355,12 +355,12 @@ class TemplateAndSourceTest extends TestCase
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [
-                'block_id' => $field->bloque_plantilla_id,
+                'block_id' => $field->campo_plantilla_id,
                 'key' => $field->clave,
                 'label' => 'Etiqueta corregida',
                 'content_type' => 'fixed',
             ])
-            ->assertJsonValidationErrors(['content_type' => 'La forma de una parte no se cambia. Elimínela y cree una nueva con la forma que necesita.']);
+            ->assertJsonValidationErrors(['content_type' => 'La forma de un campo no se cambia. Elimínelo y cree uno nuevo con la forma que necesita.']);
         $this->assertSame('text', $field->fresh()->block->contentType());
     }
 
@@ -372,7 +372,7 @@ class TemplateAndSourceTest extends TestCase
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [
-                'block_id' => $field->bloque_plantilla_id,
+                'block_id' => $field->campo_plantilla_id,
                 'key' => $field->clave,
                 'label' => $field->etiqueta,
                 'content_type' => 'text',
@@ -395,7 +395,7 @@ class TemplateAndSourceTest extends TestCase
         $identification = $template->fields()->where('clave', 'asignatura')->firstOrFail();
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.template.fields.update', [$template, $identification]), [
-                'block_id' => $identification->bloque_plantilla_id,
+                'block_id' => $identification->campo_plantilla_id,
                 'key' => $identification->clave,
                 'label' => $identification->etiqueta,
                 'content_type' => 'institutional',
@@ -432,7 +432,7 @@ class TemplateAndSourceTest extends TestCase
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.template.fields.update', [$version, $field]), [
-                'block_id' => $field->bloque_plantilla_id,
+                'block_id' => $field->campo_plantilla_id,
                 'key' => 'parte_sin_nombre',
                 'label' => '   ',
                 'content_type' => 'text',
@@ -520,7 +520,7 @@ class TemplateAndSourceTest extends TestCase
             ->assertSuccessful();
 
         $this->assertNull($version->fresh()->block($second->id));
-        $this->assertDatabaseMissing('definiciones_campo', ['bloque_plantilla_id' => $second->id]);
+        $this->assertDatabaseMissing('definiciones_campo', ['campo_plantilla_id' => $second->id]);
     }
 
     public function test_table_structure_form_no_longer_exists(): void
@@ -571,7 +571,7 @@ class TemplateAndSourceTest extends TestCase
 
         $this->assertNull($version->fresh()->section($created->id));
         foreach ($created->blocks()->pluck('id') as $blockId) {
-            $this->assertDatabaseMissing('definiciones_campo', ['bloque_plantilla_id' => $blockId]);
+            $this->assertDatabaseMissing('definiciones_campo', ['campo_plantilla_id' => $blockId]);
         }
     }
 

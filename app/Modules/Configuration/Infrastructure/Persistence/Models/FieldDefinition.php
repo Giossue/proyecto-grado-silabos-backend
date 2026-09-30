@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property string $id
  * @property string $plantilla_id
- * @property string $bloque_plantilla_id
+ * @property string $campo_plantilla_id
  * @property string $clave
  * @property string $etiqueta
  * @property string|null $ayuda
@@ -45,7 +45,7 @@ class FieldDefinition extends Model
     /** @var list<string> */
     protected $fillable = [
         'plantilla_id',
-        'bloque_plantilla_id',
+        'campo_plantilla_id',
         'clave',
         'etiqueta',
         'ayuda',
@@ -86,7 +86,7 @@ class FieldDefinition extends Model
             : $this->template()->first();
 
         return $template instanceof SyllabusTemplate
-            ? $template->block($this->bloque_plantilla_id)
+            ? $template->block($this->campo_plantilla_id)
             : null;
     }
 

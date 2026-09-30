@@ -73,7 +73,7 @@ final class TemplateDocument
                 if (! is_string($key) || ! preg_match('/^[a-z][a-z0-9_]{0,119}$/D', $key)
                     || ! is_string($label) || trim($label) === '' || mb_strlen($label) > 180
                     || ! in_array($kind, [...self::FIELD_TYPES, 'referencia_maestra', 'booleano'], true)) {
-                    self::fail('Cada parte necesita un nombre y un tipo válido.');
+                    self::fail('Cada campo necesita un nombre y un tipo válido.');
                 }
                 $node['attrs'] = ['key' => $key, 'label' => trim($label), 'kind' => $kind];
                 $choiceType = in_array($kind, ['seleccion_unica', 'seleccion_multiple'], true);
@@ -101,7 +101,7 @@ final class TemplateDocument
                 }
                 $options = self::options($rawOptions);
                 if ($options !== null && ! $choiceType) {
-                    self::fail('Solo una parte de selección admite opciones.');
+                    self::fail('Solo un campo de selección admite opciones.');
                 }
                 $node['attrs']['options'] = $options;
                 if ($hasOptionsSources && $options !== null) {
@@ -112,17 +112,17 @@ final class TemplateDocument
                     self::fail('Las marcas condicionales solo admiten selección única con opciones fijas.');
                 }
                 if ($choice !== null && (! is_string($choice) || trim($choice) === '' || mb_strlen($choice) > 100)) {
-                    self::fail('Una opción de la parte no es válida.');
+                    self::fail('Una opción del campo no es válida.');
                 }
                 if ($choice !== null && $options !== null && ! in_array($choice, $options, true)) {
-                    self::fail('La condición usa una opción que no pertenece a la parte.');
+                    self::fail('La condición usa una opción que no pertenece al campo.');
                 }
                 $node['attrs']['choice'] = $choice;
                 $showWhen = $attrs['showWhen'] ?? null;
                 if ($showWhen !== null) {
                     if (! is_array($showWhen) || ! is_string($showWhen['key'] ?? null) || ! preg_match('/^[a-z][a-z0-9_]{0,119}$/D', $showWhen['key'])
                         || ! is_string($showWhen['value'] ?? null) || trim($showWhen['value']) === '' || mb_strlen($showWhen['value']) > 100) {
-                        self::fail('La condición de la parte no es válida.');
+                        self::fail('La condición del campo no es válida.');
                     }
                     $node['attrs']['showWhen'] = ['key' => $showWhen['key'], 'value' => trim($showWhen['value'])];
                 }
@@ -316,17 +316,17 @@ final class TemplateDocument
             return null;
         }
         if (! is_array($raw) || ! array_is_list($raw) || count($raw) < 2 || count($raw) > 20) {
-            self::fail('Una parte de selección necesita entre 2 y 20 opciones.');
+            self::fail('Un campo de selección necesita entre 2 y 20 opciones.');
         }
         $options = [];
         foreach ($raw as $option) {
             if (! is_string($option) || trim($option) === '' || mb_strlen(trim($option)) > 100) {
-                self::fail('Las opciones de la parte no son válidas.');
+                self::fail('Las opciones del campo no son válidas.');
             }
             $options[] = trim($option);
         }
         if (count(array_unique($options)) !== count($options)) {
-            self::fail('Las opciones de la parte no pueden repetirse.');
+            self::fail('Las opciones del campo no pueden repetirse.');
         }
 
         return $options;

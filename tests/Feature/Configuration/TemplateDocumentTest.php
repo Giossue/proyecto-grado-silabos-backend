@@ -367,7 +367,7 @@ class TemplateDocumentTest extends TestCase
 
         $block = $block->fresh();
         $this->patchJson($url, ['document' => $sheet(['key' => 'hay_practicas', 'value' => 'Quizá']), 'fingerprint' => SaveTemplateDocument::fingerprint($block)])
-            ->assertJsonValidationErrors(['document' => 'El valor elegido no es una opción de esa parte.']);
+            ->assertJsonValidationErrors(['document' => 'El valor elegido no es una opción de ese campo.']);
         $this->patchJson($url, ['document' => $sheet(null), 'fingerprint' => SaveTemplateDocument::fingerprint($block)])->assertSuccessful();
         $this->assertNull($detail->fresh()->mostrar_si);
     }
@@ -675,11 +675,11 @@ class TemplateDocumentTest extends TestCase
         $save(['key' => 'discapacidad_tiene', 'value' => 'No'])->assertSuccessful();
         $this->assertSame(['key' => 'discapacidad_tiene', 'value' => 'No'], $formation->fresh()->mostrar_si);
         $save(['key' => 'formacion_experiencia', 'value' => 'No'])
-            ->assertJsonValidationErrors(['properties.0.show_when' => 'Una parte no puede depender de sí misma.']);
+            ->assertJsonValidationErrors(['properties.0.show_when' => 'Un campo no puede depender de sí mismo.']);
         $save(['key' => 'discapacidad_tipo', 'value' => 'x'])
-            ->assertJsonValidationErrors(['properties.0.show_when' => 'La parte elegida en «Mostrar solo si» debe ser de Sí/No o de selección.']);
+            ->assertJsonValidationErrors(['properties.0.show_when' => 'El campo elegido en «Mostrar solo si» debe ser de Sí/No o de selección.']);
         $save(['key' => 'discapacidad_tiene', 'value' => 'Tal vez'])
-            ->assertJsonValidationErrors(['properties.0.show_when' => 'El valor elegido no es una opción de esa parte.']);
+            ->assertJsonValidationErrors(['properties.0.show_when' => 'El valor elegido no es una opción de ese campo.']);
         $save(null)->assertSuccessful();
         $this->assertNull($formation->fresh()->mostrar_si);
     }

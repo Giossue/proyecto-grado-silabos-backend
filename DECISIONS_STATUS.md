@@ -20,12 +20,18 @@ comentario no anula firmas): la aprueba o comenta. Si comenta, el sílabo se rea
 para la bibliografía; el docente la reenvía sin nueva revisión de coordinación (revisión
 nueva = copia de la aprobada con la bibliografía cambiada y aprobación heredada,
 `aprobacion_base_id`) y vuelve a biblioteca. Aprobada la bibliografía, el PDF se firma en
-orden docente → coordinación → biblioteca. La bibliografía la propone el docente (partes
+orden docente → coordinación → biblioteca. La bibliografía la propone el docente (campos
 de Texto libre). La plantilla gana `firma_docente`, `firma_coordinador` y
 `firma_bibliotecario`, que marcan dónde va cada sello. Migraciones `000162` (corrige el
 trigger `validar_bloque_definicion_campo` que dejó I-164), `000163` y `000164`, aplicadas
 en la base remota con respaldo previo. Pendiente en la remota: cambiar la sección
 Bibliografía a Texto libre y crear la cuenta de biblioteca.
+
+I-166 (29 de septiembre de 2026), por pedido de los docentes vía el responsable: lo que va
+dentro de cada sección de la plantilla se llama **campo**, no «parte», en la interfaz, los
+mensajes y la base de datos. La migración `000165` renombra `bloques_plantilla` a
+`campos_plantilla` y `definiciones_campo.bloque_plantilla_id` a `campo_plantilla_id`, y da
+nombres explícitos a las columnas de `campos_plantilla` y `secciones_plantilla`.
 
 I-163 (29 de septiembre de 2026), por instrucción del responsable: los avisos solo
 informativos (cuenta activada, plazo extendido, proceso o convocatoria en pausa, proceso
@@ -34,12 +40,12 @@ cerrado) no llevan enlace; los que piden actuar conservan su destino. Los pasos 
 libre y Contenido de la plantilla, datos del Proyecto de carrera, borrador que se inicia
 solo y un paso nuevo para firmar el sílabo aprobado. Sin cambios de esquema ni de API.
 El mismo día, el responsable decide que Texto libre no lleva hoja ni marcas (solo lo
-escribe el docente) y que la otra forma de parte se llama «Personalizado» (antes
+escribe el docente) y que la otra forma de campo se llama «Personalizado» (antes
 «Contenido de la plantilla»): ahí van tablas, datos automáticos, huecos Docente y
 Proyecto de carrera.
 
-I-158 (29 de septiembre de 2026), por instrucción del responsable: «Propiedades de la
-parte» solo cambia nombre y orientación. La condición «pedir solo si…» se define en la
+I-158 (29 de septiembre de 2026), por instrucción del responsable: «Propiedades del
+campo» solo cambia nombre y orientación. La condición «pedir solo si…» se define en la
 ficha de la hoja (atributo `showWhen`) y sustituye la configuración de condiciones y
 nombres de preguntas de I-153 en Propiedades. Sin cambios de esquema.
 
@@ -50,24 +56,24 @@ paso en un modal que retoma la importación en curso y permite descartarla. Sin
 cambios de API.
 
 I-156 (29 de septiembre de 2026), por instrucción del responsable y su tutor, deja dos
-formas de parte: **Texto libre** (el docente escribe con párrafos, negrita, cursiva,
+formas de campo: **Texto libre** (el docente escribe con párrafos, negrita, cursiva,
 viñetas, numeración y tablas simples; se guarda como documento JSON validado) y
 **Contenido de la plantilla** (hoja vacía que Administración arma con texto, tablas,
 listas y las marcas de I-155). Se retira «Filas que agrega el docente». La planificación
 de unidades se va: cada docente la escribe a mano, sin sumas ni revisiones automáticas
 (sustituye I-57, I-58, I-63, I-66 e I-143; I-109 se conserva para las pantallas
 académicas). Segunda etapa aplicada: el formato oficial usa Texto libre en todas las
-partes del docente, se retiran las filas repetibles (tabla `filas_repetibles`, tipo
+campos del docente, se retiran las filas repetibles (tabla `filas_repetibles`, tipo
 `repetible`, tablas con `repeatKey`), las reglas de planificación y los atajos de
 teclado. La migración `000157` convirtió lo ya escrito (una columna → lista, varias →
 tabla) y se aplicó en la base remota el 29 de septiembre de 2026, con respaldo previo.
 Las fotografías de revisiones anteriores no se modifican.
 
 I-155 (29 de septiembre de 2026), por instrucción del responsable, sustituye «¿Quién
-llena esta parte?» (I-151, I-154) por marcas en la hoja. Una parte nueva solo elige su
+llena este campo?» (I-151, I-154) por marcas en la hoja. Un campo nuevo solo elige su
 forma: párrafo, lista o tabla. En la hoja se mezclan texto fijo, **dato automático**
 (definido en el código), **!Docente** (lo escribe el docente), **?Docente** (responde Sí
-o No y puede condicionar otras partes) y **@ProyectoCarrera** (lo llena Coordinación al
+o No y puede condicionar otros campos) y **@ProyectoCarrera** (lo llena Coordinación al
 importar). Las marcas se ponen sin preguntas: su nombre interno sale del contexto y todo
 @ProyectoCarrera es por asignatura. La importación busca solo los @ProyectoCarrera que
 usa la plantilla, con sus secciones como contexto. Esos datos son obligatorios como la
@@ -87,9 +93,9 @@ nombre del documento.
 
 I-151 (28 de septiembre de 2026), por instrucción del responsable, adopta «la plantilla
 manda»: Administración declara en ADM-06 qué datos salen de los documentos de carrera
-(parte **Sale sola de los documentos de la carrera**) y la importación de COR-16 solo
-extrae esos datos. ADM-06 pregunta «¿Quién llena esta parte?» en lenguaje simple y deja
-de ofrecer Sí/No para partes nuevas. Sin cambios de esquema.
+(campo **Sale sola de los documentos de la carrera**) y la importación de COR-16 solo
+extrae esos datos. ADM-06 pregunta «¿Quién llena este campo?» en lenguaje simple y deja
+de ofrecer Sí/No para campos nuevos. Sin cambios de esquema.
 
 I-149 (28 de septiembre de 2026), por instrucción del responsable, saca de la malla el
 asistente curricular y crea **Coordinación → Proyecto de carrera** (COR-16), una pantalla

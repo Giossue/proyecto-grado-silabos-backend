@@ -112,7 +112,7 @@ final class SyllabusTemplateProvisioner
 
                 $fieldDefinitions[] = [
                     'plantilla_id' => $template->id,
-                    'bloque_plantilla_id' => $blockId,
+                    'campo_plantilla_id' => $blockId,
                     'clave' => $fieldKey,
                     'etiqueta' => $label,
                     'tipo' => $this->fieldType($contentType),
@@ -131,7 +131,7 @@ final class SyllabusTemplateProvisioner
                     [$inputKey, $inputLabel, $inputType, $options] = $input;
                     $fieldDefinitions[] = [
                         'plantilla_id' => $template->id,
-                        'bloque_plantilla_id' => $blockId,
+                        'campo_plantilla_id' => $blockId,
                         'clave' => $inputKey,
                         'etiqueta' => $inputLabel,
                         'tipo' => $inputType,

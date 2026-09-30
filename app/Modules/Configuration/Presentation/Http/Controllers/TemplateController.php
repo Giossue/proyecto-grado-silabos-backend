@@ -231,7 +231,7 @@ class TemplateController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->create($template->id, $request->validated(), $actor, $request);
 
-        return $this->success($request, 'Parte agregada a la sección.');
+        return $this->success($request, 'Campo agregado a la sección.');
     }
 
     /** @ProyectoCarrera nuevo para insertarlo en la hoja (I-155). */
@@ -259,7 +259,7 @@ class TemplateController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->update($field, $request->validated(), $actor, $request);
 
-        return $this->success($request, 'Parte actualizada.');
+        return $this->success($request, 'Campo actualizado.');
     }
 
     public function storeSection(
@@ -303,7 +303,7 @@ class TemplateController extends Controller
             $request,
         );
 
-        return $this->success($request, 'Orden de partes actualizado.');
+        return $this->success($request, 'Orden de campos actualizado.');
     }
 
     public function reorderSections(

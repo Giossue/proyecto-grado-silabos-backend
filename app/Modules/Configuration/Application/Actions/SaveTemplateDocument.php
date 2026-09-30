@@ -61,7 +61,7 @@ final class SaveTemplateDocument
                 $field = $fields->get($property['key']);
                 if (($field === null && ! in_array($property['key'], $documentFieldKeys, true))
                     || ($field !== null && isset($block->configuracion['detached_fields'][$field->clave]))) {
-                    throw ValidationException::withMessages(["properties.$index.key" => 'La parte no pertenece al diseño actual.']);
+                    throw ValidationException::withMessages(["properties.$index.key" => 'El campo no pertenece al diseño actual.']);
                 }
             }
             $normalized = $this->applyPropertyLabels($normalized, $request->input('properties', []));
@@ -79,11 +79,11 @@ final class SaveTemplateDocument
                     }
                 }
                 if (array_key_exists($key, $optionSources) && $optionSources[$key] !== $source) {
-                    TemplateDocument::fail('Una parte debe conservar el mismo origen de opciones en todas sus apariciones.');
+                    TemplateDocument::fail('Un campo debe conservar el mismo origen de opciones en todas sus apariciones.');
                 }
                 $optionSources[$key] = $source;
                 if (isset($labels[$key]) && $labels[$key] !== $attrs['label']) {
-                    TemplateDocument::fail('Una parte debe conservar el mismo nombre en todas sus apariciones.');
+                    TemplateDocument::fail('Un campo debe conservar el mismo nombre en todas sus apariciones.');
                 }
                 $labels[$key] = $attrs['label'];
                 $used[] = $key;
@@ -94,20 +94,20 @@ final class SaveTemplateDocument
                     if (in_array($fields[$key]->tipo, CurricularFieldOptions::CHOICE_TYPES, true)) {
                         $staticOptions = $attrs['options'] ?? $fields[$key]->opciones;
                         if ($source === [] && ($staticOptions === null || $staticOptions === [])) {
-                            TemplateDocument::fail('Una parte de selección necesita opciones fijas o una lista curricular.');
+                            TemplateDocument::fail('Un campo de selección necesita opciones fijas o una lista curricular.');
                         }
                         $fields[$key]->update(['opciones' => $source === [] ? $staticOptions : null]);
                     }
                     $choice = $attrs['choice'] ?? null;
                     if ($choice !== null && ! in_array($choice, $this->optionValues($fields[$key]), true)) {
-                        TemplateDocument::fail('La condición usa una opción que no pertenece a la parte.');
+                        TemplateDocument::fail('La condición usa una opción que no pertenece al campo.');
                     }
 
                     continue;
                 }
                 if (! in_array($attrs['kind'], TemplateDocument::FIELD_TYPES, true)
                     || FieldDefinition::query()->where('plantilla_id', $block->plantilla_id)->where('clave', $key)->exists()) {
-                    TemplateDocument::fail('La parte pertenece a otra sección o su tipo no está permitido.');
+                    TemplateDocument::fail('El campo pertenece a otra sección o su tipo no está permitido.');
                 }
                 if ($attrs['kind'] === 'seleccion_multiple' && $source === []) {
                     TemplateDocument::fail('Seleccione un catálogo curricular para la nueva selección múltiple.');
@@ -120,10 +120,10 @@ final class SaveTemplateDocument
                 ];
                 if (in_array($attrs['kind'], CurricularFieldOptions::CHOICE_TYPES, true)
                     && $definition['options'] === null && $source === []) {
-                    TemplateDocument::fail('Una parte de selección necesita sus opciones.');
+                    TemplateDocument::fail('Un campo de selección necesita sus opciones.');
                 }
                 if (isset($toCreate[$key]) && $toCreate[$key] !== $definition) {
-                    TemplateDocument::fail('Dos partes distintas tienen el mismo nombre. Cambie el nombre de una.');
+                    TemplateDocument::fail('Dos campos distintos tienen el mismo nombre. Cambie el nombre de uno.');
                 }
                 $toCreate[$key] = $definition;
             }
@@ -136,7 +136,7 @@ final class SaveTemplateDocument
             foreach ($toCreate as $key => $attrs) {
                 $block->fields()->create([
                     'plantilla_id' => $block->plantilla_id,
-                    'bloque_plantilla_id' => $block->id,
+                    'campo_plantilla_id' => $block->id,
                     'clave' => $key,
                     'etiqueta' => $attrs['label'], 'tipo' => $attrs['kind'],
                     'opciones' => $attrs['options'],
