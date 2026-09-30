@@ -36,7 +36,7 @@ final class NotificationDestination
         'silabo.bibliografia_corregida',
     ];
 
-    private const LIBRARY_EVENTS = ['biblioteca.enviado'];
+    private const LIBRARY_EVENTS = ['biblioteca.enviado', 'silabo.firmado_coordinacion'];
 
     public function __construct(
         private readonly ActiveRole $roles,

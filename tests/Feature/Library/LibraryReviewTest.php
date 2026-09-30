@@ -79,7 +79,7 @@ class LibraryReviewTest extends TestCase
 
     public function test_biblioteca_comenta_y_el_docente_corrige_solo_la_bibliografia(): void
     {
-        [$syllabus, $revision] = $this->signedByTeacherAndCoordination();
+        [$syllabus, $revision] = $this->approvedRevision();
         $this->as('teacher')->postJson(route('api.v1.library.submission.store', $revision))->assertCreated();
 
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'pendiente']))
@@ -151,35 +151,50 @@ class LibraryReviewTest extends TestCase
         $this->assertSame($before['template_variables'], $after['template_variables']);
         $this->assertStringContainsString('Arquitectura limpia', json_encode(BibliographyCorrection::sections($after), JSON_UNESCAPED_UNICODE));
 
-        $this->as('teacher')->getJson(route('api.v1.signature.show', $corrected))->assertJsonPath('state', 'sin_documento');
+        $this->as('teacher')->getJson(route('api.v1.signature.show', $corrected))->assertJsonPath('state', 'pendiente_envio_biblioteca');
         $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertJsonPath('syllabus.library_correction', false)
             ->assertJsonPath('syllabus.approved_revision_id', $corrected->id);
     }
 
-    public function test_el_envio_solo_ocurre_tras_las_dos_firmas_y_biblioteca_no_ve_lo_no_enviado(): void
+    public function test_biblioteca_aprueba_antes_de_las_firmas_y_firma_al_final(): void
     {
         [, $revision] = $this->approvedRevision();
-        $this->as('teacher')->postJson(route('api.v1.library.submission.store', $revision))->assertJsonValidationErrors('revision');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertNotFound();
         $this->as('librarian')->getJson(route('api.v1.signature.show', $revision))->assertForbidden();
-        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
-            'comment' => 'Sin libros', 'idempotency_key' => (string) Str::uuid(),
-        ])->assertForbidden();
-    }
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))->assertForbidden();
 
-    /** @return array{Syllabus, SyllabusRevision} */
-    private function signedByTeacherAndCoordination(): array
-    {
-        [$syllabus, $revision] = $this->approvedRevision();
+        $this->as('teacher')->postJson(route('api.v1.library.submission.store', $revision))->assertCreated();
+        $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))
+            ->assertJsonPath('state', 'pendiente_verificacion_biblioteca')
+            ->assertJsonPath('can_send_to_library', false);
         $this->exportPdf($revision);
         $original = $this->as('teacher')->get(route('api.v1.signature.pdf', $revision))->assertOk()->streamedContent();
         $teacherSigned = $this->signPdfIncrementally($original, $this->makeSigningCertificate('DOCENTE DE PRUEBA'));
+        $this->upload($revision, $teacherSigned, $original, 'teacher')
+            ->assertJsonValidationErrors(['signed_pdf' => 'Primero biblioteca debe aprobar la bibliografía.']);
+
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertOk()->assertJsonPath('review.can_verify', true)->assertJsonPath('review.state', 'pendiente');
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
+        $this->assertNotified($this->people['teacher'][0]->id, 'biblioteca.verificado', 'Genere el PDF');
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertJsonPath('review.state', 'por_firmar')
+            ->assertJsonPath('review.can_comment', false)
+            ->assertJsonPath('review.verified_by', $this->people['librarian'][0]->nombre);
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
+            'comment' => 'Tarde', 'idempotency_key' => (string) Str::uuid(),
+        ])->assertJsonValidationErrors('comment');
+
         $this->upload($revision, $teacherSigned, $original, 'teacher')->assertCreated();
         $coordinationSigned = $this->signPdfIncrementally($teacherSigned, $this->makeSigningCertificate('COORDINACION DE PRUEBA'));
         $this->upload($revision, $coordinationSigned, $teacherSigned, 'coordinator')->assertCreated();
-
-        return [$syllabus, $revision];
+        $this->assertNotified($this->people['librarian'][0]->id, 'silabo.firmado_coordinacion');
+        $librarySigned = $this->signPdfIncrementally($coordinationSigned, $this->makeSigningCertificate('BIBLIOTECA DE PRUEBA'));
+        $this->upload($revision, $librarySigned, $coordinationSigned, 'librarian')->assertCreated();
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'firmado']))->assertJsonPath('reviews.total', 1);
+        $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))->assertJsonPath('state', 'firmado')->assertJsonCount(3, 'signatures');
     }
 
     /** @return array{Syllabus, SyllabusRevision} */

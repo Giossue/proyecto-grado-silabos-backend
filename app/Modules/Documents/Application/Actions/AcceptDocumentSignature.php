@@ -51,6 +51,12 @@ class AcceptDocumentSignature
                 if ($state === SignatureWorkflow::STATE_VOIDED) {
                     $this->fail('El sílabo fue reabierto: esta revisión ya no se firma. Firme la nueva revisión cuando se apruebe.');
                 }
+                if ($state === SignatureWorkflow::STATE_PENDING_LIBRARY_SUBMISSION) {
+                    $this->fail('Primero el docente debe enviar el sílabo a biblioteca.');
+                }
+                if ($state === SignatureWorkflow::STATE_PENDING_LIBRARY_REVIEW) {
+                    $this->fail('Primero biblioteca debe aprobar la bibliografía.');
+                }
                 if ($artifact === null) {
                     $this->fail('Primero genere el PDF de la revisión aprobada.');
                 }
@@ -60,9 +66,6 @@ class AcceptDocumentSignature
                 }
                 if ($expected !== $role) {
                     $this->fail($this->outOfTurn($expected, $role));
-                }
-                if ($state === SignatureWorkflow::STATE_PENDING_LIBRARY_SUBMISSION) {
-                    $this->fail('El docente todavía no envía el sílabo a biblioteca.');
                 }
 
                 $current = $this->workflow->currentPdf($artifact, $signatures);
@@ -127,7 +130,7 @@ class AcceptDocumentSignature
                 );
                 [$eventType, $recipientIds] = match ($role) {
                     DocumentSignature::ROLE_TEACHER => ['silabo.firmado_docente', $this->recipients->coordinatorsFor($syllabus)],
-                    DocumentSignature::ROLE_COORDINATION => ['silabo.firmado_coordinacion', $this->recipients->teachersFor($syllabus)],
+                    DocumentSignature::ROLE_COORDINATION => ['silabo.firmado_coordinacion', $this->recipients->librarians()],
                     default => ['silabo.firmado', [
                         ...$this->recipients->teachersFor($syllabus),
                         ...$this->recipients->coordinatorsFor($syllabus),

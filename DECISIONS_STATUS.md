@@ -13,7 +13,8 @@ Fecha de corte: **27 de septiembre de 2026**.
 
 - Producto centralizado, configurable y trazable para el ciclo de vida del sílabo.
 - Alcance inicial: Carrera de Software UEB.
-- Roles: Administrador, Coordinador y Docente.
+- Roles: Administrador, Coordinador, Docente y, desde I-165 (29 de septiembre de 2026),
+  Bibliotecario, sin carrera, que verifica la bibliografía y firma al final.
 - Estados: Sin iniciar, Borrador, En revisión, Corrección solicitada y Aprobado.
 - Enviar y reenviar crea revisión inmutable.
 - Aprobar vuelve inmutable la revisión.
@@ -174,6 +175,20 @@ formato vacía del Texto libre, las partes con hoja sin título, el nombre de la
 insertadas en celdas con la etiqueta en la línea anterior, el exceso de texto del
 Asistente de unidades y dos marcas mal nombradas de la plantilla remota. Sin cambios de
 esquema ni de API.
+
+I-165 (29 de septiembre de 2026), por instrucción del responsable: nuevo rol
+**Bibliotecario**, sin carrera y para toda la universidad. Tras la aprobación, el PDF se
+firma en orden docente → coordinación → biblioteca. Entre la segunda y la tercera firma,
+el docente envía el sílabo a biblioteca. El bibliotecario firma si los libros están; si
+no, comenta. El comentario reabre el sílabo solo para la bibliografía. El docente la
+corrige y la reenvía sin nueva revisión de coordinación: la revisión nueva copia la
+aprobada con la bibliografía cambiada y hereda su aprobación (`aprobacion_base_id`).
+Luego el PDF nuevo se firma otra vez. La bibliografía la propone el docente, así que la
+sección debe tener partes de Texto libre. La plantilla gana los datos automáticos
+`firma_docente`, `firma_coordinador` y `firma_bibliotecario`, que marcan dónde va cada
+sello. Migraciones `000162`, que corrige el trigger `validar_bloque_definicion_campo`
+que dejó I-164, y `000163`. Pendiente en la base remota: migrar y cambiar la sección
+Bibliografía a Texto libre.
 
 I-163 (29 de septiembre de 2026), por instrucción del responsable: los avisos solo
 informativos (cuenta activada, plazo extendido, proceso o convocatoria en pausa, proceso

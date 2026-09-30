@@ -10,10 +10,12 @@ use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Application\SignatureWorkflow;
 use App\Modules\Library\Application\Actions\CommentBibliography;
 use App\Modules\Library\Application\Actions\SendToLibrary;
+use App\Modules\Library\Application\Actions\VerifyBibliography;
 use App\Modules\Library\Application\LibraryReviews;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Library\Presentation\Http\Requests\CommentLibraryReviewRequest;
 use App\Modules\Library\Presentation\Http\Requests\SendToLibraryRequest;
+use App\Modules\Library\Presentation\Http\Requests\VerifyLibraryReviewRequest;
 use App\Modules\Library\Presentation\Http\Requests\ViewLibraryReviewsRequest;
 use App\Modules\Syllabus\Application\BibliographyCorrection;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Reopening;
@@ -54,11 +56,13 @@ class LibraryReviewController extends Controller
     public function show(SyllabusRevision $revision, ViewLibraryReviewsRequest $request, SignatureWorkflow $workflow): JsonResponse
     {
         $artifact = $workflow->artifactFor($revision);
-        $submission = $workflow->submission($artifact);
+        $submission = $workflow->submission($revision);
         abort_if($submission === null, 404);
         $syllabus = $this->syllabi([$revision->silabo_id])->get($revision->silabo_id);
         abort_if($syllabus === null, 404);
         $state = $this->reviews->stateOf($submission);
+        $reviewable = $state === LibraryReviews::STATE_PENDING
+            && $workflow->state($revision, $artifact, $workflow->signatures($artifact)) === SignatureWorkflow::STATE_PENDING_LIBRARY_REVIEW;
         $snapshot = $revision->fotografia;
         $mapping = is_array($snapshot['document_mapping'] ?? null) ? $snapshot['document_mapping'] : [];
 
@@ -68,8 +72,10 @@ class LibraryReviewController extends Controller
             'sent_at' => $submission->enviado_en->toIso8601String(),
             'sent_by' => $submission->sender->nombre,
             'state' => $state,
-            'can_comment' => $state === LibraryReviews::STATE_PENDING
-                && $workflow->state($revision, $artifact, $workflow->signatures($artifact)) === SignatureWorkflow::STATE_PENDING_LIBRARY,
+            'can_comment' => $reviewable,
+            'can_verify' => $reviewable,
+            'verified_at' => $submission->verificado_en?->toIso8601String(),
+            'verified_by' => $submission->verifier?->nombre,
             'presentation' => [
                 'appearance' => TemplateAppearance::fromMapping($mapping),
                 'title' => TemplateTitleBlock::fromMapping($mapping)['text'],
@@ -97,6 +103,15 @@ class LibraryReviewController extends Controller
         );
 
         return response()->json(['message' => 'Comentario enviado. El docente corregirá la bibliografía y la reenviará.'], 201);
+    }
+
+    public function verify(SyllabusRevision $revision, VerifyLibraryReviewRequest $request, VerifyBibliography $action): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $action->execute($revision, $actor, $request);
+
+        return response()->json(['message' => 'Bibliografía aprobada. El docente ya puede generar y firmar el PDF.'], 201);
     }
 
     public function send(SyllabusRevision $revision, SendToLibraryRequest $request, SendToLibrary $action): JsonResponse

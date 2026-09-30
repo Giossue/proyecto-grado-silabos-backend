@@ -36,9 +36,8 @@ class SignatureController extends Controller
             : null;
         $role = $workflow->roleOf($actor, $revision, $request);
         $current = $artifact === null ? null : $workflow->currentPdf($artifact, $signatures);
-        $canSign = $next !== null && $next === $role && $current !== null
-            && $state !== SignatureWorkflow::STATE_PENDING_LIBRARY_SUBMISSION;
-        $submission = $workflow->submission($artifact);
+        $canSign = $next !== null && $next === $role && $current !== null;
+        $submission = $workflow->submission($revision);
         $stamp = null;
         if ($canSign && Storage::disk($current->disco)->exists($current->ruta_interna)) {
             $stamp = $stamps->locate((string) Storage::disk($current->disco)->get($current->ruta_interna), $next);
@@ -54,6 +53,8 @@ class SignatureController extends Controller
             'library' => $submission === null ? null : [
                 'sent_at' => $submission->enviado_en->toIso8601String(),
                 'sent_by' => $submission->sender->nombre,
+                'verified_at' => $submission->verificado_en?->toIso8601String(),
+                'verified_by' => $submission->verifier?->nombre,
             ],
             'artifact_id' => $artifact?->id,
             'document' => $current === null ? null : [
@@ -134,7 +135,7 @@ class SignatureController extends Controller
         return response()->json([
             'message' => match ($signature->rol_firma) {
                 DocumentSignature::ROLE_TEACHER => 'Firma registrada. Coordinación ya puede firmar el sílabo.',
-                DocumentSignature::ROLE_COORDINATION => 'Firma registrada. El docente ya puede enviar el sílabo a biblioteca.',
+                DocumentSignature::ROLE_COORDINATION => 'Firma registrada. Biblioteca ya puede firmar el sílabo.',
                 default => 'Firma registrada. El sílabo quedó firmado por docente, coordinación y biblioteca.',
             },
             'signature_id' => $signature->id,

@@ -10,23 +10,27 @@ final class LibraryReviews
 {
     public const STATE_PENDING = 'pendiente';
 
+    public const STATE_TO_SIGN = 'por_firmar';
+
     public const STATE_SIGNED = 'firmado';
 
     public const STATE_COMMENTED = 'comentado';
 
     public const STATE_VOIDED = 'anulado';
 
-    public const STATES = [self::STATE_PENDING, self::STATE_SIGNED, self::STATE_COMMENTED, self::STATE_VOIDED];
+    public const STATES = [self::STATE_PENDING, self::STATE_TO_SIGN, self::STATE_SIGNED, self::STATE_COMMENTED, self::STATE_VOIDED];
 
     private const STATE_SQL = <<<'SQL'
         CASE
             WHEN EXISTS (
                 SELECT 1 FROM firmas_documento firma
-                WHERE firma.artefacto_exportacion_id = envios_biblioteca.artefacto_exportacion_id
+                JOIN artefactos_exportacion artefacto ON artefacto.id = firma.artefacto_exportacion_id
+                WHERE artefacto.revision_silabo_id = envios_biblioteca.revision_silabo_id
                   AND firma.rol_firma = 'biblioteca'
             ) THEN 'firmado'
             WHEN reapertura.origen_reapertura = 'biblioteca' THEN 'comentado'
             WHEN reapertura.id IS NOT NULL THEN 'anulado'
+            WHEN envios_biblioteca.verificado_en IS NOT NULL THEN 'por_firmar'
             ELSE 'pendiente'
         END
         SQL;
@@ -35,8 +39,7 @@ final class LibraryReviews
     public function query(?string $state = null, ?string $search = null): Builder
     {
         return LibrarySubmission::query()
-            ->join('artefactos_exportacion as artefacto', 'artefacto.id', '=', 'envios_biblioteca.artefacto_exportacion_id')
-            ->join('revisiones_silabo as revision', 'revision.id', '=', 'artefacto.revision_silabo_id')
+            ->join('revisiones_silabo as revision', 'revision.id', '=', 'envios_biblioteca.revision_silabo_id')
             ->join('silabos as silabo', 'silabo.id', '=', 'revision.silabo_id')
             ->join('aprobaciones as aprobacion', 'aprobacion.revision_silabo_id', '=', 'revision.id')
             ->leftJoin('reaperturas as reapertura', 'reapertura.aprobacion_id', '=', 'aprobacion.id')

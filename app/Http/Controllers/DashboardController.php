@@ -197,6 +197,13 @@ class DashboardController extends Controller
                 'hint' => $counts[LibraryReviews::STATE_PENDING] === 0 ? 'Nada pendiente por ahora' : 'Sílabos con la bibliografía por revisar y firmar',
             ],
             [
+                'key' => 'library_to_sign',
+                'label' => 'Por firmar',
+                'value' => $counts[LibraryReviews::STATE_TO_SIGN],
+                'suffix' => null,
+                'hint' => 'Bibliografía aprobada; falta su firma cuando docente y coordinación firmen',
+            ],
+            [
                 'key' => 'library_commented',
                 'label' => 'Con comentario',
                 'value' => $counts[LibraryReviews::STATE_COMMENTED],

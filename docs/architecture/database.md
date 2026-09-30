@@ -36,8 +36,9 @@
 
 ### Identidad
 
-`usuarios`, `asignaciones_rol`. Los roles son los tres valores fijos del enum de
-dominio (`administrador`, `coordinador`, `docente`), almacenados en
+`usuarios`, `asignaciones_rol`. Los roles son los cuatro valores fijos del enum de
+dominio (`administrador`, `coordinador`, `docente` y, desde I-165, `bibliotecario`, sin
+carrera como el administrador), almacenados en
 `asignaciones_rol.rol`; no existe un catálogo administrable `roles`. Las columnas de `usuarios` heredadas del
 starter quedaron en español en I-28 y sus atributos de dominio son explícitos desde
 I-78 (`nombre_usuario`, `correo_electronico`, `contrasena`, `usuario_activo`,
@@ -271,7 +272,7 @@ asignatura para conservar las otras materias.
 ### Revisión, validación e IA
 
 `revisiones_silabo`, `observaciones_revision`, `solicitudes_correccion`, `aprobaciones`,
-`reaperturas`, `ejecuciones_validacion`,
+`reaperturas`, `envios_biblioteca` (I-165), `ejecuciones_validacion`,
 `resultados_validacion` y la memoria de IA `historial_ia` (I-135). I-120 eliminó `respuestas_observacion` y el estado `respondida`:
 el docente corrige y reenvía, y una observación está abierta o verificada.
 Desde I-131, `aprobaciones`, `reaperturas`, `solicitudes_correccion` y

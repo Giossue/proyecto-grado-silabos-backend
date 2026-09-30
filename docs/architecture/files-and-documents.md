@@ -77,6 +77,16 @@ completa desde la aprobación (fecha de envío, nombre de quien aprobó y fecha 
 aprobación, hora de Ecuador). Solo muestran nombres y fechas: la firma digital dentro del
 sistema es trabajo aparte.
 
+I-165 agrega los datos automáticos de firma `firma_docente`, `firma_coordinador` y
+`firma_bibliotecario`. Su valor es fijo (`SignatureAnchor`): cuatro líneas en blanco para
+el sello y la etiqueta «Firma del docente», «Firma de coordinación» o «Firma de
+biblioteca». La plantilla decide dónde van. `SignatureStampLocator` busca en el PDF la
+etiqueta del rol que firma y centra el sello (150 × 48 pt) justo encima. Si no la
+encuentra, usa las etiquetas «Firma:» por orden o, en último caso, el pie de la última
+página, con tres posiciones. El formato oficial trae una tabla de tres columnas con
+estas variables. La firma es incremental (PAdES) en orden docente → coordinación →
+biblioteca, y el PDF no cambia entre firmas.
+
 El PDF continúa como respaldo de texto (ahora incluye texto fijo y variables del diseño);
 no se promete maquetación de tablas, colores ni cortes iguales al DOCX. La fidelidad
 institucional y el motor PDF siguen sujetos a PV-07.

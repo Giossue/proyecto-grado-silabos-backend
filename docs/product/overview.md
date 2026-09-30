@@ -35,6 +35,7 @@ genera Word/PDF desde la revisión aprobada.
 | Docente | Elaborar, corregir, justificar y enviar el sílabo asignado sin perder trabajo. |
 | Coordinador | Gestionar mallas, materias programadas, paralelos y docentes de su carrera; preparar convocatorias, revisar, aprobar y vigilar el avance. |
 | Administrador | Mantener usuarios, facultades, carreras, coordinaciones, plantillas y operación. |
+| Bibliotecario | Verificar que los libros de la bibliografía estén disponibles: firmar el sílabo o comentar (I-165). |
 
 Una persona puede acumular roles. El permiso efectivo depende además de alcance,
 asignación, vigencia y estado.

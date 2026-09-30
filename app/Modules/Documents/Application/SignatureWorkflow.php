@@ -25,12 +25,13 @@ class SignatureWorkflow
 
     public const STATE_PENDING_LIBRARY_SUBMISSION = 'pendiente_envio_biblioteca';
 
+    public const STATE_PENDING_LIBRARY_REVIEW = 'pendiente_verificacion_biblioteca';
+
     public const STATE_PENDING_LIBRARY = 'pendiente_biblioteca';
 
     public const PENDING_STATES = [
         self::STATE_PENDING_TEACHER,
         self::STATE_PENDING_COORDINATION,
-        self::STATE_PENDING_LIBRARY_SUBMISSION,
         self::STATE_PENDING_LIBRARY,
     ];
 
@@ -85,11 +86,12 @@ class SignatureWorkflow
         return null;
     }
 
-    public function submission(?ExportArtifact $artifact): ?LibrarySubmission
+    public function submission(SyllabusRevision $revision): ?LibrarySubmission
     {
-        return $artifact === null
-            ? null
-            : LibrarySubmission::query()->where('artefacto_exportacion_id', $artifact->id)->with('sender:id,nombre')->first();
+        return LibrarySubmission::query()
+            ->where('revision_silabo_id', $revision->id)
+            ->with(['sender:id,nombre', 'verifier:id,nombre'])
+            ->first();
     }
 
     /** @param Collection<int, DocumentSignature> $signatures */
@@ -120,6 +122,13 @@ class SignatureWorkflow
         if ($this->voided($revision)) {
             return self::STATE_VOIDED;
         }
+        $submission = $this->submission($revision);
+        if ($submission === null) {
+            return self::STATE_PENDING_LIBRARY_SUBMISSION;
+        }
+        if ($submission->verificado_en === null) {
+            return self::STATE_PENDING_LIBRARY_REVIEW;
+        }
         if ($artifact === null) {
             return self::STATE_NO_DOCUMENT;
         }
@@ -127,7 +136,7 @@ class SignatureWorkflow
         return match ($next) {
             DocumentSignature::ROLE_TEACHER => self::STATE_PENDING_TEACHER,
             DocumentSignature::ROLE_COORDINATION => self::STATE_PENDING_COORDINATION,
-            default => $this->submission($artifact) === null ? self::STATE_PENDING_LIBRARY_SUBMISSION : self::STATE_PENDING_LIBRARY,
+            default => self::STATE_PENDING_LIBRARY,
         };
     }
 

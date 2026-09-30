@@ -127,15 +127,42 @@ columnas con estas variables.
 
 ## Pasos
 
-- [ ] Migración, enum de rol, asignación sin carrera, formularios y seeder.
-- [ ] Flujo de firma de tres pasos, envío a biblioteca y acciones de biblioteca.
-- [ ] Corrección solo de bibliografía y reenvío con aprobación heredada.
-- [ ] Variables de firma y ubicación del sello por rol.
-- [ ] Panel, avisos, etiqueta de contexto y paso de puesta en marcha.
-- [ ] Pruebas de servidor, OpenAPI regenerado y `composer verify`.
-- [ ] Frontend: rol, rutas, bandeja y detalle de biblioteca, envío del docente,
+- [x] Migración, enum de rol, asignación sin carrera, formularios y seeder
+      (`bibliotecario@silabos.test`).
+- [x] Flujo de firma de tres pasos, envío a biblioteca y acciones de biblioteca.
+- [x] Corrección solo de bibliografía y reenvío con aprobación heredada.
+- [x] Variables de firma y ubicación del sello por rol.
+- [x] Panel, avisos, etiqueta de contexto y paso de puesta en marcha (el paso «Crear las
+      cuentas» ya no cuenta cuentas de biblioteca).
+- [x] Pruebas de servidor, OpenAPI regenerado y `composer verify`.
+- [x] Frontend: rol, rutas, bandeja y detalle de biblioteca, envío del docente,
       corrección de bibliografía y variables de firma en el editor.
-- [ ] Documentación: decisiones, roles, ciclo de vida, esquema, documentos y pantallas.
+- [x] Documentación: decisiones, roles, ciclo de vida, esquema, documentos y pantallas.
+- [ ] Base remota: migrar (`000162`, `000163`) según `docs/security/hardening.md`.
+- [ ] Plantilla remota: pasar la sección Bibliografía a partes de Texto libre y poner
+      las variables de firma en «Revisión y aprobación».
+- [ ] Prueba manual con los cuatro roles.
+
+## Hallazgo corregido de paso
+
+La migración `000161` (I-164) quitó `plantilla_silabo.documento_plantilla`, pero dejó
+vivo el trigger `validar_bloque_definicion_campo`, que la leía. Por eso fallaba cualquier
+alta de pregunta de la plantilla. La migración `000162` lo elimina: la llave foránea
+`definiciones_campo.bloque_plantilla_id → bloques_plantilla` ya cubre esa regla.
+
+## Evidencia (2026-09-29)
+
+- Servidor: `composer verify` pasa 384 de 386 pruebas, con PHPStan y Pint limpios.
+  `LibraryReviewTest` cubre el rol sin carrera, la bandeja, el comentario idempotente,
+  la edición limitada a la bibliografía con el proceso cerrado, el reenvío con
+  aprobación heredada y la fotografía idéntica fuera de la bibliografía.
+  `DocumentSignatureTest` cubre las tres firmas en orden y el envío idempotente.
+  `SignatureStampLocatorTest` cubre el sello sobre la etiqueta de cada rol y los
+  respaldos. La única falla es `SpanishSchemaTest` I-78: los nombres genéricos de
+  columnas de `secciones_plantilla` y `bloques_plantilla`, que vienen de I-164, no de
+  este cambio.
+- SPA: lint y typecheck sin errores; 267 pruebas de Vitest pasan. `contract:check`
+  cubre los endpoints nuevos; solo falla `src/api/academic.ts:21`, que ya fallaba antes.
 
 ## Fuera de alcance
 

@@ -277,6 +277,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.library.reviews.index');
             Route::get('library/reviews/{revision}', [LibraryReviewController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.library.reviews.show');
+            Route::post('library/reviews/{revision}/verify', [LibraryReviewController::class, 'verify'])
+                ->middleware('active-role')->name('api.v1.library.reviews.verify');
             Route::post('library/reviews/{revision}/comments', [LibraryReviewController::class, 'comment'])
                 ->middleware('active-role')->name('api.v1.library.reviews.comments.store');
         });

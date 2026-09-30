@@ -48,7 +48,7 @@ class CommentBibliography
             }
             $artifact = $this->workflow->artifactFor($revision);
             $state = $this->workflow->state($revision, $artifact, $this->workflow->signatures($artifact));
-            if ($syllabus->estado !== 'aprobado' || $state !== SignatureWorkflow::STATE_PENDING_LIBRARY) {
+            if ($syllabus->estado !== 'aprobado' || $state !== SignatureWorkflow::STATE_PENDING_LIBRARY_REVIEW) {
                 throw ValidationException::withMessages(['comment' => 'Este sílabo ya no espera la verificación de biblioteca.']);
             }
 

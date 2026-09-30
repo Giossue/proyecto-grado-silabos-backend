@@ -90,7 +90,7 @@ y `composer verify` para cambios amplios, riesgosos o cuando se soliciten expres
 ## Restricciones de producto
 
 - Alcance actual: Carrera de Software UEB.
-- Roles: Administrador, Coordinador y Docente.
+- Roles: Administrador, Coordinador, Docente y Bibliotecario (I-165).
 - Estados: Sin iniciar, Borrador, En revisión, Corrección solicitada y Aprobado.
 - Una revisión enviada es inmutable durante el flujo normal.
 - Una revisión aprobada es inmutable durante el flujo normal.

@@ -49,8 +49,8 @@ carrera_id UUID (FK → carreras.id) NULL
 asignacion_rol_activa BOOLEAN NOT NULL
 asignado_en TIMESTAMPTZ NULL
 
-CHECK (rol IN ('administrador', 'coordinador', 'docente'))
-CHECK (administrador sin carrera; coordinador/docente con carrera)
+CHECK (rol IN ('administrador', 'coordinador', 'docente', 'bibliotecario'))
+CHECK (administrador/bibliotecario sin carrera; coordinador/docente con carrera)
 UNIQUE parcial: usuario_id, rol y carrera_id cuando asignacion_rol_activa
 ~~~
 
@@ -652,10 +652,14 @@ clave_idempotencia UUID NOT NULL
 huella_sha256 CHAR(64) NOT NULL
 aprobado_por UUID (FK → usuarios.id) NOT NULL
 aprobado_en TIMESTAMPTZ NOT NULL
+aprobacion_base_id UUID (FK → aprobaciones.id) NULL INDEX
 ~~~
 
 El sílabo se obtiene de `revisiones_silabo.silabo_id`. La clave de idempotencia sigue
 siendo única por sílabo; la comprueba el trigger `validar_relaciones_flujo` (I-131).
+`aprobacion_base_id` solo existe en la aprobación heredada que crea el reenvío de una
+corrección de biblioteca (I-165): apunta a la aprobación de coordinación que cubre todo
+el contenido salvo la bibliografía, y conserva su aprobador.
 
 ## reaperturas
 
@@ -669,7 +673,29 @@ clave_idempotencia UUID NOT NULL
 causa TEXT NOT NULL
 reabierto_por UUID (FK → usuarios.id) NOT NULL
 reabierto_en TIMESTAMPTZ NOT NULL
+origen_reapertura VARCHAR(16) NOT NULL DEFAULT 'coordinacion'
+
+CHECK (origen_reapertura IN ('coordinacion', 'biblioteca'))
 ~~~
+
+I-165: el comentario del bibliotecario es una reapertura de origen `biblioteca`; su
+`causa` es el comentario y deja editable solo la sección `bibliografia`.
+
+## envios_biblioteca
+
+**Contexto:** envío del PDF firmado por docente y coordinación a biblioteca (I-165).
+
+~~~text
+id UUID (PK)
+artefacto_exportacion_id UUID (FK → artefactos_exportacion.id) NOT NULL UNIQUE
+enviado_por UUID (FK → usuarios.id) NOT NULL INDEX
+enviado_en TIMESTAMPTZ NOT NULL
+~~~
+
+Solo se insertan filas (trigger `proteger_registro_append_only`). El estado del envío se
+deriva: `firmado` si el artefacto tiene la firma `biblioteca`, `comentado` si la
+aprobación tiene una reapertura de origen `biblioteca`, `anulado` si la reapertura es de
+coordinación y `pendiente` en otro caso.
 
 El sílabo se obtiene de `revision_aprobada_id`; el trigger exige que coincida con la
 revisión de la aprobación y que la clave de idempotencia sea única por sílabo (I-131).

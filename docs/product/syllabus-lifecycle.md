@@ -29,10 +29,33 @@ mutable el documento aprobado.
 | Corrección solicitada | Reenviar             | Docente autorizado       | En revisión                      | Crea nueva revisión; Coordinación verifica sobre ella. |
 | En revisión           | Aprobar              | Coordinador autorizado   | Aprobado                         | Fija aprobación sobre revisión inmutable.          |
 | Aprobado              | Reabrir              | Coordinador autorizado   | Borrador o Corrección solicitada | Registra causa y crea revisión enlazada.           |
+| Aprobado (firmado por docente y coordinación) | Comentar bibliografía | Bibliotecario | Corrección solicitada | Reapertura de origen `biblioteca`; solo la bibliografía es editable (I-165). |
+| Corrección solicitada de biblioteca | Reenviar bibliografía | Docente autorizado | Aprobado | Nueva revisión = copia de la aprobada con la bibliografía nueva; aprobación heredada. |
 
 ADR-0005 fija provisionalmente `Corrección solicitada` tras una reapertura. DT-07 exige
 validar ese lenguaje con usuarios; un cambio futuro afectará trabajo nuevo sin alterar la
 revisión ni la aprobación conservadas.
+
+## Firmas y verificación de biblioteca (I-139, I-165)
+
+Tras la aprobación, el PDF de la revisión recibe tres firmas electrónicas en orden fijo:
+docente → coordinación → biblioteca. Entre la segunda y la tercera, el docente pulsa
+«Enviar a biblioteca» (`envios_biblioteca`, una vez por PDF). El bibliotecario revisa la
+bibliografía fotografiada:
+
+- si los libros están, **firma** y el proceso termina (`firmado`);
+- si no, **comenta**. El comentario es una reapertura con `origen_reapertura =
+  'biblioteca'`: anula las firmas del PDF anterior, restaura la fotografía aprobada y
+  deja el sílabo en «Corrección solicitada», con solo la sección `bibliografia` editable.
+
+Al reenviar, el servidor arma la revisión N+1 copiando la fotografía aprobada y
+reemplazando solo los valores de la sección `bibliografia`. Crea una aprobación con
+`aprobacion_base_id` apuntando a la aprobación de N y el mismo aprobador, así que no hay
+nueva revisión de coordinación. El sílabo vuelve a «Aprobado» y el PDF nuevo repite las
+tres firmas. Esta corrección no exige convocatoria en curso ni plazo abierto: es trabajo
+posterior a la aprobación, igual que las firmas, y así ningún sílabo queda atascado si el
+proceso se pausa o se cierra. Una reapertura normal de coordinación también anula el
+envío a biblioteca en curso.
 
 ## Relevo del docente responsable
 

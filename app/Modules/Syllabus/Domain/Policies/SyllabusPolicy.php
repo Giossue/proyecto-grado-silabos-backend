@@ -36,7 +36,7 @@ class SyllabusPolicy
         }
         if ($activeRole->role->codigo_rol === RoleCode::Librarian->value) {
             return LibrarySubmission::query()
-                ->whereHas('artifact.revision', fn ($revision) => $revision->where('silabo_id', $syllabus->id))
+                ->whereHas('revision', fn ($revision) => $revision->where('silabo_id', $syllabus->id))
                 ->exists();
         }
         if ($activeRole->role->codigo_rol !== RoleCode::Teacher->value
