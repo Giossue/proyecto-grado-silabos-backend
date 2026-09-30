@@ -32,7 +32,7 @@ class SyllabusRevision extends Model
 
     protected const LEGACY_COLUMN_ALIASES = [
         'fotografia' => 'contenido_enviado',
-        'huella_sha256' => 'huella_contenido',
+        'huella_sha256' => 'hash_contenido',
         'version_bloqueo_origen' => 'version_borrador',
         'clave_idempotencia' => 'clave_solicitud',
     ];

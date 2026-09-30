@@ -188,7 +188,7 @@ class ReviewWorkflowTest extends TestCase
         try {
             DB::transaction(fn () => DB::table('revisiones_silabo')
                 ->where('id', $revision->id)
-                ->update(['huella_contenido' => str_repeat('0', 64)]));
+                ->update(['hash_contenido' => str_repeat('0', 64)]));
             $this->fail('PostgreSQL permitió modificar una revisión histórica.');
         } catch (QueryException) {
             $this->assertSame($originalFingerprint, $revision->fresh()->huella_sha256);

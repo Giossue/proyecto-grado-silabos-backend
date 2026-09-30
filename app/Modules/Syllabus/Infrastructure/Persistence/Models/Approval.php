@@ -26,7 +26,7 @@ class Approval extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
-        'huella_sha256' => 'huella_contenido',
+        'huella_sha256' => 'hash_contenido',
         'clave_idempotencia' => 'clave_solicitud',
     ];
 

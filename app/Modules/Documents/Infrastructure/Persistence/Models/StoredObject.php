@@ -31,7 +31,7 @@ class StoredObject extends Model
         'clasificacion' => 'categoria',
         'propietario_usuario_id' => 'subido_por',
         'ruta_interna' => 'ruta_archivo',
-        'huella_sha256' => 'huella_archivo',
+        'huella_sha256' => 'hash_archivo',
     ];
 
     public const CREATED_AT = 'almacenado_en';

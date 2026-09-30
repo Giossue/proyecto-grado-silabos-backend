@@ -22,7 +22,7 @@ class ActivateManagedUser
         DB::transaction(function () use ($password, $request, $token): void {
             $invitation = ActivationInvitation::query()
                 ->lockForUpdate()
-                ->where('huella_activacion', hash('sha256', $token))
+                ->where('hash_activacion', hash('sha256', $token))
                 ->first();
 
             if ($invitation === null || $invitation->usada_en !== null || $invitation->invalidada_en !== null || $invitation->expira_en->isPast()) {

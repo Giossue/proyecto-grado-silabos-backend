@@ -228,7 +228,7 @@ class ApiSessionTest extends TestCase
         $user->markEmailAsUnverified();
         $old = ActivationInvitation::query()->create([
             'usuario_id' => $user->id,
-            'huella_activacion' => hash('sha256', 'anterior'),
+            'hash_activacion' => hash('sha256', 'anterior'),
             'expira_en' => now()->addDay(),
         ]);
 

@@ -38,7 +38,7 @@ class DocumentSignature extends Model
         'certificado_serie' => 'numero_certificado',
         'certificado_emisor' => 'entidad_emisora',
         'certificado_vence_en' => 'certificado_valido_hasta',
-        'huella_sha256' => 'huella_archivo',
+        'huella_sha256' => 'hash_archivo',
     ];
 
     public const ROLE_TEACHER = 'docente';

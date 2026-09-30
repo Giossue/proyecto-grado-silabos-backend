@@ -176,7 +176,7 @@ class SyllabusWordDocument
     {
         $section->addText(
             sprintf(
-                'Revisión %d · %s · huella %s · generado %s',
+                'Revisión %d · %s · hash %s · generado %s',
                 $input->revisionNumber,
                 $input->subject.' ('.$input->subjectCode.')',
                 $input->revisionFingerprint,

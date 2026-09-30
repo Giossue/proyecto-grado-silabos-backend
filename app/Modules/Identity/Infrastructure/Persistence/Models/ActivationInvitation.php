@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property string $id
  * @property string $usuario_id
- * @property string $huella_activacion
+ * @property string $hash_activacion
  * @property Carbon $expira_en
  * @property Carbon|null $usada_en
  * @property Carbon|null $invalidada_en
@@ -31,7 +31,7 @@ class ActivationInvitation extends Model
 
     protected $fillable = [
         'usuario_id',
-        'huella_activacion',
+        'hash_activacion',
         'expira_en',
         'usada_en',
         'invalidada_en',

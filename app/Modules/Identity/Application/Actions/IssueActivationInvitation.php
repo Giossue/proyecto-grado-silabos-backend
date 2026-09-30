@@ -55,7 +55,7 @@ class IssueActivationInvitation
             $token = Str::random(64);
             $invitation = ActivationInvitation::query()->create([
                 'usuario_id' => $user->id,
-                'huella_activacion' => hash('sha256', $token),
+                'hash_activacion' => hash('sha256', $token),
                 'expira_en' => $now->copy()->addHours(self::EXPIRATION_HOURS),
                 'emitida_por_usuario_id' => $actor->id,
             ]);
