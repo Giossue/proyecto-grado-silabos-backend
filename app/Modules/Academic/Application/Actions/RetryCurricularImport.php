@@ -57,7 +57,7 @@ final class RetryCurricularImport
                 if (($record['kind'] ?? null) !== 'pdf' || ! $capabilities['pdf']) {
                     throw ValidationException::withMessages(['import' => 'Primero debe estar disponible la lectura del documento.']);
                 }
-                $object = StoredObject::query()->where('carrera_id', $previous->carrera_id)->where('estado', 'activo')->whereKey($record['original_object_id'])->firstOrFail();
+                $object = StoredObject::query()->where('carrera_id', $previous->carrera_id)->whereKey($record['original_object_id'])->firstOrFail();
                 $stream = Storage::disk($object->disco)->readStream($object->ruta_interna);
                 $temporary = tmpfile();
                 if (! is_resource($stream) || $temporary === false) {

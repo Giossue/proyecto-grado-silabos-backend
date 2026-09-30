@@ -91,7 +91,6 @@ class AcceptDocumentSignature
                     'tamano_bytes' => strlen($signedPdf),
                     'huella_sha256' => $fingerprint,
                     'clasificacion' => 'syllabus_signed_export',
-                    'estado' => 'activo',
                     'propietario_usuario_id' => $actor->id,
                     'carrera_id' => $syllabus->convocation->carrera_id,
                     'almacenado_en' => now(),

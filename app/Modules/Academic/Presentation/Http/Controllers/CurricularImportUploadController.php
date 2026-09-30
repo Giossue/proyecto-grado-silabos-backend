@@ -21,7 +21,7 @@ final class CurricularImportUploadController extends Controller
         $record = $view->find($import, $request);
         $document = collect($record->documentos_importacion)->firstWhere('source_id', $source);
         abort_unless(is_array($document) && is_string($document['original_object_id'] ?? null), 404);
-        $object = StoredObject::query()->where('carrera_id', $record->carrera_id)->where('estado', 'activo')
+        $object = StoredObject::query()->where('carrera_id', $record->carrera_id)
             ->whereKey($document['original_object_id'])->firstOrFail();
         abort_unless(Storage::disk($object->disco)->exists($object->ruta_interna), 404);
 

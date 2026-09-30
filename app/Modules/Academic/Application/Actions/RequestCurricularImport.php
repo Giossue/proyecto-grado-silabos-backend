@@ -117,7 +117,7 @@ final class RequestCurricularImport
                     $object = StoredObject::query()->firstOrCreate(['disco' => 'private', 'ruta_interna' => $path], [
                         'nombre_logico' => Str::limit($file->getClientOriginalName(), 255, ''), 'mime' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                         'tamano_bytes' => $file->getSize(), 'huella_sha256' => $hash, 'clasificacion' => 'curricular_workbook',
-                        'estado' => 'activo', 'propietario_usuario_id' => $actor->id, 'carrera_id' => $careerId, 'almacenado_en' => now(),
+                        'propietario_usuario_id' => $actor->id, 'carrera_id' => $careerId, 'almacenado_en' => now(),
                     ]);
                     $documentRecords[] = ['source_id' => $source->id, 'name' => $name, 'hash' => $this->hasher->hash($document), 'kind' => 'xlsx', 'execution_id' => null, 'file_hash' => $hash, 'original_object_id' => $object->id];
                 }

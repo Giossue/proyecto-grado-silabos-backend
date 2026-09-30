@@ -243,7 +243,7 @@ class CurricularImportsTest extends TestCase
         $original = StoredObject::query()->create([
             'disco' => 'private', 'ruta_interna' => 'pruebas/original.pdf', 'nombre_logico' => 'original.pdf', 'mime' => 'application/pdf',
             'tamano_bytes' => 10, 'huella_sha256' => str_repeat('a', 64), 'clasificacion' => 'academic_source_pdf',
-            'estado' => 'activo', 'propietario_usuario_id' => $this->coordinator->id, 'carrera_id' => $this->subject->carrera_id, 'almacenado_en' => now(),
+            'propietario_usuario_id' => $this->coordinator->id, 'carrera_id' => $this->subject->carrera_id, 'almacenado_en' => now(),
         ]);
         $replacement = $original->replicate();
         $replacement->ruta_interna = 'pruebas/sustitucion.pdf';

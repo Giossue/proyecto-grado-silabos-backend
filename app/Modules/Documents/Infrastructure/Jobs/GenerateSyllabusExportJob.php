@@ -197,7 +197,6 @@ class GenerateSyllabusExportJob implements ShouldQueue
             'tamano_bytes' => $document->size(),
             'huella_sha256' => $document->fingerprint(),
             'clasificacion' => 'syllabus_export',
-            'estado' => 'activo',
             'propietario_usuario_id' => $artifact->solicitado_por,
             'carrera_id' => $careerId,
             'almacenado_en' => now(),

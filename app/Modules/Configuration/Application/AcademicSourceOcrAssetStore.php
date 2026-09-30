@@ -71,7 +71,6 @@ final class AcademicSourceOcrAssetStore
                 'tamano_bytes' => strlen($bytes),
                 'huella_sha256' => $hash,
                 'clasificacion' => 'academic_source_image',
-                'estado' => 'activo',
                 'propietario_usuario_id' => is_string($execution->entrada['requested_by'] ?? null) ? $execution->entrada['requested_by'] : null,
                 'carrera_id' => $source->carrera_id,
                 'almacenado_en' => now(),

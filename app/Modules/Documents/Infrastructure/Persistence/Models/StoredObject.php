@@ -22,7 +22,7 @@ class StoredObject extends Model
 {
     use HasUuids, MapsLegacyColumnNames;
 
-    protected const LEGACY_COLUMN_ALIASES = ['estado' => 'estado_objeto_almacenado'];
+    protected const LEGACY_COLUMN_ALIASES = [];
 
     public const CREATED_AT = 'almacenado_en';
 
@@ -33,7 +33,7 @@ class StoredObject extends Model
     /** @var list<string> */
     protected $fillable = [
         'disco', 'ruta_interna', 'nombre_logico', 'mime', 'tamano_bytes',
-        'huella_sha256', 'clasificacion', 'estado', 'propietario_usuario_id',
+        'huella_sha256', 'clasificacion', 'propietario_usuario_id',
         'carrera_id', 'almacenado_en',
     ];
 

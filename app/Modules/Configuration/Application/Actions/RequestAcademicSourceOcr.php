@@ -57,7 +57,6 @@ final class RequestAcademicSourceOcr
                     'tamano_bytes' => $pathInfo['size'],
                     'huella_sha256' => $pathInfo['hash'],
                     'clasificacion' => 'academic_source_pdf',
-                    'estado' => 'activo',
                     'propietario_usuario_id' => $actor->id,
                     'carrera_id' => $lockedSource->carrera_id,
                     'almacenado_en' => now(),

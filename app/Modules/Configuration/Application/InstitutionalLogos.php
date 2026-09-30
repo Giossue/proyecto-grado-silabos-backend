@@ -57,7 +57,6 @@ class InstitutionalLogos
             'tamano_bytes' => strlen($content),
             'huella_sha256' => hash('sha256', $content),
             'clasificacion' => 'logo_facultad',
-            'estado' => 'activo',
             'propietario_usuario_id' => null,
             'carrera_id' => null,
         ]);
