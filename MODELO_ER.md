@@ -2,7 +2,7 @@
 
 34 entidades y 62 relaciones, generado de la base actual (sin las tablas internas de Laravel).
 
-- Rectángulo = entidad · rombo = relación (verbo) · óvalo = atributo (clave subrayada) · en las líneas, `1` y `*` (muchos).
+- Rectángulo = entidad · rombo = relación (verbo) · óvalo = atributo (clave subrayada) · en las líneas, `1` y `N` (muchos).
 
 ```mermaid
 flowchart LR
@@ -234,79 +234,79 @@ flowchart LR
     valores_campo_valor_campo(["valor_campo"]) --- valores_campo
     r0{"Reemplaza"}
     aprobaciones ---|"1"| r0
-    r0 ---|"*"| aprobaciones
+    r0 ---|"N"| aprobaciones
     r1{"Aprueba"}
     usuarios ---|"1"| r1
-    r1 ---|"*"| aprobaciones
+    r1 ---|"N"| aprobaciones
     r2{"Tiene"}
     revisiones_silabo ---|"1"| r2
     r2 ---|"1"| aprobaciones
     r3{"Tiene"}
     carreras ---|"1"| r3
-    r3 ---|"*"| archivos
+    r3 ---|"N"| archivos
     r4{"Sube"}
     usuarios ---|"1"| r4
-    r4 ---|"*"| archivos
+    r4 ---|"N"| archivos
     r5{"Tiene"}
     asignaciones_rol ---|"1"| r5
-    r5 ---|"*"| asignaciones_paralelo
+    r5 ---|"N"| asignaciones_paralelo
     r6{"Tiene"}
     paralelos ---|"1"| r6
-    r6 ---|"*"| asignaciones_paralelo
+    r6 ---|"N"| asignaciones_paralelo
     r7{"Tiene"}
     carreras ---|"1"| r7
-    r7 ---|"*"| asignaciones_rol
+    r7 ---|"N"| asignaciones_rol
     r8{"Pertenece a"}
     usuarios ---|"1"| r8
-    r8 ---|"*"| asignaciones_rol
+    r8 ---|"N"| asignaciones_rol
     r9{"Tiene"}
     carreras ---|"1"| r9
-    r9 ---|"*"| asignaturas
+    r9 ---|"N"| asignaturas
     r10{"Tiene"}
     asignaturas ---|"1"| r10
-    r10 ---|"*"| asignaturas_ofertadas
+    r10 ---|"N"| asignaturas_ofertadas
     r11{"Tiene"}
     periodos_academicos ---|"1"| r11
-    r11 ---|"*"| asignaturas_ofertadas
+    r11 ---|"N"| asignaturas_ofertadas
     r12{"Tiene"}
     plantilla_silabo ---|"1"| r12
-    r12 ---|"*"| campos_plantilla
+    r12 ---|"N"| campos_plantilla
     r13{"Tiene"}
     secciones_plantilla ---|"1"| r13
-    r13 ---|"*"| campos_plantilla
+    r13 ---|"N"| campos_plantilla
     r14{"Tiene"}
     facultades ---|"1"| r14
-    r14 ---|"*"| carreras
+    r14 ---|"N"| carreras
     r15{"Tiene"}
     carreras ---|"1"| r15
-    r15 ---|"*"| convocatorias_carreras
+    r15 ---|"N"| convocatorias_carreras
     r16{"Tiene"}
     convocatorias_universidad ---|"1"| r16
-    r16 ---|"*"| convocatorias_carreras
+    r16 ---|"N"| convocatorias_carreras
     r17{"Tiene"}
     periodos_academicos ---|"1"| r17
-    r17 ---|"*"| convocatorias_universidad
+    r17 ---|"N"| convocatorias_universidad
     r18{"Tiene"}
     campos_plantilla ---|"1"| r18
-    r18 ---|"*"| definiciones_campo
+    r18 ---|"N"| definiciones_campo
     r19{"Tiene"}
     plantilla_silabo ---|"1"| r19
-    r19 ---|"*"| definiciones_campo
+    r19 ---|"N"| definiciones_campo
     r20{"Envía"}
     usuarios ---|"1"| r20
-    r20 ---|"*"| envios_biblioteca
+    r20 ---|"N"| envios_biblioteca
     r21{"Tiene"}
     revisiones_silabo ---|"1"| r21
     r21 ---|"1"| envios_biblioteca
     r22{"Verifica"}
     usuarios ---|"1"| r22
-    r22 ---|"*"| envios_biblioteca
+    r22 ---|"N"| envios_biblioteca
     r23{"Tiene"}
     asignaciones_rol ---|"1"| r23
-    r23 ---|"*"| eventos_auditoria
+    r23 ---|"N"| eventos_auditoria
     r24{"Pertenece a"}
     usuarios ---|"1"| r24
-    r24 ---|"*"| eventos_auditoria
+    r24 ---|"N"| eventos_auditoria
     r25{"Genera PDF"}
     archivos ---|"1"| r25
     r25 ---|"1"| exportaciones_silabo
@@ -315,109 +315,109 @@ flowchart LR
     r26 ---|"1"| exportaciones_silabo
     r27{"Tiene"}
     revisiones_silabo ---|"1"| r27
-    r27 ---|"*"| exportaciones_silabo
+    r27 ---|"N"| exportaciones_silabo
     r28{"Solicita"}
     usuarios ---|"1"| r28
-    r28 ---|"*"| exportaciones_silabo
+    r28 ---|"N"| exportaciones_silabo
     r29{"Procesa"}
     trabajos_en_cola ---|"1"| r29
     r29 ---|"1"| exportaciones_silabo
     r30{"Usa como logo"}
     archivos ---|"1"| r30
-    r30 ---|"*"| facultades
+    r30 ---|"N"| facultades
     r31{"Firma en"}
     archivos ---|"1"| r31
     r31 ---|"1"| firmas_documento
     r32{"Tiene"}
     exportaciones_silabo ---|"1"| r32
-    r32 ---|"*"| firmas_documento
+    r32 ---|"N"| firmas_documento
     r33{"Firma"}
     usuarios ---|"1"| r33
-    r33 ---|"*"| firmas_documento
+    r33 ---|"N"| firmas_documento
     r34{"Emite"}
     usuarios ---|"1"| r34
-    r34 ---|"*"| invitaciones_activacion
+    r34 ---|"N"| invitaciones_activacion
     r35{"Pertenece a"}
     usuarios ---|"1"| r35
-    r35 ---|"*"| invitaciones_activacion
+    r35 ---|"N"| invitaciones_activacion
     r36{"Tiene"}
     silabos ---|"1"| r36
-    r36 ---|"*"| mensajes_ia
+    r36 ---|"N"| mensajes_ia
     r37{"Pertenece a"}
     usuarios ---|"1"| r37
-    r37 ---|"*"| mensajes_ia
+    r37 ---|"N"| mensajes_ia
     r38{"Pertenece a"}
     usuarios ---|"1"| r38
-    r38 ---|"*"| notificaciones
+    r38 ---|"N"| notificaciones
     r39{"Crea"}
     usuarios ---|"1"| r39
-    r39 ---|"*"| observaciones_revision
+    r39 ---|"N"| observaciones_revision
     r40{"Tiene"}
     revisiones_silabo ---|"1"| r40
-    r40 ---|"*"| observaciones_revision
+    r40 ---|"N"| observaciones_revision
     r41{"Tiene"}
     asignaturas_ofertadas ---|"1"| r41
-    r41 ---|"*"| paralelos
+    r41 ---|"N"| paralelos
     r42{"Tiene"}
     aprobaciones ---|"1"| r42
     r42 ---|"1"| reaperturas
     r43{"Reabre"}
     usuarios ---|"1"| r43
-    r43 ---|"*"| reaperturas
+    r43 ---|"N"| reaperturas
     r44{"Reabre"}
     revisiones_silabo ---|"1"| r44
-    r44 ---|"*"| reaperturas
+    r44 ---|"N"| reaperturas
     r45{"Tiene"}
     asignaturas ---|"1"| r45
-    r45 ---|"*"| requisitos_asignatura
+    r45 ---|"N"| requisitos_asignatura
     r46{"Es requisito de"}
     asignaturas ---|"1"| r46
-    r46 ---|"*"| requisitos_asignatura
+    r46 ---|"N"| requisitos_asignatura
     r47{"Tiene"}
     definiciones_campo ---|"1"| r47
-    r47 ---|"*"| resultados_validacion
+    r47 ---|"N"| resultados_validacion
     r48{"Tiene"}
     validaciones_silabo ---|"1"| r48
-    r48 ---|"*"| resultados_validacion
+    r48 ---|"N"| resultados_validacion
     r49{"Envía"}
     usuarios ---|"1"| r49
-    r49 ---|"*"| revisiones_silabo
+    r49 ---|"N"| revisiones_silabo
     r50{"Tiene"}
     reaperturas ---|"1"| r50
-    r50 ---|"*"| revisiones_silabo
+    r50 ---|"N"| revisiones_silabo
     r51{"Sucede a"}
     revisiones_silabo ---|"1"| r51
-    r51 ---|"*"| revisiones_silabo
+    r51 ---|"N"| revisiones_silabo
     r52{"Tiene"}
     silabos ---|"1"| r52
-    r52 ---|"*"| revisiones_silabo
+    r52 ---|"N"| revisiones_silabo
     r53{"Tiene"}
     plantilla_silabo ---|"1"| r53
-    r53 ---|"*"| secciones_plantilla
+    r53 ---|"N"| secciones_plantilla
     r54{"Tiene"}
     convocatorias_carreras ---|"1"| r54
-    r54 ---|"*"| silabos
+    r54 ---|"N"| silabos
     r55{"Tiene"}
     paralelos ---|"1"| r55
-    r55 ---|"*"| silabos
+    r55 ---|"N"| silabos
     r56{"Tiene"}
     revisiones_silabo ---|"1"| r56
     r56 ---|"1"| solicitudes_correccion
     r57{"Solicita"}
     usuarios ---|"1"| r57
-    r57 ---|"*"| solicitudes_correccion
+    r57 ---|"N"| solicitudes_correccion
     r58{"Ejecuta"}
     usuarios ---|"1"| r58
-    r58 ---|"*"| validaciones_silabo
+    r58 ---|"N"| validaciones_silabo
     r59{"Tiene"}
     silabos ---|"1"| r59
-    r59 ---|"*"| validaciones_silabo
+    r59 ---|"N"| validaciones_silabo
     r60{"Tiene"}
     definiciones_campo ---|"1"| r60
-    r60 ---|"*"| valores_campo
+    r60 ---|"N"| valores_campo
     r61{"Tiene"}
     silabos ---|"1"| r61
-    r61 ---|"*"| valores_campo
+    r61 ---|"N"| valores_campo
     classDef entidad fill:#FFFFFF,stroke:#000,color:#000
     classDef relacion fill:#FFFFFF,stroke:#000,color:#000
     classDef atributo fill:#FFFFFF,stroke:#000,color:#000
