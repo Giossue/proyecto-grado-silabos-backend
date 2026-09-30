@@ -153,18 +153,16 @@ Actualizado el 2026-09-30: **42 tablas** y 70 relaciones.
 
 ### Relaciones: Identidad y operación
 
-| Tabla | Columna | Apunta a | Cardinalidad (padre → hijos) |
-|---|---|---|---|
-| `archivos` | `carrera_id` | `carreras` | 0 o 1 → muchos |
-| `archivos` | `subido_por` | `usuarios` | 0 o 1 → muchos |
-| `asignaciones_rol` | `carrera_id` | `carreras` | 0 o 1 → muchos |
-| `asignaciones_rol` | `usuario_id` | `usuarios` | 1 → muchos |
-| `eventos_auditoria` | `asignacion_rol_id` | `asignaciones_rol` | 0 o 1 → muchos |
-| `eventos_auditoria` | `usuario_id` | `usuarios` | 0 o 1 → muchos |
-| `invitaciones_activacion` | `emitida_por_usuario_id` | `usuarios` | 0 o 1 → muchos |
-| `invitaciones_activacion` | `usuario_id` | `usuarios` | 1 → muchos |
-| `notificaciones` | `usuario_id` | `usuarios` | 1 → muchos |
-| `sesiones` | `user_id` | `usuarios` | 0 o 1 → muchos |
+- archivos.carrera_id → carreras
+- archivos.subido_por → usuarios
+- asignaciones_rol.carrera_id → carreras
+- asignaciones_rol.usuario_id → usuarios
+- eventos_auditoria.asignacion_rol_id → asignaciones_rol
+- eventos_auditoria.usuario_id → usuarios
+- invitaciones_activacion.emitida_por_usuario_id → usuarios
+- invitaciones_activacion.usuario_id → usuarios
+- notificaciones.usuario_id → usuarios
+- sesiones.user_id → usuarios
 
 ## Estructura académica
 
@@ -311,25 +309,23 @@ Actualizado el 2026-09-30: **42 tablas** y 70 relaciones.
 
 ### Relaciones: Estructura académica
 
-| Tabla | Columna | Apunta a | Cardinalidad (padre → hijos) |
-|---|---|---|---|
-| `asignaciones_paralelo` | `asignacion_rol_id` | `asignaciones_rol` | 1 → muchos |
-| `asignaciones_paralelo` | `paralelo_id` | `paralelos` | 1 → muchos |
-| `asignaturas` | `carrera_id` | `carreras` | 1 → muchos |
-| `asignaturas_ofertadas` | `asignatura_id` | `asignaturas` | 1 → muchos |
-| `asignaturas_ofertadas` | `periodo_academico_id` | `periodos_academicos` | 1 → muchos |
-| `carreras` | `facultad_id` | `facultades` | 1 → muchos |
-| `documentos_importacion` | `archivo_pdf_id` | `archivos` | 0 o 1 → muchos |
-| `documentos_importacion` | `carrera_id` | `carreras` | 1 → muchos |
-| `facultades` | `logo_archivo_id` | `archivos` | 0 o 1 → muchos |
-| `importaciones_curriculares` | `carrera_id` | `carreras` | 1 → muchos |
-| `importaciones_curriculares` | `solicitado_por` | `usuarios` | 1 → muchos |
-| `paralelos` | `asignatura_ofertada_id` | `asignaturas_ofertadas` | 1 → muchos |
-| `requisitos_asignatura` | `asignatura_id` | `asignaturas` | 1 → muchos |
-| `requisitos_asignatura` | `requisito_id` | `asignaturas` | 1 → muchos |
-| `valores_curriculares` | `asignatura_id` | `asignaturas` | 1 → muchos |
-| `valores_curriculares` | `concepto_id` | `conceptos_curriculares` | 1 → muchos |
-| `valores_curriculares` | `confirmado_por` | `usuarios` | 1 → muchos |
+- asignaciones_paralelo.asignacion_rol_id → asignaciones_rol
+- asignaciones_paralelo.paralelo_id → paralelos
+- asignaturas.carrera_id → carreras
+- asignaturas_ofertadas.asignatura_id → asignaturas
+- asignaturas_ofertadas.periodo_academico_id → periodos_academicos
+- carreras.facultad_id → facultades
+- documentos_importacion.archivo_pdf_id → archivos
+- documentos_importacion.carrera_id → carreras
+- facultades.logo_archivo_id → archivos
+- importaciones_curriculares.carrera_id → carreras
+- importaciones_curriculares.solicitado_por → usuarios
+- paralelos.asignatura_ofertada_id → asignaturas_ofertadas
+- requisitos_asignatura.asignatura_id → asignaturas
+- requisitos_asignatura.requisito_id → asignaturas
+- valores_curriculares.asignatura_id → asignaturas
+- valores_curriculares.concepto_id → conceptos_curriculares
+- valores_curriculares.confirmado_por → usuarios
 
 ## Plantilla del sílabo
 
@@ -383,13 +379,11 @@ Actualizado el 2026-09-30: **42 tablas** y 70 relaciones.
 
 ### Relaciones: Plantilla del sílabo
 
-| Tabla | Columna | Apunta a | Cardinalidad (padre → hijos) |
-|---|---|---|---|
-| `campos_plantilla` | `plantilla_id` | `plantilla_silabo` | 1 → muchos |
-| `campos_plantilla` | `seccion_plantilla_id` | `secciones_plantilla` | 1 → muchos |
-| `definiciones_campo` | `campo_plantilla_id` | `campos_plantilla` | 1 → muchos |
-| `definiciones_campo` | `plantilla_id` | `plantilla_silabo` | 1 → muchos |
-| `secciones_plantilla` | `plantilla_id` | `plantilla_silabo` | 1 → muchos |
+- campos_plantilla.plantilla_id → plantilla_silabo
+- campos_plantilla.seccion_plantilla_id → secciones_plantilla
+- definiciones_campo.campo_plantilla_id → campos_plantilla
+- definiciones_campo.plantilla_id → plantilla_silabo
+- secciones_plantilla.plantilla_id → plantilla_silabo
 
 ## Convocatorias, sílabos y revisión
 
@@ -546,38 +540,36 @@ Actualizado el 2026-09-30: **42 tablas** y 70 relaciones.
 
 ### Relaciones: Convocatorias, sílabos y revisión
 
-| Tabla | Columna | Apunta a | Cardinalidad (padre → hijos) |
-|---|---|---|---|
-| `aprobaciones` | `aprobacion_anterior_id` | `aprobaciones` | 0 o 1 → muchos |
-| `aprobaciones` | `aprobado_por` | `usuarios` | 1 → muchos |
-| `aprobaciones` | `revision_silabo_id` | `revisiones_silabo` | 1 → 0 o 1 |
-| `convocatorias_carreras` | `carrera_id` | `carreras` | 1 → muchos |
-| `convocatorias_carreras` | `convocatoria_universidad_id` | `convocatorias_universidad` | 1 → muchos |
-| `convocatorias_universidad` | `periodo_academico_id` | `periodos_academicos` | 1 → muchos |
-| `envios_biblioteca` | `enviado_por` | `usuarios` | 1 → muchos |
-| `envios_biblioteca` | `revision_silabo_id` | `revisiones_silabo` | 1 → 0 o 1 |
-| `envios_biblioteca` | `verificado_por` | `usuarios` | 0 o 1 → muchos |
-| `mensajes_ia` | `silabo_id` | `silabos` | 1 → muchos |
-| `mensajes_ia` | `usuario_id` | `usuarios` | 1 → muchos |
-| `observaciones_revision` | `creado_por` | `usuarios` | 1 → muchos |
-| `observaciones_revision` | `revision_silabo_id` | `revisiones_silabo` | 1 → muchos |
-| `reaperturas` | `aprobacion_id` | `aprobaciones` | 1 → 0 o 1 |
-| `reaperturas` | `reabierto_por` | `usuarios` | 1 → muchos |
-| `reaperturas` | `revision_aprobada_id` | `revisiones_silabo` | 1 → muchos |
-| `resultados_validacion` | `definicion_campo_id` | `definiciones_campo` | 0 o 1 → muchos |
-| `resultados_validacion` | `validacion_silabo_id` | `validaciones_silabo` | 1 → muchos |
-| `revisiones_silabo` | `enviado_por` | `usuarios` | 1 → muchos |
-| `revisiones_silabo` | `reapertura_id` | `reaperturas` | 0 o 1 → muchos |
-| `revisiones_silabo` | `revision_anterior_id` | `revisiones_silabo` | 0 o 1 → muchos |
-| `revisiones_silabo` | `silabo_id` | `silabos` | 1 → muchos |
-| `silabos` | `convocatoria_carrera_id` | `convocatorias_carreras` | 1 → muchos |
-| `silabos` | `paralelo_id` | `paralelos` | 1 → muchos |
-| `solicitudes_correccion` | `revision_silabo_id` | `revisiones_silabo` | 1 → 0 o 1 |
-| `solicitudes_correccion` | `solicitado_por` | `usuarios` | 1 → muchos |
-| `validaciones_silabo` | `ejecutado_por` | `usuarios` | 1 → muchos |
-| `validaciones_silabo` | `silabo_id` | `silabos` | 1 → muchos |
-| `valores_campo` | `definicion_campo_id` | `definiciones_campo` | 1 → muchos |
-| `valores_campo` | `silabo_id` | `silabos` | 1 → muchos |
+- aprobaciones.aprobacion_anterior_id → aprobaciones
+- aprobaciones.aprobado_por → usuarios
+- aprobaciones.revision_silabo_id → revisiones_silabo
+- convocatorias_carreras.carrera_id → carreras
+- convocatorias_carreras.convocatoria_universidad_id → convocatorias_universidad
+- convocatorias_universidad.periodo_academico_id → periodos_academicos
+- envios_biblioteca.enviado_por → usuarios
+- envios_biblioteca.revision_silabo_id → revisiones_silabo
+- envios_biblioteca.verificado_por → usuarios
+- mensajes_ia.silabo_id → silabos
+- mensajes_ia.usuario_id → usuarios
+- observaciones_revision.creado_por → usuarios
+- observaciones_revision.revision_silabo_id → revisiones_silabo
+- reaperturas.aprobacion_id → aprobaciones
+- reaperturas.reabierto_por → usuarios
+- reaperturas.revision_aprobada_id → revisiones_silabo
+- resultados_validacion.definicion_campo_id → definiciones_campo
+- resultados_validacion.validacion_silabo_id → validaciones_silabo
+- revisiones_silabo.enviado_por → usuarios
+- revisiones_silabo.reapertura_id → reaperturas
+- revisiones_silabo.revision_anterior_id → revisiones_silabo
+- revisiones_silabo.silabo_id → silabos
+- silabos.convocatoria_carrera_id → convocatorias_carreras
+- silabos.paralelo_id → paralelos
+- solicitudes_correccion.revision_silabo_id → revisiones_silabo
+- solicitudes_correccion.solicitado_por → usuarios
+- validaciones_silabo.ejecutado_por → usuarios
+- validaciones_silabo.silabo_id → silabos
+- valores_campo.definicion_campo_id → definiciones_campo
+- valores_campo.silabo_id → silabos
 
 ## Documentos y firmas
 
@@ -590,8 +582,6 @@ Actualizado el 2026-09-30: **42 tablas** y 70 relaciones.
 | `trabajo_id` | uuid | sí | FK → `trabajos_en_cola` |
 | `archivo_word_id` | uuid | sí | FK → `archivos` |
 | `archivo_pdf_id` | uuid | sí | FK → `archivos` |
-| `version_generador` | varchar | no |  |
-| `idioma` | varchar | no |  |
 | `clave_solicitud` | uuid | no |  |
 | `estado_exportacion` | varchar | no |  |
 | `solicitado_por` | uuid | no | FK → `usuarios` |
@@ -616,13 +606,11 @@ Actualizado el 2026-09-30: **42 tablas** y 70 relaciones.
 
 ### Relaciones: Documentos y firmas
 
-| Tabla | Columna | Apunta a | Cardinalidad (padre → hijos) |
-|---|---|---|---|
-| `exportaciones_silabo` | `archivo_pdf_id` | `archivos` | 0 o 1 → 0 o 1 |
-| `exportaciones_silabo` | `archivo_word_id` | `archivos` | 0 o 1 → 0 o 1 |
-| `exportaciones_silabo` | `revision_silabo_id` | `revisiones_silabo` | 1 → muchos |
-| `exportaciones_silabo` | `solicitado_por` | `usuarios` | 1 → muchos |
-| `exportaciones_silabo` | `trabajo_id` | `trabajos_en_cola` | 0 o 1 → 0 o 1 |
-| `firmas_documento` | `archivo_firmado_id` | `archivos` | 1 → 0 o 1 |
-| `firmas_documento` | `exportacion_silabo_id` | `exportaciones_silabo` | 1 → muchos |
-| `firmas_documento` | `usuario_id` | `usuarios` | 1 → muchos |
+- exportaciones_silabo.archivo_pdf_id → archivos
+- exportaciones_silabo.archivo_word_id → archivos
+- exportaciones_silabo.revision_silabo_id → revisiones_silabo
+- exportaciones_silabo.solicitado_por → usuarios
+- exportaciones_silabo.trabajo_id → trabajos_en_cola
+- firmas_documento.archivo_firmado_id → archivos
+- firmas_documento.exportacion_silabo_id → exportaciones_silabo
+- firmas_documento.usuario_id → usuarios
