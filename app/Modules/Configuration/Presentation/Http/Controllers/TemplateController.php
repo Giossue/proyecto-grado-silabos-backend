@@ -40,7 +40,6 @@ use App\Modules\Configuration\Presentation\Http\Requests\SaveTemplateTitleReques
 use App\Modules\Configuration\Presentation\Http\Requests\StoreInstitutionLogoRequest;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -104,7 +103,6 @@ class TemplateController extends Controller
     {
         return [
             'processLock' => $locks->templateLockReason(),
-            'identificationSample' => IdentificationCard::grid(IdentificationCard::sample()),
             'variables' => TemplateVariables::catalog(),
             'identificationDesign' => TemplateDocumentDefaults::identification(),
             'logos' => [

@@ -114,21 +114,9 @@ final class TemplateVariables
     /** @return list<array{key: string, label: string, sample: string, type?: string}> */
     public static function catalog(): array
     {
-        $samples = self::resolve([
-            'identification' => IdentificationCard::sample(),
-            'academic_context' => ['subject' => ['learning_outcomes' => [
-                'source_name' => 'Proyecto de carrera',
-                'source_locator' => 'Página 12, descripción de la asignatura',
-                'outcomes' => [
-                    ['text' => 'Analiza problemas de la asignatura con criterios fundamentados.'],
-                    ['text' => 'Aplica los conocimientos en una solución verificable.'],
-                ],
-            ]]],
-            'approval' => ['submitted_on' => '14-08-2026', 'coordinator' => 'Ing. Galuth García', 'approved_on' => '14-08-2026'],
-        ]);
         $catalog = [];
         foreach (self::definitions() as $key => $definition) {
-            $item = ['key' => $key, 'label' => $definition['label'], 'sample' => $samples[$key] ?? $definition['label']];
+            $item = ['key' => $key, 'label' => $definition['label'], 'sample' => $definition['label']];
             if (isset($definition['type'])) {
                 $item['type'] = $definition['type'];
             }

@@ -10,6 +10,19 @@ final class TemplateFieldAttributes
      * @param  array<string, mixed>  $configuration
      * @return array<string, mixed>
      */
+    public static function withoutFixedDocument(array $configuration): array
+    {
+        if (($configuration['content_type'] ?? null) === 'institutional') {
+            $configuration['document'] = TemplateDocumentDefaults::identification();
+        }
+
+        return $configuration;
+    }
+
+    /**
+     * @param  array<string, mixed>  $configuration
+     * @return array<string, mixed>
+     */
     public static function store(array $configuration): array
     {
         if (! is_array($configuration['document'] ?? null)) {

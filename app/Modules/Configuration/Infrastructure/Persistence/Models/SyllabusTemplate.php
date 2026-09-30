@@ -303,7 +303,7 @@ class SyllabusTemplate extends Model
                     'id' => $block->id, 'clave' => $block->clave_campo_plantilla, 'titulo' => $block->titulo_campo_plantilla,
                     'posicion' => (int) $block->posicion_campo_plantilla,
                     'configuracion' => TemplateFieldAttributes::hydrate(
-                        is_string($block->configuracion_campo_plantilla) ? json_decode($block->configuracion_campo_plantilla, true, 512, JSON_THROW_ON_ERROR) : [],
+                        TemplateFieldAttributes::withoutFixedDocument(is_string($block->configuracion_campo_plantilla) ? json_decode($block->configuracion_campo_plantilla, true, 512, JSON_THROW_ON_ERROR) : []),
                         $definitions->get($block->id, []),
                     ),
                 ])->values()->all(),

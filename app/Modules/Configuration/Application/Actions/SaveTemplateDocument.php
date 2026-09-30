@@ -46,6 +46,9 @@ final class SaveTemplateDocument
             $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
             $this->locks->assertTemplateEditable();
             $block = $template->blockOrFail($block->id);
+            if ($block->contentType() === 'institutional') {
+                throw ValidationException::withMessages(['document' => 'La identificación institucional es fija y no se edita desde la plantilla.']);
+            }
             if ($block->contentType() === 'fixed' && ! self::hasContent($normalized)) {
                 throw ValidationException::withMessages(['document' => 'Escriba el texto fijo antes de guardar.']);
             }
