@@ -24,7 +24,11 @@ class SyllabusProcess extends Model
 {
     use HasUuids, MapsLegacyColumnNames;
 
-    protected const LEGACY_COLUMN_ALIASES = ['estado' => 'estado_convocatoria_universidad'];
+    protected const LEGACY_COLUMN_ALIASES = [
+        'estado' => 'estado_convocatoria_universidad',
+        'inicia_en' => 'fecha_inicio',
+        'entrega_en' => 'fecha_entrega',
+    ];
 
     public $timestamps = false;
 

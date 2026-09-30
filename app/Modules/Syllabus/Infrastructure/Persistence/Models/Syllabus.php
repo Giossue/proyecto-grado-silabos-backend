@@ -88,7 +88,7 @@ class Syllabus extends Model
     /** @return HasOneThrough<ScheduledSubject, Parallel, $this> Programación a la que pertenece el paralelo. */
     public function scheduledSubject(): HasOneThrough
     {
-        return $this->hasOneThrough(ScheduledSubject::class, Parallel::class, 'id', 'id', 'paralelo_id', 'programacion_asignatura_id');
+        return $this->hasOneThrough(ScheduledSubject::class, Parallel::class, 'id', 'id', 'paralelo_id', 'asignatura_ofertada_id');
     }
 
     // La materia sale del paralelo (I-164): ya no se guarda en el sílabo.

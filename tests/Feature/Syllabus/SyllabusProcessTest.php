@@ -53,7 +53,7 @@ class SyllabusProcessTest extends TestCase
         }
 
         $this->assertTrue(Schema::hasColumns('convocatorias_carreras', ['id', 'carrera_id', 'convocatoria_universidad_id', 'estado_convocatoria_carrera']));
-        $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['id', 'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado_convocatoria_universidad']));
+        $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['id', 'periodo_academico_id', 'fecha_inicio', 'fecha_entrega', 'estado_convocatoria_universidad']));
         foreach (['silabos', 'convocatorias_universidad', 'artefactos_exportacion', 'historial_ia'] as $table) {
             $this->assertFalse(Schema::hasColumn($table, 'plantilla_id'));
         }

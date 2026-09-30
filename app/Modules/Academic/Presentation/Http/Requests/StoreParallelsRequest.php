@@ -46,8 +46,8 @@ class StoreParallelsRequest extends FormRequest
             'scheduled_subject_id' => [
                 'required',
                 'uuid',
-                Rule::exists('programaciones_asignatura', 'id')->where(fn ($query) => $query
-                    ->where('programacion_asignatura_activa', true)
+                Rule::exists('asignaturas_ofertadas', 'id')->where(fn ($query) => $query
+                    ->where('asignatura_ofertada_activa', true)
                     ->whereIn('asignatura_id', Subject::query()
                         ->select('id')
                         ->where('carrera_id', $careerId))),

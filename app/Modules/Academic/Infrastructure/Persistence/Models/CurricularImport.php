@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Infrastructure\Persistence\Models;
 
 use App\Models\User;
+use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -24,7 +25,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class CurricularImport extends Model
 {
-    use HasUuids;
+    use HasUuids, MapsLegacyColumnNames;
+
+    protected const LEGACY_COLUMN_ALIASES = ['clave_idempotencia_importacion' => 'clave_solicitud'];
 
     public $timestamps = false;
 

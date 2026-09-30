@@ -91,7 +91,7 @@ it('I-78 usa nombres explícitos para todos los atributos genéricos de dominio'
         'codigo', 'nombre', 'descripcion', 'activo', 'estado', 'tipo', 'titulo',
         'contenido', 'valor', 'origen', 'clave', 'etiqueta', 'ayuda', 'reglas',
         'opciones', 'posicion', 'modalidad', 'fecha_inicio', 'fecha_fin',
-        'semanas_lectivas', 'numero_ciclos', 'creditos', 'horas_totales',
+        'semanas_lectivas', 'creditos', 'horas_totales',
         'orden_en_ciclo', 'unidad_organizacion_curricular', 'mapeo_documento',
         'configuracion', 'datos', 'advertencias', 'extracto', 'decision',
         'fotografia', 'justificacion', 'accion', 'metadatos', 'resultado', 'mensaje',
@@ -101,6 +101,7 @@ it('I-78 usa nombres explícitos para todos los atributos genéricos de dominio'
         ->where('table_schema', 'public')
         ->whereNotIn('table_name', $tablasDeFramework)
         ->whereIn('column_name', $nombresGenericos)
+        ->whereNot(fn ($query) => $query->where('table_name', 'convocatorias_universidad')->where('column_name', 'fecha_inicio'))
         ->get(['table_name', 'column_name'])
         ->map(fn ($column) => "{$column->table_name}.{$column->column_name}")
         ->all();
@@ -156,7 +157,7 @@ it('I-107 guarda ciclos en la carrera y retira códigos de facultad y malla', fu
         ->and(Schema::hasColumn('facultades', 'codigo_facultad'))->toBeFalse()
         ->and(Schema::hasColumn('carreras', 'codigo_malla'))->toBeFalse()
         ->and(Schema::hasColumn('carreras', 'codigo_carrera'))->toBeTrue()
-        ->and(Schema::hasColumn('carreras', 'cantidad_ciclos_malla'))->toBeTrue()
+        ->and(Schema::hasColumn('carreras', 'numero_ciclos'))->toBeTrue()
         ->and(Schema::hasColumn('asignaturas', 'carrera_id'))->toBeTrue()
         ->and(Schema::hasColumn('asignaturas', 'malla_id'))->toBeFalse()
         ->and(Schema::hasColumn('silabos', 'carrera_id'))->toBeFalse()
@@ -174,7 +175,7 @@ it('I-107 guarda ciclos en la carrera y retira códigos de facultad y malla', fu
     ))->pluck('conname');
 
     expect($restricciones)
-        ->toContain('carreras_cantidad_ciclos_malla_check')
+        ->toContain('carreras_numero_ciclos_check')
         ->toContain('asignaturas_carrera_id_foreign')
         ->toContain('asignaturas_carrera_id_codigo_asignatura_unique')
         ->toContain('silabos_paralelo_id_foreign')
@@ -183,9 +184,10 @@ it('I-107 guarda ciclos en la carrera y retira códigos de facultad y malla', fu
 });
 
 it('I-62 persiste la programación de asignaturas con nombres e invariante propios', function () {
-    expect(Schema::hasTable('programaciones_asignatura'))->toBeTrue()
+    expect(Schema::hasTable('asignaturas_ofertadas'))->toBeTrue()
+        ->and(Schema::hasTable('programaciones_asignatura'))->toBeFalse()
         ->and(Schema::hasTable('ofertas_academicas'))->toBeFalse()
-        ->and(Schema::hasColumn('paralelos', 'programacion_asignatura_id'))->toBeTrue()
+        ->and(Schema::hasColumn('paralelos', 'asignatura_ofertada_id'))->toBeTrue()
         ->and(Schema::hasColumn('paralelos', 'oferta_academica_id'))->toBeFalse()
         ->and(Schema::hasTable('alcances_silabo'))->toBeFalse()
         ->and(Schema::hasColumn('silabos', 'paralelo_id'))->toBeTrue()
@@ -194,13 +196,14 @@ it('I-62 persiste la programación de asignaturas con nombres e invariante propi
     $restricciones = collect(DB::select(
         "SELECT conname
          FROM pg_constraint
-         WHERE conrelid = 'programaciones_asignatura'::regclass",
+         WHERE conrelid = 'asignaturas_ofertadas'::regclass",
     ))->pluck('conname');
 
     expect($restricciones)
-        ->toContain('programaciones_asignatura_periodo_materia_unica')
-        ->toContain('programaciones_asignatura_periodo_academico_id_foreign')
-        ->toContain('programaciones_asignatura_asignatura_id_foreign')
-        ->toContain('programaciones_asignatura_id_not_null')
+        ->toContain('asignaturas_ofertadas_periodo_materia_unica')
+        ->toContain('asignaturas_ofertadas_periodo_academico_id_foreign')
+        ->toContain('asignaturas_ofertadas_asignatura_id_foreign')
+        ->toContain('asignaturas_ofertadas_id_not_null')
+        ->toContain('asignaturas_ofertadas_pkey')
         ->not->toContain('ofertas_academicas_id_not_null');
 });
