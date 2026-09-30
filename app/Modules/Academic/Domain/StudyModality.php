@@ -4,11 +4,11 @@ namespace App\Modules\Academic\Domain;
 
 enum StudyModality: string
 {
-    case Presencial = 'presencial';
-    case Semipresencial = 'semipresencial';
-    case EnLinea = 'en_linea';
-    case ADistancia = 'a_distancia';
-    case Hibrida = 'hibrida';
+    case Presencial = 'Presencial';
+    case Semipresencial = 'Semipresencial';
+    case EnLinea = 'En línea';
+    case ADistancia = 'A distancia';
+    case Hibrida = 'Híbrida';
 
     public function label(): string
     {
