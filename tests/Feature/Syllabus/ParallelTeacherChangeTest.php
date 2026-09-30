@@ -115,9 +115,7 @@ class ParallelTeacherChangeTest extends TestCase
         $convocation = Convocation::query()->with('career')->firstOrFail();
 
         $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), [
-                'reason' => 'Corregir la malla antes de continuar.',
-            ])
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))
             ->assertSuccessful();
         $this->assertNotified($this->teacher->id, 'convocatoria.pausada', "La convocatoria de {$convocation->career->nombre} está en pausa.");
 

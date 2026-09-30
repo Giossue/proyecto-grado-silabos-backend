@@ -27,18 +27,7 @@ class TransitionConvocationRequest extends FormRequest
     /** @return array<string, list<mixed>> */
     public function rules(): array
     {
-        return $this->transition() === TransitionConvocation::PAUSE
-            ? ['reason' => ['required', 'string', 'min:10', 'max:500']]
-            : ['reason' => ['nullable', 'string', 'max:500']];
-    }
-
-    /** @return array<string, string> */
-    public function messages(): array
-    {
-        return [
-            'reason.required' => 'Indique el motivo de la pausa.',
-            'reason.min' => 'Escriba al menos 10 caracteres para explicar la pausa.',
-        ];
+        return [];
     }
 
     public function transition(): string

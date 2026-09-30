@@ -207,9 +207,7 @@ class ConvocationScheduleTest extends TestCase
         $syllabus = $this->createValidDraft();
         $process = $syllabus->convocation->process;
 
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'pausar']), [
-            'reason' => 'Corregir la plantilla institucional.',
-        ])->assertSuccessful();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'pausar']))->assertSuccessful();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']))->assertSuccessful();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();
 

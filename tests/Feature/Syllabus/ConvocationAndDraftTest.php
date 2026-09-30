@@ -217,7 +217,7 @@ class ConvocationAndDraftTest extends TestCase
         $original = Syllabus::query()->firstOrFail();
 
         $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Se agrega el paralelo B a la malla.'])
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))
             ->assertSuccessful();
         $parallel = Parallel::query()->create([
             'programacion_asignatura_id' => ScheduledSubject::query()->firstOrFail()->id,
@@ -340,7 +340,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('abierta', $convocation->fresh()->estado);
         $this->assertDatabaseCount('silabos', 1);
         $this->assertDatabaseCount('fuentes_academicas', 0);
-        $this->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']), ['reason' => 'Comprobar la reanudación sin fuentes.'])->assertOk();
+        $this->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))->assertOk();
         $this->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))->assertOk();
         $this->assertSame('abierta', $convocation->fresh()->estado);
     }

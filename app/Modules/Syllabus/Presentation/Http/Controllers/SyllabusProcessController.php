@@ -115,8 +115,7 @@ class SyllabusProcessController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $reason = $request->filled('reason') ? $request->string('reason')->toString() : null;
-        $action->execute($process, $transition, $reason, $actor, $request);
+        $action->execute($process, $transition, $actor, $request);
 
         $message = match ($transition) {
             TransitionSyllabusProcess::PAUSE => 'Proceso en pausa. Los envíos se detienen y la plantilla queda editable.',

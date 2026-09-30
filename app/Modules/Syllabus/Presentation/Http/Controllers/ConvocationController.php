@@ -133,8 +133,7 @@ class ConvocationController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $reason = $request->filled('reason') ? $request->string('reason')->toString() : null;
-        $action->execute($convocation, $transition, $reason, $actor, $request);
+        $action->execute($convocation, $transition, $actor, $request);
 
         $message = $transition === TransitionConvocation::PAUSE
             ? 'Convocatoria en pausa. Los docentes de la carrera no editan ni envían; la malla y los datos curriculares quedan editables.'

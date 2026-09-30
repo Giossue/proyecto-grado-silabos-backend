@@ -42,7 +42,6 @@ class TransitionSyllabusProcess
     public function execute(
         SyllabusProcess $process,
         string $transition,
-        ?string $reason,
         User $actor,
         Request $request,
     ): SyllabusProcess {
@@ -55,7 +54,7 @@ class TransitionSyllabusProcess
             throw ValidationException::withMessages(['transition' => 'La acción sobre el proceso no existe.']);
         }
 
-        return DB::transaction(function () use ($activeRole, $actor, $process, $reason, $request, $rule): SyllabusProcess {
+        return DB::transaction(function () use ($activeRole, $actor, $process, $request, $rule): SyllabusProcess {
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
             if (! in_array($locked->estado, $rule['from'], true)) {
                 throw ValidationException::withMessages([
@@ -79,10 +78,7 @@ class TransitionSyllabusProcess
                 resourceType: 'proceso_silabos',
                 resourceId: $locked->id,
                 result: 'exito',
-                metadata: array_filter([
-                    'previous_state' => $previous,
-                    'reason' => $reason,
-                ], fn (mixed $value): bool => $value !== null),
+                metadata: ['previous_state' => $previous],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notify($locked, $rule['to'], $request);

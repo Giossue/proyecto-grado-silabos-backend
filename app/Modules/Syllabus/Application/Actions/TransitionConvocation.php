@@ -33,7 +33,6 @@ class TransitionConvocation
     public function execute(
         Convocation $convocation,
         string $transition,
-        ?string $reason,
         User $actor,
         Request $request,
     ): Convocation {
@@ -43,7 +42,7 @@ class TransitionConvocation
             abort(403);
         }
 
-        return DB::transaction(function () use ($activeRole, $actor, $convocation, $reason, $request, $transition): Convocation {
+        return DB::transaction(function () use ($activeRole, $actor, $convocation, $request, $transition): Convocation {
             $locked = Convocation::query()->lockForUpdate()->with('process')->findOrFail($convocation->id);
 
             [$from, $to] = match ($transition) {
@@ -75,10 +74,7 @@ class TransitionConvocation
                 resourceType: 'convocatoria',
                 resourceId: $locked->id,
                 result: 'exito',
-                metadata: array_filter(
-                    ['reason' => $reason, 'generated_count' => $generated ?: null],
-                    fn (mixed $value): bool => $value !== null,
-                ),
+                metadata: $generated > 0 ? ['generated_count' => $generated] : [],
                 correlationId: $request->attributes->getString('correlation_id') ?: null,
             );
             $this->notifyTeachers($locked, $to, $request);

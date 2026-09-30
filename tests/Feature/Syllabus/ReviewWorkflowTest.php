@@ -125,7 +125,7 @@ class ReviewWorkflowTest extends TestCase
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
         $approvalId = Approval::query()->firstOrFail()->id;
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'pausar']), ['reason' => 'Ajustar el diseño de la plantilla'])->assertSuccessful();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'pausar']))->assertSuccessful();
         $this->patch($url, $payload)->assertSuccessful();
         $this->assertNotSame($block->configuracion['document'], $block->fresh()->configuracion['document']);
         $this->assertDatabaseHas('silabos', ['id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
@@ -573,7 +573,7 @@ class ReviewWorkflowTest extends TestCase
         [$syllabus, $revision] = $this->submitValidDraft();
         $message = 'La convocatoria está cerrada: la revisión queda solo para consulta y no admite decisiones.';
 
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$syllabus->convocation, 'pausar']), ['reason' => 'Ajuste de la malla durante la revisión.'])->assertSuccessful();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$syllabus->convocation, 'pausar']))->assertSuccessful();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $revision), [
             'content' => 'Observación registrada durante la pausa.',
         ])->assertSuccessful();

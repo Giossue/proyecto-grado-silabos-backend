@@ -524,7 +524,7 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   convocatoria y el formulario no copia las fechas lectivas del período.
   ADM-12 queda como pantalla de seguimiento y administración posterior. **Editar** solo
   aparece en pausa; **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
-  explica la consecuencia y **Pausar** exige motivo. **Prorrogar plazo** solicita
+  explica la consecuencia, sin pedir motivo. **Prorrogar plazo** solicita
   únicamente una nueva fecha límite de entrega y el motivo; no permite cambiar el inicio.
   **Eliminar** aparece cuando ningún docente ha iniciado un sílabo (si no, el menú muestra
   «No se puede eliminar: ya hay sílabos iniciados») y confirma que se
