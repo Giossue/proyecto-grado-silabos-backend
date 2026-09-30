@@ -6,8 +6,6 @@ use App\Modules\Syllabus\Application\IdentificationCard;
 
 final class TemplateDocumentDefaults
 {
-    public const IDENTIFICATION_FONT_SIZE = 9;
-
     /** @return array<string, mixed> */
     public static function identification(): array
     {
@@ -69,7 +67,7 @@ final class TemplateDocumentDefaults
             $rows[] = $row;
         }
 
-        return ['type' => 'doc', 'content' => [['type' => 'table', 'attrs' => ['repeatKey' => null, 'fontSize' => self::IDENTIFICATION_FONT_SIZE], 'content' => $rows]]];
+        return ['type' => 'doc', 'content' => [['type' => 'table', 'attrs' => ['repeatKey' => null], 'content' => $rows]]];
     }
 
     /** @return array<string, mixed> */
