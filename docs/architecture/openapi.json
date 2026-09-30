@@ -6933,11 +6933,11 @@
                                 "value": {
                                     "type": "string",
                                     "enum": [
-                                        "presencial",
-                                        "semipresencial",
-                                        "en_linea",
-                                        "a_distancia",
-                                        "hibrida"
+                                        "Presencial",
+                                        "Semipresencial",
+                                        "En línea",
+                                        "A distancia",
+                                        "Híbrida"
                                     ]
                                 },
                                 "label": {
