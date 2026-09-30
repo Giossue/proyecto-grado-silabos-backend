@@ -31,4 +31,4 @@ en la interfaz y en la base de datos.
 
 - Migración `000165` probada en local con subida, reversa y nueva subida.
 - `composer verify` y `npm run typecheck`, `npm run lint`, `npx vitest run`.
-- Remota: respaldo previo y `migrate` según `docs/security/hardening.md`.
+- Remota: respaldo `silabos_remota_20260929_215717_pre_000165.dump` y `000165` aplicada (21 campos, 22 definiciones, 12 secciones intactos).
