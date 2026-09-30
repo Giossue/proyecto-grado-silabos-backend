@@ -683,22 +683,23 @@ I-165: el comentario del bibliotecario es una reapertura de origen `biblioteca`;
 
 ## envios_biblioteca
 
-**Contexto:** envío del PDF firmado por docente y coordinación a biblioteca (I-165).
+**Contexto:** envío de una revisión aprobada a biblioteca y su visto bueno (I-165).
 
 ~~~text
 id UUID (PK)
-artefacto_exportacion_id UUID (FK → artefactos_exportacion.id) NOT NULL UNIQUE
+revision_silabo_id UUID (FK → revisiones_silabo.id) NOT NULL UNIQUE
 enviado_por UUID (FK → usuarios.id) NOT NULL INDEX
 enviado_en TIMESTAMPTZ NOT NULL
+verificado_por UUID (FK → usuarios.id) NULL INDEX
+verificado_en TIMESTAMPTZ NULL
+
+CHECK (verificado_por y verificado_en ambos nulos o ambos presentes)
 ~~~
 
-Solo se insertan filas (trigger `proteger_registro_append_only`). El estado del envío se
-deriva: `firmado` si el artefacto tiene la firma `biblioteca`, `comentado` si la
-aprobación tiene una reapertura de origen `biblioteca`, `anulado` si la reapertura es de
-coordinación y `pendiente` en otro caso.
-
-El sílabo se obtiene de `revision_aprobada_id`; el trigger exige que coincida con la
-revisión de la aprobación y que la clave de idempotencia sea única por sílabo (I-131).
+El trigger `proteger_envio_biblioteca` solo permite registrar la verificación una vez
+(migración `000164`). Estado derivado: `firmado` (firma `biblioteca` en un PDF de la
+revisión), `comentado` (reapertura de origen biblioteca), `anulado` (reapertura de
+coordinación), `por_firmar` (verificado) o `pendiente`.
 
 ## Cambios de estado del sílabo
 

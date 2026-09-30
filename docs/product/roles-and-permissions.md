@@ -75,14 +75,14 @@ usan sus operaciones atómicas específicas.
 ## Bibliotecario (I-165)
 
 El rol `bibliotecario` no tiene carrera: una cuenta con solo ese rol entra directo y ve
-los sílabos que cualquier docente le envió. No ve sílabos que no pasaron por el envío a
-biblioteca. Consulta la bibliografía fotografiada y el PDF firmado, y puede **firmar**
-electrónicamente (tercera firma, después de docente y coordinación) o **comentar**. El
-comentario devuelve el sílabo al docente en «Corrección solicitada», pero solo con la
-sección `bibliografia` editable. El docente la reenvía sin nueva revisión de
-coordinación y vuelve a firmar junto con coordinación el PDF nuevo. Administración crea
-estas cuentas sin carrera. El rol se puede acumular con Coordinador o Docente, pero no
-con Administrador.
+los sílabos que cualquier docente le envió; no ve los que no pasaron por el envío.
+Revisa la bibliografía **antes** de las firmas: la **aprueba** o la **comenta**. El
+comentario devuelve el sílabo al docente en «Corrección solicitada», con solo la sección
+`bibliografia` editable; el docente la reenvía sin nueva revisión de coordinación y
+vuelve a biblioteca, sin perder firmas porque aún no se firmó. Aprobada la bibliografía,
+el PDF se firma en orden docente → coordinación → biblioteca. Administración crea estas
+cuentas sin carrera. El rol se acumula con Coordinador o Docente, pero no con
+Administrador.
 
 ## Acumulación de roles
 

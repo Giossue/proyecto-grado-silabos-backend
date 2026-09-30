@@ -138,7 +138,10 @@ columnas con estas variables.
 - [x] Frontend: rol, rutas, bandeja y detalle de biblioteca, envío del docente,
       corrección de bibliografía y variables de firma en el editor.
 - [x] Documentación: decisiones, roles, ciclo de vida, esquema, documentos y pantallas.
-- [ ] Base remota: migrar (`000162`, `000163`) según `docs/security/hardening.md`.
+- [x] Orden cambiado por el responsable: biblioteca aprueba o comenta antes de las firmas
+      (migración `000164`, `POST library/reviews/{revision}/verify`, estados
+      `pendiente_verificacion_biblioteca` y `por_firmar`).
+- [x] Base remota: `000159`–`000164` aplicadas con respaldo previo en `~/respaldos/`.
 - [ ] Plantilla remota: pasar la sección Bibliografía a partes de Texto libre y poner
       las variables de firma en «Revisión y aprobación».
 - [ ] Prueba manual con los cuatro roles.

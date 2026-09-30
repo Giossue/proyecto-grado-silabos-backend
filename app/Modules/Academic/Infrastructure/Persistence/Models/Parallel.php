@@ -30,6 +30,12 @@ class Parallel extends Model
     /** @var list<string> */
     public const SHIFTS = ['matutina', 'vespertina', 'nocturna'];
 
+    /** @return list<array{value: string, label: string}> */
+    public static function shiftOptions(): array
+    {
+        return array_map(fn (string $shift): array => ['value' => $shift, 'label' => ucfirst($shift)], self::SHIFTS);
+    }
+
     /** @var list<string> */
     protected $fillable = ['programacion_asignatura_id', 'codigo', 'jornada'];
 

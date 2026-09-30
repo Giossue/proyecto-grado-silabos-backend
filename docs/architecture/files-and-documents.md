@@ -85,7 +85,8 @@ etiqueta del rol que firma y centra el sello (150 × 48 pt) justo encima. Si no 
 encuentra, usa las etiquetas «Firma:» por orden o, en último caso, el pie de la última
 página, con tres posiciones. El formato oficial trae una tabla de tres columnas con
 estas variables. La firma es incremental (PAdES) en orden docente → coordinación →
-biblioteca, y el PDF no cambia entre firmas.
+biblioteca y solo empieza cuando biblioteca aprobó la bibliografía; el PDF no cambia
+entre firmas.
 
 El PDF continúa como respaldo de texto (ahora incluye texto fijo y variables del diseño);
 no se promete maquetación de tablas, colores ni cortes iguales al DOCX. La fidelidad

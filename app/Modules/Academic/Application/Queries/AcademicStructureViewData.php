@@ -477,7 +477,7 @@ class AcademicStructureViewData
         return is_string($shift) ? $shift : null;
     }
 
-    /** @return array<string, array<never, never>> */
+    /** @return array<string, list<array{value: string, label: string}>> */
     private function emptyOptions(): array
     {
         return [
@@ -485,6 +485,8 @@ class AcademicStructureViewData
             'careers' => [],
             'periods' => [],
             'campusOptions' => [],
+            'modalityOptions' => StudyModality::options(),
+            'shiftOptions' => Parallel::shiftOptions(),
             'currentCurricula' => [],
             'activeSubjects' => [],
             'scheduledSubjects' => [],
