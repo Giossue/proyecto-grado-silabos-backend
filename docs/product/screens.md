@@ -123,6 +123,9 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   cambiarse desde un `Sheet` en ese mismo menú.
 - El selector de tema del encabezado alterna únicamente entre claro y oscuro; no existe
   la opción «Sistema». Sin preferencia guardada, la aplicación arranca en claro.
+- El menú lateral de escritorio conserva su estado expandido o colapsado en la cookie
+  `sidebar_state` del navegador durante siete días. Lo restaura al recargar o montar
+  de nuevo el layout; sin preferencia guardada, aparece expandido.
 - UI-03 se abre desde el acceso de **Notificaciones** situado junto al selector de tema en
   el encabezado autenticado común. El acceso conserva el contador de pendientes para los
   tres roles y no ocupa una entrada del menú lateral. El tema visual también se cambia

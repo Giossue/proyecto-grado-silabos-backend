@@ -37,6 +37,12 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 | Identificación solo desde la plantilla | I-148, I-33, I-34, I-71 | `WordRendererTest`, `ReviewWorkflowTest`, `ConvocationAndDraftTest`; `CoordinationReviewDetailPage.test.ts` | Implementación y verificación en plan I-148 |
 | Borrado de parte/sección con regeneración confirmada | I-118, I-140, I-144; RF-017..026; RN-009..012; CU-04; ADM-06; CP-F plantilla/inmutabilidad; PV-19 | `PurgeConfirmationDialog` se muestra sobre el diálogo de borrado y repite la operación con `confirm_purge`; los textos distinguen sílabos en curso de aprobaciones conservadas | Comprobación técnica puntual; revisión visual real pendiente en PV-19 |
 
+## Preferencia del menú lateral — 2026-09-29
+
+| Cambio | IDs relacionados | Evidencia | Estado |
+|---|---|---|---|
+| Restaurar el menú lateral desde el navegador | RNF-018..023; UI-02, ADM/COR/DOC/BIB; CP-N experiencia; PV-19 | `AppShell` delega el estado inicial a `SidebarProvider`, que lee `sidebar_state` en cada montaje; cookie vigente durante siete días | Verificación puntual del layout; revisión visual real pendiente en PV-19 |
+
 ## Cadena
 
 ```text
