@@ -1,8 +1,8 @@
 # Modelo entidad-relación de la base de datos
 
-Base remota (`silabos_ueb_db`), 2026-09-30, tras la limpieza I-168: **42 tablas** y 68 relaciones.
+Base remota (`silabos_ueb_db`), actualizado el 2026-09-30: **42 tablas** y 68 relaciones.
 
-**Llave:** `PK` = identificador de la fila; `FK → tabla` = apunta a otra tabla. **¿Vacío?:** si la columna puede quedar sin valor.
+**Llave:** `PK` = identificador; `FK → tabla` = apunta a otra tabla. **¿Vacío?:** si puede quedar sin valor.
 
 ## Identidad y operación
 
@@ -76,7 +76,6 @@ Base remota (`silabos_ueb_db`), 2026-09-30, tras la limpieza I-168: **42 tablas*
 | `recurso_id` | uuid | sí |  |
 | `resultado_evento_auditoria` | varchar | no |  |
 | `metadatos_evento_auditoria` | jsonb | sí |  |
-| `correlacion_id` | uuid | sí |  |
 | `ocurrido_en` | timestamptz | no |  |
 
 ### notificaciones_internas
@@ -102,7 +101,6 @@ Base remota (`silabos_ueb_db`), 2026-09-30, tras la limpieza I-168: **42 tablas*
 | `tipo_ejecucion_trabajo` | varchar | no |  |
 | `estado_ejecucion_trabajo` | varchar | no |  |
 | `clave_idempotencia` | varchar | no |  |
-| `correlacion_id` | uuid | sí |  |
 | `intentos` | smallint | no |  |
 | `progreso` | smallint | no |  |
 | `resultado_ejecucion_trabajo` | jsonb | sí |  |
@@ -141,7 +139,6 @@ Base remota (`silabos_ueb_db`), 2026-09-30, tras la limpieza I-168: **42 tablas*
 | `tamano_bytes` | bigint | no |  |
 | `huella_sha256` | char | no |  |
 | `clasificacion` | varchar | no |  |
-| `estado_objeto_almacenado` | varchar | no |  |
 | `propietario_usuario_id` | uuid | sí | FK → `usuarios` |
 | `carrera_id` | uuid | sí | FK → `carreras` |
 | `almacenado_en` | timestamptz | no |  |
@@ -190,7 +187,7 @@ Base remota (`silabos_ueb_db`), 2026-09-30, tras la limpieza I-168: **42 tablas*
 | `codigo_carrera` | varchar | no |  |
 | `nombre_carrera` | varchar | no |  |
 | `carrera_activa` | boolean | no |  |
-| `modalidad_carrera` | varchar | sí |  |
+| `modalidad_carrera` | enum modalidad_estudio | sí |  |
 | `cantidad_ciclos_malla` | smallint | no |  |
 
 ### asignaturas
@@ -208,7 +205,7 @@ Base remota (`silabos_ueb_db`), 2026-09-30, tras la limpieza I-168: **42 tablas*
 | `horas_aa` | numeric | sí |  |
 | `orden_asignatura_en_ciclo` | smallint | no |  |
 | `unidad_organizativa_curricular_asignatura` | varchar | sí |  |
-| `modalidad_asignatura` | varchar | sí |  |
+| `modalidad_asignatura` | enum modalidad_estudio | sí |  |
 | `carrera_id` | uuid | no | FK → `carreras` |
 | `total_horas_asignatura` | smallint | sí |  |
 
