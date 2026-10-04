@@ -46,17 +46,17 @@ en el inventario como identificador histórico.
 | COR-11 | Retirada por I-146: Fuentes académicas                                            |
 | COR-12 | Retirado en I-122: el avance de la carrera se consulta en el Panel |
 | COR-13 | Malla, constructor visual/formulario y materias de la carrera |
-| COR-14 | Materias, paralelos y docentes del período en curso (pestañas Materias y Docentes, I-171) |
-| COR-15 | Integrada en COR-14 como pestaña **Docentes** (I-171); su ruta redirige a COR-14 |
+| COR-14 | Materias y asignaciones: materias y paralelos del período en curso; el docente se asigna desde los paralelos de cada materia |
+| COR-15 | Docentes (`/coordinacion/docentes`): cuentas docentes de la carrera y sus paralelos; acción **Crear docente** |
 | COR-16 | Proyecto de carrera: documentos y datos curriculares confirmados |
 
-En COR-14, cuando la malla del período ya está programada, una sola acción **Gestionar
-docente** reúne **Crear docente** y **Asignar docente** (I-171). Crear abre el formulario compartido de cuentas en modo docente de la carrera
-activa (I-54): solo solicita nombre y correo; la persona recibe un enlace de activación
-para verificar su correo y definir su contraseña. El rol y la carrera se derivan del
-contexto y no se muestran como campos. Un correo existente se incorpora sin
-cambiar su identidad ni contraseña. Asignar vincula una cuenta docente existente con un
-paralelo. Son operaciones separadas y ninguna levanta los bloqueos académicos.
+En COR-15, **Crear docente** abre el formulario compartido de cuentas en modo docente de
+la carrera activa (I-54): solo solicita nombre y correo; la persona recibe un enlace de
+activación para verificar su correo y definir su contraseña. El rol y la carrera se
+derivan del contexto y no se muestran como campos. Un correo existente se incorpora sin
+cambiar su identidad ni contraseña. Asignar docente a un paralelo se hace únicamente en
+COR-14, desde los paralelos de cada materia; la pantalla ya no ofrece un botón global
+de asignación. Ninguna operación levanta los bloqueos académicos.
 
 ## Bibliotecario (I-165)
 
