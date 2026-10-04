@@ -83,6 +83,13 @@ final class GenerateConvocationSyllabi
         return $generated;
     }
 
+    /** Genera desde cero el sílabo de un solo paralelo; el paralelo no debe tener sílabo en la convocatoria. */
+    public function generateForParallel(Convocation $convocation, Parallel $parallel): void
+    {
+        $parallel->loadMissing('scheduledSubject.subject.career.faculty');
+        $this->generate($convocation, $parallel->scheduledSubject, $parallel);
+    }
+
     private function generate(Convocation $convocation, ScheduledSubject $scheduledSubject, Parallel $parallel): void
     {
         $syllabus = Syllabus::query()->create([

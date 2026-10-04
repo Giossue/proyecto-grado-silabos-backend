@@ -55,10 +55,9 @@ class ParallelTeacherChangeTest extends TestCase
         $this->replacement = $this->createTeacher('suplente@silabos.test');
     }
 
-    public function test_the_new_teacher_of_the_parallel_continues_the_syllabus(): void
+    public function test_the_new_teacher_of_the_parallel_starts_the_syllabus_from_scratch(): void
     {
         $syllabus = $this->validDraft();
-        $valuesBefore = $syllabus->values()->count();
         $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
 
         $this->removeAssignment($assignment)->assertSuccessful();
@@ -68,26 +67,21 @@ class ParallelTeacherChangeTest extends TestCase
             ->assertOk()->assertJsonCount(0, 'syllabi.data');
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertForbidden();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
-        $this->assertSame($valuesBefore, $syllabus->values()->count());
 
         $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertSuccessful();
 
-        $this->actingAsReplacement()->getJson(route('api.v1.teacher.syllabi.index'))
-            ->assertOk()->assertJsonPath('syllabi.data.0.id', $syllabus->id);
-        $field = FieldDefinition::query()
-            ->where('heredado', false)
-            ->firstOrFail();
-        $this->actingAsReplacement()->patchJson(
-            route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
-            $this->validFieldPayload($field, $syllabus->fresh()->version_bloqueo),
-        )->assertOk();
-        $this->assertSame($valuesBefore, $syllabus->values()->count());
-        $this->assertSame([$this->replacement->id], $syllabus->fresh()->teachers()->pluck('usuarios.id')->all());
+        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $fresh = Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->sole();
+        $this->assertSame('sin_iniciar', $fresh->estado);
+        $this->assertDatabaseMissing('valores_campo', ['silabo_id' => $syllabus->id]);
+        $this->assertSame([$this->replacement->id], $fresh->teachers()->pluck('usuarios.id')->all());
 
-        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertForbidden();
+        $this->actingAsReplacement()->getJson(route('api.v1.teacher.syllabi.index'))
+            ->assertOk()->assertJsonCount(1, 'syllabi.data')->assertJsonPath('syllabi.data.0.id', $fresh->id);
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $fresh))->assertForbidden();
     }
 
-    public function test_a_syllabus_under_review_keeps_its_state_when_the_teacher_changes(): void
+    public function test_a_submitted_syllabus_is_also_discarded_when_the_teacher_changes(): void
     {
         $syllabus = $this->submittedSyllabus();
         $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
@@ -95,9 +89,24 @@ class ParallelTeacherChangeTest extends TestCase
         $this->removeAssignment($assignment)->assertSuccessful();
         $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertSuccessful();
 
-        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseMissing('revisiones_silabo', ['silabo_id' => $syllabus->id]);
+        $fresh = Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->sole();
+        $this->assertSame('sin_iniciar', $fresh->estado);
         $this->actingAsReplacement()->getJson(route('api.v1.teacher.syllabi.index'))
-            ->assertOk()->assertJsonPath('syllabi.data.0.id', $syllabus->id);
+            ->assertOk()->assertJsonPath('syllabi.data.0.id', $fresh->id);
+    }
+
+    public function test_reassigning_the_same_teacher_also_starts_from_scratch(): void
+    {
+        $syllabus = $this->validDraft();
+        $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
+
+        $this->removeAssignment($assignment)->assertSuccessful();
+        $this->assignTeacher($this->teacher, $assignment->paralelo_id)->assertSuccessful();
+
+        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertSame('sin_iniciar', Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->sole()->estado);
     }
 
     public function test_a_parallel_still_accepts_a_single_active_teacher(): void

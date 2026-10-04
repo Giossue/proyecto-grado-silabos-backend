@@ -177,11 +177,15 @@ class CreateAcademicRecord
             ]);
         }
 
-        return TeacherAssignment::query()->create([
+        $assignment = TeacherAssignment::query()->create([
             'asignacion_rol_id' => $roleAssignment->id,
             'paralelo_id' => $parallel->id,
             'activo' => true,
         ]);
+        // El docente nuevo no hereda nada del anterior: el sílabo del paralelo vuelve a cero.
+        $this->work->restartForParallel($parallel->id);
+
+        return $assignment;
     }
 
     private function careerId(RoleAssignment $activeRole): string

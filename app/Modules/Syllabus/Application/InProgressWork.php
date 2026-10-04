@@ -160,6 +160,30 @@ final class InProgressWork
     }
 
     /**
+     * Un docente nuevo empieza el sílabo del paralelo desde cero: se borra el sílabo
+     * anterior con todo su historial, sin importar su estado, y se genera uno en blanco.
+     * Debe llamarse dentro de una transacción. Devuelve cuántos sílabos se reiniciaron.
+     */
+    public function restartForParallel(string $parallelId): int
+    {
+        $syllabi = Syllabus::query()
+            ->where('paralelo_id', $parallelId)
+            ->with(['convocation.process', 'parallel'])
+            ->lockForUpdate()
+            ->get();
+        if ($syllabi->isEmpty()) {
+            return 0;
+        }
+
+        $this->deleteAggregates(array_values(array_map('strval', $syllabi->pluck('id')->all())));
+        foreach ($syllabi as $syllabus) {
+            $this->generator->generateForParallel($syllabus->convocation, $syllabus->parallel);
+        }
+
+        return $syllabi->count();
+    }
+
+    /**
      * Borra los sílabos indicados con todo su historial (revisiones, aprobaciones, documentos,
      * firmas y envíos a biblioteca), sin importar su estado. Debe llamarse dentro de una transacción.
      *
