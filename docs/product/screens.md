@@ -192,6 +192,12 @@ plantilla por defecto trae cuatro celdas de firma.
   dentro del desplazamiento local. Notificaciones, conversación, firma y seguridad
   también representan sus cargas de contenido. Cada región anuncia la carga una vez,
   oculta los adornos al lector de pantalla y respeta movimiento reducido y ambos temas.
+- Configuración conserva su título y la navegación Perfil/Seguridad durante la carga.
+  Seguridad representa juntos los tres campos de contraseña, Guardar y el bloque de
+  segundo factor hasta terminar su consulta. Un fallo libera el formulario de contraseña
+  y muestra el error de segundo factor, sin presentar como desactivado un estado desconocido.
+  Perfil representa sus dos campos mientras falta la identidad de sesión; al recibirla
+  aplica los permisos vigentes de edición o consulta. No agrega esperas artificiales.
 - Toda columna **Acciones** muestra únicamente el botón de tres puntos de
   `TableActionsMenu`, incluso cuando solo existe una opción o el registro es de solo
   lectura. Al abrirlo, el menú nombra el registro para tecnologías asistivas, agrupa las

@@ -61,6 +61,19 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 |---|---|---|---|
 | Esqueletos de carga por pantalla, rol y etapa | RF-001..026/034..075; RNF-018..023/029..034; RN-001..034 como contexto; CU-01..04/06..18; UI-02..04, ADM-01..12, COR-01..10/13..15, DOC-01..10, BIB-01..03 y DEC-01..02; CP-F identidad/panel/listados/editor/revisión y CP-N experiencia/accesibilidad; PV-19 | `LoadingSkeleton` y composiciones `TableLoadingSkeleton`, `DashboardLoadingSkeleton`, `AcademicLoadingSkeleton` y `DocumentLoadingSkeleton`; parámetros de las páginas y cargas interiores de notificaciones, chat, firma y segundo factor. `LoadingSkeleton.test.ts`, `DocumentLoadingSkeleton.test.ts`, `ManageTwoFactor.test.ts`, regresiones de notificaciones/chat/firma y `loading-skeletons.spec.ts`. Plan `docs/plans/completed/FE-LOAD-2026-10-04-skeletons-interfaz-vigente.md`. | Lint, tipos, build y 286 pruebas aprobados; Chromium: siete pruebas, 126 renders en ambos temas/tres anchos y movimiento reducido. Geometría compartida del asistente verificada. PV-19 conserva pendiente la aceptación con dispositivos reales. |
 
+### Configuración omitida en el inventario inicial
+
+UI-04, RF-001..007, RNF-018..023, RN-001..004, CU-01/02 y CP-F identidad/segundo
+factor/CP-N experiencia y accesibilidad: el usuario señaló la falta de carga completa
+en Seguridad. `SettingsLoadingSkeleton`, `SecurityPage`, `ProfilePage` y el evento
+`ManageTwoFactor.loading` cubren la subsección completa con navegación estable y una
+consulta de segundo factor. Un error libera la contraseña y evita inventar el estado
+del segundo factor. `SettingsLoading.test.ts`, `ManageTwoFactor.test.ts` y
+`settings-loading.spec.ts` cubren resolución, error, permisos y responsive.
+La evidencia adicional está en
+`docs/plans/completed/FE-LOAD-2026-10-04-configuracion.md`; PV-19 mantiene pendiente la
+aceptación con dispositivos reales.
+
 ## Cadena
 
 ```text

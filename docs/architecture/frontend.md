@@ -59,7 +59,12 @@ columnas, búsqueda, filtros, paginación, acciones y líneas por celda;
 `DashboardLoadingSkeleton` ajusta indicadores, plazo y pasos al rol activo;
 `AcademicLoadingSkeleton` distingue Malla, Materias y Docentes;
 `DocumentLoadingSkeleton` reúne sílabo, revisión por etapa, plantilla, comparación y
-exportaciones. Las páginas pasan la estructura que renderizan actualmente; `table-body`
+exportaciones; `SettingsLoadingSkeleton` representa Perfil o Seguridad dentro del layout
+de Configuración. `ManageTwoFactor` comunica el inicio y la finalización de su consulta
+mediante el evento `loading`; `SecurityPage` conserva montado el componente oculto para
+realizar una sola consulta y muestra el esqueleto completo de la subsección hasta que
+responde, incluso con error. `ProfilePage` espera los datos reactivos de sesión.
+Las páginas pasan la estructura que renderizan actualmente; `table-body`
 no agrega búsqueda ni filtros por defecto cuando esos controles ya están visibles.
 Las superficies usan `Card` y `Skeleton` locales y las tablas decorativas no montan
 controles de detalle durante la carga. Los componentes de notificaciones, chat, firma
