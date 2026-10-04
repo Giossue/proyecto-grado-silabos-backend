@@ -27,6 +27,14 @@ trigger `validar_bloque_definicion_campo` que dejó I-164), `000163` y `000164`,
 en la base remota con respaldo previo. Pendiente en la remota: cambiar la sección
 Bibliografía a Texto libre y crear la cuenta de biblioteca.
 
+I-171 (4 de octubre de 2026), por instrucción del responsable del producto, funde COR-15
+en COR-14: una sola pantalla **Materias y paralelos** del período en curso (sin selector
+de período ni historial de períodos anteriores) con dos pestañas, **Materias** y
+**Docentes**. Cada paralelo muestra jornada y docente; desde la materia se agregan o
+corrigen paralelos y se asigna o retira el docente. El botón principal es **Preparar
+período** mientras falte programar materias de la malla y, después, **Gestionar docente**
+(crear, asignar). La ruta de asignaciones docentes redirige a la pantalla unificada.
+
 I-170 (4 de octubre de 2026), por instrucción del responsable del producto, amplía I-54:
 el Coordinador corrige **nombre y correo** de los docentes vigentes de su carrera activa
 desde COR-15 (acción **Editar docente**), nada más. Reutiliza las reglas administrativas:

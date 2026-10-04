@@ -129,6 +129,9 @@ I-170 agrega `PATCH coordination/academic/teachers/{user}` (política
 corrección de nombre y correo con reemisión de invitación, correo bloqueado en cuenta
 activada, rechazo de administradores, cuentas ajenas y campos prohibidos;
 `TeacherAssignmentsPanel.test.ts` cubre la acción **Editar docente** en cada fila.
+I-171 funde COR-15 en COR-14 (pestañas Materias y Docentes, docente por paralelo en
+`ParallelCreationSheet`, botón principal según programación pendiente); sin cambios de
+API. `ScheduledSubjectsTab.test.ts` y `TeacherAssignmentsPanel.test.ts` cubren la vista.
 Sin cambios de esquema ni permisos sobre asignaciones académicas.
 
 COR-02 (I-46): el listado institucional incluye el alcance de la carrera activa y permite

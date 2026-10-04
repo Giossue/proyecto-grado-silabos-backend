@@ -46,12 +46,12 @@ en el inventario como identificador histórico.
 | COR-11 | Retirada por I-146: Fuentes académicas                                            |
 | COR-12 | Retirado en I-122: el avance de la carrera se consulta en el Panel |
 | COR-13 | Malla, constructor visual/formulario y materias de la carrera |
-| COR-14 | Materias programadas en el período y sus paralelos            |
-| COR-15 | Asignaciones docentes de la carrera                           |
+| COR-14 | Materias, paralelos y docentes del período en curso (pestañas Materias y Docentes, I-171) |
+| COR-15 | Integrada en COR-14 como pestaña **Docentes** (I-171); su ruta redirige a COR-14 |
 | COR-16 | Proyecto de carrera: documentos y datos curriculares confirmados |
 
-En COR-15, una sola acción **Gestionar docente** reúne **Crear docente** y **Asignar
-docente**. Crear abre el formulario compartido de cuentas en modo docente de la carrera
+En COR-14, cuando la malla del período ya está programada, una sola acción **Gestionar
+docente** reúne **Crear docente** y **Asignar docente** (I-171). Crear abre el formulario compartido de cuentas en modo docente de la carrera
 activa (I-54): solo solicita nombre y correo; la persona recibe un enlace de activación
 para verificar su correo y definir su contraseña. El rol y la carrera se derivan del
 contexto y no se muestran como campos. Un correo existente se incorpora sin
@@ -228,12 +228,13 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   el constructor. Sus variables muestran datos de malla, programación, paralelos y docentes;
   no son campos de escritura. Discapacidad y formación son campos que completa el
   docente en su lugar dentro de la tabla. Mapa: `docs/product/identificacion-institucional.md`.
-  COR-14 concentra sus paralelos dentro de **Materias y paralelos**. Desde las acciones de cada materia se
-  crea un paralelo con su código y jornada; el servidor rechaza códigos repetidos. La
-  pantalla selecciona un período académico a la vez y la tabla muestra materia, código,
-  ciclo y cada paralelo con su jornada. La materia programada no se edita desde esta
-  pantalla; **Agregar paralelo** incluye una tabla de resumen con los paralelos y jornadas
-  ya registrados.
+  COR-14 concentra sus paralelos dentro de **Materias y paralelos**. Desde las acciones de cada materia,
+  **Paralelos y docentes** crea o corrige paralelos con código y jornada y elige el docente
+  de cada uno (asignar o retirar); el servidor rechaza códigos repetidos. La pantalla
+  muestra solo el período en curso (o el próximo si aún no empieza), sin selector, y la
+  pestaña **Materias** lista materia, código, ciclo y cada paralelo con jornada y docente.
+  La pestaña **Docentes** lista los docentes de la carrera con sus paralelos del período,
+  estado de activación, **Editar docente** y **Reenviar invitación** (I-171).
 - Indicadores del Panel (UI-01): Administración ve avance del proceso (% aprobados), días
   para la entrega, carreras sin convocar y sílabos sin iniciar; Coordinación ve avance,
   sílabos por revisar y sin iniciar; Docencia ve sílabos por entregar y por corregir. El
@@ -464,8 +465,9 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   carrera» o una distinta), sin cambiar la modalidad visible de la carrera. COR-14 programa
   materias sin selector de modalidad: hereda la de la materia o, si no hay excepción, la
   de la carrera y la muestra en el listado (I-35).
-- COR-14 no programa materias una a una: **Preparar período** abre una hoja lateral amplia
-  con las materias activas que aún no están programadas en el período elegido. Coordinación
+- COR-14 no programa materias una a una: **Preparar período** (visible solo mientras haya
+  materias de la malla sin programar) abre un modal amplio con las materias activas que
+  aún no están programadas en el período en curso. Coordinación
   revisa toda la malla pendiente y confirma uno o más paralelos por materia, cada uno con
   su jornada y un docente opcional. La hoja propone paralelos, jornadas y docentes del
   período anterior, si existen; solo propone docentes activos, verificados y con rol
@@ -476,10 +478,9 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   histórica del sílabo. Una materia
   ya preparada no reaparece aquí: para cambios posteriores se usa la acción de su
   materia programada.
-- COR-14 conserva el período seleccionado en la URL. Al entrar elige el período en curso;
-  si no existe, el próximo más cercano y, finalmente, el último disponible. El selector
-  identifica cada período como **Próximo**, **En curso** o **Finalizado**, estado derivado
-  de sus fechas en `America/Guayaquil`. Los períodos finalizados permanecen como historial:
+- COR-14 no ofrece selector de período (I-171). Elige el período en curso; si no existe,
+  el próximo más cercano y, finalmente, el último disponible, con el estado derivado de
+  sus fechas en `America/Guayaquil`. Los períodos finalizados permanecen como historial:
   sus materias, paralelos, responsables y sílabos se consultan, pero no se preparan, crean,
   editan, deshabilitan, eliminan ni relevan.
 - COR-13 usa una única entrada **Malla**. Si existe, la ruta abre directamente la
