@@ -47,7 +47,7 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 
 | Cambio | IDs relacionados | Evidencia | Estado |
 |---|---|---|---|
-| Azul y rojo de marca en los temas compartidos | RNF-018..023, RNF-029..034; UI-01..04; ADM/COR/DOC/BIB vigentes; CP-N UX/accesibilidad/mantenibilidad; PV-19 | Solicitud del responsable del producto: `#2d4b6f` y `#ac231e`; `src/styles.css`, sidebar y acceso del repositorio frontend; plan `FE-UEB-2026-10-04-paleta-institucional.md`. Los colores semánticos y documentales conservan su función independiente. | En curso; comprobaciones frontend, contraste y revisión visual local pendientes. PV-19 permanece abierta. |
+| Azul y rojo de marca en los temas compartidos | RNF-018..023, RNF-029..034; UI-01..04; ADM/COR/DOC/BIB vigentes; CP-N UX/accesibilidad/mantenibilidad; PV-19 | Solicitud del responsable del producto: `#2d4b6f` y `#ac231e`; tokens compartidos, sidebar, acceso, encabezados y métricas del frontend. Plan `docs/plans/completed/FE-UEB-2026-10-04-paleta-institucional.md`: ESLint, tipos, 14 pruebas existentes, Chromium en dos temas/tres anchos y 43 pares de contraste por tema. Las paletas semántica y documental conservan su función independiente. | Implementación verificada localmente; mínimo de contraste comprobado 4,53:1. PV-19 permanece abierta. |
 
 ## Cadena
 

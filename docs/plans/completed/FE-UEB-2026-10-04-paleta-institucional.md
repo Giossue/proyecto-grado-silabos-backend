@@ -2,7 +2,8 @@
 
 ## Estado
 
-En curso. Implementación y evidencia de verificación pendientes.
+Completado el 2026-10-04. Implementación y comprobación local cerradas;
+aceptación institucional en dispositivos reales pendiente en PV-19.
 
 ## Trazabilidad
 
@@ -34,11 +35,19 @@ papel y los colores guardados en plantillas y sílabos son independientes del te
 la interfaz. PV-19 no bloquea este ajuste reversible, pero mantiene pendiente la
 aceptación en dispositivos y navegadores reales.
 
-## Cambios previstos
+## Cambios realizados
 
 - Frontend: tokens centralizados en `src/styles.css`, azul principal, acentos rojos,
   fondos azul suaves, sidebar azul y navegación activa distinguible.
-- Acceso: branding coherente en claro y oscuro con los tokens compartidos.
+- Acceso: contenedor compartido con logo ampliado, fondo azul tenue y borde rojo.
+- Encabezados y métricas: acento institucional, iconos con fondo azul suave y cifras
+  en el color principal; versión clara del azul para el tema oscuro.
+- Navegación: selección clara con indicador rojo y foco visible, conservada al abrir
+  grupos y al colapsar el menú. Los textos secundarios del usuario heredan tonos
+  apropiados para el fondo del sidebar.
+- Estados: ajuste de los tonos de error, éxito y advertencia para mantener contraste
+  sobre las nuevas superficies. Botones y badges destructivos usan su fondo completo
+  y el texto correspondiente en modo oscuro.
 - Documentación: arquitectura frontend, patrón de colores y trazabilidad.
 - Dominio, API, base de datos, permisos, estados, auditoría e integraciones: sin cambios.
 
@@ -52,9 +61,9 @@ requieren migraciones ni la puerta backend para este ajuste visual.
 ## Pasos
 
 - [x] Identificar origen, alcance, trazabilidad y pendientes.
-- [ ] Ajustar tokens, sidebar y acceso en el repositorio frontend.
+- [x] Ajustar tokens, sidebar y acceso en el repositorio frontend.
 - [x] Sincronizar arquitectura, patrones de pantalla y trazabilidad.
-- [ ] Registrar comprobaciones automatizadas, contraste y revisión visual local.
+- [x] Registrar comprobaciones automatizadas, contraste y revisión visual local.
 
 ## Riesgos y reversión
 
@@ -65,4 +74,23 @@ afecta datos persistidos ni documentos.
 
 ## Evidencia de cierre
 
-Pendiente de implementación y verificación. La revisión local no cierra PV-19.
+Responsable: Codex. Ambiente: frontend local con Vite y Chromium sin interfaz,
+API local interceptada y datos sintéticos. Revisión frontend comprobada:
+`ad3e4fb`; documentación base `5cc1992e`. No se usaron cuentas ni datos reales.
+
+| Comprobación | Resultado |
+|---|---|
+| `npm run lint` | ESLint y cuatro casos de arquitectura aprobados |
+| `npm run typecheck` | Aprobado |
+| `npm test -- src/components/AppShell.test.ts src/pages/AuthFlowPages.test.ts src/pages/WorkspacePage.test.ts` | Tres archivos y 14 pruebas aprobados |
+| Acceso y panel en Chromium | 12 combinaciones: claro/oscuro, 360/768/1440 px, sin desbordamiento horizontal ni errores de página |
+| Contraste de tokens y composiciones | 43 pares por tema; mínimo 4,53:1 en claro y 4,54:1 en oscuro, incluidos textos secundarios, botones, alertas, tintes y navegación |
+| Menú móvil y colapsado | Fondo institucional, selección, foco y estado activo al combinar apertura y hover comprobados en ambos temas |
+| Encabezados | Sombra interior roja comprobada; las utilidades de borde no sustituyen su color |
+| `git diff --check` | Aprobado en los archivos modificados |
+
+Las capturas locales se guardaron en `/tmp/silabos-ueb-palette-review/` para inspección;
+son evidencia temporal con datos sintéticos. No se ejecutó build ni la puerta backend:
+la verificación fue proporcional al ajuste de presentación. No se agregaron pruebas
+que reprodujeran los valores CSS. Esta revisión local no cierra PV-19 ni declara
+conformidad de accesibilidad de toda la aplicación.
