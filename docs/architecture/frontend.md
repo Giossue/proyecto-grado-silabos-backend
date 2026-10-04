@@ -41,13 +41,7 @@ lleva un icono `lucide` al inicio con `data-icon="inline-start"`; mientras proce
 Los botones secundarios (`outline`, `ghost`, `link`) no lo requieren.
 
 `styles.css` centraliza el tema, el avatar, el logo, las dimensiones de layouts y los
-niveles de superposición. La paleta solicitada por el responsable del producto el
-2026-10-04 usa el azul `#2d4b6f` como base de acciones y navegación, el rojo `#ac231e`
-como acento de marca y variantes para fondos suaves y contraste en claro/oscuro. El
-sidebar azul, su estado activo y el acceso comparten esos tokens. Éxito, advertencia y
-acción destructiva tienen colores semánticos independientes. Los valores proceden del
-pedido del usuario y no acreditan una guía oficial de identidad de la UEB.
-`WorkspaceLayout` comparte la composición de sílabo y revisión
+niveles de superposición. `WorkspaceLayout` comparte la composición de sílabo y revisión
 con sus skeletons. `documentPalette.ts` mantiene los colores que se serializan y
 establece sus variables CSS durante el arranque; `documentDefaults.ts` reúne los
 valores documentales por defecto. Los colores del papel conservan su identidad en ambos
