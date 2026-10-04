@@ -3,7 +3,7 @@
 ## Estado
 
 Implementado el 24 de septiembre de 2026 (decisión del responsable del producto).
-Ajustado por I-173 (4 de octubre de 2026): asignar un docente reinicia el sílabo del
+Ajustado por I-174 (4 de octubre de 2026): asignar un docente reinicia el sílabo del
 paralelo; el docente nuevo no hereda nada del anterior.
 
 ## Objetivo

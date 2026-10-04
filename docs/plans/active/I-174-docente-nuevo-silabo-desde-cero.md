@@ -1,4 +1,4 @@
-# I-173 — Un docente nuevo empieza el sílabo desde cero
+# I-174 — Un docente nuevo empieza el sílabo desde cero
 
 ## Pedido del responsable, 2026-10-04
 
