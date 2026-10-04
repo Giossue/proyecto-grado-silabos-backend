@@ -53,7 +53,20 @@ en los tokens de `src/styles.css`. Éxito, advertencia y acción destructiva tie
 colores semánticos independientes. Los valores proceden del
 pedido del usuario y no acreditan una guía oficial de identidad de la UEB.
 `WorkspaceLayout` comparte la composición de sílabo y revisión
-con sus skeletons. `documentPalette.ts` mantiene los colores que se serializan y
+con sus skeletons. `LoadingSkeleton` mantiene el anuncio accesible de carga y delega
+las composiciones en `src/components/domain/loading`: `TableLoadingSkeleton` recibe
+columnas, búsqueda, filtros, paginación, acciones y líneas por celda;
+`DashboardLoadingSkeleton` ajusta indicadores, plazo y pasos al rol activo;
+`AcademicLoadingSkeleton` distingue Malla, Materias y Docentes;
+`DocumentLoadingSkeleton` reúne sílabo, revisión por etapa, plantilla, comparación y
+exportaciones. Las páginas pasan la estructura que renderizan actualmente; `table-body`
+no agrega búsqueda ni filtros por defecto cuando esos controles ya están visibles.
+Las superficies usan `Card` y `Skeleton` locales y las tablas decorativas no montan
+controles de detalle durante la carga. Los componentes de notificaciones, chat, firma
+y segundo factor conservan el título o controles estables y cargan su contenido dentro
+de la misma región. `styles.css` comparte las columnas y desactiva la animación de los
+esqueletos con movimiento reducido.
+`documentPalette.ts` mantiene los colores que se serializan y
 establece sus variables CSS durante el arranque; `documentDefaults.ts` reúne los
 valores documentales por defecto. Los colores del papel conservan su identidad en ambos
 temas. La geometría calculada y los motores Tiptap/Vue Flow permanecen conforme a

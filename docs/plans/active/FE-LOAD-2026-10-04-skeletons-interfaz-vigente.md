@@ -2,7 +2,7 @@
 
 ## Estado
 
-En curso.
+En verificación.
 
 ## Trazabilidad
 
@@ -46,7 +46,7 @@ desbordamiento, temas y movimiento reducido con contenido sintético sin backend
 ## Pasos
 
 - [x] Inventariar cargas y compararlas con las páginas actuales.
-- [ ] Actualizar composiciones y llamadas de todas las pantallas afectadas.
+- [x] Actualizar composiciones y llamadas de todas las pantallas afectadas.
 - [ ] Verificar accesibilidad, responsive y regresiones con las puertas frontend.
 - [ ] Sincronizar documentación y trazabilidad; cerrar con evidencia.
 

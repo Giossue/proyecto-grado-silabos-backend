@@ -180,6 +180,18 @@ plantilla por defecto trae cuatro celdas de firma.
   cuando el resultado ocupa una sola página.
 - Toda tabla diferencia visualmente el encabezado y alterna el fondo de sus registros;
   el primer registro usa la superficie base y el segundo el tono alterno.
+- Las cargas iniciales reproducen la composición vigente de su pantalla mediante
+  esqueletos: cantidad de columnas, búsqueda y filtros, filas y pie de paginación. En
+  móvil representan los dos datos visibles y el espacio de «Ver más» sin controles
+  interactivos. Los filtros ya visibles fuera de la región de carga no se duplican.
+  El Panel diferencia indicadores, plazo y puesta en marcha según el rol; biblioteca y
+  decanato solo esperan sus indicadores. La Malla conserva niveles horizontales,
+  leyenda y zoom; Materias y Docentes conservan sus composiciones independientes.
+  El sílabo mantiene su contexto académico y asistente; la revisión distingue
+  biblioteca, coordinación y decanato. Plantilla conserva las dimensiones de sus hojas
+  dentro del desplazamiento local. Notificaciones, conversación, firma y seguridad
+  también representan sus cargas de contenido. Cada región anuncia la carga una vez,
+  oculta los adornos al lector de pantalla y respeta movimiento reducido y ambos temas.
 - Toda columna **Acciones** muestra únicamente el botón de tres puntos de
   `TableActionsMenu`, incluso cuando solo existe una opción o el registro es de solo
   lectura. Al abrirlo, el menú nombra el registro para tecnologías asistivas, agrupa las
