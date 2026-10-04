@@ -135,15 +135,18 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   `sidebar_state` del navegador durante siete días. Lo restaura al recargar o montar
   de nuevo el layout; sin preferencia guardada, aparece expandido.
 - UI-03 se abre desde el acceso de **Notificaciones** situado junto al selector de tema en
-  el encabezado autenticado común. El acceso conserva el contador de pendientes para los
-  tres roles y no ocupa una entrada del menú lateral. El tema visual también se cambia
-  desde ese encabezado; Configuración solo conserva Perfil y Seguridad.
+  el encabezado autenticado común. Por solicitud del responsable del producto del
+  2026-10-04, el acceso indica avisos sin leer mediante un punto rojo pequeño, sin número,
+  y comunica ese estado en su nombre accesible. No ocupa una entrada del menú lateral.
+  El tema visual también se cambia desde ese encabezado; Configuración solo conserva
+  Perfil y Seguridad.
 - Por solicitud del responsable del producto del 2026-10-04, el menú de usuario se
   traslada del sidebar al extremo derecho del encabezado autenticado común, después de
-  la campana de notificaciones y el selector de tema. En escritorio muestra avatar,
-  nombre y ámbito con texto truncado; en móvil, el acceso muestra solo el avatar con
-  el nombre accesible «Menú de usuario». Conserva Configuración, cambio de carrera o
-  rol cuando corresponde y Cerrar sesión.
+  la campana de notificaciones y el selector de tema. En escritorio muestra avatar
+  circular, nombre y ámbito con texto truncado; en móvil, el acceso muestra solo el avatar
+  con el nombre accesible «Menú de usuario». El menú abierto muestra el nombre completo,
+  que se ajusta a varias líneas cuando hace falta. Conserva Configuración, cambio de
+  carrera o rol cuando corresponde y Cerrar sesión, que usa la variante destructiva roja.
 - Todo módulo autenticado presenta el mismo encabezado mediante `PageFrame`: icono,
   título principal único, descripción y espaciado responsive. Regreso, estado y acciones
   ocupan posiciones estables; Configuración comparte el encabezado en su layout y trata
