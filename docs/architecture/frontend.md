@@ -42,9 +42,11 @@ Los botones secundarios (`outline`, `ghost`, `link`) no lo requieren.
 
 `styles.css` centraliza el tema, el avatar, el logo, las dimensiones de layouts y los
 niveles de superposición. El avatar del asistente (`RobotAvatar.vue`) es un blob azul con
-dos ojos, inspirado en el estilo «Strobi» de bible-strong-avatar-lab pero dibujado en SVG
-propio (sin dependencia ni AGPL): `--avatar-body` y `--avatar-outline`; modos y emociones
-se expresan con ojos, boca y cuerpo (I-174, 2026-10-04). La paleta solicitada por el responsable del producto el
+dos ojos al estilo «Strobi» de bible-strong-avatar-lab, reimplementado sin dependencia ni
+AGPL: `blobGeometry.ts` modela una esfera (radio 120, foco 620) con dos cápsulas
+proyectadas sobre su superficie; cada expresión gira la cabeza y cambia tamaño, separación
+y ángulo de los ojos, y cada modo o emoción encadena expresiones con transición suave y
+parpadeo (`ANIMATIONS`). Colores: `--avatar-body` y `--avatar-outline` (I-174, 2026-10-04). La paleta solicitada por el responsable del producto el
 2026-10-04 usa el azul `#2d4b6f` en acciones primarias, foco y menú activo, y el rojo `#ac231e`
 solo como barra del ítem activo del menú. Fondos y sidebar siguen neutros; todo vive
 en los tokens de `src/styles.css`. Éxito, advertencia y acción destructiva tienen
