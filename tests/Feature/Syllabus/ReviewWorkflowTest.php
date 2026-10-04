@@ -215,7 +215,6 @@ class ReviewWorkflowTest extends TestCase
 
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('revisiones_silabo', 0);
-        $this->assertDatabaseCount('validaciones_silabo', 1);
         $this->assertDatabaseMissing('eventos_auditoria', ['accion' => 'silabo.enviado']);
     }
 
@@ -235,7 +234,6 @@ class ReviewWorkflowTest extends TestCase
 
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('revisiones_silabo', 0);
-        $this->assertDatabaseCount('validaciones_silabo', 0);
     }
 
     public function test_cp_f_review_workspace_enforces_role_and_record_scope(): void
@@ -420,10 +418,10 @@ class ReviewWorkflowTest extends TestCase
             'cause' => 'Se detectó una actualización académica posterior a la aprobación.',
         ])->assertSuccessful();
         $syllabus->refresh();
-        $reopening = $syllabus->reopenings()->firstOrFail();
+        $reopened = $syllabus->reopenedApprovals()->firstOrFail();
         $this->assertSame('correccion_solicitada', $syllabus->estado);
         $this->assertSame($approvedValue, $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor);
-        $this->assertSame($approval->id, $reopening->aprobacion_id);
+        $this->assertSame($approval->id, $reopened->id);
         $this->assertDatabaseCount('aprobaciones', 1);
         $this->assertDatabaseCount('revisiones_silabo', 1);
         $this->assertWorkflowNotification($syllabus->id, 'silabo.reabierto');
@@ -432,7 +430,7 @@ class ReviewWorkflowTest extends TestCase
             'idempotency_key' => $key,
             'cause' => 'Se detectó una actualización académica posterior a la aprobación.',
         ])->assertSuccessful();
-        $this->assertDatabaseCount('reaperturas', 1);
+        $this->assertSame(1, Approval::query()->whereNotNull('reabierta_en')->count());
 
         $this->actingAsCoordinator()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
@@ -449,9 +447,80 @@ class ReviewWorkflowTest extends TestCase
         ])->assertSuccessful();
 
         $newRevision = SyllabusRevision::query()->where('numero_revision', 2)->firstOrFail();
-        $this->assertSame($reopening->id, $newRevision->reapertura_id);
+        $this->assertSame($approvedRevision->id, $newRevision->revision_anterior_id);
         $this->assertSame($approvedRevision->id, $approval->fresh()->revision_silabo_id);
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
+    }
+
+    public function test_cp_f_reopening_and_correction_columns_are_write_once_and_complete(): void
+    {
+        [, $revision] = $this->submitValidDraft();
+        $this->approveThroughChain($revision);
+        $approval = Approval::query()->firstOrFail();
+        $reopening = [
+            'clave_reapertura' => (string) Str::uuid(),
+            'causa_reapertura' => 'Se detectó un error.',
+            'origen_reapertura' => 'coordinacion',
+            'reabierta_por' => $this->coordinator->id,
+            'reabierta_en' => now(),
+        ];
+
+        // Un hecho a medias no es válido en la base.
+        try {
+            DB::transaction(fn () => DB::table('aprobaciones')->where('id', $approval->id)->update(['causa_reapertura' => 'Solo la causa']));
+            $this->fail('PostgreSQL permitió una reapertura incompleta.');
+        } catch (QueryException) {
+            $this->assertNull($approval->fresh()->causa_reapertura);
+        }
+
+        $approval->update($reopening);
+        $this->assertTrue($approval->fresh()->isReopened());
+
+        // Lo ya escrito no cambia y el resto de la fila sigue inmutable, en el modelo y en la base.
+        foreach ([['causa_reapertura' => 'Otra causa'], ['huella_sha256' => str_repeat('b', 64)]] as $changes) {
+            try {
+                $approval->fresh()->update($changes);
+                $this->fail('El modelo permitió modificar un registro histórico.');
+            } catch (LogicException) {
+                $this->assertSame('Se detectó un error.', $approval->fresh()->causa_reapertura);
+            }
+        }
+        foreach (['causa_reapertura' => 'Otra causa', 'hash_contenido' => str_repeat('b', 64)] as $column => $value) {
+            try {
+                DB::transaction(fn () => DB::table('aprobaciones')->where('id', $approval->id)->update([$column => $value]));
+                $this->fail('PostgreSQL permitió modificar un registro histórico.');
+            } catch (QueryException) {
+                $this->assertSame('Se detectó un error.', $approval->fresh()->causa_reapertura);
+            }
+        }
+        try {
+            DB::transaction(fn () => DB::table('aprobaciones')->where('id', $approval->id)->delete());
+            $this->fail('PostgreSQL permitió borrar una aprobación.');
+        } catch (QueryException) {
+            $this->assertDatabaseCount('aprobaciones', 1);
+        }
+
+        // La misma regla para la solicitud de corrección de la revisión.
+        $this->assertFalse($revision->fresh()->hasCorrectionRequest());
+        try {
+            DB::transaction(fn () => DB::table('revisiones_silabo')->where('id', $revision->id)->update(['correccion_etapa' => 'coordinacion']));
+            $this->fail('PostgreSQL permitió una solicitud de corrección incompleta.');
+        } catch (QueryException) {
+            $this->assertNull($revision->fresh()->correccion_etapa);
+        }
+        $revision->fresh()->update([
+            'correccion_justificacion' => 'Falta bibliografía.',
+            'correccion_etapa' => 'coordinacion',
+            'correccion_solicitada_por' => $this->coordinator->id,
+            'correccion_solicitada_en' => now(),
+        ]);
+        $this->assertTrue($revision->fresh()->hasCorrectionRequest());
+        try {
+            $revision->fresh()->update(['correccion_justificacion' => 'Otra']);
+            $this->fail('El modelo permitió reescribir la solicitud de corrección.');
+        } catch (LogicException) {
+            $this->assertSame('Falta bibliografía.', $revision->fresh()->correccion_justificacion);
+        }
     }
 
     public function test_cp_f_database_rejects_invalid_state_and_cross_syllabus_evidence(): void

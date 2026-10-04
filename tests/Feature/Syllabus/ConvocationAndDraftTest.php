@@ -20,7 +20,6 @@ use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -317,9 +316,9 @@ class ConvocationAndDraftTest extends TestCase
         ]]])->assertUnprocessable()->assertJsonValidationErrors(['value' => 'El texto libre contiene un elemento no permitido.']);
 
         $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]]])->assertOk();
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
-        $this->assertTrue(ValidationRun::query()->latest('completado_en')->firstOrFail()->results()
-            ->where('definicion_campo_id', $field->id)->where('codigo', 'campo_obligatorio_faltante')->exists());
+        $validation = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
+        $this->assertTrue(collect($validation->json('validation.results'))
+            ->contains(fn (array $issue): bool => $issue['field_id'] === $field->id && $issue['code'] === 'campo_obligatorio_faltante'));
 
         $value = ['type' => 'doc', 'content' => [
             $paragraph('Enfoque práctico.', [['type' => 'bold'], ['type' => 'textStyle', 'attrs' => ['color' => '#FF0000']]]),
@@ -428,10 +427,9 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
 
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
-        $firstRun = ValidationRun::query()->latest('completado_en')->firstOrFail();
-        $this->assertSame('free-text-v6', $firstRun->version_reglas);
-        $this->assertGreaterThan(0, $firstRun->errores_bloqueantes);
+        $first = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
+        $this->assertGreaterThan(0, $first->json('validation.blocking_errors'));
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.validado', 'recurso_id' => $syllabus->id]);
 
         $requiredEditable = FieldDefinition::query()
             ->where('heredado', false)
@@ -445,9 +443,8 @@ class ConvocationAndDraftTest extends TestCase
             $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), $payload)->assertOk();
         }
 
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
-        $lastRun = ValidationRun::query()->whereKeyNot($firstRun->id)->firstOrFail();
-        $this->assertSame(0, $lastRun->errores_bloqueantes);
+        $last = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
+        $this->assertSame(0, $last->json('validation.blocking_errors'));
     }
 
     public function test_every_teacher_field_is_required_only_when_sending(): void
@@ -467,11 +464,10 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertTrue($fields['habilidades_blandas']['required']);
         $this->assertArrayNotHasKey('rules', $fields['objetivo_general']);
 
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
-        $run = ValidationRun::query()->latest('completado_en')->firstOrFail();
-        $messages = $run->results()->get()->groupBy('definicion_campo_id');
+        $validation = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
+        $messages = collect($validation->json('validation.results'))->groupBy('field_id');
         $this->assertArrayNotHasKey($text->id, $messages->all());
-        $this->assertSame('«'.$empty->etiqueta.'» está vacío. Complétalo antes de enviar.', $messages[$empty->id]->first()->mensaje);
+        $this->assertSame('«'.$empty->etiqueta.'» está vacío. Complétalo antes de enviar.', $messages[$empty->id]->first()['message']);
     }
 
     public function test_part_shown_only_when_another_matches_is_not_required_while_hidden_and_prints_empty(): void
@@ -538,17 +534,16 @@ class ConvocationAndDraftTest extends TestCase
         $inherited = FieldDefinition::query()->where('heredado', true)->firstOrFail();
         $syllabus->values()->where('definicion_campo_id', $inherited->id)->delete();
 
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
-        $messages = ValidationRun::query()->latest('completado_en')->firstOrFail()
-            ->results()->get()->groupBy('definicion_campo_id');
+        $validation = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
+        $messages = collect($validation->json('validation.results'))->groupBy('field_id');
 
         $this->assertArrayNotHasKey($inFixed->id, $messages->all());
         $this->assertArrayNotHasKey($locked->id, $messages->all());
         $this->assertSame(
             "Avise a Coordinación: falta el dato «{$inherited->etiqueta}» en la información de la carrera.",
-            $messages[$inherited->id]->first()->mensaje,
+            $messages[$inherited->id]->first()['message'],
         );
-        $this->assertSame('error', $messages[$inherited->id]->first()->severidad);
+        $this->assertSame('error', $messages[$inherited->id]->first()['severity']);
     }
 
     public function test_role_navigation_endpoints_do_not_mix_coordinator_and_teacher_privileges(): void

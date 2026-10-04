@@ -152,12 +152,6 @@ class Syllabus extends Model
         return $this->hasMany(FieldValue::class, 'silabo_id');
     }
 
-    /** @return HasMany<ValidationRun, $this> */
-    public function validationRuns(): HasMany
-    {
-        return $this->hasMany(ValidationRun::class, 'silabo_id');
-    }
-
     /** @return HasMany<SyllabusRevision, $this> */
     public function revisions(): HasMany
     {
@@ -181,9 +175,9 @@ class Syllabus extends Model
         return $this->hasManyThrough(Approval::class, SyllabusRevision::class, 'silabo_id', 'revision_silabo_id');
     }
 
-    /** @return HasManyThrough<Reopening, SyllabusRevision, $this> */
-    public function reopenings(): HasManyThrough
+    /** @return HasManyThrough<Approval, SyllabusRevision, $this> Aprobaciones que fueron reabiertas. */
+    public function reopenedApprovals(): HasManyThrough
     {
-        return $this->hasManyThrough(Reopening::class, SyllabusRevision::class, 'silabo_id', 'revision_aprobada_id');
+        return $this->approvals()->whereNotNull('aprobaciones.reabierta_en');
     }
 }

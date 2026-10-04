@@ -14,7 +14,6 @@ use App\Modules\Syllabus\Application\InheritMasterValues;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -68,7 +67,6 @@ class ResetSyllabus
             ];
 
             FieldValue::query()->where('silabo_id', $locked->id)->delete();
-            ValidationRun::query()->where('silabo_id', $locked->id)->get()->each->delete();
 
             $locked->update([
                 'estado' => 'sin_iniciar',

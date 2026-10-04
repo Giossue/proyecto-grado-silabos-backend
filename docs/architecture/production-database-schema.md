@@ -439,34 +439,11 @@ UNIQUE (silabo_id, definicion_campo_id)
 I-156 la elimina (migración `000157`): lo que el docente escribía por filas se convirtió
 en Texto libre (`valores_campo.valor_campo`, documento JSON) antes de borrarla.
 
-## ejecuciones_validacion
+## Validación del borrador (retirada)
 
-**Contexto:** validación determinística de un borrador.
-
-~~~text
-id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-ejecutado_por UUID (FK → usuarios.id) NOT NULL
-version_reglas VARCHAR NOT NULL
-estado_ejecucion_validacion VARCHAR NOT NULL
-version_bloqueo INTEGER NOT NULL
-cantidad_errores_validacion SMALLINT NOT NULL
-cantidad_advertencias_validacion SMALLINT NOT NULL
-completado_en TIMESTAMPTZ NOT NULL
-~~~
-
-## resultados_validacion
-
-**Contexto:** detalle de un error o advertencia.
-
-~~~text
-id UUID (PK)
-ejecucion_validacion_id UUID (FK → ejecuciones_validacion.id) NOT NULL
-definicion_campo_id UUID (FK → definiciones_campo.id) NULL
-codigo_resultado_validacion VARCHAR NOT NULL
-severidad_resultado_validacion VARCHAR NOT NULL
-mensaje_resultado_validacion VARCHAR NOT NULL
-~~~
+I-176 elimina `validaciones_silabo` y `resultados_validacion`: la validación es una función
+del contenido actual, se calcula al validar o enviar y se devuelve sin guardar. La auditoría
+conserva el evento `silabo.validado`.
 
 ### Cardinalidades
 
@@ -481,8 +458,6 @@ convocatorias_carreras 1:N silabos
 paralelos 1:N silabos (uno por convocatoria de carrera)
 silabos N:M usuarios mediante la vista docentes_vigentes_silabo (derivada del paralelo y sus asignaciones)
 silabos N:M definiciones_campo mediante valores_campo
-silabos 1:N ejecuciones_validacion
-ejecuciones_validacion 1:N resultados_validacion
 ~~~
 
 ---
@@ -579,11 +554,21 @@ fotografia_revision_silabo JSONB NOT NULL
 huella_sha256 CHAR(64) NOT NULL
 enviado_por UUID (FK → usuarios.id) NOT NULL
 enviado_en TIMESTAMPTZ NOT NULL
-reapertura_id UUID (FK → reaperturas.id) NULL
+correccion_justificacion TEXT NULL
+correccion_etapa VARCHAR(16) NULL CHECK (biblioteca | coordinacion | decanato)
+correccion_solicitada_por UUID (FK → usuarios.id) NULL INDEX
+correccion_solicitada_en TIMESTAMPTZ NULL
 
 UNIQUE (silabo_id, numero_revision)
 UNIQUE (silabo_id, clave_idempotencia)
+
+CHECK (las cuatro columnas correccion_* son todas nulas o todas presentes)
 ~~~
+
+Las columnas `correccion_*` son de escritura única (I-176): registran la solicitud formal
+de corrección de esa revisión, con la etapa que la pidió. Reemplazan a la tabla
+`solicitudes_correccion`. La reapertura ya no se enlaza desde la revisión: la revisión
+siguiente apunta a la aprobada con `revision_anterior_id`.
 
 ## observaciones_revision
 
@@ -600,18 +585,6 @@ creado_por UUID (FK → usuarios.id) NOT NULL
 observado_en TIMESTAMPTZ NOT NULL
 ~~~
 
-## solicitudes_correccion
-
-**Contexto:** solicitud formal de corrección.
-
-~~~text
-id UUID (PK)
-revision_silabo_id UUID (FK → revisiones_silabo.id) NOT NULL UNIQUE
-justificacion_solicitud_correccion TEXT NOT NULL
-solicitado_por UUID (FK → usuarios.id) NOT NULL
-solicitado_en TIMESTAMPTZ NOT NULL
-~~~
-
 ## aprobaciones
 
 **Contexto:** aprobación de una revisión.
@@ -624,6 +597,13 @@ huella_sha256 CHAR(64) NOT NULL
 aprobado_por UUID (FK → usuarios.id) NOT NULL
 aprobado_en TIMESTAMPTZ NOT NULL
 aprobacion_base_id UUID (FK → aprobaciones.id) NULL INDEX
+causa_reapertura TEXT NULL
+origen_reapertura VARCHAR(16) NULL CHECK (coordinacion | biblioteca | decanato)
+reabierta_por UUID (FK → usuarios.id) NULL INDEX
+reabierta_en TIMESTAMPTZ NULL
+clave_reapertura UUID NULL
+
+CHECK (las cinco columnas de reapertura son todas nulas o todas presentes)
 ~~~
 
 El sílabo se obtiene de `revisiones_silabo.silabo_id`. La clave de idempotencia sigue
@@ -632,25 +612,9 @@ siendo única por sílabo; la comprueba el trigger `validar_relaciones_flujo` (I
 corrección de biblioteca (I-165): apunta a la aprobación de coordinación que cubre todo
 el contenido salvo la bibliografía, y conserva su aprobador.
 
-## reaperturas
-
-**Contexto:** reapertura posterior a una aprobación.
-
-~~~text
-id UUID (PK)
-aprobacion_id UUID (FK → aprobaciones.id) NOT NULL UNIQUE
-revision_aprobada_id UUID (FK → revisiones_silabo.id) NOT NULL INDEX
-clave_idempotencia UUID NOT NULL
-causa TEXT NOT NULL
-reabierto_por UUID (FK → usuarios.id) NOT NULL
-reabierto_en TIMESTAMPTZ NOT NULL
-origen_reapertura VARCHAR(16) NOT NULL DEFAULT 'coordinacion'
-
-CHECK (origen_reapertura IN ('coordinacion', 'biblioteca'))
-~~~
-
-I-165: el comentario del bibliotecario es una reapertura de origen `biblioteca`; su
-`causa` es el comentario y deja editable solo la sección `bibliografia`.
+Las columnas de reapertura son de escritura única (I-176): una aprobación se reabre una
+sola vez y reemplazan a la tabla `reaperturas`. Una aprobación con `reabierta_en` queda
+anulada para firmas. La clave de reapertura es única por sílabo (`validar_relaciones_flujo`).
 
 ## envios_biblioteca
 
@@ -669,8 +633,8 @@ CHECK (verificado_por y verificado_en ambos nulos o ambos presentes)
 
 El trigger `proteger_envio_biblioteca` solo permite registrar la verificación una vez
 (migración `000164`). Estado derivado: `firmado` (firma `biblioteca` en un PDF de la
-revisión), `comentado` (reapertura de origen biblioteca), `anulado` (reapertura de
-coordinación), `por_firmar` (verificado) o `pendiente`.
+revisión), `comentado` (corrección pedida por biblioteca), `anulado` (aprobación
+reabierta), `por_firmar` (verificado) o `pendiente`.
 
 ## Cambios de estado del sílabo
 
@@ -684,11 +648,10 @@ Desde I-136 no existe `transiciones_silabo`: cada cambio de estado queda en
 silabos 1:N revisiones_silabo
 revisiones_silabo 0..1:N revisiones_silabo mediante revision_anterior_id
 revisiones_silabo 1:N observaciones_revision
-revisiones_silabo 1:0..1 solicitudes_correccion
-solicitudes_correccion incluye todas las observaciones_revision de su revisión
-  (derivado por revision_silabo_id; I-134)
+la solicitud de corrección (columnas correccion_*) incluye todas las observaciones_revision
+  de su revisión (derivado por revision_silabo_id; I-134)
 revisiones_silabo 1:0..1 aprobaciones
-aprobaciones 1:0..1 reaperturas
+la reapertura (columnas de aprobaciones) deja la aprobación anulada
 ~~~
 
 ---

@@ -8,7 +8,6 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\CorrectionRequest;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
@@ -30,12 +29,12 @@ class RequestSyllabusCorrection
         string $justification,
         User $actor,
         Request $request,
-    ): CorrectionRequest {
+    ): SyllabusRevision {
         $activeRole = $this->roles->resolve($request);
         $stage = $activeRole === null ? null : ReviewStage::forRole($activeRole->role->codigo_rol);
         abort_if($stage === null, 403);
 
-        return DB::transaction(function () use ($actor, $activeRole, $justification, $revision, $stage): CorrectionRequest {
+        return DB::transaction(function () use ($actor, $activeRole, $justification, $revision, $stage): SyllabusRevision {
             $syllabus = Syllabus::query()->lockForUpdate()->findOrFail($revision->silabo_id);
             $latestId = SyllabusRevision::query()
                 ->where('silabo_id', $syllabus->id)
@@ -46,7 +45,8 @@ class RequestSyllabusCorrection
                     'revision' => 'La revisión dejó de estar disponible para solicitar corrección.',
                 ]);
             }
-            if (CorrectionRequest::query()->where('revision_silabo_id', $revision->id)->exists()) {
+            $locked = SyllabusRevision::query()->lockForUpdate()->findOrFail($revision->id);
+            if ($locked->hasCorrectionRequest()) {
                 throw ValidationException::withMessages(['revision' => 'Esta revisión ya tiene una solicitud de corrección.']);
             }
             // I-173: cada revisor devuelve solo en su etapa; coordinación sustenta con observaciones.
@@ -65,12 +65,11 @@ class RequestSyllabusCorrection
                 ]);
             }
 
-            $correction = CorrectionRequest::query()->create([
-                'revision_silabo_id' => $revision->id,
-                'justificacion' => $justification,
-                'etapa_solicitud' => $stage,
-                'solicitado_por' => $actor->id,
-                'solicitado_en' => now(),
+            $locked->update([
+                'correccion_justificacion' => $justification,
+                'correccion_etapa' => $stage,
+                'correccion_solicitada_por' => $actor->id,
+                'correccion_solicitada_en' => now(),
             ]);
 
             $syllabus->update([
@@ -82,20 +81,20 @@ class RequestSyllabusCorrection
                 actorId: $actor->id,
                 roleAssignmentId: $activeRole?->id,
                 action: 'silabo.correccion_solicitada',
-                resourceType: 'solicitud_correccion',
-                resourceId: $correction->id,
+                resourceType: 'revision_silabo',
+                resourceId: $revision->id,
                 result: 'exito',
                 metadata: ['revision_number' => $revision->numero_revision, 'from_state' => 'en_revision', 'to_state' => 'correccion_solicitada', 'stage' => $stage, 'observation_count' => $observations->count()],
             );
             $this->notifications->execute(
                 syllabus: $syllabus,
                 eventType: 'silabo.correccion_solicitada',
-                deduplicationKey: "silabo.correccion_solicitada:{$correction->id}",
+                deduplicationKey: "silabo.correccion_solicitada:{$revision->id}",
                 recipientIds: $this->recipients->teachersFor($syllabus),
                 revisionNumber: $revision->numero_revision,
             );
 
-            return $correction;
+            return $locked;
         });
     }
 }

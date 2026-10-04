@@ -22,7 +22,6 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Reopening;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\CanonicalHasher;
@@ -217,13 +216,12 @@ class DocumentSignatureTest extends TestCase
             ->assertForbidden();
 
         $approval = Approval::query()->where('revision_silabo_id', $revision->id)->firstOrFail();
-        Reopening::query()->create([
-            'aprobacion_id' => $approval->id,
-            'revision_aprobada_id' => $revision->id,
-            'clave_idempotencia' => (string) Str::uuid(),
-            'causa' => 'Corregir bibliografía.',
-            'reabierto_por' => $this->coordinator->id,
-            'reabierto_en' => now(),
+        $approval->update([
+            'clave_reapertura' => (string) Str::uuid(),
+            'causa_reapertura' => 'Corregir bibliografía.',
+            'origen_reapertura' => 'coordinacion',
+            'reabierta_por' => $this->coordinator->id,
+            'reabierta_en' => now(),
         ]);
 
         $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))

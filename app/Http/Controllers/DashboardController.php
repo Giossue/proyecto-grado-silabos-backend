@@ -234,7 +234,7 @@ class DashboardController extends Controller
             ->whereHas('revisions', fn (Builder $revision) => $revision
                 ->whereHas('coordinationReview')
                 ->whereDoesntHave('approval')
-                ->whereDoesntHave('correctionRequest'))
+                ->whereNull('correccion_solicitada_en'))
             ->count();
         $approved = $faculty()->where('estado', 'aprobado')->count();
 

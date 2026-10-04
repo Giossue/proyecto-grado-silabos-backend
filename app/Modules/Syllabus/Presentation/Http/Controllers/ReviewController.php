@@ -232,15 +232,15 @@ class ReviewController extends Controller
             'syllabus.teachers:id,nombre',
             'syllabus.revisions.submitter:id,nombre',
             'syllabus.revisions.observations.creator:id,nombre',
-            'syllabus.revisions.correctionRequest.requester:id,nombre',
+            'syllabus.revisions.correctionRequester:id,nombre',
             'syllabus.revisions.approval.approver:id,nombre',
             'syllabus.revisions.librarySubmission.verifier:id,nombre',
             'syllabus.revisions.coordinationReview.reviewer:id,nombre',
-            'syllabus.reopenings.reopener:id,nombre',
+            'syllabus.reopenedApprovals.reopener:id,nombre',
         ]);
         $syllabus = $revision->syllabus;
         $latest = $syllabus->revisions->sortByDesc('numero_revision')->first();
-        $latestReopening = $syllabus->reopenings->sortByDesc('reabierto_en')->first();
+        $latestReopening = $syllabus->reopenedApprovals->sortByDesc('reabierta_en')->first();
         $decisionsAllowed = SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation->estado);
         $activeRole = app(ActiveRole::class)->resolve(request());
         $myStage = $activeRole === null ? null : ReviewStage::forRole($activeRole->role->codigo_rol);
@@ -293,19 +293,19 @@ class ReviewController extends Controller
                 'approved_by' => $item->approval?->approver->nombre,
             ])->values(),
             'observations' => $this->reviewObservationsPayload($syllabus),
-            'correction_request' => $revision->correctionRequest === null ? null : [
-                'justification' => $revision->correctionRequest->justificacion,
-                'stage' => $revision->correctionRequest->etapa_solicitud,
-                'requested_by' => $revision->correctionRequest->requester->nombre,
-                'requested_at' => $revision->correctionRequest->solicitado_en->toIso8601String(),
+            'correction_request' => ! $revision->hasCorrectionRequest() ? null : [
+                'justification' => $revision->correccion_justificacion,
+                'stage' => $revision->correccion_etapa,
+                'requested_by' => $revision->correctionRequester->nombre,
+                'requested_at' => $revision->correccion_solicitada_en->toIso8601String(),
             ],
             'decisions_allowed' => $decisionsAllowed,
             'reset' => [
                 'allowed' => $decisionsAllowed && $myStage === ReviewStage::COORDINATION && in_array($syllabus->estado, ResetSyllabus::RESETTABLE_STATES, true),
             ],
             'reopening' => $latestReopening === null ? null : [
-                'cause' => $latestReopening->causa,
-                'reopened_at' => $latestReopening->reabierto_en->toIso8601String(),
+                'cause' => $latestReopening->causa_reapertura,
+                'reopened_at' => $latestReopening->reabierta_en->toIso8601String(),
                 'reopened_by' => $latestReopening->reopener->nombre,
                 'origin' => $latestReopening->origen_reapertura,
             ],
@@ -327,7 +327,7 @@ class ReviewController extends Controller
     {
         $payload = [];
         foreach ($syllabus->revisions->sortBy('numero_revision') as $revision) {
-            $requested = $revision->correctionRequest !== null;
+            $requested = $revision->hasCorrectionRequest();
             foreach ($revision->observations as $observation) {
                 $payload[] = [
                     'id' => $observation->id,

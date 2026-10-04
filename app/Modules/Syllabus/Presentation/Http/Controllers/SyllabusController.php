@@ -27,7 +27,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
 use App\Modules\Syllabus\Presentation\Http\Requests\CopySyllabusContentRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\SubmitSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\UpdateDraftFieldRequest;
@@ -168,25 +167,15 @@ class SyllabusController extends Controller
     {
         abort_unless($request->user()?->can('edit', $syllabus) === true, 403);
         $actor = $request->user();
-        $run = $action->execute($syllabus, $actor, $request);
+        $validation = $action->execute($syllabus, $actor, $request);
 
-        $message = $run->errores_bloqueantes === 0
+        $message = $validation->blockingErrors() === 0
             ? 'Validación completada sin errores bloqueantes.'
             : 'Validación completada. Revise los campos señalados.';
 
         return response()->json([
             'message' => $message,
-            'validation' => [
-                'version_bloqueo' => $run->version_bloqueo,
-                'blocking_errors' => $run->errores_bloqueantes,
-                'warnings' => $run->advertencias,
-                'results' => $run->results->map(fn ($result): array => [
-                    'field_id' => $result->definicion_campo_id,
-                    'code' => $result->codigo,
-                    'severity' => $result->severidad,
-                    'message' => $result->mensaje,
-                ])->values(),
-            ],
+            'validation' => $validation->toArray(),
         ]);
     }
 
@@ -196,15 +185,12 @@ class SyllabusController extends Controller
         $syllabus->load([
             'convocation.career', 'convocation.process.academicPeriod', 'parallel.scheduledSubject.subject', 'parallel', 'teachers:id,nombre,correo_electronico',
             'values',
-            'validationRuns' => fn ($query) => $query->with('results')->latest('completado_en')->limit(1),
             'revisions' => fn ($query) => $query->with([
-                'submitter:id,nombre', 'approval.approver:id,nombre',
-                'correctionRequest', 'observations',
+                'submitter:id,nombre', 'approval.approver:id,nombre', 'observations',
             ]),
-            'reopenings' => fn ($query) => $query->with('reopener:id,nombre')->latest('reabierto_en'),
+            'reopenedApprovals' => fn ($query) => $query->with('reopener:id,nombre')->latest('reabierta_en'),
         ]);
         $values = $syllabus->values->keyBy('definicion_campo_id');
-        $lastValidation = $syllabus->validationRuns->first();
         $template = SyllabusTemplate::institutional();
 
         return [
@@ -236,18 +222,6 @@ class SyllabusController extends Controller
             'sections' => $template->sections
                 ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values))
                 ->values(),
-            'validation' => $lastValidation instanceof ValidationRun ? [
-                'completed_at' => $lastValidation->completado_en->toIso8601String(),
-                'version_bloqueo' => $lastValidation->version_bloqueo,
-                'blocking_errors' => $lastValidation->errores_bloqueantes,
-                'warnings' => $lastValidation->advertencias,
-                'results' => $lastValidation->results->map(fn ($result) => [
-                    'field_id' => $result->definicion_campo_id,
-                    'code' => $result->codigo,
-                    'severity' => $result->severidad,
-                    'message' => $result->mensaje,
-                ])->values(),
-            ] : null,
             'revisions' => $syllabus->revisions->sortBy('numero_revision')->map(fn (SyllabusRevision $revision): array => [
                 'id' => $revision->id,
                 'number' => $revision->numero_revision,
@@ -256,11 +230,11 @@ class SyllabusController extends Controller
                 'approved_at' => $revision->approval?->aprobado_en->toIso8601String(),
             ])->values(),
             'observations' => $this->teacherObservationsPayload($syllabus),
-            'reopening' => $syllabus->reopenings->first() === null ? null : [
-                'cause' => $syllabus->reopenings->first()->causa,
-                'reopened_at' => $syllabus->reopenings->first()->reabierto_en->toIso8601String(),
-                'reopened_by' => $syllabus->reopenings->first()->reopener->nombre,
-                'origin' => $syllabus->reopenings->first()->origen_reapertura,
+            'reopening' => $syllabus->reopenedApprovals->first() === null ? null : [
+                'cause' => $syllabus->reopenedApprovals->first()->causa_reapertura,
+                'reopened_at' => $syllabus->reopenedApprovals->first()->reabierta_en->toIso8601String(),
+                'reopened_by' => $syllabus->reopenedApprovals->first()->reopener->nombre,
+                'origin' => $syllabus->reopenedApprovals->first()->origen_reapertura,
             ],
             'review_stage' => ReviewStage::of($syllabus),
             'library_comments' => LibraryReviewController::comments($syllabus),
@@ -309,7 +283,7 @@ class SyllabusController extends Controller
     {
         $payload = [];
         foreach ($syllabus->revisions->sortBy('numero_revision') as $revision) {
-            $requested = $revision->correctionRequest !== null;
+            $requested = $revision->hasCorrectionRequest();
             foreach ($revision->observations as $observation) {
                 $payload[] = [
                     'id' => $observation->id,

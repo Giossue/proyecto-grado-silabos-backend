@@ -34,16 +34,13 @@ final class LibraryReviews
                 WHERE exportacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
                   AND firma.firmado_como = 'biblioteca'
             ) THEN 'firmado'
-            WHEN EXISTS (
-                SELECT 1 FROM solicitudes_correccion solicitud
-                WHERE solicitud.revision_silabo_id = envios_biblioteca.revision_silabo_id
-                  AND solicitud.etapa_solicitud = 'biblioteca'
-            ) THEN 'comentado'
+            WHEN revision.correccion_etapa = 'biblioteca' THEN 'comentado'
             WHEN EXISTS (
                 SELECT 1 FROM revisiones_silabo posterior
                 WHERE posterior.silabo_id = revision.silabo_id AND posterior.numero_revision > revision.numero_revision
             ) OR EXISTS (
-                SELECT 1 FROM reaperturas reapertura WHERE reapertura.revision_aprobada_id = envios_biblioteca.revision_silabo_id
+                SELECT 1 FROM aprobaciones reabierta
+                WHERE reabierta.revision_silabo_id = envios_biblioteca.revision_silabo_id AND reabierta.reabierta_en IS NOT NULL
             ) THEN 'anulado'
             WHEN EXISTS (
                 SELECT 1 FROM aprobaciones aprobacion WHERE aprobacion.revision_silabo_id = envios_biblioteca.revision_silabo_id

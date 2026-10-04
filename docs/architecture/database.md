@@ -242,22 +242,22 @@ asignatura para conservar las otras materias.
 
 ### Revisión, validación e IA
 
-`revisiones_silabo`, `observaciones_revision`, `solicitudes_correccion`, `aprobaciones`,
-`reaperturas`, `envios_biblioteca` (I-165), `ejecuciones_validacion`,
-`resultados_validacion` y la memoria de IA `historial_ia` (I-135). I-120 eliminó `respuestas_observacion` y el estado `respondida`:
+`revisiones_silabo`, `observaciones_revision`, `aprobaciones`, `envios_biblioteca` (I-165)
+y la memoria de IA `historial_ia` (I-135). I-120 eliminó `respuestas_observacion` y el estado `respondida`:
 el docente corrige y reenvía, y una observación está abierta o verificada.
-Desde I-131, `aprobaciones`, `reaperturas`, `solicitudes_correccion` y
-`artefactos_exportacion` no guardan `silabo_id`: el sílabo se obtiene de la revisión
-(`revision_silabo_id` o `revision_aprobada_id`). La unicidad por sílabo de las claves de
+Desde I-131, `aprobaciones` y `artefactos_exportacion` no guardan `silabo_id`: el sílabo se
+obtiene de la revisión (`revision_silabo_id`). La unicidad por sílabo de las claves de
 idempotencia de aprobaciones y reaperturas la verifica `validar_relaciones_flujo`.
 Desde I-136 no existe `transiciones_silabo`: los cambios de estado del sílabo se
 registran solo en `eventos_auditoria`, con `from_state`/`to_state` en los metadatos.
-Desde I-134, una solicitud de corrección envía todas las observaciones abiertas de su
-revisión (se exige al menos una); la migración `000102` eliminó
-`solicitud_correccion_observaciones` y la rama correspondiente de
-`validar_relaciones_flujo`; I-168 eliminó el trigger `validar_solicitud_correccion`, que
-quedó sin nada que validar. Las observaciones incluidas son las de
-`observaciones_revision` con el mismo `revision_silabo_id`. I-116 eliminó
+I-176 retiró `validaciones_silabo`, `resultados_validacion`, `solicitudes_correccion` y
+`reaperturas`. La validación se calcula al enviar o validar y no se guarda. La solicitud de
+corrección son columnas `correccion_*` de `revisiones_silabo` y la reapertura son columnas
+`*_reapertura`/`reabierta_*` de `aprobaciones`. Son de escritura única: pasan de NULL a un
+valor una vez, completas, y el trigger `proteger_registro_con_campos_unicos` mantiene
+inmutable el resto de la fila (ADR 0002). Desde I-134, una solicitud de corrección envía
+todas las observaciones abiertas de su revisión (se exige al menos una). Las observaciones
+incluidas son las de `observaciones_revision` con el mismo `revision_silabo_id`. I-116 eliminó
 `preferencias_ia_carrera`; I-168 retiró también la marca de IA por campo, que no se usaba.
 
 I-135 reemplazó las once tablas de IA por `historial_ia`, que guarda un mensaje JSONB

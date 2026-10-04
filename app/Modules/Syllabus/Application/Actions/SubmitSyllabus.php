@@ -52,7 +52,7 @@ class SubmitSyllabus
         }
 
         $validation = $this->validateDraft->execute($syllabus, $actor, $request);
-        if ($validation->errores_bloqueantes > 0) {
+        if ($validation->blockingErrors() > 0) {
             throw ValidationException::withMessages([
                 'validation' => 'Corrija los errores determinísticos antes de enviar.',
             ]);
@@ -76,17 +76,10 @@ class SubmitSyllabus
                 ->orderByDesc('numero_revision')
                 ->lockForUpdate()
                 ->first();
-            $reopening = $locked->estado === 'correccion_solicitada'
-                ? $locked->reopenings()
-                    ->whereNotIn('reaperturas.id', SyllabusRevision::query()->whereNotNull('reapertura_id')->select('reapertura_id'))
-                    ->latest('reabierto_en')
-                    ->first()
-                : null;
             $snapshot = $this->snapshots->build($locked);
             $revision = SyllabusRevision::query()->create([
                 'silabo_id' => $locked->id,
                 'revision_anterior_id' => $previous?->id,
-                'reapertura_id' => $reopening?->id,
                 'numero_revision' => $previous === null ? 1 : $previous->numero_revision + 1,
                 'clave_idempotencia' => $idempotencyKey,
                 'version_bloqueo_origen' => $locked->version_bloqueo,

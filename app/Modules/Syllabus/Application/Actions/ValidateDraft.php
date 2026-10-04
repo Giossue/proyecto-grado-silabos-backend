@@ -9,9 +9,8 @@ use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\DraftValidation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationResult;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ValidationRun;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -24,9 +23,9 @@ class ValidateDraft
         private readonly RecordAuditEvent $audit,
     ) {}
 
-    public function execute(Syllabus $syllabus, User $actor, Request $request): ValidationRun
+    public function execute(Syllabus $syllabus, User $actor, Request $request): DraftValidation
     {
-        return DB::transaction(function () use ($actor, $request, $syllabus): ValidationRun {
+        return DB::transaction(function () use ($actor, $request, $syllabus): DraftValidation {
             $locked = Syllabus::query()->lockForUpdate()->findOrFail($syllabus->id);
             $fields = FieldDefinition::query()
                 ->with('template')
@@ -54,25 +53,6 @@ class ValidateDraft
                 }
             }
 
-            $run = ValidationRun::query()->create([
-                'silabo_id' => $locked->id,
-                'ejecutado_por' => $actor->id,
-                'version_reglas' => self::RULE_VERSION,
-                'estado' => 'completada',
-                'version_bloqueo' => $locked->version_bloqueo,
-                'errores_bloqueantes' => count($issues),
-                'advertencias' => 0,
-                'completado_en' => now(),
-            ]);
-            foreach ($issues as $issue) {
-                ValidationResult::query()->create([
-                    'validacion_silabo_id' => $run->id,
-                    'definicion_campo_id' => $issue['field_id'],
-                    'codigo' => $issue['code'],
-                    'severidad' => $issue['severity'],
-                    'mensaje' => $issue['message'],
-                ]);
-            }
             $activeRole = $this->roles->resolve($request);
             $this->audit->execute(
                 actorId: $actor->id,
@@ -84,7 +64,7 @@ class ValidateDraft
                 metadata: ['rule_version' => self::RULE_VERSION, 'blocking_errors' => count($issues)],
             );
 
-            return $run->load('results');
+            return new DraftValidation($locked->version_bloqueo, $issues);
         });
     }
 

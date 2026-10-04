@@ -105,7 +105,7 @@ class SignatureWorkflow
     {
         $approval = Approval::query()->where('revision_silabo_id', $revision->id)->first();
 
-        return $approval === null || $approval->reopening()->exists();
+        return $approval === null || $approval->isReopened();
     }
 
     /**

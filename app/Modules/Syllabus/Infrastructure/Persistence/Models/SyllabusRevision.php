@@ -17,7 +17,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $id
  * @property string $silabo_id
  * @property string|null $revision_anterior_id
- * @property string|null $reapertura_id
  * @property int $numero_revision
  * @property string $clave_idempotencia
  * @property int $version_bloqueo_origen
@@ -25,6 +24,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $huella_sha256
  * @property string $enviado_por
  * @property CarbonImmutable $enviado_en
+ * @property string|null $correccion_justificacion
+ * @property string|null $correccion_etapa
+ * @property string|null $correccion_solicitada_por
+ * @property CarbonImmutable|null $correccion_solicitada_en
  * @property-read Syllabus $syllabus
  */
 class SyllabusRevision extends Model
@@ -46,10 +49,21 @@ class SyllabusRevision extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'silabo_id', 'revision_anterior_id', 'reapertura_id', 'numero_revision',
+        'silabo_id', 'revision_anterior_id', 'numero_revision',
         'clave_idempotencia', 'version_bloqueo_origen', 'fotografia', 'huella_sha256',
         'enviado_por', 'enviado_en',
+        'correccion_justificacion', 'correccion_etapa', 'correccion_solicitada_por', 'correccion_solicitada_en',
     ];
+
+    /**
+     * Solicitud de corrección: se registra una sola vez sobre la revisión; lo demás es inmutable.
+     *
+     * @return list<string>
+     */
+    public function writeOnceColumns(): array
+    {
+        return ['correccion_justificacion', 'correccion_etapa', 'correccion_solicitada_por', 'correccion_solicitada_en'];
+    }
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -59,6 +73,7 @@ class SyllabusRevision extends Model
             'version_bloqueo_origen' => 'integer',
             'fotografia' => 'array',
             'enviado_en' => 'immutable_datetime',
+            'correccion_solicitada_en' => 'immutable_datetime',
         ];
     }
 
@@ -72,12 +87,6 @@ class SyllabusRevision extends Model
     public function previousRevision(): BelongsTo
     {
         return $this->belongsTo(self::class, 'revision_anterior_id');
-    }
-
-    /** @return BelongsTo<Reopening, $this> */
-    public function reopening(): BelongsTo
-    {
-        return $this->belongsTo(Reopening::class, 'reapertura_id');
     }
 
     /** @return BelongsTo<User, $this> */
@@ -98,10 +107,15 @@ class SyllabusRevision extends Model
         return $this->hasOne(Approval::class, 'revision_silabo_id');
     }
 
-    /** @return HasOne<CorrectionRequest, $this> */
-    public function correctionRequest(): HasOne
+    /** @return BelongsTo<User, $this> */
+    public function correctionRequester(): BelongsTo
     {
-        return $this->hasOne(CorrectionRequest::class, 'revision_silabo_id');
+        return $this->belongsTo(User::class, 'correccion_solicitada_por');
+    }
+
+    public function hasCorrectionRequest(): bool
+    {
+        return $this->correccion_solicitada_en !== null;
     }
 
     /** @return HasOne<CoordinationReview, $this> */

@@ -17,7 +17,6 @@ use App\Modules\Library\Presentation\Http\Requests\ViewLibraryReviewsRequest;
 use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
 use App\Modules\Syllabus\Application\BibliographySections;
 use App\Modules\Syllabus\Application\ReviewStage;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\CorrectionRequest;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Http\JsonResponse;
@@ -111,17 +110,17 @@ class LibraryReviewController extends Controller
     /** @return list<array{comment: string, commented_at: string, commented_by: string, revision_number: int}> */
     public static function comments(Syllabus $syllabus): array
     {
-        return array_values(CorrectionRequest::query()
-            ->where('etapa_solicitud', ReviewStage::LIBRARY)
-            ->whereHas('revision', fn ($query) => $query->where('silabo_id', $syllabus->id))
-            ->with(['requester:id,nombre', 'revision:id,numero_revision'])
-            ->latest('solicitado_en')
+        return array_values(SyllabusRevision::query()
+            ->where('silabo_id', $syllabus->id)
+            ->where('correccion_etapa', ReviewStage::LIBRARY)
+            ->with('correctionRequester:id,nombre')
+            ->latest('correccion_solicitada_en')
             ->get()
-            ->map(fn (CorrectionRequest $correction): array => [
-                'comment' => $correction->justificacion,
-                'commented_at' => $correction->solicitado_en->toIso8601String(),
-                'commented_by' => $correction->requester->nombre,
-                'revision_number' => $correction->revision->numero_revision,
+            ->map(fn (SyllabusRevision $revision): array => [
+                'comment' => (string) $revision->correccion_justificacion,
+                'commented_at' => $revision->correccion_solicitada_en?->toIso8601String() ?? '',
+                'commented_by' => $revision->correctionRequester->nombre,
+                'revision_number' => $revision->numero_revision,
             ])
             ->all());
     }

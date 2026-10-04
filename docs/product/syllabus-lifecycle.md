@@ -26,10 +26,10 @@ mutable el documento aprobado.
 | Sin iniciar | Crear borrador | Docente asignado/sistema | Borrador | Fija plantilla y contexto académico. |
 | Borrador | Enviar | Docente autorizado | En revisión (etapa biblioteca) | Valida, crea revisión inmutable, abre el envío a biblioteca y audita. |
 | En revisión · biblioteca | Aprobar bibliografía | Bibliotecario | En revisión (etapa coordinación) | Marca `verificado_por/en` en `envios_biblioteca`; avisa a coordinación. |
-| En revisión · biblioteca | Comentar | Bibliotecario | Corrección solicitada | `solicitudes_correccion` con `etapa_solicitud = 'biblioteca'`; todo el sílabo es editable. |
-| En revisión · coordinación | Observar / solicitar corrección | Coordinador de alcance | Corrección solicitada | Exige observaciones abiertas; `etapa_solicitud = 'coordinacion'`. |
+| En revisión · biblioteca | Comentar | Bibliotecario | Corrección solicitada | columnas `correccion_*` de la revisión con `correccion_etapa = 'biblioteca'`; todo el sílabo es editable. |
+| En revisión · coordinación | Observar / solicitar corrección | Coordinador de alcance | Corrección solicitada | Exige observaciones abiertas; `correccion_etapa = 'coordinacion'`. |
 | En revisión · coordinación | Aprobar | Coordinador de alcance | En revisión (etapa decanato) | Crea `revisiones_coordinacion` (una por revisión, inmutable); da por resueltas las observaciones; avisa al decano. |
-| En revisión · decanato | Solicitar corrección | Decano de la facultad | Corrección solicitada | `etapa_solicitud = 'decanato'`, con justificación. |
+| En revisión · decanato | Solicitar corrección | Decano de la facultad | Corrección solicitada | `correccion_etapa = 'decanato'`, con justificación. |
 | En revisión · decanato | Aprobar | Decano de la facultad | Aprobado | Fija `aprobaciones` sobre la revisión inmutable y solicita el PDF. |
 | Corrección solicitada | Reenviar | Docente autorizado | En revisión (etapa biblioteca) | Crea nueva revisión; la cadena vuelve a empezar por biblioteca. |
 | Aprobado | Reabrir | Coordinador o decano | Corrección solicitada | Registra causa (`origen_reapertura` coordinación o decanato), restaura la fotografía y anula PDF y firmas. |

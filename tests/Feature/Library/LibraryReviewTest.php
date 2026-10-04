@@ -103,7 +103,7 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
             'comment' => 'No tenemos «Clean Architecture»; proponga otra edición.', 'idempotency_key' => (string) Str::uuid(),
         ])->assertCreated();
-        $this->assertDatabaseHas('solicitudes_correccion', ['revision_silabo_id' => $revision->id, 'etapa_solicitud' => 'biblioteca']);
+        $this->assertDatabaseHas('revisiones_silabo', ['id' => $revision->id, 'correccion_etapa' => 'biblioteca']);
         $this->assertNotified($this->people['teacher'][0]->id, 'silabo.correccion_solicitada', 'volverá a biblioteca');
         $this->assertSame('correccion_solicitada', $syllabus->fresh()->estado);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertJsonPath('reviews.data.0.state', 'comentado');
