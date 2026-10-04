@@ -83,7 +83,7 @@
   crear la nueva.
 - La navegación del Coordinador concentra Materias dentro de **Malla**. La ruta abre el
   agregado actual directamente o muestra su estado vacío; no usa buscador, filtros,
-  cards, paginación, publicación ni número de versión. **Materias y paralelos** conserva
+  cards, paginación, publicación ni número de versión. **Materias y asignaciones** conserva
   una ruta separada.
 - Estructura, mallas, materias y programaciones usan identificadores estables. La posición de una
   materia se presenta como ciclo; el periodo académico conserva sus fechas.

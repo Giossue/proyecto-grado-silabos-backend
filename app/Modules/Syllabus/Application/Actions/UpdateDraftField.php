@@ -7,7 +7,6 @@ use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\BibliographyCorrection;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -35,9 +34,6 @@ class UpdateDraftField
             }
             if ($field->heredado || ! $field->editable_docente || $field->tipo === 'calculo') {
                 throw ValidationException::withMessages(['field' => 'Este campo lo llena el sistema; el docente no puede cambiarlo.']);
-            }
-            if (BibliographyCorrection::requested($locked) && ! BibliographyCorrection::includes($field)) {
-                throw ValidationException::withMessages(['field' => 'Biblioteca solo pidió corregir la bibliografía; el resto del sílabo ya está aprobado.']);
             }
 
             FieldValue::query()->updateOrCreate([

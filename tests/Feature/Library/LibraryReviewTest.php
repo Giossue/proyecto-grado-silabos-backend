@@ -12,11 +12,9 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\BibliographyCorrection;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,7 +44,7 @@ class LibraryReviewTest extends TestCase
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
         $this->configureFacultyLogos();
-        foreach (['admin' => 'admin', 'coordinator' => 'coordinador', 'teacher' => 'docente', 'librarian' => 'bibliotecario'] as $key => $mail) {
+        foreach (['admin' => 'admin', 'coordinator' => 'coordinador', 'teacher' => 'docente', 'librarian' => 'bibliotecario', 'dean' => 'decano'] as $key => $mail) {
             $user = User::query()->where('correo_electronico', "{$mail}@silabos.test")->firstOrFail();
             $this->people[$key] = [$user, $user->roleAssignments()->firstOrFail()];
         }
@@ -77,10 +75,10 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.teacher.syllabi.index'))->assertForbidden();
     }
 
-    public function test_biblioteca_comenta_y_el_docente_corrige_solo_la_bibliografia(): void
+    public function test_biblioteca_revisa_primero_y_devuelve_al_docente_que_reenvia(): void
     {
-        [$syllabus, $revision] = $this->approvedRevision();
-        $this->as('teacher')->postJson(route('api.v1.library.submission.store', $revision))->assertCreated();
+        [$syllabus, $revision] = $this->submittedRevision();
+        $this->assertNotified($this->people['librarian'][0]->id, 'silabo.enviado', 'biblioteca revisa primero');
 
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'pendiente']))
             ->assertOk()
@@ -91,102 +89,83 @@ class LibraryReviewTest extends TestCase
         $detail = $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
             ->assertOk()
             ->assertJsonPath('review.can_comment', true)
+            ->assertJsonPath('review.can_verify', true)
             ->assertJsonPath('review.sections.0.key', 'bibliografia')
             ->assertJsonCount(1, 'review.sections');
         $this->assertNotEmpty($detail->json('review.template_variables'));
+        // Coordinación y decanato esperan su turno.
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])
+            ->assertJsonValidationErrors('revision');
 
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
             'comment' => '', 'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('comment');
-        $key = (string) Str::uuid();
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
-            'comment' => 'No tenemos «Clean Architecture»; proponga otra edición.', 'idempotency_key' => $key,
+            'comment' => 'No tenemos «Clean Architecture»; proponga otra edición.', 'idempotency_key' => (string) Str::uuid(),
         ])->assertCreated();
-        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
-            'comment' => 'No tenemos «Clean Architecture»; proponga otra edición.', 'idempotency_key' => $key,
-        ])->assertCreated();
-        $this->assertDatabaseCount('reaperturas', 1);
-        $this->assertDatabaseHas('reaperturas', ['origen_reapertura' => 'biblioteca', 'reabierto_por' => $this->people['librarian'][0]->id]);
-        $this->assertNotified($this->people['teacher'][0]->id, 'biblioteca.comentado', 'Corríjala y reenvíela');
+        $this->assertDatabaseHas('solicitudes_correccion', ['revision_silabo_id' => $revision->id, 'etapa_solicitud' => 'biblioteca']);
+        $this->assertNotified($this->people['teacher'][0]->id, 'silabo.correccion_solicitada', 'volverá a biblioteca');
         $this->assertSame('correccion_solicitada', $syllabus->fresh()->estado);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertJsonPath('reviews.data.0.state', 'comentado');
-        $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))->assertJsonPath('state', 'anulado');
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertJsonPath('review.can_comment', false)
+            ->assertJsonPath('review.comments.0.comment', 'No tenemos «Clean Architecture»; proponga otra edición.');
 
-        $this->as('admin')->postJson(route('api.v1.admin.processes.transition', [SyllabusProcess::query()->firstOrFail(), 'cerrar']))->assertSuccessful();
-        $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
-            ->assertOk()
-            ->assertJsonPath('syllabus.library_correction', true)
-            ->assertJsonPath('syllabus.editable', true)
-            ->assertJsonPath('syllabus.reopening.origin', 'biblioteca')
-            ->assertJsonPath('syllabus.library_comments.0.comment', 'No tenemos «Clean Architecture»; proponga otra edición.');
-
-        $bibliography = $this->field('bibliografia');
-        $other = FieldDefinition::query()->where('editable_docente', true)->where('heredado', false)->get()
-            ->first(fn (FieldDefinition $field): bool => ! BibliographyCorrection::includes($field) && $field->tipo === 'texto_libre');
-        $this->assertNotNull($other);
+        // El docente corrige lo que haga falta (no solo la bibliografía) y reenvía: vuelve a biblioteca.
+        $other = FieldDefinition::query()->where('editable_docente', true)->where('heredado', false)->where('tipo', 'texto_libre')
+            ->where('clave', '!=', 'bibliografia')->firstOrFail();
         $this->as('teacher')->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $other]), [
-            'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue('Cambio no pedido'),
-        ])->assertJsonValidationErrors('field');
-        $this->as('teacher')->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $bibliography]), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue('Ajuste general'),
+        ])->assertOk();
+        $this->as('teacher')->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $this->field('bibliografia')]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue('Martin, R. Arquitectura limpia (2.ª ed.).'),
         ])->assertOk();
-
         $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
         $corrected = SyllabusRevision::query()->where('silabo_id', $syllabus->id)->orderByDesc('numero_revision')->firstOrFail();
         $this->assertSame(2, $corrected->numero_revision);
-        $this->assertSame('aprobado', $syllabus->fresh()->estado);
-        $approval = Approval::query()->where('revision_silabo_id', $corrected->id)->firstOrFail();
-        $base = Approval::query()->where('revision_silabo_id', $revision->id)->firstOrFail();
-        $this->assertSame($base->id, $approval->aprobacion_anterior_id);
-        $this->assertSame($base->aprobado_por, $approval->aprobado_por);
-        $this->assertNotified($this->people['coordinator'][0]->id, 'silabo.bibliografia_corregida');
-
-        $before = $revision->fotografia;
-        $after = $corrected->fotografia;
-        $this->assertNotSame(BibliographyCorrection::sections($before), BibliographyCorrection::sections($after));
-        $strip = fn (array $snapshot): array => array_values(array_filter($snapshot['sections'], fn (array $section): bool => $section['key'] !== 'bibliografia'));
-        $this->assertSame($strip($before), $strip($after));
-        $this->assertSame($before['template_variables'], $after['template_variables']);
-        $this->assertStringContainsString('Arquitectura limpia', json_encode(BibliographyCorrection::sections($after), JSON_UNESCAPED_UNICODE));
-
-        $this->as('teacher')->getJson(route('api.v1.signature.show', $corrected))->assertJsonPath('state', 'pendiente_envio_biblioteca');
-        $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
-            ->assertJsonPath('syllabus.library_correction', false)
-            ->assertJsonPath('syllabus.approved_revision_id', $corrected->id);
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $corrected->id, 'verificado_en' => null]);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'pendiente']))
+            ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $corrected->id);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'anulado']))->assertJsonPath('reviews.total', 0);
+        $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertJsonPath('syllabus.review_stage', 'biblioteca');
     }
 
-    public function test_biblioteca_aprueba_antes_de_las_firmas_y_firma_al_final(): void
+    public function test_biblioteca_aprueba_primero_y_firma_despues_de_docente_y_coordinacion(): void
     {
-        [, $revision] = $this->approvedRevision();
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertNotFound();
-        $this->as('librarian')->getJson(route('api.v1.signature.show', $revision))->assertForbidden();
-        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))->assertForbidden();
-
-        $this->as('teacher')->postJson(route('api.v1.library.submission.store', $revision))->assertCreated();
-        $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))
-            ->assertJsonPath('state', 'pendiente_verificacion_biblioteca')
-            ->assertJsonPath('can_send_to_library', false);
-        $this->exportPdf($revision);
-        $original = $this->as('teacher')->get(route('api.v1.signature.pdf', $revision))->assertOk()->streamedContent();
-        $teacherSigned = $this->signPdfIncrementally($original, $this->makeSigningCertificate('DOCENTE DE PRUEBA'));
-        $this->upload($revision, $teacherSigned, $original, 'teacher')
-            ->assertJsonValidationErrors(['signed_pdf' => 'Primero biblioteca debe aprobar la bibliografía.']);
-
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
-            ->assertOk()->assertJsonPath('review.can_verify', true)->assertJsonPath('review.state', 'pendiente');
+        [$syllabus, $revision] = $this->submittedRevision();
         $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
         $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
-        $this->assertNotified($this->people['teacher'][0]->id, 'biblioteca.verificado', 'Genere el PDF');
+        $this->assertNotified($this->people['coordinator'][0]->id, 'biblioteca.verificado', 'Pasa a revisión de coordinación');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
-            ->assertJsonPath('review.state', 'por_firmar')
+            ->assertJsonPath('review.state', 'aprobado')
             ->assertJsonPath('review.can_comment', false)
             ->assertJsonPath('review.verified_by', $this->people['librarian'][0]->nombre);
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
             'comment' => 'Tarde', 'idempotency_key' => (string) Str::uuid(),
-        ])->assertJsonValidationErrors('comment');
+        ])->assertJsonValidationErrors('revision');
+        $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertJsonPath('syllabus.review_stage', 'coordinacion');
 
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
+        $this->assertNotified($this->people['dean'][0]->id, 'silabo.revisado_coordinacion', 'Espera la aprobación del decanato');
+        $this->as('dean')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()
+            ->assertJsonPath('syllabi.data.0.stage', 'decanato');
+        Queue::fake([GenerateSyllabusExportJob::class]);
+        $this->as('dean')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
+        $this->assertSame('aprobado', $syllabus->fresh()->estado);
+        $this->assertSame($this->people['dean'][0]->id, Approval::query()->firstOrFail()->aprobado_por);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertJsonPath('review.state', 'por_firmar');
+
+        // El PDF se solicitó solo al aprobar el decanato; aquí se genera.
+        (new GenerateSyllabusExportJob(ExportArtifact::query()->latest('solicitado_en')->firstOrFail()->id))->handle(
+            app(DocumentRenderer::class),
+            app(RecordAuditEvent::class),
+            app(DocumentBundleValidator::class),
+        );
+        $original = $this->as('teacher')->get(route('api.v1.signature.pdf', $revision))->assertOk()->streamedContent();
+        $teacherSigned = $this->signPdfIncrementally($original, $this->makeSigningCertificate('DOCENTE DE PRUEBA'));
         $this->upload($revision, $teacherSigned, $original, 'teacher')->assertCreated();
         $coordinationSigned = $this->signPdfIncrementally($teacherSigned, $this->makeSigningCertificate('COORDINACION DE PRUEBA'));
         $this->upload($revision, $coordinationSigned, $teacherSigned, 'coordinator')->assertCreated();
@@ -194,11 +173,13 @@ class LibraryReviewTest extends TestCase
         $librarySigned = $this->signPdfIncrementally($coordinationSigned, $this->makeSigningCertificate('BIBLIOTECA DE PRUEBA'));
         $this->upload($revision, $librarySigned, $coordinationSigned, 'librarian')->assertCreated();
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'firmado']))->assertJsonPath('reviews.total', 1);
-        $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))->assertJsonPath('state', 'firmado')->assertJsonCount(3, 'signatures');
+        $deanSigned = $this->signPdfIncrementally($librarySigned, $this->makeSigningCertificate('DECANATO DE PRUEBA'));
+        $this->upload($revision, $deanSigned, $librarySigned, 'dean')->assertCreated();
+        $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))->assertJsonPath('state', 'firmado')->assertJsonCount(4, 'signatures');
     }
 
     /** @return array{Syllabus, SyllabusRevision} */
-    private function approvedRevision(): array
+    private function submittedRevision(): array
     {
         $this->as('admin')->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-165']);
         $template = SyllabusTemplate::query()->firstOrFail();
@@ -219,24 +200,8 @@ class LibraryReviewTest extends TestCase
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
         $revision = SyllabusRevision::query()->firstOrFail();
-        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), [
-            'idempotency_key' => (string) Str::uuid(),
-        ])->assertSuccessful();
 
         return [$syllabus->fresh(), $revision->fresh()];
-    }
-
-    private function exportPdf(SyllabusRevision $revision): void
-    {
-        Queue::fake([GenerateSyllabusExportJob::class]);
-        $this->as('teacher')->postJson(route('api.v1.documents.store', $revision), [
-            'idempotency_key' => (string) Str::uuid(),
-        ])->assertSuccessful();
-        (new GenerateSyllabusExportJob(ExportArtifact::query()->latest('solicitado_en')->firstOrFail()->id))->handle(
-            app(DocumentRenderer::class),
-            app(RecordAuditEvent::class),
-            app(DocumentBundleValidator::class),
-        );
     }
 
     private function upload(SyllabusRevision $revision, string $pdf, string $base, string $as): TestResponse

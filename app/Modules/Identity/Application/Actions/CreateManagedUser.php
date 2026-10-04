@@ -20,7 +20,7 @@ class CreateManagedUser
         private readonly IssueActivationInvitation $invitations,
     ) {}
 
-    /** @param array{nombre: string, correo_electronico: string, role_code: string, career_id?: string|null} $data */
+    /** @param array{nombre: string, correo_electronico: string, role_code: string, career_id?: string|null, faculty_id?: string|null} $data */
     public function execute(array $data, User $actor, Request $request): User
     {
         $activeRole = $this->roles->resolve($request);

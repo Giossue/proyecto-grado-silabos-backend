@@ -25,9 +25,15 @@ class CreateManagedUserRequest extends FormRequest
             'role_code' => ['required', Rule::enum(RoleCode::class)],
             'career_id' => [
                 'nullable',
-                'required_unless:role_code,'.RoleCode::Administrator->value.','.RoleCode::Librarian->value,
+                'required_unless:role_code,'.RoleCode::Administrator->value.','.RoleCode::Librarian->value.','.RoleCode::Dean->value,
                 'uuid',
                 Rule::exists('carreras', 'id')->where('carrera_activa', true),
+            ],
+            'faculty_id' => [
+                'nullable',
+                'required_if:role_code,'.RoleCode::Dean->value,
+                'uuid',
+                Rule::exists('facultades', 'id')->where('facultad_activa', true),
             ],
         ];
     }
@@ -38,6 +44,7 @@ class CreateManagedUserRequest extends FormRequest
         return [
             'correo_electronico.unique' => 'Ya existe una cuenta con este correo.',
             'career_id.required_unless' => 'Seleccione la carrera que limita este rol.',
+            'faculty_id.required_if' => 'Seleccione la facultad del decano.',
         ];
     }
 }

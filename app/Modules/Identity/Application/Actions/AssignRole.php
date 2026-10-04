@@ -21,7 +21,7 @@ class AssignRole
         private readonly ScheduleInternalNotification $notifications,
     ) {}
 
-    /** @param array{role_code: string, career_id?: string|null} $data */
+    /** @param array{role_code: string, career_id?: string|null, faculty_id?: string|null} $data */
     public function execute(User $target, array $data, User $actor, Request $request, bool $notify = true): RoleAssignment
     {
         $activeRole = $this->roles->resolve($request);
@@ -52,6 +52,21 @@ class AssignRole
             }
 
             $careerId = $role->hasCareerScope() ? ($data['career_id'] ?? null) : null;
+            $facultyId = $role->hasFacultyScope() ? ($data['faculty_id'] ?? null) : null;
+            if ($role === RoleCode::Dean) {
+                $alreadyDean = RoleAssignment::query()
+                    ->effective()
+                    ->where('facultad_id', $facultyId)
+                    ->where('usuario_id', '!=', $target->id)
+                    ->whereHas('user', fn ($query) => $query->where('activo', true))
+                    ->where('rol', RoleCode::Dean->value)
+                    ->exists();
+                if ($alreadyDean) {
+                    throw ValidationException::withMessages([
+                        'role_code' => 'La facultad ya tiene un decano activo.',
+                    ]);
+                }
+            }
             if ($data['role_code'] === RoleCode::Coordinator->value) {
                 $alreadyCoordinated = RoleAssignment::query()
                     ->effective()
@@ -71,6 +86,7 @@ class AssignRole
                     'usuario_id' => $target->id,
                     'rol' => $role->value,
                     'carrera_id' => $careerId,
+                    'facultad_id' => $facultyId,
                 ],
                 [
                     'activo' => true,

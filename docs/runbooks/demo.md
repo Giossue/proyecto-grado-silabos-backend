@@ -109,7 +109,7 @@ Las cuentas creadas por el seeder usan exclusivamente datos sintéticos:
    `Sistemas Distribuidos`, ciclo 7, cuatro créditos y 160 horas. Revise y edite la misma
    materia en **Constructor visual**; confirme que ambas vistas trabajan sobre la misma
    malla.
-3. En **Materias y paralelos**, prepare `SW-701` para el periodo académico. El campus se
+3. En **Materias y asignaciones**, prepare `SW-701` para el periodo académico. El campus se
    hereda de la facultad y la modalidad de la carrera; desde **Paralelos**, cree el
    paralelo `A`. En
    **Asignación docente**, asigne

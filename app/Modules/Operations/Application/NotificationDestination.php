@@ -21,7 +21,9 @@ use Illuminate\Support\Collection;
  */
 final class NotificationDestination
 {
-    private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'coordinacion.asignada'];
+    private const COORDINATION_EVENTS = ['biblioteca.verificado', 'silabo.firmado_docente', 'coordinacion.asignada'];
+
+    private const DEANERY_EVENTS = ['silabo.revisado_coordinacion', 'silabo.firmado_biblioteca'];
 
     /**
      * Avisos solo informativos (I-163): no piden hacer nada, así que no llevan enlace.
@@ -33,10 +35,9 @@ final class NotificationDestination
         'proceso.pausado',
         'proceso.cerrado',
         'convocatoria.pausada',
-        'silabo.bibliografia_corregida',
     ];
 
-    private const LIBRARY_EVENTS = ['biblioteca.enviado', 'silabo.firmado_coordinacion'];
+    private const LIBRARY_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'silabo.firmado_coordinacion'];
 
     public function __construct(
         private readonly ActiveRole $roles,
@@ -79,6 +80,7 @@ final class NotificationDestination
             RoleCode::Coordinator->value => 'Coordinación'.($career !== null ? " · {$career}" : ''),
             RoleCode::Teacher->value => 'Docencia'.($career !== null ? " · {$career}" : ''),
             RoleCode::Librarian->value => 'Biblioteca',
+            RoleCode::Dean->value => 'Decanato'.($assignment->faculty?->nombre !== null ? " · {$assignment->faculty->nombre}" : ''),
             default => 'Administración',
         };
     }
@@ -132,6 +134,9 @@ final class NotificationDestination
         $revision = $this->syllabi->latestRevisionId($syllabusId);
         if (in_array($notification->tipo, self::LIBRARY_EVENTS, true)) {
             return $this->withRole($eligible, RoleCode::Librarian, null, $revision !== null ? "/biblioteca/revisiones/{$revision}" : '/biblioteca/revisiones');
+        }
+        if (in_array($notification->tipo, self::DEANERY_EVENTS, true)) {
+            return $this->withRole($eligible, RoleCode::Dean, null, $revision !== null ? "/decanato/revisiones/{$revision}" : '/decanato/revisiones');
         }
         $teacher = $this->teacherOptions($syllabusId, $user, $eligible, "/docente/mis-silabos/{$syllabusId}");
         $coordinator = $this->withRole(

@@ -8,11 +8,14 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Application\Actions\AddReviewObservation;
 use App\Modules\Syllabus\Application\Actions\ApproveSyllabus;
 use App\Modules\Syllabus\Application\Actions\ReopenSyllabus;
 use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
 use App\Modules\Syllabus\Application\Actions\ResetSyllabus;
+use App\Modules\Syllabus\Application\Actions\ReviewByCoordination;
+use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\RevisionDiff;
 use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -37,14 +40,20 @@ class ReviewController extends Controller
         $state = $request->string('state')->toString();
         $search = trim($request->string('search')->toString());
 
+        // I-173: coordinación ve su carrera; decanato, todas las carreras de su facultad.
         $query = Syllabus::query()
-            ->whereHas('convocation', fn ($convocation) => $convocation->where('carrera_id', $activeRole?->carrera_id))
+            ->when(
+                $activeRole?->role->codigo_rol === RoleCode::Dean->value,
+                fn ($syllabi) => $syllabi->whereHas('convocation.career', fn ($career) => $career->where('facultad_id', $activeRole?->facultad_id)),
+                fn ($syllabi) => $syllabi->whereHas('convocation', fn ($convocation) => $convocation->where('carrera_id', $activeRole?->carrera_id)),
+            )
             ->whereHas('revisions')
             ->with([
                 'convocation.process.academicPeriod:id,codigo',
                 'parallel.scheduledSubject.subject:id,nombre,codigo_asignatura',
                 'teachers:id,nombre',
                 'revisions' => fn ($revision) => $revision
+                    ->with(['librarySubmission', 'coordinationReview', 'approval'])
                     ->orderByDesc('numero_revision')
                     ->limit(1),
             ])
@@ -75,6 +84,7 @@ class ReviewController extends Controller
                         'code' => $syllabus->academicSubjectCode(),
                         'period' => $syllabus->convocation->process->academicPeriod->codigo,
                         'state' => $syllabus->estado,
+                        'stage' => $syllabus->estado === 'en_revision' && $revision !== null ? self::stageOf($revision) : null,
                         'teachers' => $syllabus->teachers->pluck('nombre')->values(),
                         'unresolved_observations' => (int) $syllabus->unresolved_observations_count,
                         'submitted_at' => $revision?->enviado_en->toIso8601String(),
@@ -134,21 +144,29 @@ class ReviewController extends Controller
         return response()->json(['message' => $message]);
     }
 
+    /** Coordinación aprueba y pasa al decanato; el decanato aprueba y fija la revisión (I-173). */
     public function approve(
         SyllabusRevision $revision,
         ApproveSyllabusRequest $request,
-        ApproveSyllabus $action,
+        ApproveSyllabus $approve,
+        ReviewByCoordination $reviewByCoordination,
+        ActiveRole $roles,
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute(
+        if ($roles->hasRole($request, RoleCode::Coordinator)) {
+            $reviewByCoordination->execute($revision, $actor, $request);
+
+            return response()->json(['message' => "Revisión {$revision->numero_revision} aprobada por coordinación; pasa al decanato."]);
+        }
+        $approve->execute(
             $revision,
             $request->string('idempotency_key')->toString(),
             $actor,
             $request,
         );
 
-        $message = "Revisión {$revision->numero_revision} aprobada y fijada.";
+        $message = "Revisión {$revision->numero_revision} aprobada y fijada. Se está generando el PDF para las firmas.";
 
         return response()->json(['message' => $message]);
     }
@@ -207,19 +225,26 @@ class ReviewController extends Controller
     {
         $revision->load([
             'submitter:id,nombre',
+            'librarySubmission',
+            'coordinationReview',
             'syllabus.parallel.scheduledSubject.subject',
             'syllabus.convocation.process.academicPeriod',
             'syllabus.teachers:id,nombre',
             'syllabus.revisions.submitter:id,nombre',
             'syllabus.revisions.observations.creator:id,nombre',
-            'syllabus.revisions.correctionRequest',
+            'syllabus.revisions.correctionRequest.requester:id,nombre',
             'syllabus.revisions.approval.approver:id,nombre',
+            'syllabus.revisions.librarySubmission.verifier:id,nombre',
+            'syllabus.revisions.coordinationReview.reviewer:id,nombre',
             'syllabus.reopenings.reopener:id,nombre',
         ]);
         $syllabus = $revision->syllabus;
         $latest = $syllabus->revisions->sortByDesc('numero_revision')->first();
         $latestReopening = $syllabus->reopenings->sortByDesc('reabierto_en')->first();
         $decisionsAllowed = SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation->estado);
+        $activeRole = app(ActiveRole::class)->resolve(request());
+        $myStage = $activeRole === null ? null : ReviewStage::forRole($activeRole->role->codigo_rol);
+        $stage = $syllabus->estado === 'en_revision' && $latest?->id === $revision->id ? self::stageOf($revision) : null;
         $documentMapping = is_array($revision->fotografia['document_mapping'] ?? null)
             ? $revision->fotografia['document_mapping']
             : [];
@@ -231,8 +256,14 @@ class ReviewController extends Controller
                 'code' => $syllabus->academicSubjectCode(),
                 'period' => $syllabus->convocation->process->academicPeriod->codigo,
                 'state' => $syllabus->estado,
+                'stage' => $stage,
                 'teachers' => $syllabus->teachers->pluck('nombre')->values(),
             ],
+            'my_stage' => $myStage,
+            // Solo el revisor de la etapa vigente decide; los demás consultan.
+            'can_decide' => $decisionsAllowed && $stage !== null && $stage === $myStage,
+            'can_reopen' => $decisionsAllowed && $syllabus->estado === 'aprobado'
+                && in_array($myStage, [ReviewStage::COORDINATION, ReviewStage::DEANERY], true),
             'presentation' => [
                 'appearance' => TemplateAppearance::fromMapping($documentMapping),
                 'title' => TemplateTitleBlock::fromMapping($documentMapping)['text'],
@@ -254,16 +285,23 @@ class ReviewController extends Controller
                 'number' => $item->numero_revision,
                 'submitted_at' => $item->enviado_en->toIso8601String(),
                 'submitted_by' => $item->submitter->nombre,
+                'library_verified_at' => $item->librarySubmission?->verificado_en?->toIso8601String(),
+                'library_verified_by' => $item->librarySubmission?->verifier?->nombre,
+                'coordination_reviewed_at' => $item->coordinationReview?->revisado_en->toIso8601String(),
+                'coordination_reviewed_by' => $item->coordinationReview?->reviewer->nombre,
                 'approved_at' => $item->approval?->aprobado_en->toIso8601String(),
+                'approved_by' => $item->approval?->approver->nombre,
             ])->values(),
             'observations' => $this->reviewObservationsPayload($syllabus),
             'correction_request' => $revision->correctionRequest === null ? null : [
                 'justification' => $revision->correctionRequest->justificacion,
+                'stage' => $revision->correctionRequest->etapa_solicitud,
+                'requested_by' => $revision->correctionRequest->requester->nombre,
                 'requested_at' => $revision->correctionRequest->solicitado_en->toIso8601String(),
             ],
             'decisions_allowed' => $decisionsAllowed,
             'reset' => [
-                'allowed' => $decisionsAllowed && in_array($syllabus->estado, ResetSyllabus::RESETTABLE_STATES, true),
+                'allowed' => $decisionsAllowed && $myStage === ReviewStage::COORDINATION && in_array($syllabus->estado, ResetSyllabus::RESETTABLE_STATES, true),
             ],
             'reopening' => $latestReopening === null ? null : [
                 'cause' => $latestReopening->causa,
@@ -272,6 +310,16 @@ class ReviewController extends Controller
                 'origin' => $latestReopening->origen_reapertura,
             ],
         ];
+    }
+
+    /** Etapa a partir de las relaciones ya cargadas de la revisión. */
+    private static function stageOf(SyllabusRevision $revision): string
+    {
+        return match (true) {
+            $revision->coordinationReview !== null => ReviewStage::DEANERY,
+            $revision->librarySubmission?->verificado_en !== null => ReviewStage::COORDINATION,
+            default => ReviewStage::LIBRARY,
+        };
     }
 
     /** @return list<array<string, mixed>> */

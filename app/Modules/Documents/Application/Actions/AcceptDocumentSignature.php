@@ -51,12 +51,6 @@ class AcceptDocumentSignature
                 if ($state === SignatureWorkflow::STATE_VOIDED) {
                     $this->fail('El sílabo fue reabierto: esta revisión ya no se firma. Firme la nueva revisión cuando se apruebe.');
                 }
-                if ($state === SignatureWorkflow::STATE_PENDING_LIBRARY_SUBMISSION) {
-                    $this->fail('Primero el docente debe enviar el sílabo a biblioteca.');
-                }
-                if ($state === SignatureWorkflow::STATE_PENDING_LIBRARY_REVIEW) {
-                    $this->fail('Primero biblioteca debe aprobar la bibliografía.');
-                }
                 if ($artifact === null) {
                     $this->fail('Primero genere el PDF de la revisión aprobada.');
                 }
@@ -128,10 +122,11 @@ class AcceptDocumentSignature
                 [$eventType, $recipientIds] = match ($role) {
                     DocumentSignature::ROLE_TEACHER => ['silabo.firmado_docente', $this->recipients->coordinatorsFor($syllabus)],
                     DocumentSignature::ROLE_COORDINATION => ['silabo.firmado_coordinacion', $this->recipients->librarians()],
-                    default => ['silabo.firmado', [
+                    DocumentSignature::ROLE_LIBRARY => ['silabo.firmado_biblioteca', $this->recipients->deansFor($syllabus)],
+                    default => ['silabo.firmado', array_values(array_unique([
                         ...$this->recipients->teachersFor($syllabus),
                         ...$this->recipients->coordinatorsFor($syllabus),
-                    ]],
+                    ]))],
                 };
                 $this->notifications->execute(
                     syllabus: $syllabus,
@@ -153,12 +148,19 @@ class AcceptDocumentSignature
 
     private function outOfTurn(string $expected, string $role): string
     {
-        return match (true) {
-            $expected === DocumentSignature::ROLE_TEACHER => 'Primero debe firmar el docente.',
-            $expected === DocumentSignature::ROLE_COORDINATION && $role === DocumentSignature::ROLE_LIBRARY => 'Primero debe firmar la coordinación.',
-            $expected === DocumentSignature::ROLE_COORDINATION => 'Su firma ya está registrada; ahora firma la coordinación.',
-            default => 'Su firma ya está registrada; ahora firma biblioteca.',
-        };
+        $expectedIndex = (int) array_search($expected, DocumentSignature::ORDER, true);
+        $roleIndex = (int) array_search($role, DocumentSignature::ORDER, true);
+        $names = [
+            DocumentSignature::ROLE_TEACHER => 'el docente',
+            DocumentSignature::ROLE_COORDINATION => 'la coordinación',
+            DocumentSignature::ROLE_LIBRARY => 'biblioteca',
+            DocumentSignature::ROLE_DEANERY => 'el decanato',
+        ];
+
+        // Quien llega antes de su turno espera; quien ya firmó ve a quién le toca ahora.
+        return $roleIndex > $expectedIndex
+            ? "Primero debe firmar {$names[$expected]}."
+            : "Su firma ya está registrada; ahora firma {$names[$expected]}.";
     }
 
     private function fail(string $message): never

@@ -32,6 +32,8 @@ class Reopening extends Model
 
     public const ORIGIN_LIBRARY = 'biblioteca';
 
+    public const ORIGIN_DEANERY = 'decanato';
+
     public $timestamps = false;
 
     protected $table = 'reaperturas';

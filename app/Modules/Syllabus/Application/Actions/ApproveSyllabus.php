@@ -3,10 +3,12 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Documents\Application\Actions\RequestSyllabusExport;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
+use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -24,6 +26,7 @@ class ApproveSyllabus
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
+        private readonly RequestSyllabusExport $exports,
     ) {}
 
     public function execute(
@@ -49,6 +52,9 @@ class ApproveSyllabus
                 ->firstOrFail();
             if ($syllabus->estado !== 'en_revision' || $latest->id !== $revision->id) {
                 throw ValidationException::withMessages(['revision' => 'Solo puede aprobarse la revisión vigente.']);
+            }
+            if (ReviewStage::ofRevision($revision) !== ReviewStage::DEANERY) {
+                throw ValidationException::withMessages(['revision' => 'La revisión aún no llega al decanato: faltan biblioteca o coordinación.']);
             }
 
             $resolved = ReviewObservation::query()
@@ -93,9 +99,11 @@ class ApproveSyllabus
                 syllabus: $syllabus,
                 eventType: 'silabo.aprobado',
                 deduplicationKey: "silabo.aprobado:{$approval->id}",
-                recipientIds: $this->recipients->teachersFor($syllabus),
+                recipientIds: array_values(array_unique([...$this->recipients->teachersFor($syllabus), ...$this->recipients->coordinatorsFor($syllabus)])),
                 revisionNumber: $revision->numero_revision,
             );
+            // I-173: el PDF se genera al terminar la cadena de revisión; después firman los cuatro.
+            $this->exports->execute($revision, "aprobacion:{$approval->id}", $actor, $request);
 
             return $approval;
         });

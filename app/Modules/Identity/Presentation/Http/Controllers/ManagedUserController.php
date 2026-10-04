@@ -5,6 +5,7 @@ namespace App\Modules\Identity\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Identity\Application\Actions\AssignRole;
 use App\Modules\Identity\Application\Actions\CreateManagedUser;
 use App\Modules\Identity\Application\Actions\DeleteManagedUser;
@@ -72,7 +73,7 @@ class ManagedUserController extends Controller
                     ->select('usuario_id'),
             ))
             ->with(['roleAssignments' => fn ($query) => $query
-                ->with(['career:id,nombre'])
+                ->with(['career:id,nombre', 'faculty:id,nombre'])
                 ->orderByDesc('asignado_en')])
             ->orderBy('nombre')
             ->paginate(20)
@@ -91,6 +92,7 @@ class ManagedUserController extends Controller
                         'code' => $assignment->rol,
                         'name' => $assignment->role->nombre_rol,
                         'career_name' => $assignment->career?->nombre,
+                        'faculty_name' => $assignment->faculty?->nombre,
                     ])->values()->all(),
                     'careers' => $effective
                         ->map(fn ($assignment) => $assignment->career?->nombre)
@@ -99,6 +101,7 @@ class ManagedUserController extends Controller
                         'id' => $assignment->id,
                         'role_name' => $assignment->role->nombre_rol,
                         'career_name' => $assignment->career?->nombre,
+                        'faculty_name' => $assignment->faculty?->nombre,
                         'active' => $assignment->activo,
                     ])->values()->all(),
                 ];
@@ -114,6 +117,7 @@ class ManagedUserController extends Controller
             ],
             'roles' => $this->fixedRoles(),
             'careers' => Career::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
+            'faculties' => Faculty::query()->where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
         ];
 
         return response()->json($payload);
@@ -128,6 +132,7 @@ class ManagedUserController extends Controller
             'correo_electronico' => $request->string('correo_electronico')->toString(),
             'role_code' => $request->string('role_code')->toString(),
             'career_id' => $request->filled('career_id') ? $request->string('career_id')->toString() : null,
+            'faculty_id' => $request->filled('faculty_id') ? $request->string('faculty_id')->toString() : null,
         ], $actor, $request);
 
         return response()->json([
@@ -186,6 +191,7 @@ class ManagedUserController extends Controller
                 $assignRole->execute($user, [
                     'role_code' => $validated['role_code'],
                     'career_id' => $validated['career_id'] ?? null,
+                    'faculty_id' => $validated['faculty_id'] ?? null,
                 ], $actor, $request);
             }
 

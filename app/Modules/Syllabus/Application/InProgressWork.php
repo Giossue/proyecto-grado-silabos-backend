@@ -226,6 +226,7 @@ final class InProgressWork
             'reapertura_id' => null,
         ]);
         DB::table('envios_biblioteca')->whereIn('revision_silabo_id', $revisionIds)->delete();
+        DB::table('revisiones_coordinacion')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('reaperturas')->whereIn('revision_aprobada_id', $revisionIds)->delete();
         DB::table('aprobaciones')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('solicitudes_correccion')->whereIn('revision_silabo_id', $revisionIds)->delete();

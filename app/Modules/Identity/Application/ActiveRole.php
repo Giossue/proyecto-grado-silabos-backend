@@ -35,7 +35,7 @@ class ActiveRole
         $assignment = RoleAssignment::query()
             ->effective()
             ->where('usuario_id', $user->id)
-            ->with(['career:id,nombre,activo'])
+            ->with(['career:id,nombre,activo', 'faculty:id,nombre'])
             ->find($assignmentId);
 
         if ($assignment !== null && $this->isEligible($assignment)) {
@@ -64,7 +64,7 @@ class ActiveRole
         return RoleAssignment::query()
             ->effective()
             ->where('usuario_id', $user->id)
-            ->with(['career:id,nombre,activo'])
+            ->with(['career:id,nombre,activo', 'faculty:id,nombre'])
             ->orderBy('asignado_en')
             ->orderBy('id')
             ->get()

@@ -140,15 +140,15 @@ class DeliverInternalNotificationJob implements ShouldQueue
         return match ($this->eventType($execution)) {
             'silabo.enviado', 'silabo.reenviado' => [
                 'Sílabo listo para revisión',
-                "El sílabo {$syllabus->subject->nombre}{$revisionLabel} fue enviado a coordinación.",
+                "El sílabo {$syllabus->subject->nombre}{$revisionLabel} fue enviado; biblioteca revisa primero su bibliografía.",
             ],
             'silabo.correccion_solicitada' => [
                 'Corrección solicitada',
-                "Coordinación solicitó corregir el sílabo {$syllabus->subject->nombre}{$revisionLabel}.",
+                "Se solicitó corregir el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Corríjalo y reenvíelo; volverá a biblioteca.",
             ],
             'silabo.aprobado' => [
                 'Sílabo aprobado',
-                "El sílabo {$syllabus->subject->nombre}{$revisionLabel} fue aprobado.",
+                "El decanato aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Se genera el PDF; luego firman docente, coordinación, biblioteca y decanato.",
             ],
             'silabo.reabierto' => [
                 'Sílabo reabierto',
@@ -162,25 +162,21 @@ class DeliverInternalNotificationJob implements ShouldQueue
                 'Sílabo listo para su firma',
                 "Docente y coordinación firmaron el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Falta la firma de biblioteca.",
             ],
+            'silabo.firmado_biblioteca' => [
+                'Sílabo listo para su firma',
+                "Docente, coordinación y biblioteca firmaron el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Falta la firma del decanato.",
+            ],
             'biblioteca.verificado' => [
                 'Bibliografía aprobada',
-                "Biblioteca aprobó la bibliografía del sílabo {$syllabus->subject->nombre}{$revisionLabel}. Genere el PDF y fírmelo.",
+                "Biblioteca aprobó la bibliografía del sílabo {$syllabus->subject->nombre}{$revisionLabel}. Pasa a revisión de coordinación.",
+            ],
+            'silabo.revisado_coordinacion' => [
+                'Sílabo listo para aprobación',
+                "Coordinación revisó y aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Espera la aprobación del decanato.",
             ],
             'silabo.firmado' => [
                 'Sílabo firmado',
-                "Biblioteca firmó electrónicamente el sílabo {$syllabus->subject->nombre}{$revisionLabel}. El PDF con las tres firmas ya está disponible.",
-            ],
-            'biblioteca.enviado' => [
-                'Bibliografía por verificar',
-                "El docente envió el sílabo {$syllabus->subject->nombre}{$revisionLabel} para verificar su bibliografía.",
-            ],
-            'biblioteca.comentado' => [
-                'Biblioteca pidió corregir la bibliografía',
-                "Biblioteca comentó la bibliografía del sílabo {$syllabus->subject->nombre}{$revisionLabel}. Corríjala y reenvíela.",
-            ],
-            'silabo.bibliografia_corregida' => [
-                'Bibliografía corregida',
-                "El docente corrigió la bibliografía del sílabo {$syllabus->subject->nombre}{$revisionLabel} por pedido de biblioteca. Vuelve a biblioteca para su verificación.",
+                "El decanato firmó electrónicamente el sílabo {$syllabus->subject->nombre}{$revisionLabel}. El PDF con las cuatro firmas ya está disponible.",
             ],
             'silabo.reiniciado' => [
                 'Sílabo reiniciado',

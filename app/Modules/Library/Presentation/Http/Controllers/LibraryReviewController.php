@@ -8,17 +8,16 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Application\SignatureWorkflow;
-use App\Modules\Library\Application\Actions\CommentBibliography;
-use App\Modules\Library\Application\Actions\SendToLibrary;
 use App\Modules\Library\Application\Actions\VerifyBibliography;
 use App\Modules\Library\Application\LibraryReviews;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Library\Presentation\Http\Requests\CommentLibraryReviewRequest;
-use App\Modules\Library\Presentation\Http\Requests\SendToLibraryRequest;
 use App\Modules\Library\Presentation\Http\Requests\VerifyLibraryReviewRequest;
 use App\Modules\Library\Presentation\Http\Requests\ViewLibraryReviewsRequest;
-use App\Modules\Syllabus\Application\BibliographyCorrection;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Reopening;
+use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
+use App\Modules\Syllabus\Application\BibliographySections;
+use App\Modules\Syllabus\Application\ReviewStage;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\CorrectionRequest;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Http\JsonResponse;
@@ -62,7 +61,8 @@ class LibraryReviewController extends Controller
         abort_if($syllabus === null, 404);
         $state = $this->reviews->stateOf($submission);
         $reviewable = $state === LibraryReviews::STATE_PENDING
-            && $workflow->state($revision, $artifact, $workflow->signatures($artifact)) === SignatureWorkflow::STATE_PENDING_LIBRARY_REVIEW;
+            && $syllabus->estado === 'en_revision'
+            && ReviewStage::ofRevision($revision) === ReviewStage::LIBRARY;
         $snapshot = $revision->fotografia;
         $mapping = is_array($snapshot['document_mapping'] ?? null) ? $snapshot['document_mapping'] : [];
 
@@ -85,24 +85,18 @@ class LibraryReviewController extends Controller
                 ],
             ],
             'template_variables' => is_array($snapshot['template_variables'] ?? null) ? $snapshot['template_variables'] : [],
-            'sections' => BibliographyCorrection::sections($snapshot),
+            'sections' => BibliographySections::of($snapshot),
             'comments' => self::comments($syllabus),
         ]]);
     }
 
-    public function comment(SyllabusRevision $revision, CommentLibraryReviewRequest $request, CommentBibliography $action): JsonResponse
+    public function comment(SyllabusRevision $revision, CommentLibraryReviewRequest $request, RequestSyllabusCorrection $action): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute(
-            $revision,
-            trim($request->string('comment')->toString()),
-            $request->string('idempotency_key')->toString(),
-            $actor,
-            $request,
-        );
+        $action->execute($revision, trim($request->string('comment')->toString()), $actor, $request);
 
-        return response()->json(['message' => 'Comentario enviado. El docente corregirá la bibliografía y la reenviará.'], 201);
+        return response()->json(['message' => 'Comentario enviado. El docente corregirá el sílabo y lo reenviará; volverá a biblioteca.'], 201);
     }
 
     public function verify(SyllabusRevision $revision, VerifyLibraryReviewRequest $request, VerifyBibliography $action): JsonResponse
@@ -111,32 +105,23 @@ class LibraryReviewController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->execute($revision, $actor, $request);
 
-        return response()->json(['message' => 'Bibliografía aprobada. El docente ya puede generar y firmar el PDF.'], 201);
-    }
-
-    public function send(SyllabusRevision $revision, SendToLibraryRequest $request, SendToLibrary $action): JsonResponse
-    {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($revision, $actor, $request);
-
-        return response()->json(['message' => 'Sílabo enviado a biblioteca para verificar la bibliografía.'], 201);
+        return response()->json(['message' => 'Bibliografía aprobada. El sílabo pasa a coordinación.'], 201);
     }
 
     /** @return list<array{comment: string, commented_at: string, commented_by: string, revision_number: int}> */
     public static function comments(Syllabus $syllabus): array
     {
-        return array_values(Reopening::query()
-            ->where('origen_reapertura', Reopening::ORIGIN_LIBRARY)
-            ->whereHas('approvedRevision', fn ($query) => $query->where('silabo_id', $syllabus->id))
-            ->with(['reopener:id,nombre', 'approvedRevision:id,numero_revision'])
-            ->latest('reabierto_en')
+        return array_values(CorrectionRequest::query()
+            ->where('etapa_solicitud', ReviewStage::LIBRARY)
+            ->whereHas('revision', fn ($query) => $query->where('silabo_id', $syllabus->id))
+            ->with(['requester:id,nombre', 'revision:id,numero_revision'])
+            ->latest('solicitado_en')
             ->get()
-            ->map(fn (Reopening $reopening): array => [
-                'comment' => $reopening->causa,
-                'commented_at' => $reopening->reabierto_en->toIso8601String(),
-                'commented_by' => $reopening->reopener->nombre,
-                'revision_number' => $reopening->approvedRevision->numero_revision,
+            ->map(fn (CorrectionRequest $correction): array => [
+                'comment' => $correction->justificacion,
+                'commented_at' => $correction->solicitado_en->toIso8601String(),
+                'commented_by' => $correction->requester->nombre,
+                'revision_number' => $correction->revision->numero_revision,
             ])
             ->all());
     }

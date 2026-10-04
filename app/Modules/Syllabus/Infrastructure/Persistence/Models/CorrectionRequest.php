@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property string $id
  * @property string $justificacion
+ * @property string $etapa_solicitud
  * @property CarbonImmutable $solicitado_en
  */
 class CorrectionRequest extends Model
@@ -28,7 +29,7 @@ class CorrectionRequest extends Model
     protected $table = 'solicitudes_correccion';
 
     /** @var list<string> */
-    protected $fillable = ['revision_silabo_id', 'justificacion', 'solicitado_por', 'solicitado_en'];
+    protected $fillable = ['revision_silabo_id', 'justificacion', 'etapa_solicitud', 'solicitado_por', 'solicitado_en'];
 
     /** @return array<string, string> */
     protected function casts(): array

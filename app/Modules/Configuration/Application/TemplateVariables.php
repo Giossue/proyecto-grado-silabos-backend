@@ -50,7 +50,7 @@ final class TemplateVariables
     {
         $samples = self::resolve([
             'identification' => IdentificationCard::sample(),
-            'approval' => ['submitted_on' => '14-08-2026', 'coordinator' => 'Ing. Galuth García', 'approved_on' => '14-08-2026'],
+            'approval' => ['submitted_on' => '14-08-2026', 'coordinator' => 'Ing. Galuth García', 'dean' => 'Dra. Carmen Ulloa', 'approved_on' => '14-08-2026'],
         ]);
         $catalog = [];
         foreach (self::definitions() as $key => $definition) {

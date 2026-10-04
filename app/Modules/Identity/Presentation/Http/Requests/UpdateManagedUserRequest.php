@@ -43,9 +43,16 @@ class UpdateManagedUserRequest extends FormRequest
             'career_id' => [
                 'exclude_without:role_code',
                 'nullable',
-                'required_unless:role_code,'.RoleCode::Administrator->value.','.RoleCode::Librarian->value,
+                'required_unless:role_code,'.RoleCode::Administrator->value.','.RoleCode::Librarian->value.','.RoleCode::Dean->value,
                 'uuid',
                 Rule::exists('carreras', 'id')->where('carrera_activa', true),
+            ],
+            'faculty_id' => [
+                'exclude_without:role_code',
+                'nullable',
+                'required_if:role_code,'.RoleCode::Dean->value,
+                'uuid',
+                Rule::exists('facultades', 'id')->where('facultad_activa', true),
             ],
         ];
     }

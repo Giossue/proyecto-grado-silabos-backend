@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
@@ -56,11 +57,13 @@ class ReopenSyllabus
                 throw ValidationException::withMessages(['approval' => 'Esta aprobación ya fue reabierta.']);
             }
 
+            $activeRole = $this->roles->resolve($request);
             $reopening = Reopening::query()->create([
                 'aprobacion_id' => $approval->id,
                 'revision_aprobada_id' => $approval->revision_silabo_id,
                 'clave_idempotencia' => $idempotencyKey,
                 'causa' => $cause,
+                'origen_reapertura' => $activeRole?->role->codigo_rol === RoleCode::Dean->value ? Reopening::ORIGIN_DEANERY : Reopening::ORIGIN_COORDINATION,
                 'reabierto_por' => $actor->id,
                 'reabierto_en' => now(),
             ]);
@@ -70,7 +73,6 @@ class ReopenSyllabus
                 'version_bloqueo' => $locked->version_bloqueo + 1,
                 'guardado_en' => now(),
             ]);
-            $activeRole = $this->roles->resolve($request);
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $activeRole?->id,

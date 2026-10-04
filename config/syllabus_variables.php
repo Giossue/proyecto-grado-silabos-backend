@@ -27,9 +27,11 @@ return [
     'marca_unidad_profesional' => ['label' => 'Marca de unidad profesional', 'source' => 'identification.organization_unit', 'equals' => 'Unidad profesional'],
     'marca_unidad_titulacion' => ['label' => 'Marca de unidad de integración curricular', 'source' => 'identification.organization_unit', 'equals' => 'Unidad de integración curricular'],
     'fecha_entrega' => ['label' => 'Fecha de entrega del sílabo', 'source' => 'approval.submitted_on'],
-    'nombre_coordinador' => ['label' => 'Nombre de quien aprobó (coordinación)', 'source' => 'approval.coordinator'],
-    'fecha_revision' => ['label' => 'Fecha de revisión (aprobación)', 'source' => 'approval.approved_on'],
+    'nombre_coordinador' => ['label' => 'Nombre de quien revisó (coordinación)', 'source' => 'approval.coordinator'],
+    'nombre_decano' => ['label' => 'Nombre de quien aprobó (decanato)', 'source' => 'approval.dean'],
+    'fecha_revision' => ['label' => 'Fecha de revisión (aprobación del decanato)', 'source' => 'approval.approved_on'],
     'firma_docente' => ['label' => 'Firma del docente', 'source' => 'signature.docente', 'text' => SignatureAnchor::text('docente')],
     'firma_coordinador' => ['label' => 'Firma de coordinación', 'source' => 'signature.coordinacion', 'text' => SignatureAnchor::text('coordinacion')],
     'firma_bibliotecario' => ['label' => 'Firma de biblioteca', 'source' => 'signature.biblioteca', 'text' => SignatureAnchor::text('biblioteca')],
+    'firma_decano' => ['label' => 'Firma de decanato', 'source' => 'signature.decanato', 'text' => SignatureAnchor::text('decanato')],
 ];

@@ -232,7 +232,8 @@ class GenerateSyllabusExportJob implements ShouldQueue
         $variables = is_array($snapshot['template_variables'] ?? null) ? $snapshot['template_variables'] : [];
         $snapshot['template_variables'] = [...$variables, ...TemplateVariables::approval([
             'submitted_on' => $revision->enviado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
-            'coordinator' => $approval->approver->nombre ?? '',
+            'coordinator' => $revision->coordinationReview?->reviewer->nombre ?? '',
+            'dean' => $approval->approver->nombre ?? '',
             'approved_on' => $approval->aprobado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
         ])];
 

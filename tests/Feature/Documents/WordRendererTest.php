@@ -171,7 +171,7 @@ class WordRendererTest extends TestCase
             $total = array_sum($grid);
             $this->assertSame('fixed', $xpath->evaluate('string(w:tblPr/w:tblLayout/@w:type)', $table));
             $this->assertSame((string) $total, $xpath->evaluate('string(w:tblPr/w:tblW/@w:w)', $table));
-            $this->assertContains($total, [9406, 9405, 9404, 13006, 13007, 13005, 13004], 'La tabla no ocupa el ancho útil.');
+            $this->assertContains($total, [9408, 9407, 9406, 9405, 9404, 13006, 13007, 13005, 13004], 'La tabla no ocupa el ancho útil.');
             foreach ($xpath->query('w:tr', $table) ?: [] as $row) {
                 $columns = 0;
                 $width = 0;

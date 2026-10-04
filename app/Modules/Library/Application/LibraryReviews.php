@@ -6,9 +6,15 @@ use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Bandeja de biblioteca (I-173): cada envío nace con la revisión. Biblioteca es la primera
+ * etapa; después el sílabo sigue a coordinación y decanato, y al final biblioteca firma.
+ */
 final class LibraryReviews
 {
     public const STATE_PENDING = 'pendiente';
+
+    public const STATE_VERIFIED = 'aprobado';
 
     public const STATE_TO_SIGN = 'por_firmar';
 
@@ -18,7 +24,7 @@ final class LibraryReviews
 
     public const STATE_VOIDED = 'anulado';
 
-    public const STATES = [self::STATE_PENDING, self::STATE_TO_SIGN, self::STATE_SIGNED, self::STATE_COMMENTED, self::STATE_VOIDED];
+    public const STATES = [self::STATE_PENDING, self::STATE_VERIFIED, self::STATE_TO_SIGN, self::STATE_SIGNED, self::STATE_COMMENTED, self::STATE_VOIDED];
 
     private const STATE_SQL = <<<'SQL'
         CASE
@@ -28,9 +34,21 @@ final class LibraryReviews
                 WHERE exportacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
                   AND firma.firmado_como = 'biblioteca'
             ) THEN 'firmado'
-            WHEN reapertura.origen_reapertura = 'biblioteca' THEN 'comentado'
-            WHEN reapertura.id IS NOT NULL THEN 'anulado'
-            WHEN envios_biblioteca.verificado_en IS NOT NULL THEN 'por_firmar'
+            WHEN EXISTS (
+                SELECT 1 FROM solicitudes_correccion solicitud
+                WHERE solicitud.revision_silabo_id = envios_biblioteca.revision_silabo_id
+                  AND solicitud.etapa_solicitud = 'biblioteca'
+            ) THEN 'comentado'
+            WHEN EXISTS (
+                SELECT 1 FROM revisiones_silabo posterior
+                WHERE posterior.silabo_id = revision.silabo_id AND posterior.numero_revision > revision.numero_revision
+            ) OR EXISTS (
+                SELECT 1 FROM reaperturas reapertura WHERE reapertura.revision_aprobada_id = envios_biblioteca.revision_silabo_id
+            ) THEN 'anulado'
+            WHEN EXISTS (
+                SELECT 1 FROM aprobaciones aprobacion WHERE aprobacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
+            ) THEN 'por_firmar'
+            WHEN envios_biblioteca.verificado_en IS NOT NULL THEN 'aprobado'
             ELSE 'pendiente'
         END
         SQL;
@@ -41,8 +59,6 @@ final class LibraryReviews
         return LibrarySubmission::query()
             ->join('revisiones_silabo as revision', 'revision.id', '=', 'envios_biblioteca.revision_silabo_id')
             ->join('silabos as silabo', 'silabo.id', '=', 'revision.silabo_id')
-            ->join('aprobaciones as aprobacion', 'aprobacion.revision_silabo_id', '=', 'revision.id')
-            ->leftJoin('reaperturas as reapertura', 'reapertura.aprobacion_id', '=', 'aprobacion.id')
             ->select('envios_biblioteca.*', 'revision.id as revision_id', 'revision.silabo_id as silabo_id', 'revision.numero_revision as numero_revision')
             ->selectRaw(self::STATE_SQL.' AS estado_envio')
             ->when($state !== null, fn (Builder $query) => $query->whereRaw('('.self::STATE_SQL.') = ?', [$state]))

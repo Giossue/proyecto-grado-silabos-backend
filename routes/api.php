@@ -258,8 +258,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.signature.pdf');
             Route::post('revisions/{revision}/signature', [SignatureController::class, 'store'])
                 ->middleware('active-role')->name('api.v1.signature.store');
-            Route::post('revisions/{revision}/library-submission', [LibraryReviewController::class, 'send'])
-                ->middleware('active-role')->name('api.v1.library.submission.store');
             Route::get('library/reviews', [LibraryReviewController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.library.reviews.index');
             Route::get('library/reviews/{revision}', [LibraryReviewController::class, 'show'])

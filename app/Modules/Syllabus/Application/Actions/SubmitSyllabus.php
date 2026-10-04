@@ -4,10 +4,10 @@ namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
-use App\Modules\Syllabus\Application\BibliographyCorrection;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
@@ -29,7 +29,6 @@ class SubmitSyllabus
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
-        private readonly SubmitBibliographyCorrection $bibliographyCorrection,
     ) {}
 
     public function execute(
@@ -46,10 +45,6 @@ class SubmitSyllabus
         if (! in_array($syllabus->estado, ['borrador', 'correccion_solicitada'], true)) {
             throw ValidationException::withMessages(['syllabus' => 'El expediente no está listo para envío.']);
         }
-        if (BibliographyCorrection::requested($syllabus)) {
-            return $this->bibliographyCorrection->execute($syllabus, $expectedLockVersion, $idempotencyKey, $actor, $request);
-        }
-
         $this->schedule->assertOpenForSubmission($syllabus->convocation()->firstOrFail());
 
         if ($syllabus->version_bloqueo !== $expectedLockVersion) {
@@ -101,6 +96,13 @@ class SubmitSyllabus
                 'enviado_en' => now(),
             ]);
 
+            // I-173: la revisión entra primero a biblioteca; el envío queda registrado con el docente.
+            LibrarySubmission::query()->create([
+                'revision_silabo_id' => $revision->id,
+                'enviado_por' => $actor->id,
+                'enviado_en' => now(),
+            ]);
+
             $from = $locked->estado;
             $action = $from === 'borrador' ? 'enviar' : 'reenviar';
             $locked->update([
@@ -126,7 +128,7 @@ class SubmitSyllabus
                 syllabus: $locked,
                 eventType: $eventType,
                 deduplicationKey: "{$eventType}:{$revision->id}",
-                recipientIds: $this->recipients->coordinatorsFor($locked),
+                recipientIds: $this->recipients->librarians(),
                 revisionNumber: $revision->numero_revision,
             );
 

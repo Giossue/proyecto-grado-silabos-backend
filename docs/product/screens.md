@@ -237,7 +237,7 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   el constructor. Sus variables muestran datos de malla, programación, paralelos y docentes;
   no son campos de escritura. Discapacidad y formación son campos que completa el
   docente en su lugar dentro de la tabla. Mapa: `docs/product/identificacion-institucional.md`.
-  COR-14 concentra sus paralelos dentro de **Materias y paralelos**. Desde las acciones de cada materia,
+  COR-14 concentra sus paralelos dentro de **Materias y asignaciones**. Desde las acciones de cada materia,
   **Paralelos y docentes** crea o corrige paralelos con código y jornada y elige el docente
   de cada uno (asignar o retirar); el servidor rechaza códigos repetidos. La pantalla
   muestra solo el período en curso (o el próximo si aún no empieza), sin selector, y la
@@ -499,7 +499,7 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   para crearla. No presenta pestañas de modo, buscador, filtros, cards, paginación,
   publicación ni número de versión. Materias, campos y relaciones se consultan y mantienen
   dentro de esa malla. COR-14 conserva una única entrada
-  **Materias y paralelos**; los paralelos se agregan desde las acciones de cada materia.
+  **Materias y asignaciones**; los paralelos se agregan desde las acciones de cada materia.
 - COR-13 abre en vista de lectura y ofrece **Editar malla** en el encabezado. Antes de
   entrar al modo de edición consulta de nuevo el bloqueo de la convocatoria. Dentro de
   ese modo oculta el sidebar y el encabezado global; su propia barra muestra **Configurar

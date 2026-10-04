@@ -21,8 +21,8 @@ use App\Modules\Syllabus\Application\Actions\StartDraft;
 use App\Modules\Syllabus\Application\Actions\SubmitSyllabus;
 use App\Modules\Syllabus\Application\Actions\UpdateDraftField;
 use App\Modules\Syllabus\Application\Actions\ValidateDraft;
-use App\Modules\Syllabus\Application\BibliographyCorrection;
 use App\Modules\Syllabus\Application\IdentificationCard;
+use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -262,7 +262,7 @@ class SyllabusController extends Controller
                 'reopened_by' => $syllabus->reopenings->first()->reopener->nombre,
                 'origin' => $syllabus->reopenings->first()->origen_reapertura,
             ],
-            'library_correction' => BibliographyCorrection::requested($syllabus),
+            'review_stage' => ReviewStage::of($syllabus),
             'library_comments' => LibraryReviewController::comments($syllabus),
         ];
     }

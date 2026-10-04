@@ -28,7 +28,7 @@ class DatabaseBootstrapTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertSame(4, RoleAssignment::query()->count());
+        $this->assertSame(5, RoleAssignment::query()->count());
         $this->assertSame(1, CoordinatorAssignment::query()->count());
         $this->assertSame(1, TeacherAssignment::query()->count());
     }

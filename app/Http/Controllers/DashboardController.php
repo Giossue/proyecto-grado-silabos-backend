@@ -51,6 +51,7 @@ class DashboardController extends Controller
             $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorMetrics($coordinatorReadiness),
             $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherMetrics($user, $activeRole->carrera_id),
             $activeRole->role->codigo_rol === RoleCode::Librarian->value => $this->librarianMetrics($libraryReviews),
+            $activeRole->role->codigo_rol === RoleCode::Dean->value => $this->deanMetrics($activeRole->facultad_id),
             default => [],
         };
 
@@ -194,21 +195,21 @@ class DashboardController extends Controller
                 'label' => 'Por verificar',
                 'value' => $counts[LibraryReviews::STATE_PENDING],
                 'suffix' => null,
-                'hint' => $counts[LibraryReviews::STATE_PENDING] === 0 ? 'Nada pendiente por ahora' : 'Sílabos con la bibliografía por revisar y firmar',
+                'hint' => $counts[LibraryReviews::STATE_PENDING] === 0 ? 'Nada pendiente por ahora' : 'Sílabos recién enviados; biblioteca revisa primero',
             ],
             [
                 'key' => 'library_to_sign',
                 'label' => 'Por firmar',
                 'value' => $counts[LibraryReviews::STATE_TO_SIGN],
                 'suffix' => null,
-                'hint' => 'Bibliografía aprobada; falta su firma cuando docente y coordinación firmen',
+                'hint' => 'Aprobados por el decanato; su firma va después de docente y coordinación',
             ],
             [
                 'key' => 'library_commented',
                 'label' => 'Con comentario',
                 'value' => $counts[LibraryReviews::STATE_COMMENTED],
                 'suffix' => null,
-                'hint' => 'Devueltos al docente para corregir la bibliografía',
+                'hint' => 'Devueltos al docente desde biblioteca',
             ],
             [
                 'key' => 'library_signed',
@@ -216,6 +217,41 @@ class DashboardController extends Controller
                 'value' => $counts[LibraryReviews::STATE_SIGNED],
                 'suffix' => null,
                 'hint' => 'Sílabos con la firma de biblioteca',
+            ],
+        ];
+    }
+
+    /**
+     * Panel del decano (I-173): sílabos de su facultad por aprobar y aprobados.
+     *
+     * @return list<array{key: string, label: string, value: int, suffix: string|null, hint: string}>
+     */
+    private function deanMetrics(?string $facultyId): array
+    {
+        $faculty = fn (): Builder => Syllabus::query()
+            ->whereHas('convocation.career', fn (Builder $query) => $query->where('facultad_id', $facultyId));
+        $pending = $faculty()->where('estado', 'en_revision')
+            ->whereHas('revisions', fn (Builder $revision) => $revision
+                ->whereHas('coordinationReview')
+                ->whereDoesntHave('approval')
+                ->whereDoesntHave('correctionRequest'))
+            ->count();
+        $approved = $faculty()->where('estado', 'aprobado')->count();
+
+        return [
+            [
+                'key' => 'deanery_pending',
+                'label' => 'Por aprobar',
+                'value' => $pending,
+                'suffix' => null,
+                'hint' => $pending === 0 ? 'Nada pendiente por ahora' : 'Revisados por biblioteca y coordinación; esperan su aprobación',
+            ],
+            [
+                'key' => 'deanery_approved',
+                'label' => 'Aprobados',
+                'value' => $approved,
+                'suffix' => null,
+                'hint' => 'Sílabos aprobados en su facultad; firman docente, coordinación, biblioteca y decanato',
             ],
         ];
     }

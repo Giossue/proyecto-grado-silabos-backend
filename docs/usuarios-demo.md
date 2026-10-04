@@ -4,6 +4,7 @@ Usuarios de prueba
 |---|---|---|---|
 | Administrador | — | `admin@silabos.test` | `Demo-2026!` |
 | Bibliotecario | Bibliotecaria Demo | `bibliotecario@silabos.test` | `Demo-2026!` |
+| Decano | Decano Demo | `decano@silabos.test` | `Demo-2026!` |
 | Coordinador | María Fernanda Guerrero Toapanta | `maria.guerrero@silabos.test` | `Demo-2026!` |
 | Coordinador | Carlos Alberto Villacís Mora | `carlos.villacis@silabos.test` | `Demo-2026!` |
 | Docente | Luis Enrique Chávez Salazar | `luis.chavez@silabos.test` | `Demo-2026!` |

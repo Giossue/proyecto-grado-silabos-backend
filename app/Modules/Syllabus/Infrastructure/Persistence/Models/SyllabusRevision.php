@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Infrastructure\Persistence\Models;
 
 use App\Models\User;
+use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Concerns\ImmutableRecord;
 use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
@@ -101,5 +102,17 @@ class SyllabusRevision extends Model
     public function correctionRequest(): HasOne
     {
         return $this->hasOne(CorrectionRequest::class, 'revision_silabo_id');
+    }
+
+    /** @return HasOne<CoordinationReview, $this> */
+    public function coordinationReview(): HasOne
+    {
+        return $this->hasOne(CoordinationReview::class, 'revision_silabo_id');
+    }
+
+    /** @return HasOne<LibrarySubmission, $this> */
+    public function librarySubmission(): HasOne
+    {
+        return $this->hasOne(LibrarySubmission::class, 'revision_silabo_id');
     }
 }

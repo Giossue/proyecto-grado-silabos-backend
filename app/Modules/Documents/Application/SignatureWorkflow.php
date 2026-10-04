@@ -23,16 +23,15 @@ class SignatureWorkflow
 
     public const STATE_PENDING_COORDINATION = 'pendiente_coordinacion';
 
-    public const STATE_PENDING_LIBRARY_SUBMISSION = 'pendiente_envio_biblioteca';
-
-    public const STATE_PENDING_LIBRARY_REVIEW = 'pendiente_verificacion_biblioteca';
-
     public const STATE_PENDING_LIBRARY = 'pendiente_biblioteca';
+
+    public const STATE_PENDING_DEANERY = 'pendiente_decanato';
 
     public const PENDING_STATES = [
         self::STATE_PENDING_TEACHER,
         self::STATE_PENDING_COORDINATION,
         self::STATE_PENDING_LIBRARY,
+        self::STATE_PENDING_DEANERY,
     ];
 
     public const STATE_SIGNED = 'firmado';
@@ -122,13 +121,6 @@ class SignatureWorkflow
         if ($this->voided($revision)) {
             return self::STATE_VOIDED;
         }
-        $submission = $this->submission($revision);
-        if ($submission === null) {
-            return self::STATE_PENDING_LIBRARY_SUBMISSION;
-        }
-        if ($submission->verificado_en === null) {
-            return self::STATE_PENDING_LIBRARY_REVIEW;
-        }
         if ($artifact === null) {
             return self::STATE_NO_DOCUMENT;
         }
@@ -136,7 +128,8 @@ class SignatureWorkflow
         return match ($next) {
             DocumentSignature::ROLE_TEACHER => self::STATE_PENDING_TEACHER,
             DocumentSignature::ROLE_COORDINATION => self::STATE_PENDING_COORDINATION,
-            default => self::STATE_PENDING_LIBRARY,
+            DocumentSignature::ROLE_LIBRARY => self::STATE_PENDING_LIBRARY,
+            default => self::STATE_PENDING_DEANERY,
         };
     }
 
@@ -157,6 +150,9 @@ class SignatureWorkflow
         }
         if ($active->role->codigo_rol === RoleCode::Librarian->value) {
             return $user->can('view', $syllabus) ? DocumentSignature::ROLE_LIBRARY : null;
+        }
+        if ($active->role->codigo_rol === RoleCode::Dean->value) {
+            return $user->can('review', $syllabus) ? DocumentSignature::ROLE_DEANERY : null;
         }
 
         return null;
