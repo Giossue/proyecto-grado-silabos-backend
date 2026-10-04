@@ -33,9 +33,20 @@ RF-008..016, RF-034..036 · RN-005..019 · CU-03..06 · ADM-04, ADM-12 · I-110,
   El Panel apunta sus pasos de periodo y proceso a Convocatorias. Sidebar sin Periodos.
 - Docs: `screens.md` (ADM-04, ADM-12), `DECISIONS_STATUS.md` (I-172), trazabilidad.
 
+## Ajustes del 2026-10-04 (misma sesión)
+
+- Las cuatro fechas son obligatorias; el `Sheet` no lleva descripción general y
+  confirma en un diálogo que el periodo no se edita después.
+- Estados visibles: Sin iniciar, Abierto, Pausado, Finalizado («Cerrar» → «Finalizar»).
+- Administración no edita periodos (los documentos firmados fijan sus bytes). El alta
+  queda deshabilitada mientras haya convocatoria abierta o pausada.
+- **Eliminar** en cualquier estado: `DeleteSyllabusProcess` usa `InProgressWork::purge`
+  (ahora público y con `envios_biblioteca`) y ya no bloquea por actividad docente; se
+  retira `deletable` de la API. Reemplaza I-117.
+
 ## Verificación
 
-- Backend: `AcademicStructureTest` (25 pruebas) en verde; Pint.
+- Backend: `AcademicStructureTest` (25), `SyllabusProcessTest` (27) en verde; Pint; PHPStan en los archivos tocados; `php artisan test` completo (el contrato OpenAPI se regeneró: traía la ruta de I-170 sin exportar).
 - Frontend: `AdminProcessesPage.test.ts`, `ConvocationPeriodSheet.test.ts`,
   `AcademicGovernancePage.test.ts`, typecheck y lint.
 

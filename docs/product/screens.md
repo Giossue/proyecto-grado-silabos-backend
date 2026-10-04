@@ -138,6 +138,12 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   el encabezado autenticado común. El acceso conserva el contador de pendientes para los
   tres roles y no ocupa una entrada del menú lateral. El tema visual también se cambia
   desde ese encabezado; Configuración solo conserva Perfil y Seguridad.
+- Por solicitud del responsable del producto del 2026-10-04, el menú de usuario se
+  traslada del sidebar al extremo derecho del encabezado autenticado común, después de
+  la campana de notificaciones y el selector de tema. En escritorio muestra avatar,
+  nombre y ámbito con texto truncado; en móvil, el acceso muestra solo el avatar con
+  el nombre accesible «Menú de usuario». Conserva Configuración, cambio de carrera o
+  rol cuando corresponde y Cerrar sesión.
 - Todo módulo autenticado presenta el mismo encabezado mediante `PageFrame`: icono,
   título principal único, descripción y espaciado responsive. Regreso, estado y acciones
   ocupan posiciones estables; Configuración comparte el encabezado en su layout y trata
@@ -257,9 +263,10 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   se calcula con datos reales; el siguiente lleva su botón y la tarjeta desaparece al
   completarse. Administración conserva «Panel» en el sidebar; Coordinación y Docencia
   conservan la pantalla y el checklist, pero no tienen esa entrada lateral ni un atajo
-  desde la marca del sidebar. El encabezado repite el avance en miniatura (barra con color
-  y «n/m», tooltip «Configuración del sistema») y lleva al Panel; se recalcula en cada
-  petición, así que reaparece si algo se borra.
+  desde la marca del sidebar. Por solicitud del responsable del producto del 2026-10-04,
+  el avance de puesta en marcha se muestra en el Panel y se retira su indicador en
+  miniatura del encabezado. El checklist se calcula con los datos vigentes y reaparece
+  si algo se borra.
 - Encabezado del sílabo: logo de la universidad a la izquierda y logo de la facultad de la
   carrera a la derecha, dentro del ancho útil de los márgenes y antes del bloque de título.
   Administración reemplaza el logo institucional desde la hoja «Personalizar plantilla»
@@ -530,24 +537,28 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   ruta independiente para diagnosticar y reintentar trabajos.
 - ADM-12 **Convocatorias** (I-172) es la única pantalla de periodos y convocatorias: una
   fila por periodo lectivo con sus fechas de clases, las fechas de elaboración de sílabos
-  (o «Sin fechas») y el estado de la convocatoria («Sin abrir», Abierta, En pausa,
-  Cerrada). El botón **Nueva convocatoria** abre un solo `Sheet` con dos bloques: fechas
-  del periodo (la etiqueta se genera sola) y fechas de elaboración; las cuatro son
-  obligatorias. La SPA crea el periodo y abre la convocatoria con el `id` devuelto; si
-  falla la apertura, el periodo queda creado y el reintento solo abre la convocatoria.
-  Un periodo que quedó sin convocatoria la abre después desde la fila (**Abrir
-  convocatoria**), con el período fijado y el nombre y la plantilla automáticos. Las fechas de elaboración siempre empiezan vacías: el
-  formulario no copia las fechas lectivas del período (I-113). Desde la fila también se
-  editan las fechas del periodo (salvo bloqueo por convocatoria en curso) y se elimina un
-  periodo sin convocatoria. **Editar** solo
+  (o «Sin fechas») y el estado: **Sin iniciar** (periodo sin convocatoria), **Abierto**,
+  **Pausado** y **Finalizado**. El botón **Nueva convocatoria** abre un solo `Sheet` sin
+  descripción general, con dos bloques y una línea de ayuda bajo cada uno: fechas del
+  periodo (la etiqueta se genera sola) y fechas de elaboración; las cuatro son
+  obligatorias. Al enviar, un diálogo confirma que, una vez abierta, el periodo y sus
+  fechas no se editan y que cualquier cambio exige eliminar la convocatoria y abrir otra
+  (los documentos firmados fijan sus bytes). La SPA crea el periodo y abre la
+  convocatoria con el `id` devuelto; si falla la apertura, el periodo queda creado y el
+  reintento solo abre la convocatoria. El botón queda deshabilitado, con un aviso, mientras
+  exista una convocatoria abierta o pausada. Un periodo en Sin iniciar la abre después
+  desde la fila (**Abrir convocatoria**), con el período fijado y el nombre y la plantilla
+  automáticos, o se elimina. Las fechas de elaboración siempre empiezan vacías: el
+  formulario no copia las fechas lectivas del período (I-113). Administración nunca edita
+  un periodo. **Editar** solo
   aparece en pausa; **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
-  explica la consecuencia, sin pedir motivo. **Prorrogar plazo** solicita
+  explica la consecuencia, sin pedir motivo; en la interfaz **Cerrar** se llama
+  **Finalizar**. **Prorrogar plazo** solicita
   únicamente una nueva fecha límite de entrega, sin motivo; no permite cambiar el inicio.
-  **Eliminar** aparece cuando ningún docente ha iniciado un sílabo (si no, el menú muestra
-  «No se puede eliminar: ya hay sílabos iniciados») y confirma que se
-  retirarán la convocatoria institucional, sus alcances y los expedientes sin iniciar.
-  Si hubo cualquier inicio docente, el menú informa que el proceso se conserva por
-  actividad docente y el servidor rechaza igualmente un borrado forzado.
+  **Eliminar** está siempre disponible (I-172, reemplaza I-117) y confirma que se
+  retirarán la convocatoria institucional, sus alcances y todos sus sílabos, incluidos los
+  iniciados, aprobados y firmados, con sus revisiones, documentos, firmas y envíos a
+  biblioteca; queda en auditoría con el conteo de sílabos borrados.
   El nombre se genera al crear o guardar
   como «Convocatoria {nombre del período}»; el formulario no pide nombre ni muestra una
   etiqueta de plantilla vacía. La plantilla institucional se sigue heredando. El alta exige elegir el período
