@@ -2,7 +2,8 @@
 
 ## Estado
 
-En verificación.
+Completado técnicamente el 2026-10-04. PV-19 mantiene su aceptación con dispositivos
+reales pendiente.
 
 ## Trazabilidad
 
@@ -47,8 +48,8 @@ desbordamiento, temas y movimiento reducido con contenido sintético sin backend
 
 - [x] Inventariar cargas y compararlas con las páginas actuales.
 - [x] Actualizar composiciones y llamadas de todas las pantallas afectadas.
-- [ ] Verificar accesibilidad, responsive y regresiones con las puertas frontend.
-- [ ] Sincronizar documentación y trazabilidad; cerrar con evidencia.
+- [x] Verificar accesibilidad, responsive y regresiones con las puertas frontend.
+- [x] Sincronizar documentación y trazabilidad; cerrar con evidencia.
 
 ## Riesgos y reversión
 
@@ -59,4 +60,25 @@ sin operaciones de datos ni migraciones.
 
 ## Evidencia de cierre
 
-Pendiente de verificación.
+- `npm run lint`: cuatro comprobaciones de arquitectura y ESLint aprobados.
+- `npm run typecheck`: aprobado; `npm run build` vuelve a comprobar tipos y compila
+  correctamente la SPA con los cambios finales.
+- `npm test`: 71 archivos aprobados, 286 pruebas aprobadas y una prueba omitida existente.
+- `VITE_API_URL=http://127.0.0.1:8000 npx playwright test tests/e2e/loading-skeletons.spec.ts`:
+  siete pruebas aprobadas, 21 configuraciones en tres anchos y dos temas (126 renders),
+  único estado accesible, sin controles enfocables ni desbordamiento global; movimiento
+  reducido comprobado para las 21 configuraciones.
+- La regresión existente de `frontend-components.spec.ts` sobre geometría compartida
+  del sílabo y su asistente pasa en los mismos anchos y temas.
+- Inspección de capturas sintéticas de tablas, notificaciones, selección de ámbito,
+  panel, malla, materias, docentes, sílabo, revisión, documentos y plantilla. Las 78
+  capturas locales de 13 composiciones se encuentran en `/tmp/silabos-loading-skeletons`;
+  son evidencia auxiliar, no datos reales ni un artefacto requerido por el producto.
+- La comprobación de 360 px detectó que un `CardHeader` documental imponía una columna
+  mínima por los placeholders. Se corrigió con una columna reducible y se repitió la
+  matriz completa, que pasa. La tabla académica conserva scroll local cuando lo necesita.
+- Inventario cubierto: 20 puntos de carga de página/seguimiento y cinco cargas
+  interiores (notificaciones, conversación, firma, estado de segundo factor y QR).
+- `docs/product/screens.md`, `docs/architecture/frontend.md` y
+  `docs/quality/traceability.md` sincronizados. API, esquema y reglas académicas no requieren
+  cambios para este trabajo visual; las verificaciones ejecutadas pertenecen al frontend.
