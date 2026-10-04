@@ -51,17 +51,17 @@ sequenceDiagram
     participant R as Review Actions
     participant DB as PostgreSQL
 
-    Coo->>UI: Registra observaciones sobre revisión N
-    UI->>R: Solicitar corrección con observaciones seleccionadas
+    Coo->>UI: Escribe el comentario general sobre la revisión N
+    UI->>R: Solicitar corrección con el comentario
     R->>DB: autorizar alcance y comprobar En revisión
-    R->>DB: transacción: observaciones + estado Corrección solicitada + auditoría
+    R->>DB: transacción: comentario en la revisión + estado Corrección solicitada + auditoría
     R-->>D: notificación posterior al commit
     D->>UI: Edita nueva versión de trabajo
     D->>R: Reenviar con version_bloqueo e idempotency_key
     R->>DB: validar + insertar revisión N+1 inmutable
     R->>DB: estado En revisión + transición + auditoría
     R-->>Coo: notificación posterior al commit
-    Coo->>UI: Ver diff N ↔ N+1 y verificar observaciones
+    Coo->>UI: Ver diff N ↔ N+1
 ```
 
 ## Aprobar y reabrir
@@ -76,7 +76,7 @@ sequenceDiagram
 
     Coo->>UI: Confirma aprobación de revisión N
     UI->>A: approve(revision N, idempotency_key)
-    A->>DB: autorizar + validar estado/reglas/observaciones
+    A->>DB: autorizar + validar estado/reglas
     A->>DB: transacción: Aprobacion(N) + estado Aprobado + auditoría + ejecución pendiente
     A-->>UI: Aprobado; revisión N bloqueada
     O-->>O: habilita notificación/exportación después del commit

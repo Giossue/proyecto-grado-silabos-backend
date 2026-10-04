@@ -168,8 +168,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.reviews.compare');
             Route::get('coordination/reviews/{revision}', [ReviewController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.coordination.reviews.show');
-            Route::post('coordination/reviews/{revision}/observations', [ReviewController::class, 'storeObservation'])
-                ->middleware('active-role')->name('api.v1.coordination.reviews.observations.store');
             Route::post('coordination/reviews/{revision}/request-correction', [ReviewController::class, 'requestCorrection'])
                 ->middleware('active-role')->name('api.v1.coordination.reviews.correction.store');
             Route::post('coordination/reviews/{revision}/approve', [ReviewController::class, 'approve'])

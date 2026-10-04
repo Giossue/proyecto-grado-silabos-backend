@@ -97,11 +97,20 @@ class LibraryReviewTest extends TestCase
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])
             ->assertJsonValidationErrors('revision');
 
+        // Solo motivos predefinidos: sin texto libre, sin motivos vacíos ni inventados.
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
-            'comment' => '', 'idempotency_key' => (string) Str::uuid(),
-        ])->assertJsonValidationErrors('comment');
+            'reasons' => [], 'idempotency_key' => (string) Str::uuid(),
+        ])->assertJsonValidationErrors('reasons');
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
-            'comment' => 'No tenemos «Clean Architecture»; proponga otra edición.', 'idempotency_key' => (string) Str::uuid(),
+            'comment' => 'Texto libre', 'idempotency_key' => (string) Str::uuid(),
+        ])->assertJsonValidationErrors('reasons');
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
+            'reasons' => ['inventado'], 'idempotency_key' => (string) Str::uuid(),
+        ])->assertJsonValidationErrors('reasons.0');
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertJsonPath('review.comment_reasons.0.code', 'libro_no_disponible');
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
+            'reasons' => ['libro_no_disponible', 'codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
         ])->assertCreated();
         $this->assertDatabaseHas('revisiones_silabo', ['id' => $revision->id, 'correccion_etapa' => 'biblioteca']);
         $this->assertNotified($this->people['teacher'][0]->id, 'silabo.correccion_solicitada', 'volverá a biblioteca');
@@ -109,7 +118,10 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertJsonPath('reviews.data.0.state', 'comentado');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
             ->assertJsonPath('review.can_comment', false)
-            ->assertJsonPath('review.comments.0.comment', 'No tenemos «Clean Architecture»; proponga otra edición.');
+            ->assertJsonPath('review.comments.0.comment', 'El libro no está disponible en biblioteca; El código del libro es incorrecto.');
+        $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
+            ->assertJsonPath('syllabus.review_comments.0.stage', 'biblioteca')
+            ->assertJsonPath('syllabus.review_comments.0.comment', 'El libro no está disponible en biblioteca; El código del libro es incorrecto.');
 
         // El docente corrige lo que haga falta (no solo la bibliografía) y reenvía: vuelve a biblioteca.
         $other = FieldDefinition::query()->where('editable_docente', true)->where('heredado', false)->where('tipo', 'texto_libre')
@@ -144,7 +156,7 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('review.can_comment', false)
             ->assertJsonPath('review.verified_by', $this->people['librarian'][0]->nombre);
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
-            'comment' => 'Tarde', 'idempotency_key' => (string) Str::uuid(),
+            'reasons' => ['codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('revision');
         $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertJsonPath('syllabus.review_stage', 'coordinacion');
 

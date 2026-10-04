@@ -8,7 +8,6 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Http\Request;
@@ -49,20 +48,9 @@ class RequestSyllabusCorrection
             if ($locked->hasCorrectionRequest()) {
                 throw ValidationException::withMessages(['revision' => 'Esta revisión ya tiene una solicitud de corrección.']);
             }
-            // I-173: cada revisor devuelve solo en su etapa; coordinación sustenta con observaciones.
+            // I-173: cada revisor devuelve solo en su etapa, con un comentario general (I-177: sin observaciones por campo).
             if (ReviewStage::ofRevision($revision) !== $stage) {
                 throw ValidationException::withMessages(['revision' => 'La revisión no está en su etapa; otro revisor la tiene ahora.']);
-            }
-
-            $observations = ReviewObservation::query()
-                ->where('revision_silabo_id', $revision->id)
-                ->where('estado', 'abierta')
-                ->lockForUpdate()
-                ->get();
-            if ($stage === ReviewStage::COORDINATION && $observations->isEmpty()) {
-                throw ValidationException::withMessages([
-                    'revision' => 'Registra al menos una observación pendiente en esta revisión antes de solicitar corrección.',
-                ]);
             }
 
             $locked->update([
@@ -84,7 +72,7 @@ class RequestSyllabusCorrection
                 resourceType: 'revision_silabo',
                 resourceId: $revision->id,
                 result: 'exito',
-                metadata: ['revision_number' => $revision->numero_revision, 'from_state' => 'en_revision', 'to_state' => 'correccion_solicitada', 'stage' => $stage, 'observation_count' => $observations->count()],
+                metadata: ['revision_number' => $revision->numero_revision, 'from_state' => 'en_revision', 'to_state' => 'correccion_solicitada', 'stage' => $stage],
             );
             $this->notifications->execute(
                 syllabus: $syllabus,

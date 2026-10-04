@@ -9,6 +9,7 @@ use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Application\SignatureWorkflow;
 use App\Modules\Library\Application\Actions\VerifyBibliography;
+use App\Modules\Library\Application\LibraryCommentReasons;
 use App\Modules\Library\Application\LibraryReviews;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Library\Presentation\Http\Requests\CommentLibraryReviewRequest;
@@ -16,6 +17,7 @@ use App\Modules\Library\Presentation\Http\Requests\VerifyLibraryReviewRequest;
 use App\Modules\Library\Presentation\Http\Requests\ViewLibraryReviewsRequest;
 use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
 use App\Modules\Syllabus\Application\BibliographySections;
+use App\Modules\Syllabus\Application\ReviewComments;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
@@ -86,6 +88,7 @@ class LibraryReviewController extends Controller
             'template_variables' => is_array($snapshot['template_variables'] ?? null) ? $snapshot['template_variables'] : [],
             'sections' => BibliographySections::of($snapshot),
             'comments' => self::comments($syllabus),
+            'comment_reasons' => LibraryCommentReasons::options(),
         ]]);
     }
 
@@ -93,7 +96,9 @@ class LibraryReviewController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute($revision, trim($request->string('comment')->toString()), $actor, $request);
+        /** @var list<string> $reasons */
+        $reasons = $request->validated('reasons');
+        $action->execute($revision, LibraryCommentReasons::text($reasons), $actor, $request);
 
         return response()->json(['message' => 'Comentario enviado. El docente corregirá el sílabo y lo reenviará; volverá a biblioteca.'], 201);
     }
@@ -110,19 +115,12 @@ class LibraryReviewController extends Controller
     /** @return list<array{comment: string, commented_at: string, commented_by: string, revision_number: int}> */
     public static function comments(Syllabus $syllabus): array
     {
-        return array_values(SyllabusRevision::query()
-            ->where('silabo_id', $syllabus->id)
-            ->where('correccion_etapa', ReviewStage::LIBRARY)
-            ->with('correctionRequester:id,nombre')
-            ->latest('correccion_solicitada_en')
-            ->get()
-            ->map(fn (SyllabusRevision $revision): array => [
-                'comment' => (string) $revision->correccion_justificacion,
-                'commented_at' => $revision->correccion_solicitada_en?->toIso8601String() ?? '',
-                'commented_by' => $revision->correctionRequester->nombre,
-                'revision_number' => $revision->numero_revision,
-            ])
-            ->all());
+        return array_map(fn (array $comment): array => [
+            'comment' => $comment['comment'],
+            'commented_at' => $comment['commented_at'],
+            'commented_by' => $comment['commented_by'],
+            'revision_number' => $comment['revision_number'],
+        ], ReviewComments::forSyllabus($syllabus, ReviewStage::LIBRARY));
     }
 
     /**

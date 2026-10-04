@@ -49,6 +49,21 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 |---|---|---|---|
 | Azul y rojo de marca en los temas compartidos | RNF-018..023, RNF-029..034; UI-01..04; ADM/COR/DOC/BIB vigentes; CP-N UX/accesibilidad/mantenibilidad; PV-19 | Solicitud del responsable del producto: `#2d4b6f` y `#ac231e`; tokens compartidos, sidebar, acceso, encabezados y métricas del frontend. Plan `docs/plans/completed/FE-UEB-2026-10-04-paleta-institucional.md`: ESLint, tipos, 14 pruebas existentes, Chromium en dos temas/tres anchos y 43 pares de contraste por tema. Las paletas semántica y documental conservan su función independiente. | Primera versión revertida por el responsable del producto (sidebar azul y fondos teñidos se veían mal); versión discreta vigente en `9ac168f`, solo tokens. PV-19 permanece abierta. |
 
+## Selección de texto uniforme — 2026-10-04
+
+RNF-018..023/029..034, UI-01..04 y pantallas ADM/COR/DOC/BIB/DEC vigentes,
+CP-N experiencia/accesibilidad/mantenibilidad; RF/RN/CU conservan su comportamiento.
+El pedido de «subrayado» se interpreta como el fondo al seleccionar texto, supuesto
+comunicado al usuario junto con la consulta sobre su significado. `styles.css` define
+un par opaco de fondo/texto por tema y lo aplica mediante `::selection`; `Input` y
+`NativeSelect` dejan de definir colores de selección propios. Chromium comprueba
+once superficies reales, selección de campo y alternancia de temas: el mismo par en
+texto, enlaces, campos, selector, editor, documento sobre papel blanco y popover.
+Contraste texto/fondo: 13,76:1 en claro y 9,55:1 en oscuro; sin errores de navegador.
+ESLint puntual de las primitivas y `git diff --check` aprobados. PV-19 conserva la
+aceptación pendiente con dispositivos reales; confirmar que selección es el alcance
+esperado permite validar la interpretación del pedido.
+
 ## Menú de usuario en el encabezado — 2026-10-04
 
 | Cambio | IDs relacionados | Evidencia | Estado |
@@ -158,6 +173,13 @@ I-171 funde COR-15 en COR-14 (pestañas Materias y Docentes, docente por paralel
 `ParallelCreationSheet`, botón principal según programación pendiente); sin cambios de
 API. `ScheduledSubjectsTab.test.ts` y `TeacherAssignmentsPanel.test.ts` cubren la vista.
 Sin cambios de esquema ni permisos sobre asignaciones académicas.
+
+ADM-02 y COR-15, estados sin tooltip (2026-10-04) — RF-003..006, RNF-018..023,
+RN-001..004, CU-02/03, CP-F identidad y CP-N experiencia; aceptación general PV-19:
+`AdminUsersPage` y `TeacherAssignmentsPanel` muestran la etiqueta de Estado como texto
+directo, según solicitud del responsable del producto. Se conserva el texto utilizado
+por la búsqueda y los filtros. Verificación puntual con ESLint y
+`TeacherAssignmentsPanel.test.ts`.
 
 COR-02 (I-46): el listado institucional incluye el alcance de la carrera activa y permite
 iniciarlo desde Acciones. Su filtro se limita a estados operativos (iniciada, pausada y
@@ -406,6 +428,7 @@ hojas, manteniendo el papel blanco y los colores de las celdas.
 | Filas agregadas no desaparecen y campos tipo lista (I-143) | RF-037..044 | RN-020..024 | CU-07 | DOC-01..05 | CP-F borrador | `SyllabusController::updateField` responde filas como `id`/`data`/`position`; `reconcileSavedRows` conserva filas locales y solo adopta ids; `SyllabusTableEditor` en modo lista | `ConvocationAndDraftTest`, `TeacherSyllabusDetailPage.test.ts`, `repeatableRows.test.ts` | Retirado en I-156: sin filas repetibles, planificación ni atajos |
 | Revisión en cadena biblioteca → coordinación → decanato y rol Decano (I-173) | RF-017..033, RF-037..045, RF-062..069 | RN-009..024 | CU-04..07 | COR-05..10, BIB-01..03, DEC-01/02, DOC-07/08/10, ADM-02 | CP-F revisión/firmas/roles | migración `000183` (facultad en roles, `revisiones_coordinacion`, `etapa_solicitud`, firma `decanato`); `ReviewStage`, `SubmitSyllabus` (abre el envío a biblioteca), `VerifyBibliography`, `ReviewByCoordination`, `ApproveSyllabus` (decano; exportación automática), `RequestSyllabusCorrection` por etapa, `SyllabusPolicy` (decano por facultad), `SignatureWorkflow`/`DocumentSignature` con cuatro firmantes, `LibraryReviews`, recipients y destinos de avisos, `AssignRole`/alta de usuarios con facultad; SPA: área `/decanato`, páginas de revisión compartidas con etapa, tarjeta de firma de cuatro, biblioteca y docente sin corrección parcial | `ReviewWorkflowTest`, `LibraryReviewTest`, `DocumentSignatureTest`, `ManagedUserTest`, `TemplateDocumentTest`, `WordRendererTest`, `CoordinationReviewDetailPage.test.ts`, `DocumentSignatureCard.test.ts`, `LibraryReviewDetailPage.test.ts`, `TeacherSyllabusDetailPage.test.ts`, `router.test.ts`, typecheck, lint, Pint, PHPStan | Verificado local; revisión visual pendiente |
 | Simplificación de tablas de revisión y validación (I-176; enmienda ADR 0002) | RF-045, RF-060, RF-063, RF-064 | RN-019, RN-025, RN-026 | CU-04..07 | COR-05..10, BIB-01..03, DOC-07/08 | CP-F revisión/inmutabilidad | migración `000184` (columnas `correccion_*` en `revisiones_silabo`, columnas de reapertura en `aprobaciones`, trigger `proteger_registro_con_campos_unicos`, tablas retiradas); `DraftValidation`, `ValidateDraft`, `RequestSyllabusCorrection`, `ReopenSyllabus`, `ImmutableRecord`, `LibraryReviews` | `ReviewWorkflowTest`, `ConvocationAndDraftTest`, `LibraryReviewTest`, `DocumentSignatureTest`, Pint, PHPStan, contrato OpenAPI | Verificado local |
+| Comentario general en las revisiones; biblioteca con motivos predefinidos (I-177) | RF-017..033, RF-062..069 | RN-009..024 | CU-04..07 | COR-05..10, BIB-03, DEC-02, DOC-08 | CP-F revisión | migración `000185` (se elimina `observaciones_revision`); `RequestSyllabusCorrection`, `ReviewComments`, `LibraryCommentReasons`, `CommentLibraryReviewRequest`; SPA: páginas de revisión, biblioteca y docente | `LibraryReviewTest`, `ReviewWorkflowTest`, `LibraryReviewDetailPage.test.ts`, `CoordinationReviewDetailPage.test.ts`, `TeacherSyllabusDetailPage.test.ts`, Pint, PHPStan, contrato OpenAPI | Verificado local |
 | Rol Bibliotecario, verificación de bibliografía y firmas en plantilla (I-165) | RF-001..007, RF-062..069; requisito nuevo sin ID en la SRS | RN-019, RN-025, RN-026 | CU-13..15 | UI-02, BIB-01..03, DOC-08, DOC-10, ADM-02, ADM-06 | CP-F firma/biblioteca/corrección | `RoleCode::Librarian`, `SignatureWorkflow` (tres firmas), `SendToLibrary`, `CommentBibliography`, `SubmitBibliographyCorrection`, `BibliographyCorrection`, `LibraryReviews`, `LibraryReviewController`, `SignatureAnchor`, `SignatureStampLocator`, migraciones `000162`/`000163`; SPA: `LibraryReviewsPage`, `LibraryReviewDetailPage`, `DocumentSignatureCard`, `TeacherSyllabusDetailPage`, grupo «Firma» del menú Insertar | `LibraryReviewTest`, `DocumentSignatureTest`, `SignatureStampLocatorTest`, `TemplateDocumentTest`, `ManagedUserTest`; Vitest de páginas de biblioteca, roles, firma y plantilla | Verificado automatizado; migración remota y cambio de la sección Bibliografía pendientes |
 | «Campo» en lugar de «parte» y columnas explícitas de la plantilla (I-166) | RF-008..016 | RN-005..008 | CU-03 | ADM-04, COR-05, DOC-01 | CP-F plantilla/esquema | migración `000165` (`campos_plantilla`, `campo_plantilla_id`, columnas explícitas de `secciones_plantilla`); `SyllabusTemplate`; mensajes de `TemplateDocument`, `FieldConditions`, `SaveTemplateDocument`, `SaveFieldDefinition`, `TemplateController`, `lang/es/validation.php`; SPA: textos del constructor de plantilla, revisión y sílabo docente | `SpanishSchemaTest` (I-78), `TemplateAndSourceTest`, `TemplateDocumentTest`, `ConvocationAndDraftTest`; Vitest de plantilla y sílabo docente | Verificado automatizado; `000165` aplicada en la remota con respaldo previo |
 | Copiar el sílabo entre paralelos del mismo docente (I-167) | RF sin ID en la SRS | — | CU del docente | DOC-01 | CP-F borrador | `CopySyllabusContent`, `CopySyllabusContentRequest`, `SyllabusController::copyFrom`, `copy_sources` del detalle; SPA: `TeacherSyllabusDetailPage` | `ConvocationAndDraftTest` (copia, conflicto, destino enviado, origen sin iniciar); Vitest del detalle docente | Verificado automatizado |

@@ -220,12 +220,10 @@ final class InProgressWork
             }
         });
 
-        $observationIds = DB::table('observaciones_revision')->whereIn('revision_silabo_id', $revisionIds)->pluck('id')->all();
         DB::table('revisiones_silabo')->whereIn('id', $revisionIds)->update(['revision_anterior_id' => null]);
         DB::table('envios_biblioteca')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('revisiones_coordinacion')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('aprobaciones')->whereIn('revision_silabo_id', $revisionIds)->delete();
-        DB::table('observaciones_revision')->whereIn('id', $observationIds)->delete();
         DB::table('revisiones_silabo')->whereIn('id', $revisionIds)->delete();
         DB::table('notificaciones')->whereIn('recurso_id', [...$syllabusIds, ...$revisionIds])->delete();
 

@@ -23,7 +23,6 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
  * @property string $convocatoria_id
  * @property string $estado
  * @property int $version_bloqueo
- * @property int $unresolved_observations_count
  * @property array<string, mixed> $contexto_academico
  * @property CarbonImmutable|null $iniciado_en
  * @property CarbonImmutable|null $guardado_en
@@ -156,17 +155,6 @@ class Syllabus extends Model
     public function revisions(): HasMany
     {
         return $this->hasMany(SyllabusRevision::class, 'silabo_id');
-    }
-
-    /** @return HasManyThrough<ReviewObservation, SyllabusRevision, $this> */
-    public function reviewObservations(): HasManyThrough
-    {
-        return $this->hasManyThrough(
-            ReviewObservation::class,
-            SyllabusRevision::class,
-            'silabo_id',
-            'revision_silabo_id',
-        );
     }
 
     /** @return HasManyThrough<Approval, SyllabusRevision, $this> */

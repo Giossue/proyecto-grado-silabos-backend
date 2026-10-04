@@ -144,15 +144,14 @@ Las cuentas creadas por el seeder usan exclusivamente datos sintéticos:
 
 ### 4. Coordinador y docente: corrección, comparación y aprobación
 
-1. Como Coordinador, abra **Revisiones**, entre a la revisión 1 y registre la observación
-   `Precise el resultado formativo esperado` sobre el campo Objetivo general (`CU-10`).
-2. Seleccione esa observación, escriba una justificación y solicite corrección. El estado
-   debe ser **Corrección solicitada**.
-3. Como Docente, abra el expediente, lea la observación, ajuste el objetivo, espere
+1. Como Coordinador, abra **Revisiones** y entre a la revisión 1 (`CU-10`).
+2. Escriba el comentario `Precise el resultado formativo esperado en el objetivo general` y
+   solicite corrección. El estado debe ser **Corrección solicitada**.
+3. Como Docente, abra el expediente, lea el comentario, ajuste el objetivo, espere
    el autoguardado, valide y reenvíe. Debe crearse la revisión 2 sin cambiar la revisión 1
    (`CU-11`).
 4. Como Coordinador, abra **Comparar revisiones** y compruebe el antes/después (`CU-12`).
-   Verifique la observación y apruebe la revisión 2 (`CU-13`).
+   Apruebe la revisión 2 (`CU-13`).
 5. Compruebe que el aprobado no admite edición. No lo reabra todavía: conserve ese estado
    para generar los documentos en el paso siguiente.
 

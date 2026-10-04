@@ -9,7 +9,6 @@ use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
-use App\Modules\Syllabus\Application\Actions\AddReviewObservation;
 use App\Modules\Syllabus\Application\Actions\ApproveSyllabus;
 use App\Modules\Syllabus\Application\Actions\ReopenSyllabus;
 use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
@@ -24,7 +23,6 @@ use App\Modules\Syllabus\Presentation\Http\Requests\ApproveSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ReopenSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ResetSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreCorrectionRequest;
-use App\Modules\Syllabus\Presentation\Http\Requests\StoreObservationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewReviewsRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,8 +54,7 @@ class ReviewController extends Controller
                     ->with(['librarySubmission', 'coordinationReview', 'approval'])
                     ->orderByDesc('numero_revision')
                     ->limit(1),
-            ])
-            ->withCount(['reviewObservations as unresolved_observations_count' => fn ($observation) => $observation->where('estado', '!=', 'verificada')]);
+            ]);
         if ($state !== '') {
             $query->where('estado', $state);
         } else {
@@ -86,7 +83,6 @@ class ReviewController extends Controller
                         'state' => $syllabus->estado,
                         'stage' => $syllabus->estado === 'en_revision' && $revision !== null ? self::stageOf($revision) : null,
                         'teachers' => $syllabus->teachers->pluck('nombre')->values(),
-                        'unresolved_observations' => (int) $syllabus->unresolved_observations_count,
                         'submitted_at' => $revision?->enviado_en->toIso8601String(),
                     ];
                 }),
@@ -102,27 +98,6 @@ class ReviewController extends Controller
         $payload = $this->reviewPayload($revision);
 
         return response()->json($payload);
-    }
-
-    public function storeObservation(
-        SyllabusRevision $revision,
-        StoreObservationRequest $request,
-        AddReviewObservation $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute(
-            $revision,
-            $request->filled('section_key') ? $request->string('section_key')->toString() : null,
-            $request->filled('field_key') ? $request->string('field_key')->toString() : null,
-            $request->string('content')->toString(),
-            $actor,
-            $request,
-        );
-
-        $message = 'Observación registrada en esta revisión.';
-
-        return response()->json(['message' => $message]);
     }
 
     public function requestCorrection(
@@ -231,7 +206,6 @@ class ReviewController extends Controller
             'syllabus.convocation.process.academicPeriod',
             'syllabus.teachers:id,nombre',
             'syllabus.revisions.submitter:id,nombre',
-            'syllabus.revisions.observations.creator:id,nombre',
             'syllabus.revisions.correctionRequester:id,nombre',
             'syllabus.revisions.approval.approver:id,nombre',
             'syllabus.revisions.librarySubmission.verifier:id,nombre',
@@ -292,7 +266,6 @@ class ReviewController extends Controller
                 'approved_at' => $item->approval?->aprobado_en->toIso8601String(),
                 'approved_by' => $item->approval?->approver->nombre,
             ])->values(),
-            'observations' => $this->reviewObservationsPayload($syllabus),
             'correction_request' => ! $revision->hasCorrectionRequest() ? null : [
                 'justification' => $revision->correccion_justificacion,
                 'stage' => $revision->correccion_etapa,
@@ -320,30 +293,6 @@ class ReviewController extends Controller
             $revision->librarySubmission?->verificado_en !== null => ReviewStage::COORDINATION,
             default => ReviewStage::LIBRARY,
         };
-    }
-
-    /** @return list<array<string, mixed>> */
-    private function reviewObservationsPayload(Syllabus $syllabus): array
-    {
-        $payload = [];
-        foreach ($syllabus->revisions->sortBy('numero_revision') as $revision) {
-            $requested = $revision->hasCorrectionRequest();
-            foreach ($revision->observations as $observation) {
-                $payload[] = [
-                    'id' => $observation->id,
-                    'revision_number' => $revision->numero_revision,
-                    'section_key' => $observation->clave_seccion,
-                    'field_key' => $observation->clave_campo,
-                    'content' => $observation->contenido,
-                    'state' => $observation->estado,
-                    'requested' => $requested,
-                    'created_by' => $observation->creator->nombre,
-                    'observado_en' => $observation->observado_en->toIso8601String(),
-                ];
-            }
-        }
-
-        return $payload;
     }
 
     public function reset(

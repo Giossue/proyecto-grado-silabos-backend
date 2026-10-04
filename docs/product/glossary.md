@@ -10,7 +10,7 @@
 | Sílabo canónico           | Expediente compartible por asignatura y periodo que fija su contexto académico.              |
 | Borrador                  | Contenido editable actual, todavía no enviado como evidencia.                                |
 | Revisión                  | Fotografía inmutable creada al enviar o reenviar.                                            |
-| Observación               | Solicitud de revisión vinculada a campo, sección o documento.                                |
+| Observación               | Retirada en I-177: la revisión se devuelve con un comentario general (biblioteca, con motivos).|
 | Respuesta                 | Retirada en I-120: el docente corrige y reenvía; ya no escribe respuestas a observaciones.   |
 | Aprobación                | Decisión humana sobre una revisión concreta e inmutable.                                     |
 | Reapertura                | Creación controlada de una nueva revisión desde un aprobado conservado.                      |

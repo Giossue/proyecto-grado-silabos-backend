@@ -4233,62 +4233,6 @@
                 ]
             }
         },
-        "/api/v1/coordination/reviews/{revision}/observations": {
-            "post": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_reviews_observations_store",
-                "summary": "api.v1.coordination.reviews.observations.store",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "revision",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
         "/api/v1/coordination/reviews/{revision}/request-correction": {
             "post": {
                 "tags": [

@@ -41,7 +41,9 @@ lleva un icono `lucide` al inicio con `data-icon="inline-start"`; mientras proce
 Los botones secundarios (`outline`, `ghost`, `link`) no lo requieren.
 
 `styles.css` centraliza el tema, el avatar, el logo, las dimensiones de layouts y los
-niveles de superposición. El avatar del asistente (`RobotAvatar.vue`) es un blob azul con
+niveles de superposición. Los tokens `--selection-background` y `--selection-foreground`
+definen el par de selección por tema mediante `::selection` global. Las primitivas de
+campos heredan ese par. El avatar del asistente (`RobotAvatar.vue`) es un blob azul con
 dos ojos al estilo «Strobi» de bible-strong-avatar-lab, reimplementado sin dependencia ni
 AGPL: `blobGeometry.ts` modela una esfera (radio 120, foco 620) con dos cápsulas
 proyectadas sobre su superficie; cada expresión gira la cabeza y cambia tamaño, separación

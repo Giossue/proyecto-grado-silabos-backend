@@ -14,7 +14,6 @@ class DeleteManagedUser
     private const TRACES = [
         'asignaciones_paralelo' => 'asignacion_rol_id',
         'eventos_auditoria' => 'usuario_id',
-        'observaciones_revision' => 'creado_por',
         'revisiones_silabo' => 'enviado_por',
         'exportaciones_silabo' => 'solicitado_por',
         'archivos' => 'subido_por',

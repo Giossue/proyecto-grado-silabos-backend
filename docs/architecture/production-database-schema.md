@@ -570,20 +570,11 @@ de corrección de esa revisión, con la etapa que la pidió. Reemplazan a la tab
 `solicitudes_correccion`. La reapertura ya no se enlaza desde la revisión: la revisión
 siguiente apunta a la aprobada con `revision_anterior_id`.
 
-## observaciones_revision
+## Observaciones por campo (retiradas)
 
-**Contexto:** observaciones hechas sobre una revisión.
-
-~~~text
-id UUID (PK)
-revision_silabo_id UUID (FK → revisiones_silabo.id) NOT NULL
-clave_seccion VARCHAR NULL
-clave_campo VARCHAR NULL
-contenido_observacion_revision TEXT NOT NULL
-estado_observacion_revision VARCHAR NOT NULL CHECK (abierta | verificada)
-creado_por UUID (FK → usuarios.id) NOT NULL
-observado_en TIMESTAMPTZ NOT NULL
-~~~
+I-177 elimina `observaciones_revision`: la revisión se devuelve con un comentario general
+guardado en `revisiones_silabo.correccion_justificacion`. Biblioteca elige motivos
+predefinidos y el sistema guarda su texto en ese mismo campo.
 
 ## aprobaciones
 
@@ -647,9 +638,7 @@ Desde I-136 no existe `transiciones_silabo`: cada cambio de estado queda en
 ~~~text
 silabos 1:N revisiones_silabo
 revisiones_silabo 0..1:N revisiones_silabo mediante revision_anterior_id
-revisiones_silabo 1:N observaciones_revision
-la solicitud de corrección (columnas correccion_*) incluye todas las observaciones_revision
-  de su revisión (derivado por revision_silabo_id; I-134)
+la solicitud de corrección (columnas correccion_*) es un comentario general de la revisión
 revisiones_silabo 1:0..1 aprobaciones
 la reapertura (columnas de aprobaciones) deja la aprobación anulada
 ~~~

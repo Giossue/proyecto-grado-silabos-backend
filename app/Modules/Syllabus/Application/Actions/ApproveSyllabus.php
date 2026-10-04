@@ -10,7 +10,6 @@ use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\CanonicalHasher;
@@ -57,11 +56,6 @@ class ApproveSyllabus
                 throw ValidationException::withMessages(['revision' => 'La revisión aún no llega al decanato: faltan biblioteca o coordinación.']);
             }
 
-            $resolved = ReviewObservation::query()
-                ->whereHas('revision', fn ($query) => $query->where('silabo_id', $syllabus->id))
-                ->where('estado', '!=', 'verificada')
-                ->update(['estado' => 'verificada']);
-
             $approvedAt = now();
             $fingerprint = $this->hasher->hash([
                 'revision_id' => $revision->id,
@@ -90,7 +84,6 @@ class ApproveSyllabus
                     'revision_number' => $revision->numero_revision,
                     'from_state' => 'en_revision',
                     'to_state' => 'aprobado',
-                    'resolved_observations' => $resolved,
                     'fingerprint' => $fingerprint,
                     'self_approved' => $revision->enviado_por === $actor->id,
                 ],

@@ -64,7 +64,7 @@ de asignación. Ninguna operación levanta los bloqueos académicos.
 | ------ | ------------------------------------------ |
 | BIB-01 | Panel de biblioteca                        |
 | BIB-02 | Revisiones de biblioteca                   |
-| BIB-03 | Revisión de bibliografía (aprobar, comentar o firmar) |
+| BIB-03 | Revisión de bibliografía (aprobar, devolver con motivos o firmar) |
 
 El bibliotecario no tiene carrera: entra directo, como Administración, y su tarjeta de
 ámbito dice «Biblioteca · toda la universidad». El menú lateral tiene «Panel» y
@@ -74,7 +74,7 @@ los sílabos enviados (cada envío del docente llega primero aquí), con búsque
 de estado («Por revisar», «Aprobada por biblioteca», «Por firmar», «Firmado», «Con
 comentario», «Anulado») y la acción «Abrir». BIB-03 muestra la Bibliografía de la
 revisión en solo lectura y, en etapa biblioteca, las tarjetas «Aprobar bibliografía» (el
-sílabo pasa a coordinación) y «Enviar comentario» (vuelve al docente, que corrige todo el
+sílabo pasa a coordinación) y «Devolver al docente» (casillas con motivos predefinidos, sin texto libre; vuelve al docente, que corrige todo el
 sílabo y reenvía; la revisión nueva vuelve a biblioteca). Cuando el decanato aprueba,
 aparece la tarjeta de firma (tercera firma). El aviso `silabo.enviado` abre BIB-03.
 
@@ -90,7 +90,7 @@ El decano tiene facultad, no carrera: entra directo y su ámbito dice «Decanato
 los sílabos de todas las carreras de su facultad con su etapa («En biblioteca», «En
 coordinación», «En decanato»); el detalle solo permite decidir en etapa decanato:
 **Aprobar** (fija la aprobación y genera el PDF) o **Solicitar corrección** (con
-justificación, sin observaciones; el sílabo vuelve al docente y la cadena empieza de
+comentario general, sin observaciones; el sílabo vuelve al docente y la cadena empieza de
 nuevo). Puede **Reabrir** un aprobado y firma el PDF en cuarto lugar. DEC-01 muestra «Por
 aprobar» y «Aprobados». Los avisos `silabo.revisado_coordinacion` y
 `silabo.firmado_biblioteca` abren DEC-02.
@@ -139,6 +139,10 @@ plantilla por defecto trae cuatro celdas de firma.
   cambiarse desde un `Sheet` en ese mismo menú.
 - El selector de tema del encabezado alterna únicamente entre claro y oscuro; no existe
   la opción «Sistema». Sin preferencia guardada, la aplicación arranca en claro.
+- La selección de texto comparte un fondo y un color de texto por tema en toda la
+  interfaz, incluidos formularios y documentos. En claro usa azul oscuro con texto
+  claro; en oscuro, azul claro con texto oscuro. Los pares son opacos para mantener
+  legibilidad sobre las distintas superficies.
 - La identidad visual usa el azul `#2d4b6f` y el rojo `#ac231e` proporcionados por el
   responsable del producto el 2026-10-04. El azul marca acciones primarias, foco e ítem
   activo del menú; el rojo aparece solo como barra del ítem activo. Fondos y sidebar
@@ -476,6 +480,8 @@ plantilla por defecto trae cuatro celdas de firma.
   de activación» y la misma acción de reenvío para la carrera activa. Cada fila de
   COR-15 tiene además **Editar docente** (I-170): nombre y correo en un panel lateral;
   el correo queda deshabilitado, con explicación, cuando la cuenta ya fue activada.
+  Por solicitud del responsable del producto del 2026-10-04, la columna Estado de
+  Usuarios y Docentes muestra únicamente su etiqueta visible, sin tooltip.
 - Salida de personas (I-39): en ADM-04 Carreras la coordinación no ocupa una columna;
   su menú tiene **Reemplazar coordinador** (o **Asignar coordinador** si no hay): cierra
   nombramiento y rol de quien sale, abre los de quien entra y, si se marca y no le
@@ -633,9 +639,9 @@ plantilla por defecto trae cuatro celdas de firma.
 | Rol           | Interfaces cubiertas                            | Comportamiento                                                                                                                                                                                                                                 |
 | ------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Administrador | ADM-02, ADM-03, ADM-04, ADM-05, ADM-06 y ADM-12 | Cuentas, roles, catálogos, coordinaciones, campos y procesos de sílabos se crean desde una acción que abre el `Sheet` derecho. La única plantilla institucional se crea como contenedor vacío; el administrador puede aplicar «Formatear» para cargar la estructura oficial o construirla manualmente. |
-| Coordinador   | COR-02, COR-06, COR-13, COR-14 y COR-15 | Convocatorias, observaciones, mallas, materias programadas, paralelos y asignaciones docentes usan el mismo patrón. En COR-15, los selectores permiten buscar docentes por nombre o correo y paralelos por materia, período o código. |
+| Coordinador   | COR-02, COR-06, COR-13, COR-14 y COR-15 | Convocatorias, revisiones, mallas, materias programadas, paralelos y asignaciones docentes usan el mismo patrón. En COR-15, los selectores permiten buscar docentes por nombre o correo y paralelos por materia, período o código. |
 | Docente       | DOC-02 a DOC-10                                 | No administra colecciones maestras. Edición, IA, envío y respuestas son flujos académicos de página completa, no formularios de alta.                                                                                                          |
-| Bibliotecario | BIB-01 a BIB-03 | No administra colecciones. Aprueba, comenta o firma desde el detalle de la revisión; no hay formularios de alta. |
+| Bibliotecario | BIB-01 a BIB-03 | No administra colecciones. Aprueba, devuelve con motivos o firma desde el detalle de la revisión; no hay formularios de alta. |
 | Decano | DEC-01, DEC-02 | No administra colecciones. Aprueba, devuelve, reabre o firma desde el detalle de la revisión. |
 
 Selección de rol, filtros, configuración personal, resolución de contradicciones y

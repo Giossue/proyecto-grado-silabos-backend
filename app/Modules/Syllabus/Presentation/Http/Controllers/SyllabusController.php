@@ -15,13 +15,13 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
-use App\Modules\Library\Presentation\Http\Controllers\LibraryReviewController;
 use App\Modules\Syllabus\Application\Actions\CopySyllabusContent;
 use App\Modules\Syllabus\Application\Actions\StartDraft;
 use App\Modules\Syllabus\Application\Actions\SubmitSyllabus;
 use App\Modules\Syllabus\Application\Actions\UpdateDraftField;
 use App\Modules\Syllabus\Application\Actions\ValidateDraft;
 use App\Modules\Syllabus\Application\IdentificationCard;
+use App\Modules\Syllabus\Application\ReviewComments;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -186,7 +186,7 @@ class SyllabusController extends Controller
             'convocation.career', 'convocation.process.academicPeriod', 'parallel.scheduledSubject.subject', 'parallel', 'teachers:id,nombre,correo_electronico',
             'values',
             'revisions' => fn ($query) => $query->with([
-                'submitter:id,nombre', 'approval.approver:id,nombre', 'observations',
+                'submitter:id,nombre', 'approval.approver:id,nombre',
             ]),
             'reopenedApprovals' => fn ($query) => $query->with('reopener:id,nombre')->latest('reabierta_en'),
         ]);
@@ -229,7 +229,6 @@ class SyllabusController extends Controller
                 'submitted_by' => $revision->submitter->nombre,
                 'approved_at' => $revision->approval?->aprobado_en->toIso8601String(),
             ])->values(),
-            'observations' => $this->teacherObservationsPayload($syllabus),
             'reopening' => $syllabus->reopenedApprovals->first() === null ? null : [
                 'cause' => $syllabus->reopenedApprovals->first()->causa_reapertura,
                 'reopened_at' => $syllabus->reopenedApprovals->first()->reabierta_en->toIso8601String(),
@@ -237,7 +236,7 @@ class SyllabusController extends Controller
                 'origin' => $syllabus->reopenedApprovals->first()->origen_reapertura,
             ],
             'review_stage' => ReviewStage::of($syllabus),
-            'library_comments' => LibraryReviewController::comments($syllabus),
+            'review_comments' => ReviewComments::forSyllabus($syllabus),
         ];
     }
 
@@ -276,28 +275,6 @@ class SyllabusController extends Controller
         };
 
         return ['editable' => false, 'edit_block_reason' => $reason];
-    }
-
-    /** @return list<array<string, mixed>> */
-    private function teacherObservationsPayload(Syllabus $syllabus): array
-    {
-        $payload = [];
-        foreach ($syllabus->revisions->sortBy('numero_revision') as $revision) {
-            $requested = $revision->hasCorrectionRequest();
-            foreach ($revision->observations as $observation) {
-                $payload[] = [
-                    'id' => $observation->id,
-                    'revision_number' => $revision->numero_revision,
-                    'section_key' => $observation->clave_seccion,
-                    'field_key' => $observation->clave_campo,
-                    'content' => $observation->contenido,
-                    'state' => $observation->estado,
-                    'requested' => $requested,
-                ];
-            }
-        }
-
-        return $payload;
     }
 
     /**

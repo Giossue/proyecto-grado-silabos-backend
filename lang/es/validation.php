@@ -314,6 +314,8 @@ return [
         'remember' => 'recordarme',
         'idempotency_key' => 'identificador de la solicitud',
         'comment' => 'comentario',
+        'reasons' => 'motivos',
+        'reasons.*' => 'motivo',
         'return_to_editor' => 'volver al editor',
         '*.label' => 'nombre',
         '*.code' => 'código',

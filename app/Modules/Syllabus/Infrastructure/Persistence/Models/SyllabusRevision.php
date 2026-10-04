@@ -10,7 +10,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
@@ -93,12 +92,6 @@ class SyllabusRevision extends Model
     public function submitter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'enviado_por');
-    }
-
-    /** @return HasMany<ReviewObservation, $this> */
-    public function observations(): HasMany
-    {
-        return $this->hasMany(ReviewObservation::class, 'revision_silabo_id');
     }
 
     /** @return HasOne<Approval, $this> */

@@ -174,9 +174,9 @@ por plantilla:
 
 ### Revisión
 
-- `Observacion`: campo, sección o documento; autor, revisión, estado y fecha.
-- El docente no responde observaciones: corrige el sílabo y lo reenvía (I-120). Una
-  observación está abierta o verificada.
+- Comentario de devolución: texto general, etapa (biblioteca, coordinación o decanato),
+  autor y fecha, guardado en la revisión devuelta (I-176/I-177). No hay observaciones por
+  campo. El docente no responde: corrige el sílabo y lo reenvía.
 - `Aprobacion`: actor, revisión, fecha, metadatos y huella.
 - `Reapertura`: causa, actor, revisión aprobada de origen y nueva revisión.
 

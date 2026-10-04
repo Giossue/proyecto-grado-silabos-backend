@@ -79,7 +79,7 @@ class SpanishModelColumnsTest extends TestCase
             $modelos[] = $reflexion;
         }
 
-        $this->assertGreaterThan(30, count($modelos), 'El inventario de modelos parece incompleto.');
+        $this->assertGreaterThan(25, count($modelos), 'El inventario de modelos parece incompleto.');
 
         return $modelos;
     }

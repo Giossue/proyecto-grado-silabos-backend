@@ -9,7 +9,6 @@ use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Http\Request;
@@ -39,10 +38,6 @@ class ReviewByCoordination
                 throw ValidationException::withMessages(['revision' => 'Esta revisión no está en la etapa de coordinación.']);
             }
 
-            $resolved = ReviewObservation::query()
-                ->whereHas('revision', fn ($query) => $query->where('silabo_id', $syllabus->id))
-                ->where('estado', '!=', 'verificada')
-                ->update(['estado' => 'verificada']);
             $review = CoordinationReview::query()->create([
                 'revision_silabo_id' => $revision->id,
                 'revisado_por' => $actor->id,
@@ -56,7 +51,7 @@ class ReviewByCoordination
                 resourceType: 'revision_coordinacion',
                 resourceId: $review->id,
                 result: 'exito',
-                metadata: ['revision_number' => $revision->numero_revision, 'resolved_observations' => $resolved],
+                metadata: ['revision_number' => $revision->numero_revision],
             );
             $this->notifications->execute(
                 syllabus: $syllabus,

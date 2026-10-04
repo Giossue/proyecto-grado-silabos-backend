@@ -32,11 +32,11 @@
 - Enviar/reenviar ejecuta validaciones obligatorias y crea una revisión inmutable.
 - `borrador` identifica el trabajo editable e `iniciado_en` conserva cuándo comenzó;
   un borrador puede estar incompleto hasta la validación de envío.
-- El coordinador observa una revisión concreta, solicita corrección o aprueba.
-- COR-06 mantiene la revisión como página completa, pero abre el alta de observaciones
-  desde una acción principal en un panel lateral derecho.
-- Solo Coordinación escribe observaciones. El docente corrige y reenvía; el
-  coordinador verifica sobre la nueva revisión si la observación queda resuelta (I-120).
+- El coordinador solicita corrección con un comentario general o aprueba.
+- COR-06 mantiene la revisión como página completa; la corrección se pide con un
+  comentario general en el panel lateral derecho (I-177: no hay observaciones por campo).
+- Biblioteca devuelve con motivos predefinidos; coordinación y decanato, con un
+  comentario general. El docente corrige y reenvía una revisión nueva.
 - La comparación muestra cambios de campos, filas y secciones.
 - Reabrir conserva la revisión aprobada y registra causa/actor.
 

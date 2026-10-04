@@ -15,7 +15,6 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Application\RevisionDiff;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\ReviewObservation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\CanonicalHasher;
@@ -284,18 +283,10 @@ class ReviewWorkflowTest extends TestCase
             'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
         ])->assertUnprocessable()->assertJsonPath('errors.revision.0', 'La revisión no está en su etapa; otro revisor la tiene ahora.');
         $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $firstRevision))->assertCreated();
+        // I-177: un comentario general, sin observaciones por campo.
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $firstRevision), [
-            'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
-        ])->assertUnprocessable()->assertJsonPath(
-            'errors.revision.0',
-            'Registra al menos una observación pendiente en esta revisión antes de solicitar corrección.',
-        );
-
-        foreach (['Precise la descripción y explique el ajuste realizado.', 'Complete la bibliografía básica.'] as $content) {
-            $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $firstRevision), [
-                'content' => $content,
-            ])->assertSuccessful();
-        }
+            'justification' => 'Corto',
+        ])->assertJsonValidationErrors('justification');
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $firstRevision), [
             'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
         ])->assertSuccessful();
@@ -310,11 +301,11 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsTeacher()
             ->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertOk()
-            ->assertJson(fn (Assert $page) => $page->etc()
+            ->assertJsonPath('syllabus.review_comments.0.stage', 'coordinacion')
+            ->assertJsonPath('syllabus.review_comments.0.comment', 'Se requiere precisión académica antes de aprobar la revisión.')
+            ->assertJsonMissingPath('syllabus.observations');
 
-                ->where('syllabus.observations.0.requested', true)
-                ->where('syllabus.observations.1.requested', true));
-
+        $this->assertFalse(Route::has('api.v1.coordination.reviews.observations.store'));
         $this->assertFalse(Route::has('api.v1.teacher.syllabi.observations.respond'));
         $this->assertFalse(Route::has('api.v1.coordination.reviews.observations.verify'));
 
@@ -353,13 +344,9 @@ class ReviewWorkflowTest extends TestCase
                 ->where('comparison.after_revision', 2));
     }
 
-    public function test_cp_f_approval_resolves_pending_observations_and_is_idempotent(): void
+    public function test_cp_f_approval_follows_the_chain_and_is_idempotent(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $revision), [
-            'content' => 'Confirme que el contenido actual satisface el criterio.',
-        ]);
-        $observation = ReviewObservation::query()->firstOrFail();
         $key = (string) Str::uuid();
 
         // I-173: biblioteca → coordinación → decanato; el decanato fija la aprobación.
@@ -372,7 +359,6 @@ class ReviewWorkflowTest extends TestCase
             'idempotency_key' => $key,
         ])->assertSuccessful();
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
-        $this->assertSame('verificada', $observation->fresh()->estado);
         $this->assertDatabaseHas('revisiones_coordinacion', ['revision_silabo_id' => $revision->id, 'revisado_por' => $this->coordinator->id]);
         $this->assertWorkflowNotification($syllabus->id, 'silabo.revisado_coordinacion');
         $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))
@@ -670,9 +656,6 @@ class ReviewWorkflowTest extends TestCase
         $message = 'La convocatoria está cerrada: la revisión queda solo para consulta y no admite decisiones.';
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$syllabus->convocation, 'pausar']))->assertSuccessful();
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $revision), [
-            'content' => 'Observación registrada durante la pausa.',
-        ])->assertSuccessful();
 
         $syllabus->convocation->update(['estado' => Convocation::STATE_CLOSED]);
 
@@ -680,9 +663,6 @@ class ReviewWorkflowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('decisions_allowed', false)
             ->assertJsonPath('reset.allowed', false);
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.observations.store', $revision), [
-            'content' => 'Observación fuera de plazo.',
-        ])->assertForbidden()->assertJsonPath('message', $message);
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
             'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
         ])->assertForbidden()->assertJsonPath('message', $message);
@@ -697,7 +677,6 @@ class ReviewWorkflowTest extends TestCase
 
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('aprobaciones', 0);
-        $this->assertSame(1, ReviewObservation::query()->count());
     }
 
     private function assertWorkflowNotification(string $syllabusId, string $eventType): void
