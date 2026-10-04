@@ -47,9 +47,12 @@ class AcademicGovernanceController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute($entity, $request->validated(), $actor, $request);
+        $record = $action->execute($entity, $request->validated(), $actor, $request);
 
-        return response()->json(['message' => 'Registro institucional creado.'], 201);
+        return response()->json([
+            'message' => 'Registro institucional creado.',
+            'id' => $record->getKey(),
+        ], 201);
     }
 
     public function replaceCoordinator(

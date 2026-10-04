@@ -193,7 +193,8 @@ class AcademicStructureTest extends TestCase
                 'starts_on' => '2026-09-23',
                 'ends_on' => '2026-12-18',
             ])
-            ->assertCreated();
+            ->assertCreated()
+            ->assertJsonStructure(['message', 'id']);
     }
 
     public function test_period_rejects_a_range_longer_than_52_calendar_weeks(): void

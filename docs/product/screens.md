@@ -449,14 +449,15 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   sílabos reemplazará. La confirmación aclara que también desaparecen revisiones,
   aprobaciones, IA y exportaciones antes de regenerarlos (I-118).
 - Los IDs internos y detalles de infraestructura no se muestran.
-- ADM-04 usa el submenú **Estructura académica** con rutas independientes para Facultades,
-  Carreras y Periodos académicos. El formulario de facultad exige elegir uno de los cinco
+- ADM-04 usa el submenú **Estructura académica** con rutas independientes para Facultades
+  y Carreras; los periodos académicos se administran en ADM-12 (I-172) y la ruta antigua
+  de Periodos redirige allí. El formulario de facultad exige elegir uno de los cinco
   campus institucionales y no solicita código; la tabla de facultades muestra su campus.
   Carreras exige el código de carrera y muestra su Facultad, Modalidad y campus heredado.
   El período genera automáticamente su etiqueta con el rango de meses y año; su
-  formulario solo solicita las fechas y muestra las semanas lectivas calculadas en solo
-  lectura. Se cuentan las semanas de lunes a domingo que toca el rango, aunque la primera
-  o la última sea parcial.
+  formulario solo solicita las fechas. Las semanas lectivas se calculan contando las de
+  lunes a domingo que toca el rango, aunque la primera o la última sea parcial, y no se
+  muestran en la tabla.
   La configuración de malla solo edita la cantidad de ciclos. No hay una pantalla o
   catálogo de campus ni un código de facultad o malla (I-107).
 - La modalidad base se fija por carrera (obligatoria al crearla; la aprueba el CES) y
@@ -527,13 +528,19 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   registro paginado con fecha, actividad, responsable y resultado; acción y recurso se
   agrupan en la misma celda y no se muestran metadatos secundarios. ADM-09 conserva su
   ruta independiente para diagnosticar y reintentar trabajos.
-- ADM-12 lista los procesos de sílabos con estado, período institucional, plantilla, inicio, entrega y
-  convocatorias. La apertura se lanza desde la fila de un período en ADM-04: el período
-  queda fijado, el nombre y la plantilla son automáticos, y el `Sheet` solo solicita las
-  fechas de elaboración antes de crear y abrir en una operación atómica.
-  Ambos selectores empiezan vacíos: Administración elige las fechas propias de la
-  convocatoria y el formulario no copia las fechas lectivas del período.
-  ADM-12 queda como pantalla de seguimiento y administración posterior. **Editar** solo
+- ADM-12 **Convocatorias** (I-172) es la única pantalla de periodos y convocatorias: una
+  fila por periodo lectivo con sus fechas de clases, las fechas de elaboración de sílabos
+  (o «Sin fechas») y el estado de la convocatoria («Sin abrir», Abierta, En pausa,
+  Cerrada). El botón **Nueva convocatoria** abre un solo `Sheet` con dos bloques: fechas
+  del periodo (obligatorias; la etiqueta se genera sola) y fechas de elaboración
+  (opcionales). Si se llenan las segundas, la SPA crea el periodo y abre la convocatoria
+  con el `id` devuelto; si falla la apertura, el periodo queda creado y el reintento solo
+  abre la convocatoria. Si se dejan vacías, solo se crea el periodo y la convocatoria se
+  abre después desde la fila (**Abrir convocatoria**), con el período fijado y el nombre y
+  la plantilla automáticos. Las fechas de elaboración siempre empiezan vacías: el
+  formulario no copia las fechas lectivas del período (I-113). Desde la fila también se
+  editan las fechas del periodo (salvo bloqueo por convocatoria en curso) y se elimina un
+  periodo sin convocatoria. **Editar** solo
   aparece en pausa; **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
   explica la consecuencia, sin pedir motivo. **Prorrogar plazo** solicita
   únicamente una nueva fecha límite de entrega, sin motivo; no permite cambiar el inicio.
@@ -545,8 +552,7 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   El nombre se genera al crear o guardar
   como «Convocatoria {nombre del período}»; el formulario no pide nombre ni muestra una
   etiqueta de plantilla vacía. La plantilla institucional se sigue heredando. El alta exige elegir el período
-  académico institucional. ADM-12 ya no ofrece un alta independiente y remite a Periodos
-  académicos; el servidor rechaza igualmente un alta forzada sin estructura lista. COR-03 muestra las convocatorias institucionales visibles y
+  académico institucional; el servidor rechaza igualmente un alta forzada sin estructura lista. COR-03 muestra las convocatorias institucionales visibles y
   permite iniciar únicamente el alcance de su carrera desde una abierta; hereda plantilla,
   período y fechas. El mismo inicio está disponible en COR-01 cuando la comprobación
   completa de malla, programación, paralelos, docentes, plantilla y logo indica que la
