@@ -53,7 +53,7 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 
 | Cambio | IDs relacionados | Evidencia | Estado |
 |---|---|---|---|
-| Cuenta al extremo derecho y puesta en marcha en el Panel | RF-001..007, RN-001..004, CU-01/02; UI-01..04; RNF-018..023; CP-F identidad/ámbito/sesión, CP-N experiencia/accesibilidad; PV-19 | Solicitud del responsable del producto: retirar el mini avance del encabezado y trasladar el menú de usuario del sidebar después de notificaciones y tema; nombre y ámbito truncados en escritorio, solo avatar en móvil. Composición descrita en `docs/product/screens.md`; ESLint puntual y las ocho pruebas existentes de `AppShell.test.ts` pasan. | Verificación puntual aprobada; aceptación con dispositivos reales pendiente en PV-19. |
+| Cuenta al extremo derecho y puesta en marcha en el Panel | RF-001..007, RN-001..004, CU-01/02; UI-02..04; RNF-018..023; CP-F identidad/ámbito/sesión, CP-N experiencia/accesibilidad; PV-19 | Solicitud del responsable del producto: retirar el mini avance del encabezado y trasladar el menú de usuario del sidebar después de notificaciones y tema; nombre y ámbito truncados en escritorio, solo avatar en móvil. Composición descrita en `docs/product/screens.md`; ESLint puntual y las ocho pruebas existentes de `AppShell.test.ts` pasan. | Verificación puntual aprobada; aceptación con dispositivos reales pendiente en PV-19. |
 
 ## Cadena
 

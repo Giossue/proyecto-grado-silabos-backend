@@ -553,7 +553,9 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   un periodo. **Editar** solo
   aparece en pausa; **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
   explica la consecuencia, sin pedir motivo; en la interfaz **Cerrar** se llama
-  **Finalizar**. **Prorrogar plazo** solicita
+  **Finalizar** y al finalizar el proceso se finalizan también las convocatorias de
+  carrera abiertas o pausadas (COR-03 muestra Sin iniciar, Abierta, Pausada, Finalizada,
+  sin columna de período porque el nombre ya es el del período). **Prorrogar plazo** solicita
   únicamente una nueva fecha límite de entrega, sin motivo; no permite cambiar el inicio.
   **Eliminar** está siempre disponible (I-172, reemplaza I-117) y confirma que se
   retirarán la convocatoria institucional, sus alcances y todos sus sílabos, incluidos los

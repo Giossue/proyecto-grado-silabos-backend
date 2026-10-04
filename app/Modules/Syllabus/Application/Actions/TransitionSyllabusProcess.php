@@ -10,6 +10,7 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,6 +71,13 @@ class TransitionSyllabusProcess
             $locked->update([
                 'estado' => $rule['to'],
             ]);
+            // Al finalizar, las convocatorias de carrera en curso se finalizan con el proceso (I-172).
+            if ($rule['to'] === SyllabusProcess::STATE_CLOSED) {
+                Convocation::query()
+                    ->where('proceso_id', $locked->id)
+                    ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
+                    ->update(['estado' => Convocation::STATE_CLOSED]);
+            }
 
             $this->audit->execute(
                 actorId: $actor->id,

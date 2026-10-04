@@ -43,6 +43,9 @@ RF-008..016, RF-034..036 · RN-005..019 · CU-03..06 · ADM-04, ADM-12 · I-110,
 - **Eliminar** en cualquier estado: `DeleteSyllabusProcess` usa `InProgressWork::purge`
   (ahora público y con `envios_biblioteca`) y ya no bloquea por actividad docente; se
   retira `deletable` de la API. Reemplaza I-117.
+- Al finalizar el proceso, `TransitionSyllabusProcess` finaliza las convocatorias de
+  carrera abiertas o pausadas; COR-03 usa las mismas etiquetas y pierde la columna
+  Período duplicada.
 
 ## Verificación
 

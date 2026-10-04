@@ -168,6 +168,17 @@ class SyllabusProcessTest extends TestCase
         ]);
     }
 
+    public function test_closing_the_process_finalizes_the_career_convocations(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+        $this->assertSame(Convocation::STATE_OPEN, $convocation->fresh()->estado);
+
+        $this->transition($process, 'cerrar')->assertSuccessful();
+
+        $this->assertSame(Convocation::STATE_CLOSED, $convocation->fresh()->estado);
+    }
+
     public function test_coordination_cannot_delete_an_institutional_process(): void
     {
         $process = $this->createProcess($this->publishedTemplate(), 'Proceso protegido');
@@ -806,7 +817,7 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'cerrar']))->assertNotFound();
         $syllabus = Syllabus::query()->firstOrFail();
         $this->transition($convocation->process()->firstOrFail(), 'cerrar')->assertSuccessful();
-        $this->assertSame('pausada', $convocation->fresh()->estado);
+        $this->assertSame('cerrada', $convocation->fresh()->estado);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertForbidden();
     }
 
