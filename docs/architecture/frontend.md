@@ -41,7 +41,10 @@ lleva un icono `lucide` al inicio con `data-icon="inline-start"`; mientras proce
 Los botones secundarios (`outline`, `ghost`, `link`) no lo requieren.
 
 `styles.css` centraliza el tema, el avatar, el logo, las dimensiones de layouts y los
-niveles de superposición. La paleta solicitada por el responsable del producto el
+niveles de superposición. El avatar del asistente (`RobotAvatar.vue`) es un blob azul con
+dos ojos, inspirado en el estilo «Strobi» de bible-strong-avatar-lab pero dibujado en SVG
+propio (sin dependencia ni AGPL): `--avatar-body` y `--avatar-outline`; modos y emociones
+se expresan con ojos, boca y cuerpo (I-174, 2026-10-04). La paleta solicitada por el responsable del producto el
 2026-10-04 usa el azul `#2d4b6f` en acciones primarias, foco y menú activo, y el rojo `#ac231e`
 solo como barra del ítem activo del menú. Fondos y sidebar siguen neutros; todo vive
 en los tokens de `src/styles.css`. Éxito, advertencia y acción destructiva tienen
