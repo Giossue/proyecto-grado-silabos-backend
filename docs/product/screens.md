@@ -58,36 +58,52 @@ cambiar su identidad ni contraseña. Asignar docente a un paralelo se hace únic
 COR-14, desde los paralelos de cada materia; la pantalla ya no ofrece un botón global
 de asignación. Ninguna operación levanta los bloqueos académicos.
 
-## Bibliotecario (I-165)
+## Bibliotecario (I-165, I-173)
 
 | ID     | Pantalla                                   |
 | ------ | ------------------------------------------ |
 | BIB-01 | Panel de biblioteca                        |
 | BIB-02 | Revisiones de biblioteca                   |
-| BIB-03 | Revisión de bibliografía (firmar o comentar) |
+| BIB-03 | Revisión de bibliografía (aprobar, comentar o firmar) |
 
 El bibliotecario no tiene carrera: entra directo, como Administración, y su tarjeta de
 ámbito dice «Biblioteca · toda la universidad». El menú lateral tiene «Panel» y
-«Revisiones de biblioteca». BIB-01 muestra «Por verificar», «Con comentario» y
-«Firmados», sin plazo ni Puesta en marcha. BIB-02 es la bandeja de sílabos enviados, con
-búsqueda y filtro de estado («Por verificar», «Firmado», «Con comentario», «Anulado») y
-la acción «Abrir» en el menú de tres puntos. BIB-03 muestra la Bibliografía de la
-revisión en solo lectura, la tarjeta de firma electrónica (tercera firma) y, mientras
-espera verificación, la tarjeta «Enviar comentario» con confirmación. Abajo muestra el
-historial de comentarios. El aviso `biblioteca.enviado` abre BIB-03 y
-`biblioteca.comentado` abre el sílabo del docente.
+«Revisiones de biblioteca». BIB-01 muestra «Por verificar», «Por firmar», «Con
+comentario» y «Firmados», sin plazo ni Puesta en marcha. BIB-02 es la bandeja de todos
+los sílabos enviados (cada envío del docente llega primero aquí), con búsqueda y filtro
+de estado («Por revisar», «Aprobada por biblioteca», «Por firmar», «Firmado», «Con
+comentario», «Anulado») y la acción «Abrir». BIB-03 muestra la Bibliografía de la
+revisión en solo lectura y, en etapa biblioteca, las tarjetas «Aprobar bibliografía» (el
+sílabo pasa a coordinación) y «Enviar comentario» (vuelve al docente, que corrige todo el
+sílabo y reenvía; la revisión nueva vuelve a biblioteca). Cuando el decanato aprueba,
+aparece la tarjeta de firma (tercera firma). El aviso `silabo.enviado` abre BIB-03.
 
-En DOC-10, después de las firmas de docente y coordinación, aparece «Enviar a
-biblioteca» con confirmación y luego «Enviado a biblioteca el … por …». Los estados de
-firma nuevos son «Por enviar a biblioteca» y «Pendiente biblioteca». En DOC-08, cuando
-biblioteca comenta, solo la Bibliografía es editable, aparece la tarjeta «Comentario de
-biblioteca» con su historial y el botón pasa a «Reenviar bibliografía». Su diálogo
-explica que no vuelve a revisión de coordinación y que docente y coordinación firman un
-PDF nuevo antes de volver a biblioteca. En ADM-02, el rol Bibliotecario no pide carrera
-y puede agregarse a una cuenta que no sea administradora. En ADM-06, el menú Insertar
-ofrece el grupo «Firma» (del docente, de coordinación y de biblioteca), con ficha
-violeta. En la hoja, la vista previa y las revisiones se ve como un espacio con línea y
-la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
+## Decano (I-173)
+
+| ID     | Pantalla                                   |
+| ------ | ------------------------------------------ |
+| DEC-01 | Panel de decanato                          |
+| DEC-02 | Revisión (cola y detalle de su facultad)   |
+
+El decano tiene facultad, no carrera: entra directo y su ámbito dice «Decanato ·
+{facultad}». Reutiliza COR-05/COR-06/COR-07 bajo `/decanato/revisiones`: la cola muestra
+los sílabos de todas las carreras de su facultad con su etapa («En biblioteca», «En
+coordinación», «En decanato»); el detalle solo permite decidir en etapa decanato:
+**Aprobar** (fija la aprobación y genera el PDF) o **Solicitar corrección** (con
+justificación, sin observaciones; el sílabo vuelve al docente y la cadena empieza de
+nuevo). Puede **Reabrir** un aprobado y firma el PDF en cuarto lugar. DEC-01 muestra «Por
+aprobar» y «Aprobados». Los avisos `silabo.revisado_coordinacion` y
+`silabo.firmado_biblioteca` abren DEC-02.
+
+En COR-06 el coordinador decide solo en etapa coordinación: **Aprobar** pasa el sílabo al
+decanato (no lo fija); mientras está en otra etapa ve un aviso de «otro revisor la tiene
+ahora». En DOC-07 el envío va «a revisión» (biblioteca primero) y en DOC-08 el docente ve
+la etapa en curso y los comentarios de biblioteca; tras cualquier devolución corrige todo
+el sílabo. En DOC-10 el PDF se genera solo al aprobar el decanato y la tarjeta de firma
+muestra cuatro firmantes y los estados «Pendiente docente/coordinación/biblioteca/
+decanato». En ADM-02, Bibliotecario no pide carrera y Decano pide facultad. En ADM-06, el
+menú Insertar ofrece el grupo «Firma» (docente, coordinación, biblioteca y decanato) y la
+plantilla por defecto trae cuatro celdas de firma.
 
 ## Administrador
 
@@ -601,7 +617,8 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
 | Administrador | ADM-02, ADM-03, ADM-04, ADM-05, ADM-06 y ADM-12 | Cuentas, roles, catálogos, coordinaciones, campos y procesos de sílabos se crean desde una acción que abre el `Sheet` derecho. La única plantilla institucional se crea como contenedor vacío; el administrador puede aplicar «Formatear» para cargar la estructura oficial o construirla manualmente. |
 | Coordinador   | COR-02, COR-06, COR-13, COR-14 y COR-15 | Convocatorias, observaciones, mallas, materias programadas, paralelos y asignaciones docentes usan el mismo patrón. En COR-15, los selectores permiten buscar docentes por nombre o correo y paralelos por materia, período o código. |
 | Docente       | DOC-02 a DOC-10                                 | No administra colecciones maestras. Edición, IA, envío y respuestas son flujos académicos de página completa, no formularios de alta.                                                                                                          |
-| Bibliotecario | BIB-01 a BIB-03 | No administra colecciones. Firma o comenta desde el detalle de la revisión; no hay formularios de alta. |
+| Bibliotecario | BIB-01 a BIB-03 | No administra colecciones. Aprueba, comenta o firma desde el detalle de la revisión; no hay formularios de alta. |
+| Decano | DEC-01, DEC-02 | No administra colecciones. Aprueba, devuelve, reabre o firma desde el detalle de la revisión. |
 
 Selección de rol, filtros, configuración personal, resolución de contradicciones y
 acciones de ciclo de vida como publicar, activar, aprobar o reabrir permanecen en su

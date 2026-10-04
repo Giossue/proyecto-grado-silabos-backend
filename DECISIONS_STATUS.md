@@ -27,6 +27,18 @@ trigger `validar_bloque_definicion_campo` que dejó I-164), `000163` y `000164`,
 en la base remota con respaldo previo. Pendiente en la remota: cambiar la sección
 Bibliografía a Texto libre y crear la cuenta de biblioteca.
 
+I-173 (4 de octubre de 2026), por instrucción del responsable del producto, cambia el
+orden de revisión y agrega el rol **Decano** (uno por facultad, `asignaciones_rol.facultad_id`).
+El envío del docente llega primero a **biblioteca**; si aprueba la bibliografía pasa
+automáticamente a **coordinación**; si coordinación aprueba pasa al **decanato**, que
+fija la aprobación. Solo entonces se genera el PDF (automático) y firman los cuatro en
+orden docente → coordinación → biblioteca → decanato. Cualquier revisor devuelve al
+docente; al reenviar la cadena empieza de nuevo y las firmas anteriores quedan anuladas.
+La etapa se deriva de `envios_biblioteca`, `revisiones_coordinacion` (nueva) y
+`aprobaciones`; `solicitudes_correccion.etapa_solicitud` registra desde dónde se devolvió.
+Reemplaza el orden de I-165 (biblioteca después de coordinación) y retira la corrección
+«solo bibliografía» y la aprobación heredada. Migración `000183` (irreversible).
+
 I-172 (4 de octubre de 2026), por instrucción del responsable del producto, funde la
 pantalla de Periodos académicos en **Convocatorias** (ADM-12): una fila por periodo con
 sus fechas de clases, las de elaboración de sílabos y el estado de la convocatoria, y un

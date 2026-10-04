@@ -105,17 +105,24 @@ las firmas como hoy.
 
 ## Pasos
 
-1. [ ] Migración + rol Decano (enum, asignaciones, sesión, alta de usuarios, seeder).
-2. [ ] Flujo de revisión por etapas (acciones, política, controladores, avisos).
-3. [ ] Firmas con decanato y exportación automática.
-4. [ ] Pruebas backend (ReviewWorkflowTest, LibraryReviewTest, DocumentSignatureTest,
-       nuevo DeanReviewTest) y OpenAPI.
-5. [ ] Frontend (sesión/rol, menú, páginas, firma, usuarios) y pruebas.
-6. [ ] Documentación y trazabilidad.
+1. [x] Migración + rol Decano (enum, asignaciones, sesión, alta de usuarios, seeder).
+2. [x] Flujo de revisión por etapas (acciones, política, controladores, avisos).
+3. [x] Firmas con decanato y exportación automática.
+4. [x] Pruebas backend (ReviewWorkflowTest, LibraryReviewTest, DocumentSignatureTest,
+       ManagedUserTest) y OpenAPI regenerado.
+5. [x] Frontend (sesión/rol, menú, rutas `/decanato`, páginas de revisión compartidas,
+       tarjeta de firma, biblioteca, docente, usuarios) y pruebas.
+6. [x] Documentación y trazabilidad.
+
+Nota de diseño: el decanato reutiliza las rutas `coordination/reviews*` del API y las
+páginas de revisión de coordinación; la política y `my_stage`/`can_decide` deciden qué
+puede hacer cada rol. `approve` despacha a `ReviewByCoordination` o `ApproveSyllabus`
+según el rol activo.
 
 ## Verificación
 
-Pendiente.
+- Backend: `php artisan test` 326/326, Pint, PHPStan sin errores, OpenAPI regenerado.
+- Frontend: `vue-tsc`, `npm run lint`, `vitest` 254 pruebas en verde.
 
 ## Pendiente
 

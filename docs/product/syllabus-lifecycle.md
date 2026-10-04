@@ -21,38 +21,37 @@ mutable el documento aprobado.
 
 ## Transiciones permitidas
 
-| Origen                | Acción               | Actor                    | Destino                          | Efecto obligatorio                                 |
-| --------------------- | -------------------- | ------------------------ | -------------------------------- | -------------------------------------------------- |
-| Sin iniciar           | Crear borrador       | Docente asignado/sistema | Borrador                         | Fija plantilla y contexto académico.               |
-| Borrador              | Enviar               | Docente autorizado       | En revisión                      | Valida, crea revisión inmutable y audita.          |
-| En revisión           | Solicitar corrección | Coordinador de alcance   | Corrección solicitada            | Selecciona observaciones y habilita nueva edición. |
-| Corrección solicitada | Reenviar             | Docente autorizado       | En revisión                      | Crea nueva revisión; Coordinación verifica sobre ella. |
-| En revisión           | Aprobar              | Coordinador autorizado   | Aprobado                         | Fija aprobación sobre revisión inmutable.          |
-| Aprobado              | Reabrir              | Coordinador autorizado   | Borrador o Corrección solicitada | Registra causa y crea revisión enlazada.           |
-| Aprobado y enviado a biblioteca | Comentar bibliografía | Bibliotecario | Corrección solicitada | Reapertura de origen `biblioteca`; solo la bibliografía es editable (I-165). |
-| Corrección solicitada de biblioteca | Reenviar bibliografía | Docente autorizado | Aprobado | Nueva revisión = copia de la aprobada con la bibliografía nueva; aprobación heredada. |
+| Origen | Acción | Actor | Destino | Efecto obligatorio |
+| --- | --- | --- | --- | --- |
+| Sin iniciar | Crear borrador | Docente asignado/sistema | Borrador | Fija plantilla y contexto académico. |
+| Borrador | Enviar | Docente autorizado | En revisión (etapa biblioteca) | Valida, crea revisión inmutable, abre el envío a biblioteca y audita. |
+| En revisión · biblioteca | Aprobar bibliografía | Bibliotecario | En revisión (etapa coordinación) | Marca `verificado_por/en` en `envios_biblioteca`; avisa a coordinación. |
+| En revisión · biblioteca | Comentar | Bibliotecario | Corrección solicitada | `solicitudes_correccion` con `etapa_solicitud = 'biblioteca'`; todo el sílabo es editable. |
+| En revisión · coordinación | Observar / solicitar corrección | Coordinador de alcance | Corrección solicitada | Exige observaciones abiertas; `etapa_solicitud = 'coordinacion'`. |
+| En revisión · coordinación | Aprobar | Coordinador de alcance | En revisión (etapa decanato) | Crea `revisiones_coordinacion` (una por revisión, inmutable); da por resueltas las observaciones; avisa al decano. |
+| En revisión · decanato | Solicitar corrección | Decano de la facultad | Corrección solicitada | `etapa_solicitud = 'decanato'`, con justificación. |
+| En revisión · decanato | Aprobar | Decano de la facultad | Aprobado | Fija `aprobaciones` sobre la revisión inmutable y solicita el PDF. |
+| Corrección solicitada | Reenviar | Docente autorizado | En revisión (etapa biblioteca) | Crea nueva revisión; la cadena vuelve a empezar por biblioteca. |
+| Aprobado | Reabrir | Coordinador o decano | Corrección solicitada | Registra causa (`origen_reapertura` coordinación o decanato), restaura la fotografía y anula PDF y firmas. |
+
+La **etapa** dentro de «En revisión» no es una columna: se deriva de la revisión vigente
+(`ReviewStage`): sin verificación de biblioteca → biblioteca; verificada y sin
+`revisiones_coordinacion` → coordinación; con revisión de coordinación y sin aprobación
+→ decanato. Solo el revisor de la etapa vigente decide; los demás consultan.
 
 ADR-0005 fija provisionalmente `Corrección solicitada` tras una reapertura. DT-07 exige
 validar ese lenguaje con usuarios; un cambio futuro afectará trabajo nuevo sin alterar la
 revisión ni la aprobación conservadas.
 
-## Firmas y verificación de biblioteca (I-139, I-165)
+## Firmas (I-139, I-173)
 
-Biblioteca revisa **antes** de las firmas, para que un comentario no anule firmas ya
-hechas. Tras la aprobación, el docente pulsa «Enviar a biblioteca» (`envios_biblioteca`,
-uno por revisión). El bibliotecario revisa la bibliografía fotografiada:
-
-- si los libros están, **aprueba la bibliografía** (`verificado_por`/`verificado_en`);
-  entonces se genera el PDF y se firma en orden docente → coordinación → biblioteca;
-- si no, **comenta**. El comentario es una reapertura con `origen_reapertura =
-  'biblioteca'` que restaura la fotografía aprobada y deja el sílabo en «Corrección
-  solicitada» con solo la sección `bibliografia` editable.
-
-Al reenviar, el servidor arma la revisión N+1 copiando la fotografía aprobada y
-reemplazando solo los valores de `bibliografia`, con una aprobación heredada
-(`aprobacion_base_id`, mismo aprobador): no hay nueva revisión de coordinación. El
-sílabo vuelve a «Aprobado» y el docente la envía otra vez a biblioteca. Esta corrección
-no exige convocatoria en curso ni plazo abierto, para que ningún sílabo quede atascado.
+El PDF se genera **al aprobar el decanato** (exportación automática) y se firma de forma
+incremental en este orden: docente → coordinación → biblioteca → decanato
+(`firmas_documento.firmado_como`). Cada revisión tiene su propio PDF y sus propias
+firmas: cualquier cambio de contenido es una revisión nueva (reenvío o reapertura), la
+anterior queda `anulado` y se vuelve a firmar desde cero. Biblioteca revisa la
+bibliografía al **inicio** de la cadena, no antes de firmar; firma al final porque su
+firma da fe de la bibliografía que ya aprobó.
 
 ## Relevo del docente responsable
 
