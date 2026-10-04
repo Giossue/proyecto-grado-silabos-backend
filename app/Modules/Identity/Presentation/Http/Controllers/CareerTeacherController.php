@@ -5,7 +5,9 @@ namespace App\Modules\Identity\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Identity\Application\Actions\CreateCareerTeacher;
+use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
 use App\Modules\Identity\Presentation\Http\Requests\CreateCareerTeacherRequest;
+use App\Modules\Identity\Presentation\Http\Requests\UpdateCareerTeacherRequest;
 use Illuminate\Http\JsonResponse;
 
 class CareerTeacherController extends Controller
@@ -21,6 +23,20 @@ class CareerTeacherController extends Controller
             : ($result['attached']
                 ? 'Docente incorporado a su carrera. Conserva su nombre y acceso actuales.'
                 : 'El docente ya está disponible en su carrera. Conserva su nombre y acceso actuales.');
+
+        return response()->json(['message' => $message]);
+    }
+
+    public function update(User $user, UpdateCareerTeacherRequest $request, UpdateManagedUserProfile $action): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $previousEmail = $user->correo_electronico;
+        $updated = $action->execute($user, $request->profileData(), $actor, $request);
+
+        $message = $updated->correo_electronico !== $previousEmail
+            ? 'Docente actualizado. La invitación anterior se invalidó y se envió una nueva al correo corregido.'
+            : 'Docente actualizado.';
 
         return response()->json(['message' => $message]);
     }

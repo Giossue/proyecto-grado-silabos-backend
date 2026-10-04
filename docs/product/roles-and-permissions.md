@@ -22,7 +22,7 @@ el permiso, pero no lo sustituyen.
 |---|---:|---:|---:|---:|
 | Gestionar usuarios/roles | Sí | No | No | No |
 | Crear/incorporar docentes (I-54) y reenviar su invitación pendiente | Sí, sin cambios | Solo rol Docente pendiente de su carrera activa | No | No |
-| Corregir nombre o correo de una cuenta | Sí | No | No | No |
+| Corregir nombre o correo de una cuenta | Sí | Solo docentes vigentes de su carrera activa (I-170); el correo, mientras esté pendiente de activación | No | No |
 | Crear, editar y eliminar sin dependencias facultades, carreras y catálogos globales | Sí | Consulta de alcance | Consulta asignada | No |
 | Cargar o reemplazar el logo de una facultad (I-123/I-125) | Sí; obligatorio al crearla | No | No | No |
 | Asignar coordinación a una carrera | Sí | No | No | No |
@@ -61,9 +61,12 @@ excepción acotada (I-54), el Coordinador puede crear o incorporar docentes a su
 activa desde COR-15. El servidor fija rol y carrera. Si el correo ya existe, conserva
 identidad, contraseña y otros roles; no reactiva cuentas ni accesos docentes retirados.
 El alta no asigna paralelos: esa acción mantiene sus bloqueos e historial actuales.
-El nombre y el correo son datos administrativos de la cuenta: solo el Administrador puede
-corregirlos. Ni el Coordinador por dirigir a una persona ni el Docente sobre su propio
-perfil puede modificarlos; el cambio se solicita a Administración.
+El nombre y el correo son datos administrativos de la cuenta: el Administrador los corrige
+en cualquier cuenta y, desde I-170, el Coordinador solo en los docentes vigentes de su
+carrera activa (COR-15, **Editar docente**) con las mismas reglas: el correo cambia solo
+mientras la cuenta esté pendiente de activación y el cambio invalida la invitación
+anterior y emite otra. El Docente no modifica su propio perfil; lo solicita a su
+coordinación o a Administración.
 La edición administrativa de catálogos conserva el valor anterior y el nuevo en auditoría;
 no concede al Administrador permisos sobre mallas, materias o contenido docente.
 Si el dato alimenta sílabos del proceso vigente, primero se pausa el alcance y el cambio

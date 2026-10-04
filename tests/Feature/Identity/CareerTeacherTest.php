@@ -344,4 +344,71 @@ class CareerTeacherTest extends TestCase
         $this->assertNotNull($teachers->firstWhere('id', User::query()->where('correo_electronico', 'docente@silabos.test')->value('id')));
         $this->assertNull($teachers->firstWhere('id', $inactive->id));
     }
+
+    public function test_coordinator_corrects_name_and_email_of_a_pending_teacher_and_reissues_the_invitation(): void
+    {
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful();
+        $user = User::query()->where('correo_electronico', 'nuevo@silabos.test')->firstOrFail();
+        $first = ActivationInvitation::query()->where('usuario_id', $user->id)->firstOrFail();
+
+        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $user), [
+            'nombre' => 'docente corregido',
+            'correo_electronico' => ' Corregido@silabos.test ',
+        ])->assertOk()->assertJsonPath('message', 'Docente actualizado. La invitación anterior se invalidó y se envió una nueva al correo corregido.');
+
+        $user->refresh();
+        $this->assertSame('corregido@silabos.test', $user->correo_electronico);
+        $this->assertNotSame('docente corregido', $user->nombre);
+        $this->assertStringContainsStringIgnoringCase('docente corregido', $user->nombre);
+        $this->assertNotNull($first->fresh()->invalidada_en);
+        $this->assertDatabaseCount('invitaciones_activacion', 2);
+        Mail::assertQueued(ManagedUserActivationMail::class, 2);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.perfil_actualizado', 'usuario_id' => $this->coordinator->id, 'recurso_id' => $user->id]);
+    }
+
+    public function test_coordinator_cannot_change_the_email_of_an_activated_teacher_but_can_fix_the_name(): void
+    {
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+
+        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
+            'nombre' => $teacher->nombre,
+            'correo_electronico' => 'otro@silabos.test',
+        ])->assertUnprocessable()->assertJsonValidationErrors('correo_electronico');
+
+        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
+            'nombre' => 'Docente Demo Corregido',
+            'correo_electronico' => 'docente@silabos.test',
+        ])->assertOk()->assertJsonPath('message', 'Docente actualizado.');
+
+        $this->assertSame('DOCENTE DEMO CORREGIDO', $teacher->fresh()->nombre);
+        $this->assertSame('docente@silabos.test', $teacher->fresh()->correo_electronico);
+        Mail::assertNothingQueued();
+    }
+
+    public function test_coordinator_cannot_edit_accounts_outside_its_teachers(): void
+    {
+        $admin = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
+        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $admin), $this->payload())->assertForbidden();
+
+        $outsider = User::query()->create([
+            'nombre' => 'Docente Ajeno',
+            'correo_electronico' => 'ajeno@silabos.test',
+            'contrasena' => Hash::make('Demo-2026!'),
+            'activo' => true,
+        ]);
+        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $outsider), $this->payload())->assertForbidden();
+
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
+            'nombre' => $teacher->nombre,
+            'correo_electronico' => $teacher->correo_electronico,
+            'active' => false,
+        ])->assertUnprocessable()->assertJsonValidationErrors('active');
+
+        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
+            'nombre' => $teacher->nombre,
+            'correo_electronico' => 'admin@silabos.test',
+        ])->assertUnprocessable()->assertJsonValidationErrors('correo_electronico');
+        $this->assertTrue($teacher->fresh()->activo);
+    }
 }

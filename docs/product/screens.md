@@ -428,7 +428,9 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   **Eliminar** (solo sin actividad; con historia, desactivar). Corregir su correo invalida
   la invitación anterior y emite otra al nuevo correo (I-38, I-88). COR-15 muestra las
   cuentas pendientes dentro de la tabla de docentes y asignaciones, con estado «Pendiente
-  de activación» y la misma acción de reenvío para la carrera activa.
+  de activación» y la misma acción de reenvío para la carrera activa. Cada fila de
+  COR-15 tiene además **Editar docente** (I-170): nombre y correo en un panel lateral;
+  el correo queda deshabilitado, con explicación, cuando la cuenta ya fue activada.
 - Salida de personas (I-39): en ADM-04 Carreras la coordinación no ocupa una columna;
   su menú tiene **Reemplazar coordinador** (o **Asignar coordinador** si no hay): cierra
   nombramiento y rol de quien sale, abre los de quien entra y, si se marca y no le

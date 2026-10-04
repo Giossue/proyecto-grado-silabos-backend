@@ -1,6 +1,6 @@
 # Estado de decisiones
 
-Fecha de corte: **27 de septiembre de 2026**.
+Fecha de corte: **4 de octubre de 2026**.
 
 ## Etiquetas
 
@@ -26,6 +26,14 @@ de Texto libre). La plantilla gana `firma_docente`, `firma_coordinador` y
 trigger `validar_bloque_definicion_campo` que dejó I-164), `000163` y `000164`, aplicadas
 en la base remota con respaldo previo. Pendiente en la remota: cambiar la sección
 Bibliografía a Texto libre y crear la cuenta de biblioteca.
+
+I-170 (4 de octubre de 2026), por instrucción del responsable del producto, amplía I-54:
+el Coordinador corrige **nombre y correo** de los docentes vigentes de su carrera activa
+desde COR-15 (acción **Editar docente**), nada más. Reutiliza las reglas administrativas:
+el correo solo cambia mientras la cuenta esté pendiente de activación, y al cambiarlo se
+invalida la invitación anterior y se emite otra al correo corregido; una cuenta activada
+conserva su correo. No alcanza a administradores ni a cuentas ajenas a la carrera, no
+toca estado, roles ni paralelos, y queda en auditoría con los valores anteriores.
 
 I-166 (29 de septiembre de 2026), por pedido de los docentes vía el responsable: lo que va
 dentro de cada sección de la plantilla se llama **campo**, no «parte», en la interfaz, los
@@ -195,8 +203,9 @@ pendientes de habilidades, APE o unidades.
 
 I-54 (2026-09-06), por solicitud explícita del responsable del producto, permite al
 Coordinador crear o incorporar cuentas como Docente exclusivamente en su carrera activa.
-Administración conserva todas sus capacidades. No delega corrección de nombre/correo,
-otros roles, reactivaciones ni gestión global de cuentas. La incorporación reutiliza
+Administración conserva todas sus capacidades. No delega otros roles, reactivaciones ni
+gestión global de cuentas; la corrección de nombre/correo de docentes de la carrera se
+delegó después en I-170. La incorporación reutiliza
 cuentas activas por correo, sin sobrescribir identidad o acceso; asignar paralelos sigue
 siendo otra operación con sus bloqueos académicos.
 

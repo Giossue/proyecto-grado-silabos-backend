@@ -124,6 +124,11 @@ conservan la regresión administrativa. `ManagementCreationUiTest` cubre el form
 compartido de alta y la acción única **Gestionar docente**, que abre alta o asignación;
 en el alta delegada solo se solicitan nombre y correo; la invitación de activación y la
 contraseña se resuelven por el titular porque rol y carrera se derivan del alcance activo.
+I-170 agrega `PATCH coordination/academic/teachers/{user}` (política
+`updateCareerTeacher`, reutiliza `UpdateManagedUserProfile`): `CareerTeacherTest` cubre
+corrección de nombre y correo con reemisión de invitación, correo bloqueado en cuenta
+activada, rechazo de administradores, cuentas ajenas y campos prohibidos;
+`TeacherAssignmentsPanel.test.ts` cubre la acción **Editar docente** en cada fila.
 Sin cambios de esquema ni permisos sobre asignaciones académicas.
 
 COR-02 (I-46): el listado institucional incluye el alcance de la carrera activa y permite

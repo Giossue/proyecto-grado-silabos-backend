@@ -34,6 +34,26 @@ class UserPolicy
         return $this->viewAny($actor);
     }
 
+    /** I-170: el Coordinador corrige nombre y correo solo de docentes vigentes de su carrera activa. */
+    public function updateCareerTeacher(User $actor, User $target): bool
+    {
+        if (! $this->createCareerTeacher($actor) || ! $target->activo) {
+            return false;
+        }
+
+        $careerId = $this->roles->resolve(request())?->carrera_id;
+
+        if ($careerId === null || $target->roleAssignments()->effective()->where('rol', RoleCode::Administrator->value)->exists()) {
+            return false;
+        }
+
+        return $target->roleAssignments()
+            ->effective()
+            ->where('rol', RoleCode::Teacher->value)
+            ->where('carrera_id', $careerId)
+            ->exists();
+    }
+
     public function update(User $actor, User $target): bool
     {
         return $this->viewAny($actor) && $actor->id !== $target->id;
