@@ -43,6 +43,12 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 |---|---|---|---|
 | Restaurar el menú lateral desde el navegador | RNF-018..023; UI-02, ADM/COR/DOC/BIB; CP-N experiencia; PV-19 | `AppShell` delega el estado inicial a `SidebarProvider`, que lee `sidebar_state` en cada montaje; cookie vigente durante siete días | Verificación puntual del layout; revisión visual real pendiente en PV-19 |
 
+## Paleta institucional de la interfaz — 2026-10-04
+
+| Cambio | IDs relacionados | Evidencia | Estado |
+|---|---|---|---|
+| Azul y rojo de marca en los temas compartidos | RNF-018..023, RNF-029..034; UI-01..04; ADM/COR/DOC/BIB vigentes; CP-N UX/accesibilidad/mantenibilidad; PV-19 | Solicitud del responsable del producto: `#2d4b6f` y `#ac231e`; tokens compartidos, sidebar, acceso, encabezados y métricas del frontend. Plan `docs/plans/completed/FE-UEB-2026-10-04-paleta-institucional.md`: ESLint, tipos, 14 pruebas existentes, Chromium en dos temas/tres anchos y 43 pares de contraste por tema. Las paletas semántica y documental conservan su función independiente. | Primera versión revertida por el responsable del producto (sidebar azul y fondos teñidos se veían mal); versión discreta vigente en `9ac168f`, solo tokens. PV-19 permanece abierta. |
+
 ## Cadena
 
 ```text

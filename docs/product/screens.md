@@ -123,6 +123,14 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   cambiarse desde un `Sheet` en ese mismo menú.
 - El selector de tema del encabezado alterna únicamente entre claro y oscuro; no existe
   la opción «Sistema». Sin preferencia guardada, la aplicación arranca en claro.
+- La identidad visual usa el azul `#2d4b6f` y el rojo `#ac231e` proporcionados por el
+  responsable del producto el 2026-10-04. El azul marca acciones primarias, foco e ítem
+  activo del menú; el rojo aparece solo como barra del ítem activo. Fondos y sidebar
+  se mantienen neutros para que la interfaz no se vea recargada.
+  Éxito, advertencia y acción destructiva mantienen su significado propio mediante
+  colores semánticos, texto e iconos. El papel y los colores de plantillas y sílabos
+  conservan su paleta independiente. No se presenta esta selección como una guía
+  oficial de identidad de la UEB.
 - El menú lateral de escritorio conserva su estado expandido o colapsado en la cookie
   `sidebar_state` del navegador durante siete días. Lo restaura al recargar o montar
   de nuevo el layout; sin preferencia guardada, aparece expandido.
