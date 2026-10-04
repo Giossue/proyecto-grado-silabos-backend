@@ -103,7 +103,7 @@ class ApproveSyllabus
                 revisionNumber: $revision->numero_revision,
             );
             // I-173: el PDF se genera al terminar la cadena de revisión; después firman los cuatro.
-            $this->exports->execute($revision, "aprobacion:{$approval->id}", $actor, $request);
+            $this->exports->execute($revision, $approval->id, $actor, $request);
 
             return $approval;
         });
