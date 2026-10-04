@@ -46,6 +46,9 @@ RF-008..016, RF-034..036 · RN-005..019 · CU-03..06 · ADM-04, ADM-12 · I-110,
 - Al finalizar el proceso, `TransitionSyllabusProcess` finaliza las convocatorias de
   carrera abiertas o pausadas; COR-03 usa las mismas etiquetas y pierde la columna
   Período duplicada.
+- Eliminar un periodo Sin iniciar (`DeleteAcademicRecord`) arrastra su programación
+  (materias programadas, paralelos y asignaciones docentes) con conteos en auditoría;
+  solo bloquea si existe convocatoria.
 
 ## Verificación
 

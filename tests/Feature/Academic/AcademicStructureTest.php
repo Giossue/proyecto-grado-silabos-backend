@@ -525,6 +525,22 @@ class AcademicStructureTest extends TestCase
         $this->assertDatabaseHas('asignaturas_ofertadas', ['asignatura_id' => $second->id]);
     }
 
+    public function test_administration_deletes_a_period_without_convocation_together_with_its_planning(): void
+    {
+        $period = AcademicPeriod::query()->firstOrFail();
+        $scheduled = ScheduledSubject::query()->where('periodo_academico_id', $period->id)->firstOrFail();
+        $parallel = Parallel::query()->create(['programacion_asignatura_id' => $scheduled->id, 'codigo' => 'Z', 'jornada' => 'matutina']);
+
+        // I-172: sin convocatoria no hay sílabos; la programación del periodo se va con él.
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.academic.destroy', ['periodo', $period->id]))
+            ->assertOk();
+
+        $this->assertDatabaseMissing('periodos_academicos', ['id' => $period->id]);
+        $this->assertDatabaseMissing('asignaturas_ofertadas', ['id' => $scheduled->id]);
+        $this->assertDatabaseMissing('paralelos', ['id' => $parallel->id]);
+    }
+
     public function test_preparing_a_period_does_not_reuse_an_inactive_scheduled_subject(): void
     {
         $source = Subject::query()->firstOrFail();

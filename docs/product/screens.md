@@ -551,7 +551,9 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   reintento solo abre la convocatoria. El botón queda deshabilitado, con un aviso, mientras
   exista una convocatoria abierta o pausada. Un periodo en Sin iniciar la abre después
   desde la fila (**Abrir convocatoria**), con el período fijado y el nombre y la plantilla
-  automáticos, o se elimina. Las fechas de elaboración siempre empiezan vacías: el
+  automáticos, o se elimina; al eliminarlo se borran también las materias programadas,
+  paralelos y asignaciones docentes que las coordinaciones hubieran preparado en él (sin
+  convocatoria no hay sílabos). Un periodo con convocatoria se elimina desde ella. Las fechas de elaboración siempre empiezan vacías: el
   formulario no copia las fechas lectivas del período (I-113). Administración nunca edita
   un periodo. **Editar** solo
   aparece en pausa; **Pausar**, **Reanudar** y **Cerrar** confirman en un diálogo que
