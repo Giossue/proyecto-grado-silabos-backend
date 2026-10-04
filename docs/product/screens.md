@@ -42,7 +42,7 @@ en el inventario como identificador histórico.
 | COR-07 | Comparar revisiones                                           |
 | COR-08 | Solicitar corrección                                          |
 | COR-09 | Aprobar                                                       |
-| COR-10 | Reabrir aprobado                                              |
+| COR-10 | Eliminar sílabo aprobado                                      |
 | COR-11 | Retirada por I-146: Fuentes académicas                                            |
 | COR-12 | Retirado en I-122: el avance de la carrera se consulta en el Panel |
 | COR-13 | Malla, constructor visual/formulario y materias de la carrera |
@@ -91,7 +91,7 @@ los sílabos de todas las carreras de su facultad con su etapa («En biblioteca�
 coordinación», «En decanato»); el detalle solo permite decidir en etapa decanato:
 **Aprobar** (fija la aprobación y genera el PDF) o **Solicitar corrección** (con
 comentario general, sin observaciones; el sílabo vuelve al docente y la cadena empieza de
-nuevo). Puede **Reabrir** un aprobado y firma el PDF en cuarto lugar. DEC-01 muestra «Por
+nuevo). Firma el PDF en cuarto lugar. DEC-01 muestra «Por
 aprobar» y «Aprobados». Los avisos `silabo.revisado_coordinacion` y
 `silabo.firmado_biblioteca` abren DEC-02.
 
@@ -489,7 +489,7 @@ plantilla por defecto trae cuatro celdas de firma.
   coordinadora sin tipo de designación ni sustento documental. En COR-15, cada asignación
   vigente ofrece **Relevar docente**: la fila identifica a quien sale y la hoja solo pide
   al docente entrante, muestra cuántos paralelos se transferirán y confirma el efecto sobre
-  sus sílabos (borrador se descarta, aprobado se reabre, en revisión bloquea). La auditoría
+  sus sílabos (borrador se descarta, aprobado se elimina, en revisión bloquea). La auditoría
   registra el cambio sin exigir una referencia documental. Desactivar una cuenta
   (ADM-02) se rechaza si tiene sílabos en curso o es la única administración; al
   desactivar se cierran sus asignaciones docentes activas.
@@ -642,10 +642,10 @@ plantilla por defecto trae cuatro celdas de firma.
 | Coordinador   | COR-02, COR-06, COR-13, COR-14 y COR-15 | Convocatorias, revisiones, mallas, materias programadas, paralelos y asignaciones docentes usan el mismo patrón. En COR-15, los selectores permiten buscar docentes por nombre o correo y paralelos por materia, período o código. |
 | Docente       | DOC-02 a DOC-10                                 | No administra colecciones maestras. Edición, IA, envío y respuestas son flujos académicos de página completa, no formularios de alta.                                                                                                          |
 | Bibliotecario | BIB-01 a BIB-03 | No administra colecciones. Aprueba, devuelve con motivos o firma desde el detalle de la revisión; no hay formularios de alta. |
-| Decano | DEC-01, DEC-02 | No administra colecciones. Aprueba, devuelve, reabre o firma desde el detalle de la revisión. |
+| Decano | DEC-01, DEC-02 | No administra colecciones. Aprueba, devuelve o firma desde el detalle de la revisión. |
 
 Selección de rol, filtros, configuración personal, resolución de contradicciones y
-acciones de ciclo de vida como publicar, activar, aprobar o reabrir permanecen en su
+acciones de ciclo de vida como publicar, activar, aprobar o eliminar permanecen en su
 de esa regla porque no crean una colección desde un listado. `ManagementCreationUiTest`
 protege la clasificación y falla si una alta de gestión vuelve a incrustarse en una
 página.

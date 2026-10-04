@@ -162,10 +162,4 @@ class Syllabus extends Model
     {
         return $this->hasManyThrough(Approval::class, SyllabusRevision::class, 'silabo_id', 'revision_silabo_id');
     }
-
-    /** @return HasManyThrough<Approval, SyllabusRevision, $this> Aprobaciones que fueron reabiertas. */
-    public function reopenedApprovals(): HasManyThrough
-    {
-        return $this->approvals()->whereNotNull('aprobaciones.reabierta_en');
-    }
 }

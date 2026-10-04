@@ -1,5 +1,7 @@
 # ADR-0005: La reapertura inicia una corrección vinculada
 
+> **Reemplazado por I-178 (2026-10-04):** se retiró la reapertura; un sílabo aprobado se elimina.
+
 - Estado: Aceptado como decisión técnica provisional
 - Fecha: 2026-08-14
 - Responsables: desarrollo; pendiente de prueba con Coordinación

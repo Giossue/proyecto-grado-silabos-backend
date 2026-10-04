@@ -38,9 +38,6 @@ final class LibraryReviews
             WHEN EXISTS (
                 SELECT 1 FROM revisiones_silabo posterior
                 WHERE posterior.silabo_id = revision.silabo_id AND posterior.numero_revision > revision.numero_revision
-            ) OR EXISTS (
-                SELECT 1 FROM aprobaciones reabierta
-                WHERE reabierta.revision_silabo_id = envios_biblioteca.revision_silabo_id AND reabierta.reabierta_en IS NOT NULL
             ) THEN 'anulado'
             WHEN EXISTS (
                 SELECT 1 FROM aprobaciones aprobacion WHERE aprobacion.revision_silabo_id = envios_biblioteca.revision_silabo_id

@@ -13,7 +13,7 @@
 | Observación               | Retirada en I-177: la revisión se devuelve con un comentario general (biblioteca, con motivos).|
 | Respuesta                 | Retirada en I-120: el docente corrige y reenvía; ya no escribe respuestas a observaciones.   |
 | Aprobación                | Decisión humana sobre una revisión concreta e inmutable.                                     |
-| Reapertura                | Creación controlada de una nueva revisión desde un aprobado conservado.                      |
+| Reapertura                | Retirada en I-178: un aprobado no se reabre; Coordinación lo elimina y se empieza de cero.    |
 | Plantilla                 | Esquema funcional de secciones, bloques y campos del sílabo.                                 |
 | Versión publicada         | Versión inmutable de plantilla disponible para convocatorias o evidencia histórica.          |
 | Fuente académica          | Documento Markdown que la coordinación entrega a los docentes como apoyo del sílabo.         |

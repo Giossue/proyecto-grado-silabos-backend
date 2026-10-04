@@ -215,19 +215,6 @@ class DocumentSignatureTest extends TestCase
             ], ['Accept' => 'application/json'])
             ->assertForbidden();
 
-        $approval = Approval::query()->where('revision_silabo_id', $revision->id)->firstOrFail();
-        $approval->update([
-            'clave_reapertura' => (string) Str::uuid(),
-            'causa_reapertura' => 'Corregir bibliografía.',
-            'origen_reapertura' => 'coordinacion',
-            'reabierta_por' => $this->coordinator->id,
-            'reabierta_en' => now(),
-        ]);
-
-        $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
-            ->assertOk()->assertJsonPath('state', 'anulado')->assertJsonPath('can_sign', false);
-        $this->upload($revision, $this->signPdfIncrementally($original, $credentials), hash('sha256', $original), 'teacher')
-            ->assertJsonValidationErrors('signed_pdf');
         $this->assertSame(0, DocumentSignature::query()->count());
     }
 

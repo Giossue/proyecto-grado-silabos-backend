@@ -184,6 +184,24 @@ final class InProgressWork
     }
 
     /**
+     * Borra un sílabo con todo su historial y crea el nuevo, sin iniciar, de su paralelo en la
+     * misma convocatoria. Debe llamarse dentro de una transacción.
+     */
+    public function restartSyllabus(Syllabus $syllabus): Syllabus
+    {
+        $syllabus->loadMissing(['convocation.process', 'parallel']);
+        $convocation = $syllabus->convocation;
+        $parallel = $syllabus->parallel;
+        $this->deleteAggregates([(string) $syllabus->id]);
+        $this->generator->generateForParallel($convocation, $parallel);
+
+        return Syllabus::query()
+            ->where('convocatoria_carrera_id', $convocation->id)
+            ->where('paralelo_id', $parallel->id)
+            ->firstOrFail();
+    }
+
+    /**
      * Borra los sílabos indicados con todo su historial (revisiones, aprobaciones, documentos,
      * firmas y envíos a biblioteca), sin importar su estado. Debe llamarse dentro de una transacción.
      *

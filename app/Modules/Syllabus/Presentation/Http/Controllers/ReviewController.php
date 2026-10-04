@@ -10,7 +10,7 @@ use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Application\Actions\ApproveSyllabus;
-use App\Modules\Syllabus\Application\Actions\ReopenSyllabus;
+use App\Modules\Syllabus\Application\Actions\DeleteSyllabus;
 use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
 use App\Modules\Syllabus\Application\Actions\ResetSyllabus;
 use App\Modules\Syllabus\Application\Actions\ReviewByCoordination;
@@ -20,7 +20,7 @@ use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Modules\Syllabus\Presentation\Http\Requests\ApproveSyllabusRequest;
-use App\Modules\Syllabus\Presentation\Http\Requests\ReopenSyllabusRequest;
+use App\Modules\Syllabus\Presentation\Http\Requests\DeleteSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ResetSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreCorrectionRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewReviewsRequest;
@@ -146,22 +146,16 @@ class ReviewController extends Controller
         return response()->json(['message' => $message]);
     }
 
-    public function reopen(
+    public function destroy(
         Syllabus $syllabus,
-        ReopenSyllabusRequest $request,
-        ReopenSyllabus $action,
+        DeleteSyllabusRequest $request,
+        DeleteSyllabus $action,
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute(
-            $syllabus,
-            $request->string('cause')->toString(),
-            $request->string('idempotency_key')->toString(),
-            $actor,
-            $request,
-        );
+        $action->execute($syllabus, $actor, $request);
 
-        $message = 'Sílabo reabierto. La aprobación anterior permanece intacta.';
+        $message = 'Sílabo eliminado con todo su historial. El docente empieza de cero con la malla y la plantilla actuales.';
 
         return response()->json(['message' => $message]);
     }
@@ -210,11 +204,9 @@ class ReviewController extends Controller
             'syllabus.revisions.approval.approver:id,nombre',
             'syllabus.revisions.librarySubmission.verifier:id,nombre',
             'syllabus.revisions.coordinationReview.reviewer:id,nombre',
-            'syllabus.reopenedApprovals.reopener:id,nombre',
         ]);
         $syllabus = $revision->syllabus;
         $latest = $syllabus->revisions->sortByDesc('numero_revision')->first();
-        $latestReopening = $syllabus->reopenedApprovals->sortByDesc('reabierta_en')->first();
         $decisionsAllowed = SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation->estado);
         $activeRole = app(ActiveRole::class)->resolve(request());
         $myStage = $activeRole === null ? null : ReviewStage::forRole($activeRole->role->codigo_rol);
@@ -236,8 +228,7 @@ class ReviewController extends Controller
             'my_stage' => $myStage,
             // Solo el revisor de la etapa vigente decide; los demás consultan.
             'can_decide' => $decisionsAllowed && $stage !== null && $stage === $myStage,
-            'can_reopen' => $decisionsAllowed && $syllabus->estado === 'aprobado'
-                && in_array($myStage, [ReviewStage::COORDINATION, ReviewStage::DEANERY], true),
+            'can_delete' => $decisionsAllowed && $syllabus->estado === 'aprobado' && $myStage === ReviewStage::COORDINATION,
             'presentation' => [
                 'appearance' => TemplateAppearance::fromMapping($documentMapping),
                 'title' => TemplateTitleBlock::fromMapping($documentMapping)['text'],
@@ -275,12 +266,6 @@ class ReviewController extends Controller
             'decisions_allowed' => $decisionsAllowed,
             'reset' => [
                 'allowed' => $decisionsAllowed && $myStage === ReviewStage::COORDINATION && in_array($syllabus->estado, ResetSyllabus::RESETTABLE_STATES, true),
-            ],
-            'reopening' => $latestReopening === null ? null : [
-                'cause' => $latestReopening->causa_reapertura,
-                'reopened_at' => $latestReopening->reabierta_en->toIso8601String(),
-                'reopened_by' => $latestReopening->reopener->nombre,
-                'origin' => $latestReopening->origen_reapertura,
             ],
         ];
     }

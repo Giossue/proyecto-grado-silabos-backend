@@ -139,7 +139,7 @@ class AuditEventController extends Controller
             'biblioteca.verificado' => 'Biblioteca aprobó la bibliografía',
             'silabo.revisado_coordinacion' => 'Coordinación revisó y aprobó el sílabo',
             'silabo.correccion_solicitada' => 'Corrección solicitada',
-            'silabo.reabierto' => 'Sílabo reabierto',
+            'silabo.eliminado' => 'Sílabo eliminado',
             'silabo.reiniciado' => 'Sílabo reiniciado',
             'silabo.reenviado' => 'Sílabo reenviado',
             'silabo.enviado' => 'Sílabo enviado',

@@ -152,7 +152,7 @@ Las cuentas creadas por el seeder usan exclusivamente datos sintéticos:
    (`CU-11`).
 4. Como Coordinador, abra **Comparar revisiones** y compruebe el antes/después (`CU-12`).
    Apruebe la revisión 2 (`CU-13`).
-5. Compruebe que el aprobado no admite edición. No lo reabra todavía: conserve ese estado
+5. Compruebe que el aprobado no admite edición. No lo elimine todavía: conserve ese estado
    para generar los documentos en el paso siguiente.
 
 ### 5. Documentos, informes y operación
@@ -160,9 +160,8 @@ Las cuentas creadas por el seeder usan exclusivamente datos sintéticos:
 1. Desde la revisión aprobada abra **Documentos** y
    solicite DOCX/PDF. El worker de `documentos` debe dejar ambos disponibles como archivos
    privados; la pantalla identifica el renderer como técnico provisional (`CU-15`).
-2. Vuelva al expediente, pulse **Reabrir**, indique `Ajuste posterior de demostración` y
-   confirme que se conserva la aprobación y aparece una nueva línea de trabajo en
-   **Corrección solicitada** (`CU-14`).
+2. Opcional y destructivo: como Coordinador, pulse **Eliminar sílabo** en la revisión
+   aprobada y confirme que el paralelo queda con un sílabo nuevo **Sin iniciar** (`CU-14`).
 3. Como Coordinador, abra **Informes**, filtre la convocatoria y contraste totales con su
    detalle. Ningún registro de otra carrera debe ser visible (`CU-16`).
 4. Como Administrador, abra **Procesos** y **Auditoría**. Compruebe progreso, intentos,
@@ -176,7 +175,7 @@ registre contraseñas, cookies, UUID, contenido completo ni capturas con datos p
 La demostración es satisfactoria técnicamente cuando:
 
 - los tres roles solo ven su rol y alcance;
-- el envío, corrección, aprobación y reapertura conservan todas las revisiones;
+- el envío, corrección y aprobación conservan todas las revisiones;
 - IA, exportación y notificaciones terminan en sus colas observables;
 - apagar `AI_DRIVER` no impide guardar, validar, enviar, revisar ni aprobar;
 - cualquier hallazgo manual se registra en la matriz de aceptación, sin cambiar un `PV`.

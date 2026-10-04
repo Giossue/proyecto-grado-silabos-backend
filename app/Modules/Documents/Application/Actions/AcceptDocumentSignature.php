@@ -49,7 +49,7 @@ class AcceptDocumentSignature
                 $signatures = $this->workflow->signatures($artifact);
                 $state = $this->workflow->state($revision, $artifact, $signatures);
                 if ($state === SignatureWorkflow::STATE_VOIDED) {
-                    $this->fail('El sílabo fue reabierto: esta revisión ya no se firma. Firme la nueva revisión cuando se apruebe.');
+                    $this->fail('Esta revisión no tiene una aprobación vigente: no se firma.');
                 }
                 if ($artifact === null) {
                     $this->fail('Primero genere el PDF de la revisión aprobada.');

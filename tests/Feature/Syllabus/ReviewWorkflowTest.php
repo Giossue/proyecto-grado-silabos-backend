@@ -387,97 +387,57 @@ class ReviewWorkflowTest extends TestCase
         ])->assertJsonValidationErrors('revision');
     }
 
-    public function test_cp_f_reopening_preserves_approval_restores_snapshot_and_links_next_revision(): void
+    public function test_cp_f_coordinator_deletes_an_approved_syllabus_and_the_teacher_starts_from_scratch(): void
     {
-        [$syllabus, $approvedRevision] = $this->submitValidDraft();
-        $this->approveThroughChain($approvedRevision);
-        $approval = Approval::query()->firstOrFail();
-        $field = $this->editableScalarField($syllabus);
-        $approvedValue = $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor;
-        $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->update([
-            'valor' => 'Deriva fuera del flujo que debe descartarse.',
-        ]);
-        $key = (string) Str::uuid();
+        [$syllabus, $revision] = $this->submitValidDraft();
 
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reopen', $syllabus), [
-            'idempotency_key' => $key,
-            'cause' => 'Se detectó una actualización académica posterior a la aprobación.',
-        ])->assertSuccessful();
-        $syllabus->refresh();
-        $reopened = $syllabus->reopenedApprovals()->firstOrFail();
-        $this->assertSame('correccion_solicitada', $syllabus->estado);
-        $this->assertSame($approvedValue, $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor);
-        $this->assertSame($approval->id, $reopened->id);
-        $this->assertDatabaseCount('aprobaciones', 1);
-        $this->assertDatabaseCount('revisiones_silabo', 1);
-        $this->assertWorkflowNotification($syllabus->id, 'silabo.reabierto');
+        // Solo se elimina un sílabo aprobado; antes de eso se reinicia.
+        $this->actingAsCoordinator()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
 
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reopen', $syllabus), [
-            'idempotency_key' => $key,
-            'cause' => 'Se detectó una actualización académica posterior a la aprobación.',
-        ])->assertSuccessful();
-        $this->assertSame(1, Approval::query()->whereNotNull('reabierta_en')->count());
+        $this->approveThroughChain($revision);
+        $this->assertSame('aprobado', $syllabus->fresh()->estado);
+        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))
+            ->assertOk()->assertJsonPath('can_delete', true);
+        $this->actingAsDean()->getJson(route('api.v1.coordination.reviews.show', $revision))
+            ->assertOk()->assertJsonPath('can_delete', false);
 
-        $this->actingAsCoordinator()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
-            'version_bloqueo' => $syllabus->version_bloqueo,
-            'value' => 'Coordinación no puede editar mientras PV-16 esté pendiente.',
-        ])->assertForbidden();
-        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
-            'version_bloqueo' => $syllabus->version_bloqueo,
-            'value' => 'Cambio posterior a la reapertura.',
-        ])->assertOk();
-        $syllabus->refresh();
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
-            'version_bloqueo' => $syllabus->version_bloqueo,
-            'idempotency_key' => (string) Str::uuid(),
-        ])->assertSuccessful();
+        // Ni el decano ni el docente eliminan.
+        $this->actingAsDean()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
+        $this->actingAsTeacher()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
+        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
 
-        $newRevision = SyllabusRevision::query()->where('numero_revision', 2)->firstOrFail();
-        $this->assertSame($approvedRevision->id, $newRevision->revision_anterior_id);
-        $this->assertSame($approvedRevision->id, $approval->fresh()->revision_silabo_id);
-        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->actingAsCoordinator()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertSuccessful();
+
+        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseCount('revisiones_silabo', 0);
+        $this->assertDatabaseCount('aprobaciones', 0);
+        $fresh = Syllabus::query()->where('paralelo_id', $syllabus->paralelo_id)->firstOrFail();
+        $this->assertNotSame($syllabus->id, $fresh->id);
+        $this->assertSame('sin_iniciar', $fresh->estado);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.eliminado', 'recurso_id' => $fresh->id]);
+        $this->assertWorkflowNotification($fresh->id, 'silabo.eliminado');
+        $this->assertFalse(Route::has('api.v1.coordination.reviews.reopen'));
     }
 
-    public function test_cp_f_reopening_and_correction_columns_are_write_once_and_complete(): void
+    public function test_cp_f_correction_columns_are_write_once_and_complete_and_approvals_are_immutable(): void
     {
         [, $revision] = $this->submitValidDraft();
         $this->approveThroughChain($revision);
         $approval = Approval::query()->firstOrFail();
-        $reopening = [
-            'clave_reapertura' => (string) Str::uuid(),
-            'causa_reapertura' => 'Se detectó un error.',
-            'origen_reapertura' => 'coordinacion',
-            'reabierta_por' => $this->coordinator->id,
-            'reabierta_en' => now(),
-        ];
+        $approvedAt = $approval->aprobado_en;
 
-        // Un hecho a medias no es válido en la base.
+        // La aprobación es totalmente inmutable, en el modelo y en la base.
         try {
-            DB::transaction(fn () => DB::table('aprobaciones')->where('id', $approval->id)->update(['causa_reapertura' => 'Solo la causa']));
-            $this->fail('PostgreSQL permitió una reapertura incompleta.');
+            $approval->update(['aprobado_en' => now()->addDay()]);
+            $this->fail('El modelo permitió modificar una aprobación.');
+        } catch (LogicException) {
+            $this->assertTrue($approvedAt->equalTo($approval->fresh()->aprobado_en));
+        }
+        try {
+            DB::transaction(fn () => DB::table('aprobaciones')->where('id', $approval->id)->update(['aprobado_en' => now()->addDay()]));
+            $this->fail('PostgreSQL permitió modificar una aprobación.');
         } catch (QueryException) {
-            $this->assertNull($approval->fresh()->causa_reapertura);
-        }
-
-        $approval->update($reopening);
-        $this->assertTrue($approval->fresh()->isReopened());
-
-        // Lo ya escrito no cambia y el resto de la fila sigue inmutable, en el modelo y en la base.
-        foreach ([['causa_reapertura' => 'Otra causa'], ['huella_sha256' => str_repeat('b', 64)]] as $changes) {
-            try {
-                $approval->fresh()->update($changes);
-                $this->fail('El modelo permitió modificar un registro histórico.');
-            } catch (LogicException) {
-                $this->assertSame('Se detectó un error.', $approval->fresh()->causa_reapertura);
-            }
-        }
-        foreach (['causa_reapertura' => 'Otra causa', 'hash_contenido' => str_repeat('b', 64)] as $column => $value) {
-            try {
-                DB::transaction(fn () => DB::table('aprobaciones')->where('id', $approval->id)->update([$column => $value]));
-                $this->fail('PostgreSQL permitió modificar un registro histórico.');
-            } catch (QueryException) {
-                $this->assertSame('Se detectó un error.', $approval->fresh()->causa_reapertura);
-            }
+            $this->assertDatabaseCount('aprobaciones', 1);
         }
         try {
             DB::transaction(fn () => DB::table('aprobaciones')->where('id', $approval->id)->delete());
@@ -486,7 +446,7 @@ class ReviewWorkflowTest extends TestCase
             $this->assertDatabaseCount('aprobaciones', 1);
         }
 
-        // La misma regla para la solicitud de corrección de la revisión.
+        // La solicitud de corrección de la revisión se escribe una vez y completa.
         $this->assertFalse($revision->fresh()->hasCorrectionRequest());
         try {
             DB::transaction(fn () => DB::table('revisiones_silabo')->where('id', $revision->id)->update(['correccion_etapa' => 'coordinacion']));
@@ -506,6 +466,12 @@ class ReviewWorkflowTest extends TestCase
             $this->fail('El modelo permitió reescribir la solicitud de corrección.');
         } catch (LogicException) {
             $this->assertSame('Falta bibliografía.', $revision->fresh()->correccion_justificacion);
+        }
+        try {
+            DB::transaction(fn () => DB::table('revisiones_silabo')->where('id', $revision->id)->update(['hash_contenido' => str_repeat('b', 64)]));
+            $this->fail('PostgreSQL permitió modificar el contenido de una revisión.');
+        } catch (QueryException) {
+            $this->assertSame($revision->huella_sha256, $revision->fresh()->huella_sha256);
         }
     }
 
@@ -670,10 +636,7 @@ class ReviewWorkflowTest extends TestCase
             'idempotency_key' => (string) Str::uuid(),
         ])->assertForbidden()->assertJsonPath('message', $message);
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus))->assertForbidden()->assertJsonPath('message', $message);
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reopen', $syllabus), [
-            'cause' => 'Intento de reabrir con la convocatoria cerrada.',
-            'idempotency_key' => (string) Str::uuid(),
-        ])->assertForbidden()->assertJsonPath('message', $message);
+        $this->actingAsCoordinator()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
 
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('aprobaciones', 0);

@@ -8,16 +8,16 @@ Sin iniciar
     ▼
 Borrador ── enviar revisión ──► En revisión
    ▲                              │
-   │                              ├─ aprobar ──► Aprobado
-   │                              │                │
-   │ solicitar corrección         │                └─ reabrir
-   └──── Corrección solicitada ◄──┘                     │
-              │                                         ▼
-              └─ reenviar nueva revisión ─► En revisión / nueva revisión editable
+   │                              ├─ aprobar ──► Aprobado ── eliminar (Coordinación) ──► Sin iniciar
+   │                              │
+   │ solicitar corrección         │
+   └──── Corrección solicitada ◄──┘
+              │
+              └─ reenviar nueva revisión ─► En revisión
 ```
 
-La reapertura crea una nueva línea editable vinculada a la revisión aprobada; no vuelve
-mutable el documento aprobado.
+Un sílabo aprobado no se reabre ni se modifica (I-178). Si tiene un error, Coordinación lo
+elimina con todo su historial y el paralelo recibe un sílabo nuevo sin iniciar.
 
 ## Transiciones permitidas
 
@@ -32,23 +32,21 @@ mutable el documento aprobado.
 | En revisión · decanato | Solicitar corrección | Decano de la facultad | Corrección solicitada | `correccion_etapa = 'decanato'`, con justificación. |
 | En revisión · decanato | Aprobar | Decano de la facultad | Aprobado | Fija `aprobaciones` sobre la revisión inmutable y solicita el PDF. |
 | Corrección solicitada | Reenviar | Docente autorizado | En revisión (etapa biblioteca) | Crea nueva revisión; la cadena vuelve a empezar por biblioteca. |
-| Aprobado | Reabrir | Coordinador o decano | Corrección solicitada | Registra causa (`origen_reapertura` coordinación o decanato), restaura la fotografía y anula PDF y firmas. |
+| Aprobado | Eliminar | Coordinador de alcance | Sin iniciar (sílabo nuevo) | Borra el sílabo con revisiones, aprobación, PDF y firmas, crea otro sin iniciar para el paralelo, audita `silabo.eliminado` y avisa al docente. Solo con la convocatoria abierta o en pausa. |
 
 La **etapa** dentro de «En revisión» no es una columna: se deriva de la revisión vigente
 (`ReviewStage`): sin verificación de biblioteca → biblioteca; verificada y sin
 `revisiones_coordinacion` → coordinación; con revisión de coordinación y sin aprobación
 → decanato. Solo el revisor de la etapa vigente decide; los demás consultan.
 
-ADR-0005 fija provisionalmente `Corrección solicitada` tras una reapertura. DT-07 exige
-validar ese lenguaje con usuarios; un cambio futuro afectará trabajo nuevo sin alterar la
-revisión ni la aprobación conservadas.
+La reapertura de aprobados se retiró en I-178 (ADR-0005 reemplazado); DT-07 ya no aplica.
 
 ## Firmas (I-139, I-173)
 
 El PDF se genera **al aprobar el decanato** (exportación automática) y se firma de forma
 incremental en este orden: docente → coordinación → biblioteca → decanato
 (`firmas_documento.firmado_como`). Cada revisión tiene su propio PDF y sus propias
-firmas: cualquier cambio de contenido es una revisión nueva (reenvío o reapertura), la
+firmas: cualquier cambio de contenido es una revisión nueva (reenvío), la
 anterior queda `anulado` y se vuelve a firmar desde cero. Biblioteca revisa la
 bibliografía al **inicio** de la cadena, no antes de firmar; firma al final porque su
 firma da fe de la bibliografía que ya aprobó.
@@ -66,7 +64,7 @@ referencia del acto que lo respalda.
 | Borrador              | Se descarta el contenido y el nuevo docente empieza limpio. El avance perdido queda en auditoría. |
 | En revisión           | No se traspasa. Primero se resuelve la revisión.                                                  |
 | Corrección solicitada | Se conserva el contenido: hubo envío, así que es evidencia.                                       |
-| Aprobado              | Se reabre conservando la revisión aprobada intacta; el nuevo docente hereda el contenido.         |
+| Aprobado              | Se elimina con todo su historial; el nuevo docente empieza desde cero (I-174).                    |
 
 El descarte del borrador viene de DT-08 y no se deshace. La herencia del trabajo enviado
 viene de A1. Ambas están registradas en `references/entrevista-2026-08-26-hallazgos.md`.

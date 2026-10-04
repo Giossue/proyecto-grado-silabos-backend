@@ -44,3 +44,5 @@ Se enmendó el ADR 0002.
   única y grupos completos en modelo y base (`test_cp_f_reopening_and_correction_columns_are_write_once_and_complete`).
 - `ConvocationAndDraftTest`: validación determinística leída de la respuesta.
 - `LibraryReviewTest`, `DocumentSignatureTest`; suite completa, Pint, PHPStan y contrato OpenAPI.
+
+> I-178 retiró después la reapertura: las columnas de reapertura de `aprobaciones` ya no existen.

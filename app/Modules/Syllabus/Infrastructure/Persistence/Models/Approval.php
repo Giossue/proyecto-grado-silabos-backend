@@ -18,11 +18,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $aprobado_por
  * @property string|null $aprobacion_anterior_id
  * @property CarbonImmutable $aprobado_en
- * @property string|null $causa_reapertura
- * @property string|null $origen_reapertura
- * @property string|null $reabierta_por
- * @property CarbonImmutable|null $reabierta_en
- * @property string|null $clave_reapertura
  * @property-read SyllabusRevision $revision
  */
 class Approval extends Model
@@ -36,12 +31,6 @@ class Approval extends Model
 
     use ImmutableRecord;
 
-    public const ORIGIN_COORDINATION = 'coordinacion';
-
-    public const ORIGIN_LIBRARY = 'biblioteca';
-
-    public const ORIGIN_DEANERY = 'decanato';
-
     public $timestamps = false;
 
     protected $table = 'aprobaciones';
@@ -50,23 +39,18 @@ class Approval extends Model
     protected $fillable = [
         'revision_silabo_id', 'clave_idempotencia', 'huella_sha256',
         'aprobado_por', 'aprobado_en', 'aprobacion_anterior_id',
-        'causa_reapertura', 'origen_reapertura', 'reabierta_por', 'reabierta_en', 'clave_reapertura',
     ];
 
-    /**
-     * Reapertura: se registra una sola vez sobre la aprobación vigente; lo demás es inmutable.
-     *
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function writeOnceColumns(): array
     {
-        return ['causa_reapertura', 'origen_reapertura', 'reabierta_por', 'reabierta_en', 'clave_reapertura'];
+        return [];
     }
 
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['aprobado_en' => 'immutable_datetime', 'reabierta_en' => 'immutable_datetime'];
+        return ['aprobado_en' => 'immutable_datetime'];
     }
 
     /** @return BelongsTo<SyllabusRevision, $this> */
@@ -85,16 +69,5 @@ class Approval extends Model
     public function baseApproval(): BelongsTo
     {
         return $this->belongsTo(Approval::class, 'aprobacion_anterior_id');
-    }
-
-    /** @return BelongsTo<User, $this> */
-    public function reopener(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'reabierta_por');
-    }
-
-    public function isReopened(): bool
-    {
-        return $this->reabierta_en !== null;
     }
 }

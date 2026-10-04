@@ -42,7 +42,7 @@ el permiso, pero no lo sustituyen.
 | Enviar/reenviar | No | No | Sí, asignado | No | No |
 | Observar/solicitar corrección | No | Sí, en etapa coordinación | No; corrige y reenvía (I-120) | Comentar en etapa biblioteca | Solicitar corrección en etapa decanato |
 | Comparar revisiones | Auditoría | Sí | Sí, si es propio/autorizado | No | Sí, en su facultad |
-| Aprobar/reabrir | No | Sí | No | No | Sí: aprobación final y reapertura en su facultad |
+| Aprobar | No | Sí | No | No | Sí: aprobación final en su facultad |
 | Exportar | Según permiso | Sí en alcance | Sí, propio/autorizado | Consulta del PDF enviado | Sí, en su facultad |
 | Consultar auditoría | Sí, permiso explícito | Vista limitada | No por defecto | No | No |
 | Revisar la bibliografía al enviar: aprobar o comentar (I-165, I-173) | No | No | No; su envío llega primero a biblioteca | Sí, en toda la universidad | No |
@@ -93,7 +93,7 @@ El rol `decano` tiene alcance por **facultad** (`asignaciones_rol.facultad_id`),
 activo por facultad. Ve la cola de revisión de todas las carreras de su facultad y decide
 solo en la etapa `decanato`: **aprueba** (fija la aprobación y se genera el PDF) o
 **solicita corrección** (el sílabo vuelve al docente y la cadena empieza de nuevo por
-biblioteca). Puede reabrir un sílabo aprobado y firma el PDF en último lugar.
+biblioteca). Firma el PDF en último lugar. Eliminar un sílabo aprobado es solo del coordinador.
 Administración lo crea eligiendo la facultad; se acumula con otros roles salvo
 Administrador.
 

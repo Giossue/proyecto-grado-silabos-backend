@@ -7,7 +7,7 @@ use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 
-class ReopenSyllabusRequest extends FormRequest
+class DeleteSyllabusRequest extends FormRequest
 {
     public function authorize(): Response
     {
@@ -16,15 +16,12 @@ class ReopenSyllabusRequest extends FormRequest
             return Response::deny();
         }
 
-        return Gate::forUser($this->user())->inspect('decide', $syllabus);
+        return Gate::forUser($this->user())->inspect('delete', $syllabus);
     }
 
-    /** @return array<string, list<string>> */
+    /** @return array<string, list<mixed>> */
     public function rules(): array
     {
-        return [
-            'idempotency_key' => ['required', 'uuid'],
-            'cause' => ['required', 'string', 'min:10', 'max:10000'],
-        ];
+        return [];
     }
 }

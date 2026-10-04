@@ -64,7 +64,7 @@ sequenceDiagram
     Coo->>UI: Ver diff N ↔ N+1
 ```
 
-## Aprobar y reabrir
+## Aprobar y eliminar
 
 ```mermaid
 sequenceDiagram
@@ -81,14 +81,13 @@ sequenceDiagram
     A-->>UI: Aprobado; revisión N bloqueada
     O-->>O: habilita notificación/exportación después del commit
 
-    opt Reapertura autorizada
-        Coo->>UI: Indica causa y confirma reabrir
-        UI->>A: reopen(approval N, reason)
+    opt Eliminación autorizada (I-178)
+        Coo->>UI: Confirma eliminar el sílabo aprobado
+        UI->>A: DELETE sílabo
         A->>DB: autorizar + transacción
-        A->>DB: insertar Reapertura y nueva revisión de trabajo enlazada
-        A->>DB: conservar Aprobacion(N) y revisión N intactas
-        A->>DB: transición + auditoría + ejecución pendiente
-        A-->>UI: nueva revisión editable identificada
+        A->>DB: borrar sílabo con revisiones, aprobación, PDF y firmas
+        A->>DB: crear sílabo nuevo sin iniciar + auditoría + aviso al docente
+        A-->>UI: sílabo nuevo sin iniciar
     end
 ```
 

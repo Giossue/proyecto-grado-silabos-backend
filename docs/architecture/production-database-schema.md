@@ -567,8 +567,7 @@ CHECK (las cuatro columnas correccion_* son todas nulas o todas presentes)
 
 Las columnas `correccion_*` son de escritura única (I-176): registran la solicitud formal
 de corrección de esa revisión, con la etapa que la pidió. Reemplazan a la tabla
-`solicitudes_correccion`. La reapertura ya no se enlaza desde la revisión: la revisión
-siguiente apunta a la aprobada con `revision_anterior_id`.
+`solicitudes_correccion`. La revisión siguiente apunta a la anterior con `revision_anterior_id`.
 
 ## Observaciones por campo (retiradas)
 
@@ -588,13 +587,6 @@ huella_sha256 CHAR(64) NOT NULL
 aprobado_por UUID (FK → usuarios.id) NOT NULL
 aprobado_en TIMESTAMPTZ NOT NULL
 aprobacion_base_id UUID (FK → aprobaciones.id) NULL INDEX
-causa_reapertura TEXT NULL
-origen_reapertura VARCHAR(16) NULL CHECK (coordinacion | biblioteca | decanato)
-reabierta_por UUID (FK → usuarios.id) NULL INDEX
-reabierta_en TIMESTAMPTZ NULL
-clave_reapertura UUID NULL
-
-CHECK (las cinco columnas de reapertura son todas nulas o todas presentes)
 ~~~
 
 El sílabo se obtiene de `revisiones_silabo.silabo_id`. La clave de idempotencia sigue
@@ -603,9 +595,8 @@ siendo única por sílabo; la comprueba el trigger `validar_relaciones_flujo` (I
 corrección de biblioteca (I-165): apunta a la aprobación de coordinación que cubre todo
 el contenido salvo la bibliografía, y conserva su aprobador.
 
-Las columnas de reapertura son de escritura única (I-176): una aprobación se reabre una
-sola vez y reemplazan a la tabla `reaperturas`. Una aprobación con `reabierta_en` queda
-anulada para firmas. La clave de reapertura es única por sílabo (`validar_relaciones_flujo`).
+Una aprobación es totalmente inmutable (trigger `proteger_aprobacion`). Un sílabo aprobado no se
+reabre (I-178): Coordinación lo elimina con todo su historial.
 
 ## envios_biblioteca
 
@@ -624,14 +615,13 @@ CHECK (verificado_por y verificado_en ambos nulos o ambos presentes)
 
 El trigger `proteger_envio_biblioteca` solo permite registrar la verificación una vez
 (migración `000164`). Estado derivado: `firmado` (firma `biblioteca` en un PDF de la
-revisión), `comentado` (corrección pedida por biblioteca), `anulado` (aprobación
-reabierta), `por_firmar` (verificado) o `pendiente`.
+revisión), `comentado` (corrección pedida por biblioteca), `anulado` (hay una revisión posterior), `por_firmar` (verificado) o `pendiente`.
 
 ## Cambios de estado del sílabo
 
 Desde I-136 no existe `transiciones_silabo`: cada cambio de estado queda en
 `eventos_auditoria` (`silabo.enviado`, `silabo.reenviado`, `silabo.correccion_solicitada`,
-`silabo.aprobado`, `silabo.reabierto`) con `from_state` y `to_state` en sus metadatos.
+`silabo.aprobado`, `silabo.eliminado`) con `from_state` y `to_state` en sus metadatos.
 
 ### Cardinalidades
 
@@ -640,7 +630,6 @@ silabos 1:N revisiones_silabo
 revisiones_silabo 0..1:N revisiones_silabo mediante revision_anterior_id
 la solicitud de corrección (columnas correccion_*) es un comentario general de la revisión
 revisiones_silabo 1:0..1 aprobaciones
-la reapertura (columnas de aprobaciones) deja la aprobación anulada
 ~~~
 
 ---

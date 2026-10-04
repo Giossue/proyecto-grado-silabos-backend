@@ -13,8 +13,8 @@ documento aprobado después.
 ## Decisión
 
 El trabajo editable vive en un borrador controlado. Enviar/reenviar crea una fotografía
-inmutable numerada. Aprobación y exportación apuntan a una revisión. Reabrir conserva la
-aprobada y crea otra línea editable enlazada.
+inmutable numerada. Aprobación y exportación apuntan a una revisión. Un aprobado no se reabre (I-178):
+se elimina completo y el paralelo recibe un sílabo nuevo.
 
 ## Consecuencias
 
@@ -34,3 +34,8 @@ modelo (`ImmutableRecord::writeOnceColumns`) y el trigger
 `proteger_registro_con_campos_unicos` lo hacen cumplir; ambos rechazan cambiar una columna ya
 escrita o cualquier otra columna. La excepción de reinicio institucional no cambia.
 
+## Enmienda I-178 (2026-10-04)
+
+La reapertura se retiró: un aprobado no se modifica, se elimina. Las columnas de reapertura de
+`aprobaciones` se eliminaron y esa tabla vuelve a ser totalmente inmutable. Solo las columnas
+`correccion_*` de `revisiones_silabo` quedan como escritura única.

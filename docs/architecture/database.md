@@ -248,15 +248,15 @@ observaciones por campo; el revisor devuelve con un comentario general (bibliote
 motivos predefinidos) guardado en `correccion_*`. El docente corrige y reenvía.
 Desde I-131, `aprobaciones` y `artefactos_exportacion` no guardan `silabo_id`: el sílabo se
 obtiene de la revisión (`revision_silabo_id`). La unicidad por sílabo de las claves de
-idempotencia de aprobaciones y reaperturas la verifica `validar_relaciones_flujo`.
+idempotencia de aprobaciones la verifica `validar_relaciones_flujo`.
 Desde I-136 no existe `transiciones_silabo`: los cambios de estado del sílabo se
 registran solo en `eventos_auditoria`, con `from_state`/`to_state` en los metadatos.
 I-176 retiró `validaciones_silabo`, `resultados_validacion`, `solicitudes_correccion` y
 `reaperturas`. La validación se calcula al enviar o validar y no se guarda. La solicitud de
-corrección son columnas `correccion_*` de `revisiones_silabo` y la reapertura son columnas
-`*_reapertura`/`reabierta_*` de `aprobaciones`. Son de escritura única: pasan de NULL a un
-valor una vez, completas, y el trigger `proteger_registro_con_campos_unicos` mantiene
-inmutable el resto de la fila (ADR 0002). I-116 eliminó
+corrección son columnas `correccion_*` de `revisiones_silabo`, de escritura única: pasan de
+NULL a un valor una vez, completas, y el trigger `proteger_registro_con_campos_unicos`
+mantiene inmutable el resto de la fila (ADR 0002). I-178 retiró la reapertura: las columnas
+que I-176 había puesto en `aprobaciones` se eliminaron y esa tabla es totalmente inmutable. I-116 eliminó
 `preferencias_ia_carrera`; I-168 retiró también la marca de IA por campo, que no se usaba.
 
 I-135 reemplazó las once tablas de IA por `historial_ia`, que guarda un mensaje JSONB

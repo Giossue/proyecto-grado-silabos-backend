@@ -72,6 +72,15 @@ class SyllabusPolicy
         return $this->decide($user, $syllabus);
     }
 
+    public function delete(User $user, Syllabus $syllabus): Response
+    {
+        if ($syllabus->estado !== 'aprobado' || ! $this->roles->hasRole(request(), RoleCode::Coordinator)) {
+            return Response::deny();
+        }
+
+        return $this->decide($user, $syllabus);
+    }
+
     public function decide(User $user, Syllabus $syllabus): Response
     {
         if (! $this->review($user, $syllabus)) {

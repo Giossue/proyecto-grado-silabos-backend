@@ -38,7 +38,7 @@
 - Biblioteca devuelve con motivos predefinidos; coordinación y decanato, con un
   comentario general. El docente corrige y reenvía una revisión nueva.
 - La comparación muestra cambios de campos, filas y secciones.
-- Reabrir conserva la revisión aprobada y registra causa/actor.
+- Un aprobado no se reabre: Coordinación lo elimina con todo su historial (I-178).
 
 ## Criterios críticos
 

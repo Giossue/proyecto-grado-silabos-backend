@@ -4289,13 +4289,13 @@
                 ]
             }
         },
-        "/api/v1/coordination/syllabi/{syllabus}/reopen": {
-            "post": {
+        "/api/v1/coordination/syllabi/{syllabus}": {
+            "delete": {
                 "tags": [
                     "Coordinación"
                 ],
-                "operationId": "api_v1_coordination_reviews_reopen",
-                "summary": "api.v1.coordination.reviews.reopen",
+                "operationId": "api_v1_coordination_reviews_destroy",
+                "summary": "api.v1.coordination.reviews.destroy",
                 "responses": {
                     "200": {
                         "description": "Operación completada.",

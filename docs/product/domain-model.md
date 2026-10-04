@@ -178,7 +178,6 @@ por plantilla:
   autor y fecha, guardado en la revisión devuelta (I-176/I-177). No hay observaciones por
   campo. El docente no responde: corrige el sílabo y lo reenvía.
 - `Aprobacion`: actor, revisión, fecha, metadatos y huella.
-- `Reapertura`: causa, actor, revisión aprobada de origen y nueva revisión.
 
 ### Validación e IA
 
@@ -204,10 +203,10 @@ establece; una recomendación de IA nunca bloquea por sí sola.
 4. Una revisión enviada/aprobada es inmutable en el flujo normal y contiene su propia
    copia de la plantilla; I-118 permite eliminar el agregado completo únicamente durante
    un reinicio institucional confirmado de un proceso vigente y pausado, siempre que
-   no conserve una aprobación. Una reapertura conserva la revisión aprobada y sus vínculos.
+   no conserve una aprobación. Un sílabo aprobado no se reabre (I-178): se elimina completo.
 5. Todo envío o reenvío inserta una revisión; nunca actualiza la anterior.
 6. Una aprobación apunta a una revisión concreta.
-7. Una reapertura no altera la aprobación previa.
+7. Una aprobación es inmutable; un sílabo aprobado solo puede eliminarse completo.
 8. La comparación solo usa revisiones del mismo expediente autorizado.
 9. El chat cita únicamente el contexto académico/curricular y las tablas de unidades o
    planificación de su entrada; no consulta fuentes vivas ni índices vectoriales (I-146).

@@ -188,7 +188,6 @@ class SyllabusController extends Controller
             'revisions' => fn ($query) => $query->with([
                 'submitter:id,nombre', 'approval.approver:id,nombre',
             ]),
-            'reopenedApprovals' => fn ($query) => $query->with('reopener:id,nombre')->latest('reabierta_en'),
         ]);
         $values = $syllabus->values->keyBy('definicion_campo_id');
         $template = SyllabusTemplate::institutional();
@@ -229,12 +228,6 @@ class SyllabusController extends Controller
                 'submitted_by' => $revision->submitter->nombre,
                 'approved_at' => $revision->approval?->aprobado_en->toIso8601String(),
             ])->values(),
-            'reopening' => $syllabus->reopenedApprovals->first() === null ? null : [
-                'cause' => $syllabus->reopenedApprovals->first()->causa_reapertura,
-                'reopened_at' => $syllabus->reopenedApprovals->first()->reabierta_en->toIso8601String(),
-                'reopened_by' => $syllabus->reopenedApprovals->first()->reopener->nombre,
-                'origin' => $syllabus->reopenedApprovals->first()->origen_reapertura,
-            ],
             'review_stage' => ReviewStage::of($syllabus),
             'review_comments' => ReviewComments::forSyllabus($syllabus),
         ];
