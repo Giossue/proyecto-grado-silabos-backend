@@ -25,6 +25,7 @@ class Approval extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'aprobacion_id',
         'huella_sha256' => 'hash_contenido',
         'clave_idempotencia' => 'clave_solicitud',
     ];
@@ -34,6 +35,8 @@ class Approval extends Model
     public $timestamps = false;
 
     protected $table = 'aprobaciones';
+
+    protected $primaryKey = 'aprobacion_id';
 
     /** @var list<string> */
     protected $fillable = [

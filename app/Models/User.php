@@ -41,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
     use HasFactory, HasUuids, MapsLegacyColumnNames, MustVerifyEmail, Notifiable, TwoFactorAuthenticatable;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'usuario_id',
         'nombre' => 'nombre_usuario',
         'activo' => 'usuario_activo',
     ];
@@ -48,6 +49,8 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public $timestamps = false;
 
     protected $table = 'usuarios';
+
+    protected $primaryKey = 'usuario_id';
 
     protected $authPasswordName = 'contrasena';
 

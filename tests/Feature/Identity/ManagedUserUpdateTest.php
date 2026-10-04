@@ -93,7 +93,7 @@ class ManagedUserUpdateTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
 
-        $this->assertDatabaseHas('asignaciones_rol', ['id' => $previousAssignmentId, 'asignacion_rol_activa' => true]);
+        $this->assertDatabaseHas('asignaciones_rol', ['asignacion_rol_id' => $previousAssignmentId, 'asignacion_rol_activa' => true]);
         $this->assertDatabaseHas('asignaciones_rol', [
             'usuario_id' => $this->coordinator->id,
             'rol' => RoleCode::Teacher->value,
@@ -201,7 +201,7 @@ class ManagedUserUpdateTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
 
-        $this->assertDatabaseHas('usuarios', ['id' => $this->teacher->id, 'usuario_activo' => false]);
+        $this->assertDatabaseHas('usuarios', ['usuario_id' => $this->teacher->id, 'usuario_activo' => false]);
         $this->assertFalse(CoordinatorAssignment::query()
             ->where('usuario_id', $this->teacher->id)
             ->where('carrera_id', $career->id)

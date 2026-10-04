@@ -50,7 +50,7 @@ class StoreAcademicRecordRequest extends FormRequest
                 'logo' => ['required', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
             ],
             'carrera' => [
-                'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'id')->where('facultad_activa', true)],
+                'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'facultad_id')->where('facultad_activa', true)],
                 'modality' => ['required', 'string', Rule::in(StudyModality::values())],
                 'code' => ['required', 'string', 'max:80', Rule::unique('carreras', 'codigo_carrera')],
                 'nombre' => ['required', 'string', 'max:180'],
@@ -65,14 +65,14 @@ class StoreAcademicRecordRequest extends FormRequest
                 'user_id' => [
                     'required',
                     'uuid',
-                    Rule::exists('usuarios', 'id')->where(fn ($query) => $query
+                    Rule::exists('usuarios', 'usuario_id')->where(fn ($query) => $query
                         ->where('usuario_activo', true)
                         ->whereNotNull('correo_verificado_en')),
                 ],
                 'parallel_id' => [
                     'required',
                     'uuid',
-                    Rule::exists('paralelos', 'id')->where(fn ($query) => $query
+                    Rule::exists('paralelos', 'paralelo_id')->where(fn ($query) => $query
                         ->whereIn('asignatura_ofertada_id', ScheduledSubject::query()
                             ->select('id')
                             ->where('asignatura_ofertada_activa', true)

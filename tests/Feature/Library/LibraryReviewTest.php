@@ -112,7 +112,7 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
             'reasons' => ['libro_no_disponible', 'codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
         ])->assertCreated();
-        $this->assertDatabaseHas('revisiones_silabo', ['id' => $revision->id, 'correccion_etapa' => 'biblioteca']);
+        $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id, 'correccion_etapa' => 'biblioteca']);
         $this->assertNotified($this->people['teacher'][0]->id, 'silabo.correccion_solicitada', 'volverá a biblioteca');
         $this->assertSame('correccion_solicitada', $syllabus->fresh()->estado);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertJsonPath('reviews.data.0.state', 'comentado');

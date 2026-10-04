@@ -25,6 +25,7 @@ class SyllabusProcess extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'convocatoria_universidad_id',
         'estado' => 'estado_convocatoria_universidad',
         'inicia_en' => 'fecha_inicio',
         'entrega_en' => 'fecha_entrega',
@@ -46,6 +47,8 @@ class SyllabusProcess extends Model
     ];
 
     protected $table = 'convocatorias_universidad';
+
+    protected $primaryKey = 'convocatoria_universidad_id';
 
     /** @var list<string> */
     protected $fillable = [

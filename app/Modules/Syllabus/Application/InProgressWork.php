@@ -218,31 +218,31 @@ final class InProgressWork
     private function deleteAggregates(array $syllabusIds): void
     {
         DB::statement("SET LOCAL app.reinicio_institucional = 'on'");
-        $revisionIds = DB::table('revisiones_silabo')->whereIn('silabo_id', $syllabusIds)->pluck('id')->all();
+        $revisionIds = DB::table('revisiones_silabo')->whereIn('silabo_id', $syllabusIds)->pluck('revision_silabo_id')->all();
         DB::table('mensajes_ia')->whereIn('silabo_id', $syllabusIds)->delete();
 
         $exports = DB::table('exportaciones_silabo')
             ->whereIn('revision_silabo_id', $revisionIds)
-            ->get(['id', 'archivo_word_id', 'archivo_pdf_id']);
-        $signatures = DB::table('firmas_documento')->whereIn('exportacion_silabo_id', $exports->pluck('id')->all());
+            ->get(['exportacion_silabo_id', 'archivo_word_id', 'archivo_pdf_id']);
+        $signatures = DB::table('firmas_documento')->whereIn('exportacion_silabo_id', $exports->pluck('exportacion_silabo_id')->all());
         $objectIds = $exports->flatMap(fn ($export) => [$export->archivo_word_id, $export->archivo_pdf_id])
             ->merge((clone $signatures)->pluck('archivo_firmado_id'))
             ->filter()->unique()->values()->all();
-        $objects = DB::table('archivos')->whereIn('id', $objectIds)->get(['disco', 'ruta_archivo']);
+        $objects = DB::table('archivos')->whereIn('archivo_id', $objectIds)->get(['disco', 'ruta_archivo']);
         $signatures->delete();
         DB::table('exportaciones_silabo')->whereIn('revision_silabo_id', $revisionIds)->delete();
-        DB::table('archivos')->whereIn('id', $objectIds)->delete();
+        DB::table('archivos')->whereIn('archivo_id', $objectIds)->delete();
         DB::afterCommit(function () use ($objects): void {
             foreach ($objects as $object) {
                 Storage::disk($object->disco)->delete($object->ruta_archivo);
             }
         });
 
-        DB::table('revisiones_silabo')->whereIn('id', $revisionIds)->update(['revision_anterior_id' => null]);
+        DB::table('revisiones_silabo')->whereIn('revision_silabo_id', $revisionIds)->update(['revision_anterior_id' => null]);
         DB::table('envios_biblioteca')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('revisiones_coordinacion')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('aprobaciones')->whereIn('revision_silabo_id', $revisionIds)->delete();
-        DB::table('revisiones_silabo')->whereIn('id', $revisionIds)->delete();
+        DB::table('revisiones_silabo')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('notificaciones')->whereIn('recurso_id', [...$syllabusIds, ...$revisionIds])->delete();
 
         Syllabus::query()->whereKey($syllabusIds)->delete();

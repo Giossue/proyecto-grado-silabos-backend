@@ -19,6 +19,7 @@ class Parallel extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'paralelo_id',
         'codigo' => 'codigo_paralelo',
         'jornada' => 'jornada_paralelo',
         'programacion_asignatura_id' => 'asignatura_ofertada_id',
@@ -27,6 +28,8 @@ class Parallel extends Model
     public $timestamps = false;
 
     protected $table = 'paralelos';
+
+    protected $primaryKey = 'paralelo_id';
 
     /** @var list<string> */
     public const SHIFTS = ['matutina', 'vespertina', 'nocturna'];

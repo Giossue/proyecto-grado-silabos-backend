@@ -22,6 +22,7 @@ class SyllabusTemplate extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'plantilla_id',
         'mapeo_documento' => 'mapeo_documento_plantilla',
     ];
 
@@ -41,6 +42,8 @@ class SyllabusTemplate extends Model
     public $timestamps = false;
 
     protected $table = 'plantilla_silabo';
+
+    protected $primaryKey = 'plantilla_id';
 
     /** @var list<string> */
     protected $fillable = ['documento', 'mapeo_documento'];
@@ -297,14 +300,14 @@ class SyllabusTemplate extends Model
         return array_values(DB::table('secciones_plantilla')->where('plantilla_id', $this->id)
             ->orderBy('posicion_seccion_plantilla')->orderBy('clave_seccion_plantilla')->get()
             ->map(fn (object $section): array => [
-                'id' => $section->id, 'clave' => $section->clave_seccion_plantilla, 'titulo' => $section->titulo_seccion_plantilla,
+                'id' => $section->seccion_plantilla_id, 'clave' => $section->clave_seccion_plantilla, 'titulo' => $section->titulo_seccion_plantilla,
                 'descripcion' => $section->descripcion_seccion_plantilla, 'posicion' => (int) $section->posicion_seccion_plantilla,
-                'bloques' => ($blocks->get($section->id) ?? collect())->map(fn (object $block): array => [
-                    'id' => $block->id, 'clave' => $block->clave_campo_plantilla, 'titulo' => $block->titulo_campo_plantilla,
+                'bloques' => ($blocks->get($section->seccion_plantilla_id) ?? collect())->map(fn (object $block): array => [
+                    'id' => $block->campo_plantilla_id, 'clave' => $block->clave_campo_plantilla, 'titulo' => $block->titulo_campo_plantilla,
                     'posicion' => (int) $block->posicion_campo_plantilla,
                     'configuracion' => TemplateFieldAttributes::hydrate(
                         TemplateFieldAttributes::withoutFixedDocument(is_string($block->configuracion_campo_plantilla) ? json_decode($block->configuracion_campo_plantilla, true, 512, JSON_THROW_ON_ERROR) : []),
-                        $definitions->get($block->id, []),
+                        $definitions->get($block->campo_plantilla_id, []),
                     ),
                 ])->values()->all(),
             ])->all());
@@ -333,11 +336,11 @@ class SyllabusTemplate extends Model
                     $blockIds[] = (string) $block['id'];
                 }
             }
-            DB::table('campos_plantilla')->where('plantilla_id', $this->id)->whereNotIn('id', $blockIds)->delete();
-            DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->whereNotIn('id', $sectionIds)->delete();
+            DB::table('campos_plantilla')->where('plantilla_id', $this->id)->whereNotIn('campo_plantilla_id', $blockIds)->delete();
+            DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->whereNotIn('seccion_plantilla_id', $sectionIds)->delete();
 
             foreach ($sections as $sectionIndex => $section) {
-                DB::table('secciones_plantilla')->updateOrInsert(['id' => (string) $section['id']], [
+                DB::table('secciones_plantilla')->updateOrInsert(['seccion_plantilla_id' => (string) $section['id']], [
                     'plantilla_id' => $this->id,
                     'clave_seccion_plantilla' => (string) $section['clave'],
                     'titulo_seccion_plantilla' => (string) ($section['titulo'] ?? ''),
@@ -345,7 +348,7 @@ class SyllabusTemplate extends Model
                     'posicion_seccion_plantilla' => (int) ($section['posicion'] ?? $sectionIndex + 1),
                 ]);
                 foreach (array_values(is_array($section['bloques'] ?? null) ? $section['bloques'] : []) as $blockIndex => $block) {
-                    DB::table('campos_plantilla')->updateOrInsert(['id' => (string) $block['id']], [
+                    DB::table('campos_plantilla')->updateOrInsert(['campo_plantilla_id' => (string) $block['id']], [
                         'seccion_plantilla_id' => (string) $section['id'],
                         'plantilla_id' => $this->id,
                         'clave_campo_plantilla' => (string) $block['clave'],

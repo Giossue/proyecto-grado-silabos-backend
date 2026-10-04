@@ -112,7 +112,7 @@ class PreparePeriodRequest extends FormRequest
             'period_id' => [
                 'required',
                 'uuid',
-                Rule::exists('periodos_academicos', 'id'),
+                Rule::exists('periodos_academicos', 'periodo_academico_id'),
             ],
             'subjects' => ['required', 'array', 'min:1', 'max:200'],
             'subjects.*.id' => ['required', 'uuid', 'distinct'],

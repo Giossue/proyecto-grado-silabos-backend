@@ -39,7 +39,7 @@ class DeleteManagedUser
             foreach (self::TRACES as $table => $column) {
                 $query = DB::table($table);
                 if ($table === 'asignaciones_paralelo') {
-                    $query->whereIn($column, DB::table('asignaciones_rol')->where('usuario_id', $locked->id)->select('id'));
+                    $query->whereIn($column, DB::table('asignaciones_rol')->where('usuario_id', $locked->id)->select('asignacion_rol_id'));
                 } else {
                     $query->where($column, $locked->id);
                 }

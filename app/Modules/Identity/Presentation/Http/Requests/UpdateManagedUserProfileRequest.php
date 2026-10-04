@@ -30,6 +30,7 @@ class UpdateManagedUserProfileRequest extends FormRequest
                 'max:255',
                 Rule::unique('usuarios', 'correo_electronico')->ignore(
                     $target instanceof User ? $target->id : null,
+                    'usuario_id',
                 ),
             ],
         ];

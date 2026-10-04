@@ -69,7 +69,7 @@ class UpdateCareerAcademicRecordRequest extends FormRequest
                 'max:80',
                 Rule::unique('asignaturas', 'codigo_asignatura')
                     ->where('carrera_id', $careerId)
-                    ->ignore($this->recordId()),
+                    ->ignore($this->recordId(), 'asignatura_id'),
             ],
             'nombre' => ['required', 'string', 'max:180'],
             'cycle' => ['required', 'integer', 'min:1', 'max:30'],

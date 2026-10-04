@@ -28,6 +28,7 @@ class FieldDefinition extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'definicion_campo_id',
         'clave' => 'clave_definicion_campo',
         'etiqueta' => 'etiqueta_definicion_campo',
         'ayuda' => 'ayuda_definicion_campo',
@@ -43,6 +44,8 @@ class FieldDefinition extends Model
     public $timestamps = false;
 
     protected $table = 'definiciones_campo';
+
+    protected $primaryKey = 'definicion_campo_id';
 
     /** @var list<string> */
     protected $fillable = [

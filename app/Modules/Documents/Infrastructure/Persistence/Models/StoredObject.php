@@ -26,6 +26,7 @@ class StoredObject extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'archivo_id',
         'nombre_logico' => 'nombre_archivo',
         'mime' => 'tipo_archivo',
         'clasificacion' => 'categoria',
@@ -39,6 +40,8 @@ class StoredObject extends Model
     public const UPDATED_AT = null;
 
     protected $table = 'archivos';
+
+    protected $primaryKey = 'archivo_id';
 
     /** @var list<string> */
     protected $fillable = [

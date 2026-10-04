@@ -61,7 +61,7 @@ class ParallelTeacherChangeTest extends TestCase
         $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
 
         $this->removeAssignment($assignment)->assertSuccessful();
-        $this->assertDatabaseMissing('asignaciones_paralelo', ['id' => $assignment->id]);
+        $this->assertDatabaseMissing('asignaciones_paralelo', ['asignacion_paralelo_id' => $assignment->id]);
 
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.index'))
             ->assertOk()->assertJsonCount(0, 'syllabi.data');
@@ -70,7 +70,7 @@ class ParallelTeacherChangeTest extends TestCase
 
         $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertSuccessful();
 
-        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
         $fresh = Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->sole();
         $this->assertSame('sin_iniciar', $fresh->estado);
         $this->assertDatabaseMissing('valores_campo', ['silabo_id' => $syllabus->id]);
@@ -89,7 +89,7 @@ class ParallelTeacherChangeTest extends TestCase
         $this->removeAssignment($assignment)->assertSuccessful();
         $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertSuccessful();
 
-        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertDatabaseMissing('revisiones_silabo', ['silabo_id' => $syllabus->id]);
         $fresh = Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->sole();
         $this->assertSame('sin_iniciar', $fresh->estado);
@@ -105,7 +105,7 @@ class ParallelTeacherChangeTest extends TestCase
         $this->removeAssignment($assignment)->assertSuccessful();
         $this->assignTeacher($this->teacher, $assignment->paralelo_id)->assertSuccessful();
 
-        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertSame('sin_iniciar', Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->sole()->estado);
     }
 

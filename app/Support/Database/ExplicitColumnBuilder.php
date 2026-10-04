@@ -127,6 +127,7 @@ class ExplicitColumnBuilder extends Builder
      */
     public function select($columns = ['*'])
     {
+        $columns = is_array($columns) ? $columns : func_get_args();
         $this->query->select($this->mappedColumns($columns));
 
         return $this;
@@ -138,6 +139,7 @@ class ExplicitColumnBuilder extends Builder
      */
     public function addSelect($column)
     {
+        $column = is_array($column) ? $column : func_get_args();
         $this->query->addSelect($this->mappedColumns($column));
 
         return $this;

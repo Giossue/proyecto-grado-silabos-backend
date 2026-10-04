@@ -234,7 +234,7 @@ class AcademicStructureTest extends TestCase
             ->assertSuccessful();
 
         $this->assertDatabaseHas('carreras', [
-            'id' => $career->id,
+            'carrera_id' => $career->id,
             'numero_ciclos' => 10,
         ]);
         $this->assertDatabaseHas('asignaturas', [
@@ -288,7 +288,7 @@ class AcademicStructureTest extends TestCase
             ->assertJsonPath('message', 'Posición de la materia actualizada.');
 
         $this->assertDatabaseHas('asignaturas', [
-            'id' => $subject->id,
+            'asignatura_id' => $subject->id,
             'ciclo_asignatura' => $subject->ciclo,
             'orden_asignatura_en_ciclo' => 2,
         ]);
@@ -306,7 +306,7 @@ class AcademicStructureTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('cycle');
         $this->assertDatabaseHas('asignaturas', [
-            'id' => $subject->id,
+            'asignatura_id' => $subject->id,
             'ciclo_asignatura' => $subject->ciclo,
             'orden_asignatura_en_ciclo' => 2,
         ]);
@@ -329,7 +329,7 @@ class AcademicStructureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('message', 'Materia eliminada de la malla.');
 
-        $this->assertDatabaseMissing('asignaturas', ['id' => $subject->id]);
+        $this->assertDatabaseMissing('asignaturas', ['asignatura_id' => $subject->id]);
     }
 
     public function test_coordinator_cannot_access_another_careers_curricular_structure_or_subjects(): void
@@ -536,9 +536,9 @@ class AcademicStructureTest extends TestCase
             ->deleteJson(route('api.v1.admin.academic.destroy', ['periodo', $period->id]))
             ->assertOk();
 
-        $this->assertDatabaseMissing('periodos_academicos', ['id' => $period->id]);
-        $this->assertDatabaseMissing('asignaturas_ofertadas', ['id' => $scheduled->id]);
-        $this->assertDatabaseMissing('paralelos', ['id' => $parallel->id]);
+        $this->assertDatabaseMissing('periodos_academicos', ['periodo_academico_id' => $period->id]);
+        $this->assertDatabaseMissing('asignaturas_ofertadas', ['asignatura_ofertada_id' => $scheduled->id]);
+        $this->assertDatabaseMissing('paralelos', ['paralelo_id' => $parallel->id]);
     }
 
     public function test_preparing_a_period_does_not_reuse_an_inactive_scheduled_subject(): void
@@ -634,8 +634,8 @@ class AcademicStructureTest extends TestCase
             ->deleteJson(route('api.v1.coordination.academic.parallels.destroy', $free))
             ->assertSuccessful();
 
-        $this->assertDatabaseMissing('paralelos', ['id' => $free->id]);
-        $this->assertDatabaseHas('paralelos', ['id' => $withTeacher->id]);
+        $this->assertDatabaseMissing('paralelos', ['paralelo_id' => $free->id]);
+        $this->assertDatabaseHas('paralelos', ['paralelo_id' => $withTeacher->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.paralelo.eliminacion', 'recurso_id' => $free->id]);
     }
 

@@ -19,6 +19,7 @@ class AcademicPeriod extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'periodo_academico_id',
         'codigo' => 'codigo_periodo_academico',
         'fecha_inicio' => 'fecha_inicio_periodo',
         'fecha_fin' => 'fecha_fin_periodo',
@@ -28,6 +29,8 @@ class AcademicPeriod extends Model
     public $timestamps = false;
 
     protected $table = 'periodos_academicos';
+
+    protected $primaryKey = 'periodo_academico_id';
 
     /** @var list<string> */
     protected $fillable = [

@@ -26,12 +26,15 @@ class ScheduledSubject extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'asignatura_ofertada_id',
         'activo' => 'asignatura_ofertada_activa',
     ];
 
     public $timestamps = false;
 
     protected $table = 'asignaturas_ofertadas';
+
+    protected $primaryKey = 'asignatura_ofertada_id';
 
     /** @var list<string> */
     protected $fillable = ['periodo_academico_id', 'asignatura_id', 'activo'];

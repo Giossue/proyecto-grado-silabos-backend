@@ -51,8 +51,8 @@ class SyllabusProcessTest extends TestCase
             $this->assertFalse(Schema::hasColumn('convocatorias_universidad', $column));
         }
 
-        $this->assertTrue(Schema::hasColumns('convocatorias_carreras', ['id', 'carrera_id', 'convocatoria_universidad_id', 'estado_convocatoria_carrera']));
-        $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['id', 'periodo_academico_id', 'fecha_inicio', 'fecha_entrega', 'estado_convocatoria_universidad']));
+        $this->assertTrue(Schema::hasColumns('convocatorias_carreras', ['convocatoria_carrera_id', 'carrera_id', 'convocatoria_universidad_id', 'estado_convocatoria_carrera']));
+        $this->assertTrue(Schema::hasColumns('convocatorias_universidad', ['convocatoria_universidad_id', 'periodo_academico_id', 'fecha_inicio', 'fecha_entrega', 'estado_convocatoria_universidad']));
         foreach (['silabos', 'convocatorias_universidad', 'exportaciones_silabo', 'mensajes_ia'] as $table) {
             $this->assertFalse(Schema::hasColumn($table, 'plantilla_id'));
         }
@@ -133,10 +133,10 @@ class SyllabusProcessTest extends TestCase
             ->assertOk()
             ->assertJsonPath('message', 'Convocatoria institucional eliminada.');
 
-        $this->assertDatabaseMissing('convocatorias_universidad', ['id' => $process->id]);
-        $this->assertDatabaseMissing('convocatorias_carreras', ['id' => $convocation->id]);
+        $this->assertDatabaseMissing('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);
+        $this->assertDatabaseMissing('convocatorias_carreras', ['convocatoria_carrera_id' => $convocation->id]);
         foreach ($syllabusIds as $syllabusId) {
-            $this->assertDatabaseMissing('silabos', ['id' => $syllabusId]);
+            $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabusId]);
         }
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion' => 'proceso_silabos.eliminado',
@@ -153,15 +153,15 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsTeacher()
             ->postJson(route('api.v1.teacher.syllabi.start', $syllabus))
             ->assertSuccessful();
-        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id, 'estado_silabo' => 'borrador']);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'borrador']);
 
         // I-172: la convocatoria se elimina con todo su historial, sin importar la actividad docente.
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.processes.destroy', $process))
             ->assertOk();
 
-        $this->assertDatabaseMissing('convocatorias_universidad', ['id' => $process->id]);
-        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseMissing('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion' => 'proceso_silabos.eliminado',
             'recurso_id' => $process->id,
@@ -187,7 +187,7 @@ class SyllabusProcessTest extends TestCase
             ->deleteJson(route('api.v1.admin.processes.destroy', $process))
             ->assertForbidden();
 
-        $this->assertDatabaseHas('convocatorias_universidad', ['id' => $process->id]);
+        $this->assertDatabaseHas('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);
     }
 
     public function test_administration_must_choose_process_dates_explicitly(): void
@@ -504,7 +504,7 @@ class SyllabusProcessTest extends TestCase
             ->postJson(route('api.v1.admin.template.sections.store', $template), [...$sectionPayload, 'confirm_purge' => 1])
             ->assertSuccessful()
             ->assertSuccessful();
-        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertDatabaseCount('silabos', 1);
         $this->assertDatabaseHas('silabos', ['estado_silabo' => 'sin_iniciar']);
         $this->assertSame(13, $template->fresh()->sections()->count());
@@ -533,7 +533,7 @@ class SyllabusProcessTest extends TestCase
                 'cycle_count' => 9,
             ])
             ->assertSuccessful();
-        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertSame(9, data_get($syllabus->fresh()->contexto_academico, 'curriculum.cycle_count'));
         $this->assertSame(9, $career->fresh()->cantidad_ciclos_malla);
 
@@ -549,7 +549,7 @@ class SyllabusProcessTest extends TestCase
                 'type' => 'correquisito',
             ])
             ->assertSuccessful();
-        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertContains($other->codigo_asignatura, data_get($syllabus->fresh()->contexto_academico, 'subject.corequisites'));
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.curriculum.requirements.store', $career->id), [
@@ -588,7 +588,7 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.update', ['asignatura', $subject->id]), $payload)
             ->assertSuccessful();
-        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertSame('Materia renombrada', data_get($syllabus->fresh()->contexto_academico, 'subject.name'));
 
         $this->actingAsCoordinator()
@@ -598,7 +598,7 @@ class SyllabusProcessTest extends TestCase
                 'position' => 7,
             ])
             ->assertSuccessful();
-        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertSame(
             $subject->fresh()->orden_en_ciclo,
             data_get($syllabus->fresh()->contexto_academico, 'subject.position'),
@@ -625,7 +625,7 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.curriculum.configuration.update', $career->id), ['cycle_count' => 9])
             ->assertSuccessful();
-        $this->assertDatabaseHas('silabos', ['id' => $approved->id, 'estado_silabo' => 'aprobado']);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $approved->id, 'estado_silabo' => 'aprobado']);
         $this->assertDatabaseCount('silabos', 1);
     }
 

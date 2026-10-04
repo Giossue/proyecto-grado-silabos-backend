@@ -24,6 +24,7 @@ class InternalNotification extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'notificacion_id',
         'tipo' => 'tipo_notificacion',
         'titulo' => 'titulo_notificacion',
         'mensaje' => 'mensaje_notificacion',
@@ -35,6 +36,8 @@ class InternalNotification extends Model
     public const UPDATED_AT = null;
 
     protected $table = 'notificaciones';
+
+    protected $primaryKey = 'notificacion_id';
 
     /** @var list<string> */
     protected $fillable = [

@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Infrastructure\Persistence\Models;
 
 use App\Models\User;
+use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -20,11 +21,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class CoordinationReview extends Model
 {
-    use HasUuids;
+    use HasUuids, MapsLegacyColumnNames;
+
+    protected const LEGACY_COLUMN_ALIASES = ['id' => 'revision_coordinacion_id'];
 
     public $timestamps = false;
 
     protected $table = 'revisiones_coordinacion';
+
+    protected $primaryKey = 'revision_coordinacion_id';
 
     /** @var list<string> */
     protected $fillable = ['revision_silabo_id', 'revisado_por', 'revisado_en'];

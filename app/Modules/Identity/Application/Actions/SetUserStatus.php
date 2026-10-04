@@ -99,14 +99,14 @@ class SetUserStatus
         }
 
         $inProgress = DB::table('docentes_vigentes_silabo')
-            ->join('silabos', 'silabos.id', '=', 'docentes_vigentes_silabo.silabo_id')
-            ->join('convocatorias_carreras', 'convocatorias_carreras.id', '=', 'silabos.convocatoria_carrera_id')
-            ->join('carreras', 'carreras.id', '=', 'convocatorias_carreras.carrera_id')
+            ->join('silabos', 'silabos.silabo_id', '=', 'docentes_vigentes_silabo.silabo_id')
+            ->join('convocatorias_carreras', 'convocatorias_carreras.convocatoria_carrera_id', '=', 'silabos.convocatoria_carrera_id')
+            ->join('carreras', 'carreras.carrera_id', '=', 'convocatorias_carreras.carrera_id')
             ->where('docentes_vigentes_silabo.usuario_id', $target->id)
             ->whereIn('silabos.estado_silabo', ['borrador', 'en_revision', 'correccion_solicitada'])
             ->where('convocatorias_carreras.estado_convocatoria_carrera', 'abierta')
             ->groupBy('carreras.nombre_carrera')
-            ->selectRaw('carreras.nombre_carrera AS carrera, COUNT(DISTINCT silabos.id) AS total')
+            ->selectRaw('carreras.nombre_carrera AS carrera, COUNT(DISTINCT silabos.silabo_id) AS total')
             ->get();
         if ($inProgress->isNotEmpty()) {
             $detail = $inProgress->map(fn (object $row): string => "{$row->total} en {$row->carrera}")->implode(', ');

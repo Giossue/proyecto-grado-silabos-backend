@@ -32,6 +32,7 @@ class Subject extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'asignatura_id',
         'nombre' => 'nombre_asignatura',
         'ciclo' => 'ciclo_asignatura',
         'creditos' => 'creditos_asignatura',
@@ -48,6 +49,8 @@ class Subject extends Model
     public $timestamps = false;
 
     protected $table = 'asignaturas';
+
+    protected $primaryKey = 'asignatura_id';
 
     /** @var list<string> */
     protected $fillable = [

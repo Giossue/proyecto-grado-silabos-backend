@@ -35,7 +35,7 @@ class UpdateCareerTeacherRequest extends FormRequest
                 'string',
                 'email',
                 'max:255',
-                Rule::unique('usuarios', 'correo_electronico')->ignore($target instanceof User ? $target->id : null),
+                Rule::unique('usuarios', 'correo_electronico')->ignore($target instanceof User ? $target->id : null, 'usuario_id'),
             ],
             'password' => ['prohibited'],
             'role_code' => ['prohibited'],

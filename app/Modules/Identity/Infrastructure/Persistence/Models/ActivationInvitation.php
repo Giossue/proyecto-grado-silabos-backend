@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Infrastructure\Persistence\Models;
 
 use App\Models\User;
+use App\Support\Database\MapsLegacyColumnNames;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -21,13 +22,17 @@ use Illuminate\Support\Carbon;
  */
 class ActivationInvitation extends Model
 {
-    use HasUuids;
+    use HasUuids, MapsLegacyColumnNames;
+
+    protected const LEGACY_COLUMN_ALIASES = ['id' => 'invitacion_activacion_id'];
 
     public const CREATED_AT = 'creada_en';
 
     public const UPDATED_AT = null;
 
     protected $table = 'invitaciones_activacion';
+
+    protected $primaryKey = 'invitacion_activacion_id';
 
     protected $fillable = [
         'usuario_id',

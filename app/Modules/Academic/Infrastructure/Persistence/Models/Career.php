@@ -26,6 +26,7 @@ class Career extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'carrera_id',
         'nombre' => 'nombre_carrera',
         'activo' => 'carrera_activa',
         'modalidad' => 'modalidad_carrera',
@@ -35,6 +36,8 @@ class Career extends Model
     public $timestamps = false;
 
     protected $table = 'carreras';
+
+    protected $primaryKey = 'carrera_id';
 
     /** @var list<string> */
     protected $fillable = [

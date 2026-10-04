@@ -256,7 +256,7 @@ class CareerTeacherTest extends TestCase
             ->assertSuccessful()
             ->assertJsonPath('message', 'Docente retirado de su carrera; su paralelo quedó sin docente.');
 
-        $this->assertDatabaseMissing('asignaciones_paralelo', ['id' => $assignment->id]);
+        $this->assertDatabaseMissing('asignaciones_paralelo', ['asignacion_paralelo_id' => $assignment->id]);
         $this->assertFalse($teacher->roleAssignments()->where('rol', RoleCode::Teacher->value)->firstOrFail()->activo);
         $this->assertTrue($teacher->fresh()->activo);
         $teachers = collect($this->getJson(route('api.v1.coordination.academic.teacher-assignments.index'))->assertOk()->json('careerTeachers'));

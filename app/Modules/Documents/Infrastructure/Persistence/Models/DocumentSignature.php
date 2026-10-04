@@ -31,6 +31,7 @@ class DocumentSignature extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'firma_documento_id',
         'artefacto_exportacion_id' => 'exportacion_silabo_id',
         'rol_firma' => 'firmado_como',
         'objeto_almacenado_id' => 'archivo_firmado_id',
@@ -54,6 +55,8 @@ class DocumentSignature extends Model
     public $timestamps = false;
 
     protected $table = 'firmas_documento';
+
+    protected $primaryKey = 'firma_documento_id';
 
     /** @var list<string> */
     protected $fillable = [

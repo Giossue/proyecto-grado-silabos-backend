@@ -29,6 +29,7 @@ class RoleAssignment extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'asignacion_rol_id',
         'activo' => 'asignacion_rol_activa',
     ];
 
@@ -37,6 +38,8 @@ class RoleAssignment extends Model
     public const UPDATED_AT = null;
 
     protected $table = 'asignaciones_rol';
+
+    protected $primaryKey = 'asignacion_rol_id';
 
     /** @var list<string> */
     protected $fillable = [

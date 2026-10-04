@@ -2,6 +2,7 @@
 
 namespace App\Modules\AiAssistance\Infrastructure\Persistence\Models;
 
+use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -16,13 +17,17 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AiHistoryEntry extends Model
 {
-    use HasUuids;
+    use HasUuids, MapsLegacyColumnNames;
+
+    protected const LEGACY_COLUMN_ALIASES = ['id' => 'mensaje_ia_id'];
 
     public const OPEN_STATES = ['pendiente', 'en_ejecucion'];
 
     public $timestamps = false;
 
     protected $table = 'mensajes_ia';
+
+    protected $primaryKey = 'mensaje_ia_id';
 
     /** @var list<string> */
     protected $fillable = ['id', 'silabo_id', 'usuario_id', 'contenido_mensaje'];

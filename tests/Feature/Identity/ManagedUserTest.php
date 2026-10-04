@@ -269,7 +269,7 @@ class ManagedUserTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
 
-        $this->assertDatabaseHas('asignaciones_rol', ['id' => $previousAssignmentId, 'asignacion_rol_activa' => true]);
+        $this->assertDatabaseHas('asignaciones_rol', ['asignacion_rol_id' => $previousAssignmentId, 'asignacion_rol_activa' => true]);
         $this->assertDatabaseHas('asignaciones_rol', [
             'usuario_id' => $teacher->id,
             'rol' => RoleCode::Coordinator->value,
@@ -357,7 +357,7 @@ class ManagedUserTest extends TestCase
             ->assertSuccessful();
 
         $this->assertDatabaseHas('asignaciones_rol', [
-            'id' => $originalAssignment->id,
+            'asignacion_rol_id' => $originalAssignment->id,
             'asignacion_rol_activa' => true,
         ]);
         $this->assertDatabaseHas('asignaciones_rol', [
@@ -391,9 +391,9 @@ class ManagedUserTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
 
-        $this->assertDatabaseHas('usuarios', ['id' => $teacher->id, 'usuario_activo' => false]);
+        $this->assertDatabaseHas('usuarios', ['usuario_id' => $teacher->id, 'usuario_activo' => false]);
         $this->assertDatabaseMissing('sesiones', ['id' => 'teacher-session-to-revoke']);
-        $this->assertDatabaseHas('asignaciones_rol', ['id' => $roleAssignmentId]);
+        $this->assertDatabaseHas('asignaciones_rol', ['asignacion_rol_id' => $roleAssignmentId]);
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion' => 'usuario.desactivado',
             'recurso_id' => $teacher->id,
@@ -487,7 +487,7 @@ class ManagedUserTest extends TestCase
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.users.destroy', $pending))
             ->assertSuccessful();
-        $this->assertDatabaseMissing('usuarios', ['id' => $pending->id]);
+        $this->assertDatabaseMissing('usuarios', ['usuario_id' => $pending->id]);
         $this->assertDatabaseMissing('asignaciones_rol', ['usuario_id' => $pending->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.eliminado', 'recurso_id' => $pending->id]);
 
@@ -495,7 +495,7 @@ class ManagedUserTest extends TestCase
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.users.destroy', $teacher))
             ->assertForbidden();
-        $this->assertDatabaseHas('usuarios', ['id' => $teacher->id]);
+        $this->assertDatabaseHas('usuarios', ['usuario_id' => $teacher->id]);
 
         $assigned = $this->pendingTeacher('asignado@silabos.test');
         $parallel = Parallel::query()->create([
@@ -511,7 +511,7 @@ class ManagedUserTest extends TestCase
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.users.destroy', $assigned))
             ->assertJsonValidationErrors('user');
-        $this->assertDatabaseHas('usuarios', ['id' => $assigned->id]);
+        $this->assertDatabaseHas('usuarios', ['usuario_id' => $assigned->id]);
     }
 
     private function pendingTeacher(string $email = 'pendiente@silabos.test'): User

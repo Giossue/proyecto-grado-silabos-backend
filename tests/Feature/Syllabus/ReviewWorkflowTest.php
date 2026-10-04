@@ -136,9 +136,9 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'pausar']))->assertSuccessful();
         $this->patch($url, $payload)->assertSuccessful();
         $this->assertNotSame($block->configuracion['document'], $block->fresh()->configuracion['document']);
-        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
-        $this->assertDatabaseHas('revisiones_silabo', ['id' => $revisionId]);
-        $this->assertDatabaseHas('aprobaciones', ['id' => $approvalId]);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
+        $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revisionId]);
+        $this->assertDatabaseHas('aprobaciones', ['aprobacion_id' => $approvalId]);
         $this->assertDatabaseCount('silabos', 1);
     }
 
@@ -195,7 +195,7 @@ class ReviewWorkflowTest extends TestCase
 
         try {
             DB::transaction(fn () => DB::table('revisiones_silabo')
-                ->where('id', $revision->id)
+                ->where('revision_silabo_id', $revision->id)
                 ->update(['hash_contenido' => str_repeat('0', 64)]));
             $this->fail('PostgreSQL permitió modificar una revisión histórica.');
         } catch (QueryException) {
@@ -404,11 +404,11 @@ class ReviewWorkflowTest extends TestCase
         // Ni el decano ni el docente eliminan.
         $this->actingAsDean()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
         $this->actingAsTeacher()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
-        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
 
         $this->actingAsCoordinator()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertSuccessful();
 
-        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertDatabaseCount('revisiones_silabo', 0);
         $this->assertDatabaseCount('aprobaciones', 0);
         $fresh = Syllabus::query()->where('paralelo_id', $syllabus->paralelo_id)->firstOrFail();
@@ -434,13 +434,13 @@ class ReviewWorkflowTest extends TestCase
             $this->assertTrue($approvedAt->equalTo($approval->fresh()->aprobado_en));
         }
         try {
-            DB::transaction(fn () => DB::table('aprobaciones')->where('id', $approval->id)->update(['aprobado_en' => now()->addDay()]));
+            DB::transaction(fn () => DB::table('aprobaciones')->where('aprobacion_id', $approval->id)->update(['aprobado_en' => now()->addDay()]));
             $this->fail('PostgreSQL permitió modificar una aprobación.');
         } catch (QueryException) {
             $this->assertDatabaseCount('aprobaciones', 1);
         }
         try {
-            DB::transaction(fn () => DB::table('aprobaciones')->where('id', $approval->id)->delete());
+            DB::transaction(fn () => DB::table('aprobaciones')->where('aprobacion_id', $approval->id)->delete());
             $this->fail('PostgreSQL permitió borrar una aprobación.');
         } catch (QueryException) {
             $this->assertDatabaseCount('aprobaciones', 1);
@@ -449,7 +449,7 @@ class ReviewWorkflowTest extends TestCase
         // La solicitud de corrección de la revisión se escribe una vez y completa.
         $this->assertFalse($revision->fresh()->hasCorrectionRequest());
         try {
-            DB::transaction(fn () => DB::table('revisiones_silabo')->where('id', $revision->id)->update(['correccion_etapa' => 'coordinacion']));
+            DB::transaction(fn () => DB::table('revisiones_silabo')->where('revision_silabo_id', $revision->id)->update(['correccion_etapa' => 'coordinacion']));
             $this->fail('PostgreSQL permitió una solicitud de corrección incompleta.');
         } catch (QueryException) {
             $this->assertNull($revision->fresh()->correccion_etapa);
@@ -468,7 +468,7 @@ class ReviewWorkflowTest extends TestCase
             $this->assertSame('Falta bibliografía.', $revision->fresh()->correccion_justificacion);
         }
         try {
-            DB::transaction(fn () => DB::table('revisiones_silabo')->where('id', $revision->id)->update(['hash_contenido' => str_repeat('b', 64)]));
+            DB::transaction(fn () => DB::table('revisiones_silabo')->where('revision_silabo_id', $revision->id)->update(['hash_contenido' => str_repeat('b', 64)]));
             $this->fail('PostgreSQL permitió modificar el contenido de una revisión.');
         } catch (QueryException) {
             $this->assertSame($revision->huella_sha256, $revision->fresh()->huella_sha256);
@@ -507,7 +507,7 @@ class ReviewWorkflowTest extends TestCase
             ->assertJsonValidationErrors('revisions');
 
         try {
-            DB::transaction(fn () => DB::table('silabos')->where('id', $syllabus->id)->update(['estado' => 'publicado']));
+            DB::transaction(fn () => DB::table('silabos')->where('silabo_id', $syllabus->id)->update(['estado' => 'publicado']));
             $this->fail('PostgreSQL permitió un estado de sílabo inválido.');
         } catch (QueryException) {
             $this->assertSame('en_revision', $syllabus->fresh()->estado);
@@ -606,7 +606,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame('sin_iniciar', $fresh->estado);
         $this->assertSame(0, $fresh->version_bloqueo);
         $this->assertSame(0, $fresh->values()->whereHas('field', fn ($field) => $field->where('heredado', false))->count());
-        $this->assertDatabaseHas('revisiones_silabo', ['id' => $revision->id]);
+        $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
         $this->assertWorkflowNotification($syllabus->id, 'silabo.reiniciado');
 

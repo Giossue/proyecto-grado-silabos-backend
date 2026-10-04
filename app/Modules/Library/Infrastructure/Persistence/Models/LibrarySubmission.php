@@ -4,6 +4,7 @@ namespace App\Modules\Library\Infrastructure\Persistence\Models;
 
 use App\Models\User;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -23,11 +24,15 @@ use LogicException;
  */
 class LibrarySubmission extends Model
 {
-    use HasUuids;
+    use HasUuids, MapsLegacyColumnNames;
+
+    protected const LEGACY_COLUMN_ALIASES = ['id' => 'envio_biblioteca_id'];
 
     public $timestamps = false;
 
     protected $table = 'envios_biblioteca';
+
+    protected $primaryKey = 'envio_biblioteca_id';
 
     /** @var list<string> */
     protected $fillable = ['revision_silabo_id', 'enviado_por', 'enviado_en', 'verificado_por', 'verificado_en'];

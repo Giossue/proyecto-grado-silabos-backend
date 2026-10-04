@@ -16,6 +16,7 @@ class Faculty extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'facultad_id',
         'nombre' => 'nombre_facultad',
         'activo' => 'facultad_activa',
         'campus' => 'campus_facultad',
@@ -25,6 +26,8 @@ class Faculty extends Model
     public $timestamps = false;
 
     protected $table = 'facultades';
+
+    protected $primaryKey = 'facultad_id';
 
     /** @var list<string> */
     protected $fillable = ['nombre', 'campus', 'logo_objeto_id', 'activo'];

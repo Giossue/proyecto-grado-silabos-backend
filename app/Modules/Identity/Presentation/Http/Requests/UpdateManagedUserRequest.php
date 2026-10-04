@@ -36,6 +36,7 @@ class UpdateManagedUserRequest extends FormRequest
                 'max:255',
                 Rule::unique('usuarios', 'correo_electronico')->ignore(
                     $target instanceof User ? $target->id : null,
+                    'usuario_id',
                 ),
             ],
             'active' => ['sometimes', 'required', 'boolean'],
@@ -45,14 +46,14 @@ class UpdateManagedUserRequest extends FormRequest
                 'nullable',
                 'required_unless:role_code,'.RoleCode::Administrator->value.','.RoleCode::Librarian->value.','.RoleCode::Dean->value,
                 'uuid',
-                Rule::exists('carreras', 'id')->where('carrera_activa', true),
+                Rule::exists('carreras', 'carrera_id')->where('carrera_activa', true),
             ],
             'faculty_id' => [
                 'exclude_without:role_code',
                 'nullable',
                 'required_if:role_code,'.RoleCode::Dean->value,
                 'uuid',
-                Rule::exists('facultades', 'id')->where('facultad_activa', true),
+                Rule::exists('facultades', 'facultad_id')->where('facultad_activa', true),
             ],
         ];
     }

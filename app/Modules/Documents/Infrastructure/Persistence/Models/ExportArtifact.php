@@ -33,6 +33,7 @@ class ExportArtifact extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'exportacion_silabo_id',
         'estado' => 'estado_exportacion',
         'objeto_docx_id' => 'archivo_word_id',
         'objeto_pdf_id' => 'archivo_pdf_id',
@@ -43,6 +44,8 @@ class ExportArtifact extends Model
     public $timestamps = false;
 
     protected $table = 'exportaciones_silabo';
+
+    protected $primaryKey = 'exportacion_silabo_id';
 
     /** @var list<string> */
     protected $fillable = [
@@ -67,7 +70,7 @@ class ExportArtifact extends Model
     /** @return HasOneThrough<Syllabus, SyllabusRevision, $this> */
     public function syllabus(): HasOneThrough
     {
-        return $this->hasOneThrough(Syllabus::class, SyllabusRevision::class, 'id', 'id', 'revision_silabo_id', 'silabo_id');
+        return $this->hasOneThrough(Syllabus::class, SyllabusRevision::class, 'revision_silabo_id', 'silabo_id', 'revision_silabo_id', 'silabo_id');
     }
 
     /** @return BelongsTo<JobExecution, $this> */

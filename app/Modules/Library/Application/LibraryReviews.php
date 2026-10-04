@@ -30,7 +30,7 @@ final class LibraryReviews
         CASE
             WHEN EXISTS (
                 SELECT 1 FROM firmas_documento firma
-                JOIN exportaciones_silabo exportacion ON exportacion.id = firma.exportacion_silabo_id
+                JOIN exportaciones_silabo exportacion ON exportacion.exportacion_silabo_id = firma.exportacion_silabo_id
                 WHERE exportacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
                   AND firma.firmado_como = 'biblioteca'
             ) THEN 'firmado'
@@ -51,9 +51,9 @@ final class LibraryReviews
     public function query(?string $state = null, ?string $search = null): Builder
     {
         return LibrarySubmission::query()
-            ->join('revisiones_silabo as revision', 'revision.id', '=', 'envios_biblioteca.revision_silabo_id')
-            ->join('silabos as silabo', 'silabo.id', '=', 'revision.silabo_id')
-            ->select('envios_biblioteca.*', 'revision.id as revision_id', 'revision.silabo_id as silabo_id', 'revision.numero_revision as numero_revision')
+            ->join('revisiones_silabo as revision', 'revision.revision_silabo_id', '=', 'envios_biblioteca.revision_silabo_id')
+            ->join('silabos as silabo', 'silabo.silabo_id', '=', 'revision.silabo_id')
+            ->select('envios_biblioteca.*', 'revision.revision_silabo_id as revision_id', 'revision.silabo_id as silabo_id', 'revision.numero_revision as numero_revision')
             ->selectRaw(self::STATE_SQL.' AS estado_envio')
             ->when($state !== null, fn (Builder $query) => $query->whereRaw('('.self::STATE_SQL.') = ?', [$state]))
             ->when($search !== null && $search !== '', fn (Builder $query) => $query->where(

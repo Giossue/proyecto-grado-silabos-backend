@@ -7,6 +7,11 @@ Desde I-168 las restricciones siguen la convención `{tabla}_{columna}_not_null`
 `{tabla}_pkey` y `{tabla}_..._foreign`, y los índices llevan el prefijo de su tabla. La
 base ya no usa la extensión `vector`.
 
+Desde I-179 cada tabla del dominio tiene una sola llave primaria con el nombre de la entidad
+(`paralelos.paralelo_id`, `silabos.silabo_id`), igual que las llaves foráneas que la
+referencian. Solo las tablas del framework (`migraciones`, `sesiones`, `trabajos_fallidos`)
+conservan `id`, porque Laravel fija sus columnas.
+
 # 1. Identidad y acceso
 
 ## usuarios
@@ -14,7 +19,7 @@ base ya no usa la extensión `vector`.
 **Contexto:** cuentas de administrador, coordinador y docente.
 
 ~~~text
-id UUID (PK)
+usuario_id UUID (PK)
 nombre_usuario VARCHAR NOT NULL
 correo_electronico VARCHAR NOT NULL UNIQUE
 correo_verificado_en TIMESTAMPTZ NULL
@@ -31,13 +36,13 @@ dos_factores_confirmado_en TIMESTAMPTZ NULL
 **Contexto:** enlaces de activación emitidos para cuentas aún no verificadas.
 
 ~~~text
-id UUID (PK)
-usuario_id UUID (FK → usuarios.id) NOT NULL
+invitacion_activacion_id UUID (PK)
+usuario_id UUID (FK → usuarios.usuario_id) NOT NULL
 huella_activacion CHAR(64) NOT NULL UNIQUE
 expira_en TIMESTAMPTZ NOT NULL
 usada_en TIMESTAMPTZ NULL
 invalidada_en TIMESTAMPTZ NULL
-emitida_por_usuario_id UUID (FK → usuarios.id) NULL
+emitida_por_usuario_id UUID (FK → usuarios.usuario_id) NULL
 creada_en TIMESTAMPTZ NOT NULL
 ~~~
 
@@ -46,10 +51,10 @@ creada_en TIMESTAMPTZ NOT NULL
 **Contexto:** rol fijo otorgado a un usuario, global o por carrera.
 
 ~~~text
-id UUID (PK)
-usuario_id UUID (FK → usuarios.id) NOT NULL
+asignacion_rol_id UUID (PK)
+usuario_id UUID (FK → usuarios.usuario_id) NOT NULL
 rol VARCHAR NOT NULL
-carrera_id UUID (FK → carreras.id) NULL
+carrera_id UUID (FK → carreras.carrera_id) NULL
 asignacion_rol_activa BOOLEAN NOT NULL
 asignado_en TIMESTAMPTZ NOT NULL
 
@@ -64,9 +69,9 @@ UNIQUE parcial: usuario_id, rol y carrera_id cuando asignacion_rol_activa
 de la misma carrera.
 
 ~~~text
-id UUID (PK)
-asignacion_rol_id UUID (FK → asignaciones_rol.id) NOT NULL
-paralelo_id UUID (FK → paralelos.id) NOT NULL
+asignacion_paralelo_id UUID (PK)
+asignacion_rol_id UUID (FK → asignaciones_rol.asignacion_rol_id) NOT NULL
+paralelo_id UUID (FK → paralelos.paralelo_id) NOT NULL
 asignacion_paralelo_activa BOOLEAN NOT NULL
 asignado_en TIMESTAMPTZ NOT NULL
 
@@ -79,7 +84,7 @@ UNIQUE parcial (paralelo_id) WHERE asignacion_paralelo_activa
 
 ~~~text
 id VARCHAR (PK)
-user_id UUID (FK → usuarios.id) NULL
+user_id UUID (FK → usuarios.usuario_id) NULL
 ip_address VARCHAR NULL
 user_agent TEXT NULL
 payload TEXT NOT NULL
@@ -114,7 +119,7 @@ usuarios 1:N sesiones
 **Contexto:** facultades institucionales.
 
 ~~~text
-id UUID (PK)
+facultad_id UUID (PK)
 nombre_facultad VARCHAR NOT NULL
 facultad_activa BOOLEAN NOT NULL
 campus_facultad VARCHAR NOT NULL CHECK (campus_facultad IN (
@@ -132,8 +137,8 @@ logo_objeto_id UUID (FK → objetos_almacenados.id) NULL UNIQUE
 **Contexto:** carreras académicas.
 
 ~~~text
-id UUID (PK)
-facultad_id UUID (FK → facultades.id) NOT NULL
+carrera_id UUID (PK)
+facultad_id UUID (FK → facultades.facultad_id) NOT NULL
 codigo_carrera VARCHAR NOT NULL UNIQUE
 nombre_carrera VARCHAR NOT NULL
 carrera_activa BOOLEAN NOT NULL
@@ -148,7 +153,7 @@ CHECK modalidad_carrera IN ('presencial', 'semipresencial', 'en_linea', 'a_dista
 **Contexto:** períodos lectivos.
 
 ~~~text
-id UUID (PK)
+periodo_academico_id UUID (PK)
 codigo_periodo_academico VARCHAR NOT NULL UNIQUE
 fecha_inicio_periodo DATE NOT NULL
 fecha_fin_periodo DATE NOT NULL
@@ -160,8 +165,8 @@ cantidad_semanas_lectivas SMALLINT NOT NULL
 **Contexto:** materias de la estructura curricular única de una carrera.
 
 ~~~text
-id UUID (PK)
-carrera_id UUID (FK → carreras.id) NOT NULL
+asignatura_id UUID (PK)
+carrera_id UUID (FK → carreras.carrera_id) NOT NULL
 codigo_asignatura VARCHAR NOT NULL
 nombre_asignatura VARCHAR NOT NULL
 ciclo_asignatura SMALLINT NULL
@@ -184,9 +189,9 @@ CHECK modalidad_asignatura nula o con los mismos valores que modalidad_carrera
 **Contexto:** relación de requisito entre dos asignaturas.
 
 ~~~text
-id UUID (PK)
-asignatura_id UUID (FK → asignaturas.id) NOT NULL
-requisito_id UUID (FK → asignaturas.id) NOT NULL
+requisito_asignatura_id UUID (PK)
+asignatura_id UUID (FK → asignaturas.asignatura_id) NOT NULL
+requisito_id UUID (FK → asignaturas.asignatura_id) NOT NULL
 tipo_requisito_asignatura VARCHAR NOT NULL
 
 UNIQUE (asignatura_id, requisito_id)
@@ -201,8 +206,8 @@ la materia, su carrera y su facultad (I-164); no se guardan aquí.
 
 ~~~text
 id UUID (PK)
-periodo_academico_id UUID (FK → periodos_academicos.id) NOT NULL
-asignatura_id UUID (FK → asignaturas.id) NOT NULL
+periodo_academico_id UUID (FK → periodos_academicos.periodo_academico_id) NOT NULL
+asignatura_id UUID (FK → asignaturas.asignatura_id) NOT NULL
 programacion_asignatura_activa BOOLEAN NOT NULL
 
 UNIQUE (periodo_academico_id, asignatura_id)
@@ -213,7 +218,7 @@ UNIQUE (periodo_academico_id, asignatura_id)
 **Contexto:** paralelos de una programación.
 
 ~~~text
-id UUID (PK)
+paralelo_id UUID (PK)
 programacion_asignatura_id UUID (FK → programaciones_asignatura.id) NOT NULL
 codigo_paralelo VARCHAR NOT NULL
 jornada_paralelo VARCHAR NULL
@@ -244,7 +249,7 @@ apariencia (`mapeo_documento_plantilla`). I-168 retiró el contador
 `revision_configuracion` y sus triggers `tocar_revision_*`.
 
 ~~~text
-id UUID (PK)
+plantilla_id UUID (PK)
 mapeo_documento_plantilla JSONB NULL
 
 UNIQUE constante: existe solo una plantilla
@@ -256,8 +261,8 @@ UNIQUE constante: existe solo una plantilla
 I-166 da nombres explícitos a sus columnas.
 
 ~~~text
-id UUID (PK)
-plantilla_id UUID (FK → plantilla_silabo.id, ON DELETE CASCADE) NOT NULL
+seccion_plantilla_id UUID (PK)
+plantilla_id UUID (FK → plantilla_silabo.plantilla_id, ON DELETE CASCADE) NOT NULL
 clave_seccion_plantilla VARCHAR(120) NOT NULL
 titulo_seccion_plantilla VARCHAR(180) NOT NULL
 descripcion_seccion_plantilla TEXT NULL
@@ -279,9 +284,9 @@ opciones) viven una sola vez en `definiciones_campo`. `TemplateFieldAttributes` 
 completa al leer y los recorta al guardar.
 
 ~~~text
-id UUID (PK)
-seccion_plantilla_id UUID (FK → secciones_plantilla.id, ON DELETE CASCADE) NOT NULL
-plantilla_id UUID (FK → plantilla_silabo.id, ON DELETE CASCADE) NOT NULL
+campo_plantilla_id UUID (PK)
+seccion_plantilla_id UUID (FK → secciones_plantilla.seccion_plantilla_id, ON DELETE CASCADE) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.plantilla_id, ON DELETE CASCADE) NOT NULL
 clave_campo_plantilla VARCHAR(120) NOT NULL
 titulo_campo_plantilla VARCHAR(180) NOT NULL DEFAULT ''
 posicion_campo_plantilla SMALLINT NOT NULL
@@ -297,8 +302,8 @@ FK compuesta (seccion_plantilla_id, plantilla_id): la sección es de la misma pl
 Es la única copia de sus atributos (I-168).
 
 ~~~text
-id UUID (PK)
-campo_plantilla_id UUID (FK → campos_plantilla.id, ON DELETE CASCADE) NOT NULL
+definicion_campo_id UUID (PK)
+campo_plantilla_id UUID (FK → campos_plantilla.campo_plantilla_id, ON DELETE CASCADE) NOT NULL
 clave_definicion_campo VARCHAR NOT NULL
 etiqueta_definicion_campo VARCHAR NOT NULL
 ayuda_definicion_campo TEXT NULL
@@ -308,7 +313,7 @@ origen_maestro_definicion_campo VARCHAR NULL
 editable_docente_definicion_campo BOOLEAN NOT NULL
 opciones_definicion_campo JSONB NULL
 posicion_definicion_campo SMALLINT NOT NULL
-plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.plantilla_id) NOT NULL
 mostrar_si_definicion_campo JSONB NULL
 
 UNIQUE (plantilla_id, clave_definicion_campo)
@@ -328,7 +333,7 @@ derivado y la versión del documento.
 
 ~~~text
 id UUID (PK)
-carrera_id UUID (FK → carreras.id) NOT NULL
+carrera_id UUID (FK → carreras.carrera_id) NOT NULL
 nombre_fuente_academica VARCHAR NOT NULL
 fuente_academica_activa BOOLEAN NOT NULL
 documento_fuente_academica JSONB NOT NULL
@@ -361,12 +366,12 @@ fuentes_academicas 1:N ejecuciones_trabajo por recurso lógico
 **Contexto:** proceso universitario de elaboración por período.
 
 ~~~text
-id UUID (PK)
+convocatoria_universidad_id UUID (PK)
 inicia_en TIMESTAMPTZ NOT NULL
 entrega_en TIMESTAMPTZ NOT NULL
 estado_convocatoria_universidad VARCHAR NOT NULL
-plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
-periodo_academico_id UUID (FK → periodos_academicos.id) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.plantilla_id) NOT NULL
+periodo_academico_id UUID (FK → periodos_academicos.periodo_academico_id) NOT NULL
 
 UNIQUE (periodo_academico_id)
 UNIQUE parcial: una convocatoria abierta o pausada
@@ -377,10 +382,10 @@ UNIQUE parcial: una convocatoria abierta o pausada
 **Contexto:** participación de una carrera en una convocatoria.
 
 ~~~text
-id UUID (PK)
-carrera_id UUID (FK → carreras.id) NOT NULL
+convocatoria_carrera_id UUID (PK)
+carrera_id UUID (FK → carreras.carrera_id) NOT NULL
 estado_convocatoria_carrera VARCHAR NOT NULL
-convocatoria_universidad_id UUID (FK → convocatorias_universidad.id) NOT NULL
+convocatoria_universidad_id UUID (FK → convocatorias_universidad.convocatoria_universidad_id) NOT NULL
 
 UNIQUE (carrera_id, convocatoria_universidad_id)
 ~~~
@@ -390,15 +395,15 @@ UNIQUE (carrera_id, convocatoria_universidad_id)
 **Contexto:** borrador vivo de un sílabo.
 
 ~~~text
-id UUID (PK)
-convocatoria_carrera_id UUID (FK → convocatorias_carreras.id) NOT NULL
-paralelo_id UUID (FK → paralelos.id) NOT NULL
+silabo_id UUID (PK)
+convocatoria_carrera_id UUID (FK → convocatorias_carreras.convocatoria_carrera_id) NOT NULL
+paralelo_id UUID (FK → paralelos.paralelo_id) NOT NULL
 estado_silabo VARCHAR NOT NULL
 version_bloqueo INTEGER NOT NULL
 iniciado_en TIMESTAMPTZ NULL
 guardado_en TIMESTAMPTZ NULL
 contexto_academico_silabo JSONB NOT NULL
-plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.plantilla_id) NOT NULL
 ~~~
 
 `UNIQUE (convocatoria_carrera_id, paralelo_id)`. La carrera se obtiene de
@@ -426,9 +431,9 @@ paralelo_id UUID
 **Contexto:** valor no repetible de un campo dentro de un sílabo.
 
 ~~~text
-id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-definicion_campo_id UUID (FK → definiciones_campo.id) NOT NULL
+valor_campo_id UUID (PK)
+silabo_id UUID (FK → silabos.silabo_id) NOT NULL
+definicion_campo_id UUID (FK → definiciones_campo.definicion_campo_id) NOT NULL
 valor_campo JSONB NULL
 
 UNIQUE (silabo_id, definicion_campo_id)
@@ -544,19 +549,19 @@ ejecuciones_trabajo 1:0..1 historial_ia (recurso_id = id del mensaje)
 **Contexto:** fotografía inmutable enviada para revisión.
 
 ~~~text
-id UUID (PK)
-silabo_id UUID (FK → silabos.id) NOT NULL
-revision_anterior_id UUID (FK → revisiones_silabo.id) NULL
+revision_silabo_id UUID (PK)
+silabo_id UUID (FK → silabos.silabo_id) NOT NULL
+revision_anterior_id UUID (FK → revisiones_silabo.revision_silabo_id) NULL
 numero_revision SMALLINT NOT NULL
 clave_idempotencia UUID NOT NULL
 version_bloqueo_origen INTEGER NOT NULL
 fotografia_revision_silabo JSONB NOT NULL
 huella_sha256 CHAR(64) NOT NULL
-enviado_por UUID (FK → usuarios.id) NOT NULL
+enviado_por UUID (FK → usuarios.usuario_id) NOT NULL
 enviado_en TIMESTAMPTZ NOT NULL
 correccion_justificacion TEXT NULL
 correccion_etapa VARCHAR(16) NULL CHECK (biblioteca | coordinacion | decanato)
-correccion_solicitada_por UUID (FK → usuarios.id) NULL INDEX
+correccion_solicitada_por UUID (FK → usuarios.usuario_id) NULL INDEX
 correccion_solicitada_en TIMESTAMPTZ NULL
 
 UNIQUE (silabo_id, numero_revision)
@@ -580,13 +585,13 @@ predefinidos y el sistema guarda su texto en ese mismo campo.
 **Contexto:** aprobación de una revisión.
 
 ~~~text
-id UUID (PK)
-revision_silabo_id UUID (FK → revisiones_silabo.id) NOT NULL UNIQUE
+aprobacion_id UUID (PK)
+revision_silabo_id UUID (FK → revisiones_silabo.revision_silabo_id) NOT NULL UNIQUE
 clave_idempotencia UUID NOT NULL
 huella_sha256 CHAR(64) NOT NULL
-aprobado_por UUID (FK → usuarios.id) NOT NULL
+aprobado_por UUID (FK → usuarios.usuario_id) NOT NULL
 aprobado_en TIMESTAMPTZ NOT NULL
-aprobacion_base_id UUID (FK → aprobaciones.id) NULL INDEX
+aprobacion_base_id UUID (FK → aprobaciones.aprobacion_id) NULL INDEX
 ~~~
 
 El sílabo se obtiene de `revisiones_silabo.silabo_id`. La clave de idempotencia sigue
@@ -603,11 +608,11 @@ reabre (I-178): Coordinación lo elimina con todo su historial.
 **Contexto:** envío de una revisión aprobada a biblioteca y su visto bueno (I-165).
 
 ~~~text
-id UUID (PK)
-revision_silabo_id UUID (FK → revisiones_silabo.id) NOT NULL UNIQUE
-enviado_por UUID (FK → usuarios.id) NOT NULL INDEX
+envio_biblioteca_id UUID (PK)
+revision_silabo_id UUID (FK → revisiones_silabo.revision_silabo_id) NOT NULL UNIQUE
+enviado_por UUID (FK → usuarios.usuario_id) NOT NULL INDEX
 enviado_en TIMESTAMPTZ NOT NULL
-verificado_por UUID (FK → usuarios.id) NULL INDEX
+verificado_por UUID (FK → usuarios.usuario_id) NULL INDEX
 verificado_en TIMESTAMPTZ NULL
 
 CHECK (verificado_por y verificado_en ambos nulos o ambos presentes)
@@ -652,8 +657,8 @@ tamano_bytes BIGINT NOT NULL
 huella_sha256 CHAR(64) NOT NULL
 clasificacion VARCHAR NOT NULL
 estado_objeto_almacenado VARCHAR NOT NULL CHECK (= 'activo')
-propietario_usuario_id UUID (FK → usuarios.id) NULL
-carrera_id UUID (FK → carreras.id) NULL
+propietario_usuario_id UUID (FK → usuarios.usuario_id) NULL
+carrera_id UUID (FK → carreras.carrera_id) NULL
 almacenado_en TIMESTAMPTZ NOT NULL
 
 UNIQUE (disco, ruta_interna)
@@ -665,7 +670,7 @@ UNIQUE (disco, ruta_interna)
 
 ~~~text
 id UUID (PK)
-revision_silabo_id UUID (FK → revisiones_silabo.id) NOT NULL
+revision_silabo_id UUID (FK → revisiones_silabo.revision_silabo_id) NOT NULL
 ejecucion_trabajo_id UUID (FK → ejecuciones_trabajo.id) NULL UNIQUE
 objeto_docx_id UUID (FK → objetos_almacenados.id) NULL UNIQUE
 objeto_pdf_id UUID (FK → objetos_almacenados.id) NULL UNIQUE
@@ -673,10 +678,10 @@ version_renderizador VARCHAR NOT NULL
 idioma VARCHAR NOT NULL
 clave_idempotencia UUID NOT NULL
 estado_artefacto_exportacion VARCHAR NOT NULL
-solicitado_por UUID (FK → usuarios.id) NOT NULL
+solicitado_por UUID (FK → usuarios.usuario_id) NOT NULL
 solicitado_en TIMESTAMPTZ NOT NULL
 completado_en TIMESTAMPTZ NULL
-plantilla_id UUID (FK → plantilla_silabo.id) NOT NULL
+plantilla_id UUID (FK → plantilla_silabo.plantilla_id) NOT NULL
 
 UNIQUE (revision_silabo_id, clave_idempotencia)
 INDEX (revision_silabo_id, estado_artefacto_exportacion, solicitado_en)
@@ -691,10 +696,10 @@ El sílabo se obtiene de la revisión exportada (I-131 retiró `silabo_id`). I-1
 biblioteca.
 
 ~~~text
-id UUID (PK)
+firma_documento_id UUID (PK)
 artefacto_exportacion_id UUID (FK → artefactos_exportacion.id) NOT NULL
 rol_firma VARCHAR(16) NOT NULL
-usuario_id UUID (FK → usuarios.id) NOT NULL INDEX
+usuario_id UUID (FK → usuarios.usuario_id) NOT NULL INDEX
 objeto_almacenado_id UUID (FK → objetos_almacenados.id) NOT NULL UNIQUE
 certificado_titular VARCHAR NOT NULL
 certificado_serie VARCHAR NOT NULL
@@ -714,7 +719,7 @@ TRIGGER proteger_firma_documento: solo se insertan filas; no se editan ni borran
 
 ~~~text
 id UUID (PK)
-usuario_id UUID (FK → usuarios.id) NOT NULL
+usuario_id UUID (FK → usuarios.usuario_id) NOT NULL
 clave_deduplicacion VARCHAR NOT NULL
 tipo_notificacion_interna VARCHAR NOT NULL
 titulo_notificacion_interna VARCHAR NOT NULL
@@ -732,9 +737,9 @@ UNIQUE (usuario_id, clave_deduplicacion)
 **Contexto:** trazabilidad de acciones relevantes.
 
 ~~~text
-id UUID (PK)
-actor_usuario_id UUID (FK → usuarios.id) NULL
-asignacion_rol_id UUID (FK → asignaciones_rol.id) NULL
+evento_auditoria_id UUID (PK)
+actor_usuario_id UUID (FK → usuarios.usuario_id) NULL
+asignacion_rol_id UUID (FK → asignaciones_rol.asignacion_rol_id) NULL
 accion_evento_auditoria VARCHAR NOT NULL
 tipo_recurso VARCHAR NOT NULL
 recurso_id UUID NULL

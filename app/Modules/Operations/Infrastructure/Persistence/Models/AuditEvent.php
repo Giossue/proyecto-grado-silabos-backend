@@ -29,6 +29,7 @@ class AuditEvent extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'evento_auditoria_id',
         'actor_usuario_id' => 'usuario_id',
         'metadatos' => 'detalles',
     ];
@@ -36,6 +37,8 @@ class AuditEvent extends Model
     public $timestamps = false;
 
     protected $table = 'eventos_auditoria';
+
+    protected $primaryKey = 'evento_auditoria_id';
 
     /** @var list<string> */
     protected $fillable = [

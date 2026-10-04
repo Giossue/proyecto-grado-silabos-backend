@@ -18,12 +18,15 @@ class SubjectRequirement extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'requisito_asignatura_id',
         'tipo' => 'tipo_requisito_asignatura',
     ];
 
     public $timestamps = false;
 
     protected $table = 'requisitos_asignatura';
+
+    protected $primaryKey = 'requisito_asignatura_id';
 
     /** @var list<string> */
     protected $fillable = ['asignatura_id', 'requisito_id', 'tipo'];

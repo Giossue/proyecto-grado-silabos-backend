@@ -40,13 +40,13 @@ class UpdateAcademicRecordRequest extends FormRequest
                 ],
             ],
             'carrera' => [
-                'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'id')],
+                'faculty_id' => ['required', 'uuid', Rule::exists('facultades', 'facultad_id')],
                 'modality' => ['required', 'string', Rule::in(StudyModality::values())],
                 'code' => [
                     'required',
                     'string',
                     'max:80',
-                    Rule::unique('carreras', 'codigo_carrera')->ignore($this->recordId()),
+                    Rule::unique('carreras', 'codigo_carrera')->ignore($this->recordId(), 'carrera_id'),
                 ],
                 'nombre' => ['required', 'string', 'max:180'],
             ],

@@ -34,6 +34,7 @@ class SyllabusRevision extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'revision_silabo_id',
         'fotografia' => 'contenido_enviado',
         'huella_sha256' => 'hash_contenido',
         'version_bloqueo_origen' => 'version_borrador',
@@ -45,6 +46,8 @@ class SyllabusRevision extends Model
     public $timestamps = false;
 
     protected $table = 'revisiones_silabo';
+
+    protected $primaryKey = 'revision_silabo_id';
 
     /** @var list<string> */
     protected $fillable = [

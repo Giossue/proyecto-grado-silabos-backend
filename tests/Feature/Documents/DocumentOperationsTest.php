@@ -222,7 +222,7 @@ class DocumentOperationsTest extends TestCase
         }
         try {
             DB::transaction(fn () => DB::table('archivos')
-                ->where('id', $docx->id)->update(['nombre_archivo' => 'alterado.docx']));
+                ->where('archivo_id', $docx->id)->update(['nombre_archivo' => 'alterado.docx']));
             $this->fail('PostgreSQL permitió reescribir un objeto publicado.');
         } catch (QueryException) {
             $this->assertSame($docx->nombre_logico, $docx->fresh()->nombre_logico);
@@ -327,14 +327,14 @@ class DocumentOperationsTest extends TestCase
 
         try {
             DB::transaction(fn () => DB::table('notificaciones')
-                ->where('id', $notification->id)->update(['titulo_notificacion' => 'Alterado']));
+                ->where('notificacion_id', $notification->id)->update(['titulo_notificacion' => 'Alterado']));
             $this->fail('PostgreSQL permitió alterar una notificación entregada.');
         } catch (QueryException) {
             $this->assertSame('Sílabo aprobado', $notification->fresh()->titulo);
         }
         try {
             DB::transaction(fn () => DB::table('trabajos_en_cola')
-                ->where('id', $first->id)
+                ->where('trabajo_id', $first->id)
                 ->update(['datos_entrada' => json_encode(['destinatarios_ids' => []])]));
             $this->fail('PostgreSQL permitió alterar la entrada del trabajo.');
         } catch (QueryException) {
@@ -495,7 +495,7 @@ class DocumentOperationsTest extends TestCase
         }
         try {
             DB::transaction(fn () => DB::table('eventos_auditoria')
-                ->where('id', $event->id)->update(['resultado' => 'fallida']));
+                ->where('evento_auditoria_id', $event->id)->update(['resultado' => 'fallida']));
             $this->fail('PostgreSQL permitió modificar auditoría histórica.');
         } catch (QueryException) {
             $this->assertSame('exito', $event->fresh()->resultado);

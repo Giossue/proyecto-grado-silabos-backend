@@ -31,6 +31,7 @@ class JobExecution extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'trabajo_id',
         'tipo' => 'tipo_trabajo',
         'estado' => 'estado_trabajo',
         'resultado' => 'resultado_trabajo',
@@ -43,6 +44,8 @@ class JobExecution extends Model
     public const UPDATED_AT = null;
 
     protected $table = 'trabajos_en_cola';
+
+    protected $primaryKey = 'trabajo_id';
 
     /** @var list<string> */
     protected $fillable = [

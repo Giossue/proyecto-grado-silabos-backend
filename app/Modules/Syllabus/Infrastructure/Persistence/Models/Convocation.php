@@ -25,6 +25,7 @@ class Convocation extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'convocatoria_carrera_id',
         'estado' => 'estado_convocatoria_carrera',
         'proceso_id' => 'convocatoria_universidad_id',
     ];
@@ -40,6 +41,8 @@ class Convocation extends Model
     public const STATE_CLOSED = 'cerrada';
 
     protected $table = 'convocatorias_carreras';
+
+    protected $primaryKey = 'convocatoria_carrera_id';
 
     /** @var list<string> */
     protected $fillable = [

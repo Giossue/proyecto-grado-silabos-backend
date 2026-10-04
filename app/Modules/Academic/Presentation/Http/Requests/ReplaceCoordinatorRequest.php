@@ -19,7 +19,7 @@ class ReplaceCoordinatorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'incoming_user_id' => ['required', 'uuid', Rule::exists('usuarios', 'id')->where('usuario_activo', true)],
+            'incoming_user_id' => ['required', 'uuid', Rule::exists('usuarios', 'usuario_id')->where('usuario_activo', true)],
         ];
     }
 

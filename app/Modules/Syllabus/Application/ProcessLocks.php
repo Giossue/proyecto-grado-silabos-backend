@@ -67,7 +67,7 @@ class ProcessLocks
     public function lockedPeriodReasons(): array
     {
         $periodIds = Convocation::query()->running()
-            ->join('convocatorias_universidad', 'convocatorias_universidad.id', '=', 'convocatorias_carreras.convocatoria_universidad_id')
+            ->join('convocatorias_universidad', 'convocatorias_universidad.convocatoria_universidad_id', '=', 'convocatorias_carreras.convocatoria_universidad_id')
             ->distinct()->pluck('convocatorias_universidad.periodo_academico_id');
 
         return $periodIds->mapWithKeys(fn (string $id): array => [$id => self::CONVOCATION_LOCK_REASON])->all();

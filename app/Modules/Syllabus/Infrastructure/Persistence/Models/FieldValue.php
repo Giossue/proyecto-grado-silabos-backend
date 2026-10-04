@@ -14,12 +14,15 @@ class FieldValue extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'valor_campo_id',
         'valor' => 'valor_campo',
     ];
 
     public $timestamps = false;
 
     protected $table = 'valores_campo';
+
+    protected $primaryKey = 'valor_campo_id';
 
     /** @var list<string> */
     protected $fillable = ['silabo_id', 'definicion_campo_id', 'valor'];

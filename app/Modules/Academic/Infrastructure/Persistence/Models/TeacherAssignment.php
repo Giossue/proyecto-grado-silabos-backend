@@ -23,6 +23,7 @@ class TeacherAssignment extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'asignacion_paralelo_id',
         'activo' => 'asignacion_paralelo_activa',
     ];
 
@@ -31,6 +32,8 @@ class TeacherAssignment extends Model
     public const UPDATED_AT = null;
 
     protected $table = 'asignaciones_paralelo';
+
+    protected $primaryKey = 'asignacion_paralelo_id';
 
     /** @var list<string> */
     protected $fillable = [

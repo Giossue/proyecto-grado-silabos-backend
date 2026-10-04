@@ -145,7 +145,7 @@ class ApiSessionTest extends TestCase
             ->assertJsonValidationErrors('correo_electronico');
 
         $this->assertDatabaseHas('usuarios', [
-            'id' => $administrator->id,
+            'usuario_id' => $administrator->id,
             'nombre_usuario' => 'MARÍA JOSÉ PÉREZ LÓPEZ',
             'correo_electronico' => 'admin@silabos.test',
         ]);

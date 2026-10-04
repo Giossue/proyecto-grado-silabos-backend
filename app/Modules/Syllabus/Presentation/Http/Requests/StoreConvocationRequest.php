@@ -17,7 +17,7 @@ class StoreConvocationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'process_id' => ['required', 'uuid', Rule::exists('convocatorias_universidad', 'id')->where('estado_convocatoria_universidad', 'abierto')],
+            'process_id' => ['required', 'uuid', Rule::exists('convocatorias_universidad', 'convocatoria_universidad_id')->where('estado_convocatoria_universidad', 'abierto')],
         ];
     }
 

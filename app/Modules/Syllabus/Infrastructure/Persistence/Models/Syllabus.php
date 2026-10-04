@@ -38,6 +38,7 @@ class Syllabus extends Model
     use HasUuids, MapsLegacyColumnNames;
 
     protected const LEGACY_COLUMN_ALIASES = [
+        'id' => 'silabo_id',
         'estado' => 'estado_silabo',
         'convocatoria_id' => 'convocatoria_carrera_id',
         'contexto_academico' => 'datos_academicos_silabo',
@@ -47,6 +48,8 @@ class Syllabus extends Model
     public $timestamps = false;
 
     protected $table = 'silabos';
+
+    protected $primaryKey = 'silabo_id';
 
     /** @var list<string> */
     protected $fillable = [
@@ -88,7 +91,7 @@ class Syllabus extends Model
     /** @return HasOneThrough<ScheduledSubject, Parallel, $this> Programación a la que pertenece el paralelo. */
     public function scheduledSubject(): HasOneThrough
     {
-        return $this->hasOneThrough(ScheduledSubject::class, Parallel::class, 'id', 'id', 'paralelo_id', 'asignatura_ofertada_id');
+        return $this->hasOneThrough(ScheduledSubject::class, Parallel::class, 'paralelo_id', 'asignatura_ofertada_id', 'paralelo_id', 'asignatura_ofertada_id');
     }
 
     // La materia sale del paralelo (I-164): ya no se guarda en el sílabo.
@@ -114,7 +117,7 @@ class Syllabus extends Model
     /** @return HasOneThrough<Career, Convocation, $this> */
     public function career(): HasOneThrough
     {
-        return $this->hasOneThrough(Career::class, Convocation::class, 'id', 'id', 'convocatoria_carrera_id', 'carrera_id');
+        return $this->hasOneThrough(Career::class, Convocation::class, 'convocatoria_carrera_id', 'carrera_id', 'convocatoria_carrera_id', 'carrera_id');
     }
 
     /** @return BelongsTo<Parallel, $this> */
