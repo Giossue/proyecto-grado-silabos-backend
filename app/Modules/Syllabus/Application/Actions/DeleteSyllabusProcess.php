@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
+use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -20,12 +20,8 @@ final class DeleteSyllabusProcess
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly InProgressWork $work,
     ) {}
-
-    public function isDeletable(SyllabusProcess $process): bool
-    {
-        return ! $this->hasTeacherActivity($process->id);
-    }
 
     public function execute(SyllabusProcess $process, User $actor, Request $request): void
     {
@@ -44,18 +40,13 @@ final class DeleteSyllabusProcess
                     ->lockForUpdate()
                     ->get();
 
-                if ($this->hasTeacherActivity($locked->id)) {
-                    throw ValidationException::withMessages([
-                        'process' => 'No se puede eliminar porque al menos un docente ya inició un sílabo. El historial académico debe conservarse.',
-                    ]);
-                }
-
                 $periodId = $locked->periodo_academico_id;
                 $state = $locked->estado;
                 $convocationCount = $convocations->count();
                 $syllabusCount = $syllabi->count();
 
-                $syllabi->each->delete();
+                // I-172: se borra todo el historial, incluidos sílabos iniciados, aprobados y firmados.
+                $this->work->purge(array_values(array_map('strval', $syllabi->modelKeys())));
                 $convocations->each->delete();
                 $locked->delete();
 
@@ -70,7 +61,7 @@ final class DeleteSyllabusProcess
                         'period_id' => $periodId,
                         'previous_state' => $state,
                         'deleted_convocations' => $convocationCount,
-                        'deleted_unstarted_syllabi' => $syllabusCount,
+                        'deleted_syllabi' => $syllabusCount,
                     ],
                 );
             });
@@ -83,27 +74,5 @@ final class DeleteSyllabusProcess
 
             throw $exception;
         }
-    }
-
-    private function hasTeacherActivity(string $processId): bool
-    {
-        $syllabi = Syllabus::query()
-            ->whereHas('convocation', fn ($query) => $query->where('proceso_id', $processId));
-
-        $hasCurrentActivity = (clone $syllabi)
-            ->where(fn ($query) => $query
-                ->where('estado', '!=', 'sin_iniciar')
-                ->orWhereNotNull('iniciado_en')
-                ->orWhereNotNull('guardado_en'))
-            ->exists();
-
-        if ($hasCurrentActivity) {
-            return true;
-        }
-
-        return AuditEvent::query()
-            ->where('accion', 'silabo.borrador_iniciado')
-            ->whereIn('recurso_id', (clone $syllabi)->select('silabos.id'))
-            ->exists();
     }
 }

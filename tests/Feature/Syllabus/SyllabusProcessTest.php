@@ -128,10 +128,6 @@ class SyllabusProcessTest extends TestCase
         $this->assertNotEmpty($syllabusIds);
         $this->transition($process, 'cerrar')->assertSuccessful();
 
-        $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.index'))
-            ->assertOk()
-            ->assertJsonPath('processes.0.deletable', true);
-
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.processes.destroy', $process))
             ->assertOk()
@@ -148,7 +144,7 @@ class SyllabusProcessTest extends TestCase
         ]);
     }
 
-    public function test_a_process_is_never_deletable_after_a_teacher_started_a_syllabus(): void
+    public function test_administration_deletes_a_process_even_after_a_teacher_started_a_syllabus(): void
     {
         $convocation = $this->openedConvocation();
         $process = $convocation->process()->firstOrFail();
@@ -157,28 +153,19 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsTeacher()
             ->postJson(route('api.v1.teacher.syllabi.start', $syllabus))
             ->assertSuccessful();
+        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id, 'estado_silabo' => 'borrador']);
 
-        $syllabus->update([
-            'estado' => 'sin_iniciar',
-            'version_bloqueo' => 0,
-            'iniciado_en' => null,
-            'guardado_en' => null,
-        ]);
-        $this->transition($process, 'cerrar')->assertSuccessful();
-
-        $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.index'))
-            ->assertOk()
-            ->assertJsonPath('processes.0.deletable', false);
-
+        // I-172: la convocatoria se elimina con todo su historial, sin importar la actividad docente.
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.processes.destroy', $process))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors([
-                'process' => 'No se puede eliminar porque al menos un docente ya inició un sílabo. El historial académico debe conservarse.',
-            ]);
+            ->assertOk();
 
-        $this->assertDatabaseHas('convocatorias_universidad', ['id' => $process->id]);
-        $this->assertDatabaseHas('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseMissing('convocatorias_universidad', ['id' => $process->id]);
+        $this->assertDatabaseMissing('silabos', ['id' => $syllabus->id]);
+        $this->assertDatabaseHas('eventos_auditoria', [
+            'accion' => 'proceso_silabos.eliminado',
+            'recurso_id' => $process->id,
+        ]);
     }
 
     public function test_coordination_cannot_delete_an_institutional_process(): void

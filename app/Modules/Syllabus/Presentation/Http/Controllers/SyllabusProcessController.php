@@ -21,10 +21,8 @@ use Illuminate\Support\Facades\Gate;
 
 class SyllabusProcessController extends Controller
 {
-    public function index(
-        ManageSyllabusProcessesRequest $request,
-        DeleteSyllabusProcess $deleteProcess,
-    ): JsonResponse {
+    public function index(ManageSyllabusProcessesRequest $request): JsonResponse
+    {
         $template = SyllabusTemplate::query()->first();
         $activeProcess = SyllabusProcess::query()->inProgress()
             ->with('academicPeriod:id,codigo')
@@ -47,7 +45,6 @@ class SyllabusProcessController extends Controller
                     'due_at' => $process->entrega_en->toIso8601String(),
                     'convocations_count' => $process->convocations_count,
                     'configurable' => $process->isConfigurable(),
-                    'deletable' => $deleteProcess->isDeletable($process),
                 ]),
             'template' => $template?->hasStructure()
                 ? SyllabusTemplate::INSTITUTIONAL_NAME

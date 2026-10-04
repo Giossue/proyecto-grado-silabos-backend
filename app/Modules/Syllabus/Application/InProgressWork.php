@@ -159,6 +159,19 @@ final class InProgressWork
             ->all();
     }
 
+    /**
+     * Borra los sílabos indicados con todo su historial (revisiones, aprobaciones, documentos,
+     * firmas y envíos a biblioteca), sin importar su estado. Debe llamarse dentro de una transacción.
+     *
+     * @param  list<string>  $syllabusIds
+     */
+    public function purge(array $syllabusIds): void
+    {
+        if ($syllabusIds !== []) {
+            $this->deleteAggregates($syllabusIds);
+        }
+    }
+
     /** @param list<string> $syllabusIds */
     private function deleteAggregates(array $syllabusIds): void
     {
@@ -188,6 +201,7 @@ final class InProgressWork
             'revision_anterior_id' => null,
             'reapertura_id' => null,
         ]);
+        DB::table('envios_biblioteca')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('reaperturas')->whereIn('revision_aprobada_id', $revisionIds)->delete();
         DB::table('aprobaciones')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('solicitudes_correccion')->whereIn('revision_silabo_id', $revisionIds)->delete();
