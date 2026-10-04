@@ -47,7 +47,7 @@ en el inventario como identificador histórico.
 | COR-12 | Retirado en I-122: el avance de la carrera se consulta en el Panel |
 | COR-13 | Malla, constructor visual/formulario y materias de la carrera |
 | COR-14 | Materias y asignaciones: materias y paralelos del período en curso; el docente se asigna desde los paralelos de cada materia |
-| COR-15 | Docentes (`/coordinacion/docentes`): cuentas docentes de la carrera y sus paralelos; acción **Crear docente** |
+| COR-15 | Docentes (`/coordinacion/docentes`): cuentas docentes de la carrera; acciones **Crear docente**, **Editar docente** y **Quitar de la carrera** (I-175) |
 | COR-16 | Proyecto de carrera: documentos y datos curriculares confirmados |
 
 En COR-15, **Crear docente** abre el formulario compartido de cuentas en modo docente de

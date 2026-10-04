@@ -3562,6 +3562,50 @@
                         "sanctumCookie": []
                     }
                 ]
+            },
+            "delete": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_academic_teachers_destroy",
+                "summary": "api.v1.coordination.academic.teachers.destroy",
+                "description": "Quita al docente de la carrera activa: cierra su rol docente y borra sus asignaciones de paralelo vigentes. Los sílabos se conservan sin docente.",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
             }
         },
         "/api/v1/coordination/academic/teachers/{user}/resend-activation": {

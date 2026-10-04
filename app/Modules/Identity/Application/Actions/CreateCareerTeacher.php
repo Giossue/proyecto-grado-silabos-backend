@@ -75,15 +75,15 @@ class CreateCareerTeacher
             ];
             $assignment = RoleAssignment::query()->where($identity)->orderByDesc('activo')->first();
 
-            if ($assignment !== null && ! $assignment->activo) {
-                throw ValidationException::withMessages([
-                    'correo_electronico' => 'El acceso docente a esta carrera fue retirado. Solicite su revisión a Administración.',
-                ]);
+            // Un docente retirado de la carrera por Coordinación vuelve a incorporarse con la misma fila.
+            $reactivated = $assignment !== null && ! $assignment->activo;
+            if ($reactivated) {
+                $assignment->update(['activo' => true]);
             }
 
             $assignment ??= RoleAssignment::query()->firstOrCreate([...$identity, 'activo' => true]);
 
-            $attached = $created || $assignment->wasRecentlyCreated;
+            $attached = $created || $reactivated || $assignment->wasRecentlyCreated;
 
             if ($attached) {
                 $this->audit->execute(

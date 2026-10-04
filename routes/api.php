@@ -188,6 +188,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.store');
             Route::patch('coordination/academic/teachers/{user}', [CareerTeacherController::class, 'update'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.update');
+            Route::delete('coordination/academic/teachers/{user}', [CareerTeacherController::class, 'destroy'])
+                ->middleware('active-role')->name('api.v1.coordination.academic.teachers.destroy');
             Route::post('coordination/academic/teachers/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
                 ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.coordination.academic.teachers.activation.resend');
             Route::post('coordination/academic/prepare-period', [CareerAcademicStructureController::class, 'preparePeriod'])

@@ -38,8 +38,7 @@ activa con rol `docente`). Se elimina la copia por sílabo del docente y el rele
 
 ## Pendiente
 
-- "Quitar de la carrera" (cerrar todas las asignaciones de un docente y su rol de
-  carrera) no se implementó; hoy se quita asignación por asignación.
+- "Quitar de la carrera" se implementó en I-175 (`DELETE coordination/academic/teachers/{user}`).
 
 ## Entregables
 

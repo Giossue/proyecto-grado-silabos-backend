@@ -230,7 +230,7 @@ class CareerTeacherTest extends TestCase
         Mail::assertNothingQueued();
     }
 
-    public function test_cannot_reactivate_disabled_account_or_revoked_teacher_access(): void
+    public function test_cannot_reactivate_disabled_account_but_a_removed_teacher_is_reincorporated(): void
     {
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $teacher->update(['activo' => false]);
@@ -239,9 +239,53 @@ class CareerTeacherTest extends TestCase
         $this->assertFalse($teacher->fresh()->activo);
         $teacher->update(['activo' => true]);
         $teacher->roleAssignments()->update(['activo' => false]);
-        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $data)->assertUnprocessable()->assertJsonValidationErrors('correo_electronico');
-        $this->assertFalse($teacher->roleAssignments()->firstOrFail()->activo);
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $data)
+            ->assertSuccessful()
+            ->assertJsonPath('message', 'Docente incorporado a su carrera. Conserva su nombre y acceso actuales.');
+        $this->assertTrue($teacher->roleAssignments()->firstOrFail()->activo);
+        $this->assertSame(1, $teacher->roleAssignments()->count());
         Mail::assertNothingQueued();
+    }
+
+    public function test_coordinator_removes_a_teacher_from_the_career_and_its_parallels_lose_their_teacher(): void
+    {
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $assignment = TeacherAssignment::query()->forUser($teacher->id)->firstOrFail();
+
+        $this->deleteJson(route('api.v1.coordination.academic.teachers.destroy', $teacher))
+            ->assertSuccessful()
+            ->assertJsonPath('message', 'Docente retirado de su carrera; su paralelo quedó sin docente.');
+
+        $this->assertDatabaseMissing('asignaciones_paralelo', ['id' => $assignment->id]);
+        $this->assertFalse($teacher->roleAssignments()->where('rol', RoleCode::Teacher->value)->firstOrFail()->activo);
+        $this->assertTrue($teacher->fresh()->activo);
+        $teachers = collect($this->getJson(route('api.v1.coordination.academic.teacher-assignments.index'))->assertOk()->json('careerTeachers'));
+        $this->assertNull($teachers->firstWhere('id', $teacher->id));
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.docente_retirado', 'recurso_id' => $teacher->id]);
+
+        $this->deleteJson(route('api.v1.coordination.academic.teachers.destroy', $teacher))->assertForbidden();
+    }
+
+    public function test_coordinator_cannot_remove_a_teacher_of_another_career(): void
+    {
+        $other = User::query()->create([
+            'nombre' => 'Docente de otra carrera',
+            'correo_electronico' => 'otra.carrera@silabos.test',
+            'contrasena' => Hash::make('Demo-2026!'),
+            'correo_verificado_en' => now(),
+            'activo' => true,
+        ]);
+        $career = Career::query()->create([
+            'facultad_id' => Career::query()->firstOrFail()->facultad_id,
+            'nombre' => 'Turismo',
+            'codigo_carrera' => 'TURISMO',
+            'cantidad_ciclos_malla' => 8,
+            'activo' => true,
+        ]);
+        RoleAssignment::query()->create(['usuario_id' => $other->id, 'rol' => RoleCode::Teacher->value, 'carrera_id' => $career->id, 'activo' => true]);
+
+        $this->deleteJson(route('api.v1.coordination.academic.teachers.destroy', $other))->assertForbidden();
+        $this->assertTrue($other->roleAssignments()->firstOrFail()->activo);
     }
 
     public function test_cannot_choose_role_career_or_global_account_state(): void
