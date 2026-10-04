@@ -26,7 +26,7 @@ RF-008..016, RF-034..036 · RN-005..019 · CU-03..06 · ADM-04, ADM-12 · I-110,
 
 - Backend: `AcademicGovernanceController::store` devuelve `id` junto con `message`.
 - Frontend: `AdminProcessesPage` (una fila por periodo: Período · Clases · Elaboración de
-  sílabos · Estado), `ConvocationPeriodSheet` (periodo + convocatoria opcional),
+  sílabos · Estado), `ConvocationPeriodSheet` (cuatro fechas obligatorias: periodo y convocatoria),
   `ConvocationRowActions` (abrir convocatoria, editar fechas, eliminar periodo o acciones
   del proceso). `CatalogSection` y `AcademicGovernancePage` solo manejan facultades y
   carreras; la ruta `periodos-academicos` y `?seccion=periodo` redirigen a Convocatorias.

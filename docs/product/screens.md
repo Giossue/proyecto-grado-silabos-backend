@@ -532,12 +532,11 @@ la etiqueta debajo; en el PDF, cada sello se dibuja sobre esa etiqueta.
   fila por periodo lectivo con sus fechas de clases, las fechas de elaboración de sílabos
   (o «Sin fechas») y el estado de la convocatoria («Sin abrir», Abierta, En pausa,
   Cerrada). El botón **Nueva convocatoria** abre un solo `Sheet` con dos bloques: fechas
-  del periodo (obligatorias; la etiqueta se genera sola) y fechas de elaboración
-  (opcionales). Si se llenan las segundas, la SPA crea el periodo y abre la convocatoria
-  con el `id` devuelto; si falla la apertura, el periodo queda creado y el reintento solo
-  abre la convocatoria. Si se dejan vacías, solo se crea el periodo y la convocatoria se
-  abre después desde la fila (**Abrir convocatoria**), con el período fijado y el nombre y
-  la plantilla automáticos. Las fechas de elaboración siempre empiezan vacías: el
+  del periodo (la etiqueta se genera sola) y fechas de elaboración; las cuatro son
+  obligatorias. La SPA crea el periodo y abre la convocatoria con el `id` devuelto; si
+  falla la apertura, el periodo queda creado y el reintento solo abre la convocatoria.
+  Un periodo que quedó sin convocatoria la abre después desde la fila (**Abrir
+  convocatoria**), con el período fijado y el nombre y la plantilla automáticos. Las fechas de elaboración siempre empiezan vacías: el
   formulario no copia las fechas lectivas del período (I-113). Desde la fila también se
   editan las fechas del periodo (salvo bloqueo por convocatoria en curso) y se elimina un
   periodo sin convocatoria. **Editar** solo

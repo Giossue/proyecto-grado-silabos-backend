@@ -30,8 +30,9 @@ Bibliografía a Texto libre y crear la cuenta de biblioteca.
 I-172 (4 de octubre de 2026), por instrucción del responsable del producto, funde la
 pantalla de Periodos académicos en **Convocatorias** (ADM-12): una fila por periodo con
 sus fechas de clases, las de elaboración de sílabos y el estado de la convocatoria, y un
-solo formulario que crea el periodo y, si se indican las fechas de elaboración, abre la
-convocatoria a continuación (dos llamadas; el periodo puede quedar sin convocatoria). Las
+solo formulario de cuatro fechas obligatorias que crea el periodo y abre la convocatoria
+a continuación (dos llamadas; si la segunda falla, el periodo queda y se reintenta solo
+la apertura). Las
 tablas, reglas de unicidad y las fechas vacías por defecto (I-110, I-113) no cambian; el
 alta de periodo devuelve el `id` creado. La columna de semanas lectivas deja de mostrarse;
 el valor se sigue calculando para el sílabo. Periodos sale del submenú Estructura
