@@ -199,31 +199,21 @@ CHECK tipo_requisito_asignatura IN ('prerrequisito', 'correquisito')
 CHECK asignatura_id <> requisito_id
 ~~~
 
-## programaciones_asignatura
-
-**Contexto:** programación de una asignatura en período. Campus y modalidad se derivan de
-la materia, su carrera y su facultad (I-164); no se guardan aquí.
-
-~~~text
-id UUID (PK)
-periodo_academico_id UUID (FK → periodos_academicos.periodo_academico_id) NOT NULL
-asignatura_id UUID (FK → asignaturas.asignatura_id) NOT NULL
-programacion_asignatura_activa BOOLEAN NOT NULL
-
-UNIQUE (periodo_academico_id, asignatura_id)
-~~~
-
 ## paralelos
 
-**Contexto:** paralelos de una programación.
+**Contexto:** paralelos de una materia en un período. A nivel institucional siempre se ofrecen
+todas las materias de la malla, así que no hay una tabla de programación aparte (I-181 retiró
+`asignaturas_ofertadas`). Campus y modalidad se derivan de la materia, su carrera y su
+facultad (I-164); no se guardan aquí.
 
 ~~~text
 paralelo_id UUID (PK)
-programacion_asignatura_id UUID (FK → programaciones_asignatura.id) NOT NULL
+periodo_academico_id UUID (FK → periodos_academicos.periodo_academico_id) NOT NULL
+asignatura_id UUID (FK → asignaturas.asignatura_id) NOT NULL
 codigo_paralelo VARCHAR NOT NULL
-jornada_paralelo VARCHAR NULL
+jornada_paralelo VARCHAR NOT NULL
 
-UNIQUE (programacion_asignatura_id, codigo_paralelo)
+UNIQUE (periodo_academico_id, asignatura_id, codigo_paralelo)
 ~~~
 
 ### Cardinalidades
@@ -232,9 +222,8 @@ UNIQUE (programacion_asignatura_id, codigo_paralelo)
 facultades 1:N carreras
 carreras 1:N asignaturas
 asignaturas 1:N requisitos_asignatura, como asignatura y como requisito
-periodos_academicos 1:N programaciones_asignatura
-asignaturas 1:N programaciones_asignatura
-programaciones_asignatura 1:N paralelos
+periodos_academicos 1:N paralelos
+asignaturas 1:N paralelos
 ~~~
 
 ---

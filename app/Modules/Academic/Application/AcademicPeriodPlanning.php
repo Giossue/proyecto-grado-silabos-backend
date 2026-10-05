@@ -4,7 +4,6 @@ namespace App\Modules\Academic\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
@@ -53,21 +52,15 @@ final class AcademicPeriodPlanning
 
     }
 
-    public function assertScheduledSubjectMayChange(ScheduledSubject $scheduledSubject, string $field = 'record'): void
-    {
-        $scheduledSubject->loadMissing('academicPeriod');
-        $this->assertMayPlan($scheduledSubject->academicPeriod, $field);
-    }
-
     public function assertParallelMayChange(Parallel $parallel, string $field = 'record'): void
     {
-        $parallel->loadMissing('scheduledSubject.academicPeriod');
-        $this->assertMayPlan($parallel->scheduledSubject->academicPeriod, $field);
+        $parallel->loadMissing('academicPeriod');
+        $this->assertMayPlan($parallel->academicPeriod, $field);
     }
 
     public function assertTeacherAssignmentMayChange(TeacherAssignment $assignment, string $field = 'record'): void
     {
-        $assignment->loadMissing('parallel.scheduledSubject.academicPeriod');
-        $this->assertMayPlan($assignment->parallel->scheduledSubject->academicPeriod, $field);
+        $assignment->loadMissing('parallel.academicPeriod');
+        $this->assertMayPlan($assignment->parallel->academicPeriod, $field);
     }
 }

@@ -7,7 +7,7 @@ use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -693,16 +693,17 @@ class SyllabusProcessTest extends TestCase
     public function test_an_open_cycle_only_freezes_the_template_and_the_active_careers_structure(): void
     {
         $convocation = $this->openedConvocation();
-        $scheduledSubject = ScheduledSubject::query()->firstOrFail();
+        $scheduledSubject = Parallel::query()->firstOrFail();
 
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.parallels.store'), [
-                'scheduled_subject_id' => $scheduledSubject->id,
+                'subject_id' => $scheduledSubject->asignatura_id,
+                'period_id' => $scheduledSubject->periodo_academico_id,
                 'codes' => ['B'],
                 'shift' => 'matutina',
             ])
             ->assertJsonValidationErrors('process');
-        $parallel = $scheduledSubject->parallels()->firstOrFail();
+        $parallel = $scheduledSubject;
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.parallels.update', $parallel), ['code' => 'Z', 'shift' => 'nocturna'])
             ->assertJsonValidationErrors('process');
@@ -750,7 +751,8 @@ class SyllabusProcessTest extends TestCase
 
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.parallels.store'), [
-                'scheduled_subject_id' => $scheduledSubject->id,
+                'subject_id' => $scheduledSubject->asignatura_id,
+                'period_id' => $scheduledSubject->periodo_academico_id,
                 'codes' => ['B'],
                 'shift' => 'matutina',
             ])

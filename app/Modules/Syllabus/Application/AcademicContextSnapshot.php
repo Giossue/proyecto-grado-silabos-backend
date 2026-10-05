@@ -2,20 +2,20 @@
 
 namespace App\Modules\Syllabus\Application;
 
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 
 class AcademicContextSnapshot
 {
     /** @return array<string, mixed> */
-    public function build(ScheduledSubject $scheduledSubject): array
+    public function build(Parallel $parallel): array
     {
-        $scheduledSubject->loadMissing([
+        $parallel->loadMissing([
             'subject.career.faculty',
             'subject.requirements.requirement',
             'academicPeriod',
         ]);
-        $subject = $scheduledSubject->subject;
+        $subject = $parallel->subject;
         $career = $subject->career;
         $requirementCodes = fn (string $type): array => $subject->requirements
             ->where('tipo', $type)
@@ -53,11 +53,10 @@ class AcademicContextSnapshot
                 'corequisites' => $requirementCodes('correquisito'),
             ],
             'scheduled_subject' => [
-                'id' => $scheduledSubject->id,
-                'period' => $scheduledSubject->academicPeriod->codigo,
-                'teaching_weeks' => $scheduledSubject->academicPeriod->semanas_lectivas,
-                'campus' => $scheduledSubject->campus_programacion,
-                'modality' => $scheduledSubject->modalidad->label(),
+                'period' => $parallel->academicPeriod->codigo,
+                'teaching_weeks' => $parallel->academicPeriod->semanas_lectivas,
+                'campus' => $parallel->campus_programacion,
+                'modality' => $parallel->modalidad->label(),
             ],
         ];
     }

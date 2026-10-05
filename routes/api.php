@@ -204,8 +204,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereIn('entity', AcademicStructurePermissions::CAREER_UPDATE_ENTITIES)->whereUuid('record')->name('api.v1.coordination.academic.update');
             Route::delete('coordination/academic/{entity}/{record}', [CareerAcademicStructureController::class, 'destroy'])
                 ->middleware('active-role')->whereIn('entity', AcademicStructurePermissions::CAREER_GENERIC_DELETE_ENTITIES)->whereUuid('record')->name('api.v1.coordination.academic.destroy');
-            Route::delete('coordination/academic/scheduled-subjects/{scheduledSubject}', [CareerAcademicStructureController::class, 'destroyScheduledSubject'])
-                ->middleware('active-role')->whereUuid('scheduledSubject')->name('api.v1.coordination.academic.scheduled-subjects.destroy');
             Route::patch('coordination/academic/curriculum/{curriculum}/configuration', [CareerAcademicStructureController::class, 'updateCurriculumConfiguration'])
                 ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.configuration.update');
             Route::post('coordination/academic/curriculum/{curriculum}/requirements', [CareerAcademicStructureController::class, 'storeSubjectRequirement'])

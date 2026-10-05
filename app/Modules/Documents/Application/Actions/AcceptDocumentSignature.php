@@ -86,7 +86,6 @@ class AcceptDocumentSignature
                     'huella_sha256' => $fingerprint,
                     'clasificacion' => 'syllabus_signed_export',
                     'propietario_usuario_id' => $actor->id,
-                    'carrera_id' => $syllabus->convocation->carrera_id,
                     'almacenado_en' => now(),
                 ]);
                 $signature = DocumentSignature::query()->create([

@@ -12,7 +12,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
@@ -22,6 +21,7 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class AcademicStructureViewData
 {
@@ -235,23 +235,15 @@ class AcademicStructureViewData
     {
         $career = $this->career($careerId);
         $lockReason = $this->locks->careerLockReason($careerId);
-        $scheduledSubjects = ScheduledSubject::query()
+        // A nivel institucional se ofrecen todas las materias de la malla (I-181): el paralelo apunta
+        // directo al período y a la materia, y "materia programada" es ese par con sus paralelos.
+        $careerParallels = Parallel::query()
             ->whereHas('subject', fn ($query) => $query->where('carrera_id', $careerId))
-            ->with([
-                'academicPeriod:id,fecha_inicio,fecha_fin',
-                'subject:id,nombre,codigo_asignatura,ciclo',
-                'parallels' => fn ($query) => $query
-                    ->orderBy('codigo')
-                    ->select(['id', 'programacion_asignatura_id', 'codigo', 'jornada']),
-            ])
-            ->orderBy('asignatura_id')
-            ->get();
-        $usedScheduledSubjectIds = Parallel::query()
-            ->whereIn('programacion_asignatura_id', $scheduledSubjects->pluck('id'))
-            ->whereIn('id', Syllabus::query()->select('paralelo_id'))
-            ->pluck('programacion_asignatura_id')
-            ->flip();
-        $parallelIds = $scheduledSubjects->flatMap(fn (ScheduledSubject $item) => $item->parallels->pluck('id'));
+            ->orderBy('codigo')
+            ->get(['id', 'periodo_academico_id', 'asignatura_id', 'codigo', 'jornada']);
+        $parallelsBySubjectAndPeriod = $careerParallels
+            ->groupBy(fn (Parallel $parallel): string => $parallel->asignatura_id.'|'.$parallel->periodo_academico_id);
+        $parallelIds = $careerParallels->pluck('id');
         $parallelsWithSyllabus = Syllabus::query()->whereIn('paralelo_id', $parallelIds)->pluck('paralelo_id')->flip();
         $parallelsWithTeacher = TeacherAssignment::query()->whereIn('paralelo_id', $parallelIds)->pluck('paralelo_id')->flip();
         $periods = AcademicPeriod::query()
@@ -281,6 +273,56 @@ class AcademicStructureViewData
         $selectedPeriodId ??= $periods->first(fn (AcademicPeriod $period): bool => $this->periodPlanning->status($period) === AcademicPeriodPlanning::UPCOMING)?->id;
         $selectedPeriodId ??= $periods->first()?->id;
 
+        $careerSubjects = Subject::query()
+            ->where('carrera_id', $careerId)
+            ->with('career.faculty')
+            ->orderBy('ciclo')
+            ->orderBy('orden_en_ciclo')
+            ->orderBy('nombre')
+            ->get(['id', 'carrera_id', 'codigo_asignatura', 'nombre', 'ciclo', 'activo', 'modalidad']);
+        // Cada período ofrece todas las materias activas de la malla; se listan también las que
+        // ya tienen paralelos aunque la materia se haya desactivado después.
+        $rows = [];
+        foreach ($periods as $period) {
+            $planningEnabled = $this->periodPlanning->mayPlan($period);
+            foreach ($careerSubjects as $subject) {
+                $group = $parallelsBySubjectAndPeriod->get($subject->id.'|'.$period->id, new EloquentCollection);
+                if ($group->isEmpty() && ! ($planningEnabled && $subject->activo)) {
+                    continue;
+                }
+                $used = $group->contains(fn (Parallel $parallel): bool => $parallelsWithSyllabus->has($parallel->id));
+
+                $rows[] = [
+                    'subject_id' => $subject->id,
+                    'period_id' => $period->id,
+                    'label' => "{$subject->codigo_asignatura} · {$subject->nombre}",
+                    'subject_code' => $subject->codigo_asignatura,
+                    'subject_name' => $subject->nombre,
+                    'subject_cycle' => $subject->ciclo,
+                    'period_starts_on' => $period->fecha_inicio->toDateString(),
+                    'period_ends_on' => $period->fecha_fin->toDateString(),
+                    'period_status' => $this->periodPlanning->status($period),
+                    'period_status_label' => $this->periodPlanning->label($period),
+                    'period_planning_enabled' => $planningEnabled,
+                    // Derivados de la facultad y la carrera; pueden faltar si la malla se retiró.
+                    'campus_name' => $subject->campusName(),
+                    'modality_name' => $subject->studyModality()?->label(),
+                    'parallels' => $group
+                        ->map(fn (Parallel $parallel): array => [
+                            'id' => $parallel->id,
+                            'code' => $parallel->codigo,
+                            'shift' => $this->parallelShift($parallel),
+                            'editable' => ! $parallelsWithSyllabus->has($parallel->id),
+                            'deletable' => ! $parallelsWithSyllabus->has($parallel->id) && ! $parallelsWithTeacher->has($parallel->id),
+                        ])
+                        ->values()
+                        ->all(),
+                    'editable' => $planningEnabled && $lockReason === null && ! $used,
+                ];
+            }
+        }
+        $scheduledSubjects = collect($rows);
+
         return [
             'career' => [
                 'id' => $career->id,
@@ -288,40 +330,7 @@ class AcademicStructureViewData
                 'lock_reason' => $lockReason,
             ],
             'selectedPeriodId' => $selectedPeriodId,
-            'scheduledSubjects' => $scheduledSubjects
-                ->map(function (ScheduledSubject $scheduledSubject) use ($lockReason, $usedScheduledSubjectIds, $parallelsWithSyllabus, $parallelsWithTeacher): array {
-                    $periodPlanningEnabled = $this->periodPlanning->mayPlan($scheduledSubject->academicPeriod);
-
-                    return [
-                        'id' => $scheduledSubject->id,
-                        'subject_id' => $scheduledSubject->asignatura_id,
-                        'period_id' => $scheduledSubject->periodo_academico_id,
-                        'label' => "{$scheduledSubject->subject->codigo_asignatura} · {$scheduledSubject->subject->nombre}",
-                        'subject_code' => $scheduledSubject->subject->codigo_asignatura,
-                        'subject_name' => $scheduledSubject->subject->nombre,
-                        'subject_cycle' => $scheduledSubject->subject->ciclo,
-                        'period_starts_on' => $scheduledSubject->academicPeriod->fecha_inicio->toDateString(),
-                        'period_ends_on' => $scheduledSubject->academicPeriod->fecha_fin->toDateString(),
-                        'period_status' => $this->periodPlanning->status($scheduledSubject->academicPeriod),
-                        'period_status_label' => $this->periodPlanning->label($scheduledSubject->academicPeriod),
-                        'period_planning_enabled' => $periodPlanningEnabled,
-                        // Derivados de la facultad y la carrera; pueden faltar si la malla se retiró.
-                        'campus_name' => $scheduledSubject->campus_programacion,
-                        'modality_name' => $scheduledSubject->modalidad?->label(),
-                        'parallels' => $scheduledSubject->parallels
-                            ->map(fn (Parallel $parallel): array => [
-                                'id' => $parallel->id,
-                                'code' => $parallel->codigo,
-                                'shift' => $this->parallelShift($parallel),
-                                'editable' => ! $parallelsWithSyllabus->has($parallel->id),
-                                'deletable' => ! $parallelsWithSyllabus->has($parallel->id) && ! $parallelsWithTeacher->has($parallel->id),
-                            ])
-                            ->values()
-                            ->all(),
-                        'active' => $scheduledSubject->activo,
-                        'editable' => $periodPlanningEnabled && $lockReason === null && ! $usedScheduledSubjectIds->has($scheduledSubject->id),
-                    ];
-                }),
+            'scheduledSubjects' => $scheduledSubjects,
             'options' => [
                 ...$this->baseOptions(),
                 'periods' => $periods
@@ -341,18 +350,20 @@ class AcademicStructureViewData
                     ->orderBy('orden_en_ciclo')
                     ->orderBy('nombre')
                     ->get(['id', 'codigo_asignatura', 'nombre', 'ciclo']),
-                'scheduledSubjects' => ScheduledSubject::query()
-                    ->where('activo', true)
-                    ->whereHas('subject', fn ($query) => $query->where('carrera_id', $careerId))
-                    ->with(['subject:id,codigo_asignatura,nombre', 'academicPeriod:id,codigo,fecha_inicio,fecha_fin'])
-                    ->get()
-                    ->filter(fn (ScheduledSubject $scheduledSubject): bool => $this->periodPlanning->mayPlan($scheduledSubject->academicPeriod))
-                    ->map(fn (ScheduledSubject $scheduledSubject) => [
-                        'id' => $scheduledSubject->id,
-                        'label' => "{$scheduledSubject->subject->codigo_asignatura} · {$scheduledSubject->academicPeriod->codigo}",
-                        'subject_id' => $scheduledSubject->asignatura_id,
-                        'period_id' => $scheduledSubject->periodo_academico_id,
-                    ]),
+                'scheduledSubjects' => $periods
+                    ->filter(fn (AcademicPeriod $period): bool => $this->periodPlanning->mayPlan($period))
+                    ->flatMap(fn (AcademicPeriod $period) => Subject::query()
+                        ->where('activo', true)
+                        ->where('carrera_id', $careerId)
+                        ->orderBy('ciclo')
+                        ->orderBy('orden_en_ciclo')
+                        ->get(['id', 'codigo_asignatura', 'nombre'])
+                        ->map(fn (Subject $subject): array => [
+                            'label' => "{$subject->codigo_asignatura} · {$period->codigo}",
+                            'subject_id' => $subject->id,
+                            'period_id' => $period->id,
+                        ]))
+                    ->values(),
             ],
         ];
     }
@@ -364,13 +375,13 @@ class AcademicStructureViewData
         $lockReason = $this->locks->careerLockReason($careerId);
         $teacherAssignments = TeacherAssignment::query()
             ->whereHas(
-                'parallel.scheduledSubject.subject',
+                'parallel.subject',
                 fn ($query) => $query->where('carrera_id', $careerId),
             )
             ->with([
                 'roleAssignment.user:id,nombre,correo_electronico',
-                'parallel.scheduledSubject.subject:id,nombre,codigo_asignatura',
-                'parallel.scheduledSubject.academicPeriod:id,codigo,fecha_inicio,fecha_fin',
+                'parallel.subject:id,nombre,codigo_asignatura',
+                'parallel.academicPeriod:id,codigo,fecha_inicio,fecha_fin',
             ])
             ->orderByDesc('asignado_en')
             ->get();
@@ -389,12 +400,12 @@ class AcademicStructureViewData
                     'user_name' => $assignment->roleAssignment->user->nombre,
                     'user_email' => $assignment->roleAssignment->user->correo_electronico,
                     'parallel_code' => $assignment->parallel->codigo,
-                    'subject_name' => $assignment->parallel->scheduledSubject->subject->nombre,
-                    'period_name' => $assignment->parallel->scheduledSubject->academicPeriod->codigo,
-                    'period_status' => $this->periodPlanning->status($assignment->parallel->scheduledSubject->academicPeriod),
-                    'period_planning_enabled' => $this->periodPlanning->mayPlan($assignment->parallel->scheduledSubject->academicPeriod),
+                    'subject_name' => $assignment->parallel->subject->nombre,
+                    'period_name' => $assignment->parallel->academicPeriod->codigo,
+                    'period_status' => $this->periodPlanning->status($assignment->parallel->academicPeriod),
+                    'period_planning_enabled' => $this->periodPlanning->mayPlan($assignment->parallel->academicPeriod),
                     'active' => $assignment->activo,
-                    'editable' => $this->periodPlanning->mayPlan($assignment->parallel->scheduledSubject->academicPeriod),
+                    'editable' => $this->periodPlanning->mayPlan($assignment->parallel->academicPeriod),
                 ]),
             'careerTeachers' => RoleAssignment::query()
                 ->effective()
@@ -432,19 +443,19 @@ class AcademicStructureViewData
                 ...$this->baseOptions(),
                 'parallels' => Parallel::query()
                     ->whereHas(
-                        'scheduledSubject.subject',
+                        'subject',
                         fn ($query) => $query->where('carrera_id', $careerId),
                     )
                     ->whereDoesntHave('teacherAssignments', fn ($query) => $query->where('activo', true))
                     ->with([
-                        'scheduledSubject.subject:id,codigo_asignatura,nombre',
-                        'scheduledSubject.academicPeriod:id,codigo,fecha_inicio,fecha_fin',
+                        'subject:id,codigo_asignatura,nombre',
+                        'academicPeriod:id,codigo,fecha_inicio,fecha_fin',
                     ])
                     ->get()
-                    ->filter(fn (Parallel $parallel): bool => $this->periodPlanning->mayPlan($parallel->scheduledSubject->academicPeriod))
+                    ->filter(fn (Parallel $parallel): bool => $this->periodPlanning->mayPlan($parallel->academicPeriod))
                     ->map(fn (Parallel $parallel) => [
                         'id' => $parallel->id,
-                        'label' => "{$parallel->scheduledSubject->subject->nombre} · {$parallel->scheduledSubject->academicPeriod->codigo} · Paralelo {$parallel->codigo}",
+                        'label' => "{$parallel->subject->nombre} · {$parallel->academicPeriod->codigo} · Paralelo {$parallel->codigo}",
                     ]),
                 'teacherUsers' => User::query()
                     ->where('activo', true)

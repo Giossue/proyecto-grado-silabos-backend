@@ -153,11 +153,10 @@ class CreateAcademicRecord
     private function createTeacherAssignment(array $data, string $careerId): TeacherAssignment
     {
         $parallel = Parallel::query()
-            ->with('scheduledSubject.subject.career:id')
+            ->with('subject.career:id')
             ->whereKey($this->stringValue($data, 'parallel_id'))
-            ->whereHas('scheduledSubject', fn ($query) => $query->where('activo', true))
             ->whereHas(
-                'scheduledSubject.subject',
+                'subject',
                 fn ($query) => $query->where('carrera_id', $careerId),
             )
             ->lockForUpdate()

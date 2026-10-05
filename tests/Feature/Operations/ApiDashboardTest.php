@@ -4,7 +4,6 @@ namespace Tests\Feature\Operations;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Database\Seeders\DatabaseSeeder;
@@ -66,7 +65,7 @@ class ApiDashboardTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
         $coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
-        $scheduledSubject = ScheduledSubject::query()->firstOrFail();
+        $scheduledSubject = Parallel::query()->firstOrFail();
         $template = app(SyllabusTemplateProvisioner::class)->createWithOfficialFormat();
         $process = SyllabusProcess::query()->create([
             'periodo_academico_id' => $scheduledSubject->periodo_academico_id,
@@ -75,7 +74,7 @@ class ApiDashboardTest extends TestCase
             'estado' => SyllabusProcess::STATE_OPEN,
         ]);
         Parallel::query()->create([
-            'programacion_asignatura_id' => $scheduledSubject->id,
+            'periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id,
             'codigo' => 'B',
             'jornada' => 'matutina',
         ]);

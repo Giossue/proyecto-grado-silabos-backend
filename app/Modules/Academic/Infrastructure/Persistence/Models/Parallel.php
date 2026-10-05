@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Infrastructure\Persistence\Models;
 
+use App\Modules\Academic\Domain\StudyModality;
 use App\Support\Database\MapsLegacyColumnNames;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -9,10 +10,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
+ * Paralelo de una materia en un período académico. A nivel institucional siempre se ofrecen
+ * todas las materias de la malla, así que no hay una "materia programada" aparte (I-181).
+ *
  * @property string $id
+ * @property string $periodo_academico_id
+ * @property string $asignatura_id
  * @property string $codigo
  * @property string $jornada
- * @property-read ScheduledSubject $scheduledSubject
+ * @property-read AcademicPeriod $academicPeriod
+ * @property-read Subject $subject
+ * @property-read string|null $campus_programacion Campus de la facultad de la carrera (derivado, I-164).
+ * @property-read StudyModality|null $modalidad Modalidad de la materia o, si no tiene, de la carrera (derivada).
  */
 class Parallel extends Model
 {
@@ -22,7 +31,6 @@ class Parallel extends Model
         'id' => 'paralelo_id',
         'codigo' => 'codigo_paralelo',
         'jornada' => 'jornada_paralelo',
-        'programacion_asignatura_id' => 'asignatura_ofertada_id',
     ];
 
     public $timestamps = false;
@@ -41,12 +49,33 @@ class Parallel extends Model
     }
 
     /** @var list<string> */
-    protected $fillable = ['programacion_asignatura_id', 'codigo', 'jornada'];
+    protected $fillable = ['periodo_academico_id', 'asignatura_id', 'codigo', 'jornada'];
 
-    /** @return BelongsTo<ScheduledSubject, $this> */
-    public function scheduledSubject(): BelongsTo
+    // Campus y modalidad no se guardan: salen de la materia, su carrera y su facultad.
+    public function getCampusProgramacionAttribute(): ?string
     {
-        return $this->belongsTo(ScheduledSubject::class, 'asignatura_ofertada_id');
+        $this->loadMissing('subject');
+
+        return $this->subject->campusName();
+    }
+
+    public function getModalidadAttribute(): ?StudyModality
+    {
+        $this->loadMissing('subject');
+
+        return $this->subject->studyModality();
+    }
+
+    /** @return BelongsTo<AcademicPeriod, $this> */
+    public function academicPeriod(): BelongsTo
+    {
+        return $this->belongsTo(AcademicPeriod::class, 'periodo_academico_id');
+    }
+
+    /** @return BelongsTo<Subject, $this> */
+    public function subject(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class, 'asignatura_id');
     }
 
     /** @return HasMany<TeacherAssignment, $this> */

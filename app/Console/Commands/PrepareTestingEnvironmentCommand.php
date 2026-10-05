@@ -6,13 +6,11 @@ use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Application\Actions\CreateAcademicRecord;
 use App\Modules\Academic\Application\Actions\CreateParallels;
-use App\Modules\Academic\Application\Actions\DeleteScheduledSubject;
 use App\Modules\Academic\Application\Actions\PreparePeriod;
 use App\Modules\Academic\Application\Actions\ReplaceCoordinator;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
@@ -130,10 +128,9 @@ class PrepareTestingEnvironmentCommand extends Command
                 app(AcademicPeriodPlanning::class)->label($period),
             ])->all());
         $this->line(sprintf(
-            'Malla: %d materias activas · programaciones: %d · paralelos: %d',
+            'Malla: %d materias activas · paralelos: %d',
             Subject::query()->where('carrera_id', $career->id)->where('activo', true)->count(),
-            ScheduledSubject::query()->whereHas('subject', fn ($q) => $q->where('carrera_id', $career->id))->count(),
-            Parallel::query()->whereHas('scheduledSubject.subject', fn ($q) => $q->where('carrera_id', $career->id))->count(),
+            Parallel::query()->whereHas('subject', fn ($q) => $q->where('carrera_id', $career->id))->count(),
         ));
         $this->line(sprintf(
             'Convocatorias institucionales: %s · de carrera: %s',
@@ -247,11 +244,11 @@ class PrepareTestingEnvironmentCommand extends Command
             if ($running) {
                 throw new RuntimeException('La convocatoria de la carrera ya existe: asigne el paralelo desde Coordinación.');
             }
-            $scheduled = ScheduledSubject::query()->where('periodo_academico_id', $period->id)
-                ->where('asignatura_id', $subject->id)->where('activo', true)->first();
-            $scheduled === null
-                ? $this->scheduleSubject($career, $period, $coordinator, $subject, $teacher)
-                : $this->assignExisting($scheduled, $coordinator, $teacher);
+            $hasParallels = Parallel::query()->where('periodo_academico_id', $period->id)
+                ->where('asignatura_id', $subject->id)->exists();
+            $hasParallels
+                ? $this->assignExisting($period, $subject, $coordinator, $teacher)
+                : $this->scheduleSubject($career, $period, $coordinator, $subject, $teacher);
             $this->line("Paralelo {$subject->nombre} asignado a {$teacher->correo_electronico}");
         }
     }
@@ -281,17 +278,16 @@ class PrepareTestingEnvironmentCommand extends Command
     {
         return TeacherAssignment::query()->where('activo', true)
             ->whereHas('roleAssignment', fn ($q) => $q->where('usuario_id', $teacher->id))
-            ->whereHas('parallel.scheduledSubject', fn ($q) => $q->where('periodo_academico_id', $period->id)
-                ->where('asignatura_id', $subject->id)->where('activo', true))
+            ->whereHas('parallel', fn ($q) => $q->where('periodo_academico_id', $period->id)
+                ->where('asignatura_id', $subject->id))
             ->first();
     }
 
     private function scheduleSubject(Career $career, AcademicPeriod $period, RoleAssignment $coordinator, Subject $subject, User $teacher): void
     {
-        $before = ScheduledSubject::query()->where('periodo_academico_id', $period->id)->pluck('id');
         /** @var list<string> $pending */
         $pending = Subject::query()->where('carrera_id', $career->id)->where('activo', true)
-            ->whereDoesntHave('scheduledSubjects', fn ($q) => $q->where('periodo_academico_id', $period->id)->where('activo', true))
+            ->whereDoesntHave('parallels', fn ($q) => $q->where('periodo_academico_id', $period->id))
             ->pluck('id')->push($subject->id)->unique()->values()->all();
         $settings = [];
         foreach ($pending as $id) {
@@ -303,20 +299,16 @@ class PrepareTestingEnvironmentCommand extends Command
             'period_id' => $period->id,
             'subjects' => $settings,
         ], $coordinator->user, $this->requestAs($coordinator));
-
-        ScheduledSubject::query()->where('periodo_academico_id', $period->id)->whereNotIn('id', $before)
-            ->whereDoesntHave('parallels')->pluck('id')
-            ->each(fn (string $id) => app(DeleteScheduledSubject::class)->execute($id, $coordinator->user, $this->requestAs($coordinator)));
     }
 
-    private function assignExisting(ScheduledSubject $scheduled, RoleAssignment $coordinator, User $teacher): void
+    private function assignExisting(AcademicPeriod $period, Subject $subject, RoleAssignment $coordinator, User $teacher): void
     {
-        $free = Parallel::query()->where('programacion_asignatura_id', $scheduled->id)
-            ->whereDoesntHave('teacherAssignments', fn ($q) => $q->where('activo', true))->orderBy('codigo')->first();
+        $parallels = fn () => Parallel::query()->where('periodo_academico_id', $period->id)->where('asignatura_id', $subject->id);
+        $free = $parallels()->whereDoesntHave('teacherAssignments', fn ($q) => $q->where('activo', true))->orderBy('codigo')->first();
         if ($free === null) {
-            $code = 'P'.(Parallel::query()->where('programacion_asignatura_id', $scheduled->id)->count() + 1);
-            app(CreateParallels::class)->execute(['scheduled_subject_id' => $scheduled->id, 'codes' => [$code], 'shift' => 'matutina'], $coordinator->user, $this->requestAs($coordinator));
-            $free = Parallel::query()->where('programacion_asignatura_id', $scheduled->id)->where('codigo', $code)->firstOrFail();
+            $code = 'P'.($parallels()->count() + 1);
+            app(CreateParallels::class)->execute(['subject_id' => $subject->id, 'period_id' => $period->id, 'codes' => [$code], 'shift' => 'matutina'], $coordinator->user, $this->requestAs($coordinator));
+            $free = $parallels()->where('codigo', $code)->firstOrFail();
         }
         app(CreateAcademicRecord::class)->execute('asignacion_docente', ['parallel_id' => $free->id, 'user_id' => $teacher->id], $coordinator->user, $this->requestAs($coordinator));
     }
@@ -364,8 +356,8 @@ class PrepareTestingEnvironmentCommand extends Command
                 $assignment->user->correo_electronico, $assignment->rol, $assignment->career?->codigo_carrera,
                 $assignment->user->activo ? 'sí' : 'no', $assignment->user->hasVerifiedEmail() ? 'sí' : 'no',
                 TeacherAssignment::query()->where('asignacion_rol_id', $assignment->id)->where('activo', true)
-                    ->with('parallel.scheduledSubject.subject')->get()
-                    ->map(fn (TeacherAssignment $t): string => "{$t->parallel->scheduledSubject->subject->nombre} ({$t->parallel->codigo})")
+                    ->with('parallel.subject')->get()
+                    ->map(fn (TeacherAssignment $t): string => "{$t->parallel->subject->nombre} ({$t->parallel->codigo})")
                     ->implode(', ') ?: '-',
             ])->all());
 
@@ -377,7 +369,7 @@ class PrepareTestingEnvironmentCommand extends Command
 
         $this->table(['Docente', 'Materia', 'Paralelo', 'Estado sílabo'], Syllabus::query()
             ->whereHas('convocation', fn ($q) => $q->where('carrera_id', $career->id))
-            ->with(['parallel.scheduledSubject.subject', 'parallel.teacherAssignments' => fn ($q) => $q->where('activo', true)->with('roleAssignment.user')])
+            ->with(['parallel.subject', 'parallel.teacherAssignments' => fn ($q) => $q->where('activo', true)->with('roleAssignment.user')])
             ->get()
             ->map(fn (Syllabus $syllabus): array => [
                 $syllabus->parallel->teacherAssignments->first()?->roleAssignment->user->correo_electronico ?? '-',

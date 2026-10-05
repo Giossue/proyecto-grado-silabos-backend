@@ -65,7 +65,7 @@ class SyllabusController extends Controller
                         ->whereRaw('codigo_periodo_academico ILIKE ?', ["%{$term}%"])),
             ))
             ->when($state, fn ($query, string $value) => $query->where('estado', $value))
-            ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'parallel.scheduledSubject.subject:id,nombre,codigo_asignatura', 'parallel:id,codigo'])
+            ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'parallel.subject:id,nombre,codigo_asignatura', 'parallel:id,codigo'])
             ->orderByRaw('guardado_en DESC NULLS LAST')
             ->paginate(15)
             ->withQueryString()
@@ -183,7 +183,7 @@ class SyllabusController extends Controller
     private function syllabusPayload(Syllabus $syllabus): array
     {
         $syllabus->load([
-            'convocation.career', 'convocation.process.academicPeriod', 'parallel.scheduledSubject.subject', 'parallel', 'teachers:id,nombre,correo_electronico',
+            'convocation.career', 'convocation.process.academicPeriod', 'parallel.subject', 'parallel', 'teachers:id,nombre,correo_electronico',
             'values',
             'revisions' => fn ($query) => $query->with([
                 'submitter:id,nombre', 'approval.approver:id,nombre',

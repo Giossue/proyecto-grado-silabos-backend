@@ -225,7 +225,7 @@ class DeliverInternalNotificationJob implements ShouldQueue
 
     private function syllabusFor(JobExecution $execution): Syllabus
     {
-        return Syllabus::query()->with('parallel.scheduledSubject.subject:id,nombre')->findOrFail($execution->recurso_id);
+        return Syllabus::query()->with('parallel.subject:id,nombre')->findOrFail($execution->recurso_id);
     }
 
     private function notificationKey(JobExecution $execution): string

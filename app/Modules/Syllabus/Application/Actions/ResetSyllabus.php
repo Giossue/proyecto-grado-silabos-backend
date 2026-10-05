@@ -43,7 +43,7 @@ class ResetSyllabus
         return DB::transaction(function () use ($activeRole, $actor, $syllabus): Syllabus {
             $locked = Syllabus::query()
                 ->lockForUpdate()
-                ->with(['convocation', 'parallel.scheduledSubject'])
+                ->with(['convocation', 'parallel'])
                 ->findOrFail($syllabus->id);
 
             if (! in_array($locked->estado, self::RESETTABLE_STATES, true)) {
@@ -59,7 +59,7 @@ class ResetSyllabus
                 ]);
             }
 
-            $scheduledSubject = $locked->parallel->scheduledSubject;
+            $parallel = $locked->parallel;
 
             $discarded = [
                 'previous_state' => $locked->estado,
@@ -73,12 +73,12 @@ class ResetSyllabus
                 'version_bloqueo' => 0,
                 'iniciado_en' => null,
                 'guardado_en' => null,
-                'contexto_academico' => $this->academicContext->build($scheduledSubject),
+                'contexto_academico' => $this->academicContext->build($parallel),
             ]);
             $this->inherit->execute(
                 $locked,
                 SyllabusTemplate::institutional()->sections->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields)),
-                $scheduledSubject,
+                $parallel,
             );
 
             $this->audit->execute(

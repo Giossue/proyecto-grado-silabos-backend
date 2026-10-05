@@ -55,7 +55,7 @@ programadas de inicio o fin.
 
 `facultades`, `carreras`,
 `periodos_academicos`, `asignaturas`, `requisitos_asignatura`,
-`programaciones_asignatura`, `paralelos`, `asignaciones_paralelo`.
+`paralelos`, `asignaciones_paralelo`.
 
 `asignaciones_rol` es única relación RBAC: une usuario, rol fijo y alcance de carrera. Una
 fila activa con rol `coordinador` expresa directamente quién coordina esa carrera; no
@@ -78,8 +78,9 @@ servidor a partir del rango de meses y el año. `cantidad_semanas_lectivas` se c
 las semanas de lunes a domingo que toca el rango, incluidas las parciales, y queda entre
 1 y 52. El período no depende de una carrera. Su estado se deriva exclusivamente de sus
 fechas.
-`programaciones_asignatura` relaciona cada período con una asignatura mediante claves
-foráneas. La modalidad no es tabla sino
+I-181 retiró `asignaturas_ofertadas`: el paralelo apunta directo al período y a la asignatura
+(`paralelos.periodo_academico_id`, `paralelos.asignatura_id`), porque siempre se ofrecen todas
+las materias de la malla. La modalidad no es tabla sino
 columna de texto con valores fijos (`carreras.modalidad_carrera` base,
 `asignaturas.modalidad_asignatura` opcional; migraciones `000034` y `000052`, I-37/I-62).
 Desde I-168 un `CHECK` limita ambas a `presencial`, `semipresencial`, `en_linea`,
@@ -92,9 +93,8 @@ jerarquía que presenta ADM-04 es una proyección de lectura y no una desnormali
 la persistencia.
 
 `paralelos` no tiene estado propio: antes de tener historia se elimina y, una vez que
-participa en un sílabo, se conserva. Su operatividad se deriva del período y de su
-programación, sin duplicar un booleano individual. Todo paralelo tiene código único por
-materia programada y `jornada_paralelo` obligatoria (`matutina`, `vespertina` o
+participa en un sílabo, se conserva. Su operatividad se deriva del período, sin duplicar un
+booleano individual. Todo paralelo tiene código único por período y materia y `jornada_paralelo` obligatoria (`matutina`, `vespertina` o
 `nocturna`); la migración `000112` rellenó los nulos con `matutina` y dejó la columna
 NOT NULL (I-141).
 
@@ -229,7 +229,7 @@ Desde I-164 (migración `000160`) `silabos` ya no guarda `asignatura_id`: la mat
 lee del paralelo (paralelo → programación → materia; `Syllabus::subject` es derivado y
 `Syllabus::forSubjects()` filtra por esa vía). Cada sílabo cubre exactamente un paralelo: `silabos.paralelo_id` es obligatorio y único
 junto con `convocatoria_carrera_id` (antes `convocatoria_id`, alias en el modelo). La migración `000099` (I-131) retiró `alcances_silabo`
-(la materia programada se deriva de `paralelos.programacion_asignatura_id`) y
+(la materia se deriva de `paralelos.asignatura_id`) y
 `silabos.carrera_id` (la carrera es la de `convocatorias_carreras`); la vista
 `docentes_vigentes_silabo` se recreó sobre `silabos.paralelo_id`.
 Una corrección confirmada durante esa pausa usa `InProgressWork`: guarda el cambio,

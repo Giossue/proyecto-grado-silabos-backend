@@ -24,7 +24,7 @@ class DocumentController extends Controller
     {
         $revision->load([
             'approval.approver:id,nombre',
-            'syllabus.parallel.scheduledSubject.subject:id,nombre,codigo_asignatura',
+            'syllabus.parallel.subject:id,nombre,codigo_asignatura',
             'syllabus.convocation.process.academicPeriod:id,codigo',
         ]);
         abort_unless($revision->approval !== null, 404);
@@ -98,7 +98,7 @@ class DocumentController extends Controller
     ): StreamedResponse {
         $object = $this->objectFor($artifact, $format);
         abort_unless($object->disco === 'private' && Storage::disk('private')->exists($object->ruta_interna), 404);
-        $artifact->loadMissing('revision.syllabus.parallel.scheduledSubject.subject');
+        $artifact->loadMissing('revision.syllabus.parallel.subject');
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $activeRole = $roles->resolve($request);

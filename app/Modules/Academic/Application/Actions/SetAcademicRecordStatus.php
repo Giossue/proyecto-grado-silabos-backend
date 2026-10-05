@@ -8,7 +8,6 @@ use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
@@ -28,7 +27,6 @@ class SetAcademicRecordStatus
         'facultad' => Faculty::class,
         'carrera' => Career::class,
         'asignatura' => Subject::class,
-        'programacion_asignatura' => ScheduledSubject::class,
         'asignacion_docente' => TeacherAssignment::class,
     ];
 
@@ -70,9 +68,7 @@ class SetAcademicRecordStatus
                 ? $this->findCareerRecord($entity, $recordId, $activeRole->carrera_id)
                 : $modelClass::query()->lockForUpdate()->findOrFail($recordId);
 
-            if ($record instanceof ScheduledSubject) {
-                $this->periodPlanning->assertScheduledSubjectMayChange($record);
-            } elseif ($record instanceof TeacherAssignment) {
+            if ($record instanceof TeacherAssignment) {
                 $this->periodPlanning->assertTeacherAssignmentMayChange($record);
                 if ($record->activo !== $active && $active) {
                     throw ValidationException::withMessages([
@@ -112,12 +108,8 @@ class SetAcademicRecordStatus
                 'career',
                 fn ($query) => $query->whereKey($careerId),
             )->lockForUpdate()->findOrFail($recordId),
-            'programacion_asignatura' => ScheduledSubject::query()->whereHas(
-                'subject',
-                fn ($query) => $query->where('carrera_id', $careerId),
-            )->lockForUpdate()->findOrFail($recordId),
             'asignacion_docente' => TeacherAssignment::query()->whereHas(
-                'parallel.scheduledSubject.subject',
+                'parallel.subject',
                 fn ($query) => $query->where('carrera_id', $careerId),
             )->lockForUpdate()->findOrFail($recordId),
             default => throw new AuthorizationException('El registro no pertenece a la gestión de carrera.'),
@@ -129,8 +121,7 @@ class SetAcademicRecordStatus
         $hasActiveDependants = match ($entity) {
             'facultad' => Career::query()->where('facultad_id', $recordId)->where('activo', true)->exists(),
             'carrera' => Subject::query()->where('carrera_id', $recordId)->where('activo', true)->exists(),
-            'asignatura' => ScheduledSubject::query()->where('asignatura_id', $recordId)->where('activo', true)->exists(),
-            'programacion_asignatura' => Parallel::query()->where('programacion_asignatura_id', $recordId)->exists(),
+            'asignatura' => Parallel::query()->where('asignatura_id', $recordId)->exists(),
             default => false,
         };
 

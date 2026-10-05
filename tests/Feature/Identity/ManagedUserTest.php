@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\Actions\SetUserStatus;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -498,8 +497,10 @@ class ManagedUserTest extends TestCase
         $this->assertDatabaseHas('usuarios', ['usuario_id' => $teacher->id]);
 
         $assigned = $this->pendingTeacher('asignado@silabos.test');
+        $base = Parallel::query()->firstOrFail();
         $parallel = Parallel::query()->create([
-            'programacion_asignatura_id' => ScheduledSubject::query()->firstOrFail()->id,
+            'periodo_academico_id' => $base->periodo_academico_id,
+            'asignatura_id' => $base->asignatura_id,
             'codigo' => 'Z',
             'jornada' => 'matutina',
         ]);

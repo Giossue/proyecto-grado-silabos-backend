@@ -9,7 +9,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
@@ -58,7 +57,7 @@ class DeleteAcademicRecord
                 }
             : match ($entity) {
                 'asignacion_docente' => TeacherAssignment::query()
-                    ->whereHas('parallel.scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $role->carrera_id))
+                    ->whereHas('parallel.subject', fn ($query) => $query->where('carrera_id', $role->carrera_id))
                     ->lockForUpdate()->findOrFail($recordId),
                 default => throw new \LogicException('Entidad de carrera no admitida.'),
             };
@@ -117,18 +116,16 @@ class DeleteAcademicRecord
     }
 
     /**
-     * Borra materias programadas, paralelos y asignaciones docentes del periodo. Sin convocatoria no hay sílabos.
+     * Borra paralelos y asignaciones docentes del periodo. Sin convocatoria no hay sílabos.
      *
      * @return array<string, int>
      */
     private function deletePeriodPlanning(string $periodId): array
     {
-        $scheduledIds = ScheduledSubject::query()->where('periodo_academico_id', $periodId)->lockForUpdate()->pluck('id');
-        $parallelIds = Parallel::query()->whereIn('programacion_asignatura_id', $scheduledIds)->lockForUpdate()->pluck('id');
+        $parallelIds = Parallel::query()->where('periodo_academico_id', $periodId)->lockForUpdate()->pluck('id');
         $assignments = TeacherAssignment::query()->whereIn('paralelo_id', $parallelIds)->delete();
         $parallels = Parallel::query()->whereIn('id', $parallelIds)->delete();
-        $scheduled = ScheduledSubject::query()->whereIn('id', $scheduledIds)->delete();
 
-        return ['deleted_scheduled_subjects' => $scheduled, 'deleted_parallels' => $parallels, 'deleted_teacher_assignments' => $assignments];
+        return ['deleted_parallels' => $parallels, 'deleted_teacher_assignments' => $assignments];
     }
 }

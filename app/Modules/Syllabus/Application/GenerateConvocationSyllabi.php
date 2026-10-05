@@ -3,7 +3,6 @@
 namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
@@ -21,35 +20,33 @@ final class GenerateConvocationSyllabi
     public function execute(Convocation $convocation, ?string $subjectId = null, ?array $subjectIds = null): int
     {
         $convocation->loadMissing('process');
-        $scheduledSubjects = ScheduledSubject::query()
+        $parallels = Parallel::query()
             ->where('periodo_academico_id', $convocation->process->periodo_academico_id)
-            ->where('activo', true)
-            ->whereHas('subject', fn ($query) => $query->where('carrera_id', $convocation->carrera_id))
+            ->whereHas('subject', fn ($query) => $query->where('carrera_id', $convocation->carrera_id)->where('activo', true))
             ->when($subjectId !== null, fn ($query) => $query->where('asignatura_id', $subjectId))
             ->when($subjectIds !== null, fn ($query) => $query->whereIn('asignatura_id', $subjectIds))
             ->with([
                 'subject.career.faculty',
-                'parallels' => fn ($query) => $query->lockForUpdate()->with([
-                    'teacherAssignments' => fn ($assignmentQuery) => $assignmentQuery
-                        ->where('asignaciones_paralelo.asignacion_paralelo_activa', true)
-                        ->whereHas('roleAssignment', fn ($roleQuery) => $roleQuery
-                            ->where('asignaciones_rol.asignacion_rol_activa', true)
-                            ->where('asignaciones_rol.rol', RoleCode::Teacher->value)
-                            ->where('asignaciones_rol.carrera_id', $convocation->carrera_id)
-                            ->whereHas('user', fn ($userQuery) => $userQuery
-                                ->where('usuarios.usuario_activo', true)
-                                ->whereNotNull('usuarios.correo_verificado_en')))
-                        ->with('roleAssignment')
-                        ->lockForUpdate(),
-                ]),
+                'teacherAssignments' => fn ($assignmentQuery) => $assignmentQuery
+                    ->where('asignaciones_paralelo.asignacion_paralelo_activa', true)
+                    ->whereHas('roleAssignment', fn ($roleQuery) => $roleQuery
+                        ->where('asignaciones_rol.asignacion_rol_activa', true)
+                        ->where('asignaciones_rol.rol', RoleCode::Teacher->value)
+                        ->where('asignaciones_rol.carrera_id', $convocation->carrera_id)
+                        ->whereHas('user', fn ($userQuery) => $userQuery
+                            ->where('usuarios.usuario_activo', true)
+                            ->whereNotNull('usuarios.correo_verificado_en')))
+                    ->with('roleAssignment')
+                    ->lockForUpdate(),
             ])
             ->orderBy('asignatura_id')
+            ->orderBy('codigo')
             ->lockForUpdate()
             ->get();
 
-        if ($scheduledSubjects->isEmpty()) {
+        if ($parallels->isEmpty()) {
             throw ValidationException::withMessages([
-                'convocation' => 'No existen materias programadas activas de la carrera para el período.',
+                'convocation' => 'No existen paralelos de la carrera para el período.',
             ]);
         }
 
@@ -58,26 +55,22 @@ final class GenerateConvocationSyllabi
             ->pluck('paralelo_id')
             ->flip();
 
-        foreach ($scheduledSubjects as $scheduledSubject) {
-            $pending = $scheduledSubject->parallels->reject(fn (Parallel $parallel): bool => $covered->has($parallel->id));
-            if ($scheduledSubject->parallels->isEmpty() || $pending->contains(
-                fn (Parallel $parallel): bool => $parallel->teacherAssignments->count() !== 1,
-            )) {
+        foreach ($parallels->groupBy('asignatura_id') as $subjectParallels) {
+            $pending = $subjectParallels->reject(fn (Parallel $parallel): bool => $covered->has($parallel->id));
+            if ($pending->contains(fn (Parallel $parallel): bool => $parallel->teacherAssignments->count() !== 1)) {
                 throw ValidationException::withMessages([
-                    'convocation' => "La materia {$scheduledSubject->subject->nombre} debe tener exactamente un docente vigente por paralelo.",
+                    'convocation' => "La materia {$subjectParallels->first()->subject->nombre} debe tener exactamente un docente vigente por paralelo.",
                 ]);
             }
         }
 
         $generated = 0;
-        foreach ($scheduledSubjects as $scheduledSubject) {
-            foreach ($scheduledSubject->parallels as $parallel) {
-                if ($covered->has($parallel->id)) {
-                    continue;
-                }
-                $this->generate($convocation, $scheduledSubject, $parallel);
-                $generated++;
+        foreach ($parallels as $parallel) {
+            if ($covered->has($parallel->id)) {
+                continue;
             }
+            $this->generate($convocation, $parallel);
+            $generated++;
         }
 
         return $generated;
@@ -86,21 +79,21 @@ final class GenerateConvocationSyllabi
     /** Genera desde cero el sílabo de un solo paralelo; el paralelo no debe tener sílabo en la convocatoria. */
     public function generateForParallel(Convocation $convocation, Parallel $parallel): void
     {
-        $parallel->loadMissing('scheduledSubject.subject.career.faculty');
-        $this->generate($convocation, $parallel->scheduledSubject, $parallel);
+        $parallel->loadMissing('subject.career.faculty');
+        $this->generate($convocation, $parallel);
     }
 
-    private function generate(Convocation $convocation, ScheduledSubject $scheduledSubject, Parallel $parallel): void
+    private function generate(Convocation $convocation, Parallel $parallel): void
     {
         $syllabus = Syllabus::query()->create([
             'convocatoria_id' => $convocation->id,
             'paralelo_id' => $parallel->id,
-            'contexto_academico' => $this->academicContext->build($scheduledSubject),
+            'contexto_academico' => $this->academicContext->build($parallel),
             'estado' => 'sin_iniciar',
         ]);
 
         $fields = SyllabusTemplate::institutional()->sections
             ->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields));
-        $this->inherit->execute($syllabus, $fields, $scheduledSubject);
+        $this->inherit->execute($syllabus, $fields, $parallel);
     }
 }

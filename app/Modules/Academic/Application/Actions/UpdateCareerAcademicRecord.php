@@ -9,7 +9,6 @@ use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
@@ -41,7 +40,6 @@ class UpdateCareerAcademicRecord
         'periodo_academico_id' => 'Periodo académico',
         'asignatura_id' => 'Materia',
         'modalidad' => 'Modalidad',
-        'asignatura_ofertada_id' => 'Programación de asignatura',
         'usuario_id' => 'Docente',
         'paralelo_id' => 'Paralelo',
     ];
@@ -230,10 +228,6 @@ class UpdateCareerAcademicRecord
 
     private function assertPeriodMayChange(Model $record): void
     {
-        if ($record instanceof ScheduledSubject) {
-            $this->periodPlanning->assertScheduledSubjectMayChange($record);
-        }
-
         if ($record instanceof Parallel) {
             $this->periodPlanning->assertParallelMayChange($record);
         }

@@ -5,8 +5,9 @@ namespace App\Modules\Academic\Application\Actions;
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -25,7 +26,7 @@ class CreateParallels
         private readonly AcademicPeriodPlanning $periodPlanning,
     ) {}
 
-    /** @param  array{scheduled_subject_id: string, codes: list<string>, shift: string}  $data */
+    /** @param  array{subject_id: string, period_id: string, codes: list<string>, shift: string}  $data */
     public function execute(array $data, User $actor, Request $request): int
     {
         $activeRole = $this->roles->resolve($request);
@@ -37,31 +38,33 @@ class CreateParallels
         $this->locks->assertCareerEditable($activeRole->carrera_id);
 
         return DB::transaction(function () use ($data, $actor, $activeRole): int {
-            $scheduledSubject = ScheduledSubject::query()
-                ->whereKey($data['scheduled_subject_id'])
+            $subject = Subject::query()
+                ->whereKey($data['subject_id'])
                 ->where('activo', true)
-                ->whereHas('subject', fn ($query) => $query
-                    ->where('carrera_id', $activeRole->carrera_id))
+                ->where('carrera_id', $activeRole->carrera_id)
                 ->lockForUpdate()
                 ->firstOrFail();
-            $this->periodPlanning->assertScheduledSubjectMayChange($scheduledSubject, 'scheduled_subject_id');
+            $period = AcademicPeriod::query()->whereKey($data['period_id'])->firstOrFail();
+            $this->periodPlanning->assertMayPlan($period, 'period_id');
             $codes = collect($data['codes'])
                 ->map(fn (string $code) => trim($code))
                 ->values();
             $existing = Parallel::query()
-                ->where('programacion_asignatura_id', $scheduledSubject->id)
+                ->where('periodo_academico_id', $period->id)
+                ->where('asignatura_id', $subject->id)
                 ->whereIn('codigo', $codes)
                 ->pluck('codigo');
 
             if ($existing->isNotEmpty()) {
                 throw ValidationException::withMessages([
-                    'codes' => 'Ya existe el paralelo '.$existing->join(', ').' para esta materia programada.',
+                    'codes' => 'Ya existe el paralelo '.$existing->join(', ').' para esta materia en el período.',
                 ]);
             }
 
             foreach ($codes as $code) {
                 $parallel = Parallel::query()->create([
-                    'programacion_asignatura_id' => $scheduledSubject->id,
+                    'periodo_academico_id' => $period->id,
+                    'asignatura_id' => $subject->id,
                     'codigo' => $code,
                     'jornada' => $data['shift'],
                 ]);

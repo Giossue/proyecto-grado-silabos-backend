@@ -210,11 +210,12 @@ it('I-107 guarda ciclos en la carrera y retira códigos de facultad y malla', fu
         ->not->toContain('silabos_carrera_id_foreign');
 });
 
-it('I-62 persiste la programación de asignaturas con nombres e invariante propios', function () {
-    expect(Schema::hasTable('asignaturas_ofertadas'))->toBeTrue()
+it('I-181 el paralelo apunta directo al período y a la materia, sin tabla de programación', function () {
+    expect(Schema::hasTable('asignaturas_ofertadas'))->toBeFalse()
         ->and(Schema::hasTable('programaciones_asignatura'))->toBeFalse()
         ->and(Schema::hasTable('ofertas_academicas'))->toBeFalse()
-        ->and(Schema::hasColumn('paralelos', 'asignatura_ofertada_id'))->toBeTrue()
+        ->and(Schema::hasColumns('paralelos', ['periodo_academico_id', 'asignatura_id']))->toBeTrue()
+        ->and(Schema::hasColumn('paralelos', 'asignatura_ofertada_id'))->toBeFalse()
         ->and(Schema::hasColumn('paralelos', 'oferta_academica_id'))->toBeFalse()
         ->and(Schema::hasTable('alcances_silabo'))->toBeFalse()
         ->and(Schema::hasColumn('silabos', 'paralelo_id'))->toBeTrue()
@@ -223,16 +224,14 @@ it('I-62 persiste la programación de asignaturas con nombres e invariante propi
     $restricciones = collect(DB::select(
         "SELECT conname
          FROM pg_constraint
-         WHERE conrelid = 'asignaturas_ofertadas'::regclass",
+         WHERE conrelid = 'paralelos'::regclass",
     ))->pluck('conname');
 
     expect($restricciones)
-        ->toContain('asignaturas_ofertadas_periodo_materia_unica')
-        ->toContain('asignaturas_ofertadas_periodo_academico_id_foreign')
-        ->toContain('asignaturas_ofertadas_asignatura_id_foreign')
-        ->toContain('asignaturas_ofertadas_id_not_null')
-        ->toContain('asignaturas_ofertadas_pkey')
-        ->not->toContain('ofertas_academicas_id_not_null');
+        ->toContain('paralelos_periodo_asignatura_codigo_unique')
+        ->toContain('paralelos_periodo_academico_id_foreign')
+        ->toContain('paralelos_asignatura_id_foreign')
+        ->toContain('paralelos_pkey');
 });
 
 it('I-176 nombra con claridad trabajos, notificaciones, auditoría y mensajes de IA', function () {

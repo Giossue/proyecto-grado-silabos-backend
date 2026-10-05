@@ -53,7 +53,7 @@ class PreparePeriodRequest extends FormRequest
 
         return $this->user()?->activo === true
             && $activeRole !== null
-            && AcademicStructurePermissions::mayCreate($activeRole, 'programacion_asignatura')
+            && AcademicStructurePermissions::mayCreate($activeRole, 'paralelo')
             && (! $this->includesTeacher()
                 || AcademicStructurePermissions::mayCreate($activeRole, 'asignacion_docente'));
     }

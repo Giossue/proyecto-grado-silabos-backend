@@ -8,7 +8,7 @@ use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\CurricularUnit;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Domain\StudyModality;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
 use Illuminate\Foundation\Http\FormRequest;
@@ -73,11 +73,10 @@ class StoreAcademicRecordRequest extends FormRequest
                     'required',
                     'uuid',
                     Rule::exists('paralelos', 'paralelo_id')->where(fn ($query) => $query
-                        ->whereIn('asignatura_ofertada_id', ScheduledSubject::query()
+                        ->whereIn('asignatura_id', Subject::query()
                             ->select('id')
-                            ->where('asignatura_ofertada_activa', true)
-                            ->whereHas('subject', fn ($subject) => $subject
-                                ->where('carrera_id', $this->careerId())))),
+                            ->where('activo', true)
+                            ->where('carrera_id', $this->careerId()))),
                 ],
             ],
             default => [],

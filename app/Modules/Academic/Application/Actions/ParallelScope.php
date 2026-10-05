@@ -31,7 +31,7 @@ final class ParallelScope
     {
         return Parallel::query()
             ->whereKey($parallelId)
-            ->whereHas('scheduledSubject.subject', fn ($query) => $query->where('carrera_id', $careerId))
+            ->whereHas('subject', fn ($query) => $query->where('carrera_id', $careerId))
             ->lockForUpdate()
             ->firstOrFail();
     }

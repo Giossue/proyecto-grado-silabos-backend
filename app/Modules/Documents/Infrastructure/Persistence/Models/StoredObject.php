@@ -18,7 +18,6 @@ use LogicException;
  * @property string $huella_sha256
  * @property string $clasificacion
  * @property string|null $propietario_usuario_id
- * @property string|null $carrera_id
  * @property CarbonImmutable $almacenado_en
  */
 class StoredObject extends Model
@@ -47,7 +46,7 @@ class StoredObject extends Model
     protected $fillable = [
         'disco', 'ruta_interna', 'nombre_logico', 'mime', 'tamano_bytes',
         'huella_sha256', 'clasificacion', 'propietario_usuario_id',
-        'carrera_id', 'almacenado_en',
+        'almacenado_en',
     ];
 
     /** @return array<string, string> */

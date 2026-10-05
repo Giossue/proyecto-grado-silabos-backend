@@ -4,7 +4,7 @@ namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -45,26 +45,23 @@ final class CoordinatorConvocationReadiness
             ->with('academicPeriod')
             ->first();
 
-        $scheduledSubjects = ScheduledSubject::query()
+        // A nivel institucional se ofrecen todas las materias activas de la malla (I-181).
+        $subjects = Subject::query()
             ->where('activo', true)
-            ->whereHas('subject', fn (Builder $query) => $query->where('carrera_id', $careerId))
+            ->where('carrera_id', $careerId)
+            ->when($process === null, fn (Builder $query) => $query->whereRaw('1 = 0'));
+        $scheduledTotal = (clone $subjects)->count();
+        $scheduledWithParallels = $process === null ? 0 : (clone $subjects)
+            ->whereHas('parallels', fn (Builder $query) => $query->where('periodo_academico_id', $process->periodo_academico_id))
+            ->count();
+
+        $parallels = Parallel::query()
             ->when(
                 $process !== null,
                 fn (Builder $query) => $query->where('periodo_academico_id', $process->periodo_academico_id),
                 fn (Builder $query) => $query->whereRaw('1 = 0'),
-            );
-        $scheduledTotal = (clone $scheduledSubjects)->count();
-        $scheduledWithParallels = (clone $scheduledSubjects)->whereHas('parallels')->count();
-
-        $parallels = Parallel::query()
-            ->whereHas('scheduledSubject', fn (Builder $query) => $query
-                ->where('activo', true)
-                ->when(
-                    $process !== null,
-                    fn (Builder $period) => $period->where('periodo_academico_id', $process->periodo_academico_id),
-                    fn (Builder $period) => $period->whereRaw('1 = 0'),
-                )
-                ->whereHas('subject', fn (Builder $subject) => $subject->where('carrera_id', $careerId)));
+            )
+            ->whereHas('subject', fn (Builder $subject) => $subject->where('activo', true)->where('carrera_id', $careerId));
         $parallelTotal = (clone $parallels)->count();
         $parallelsWithTeacher = (clone $parallels)->whereHas('teacherAssignments', fn (Builder $assignment) => $assignment
             ->where('asignaciones_paralelo.asignacion_paralelo_activa', true)
@@ -123,13 +120,13 @@ final class CoordinatorConvocationReadiness
             $missing[] = 'Falta registrar la malla de la carrera con sus materias.';
         }
         if ($readiness['scheduled_total'] === 0) {
-            $missing[] = 'Falta programar materias en el período.';
+            $missing[] = 'Falta registrar paralelos de las materias en el período.';
         }
         $withoutParallel = $readiness['scheduled_total'] - $readiness['scheduled_with_parallels'];
         if ($withoutParallel > 0) {
             $missing[] = $withoutParallel === 1
-                ? 'Falta 1 materia programada sin paralelo.'
-                : "Faltan {$withoutParallel} materias programadas sin paralelo.";
+                ? 'Falta 1 materia sin paralelo.'
+                : "Faltan {$withoutParallel} materias sin paralelo.";
         }
         $withoutTeacher = $readiness['parallel_total'] - $readiness['parallels_with_teacher'];
         if ($withoutTeacher > 0) {

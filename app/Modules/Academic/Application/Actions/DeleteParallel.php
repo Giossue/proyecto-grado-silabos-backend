@@ -38,11 +38,12 @@ class DeleteParallel
                 ]);
             }
             $siblings = Parallel::query()
-                ->where('programacion_asignatura_id', $parallel->getAttribute('programacion_asignatura_id'))
+                ->where('periodo_academico_id', $parallel->periodo_academico_id)
+                ->where('asignatura_id', $parallel->asignatura_id)
                 ->count();
             if ($siblings <= 1) {
                 throw ValidationException::withMessages([
-                    'record' => 'La materia debe conservar al menos un paralelo. Elimine la materia programada si ya no se dicta.',
+                    'record' => 'La materia debe conservar al menos un paralelo en el período.',
                 ]);
             }
             $code = $parallel->codigo;

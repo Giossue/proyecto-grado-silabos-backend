@@ -4,7 +4,6 @@ namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
@@ -117,9 +116,9 @@ class ConvocationAndDraftTest extends TestCase
 
     public function test_explicit_per_parallel_mode_generates_one_syllabus_for_each_parallel(): void
     {
-        $scheduledSubject = ScheduledSubject::query()->firstOrFail();
+        $scheduledSubject = Parallel::query()->firstOrFail();
         $parallel = Parallel::query()->create([
-            'programacion_asignatura_id' => $scheduledSubject->id,
+            'periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id,
             'codigo' => 'B',
             'jornada' => 'matutina',
         ]);
@@ -145,8 +144,10 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))
             ->assertSuccessful();
+        $base = Parallel::query()->firstOrFail();
         $parallel = Parallel::query()->create([
-            'programacion_asignatura_id' => ScheduledSubject::query()->firstOrFail()->id,
+            'periodo_academico_id' => $base->periodo_academico_id,
+            'asignatura_id' => $base->asignatura_id,
             'codigo' => 'B',
             'jornada' => 'matutina',
         ]);
@@ -171,8 +172,8 @@ class ConvocationAndDraftTest extends TestCase
 
     public function test_opening_is_atomic_when_a_parallel_has_no_current_teacher(): void
     {
-        $scheduledSubject = ScheduledSubject::query()->firstOrFail();
-        Parallel::query()->create(['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => 'B', 'jornada' => 'matutina']);
+        $scheduledSubject = Parallel::query()->firstOrFail();
+        Parallel::query()->create(['periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id, 'codigo' => 'B', 'jornada' => 'matutina']);
         $convocation = $this->createPreparedConvocation();
 
         $this->assertOpeningFails($convocation);
@@ -184,30 +185,25 @@ class ConvocationAndDraftTest extends TestCase
 
     public function test_opening_reports_how_many_parallels_lack_a_teacher(): void
     {
-        $scheduledSubject = ScheduledSubject::query()->firstOrFail();
-        Parallel::query()->create(['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => 'B', 'jornada' => 'matutina']);
-        Parallel::query()->create(['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => 'C', 'jornada' => 'matutina']);
+        $scheduledSubject = Parallel::query()->firstOrFail();
+        Parallel::query()->create(['periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id, 'codigo' => 'B', 'jornada' => 'matutina']);
+        Parallel::query()->create(['periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id, 'codigo' => 'C', 'jornada' => 'matutina']);
         $convocation = $this->createPreparedConvocation();
 
         $this->assertOpeningFails($convocation, 'Faltan 2 paralelos sin docente.');
         $this->assertDatabaseCount('silabos', 0);
     }
 
-    public function test_opening_is_rejected_when_a_scheduled_subject_has_no_parallel(): void
+    public function test_opening_is_rejected_when_a_subject_has_no_parallel(): void
     {
         $convocation = $this->createPreparedConvocation();
-        $scheduledSubject = ScheduledSubject::query()->firstOrFail();
+        $scheduledSubject = Parallel::query()->firstOrFail();
         $other = $scheduledSubject->subject->replicate();
         $other->codigo_asignatura = 'OTRA-01';
         $other->nombre_asignatura = 'Materia sin paralelo';
         $other->save();
-        ScheduledSubject::query()->create([
-            'asignatura_id' => $other->id,
-            'periodo_academico_id' => $scheduledSubject->periodo_academico_id,
-            'activo' => true,
-        ]);
 
-        $this->assertOpeningFails($convocation, 'Falta 1 materia programada sin paralelo.');
+        $this->assertOpeningFails($convocation, 'Falta 1 materia sin paralelo.');
         $this->assertSame('preparacion', $convocation->fresh()->estado);
     }
 
@@ -598,9 +594,9 @@ class ConvocationAndDraftTest extends TestCase
     /** @return array{Syllabus, Syllabus} */
     private function openConvocationWithTwoParallels(): array
     {
-        $scheduledSubject = ScheduledSubject::query()->firstOrFail();
+        $scheduledSubject = Parallel::query()->firstOrFail();
         $parallel = Parallel::query()->create([
-            'programacion_asignatura_id' => $scheduledSubject->id,
+            'periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id,
             'codigo' => 'Z',
             'jornada' => 'matutina',
         ]);

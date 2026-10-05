@@ -139,14 +139,14 @@ class MutateCurriculumBuilder
                 ->lockForUpdate()
                 ->findOrFail($subjectId);
 
-            $scheduledSubjects = $subject->scheduledSubjects()->count();
+            $parallels = $subject->parallels()->count();
             $syllabi = Syllabus::query()->forSubjects([$subject->id])->count();
-            if ($scheduledSubjects > 0 || $syllabi > 0) {
+            if ($parallels > 0 || $syllabi > 0) {
                 $blockers = [];
-                if ($scheduledSubjects > 0) {
-                    $blockers[] = $scheduledSubjects === 1
-                        ? '1 programación de asignatura'
-                        : "{$scheduledSubjects} programaciones de asignatura";
+                if ($parallels > 0) {
+                    $blockers[] = $parallels === 1
+                        ? '1 paralelo'
+                        : "{$parallels} paralelos";
                 }
                 if ($syllabi > 0) {
                     $blockers[] = $syllabi === 1 ? '1 sílabo' : "{$syllabi} sílabos";

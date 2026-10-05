@@ -4,7 +4,6 @@ namespace App\Modules\Academic\Presentation\Http\Requests;
 
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Identity\Application\ActiveRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -43,15 +42,14 @@ class StoreParallelsRequest extends FormRequest
         $careerId = app(ActiveRole::class)->resolve($this)?->carrera_id;
 
         return [
-            'scheduled_subject_id' => [
+            'subject_id' => [
                 'required',
                 'uuid',
-                Rule::exists('asignaturas_ofertadas', 'asignatura_ofertada_id')->where(fn ($query) => $query
-                    ->where('asignatura_ofertada_activa', true)
-                    ->whereIn('asignatura_id', Subject::query()
-                        ->select('id')
-                        ->where('carrera_id', $careerId))),
+                Rule::exists('asignaturas', 'asignatura_id')->where(fn ($query) => $query
+                    ->where('asignatura_activa', true)
+                    ->where('carrera_id', $careerId)),
             ],
+            'period_id' => ['required', 'uuid', Rule::exists('periodos_academicos', 'periodo_academico_id')],
             'codes' => ['required', 'array', 'min:1', 'max:50'],
             'codes.*' => ['required', 'string', 'max:30', 'distinct'],
             'shift' => ['required', 'string', Rule::in(Parallel::SHIFTS)],

@@ -3,7 +3,6 @@
 namespace Tests\Feature\Academic;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -18,9 +17,9 @@ class RequireParallelShiftMigrationTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $migration = require database_path('migrations/2026_09_24_000112_exigir_jornada_paralelo.php');
         $migration->down();
-        $scheduled = ScheduledSubject::query()->firstOrFail();
-        DB::table('paralelos')->insert(['paralelo_id' => (string) str()->uuid(), 'asignatura_ofertada_id' => $scheduled->id, 'codigo_paralelo' => 'S']);
-        $night = Parallel::query()->create(['programacion_asignatura_id' => $scheduled->id, 'codigo' => 'N', 'jornada' => 'nocturna']);
+        $scheduled = Parallel::query()->firstOrFail();
+        DB::table('paralelos')->insert(['paralelo_id' => (string) str()->uuid(), 'periodo_academico_id' => $scheduled->periodo_academico_id, 'asignatura_id' => $scheduled->asignatura_id, 'codigo_paralelo' => 'S']);
+        $night = Parallel::query()->create(['periodo_academico_id' => $scheduled->periodo_academico_id, 'asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'N', 'jornada' => 'nocturna']);
 
         $migration->up();
         $migration->up();

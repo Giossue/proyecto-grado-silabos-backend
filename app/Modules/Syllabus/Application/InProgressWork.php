@@ -2,7 +2,6 @@
 
 namespace App\Modules\Syllabus\Application;
 
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
@@ -264,21 +263,19 @@ final class InProgressWork
             data_set($context, 'career.faculty', $career->faculty?->nombre);
             data_set($context, 'career.faculty_id', $career->facultad_id);
 
-            $scheduled = ScheduledSubject::query()->find(data_get($context, 'scheduled_subject.id'));
-            if ($scheduled instanceof ScheduledSubject) {
-                data_set($context, 'scheduled_subject.campus', $scheduled->campus_programacion);
-                data_set($context, 'scheduled_subject.modality', $scheduled->modalidad->label());
-                $syllabus->values()->with('field')->get()
-                    ->filter(fn (FieldValue $value): bool => $value->field->origen_maestro === 'asignaturas')
-                    ->each(function (FieldValue $value) use ($scheduled): void {
-                        $current = is_array($value->valor) ? $value->valor : [];
-                        $value->update(['valor' => [
-                            ...$current,
-                            'campus' => $scheduled->campus_programacion,
-                            'modalidad' => $scheduled->modalidad->label(),
-                        ]]);
-                    });
-            }
+            $scheduled = $syllabus->parallel;
+            data_set($context, 'scheduled_subject.campus', $scheduled->campus_programacion);
+            data_set($context, 'scheduled_subject.modality', $scheduled->modalidad->label());
+            $syllabus->values()->with('field')->get()
+                ->filter(fn (FieldValue $value): bool => $value->field->origen_maestro === 'asignaturas')
+                ->each(function (FieldValue $value) use ($scheduled): void {
+                    $current = is_array($value->valor) ? $value->valor : [];
+                    $value->update(['valor' => [
+                        ...$current,
+                        'campus' => $scheduled->campus_programacion,
+                        'modalidad' => $scheduled->modalidad->label(),
+                    ]]);
+                });
 
             $syllabus->contexto_academico = $context;
             $syllabus->save();
@@ -289,8 +286,8 @@ final class InProgressWork
 
     public function refreshSubjects(string $careerId): int
     {
-        $syllabi = $this->inProgress($careerId)->with(['career', 'parallel.scheduledSubject'])->lockForUpdate()->get();
-        $subjectIdOf = fn (Syllabus $syllabus): string => $syllabus->parallel->scheduledSubject->asignatura_id;
+        $syllabi = $this->inProgress($careerId)->with(['career', 'parallel'])->lockForUpdate()->get();
+        $subjectIdOf = fn (Syllabus $syllabus): string => $syllabus->parallel->asignatura_id;
         $subjects = Subject::query()
             ->whereKey($syllabi->map($subjectIdOf)->unique()->values()->all())
             ->with('requirements.requirement')

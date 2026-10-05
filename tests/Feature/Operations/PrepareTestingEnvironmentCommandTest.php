@@ -5,7 +5,7 @@ namespace Tests\Feature\Operations;
 use App\Console\Commands\PrepareTestingEnvironmentCommand;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -70,7 +70,7 @@ class PrepareTestingEnvironmentCommandTest extends TestCase
         }
         $this->assertSame(
             ['Arquitectura de Software', 'Calidad de Software', 'Cálculo I'],
-            ScheduledSubject::query()->with('subject')->get()->pluck('subject.nombre')->sort()->values()->all(),
+            Parallel::query()->with('subject')->get()->pluck('subject.nombre')->unique()->sort()->values()->all(),
         );
         $this->assertSame(SyllabusProcess::STATE_OPEN, SyllabusProcess::query()->value('estado'));
         $this->assertSame(1, Convocation::query()->count());
@@ -86,7 +86,7 @@ class PrepareTestingEnvironmentCommandTest extends TestCase
 
         $this->assertSame('abierta', Convocation::query()->value('estado'));
         $this->assertSame(3, Syllabus::query()->count());
-        $byTeacher = Syllabus::query()->with(['parallel.scheduledSubject.subject', 'parallel.teacherAssignments.roleAssignment.user'])->get()
+        $byTeacher = Syllabus::query()->with(['parallel.subject', 'parallel.teacherAssignments.roleAssignment.user'])->get()
             ->mapWithKeys(fn (Syllabus $s): array => [$s->parallel->teacherAssignments->first()->roleAssignment->user->correo_electronico => $s->subject->nombre]);
         $this->assertSame('Calidad de Software', $byTeacher['docente1.pruebas@ueb.edu.ec']);
         $this->assertSame('Cálculo I', $byTeacher['docente2.pruebas@ueb.edu.ec']);

@@ -29,14 +29,14 @@ class CopySyllabusContent
             return new Collection;
         }
 
-        $scheduledSubjectId = $syllabus->parallel()->value('programacion_asignatura_id');
+        $subjectId = $syllabus->parallel()->value('asignatura_id');
 
         return Syllabus::query()
             ->with('parallel:id,codigo')
             ->where('convocatoria_id', $syllabus->convocatoria_id)
             ->whereKeyNot($syllabus->getKey())
             ->where('estado', '!=', 'sin_iniciar')
-            ->whereHas('parallel', fn ($parallel) => $parallel->where('programacion_asignatura_id', $scheduledSubjectId))
+            ->whereHas('parallel', fn ($parallel) => $parallel->where('asignatura_id', $subjectId))
             ->whereCurrentTeacher($teacher)
             ->get()
             ->sortBy(fn (Syllabus $source): string => $source->parallel->codigo)

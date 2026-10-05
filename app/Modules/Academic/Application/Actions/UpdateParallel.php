@@ -34,7 +34,8 @@ class UpdateParallel
 
             $code = trim($data['code']);
             $duplicate = Parallel::query()
-                ->where('programacion_asignatura_id', $parallel->getAttribute('programacion_asignatura_id'))
+                ->where('periodo_academico_id', $parallel->periodo_academico_id)
+                ->where('asignatura_id', $parallel->asignatura_id)
                 ->whereKeyNot($parallel->id)
                 ->whereRaw('upper(codigo_paralelo) = ?', [mb_strtoupper($code)])
                 ->exists();

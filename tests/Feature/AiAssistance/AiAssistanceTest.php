@@ -187,10 +187,9 @@ class AiAssistanceTest extends TestCase
             'clave' => 'contacto', 'etiqueta' => 'Contacto', 'tipo' => 'texto_largo', 'heredado' => false,
             'editable_docente' => true, 'posicion' => 1]);
         $parallel = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail()->parallel;
-        $scheduled = $parallel->scheduledSubject;
-        $context = app(AcademicContextSnapshot::class)->build($scheduled);
+        $context = app(AcademicContextSnapshot::class)->build($parallel);
         $context['career']['name'] = 'Software';
-        $convocation = Convocation::query()->create(['carrera_id' => $scheduled->subject->carrera_id, 'proceso_id' => $this->openSyllabusProcess($template->id)->id, 'estado' => 'abierta']);
+        $convocation = Convocation::query()->create(['carrera_id' => $parallel->subject->carrera_id, 'proceso_id' => $this->openSyllabusProcess($template->id)->id, 'estado' => 'abierta']);
         $this->syllabus = Syllabus::query()->create(['convocatoria_id' => $convocation->id, 'paralelo_id' => $parallel->id,
             'contexto_academico' => $context, 'estado' => 'borrador', 'version_bloqueo' => 0, 'iniciado_en' => now()]);
         FieldValue::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $this->planning->id,

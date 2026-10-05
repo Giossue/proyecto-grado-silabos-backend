@@ -48,7 +48,7 @@ class ReviewController extends Controller
             ->whereHas('revisions')
             ->with([
                 'convocation.process.academicPeriod:id,codigo',
-                'parallel.scheduledSubject.subject:id,nombre,codigo_asignatura',
+                'parallel.subject:id,nombre,codigo_asignatura',
                 'teachers:id,nombre',
                 'revisions' => fn ($revision) => $revision
                     ->with(['librarySubmission', 'coordinationReview', 'approval'])
@@ -62,7 +62,7 @@ class ReviewController extends Controller
         }
         if ($search !== '') {
             $escaped = addcslashes($search, '%_\\');
-            $query->whereHas('parallel.scheduledSubject.subject', fn ($subject) => $subject
+            $query->whereHas('parallel.subject', fn ($subject) => $subject
                 ->where('nombre', 'ilike', "%{$escaped}%")
                 ->orWhere('codigo_asignatura', 'ilike', "%{$escaped}%"));
         }
@@ -174,7 +174,7 @@ class ReviewController extends Controller
         if ($before->numero_revision > $after->numero_revision) {
             [$before, $after] = [$after, $before];
         }
-        $syllabus = $before->syllabus()->with(['parallel.scheduledSubject.subject', 'convocation.process.academicPeriod'])->firstOrFail();
+        $syllabus = $before->syllabus()->with(['parallel.subject', 'convocation.process.academicPeriod'])->firstOrFail();
 
         $payload = [
             'syllabus' => [
@@ -196,7 +196,7 @@ class ReviewController extends Controller
             'submitter:id,nombre',
             'librarySubmission',
             'coordinationReview',
-            'syllabus.parallel.scheduledSubject.subject',
+            'syllabus.parallel.subject',
             'syllabus.convocation.process.academicPeriod',
             'syllabus.teachers:id,nombre',
             'syllabus.revisions.submitter:id,nombre',

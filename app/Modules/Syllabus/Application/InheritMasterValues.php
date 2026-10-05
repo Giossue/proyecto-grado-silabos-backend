@@ -2,7 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -11,20 +11,20 @@ use Illuminate\Support\Collection;
 class InheritMasterValues
 {
     /** @param Collection<int, FieldDefinition> $fields */
-    public function execute(Syllabus $syllabus, Collection $fields, ScheduledSubject $scheduledSubject): void
+    public function execute(Syllabus $syllabus, Collection $fields, Parallel $parallel): void
     {
-        $scheduledSubject->loadMissing('subject');
+        $parallel->loadMissing('subject');
 
         foreach ($fields->where('heredado', true) as $field) {
             $value = match ($field->origen_maestro) {
                 'asignaturas' => [
-                    'codigo' => $scheduledSubject->subject->codigo_asignatura,
-                    'nombre' => $scheduledSubject->subject->nombre,
-                    'ciclo' => $scheduledSubject->subject->ciclo,
-                    'creditos' => $scheduledSubject->subject->creditos,
-                    'horas_totales' => $scheduledSubject->subject->horas_totales,
-                    'campus' => $scheduledSubject->campus_programacion,
-                    'modalidad' => $scheduledSubject->modalidad->label(),
+                    'codigo' => $parallel->subject->codigo_asignatura,
+                    'nombre' => $parallel->subject->nombre,
+                    'ciclo' => $parallel->subject->ciclo,
+                    'creditos' => $parallel->subject->creditos,
+                    'horas_totales' => $parallel->subject->horas_totales,
+                    'campus' => $parallel->campus_programacion,
+                    'modalidad' => $parallel->modalidad->label(),
                 ],
                 default => null,
             };

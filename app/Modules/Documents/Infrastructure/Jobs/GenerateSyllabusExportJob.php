@@ -70,7 +70,7 @@ class GenerateSyllabusExportJob implements ShouldQueue
 
         $artifact = ExportArtifact::query()->with([
             'revision',
-            'syllabus.parallel.scheduledSubject.subject',
+            'syllabus.parallel.subject',
             'syllabus.convocation.process.academicPeriod',
         ])->findOrFail($this->artifactId);
         $approval = Approval::query()->with('approver')->where('revision_silabo_id', $artifact->revision_silabo_id)->first();
@@ -93,8 +93,8 @@ class GenerateSyllabusExportJob implements ShouldQueue
         $validator->validate($bundle);
 
         $basePath = "exports/{$revision->id}/{$artifact->id}";
-        $docx = $this->persistObject($artifact, $bundle->docx, "{$basePath}/syllabus.docx", $syllabus->convocation->carrera_id);
-        $pdf = $this->persistObject($artifact, $bundle->pdf, "{$basePath}/syllabus.pdf", $syllabus->convocation->carrera_id);
+        $docx = $this->persistObject($artifact, $bundle->docx, "{$basePath}/syllabus.docx");
+        $pdf = $this->persistObject($artifact, $bundle->pdf, "{$basePath}/syllabus.pdf");
 
         DB::transaction(function () use ($artifact, $audit, $docx, $pdf, $revision, $syllabus): void {
             $locked = ExportArtifact::query()->lockForUpdate()->findOrFail($artifact->id);
@@ -186,7 +186,6 @@ class GenerateSyllabusExportJob implements ShouldQueue
         ExportArtifact $artifact,
         RenderedDocument $document,
         string $path,
-        string $careerId,
     ): StoredObject {
         $attributes = [
             'nombre_logico' => "silabo-revision-{$artifact->revision->numero_revision}.{$document->extension}",
@@ -195,7 +194,6 @@ class GenerateSyllabusExportJob implements ShouldQueue
             'huella_sha256' => $document->fingerprint(),
             'clasificacion' => 'syllabus_export',
             'propietario_usuario_id' => $artifact->solicitado_por,
-            'carrera_id' => $careerId,
             'almacenado_en' => now(),
         ];
         $existing = StoredObject::query()->where('disco', 'private')->where('ruta_interna', $path)->first();

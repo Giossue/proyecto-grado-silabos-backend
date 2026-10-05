@@ -58,7 +58,6 @@ class InstitutionalLogos
             'huella_sha256' => hash('sha256', $content),
             'clasificacion' => 'logo_facultad',
             'propietario_usuario_id' => null,
-            'carrera_id' => null,
         ]);
         $faculty->forceFill(['logo_objeto_id' => $object->id])->save();
 

@@ -17,7 +17,6 @@ final class AcademicStructurePermissions
     /** @var list<string> */
     public const CAREER_ENTITIES = [
         'asignatura',
-        'programacion_asignatura',
         'paralelo',
         'asignacion_docente',
     ];

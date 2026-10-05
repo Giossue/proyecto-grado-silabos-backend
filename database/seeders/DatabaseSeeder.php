@@ -9,7 +9,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\ScheduledSubject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -64,15 +63,8 @@ class DatabaseSeeder extends Seeder
                     'activo' => true,
                 ],
             );
-            $scheduledSubject = ScheduledSubject::query()->firstOrCreate(
-                [
-                    'periodo_academico_id' => $period->id,
-                    'asignatura_id' => $subject->id,
-                ],
-                ['activo' => true],
-            );
             $parallel = Parallel::query()->firstOrCreate(
-                ['programacion_asignatura_id' => $scheduledSubject->id, 'codigo' => 'A'],
+                ['periodo_academico_id' => $period->id, 'asignatura_id' => $subject->id, 'codigo' => 'A'],
                 ['jornada' => 'matutina'],
             );
 

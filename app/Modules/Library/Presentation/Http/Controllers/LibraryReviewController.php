@@ -134,7 +134,7 @@ class LibraryReviewController extends Controller
             ->with([
                 'convocation.career:id,nombre',
                 'convocation.process.academicPeriod',
-                'parallel.scheduledSubject.subject',
+                'parallel.subject',
                 'teachers:id,nombre',
             ])
             ->get()

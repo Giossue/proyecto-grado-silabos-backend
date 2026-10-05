@@ -2,6 +2,7 @@
 
 namespace App\Modules\Academic\Infrastructure\Persistence\Models;
 
+use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\CurricularUnit;
 use App\Modules\Academic\Domain\StudyModality;
 use App\Support\Database\MapsLegacyColumnNames;
@@ -91,16 +92,35 @@ class Subject extends Model
         return parent::replicate([...($except ?? []), 'total_horas_asignatura']);
     }
 
+    // Campus y modalidad no se guardan: salen de la materia, su carrera y su facultad (I-164).
+    public function campusName(): ?string
+    {
+        $this->loadMissing('career.faculty');
+        // La carrera o la facultad pueden faltar en datos incompletos: entonces no hay campus.
+        $campus = data_get($this, 'career.faculty.campus');
+
+        return $campus instanceof CampusLocation ? $campus->value : null;
+    }
+
+    /** Modalidad de la materia o, si no tiene, la de la carrera. */
+    public function studyModality(): ?StudyModality
+    {
+        $this->loadMissing('career');
+        $modality = $this->modalidad ?? data_get($this, 'career.modalidad');
+
+        return $modality instanceof StudyModality ? $modality : null;
+    }
+
     /** @return BelongsTo<Career, $this> */
     public function career(): BelongsTo
     {
         return $this->belongsTo(Career::class, 'carrera_id');
     }
 
-    /** @return HasMany<ScheduledSubject, $this> */
-    public function scheduledSubjects(): HasMany
+    /** @return HasMany<Parallel, $this> */
+    public function parallels(): HasMany
     {
-        return $this->hasMany(ScheduledSubject::class, 'asignatura_id');
+        return $this->hasMany(Parallel::class, 'asignatura_id');
     }
 
     /** @return HasMany<SubjectRequirement, $this> */

@@ -8,7 +8,6 @@ use App\Modules\Academic\Application\Actions\CreateAcademicRecord;
 use App\Modules\Academic\Application\Actions\CreateParallels;
 use App\Modules\Academic\Application\Actions\DeleteAcademicRecord;
 use App\Modules\Academic\Application\Actions\DeleteParallel;
-use App\Modules\Academic\Application\Actions\DeleteScheduledSubject;
 use App\Modules\Academic\Application\Actions\MutateCurriculumBuilder;
 use App\Modules\Academic\Application\Actions\PreparePeriod;
 use App\Modules\Academic\Application\Actions\UpdateCareerAcademicRecord;
@@ -84,7 +83,7 @@ class CareerAcademicStructureController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var array{scheduled_subject_id: string, codes: list<string>, shift: string} $data */
+        /** @var array{subject_id: string, period_id: string, codes: list<string>, shift: string} $data */
         $data = $request->validated();
         $created = $action->execute($data, $actor, $request);
 
@@ -126,9 +125,7 @@ class CareerAcademicStructureController extends Controller
         $result = $action->execute($data, $actor, $request);
 
         $message = sprintf(
-            'Período preparado: %d %s, %d %s y %d %s para %d %s.',
-            $result['scheduledSubjects'],
-            $result['scheduledSubjects'] === 1 ? 'materia programada' : 'materias programadas',
+            'Período preparado: %d %s y %d %s para %d %s.',
             $result['parallels'],
             $result['parallels'] === 1 ? 'paralelo' : 'paralelos',
             $result['assignments'],
@@ -151,18 +148,6 @@ class CareerAcademicStructureController extends Controller
         $action->execute($entity, $record, $request->validated(), $actor, $request);
 
         return $this->success($request, 'Registro académico actualizado.');
-    }
-
-    public function destroyScheduledSubject(
-        string $scheduledSubject,
-        ManageCareerAcademicStructureRequest $request,
-        DeleteScheduledSubject $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($scheduledSubject, $actor, $request);
-
-        return $this->success($request, 'Materia programada eliminada junto con sus paralelos y asignaciones sin historial.');
     }
 
     public function destroy(
