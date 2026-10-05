@@ -97,7 +97,6 @@ class AcceptDocumentSignature
                     'certificado_serie' => $certificate->serial,
                     'certificado_emisor' => $certificate->issuer,
                     'certificado_vence_en' => $certificate->validTo,
-                    'huella_sha256' => $fingerprint,
                     'firmado_en' => now(),
                 ]);
 

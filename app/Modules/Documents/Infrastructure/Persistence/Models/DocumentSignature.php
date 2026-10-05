@@ -20,7 +20,6 @@ use LogicException;
  * @property string $certificado_serie
  * @property string $certificado_emisor
  * @property CarbonImmutable $certificado_vence_en
- * @property string $huella_sha256
  * @property CarbonImmutable $firmado_en
  * @property-read ExportArtifact $artifact
  * @property-read StoredObject $storedObject
@@ -39,7 +38,6 @@ class DocumentSignature extends Model
         'certificado_serie' => 'numero_certificado',
         'certificado_emisor' => 'entidad_emisora',
         'certificado_vence_en' => 'certificado_valido_hasta',
-        'huella_sha256' => 'hash_archivo',
     ];
 
     public const ROLE_TEACHER = 'docente';
@@ -62,7 +60,7 @@ class DocumentSignature extends Model
     protected $fillable = [
         'artefacto_exportacion_id', 'rol_firma', 'usuario_id', 'objeto_almacenado_id',
         'certificado_titular', 'certificado_serie', 'certificado_emisor',
-        'certificado_vence_en', 'huella_sha256', 'firmado_en',
+        'certificado_vence_en', 'firmado_en',
     ];
 
     /** @return array<string, string> */
