@@ -698,7 +698,7 @@ class ReviewWorkflowTest extends TestCase
         return FieldDefinition::query()
             ->where('heredado', false)
             ->where('editable_docente', true)
-            ->where('clave', 'formacion_experiencia')
+            ->where('clave', 'discapacidad_adaptacion')
             ->firstOrFail();
     }
 

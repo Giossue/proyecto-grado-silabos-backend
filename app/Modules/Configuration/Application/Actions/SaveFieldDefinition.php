@@ -4,7 +4,9 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Configuration\Application\FieldConditions;
+use App\Modules\Configuration\Application\SyllabusTemplateCatalog;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
@@ -23,6 +25,7 @@ class SaveFieldDefinition
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
+        private readonly SyllabusTemplateCatalog $catalog,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -54,6 +57,9 @@ class SaveFieldDefinition
         return $this->work->replaceTemplate(function () use ($actor, $activeRole, $data, $field, $request, $templateId): ?FieldDefinition {
             $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
 
+            if ($field === null && isset($data['preset'])) {
+                $data = $this->catalog->expand($data, $templateId);
+            }
             $contentType = $this->stringValue($data, 'content_type');
             $data['label'] = trim((string) ($data['label'] ?? ''));
             $condition = array_key_exists('show_when', $data)
@@ -78,6 +84,11 @@ class SaveFieldDefinition
                     ...$this->profileAttributes($field, $data),
                     ...$condition,
                 ]);
+                if (array_key_exists('initial_content', $data)) {
+                    $configuration = $customBlock->configuracion;
+                    unset($configuration['initial_content']);
+                    $customBlock->update(['configuracion' => [...$configuration, ...$this->initialContent($data)]]);
+                }
                 $this->applyOrientation($customBlock, $data);
                 $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id, $request);
 
@@ -101,7 +112,8 @@ class SaveFieldDefinition
                 $label = $data['label'] !== '' ? $data['label'] : $block->section->titulo;
                 $block->update(['configuracion' => [...$block->configuracion, 'document' => $contentType === 'free_text'
                     ? TemplateDocumentDefaults::freeTextSheet($data['key'], $label)
-                    : TemplateDocumentDefaults::blankSheet()]]);
+                    : TemplateDocumentDefaults::blankSheet(),
+                    ...$this->initialContent($data)]]);
                 $this->applyOrientation($block, $data);
                 $this->audit->execute(
                     actorId: $actor->id, roleAssignmentId: $activeRole?->id, action: 'plantilla.bloque_creado',
@@ -141,6 +153,35 @@ class SaveFieldDefinition
 
             return $field;
         });
+    }
+
+    /**
+     * Contenido que trae el campo en cada sílabo nuevo (por ejemplo, la tabla de planificación).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, array<string, mixed>>
+     */
+    private function initialContent(array $data): array
+    {
+        $content = $data['initial_content'] ?? null;
+        if (! is_array($content) || ! FreeText::isDocument($content)) {
+            return [];
+        }
+        $document = FreeText::normalize($content, 'initial_content');
+
+        return FreeText::isEmpty($document) && ! $this->hasTable($document) ? [] : ['initial_content' => $document];
+    }
+
+    /** @param array<string, mixed> $document */
+    private function hasTable(array $document): bool
+    {
+        foreach (FreeText::blocks($document) as $block) {
+            if (($block['type'] ?? null) === 'table') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

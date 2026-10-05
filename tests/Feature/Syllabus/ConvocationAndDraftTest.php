@@ -163,6 +163,70 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame([], array_values(array_intersect($bibliographyIds, array_column($issues, 'field_id'))));
     }
 
+    public function test_teacher_formation_comes_from_the_profile_and_follows_it_while_the_syllabus_is_editable(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        $this->teacher->forceFill(['formacion_experiencia' => 'Ingeniero en Sistemas, MSc.'])->save();
+        $this->openPrepared($convocation);
+        $syllabus = Syllabus::query()->firstOrFail();
+        $field = FieldDefinition::query()->where('clave', 'formacion_experiencia')->firstOrFail();
+        $this->assertSame('perfil_docente', $field->origen_maestro);
+        $this->assertFalse($field->editable_docente);
+        $this->assertSame('Ingeniero en Sistemas, MSc.', $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $syllabus->refresh();
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
+            'version_bloqueo' => $syllabus->version_bloqueo,
+            'value' => 'Cambio no autorizado',
+        ])->assertUnprocessable()->assertJsonValidationErrors('field');
+
+        $this->actingAsTeacher()->putJson(route('api.v1.authentication.formation.update'), ['formacion_experiencia' => 'Doctor en Software.'])
+            ->assertOk()->assertJsonPath('user.formation', 'Doctor en Software.');
+        $this->assertSame('Doctor en Software.', $syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.formacion_actualizada']);
+        $this->actingAsTeacher()->putJson(route('api.v1.authentication.formation.update'), ['formacion_experiencia' => ''])
+            ->assertUnprocessable()->assertJsonValidationErrors('formacion_experiencia');
+    }
+
+    public function test_the_initial_content_of_a_field_reaches_new_syllabi_and_the_teacher_can_replace_it(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        $field = FieldDefinition::query()->where('clave', 'metodologia')->firstOrFail();
+        $template = SyllabusTemplate::query()->firstOrFail();
+        $block = $template->block($field->campo_plantilla_id);
+        $template->updateBlockDocument($block->id, ['configuracion' => [...$block->configuracion, 'initial_content' => FreeText::fromText('Texto inicial sugerido')]]);
+        $this->openPrepared($convocation);
+        $syllabus = Syllabus::query()->firstOrFail();
+
+        $this->assertSame('Texto inicial sugerido', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor));
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $syllabus->refresh();
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
+            'version_bloqueo' => $syllabus->version_bloqueo,
+            'value' => $this->freeTextValue('Metodología propia del docente'),
+        ])->assertOk();
+        $this->assertSame('Metodología propia del docente', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor));
+    }
+
+    public function test_missing_teacher_formation_asks_the_teacher_to_complete_the_profile(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        User::query()->whereKey($this->teacher->id)->update(['formacion_experiencia_usuario' => null]);
+        $this->openPrepared($convocation);
+        $syllabus = Syllabus::query()->firstOrFail();
+        $field = FieldDefinition::query()->where('clave', 'formacion_experiencia')->firstOrFail();
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $issues = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertOk()->json('validation.results');
+        $this->assertContains([
+            'field_id' => $field->id,
+            'code' => 'maestro_obligatorio_faltante',
+            'severity' => 'error',
+            'message' => 'Complete su formación y experiencia en su perfil.',
+        ], $issues);
+    }
+
     public function test_faculty_logo_is_required_before_opening_the_convocation(): void
     {
         $convocation = $this->createPreparedConvocation(withFacultyLogo: false);
@@ -469,9 +533,12 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
+        // En el formato oficial el único texto largo (formación) se hereda del perfil: se vuelve editable para probar el tipo.
         $field = FieldDefinition::query()
             ->where('tipo', 'texto_largo')
             ->firstOrFail();
+        $field->update(['heredado' => false, 'origen_maestro' => null, 'editable_docente' => true]);
+        $syllabus->values()->where('definicion_campo_id', $field->id)->delete();
 
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,

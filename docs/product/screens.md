@@ -661,3 +661,11 @@ acciones de ciclo de vida como publicar, activar, aprobar o eliminar permanecen 
 de esa regla porque no crean una colección desde un listado. `ManagementCreationUiTest`
 protege la clasificación y falla si una alta de gestión vuelve a incrustarse en una
 página.
+
+- I-190: «Agregar campo» ofrece un catálogo de plantillas oficiales (Descripción, objetivos,
+  resultados, habilidades, Distribución y planificación de 16 semanas, Metodología, bibliografías,
+  perfil de egreso). Al elegir una se inserta ya configurada y se modifica en «Propiedades del campo»,
+  donde un campo de texto libre propio también admite «Contenido inicial» (por ejemplo la tabla de
+  planificación que cada sílabo nuevo trae vacía). La Identificación institucional sigue siendo fija.
+  En Configuración › Perfil el docente escribe su «Formación y experiencia académica-investigativa»
+  una sola vez; sus sílabos la copian y, si la cambia, se actualizan los que aún no ha enviado.

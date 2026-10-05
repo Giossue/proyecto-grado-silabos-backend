@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Models\User;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Domain\FreeText;
@@ -29,9 +30,10 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
-    /** Llena la ficha de todas las asignaturas: un texto por cada campo «desde la ficha» de la plantilla. */
+    /** Llena la ficha de todas las asignaturas y la formación de los docentes, que los sílabos nuevos heredan. */
     protected function fillSubjectProfiles(): void
     {
+        User::query()->update(['formacion_experiencia_usuario' => 'Formación de prueba del docente.']);
         $fields = app(SubjectProfileFields::class)->fields();
         foreach (Subject::query()->get() as $subject) {
             foreach ($fields as $field) {

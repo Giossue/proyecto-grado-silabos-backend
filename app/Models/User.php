@@ -25,6 +25,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $correo_verificado_en
  * @property string $contrasena
  * @property bool $activo
+ * @property string|null $formacion_experiencia
  * @property string|null $secreto_dos_factores
  * @property string|null $codigos_recuperacion_dos_factores
  * @property Carbon|null $dos_factores_confirmado_en
@@ -44,6 +45,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'id' => 'usuario_id',
         'nombre' => 'nombre_usuario',
         'activo' => 'usuario_activo',
+        'formacion_experiencia' => 'formacion_experiencia_usuario',
     ];
 
     public $timestamps = false;

@@ -18,6 +18,7 @@ use App\Modules\Configuration\Application\Actions\SaveTemplateTitle;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\FieldOptions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
+use App\Modules\Configuration\Application\SyllabusTemplateCatalog;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TemplateAppearance;
@@ -157,11 +158,13 @@ class TemplateController extends Controller
                                     'master_source' => $field->origen_maestro,
                                     'teacher_editable' => $field->editable_docente,
                                     'content_type' => $block->contentType(),
+                                    'initial_content' => $block->configuracion['initial_content'] ?? null,
                                 ])->values()->all(),
                         ];
                     })->values()->all(),
                 ])->values()->all(),
             ],
+            'presets' => app(SyllabusTemplateCatalog::class)->options(),
             'blockTypes' => [
                 ['value' => 'free_text', 'label' => 'Texto libre'],
                 ['value' => 'template', 'label' => 'Personalizado'],

@@ -112,6 +112,53 @@ class SubjectProfileTest extends TestCase
         $this->assertContains('vinculacion', array_column($fields, 'key'));
     }
 
+    public function test_a_catalog_template_adds_a_ready_made_field_and_its_initial_content_reaches_new_syllabi(): void
+    {
+        $template = SyllabusTemplate::query()->firstOrFail();
+        $section = $template->sections->first();
+        $this->asRole('admin@silabos.test');
+        $this->assertContains('distribucion', array_column($this->getJson(route('api.v1.admin.template.show', $template))->json('presets'), 'key'));
+
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id, 'key' => 'ignorada', 'label' => '', 'content_type' => 'free_text', 'preset' => 'distribucion',
+        ])->assertSuccessful();
+        $field = FieldDefinition::query()->where('clave', 'unidades_2')->firstOrFail();
+        $this->assertSame('Distribución y planificación (16 semanas)', $field->etiqueta);
+        $this->assertFalse($field->heredado);
+        $block = $template->fresh()->block($field->campo_plantilla_id);
+        $table = $block->configuracion['initial_content']['content'][0];
+        $this->assertSame('table', $table['type']);
+        $this->assertCount(17, $table['content']);
+        $this->assertSame('Semana', $table['content'][0]['content'][0]['content'][0]['content'][0]['text']);
+
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id, 'key' => 'x', 'content_type' => 'free_text', 'preset' => 'bibliografia_basica',
+        ])->assertSuccessful();
+        $bibliography = FieldDefinition::query()->where('clave', 'bibliografia_2')->firstOrFail();
+        $this->assertTrue($bibliography->heredado);
+        $this->assertSame('ficha', $bibliography->origen_maestro);
+        $this->assertTrue($bibliography->editable_docente);
+
+        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+            'section_id' => $section->id, 'key' => 'x', 'content_type' => 'free_text', 'preset' => 'inventada',
+        ])->assertUnprocessable()->assertJsonValidationErrors('preset');
+    }
+
+    public function test_the_initial_content_of_a_field_can_be_modified_or_removed(): void
+    {
+        $template = SyllabusTemplate::query()->firstOrFail();
+        $field = FieldDefinition::query()->where('clave', 'metodologia')->firstOrFail();
+        $this->asRole('admin@silabos.test');
+        $payload = ['block_id' => $field->campo_plantilla_id, 'key' => $field->clave, 'label' => $field->etiqueta, 'content_type' => 'text'];
+
+        $this->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [...$payload, 'initial_content' => FreeText::fromText('Texto inicial sugerido')])
+            ->assertSuccessful();
+        $this->assertSame('Texto inicial sugerido', FreeText::plainText($template->fresh()->block($field->campo_plantilla_id)->configuracion['initial_content']));
+
+        $this->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [...$payload, 'initial_content' => null])->assertSuccessful();
+        $this->assertArrayNotHasKey('initial_content', $template->fresh()->block($field->campo_plantilla_id)->configuracion);
+    }
+
     public function test_a_value_belongs_to_exactly_one_owner(): void
     {
         $subject = Subject::query()->firstOrFail();

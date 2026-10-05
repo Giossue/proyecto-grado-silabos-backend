@@ -77,6 +77,9 @@ Route::prefix('v1')->group(function (): void {
             Route::put('authentication/profile', [SessionController::class, 'updateProfile'])
                 ->middleware('active-role')
                 ->name('api.v1.authentication.profile.update');
+            Route::put('authentication/formation', [SessionController::class, 'updateFormation'])
+                ->middleware('active-role')
+                ->name('api.v1.authentication.formation.update');
             Route::get('dashboard', [DashboardController::class, 'index'])
                 ->middleware('active-role')
                 ->name('api.v1.dashboard.show');

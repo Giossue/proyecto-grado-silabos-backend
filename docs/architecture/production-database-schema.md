@@ -29,6 +29,7 @@ codigo_recordarme VARCHAR NULL
 secreto_dos_factores TEXT NULL
 codigos_recuperacion_dos_factores TEXT NULL
 dos_factores_confirmado_en TIMESTAMPTZ NULL
+formacion_experiencia_usuario TEXT NULL -- el docente la escribe en su perfil y sus sílabos la heredan (I-190)
 ~~~
 
 ## invitaciones_activacion

@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Presentation\Http\Requests;
 
 use App\Modules\Configuration\Application\FieldConditions;
+use App\Modules\Configuration\Application\SyllabusTemplateCatalog;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Illuminate\Validation\Rule;
@@ -61,6 +62,8 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'help' => ['nullable', 'string', 'max:2000'],
             'content_type' => ['required', Rule::in($types)],
             'from_profile' => ['nullable', 'boolean'],
+            'preset' => ['nullable', 'string', Rule::in(app(SyllabusTemplateCatalog::class)->keys())],
+            'initial_content' => ['sometimes', 'nullable', 'array'],
             'teacher_editable' => ['nullable', 'boolean'],
             'options' => ['nullable', 'array', 'max:50'],
             'options.*' => ['required', 'array:value,label'],
@@ -74,7 +77,7 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['from_profile' => 'se llena desde la ficha'];
+        return ['from_profile' => 'se llena desde la ficha', 'preset' => 'plantilla de campo', 'initial_content' => 'contenido inicial'];
     }
 
     /** @return array<string, string> */

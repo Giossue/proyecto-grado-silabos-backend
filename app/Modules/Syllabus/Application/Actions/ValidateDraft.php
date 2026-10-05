@@ -49,7 +49,9 @@ class ValidateDraft
                         'message' => $field->heredado
                             ? ($field->fromProfile()
                                 ? 'La asignatura no tiene ficha: pídala al coordinador.'
-                                : "Avise a Coordinación: falta el dato «{$field->displayName()}» en la información de la carrera.")
+                                : ($field->origen_maestro === FieldDefinition::ORIGIN_TEACHER
+                                    ? 'Complete su formación y experiencia en su perfil.'
+                                    : "Avise a Coordinación: falta el dato «{$field->displayName()}» en la información de la carrera."))
                             : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
                     ];
                 }

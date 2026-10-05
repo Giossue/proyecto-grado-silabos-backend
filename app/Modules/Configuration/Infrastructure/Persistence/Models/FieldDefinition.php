@@ -45,6 +45,9 @@ class FieldDefinition extends Model
     /** Origen de los campos que se llenan una vez por asignatura (ficha) y el sílabo hereda. */
     public const ORIGIN_PROFILE = 'ficha';
 
+    /** Origen de la formación y experiencia: la escribe el docente en su perfil (I-190). */
+    public const ORIGIN_TEACHER = 'perfil_docente';
+
     public $timestamps = false;
 
     protected $table = 'definiciones_campo';
