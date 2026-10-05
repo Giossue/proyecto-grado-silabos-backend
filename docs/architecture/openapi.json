@@ -12,7 +12,7 @@
         }
     ],
     "paths": {
-        "/api/v1/academic/subjects/{subject}/profile": {
+        "/api/v1/academic/asignaturas/{asignatura}/ficha": {
             "get": {
                 "tags": [
                     "Operación"
@@ -31,7 +31,14 @@
                                     ],
                                     "properties": {
                                         "profile": {
-                                            "$ref": "#/components/schemas/SubjectProfile"
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/SubjectProfile"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
                                         }
                                     }
                                 }
@@ -50,7 +57,7 @@
                 },
                 "parameters": [
                     {
-                        "name": "subject",
+                        "name": "asignatura",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -101,7 +108,7 @@
                 },
                 "parameters": [
                     {
-                        "name": "subject",
+                        "name": "asignatura",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -5840,6 +5847,18 @@
             },
             "SubjectProfile": {
                 "type": "object",
+                "required": [
+                    "descripcion",
+                    "objetivo_general",
+                    "objetivos_especificos",
+                    "resultados_aprendizaje",
+                    "habilidades_blandas",
+                    "bibliografia_basica",
+                    "bibliografia_complementaria",
+                    "herramientas_tic",
+                    "herramientas_ia",
+                    "relacion_perfil_egreso"
+                ],
                 "properties": {
                     "descripcion": {
                         "type": [

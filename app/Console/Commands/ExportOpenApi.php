@@ -68,6 +68,12 @@ class ExportOpenApi extends Command
                     ],
                     'SubjectProfile' => [
                         'type' => 'object',
+                        'required' => [
+                            'descripcion', 'objetivo_general', 'objetivos_especificos',
+                            'resultados_aprendizaje', 'habilidades_blandas', 'bibliografia_basica',
+                            'bibliografia_complementaria', 'herramientas_tic', 'herramientas_ia',
+                            'relacion_perfil_egreso',
+                        ],
                         'properties' => [
                             'descripcion' => ['type' => ['string', 'null']],
                             'objetivo_general' => ['type' => ['string', 'null']],
@@ -151,7 +157,9 @@ class ExportOpenApi extends Command
             $successContent = ['application/json' => ['schema' => [
                 'type' => 'object',
                 'required' => ['profile'],
-                'properties' => ['profile' => ['$ref' => '#/components/schemas/SubjectProfile']],
+                'properties' => ['profile' => $method === 'GET'
+                    ? ['anyOf' => [['$ref' => '#/components/schemas/SubjectProfile'], ['type' => 'null']]]
+                    : ['$ref' => '#/components/schemas/SubjectProfile']],
             ]]];
         }
         if ($method === 'GET' && in_array($name, [

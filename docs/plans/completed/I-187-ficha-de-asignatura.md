@@ -1,6 +1,6 @@
 # I-187 — Ficha de asignatura: datos por materia que el sílabo hereda
 
-> Implementación local en curso. La migración remota corresponde al deploy; esta tarea no se conecta a producción.
+> Implementación local verificada. La migración remota corresponde al deploy; esta tarea no se conectó a producción.
 
 ## Por qué
 
@@ -160,11 +160,19 @@ migraciones 000184–000193). Tabla `fichas_asignatura`:
 
 - Fila nueva en `docs/quality/traceability.md` («Ficha de asignatura, herencia al sílabo (I-187)»).
 - Ajusta `docs/architecture/production-database-schema.md`, `database.md`, `docs/architecture/openapi.json`.
+- Mueve el plan a `docs/plans/completed/` cuando todo pase, con la evidencia de los comandos.
+- Migración en la remota: la aplica el deploy; no te conectes a la remota.
 
 ## Alcance diferido de esta etapa
 
 - La acción «Aplicar ficha a los borradores» queda pendiente. Un cambio de ficha solo afecta sílabos nuevos; los borradores existentes conservan sus valores hasta una acción explícita posterior. Requiere distinguir cambios del docente en bibliografía y respetar bloqueos de proceso.
 - La carga desde Excel se traslada a I-188 junto con la importación documental. La ficha se ingresa manualmente en I-187.
 - La revisión visual en dispositivos reales permanece asociada a PV-19.
-- Mueve el plan a `docs/plans/completed/` cuando todo pase, con la evidencia de los comandos.
-- Migración en la remota: la aplica el deploy; no te conectes a la remota.
+
+## Evidencia de verificación local
+
+- `composer verify`: escaneo de secretos, Pint, PHPStan y 337 pruebas backend con 4270 aserciones aprobados.
+- Frontend: `npm test` (295 pruebas aprobadas, una omitida), `npm run typecheck`, `npm run lint` y `npm run contract:check` aprobados. El contrato cotejó 101 consumidores de la SPA con 112 operaciones OpenAPI.
+- `git diff --check` pasó en ambos repositorios. La prueba de esquema PostgreSQL y el contrato OpenAPI forman parte de la suite backend.
+- Para que el escaneo obligatorio pudiera pasar, el SQL histórico versionado `SQL_REMOTA_I-168.sql` se trasladó sin abrir su contenido a `/home/giossue/Documentos/SQL_REMOTA_I-168.sql`. La eliminación del archivo versionado queda visible en el diff.
+- Ninguna migración ni consulta se ejecutó en la base remota. La estructura local de prueba se creó mediante `RefreshDatabase`.

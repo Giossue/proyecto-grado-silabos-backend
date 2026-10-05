@@ -12,18 +12,18 @@ use Illuminate\Http\Request;
 
 class SubjectProfileController extends Controller
 {
-    public function show(Subject $subject, Request $request, SaveSubjectProfile $action): JsonResponse
+    public function show(Subject $asignatura, Request $request, SaveSubjectProfile $action): JsonResponse
     {
-        $action->authorize($subject, $request);
+        $action->authorize($asignatura, $request);
 
-        return response()->json(['profile' => $subject->profile]);
+        return response()->json(['profile' => $asignatura->profile]);
     }
 
-    public function update(Subject $subject, SaveSubjectProfileRequest $request, SaveSubjectProfile $action): JsonResponse
+    public function update(Subject $asignatura, SaveSubjectProfileRequest $request, SaveSubjectProfile $action): JsonResponse
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
 
-        return response()->json(['profile' => $action->execute($subject, $request->validated(), $actor, $request)]);
+        return response()->json(['profile' => $action->execute($asignatura, $request->validated(), $actor, $request)]);
     }
 }

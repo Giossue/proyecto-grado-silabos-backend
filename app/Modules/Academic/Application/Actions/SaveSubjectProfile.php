@@ -32,12 +32,11 @@ class SaveSubjectProfile
     /** @param array<string, mixed> $data */
     public function execute(Subject $subject, array $data, User $actor, Request $request): SubjectProfile
     {
-        $this->authorize($subject, $request);
-        $this->locks->assertCareerEditable($subject->carrera_id);
-
         return DB::transaction(function () use ($actor, $data, $request, $subject): SubjectProfile {
-            Subject::query()->whereKey($subject->id)->lockForUpdate()->firstOrFail();
-            $profile = SubjectProfile::query()->firstOrNew(['asignatura_id' => $subject->id]);
+            $lockedSubject = Subject::query()->whereKey($subject->id)->lockForUpdate()->firstOrFail();
+            $this->authorize($lockedSubject, $request);
+            $this->locks->assertCareerEditable($lockedSubject->carrera_id);
+            $profile = SubjectProfile::query()->firstOrNew(['asignatura_id' => $lockedSubject->id]);
             $profile->fill($data);
             $profile->save();
             $this->audit->execute(
@@ -47,7 +46,7 @@ class SaveSubjectProfile
                 resourceType: 'ficha_asignatura',
                 resourceId: $profile->id,
                 result: 'exito',
-                metadata: ['asignatura_id' => $subject->id],
+                metadata: ['asignatura_id' => $lockedSubject->id],
             );
 
             return $profile;

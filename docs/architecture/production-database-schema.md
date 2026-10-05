@@ -365,6 +365,7 @@ CHECK documento_fuente_academica no contiene nodos de texto vacíos
 
 ~~~text
 plantilla_silabo 1:N definiciones_campo
+asignaturas 1:0..1 fichas_asignatura
 carreras 1:N fuentes_academicas
 fuentes_academicas 1:0..1 objetos_almacenados como PDF vigente
 fuentes_academicas 1:N ejecuciones_trabajo por recurso lógico

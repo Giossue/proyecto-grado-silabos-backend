@@ -179,10 +179,10 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.reviews.reset');
             Route::get('coordination/academic/curriculum/{curriculum}', [CareerAcademicStructureController::class, 'curriculumBuilder'])
                 ->middleware('active-role')->whereUuid('curriculum')->name('api.v1.coordination.academic.curriculum.show');
-            Route::get('academic/subjects/{subject}/profile', [SubjectProfileController::class, 'show'])
-                ->middleware('active-role')->whereUuid('subject')->name('api.v1.academic.subjects.profile.show');
-            Route::put('academic/subjects/{subject}/profile', [SubjectProfileController::class, 'update'])
-                ->middleware('active-role')->whereUuid('subject')->name('api.v1.academic.subjects.profile.update');
+            Route::get('academic/asignaturas/{asignatura}/ficha', [SubjectProfileController::class, 'show'])
+                ->middleware('active-role')->whereUuid('asignatura')->name('api.v1.academic.subjects.profile.show');
+            Route::put('academic/asignaturas/{asignatura}/ficha', [SubjectProfileController::class, 'update'])
+                ->middleware('active-role')->whereUuid('asignatura')->name('api.v1.academic.subjects.profile.update');
             Route::get('coordination/academic/scheduled-subjects', [CareerAcademicStructureController::class, 'scheduledSubjects'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-subjects.index');
             Route::get('coordination/academic/teacher-assignments', [CareerAcademicStructureController::class, 'teacherAssignments'])
