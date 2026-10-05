@@ -14,12 +14,9 @@ use LogicException;
 /**
  * @property string $id
  * @property string $revision_silabo_id
- * @property string $enviado_por
- * @property CarbonImmutable $enviado_en
  * @property string|null $verificado_por
  * @property CarbonImmutable|null $verificado_en
  * @property-read SyllabusRevision $revision
- * @property-read User $sender
  * @property-read User|null $verifier
  */
 class LibrarySubmission extends Model
@@ -35,24 +32,18 @@ class LibrarySubmission extends Model
     protected $primaryKey = 'envio_biblioteca_id';
 
     /** @var list<string> */
-    protected $fillable = ['revision_silabo_id', 'enviado_por', 'enviado_en', 'verificado_por', 'verificado_en'];
+    protected $fillable = ['revision_silabo_id', 'verificado_por', 'verificado_en'];
 
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['enviado_en' => 'immutable_datetime', 'verificado_en' => 'immutable_datetime'];
+        return ['verificado_en' => 'immutable_datetime'];
     }
 
     /** @return BelongsTo<SyllabusRevision, $this> */
     public function revision(): BelongsTo
     {
         return $this->belongsTo(SyllabusRevision::class, 'revision_silabo_id');
-    }
-
-    /** @return BelongsTo<User, $this> */
-    public function sender(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'enviado_por');
     }
 
     /** @return BelongsTo<User, $this> */

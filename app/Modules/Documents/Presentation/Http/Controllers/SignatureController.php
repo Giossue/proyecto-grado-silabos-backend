@@ -49,8 +49,8 @@ class SignatureController extends Controller
             'my_role' => $role,
             'can_sign' => $canSign,
             'library' => $submission === null ? null : [
-                'sent_at' => $submission->enviado_en->toIso8601String(),
-                'sent_by' => $submission->sender->nombre,
+                'sent_at' => $submission->revision->enviado_en->toIso8601String(),
+                'sent_by' => $submission->revision->submitter->nombre,
                 'verified_at' => $submission->verificado_en?->toIso8601String(),
                 'verified_by' => $submission->verifier?->nombre,
             ],

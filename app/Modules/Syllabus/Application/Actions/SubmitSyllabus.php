@@ -90,11 +90,7 @@ class SubmitSyllabus
             ]);
 
             // I-173: la revisión entra primero a biblioteca; el envío queda registrado con el docente.
-            LibrarySubmission::query()->create([
-                'revision_silabo_id' => $revision->id,
-                'enviado_por' => $actor->id,
-                'enviado_en' => now(),
-            ]);
+            LibrarySubmission::query()->create(['revision_silabo_id' => $revision->id]);
 
             $from = $locked->estado;
             $action = $from === 'borrador' ? 'enviar' : 'reenviar';

@@ -61,7 +61,7 @@ final class LibraryReviews
                     ->whereRaw("silabo.datos_academicos_silabo->'subject'->>'name' ILIKE ?", ["%{$search}%"])
                     ->orWhereRaw("silabo.datos_academicos_silabo->'subject'->>'code' ILIKE ?", ["%{$search}%"]),
             ))
-            ->orderByDesc('envios_biblioteca.enviado_en');
+            ->orderByDesc('revision.enviado_en');
     }
 
     public function stateOf(LibrarySubmission $submission): string

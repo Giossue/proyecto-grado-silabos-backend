@@ -326,8 +326,6 @@ class DocumentSignatureTest extends TestCase
         // I-173: biblioteca y coordinación ya revisaron; el decanato aprobó.
         LibrarySubmission::query()->create([
             'revision_silabo_id' => $revision->id,
-            'enviado_por' => $this->teacher->id,
-            'enviado_en' => now()->subMinute(),
             'verificado_por' => $this->librarian->id,
             'verificado_en' => now(),
         ]);

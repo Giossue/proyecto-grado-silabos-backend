@@ -89,7 +89,7 @@ class SignatureWorkflow
     {
         return LibrarySubmission::query()
             ->where('revision_silabo_id', $revision->id)
-            ->with(['sender:id,nombre', 'verifier:id,nombre'])
+            ->with(['revision.submitter:id,nombre', 'verifier:id,nombre'])
             ->first();
     }
 

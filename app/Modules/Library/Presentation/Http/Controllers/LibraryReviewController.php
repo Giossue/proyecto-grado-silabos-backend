@@ -36,7 +36,7 @@ class LibraryReviewController extends Controller
         $state = $request->validated('state');
         $search = is_string($request->validated('q')) ? trim($request->validated('q')) : null;
         $page = $this->reviews->query(is_string($state) ? $state : null, $search)
-            ->with('sender:id,nombre')
+            ->with('revision.submitter:id,nombre')
             ->paginate(15)
             ->withQueryString();
         $syllabi = $this->syllabi(array_values(collect($page->items())->pluck('silabo_id')->all()));
@@ -46,8 +46,8 @@ class LibraryReviewController extends Controller
             'reviews' => $page->through(fn (LibrarySubmission $submission): array => [
                 ...$this->summary($syllabi->get($submission->getAttribute('silabo_id')), (int) $submission->getAttribute('numero_revision')),
                 'revision_id' => $submission->getAttribute('revision_id'),
-                'sent_at' => $submission->enviado_en->toIso8601String(),
-                'sent_by' => $submission->sender->nombre,
+                'sent_at' => $submission->revision->enviado_en->toIso8601String(),
+                'sent_by' => $submission->revision->submitter->nombre,
                 'state' => $submission->getAttribute('estado_envio'),
             ]),
         ]);
@@ -70,8 +70,8 @@ class LibraryReviewController extends Controller
         return response()->json(['review' => [
             ...$this->summary($syllabus, $revision->numero_revision),
             'revision_id' => $revision->id,
-            'sent_at' => $submission->enviado_en->toIso8601String(),
-            'sent_by' => $submission->sender->nombre,
+            'sent_at' => $submission->revision->enviado_en->toIso8601String(),
+            'sent_by' => $submission->revision->submitter->nombre,
             'state' => $state,
             'can_comment' => $reviewable,
             'can_verify' => $reviewable,

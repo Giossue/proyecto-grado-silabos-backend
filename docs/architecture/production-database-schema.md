@@ -594,7 +594,7 @@ reabre (I-178): Coordinación lo elimina con todo su historial.
 
 ## envios_biblioteca
 
-**Contexto:** envío de una revisión aprobada a biblioteca y su visto bueno (I-165).
+**Contexto:** visto bueno de biblioteca sobre una revisión (I-165). Quién y cuándo envió el docente se lee de `revisiones_silabo` (I-182 quitó las columnas repetidas).
 
 ~~~text
 envio_biblioteca_id UUID (PK)
