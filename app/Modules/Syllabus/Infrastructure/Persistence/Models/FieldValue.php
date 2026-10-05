@@ -25,7 +25,7 @@ class FieldValue extends Model
     protected $primaryKey = 'valor_campo_id';
 
     /** @var list<string> */
-    protected $fillable = ['silabo_id', 'definicion_campo_id', 'valor'];
+    protected $fillable = ['silabo_id', 'asignatura_id', 'definicion_campo_id', 'valor'];
 
     /** @return array<string, string> */
     protected function casts(): array

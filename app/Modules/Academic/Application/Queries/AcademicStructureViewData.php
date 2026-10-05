@@ -4,6 +4,7 @@ namespace App\Modules\Academic\Application\Queries;
 
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
+use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\CurricularUnit;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
@@ -29,6 +30,7 @@ class AcademicStructureViewData
         private readonly ProcessLocks $locks,
         private readonly InstitutionalLogos $logos,
         private readonly AcademicPeriodPlanning $periodPlanning,
+        private readonly SubjectProfileFields $profiles,
     ) {}
 
     /** @return array<string, mixed> */
@@ -275,11 +277,12 @@ class AcademicStructureViewData
 
         $careerSubjects = Subject::query()
             ->where('carrera_id', $careerId)
-            ->with(['career.faculty', 'profile'])
+            ->with(['career.faculty'])
             ->orderBy('ciclo')
             ->orderBy('orden_en_ciclo')
             ->orderBy('nombre')
             ->get(['id', 'carrera_id', 'codigo_asignatura', 'nombre', 'ciclo', 'activo', 'modalidad']);
+        $profileComplete = $this->profiles->completeBySubject($careerSubjects->map(fn (Subject $subject): string => $subject->id)->all());
         // Cada período ofrece todas las materias activas de la malla; se listan también las que
         // ya tienen paralelos aunque la materia se haya desactivado después.
         $rows = [];
@@ -299,7 +302,7 @@ class AcademicStructureViewData
                     'subject_code' => $subject->codigo_asignatura,
                     'subject_name' => $subject->nombre,
                     'subject_cycle' => $subject->ciclo,
-                    'profile_complete' => $subject->profile?->isComplete() ?? false,
+                    'profile_complete' => $profileComplete[$subject->id] ?? false,
                     'period_starts_on' => $period->fecha_inicio->toDateString(),
                     'period_ends_on' => $period->fecha_fin->toDateString(),
                     'period_status' => $this->periodPlanning->status($period),
@@ -324,6 +327,15 @@ class AcademicStructureViewData
         }
         $scheduledSubjects = collect($rows);
 
+        $activeSubjects = Subject::query()
+            ->where('activo', true)
+            ->where('carrera_id', $careerId)
+            ->orderBy('ciclo')
+            ->orderBy('orden_en_ciclo')
+            ->orderBy('nombre')
+            ->get(['id', 'codigo_asignatura', 'nombre', 'ciclo']);
+        $activeComplete = $this->profiles->completeBySubject($activeSubjects->map(fn (Subject $subject): string => $subject->id)->all());
+
         return [
             'career' => [
                 'id' => $career->id,
@@ -344,20 +356,13 @@ class AcademicStructureViewData
                         'status_label' => $this->periodPlanning->label($period),
                         'planning_enabled' => $this->periodPlanning->mayPlan($period),
                     ]),
-                'activeSubjects' => Subject::query()
-                    ->where('activo', true)
-                    ->where('carrera_id', $careerId)
-                    ->with('profile')
-                    ->orderBy('ciclo')
-                    ->orderBy('orden_en_ciclo')
-                    ->orderBy('nombre')
-                    ->get(['id', 'codigo_asignatura', 'nombre', 'ciclo'])
+                'activeSubjects' => $activeSubjects
                     ->map(fn (Subject $subject): array => [
                         'id' => $subject->id,
                         'codigo_asignatura' => $subject->codigo_asignatura,
                         'nombre' => $subject->nombre,
                         'ciclo' => $subject->ciclo,
-                        'profile_complete' => $subject->profile?->isComplete() ?? false,
+                        'profile_complete' => $activeComplete[$subject->id] ?? false,
                     ]),
                 'scheduledSubjects' => $periods
                     ->filter(fn (AcademicPeriod $period): bool => $this->periodPlanning->mayPlan($period))

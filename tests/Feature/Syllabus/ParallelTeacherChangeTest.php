@@ -263,6 +263,7 @@ class ParallelTeacherChangeTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla cambio docente']);
         $template = SyllabusTemplate::query()->firstOrFail();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
+        $this->fillSubjectProfiles();
 
         return $template->fresh();
     }

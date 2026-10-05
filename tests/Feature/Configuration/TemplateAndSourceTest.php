@@ -374,26 +374,12 @@ class TemplateAndSourceTest extends TestCase
                 'label' => $field->etiqueta,
                 'content_type' => 'text',
                 'help' => 'Redáctelo en infinitivo.',
-                'required' => 0,
-                'teacher_editable' => 0,
-                'inherited' => 1,
-                'master_source' => 'invento',
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['master_source']);
-        $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [
-                'block_id' => $field->campo_plantilla_id,
-                'key' => $field->clave,
-                'label' => $field->etiqueta,
-                'content_type' => 'text',
-                'help' => 'Redáctelo en infinitivo.',
             ])->assertSuccessful();
         $field->refresh();
         $this->assertSame('Redáctelo en infinitivo.', $field->ayuda);
         $this->assertFalse($field->editable_docente);
         $this->assertTrue($field->heredado);
-        $this->assertSame('fichas_asignatura.objetivo_general', $field->origen_maestro);
+        $this->assertSame('ficha', $field->origen_maestro);
 
         $identification = $template->fields()->where('clave', 'asignatura')->firstOrFail();
         $this->actingAsAdministrator()

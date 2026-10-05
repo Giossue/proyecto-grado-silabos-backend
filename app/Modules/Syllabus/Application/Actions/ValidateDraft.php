@@ -47,7 +47,7 @@ class ValidateDraft
                         'code' => $field->heredado ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
                         'severity' => 'error',
                         'message' => $field->heredado
-                            ? (str_starts_with((string) $field->origen_maestro, 'fichas_asignatura.')
+                            ? ($field->fromProfile()
                                 ? 'La asignatura no tiene ficha: pídala al coordinador.'
                                 : "Avise a Coordinación: falta el dato «{$field->displayName()}» en la información de la carrera.")
                             : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
@@ -81,11 +81,9 @@ class ValidateDraft
         if (is_array($detached) && array_key_exists($field->clave, $detached)) {
             return false;
         }
-        if (in_array($field->origen_maestro, ['fichas_asignatura.bibliografia_basica', 'fichas_asignatura.bibliografia_complementaria'], true)) {
-            return false;
-        }
         if ($field->heredado) {
-            return true;
+            // Un dato de la ficha que el docente puede ajustar llega como sugerencia: no es obligatorio.
+            return ! ($field->fromProfile() && $field->editable_docente);
         }
         if (! $field->editable_docente) {
             return false;

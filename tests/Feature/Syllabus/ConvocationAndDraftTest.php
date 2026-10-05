@@ -4,7 +4,6 @@ namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectProfile;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
@@ -18,6 +17,7 @@ use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Database\Seeders\DatabaseSeeder;
@@ -101,12 +101,13 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = $this->openConvocationAndGetSyllabus();
         $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
         $bibliography = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
+        $this->assertSame('ficha', $description->origen_maestro);
         $this->assertTrue($description->heredado);
         $this->assertFalse($description->editable_docente);
         $this->assertTrue($bibliography->heredado);
         $this->assertTrue($bibliography->editable_docente);
-        $this->assertSame('Estudio de arquitecturas de software.', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $description->id)->firstOrFail()->valor));
-        $this->assertStringContainsString('Bass, L.', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
+        $this->assertSame('Ficha de prueba: descripcion', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $description->id)->firstOrFail()->valor));
+        $this->assertStringContainsString('Ficha de prueba: bibliografia', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $description]), [
@@ -124,7 +125,7 @@ class ConvocationAndDraftTest extends TestCase
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
         $original = app(SyllabusSnapshot::class)->build($syllabus);
-        SubjectProfile::query()->where('asignatura_id', $syllabus->parallel->asignatura_id)->update(['descripcion' => 'Texto nuevo']);
+        FieldValue::query()->where('asignatura_id', $syllabus->parallel->asignatura_id)->update(['valor' => FreeText::fromText('Texto nuevo')]);
         $later = app(SyllabusSnapshot::class)->build($syllabus->fresh());
         $valueOf = fn (array $snapshot): mixed => collect($snapshot['sections'])->flatMap(fn ($section) => $section['blocks'])
             ->flatMap(fn ($block) => $block['fields'])->firstWhere('key', 'descripcion')['value'];
@@ -133,8 +134,10 @@ class ConvocationAndDraftTest extends TestCase
 
     public function test_missing_profile_reports_a_coordinator_action(): void
     {
-        SubjectProfile::query()->delete();
-        $syllabus = $this->openConvocationAndGetSyllabus();
+        $convocation = $this->createPreparedConvocation();
+        FieldValue::query()->whereNotNull('asignatura_id')->delete();
+        $this->openPrepared($convocation);
+        $syllabus = Syllabus::query()->firstOrFail();
         $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
         $this->assertNull($syllabus->values()->where('definicion_campo_id', $description->id)->firstOrFail()->valor);
 
@@ -150,11 +153,13 @@ class ConvocationAndDraftTest extends TestCase
 
     public function test_empty_profile_bibliography_is_optional_for_validation(): void
     {
-        SubjectProfile::query()->firstOrFail()->update(['bibliografia_basica' => [], 'bibliografia_complementaria' => []]);
-        $syllabus = $this->openConvocationAndGetSyllabus();
+        $convocation = $this->createPreparedConvocation();
+        $bibliographyIds = FieldDefinition::query()->whereIn('clave', ['bibliografia', 'bibliografia_complementaria'])->pluck('id')->all();
+        FieldValue::query()->whereNotNull('asignatura_id')->whereIn('definicion_campo_id', $bibliographyIds)->delete();
+        $this->openPrepared($convocation);
+        $syllabus = Syllabus::query()->firstOrFail();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $issues = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertOk()->json('validation.results');
-        $bibliographyIds = FieldDefinition::query()->whereIn('clave', ['bibliografia', 'bibliografia_complementaria'])->pluck('id')->all();
         $this->assertSame([], array_values(array_intersect($bibliographyIds, array_column($issues, 'field_id'))));
     }
 
@@ -642,6 +647,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-03']);
         $template = SyllabusTemplate::query()->firstOrFail();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
+        $this->fillSubjectProfiles();
 
         return $template->fresh();
     }

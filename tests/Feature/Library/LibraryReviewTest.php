@@ -3,6 +3,7 @@
 namespace Tests\Feature\Library;
 
 use App\Models\User;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Application\DocumentBundleValidator;
@@ -14,6 +15,7 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Database\Seeders\DatabaseSeeder;
@@ -93,8 +95,9 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('review.sections.0.key', 'bibliografia')
             ->assertJsonCount(1, 'review.sections');
         $this->assertNotEmpty($detail->json('review.template_variables'));
-        $this->assertStringContainsString('Bass, L.', json_encode($detail->json('review.sections'), JSON_THROW_ON_ERROR));
-        $syllabus->subject->profile->update(['bibliografia_basica' => ['Referencia posterior']]);
+        $this->assertStringContainsString('Ficha de prueba: bibliografia', json_encode($detail->json('review.sections'), JSON_THROW_ON_ERROR));
+        FieldValue::query()->where('asignatura_id', $syllabus->subject->id)
+            ->update(['valor' => FreeText::fromText('Referencia posterior')]);
         $this->assertSame($detail->json('review.sections'), $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertOk()->json('review.sections'));
         // Coordinación y decanato esperan su turno.
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])
@@ -199,6 +202,7 @@ class LibraryReviewTest extends TestCase
         $this->as('admin')->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-165']);
         $template = SyllabusTemplate::query()->firstOrFail();
         $this->as('admin')->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
+        $this->fillSubjectProfiles();
         $this->as('coordinator')->postJson(route('api.v1.coordination.convocations.store'), [
             'process_id' => $this->openSyllabusProcess($template->id, now()->subDay()->toIso8601String(), now()->addMonth()->toIso8601String())->id,
         ])->assertSuccessful();

@@ -3,14 +3,17 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectProfile;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class SaveSubjectProfile
 {
@@ -18,6 +21,7 @@ class SaveSubjectProfile
         private readonly ActiveRole $roles,
         private readonly ProcessLocks $locks,
         private readonly RecordAuditEvent $audit,
+        private readonly SubjectProfileFields $fields,
     ) {}
 
     public function authorize(Subject $subject, Request $request): void
@@ -29,27 +33,50 @@ class SaveSubjectProfile
         ), 403);
     }
 
-    /** @param array<string, mixed> $data */
-    public function execute(Subject $subject, array $data, User $actor, Request $request): SubjectProfile
+    /**
+     * @param  array<string, mixed>  $values  valor de texto libre por definición de campo; null o vacío lo quita
+     * @return array<string, array<string, mixed>>
+     */
+    public function execute(Subject $subject, array $values, User $actor, Request $request): array
     {
-        return DB::transaction(function () use ($actor, $data, $request, $subject): SubjectProfile {
+        $allowed = $this->fields->fields()->keyBy('id');
+        foreach (array_keys($values) as $fieldId) {
+            if (! $allowed->has($fieldId)) {
+                throw ValidationException::withMessages(['values' => 'La ficha incluye un campo que ya no existe en la plantilla.']);
+            }
+        }
+
+        return DB::transaction(function () use ($actor, $request, $subject, $values): array {
             $lockedSubject = Subject::query()->whereKey($subject->id)->lockForUpdate()->firstOrFail();
             $this->authorize($lockedSubject, $request);
             $this->locks->assertCareerEditable($lockedSubject->carrera_id);
-            $profile = SubjectProfile::query()->firstOrNew(['asignatura_id' => $lockedSubject->id]);
-            $profile->fill($data);
-            $profile->save();
+
+            foreach ($values as $fieldId => $value) {
+                $document = is_array($value) ? FreeText::normalize($value, "values.{$fieldId}") : null;
+                $query = FieldValue::query()
+                    ->where('asignatura_id', $lockedSubject->id)
+                    ->where('definicion_campo_id', $fieldId);
+                if ($document === null || FreeText::isEmpty($document)) {
+                    $query->delete();
+
+                    continue;
+                }
+                FieldValue::query()->updateOrCreate(
+                    ['asignatura_id' => $lockedSubject->id, 'definicion_campo_id' => $fieldId],
+                    ['valor' => $document],
+                );
+            }
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $this->roles->resolve($request)?->id,
                 action: 'academico.ficha_asignatura.guardada',
-                resourceType: 'ficha_asignatura',
-                resourceId: $profile->id,
+                resourceType: 'asignatura',
+                resourceId: $lockedSubject->id,
                 result: 'exito',
-                metadata: ['asignatura_id' => $lockedSubject->id],
+                metadata: ['campos' => count($values)],
             );
 
-            return $profile;
+            return $this->fields->values($lockedSubject->id);
         });
     }
 }

@@ -42,6 +42,9 @@ class FieldDefinition extends Model
         'mostrar_si' => 'condicion_definicion_campo',
     ];
 
+    /** Origen de los campos que se llenan una vez por asignatura (ficha) y el sílabo hereda. */
+    public const ORIGIN_PROFILE = 'ficha';
+
     public $timestamps = false;
 
     protected $table = 'definiciones_campo';
@@ -79,6 +82,11 @@ class FieldDefinition extends Model
     protected static function booted(): void
     {
         static::addGlobalScope('vigente_en_plantilla', fn (Builder $query) => $query->where('vigente_en_plantilla', true));
+    }
+
+    public function fromProfile(): bool
+    {
+        return $this->heredado && $this->origen_maestro === self::ORIGIN_PROFILE;
     }
 
     /** @return BelongsTo<SyllabusTemplate, $this> */

@@ -54,7 +54,7 @@ programadas de inicio o fin.
 ### Académico
 
 `facultades`, `carreras`,
-`periodos_academicos`, `asignaturas`, `fichas_asignatura`, `requisitos_asignatura`,
+`periodos_academicos`, `asignaturas`, `requisitos_asignatura`,
 `paralelos`, `asignaciones_paralelo`.
 
 `asignaciones_rol` es única relación RBAC: une usuario, rol fijo y alcance de carrera. Una
@@ -106,18 +106,12 @@ atributos académicos de `asignaturas` son fijos y tipados: ninguna carrera agre
 columnas o redefine esos atributos mediante valores EAV. ACD, APE, AA, créditos y total son un
 conjunto fijo; `total_horas_asignatura` es una columna generada `STORED` igual a
 `round(horas_ac + horas_pae + horas_aa)` (I-132) y no se escribe desde la aplicación.
-I-187 agrega `fichas_asignatura`: una fila opcional por materia, editable por Coordinación
-de esa carrera o Administración mientras la estructura está desbloqueada. Conserva textos
-y listas académicos; la bibliografía puede estar vacía. Los campos de la plantilla
-heredan una copia al crear el sílabo. Corregir la ficha no reescribe borradores ni
-fotografías. La bibliografía heredada permanece editable por Docencia.
-Las columnas `horas_proyecto`, `horas_ap` y `horas_paec`, heredadas del sistema anterior
-(I-11) y sin dato ni pantalla, se retiraron en I-162. La migración `000100` trasladó a `horas_pae` el saldo de las filas cuyo total superaba la suma de
-componentes (prácticas preprofesionales y de servicio comunitario), sin perder horas.
-`asignaturas.ciclo_asignatura` y `orden_asignatura_en_ciclo` determinan la posición reproducible del lienzo.
-Las coordenadas de pantalla no se persisten. `requisitos_asignatura.tipo_requisito_asignatura`
-conserva la semántica explícita de cada flecha: un `CHECK` la limita a `prerrequisito` o
-`correquisito` y, desde I-168, un par de materias tiene un solo tipo (`requisitos_asignatura_par_unico`).
+I-187 creó la ficha de asignatura y I-189 la dejó sin tabla propia: sus valores son filas de
+`valores_campo` con `asignatura_id` en lugar de `silabo_id` (un `CHECK` exige exactamente uno
+de los dos; un índice único parcial por dueño). Los campos de la plantilla con origen `ficha`
+forman el formulario que Coordinación llena una vez por materia; el sílabo copia el valor al
+crearse. Corregir la ficha no reescribe borradores ni fotografías. Agregar un campo nuevo a la
+ficha es solo configuración de la plantilla (sin migración).
 
 `silabos.contexto_academico_silabo` (alias `contexto_academico`) guarda la lectura JSON de la
 estructura curricular, la asignatura y su programación al crear el
@@ -193,8 +187,8 @@ base lo protege como una FK: el trigger diferido `validar_condicion_definicion` 
 una clave inexistente y `propagar_clave_condicion` anula la condición si el campo
 referido se borra o la actualiza si cambia de clave. Un `CHECK`
 (`definiciones_campo_heredado_check`) exige que un campo heredado tenga origen. Solo
-`fichas_asignatura.bibliografia_basica` y `fichas_asignatura.bibliografia_complementaria`
-pueden ser heredados y editables por el docente. Las columnas de `definiciones_campo` y otras renombradas en I-168
+los campos con origen `ficha` pueden ser heredados y, si el administrador lo decide,
+editables por el docente. Las columnas de `definiciones_campo` y otras renombradas en I-168
 usan su nombre completo (`heredado_definicion_campo`, `origen_maestro_definicion_campo`,
 `editable_docente_definicion_campo`, `mostrar_si_definicion_campo`,
 `convocatorias_carreras.convocatoria_universidad_id`, `silabos.convocatoria_carrera_id`,

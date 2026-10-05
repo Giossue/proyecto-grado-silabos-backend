@@ -108,18 +108,16 @@ final class SyllabusTemplateProvisioner
                 if ($contentType === 'fixed') {
                     continue;
                 }
-                $profileSources = [
-                    'descripcion' => 'descripcion', 'objetivo_general' => 'objetivo_general',
-                    'objetivos_especificos' => 'objetivos_especificos',
-                    'resultados_aprendizaje' => 'resultados_aprendizaje',
-                    'habilidades_blandas' => 'habilidades_blandas',
-                    'herramientas_tic' => 'herramientas_tic',
-                    'contribucion_perfil' => 'relacion_perfil_egreso',
-                    'bibliografia' => 'bibliografia_basica',
-                    'bibliografia_complementaria' => 'bibliografia_complementaria',
+                $profileKeys = [
+                    'descripcion', 'objetivo_general', 'objetivos_especificos', 'resultados_aprendizaje',
+                    'habilidades_blandas', 'herramientas_tic', 'contribucion_perfil',
+                    'bibliografia', 'bibliografia_complementaria',
                 ];
-                $origin = $contentType === 'institutional' ? 'asignaturas' : (isset($profileSources[$fieldKey]) ? 'fichas_asignatura.'.$profileSources[$fieldKey] : null);
-                $bibliography = in_array($fieldKey, ['bibliografia', 'bibliografia_complementaria'], true);
+                // La bibliografía llega como sugerencia: el docente puede agregar o quitar libros.
+                $teacherAdjusts = in_array($fieldKey, ['bibliografia', 'bibliografia_complementaria'], true);
+                $origin = $contentType === 'institutional'
+                    ? 'asignaturas'
+                    : (in_array($fieldKey, $profileKeys, true) ? FieldDefinition::ORIGIN_PROFILE : null);
 
                 $fieldDefinitions[] = [
                     'plantilla_id' => $template->id,
@@ -129,7 +127,7 @@ final class SyllabusTemplateProvisioner
                     'tipo' => $this->fieldType($contentType),
                     'heredado' => $origin !== null,
                     'origen_maestro' => $origin,
-                    'editable_docente' => $origin === null || $bibliography,
+                    'editable_docente' => $origin === null || $teacherAdjusts,
                     'posicion' => 1,
                 ];
 

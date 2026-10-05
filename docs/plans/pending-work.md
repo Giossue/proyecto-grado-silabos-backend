@@ -116,7 +116,7 @@ revisiones mientras se decide el reemplazo.
 ## 1. Código: mejoras diferidas
 
 I-187 difiere dos mejoras opcionales: «Aplicar ficha a los borradores» con protección
-de los cambios docentes, y la carga inicial desde Excel, que se agrupa con I-189.
+de los cambios docentes, y la carga inicial desde Excel, que se agrupa con la IA de la ficha (plan posterior).
 La migración `000194` se entrega para el deploy y aún no se ha aplicado a producción.
 
 No hay `TODO` ni `FIXME` nuevos en I-19. Formato, análisis estático, tipos, compilación y

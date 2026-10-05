@@ -75,6 +75,7 @@ class SaveFieldDefinition
                 $field->update([
                     'etiqueta' => $data['label'], 'ayuda' => $data['help'] ?? null,
                     'opciones' => $data['options'] ?? $field->opciones,
+                    ...$this->profileAttributes($field, $data),
                     ...$condition,
                 ]);
                 $this->applyOrientation($customBlock, $data);
@@ -112,8 +113,7 @@ class SaveFieldDefinition
                 $field = FieldDefinition::query()->create([
                     'plantilla_id' => $template->id, 'campo_plantilla_id' => $block->id, 'clave' => $data['key'],
                     'etiqueta' => $label, 'ayuda' => $data['help'] ?? null, 'tipo' => 'texto_libre',
-                    'heredado' => false, 'editable_docente' => true,
-                    'posicion' => 1, ...$condition,
+                    'posicion' => 1, ...$this->profileAttributes(null, $data), ...$condition,
                 ]);
                 $this->auditField($field, 'plantilla.campo_creado', $actor, $activeRole?->id, $request);
 
@@ -124,7 +124,6 @@ class SaveFieldDefinition
             }
             $block = $this->updateBlock($field, $template, $data, $contentType);
             $this->applyOrientation($block, $data);
-            $inherited = $field->heredado;
             $attributes = [
                 'plantilla_id' => $template->id,
                 'campo_plantilla_id' => $block->id,
@@ -132,9 +131,7 @@ class SaveFieldDefinition
                 'etiqueta' => $data['label'],
                 'ayuda' => $data['help'] ?? null,
                 'tipo' => $this->fieldType($contentType),
-                'heredado' => $inherited,
-                'origen_maestro' => $field->heredado ? $field->origen_maestro : null,
-                'editable_docente' => ! $inherited || in_array($field->origen_maestro, ['fichas_asignatura.bibliografia_basica', 'fichas_asignatura.bibliografia_complementaria'], true),
+                ...$this->profileAttributes($field, $data),
                 'opciones' => $contentType === 'multiple_choice' ? ($data['options'] ?? $field->opciones) : null,
                 ...$condition,
             ];
@@ -144,6 +141,30 @@ class SaveFieldDefinition
 
             return $field;
         });
+    }
+
+    /**
+     * Herencia desde la ficha de la asignatura: solo los campos de texto libre pueden llenarse desde
+     * ella. El resto de la herencia («asignaturas», identificación) no se cambia.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function profileAttributes(?FieldDefinition $field, array $data): array
+    {
+        if ($field?->origen_maestro === 'asignaturas') {
+            return ['heredado' => true, 'origen_maestro' => 'asignaturas', 'editable_docente' => false];
+        }
+        $fromProfile = (bool) ($data['from_profile'] ?? $field?->fromProfile() ?? false);
+        if (! $fromProfile || ($field !== null && $field->tipo !== 'texto_libre')) {
+            return ['heredado' => false, 'origen_maestro' => null, 'editable_docente' => true];
+        }
+
+        return [
+            'heredado' => true,
+            'origen_maestro' => FieldDefinition::ORIGIN_PROFILE,
+            'editable_docente' => (bool) ($data['teacher_editable'] ?? ($field === null ? false : $field->editable_docente)),
+        ];
     }
 
     /** @param array<string, mixed> $data */

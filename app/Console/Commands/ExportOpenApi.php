@@ -68,23 +68,28 @@ class ExportOpenApi extends Command
                     ],
                     'SubjectProfile' => [
                         'type' => 'object',
-                        'required' => [
-                            'descripcion', 'objetivo_general', 'objetivos_especificos',
-                            'resultados_aprendizaje', 'habilidades_blandas', 'bibliografia_basica',
-                            'bibliografia_complementaria', 'herramientas_tic', 'herramientas_ia',
-                            'relacion_perfil_egreso',
-                        ],
+                        'required' => ['fields', 'values', 'complete'],
                         'properties' => [
-                            'descripcion' => ['type' => ['string', 'null']],
-                            'objetivo_general' => ['type' => ['string', 'null']],
-                            'objetivos_especificos' => ['type' => ['array', 'null'], 'items' => ['type' => 'string']],
-                            'resultados_aprendizaje' => ['type' => ['array', 'null'], 'items' => ['type' => 'string']],
-                            'habilidades_blandas' => ['type' => ['array', 'null'], 'items' => ['type' => 'object', 'required' => ['nombre', 'definicion'], 'properties' => ['nombre' => ['type' => 'string'], 'definicion' => ['type' => 'string']]]],
-                            'bibliografia_basica' => ['type' => ['array', 'null'], 'items' => ['type' => 'string']],
-                            'bibliografia_complementaria' => ['type' => ['array', 'null'], 'items' => ['type' => 'string']],
-                            'herramientas_tic' => ['type' => ['array', 'null'], 'items' => ['type' => 'string']],
-                            'herramientas_ia' => ['type' => ['array', 'null'], 'items' => ['type' => 'object', 'required' => ['herramienta', 'caracteristica'], 'properties' => ['herramienta' => ['type' => 'string'], 'caracteristica' => ['type' => 'string']]]],
-                            'relacion_perfil_egreso' => ['type' => ['string', 'null']],
+                            'fields' => ['type' => 'array', 'items' => [
+                                'type' => 'object',
+                                'required' => ['id', 'key', 'label'],
+                                'properties' => [
+                                    'id' => ['type' => 'string', 'format' => 'uuid'],
+                                    'key' => ['type' => 'string'],
+                                    'label' => ['type' => 'string'],
+                                    'help' => ['type' => ['string', 'null']],
+                                    'section' => ['type' => ['string', 'null']],
+                                ],
+                            ]],
+                            'values' => ['type' => 'object', 'additionalProperties' => ['type' => ['object', 'null']]],
+                            'complete' => ['type' => 'boolean'],
+                        ],
+                    ],
+                    'SubjectProfileInput' => [
+                        'type' => 'object',
+                        'required' => ['values'],
+                        'properties' => [
+                            'values' => ['type' => 'object', 'additionalProperties' => ['type' => ['object', 'null']]],
                         ],
                     ],
                     'Error' => [
@@ -160,13 +165,7 @@ class ExportOpenApi extends Command
                 ? ['application/pdf' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
                 : ['application/json' => ['schema' => ['type' => 'object']]]);
         if ($isSubjectProfile) {
-            $successContent = ['application/json' => ['schema' => [
-                'type' => 'object',
-                'required' => ['profile'],
-                'properties' => ['profile' => $method === 'GET'
-                    ? ['anyOf' => [['$ref' => '#/components/schemas/SubjectProfile'], ['type' => 'null']]]
-                    : ['$ref' => '#/components/schemas/SubjectProfile']],
-            ]]];
+            $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectProfile']]];
         }
         if ($isTemplateRead) {
             $successContent = ['application/json' => ['schema' => [
@@ -248,7 +247,7 @@ class ExportOpenApi extends Command
                 ]]];
             } elseif ($isSubjectProfile) {
                 $content = ['application/json' => ['schema' => [
-                    '$ref' => '#/components/schemas/SubjectProfile',
+                    '$ref' => '#/components/schemas/SubjectProfileInput',
                 ]]];
             } elseif ($isProcessTransition) {
                 $content = ['application/json' => ['schema' => [
