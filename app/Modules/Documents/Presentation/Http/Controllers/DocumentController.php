@@ -55,7 +55,6 @@ class DocumentController extends Controller
                 'renderer_label' => 'Formato institucional en revisión',
                 'execution' => $artifact->execution === null ? null : [
                     'estado' => $artifact->execution->estado,
-                    'progreso' => $artifact->execution->progreso,
                     'mensaje_error' => $artifact->execution->mensaje_error,
                 ],
                 'files' => $artifact->estado !== 'completado' ? null : [

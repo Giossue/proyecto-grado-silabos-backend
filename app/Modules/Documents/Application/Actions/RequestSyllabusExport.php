@@ -70,8 +70,6 @@ class RequestSyllabusExport
                 'tipo_recurso' => 'artefacto_exportacion',
                 'recurso_id' => $artifact->id,
                 'intentos' => 0,
-                'intentos_maximos' => 3,
-                'progreso' => 0,
             ]);
             $artifact->update(['ejecucion_trabajo_id' => $execution->id]);
             GenerateSyllabusExportJob::dispatch($artifact->id)->afterCommit();

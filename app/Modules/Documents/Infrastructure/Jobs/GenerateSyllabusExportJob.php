@@ -55,10 +55,8 @@ class GenerateSyllabusExportJob implements ShouldQueue
             $execution->update([
                 'estado' => 'en_ejecucion',
                 'intentos' => $execution->intentos + 1,
-                'progreso' => 10,
                 'iniciado_en' => $execution->iniciado_en ?? now(),
                 'finalizado_en' => null,
-                'codigo_error' => null,
                 'mensaje_error' => null,
             ]);
 
@@ -111,14 +109,12 @@ class GenerateSyllabusExportJob implements ShouldQueue
             ]);
             $execution->update([
                 'estado' => 'completada',
-                'progreso' => 100,
                 'resultado' => [
                     'artifact_id' => $locked->id,
                     'docx_object_id' => $docx->id,
                     'pdf_object_id' => $pdf->id,
                 ],
                 'finalizado_en' => now(),
-                'codigo_error' => null,
                 'mensaje_error' => null,
             ]);
             InternalNotification::query()->firstOrCreate(
@@ -163,9 +159,7 @@ class GenerateSyllabusExportJob implements ShouldQueue
             if ($execution !== null) {
                 $execution->update([
                     'estado' => 'fallida',
-                    'progreso' => 0,
                     'resultado' => null,
-                    'codigo_error' => 'exportacion_documento_fallida',
                     'mensaje_error' => 'No fue posible generar los documentos. Puede solicitar un reintento.',
                     'finalizado_en' => now(),
                 ]);

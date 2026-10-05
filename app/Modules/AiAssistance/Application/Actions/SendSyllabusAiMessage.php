@@ -72,8 +72,6 @@ class SendSyllabusAiMessage
                 'tipo_recurso' => 'mensaje_ia',
                 'recurso_id' => $answerId,
                 'intentos' => 0,
-                'intentos_maximos' => 3,
-                'progreso' => 0,
             ]);
             $answer = AiHistoryEntry::query()->create([
                 'id' => $answerId,

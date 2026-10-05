@@ -54,8 +54,6 @@ class JobExecutionController extends Controller
                     'cola' => $this->queueLabel($execution->cola),
                     'estado' => $execution->estado,
                     'intentos' => $execution->intentos,
-                    'intentos_maximos' => $execution->intentos_maximos,
-                    'progreso' => $execution->progreso,
                     'mensaje_error' => $this->safeError($execution),
                     'encolado_en' => $execution->encolado_en?->toIso8601String(),
                     'iniciado_en' => $execution->iniciado_en?->toIso8601String(),
@@ -131,17 +129,9 @@ class JobExecutionController extends Controller
         return $options;
     }
 
+    // Los mensajes guardados en `mensaje_error` son fijos y seguros; el detalle técnico va al registro.
     private function safeError(JobExecution $execution): ?string
     {
-        if ($execution->estado !== 'fallida') {
-            return null;
-        }
-
-        return in_array($execution->codigo_error, [
-            'analisis_ia_fallido', 'contrato_ia_invalido', 'servicio_ia_no_disponible',
-            'exportacion_documento_fallida', 'notificacion_interna_fallida',
-        ], true)
-            ? $execution->mensaje_error
-            : 'El trabajo terminó con un error. Revise los registros técnicos usando su identificador de correlación.';
+        return $execution->estado === 'fallida' ? $execution->mensaje_error : null;
     }
 }

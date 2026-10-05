@@ -17,10 +17,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $recurso_id
  * @property array<string, mixed>|null $entrada
  * @property int $intentos
- * @property int $intentos_maximos
- * @property int $progreso
  * @property array<string, mixed>|null $resultado
- * @property string|null $codigo_error
  * @property string|null $mensaje_error
  * @property CarbonImmutable|null $iniciado_en
  * @property CarbonImmutable|null $finalizado_en
@@ -57,10 +54,7 @@ class JobExecution extends Model
         'recurso_id',
         'entrada',
         'intentos',
-        'intentos_maximos',
-        'progreso',
         'resultado',
-        'codigo_error',
         'mensaje_error',
         'iniciado_en',
         'finalizado_en',
@@ -71,8 +65,6 @@ class JobExecution extends Model
     {
         return [
             'intentos' => 'integer',
-            'intentos_maximos' => 'integer',
-            'progreso' => 'integer',
             'resultado' => 'array',
             'entrada' => 'array',
             'iniciado_en' => 'immutable_datetime',

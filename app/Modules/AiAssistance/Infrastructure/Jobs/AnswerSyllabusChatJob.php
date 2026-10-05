@@ -43,7 +43,7 @@ class AnswerSyllabusChatJob implements ShouldQueue
             $message->amend(['estado' => 'en_ejecucion']);
             $job = JobExecution::query()->lockForUpdate()->find($message->inputString('ejecucion_trabajo_id'));
             $job?->update([
-                'estado' => 'en_ejecucion', 'progreso' => 15,
+                'estado' => 'en_ejecucion',
                 'intentos' => $job->intentos + 1, 'iniciado_en' => now(),
             ]);
 
@@ -104,7 +104,7 @@ class AnswerSyllabusChatJob implements ShouldQueue
                     'completado_en' => now()->toIso8601String(),
                 ]);
                 JobExecution::query()->find($locked->inputString('ejecucion_trabajo_id'))?->update([
-                    'estado' => 'completada', 'progreso' => 100,
+                    'estado' => 'completada',
                     'resultado' => ['message_id' => $locked->id, 'citation_count' => count($result->citationIds)],
                     'finalizado_en' => now(),
                 ]);
@@ -134,7 +134,7 @@ class AnswerSyllabusChatJob implements ShouldQueue
                 'mensaje_error' => $message, 'completado_en' => now()->toIso8601String(),
             ]);
             JobExecution::query()->find($chatMessage->inputString('ejecucion_trabajo_id'))?->update([
-                'estado' => 'fallida', 'codigo_error' => $code,
+                'estado' => 'fallida',
                 'mensaje_error' => $message, 'finalizado_en' => now(),
             ]);
         });

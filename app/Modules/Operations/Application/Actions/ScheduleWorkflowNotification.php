@@ -36,8 +36,6 @@ class ScheduleWorkflowNotification
                 'recurso_id' => $syllabus->id,
                 'entrada' => $entrada,
                 'intentos' => 0,
-                'intentos_maximos' => 5,
-                'progreso' => 0,
             ],
         );
         if ($execution->tipo !== 'notificacion.interna'

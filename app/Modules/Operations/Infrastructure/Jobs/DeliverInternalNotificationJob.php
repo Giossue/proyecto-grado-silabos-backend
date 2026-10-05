@@ -44,10 +44,8 @@ class DeliverInternalNotificationJob implements ShouldQueue
             $locked->update([
                 'estado' => 'en_ejecucion',
                 'intentos' => $locked->intentos + 1,
-                'progreso' => 20,
                 'iniciado_en' => $locked->iniciado_en ?? now(),
                 'finalizado_en' => null,
-                'codigo_error' => null,
                 'mensaje_error' => null,
             ]);
 
@@ -90,10 +88,8 @@ class DeliverInternalNotificationJob implements ShouldQueue
             }
             $locked->update([
                 'estado' => 'completada',
-                'progreso' => 100,
                 'resultado' => ['execution_id' => $locked->id, 'recipient_count' => count($activeIds)],
                 'finalizado_en' => now(),
-                'codigo_error' => null,
                 'mensaje_error' => null,
             ]);
         });
@@ -108,8 +104,6 @@ class DeliverInternalNotificationJob implements ShouldQueue
             }
             $execution->update([
                 'estado' => 'fallida',
-                'progreso' => 0,
-                'codigo_error' => 'notificacion_interna_fallida',
                 'mensaje_error' => 'No fue posible entregar la notificación interna.',
                 'finalizado_en' => now(),
             ]);

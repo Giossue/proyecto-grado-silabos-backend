@@ -43,7 +43,6 @@ class JobDispatchTest extends TestCase
 
         $execution->refresh();
         $this->assertSame('completada', $execution->estado);
-        $this->assertSame(100, $execution->progreso);
         $this->assertSame(1, JobExecution::query()->count());
     }
 

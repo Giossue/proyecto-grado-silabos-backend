@@ -147,7 +147,7 @@ class DocumentOperationsTest extends TestCase
         $artifact->refresh()->load(['docxObject', 'pdfObject', 'execution']);
         $this->assertSame('completado', $artifact->estado);
         $this->assertSame('completada', $artifact->execution->estado);
-        $this->assertSame(100, $artifact->execution->progreso);
+        $this->assertSame('completada', $artifact->execution->estado);
         $this->assertDatabaseCount('archivos', 2);
         $docx = $artifact->docxObject;
         $pdf = $artifact->pdfObject;

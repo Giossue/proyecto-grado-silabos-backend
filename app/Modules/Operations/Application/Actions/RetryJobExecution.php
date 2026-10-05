@@ -76,12 +76,9 @@ class RetryJobExecution
     private function resetExecution(JobExecution $execution, User $actor, Request $request): void
     {
         $previousAttempts = $execution->intentos;
-        $previousErrorCode = $execution->codigo_error;
         $execution->update([
             'estado' => 'pendiente',
-            'progreso' => 0,
             'resultado' => null,
-            'codigo_error' => null,
             'mensaje_error' => null,
             'iniciado_en' => null,
             'finalizado_en' => null,
@@ -97,7 +94,6 @@ class RetryJobExecution
             metadata: [
                 'job_type' => $execution->tipo,
                 'previous_attempts' => $previousAttempts,
-                'previous_error_code' => $previousErrorCode,
             ],
         );
     }

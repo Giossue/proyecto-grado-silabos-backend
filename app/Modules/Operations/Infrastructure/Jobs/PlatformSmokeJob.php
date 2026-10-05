@@ -38,11 +38,9 @@ class PlatformSmokeJob implements ShouldQueue
             $execution->update([
                 'estado' => 'completada',
                 'intentos' => max(1, $this->attempts()),
-                'progreso' => 100,
                 'resultado' => ['message' => 'platform-smoke-ok'],
                 'iniciado_en' => $execution->iniciado_en ?? now(),
                 'finalizado_en' => now(),
-                'codigo_error' => null,
                 'mensaje_error' => null,
             ]);
         });
@@ -50,11 +48,11 @@ class PlatformSmokeJob implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
+        report($exception);
         JobExecution::query()->whereKey($this->executionId)->update([
             'estado' => 'fallida',
             'intentos' => max(1, $this->attempts()),
-            'codigo_error' => 'verificacion_plataforma_fallida',
-            'mensaje_error' => str($exception->getMessage())->limit(500),
+            'mensaje_error' => 'La verificación de la plataforma falló.',
             'finalizado_en' => now(),
         ]);
     }

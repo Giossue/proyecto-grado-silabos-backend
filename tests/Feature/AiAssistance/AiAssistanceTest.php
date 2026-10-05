@@ -202,7 +202,7 @@ class AiAssistanceTest extends TestCase
     {
         return JobExecution::query()->create(['tipo' => $type, 'cola' => 'ia', 'estado' => 'pendiente', 'clave_idempotencia' => (string) Str::uuid(),
             'tipo_recurso' => 'mensaje_ia', 'recurso_id' => (string) Str::uuid(),
-            'intentos' => 0, 'intentos_maximos' => 1, 'progreso' => 0]);
+            'intentos' => 0]);
     }
 
     private function url(): string
