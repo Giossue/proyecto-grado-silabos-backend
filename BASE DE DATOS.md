@@ -1,556 +1,868 @@
-# Modelo entidad-relación de la base de datos
+# Tablas de la base de datos — esquema objetivo con I-190
 
-Actualizado el 2026-09-30: **42 tablas** y 70 relaciones.
+Estructura objetivo tras `2026_10_05_000197_teacher_formation_in_user_profile`. Los conteos de filas son la última observación remota anterior a I-189; «—» indica una tabla todavía no observada allí. Este documento no acredita que la migración se haya aplicado en producción. No incluye contenido de filas.
 
-**Llave:** `PK` = identificador; `FK → tabla` = apunta a otra tabla. **¿Vacío?:** si puede quedar sin valor.
+- Tablas objetivo: 32 (29 del dominio y 3 del framework Laravel: migraciones, restablecimientos_contrasena, sesiones)
+- Vistas: docentes_vigentes_silabo
+- Cada tabla del dominio tiene una sola llave con el nombre de la entidad (`paralelos.paralelo_id`); `id` queda solo en `migraciones` y `sesiones`, que fija Laravel (I-179). Sin `trabajos_fallidos` (I-183).
+- Sin `asignaturas_ofertadas`: el paralelo apunta directo al período y a la materia (I-181).
+- Escritura única: solo las columnas `correccion_*` de `revisiones_silabo`.
 
-## Identidad y operación
+## Índice
 
-### usuarios
-
-| Columna | Tipo | ¿Vacío? | Llave |
+| Tabla | Llave primaria | Columnas | Filas en la remota |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `nombre_usuario` | varchar | no |  |
-| `correo_electronico` | varchar | no |  |
-| `correo_verificado_en` | timestamptz | sí |  |
-| `contrasena` | varchar | no |  |
-| `usuario_activo` | boolean | no |  |
-| `codigo_recordarme` | varchar | sí |  |
-| `secreto_dos_factores` | text | sí |  |
-| `codigos_recuperacion_dos_factores` | text | sí |  |
-| `dos_factores_confirmado_en` | timestamptz | sí |  |
+| [aprobaciones](#aprobaciones) | (aprobacion_id) | 7 | 0 |
+| [archivos](#archivos) | (archivo_id) | 10 | 1 |
+| [asignaciones_paralelo](#asignaciones_paralelo) | (asignacion_paralelo_id) | 5 | 0 |
+| [asignaciones_rol](#asignaciones_rol) | (asignacion_rol_id) | 7 | 6 |
+| [asignaturas](#asignaturas) | (asignatura_id) | 14 | 43 |
+| [campos_plantilla](#campos_plantilla) | (campo_plantilla_id) | 7 | 21 |
+| [carreras](#carreras) | (carrera_id) | 7 | 1 |
+| [convocatorias_carreras](#convocatorias_carreras) | (convocatoria_carrera_id) | 4 | 0 |
+| [convocatorias_universidad](#convocatorias_universidad) | (convocatoria_universidad_id) | 5 | 0 |
+| [definiciones_campo](#definiciones_campo) | (definicion_campo_id) | 13 | 21 |
+| [envios_biblioteca](#envios_biblioteca) | (envio_biblioteca_id) | 4 | 0 |
+| [eventos_auditoria](#eventos_auditoria) | (evento_auditoria_id) | 9 | 594 |
+| [exportaciones_silabo](#exportaciones_silabo) | (exportacion_silabo_id) | 10 | 0 |
+| [facultades](#facultades) | (facultad_id) | 5 | 1 |
+| [firmas_documento](#firmas_documento) | (firma_documento_id) | 10 | 0 |
+| [invitaciones_activacion](#invitaciones_activacion) | (invitacion_activacion_id) | 8 | 8 |
+| [mensajes_ia](#mensajes_ia) | (mensaje_ia_id) | 5 | 0 |
+| [migraciones](#migraciones) | (id) | 3 | 153 |
+| [notificaciones](#notificaciones) | (notificacion_id) | 10 | 96 |
+| [paralelos](#paralelos) | (paralelo_id) | 5 | 0 |
+| [periodos_academicos](#periodos_academicos) | (periodo_academico_id) | 5 | 0 |
+| [plantilla_silabo](#plantilla_silabo) | (plantilla_id) | 2 | 1 |
+| [requisitos_asignatura](#requisitos_asignatura) | (requisito_asignatura_id) | 4 | 27 |
+| [restablecimientos_contrasena](#restablecimientos_contrasena) | (email) | 3 | 0 |
+| [revisiones_coordinacion](#revisiones_coordinacion) | (revision_coordinacion_id) | 4 | 0 |
+| [revisiones_silabo](#revisiones_silabo) | (revision_silabo_id) | 14 | 0 |
+| [secciones_plantilla](#secciones_plantilla) | (seccion_plantilla_id) | 6 | 12 |
+| [sesiones](#sesiones) | (id) | 6 | 3 |
+| [silabos](#silabos) | (silabo_id) | 8 | 0 |
+| [trabajos_en_cola](#trabajos_en_cola) | (trabajo_id) | 14 | 107 |
+| [usuarios](#usuarios) | (usuario_id) | 10 | 6 |
+| [valores_campo](#valores_campo) | (valor_campo_id) | 5 | 0 |
 
-### asignaciones_rol
+## aprobaciones
 
-| Columna | Tipo | ¿Vacío? | Llave |
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `usuario_id` | uuid | no | FK → `usuarios` |
-| `carrera_id` | uuid | sí | FK → `carreras` |
-| `asignacion_rol_activa` | boolean | no |  |
-| `asignado_en` | timestamptz | no |  |
-| `rol` | varchar | no |  |
+| `aprobacion_id` | UUID | no |  |
+| `revision_silabo_id` | UUID | no |  |
+| `clave_solicitud` | UUID | no |  |
+| `hash_contenido` | CHAR(64) | no |  |
+| `aprobado_por` | UUID | no |  |
+| `aprobado_en` | TIMESTAMPTZ | no |  |
+| `aprobacion_anterior_id` | UUID | sí |  |
 
-### invitaciones_activacion
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `aprobaciones_aprobacion_anterior_id_foreign`: FOREIGN KEY (aprobacion_anterior_id) REFERENCES aprobaciones(aprobacion_id) ON DELETE RESTRICT
+- FK `aprobaciones_aprobado_por_foreign`: FOREIGN KEY (aprobado_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- FK `aprobaciones_revision_silabo_id_foreign`: FOREIGN KEY (revision_silabo_id) REFERENCES revisiones_silabo(revision_silabo_id) ON DELETE RESTRICT
+- PK `aprobaciones_pkey`: PRIMARY KEY (aprobacion_id)
+- Único `aprobaciones_revision_silabo_id_unique`: UNIQUE (revision_silabo_id)
+
+**Índices**
+
+- `aprobaciones_aprobacion_anterior_id_index`: `btree (aprobacion_anterior_id)`
+- `aprobaciones_aprobado_por_index`: `btree (aprobado_por)`
+
+## archivos
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `usuario_id` | uuid | no | FK → `usuarios` |
-| `hash_activacion` | char | no |  |
-| `expira_en` | timestamptz | no |  |
-| `usada_en` | timestamptz | sí |  |
-| `invalidada_en` | timestamptz | sí |  |
-| `emitida_por_usuario_id` | uuid | sí | FK → `usuarios` |
-| `creada_en` | timestamptz | no |  |
+| `archivo_id` | UUID | no |  |
+| `disco` | VARCHAR(80) | no |  |
+| `ruta_archivo` | VARCHAR(500) | no |  |
+| `nombre_archivo` | VARCHAR(255) | no |  |
+| `tipo_archivo` | VARCHAR(120) | no |  |
+| `tamano_bytes` | BIGINT | no |  |
+| `hash_archivo` | CHAR(64) | no |  |
+| `categoria` | VARCHAR(80) | no |  |
+| `subido_por` | UUID | sí |  |
+| `almacenado_en` | TIMESTAMPTZ | no |  |
 
-### restablecimientos_contrasena
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `archivos_subido_por_foreign`: FOREIGN KEY (subido_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- PK `archivos_pkey`: PRIMARY KEY (archivo_id)
+- Único `archivos_disco_ruta_archivo_unique`: UNIQUE (disco, ruta_archivo)
+
+**Índices**
+
+- `archivos_categoria_almacenado_en_index`: `btree (categoria, almacenado_en)`
+- `archivos_hash_archivo_index`: `btree (hash_archivo)`
+- `archivos_subido_por_index`: `btree (subido_por)`
+
+## asignaciones_paralelo
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `email` | varchar | no |  |
-| `token` | varchar | no |  |
-| `created_at` | timestamptz | sí |  |
+| `asignacion_paralelo_id` | UUID | no |  |
+| `paralelo_id` | UUID | no |  |
+| `asignacion_paralelo_activa` | BOOLEAN | no | `true` |
+| `asignado_en` | TIMESTAMPTZ | no | `CURRENT_TIMESTAMP` |
+| `asignacion_rol_id` | UUID | no |  |
 
-### sesiones
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `asignaciones_paralelo_asignacion_rol_id_foreign`: FOREIGN KEY (asignacion_rol_id) REFERENCES asignaciones_rol(asignacion_rol_id) ON DELETE RESTRICT
+- FK `asignaciones_paralelo_paralelo_id_foreign`: FOREIGN KEY (paralelo_id) REFERENCES paralelos(paralelo_id) ON DELETE RESTRICT
+- PK `asignaciones_paralelo_pkey`: PRIMARY KEY (asignacion_paralelo_id)
+
+**Índices**
+
+- `asignaciones_paralelo_activa_idx`: `btree (asignacion_rol_id, asignacion_paralelo_activa)`
+- `asignaciones_paralelo_paralelo_activo_unico`: `btree (paralelo_id) WHERE asignacion_paralelo_activa`
+
+## asignaciones_rol
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | varchar | no | PK |
-| `user_id` | uuid | sí | FK → `usuarios` |
-| `ip_address` | varchar | sí |  |
-| `user_agent` | text | sí |  |
-| `payload` | text | no |  |
-| `last_activity` | integer | no |  |
+| `asignacion_rol_id` | UUID | no |  |
+| `usuario_id` | UUID | no |  |
+| `carrera_id` | UUID | sí |  |
+| `asignacion_rol_activa` | BOOLEAN | no | `true` |
+| `asignado_en` | TIMESTAMPTZ | no | `CURRENT_TIMESTAMP` |
+| `rol` | VARCHAR(20) | no |  |
+| `facultad_id` | UUID | sí |  |
 
-### eventos_auditoria
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `asignaciones_rol_carrera_id_foreign`: FOREIGN KEY (carrera_id) REFERENCES carreras(carrera_id) ON DELETE RESTRICT
+- FK `asignaciones_rol_facultad_id_fkey`: FOREIGN KEY (facultad_id) REFERENCES facultades(facultad_id) ON DELETE RESTRICT
+- FK `asignaciones_rol_usuario_id_foreign`: FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- PK `asignaciones_rol_pkey`: PRIMARY KEY (asignacion_rol_id)
+
+**Checks**
+
+- `asignaciones_rol_alcance_valido_check`: CHECK (((((rol)::text = ANY ((ARRAY['administrador'::character varying, 'bibliotecario'::character varying])::text[])) AND (carrera_id IS NULL) AND (facultad_id IS NULL)) OR (((rol)::text = ANY ((ARRAY['coordinador'::character varying, 'docente'::character varying])::text[])) AND (carrera_id IS NOT NULL) AND (facultad_id IS NULL)) OR (((rol)::text = 'decano'::text) AND (carrera_id IS NULL) AND (facultad_id IS NOT NULL))))
+- `asignaciones_rol_rol_valido_check`: CHECK (((rol)::text = ANY ((ARRAY['administrador'::character varying, 'coordinador'::character varying, 'docente'::character varying, 'bibliotecario'::character varying, 'decano'::character varying])::text[])))
+
+**Índices**
+
+- `asignaciones_rol_activa_unica`: `btree (usuario_id, rol, COALESCE(carrera_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE asignacion_rol_activa`
+- `asignaciones_rol_carrera_id_index`: `btree (carrera_id)`
+- `asignaciones_rol_decano_facultad_unica`: `btree (facultad_id) WHERE (((rol)::text = 'decano'::text) AND asignacion_rol_activa)`
+- `asignaciones_rol_facultad_id_index`: `btree (facultad_id)`
+
+## asignaturas
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `usuario_id` | uuid | sí | FK → `usuarios` |
-| `asignacion_rol_id` | uuid | sí | FK → `asignaciones_rol` |
-| `accion` | varchar | no |  |
-| `tipo_recurso` | varchar | no |  |
-| `recurso_id` | uuid | sí |  |
-| `resultado` | varchar | no |  |
-| `detalles` | jsonb | sí |  |
-| `ocurrido_en` | timestamptz | no |  |
+| `asignatura_id` | UUID | no |  |
+| `codigo_asignatura` | VARCHAR(80) | no |  |
+| `nombre_asignatura` | VARCHAR(180) | no |  |
+| `ciclo_asignatura` | SMALLINT | sí |  |
+| `creditos_asignatura` | NUMERIC | sí |  |
+| `asignatura_activa` | BOOLEAN | no | `true` |
+| `horas_docencia` | NUMERIC | sí |  |
+| `horas_practicas` | NUMERIC | sí |  |
+| `horas_autonomas` | NUMERIC | sí |  |
+| `orden_asignatura_en_ciclo` | SMALLINT | no | `'0'::smallint` |
+| `unidad_curricular_asignatura` | VARCHAR(30) | sí |  |
+| `modalidad_asignatura` | USER-DEFINED | sí |  |
+| `carrera_id` | UUID | no |  |
+| `total_horas_asignatura` | SMALLINT | sí |  |
 
-### notificaciones
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `asignaturas_carrera_id_foreign`: FOREIGN KEY (carrera_id) REFERENCES carreras(carrera_id) ON DELETE RESTRICT
+- PK `asignaturas_pkey`: PRIMARY KEY (asignatura_id)
+- Único `asignaturas_carrera_id_codigo_asignatura_unique`: UNIQUE (carrera_id, codigo_asignatura)
+- Único `asignaturas_identidad_carrera_unica`: UNIQUE (asignatura_id, carrera_id)
+
+**Checks**
+
+- `asignaturas_unidad_curricular_check`: CHECK (((unidad_curricular_asignatura)::text = ANY ((ARRAY['basica'::character varying, 'profesional'::character varying, 'integracion_curricular'::character varying])::text[])))
+
+## campos_plantilla
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `usuario_id` | uuid | no | FK → `usuarios` |
-| `clave_unica` | varchar | no |  |
-| `tipo_notificacion` | varchar | no |  |
-| `titulo_notificacion` | varchar | no |  |
-| `mensaje_notificacion` | text | no |  |
-| `tipo_recurso` | varchar | sí |  |
-| `recurso_id` | uuid | sí |  |
-| `leido_en` | timestamptz | sí |  |
-| `notificado_en` | timestamptz | no |  |
+| `campo_plantilla_id` | UUID | no |  |
+| `seccion_plantilla_id` | UUID | no |  |
+| `plantilla_id` | UUID | no |  |
+| `clave_campo_plantilla` | VARCHAR(120) | no |  |
+| `titulo_campo_plantilla` | VARCHAR(180) | no | `''::character varying` |
+| `posicion_campo_plantilla` | SMALLINT | no |  |
+| `configuracion_campo_plantilla` | JSONB | no |  |
+| `vigente_en_plantilla` | BOOLEAN | no | `true` |
 
-### trabajos_en_cola
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `campos_plantilla_plantilla_id_foreign`: FOREIGN KEY (plantilla_id) REFERENCES plantilla_silabo(plantilla_id) ON DELETE CASCADE
+- FK `campos_plantilla_seccion_misma_plantilla_foreign`: FOREIGN KEY (seccion_plantilla_id, plantilla_id) REFERENCES secciones_plantilla(seccion_plantilla_id, plantilla_id) ON DELETE RESTRICT
+- FK `campos_plantilla_seccion_plantilla_id_foreign`: FOREIGN KEY (seccion_plantilla_id) REFERENCES secciones_plantilla(seccion_plantilla_id) ON DELETE CASCADE
+- PK `campos_plantilla_pkey`: PRIMARY KEY (campo_plantilla_id)
+- Único parcial `campos_plantilla_vigente_clave_unica`: UNIQUE (plantilla_id, clave_campo_plantilla) WHERE vigente_en_plantilla
+- Único `campos_plantilla_id_plantilla_unica`: UNIQUE (campo_plantilla_id, plantilla_id)
+
+**Índices**
+
+- `campos_plantilla_seccion_plantilla_id_posicion_index`: `btree (seccion_plantilla_id, posicion_campo_plantilla)`
+
+## carreras
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `tipo_trabajo` | varchar | no |  |
-| `estado_trabajo` | varchar | no |  |
-| `clave_solicitud` | varchar | no |  |
-| `intentos` | smallint | no |  |
-| `progreso` | smallint | no |  |
-| `resultado_trabajo` | jsonb | sí |  |
-| `codigo_error` | varchar | sí |  |
-| `mensaje_error` | text | sí |  |
-| `iniciado_en` | timestamptz | sí |  |
-| `finalizado_en` | timestamptz | sí |  |
-| `encolado_en` | timestamptz | sí |  |
-| `cola` | varchar | no |  |
-| `tipo_recurso` | varchar | sí |  |
-| `recurso_id` | uuid | sí |  |
-| `intentos_maximos` | smallint | no |  |
-| `datos_entrada` | jsonb | sí |  |
+| `carrera_id` | UUID | no |  |
+| `facultad_id` | UUID | no |  |
+| `codigo_carrera` | VARCHAR(80) | no |  |
+| `nombre_carrera` | VARCHAR(180) | no |  |
+| `carrera_activa` | BOOLEAN | no | `true` |
+| `modalidad_carrera` | USER-DEFINED | sí |  |
+| `numero_ciclos` | SMALLINT | no |  |
 
-### trabajos_fallidos
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `carreras_facultad_id_foreign`: FOREIGN KEY (facultad_id) REFERENCES facultades(facultad_id) ON DELETE RESTRICT
+- PK `carreras_pkey`: PRIMARY KEY (carrera_id)
+- Único `carreras_codigo_carrera_unique`: UNIQUE (codigo_carrera)
+
+**Checks**
+
+- `carreras_numero_ciclos_check`: CHECK (((numero_ciclos >= 1) AND (numero_ciclos <= 30)))
+
+**Índices**
+
+- `carreras_facultad_id_index`: `btree (facultad_id)`
+
+## convocatorias_carreras
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | bigint | no | PK |
-| `uuid` | varchar | no |  |
-| `connection` | varchar | no |  |
-| `queue` | varchar | no |  |
-| `payload` | text | no |  |
-| `exception` | text | no |  |
-| `failed_at` | timestamp_without_time_zone | no |  |
+| `convocatoria_carrera_id` | UUID | no |  |
+| `carrera_id` | UUID | no |  |
+| `estado_convocatoria_carrera` | VARCHAR(24) | no | `'preparacion'::character varying` |
+| `convocatoria_universidad_id` | UUID | no |  |
 
-### archivos
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `convocatorias_carreras_carrera_id_foreign`: FOREIGN KEY (carrera_id) REFERENCES carreras(carrera_id) ON DELETE RESTRICT
+- FK `convocatorias_carreras_convocatoria_universidad_id_foreign`: FOREIGN KEY (convocatoria_universidad_id) REFERENCES convocatorias_universidad(convocatoria_universidad_id) ON DELETE RESTRICT
+- PK `convocatorias_carreras_pkey`: PRIMARY KEY (convocatoria_carrera_id)
+
+**Checks**
+
+- `convocatorias_carreras_estado_check`: CHECK (((estado_convocatoria_carrera)::text = ANY ((ARRAY['preparacion'::character varying, 'abierta'::character varying, 'pausada'::character varying, 'cerrada'::character varying])::text[])))
+
+**Índices**
+
+- `convocatorias_carreras_carrera_id_estado_index`: `btree (carrera_id, estado_convocatoria_carrera)`
+- `convocatorias_carreras_carrera_proceso_unico`: `btree (carrera_id, convocatoria_universidad_id)`
+- `convocatorias_carreras_proceso_id_index`: `btree (convocatoria_universidad_id)`
+
+## convocatorias_universidad
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `disco` | varchar | no |  |
-| `ruta_archivo` | varchar | no |  |
-| `nombre_archivo` | varchar | no |  |
-| `tipo_archivo` | varchar | no |  |
-| `tamano_bytes` | bigint | no |  |
-| `hash_archivo` | char | no |  |
-| `categoria` | varchar | no |  |
-| `subido_por` | uuid | sí | FK → `usuarios` |
-| `carrera_id` | uuid | sí | FK → `carreras` |
-| `almacenado_en` | timestamptz | no |  |
+| `convocatoria_universidad_id` | UUID | no |  |
+| `fecha_inicio` | TIMESTAMPTZ | no |  |
+| `fecha_entrega` | TIMESTAMPTZ | no |  |
+| `estado_convocatoria_universidad` | VARCHAR(20) | no | `'abierto'::character varying` |
+| `periodo_academico_id` | UUID | no |  |
+| `pausado_en` | TIMESTAMPTZ | sí |  |
 
-### migraciones
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `convocatorias_universidad_periodo_academico_id_foreign`: FOREIGN KEY (periodo_academico_id) REFERENCES periodos_academicos(periodo_academico_id) ON DELETE RESTRICT
+- PK `convocatorias_universidad_pkey`: PRIMARY KEY (convocatoria_universidad_id)
+
+**Checks**
+
+- `convocatorias_universidad_estado_check`: CHECK (((estado_convocatoria_universidad)::text = ANY ((ARRAY['abierto'::character varying, 'pausado'::character varying, 'cerrado'::character varying])::text[])))
+- `convocatorias_universidad_fechas_check`: CHECK ((fecha_entrega > fecha_inicio))
+
+**Índices**
+
+- `convocatorias_universidad_en_curso_unico`: `btree ((1)) WHERE ((estado_convocatoria_universidad)::text = ANY ((ARRAY['abierto'::character varying, 'pausado'::character varying])::text[]))`
+- `convocatorias_universidad_periodo_unico`: `btree (periodo_academico_id)`
+
+## definiciones_campo
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | integer | no | PK |
-| `migration` | varchar | no |  |
-| `batch` | integer | no |  |
+| `definicion_campo_id` | UUID | no |  |
+| `campo_plantilla_id` | UUID | no |  |
+| `clave_definicion_campo` | VARCHAR(120) | no |  |
+| `etiqueta_definicion_campo` | VARCHAR(180) | no |  |
+| `ayuda_definicion_campo` | TEXT | sí |  |
+| `tipo_definicion_campo` | VARCHAR(40) | no |  |
+| `heredado_definicion_campo` | BOOLEAN | no | `false` |
+| `origen_dato_definicion_campo` | VARCHAR(100) | sí |  |
+| `editable_docente_definicion_campo` | BOOLEAN | no | `true` |
+| `opciones_definicion_campo` | JSONB | sí |  |
+| `posicion_definicion_campo` | SMALLINT | no |  |
+| `plantilla_id` | UUID | no |  |
+| `condicion_definicion_campo` | JSONB | sí |  |
+| `vigente_en_plantilla` | BOOLEAN | no | `true` |
 
-### Relaciones: Identidad y operación
+**Restricciones**
 
-- archivos.carrera_id → carreras
-- archivos.subido_por → usuarios
-- asignaciones_rol.carrera_id → carreras
-- asignaciones_rol.usuario_id → usuarios
-- eventos_auditoria.asignacion_rol_id → asignaciones_rol
-- eventos_auditoria.usuario_id → usuarios
-- invitaciones_activacion.emitida_por_usuario_id → usuarios
-- invitaciones_activacion.usuario_id → usuarios
-- notificaciones.usuario_id → usuarios
-- sesiones.user_id → usuarios
+- FK `definiciones_campo_campo_misma_plantilla_foreign`: FOREIGN KEY (campo_plantilla_id, plantilla_id) REFERENCES campos_plantilla(campo_plantilla_id, plantilla_id) ON DELETE RESTRICT
+- FK `definiciones_campo_campo_plantilla_id_foreign`: FOREIGN KEY (campo_plantilla_id) REFERENCES campos_plantilla(campo_plantilla_id) ON DELETE CASCADE
+- FK `definiciones_campo_plantilla_id_foreign`: FOREIGN KEY (plantilla_id) REFERENCES plantilla_silabo(plantilla_id) ON DELETE CASCADE
+- PK `definiciones_campo_pkey`: PRIMARY KEY (definicion_campo_id)
+- Único `definiciones_campo_campo_id_posicion_unica`: UNIQUE (campo_plantilla_id, posicion_definicion_campo)
+- Único parcial `definiciones_campo_vigente_clave_unica`: UNIQUE (plantilla_id, clave_definicion_campo) WHERE vigente_en_plantilla
 
-## Estructura académica
+**Checks**
 
-### facultades
+- `definiciones_campo_heredado_check`: CHECK (NOT heredado_definicion_campo OR origen_dato_definicion_campo IS NOT NULL)
+- `definiciones_campo_tipo_check`: CHECK (((tipo_definicion_campo)::text = ANY ((ARRAY['texto_corto'::character varying, 'texto_largo'::character varying, 'texto_libre'::character varying, 'numero'::character varying, 'fecha'::character varying, 'seleccion_unica'::character varying, 'seleccion_multiple'::character varying, 'booleano'::character varying, 'calculo'::character varying, 'referencia_maestra'::character varying])::text[])))
 
-| Columna | Tipo | ¿Vacío? | Llave |
+## envios_biblioteca
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `nombre_facultad` | varchar | no |  |
-| `facultad_activa` | boolean | no |  |
-| `logo_archivo_id` | uuid | sí | FK → `archivos` |
-| `campus_facultad` | varchar | no |  |
+| `envio_biblioteca_id` | UUID | no |  |
+| `revision_silabo_id` | UUID | no |  |
+| `verificado_por` | UUID | sí |  |
+| `verificado_en` | TIMESTAMPTZ | sí |  |
 
-### carreras
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `envios_biblioteca_revision_silabo_id_foreign`: FOREIGN KEY (revision_silabo_id) REFERENCES revisiones_silabo(revision_silabo_id) ON DELETE RESTRICT
+- FK `envios_biblioteca_verificado_por_foreign`: FOREIGN KEY (verificado_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- PK `envios_biblioteca_pkey`: PRIMARY KEY (envio_biblioteca_id)
+- Único `envios_biblioteca_revision_unica`: UNIQUE (revision_silabo_id)
+
+**Checks**
+
+- `envios_biblioteca_verificacion_completa`: CHECK (((verificado_por IS NULL) = (verificado_en IS NULL)))
+
+**Índices**
+
+- `envios_biblioteca_verificado_por_index`: `btree (verificado_por)`
+
+## eventos_auditoria
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `facultad_id` | uuid | no | FK → `facultades` |
-| `codigo_carrera` | varchar | no |  |
-| `nombre_carrera` | varchar | no |  |
-| `carrera_activa` | boolean | no |  |
-| `modalidad_carrera` | enum modalidad_estudio | sí |  |
-| `numero_ciclos` | smallint | no |  |
+| `evento_auditoria_id` | UUID | no |  |
+| `usuario_id` | UUID | sí |  |
+| `asignacion_rol_id` | UUID | sí |  |
+| `accion` | VARCHAR(120) | no |  |
+| `tipo_recurso` | VARCHAR(120) | no |  |
+| `recurso_id` | UUID | sí |  |
+| `resultado` | VARCHAR(24) | no |  |
+| `detalles` | JSONB | sí |  |
+| `ocurrido_en` | TIMESTAMPTZ | no |  |
 
-### asignaturas
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `eventos_auditoria_asignacion_rol_id_foreign`: FOREIGN KEY (asignacion_rol_id) REFERENCES asignaciones_rol(asignacion_rol_id) ON DELETE RESTRICT
+- FK `eventos_auditoria_usuario_id_foreign`: FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- PK `eventos_auditoria_pkey`: PRIMARY KEY (evento_auditoria_id)
+
+**Checks**
+
+- `eventos_auditoria_resultado_check`: CHECK (((resultado)::text = ANY ((ARRAY['exito'::character varying, 'fallido'::character varying])::text[])))
+
+**Índices**
+
+- `eventos_auditoria_asignacion_rol_id_index`: `btree (asignacion_rol_id)`
+- `eventos_auditoria_ocurrido_en_index`: `btree (ocurrido_en)`
+- `eventos_auditoria_recurso_fecha_idx`: `btree (tipo_recurso, recurso_id, ocurrido_en)`
+- `eventos_auditoria_usuario_fecha_idx`: `btree (usuario_id, ocurrido_en)`
+
+## exportaciones_silabo
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `codigo_asignatura` | varchar | no |  |
-| `nombre_asignatura` | varchar | no |  |
-| `ciclo_asignatura` | smallint | sí |  |
-| `creditos_asignatura` | numeric | sí |  |
-| `asignatura_activa` | boolean | no |  |
-| `horas_docencia` | numeric | sí |  |
-| `horas_practicas` | numeric | sí |  |
-| `horas_autonomas` | numeric | sí |  |
-| `orden_asignatura_en_ciclo` | smallint | no |  |
-| `unidad_curricular_asignatura` | varchar | sí |  |
-| `modalidad_asignatura` | enum modalidad_estudio | sí |  |
-| `carrera_id` | uuid | no | FK → `carreras` |
-| `total_horas_asignatura` | smallint | sí |  |
+| `exportacion_silabo_id` | UUID | no |  |
+| `revision_silabo_id` | UUID | no |  |
+| `trabajo_id` | UUID | sí |  |
+| `archivo_word_id` | UUID | sí |  |
+| `archivo_pdf_id` | UUID | sí |  |
+| `clave_solicitud` | UUID | no |  |
+| `estado_exportacion` | VARCHAR(24) | no | `'pendiente'::character varying` |
+| `solicitado_por` | UUID | no |  |
+| `solicitado_en` | TIMESTAMPTZ | no |  |
+| `completado_en` | TIMESTAMPTZ | sí |  |
 
-### requisitos_asignatura
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `exportaciones_silabo_archivo_pdf_id_foreign`: FOREIGN KEY (archivo_pdf_id) REFERENCES archivos(archivo_id) ON DELETE RESTRICT
+- FK `exportaciones_silabo_archivo_word_id_foreign`: FOREIGN KEY (archivo_word_id) REFERENCES archivos(archivo_id) ON DELETE RESTRICT
+- FK `exportaciones_silabo_revision_silabo_id_foreign`: FOREIGN KEY (revision_silabo_id) REFERENCES revisiones_silabo(revision_silabo_id) ON DELETE RESTRICT
+- FK `exportaciones_silabo_solicitado_por_foreign`: FOREIGN KEY (solicitado_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- FK `exportaciones_silabo_trabajo_id_foreign`: FOREIGN KEY (trabajo_id) REFERENCES trabajos_en_cola(trabajo_id) ON DELETE RESTRICT
+- PK `exportaciones_silabo_pkey`: PRIMARY KEY (exportacion_silabo_id)
+- Único `exportaciones_silabo_archivo_pdf_id_unique`: UNIQUE (archivo_pdf_id)
+- Único `exportaciones_silabo_archivo_word_id_unique`: UNIQUE (archivo_word_id)
+- Único `exportaciones_silabo_revision_clave_solicitud_unica`: UNIQUE (revision_silabo_id, clave_solicitud)
+- Único `exportaciones_silabo_trabajo_id_unique`: UNIQUE (trabajo_id)
+
+**Checks**
+
+- `exportaciones_silabo_completitud_check`: CHECK (((((estado_exportacion)::text = 'completado'::text) AND (archivo_word_id IS NOT NULL) AND (archivo_pdf_id IS NOT NULL) AND (completado_en IS NOT NULL)) OR ((estado_exportacion)::text <> 'completado'::text)))
+- `exportaciones_silabo_estado_check`: CHECK (((estado_exportacion)::text = ANY ((ARRAY['pendiente'::character varying, 'en_ejecucion'::character varying, 'completado'::character varying, 'fallido'::character varying])::text[])))
+
+**Índices**
+
+- `exportaciones_silabo_revision_estado_solicitado_index`: `btree (revision_silabo_id, estado_exportacion, solicitado_en)`
+- `exportaciones_silabo_solicitado_por_index`: `btree (solicitado_por)`
+
+## facultades
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `asignatura_id` | uuid | no | FK → `asignaturas` |
-| `requisito_id` | uuid | no | FK → `asignaturas` |
-| `tipo_requisito_asignatura` | varchar | no |  |
+| `facultad_id` | UUID | no |  |
+| `nombre_facultad` | VARCHAR(180) | no |  |
+| `facultad_activa` | BOOLEAN | no | `true` |
+| `logo_archivo_id` | UUID | sí |  |
+| `campus_facultad` | VARCHAR(255) | no |  |
 
-### periodos_academicos
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `facultades_logo_archivo_id_foreign`: FOREIGN KEY (logo_archivo_id) REFERENCES archivos(archivo_id) ON DELETE RESTRICT
+- PK `facultades_pkey`: PRIMARY KEY (facultad_id)
+
+**Checks**
+
+- `facultades_campus_facultad_check`: CHECK (((campus_facultad)::text = ANY ((ARRAY['Campus Matriz Dr. Gabriel Galarza López'::character varying, 'Campus Laguacoto'::character varying, 'Campus CENI (Centro de Eventos Nacionales e Internacionales)'::character varying, 'Extensión San Miguel'::character varying, 'Sede Chimbo'::character varying])::text[])))
+
+**Índices**
+
+- `facultades_logo_archivo_id_index`: `btree (logo_archivo_id)`
+
+## firmas_documento
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `codigo_periodo_academico` | varchar | no |  |
-| `fecha_inicio_periodo` | date | no |  |
-| `fecha_fin_periodo` | date | no |  |
-| `cantidad_semanas_lectivas` | smallint | no |  |
+| `firma_documento_id` | UUID | no |  |
+| `exportacion_silabo_id` | UUID | no |  |
+| `firmado_como` | VARCHAR(16) | no |  |
+| `usuario_id` | UUID | no |  |
+| `archivo_firmado_id` | UUID | no |  |
+| `nombre_en_certificado` | VARCHAR(255) | no |  |
+| `numero_certificado` | VARCHAR(255) | no |  |
+| `entidad_emisora` | VARCHAR(500) | no |  |
+| `certificado_valido_hasta` | TIMESTAMPTZ | no |  |
+| `firmado_en` | TIMESTAMPTZ | no |  |
 
-### asignaturas_ofertadas
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `firmas_documento_archivo_firmado_id_foreign`: FOREIGN KEY (archivo_firmado_id) REFERENCES archivos(archivo_id) ON DELETE RESTRICT
+- FK `firmas_documento_exportacion_silabo_id_foreign`: FOREIGN KEY (exportacion_silabo_id) REFERENCES exportaciones_silabo(exportacion_silabo_id) ON DELETE RESTRICT
+- FK `firmas_documento_usuario_id_foreign`: FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- PK `firmas_documento_pkey`: PRIMARY KEY (firma_documento_id)
+- Único `firmas_documento_archivo_firmado_unico`: UNIQUE (archivo_firmado_id)
+- Único `firmas_documento_firmado_como_unico`: UNIQUE (exportacion_silabo_id, firmado_como)
+
+**Checks**
+
+- `firmas_documento_firmado_como_check`: CHECK (((firmado_como)::text = ANY ((ARRAY['docente'::character varying, 'coordinacion'::character varying, 'biblioteca'::character varying, 'decanato'::character varying])::text[])))
+
+**Índices**
+
+- `firmas_documento_usuario_id_index`: `btree (usuario_id)`
+
+## invitaciones_activacion
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `periodo_academico_id` | uuid | no | FK → `periodos_academicos` |
-| `asignatura_id` | uuid | no | FK → `asignaturas` |
-| `asignatura_ofertada_activa` | boolean | no |  |
+| `invitacion_activacion_id` | UUID | no |  |
+| `usuario_id` | UUID | no |  |
+| `hash_activacion` | CHAR(64) | no |  |
+| `expira_en` | TIMESTAMPTZ | no |  |
+| `usada_en` | TIMESTAMPTZ | sí |  |
+| `invalidada_en` | TIMESTAMPTZ | sí |  |
+| `emitida_por_usuario_id` | UUID | sí |  |
+| `creada_en` | TIMESTAMPTZ | no | `CURRENT_TIMESTAMP` |
 
-### paralelos
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `invitaciones_activacion_emitida_por_usuario_id_foreign`: FOREIGN KEY (emitida_por_usuario_id) REFERENCES usuarios(usuario_id) ON DELETE SET NULL
+- FK `invitaciones_activacion_usuario_id_foreign`: FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE CASCADE
+- PK `invitaciones_activacion_pkey`: PRIMARY KEY (invitacion_activacion_id)
+- Único `invitaciones_activacion_hash_activacion_unique`: UNIQUE (hash_activacion)
+
+**Índices**
+
+- `invitaciones_activacion_emitida_por_usuario_id_index`: `btree (emitida_por_usuario_id)`
+- `invitaciones_activacion_usuario_id_expira_en_index`: `btree (usuario_id, expira_en)`
+
+## mensajes_ia
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `asignatura_ofertada_id` | uuid | no | FK → `asignaturas_ofertadas` |
-| `codigo_paralelo` | varchar | no |  |
-| `jornada_paralelo` | varchar | no |  |
+| `mensaje_ia_id` | UUID | no |  |
+| `contenido_mensaje` | JSONB | no |  |
+| `enviado_en` | TIMESTAMPTZ | no | `clock_timestamp()` |
+| `silabo_id` | UUID | no |  |
+| `usuario_id` | UUID | no |  |
 
-### asignaciones_paralelo
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `mensajes_ia_silabo_id_foreign`: FOREIGN KEY (silabo_id) REFERENCES silabos(silabo_id) ON DELETE CASCADE
+- FK `mensajes_ia_usuario_id_foreign`: FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- PK `mensajes_ia_pkey`: PRIMARY KEY (mensaje_ia_id)
+
+**Checks**
+
+- `mensajes_ia_contenido_mensaje_check`: CHECK (((jsonb_typeof(contenido_mensaje) = 'object'::text) AND (jsonb_typeof((contenido_mensaje -> 'entrada'::text)) = 'object'::text) AND ((contenido_mensaje ->> 'tipo'::text) = ANY (ARRAY['mensaje'::text, 'ocultamiento'::text])) AND ((contenido_mensaje ->> 'estado'::text) = ANY (ARRAY['pendiente'::text, 'en_ejecucion'::text, 'completado'::text, 'fallido'::text, 'registrada'::text]))))
+
+**Índices**
+
+- `mensajes_ia_conversacion_index`: `btree (silabo_id, usuario_id, enviado_en)`
+- `mensajes_ia_mensaje_idempotencia_unica`: `btree (silabo_id, usuario_id, (((contenido_mensaje -> 'entrada'::text) ->> 'clave_idempotencia'::text))) WHERE (((contenido_mensaje ->> 'tipo'::text) = 'mensaje'::text) AND ((contenido_mensaje ->> 'rol'::text) = 'usuario'::text))`
+- `mensajes_ia_usuario_id_index`: `btree (usuario_id)`
+
+## migraciones
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `paralelo_id` | uuid | no | FK → `paralelos` |
-| `asignacion_paralelo_activa` | boolean | no |  |
-| `asignado_en` | timestamptz | no |  |
-| `asignacion_rol_id` | uuid | no | FK → `asignaciones_rol` |
+| `id` | INTEGER | no | `nextval('migraciones_id_seq'::regclass)` |
+| `migration` | VARCHAR(255) | no |  |
+| `batch` | INTEGER | no |  |
 
-### Relaciones: Estructura académica
+**Restricciones**
 
-- asignaciones_paralelo.asignacion_rol_id → asignaciones_rol
-- asignaciones_paralelo.paralelo_id → paralelos
-- asignaturas.carrera_id → carreras
-- asignaturas_ofertadas.asignatura_id → asignaturas
-- asignaturas_ofertadas.periodo_academico_id → periodos_academicos
-- carreras.facultad_id → facultades
-- facultades.logo_archivo_id → archivos
-- paralelos.asignatura_ofertada_id → asignaturas_ofertadas
-- requisitos_asignatura.asignatura_id → asignaturas
-- requisitos_asignatura.requisito_id → asignaturas
+- PK `migraciones_pkey`: PRIMARY KEY (id)
 
-## Plantilla del sílabo
+## notificaciones
 
-### plantilla_silabo
-
-| Columna | Tipo | ¿Vacío? | Llave |
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `mapeo_documento_plantilla` | jsonb | sí |  |
+| `notificacion_id` | UUID | no |  |
+| `usuario_id` | UUID | no |  |
+| `clave_unica` | VARCHAR(180) | no |  |
+| `tipo_notificacion` | VARCHAR(100) | no |  |
+| `titulo_notificacion` | VARCHAR(180) | no |  |
+| `mensaje_notificacion` | TEXT | no |  |
+| `tipo_recurso` | VARCHAR(100) | sí |  |
+| `recurso_id` | UUID | sí |  |
+| `leido_en` | TIMESTAMPTZ | sí |  |
+| `notificado_en` | TIMESTAMPTZ | no |  |
 
-### secciones_plantilla
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `notificaciones_usuario_id_foreign`: FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- PK `notificaciones_pkey`: PRIMARY KEY (notificacion_id)
+- Único `notificaciones_usuario_id_clave_unica_unique`: UNIQUE (usuario_id, clave_unica)
+
+**Índices**
+
+- `notificaciones_usuario_leido_notificado_index`: `btree (usuario_id, leido_en, notificado_en)`
+
+## paralelos
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `plantilla_id` | uuid | no | FK → `plantilla_silabo` |
-| `clave_seccion_plantilla` | varchar | no |  |
-| `titulo_seccion_plantilla` | varchar | no |  |
-| `descripcion_seccion_plantilla` | text | sí |  |
-| `posicion_seccion_plantilla` | smallint | no |  |
+| `paralelo_id` | UUID | no |  |
+| `codigo_paralelo` | VARCHAR(30) | no |  |
+| `jornada_paralelo` | VARCHAR(20) | no |  |
+| `periodo_academico_id` | UUID | no |  |
+| `asignatura_id` | UUID | no |  |
 
-### campos_plantilla
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `paralelos_asignatura_id_foreign`: FOREIGN KEY (asignatura_id) REFERENCES asignaturas(asignatura_id) ON DELETE RESTRICT
+- FK `paralelos_periodo_academico_id_foreign`: FOREIGN KEY (periodo_academico_id) REFERENCES periodos_academicos(periodo_academico_id) ON DELETE RESTRICT
+- PK `paralelos_pkey`: PRIMARY KEY (paralelo_id)
+- Único `paralelos_periodo_asignatura_codigo_unique`: UNIQUE (periodo_academico_id, asignatura_id, codigo_paralelo)
+
+**Checks**
+
+- `paralelos_jornada_check`: CHECK (((jornada_paralelo)::text = ANY ((ARRAY['matutina'::character varying, 'vespertina'::character varying, 'nocturna'::character varying])::text[])))
+
+**Índices**
+
+- `paralelos_asignatura_id_index`: `btree (asignatura_id)`
+- `paralelos_periodo_academico_id_index`: `btree (periodo_academico_id)`
+
+## periodos_academicos
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `seccion_plantilla_id` | uuid | no | FK → `secciones_plantilla` |
-| `plantilla_id` | uuid | no | FK → `plantilla_silabo` |
-| `clave_campo_plantilla` | varchar | no |  |
-| `titulo_campo_plantilla` | varchar | no |  |
-| `posicion_campo_plantilla` | smallint | no |  |
-| `configuracion_campo_plantilla` | jsonb | no |  |
+| `periodo_academico_id` | UUID | no |  |
+| `codigo_periodo_academico` | VARCHAR(40) | no |  |
+| `fecha_inicio_periodo` | DATE | no |  |
+| `fecha_fin_periodo` | DATE | no |  |
+| `cantidad_semanas_lectivas` | SMALLINT | no | `'16'::smallint` |
 
-### definiciones_campo
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- PK `periodos_academicos_pkey`: PRIMARY KEY (periodo_academico_id)
+- Único `periodos_academicos_codigo_unico`: UNIQUE (codigo_periodo_academico)
+
+**Checks**
+
+- `periodos_academicos_fechas_check`: CHECK ((fecha_fin_periodo >= fecha_inicio_periodo))
+- `periodos_academicos_semanas_lectivas_rango`: CHECK (((cantidad_semanas_lectivas >= 1) AND (cantidad_semanas_lectivas <= 52)))
+
+## plantilla_silabo
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `campo_plantilla_id` | uuid | no | FK → `campos_plantilla` |
-| `clave_definicion_campo` | varchar | no |  |
-| `etiqueta_definicion_campo` | varchar | no |  |
-| `ayuda_definicion_campo` | text | sí |  |
-| `tipo_definicion_campo` | varchar | no |  |
-| `heredado_definicion_campo` | boolean | no |  |
-| `origen_dato_definicion_campo` | varchar | sí |  |
-| `editable_docente_definicion_campo` | boolean | no |  |
-| `opciones_definicion_campo` | jsonb | sí |  |
-| `posicion_definicion_campo` | smallint | no |  |
-| `plantilla_id` | uuid | no | FK → `plantilla_silabo` |
-| `condicion_definicion_campo` | jsonb | sí |  |
+| `plantilla_id` | UUID | no |  |
+| `mapeo_documento_plantilla` | JSONB | sí |  |
+| `plantilla_modificada_en` | TIMESTAMPTZ | sí |  |
 
-### Relaciones: Plantilla del sílabo
+**Restricciones**
 
-- campos_plantilla.plantilla_id → plantilla_silabo
-- campos_plantilla.seccion_plantilla_id → secciones_plantilla
-- definiciones_campo.campo_plantilla_id → campos_plantilla
-- definiciones_campo.plantilla_id → plantilla_silabo
-- secciones_plantilla.plantilla_id → plantilla_silabo
+- PK `plantilla_silabo_pkey`: PRIMARY KEY (plantilla_id)
 
-## Convocatorias, sílabos y revisión
+**Índices**
 
-### convocatorias_universidad
+- `plantilla_silabo_unica`: `btree ((true))`
 
-| Columna | Tipo | ¿Vacío? | Llave |
+## requisitos_asignatura
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `fecha_inicio` | timestamptz | no |  |
-| `fecha_entrega` | timestamptz | no |  |
-| `estado_convocatoria_universidad` | varchar | no |  |
-| `periodo_academico_id` | uuid | no | FK → `periodos_academicos` |
+| `requisito_asignatura_id` | UUID | no |  |
+| `asignatura_id` | UUID | no |  |
+| `requisito_id` | UUID | no |  |
+| `tipo_requisito_asignatura` | VARCHAR(30) | no | `'prerrequisito'::character varying` |
 
-### convocatorias_carreras
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `requisitos_asignatura_asignatura_id_foreign`: FOREIGN KEY (asignatura_id) REFERENCES asignaturas(asignatura_id) ON DELETE RESTRICT
+- FK `requisitos_asignatura_requisito_id_foreign`: FOREIGN KEY (requisito_id) REFERENCES asignaturas(asignatura_id) ON DELETE RESTRICT
+- PK `requisitos_asignatura_pkey`: PRIMARY KEY (requisito_asignatura_id)
+- Único `requisitos_asignatura_par_unico`: UNIQUE (asignatura_id, requisito_id)
+
+**Checks**
+
+- `requisitos_asignatura_distintos_check`: CHECK ((asignatura_id <> requisito_id))
+- `requisitos_asignatura_tipo_check`: CHECK (((tipo_requisito_asignatura)::text = ANY ((ARRAY['prerrequisito'::character varying, 'correquisito'::character varying])::text[])))
+
+**Índices**
+
+- `requisitos_asignatura_requisito_id_index`: `btree (requisito_id)`
+
+## restablecimientos_contrasena
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `carrera_id` | uuid | no | FK → `carreras` |
-| `estado_convocatoria_carrera` | varchar | no |  |
-| `convocatoria_universidad_id` | uuid | no | FK → `convocatorias_universidad` |
+| `email` | VARCHAR(255) | no |  |
+| `token` | VARCHAR(255) | no |  |
+| `created_at` | TIMESTAMPTZ | sí |  |
 
-### silabos
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- PK `restablecimientos_contrasena_pkey`: PRIMARY KEY (email)
+
+## revisiones_coordinacion
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `convocatoria_carrera_id` | uuid | no | FK → `convocatorias_carreras` |
-| `estado_silabo` | varchar | no |  |
-| `version_borrador` | integer | no |  |
-| `iniciado_en` | timestamptz | sí |  |
-| `guardado_en` | timestamptz | sí |  |
-| `datos_academicos_silabo` | jsonb | no |  |
-| `paralelo_id` | uuid | no | FK → `paralelos` |
+| `revision_coordinacion_id` | UUID | no |  |
+| `revision_silabo_id` | UUID | no |  |
+| `revisado_por` | UUID | no |  |
+| `revisado_en` | TIMESTAMPTZ | no |  |
 
-### valores_campo
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `revisiones_coordinacion_revisado_por_fkey`: FOREIGN KEY (revisado_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- FK `revisiones_coordinacion_revision_silabo_id_fkey`: FOREIGN KEY (revision_silabo_id) REFERENCES revisiones_silabo(revision_silabo_id) ON DELETE RESTRICT
+- PK `revisiones_coordinacion_pkey`: PRIMARY KEY (revision_coordinacion_id)
+- Único `revisiones_coordinacion_revision_unica`: UNIQUE (revision_silabo_id)
+
+**Índices**
+
+- `revisiones_coordinacion_revisado_por_index`: `btree (revisado_por)`
+
+## revisiones_silabo
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `silabo_id` | uuid | no | FK → `silabos` |
-| `definicion_campo_id` | uuid | no | FK → `definiciones_campo` |
-| `valor_campo` | jsonb | sí |  |
+| `revision_silabo_id` | UUID | no |  |
+| `silabo_id` | UUID | no |  |
+| `revision_anterior_id` | UUID | sí |  |
+| `numero_revision` | SMALLINT | no |  |
+| `clave_solicitud` | UUID | no |  |
+| `version_borrador` | INTEGER | no |  |
+| `contenido_enviado` | JSONB | no |  |
+| `hash_contenido` | CHAR(64) | no |  |
+| `enviado_por` | UUID | no |  |
+| `enviado_en` | TIMESTAMPTZ | no |  |
+| `correccion_justificacion` | TEXT | sí |  |
+| `correccion_etapa` | VARCHAR(16) | sí |  |
+| `correccion_solicitada_por` | UUID | sí |  |
+| `correccion_solicitada_en` | TIMESTAMPTZ | sí |  |
 
-### revisiones_silabo
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `revisiones_silabo_correccion_solicitada_por_foreign`: FOREIGN KEY (correccion_solicitada_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- FK `revisiones_silabo_enviado_por_foreign`: FOREIGN KEY (enviado_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT
+- FK `revisiones_silabo_revision_anterior_id_foreign`: FOREIGN KEY (revision_anterior_id) REFERENCES revisiones_silabo(revision_silabo_id) ON DELETE RESTRICT
+- FK `revisiones_silabo_silabo_id_foreign`: FOREIGN KEY (silabo_id) REFERENCES silabos(silabo_id) ON DELETE RESTRICT
+- PK `revisiones_silabo_pkey`: PRIMARY KEY (revision_silabo_id)
+- Único `revisiones_silabo_silabo_id_clave_solicitud_unique`: UNIQUE (silabo_id, clave_solicitud)
+- Único `revisiones_silabo_silabo_id_numero_revision_unique`: UNIQUE (silabo_id, numero_revision)
+
+**Checks**
+
+- `revisiones_silabo_correccion_completa_check`: CHECK ((((correccion_justificacion IS NULL) AND (correccion_etapa IS NULL) AND (correccion_solicitada_por IS NULL) AND (correccion_solicitada_en IS NULL)) OR ((correccion_justificacion IS NOT NULL) AND (correccion_etapa IS NOT NULL) AND (correccion_solicitada_por IS NOT NULL) AND (correccion_solicitada_en IS NOT NULL))))
+- `revisiones_silabo_correccion_etapa_check`: CHECK (((correccion_etapa)::text = ANY ((ARRAY['biblioteca'::character varying, 'coordinacion'::character varying, 'decanato'::character varying])::text[])))
+
+**Índices**
+
+- `revisiones_silabo_correccion_solicitada_por_index`: `btree (correccion_solicitada_por)`
+- `revisiones_silabo_enviado_por_index`: `btree (enviado_por)`
+- `revisiones_silabo_revision_anterior_id_index`: `btree (revision_anterior_id)`
+- `revisiones_silabo_silabo_id_enviado_en_index`: `btree (silabo_id, enviado_en)`
+
+## secciones_plantilla
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `silabo_id` | uuid | no | FK → `silabos` |
-| `revision_anterior_id` | uuid | sí | FK → `revisiones_silabo` |
-| `numero_revision` | smallint | no |  |
-| `clave_solicitud` | uuid | no |  |
-| `version_borrador` | integer | no |  |
-| `contenido_enviado` | jsonb | no |  |
-| `hash_contenido` | char | no |  |
-| `enviado_por` | uuid | no | FK → `usuarios` |
-| `enviado_en` | timestamptz | no |  |
-| `reapertura_id` | uuid | sí | FK → `reaperturas` |
+| `seccion_plantilla_id` | UUID | no |  |
+| `plantilla_id` | UUID | no |  |
+| `clave_seccion_plantilla` | VARCHAR(120) | no |  |
+| `titulo_seccion_plantilla` | VARCHAR(180) | no |  |
+| `descripcion_seccion_plantilla` | TEXT | sí |  |
+| `posicion_seccion_plantilla` | SMALLINT | no |  |
+| `vigente_en_plantilla` | BOOLEAN | no | `true` |
 
-### observaciones_revision
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `secciones_plantilla_plantilla_id_foreign`: FOREIGN KEY (plantilla_id) REFERENCES plantilla_silabo(plantilla_id) ON DELETE CASCADE
+- PK `secciones_plantilla_pkey`: PRIMARY KEY (seccion_plantilla_id)
+- Único parcial `secciones_plantilla_vigente_clave_unica`: UNIQUE (plantilla_id, clave_seccion_plantilla) WHERE vigente_en_plantilla
+- Único `secciones_plantilla_id_plantilla_unica`: UNIQUE (seccion_plantilla_id, plantilla_id)
+
+**Índices**
+
+- `secciones_plantilla_plantilla_id_posicion_index`: `btree (plantilla_id, posicion_seccion_plantilla)`
+
+## sesiones
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `revision_silabo_id` | uuid | no | FK → `revisiones_silabo` |
-| `clave_seccion` | varchar | sí |  |
-| `clave_campo` | varchar | sí |  |
-| `contenido_observacion_revision` | text | no |  |
-| `estado_observacion_revision` | varchar | no |  |
-| `creado_por` | uuid | no | FK → `usuarios` |
-| `observado_en` | timestamptz | no |  |
+| `id` | VARCHAR(255) | no |  |
+| `user_id` | UUID | sí |  |
+| `ip_address` | VARCHAR(45) | sí |  |
+| `user_agent` | TEXT | sí |  |
+| `payload` | TEXT | no |  |
+| `last_activity` | INTEGER | no |  |
 
-### solicitudes_correccion
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `sesiones_user_id_foreign`: FOREIGN KEY (user_id) REFERENCES usuarios(usuario_id) ON DELETE SET NULL
+- PK `sesiones_pkey`: PRIMARY KEY (id)
+
+**Índices**
+
+- `sesiones_last_activity_index`: `btree (last_activity)`
+- `sesiones_user_id_index`: `btree (user_id)`
+
+## silabos
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `revision_silabo_id` | uuid | no | FK → `revisiones_silabo` |
-| `justificacion_solicitud_correccion` | text | no |  |
-| `solicitado_por` | uuid | no | FK → `usuarios` |
-| `solicitado_en` | timestamptz | no |  |
+| `silabo_id` | UUID | no |  |
+| `convocatoria_carrera_id` | UUID | no |  |
+| `estado_silabo` | VARCHAR(32) | no | `'sin_iniciar'::character varying` |
+| `version_borrador` | INTEGER | no | `0` |
+| `iniciado_en` | TIMESTAMPTZ | sí |  |
+| `guardado_en` | TIMESTAMPTZ | sí |  |
+| `datos_academicos_silabo` | JSONB | no | `'{}'::jsonb` |
+| `paralelo_id` | UUID | no |  |
 
-### aprobaciones
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- FK `silabos_convocatoria_carrera_id_foreign`: FOREIGN KEY (convocatoria_carrera_id) REFERENCES convocatorias_carreras(convocatoria_carrera_id) ON DELETE RESTRICT
+- FK `silabos_paralelo_id_foreign`: FOREIGN KEY (paralelo_id) REFERENCES paralelos(paralelo_id) ON DELETE RESTRICT
+- PK `silabos_pkey`: PRIMARY KEY (silabo_id)
+- Único `silabos_convocatoria_id_paralelo_id_unique`: UNIQUE (convocatoria_carrera_id, paralelo_id)
+
+**Checks**
+
+- `silabos_estado_check`: CHECK (((estado_silabo)::text = ANY ((ARRAY['sin_iniciar'::character varying, 'borrador'::character varying, 'en_revision'::character varying, 'correccion_solicitada'::character varying, 'aprobado'::character varying])::text[])))
+
+**Índices**
+
+- `silabos_campania_id_estado_index`: `btree (convocatoria_carrera_id, estado_silabo)`
+- `silabos_paralelo_id_index`: `btree (paralelo_id)`
+
+## trabajos_en_cola
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `revision_silabo_id` | uuid | no | FK → `revisiones_silabo` |
-| `clave_solicitud` | uuid | no |  |
-| `hash_contenido` | char | no |  |
-| `aprobado_por` | uuid | no | FK → `usuarios` |
-| `aprobado_en` | timestamptz | no |  |
-| `aprobacion_anterior_id` | uuid | sí | FK → `aprobaciones` |
+| `trabajo_id` | UUID | no |  |
+| `tipo_trabajo` | VARCHAR(120) | no |  |
+| `estado_trabajo` | VARCHAR(24) | no | `'pendiente'::character varying` |
+| `clave_solicitud` | VARCHAR(160) | no |  |
+| `intentos` | SMALLINT | no | `'0'::smallint` |
+| `resultado_trabajo` | JSONB | sí |  |
+| `mensaje_error` | TEXT | sí |  |
+| `iniciado_en` | TIMESTAMPTZ | sí |  |
+| `finalizado_en` | TIMESTAMPTZ | sí |  |
+| `encolado_en` | TIMESTAMPTZ | sí |  |
+| `cola` | VARCHAR(80) | no | `'general'::character varying` |
+| `tipo_recurso` | VARCHAR(100) | sí |  |
+| `recurso_id` | UUID | sí |  |
+| `datos_entrada` | JSONB | sí |  |
 
-### reaperturas
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- PK `trabajos_en_cola_pkey`: PRIMARY KEY (trabajo_id)
+- Único `trabajos_en_cola_clave_solicitud_unique`: UNIQUE (clave_solicitud)
+
+**Checks**
+
+- `trabajos_en_cola_estado_trabajo_check`: CHECK (((estado_trabajo)::text = ANY ((ARRAY['pendiente'::character varying, 'en_ejecucion'::character varying, 'completada'::character varying, 'fallida'::character varying])::text[])))
+
+**Índices**
+
+- `trabajos_en_cola_cola_estado_trabajo_encolado_en_index`: `btree (cola, estado_trabajo, encolado_en)`
+- `trabajos_en_cola_estado_trabajo_encolado_en_index`: `btree (estado_trabajo, encolado_en)`
+- `trabajos_en_cola_tipo_recurso_recurso_id_index`: `btree (tipo_recurso, recurso_id)`
+
+## usuarios
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `aprobacion_id` | uuid | no | FK → `aprobaciones` |
-| `revision_aprobada_id` | uuid | no | FK → `revisiones_silabo` |
-| `clave_solicitud` | uuid | no |  |
-| `causa` | text | no |  |
-| `reabierto_por` | uuid | no | FK → `usuarios` |
-| `reabierto_en` | timestamptz | no |  |
-| `origen_reapertura` | varchar | no |  |
+| `usuario_id` | UUID | no |  |
+| `nombre_usuario` | VARCHAR(255) | no |  |
+| `correo_electronico` | VARCHAR(255) | no |  |
+| `correo_verificado_en` | TIMESTAMPTZ | sí |  |
+| `contrasena` | VARCHAR(255) | no |  |
+| `usuario_activo` | BOOLEAN | no | `true` |
+| `codigo_recordarme` | VARCHAR(100) | sí |  |
+| `secreto_dos_factores` | TEXT | sí |  |
+| `codigos_recuperacion_dos_factores` | TEXT | sí |  |
+| `dos_factores_confirmado_en` | TIMESTAMPTZ | sí |  |
+| `formacion_experiencia_usuario` | TEXT | sí |  |
 
-### validaciones_silabo
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
+- PK `usuarios_pkey`: PRIMARY KEY (usuario_id)
+- Único `usuarios_correo_electronico_unique`: UNIQUE (correo_electronico)
+
+**Índices**
+
+- `usuarios_usuario_activo_index`: `btree (usuario_activo)`
+
+## valores_campo
+
+| Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `id` | uuid | no | PK |
-| `silabo_id` | uuid | no | FK → `silabos` |
-| `ejecutado_por` | uuid | no | FK → `usuarios` |
-| `version_reglas` | varchar | no |  |
-| `estado_validacion` | varchar | no |  |
-| `version_borrador` | integer | no |  |
-| `cantidad_errores_validacion` | smallint | no |  |
-| `cantidad_advertencias_validacion` | smallint | no |  |
-| `completado_en` | timestamptz | no |  |
+| `valor_campo_id` | UUID | no |  |
+| `silabo_id` | UUID | sí |  |
+| `definicion_campo_id` | UUID | no |  |
+| `valor_campo` | JSONB | sí |  |
+| `asignatura_id` | UUID | sí |  |
 
-### resultados_validacion
+**Restricciones**
 
-| Columna | Tipo | ¿Vacío? | Llave |
-|---|---|---|---|
-| `id` | uuid | no | PK |
-| `validacion_silabo_id` | uuid | no | FK → `validaciones_silabo` |
-| `definicion_campo_id` | uuid | sí | FK → `definiciones_campo` |
-| `codigo_resultado_validacion` | varchar | no |  |
-| `severidad_resultado_validacion` | varchar | no |  |
-| `mensaje_resultado_validacion` | varchar | no |  |
+- Check `valores_campo_un_solo_dueno_check`: CHECK ((silabo_id IS NULL) <> (asignatura_id IS NULL))
+- FK `valores_campo_asignatura_id_foreign`: FOREIGN KEY (asignatura_id) REFERENCES asignaturas(asignatura_id) ON DELETE CASCADE
+- FK `valores_campo_definicion_campo_id_foreign`: FOREIGN KEY (definicion_campo_id) REFERENCES definiciones_campo(definicion_campo_id) ON DELETE RESTRICT
+- FK `valores_campo_silabo_id_foreign`: FOREIGN KEY (silabo_id) REFERENCES silabos(silabo_id) ON DELETE CASCADE
+- PK `valores_campo_pkey`: PRIMARY KEY (valor_campo_id)
 
-### envios_biblioteca
+**Índices**
 
-| Columna | Tipo | ¿Vacío? | Llave |
-|---|---|---|---|
-| `id` | uuid | no | PK |
-| `revision_silabo_id` | uuid | no | FK → `revisiones_silabo` |
-| `enviado_por` | uuid | no | FK → `usuarios` |
-| `enviado_en` | timestamptz | no |  |
-| `verificado_por` | uuid | sí | FK → `usuarios` |
-| `verificado_en` | timestamptz | sí |  |
-
-### mensajes_ia
-
-| Columna | Tipo | ¿Vacío? | Llave |
-|---|---|---|---|
-| `id` | uuid | no | PK |
-| `contenido_mensaje` | jsonb | no |  |
-| `enviado_en` | timestamptz | no |  |
-| `silabo_id` | uuid | no | FK → `silabos` |
-| `usuario_id` | uuid | no | FK → `usuarios` |
-
-### Relaciones: Convocatorias, sílabos y revisión
-
-- aprobaciones.aprobacion_anterior_id → aprobaciones
-- aprobaciones.aprobado_por → usuarios
-- aprobaciones.revision_silabo_id → revisiones_silabo
-- convocatorias_carreras.carrera_id → carreras
-- convocatorias_carreras.convocatoria_universidad_id → convocatorias_universidad
-- convocatorias_universidad.periodo_academico_id → periodos_academicos
-- envios_biblioteca.enviado_por → usuarios
-- envios_biblioteca.revision_silabo_id → revisiones_silabo
-- envios_biblioteca.verificado_por → usuarios
-- mensajes_ia.silabo_id → silabos
-- mensajes_ia.usuario_id → usuarios
-- observaciones_revision.creado_por → usuarios
-- observaciones_revision.revision_silabo_id → revisiones_silabo
-- reaperturas.aprobacion_id → aprobaciones
-- reaperturas.reabierto_por → usuarios
-- reaperturas.revision_aprobada_id → revisiones_silabo
-- resultados_validacion.definicion_campo_id → definiciones_campo
-- resultados_validacion.validacion_silabo_id → validaciones_silabo
-- revisiones_silabo.enviado_por → usuarios
-- revisiones_silabo.reapertura_id → reaperturas
-- revisiones_silabo.revision_anterior_id → revisiones_silabo
-- revisiones_silabo.silabo_id → silabos
-- silabos.convocatoria_carrera_id → convocatorias_carreras
-- silabos.paralelo_id → paralelos
-- solicitudes_correccion.revision_silabo_id → revisiones_silabo
-- solicitudes_correccion.solicitado_por → usuarios
-- validaciones_silabo.ejecutado_por → usuarios
-- validaciones_silabo.silabo_id → silabos
-- valores_campo.definicion_campo_id → definiciones_campo
-- valores_campo.silabo_id → silabos
-
-## Documentos y firmas
-
-### exportaciones_silabo
-
-| Columna | Tipo | ¿Vacío? | Llave |
-|---|---|---|---|
-| `id` | uuid | no | PK |
-| `revision_silabo_id` | uuid | no | FK → `revisiones_silabo` |
-| `trabajo_id` | uuid | sí | FK → `trabajos_en_cola` |
-| `archivo_word_id` | uuid | sí | FK → `archivos` |
-| `archivo_pdf_id` | uuid | sí | FK → `archivos` |
-| `clave_solicitud` | uuid | no |  |
-| `estado_exportacion` | varchar | no |  |
-| `solicitado_por` | uuid | no | FK → `usuarios` |
-| `solicitado_en` | timestamptz | no |  |
-| `completado_en` | timestamptz | sí |  |
-
-### firmas_documento
-
-| Columna | Tipo | ¿Vacío? | Llave |
-|---|---|---|---|
-| `id` | uuid | no | PK |
-| `exportacion_silabo_id` | uuid | no | FK → `exportaciones_silabo` |
-| `firmado_como` | varchar | no |  |
-| `usuario_id` | uuid | no | FK → `usuarios` |
-| `archivo_firmado_id` | uuid | no | FK → `archivos` |
-| `nombre_en_certificado` | varchar | no |  |
-| `numero_certificado` | varchar | no |  |
-| `entidad_emisora` | varchar | no |  |
-| `certificado_valido_hasta` | timestamptz | no |  |
-| `hash_archivo` | char | no |  |
-| `firmado_en` | timestamptz | no |  |
-
-### Relaciones: Documentos y firmas
-
-- exportaciones_silabo.archivo_pdf_id → archivos
-- exportaciones_silabo.archivo_word_id → archivos
-- exportaciones_silabo.revision_silabo_id → revisiones_silabo
-- exportaciones_silabo.solicitado_por → usuarios
-- exportaciones_silabo.trabajo_id → trabajos_en_cola
-- firmas_documento.archivo_firmado_id → archivos
-- firmas_documento.exportacion_silabo_id → exportaciones_silabo
-- firmas_documento.usuario_id → usuarios
+- `valores_campo_asignatura_definicion_unica`: único `(asignatura_id, definicion_campo_id)` donde asignatura_id no es nulo
+- `valores_campo_silabo_definicion_unica`: único `(silabo_id, definicion_campo_id)` donde silabo_id no es nulo
+- `valores_campo_definicion_campo_id_index`: `btree (definicion_campo_id)`
