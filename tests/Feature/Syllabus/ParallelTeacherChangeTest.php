@@ -117,7 +117,7 @@ class ParallelTeacherChangeTest extends TestCase
         $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertJsonValidationErrors('user_id');
     }
 
-    public function test_pausing_and_resuming_the_convocation_notifies_its_teachers(): void
+    public function test_pausing_and_resuming_the_convocation_sends_no_notices(): void
     {
         $this->openedSyllabus();
         $convocation = Convocation::query()->with('career')->firstOrFail();
@@ -125,12 +125,13 @@ class ParallelTeacherChangeTest extends TestCase
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))
             ->assertSuccessful();
-        $this->assertNotified($this->teacher->id, 'convocatoria.pausada', "La convocatoria de {$convocation->career->nombre} está en pausa.");
+        // I-186: pausar y reanudar la convocatoria ya no generan avisos; se ven en el panel.
 
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))
             ->assertSuccessful();
-        $this->assertNotified($this->teacher->id, 'convocatoria.reanudada', 'se reanudó');
+        $this->assertNotNotified($this->teacher->id, 'convocatoria.pausada');
+        $this->assertNotNotified($this->teacher->id, 'convocatoria.reanudada');
         $this->assertNotNotified($this->coordinator->id, 'convocatoria.pausada');
     }
 

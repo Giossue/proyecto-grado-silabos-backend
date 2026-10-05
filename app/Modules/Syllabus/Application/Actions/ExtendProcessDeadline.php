@@ -83,10 +83,7 @@ class ExtendProcessDeadline
         $this->notifications->execute(
             eventType: 'proceso.plazo_extendido',
             deduplicationKey: "proceso.plazo_extendido:{$process->id}:{$dueAt->getTimestamp()}",
-            recipientIds: [
-                ...$this->recipients->coordinatorsForProcess($process),
-                ...$this->recipients->teachersWithPendingWork($process),
-            ],
+            recipientIds: $this->recipients->teachersWithPendingWork($process),
             title: 'Plazo extendido',
             message: "La entrega de sílabos del proceso «{$process->nombre}» se amplió hasta el {$this->notifications->date($dueAt)}.",
             resourceType: 'proceso_silabos',

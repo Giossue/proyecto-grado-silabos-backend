@@ -5,7 +5,6 @@ namespace App\Modules\Identity\Application\Actions;
 use App\Models\User;
 use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,12 +13,11 @@ class ActivateManagedUser
 {
     public function __construct(
         private readonly RecordAuditEvent $audit,
-        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     public function execute(string $token, string $password, Request $request): void
     {
-        DB::transaction(function () use ($password, $request, $token): void {
+        DB::transaction(function () use ($password, $token): void {
             $invitation = ActivationInvitation::query()
                 ->lockForUpdate()
                 ->where('hash_activacion', hash('sha256', $token))
@@ -58,23 +56,6 @@ class ActivateManagedUser
                 resourceId: $user->id,
                 result: 'exito',
             );
-            $this->notifyIssuer($invitation, $user, $request);
         });
-    }
-
-    private function notifyIssuer(ActivationInvitation $invitation, User $user, Request $request): void
-    {
-        $role = $user->roleAssignments()->where('activo', true)->first()?->role->nombre_rol;
-        $as = is_string($role) ? " de {$role}" : '';
-
-        $this->notifications->execute(
-            eventType: 'usuario.activado',
-            deduplicationKey: "usuario.activado:{$invitation->id}",
-            recipientIds: $invitation->emitida_por_usuario_id === null ? [] : [$invitation->emitida_por_usuario_id],
-            title: 'Cuenta activada',
-            message: "{$user->nombre} activó su cuenta{$as}.",
-            resourceType: 'usuario',
-            resourceId: $user->id,
-        );
     }
 }

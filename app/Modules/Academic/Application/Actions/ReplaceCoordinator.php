@@ -9,11 +9,8 @@ use App\Modules\Identity\Application\Actions\AssignRole;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -30,7 +27,6 @@ class ReplaceCoordinator
         private readonly ActiveRole $roles,
         private readonly AssignRole $assignRole,
         private readonly RecordAuditEvent $audit,
-        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     /**
@@ -86,29 +82,7 @@ class ReplaceCoordinator
                 ],
             );
 
-            $this->notifyIncoming($lockedCareer, $incoming, $request);
-
             return ['previous_user_id' => $current?->usuario_id, 'role_removed' => $roleRemoved];
         });
-    }
-
-    private function notifyIncoming(Career $career, User $incoming, Request $request): void
-    {
-        $pending = Syllabus::query()->whereHas('convocation', fn ($convocation) => $convocation->where('carrera_id', $career->id))->where('estado', 'en_revision')->count();
-        $waiting = match ($pending) {
-            0 => '',
-            1 => ' Hay 1 sílabo esperando revisión.',
-            default => " Hay {$pending} sílabos esperando revisión.",
-        };
-
-        $this->notifications->execute(
-            eventType: 'coordinacion.asignada',
-            deduplicationKey: "coordinacion.asignada:{$career->id}:{$incoming->id}:".Str::uuid(),
-            recipientIds: [$incoming->id],
-            title: "Ahora coordina {$career->nombre}",
-            message: "Se le asignó la coordinación de {$career->nombre}.{$waiting}",
-            resourceType: 'carrera',
-            resourceId: $career->id,
-        );
     }
 }

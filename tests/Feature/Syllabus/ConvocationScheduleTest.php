@@ -120,7 +120,7 @@ class ConvocationScheduleTest extends TestCase
         $this->assertSame('borrador', $event->metadatos['stage']);
         $this->assertArrayNotHasKey('reason', $event->metadatos);
         $this->assertNotified($this->teacher->id, 'proceso.plazo_extendido', 'se amplió hasta el');
-        $this->assertNotified($this->coordinator->id, 'proceso.plazo_extendido', 'se amplió hasta el');
+        $this->assertNotNotified($this->coordinator->id, 'proceso.plazo_extendido');
         $this->assertNotNotified($this->administrator->id, 'proceso.plazo_extendido');
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
@@ -173,7 +173,7 @@ class ConvocationScheduleTest extends TestCase
         $this->assertTrue($process->entrega_en->equalTo($previousDue));
     }
 
-    public function test_opening_the_institutional_process_notifies_every_coordination(): void
+    public function test_opening_the_institutional_process_sends_no_notices(): void
     {
         $this->publishedConfiguration();
 
@@ -183,11 +183,12 @@ class ConvocationScheduleTest extends TestCase
             'due_at' => now()->addMonth()->toIso8601String(),
         ])->assertSuccessful();
 
-        $this->assertNotified($this->coordinator->id, 'proceso.abierto', 'Ya puede iniciar la de su carrera; la entrega vence el');
+        // I-186: abrir la convocatoria institucional ya no genera avisos.
+        $this->assertNotNotified($this->coordinator->id, 'proceso.abierto');
         $this->assertNotNotified($this->teacher->id, 'proceso.abierto');
     }
 
-    public function test_pausing_resuming_and_closing_the_process_notify_who_has_pending_work(): void
+    public function test_pausing_resuming_and_closing_the_process_send_no_notices(): void
     {
         $syllabus = $this->createValidDraft();
         $process = $syllabus->convocation->process;
@@ -197,9 +198,9 @@ class ConvocationScheduleTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();
 
         foreach ([$this->teacher, $this->coordinator] as $user) {
-            $this->assertNotified($user->id, 'proceso.pausado', 'está en pausa');
-            $this->assertNotified($user->id, 'proceso.reanudado', 'se reanudó');
-            $this->assertNotified($user->id, 'proceso.cerrado', 'Ya no se reciben envíos.');
+            $this->assertNotNotified($user->id, 'proceso.pausado');
+            $this->assertNotNotified($user->id, 'proceso.reanudado');
+            $this->assertNotNotified($user->id, 'proceso.cerrado');
         }
         $this->assertNotNotified($this->administrator->id, 'proceso.cerrado');
     }

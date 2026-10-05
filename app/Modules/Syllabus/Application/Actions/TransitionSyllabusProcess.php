@@ -8,13 +8,10 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
-use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class TransitionSyllabusProcess
@@ -36,8 +33,6 @@ class TransitionSyllabusProcess
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly TemplateStructureValidator $templateStructure,
-        private readonly WorkflowNotificationRecipients $recipients,
-        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     public function execute(
@@ -55,7 +50,7 @@ class TransitionSyllabusProcess
             throw ValidationException::withMessages(['transition' => 'La acción sobre el proceso no existe.']);
         }
 
-        return DB::transaction(function () use ($activeRole, $actor, $process, $request, $rule): SyllabusProcess {
+        return DB::transaction(function () use ($activeRole, $actor, $process, $rule): SyllabusProcess {
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
             if (! in_array($locked->estado, $rule['from'], true)) {
                 throw ValidationException::withMessages([
@@ -88,31 +83,8 @@ class TransitionSyllabusProcess
                 result: 'exito',
                 metadata: ['previous_state' => $previous],
             );
-            $this->notify($locked, $rule['to'], $request);
 
             return $locked;
         });
-    }
-
-    private function notify(SyllabusProcess $process, string $to, Request $request): void
-    {
-        [$event, $title, $message] = match ($to) {
-            SyllabusProcess::STATE_PAUSED => ['proceso.pausado', 'Convocatoria institucional pausada', "La convocatoria institucional «{$process->nombre}» está en pausa. Su avance se conserva; podrá continuar cuando Administración la reanude."],
-            SyllabusProcess::STATE_OPEN => ['proceso.reanudado', 'Convocatoria institucional reanudada', "La convocatoria institucional «{$process->nombre}» se reanudó. Puede continuar con sus sílabos."],
-            default => ['proceso.cerrado', 'Convocatoria institucional cerrada', "La convocatoria institucional «{$process->nombre}» se cerró. Ya no se reciben envíos."],
-        };
-
-        $this->notifications->execute(
-            eventType: $event,
-            deduplicationKey: "{$event}:{$process->id}:".Str::uuid(),
-            recipientIds: [
-                ...$this->recipients->coordinatorsForProcess($process),
-                ...$this->recipients->teachersWithPendingWork($process),
-            ],
-            title: $title,
-            message: $message,
-            resourceType: 'proceso_silabos',
-            resourceId: $process->id,
-        );
     }
 }

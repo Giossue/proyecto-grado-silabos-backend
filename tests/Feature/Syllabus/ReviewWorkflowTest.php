@@ -475,6 +475,24 @@ class ReviewWorkflowTest extends TestCase
         }
     }
 
+    public function test_the_dean_returning_a_syllabus_notifies_the_teacher_and_the_coordinator_and_the_librarys_approval_notifies_the_teacher(): void
+    {
+        [$syllabus, $revision] = $this->submitValidDraft();
+        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
+        // I-186: la bibliografía aprobada avisa al docente (avance) y al coordinador (le toca revisar).
+        $this->assertWorkflowNotification($syllabus->id, 'biblioteca.verificado');
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertSuccessful();
+
+        $this->actingAsDean()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
+            'justification' => 'El decanato no aprueba: falta alinear los resultados de aprendizaje.',
+        ])->assertSuccessful();
+
+        $this->assertWorkflowNotification($syllabus->id, 'silabo.correccion_solicitada');
+        $this->assertWorkflowNotification($syllabus->id, 'silabo.devuelto_decanato');
+    }
+
     public function test_cp_f_database_rejects_invalid_state_and_cross_syllabus_evidence(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();

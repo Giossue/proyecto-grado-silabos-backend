@@ -240,8 +240,7 @@ class ManagedUserTest extends TestCase
             ->where('usuario_id', $teacher->id)
             ->where('carrera_id', $career->id)
             ->exists());
-        $granted = $this->assertNotified($teacher->id, 'usuario.rol_asignado', "Ahora también puede ingresar como Coordinador en {$career->nombre}.");
-        $this->assertSame('asignacion_rol', $granted->tipo_recurso);
+        $this->assertNotNotified($teacher->id, 'usuario.rol_asignado');
     }
 
     private function coordinatorHolder(): User
@@ -443,12 +442,7 @@ class ManagedUserTest extends TestCase
             'password' => 'Nueva-clave-2026!',
             'password_confirmation' => 'Nueva-clave-2026!',
         ])->assertOk();
-        $notice = $this->assertNotified($this->administrator->id, 'usuario.activado', "{$pending->nombre} activó su cuenta");
-        // «Cuenta activada» es solo informativo (I-163): se marca leído y no lleva a ninguna pantalla.
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.notifications.open', $notice))
-            ->assertOk()
-            ->assertJsonPath('path', null);
+        $this->assertNotNotified($this->administrator->id, 'usuario.activado');
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.activation.resend', $pending))
             ->assertForbidden();

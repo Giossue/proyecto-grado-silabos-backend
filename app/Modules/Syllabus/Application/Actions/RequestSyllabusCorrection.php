@@ -81,6 +81,16 @@ class RequestSyllabusCorrection
                 recipientIds: $this->recipients->teachersFor($syllabus),
                 revisionNumber: $revision->numero_revision,
             );
+            // Coordinación se entera cuando el decanato no aprueba lo que ella revisó.
+            if ($stage === ReviewStage::DEANERY) {
+                $this->notifications->execute(
+                    syllabus: $syllabus,
+                    eventType: 'silabo.devuelto_decanato',
+                    deduplicationKey: "silabo.devuelto_decanato:{$revision->id}",
+                    recipientIds: $this->recipients->coordinatorsFor($syllabus),
+                    revisionNumber: $revision->numero_revision,
+                );
+            }
 
             return $locked;
         });

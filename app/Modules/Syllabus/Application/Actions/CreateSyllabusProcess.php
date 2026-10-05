@@ -9,8 +9,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
-use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,8 +20,6 @@ class CreateSyllabusProcess
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly TemplateStructureValidator $templateStructure,
-        private readonly WorkflowNotificationRecipients $recipients,
-        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     /** @param array{period_id: string, starts_at: string, due_at: string} $data */
@@ -95,15 +91,6 @@ class CreateSyllabusProcess
                 resourceId: $process->id,
                 result: 'exito',
                 metadata: ['previous_state' => null],
-            );
-            $this->notifications->execute(
-                eventType: 'proceso.abierto',
-                deduplicationKey: "proceso.abierto:{$process->id}",
-                recipientIds: $this->recipients->coordinatorsForProcess($process),
-                title: 'Convocatoria institucional abierta',
-                message: "Se abrió la convocatoria institucional «{$process->nombre}». Ya puede iniciar la de su carrera; la entrega vence el {$this->notifications->date($process->entrega_en)}.",
-                resourceType: 'proceso_silabos',
-                resourceId: $process->id,
             );
 
             return $process;

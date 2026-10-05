@@ -21,7 +21,7 @@ use Illuminate\Support\Collection;
  */
 final class NotificationDestination
 {
-    private const COORDINATION_EVENTS = ['biblioteca.verificado', 'silabo.firmado_docente', 'coordinacion.asignada'];
+    private const COORDINATION_EVENTS = ['biblioteca.verificado', 'silabo.firmado_docente', 'silabo.devuelto_decanato', 'coordinacion.asignada'];
 
     private const DEANERY_EVENTS = ['silabo.revisado_coordinacion', 'silabo.firmado_biblioteca'];
 

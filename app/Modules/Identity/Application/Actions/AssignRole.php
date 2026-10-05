@@ -7,10 +7,8 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AssignRole
@@ -18,7 +16,6 @@ class AssignRole
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
-        private readonly ScheduleInternalNotification $notifications,
     ) {}
 
     /** @param array{role_code: string, career_id?: string|null, faculty_id?: string|null} $data */
@@ -26,7 +23,7 @@ class AssignRole
     {
         $activeRole = $this->roles->resolve($request);
 
-        return DB::transaction(function () use ($actor, $activeRole, $data, $notify, $request, $target): RoleAssignment {
+        return DB::transaction(function () use ($actor, $activeRole, $data, $target): RoleAssignment {
             $role = RoleCode::tryFrom($data['role_code']);
             if ($role === null) {
                 throw ValidationException::withMessages(['role_code' => 'El rol indicado no es válido.']);
@@ -110,27 +107,8 @@ class AssignRole
                     'career_id' => $careerId,
                 ],
             );
-            if ($notify && $granted && $target->activo && $target->hasVerifiedEmail()) {
-                $this->notifyGrantedRole($target, $assignment, $request);
-            }
 
             return $assignment;
         });
-    }
-
-    private function notifyGrantedRole(User $target, RoleAssignment $assignment, Request $request): void
-    {
-        $career = $assignment->career()->value('nombre');
-        $scope = is_string($career) ? " en {$career}" : '';
-
-        $this->notifications->execute(
-            eventType: 'usuario.rol_asignado',
-            deduplicationKey: "usuario.rol_asignado:{$assignment->id}:".Str::uuid(),
-            recipientIds: [$target->id],
-            title: 'Nuevo rol disponible',
-            message: "Ahora también puede ingresar como {$assignment->role->nombre_rol}{$scope}. Cámbielo desde el selector de ámbito.",
-            resourceType: 'asignacion_rol',
-            resourceId: $assignment->id,
-        );
     }
 }

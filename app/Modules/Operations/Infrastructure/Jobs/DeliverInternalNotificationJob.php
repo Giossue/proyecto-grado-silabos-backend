@@ -168,9 +168,9 @@ class DeliverInternalNotificationJob implements ShouldQueue
                 'Sílabo listo para aprobación',
                 "Coordinación revisó y aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Espera la aprobación del decanato.",
             ],
-            'silabo.firmado' => [
-                'Sílabo firmado',
-                "El decanato firmó electrónicamente el sílabo {$syllabus->subject->nombre}{$revisionLabel}. El PDF con las cuatro firmas ya está disponible.",
+            'silabo.devuelto_decanato' => [
+                'El decanato devolvió el sílabo',
+                "El decanato no aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel} y lo devolvió al docente. Volverá a pasar por biblioteca y por su revisión.",
             ],
             'silabo.reiniciado' => [
                 'Sílabo reiniciado',

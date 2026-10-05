@@ -144,8 +144,9 @@ class DocumentSignatureTest extends TestCase
             ->assertOk()->assertJsonPath('state', 'pendiente_decanato')->assertJsonPath('my_role', 'decanato')->assertJsonPath('can_sign', true);
         $finalPdf = $this->signPdfIncrementally($libraryPdf, $deanCredentials);
         $this->upload($revision, $finalPdf, hash('sha256', $libraryPdf), 'dean')->assertCreated();
-        $this->assertNotified($this->teacher->id, 'silabo.firmado', 'El decanato firmó');
-        $this->assertNotified($this->coordinator->id, 'silabo.firmado', 'El decanato firmó');
+        // I-186: la última firma (decanato) no genera aviso.
+        $this->assertNotNotified($this->teacher->id, 'silabo.firmado');
+        $this->assertNotNotified($this->coordinator->id, 'silabo.firmado');
 
         $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
             ->assertOk()

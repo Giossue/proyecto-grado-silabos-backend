@@ -121,18 +121,17 @@ class AcceptDocumentSignature
                     DocumentSignature::ROLE_TEACHER => ['silabo.firmado_docente', $this->recipients->coordinatorsFor($syllabus)],
                     DocumentSignature::ROLE_COORDINATION => ['silabo.firmado_coordinacion', $this->recipients->librarians()],
                     DocumentSignature::ROLE_LIBRARY => ['silabo.firmado_biblioteca', $this->recipients->deansFor($syllabus)],
-                    default => ['silabo.firmado', array_values(array_unique([
-                        ...$this->recipients->teachersFor($syllabus),
-                        ...$this->recipients->coordinatorsFor($syllabus),
-                    ]))],
+                    default => [null, []], // la última firma (decanato) no genera aviso
                 };
-                $this->notifications->execute(
-                    syllabus: $syllabus,
-                    eventType: $eventType,
-                    deduplicationKey: "documento.firmado:{$signature->id}",
-                    recipientIds: $recipientIds,
-                    revisionNumber: $revision->numero_revision,
-                );
+                if ($eventType !== null) {
+                    $this->notifications->execute(
+                        syllabus: $syllabus,
+                        eventType: $eventType,
+                        deduplicationKey: "documento.firmado:{$signature->id}",
+                        recipientIds: $recipientIds,
+                        revisionNumber: $revision->numero_revision,
+                    );
+                }
 
                 return $signature;
             });

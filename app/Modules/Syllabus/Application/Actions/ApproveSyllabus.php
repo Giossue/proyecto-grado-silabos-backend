@@ -92,7 +92,7 @@ class ApproveSyllabus
                 syllabus: $syllabus,
                 eventType: 'silabo.aprobado',
                 deduplicationKey: "silabo.aprobado:{$approval->id}",
-                recipientIds: array_values(array_unique([...$this->recipients->teachersFor($syllabus), ...$this->recipients->coordinatorsFor($syllabus)])),
+                recipientIds: $this->recipients->teachersFor($syllabus),
                 revisionNumber: $revision->numero_revision,
             );
             // I-173: el PDF se genera al terminar la cadena de revisión; después firman los cuatro.
