@@ -12,14 +12,21 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Operations\Infrastructure\Jobs\DeliverInternalNotificationJob;
+use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
+use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\ConfiguresFacultyLogos;
@@ -47,7 +54,7 @@ class SyllabusProcessTest extends TestCase
         foreach (['periodo_academico_id', 'plantilla_id', 'creado_por', 'abierto_por', 'abierto_en', 'cerrado_en', 'actualizado_en'] as $column) {
             $this->assertFalse(Schema::hasColumn('convocatorias_carreras', $column));
         }
-        foreach (['creado_por', 'abierto_por', 'abierto_en', 'pausado_en', 'cerrado_en', 'actualizado_en'] as $column) {
+        foreach (['creado_por', 'abierto_por', 'abierto_en', 'cerrado_en', 'actualizado_en'] as $column) {
             $this->assertFalse(Schema::hasColumn('convocatorias_universidad', $column));
         }
 
@@ -479,13 +486,39 @@ class SyllabusProcessTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc());
     }
 
-    public function test_changing_the_template_during_a_pause_replaces_the_affected_syllabi(): void
+    public function test_changing_the_template_during_a_pause_waits_for_confirmed_process_resume_to_replace_syllabi(): void
     {
         $convocation = $this->openedConvocation();
         $process = $convocation->process()->firstOrFail();
         $template = SyllabusTemplate::institutional();
         $syllabus = Syllabus::query()->firstOrFail();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $otherParallel = $syllabus->parallel->replicate();
+        $otherParallel->codigo = 'I188-APROBADO';
+        $otherParallel->save();
+        $approved = Syllabus::query()->create([
+            'convocatoria_id' => $convocation->id,
+            'paralelo_id' => $otherParallel->id,
+            'contexto_academico' => $syllabus->contexto_academico,
+            'estado' => 'aprobado',
+        ]);
+        $approvedRevision = SyllabusRevision::query()->create([
+            'silabo_id' => $approved->id,
+            'numero_revision' => 1,
+            'clave_idempotencia' => (string) Str::uuid(),
+            'version_bloqueo_origen' => 1,
+            'fotografia' => $syllabus->contexto_academico,
+            'huella_sha256' => str_repeat('a', 64),
+            'enviado_por' => $this->teacher->id,
+            'enviado_en' => now(),
+        ]);
+        Approval::query()->create([
+            'revision_silabo_id' => $approvedRevision->id,
+            'clave_idempotencia' => (string) Str::uuid(),
+            'huella_sha256' => str_repeat('a', 64),
+            'aprobado_por' => $this->coordinator->id,
+            'aprobado_en' => now(),
+        ]);
         $this->transition($process, 'pausar', 'Ajuste de la plantilla con expedientes abiertos.')->assertSuccessful();
         $sectionPayload = [
             'title' => 'Anexos',
@@ -496,27 +529,71 @@ class SyllabusProcessTest extends TestCase
         ];
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $sectionPayload)
-            ->assertJsonValidationErrors(['purge_required', 'purge_count']);
-        $this->assertDatabaseCount('silabos', 1);
-        $this->assertSame(12, $template->sections()->count());
+            ->assertSuccessful();
+        $createdSection = $template->fresh()->sections()->firstWhere('clave', 'anexos');
+        $field = $createdSection->blocks()->firstOrFail()->fields()->firstOrFail();
+        $value = FieldValue::query()->create([
+            'silabo_id' => $syllabus->id,
+            'definicion_campo_id' => $field->id,
+            'valor' => ['content' => 'Se conserva hasta reanudar.'],
+        ]);
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.template.sections.destroy', ['template' => $template, 'section' => $createdSection]))
+            ->assertSuccessful();
+        $this->assertGreaterThan(
+            (float) $process->fresh()->pausado_en->format('U.u'),
+            (float) $template->fresh()->plantilla_modificada_en->format('U.u'),
+        );
+        $this->assertDatabaseCount('silabos', 2);
+        $this->assertSame(12, $template->fresh()->sections()->count());
+        $this->assertDatabaseHas('valores_campo', ['valor_campo_id' => $value->id]);
+        $this->assertDatabaseHas('definiciones_campo', [
+            'definicion_campo_id' => $field->id,
+            'vigente_en_plantilla' => false,
+        ]);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'borrador']);
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']), ['confirmar_rehacer' => true])
+            ->assertForbidden();
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']))
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'plantilla_cambiada')
+            ->assertJsonPath('counts.borrador', 1)
+            ->assertJsonPath('counts.aprobado', 1);
+        $this->assertSame('pausado', $process->fresh()->estado);
 
         $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.template.sections.store', $template), [...$sectionPayload, 'confirm_purge' => 1])
-            ->assertSuccessful()
+            ->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']), ['confirmar_rehacer' => true])
             ->assertSuccessful();
         $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
-        $this->assertDatabaseCount('silabos', 1);
-        $this->assertDatabaseHas('silabos', ['estado_silabo' => 'sin_iniciar']);
-        $this->assertSame(13, $template->fresh()->sections()->count());
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $approved->id]);
+        $this->assertDatabaseMissing('revisiones_silabo', ['revision_silabo_id' => $approvedRevision->id]);
+        $this->assertDatabaseMissing('aprobaciones', ['revision_silabo_id' => $approvedRevision->id]);
+        $this->assertDatabaseMissing('valores_campo', ['valor_campo_id' => $value->id]);
+        $this->assertDatabaseCount('silabos', 2);
+        $this->assertSame(2, Syllabus::query()->where('estado', 'sin_iniciar')->count());
+        $this->assertSame('abierto', $process->fresh()->estado);
+
+        $auditEvent = AuditEvent::query()
+            ->where('accion', 'proceso.plantilla_rehecho')->sole();
+        $this->assertSame($process->id, $auditEvent->recurso_id);
+        $this->assertSame($this->administrator->id, $auditEvent->actor_usuario_id);
+        $this->assertSame(1, $auditEvent->metadatos['estado_borrador']);
+        $this->assertSame(1, $auditEvent->metadatos['estado_aprobado']);
 
         $notice = JobExecution::query()
             ->where('tipo', 'notificacion.interna')
-            ->whereJsonContains('datos_entrada', ['tipo_evento' => 'silabo.regenerado'])
+            ->whereJsonContains('datos_entrada', ['tipo_evento' => 'proceso.plantilla_rehecho'])
             ->sole();
-        $this->assertSame('carrera', $notice->tipo_recurso);
-        $this->assertSame($convocation->carrera_id, $notice->recurso_id);
+        $this->assertSame('proceso_silabos', $notice->tipo_recurso);
+        $this->assertSame($process->id, $notice->recurso_id);
         $this->assertNotEmpty($notice->entrada['destinatarios_ids']);
-        $this->assertStringContainsString($syllabus->academicSubjectName(), $notice->entrada['mensaje']);
+        (new DeliverInternalNotificationJob($notice->id))->handle();
+        $deliveredNotice = InternalNotification::query()
+            ->where('tipo', 'proceso.plantilla_rehecho')->sole();
+        $this->assertStringContainsString('se rehízo desde cero', $deliveredNotice->mensaje);
     }
 
     public function test_changing_the_cycle_count_or_requirements_refreshes_without_purging(): void

@@ -165,6 +165,7 @@ return [
         'subject_id' => 'materia',
         'requirement_id' => 'materia requisito',
         'label' => 'etiqueta visible',
+        'confirmar_rehacer' => 'confirmación para rehacer los sílabos',
         'key' => 'código de referencia',
         'type' => 'tipo',
         'system_key' => 'dato estructurado',

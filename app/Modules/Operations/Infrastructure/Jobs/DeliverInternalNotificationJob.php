@@ -113,6 +113,10 @@ class DeliverInternalNotificationJob implements ShouldQueue
     /** @return array{string, string, string, string} */
     private function content(JobExecution $execution): array
     {
+        if ($this->eventType($execution) === 'proceso.plantilla_rehecho'
+            && is_string($execution->tipo_recurso) && is_string($execution->recurso_id)) {
+            return [...$this->message($execution, null), $execution->tipo_recurso, $execution->recurso_id];
+        }
         $title = $execution->entrada['titulo'] ?? null;
         $message = $execution->entrada['mensaje'] ?? null;
         if (is_string($title) && is_string($message)
@@ -126,8 +130,15 @@ class DeliverInternalNotificationJob implements ShouldQueue
     }
 
     /** @return array{string, string} */
-    private function message(JobExecution $execution, Syllabus $syllabus): array
+    private function message(JobExecution $execution, ?Syllabus $syllabus): array
     {
+        if ($this->eventType($execution) === 'proceso.plantilla_rehecho') {
+            return [
+                'El sílabo volvió a empezar',
+                'El administrador cambió la plantilla. Su sílabo se rehízo desde cero; vuelva a completarlo.',
+            ];
+        }
+        $syllabus ??= $this->syllabusFor($execution);
         $revision = $execution->entrada['numero_revision'] ?? null;
         $revisionLabel = is_int($revision) ? ", revisión {$revision}" : '';
 

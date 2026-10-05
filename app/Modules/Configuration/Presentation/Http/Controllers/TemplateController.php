@@ -39,6 +39,7 @@ use App\Modules\Configuration\Presentation\Http\Requests\StoreInstitutionLogoReq
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -99,8 +100,16 @@ class TemplateController extends Controller
     /** @return array<string, mixed> */
     private function builderProps(SyllabusTemplate $template, ProcessLocks $locks, InstitutionalLogos $logos): array
     {
+        $pausedProcess = SyllabusProcess::query()
+            ->where('estado', SyllabusProcess::STATE_PAUSED)
+            ->first(['id', 'pausado_en']);
+        $templateChangedDuringPause = $pausedProcess?->pausado_en !== null
+            && $template->plantilla_modificada_en !== null
+            && $template->plantilla_modificada_en->greaterThan($pausedProcess->pausado_en);
+
         return [
             'processLock' => $locks->templateLockReason(),
+            'templateChangedDuringPause' => $templateChangedDuringPause,
             'variables' => TemplateVariables::catalog(),
             'identificationDesign' => TemplateDocumentDefaults::identification(),
             'logos' => [

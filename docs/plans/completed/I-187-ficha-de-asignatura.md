@@ -12,7 +12,7 @@ Se guardan una sola vez por materia en una tabla nueva, `fichas_asignatura`. El 
 y el sílabo la hereda al crearse.
 
 Esta etapa **no** incluye subir documentos ni IA: el coordinador escribe la ficha a mano. La IA que
-la rellena desde PDF/Excel es un plan posterior (I-188).
+la rellena desde PDF/Excel es un plan posterior (I-189).
 
 ## Decisiones ya tomadas (no re-discutir)
 
@@ -134,11 +134,11 @@ migraciones 000184–000193). Tabla `fichas_asignatura`:
   `Bibliografia` y llena `bibliografia_basica` / `bibliografia_complementaria` por nombre de
   materia (normalizar mayúsculas, tildes, espacios y saltos de línea). Informa las materias sin
   coincidencia y las que vienen vacías. No sobrescribe una ficha que el coordinador ya editó.
-- Si no cabe en este plan, déjalo para I-188 junto con la IA.
+- Si no cabe en este plan, déjalo para I-189 junto con la IA.
 
 ## Fuera de alcance
 
-- Subir Proyecto de carrera / Excel desde la interfaz y rellenar la ficha con IA (I-188).
+- Subir Proyecto de carrera / Excel desde la interfaz y rellenar la ficha con IA (I-189).
 - IA del docente para planificación de unidades (I-189).
 - Bloques prearmados para el administrador de plantilla (I-190).
 - Historial de versiones de la ficha (basta `eventos_auditoria`).
@@ -166,7 +166,7 @@ migraciones 000184–000193). Tabla `fichas_asignatura`:
 ## Alcance diferido de esta etapa
 
 - La acción «Aplicar ficha a los borradores» queda pendiente. Un cambio de ficha solo afecta sílabos nuevos; los borradores existentes conservan sus valores hasta una acción explícita posterior. Requiere distinguir cambios del docente en bibliografía y respetar bloqueos de proceso.
-- La carga desde Excel se traslada a I-188 junto con la importación documental. La ficha se ingresa manualmente en I-187.
+- La carga desde Excel se traslada a I-189 junto con la importación documental. La ficha se ingresa manualmente en I-187.
 - La revisión visual en dispositivos reales permanece asociada a PV-19.
 
 ## Evidencia de verificación local

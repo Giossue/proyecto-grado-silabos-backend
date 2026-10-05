@@ -30,7 +30,7 @@ class SaveTemplateSection
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        return $this->work->replace($request, function () use ($activeRole, $actor, $data, $templateId): TemplateSection {
+        return $this->work->replaceTemplate(function () use ($activeRole, $actor, $data, $templateId): TemplateSection {
             $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
 
             $sections = $template->sections()->sortBy('posicion')->values();
@@ -119,7 +119,7 @@ class SaveTemplateSection
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        return $this->work->replace($request, function () use ($activeRole, $actor, $data, $section): TemplateSection {
+        return $this->work->replaceTemplate(function () use ($activeRole, $actor, $data, $section): TemplateSection {
             $template = SyllabusTemplate::query()->whereKey($section->plantilla_id)->lockForUpdate()->firstOrFail();
             $section = $template->updateSectionDocument($section->id, [
                 'titulo' => $this->stringValue($data, 'title'),

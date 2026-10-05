@@ -25,7 +25,7 @@ final class SaveTemplateTitle
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        $this->work->replace($request, function () use ($activeRole, $actor, $template, $title): void {
+        $this->work->replaceTemplate(function () use ($activeRole, $actor, $template, $title): void {
             $locked = SyllabusTemplate::query()
                 ->whereKey($template->id)
                 ->lockForUpdate()

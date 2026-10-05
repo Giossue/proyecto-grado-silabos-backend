@@ -521,7 +521,10 @@ class TemplateAndSourceTest extends TestCase
             ->assertSuccessful();
 
         $this->assertNull($version->fresh()->block($second->id));
-        $this->assertDatabaseMissing('definiciones_campo', ['campo_plantilla_id' => $second->id]);
+        $this->assertDatabaseHas('definiciones_campo', [
+            'campo_plantilla_id' => $second->id,
+            'vigente_en_plantilla' => false,
+        ]);
     }
 
     public function test_table_structure_form_no_longer_exists(): void
@@ -572,7 +575,10 @@ class TemplateAndSourceTest extends TestCase
 
         $this->assertNull($version->fresh()->section($created->id));
         foreach ($created->blocks()->pluck('id') as $blockId) {
-            $this->assertDatabaseMissing('definiciones_campo', ['campo_plantilla_id' => $blockId]);
+            $this->assertDatabaseHas('definiciones_campo', [
+                'campo_plantilla_id' => $blockId,
+                'vigente_en_plantilla' => false,
+            ]);
         }
     }
 

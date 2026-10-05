@@ -32,7 +32,7 @@ el permiso, pero no lo sustituyen.
 | Asignar docentes a paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta propia | No | No |
 | Diseñar/publicar plantilla | Sí, salvo con proceso abierto | Consulta/aporte según política | No | No | No |
 | Importar documentos y confirmar datos curriculares (I-145/I-146) | No participa | Sí, en su carrera, con los bloqueos de corrección vigentes | Consulta del contexto de sus sílabos | No | No |
-| Crear y abrir, pausar, reanudar y cerrar el proceso de sílabos | Sí | Consulta al convocar | No | No | No |
+| Crear y abrir, pausar, reanudar y cerrar el proceso de sílabos | Sí; confirmar el reinicio de todos los estados si cambió la plantilla durante la pausa | Consulta al convocar | No | No | No |
 | Iniciar alcance de su carrera desde convocatoria institucional abierta | No | Sí, si su malla, materias programadas, paralelos y docentes están listos | No | No | No |
 | Pausar/reanudar convocatoria | No | Sí, en su carrera | No | No | No |
 | Cerrar (sobre el proceso; detiene a todas las convocatorias) | Sí | No | No | No | No |

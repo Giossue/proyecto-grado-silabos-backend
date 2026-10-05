@@ -10,6 +10,7 @@ use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -33,14 +34,16 @@ class TransitionSyllabusProcess
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly TemplateStructureValidator $templateStructure,
+        private readonly RegenerateProcessSyllabi $regenerate,
     ) {}
 
+    /** @return array{process: SyllabusProcess, confirmation_required: bool, counts: array<string, int>} */
     public function execute(
         SyllabusProcess $process,
         string $transition,
         User $actor,
         Request $request,
-    ): SyllabusProcess {
+    ): array {
         $activeRole = $this->roles->resolve($request);
         if ($activeRole?->role->codigo_rol !== RoleCode::Administrator->value) {
             abort(403);
@@ -50,7 +53,7 @@ class TransitionSyllabusProcess
             throw ValidationException::withMessages(['transition' => 'La acción sobre el proceso no existe.']);
         }
 
-        return DB::transaction(function () use ($activeRole, $actor, $process, $rule): SyllabusProcess {
+        return DB::transaction(function () use ($activeRole, $actor, $process, $request, $rule): array {
             $locked = SyllabusProcess::query()->lockForUpdate()->findOrFail($process->id);
             if (! in_array($locked->estado, $rule['from'], true)) {
                 throw ValidationException::withMessages([
@@ -62,10 +65,50 @@ class TransitionSyllabusProcess
                 $this->templateStructure->assertUsable(SyllabusTemplate::institutional(), 'process');
             }
 
+            $templateChange = false;
+            $counts = [];
+            $template = SyllabusTemplate::query()->first();
+            if ($rule['to'] === SyllabusProcess::STATE_OPEN
+                && $locked->pausado_en !== null
+                && $template?->plantilla_modificada_en instanceof CarbonInterface) {
+                $templateChange = $template->plantilla_modificada_en->greaterThan($locked->pausado_en);
+                if ($templateChange) {
+                    $counts = $this->regenerate->counts($locked);
+                    if (! $request->boolean('confirmar_rehacer')) {
+                        return [
+                            'process' => $locked,
+                            'confirmation_required' => true,
+                            'counts' => $counts,
+                        ];
+                    }
+                }
+            }
+
             $previous = $locked->estado;
+            if ($templateChange) {
+                $this->regenerate->regenerate($locked, $template->plantilla_modificada_en->toISOString());
+                $metadata = ['total' => array_sum($counts)];
+                foreach ($counts as $state => $count) {
+                    $metadata['estado_'.$state] = $count;
+                }
+                $this->audit->execute(
+                    actorId: $actor->id,
+                    roleAssignmentId: $activeRole->id,
+                    action: 'proceso.plantilla_rehecho',
+                    resourceType: 'proceso_silabos',
+                    resourceId: $locked->id,
+                    result: 'exito',
+                    metadata: $metadata,
+                );
+            }
             $locked->update([
                 'estado' => $rule['to'],
             ]);
+            if ($rule['to'] === SyllabusProcess::STATE_PAUSED) {
+                DB::table('convocatorias_universidad')
+                    ->where('convocatoria_universidad_id', $locked->id)
+                    ->update(['pausado_en' => DB::raw('clock_timestamp()')]);
+            }
             // Al finalizar, las convocatorias de carrera en curso se finalizan con el proceso (I-172).
             if ($rule['to'] === SyllabusProcess::STATE_CLOSED) {
                 Convocation::query()
@@ -84,7 +127,11 @@ class TransitionSyllabusProcess
                 metadata: ['previous_state' => $previous],
             );
 
-            return $locked;
+            return [
+                'process' => $locked,
+                'confirmation_required' => false,
+                'counts' => $counts,
+            ];
         });
     }
 }

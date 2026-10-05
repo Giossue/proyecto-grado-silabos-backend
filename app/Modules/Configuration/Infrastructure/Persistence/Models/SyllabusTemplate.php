@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use App\Modules\Configuration\Application\TemplateFieldAttributes;
 use App\Support\Database\MapsLegacyColumnNames;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * @property string $id
+ * @property CarbonImmutable|null $plantilla_modificada_en
  * @property array{version_esquema: int, secciones: list<array<string, mixed>>} $documento Armado desde las tablas (I-164).
  * @property array<string, mixed>|null $mapeo_documento
  * @property-read EmbeddedTemplateCollection<int, TemplateSection> $sections
@@ -47,6 +49,10 @@ class SyllabusTemplate extends Model
 
     /** @var list<string> */
     protected $fillable = ['documento', 'mapeo_documento'];
+
+    protected $casts = [
+        'plantilla_modificada_en' => 'immutable_datetime',
+    ];
 
     /** @return array<string, string> */
     protected function casts(): array
@@ -290,14 +296,14 @@ class SyllabusTemplate extends Model
     /** @return list<array<string, mixed>> */
     private function loadSections(): array
     {
-        $blocks = DB::table('campos_plantilla')->where('plantilla_id', $this->id)
+        $blocks = DB::table('campos_plantilla')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', true)
             ->orderBy('posicion_campo_plantilla')->orderBy('clave_campo_plantilla')->get()
             ->groupBy('seccion_plantilla_id');
-        $definitions = DB::table('definiciones_campo')->where('plantilla_id', $this->id)->get()
+        $definitions = DB::table('definiciones_campo')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', true)->get()
             ->groupBy('campo_plantilla_id')
             ->map(fn ($rows) => $rows->keyBy('clave_definicion_campo')->all());
 
-        return array_values(DB::table('secciones_plantilla')->where('plantilla_id', $this->id)
+        return array_values(DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', true)
             ->orderBy('posicion_seccion_plantilla')->orderBy('clave_seccion_plantilla')->get()
             ->map(fn (object $section): array => [
                 'id' => $section->seccion_plantilla_id, 'clave' => $section->clave_seccion_plantilla, 'titulo' => $section->titulo_seccion_plantilla,
@@ -336,8 +342,10 @@ class SyllabusTemplate extends Model
                     $blockIds[] = (string) $block['id'];
                 }
             }
-            DB::table('campos_plantilla')->where('plantilla_id', $this->id)->whereNotIn('campo_plantilla_id', $blockIds)->delete();
-            DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->whereNotIn('seccion_plantilla_id', $sectionIds)->delete();
+            $retiredBlockIds = DB::table('campos_plantilla')->where('plantilla_id', $this->id)->whereNotIn('campo_plantilla_id', $blockIds)->pluck('campo_plantilla_id');
+            DB::table('definiciones_campo')->whereIn('campo_plantilla_id', $retiredBlockIds)->update(['vigente_en_plantilla' => false]);
+            DB::table('campos_plantilla')->whereIn('campo_plantilla_id', $retiredBlockIds)->update(['vigente_en_plantilla' => false]);
+            DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->whereNotIn('seccion_plantilla_id', $sectionIds)->update(['vigente_en_plantilla' => false]);
 
             foreach ($sections as $sectionIndex => $section) {
                 DB::table('secciones_plantilla')->updateOrInsert(['seccion_plantilla_id' => (string) $section['id']], [

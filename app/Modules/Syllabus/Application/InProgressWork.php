@@ -95,6 +95,17 @@ final class InProgressWork
     }
 
     /**
+     * @template TResult
+     *
+     * @param  Closure(): TResult  $change
+     * @return TResult
+     */
+    public function replaceTemplate(Closure $change): mixed
+    {
+        return DB::transaction($change);
+    }
+
+    /**
      * @param  string|list<string>|null  $careerIds
      * @param  list<string>|null  $subjectIds
      * @return array{deleted: int, generated: int}

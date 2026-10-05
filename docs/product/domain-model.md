@@ -109,14 +109,17 @@ relevos aplican la misma protección en el servidor (I-64).
   que Coordinación confirma la selección correspondiente.
 
 No hay publicación: la estructura se comprueba al abrir o reanudar el proceso. Un sílabo
-sin enviar lee la plantilla en vivo; una revisión enviada conserva su copia completa y ya
-no depende de ella durante el flujo normal. Si se corrige la plantilla o una base académica
-durante una pausa, los expedientes afectados en curso sin aprobación conservada se
-reemplazan previa confirmación, incluidos los enviados y sus análisis de IA. Los
-aprobados y los expedientes reabiertos que conservan una revisión aprobada quedan fuera
-del reinicio. La corrección y la regeneración son una sola transacción; los procesos
-cerrados conservan su historia (I-118, aclarada en I-144). Corregir resultados de
-aprendizaje solo alcanza a la asignatura modificada.
+sin enviar lee la plantilla institucional viva; no conserva una copia de la plantilla con
+la que nació. Una revisión enviada conserva su copia completa y ya no depende de ella
+durante el flujo normal. Cuando Administración cambia la plantilla durante una pausa,
+reanudar requiere confirmación y rehace desde cero todos los sílabos de ese proceso, en
+cualquier estado, incluidos los aprobados y firmados. El reinicio borra sus revisiones,
+aprobaciones, firmas, exportaciones, archivos y mensajes de IA; una auditoría conserva
+el conteo por estado y quién confirmó. El cambio queda marcado durante la pausa y no
+afecta procesos cerrados. Cambiar fechas o pausar y reanudar sin cambios de plantilla no
+rehace sílabos (I-188). Las correcciones de bases académicas mantienen el alcance y las
+protecciones acordadas en I-118/I-144; corregir resultados de aprendizaje solo alcanza a
+la asignatura modificada.
 
 ### Proceso de sílabos y convocatoria
 
@@ -151,8 +154,9 @@ asignación vigente. Coordinación quita al docente y asigna otro; el sílabo si
 en cualquier estado y el nuevo docente continúa. Solo un período finalizado lo impide.
 Para corregir se pausa: Administración
 el proceso —detiene a toda la universidad—, Coordinación su convocatoria —solo su
-carrera—. Los expedientes ya creados conservan la plantilla con la que nacieron; cambiar
-la del proceso solo alcanza a las convocatorias que se abran después.
+carrera—. La plantilla puede cambiarse durante la pausa. Si cambió, Administración ve
+el conteo de sílabos afectados y confirma el reinicio completo al reanudar; si no cambió,
+reanudar conserva los expedientes. Los procesos cerrados permanecen intactos.
 
 ### Sílabo
 
@@ -201,9 +205,11 @@ establece; una recomendación de IA nunca bloquea por sí sola.
 2. No se crean dos coordinaciones activas superpuestas para una misma carrera.
 3. La única plantilla institucional activa crea nuevos sílabos en una convocatoria de cualquier carrera.
 4. Una revisión enviada/aprobada es inmutable en el flujo normal y contiene su propia
-   copia de la plantilla; I-118 permite eliminar el agregado completo únicamente durante
-   un reinicio institucional confirmado de un proceso vigente y pausado, siempre que
-   no conserve una aprobación. Un sílabo aprobado no se reabre (I-178): se elimina completo.
+   copia de la plantilla. El reinicio institucional confirmado de I-188 puede eliminar el
+   agregado completo de cualquier estado del proceso pausado cuya plantilla cambió,
+   incluidas aprobaciones y firmas. Las reglas de I-118 siguen aplicando a correcciones
+   de bases académicas. Un sílabo aprobado no se reabre (I-178): cuando aplica el reinicio
+   institucional, se elimina completo y se genera otro sin iniciar.
 5. Todo envío o reenvío inserta una revisión; nunca actualiza la anterior.
 6. Una aprobación apunta a una revisión concreta.
 7. Una aprobación es inmutable; un sílabo aprobado solo puede eliminarse completo.

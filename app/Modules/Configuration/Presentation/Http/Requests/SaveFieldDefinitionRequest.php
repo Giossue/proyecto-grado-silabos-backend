@@ -54,6 +54,7 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
                 $fieldId === null ? 'max:100' : 'max:120',
                 Rule::unique('definiciones_campo', 'clave_definicion_campo')
                     ->where('plantilla_id', $templateId)
+                    ->where('vigente_en_plantilla', true)
                     ->ignore($fieldId, 'definicion_campo_id'),
             ],
             'label' => ['nullable', 'string', 'max:180'],

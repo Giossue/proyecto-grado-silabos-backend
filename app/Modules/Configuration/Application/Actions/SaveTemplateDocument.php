@@ -43,7 +43,7 @@ final class SaveTemplateDocument
         $document = $this->applyPropertyLabels($document, $request->input('properties', []), false);
         $normalized = TemplateDocument::normalize($document, array_keys(TemplateVariables::definitions()));
         $this->locks->assertTemplateEditable();
-        $this->work->replace($request, function () use ($block, $normalized, $fingerprint, $actor, $request): void {
+        $this->work->replaceTemplate(function () use ($block, $normalized, $fingerprint, $actor, $request): void {
             $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
             $this->locks->assertTemplateEditable();
             $block = $template->blockOrFail($block->id);

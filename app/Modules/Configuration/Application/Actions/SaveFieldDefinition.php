@@ -51,7 +51,7 @@ class SaveFieldDefinition
     ): ?FieldDefinition {
         $activeRole = $this->roles->resolve($request);
 
-        return $this->work->replace($request, function () use ($actor, $activeRole, $data, $field, $request, $templateId): ?FieldDefinition {
+        return $this->work->replaceTemplate(function () use ($actor, $activeRole, $data, $field, $request, $templateId): ?FieldDefinition {
             $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
 
             $contentType = $this->stringValue($data, 'content_type');

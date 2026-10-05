@@ -3,7 +3,6 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
@@ -26,14 +25,10 @@ class DeleteTemplateSection
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        $this->work->replace($request, function () use ($activeRole, $actor, $section): void {
+        $this->work->replaceTemplate(function () use ($activeRole, $actor, $section): void {
 
             $template = SyllabusTemplate::query()->whereKey($section->plantilla_id)->lockForUpdate()->firstOrFail();
             $lockedSection = $template->sectionOrFail($section->id);
-            FieldDefinition::query()
-                ->where('plantilla_id', $template->id)
-                ->whereIn('campo_plantilla_id', $lockedSection->blocks()->pluck('id'))
-                ->delete();
             $template->removeSectionDocument($lockedSection->id);
 
             $this->audit->execute(

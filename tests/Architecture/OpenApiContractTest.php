@@ -30,7 +30,11 @@ it('mantiene el contrato OpenAPI sincronizado con las rutas públicas v1', funct
             ->and($committed['paths']['/api/v1/admin/template/logo']['post']['requestBody']['content'])
             ->toHaveKey('multipart/form-data')
             ->and($committed['paths']['/api/v1/exports/{artifact}/{format}']['get']['responses']['200']['content'])
-            ->toHaveKey('application/octet-stream');
+            ->toHaveKey('application/octet-stream')
+            ->and($committed['paths']['/api/v1/admin/processes/{process}/{transition}']['post']['requestBody']['content']['application/json']['schema']['properties'])
+            ->toHaveKey('confirmar_rehacer')
+            ->and($committed['components']['schemas']['Error']['properties'])
+            ->toHaveKey('counts');
         foreach (array_keys($committed['paths']) as $path) {
             expect($path)->not->toStartWith('/api/v1/coordination/sources')
                 ->and($path)->not->toStartWith('/api/v1/coordination/curricular-imports')

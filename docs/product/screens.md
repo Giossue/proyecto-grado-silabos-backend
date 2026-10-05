@@ -267,6 +267,8 @@ plantilla por defecto trae cuatro celdas de firma.
   título, bloque y campo. El tamaño de campo se aplica uniformemente a texto,
   variables y campos dentro de cualquier tabla. La fuente Arial, los colores globales,
   las alineaciones y los énfasis institucionales son fijos y no aparecen como controles.
+- Durante una pausa institucional con cambios de plantilla, ADM-06 mantiene visible el
+  aviso «Al reanudar el proceso, todos los sílabos de este período se rehacen desde cero».
 - Al editar tablas en ADM-06, las columnas se ajustan al ancho imprimible; un diseño
   excepcionalmente ancho conserva desplazamiento horizontal dentro de la hoja. El
   selector `@` permite buscar y recorrer todos los datos automáticos del catálogo y
@@ -609,7 +611,10 @@ plantilla por defecto trae cuatro celdas de firma.
   **Eliminar** está siempre disponible (I-172, reemplaza I-117) y confirma que se
   retirarán la convocatoria institucional, sus alcances y todos sus sílabos, incluidos los
   iniciados, aprobados y firmados, con sus revisiones, documentos, firmas y envíos a
-  biblioteca; queda en auditoría con el conteo de sílabos borrados.
+  biblioteca; queda en auditoría con el conteo de sílabos borrados. Si la plantilla cambió
+  durante la pausa, **Reanudar** presenta primero el conteo por estado y exige el botón
+  destructivo **Reanudar y rehacer sílabos**; cancelar mantiene el proceso pausado.
+  Prorrogar fechas y reanudar sin cambios de plantilla conservan los sílabos.
   El nombre se genera al crear o guardar
   como «Convocatoria {nombre del período}»; el formulario no pide nombre ni muestra una
   etiqueta de plantilla vacía. La plantilla institucional se sigue heredando. El alta exige elegir el período

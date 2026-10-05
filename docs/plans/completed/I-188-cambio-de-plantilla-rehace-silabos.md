@@ -1,6 +1,6 @@
 # I-188 — Cambiar la plantilla rehace desde cero los sílabos del periodo
 
-> Plan para otro agente. Nadie lo ha implementado. Lee `AGENTS.md` antes de empezar.
+> Implementación local terminada el 2026-10-05. Migración pendiente de despliegue; no aplicada a una base remota.
 > Numeración: la IA que llena la ficha pasa a I-189, la IA del docente a I-190 y los bloques
 > prearmados de plantilla a I-191 (el plan I-187 los llamaba I-188..I-190).
 
@@ -30,6 +30,28 @@ fechas de su convocatoria (`ExtendProcessDeadline`) y **no** rehace nada.
   - `ResetSyllabus` (coordinador) solo permite borrador, en revisión y corrección solicitada.
 - Transiciones de proceso: `TransitionSyllabusProcess` (`pausar`, `reanudar`, `cerrar`) en
   `POST /admin/processes/{process}/{transition}`.
+
+## Hallazgos confirmados durante la implementación
+
+- La regla de la plantilla viva es cierta: `Syllabus` no guarda una versión de plantilla. El vínculo
+  de los valores a `definiciones_campo` impide borrar una definición mientras haya referencias;
+  las revisiones enviadas, en cambio, conservan `mapeo_documento` completo. Los sílabos sin enviar
+  resuelven el diseño actual por sus definiciones.
+- `convocatorias_universidad.pausado_en` fue retirado por la migración `000045`; `000195` lo repone y
+  la transición de pausa lo actualiza. `plantilla_modificada_en` en la única fila de plantilla se
+  actualiza mediante triggers PostgreSQL en las tablas normalizadas y en `mapeo_documento_plantilla`.
+  La marca se compara con la pausa vigente, por lo que cambios anteriores no activan un reinicio.
+- Las acciones de edición de plantilla usaban `InProgressWork::replace`, que purgaba al guardar.
+  Se conserva ese mecanismo para sus otros consumidores; las acciones de plantilla lo invocan en
+  modo diferido y la regeneración sucede solo al reanudar.
+- El conteo previo y la comprobación de confirmación comparten la transición `reanudar`: ante cambio
+  de plantilla devuelve HTTP 422 `{code: "plantilla_cambiada", counts: {...}}`. La SPA reenvía la
+  transición con `confirmar_rehacer=true` desde el diálogo.
+- El reinicio incluye todas las convocatorias abiertas o pausadas del proceso y todos los estados de
+  sílabo. La auditoría guarda conteos planos por estado y el actor confirmado; un aviso de proceso
+  por cada docente activo se programa tras commit con clave idempotente.
+- IDs relacionados: RF-008..016/037..045, RN-005..024, CU-03..07, ADM-06/12, DOC-04/07,
+  CP-F plantilla/ciclo de vida/auditoría e invariantes, PV-19 para aceptación visual.
 
 ## Diseño (decidido; no re-discutir)
 
@@ -110,3 +132,18 @@ fechas de su convocatoria (`ExtendProcessDeadline`) y **no** rehace nada.
 
 Plan, implementación, pruebas, trazabilidad y documentación juntos; mover a `docs/plans/completed/`
 con la evidencia. La migración la aplica el deploy; no te conectes a la remota.
+
+## Implementación y evidencia — 2026-10-05
+
+- `composer verify`: escaneo de secretos, Pint, PHPStan y suite backend aprobados; 337 pruebas y
+  4289 aserciones. Para el escaneo se apartó temporalmente `SQL_REMOTA_I-168.sql`, que el propio
+  script clasifica como dump no autorizado; se restauró intacto al finalizar. El artefacto sigue
+  fuera de los cambios de este plan.
+- Frontend: `npm run lint`, `npm test -- --run` (297 aprobadas, una omitida), `npm run typecheck` y
+  `npm run contract:check` aprobados; los 101 consumidores de SPA coinciden con 112 operaciones
+  OpenAPI.
+- Incluye pruebas de contrato y transición con confirmación, rechazo por rol, conteos por estado,
+  borrado de valores, revisiones y aprobaciones al rehacer, notificación entregada y aviso persistente
+  durante la edición pausada. `git diff --check` se ejecutó al cerrar los cambios.
+- La migración `000195` se probó mediante la base local de pruebas. No se consultó ni modificó la
+  base remota; el despliegue debe aplicar la migración. PV-19 conserva la aceptación visual manual.

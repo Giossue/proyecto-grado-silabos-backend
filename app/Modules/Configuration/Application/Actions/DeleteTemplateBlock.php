@@ -3,7 +3,6 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Identity\Application\ActiveRole;
@@ -26,14 +25,10 @@ class DeleteTemplateBlock
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        $this->work->replace($request, function () use ($activeRole, $actor, $block): void {
+        $this->work->replaceTemplate(function () use ($activeRole, $actor, $block): void {
 
             $template = SyllabusTemplate::query()->whereKey($block->plantilla_id)->lockForUpdate()->firstOrFail();
             $lockedBlock = $template->blockOrFail($block->id);
-            FieldDefinition::query()
-                ->where('plantilla_id', $template->id)
-                ->where('campo_plantilla_id', $lockedBlock->id)
-                ->delete();
             $template->removeBlockDocument($lockedBlock->id);
 
             $this->audit->execute(

@@ -39,3 +39,14 @@ escrita o cualquier otra columna. La excepción de reinicio institucional no cam
 La reapertura se retiró: un aprobado no se modifica, se elimina. Las columnas de reapertura de
 `aprobaciones` se eliminaron y esa tabla vuelve a ser totalmente inmutable. Solo las columnas
 `correccion_*` de `revisiones_silabo` quedan como escritura única.
+
+## Enmienda I-188 (2026-10-05)
+
+Si Administración cambia la plantilla durante la pausa del proceso institucional, la
+reanudación confirmada elimina y vuelve a crear todos los sílabos de ese proceso, incluidos
+los aprobados y firmados. También elimina revisiones, aprobaciones, exportaciones, firmas,
+archivos y mensajes de IA. La mutación usa el bypass transaccional
+`app.reinicio_institucional`; un evento de auditoría conserva el actor que confirmó y el
+conteo por estado. Los procesos cerrados no se afectan. Esta excepción solo aplica al
+cambio de plantilla I-188; las correcciones de bases académicas mantienen el alcance de
+I-118/I-144.

@@ -26,7 +26,7 @@ class ReorderTemplateSections
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        $this->work->replace($request, function () use ($activeRole, $actor, $sectionIds, $template): void {
+        $this->work->replaceTemplate(function () use ($activeRole, $actor, $sectionIds, $template): void {
             $lockedTemplate = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
 
             $sections = $lockedTemplate->sections();

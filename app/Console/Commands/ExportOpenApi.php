@@ -97,6 +97,10 @@ class ExportOpenApi extends Command
                                 'type' => 'object',
                                 'additionalProperties' => ['type' => 'array', 'items' => ['type' => 'string']],
                             ],
+                            'counts' => [
+                                'type' => 'object',
+                                'additionalProperties' => ['type' => 'integer', 'minimum' => 0],
+                            ],
                         ],
                     ],
                 ],
@@ -148,6 +152,8 @@ class ExportOpenApi extends Command
         $isSignatureUpload = $name === 'api.v1.signature.store';
         $isPreparePeriod = $name === 'api.v1.coordination.academic.period.prepare';
         $isSubjectProfile = str_contains($name, '.subjects.profile.');
+        $isProcessTransition = $name === 'api.v1.admin.processes.transition';
+        $isTemplateRead = in_array($name, ['api.v1.admin.template.index', 'api.v1.admin.template.show'], true);
         $successContent = $isDownload
             ? ['application/octet-stream' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
             : ($isSignaturePdf
@@ -160,6 +166,13 @@ class ExportOpenApi extends Command
                 'properties' => ['profile' => $method === 'GET'
                     ? ['anyOf' => [['$ref' => '#/components/schemas/SubjectProfile'], ['type' => 'null']]]
                     : ['$ref' => '#/components/schemas/SubjectProfile']],
+            ]]];
+        }
+        if ($isTemplateRead) {
+            $successContent = ['application/json' => ['schema' => [
+                'type' => 'object',
+                'properties' => ['templateChangedDuringPause' => ['type' => 'boolean']],
+                'additionalProperties' => true,
             ]]];
         }
         if ($method === 'GET' && in_array($name, [
@@ -236,6 +249,12 @@ class ExportOpenApi extends Command
             } elseif ($isSubjectProfile) {
                 $content = ['application/json' => ['schema' => [
                     '$ref' => '#/components/schemas/SubjectProfile',
+                ]]];
+            } elseif ($isProcessTransition) {
+                $content = ['application/json' => ['schema' => [
+                    'type' => 'object',
+                    'properties' => ['confirmar_rehacer' => ['type' => 'boolean']],
+                    'additionalProperties' => false,
                 ]]];
             }
             $operation['requestBody'] = [

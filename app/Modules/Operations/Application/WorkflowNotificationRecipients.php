@@ -51,6 +51,16 @@ class WorkflowNotificationRecipients
     }
 
     /** @return list<string> */
+    public function teachersForProcess(SyllabusProcess $process): array
+    {
+        $convocationIds = $this->uniqueStrings(
+            Convocation::query()->where('proceso_id', $process->id)->pluck('id')->all(),
+        );
+
+        return array_map('strval', array_keys($this->teacherSyllabusCounts($convocationIds)));
+    }
+
+    /** @return list<string> */
     public function coordinatorsForCareer(string $careerId): array
     {
         $ids = CoordinatorAssignment::query()

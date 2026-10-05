@@ -39,6 +39,8 @@ final class NotificationDestination
 
     private const LIBRARY_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'silabo.firmado_coordinacion'];
 
+    private const PROCESS_TEACHER_EVENTS = ['proceso.plantilla_rehecho'];
+
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly SyllabusNavigationLookup $syllabi,
@@ -57,6 +59,16 @@ final class NotificationDestination
         }
         if ($notification->tipo_recurso === 'asignacion_rol') {
             return ['assignment' => null, 'path' => '/rol'];
+        }
+        if ($notification->tipo_recurso === 'proceso_silabos'
+            && in_array($notification->tipo, self::PROCESS_TEACHER_EVENTS, true)
+            && is_string($notification->recurso_id)) {
+            return $this->withRole(
+                $this->roles->eligible($user),
+                RoleCode::Teacher,
+                $this->syllabi->processCareerIds($notification->recurso_id),
+                '/docente/mis-silabos',
+            )[0] ?? null;
         }
 
         $options = $this->options($notification, $user, $eligible ?? $this->roles->eligible($user));

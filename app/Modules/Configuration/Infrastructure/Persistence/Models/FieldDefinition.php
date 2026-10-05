@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use App\Support\Database\MapsLegacyColumnNames;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -73,6 +74,11 @@ class FieldDefinition extends Model
             'mostrar_si' => 'array',
             'posicion' => 'integer',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('vigente_en_plantilla', fn (Builder $query) => $query->where('vigente_en_plantilla', true));
     }
 
     /** @return BelongsTo<SyllabusTemplate, $this> */
