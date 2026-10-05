@@ -54,7 +54,7 @@ programadas de inicio o fin.
 ### Académico
 
 `facultades`, `carreras`,
-`periodos_academicos`, `asignaturas`, `requisitos_asignatura`,
+`periodos_academicos`, `asignaturas`, `fichas_asignatura`, `requisitos_asignatura`,
 `paralelos`, `asignaciones_paralelo`.
 
 `asignaciones_rol` es única relación RBAC: une usuario, rol fijo y alcance de carrera. Una
@@ -106,6 +106,11 @@ atributos académicos de `asignaturas` son fijos y tipados: ninguna carrera agre
 columnas o redefine esos atributos mediante valores EAV. ACD, APE, AA, créditos y total son un
 conjunto fijo; `total_horas_asignatura` es una columna generada `STORED` igual a
 `round(horas_ac + horas_pae + horas_aa)` (I-132) y no se escribe desde la aplicación.
+I-187 agrega `fichas_asignatura`: una fila opcional por materia, editable por Coordinación
+de esa carrera o Administración mientras la estructura está desbloqueada. Conserva textos
+y listas académicos; la bibliografía puede estar vacía. Los campos de la plantilla
+heredan una copia al crear el sílabo. Corregir la ficha no reescribe borradores ni
+fotografías. La bibliografía heredada permanece editable por Docencia.
 Las columnas `horas_proyecto`, `horas_ap` y `horas_paec`, heredadas del sistema anterior
 (I-11) y sin dato ni pantalla, se retiraron en I-162. La migración `000100` trasladó a `horas_pae` el saldo de las filas cuyo total superaba la suma de
 componentes (prácticas preprofesionales y de servicio comunitario), sin perder horas.
@@ -187,8 +192,9 @@ campo retirado de la hoja era editable, para restaurarlo si vuelve.
 base lo protege como una FK: el trigger diferido `validar_condicion_definicion` rechaza
 una clave inexistente y `propagar_clave_condicion` anula la condición si el campo
 referido se borra o la actualiza si cambia de clave. Un `CHECK`
-(`definiciones_campo_heredado_check`) exige que un campo heredado tenga origen y no sea
-editable por el docente. Las columnas de `definiciones_campo` y otras renombradas en I-168
+(`definiciones_campo_heredado_check`) exige que un campo heredado tenga origen. Solo
+`fichas_asignatura.bibliografia_basica` y `fichas_asignatura.bibliografia_complementaria`
+pueden ser heredados y editables por el docente. Las columnas de `definiciones_campo` y otras renombradas en I-168
 usan su nombre completo (`heredado_definicion_campo`, `origen_maestro_definicion_campo`,
 `editable_docente_definicion_campo`, `mostrar_si_definicion_campo`,
 `convocatorias_carreras.convocatoria_universidad_id`, `silabos.convocatoria_carrera_id`,
@@ -198,7 +204,8 @@ como alias. I-168 retiró `ia_habilitada` y `marcador_documento` (se escribían 
 leía), `valores_campo.heredado` y `origen_valor_campo` (copias de la definición) y
 `plantilla_silabo.revision_configuracion` con sus cuatro triggers `tocar_revision_*`.
 No hay reglas por campo: `reglas_definicion_campo` se eliminó (migración `000111`). Todo
-campo del docente es obligatorio al enviar; el estado `borrador` puede quedar incompleto.
+campo del docente es obligatorio al enviar salvo las dos bibliografías, que I-187 vuelve
+opcionales; el estado `borrador` puede quedar incompleto.
 
 ### Convocatorias y sílabos
 

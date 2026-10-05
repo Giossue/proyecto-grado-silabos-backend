@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property string $id
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $activo
  * @property string $carrera_id
  * @property-read Career $career
+ * @property-read SubjectProfile|null $profile
  */
 class Subject extends Model
 {
@@ -127,6 +129,12 @@ class Subject extends Model
     public function requirements(): HasMany
     {
         return $this->hasMany(SubjectRequirement::class, 'asignatura_id');
+    }
+
+    /** @return HasOne<SubjectProfile, $this> */
+    public function profile(): HasOne
+    {
+        return $this->hasOne(SubjectProfile::class, 'asignatura_id');
     }
 
     /** @return HasMany<SubjectRequirement, $this> */

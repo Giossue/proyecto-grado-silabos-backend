@@ -309,7 +309,7 @@ class SyllabusController extends Controller
                 'type' => $field->tipo,
                 'options' => FieldOptions::options($field),
                 'show_when' => FieldConditions::normalize($field->mostrar_si),
-                'required' => true,
+                'required' => ! in_array($field->origen_maestro, ['fichas_asignatura.bibliografia_basica', 'fichas_asignatura.bibliografia_complementaria'], true),
                 'inherited' => $field->heredado,
                 'teacher_editable' => $field->editable_docente,
                 'value' => $values->get($field->id)?->valor,

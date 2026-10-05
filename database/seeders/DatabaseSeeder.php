@@ -10,6 +10,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectProfile;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Domain\PersonName;
@@ -63,6 +64,18 @@ class DatabaseSeeder extends Seeder
                     'activo' => true,
                 ],
             );
+            SubjectProfile::query()->firstOrCreate(['asignatura_id' => $subject->id], [
+                'descripcion' => 'Estudio de arquitecturas de software.',
+                'objetivo_general' => 'Diseñar arquitecturas de software.',
+                'objetivos_especificos' => ['Analizar requisitos arquitectónicos.'],
+                'resultados_aprendizaje' => ['Diseña soluciones de software.'],
+                'habilidades_blandas' => [['nombre' => 'Comunicación', 'definicion' => 'Expresa decisiones de diseño.']],
+                'bibliografia_basica' => ['Bass, L. (2021). Software Architecture in Practice. Addison-Wesley.'],
+                'bibliografia_complementaria' => ['Richards, M. (2020). Fundamentals of Software Architecture. O’Reilly.'],
+                'herramientas_tic' => ['Editor de diagramas'],
+                'herramientas_ia' => [['herramienta' => 'Asistente de diseño', 'caracteristica' => 'Sugiere alternativas.']],
+                'relacion_perfil_egreso' => 'Contribuye al diseño de soluciones tecnológicas.',
+            ]);
             $parallel = Parallel::query()->firstOrCreate(
                 ['periodo_academico_id' => $period->id, 'asignatura_id' => $subject->id, 'codigo' => 'A'],
                 ['jornada' => 'matutina'],

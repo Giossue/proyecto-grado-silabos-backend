@@ -66,6 +66,21 @@ class ExportOpenApi extends Command
                         'required' => ['message'],
                         'properties' => ['message' => ['type' => 'string']],
                     ],
+                    'SubjectProfile' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'descripcion' => ['type' => ['string', 'null']],
+                            'objetivo_general' => ['type' => ['string', 'null']],
+                            'objetivos_especificos' => ['type' => ['array', 'null'], 'items' => ['type' => 'string']],
+                            'resultados_aprendizaje' => ['type' => ['array', 'null'], 'items' => ['type' => 'string']],
+                            'habilidades_blandas' => ['type' => ['array', 'null'], 'items' => ['type' => 'object', 'required' => ['nombre', 'definicion'], 'properties' => ['nombre' => ['type' => 'string'], 'definicion' => ['type' => 'string']]]],
+                            'bibliografia_basica' => ['type' => ['array', 'null'], 'items' => ['type' => 'string']],
+                            'bibliografia_complementaria' => ['type' => ['array', 'null'], 'items' => ['type' => 'string']],
+                            'herramientas_tic' => ['type' => ['array', 'null'], 'items' => ['type' => 'string']],
+                            'herramientas_ia' => ['type' => ['array', 'null'], 'items' => ['type' => 'object', 'required' => ['herramienta', 'caracteristica'], 'properties' => ['herramienta' => ['type' => 'string'], 'caracteristica' => ['type' => 'string']]]],
+                            'relacion_perfil_egreso' => ['type' => ['string', 'null']],
+                        ],
+                    ],
                     'Error' => [
                         'type' => 'object',
                         'required' => ['message'],
@@ -126,11 +141,19 @@ class ExportOpenApi extends Command
         $isSignaturePdf = $name === 'api.v1.signature.pdf';
         $isSignatureUpload = $name === 'api.v1.signature.store';
         $isPreparePeriod = $name === 'api.v1.coordination.academic.period.prepare';
+        $isSubjectProfile = str_contains($name, '.subjects.profile.');
         $successContent = $isDownload
             ? ['application/octet-stream' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
             : ($isSignaturePdf
                 ? ['application/pdf' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
                 : ['application/json' => ['schema' => ['type' => 'object']]]);
+        if ($isSubjectProfile) {
+            $successContent = ['application/json' => ['schema' => [
+                'type' => 'object',
+                'required' => ['profile'],
+                'properties' => ['profile' => ['$ref' => '#/components/schemas/SubjectProfile']],
+            ]]];
+        }
         if ($method === 'GET' && in_array($name, [
             'api.v1.admin.academic.index',
             'api.v1.coordination.academic.curriculum.show',
@@ -202,9 +225,13 @@ class ExportOpenApi extends Command
                         ]],
                     ],
                 ]]];
+            } elseif ($isSubjectProfile) {
+                $content = ['application/json' => ['schema' => [
+                    '$ref' => '#/components/schemas/SubjectProfile',
+                ]]];
             }
             $operation['requestBody'] = [
-                'required' => $isPreparePeriod,
+                'required' => $isPreparePeriod || $isSubjectProfile,
                 'content' => $content,
             ];
         }

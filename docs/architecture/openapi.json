@@ -12,6 +12,120 @@
         }
     ],
     "paths": {
+        "/api/v1/academic/subjects/{subject}/profile": {
+            "get": {
+                "tags": [
+                    "Operación"
+                ],
+                "operationId": "api_v1_academic_subjects_profile_show",
+                "summary": "api.v1.academic.subjects.profile.show",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "profile"
+                                    ],
+                                    "properties": {
+                                        "profile": {
+                                            "$ref": "#/components/schemas/SubjectProfile"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "subject",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Operación"
+                ],
+                "operationId": "api_v1_academic_subjects_profile_update",
+                "summary": "api.v1.academic.subjects.profile.update",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "profile"
+                                    ],
+                                    "properties": {
+                                        "profile": {
+                                            "$ref": "#/components/schemas/SubjectProfile"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "subject",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubjectProfile"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/active-role": {
             "put": {
                 "tags": [
@@ -5721,6 +5835,116 @@
                 "properties": {
                     "message": {
                         "type": "string"
+                    }
+                }
+            },
+            "SubjectProfile": {
+                "type": "object",
+                "properties": {
+                    "descripcion": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "objetivo_general": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "objetivos_especificos": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "resultados_aprendizaje": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "habilidades_blandas": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "nombre",
+                                "definicion"
+                            ],
+                            "properties": {
+                                "nombre": {
+                                    "type": "string"
+                                },
+                                "definicion": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "bibliografia_basica": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "bibliografia_complementaria": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "herramientas_tic": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "herramientas_ia": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "herramienta",
+                                "caracteristica"
+                            ],
+                            "properties": {
+                                "herramienta": {
+                                    "type": "string"
+                                },
+                                "caracteristica": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "relacion_perfil_egreso": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     }
                 }
             },

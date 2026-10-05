@@ -184,6 +184,30 @@ UNIQUE (carrera_id, codigo_asignatura)
 CHECK modalidad_asignatura nula o con los mismos valores que modalidad_carrera
 ~~~
 
+## fichas_asignatura
+
+**Contexto:** una ficha editable por asignatura, compartida entre períodos. Su modificación no altera los valores ya heredados por sílabos existentes.
+
+~~~text
+ficha_asignatura_id UUID (PK)
+asignatura_id UUID (FK → asignaturas.asignatura_id) NOT NULL UNIQUE ON DELETE CASCADE
+descripcion TEXT NULL
+objetivo_general TEXT NULL
+objetivos_especificos JSONB NULL
+resultados_aprendizaje JSONB NULL
+habilidades_blandas JSONB NULL
+bibliografia_basica JSONB NULL
+bibliografia_complementaria JSONB NULL
+herramientas_tic JSONB NULL
+herramientas_ia JSONB NULL
+relacion_perfil_egreso TEXT NULL
+~~~
+
+Las listas simples contienen textos; `habilidades_blandas` contiene pares
+`{nombre, definicion}` y `herramientas_ia`, pares `{herramienta, caracteristica}`.
+Como las otras tablas académicas del módulo, no añade marcas temporales genéricas;
+la auditoría registra cada guardado.
+
 ## requisitos_asignatura
 
 **Contexto:** relación de requisito entre dos asignaturas.
@@ -298,17 +322,17 @@ etiqueta_definicion_campo VARCHAR NOT NULL
 ayuda_definicion_campo TEXT NULL
 tipo_definicion_campo VARCHAR NOT NULL
 heredado_definicion_campo BOOLEAN NOT NULL
-origen_maestro_definicion_campo VARCHAR NULL
+origen_dato_definicion_campo VARCHAR NULL
 editable_docente_definicion_campo BOOLEAN NOT NULL
 opciones_definicion_campo JSONB NULL
 posicion_definicion_campo SMALLINT NOT NULL
 plantilla_id UUID (FK → plantilla_silabo.plantilla_id) NOT NULL
-mostrar_si_definicion_campo JSONB NULL
+condicion_definicion_campo JSONB NULL
 
 UNIQUE (plantilla_id, clave_definicion_campo)
 UNIQUE (campo_plantilla_id, posicion_definicion_campo)
 FK compuesta (campo_plantilla_id, plantilla_id): el campo es de la misma plantilla
-CHECK heredado: si heredado_definicion_campo, hay origen maestro y no es editable
+CHECK heredado: si heredado_definicion_campo, hay origen maestro; solo las dos bibliografías de `fichas_asignatura` pueden ser editables
 TRIGGER validar_condicion_definicion: mostrar_si apunta a una definición válida
 TRIGGER propagar_clave_condicion: al renombrar una clave, actualiza las condiciones que la usan
 ~~~

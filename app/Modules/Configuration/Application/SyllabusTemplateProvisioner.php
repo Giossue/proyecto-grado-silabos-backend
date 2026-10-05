@@ -108,7 +108,18 @@ final class SyllabusTemplateProvisioner
                 if ($contentType === 'fixed') {
                     continue;
                 }
-                $origin = $contentType === 'institutional' ? 'asignaturas' : null;
+                $profileSources = [
+                    'descripcion' => 'descripcion', 'objetivo_general' => 'objetivo_general',
+                    'objetivos_especificos' => 'objetivos_especificos',
+                    'resultados_aprendizaje' => 'resultados_aprendizaje',
+                    'habilidades_blandas' => 'habilidades_blandas',
+                    'herramientas_tic' => 'herramientas_tic',
+                    'contribucion_perfil' => 'relacion_perfil_egreso',
+                    'bibliografia' => 'bibliografia_basica',
+                    'bibliografia_complementaria' => 'bibliografia_complementaria',
+                ];
+                $origin = $contentType === 'institutional' ? 'asignaturas' : (isset($profileSources[$fieldKey]) ? 'fichas_asignatura.'.$profileSources[$fieldKey] : null);
+                $bibliography = in_array($fieldKey, ['bibliografia', 'bibliografia_complementaria'], true);
 
                 $fieldDefinitions[] = [
                     'plantilla_id' => $template->id,
@@ -118,7 +129,7 @@ final class SyllabusTemplateProvisioner
                     'tipo' => $this->fieldType($contentType),
                     'heredado' => $origin !== null,
                     'origen_maestro' => $origin,
-                    'editable_docente' => $origin === null,
+                    'editable_docente' => $origin === null || $bibliography,
                     'posicion' => 1,
                 ];
 

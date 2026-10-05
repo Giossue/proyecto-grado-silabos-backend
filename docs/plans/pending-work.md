@@ -113,7 +113,11 @@ I-59 retiró después todo ese constructor de ADM-06. La página conserva única
 hoja vacía; el código y los datos históricos permanecen temporalmente para no destruir
 revisiones mientras se decide el reemplazo.
 
-## 1. Código: sin deuda funcional conocida
+## 1. Código: mejoras diferidas
+
+I-187 difiere dos mejoras opcionales: «Aplicar ficha a los borradores» con protección
+de los cambios docentes, y la carga inicial desde Excel, que se agrupa con I-188.
+La migración `000194` se entrega para el deploy y aún no se ha aplicado a producción.
 
 No hay `TODO` ni `FIXME` nuevos en I-19. Formato, análisis estático, tipos, compilación y
 las pruebas afectadas pasan. La puerta canónica `composer verify` pasó con PostgreSQL y

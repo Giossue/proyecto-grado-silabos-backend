@@ -102,6 +102,7 @@ it('I-78 usa nombres explícitos para todos los atributos genéricos de dominio'
         ->whereNotIn('table_name', $tablasDeFramework)
         ->whereIn('column_name', $nombresGenericos)
         ->whereNot(fn ($query) => $query->where('table_name', 'convocatorias_universidad')->where('column_name', 'fecha_inicio'))
+        ->whereNot(fn ($query) => $query->where('table_name', 'fichas_asignatura')->where('column_name', 'descripcion'))
         ->get(['table_name', 'column_name'])
         ->map(fn ($column) => "{$column->table_name}.{$column->column_name}")
         ->all();

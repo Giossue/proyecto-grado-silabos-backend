@@ -275,7 +275,7 @@ class AcademicStructureViewData
 
         $careerSubjects = Subject::query()
             ->where('carrera_id', $careerId)
-            ->with('career.faculty')
+            ->with(['career.faculty', 'profile'])
             ->orderBy('ciclo')
             ->orderBy('orden_en_ciclo')
             ->orderBy('nombre')
@@ -299,6 +299,7 @@ class AcademicStructureViewData
                     'subject_code' => $subject->codigo_asignatura,
                     'subject_name' => $subject->nombre,
                     'subject_cycle' => $subject->ciclo,
+                    'profile_complete' => $subject->profile?->isComplete() ?? false,
                     'period_starts_on' => $period->fecha_inicio->toDateString(),
                     'period_ends_on' => $period->fecha_fin->toDateString(),
                     'period_status' => $this->periodPlanning->status($period),
@@ -346,10 +347,18 @@ class AcademicStructureViewData
                 'activeSubjects' => Subject::query()
                     ->where('activo', true)
                     ->where('carrera_id', $careerId)
+                    ->with('profile')
                     ->orderBy('ciclo')
                     ->orderBy('orden_en_ciclo')
                     ->orderBy('nombre')
-                    ->get(['id', 'codigo_asignatura', 'nombre', 'ciclo']),
+                    ->get(['id', 'codigo_asignatura', 'nombre', 'ciclo'])
+                    ->map(fn (Subject $subject): array => [
+                        'id' => $subject->id,
+                        'codigo_asignatura' => $subject->codigo_asignatura,
+                        'nombre' => $subject->nombre,
+                        'ciclo' => $subject->ciclo,
+                        'profile_complete' => $subject->profile?->isComplete() ?? false,
+                    ]),
                 'scheduledSubjects' => $periods
                     ->filter(fn (AcademicPeriod $period): bool => $this->periodPlanning->mayPlan($period))
                     ->flatMap(fn (AcademicPeriod $period) => Subject::query()

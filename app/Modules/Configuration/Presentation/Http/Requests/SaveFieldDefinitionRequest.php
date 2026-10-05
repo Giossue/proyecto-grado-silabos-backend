@@ -60,7 +60,18 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
             'help' => ['nullable', 'string', 'max:2000'],
             'content_type' => ['required', Rule::in($types)],
             'inherited' => ['nullable', 'boolean'],
-            'master_source' => ['nullable', 'required_if:inherited,true', 'string', 'max:100'],
+            'master_source' => ['nullable', 'string', Rule::in([
+                'asignaturas',
+                'fichas_asignatura.descripcion',
+                'fichas_asignatura.objetivo_general',
+                'fichas_asignatura.objetivos_especificos',
+                'fichas_asignatura.resultados_aprendizaje',
+                'fichas_asignatura.habilidades_blandas',
+                'fichas_asignatura.herramientas_tic',
+                'fichas_asignatura.relacion_perfil_egreso',
+                'fichas_asignatura.bibliografia_basica',
+                'fichas_asignatura.bibliografia_complementaria',
+            ])],
             'teacher_editable' => ['nullable', 'boolean'],
             'options' => ['nullable', 'array', 'max:50'],
             'options.*' => ['required', 'array:value,label'],
@@ -85,6 +96,15 @@ class SaveFieldDefinitionRequest extends ManageTemplatesRequest
     {
         return [function (Validator $validator): void {
             $field = $this->route('field');
+            if ($this->has('master_source') && $this->input('master_source') !== ($field instanceof FieldDefinition ? $field->origen_maestro : null)) {
+                $validator->errors()->add('master_source', 'El origen automático de este campo no se puede cambiar.');
+            }
+            if ($this->has('inherited') && $this->boolean('inherited') !== ($field instanceof FieldDefinition && $field->heredado)) {
+                $validator->errors()->add('inherited', 'La herencia de este campo no se puede cambiar.');
+            }
+            if ($this->has('teacher_editable') && $this->boolean('teacher_editable') !== ($field instanceof FieldDefinition ? $field->editable_docente : true)) {
+                $validator->errors()->add('teacher_editable', 'La edición docente de este campo no se puede cambiar.');
+            }
             if (($this->input('content_type') === 'multiple_choice'
                 || ($field instanceof FieldDefinition && in_array($field->tipo, ['seleccion_unica', 'seleccion_multiple'], true)))
                 && count((array) $this->input('options', $field instanceof FieldDefinition ? $field->opciones : [])) < 2) {

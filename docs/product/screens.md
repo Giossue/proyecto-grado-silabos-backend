@@ -327,6 +327,10 @@ plantilla por defecto trae cuatro celdas de firma.
   planificación, evaluación, bibliografía y otras estructuras realmente tabulares
   conservan una cuadrícula, porque filas y columnas forman parte de sus datos. El diseño
   oficial permanece en la plantilla, las revisiones y las exportaciones.
+- I-187 presenta los textos de ficha heredados como bloques de solo lectura en DOC-04.
+  La bibliografía llega con el valor inicial de la ficha y sigue editable. COR-14 muestra
+  «Ficha completa / incompleta» en cada materia y abre su edición manual en una hoja
+  lateral; la preparación del período avisa qué materias carecen de ficha completa.
 - El editor presenta todas las secciones consecutivamente como un formulario continuo.
   No añade un índice lateral, un selector de sección ni pasos anterior/siguiente. Las
   secciones se separan con encabezado y divisor, no con una tarjeta repetida; `FieldSet`

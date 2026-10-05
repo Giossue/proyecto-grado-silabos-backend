@@ -131,7 +131,7 @@ final class SaveTemplateDocument
                 ]);
             }
             $detached = $configuration['detached_fields'] ?? [];
-            foreach ($block->fields->where('heredado', false) as $field) {
+            foreach ($block->fields as $field) {
                 if (in_array($field->clave, $used, true)) {
                     if (isset($detached[$field->clave])) {
                         $field->update($detached[$field->clave]);

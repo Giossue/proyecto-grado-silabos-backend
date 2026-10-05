@@ -93,6 +93,9 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('review.sections.0.key', 'bibliografia')
             ->assertJsonCount(1, 'review.sections');
         $this->assertNotEmpty($detail->json('review.template_variables'));
+        $this->assertStringContainsString('Bass, L.', json_encode($detail->json('review.sections'), JSON_THROW_ON_ERROR));
+        $syllabus->subject->profile->update(['bibliografia_basica' => ['Referencia posterior']]);
+        $this->assertSame($detail->json('review.sections'), $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertOk()->json('review.sections'));
         // Coordinación y decanato esperan su turno.
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])
             ->assertJsonValidationErrors('revision');

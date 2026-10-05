@@ -27,6 +27,7 @@ el permiso, pero no lo sustituyen.
 | Cargar o reemplazar el logo de una facultad (I-123/I-125) | Sí; obligatorio al crearla | No | No | No | No |
 | Asignar coordinación a una carrera | Sí | No | No | No | No |
 | Gestionar mallas y materias | No por defecto | Sí, en su carrera, salvo con convocatoria en curso | Consulta asignada | No | No |
+| Editar ficha académica de una materia (I-187) | Sí, en cualquier carrera desbloqueada | Sí, solo en su carrera desbloqueada | No | No | No |
 | Gestionar materias programadas y paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta asignada | No | No |
 | Asignar docentes a paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta propia | No | No |
 | Diseñar/publicar plantilla | Sí, salvo con proceso abierto | Consulta/aporte según política | No | No | No |

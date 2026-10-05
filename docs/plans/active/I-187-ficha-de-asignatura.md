@@ -1,6 +1,6 @@
 # I-187 — Ficha de asignatura: datos por materia que el sílabo hereda
 
-> Plan para otro agente. Nadie lo ha implementado todavía. Lee `AGENTS.md` antes de empezar.
+> Implementación local en curso. La migración remota corresponde al deploy; esta tarea no se conecta a producción.
 
 ## Por qué
 
@@ -79,7 +79,7 @@ migraciones 000184–000193). Tabla `fichas_asignatura`:
   `GET /api/.../asignaturas/{asignatura}/ficha` y `PUT` igual. Request con validación:
   listas de strings no vacíos, `habilidades_blandas[*].nombre` obligatorio.
   No pongas límite de caracteres (decisión del responsable, ver memoria «todo campo es obligatorio / sin límites»).
-- Actualiza `docs/openapi.json` y las pruebas de contrato.
+- Actualiza el contrato real `docs/architecture/openapi.json` y las pruebas de contrato.
 
 ### 3. Plantilla del sílabo
 
@@ -159,6 +159,12 @@ migraciones 000184–000193). Tabla `fichas_asignatura`:
 ## Entregables y trazabilidad
 
 - Fila nueva en `docs/quality/traceability.md` («Ficha de asignatura, herencia al sílabo (I-187)»).
-- Ajusta `docs/architecture/production-database-schema.md`, `database.md`, `docs/openapi.json`.
+- Ajusta `docs/architecture/production-database-schema.md`, `database.md`, `docs/architecture/openapi.json`.
+
+## Alcance diferido de esta etapa
+
+- La acción «Aplicar ficha a los borradores» queda pendiente. Un cambio de ficha solo afecta sílabos nuevos; los borradores existentes conservan sus valores hasta una acción explícita posterior. Requiere distinguir cambios del docente en bibliografía y respetar bloqueos de proceso.
+- La carga desde Excel se traslada a I-188 junto con la importación documental. La ficha se ingresa manualmente en I-187.
+- La revisión visual en dispositivos reales permanece asociada a PV-19.
 - Mueve el plan a `docs/plans/completed/` cuando todo pase, con la evidencia de los comandos.
 - Migración en la remota: la aplica el deploy; no te conectes a la remota.

@@ -54,7 +54,21 @@ class TemplateStructureValidator
 
     private function assertField(FieldDefinition $field, TemplateBlock $block, string $errorKey): void
     {
-        if ($field->heredado && ($field->origen_maestro === null || $field->editable_docente)) {
+        $bibliography = in_array($field->origen_maestro, ['fichas_asignatura.bibliografia_basica', 'fichas_asignatura.bibliografia_complementaria'], true);
+        $profileSources = [
+            'descripcion' => 'descripcion', 'objetivo_general' => 'objetivo_general',
+            'objetivos_especificos' => 'objetivos_especificos',
+            'resultados_aprendizaje' => 'resultados_aprendizaje',
+            'habilidades_blandas' => 'habilidades_blandas',
+            'herramientas_tic' => 'herramientas_tic',
+            'contribucion_perfil' => 'relacion_perfil_egreso',
+            'bibliografia' => 'bibliografia_basica',
+            'bibliografia_complementaria' => 'bibliografia_complementaria',
+        ];
+        $expected = $field->clave === 'asignatura' ? 'asignaturas'
+            : (isset($profileSources[$field->clave]) ? 'fichas_asignatura.'.$profileSources[$field->clave] : null);
+        if (($field->heredado && ($expected === null || $field->origen_maestro !== $expected || ($field->editable_docente && ! $bibliography)))
+            || (! $field->heredado && $field->origen_maestro !== null)) {
             throw ValidationException::withMessages([
                 $errorKey => "El dato automático «{$field->etiqueta}» está mal configurado. Vuelva a cargar el formato oficial UEB.",
             ]);

@@ -1,5 +1,11 @@
 # Trazabilidad
 
+## Ficha de asignatura — I-187
+
+| Cambio | IDs relacionados | Evidencia | Estado |
+|---|---|---|---|
+| Ficha de asignatura, herencia al sílabo (I-187) | RF-008..016/037..045/062..069; RN-009..024; CU-03/04/07; COR-13/14, DOC-04/07, BIB-03; CP-F estructura, borrador y revisión; PV-19 | Migración `000194`, `SubjectProfileTest`, `ConvocationAndDraftTest`, `ReviewWorkflowTest`, `SpanishSchemaTest`, contrato OpenAPI; SPA: `SubjectProfileSheet.test.ts`, `ScheduledSubjectsTab.test.ts`, `periodPreparation.test.ts`, `TeacherSyllabusDetailPage.test.ts` | Implementación local; despliegue de migración y aceptación visual pendientes |
+
 ## Alcance vigente I-146 — 2026-09-27
 
 El responsable del producto retiró Fuentes académicas como CRUD y el revisor de IA

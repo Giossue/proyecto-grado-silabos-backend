@@ -576,7 +576,7 @@ class ReviewWorkflowTest extends TestCase
     {
         $syllabus = $this->createStartedDraft();
         $fields = FieldDefinition::query()
-            ->where('heredado', false)
+            ->where('editable_docente', true)
             ->get();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(

@@ -134,7 +134,7 @@ class SaveFieldDefinition
                 'tipo' => $this->fieldType($contentType),
                 'heredado' => $inherited,
                 'origen_maestro' => $field->heredado ? $field->origen_maestro : null,
-                'editable_docente' => ! $inherited,
+                'editable_docente' => ! $inherited || in_array($field->origen_maestro, ['fichas_asignatura.bibliografia_basica', 'fichas_asignatura.bibliografia_complementaria'], true),
                 'opciones' => $contentType === 'multiple_choice' ? ($data['options'] ?? $field->opciones) : null,
                 ...$condition,
             ];

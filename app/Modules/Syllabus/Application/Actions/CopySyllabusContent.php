@@ -56,7 +56,6 @@ class CopySyllabusContent
 
             $fieldIds = FieldDefinition::query()
                 ->where('plantilla_id', SyllabusTemplate::institutional()->id)
-                ->where('heredado', false)
                 ->where('editable_docente', true)
                 ->where('tipo', '!=', 'calculo')
                 ->pluck('id');

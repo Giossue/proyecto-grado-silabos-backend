@@ -433,7 +433,7 @@ class TemplateDocumentTest extends TestCase
         $this->assertSame('Objetivo institucional', $block->fresh()->titulo);
         $this->patch($url, ['document' => $this->document(), 'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh())])
             ->assertSuccessful();
-        $this->assertTrue($field->fresh()->editable_docente);
+        $this->assertFalse($field->fresh()->editable_docente);
         $this->assertArrayNotHasKey($field->clave, $block->fresh()->configuracion['detached_fields']);
     }
 
@@ -525,7 +525,7 @@ class TemplateDocumentTest extends TestCase
             'properties' => [['key' => $field->clave, 'label' => $field->etiqueta, 'help' => null]]];
         $this->patch($url, $payload)->assertSuccessful();
         $this->assertFalse($field->fresh()->editable_docente);
-        $this->assertTrue($block->fresh()->configuracion['detached_fields'][$field->clave]['editable_docente']);
+        $this->assertFalse($block->fresh()->configuracion['detached_fields'][$field->clave]['editable_docente']);
     }
 
     public function test_official_format_has_fixed_evaluation_tables_and_signatures_without_flow(): void

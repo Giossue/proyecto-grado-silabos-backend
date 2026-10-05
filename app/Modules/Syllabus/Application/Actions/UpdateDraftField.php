@@ -32,7 +32,7 @@ class UpdateDraftField
             if (! in_array($locked->estado, ['borrador', 'correccion_solicitada'], true)) {
                 throw ValidationException::withMessages(['syllabus' => 'El expediente no está en estado editable.']);
             }
-            if ($field->heredado || ! $field->editable_docente || $field->tipo === 'calculo') {
+            if (! $field->editable_docente || $field->tipo === 'calculo') {
                 throw ValidationException::withMessages(['field' => 'Este campo lo llena el sistema; el docente no puede cambiarlo.']);
             }
 
