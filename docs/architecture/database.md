@@ -8,7 +8,7 @@
   `uuid`, `mime`, `url`, `ip`, `sha256`, `docx`, `pdf`) igual que los nombres propios de
   formato (`markdown`, `es-EC`). Única excepción: las columnas internas de las tablas
   que los drivers de Laravel escriben con nombres fijos (`sesiones`,
-  `trabajos_fallidos`, `restablecimientos_contrasena`, `migraciones`) — registrada como
+  `restablecimientos_contrasena`, `migraciones`) — registrada como
   deuda técnica. Las clases y rutas de código siguen en inglés (precedente I-14).
   `SpanishSchemaTest` y `SpanishModelColumnsTest` hacen cumplir la regla.
 - fechas: las tablas de dominio no conservan los metadatos genéricos `creado_en`,
@@ -300,8 +300,7 @@ el módulo que las usaba.
 
 Colas y caché operan sobre Redis, así que `jobs`, `job_batches`, `cache` y
 `cache_locks` se eliminaron en I-28. Sobreviven, renombradas por configuración
-soportada: `sesiones` (driver de sesión `database`), `trabajos_fallidos` (registro
-forense de trabajos agotados), `restablecimientos_contrasena` (broker de recuperación)
+soportada: `sesiones` (driver de sesión `database`), `restablecimientos_contrasena` (broker de recuperación)
 y `migraciones` (control del migrador; su renombrado se hace con
 `php artisan db:rename-migrations-table` antes de `migrate`, nunca dentro de una
 migración). Sus columnas internas conservan los nombres que los drivers exigen.

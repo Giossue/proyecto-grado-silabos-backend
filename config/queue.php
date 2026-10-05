@@ -57,10 +57,9 @@ return [
 
     ],
 
+    // I-183: los trabajos fallidos quedan en `trabajos_en_cola` (estado y error); no hay tabla de Laravel.
     'failed' => [
-        'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'pgsql'),
-        'table' => 'trabajos_fallidos',
+        'driver' => 'null',
     ],
 
 ];

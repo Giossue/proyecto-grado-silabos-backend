@@ -9,7 +9,7 @@ base ya no usa la extensión `vector`.
 
 Desde I-179 cada tabla del dominio tiene una sola llave primaria con el nombre de la entidad
 (`paralelos.paralelo_id`, `silabos.silabo_id`), igual que las llaves foráneas que la
-referencian. Solo las tablas del framework (`migraciones`, `sesiones`, `trabajos_fallidos`)
+referencian. Solo las tablas del framework (`migraciones`, `sesiones`)
 conservan `id`, porque Laravel fija sus columnas.
 
 # 1. Identidad y acceso
@@ -738,20 +738,10 @@ correlacion_id UUID NULL
 ocurrido_en TIMESTAMPTZ NOT NULL
 ~~~
 
-## trabajos_fallidos
+## Trabajos fallidos (retirada)
 
-**Contexto:** registro técnico de Laravel para trabajos agotados; no es una tabla
-funcional del dominio.
-
-~~~text
-id BIGINT (PK)
-uuid VARCHAR NOT NULL UNIQUE
-connection VARCHAR NOT NULL
-queue VARCHAR NOT NULL
-payload TEXT NOT NULL
-exception TEXT NOT NULL
-failed_at TIMESTAMP NOT NULL
-~~~
+I-183 elimina `trabajos_fallidos`: el driver de fallos de la cola es `null` y cada trabajo
+fallido queda en `trabajos_en_cola` con su estado y su error.
 
 ## migraciones
 

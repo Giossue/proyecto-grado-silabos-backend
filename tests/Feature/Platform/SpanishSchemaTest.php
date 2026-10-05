@@ -12,7 +12,7 @@ $partesInglesas = [
     'renderer', 'message', 'jobs', 'job', 'cache', 'sessions',
 ];
 
-$tablasDeFramework = ['sesiones', 'trabajos_fallidos', 'restablecimientos_contrasena', 'migraciones'];
+$tablasDeFramework = ['sesiones', 'restablecimientos_contrasena', 'migraciones'];
 
 it('I-28 no conserva identificadores en inglés en tablas ni columnas propias', function () use ($partesInglesas, $tablasDeFramework) {
     $columnas = DB::select(

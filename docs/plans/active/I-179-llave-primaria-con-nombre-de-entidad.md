@@ -12,7 +12,7 @@ entidad; las llaves foráneas conservan su nombre.
   `silabos.silabo_id`, `usuarios.usuario_id`, `plantilla_silabo.plantilla_id`, etc. Los
   nombres coinciden con los de las llaves foráneas que ya existían (`silabos.paralelo_id`
   apunta a `paralelos.paralelo_id`).
-- Se conserva `id` solo en `migraciones`, `sesiones` y `trabajos_fallidos`: sus columnas las
+- Se conserva `id` solo en `migraciones` y `sesiones` (I-183 retiró `trabajos_fallidos`): sus columnas las
   fija Laravel (y `sesiones.id` es el identificador de la sesión).
 - La API no cambia: las respuestas JSON siguen trayendo `id`. Los modelos declaran
   `$primaryKey` y un alias `id` → llave (`MapsLegacyColumnNames`), así que `$modelo->id`,
