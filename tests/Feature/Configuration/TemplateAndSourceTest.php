@@ -114,6 +114,25 @@ class TemplateAndSourceTest extends TestCase
                 ->where('processLock', null));
     }
 
+    public function test_administrator_creates_a_section_from_a_catalog_preset(): void
+    {
+        $template = $this->createTemplate();
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.template.sections.store', $template), [
+                'title' => 'Descripción de la asignatura',
+                'key' => 'bloque_descripcion',
+                'preset' => 'descripcion',
+            ])
+            ->assertSuccessful();
+
+        $section = $template->fresh()->sections()->where('clave', 'bloque_descripcion')->firstOrFail();
+        $field = $section->blocks()->sole()->fields->sole();
+        $this->assertStringStartsWith('descripcion', $field->clave);
+        $this->assertTrue($field->heredado);
+        $this->assertSame('ficha', $field->origen_maestro);
+    }
+
     public function test_administrator_creates_a_section_with_free_text_and_template_content(): void
     {
         $template = $this->createTemplate();

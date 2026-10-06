@@ -22,6 +22,7 @@ class SaveTemplateSection
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
+        private readonly SaveFieldDefinition $fields,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -30,7 +31,7 @@ class SaveTemplateSection
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
 
-        return $this->work->replaceTemplate(function () use ($activeRole, $actor, $data, $templateId): TemplateSection {
+        return $this->work->replaceTemplate(function () use ($activeRole, $actor, $data, $request, $templateId): TemplateSection {
             $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
 
             $sections = $template->sections()->sortBy('posicion')->values();
@@ -42,7 +43,8 @@ class SaveTemplateSection
             $blocks = [];
             $fieldDefinitions = [];
 
-            foreach ($this->fields($data) as $fieldPosition => $fieldData) {
+            $preset = is_string($data['preset'] ?? null) ? $data['preset'] : null;
+            foreach ($preset !== null ? [] : $this->fields($data) as $fieldPosition => $fieldData) {
                 $blockId = (string) Str::uuid();
                 $fieldKey = $this->stringValue($fieldData, 'key');
                 $fieldLabel = trim((string) ($fieldData['label'] ?? ''));
@@ -96,6 +98,13 @@ class SaveTemplateSection
 
             foreach ($fieldDefinitions as $fieldDefinition) {
                 FieldDefinition::query()->create($fieldDefinition);
+            }
+
+            if ($preset !== null) {
+                $this->fields->create($template->id, [
+                    'preset' => $preset, 'section_id' => $sectionId, 'position' => 1,
+                    'key' => '', 'label' => '', 'content_type' => 'free_text',
+                ], $actor, $request);
             }
 
             $section = $template->fresh()->sectionOrFail($sectionId);
