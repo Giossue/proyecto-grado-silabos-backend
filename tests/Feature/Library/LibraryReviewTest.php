@@ -46,7 +46,7 @@ class LibraryReviewTest extends TestCase
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
         $this->configureFacultyLogos();
-        foreach (['admin' => 'admin', 'coordinator' => 'coordinador', 'teacher' => 'docente', 'librarian' => 'bibliotecario', 'dean' => 'decano'] as $key => $mail) {
+        foreach (['admin' => 'admin', 'coordinator' => 'coordinador', 'teacher' => 'docente', 'librarian' => 'bibliotecario'] as $key => $mail) {
             $user = User::query()->where('correo_electronico', "{$mail}@silabos.test")->firstOrFail();
             $this->people[$key] = [$user, $user->roleAssignments()->firstOrFail()];
         }
@@ -99,7 +99,6 @@ class LibraryReviewTest extends TestCase
         FieldValue::query()->where('asignatura_id', $syllabus->subject->id)
             ->update(['valor' => FreeText::fromText('Referencia posterior')]);
         $this->assertSame($detail->json('review.sections'), $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertOk()->json('review.sections'));
-        // Coordinación y decanato esperan su turno.
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])
             ->assertJsonValidationErrors('revision');
 
@@ -166,17 +165,14 @@ class LibraryReviewTest extends TestCase
         ])->assertJsonValidationErrors('revision');
         $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertJsonPath('syllabus.review_stage', 'coordinacion');
 
-        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
-        $this->assertNotified($this->people['dean'][0]->id, 'silabo.revisado_coordinacion', 'Espera la aprobación del decanato');
-        $this->as('dean')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()
-            ->assertJsonPath('syllabi.data.0.stage', 'decanato');
+        $this->as('librarian')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertForbidden();
+
         Queue::fake([GenerateSyllabusExportJob::class]);
-        $this->as('dean')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
-        $this->assertSame($this->people['dean'][0]->id, Approval::query()->firstOrFail()->aprobado_por);
+        $this->assertSame($this->people['coordinator'][0]->id, Approval::query()->firstOrFail()->aprobado_por);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertJsonPath('review.state', 'por_firmar');
 
-        // El PDF se solicitó solo al aprobar el decanato; aquí se genera.
         (new GenerateSyllabusExportJob(ExportArtifact::query()->latest('solicitado_en')->firstOrFail()->id))->handle(
             app(DocumentRenderer::class),
             app(RecordAuditEvent::class),
@@ -191,9 +187,7 @@ class LibraryReviewTest extends TestCase
         $librarySigned = $this->signPdfIncrementally($coordinationSigned, $this->makeSigningCertificate('BIBLIOTECA DE PRUEBA'));
         $this->upload($revision, $librarySigned, $coordinationSigned, 'librarian')->assertCreated();
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'firmado']))->assertJsonPath('reviews.total', 1);
-        $deanSigned = $this->signPdfIncrementally($librarySigned, $this->makeSigningCertificate('DECANATO DE PRUEBA'));
-        $this->upload($revision, $deanSigned, $librarySigned, 'dean')->assertCreated();
-        $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))->assertJsonPath('state', 'firmado')->assertJsonCount(4, 'signatures');
+        $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))->assertJsonPath('state', 'firmado')->assertJsonCount(3, 'signatures');
     }
 
     /** @return array{Syllabus, SyllabusRevision} */

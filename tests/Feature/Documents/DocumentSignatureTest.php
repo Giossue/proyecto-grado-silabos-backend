@@ -21,7 +21,6 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\CanonicalHasher;
@@ -59,10 +58,6 @@ class DocumentSignatureTest extends TestCase
 
     private RoleAssignment $librarianContext;
 
-    private User $dean;
-
-    private RoleAssignment $deanContext;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -75,17 +70,14 @@ class DocumentSignatureTest extends TestCase
         $this->teacherContext = $this->teacher->roleAssignments()->firstOrFail();
         $this->librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
         $this->librarianContext = $this->librarian->roleAssignments()->firstOrFail();
-        $this->dean = User::query()->where('correo_electronico', 'decano@silabos.test')->firstOrFail();
-        $this->deanContext = $this->dean->roleAssignments()->firstOrFail();
     }
 
-    public function test_docente_coordinacion_biblioteca_y_decanato_firman_el_pdf_de_la_revision_aprobada(): void
+    public function test_docente_coordinacion_y_biblioteca_firman_el_pdf_de_la_revision_aprobada(): void
     {
         [, $revision] = $this->exportedRevision();
         $teacherCredentials = $this->makeSigningCertificate('DOCENTE DE PRUEBA');
         $coordinatorCredentials = $this->makeSigningCertificate('COORDINACION DE PRUEBA');
         $librarianCredentials = $this->makeSigningCertificate('BIBLIOTECA DE PRUEBA');
-        $deanCredentials = $this->makeSigningCertificate('DECANATO DE PRUEBA');
 
         $status = $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
             ->assertOk()
@@ -135,16 +127,7 @@ class DocumentSignatureTest extends TestCase
 
         $libraryPdf = $this->signPdfIncrementally($coordinationPdf, $librarianCredentials);
         $this->upload($revision, $libraryPdf, hash('sha256', $coordinationPdf), 'librarian')->assertCreated();
-        $this->assertNotified($this->dean->id, 'silabo.firmado_biblioteca', 'Falta la firma del decanato');
-        $this->upload($revision, $this->signPdfIncrementally($libraryPdf, $deanCredentials), hash('sha256', $libraryPdf), 'teacher')
-            ->assertJsonValidationErrors(['signed_pdf' => 'Su firma ya está registrada; ahora firma el decanato.']);
-
-        // I-173: el decanato firma al final.
-        $this->actingAsDean()->getJson(route('api.v1.signature.show', $revision))
-            ->assertOk()->assertJsonPath('state', 'pendiente_decanato')->assertJsonPath('my_role', 'decanato')->assertJsonPath('can_sign', true);
-        $finalPdf = $this->signPdfIncrementally($libraryPdf, $deanCredentials);
-        $this->upload($revision, $finalPdf, hash('sha256', $libraryPdf), 'dean')->assertCreated();
-        // I-186: la última firma (decanato) no genera aviso.
+        $finalPdf = $libraryPdf;
         $this->assertNotNotified($this->teacher->id, 'silabo.firmado');
         $this->assertNotNotified($this->coordinator->id, 'silabo.firmado');
 
@@ -152,14 +135,13 @@ class DocumentSignatureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('state', 'firmado')
             ->assertJsonPath('can_sign', false)
-            ->assertJsonCount(4, 'signatures')
+            ->assertJsonCount(3, 'signatures')
             ->assertJsonPath('signatures.0.role', 'docente')
             ->assertJsonPath('signatures.1.role', 'coordinacion')
-            ->assertJsonPath('signatures.2.role', 'biblioteca')
-            ->assertJsonPath('signatures.3.role', 'decanato');
+            ->assertJsonPath('signatures.2.role', 'biblioteca');
         $this->assertSame($finalPdf, $this->currentPdf($revision, 'teacher'));
-        $this->assertSame(4, DocumentSignature::query()->count());
-        $this->assertSame(4, AuditEvent::query()->where('accion', 'documento.firmado')->count());
+        $this->assertSame(3, DocumentSignature::query()->count());
+        $this->assertSame(3, AuditEvent::query()->where('accion', 'documento.firmado')->count());
         $this->upload($revision, $this->signPdfIncrementally($finalPdf, $teacherCredentials), hash('sha256', $finalPdf), 'teacher')
             ->assertJsonValidationErrors(['signed_pdf' => 'El documento ya tiene todas las firmas.']);
     }
@@ -324,22 +306,16 @@ class DocumentSignatureTest extends TestCase
             'enviado_por' => $this->teacher->id,
             'enviado_en' => now()->subMinute(),
         ]);
-        // I-173: biblioteca y coordinación ya revisaron; el decanato aprobó.
         LibrarySubmission::query()->create([
             'revision_silabo_id' => $revision->id,
             'verificado_por' => $this->librarian->id,
             'verificado_en' => now(),
         ]);
-        CoordinationReview::query()->create([
-            'revision_silabo_id' => $revision->id,
-            'revisado_por' => $this->coordinator->id,
-            'revisado_en' => now(),
-        ]);
         Approval::query()->create([
             'revision_silabo_id' => $revision->id,
             'clave_idempotencia' => (string) Str::uuid(),
             'huella_sha256' => hash('sha256', $revision->huella_sha256),
-            'aprobado_por' => $this->dean->id,
+            'aprobado_por' => $this->coordinator->id,
             'aprobado_en' => now(),
         ]);
         $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
@@ -361,16 +337,8 @@ class DocumentSignatureTest extends TestCase
         return match ($as) {
             'teacher' => $this->actingAsTeacher(),
             'librarian' => $this->actingAsLibrarian(),
-            'dean' => $this->actingAsDean(),
             default => $this->actingAsCoordinator(),
         };
-    }
-
-    private function actingAsDean(): static
-    {
-        $this->actingAs($this->dean)->withSession(['active_role_assignment_id' => $this->deanContext->id]);
-
-        return $this;
     }
 
     private function actingAsLibrarian(): static

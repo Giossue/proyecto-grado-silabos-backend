@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Aprobación de coordinación de una revisión (I-173): entre biblioteca y decanato.
- *
  * @property string $id
  * @property string $revision_silabo_id
  * @property string $revisado_por

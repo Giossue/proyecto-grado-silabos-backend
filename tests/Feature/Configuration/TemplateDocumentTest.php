@@ -549,8 +549,8 @@ class TemplateDocumentTest extends TestCase
         $this->assertStringContainsString('Recuperación', json_encode($blocks->get('Escala de valoración')->configuracion['document'], JSON_UNESCAPED_UNICODE));
         $signatures = array_column(array_column(TemplateDocument::nodes($blocks->get('Revisión y aprobación')->configuracion['document'], 'variable'), 'attrs'), 'id');
         $this->assertEqualsCanonicalizing([
-            'firma_docente', 'firma_coordinador', 'firma_bibliotecario', 'firma_decano',
-            'nombre_docente', 'nombre_coordinador', 'nombre_decano', 'fecha_entrega', 'fecha_revision',
+            'firma_docente', 'firma_coordinador', 'firma_bibliotecario',
+            'nombre_docente', 'nombre_coordinador', 'fecha_entrega', 'fecha_revision',
         ], $signatures);
     }
 

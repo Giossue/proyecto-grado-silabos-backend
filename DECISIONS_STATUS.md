@@ -39,6 +39,13 @@ La etapa se deriva de `envios_biblioteca`, `revisiones_coordinacion` (nueva) y
 Reemplaza el orden de I-165 (biblioteca después de coordinación) y retira la corrección
 «solo bibliografía» y la aprobación heredada. Migración `000183` (irreversible).
 
+I-192 (5 de octubre de 2026), confirmado por el responsable del producto, retira al
+Decano del sistema. Biblioteca sigue revisando primero; Coordinación da la aprobación
+final y solicita la exportación. El PDF se firma en orden docente → coordinación →
+biblioteca. I-192 sustituye la etapa de decanato, el rol y la cuarta firma de I-173,
+conservando el orden Biblioteca → Coordinación. Migración nueva `000198`; el plan activo
+registra las condiciones de migración para datos históricos y plantilla existente.
+
 I-172 (4 de octubre de 2026), por instrucción del responsable del producto, funde la
 pantalla de Periodos académicos en **Convocatorias** (ADM-12): una fila por periodo con
 sus fechas de clases, las de elaboración de sílabos y el estado de la convocatoria, y un

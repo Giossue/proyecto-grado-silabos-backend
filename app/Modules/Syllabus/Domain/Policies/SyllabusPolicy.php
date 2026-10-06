@@ -3,7 +3,6 @@
 namespace App\Modules\Syllabus\Domain\Policies;
 
 use App\Models\User;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -21,11 +20,10 @@ class SyllabusPolicy
         return $user->activo && $this->roles->hasRole(request(), RoleCode::Teacher);
     }
 
-    /** Bandeja de revisión: coordinación por carrera y decanato por facultad (I-173). */
     public function reviewAny(User $user): bool
     {
         return $user->activo
-            && ($this->roles->hasRole(request(), RoleCode::Coordinator) || $this->roles->hasRole(request(), RoleCode::Dean));
+            && $this->roles->hasRole(request(), RoleCode::Coordinator);
     }
 
     public function view(User $user, Syllabus $syllabus): bool
@@ -98,7 +96,6 @@ class SyllabusPolicy
         return in_array($state, [Convocation::STATE_OPEN, Convocation::STATE_PAUSED], true);
     }
 
-    /** Biblioteca, coordinación de la carrera o decanato de la facultad (I-173). */
     public function review(User $user, Syllabus $syllabus): bool
     {
         $activeRole = $this->roles->resolve(request());
@@ -112,8 +109,6 @@ class SyllabusPolicy
 
         return match ($activeRole->role->codigo_rol) {
             RoleCode::Coordinator->value => $activeRole->carrera_id === $careerId,
-            RoleCode::Dean->value => is_string($careerId)
-                && Career::query()->whereKey($careerId)->value('facultad_id') === $activeRole->facultad_id,
             RoleCode::Librarian->value => LibrarySubmission::query()
                 ->whereHas('revision', fn ($revision) => $revision->where('silabo_id', $syllabus->id))
                 ->exists(),

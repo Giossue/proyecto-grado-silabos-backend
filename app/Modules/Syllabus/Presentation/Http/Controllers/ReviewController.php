@@ -8,12 +8,10 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Identity\Application\ActiveRole;
-use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Application\Actions\ApproveSyllabus;
 use App\Modules\Syllabus\Application\Actions\DeleteSyllabus;
 use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
 use App\Modules\Syllabus\Application\Actions\ResetSyllabus;
-use App\Modules\Syllabus\Application\Actions\ReviewByCoordination;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\RevisionDiff;
 use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
@@ -38,13 +36,8 @@ class ReviewController extends Controller
         $state = $request->string('state')->toString();
         $search = trim($request->string('search')->toString());
 
-        // I-173: coordinación ve su carrera; decanato, todas las carreras de su facultad.
         $query = Syllabus::query()
-            ->when(
-                $activeRole?->role->codigo_rol === RoleCode::Dean->value,
-                fn ($syllabi) => $syllabi->whereHas('convocation.career', fn ($career) => $career->where('facultad_id', $activeRole?->facultad_id)),
-                fn ($syllabi) => $syllabi->whereHas('convocation', fn ($convocation) => $convocation->where('carrera_id', $activeRole?->carrera_id)),
-            )
+            ->whereHas('convocation', fn ($convocation) => $convocation->where('carrera_id', $activeRole?->carrera_id))
             ->whereHas('revisions')
             ->with([
                 'convocation.process.academicPeriod:id,codigo',
@@ -119,21 +112,13 @@ class ReviewController extends Controller
         return response()->json(['message' => $message]);
     }
 
-    /** Coordinación aprueba y pasa al decanato; el decanato aprueba y fija la revisión (I-173). */
     public function approve(
         SyllabusRevision $revision,
         ApproveSyllabusRequest $request,
         ApproveSyllabus $approve,
-        ReviewByCoordination $reviewByCoordination,
-        ActiveRole $roles,
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        if ($roles->hasRole($request, RoleCode::Coordinator)) {
-            $reviewByCoordination->execute($revision, $actor, $request);
-
-            return response()->json(['message' => "Revisión {$revision->numero_revision} aprobada por coordinación; pasa al decanato."]);
-        }
         $approve->execute(
             $revision,
             $request->string('idempotency_key')->toString(),
@@ -274,7 +259,6 @@ class ReviewController extends Controller
     private static function stageOf(SyllabusRevision $revision): string
     {
         return match (true) {
-            $revision->coordinationReview !== null => ReviewStage::DEANERY,
             $revision->librarySubmission?->verificado_en !== null => ReviewStage::COORDINATION,
             default => ReviewStage::LIBRARY,
         };

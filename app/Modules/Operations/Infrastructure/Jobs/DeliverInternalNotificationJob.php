@@ -153,7 +153,7 @@ class DeliverInternalNotificationJob implements ShouldQueue
             ],
             'silabo.aprobado' => [
                 'Sílabo aprobado',
-                "El decanato aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Se genera el PDF; luego firman docente, coordinación, biblioteca y decanato.",
+                "Coordinación aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Se genera el PDF; luego firman docente, coordinación y biblioteca.",
             ],
             'silabo.eliminado' => [
                 'Sílabo eliminado',
@@ -167,21 +167,9 @@ class DeliverInternalNotificationJob implements ShouldQueue
                 'Sílabo listo para su firma',
                 "Docente y coordinación firmaron el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Falta la firma de biblioteca.",
             ],
-            'silabo.firmado_biblioteca' => [
-                'Sílabo listo para su firma',
-                "Docente, coordinación y biblioteca firmaron el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Falta la firma del decanato.",
-            ],
             'biblioteca.verificado' => [
                 'Bibliografía aprobada',
                 "Biblioteca aprobó la bibliografía del sílabo {$syllabus->subject->nombre}{$revisionLabel}. Pasa a revisión de coordinación.",
-            ],
-            'silabo.revisado_coordinacion' => [
-                'Sílabo listo para aprobación',
-                "Coordinación revisó y aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Espera la aprobación del decanato.",
-            ],
-            'silabo.devuelto_decanato' => [
-                'El decanato devolvió el sílabo',
-                "El decanato no aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel} y lo devolvió al docente. Volverá a pasar por biblioteca y por su revisión.",
             ],
             'silabo.reiniciado' => [
                 'Sílabo reiniciado',

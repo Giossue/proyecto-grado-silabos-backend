@@ -50,6 +50,13 @@ y sus asignaciones operativas. El modelo `User` declara los puentes que Fortify 
 guard exigen. I-29 hace las asignaciones de rol manuales: `asignaciones_rol.asignacion_rol_activa`
 determina su efectividad, `asignado_en` (obligatoria desde I-168) ordena el historial y no existen fechas
 programadas de inicio o fin.
+I-192 retira el rol Decano incorporado transitoriamente por I-173. La migración
+`000198` restringe de nuevo el `CHECK` a cuatro roles y elimina el alcance de facultad
+de `asignaciones_rol`. Se detiene ante asignaciones, firmas, devoluciones históricas de
+decanato o aprobaciones antiguas por otra persona para decidir su conservación antes de
+cambiar el esquema. La tabla `revisiones_coordinacion` permanece para leer hechos
+históricos de I-173; las nuevas aprobaciones se registran directamente en `aprobaciones`
+por Coordinación.
 
 ### Académico
 

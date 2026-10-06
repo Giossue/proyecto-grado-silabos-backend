@@ -28,23 +28,20 @@ elimina con todo su historial y el paralelo recibe un sílabo nuevo sin iniciar.
 | En revisión · biblioteca | Aprobar bibliografía | Bibliotecario | En revisión (etapa coordinación) | Marca `verificado_por/en` en `envios_biblioteca`; avisa a coordinación. |
 | En revisión · biblioteca | Devolver con motivos | Bibliotecario | Corrección solicitada | Elige uno o más motivos predefinidos (sin texto libre; ver `LibraryCommentReasons`); se guarda como comentario en las columnas `correccion_*` con `correccion_etapa = 'biblioteca'`; todo el sílabo es editable. |
 | En revisión · coordinación | Solicitar corrección | Coordinador de alcance | Corrección solicitada | Un comentario general (sin observaciones por campo); `correccion_etapa = 'coordinacion'`. |
-| En revisión · coordinación | Aprobar | Coordinador de alcance | En revisión (etapa decanato) | Crea `revisiones_coordinacion` (una por revisión, inmutable); avisa al decano. |
-| En revisión · decanato | Solicitar corrección | Decano de la facultad | Corrección solicitada | `correccion_etapa = 'decanato'`, con justificación. |
-| En revisión · decanato | Aprobar | Decano de la facultad | Aprobado | Fija `aprobaciones` sobre la revisión inmutable y solicita el PDF. |
+| En revisión · coordinación | Aprobar | Coordinador de alcance | Aprobado | Fija `aprobaciones` sobre la revisión inmutable y solicita el PDF. |
 | Corrección solicitada | Reenviar | Docente autorizado | En revisión (etapa biblioteca) | Crea nueva revisión; la cadena vuelve a empezar por biblioteca. |
 | Aprobado | Eliminar | Coordinador de alcance | Sin iniciar (sílabo nuevo) | Borra el sílabo con revisiones, aprobación, PDF y firmas, crea otro sin iniciar para el paralelo, audita `silabo.eliminado` y avisa al docente. Solo con la convocatoria abierta o en pausa. |
 
 La **etapa** dentro de «En revisión» no es una columna: se deriva de la revisión vigente
 (`ReviewStage`): sin verificación de biblioteca → biblioteca; verificada y sin
-`revisiones_coordinacion` → coordinación; con revisión de coordinación y sin aprobación
-→ decanato. Solo el revisor de la etapa vigente decide; los demás consultan.
+aprobación → coordinación. Solo el revisor de la etapa vigente decide; los demás consultan.
 
 La reapertura de aprobados se retiró en I-178 (ADR-0005 reemplazado); DT-07 ya no aplica.
 
-## Firmas (I-139, I-173)
+## Firmas (I-139, I-192)
 
-El PDF se genera **al aprobar el decanato** (exportación automática) y se firma de forma
-incremental en este orden: docente → coordinación → biblioteca → decanato
+El PDF se genera **al aprobar Coordinación** (exportación automática) y se firma de forma
+incremental en este orden: docente → coordinación → biblioteca
 (`firmas_documento.firmado_como`). Cada revisión tiene su propio PDF y sus propias
 firmas: cualquier cambio de contenido es una revisión nueva (reenvío), la
 anterior queda `anulado` y se vuelve a firmar desde cero. Biblioteca revisa la
@@ -137,7 +134,7 @@ periodo académico.
 
 - El borrador representa trabajo editable y puede autoguardarse.
 - La revisión representa evidencia enviada y no se edita.
-- El comentario de devolución (biblioteca, coordinación o decanato) queda en la revisión devuelta.
+- El comentario de devolución (biblioteca o coordinación) queda en la revisión devuelta.
 - La corrección parte de una copia controlada y produce otra revisión al reenviar.
 - Un coordinador siempre revisa el contenido exacto enviado, no el borrador posterior.
 - Copiar entre paralelos (I-167): si el docente tiene la misma asignatura en más de un

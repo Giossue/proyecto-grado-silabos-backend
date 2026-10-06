@@ -120,8 +120,7 @@ class AcceptDocumentSignature
                 [$eventType, $recipientIds] = match ($role) {
                     DocumentSignature::ROLE_TEACHER => ['silabo.firmado_docente', $this->recipients->coordinatorsFor($syllabus)],
                     DocumentSignature::ROLE_COORDINATION => ['silabo.firmado_coordinacion', $this->recipients->librarians()],
-                    DocumentSignature::ROLE_LIBRARY => ['silabo.firmado_biblioteca', $this->recipients->deansFor($syllabus)],
-                    default => [null, []], // la última firma (decanato) no genera aviso
+                    default => [null, []],
                 };
                 if ($eventType !== null) {
                     $this->notifications->execute(
@@ -151,7 +150,6 @@ class AcceptDocumentSignature
             DocumentSignature::ROLE_TEACHER => 'el docente',
             DocumentSignature::ROLE_COORDINATION => 'la coordinación',
             DocumentSignature::ROLE_LIBRARY => 'biblioteca',
-            DocumentSignature::ROLE_DEANERY => 'el decanato',
         ];
 
         // Quien llega antes de su turno espera; quien ya firmó ve a quién le toca ahora.

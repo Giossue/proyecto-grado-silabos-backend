@@ -55,16 +55,11 @@ class ReviewWorkflowTest extends TestCase
 
     private RoleAssignment $librarianContext;
 
-    private User $dean;
-
-    private RoleAssignment $deanContext;
-
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
         $this->configureFacultyLogos();
-        // I-173: la aprobación del decanato encola el PDF; aquí no hace falta generarlo.
         Queue::fake([GenerateSyllabusExportJob::class]);
 
         $this->administrator = User::query()->where('correo_electronico', 'admin@silabos.test')->firstOrFail();
@@ -75,8 +70,6 @@ class ReviewWorkflowTest extends TestCase
         $this->teacherContext = $this->teacher->roleAssignments()->firstOrFail();
         $this->librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
         $this->librarianContext = $this->librarian->roleAssignments()->firstOrFail();
-        $this->dean = User::query()->where('correo_electronico', 'decano@silabos.test')->firstOrFail();
-        $this->deanContext = $this->dean->roleAssignments()->firstOrFail();
     }
 
     public function test_custom_design_and_variables_are_frozen_with_the_submitted_revision(): void
@@ -349,8 +342,7 @@ class ReviewWorkflowTest extends TestCase
         [$syllabus, $revision] = $this->submitValidDraft();
         $key = (string) Str::uuid();
 
-        // I-173: biblioteca → coordinación → decanato; el decanato fija la aprobación.
-        $this->actingAsDean()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => $key,
         ])->assertJsonValidationErrors('revision');
         $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
@@ -358,31 +350,20 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => $key,
         ])->assertSuccessful();
-        $this->assertSame('en_revision', $syllabus->fresh()->estado);
-        $this->assertDatabaseHas('revisiones_coordinacion', ['revision_silabo_id' => $revision->id, 'revisado_por' => $this->coordinator->id]);
-        $this->assertWorkflowNotification($syllabus->id, 'silabo.revisado_coordinacion');
-        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))
-            ->assertOk()->assertJsonPath('syllabus.stage', 'decanato')->assertJsonPath('can_decide', false);
-
-        $this->actingAsDean()->getJson(route('api.v1.coordination.reviews.show', $revision))
-            ->assertOk()->assertJsonPath('my_stage', 'decanato')->assertJsonPath('can_decide', true);
-        $this->actingAsDean()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
-            'idempotency_key' => $key,
-        ])->assertSuccessful();
         $approval = Approval::query()->firstOrFail();
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
-        $this->assertSame($this->dean->id, $approval->aprobado_por);
+        $this->assertSame($this->coordinator->id, $approval->aprobado_por);
         $this->assertSame($revision->id, $approval->revision_silabo_id);
         $this->assertSame(64, strlen($approval->huella_sha256));
         $this->assertWorkflowNotification($syllabus->id, 'silabo.aprobado');
         Queue::assertPushed(GenerateSyllabusExportJob::class);
 
-        $this->actingAsDean()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => $key,
         ])->assertSuccessful();
         $this->assertDatabaseCount('aprobaciones', 1);
 
-        $this->actingAsDean()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('revision');
     }
@@ -398,11 +379,6 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
         $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))
             ->assertOk()->assertJsonPath('can_delete', true);
-        $this->actingAsDean()->getJson(route('api.v1.coordination.reviews.show', $revision))
-            ->assertOk()->assertJsonPath('can_delete', false);
-
-        // Ni el decano ni el docente eliminan.
-        $this->actingAsDean()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
         $this->actingAsTeacher()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
         $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
 
@@ -475,22 +451,17 @@ class ReviewWorkflowTest extends TestCase
         }
     }
 
-    public function test_the_dean_returning_a_syllabus_notifies_the_teacher_and_the_coordinator_and_the_librarys_approval_notifies_the_teacher(): void
+    public function test_the_coordinator_returning_a_syllabus_notifies_the_teacher_and_the_librarys_approval_notifies_the_teacher(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();
         $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
         // I-186: la bibliografía aprobada avisa al docente (avance) y al coordinador (le toca revisar).
         $this->assertWorkflowNotification($syllabus->id, 'biblioteca.verificado');
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
-            'idempotency_key' => (string) Str::uuid(),
-        ])->assertSuccessful();
-
-        $this->actingAsDean()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
-            'justification' => 'El decanato no aprueba: falta alinear los resultados de aprendizaje.',
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
+            'justification' => 'Falta alinear los resultados de aprendizaje.',
         ])->assertSuccessful();
 
         $this->assertWorkflowNotification($syllabus->id, 'silabo.correccion_solicitada');
-        $this->assertWorkflowNotification($syllabus->id, 'silabo.devuelto_decanato');
     }
 
     public function test_cp_f_database_rejects_invalid_state_and_cross_syllabus_evidence(): void
@@ -730,21 +701,10 @@ class ReviewWorkflowTest extends TestCase
         return $this;
     }
 
-    private function actingAsDean(): static
-    {
-        $this->actingAs($this->dean)->withSession(['active_role_assignment_id' => $this->deanContext->id]);
-
-        return $this;
-    }
-
-    /** Recorre la cadena I-173: biblioteca aprueba, coordinación revisa y el decanato aprueba. */
     private function approveThroughChain(SyllabusRevision $revision): void
     {
         $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
-            'idempotency_key' => (string) Str::uuid(),
-        ])->assertSuccessful();
-        $this->actingAsDean()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
     }

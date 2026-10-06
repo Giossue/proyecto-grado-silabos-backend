@@ -48,7 +48,6 @@ class RequestSyllabusCorrection
             if ($locked->hasCorrectionRequest()) {
                 throw ValidationException::withMessages(['revision' => 'Esta revisión ya tiene una solicitud de corrección.']);
             }
-            // I-173: cada revisor devuelve solo en su etapa, con un comentario general (I-177: sin observaciones por campo).
             if (ReviewStage::ofRevision($revision) !== $stage) {
                 throw ValidationException::withMessages(['revision' => 'La revisión no está en su etapa; otro revisor la tiene ahora.']);
             }
@@ -81,16 +80,6 @@ class RequestSyllabusCorrection
                 recipientIds: $this->recipients->teachersFor($syllabus),
                 revisionNumber: $revision->numero_revision,
             );
-            // Coordinación se entera cuando el decanato no aprueba lo que ella revisó.
-            if ($stage === ReviewStage::DEANERY) {
-                $this->notifications->execute(
-                    syllabus: $syllabus,
-                    eventType: 'silabo.devuelto_decanato',
-                    deduplicationKey: "silabo.devuelto_decanato:{$revision->id}",
-                    recipientIds: $this->recipients->coordinatorsFor($syllabus),
-                    revisionNumber: $revision->numero_revision,
-                );
-            }
 
             return $locked;
         });

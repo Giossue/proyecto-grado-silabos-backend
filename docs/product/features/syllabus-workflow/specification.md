@@ -35,8 +35,8 @@
 - El coordinador solicita corrección con un comentario general o aprueba.
 - COR-06 mantiene la revisión como página completa; la corrección se pide con un
   comentario general en el panel lateral derecho (I-177: no hay observaciones por campo).
-- Biblioteca devuelve con motivos predefinidos; coordinación y decanato, con un
-  comentario general. El docente corrige y reenvía una revisión nueva.
+- Biblioteca devuelve con motivos predefinidos; coordinación, con un comentario
+  general. El docente corrige y reenvía una revisión nueva.
 - La comparación muestra cambios de campos, filas y secciones.
 - Un aprobado no se reabre: Coordinación lo elimina con todo su historial (I-178).
 

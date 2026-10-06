@@ -167,7 +167,7 @@ class SessionController extends Controller
         return $user;
     }
 
-    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, can_edit_identity: bool, formation: string|null}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null, faculty_id: string|null, faculty_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null, faculty_id: string|null, faculty_name: string|null}>} */
+    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, can_edit_identity: bool, formation: string|null}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>} */
     private function sessionPayload(User $user, Request $request): array
     {
         $activeRole = $this->roles->resolve($request);
@@ -188,7 +188,7 @@ class SessionController extends Controller
         ];
     }
 
-    /** @return array{id: string, code: string, career_id: string|null, career_name: string|null, faculty_id: string|null, faculty_name: string|null} */
+    /** @return array{id: string, code: string, career_id: string|null, career_name: string|null} */
     private function rolePayload(RoleAssignment $assignment): array
     {
         return [
@@ -196,8 +196,6 @@ class SessionController extends Controller
             'code' => $assignment->role->codigo_rol,
             'career_id' => $assignment->carrera_id,
             'career_name' => $assignment->career?->nombre,
-            'faculty_id' => $assignment->facultad_id,
-            'faculty_name' => $assignment->faculty?->nombre,
         ];
     }
 }

@@ -1,5 +1,7 @@
 # I-186 — Notificaciones: solo lo que pide acción o cambia el trabajo
 
+> I-192 retira la participación y los avisos del Decano. Este plan conserva la decisión histórica; el flujo vigente termina en Coordinación.
+
 ## Pedido del responsable, 2026-10-04
 
 Había demasiados avisos. Se deja solo lo que le toca hacer a la persona o lo que le cambia su

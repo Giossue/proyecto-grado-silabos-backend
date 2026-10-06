@@ -8,7 +8,6 @@ enum RoleCode: string
     case Coordinator = 'coordinador';
     case Teacher = 'docente';
     case Librarian = 'bibliotecario';
-    case Dean = 'decano';
 
     public function label(): string
     {
@@ -17,18 +16,11 @@ enum RoleCode: string
             self::Coordinator => 'Coordinador',
             self::Teacher => 'Docente',
             self::Librarian => 'Bibliotecario',
-            self::Dean => 'Decano',
         };
     }
 
     public function hasCareerScope(): bool
     {
         return $this === self::Coordinator || $this === self::Teacher;
-    }
-
-    /** El decano actúa sobre las carreras de una facultad (I-173). */
-    public function hasFacultyScope(): bool
-    {
-        return $this === self::Dean;
     }
 }

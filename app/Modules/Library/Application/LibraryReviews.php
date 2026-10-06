@@ -6,10 +6,6 @@ use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Bandeja de biblioteca (I-173): cada envío nace con la revisión. Biblioteca es la primera
- * etapa; después el sílabo sigue a coordinación y decanato, y al final biblioteca firma.
- */
 final class LibraryReviews
 {
     public const STATE_PENDING = 'pendiente';

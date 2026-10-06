@@ -86,29 +86,6 @@ class WorkflowNotificationRecipients
         return $this->uniqueStrings($ids);
     }
 
-    /**
-     * Decano de la facultad de la carrera del sílabo (I-173).
-     *
-     * @return list<string>
-     */
-    public function deansFor(Syllabus $syllabus): array
-    {
-        $careerId = $syllabus->convocation()->value('carrera_id');
-        $facultyId = is_string($careerId) ? Career::query()->whereKey($careerId)->value('facultad_id') : null;
-        if (! is_string($facultyId)) {
-            return [];
-        }
-        $ids = RoleAssignment::query()
-            ->effective()
-            ->where('rol', RoleCode::Dean->value)
-            ->where('facultad_id', $facultyId)
-            ->whereHas('user', fn ($query) => $query->where('activo', true))
-            ->pluck('usuario_id')
-            ->all();
-
-        return $this->uniqueStrings($ids);
-    }
-
     /** @return list<string> */
     public function teachersFor(Syllabus $syllabus): array
     {

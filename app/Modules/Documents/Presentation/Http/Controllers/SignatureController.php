@@ -133,8 +133,8 @@ class SignatureController extends Controller
             'message' => match ($signature->rol_firma) {
                 DocumentSignature::ROLE_TEACHER => 'Firma registrada. Coordinación ya puede firmar el sílabo.',
                 DocumentSignature::ROLE_COORDINATION => 'Firma registrada. Biblioteca ya puede firmar el sílabo.',
-                DocumentSignature::ROLE_LIBRARY => 'Firma registrada. El decanato ya puede firmar el sílabo.',
-                default => 'Firma registrada. El sílabo quedó firmado por docente, coordinación, biblioteca y decanato.',
+                DocumentSignature::ROLE_LIBRARY => 'Firma registrada. El sílabo quedó firmado por docente, coordinación y biblioteca.',
+                default => 'Firma registrada.',
             },
             'signature_id' => $signature->id,
         ], 201);

@@ -58,7 +58,7 @@ cambiar su identidad ni contraseña. Asignar docente a un paralelo se hace únic
 COR-14, desde los paralelos de cada materia; la pantalla ya no ofrece un botón global
 de asignación. Ninguna operación levanta los bloqueos académicos.
 
-## Bibliotecario (I-165, I-173)
+## Bibliotecario (I-165, I-173, I-192)
 
 | ID     | Pantalla                                   |
 | ------ | ------------------------------------------ |
@@ -75,35 +75,17 @@ de estado («Por revisar», «Aprobada por biblioteca», «Por firmar», «Firma
 comentario», «Anulado») y la acción «Abrir». BIB-03 muestra la Bibliografía de la
 revisión en solo lectura y, en etapa biblioteca, las tarjetas «Aprobar bibliografía» (el
 sílabo pasa a coordinación) y «Devolver al docente» (casillas con motivos predefinidos, sin texto libre; vuelve al docente, que corrige todo el
-sílabo y reenvía; la revisión nueva vuelve a biblioteca). Cuando el decanato aprueba,
+sílabo y reenvía; la revisión nueva vuelve a biblioteca). Cuando Coordinación aprueba,
 aparece la tarjeta de firma (tercera firma). El aviso `silabo.enviado` abre BIB-03.
 
-## Decano (I-173)
-
-| ID     | Pantalla                                   |
-| ------ | ------------------------------------------ |
-| DEC-01 | Panel de decanato                          |
-| DEC-02 | Revisión (cola y detalle de su facultad)   |
-
-El decano tiene facultad, no carrera: entra directo y su ámbito dice «Decanato ·
-{facultad}». Reutiliza COR-05/COR-06/COR-07 bajo `/decanato/revisiones`: la cola muestra
-los sílabos de todas las carreras de su facultad con su etapa («En biblioteca», «En
-coordinación», «En decanato»); el detalle solo permite decidir en etapa decanato:
-**Aprobar** (fija la aprobación y genera el PDF) o **Solicitar corrección** (con
-comentario general, sin observaciones; el sílabo vuelve al docente y la cadena empieza de
-nuevo). Firma el PDF en cuarto lugar. DEC-01 muestra «Por
-aprobar» y «Aprobados». Los avisos `silabo.revisado_coordinacion` y
-`silabo.firmado_biblioteca` abren DEC-02.
-
-En COR-06 el coordinador decide solo en etapa coordinación: **Aprobar** pasa el sílabo al
-decanato (no lo fija); mientras está en otra etapa ve un aviso de «otro revisor la tiene
+En COR-06 el coordinador decide solo en etapa coordinación: **Aprobar** fija la revisión y
+genera el PDF; mientras está en otra etapa ve un aviso de «otro revisor la tiene
 ahora». En DOC-07 el envío va «a revisión» (biblioteca primero) y en DOC-08 el docente ve
 la etapa en curso y los comentarios de biblioteca; tras cualquier devolución corrige todo
-el sílabo. En DOC-10 el PDF se genera solo al aprobar el decanato y la tarjeta de firma
-muestra cuatro firmantes y los estados «Pendiente docente/coordinación/biblioteca/
-decanato». En ADM-02, Bibliotecario no pide carrera y Decano pide facultad. En ADM-06, el
-menú Insertar ofrece el grupo «Firma» (docente, coordinación, biblioteca y decanato) y la
-plantilla por defecto trae cuatro celdas de firma.
+el sílabo. En DOC-10 el PDF se genera al aprobar Coordinación y la tarjeta de firma
+muestra tres firmantes y los estados «Pendiente docente/coordinación/biblioteca».
+En ADM-02, Bibliotecario no pide carrera. En ADM-06, el menú Insertar ofrece el grupo
+«Firma» (docente, coordinación y biblioteca) y la plantilla por defecto trae tres celdas.
 
 ## Administrador
 
@@ -188,11 +170,11 @@ plantilla por defecto trae cuatro celdas de firma.
   esqueletos: cantidad de columnas, búsqueda y filtros, filas y pie de paginación. En
   móvil representan los dos datos visibles y el espacio de «Ver más» sin controles
   interactivos. Los filtros ya visibles fuera de la región de carga no se duplican.
-  El Panel diferencia indicadores, plazo y puesta en marcha según el rol; biblioteca y
-  decanato solo esperan sus indicadores. La Malla conserva niveles horizontales,
+  El Panel diferencia indicadores, plazo y puesta en marcha según el rol; biblioteca
+  solo espera sus indicadores. La Malla conserva niveles horizontales,
   leyenda y zoom; Materias y Docentes conservan sus composiciones independientes.
   El sílabo mantiene su contexto académico y asistente; la revisión distingue
-  biblioteca, coordinación y decanato. Plantilla conserva las dimensiones de sus hojas
+  biblioteca y coordinación. Plantilla conserva las dimensiones de sus hojas
   dentro del desplazamiento local. Notificaciones, conversación, firma y seguridad
   también representan sus cargas de contenido. Cada región anuncia la carga una vez,
   oculta los adornos al lector de pantalla y respeta movimiento reducido y ambos temas.
@@ -654,7 +636,6 @@ plantilla por defecto trae cuatro celdas de firma.
 | Coordinador   | COR-02, COR-06, COR-13, COR-14 y COR-15 | Convocatorias, revisiones, mallas, materias programadas, paralelos y asignaciones docentes usan el mismo patrón. En COR-15, los selectores permiten buscar docentes por nombre o correo y paralelos por materia, período o código. |
 | Docente       | DOC-02 a DOC-10                                 | No administra colecciones maestras. Edición, IA, envío y respuestas son flujos académicos de página completa, no formularios de alta.                                                                                                          |
 | Bibliotecario | BIB-01 a BIB-03 | No administra colecciones. Aprueba, devuelve con motivos o firma desde el detalle de la revisión; no hay formularios de alta. |
-| Decano | DEC-01, DEC-02 | No administra colecciones. Aprueba, devuelve o firma desde el detalle de la revisión. |
 
 Selección de rol, filtros, configuración personal, resolución de contradicciones y
 acciones de ciclo de vida como publicar, activar, aprobar o eliminar permanecen en su

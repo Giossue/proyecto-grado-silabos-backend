@@ -73,7 +73,6 @@ class DatabaseSeeder extends Seeder
                 RoleCode::Coordinator->value => ['Coordinadora Demo', 'coordinador@silabos.test'],
                 RoleCode::Teacher->value => ['Docente Demo', 'docente@silabos.test'],
                 RoleCode::Librarian->value => ['Bibliotecaria Demo', 'bibliotecario@silabos.test'],
-                RoleCode::Dean->value => ['Decano Demo', 'decano@silabos.test'],
             ])->mapWithKeys(function (array $data, string $code): array {
                 $user = User::query()->updateOrCreate(
                     ['correo_electronico' => $data[1]],
@@ -93,7 +92,6 @@ class DatabaseSeeder extends Seeder
                     'usuario_id' => $user->id,
                     'rol' => $code,
                     'carrera_id' => RoleCode::from($code)->hasCareerScope() ? $career->id : null,
-                    'facultad_id' => RoleCode::from($code)->hasFacultyScope() ? $faculty->id : null,
                 ];
                 $assignment = RoleAssignment::query()
                     ->where($roleScope)

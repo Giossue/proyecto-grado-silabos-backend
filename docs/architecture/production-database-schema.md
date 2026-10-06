@@ -554,7 +554,7 @@ huella_sha256 CHAR(64) NOT NULL
 enviado_por UUID (FK → usuarios.usuario_id) NOT NULL
 enviado_en TIMESTAMPTZ NOT NULL
 correccion_justificacion TEXT NULL
-correccion_etapa VARCHAR(16) NULL CHECK (biblioteca | coordinacion | decanato)
+correccion_etapa VARCHAR(16) NULL CHECK (biblioteca | coordinacion)
 correccion_solicitada_por UUID (FK → usuarios.usuario_id) NULL INDEX
 correccion_solicitada_en TIMESTAMPTZ NULL
 
@@ -585,14 +585,14 @@ clave_idempotencia UUID NOT NULL
 huella_sha256 CHAR(64) NOT NULL
 aprobado_por UUID (FK → usuarios.usuario_id) NOT NULL
 aprobado_en TIMESTAMPTZ NOT NULL
-aprobacion_base_id UUID (FK → aprobaciones.aprobacion_id) NULL INDEX
+aprobacion_anterior_id UUID (FK → aprobaciones.aprobacion_id) NULL INDEX
 ~~~
 
 El sílabo se obtiene de `revisiones_silabo.silabo_id`. La clave de idempotencia sigue
 siendo única por sílabo; la comprueba el trigger `validar_relaciones_flujo` (I-131).
-`aprobacion_base_id` solo existe en la aprobación heredada que crea el reenvío de una
-corrección de biblioteca (I-165): apunta a la aprobación de coordinación que cubre todo
-el contenido salvo la bibliografía, y conserva su aprobador.
+La aprobación final la registra Coordinación después de la verificación de Biblioteca
+(I-192). `revisiones_coordinacion` conserva los hechos históricos de I-173; el flujo
+vigente ya no crea filas allí.
 
 Una aprobación es totalmente inmutable (trigger `proteger_aprobacion`). Un sílabo aprobado no se
 reabre (I-178): Coordinación lo elimina con todo su historial.
@@ -604,8 +604,6 @@ reabre (I-178): Coordinación lo elimina con todo su historial.
 ~~~text
 envio_biblioteca_id UUID (PK)
 revision_silabo_id UUID (FK → revisiones_silabo.revision_silabo_id) NOT NULL UNIQUE
-enviado_por UUID (FK → usuarios.usuario_id) NOT NULL INDEX
-enviado_en TIMESTAMPTZ NOT NULL
 verificado_por UUID (FK → usuarios.usuario_id) NULL INDEX
 verificado_en TIMESTAMPTZ NULL
 

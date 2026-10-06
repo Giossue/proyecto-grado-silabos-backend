@@ -1,5 +1,7 @@
 # I-173 — Revisión en cadena: Biblioteca → Coordinación → Decanato, con cuatro firmas
 
+> I-192 retira la participación y los avisos del Decano. Este plan conserva la decisión histórica; el flujo vigente termina en Coordinación.
+
 ## Pedido del responsable, 2026-10-04
 
 Nuevo rol **Decano** y nuevo orden del flujo:

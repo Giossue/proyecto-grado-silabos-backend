@@ -5,32 +5,22 @@ namespace App\Modules\Syllabus\Application;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 
-/**
- * Etapa de la revisión vigente (I-173). Se deriva de los registros, sin columna de estado:
- * biblioteca → coordinación → decanato.
- */
 final class ReviewStage
 {
     public const LIBRARY = 'biblioteca';
 
     public const COORDINATION = 'coordinacion';
 
-    public const DEANERY = 'decanato';
-
-    public const ORDER = [self::LIBRARY, self::COORDINATION, self::DEANERY];
+    public const ORDER = [self::LIBRARY, self::COORDINATION];
 
     /** Etapa en la que está una revisión; null si ya fue aprobada. */
     public static function ofRevision(SyllabusRevision $revision): ?string
     {
         if (Approval::query()->where('revision_silabo_id', $revision->id)->exists()) {
             return null;
-        }
-        if (CoordinationReview::query()->where('revision_silabo_id', $revision->id)->exists()) {
-            return self::DEANERY;
         }
         $verified = LibrarySubmission::query()
             ->where('revision_silabo_id', $revision->id)
@@ -60,7 +50,6 @@ final class ReviewStage
         return match ($roleCode) {
             RoleCode::Librarian->value => self::LIBRARY,
             RoleCode::Coordinator->value => self::COORDINATION,
-            RoleCode::Dean->value => self::DEANERY,
             default => null,
         };
     }
@@ -70,7 +59,6 @@ final class ReviewStage
         return match ($stage) {
             self::LIBRARY => 'En biblioteca',
             self::COORDINATION => 'En coordinación',
-            self::DEANERY => 'En decanato',
             default => $stage,
         };
     }

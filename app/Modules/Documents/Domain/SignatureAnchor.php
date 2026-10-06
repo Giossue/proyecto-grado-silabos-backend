@@ -8,7 +8,6 @@ final class SignatureAnchor
         'docente' => 'Firma del docente',
         'coordinacion' => 'Firma de coordinación',
         'biblioteca' => 'Firma de biblioteca',
-        'decanato' => 'Firma de decanato',
     ];
 
     private const BLANK_LINES = 4;

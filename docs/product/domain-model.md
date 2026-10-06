@@ -178,7 +178,7 @@ por plantilla:
 
 ### Revisión
 
-- Comentario de devolución: texto general, etapa (biblioteca, coordinación o decanato),
+- Comentario de devolución: texto general, etapa (biblioteca o coordinación),
   autor y fecha, guardado en la revisión devuelta (I-176/I-177). No hay observaciones por
   campo. El docente no responde: corrige el sílabo y lo reenvía.
 - `Aprobacion`: actor, revisión, fecha, metadatos y huella.

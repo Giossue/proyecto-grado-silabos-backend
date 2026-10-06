@@ -18,36 +18,36 @@ el permiso, pero no lo sustituyen.
 
 ## Matriz base
 
-| Capacidad | Administrador | Coordinador | Docente | Bibliotecario | Decano |
-|---|---:|---:|---:|---:|---:|
-| Gestionar usuarios/roles | Sí | No | No | No | No |
-| Crear/incorporar docentes (I-54) y reenviar su invitación pendiente | Sí, sin cambios | Solo rol Docente pendiente de su carrera activa | No | No | No |
-| Corregir nombre o correo de una cuenta | Sí | Solo docentes vigentes de su carrera activa (I-170); el correo, mientras esté pendiente de activación | No | No | No |
-| Crear, editar y eliminar sin dependencias facultades, carreras y catálogos globales | Sí | Consulta de alcance | Consulta asignada | No | No |
-| Cargar o reemplazar el logo de una facultad (I-123/I-125) | Sí; obligatorio al crearla | No | No | No | No |
-| Asignar coordinación a una carrera | Sí | No | No | No | No |
-| Gestionar mallas y materias | No por defecto | Sí, en su carrera, salvo con convocatoria en curso | Consulta asignada | No | No |
-| Editar ficha académica de una materia (I-187) | Sí, en cualquier carrera desbloqueada | Sí, solo en su carrera desbloqueada | No | No | No |
-| Gestionar materias programadas y paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta asignada | No | No |
-| Asignar docentes a paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta propia | No | No |
-| Diseñar/publicar plantilla | Sí, salvo con proceso abierto | Consulta/aporte según política | No | No | No |
-| Importar documentos y confirmar datos curriculares (I-145/I-146) | No participa | Sí, en su carrera, con los bloqueos de corrección vigentes | Consulta del contexto de sus sílabos | No | No |
-| Crear y abrir, pausar, reanudar y cerrar el proceso de sílabos | Sí; confirmar el reinicio de todos los estados si cambió la plantilla durante la pausa | Consulta al convocar | No | No | No |
-| Iniciar alcance de su carrera desde convocatoria institucional abierta | No | Sí, si su malla, materias programadas, paralelos y docentes están listos | No | No | No |
-| Pausar/reanudar convocatoria | No | Sí, en su carrera | No | No | No |
-| Cerrar (sobre el proceso; detiene a todas las convocatorias) | Sí | No | No | No | No |
-| Prorrogar fecha límite de entrega (sobre el proceso; alcanza a todas las convocatorias) | Sí | No | No | No | No |
-| Eliminar convocatoria institucional sin actividad docente | Sí | No | No | No | No |
-| Elaborar contenido | No por defecto | No por defecto | Sí, asignado y editable | No | No |
-| Chat para elaborar contenido y unidades | Configuración técnica y campos legibles | No por defecto | Sí, en su sílabo y contexto autorizado | No | No |
-| Enviar/reenviar | No | No | Sí, asignado | No | No |
-| Observar/solicitar corrección | No | Sí, en etapa coordinación | No; corrige y reenvía (I-120) | Comentar en etapa biblioteca | Solicitar corrección en etapa decanato |
-| Comparar revisiones | Auditoría | Sí | Sí, si es propio/autorizado | No | Sí, en su facultad |
-| Aprobar | No | Sí | No | No | Sí: aprobación final en su facultad |
-| Exportar | Según permiso | Sí en alcance | Sí, propio/autorizado | Consulta del PDF enviado | Sí, en su facultad |
-| Consultar auditoría | Sí, permiso explícito | Vista limitada | No por defecto | No | No |
-| Revisar la bibliografía al enviar: aprobar o comentar (I-165, I-173) | No | No | No; su envío llega primero a biblioteca | Sí, en toda la universidad | No |
-| Firmar el PDF aprobado (orden docente → coordinación → biblioteca → decanato) | No | Sí, en su carrera | Sí, propio | Sí | Sí, en su facultad |
+| Capacidad | Administrador | Coordinador | Docente | Bibliotecario |
+|---|---:|---:|---:|---:|
+| Gestionar usuarios/roles | Sí | No | No | No |
+| Crear/incorporar docentes (I-54) y reenviar su invitación pendiente | Sí, sin cambios | Solo rol Docente pendiente de su carrera activa | No | No |
+| Corregir nombre o correo de una cuenta | Sí | Solo docentes vigentes de su carrera activa (I-170); el correo, mientras esté pendiente de activación | No | No |
+| Crear, editar y eliminar sin dependencias facultades, carreras y catálogos globales | Sí | Consulta de alcance | Consulta asignada | No |
+| Cargar o reemplazar el logo de una facultad (I-123/I-125) | Sí; obligatorio al crearla | No | No | No |
+| Asignar coordinación a una carrera | Sí | No | No | No |
+| Gestionar mallas y materias | No por defecto | Sí, en su carrera, salvo con convocatoria en curso | Consulta asignada | No |
+| Editar ficha académica de una materia (I-187) | Sí, en cualquier carrera desbloqueada | Sí, solo en su carrera desbloqueada | No | No |
+| Gestionar materias programadas y paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta asignada | No |
+| Asignar docentes a paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta propia | No |
+| Diseñar/publicar plantilla | Sí, salvo con proceso abierto | Consulta/aporte según política | No | No |
+| Importar documentos y confirmar datos curriculares (I-145/I-146) | No participa | Sí, en su carrera, con los bloqueos de corrección vigentes | Consulta del contexto de sus sílabos | No |
+| Crear y abrir, pausar, reanudar y cerrar el proceso de sílabos | Sí; confirmar el reinicio de todos los estados si cambió la plantilla durante la pausa | Consulta al convocar | No | No |
+| Iniciar alcance de su carrera desde convocatoria institucional abierta | No | Sí, si su malla, materias programadas, paralelos y docentes están listos | No | No |
+| Pausar/reanudar convocatoria | No | Sí, en su carrera | No | No |
+| Cerrar (sobre el proceso; detiene a todas las convocatorias) | Sí | No | No | No |
+| Prorrogar fecha límite de entrega (sobre el proceso; alcanza a todas las convocatorias) | Sí | No | No | No |
+| Eliminar convocatoria institucional sin actividad docente | Sí | No | No | No |
+| Elaborar contenido | No por defecto | No por defecto | Sí, asignado y editable | No |
+| Chat para elaborar contenido y unidades | Configuración técnica y campos legibles | No por defecto | Sí, en su sílabo y contexto autorizado | No |
+| Enviar/reenviar | No | No | Sí, asignado | No |
+| Observar/solicitar corrección | No | Sí, en etapa coordinación | No; corrige y reenvía (I-120) | Comentar en etapa biblioteca |
+| Comparar revisiones | Auditoría | Sí | Sí, si es propio/autorizado | No |
+| Aprobar | No | Sí | No | No |
+| Exportar | Según permiso | Sí en alcance | Sí, propio/autorizado | Consulta del PDF enviado |
+| Consultar auditoría | Sí, permiso explícito | Vista limitada | No por defecto | No |
+| Revisar la bibliografía al enviar: aprobar o comentar (I-165, I-173) | No | No | No; su envío llega primero a biblioteca | Sí, en toda la universidad |
+| Firmar el PDF aprobado (orden docente → coordinación → biblioteca) | No | Sí, en su carrera | Sí, propio | Sí |
 
 I-146 retira la gestión pública de Fuentes académicas y las operaciones del revisor de
 IA. La descarga de originales de importación exige carrera activa y pertenencia del
@@ -77,7 +77,7 @@ sílabos: las revisiones enviadas ya conservan la identidad fotografiada; desact
 docente con trabajo en curso sigue bloqueado y los relevos de docentes o coordinadores
 usan sus operaciones atómicas específicas.
 
-## Bibliotecario (I-165, I-173)
+## Bibliotecario (I-165, I-173, I-192)
 
 El rol `bibliotecario` no tiene carrera: una cuenta con solo ese rol entra directo. Es la
 **primera etapa** de revisión: cada envío del docente crea un registro en
@@ -88,16 +88,6 @@ Firma el PDF en tercer lugar, después de docente y coordinación. Administraci�
 cuentas sin carrera. El rol se acumula con Coordinador o Docente, pero no con
 Administrador.
 
-## Decano (I-173)
-
-El rol `decano` tiene alcance por **facultad** (`asignaciones_rol.facultad_id`), un decano
-activo por facultad. Ve la cola de revisión de todas las carreras de su facultad y decide
-solo en la etapa `decanato`: **aprueba** (fija la aprobación y se genera el PDF) o
-**solicita corrección** (el sílabo vuelve al docente y la cadena empieza de nuevo por
-biblioteca). Firma el PDF en último lugar. Eliminar un sílabo aprobado es solo del coordinador.
-Administración lo crea eligiendo la facultad; se acumula con otros roles salvo
-Administrador.
-
 ## Acumulación de roles
 
 Una persona puede ser coordinadora de varias carreras y también docente. Cada asignación
@@ -106,8 +96,8 @@ es una excepción exclusiva: una cuenta con el rol `administrador` activo no pue
 `coordinador` ni `docente` activos, y tampoco se puede conceder `administrador` mientras
 conserve otro rol activo. Las asignaciones finalizadas se conservan como historial.
 Al iniciar como Coordinador o Docente debe elegir su ámbito incluso si solo tiene una
-asignación activa (I-121); Administración, rol exclusivo, Bibliotecario, sin carrera, y
-Decano, con su facultad, entran directo cuando es su único rol. Durante la sesión
+asignación activa (I-121); Administración y Bibliotecario entran directo cuando tienen
+un único rol. Durante la sesión
 puede cambiar de carrera o rol desde el menú de usuario. Solo existe un ámbito activo a la
 vez. Abrir un aviso puede activar otro ámbito de la misma persona: el servidor elige, entre
 sus asignaciones vigentes, la que corresponde al aviso, registra

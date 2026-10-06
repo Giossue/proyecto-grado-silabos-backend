@@ -14,6 +14,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use LogicException;
 
 class SignatureWorkflow
 {
@@ -25,13 +26,10 @@ class SignatureWorkflow
 
     public const STATE_PENDING_LIBRARY = 'pendiente_biblioteca';
 
-    public const STATE_PENDING_DEANERY = 'pendiente_decanato';
-
     public const PENDING_STATES = [
         self::STATE_PENDING_TEACHER,
         self::STATE_PENDING_COORDINATION,
         self::STATE_PENDING_LIBRARY,
-        self::STATE_PENDING_DEANERY,
     ];
 
     public const STATE_SIGNED = 'firmado';
@@ -129,7 +127,7 @@ class SignatureWorkflow
             DocumentSignature::ROLE_TEACHER => self::STATE_PENDING_TEACHER,
             DocumentSignature::ROLE_COORDINATION => self::STATE_PENDING_COORDINATION,
             DocumentSignature::ROLE_LIBRARY => self::STATE_PENDING_LIBRARY,
-            default => self::STATE_PENDING_DEANERY,
+            default => throw new LogicException('Rol de firma desconocido.'),
         };
     }
 
@@ -150,9 +148,6 @@ class SignatureWorkflow
         }
         if ($active->role->codigo_rol === RoleCode::Librarian->value) {
             return $user->can('view', $syllabus) ? DocumentSignature::ROLE_LIBRARY : null;
-        }
-        if ($active->role->codigo_rol === RoleCode::Dean->value) {
-            return $user->can('review', $syllabus) ? DocumentSignature::ROLE_DEANERY : null;
         }
 
         return null;

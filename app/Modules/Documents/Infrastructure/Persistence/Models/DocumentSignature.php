@@ -46,9 +46,7 @@ class DocumentSignature extends Model
 
     public const ROLE_LIBRARY = 'biblioteca';
 
-    public const ROLE_DEANERY = 'decanato';
-
-    public const ORDER = [self::ROLE_TEACHER, self::ROLE_COORDINATION, self::ROLE_LIBRARY, self::ROLE_DEANERY];
+    public const ORDER = [self::ROLE_TEACHER, self::ROLE_COORDINATION, self::ROLE_LIBRARY];
 
     public $timestamps = false;
 
