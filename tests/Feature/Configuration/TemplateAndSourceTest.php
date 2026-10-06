@@ -114,6 +114,23 @@ class TemplateAndSourceTest extends TestCase
                 ->where('processLock', null));
     }
 
+    public function test_administrator_adds_the_identification_table_from_the_catalog_only_once(): void
+    {
+        $template = $this->createTemplate();
+        $template->fields()->delete();
+        $template->update(['documento' => ['version_esquema' => 1, 'secciones' => []]]);
+        $payload = ['title' => 'Identificación institucional', 'key' => 'bloque_identificacion', 'preset' => 'identificacion'];
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $payload)->assertSuccessful();
+
+        $fields = $template->fresh()->fields()->pluck('clave')->all();
+        $this->assertContains('asignatura', $fields);
+        $this->assertContains('formacion_experiencia', $fields);
+        $this->assertSame('institutional', $template->fresh()->sections()->sole()->blocks()->sole()->configuredContentType());
+        $payload['key'] = 'otra';
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $payload)->assertUnprocessable();
+    }
+
     public function test_administrator_creates_a_section_from_a_catalog_preset(): void
     {
         $template = $this->createTemplate();

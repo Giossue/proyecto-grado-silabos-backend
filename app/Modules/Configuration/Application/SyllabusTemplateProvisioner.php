@@ -71,8 +71,6 @@ final class SyllabusTemplateProvisioner
     {
         /** @var list<array{0: string, 1: string, 2: list<array{0: string, 1: string, 2: string, 3: string|null}>}> $baseline */
         $baseline = config('syllabus_template.baseline', []);
-        /** @var list<array{0: string, 1: string, 2: string, 3: list<string>|null, 4?: array{key: string, value: string}|null}> $identificationInputs */
-        $identificationInputs = config('syllabus_template.identification_inputs', []);
 
         $sections = [];
         $fieldDefinitions = [];
@@ -131,25 +129,8 @@ final class SyllabusTemplateProvisioner
                     'posicion' => 1,
                 ];
 
-                if ($contentType !== 'institutional') {
-                    continue;
-                }
-
-                foreach ($identificationInputs as $inputPosition => $input) {
-                    [$inputKey, $inputLabel, $inputType, $options] = $input;
-                    $fieldDefinitions[] = [
-                        'plantilla_id' => $template->id,
-                        'campo_plantilla_id' => $blockId,
-                        'clave' => $inputKey,
-                        'etiqueta' => $inputLabel,
-                        'tipo' => $inputType,
-                        'heredado' => $inputKey === 'formacion_experiencia',
-                        'origen_maestro' => $inputKey === 'formacion_experiencia' ? FieldDefinition::ORIGIN_TEACHER : null,
-                        'editable_docente' => $inputKey !== 'formacion_experiencia',
-                        'opciones' => $options,
-                        'mostrar_si' => $input[4] ?? null,
-                        'posicion' => $inputPosition + 2,
-                    ];
+                if ($contentType === 'institutional') {
+                    array_push($fieldDefinitions, ...$this->identificationInputs($template->id, $blockId));
                 }
             }
 
@@ -171,6 +152,36 @@ final class SyllabusTemplateProvisioner
         foreach ($fieldDefinitions as $fieldDefinition) {
             FieldDefinition::query()->create($fieldDefinition);
         }
+    }
+
+    /**
+     * Campos que llena quien arma el sílabo dentro de la tabla de identificación (discapacidad, formación…).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function identificationInputs(string $templateId, string $blockId): array
+    {
+        /** @var list<array{0: string, 1: string, 2: string, 3: list<string>|null, 4?: array{key: string, value: string}|null}> $inputs */
+        $inputs = config('syllabus_template.identification_inputs', []);
+        $definitions = [];
+        foreach ($inputs as $position => [$key, $label, $type, $options]) {
+            $teacher = $key === 'formacion_experiencia';
+            $definitions[] = [
+                'plantilla_id' => $templateId,
+                'campo_plantilla_id' => $blockId,
+                'clave' => $key,
+                'etiqueta' => $label,
+                'tipo' => $type,
+                'heredado' => $teacher,
+                'origen_maestro' => $teacher ? FieldDefinition::ORIGIN_TEACHER : null,
+                'editable_docente' => ! $teacher,
+                'opciones' => $options,
+                'mostrar_si' => $inputs[$position][4] ?? null,
+                'posicion' => $position + 2,
+            ];
+        }
+
+        return $definitions;
     }
 
     private function fieldType(string $contentType): string

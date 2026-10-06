@@ -57,6 +57,9 @@ class SaveFieldDefinition
         return $this->work->replaceTemplate(function () use ($actor, $activeRole, $data, $field, $request, $templateId): ?FieldDefinition {
             $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
 
+            if ($field === null && ($data['preset'] ?? null) === 'identificacion') {
+                throw ValidationException::withMessages(['preset' => 'La identificación institucional se agrega como sección nueva.']);
+            }
             if ($field === null && isset($data['preset'])) {
                 $data = $this->catalog->expand($data, $templateId);
             }

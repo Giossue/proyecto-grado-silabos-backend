@@ -57,6 +57,7 @@ return [
      * [clave, título, resumen, clave del campo, origen, ajustable por el docente, contenido inicial]
      */
     'catalog' => [
+        ['identificacion', 'Identificación institucional', 'Tabla inicial con los datos de la asignatura, el periodo y el docente; no se edita.', 'asignatura', null, false, null],
         ['descripcion', 'Descripción de la asignatura', 'Texto que Coordinación escribe una vez por materia.', 'descripcion', 'ficha', false, null],
         ['objetivo_general', 'Objetivo general', 'Se llena desde la ficha de la asignatura.', 'objetivo_general', 'ficha', false, null],
         ['objetivos_especificos', 'Objetivos específicos', 'Se llena desde la ficha de la asignatura.', 'objetivos_especificos', 'ficha', false, null],

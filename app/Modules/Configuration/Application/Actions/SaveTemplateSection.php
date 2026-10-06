@@ -3,6 +3,7 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -23,6 +24,7 @@ class SaveTemplateSection
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
         private readonly SaveFieldDefinition $fields,
+        private readonly SyllabusTemplateProvisioner $provisioner,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -44,6 +46,26 @@ class SaveTemplateSection
             $fieldDefinitions = [];
 
             $preset = is_string($data['preset'] ?? null) ? $data['preset'] : null;
+            $identification = $preset === 'identificacion';
+            if ($identification) {
+                if ($template->fields()->where('clave', 'asignatura')->exists()) {
+                    throw ValidationException::withMessages(['preset' => 'La plantilla ya tiene la identificación institucional.']);
+                }
+                $blockId = (string) Str::uuid();
+                $blocks[] = [
+                    'id' => $blockId,
+                    'clave' => 'identificacion_principal',
+                    'titulo' => 'Identificación institucional',
+                    'configuracion' => ['content_type' => 'institutional', 'document' => TemplateDocumentDefaults::identification()],
+                    'posicion' => 1,
+                ];
+                $fieldDefinitions[] = [
+                    'plantilla_id' => $template->id, 'campo_plantilla_id' => $blockId, 'clave' => 'asignatura',
+                    'etiqueta' => 'Identificación institucional', 'tipo' => 'referencia_maestra', 'heredado' => true,
+                    'origen_maestro' => 'asignaturas', 'editable_docente' => false, 'posicion' => 1,
+                ];
+                array_push($fieldDefinitions, ...$this->provisioner->identificationInputs($template->id, $blockId));
+            }
             foreach ($preset !== null ? [] : $this->fields($data) as $fieldPosition => $fieldData) {
                 $blockId = (string) Str::uuid();
                 $fieldKey = $this->stringValue($fieldData, 'key');
@@ -100,7 +122,7 @@ class SaveTemplateSection
                 FieldDefinition::query()->create($fieldDefinition);
             }
 
-            if ($preset !== null) {
+            if ($preset !== null && ! $identification) {
                 $this->fields->create($template->id, [
                     'preset' => $preset, 'section_id' => $sectionId, 'position' => 1,
                     'key' => '', 'label' => '', 'content_type' => 'free_text',
