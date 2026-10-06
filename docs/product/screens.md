@@ -103,6 +103,9 @@ En ADM-02, Bibliotecario no pide carrera. En ADM-06, el menú Insertar ofrece el
 | ADM-11 | Configuración                                              |
 | ADM-12 | Convocatorias (proceso institucional de sílabos)           |
 
+En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
+«Todas las carreras» para Bibliotecario.
+
 ## Patrones comunes
 
 - El menú depende del rol activo y de las capacidades efectivas.
