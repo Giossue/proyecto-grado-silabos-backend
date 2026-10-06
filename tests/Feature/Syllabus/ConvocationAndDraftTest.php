@@ -583,7 +583,7 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $text = FieldDefinition::query()->where('clave', 'metodologia')->firstOrFail();
-        $empty = FieldDefinition::query()->where('clave', 'tecnicas_ensenanza')->firstOrFail();
+        $empty = FieldDefinition::query()->where('clave', 'unidades')->firstOrFail();
 
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $text]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
@@ -592,7 +592,7 @@ class ConvocationAndDraftTest extends TestCase
 
         $detail = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
         $fields = collect($detail->json('syllabus.sections'))->flatMap(fn ($section) => $section['blocks'])->flatMap(fn ($block) => $block['fields'])->keyBy('key');
-        $this->assertTrue($fields['tecnicas_ensenanza']['required']);
+        $this->assertTrue($fields['unidades']['required']);
         $this->assertArrayNotHasKey('rules', $fields['metodologia']);
 
         $validation = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();

@@ -64,7 +64,7 @@ class TemplateAndSourceTest extends TestCase
 
         $template->refresh();
         $this->assertCount(12, $template->sections());
-        $this->assertCount(21, $template->fields()->get(), 'Incluye la ficha, las tablas del docente y los campos del PDF; el contenido fijo no tiene campos.');
+        $this->assertCount(15, $template->fields()->get(), 'Incluye la ficha, las tablas del docente y los campos del PDF; el contenido fijo no tiene campos.');
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion' => 'plantilla.formateada',
             'recurso_id' => $template->id,
@@ -72,9 +72,8 @@ class TemplateAndSourceTest extends TestCase
 
         $evaluation = $template->sections()->where('clave', 'evaluacion')->firstOrFail();
         $blocks = $evaluation->blocks()->orderBy('posicion');
-        $this->assertSame(['Indicadores de evaluación', 'Escala de valoración', 'Recuperación y aprobación'], $blocks->pluck('titulo')->all());
-        $this->assertSame(['fixed', 'fixed', 'text'], $blocks->map->configuredContentType()->all());
-        $this->assertSame('texto_libre', $template->fields()->where('clave', 'recuperacion')->sole()->tipo);
+        $this->assertSame(['Indicadores de evaluación', 'Escala de valoración'], $blocks->pluck('titulo')->all());
+        $this->assertSame(['fixed', 'fixed'], $blocks->map->configuredContentType()->all());
         $this->assertArrayNotHasKey('table', $blocks->first()->configuracion);
         $this->assertNull($template->fields()->where('clave', 'indicadores_evaluacion')->first());
         $this->assertDatabaseCount('valores_campo', 0);

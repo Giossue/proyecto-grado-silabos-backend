@@ -23,21 +23,16 @@ return [
         ]],
         ['metodologia', 'Metodología y ambientes de aprendizaje', [
             ['metodologia', 'Métodos de enseñanza-aprendizaje', 'free_text', null],
-            ['tecnicas_ensenanza', 'Técnicas de enseñanza', 'free_text', null],
-            ['recursos_medios', 'Recursos y medios didácticos', 'free_text', null],
-            ['herramientas_tic', 'Herramientas pedagógicas, TAC e inteligencia artificial', 'free_text', null],
-            ['ambientes_aprendizaje', 'Ambientes o escenarios de aprendizaje', 'free_text', null],
         ]],
         ['evaluacion', 'Evaluación de los aprendizajes', [
             ['indicadores_evaluacion', 'Indicadores de evaluación', 'fixed', 'indicadores'],
             ['componentes_evaluacion', 'Escala de valoración', 'fixed', 'escala'],
-            ['recuperacion', 'Recuperación y aprobación', 'free_text', null],
         ]],
         ['perfil_egreso', 'Relación de la asignatura con los resultados de aprendizaje del perfil de egreso', [
             ['contribucion_perfil', 'Contribución al perfil de egreso', 'free_text', null],
         ]],
         ['etica', 'Conducta y comportamiento ético', [
-            ['conducta_etica', 'Conducta y comportamiento ético', 'free_text', null],
+            ['conducta_etica', 'Conducta y comportamiento ético', 'fixed', null],
         ]],
         ['bibliografia', 'Bibliografía', [
             ['bibliografia', 'Bibliografía básica', 'free_text', null],
