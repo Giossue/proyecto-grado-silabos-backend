@@ -319,6 +319,26 @@ class SyllabusTemplate extends Model
             ])->all());
     }
 
+    /**
+     * Lo retirado de la plantilla se borra; solo se conserva lo que todavía tiene valores guardados
+     * (un sílabo de un periodo anterior), porque esos valores apuntan a su definición.
+     */
+    private function purgeUnusedRetired(): void
+    {
+        DB::table('definiciones_campo')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', false)
+            ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('valores_campo')
+                ->whereColumn('valores_campo.definicion_campo_id', 'definiciones_campo.definicion_campo_id'))
+            ->delete();
+        DB::table('campos_plantilla')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', false)
+            ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('definiciones_campo')
+                ->whereColumn('definiciones_campo.campo_plantilla_id', 'campos_plantilla.campo_plantilla_id'))
+            ->delete();
+        DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', false)
+            ->whereNotExists(fn ($query) => $query->selectRaw('1')->from('campos_plantilla')
+                ->whereColumn('campos_plantilla.seccion_plantilla_id', 'secciones_plantilla.seccion_plantilla_id'))
+            ->delete();
+    }
+
     /** @param array<string, mixed> $document */
     private function saveDocument(array $document): void
     {
@@ -346,6 +366,7 @@ class SyllabusTemplate extends Model
             DB::table('definiciones_campo')->whereIn('campo_plantilla_id', $retiredBlockIds)->update(['vigente_en_plantilla' => false]);
             DB::table('campos_plantilla')->whereIn('campo_plantilla_id', $retiredBlockIds)->update(['vigente_en_plantilla' => false]);
             DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->whereNotIn('seccion_plantilla_id', $sectionIds)->update(['vigente_en_plantilla' => false]);
+            $this->purgeUnusedRetired();
 
             foreach ($sections as $sectionIndex => $section) {
                 DB::table('secciones_plantilla')->updateOrInsert(['seccion_plantilla_id' => (string) $section['id']], [

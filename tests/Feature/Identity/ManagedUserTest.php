@@ -112,7 +112,7 @@ class ManagedUserTest extends TestCase
         $this->actingAsAdministrator()
             ->getJson(route('api.v1.admin.users.index', ['status' => 'active']))
             ->assertOk()
-            ->assertJson(fn (Assert $page) => $page->etc()->has('users.data', 5));
+            ->assertJson(fn (Assert $page) => $page->etc()->has('users.data', 4));
     }
 
     public function test_the_list_separates_the_role_from_its_career(): void

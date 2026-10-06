@@ -542,10 +542,8 @@ class TemplateAndSourceTest extends TestCase
             ->assertSuccessful();
 
         $this->assertNull($version->fresh()->block($second->id));
-        $this->assertDatabaseHas('definiciones_campo', [
-            'campo_plantilla_id' => $second->id,
-            'vigente_en_plantilla' => false,
-        ]);
+        $this->assertDatabaseMissing('definiciones_campo', ['campo_plantilla_id' => $second->id]);
+        $this->assertDatabaseMissing('campos_plantilla', ['campo_plantilla_id' => $second->id]);
     }
 
     public function test_table_structure_form_no_longer_exists(): void
@@ -596,11 +594,10 @@ class TemplateAndSourceTest extends TestCase
 
         $this->assertNull($version->fresh()->section($created->id));
         foreach ($created->blocks()->pluck('id') as $blockId) {
-            $this->assertDatabaseHas('definiciones_campo', [
-                'campo_plantilla_id' => $blockId,
-                'vigente_en_plantilla' => false,
-            ]);
+            $this->assertDatabaseMissing('definiciones_campo', ['campo_plantilla_id' => $blockId]);
+            $this->assertDatabaseMissing('campos_plantilla', ['campo_plantilla_id' => $blockId]);
         }
+        $this->assertDatabaseMissing('secciones_plantilla', ['seccion_plantilla_id' => $created->id]);
     }
 
     public function test_source_management_endpoints_are_retired_for_every_role(): void
