@@ -4,6 +4,7 @@ namespace App\Modules\Documents\Infrastructure\Rendering;
 
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
+use App\Modules\Syllabus\Application\IdentificationCard;
 use PhpOffice\PhpWord\Element\Section;
 
 final class WordFieldRenderer
@@ -64,14 +65,17 @@ final class WordFieldRenderer
     {
         $types = app(FieldTypeRegistry::class);
         $fields = WordValues::arrayList($snapshotSection['fields'] ?? null);
-        $part = 0;
+        // Lo que el docente escribe y se imprime dentro de la tabla de identificación no se repite debajo.
+        $card = array_filter($fields, fn (array $field): bool => ($field['type'] ?? null) === 'automatico' && ($field['config']['source'] ?? null) === 'identification_card') !== [];
         foreach ($fields as $field) {
+            if ($card && ($field['type'] ?? null) === 'texto' && array_key_exists((string) ($field['key'] ?? ''), IdentificationCard::INPUT_KEYS)) {
+                continue;
+            }
             $type = $types->get((string) $field['type']);
             $label = WordValues::string($field['label'] ?? null, '');
             if ($type->key() !== 'automatico' && $label !== '') {
-                $prefix = count($fields) > 1 ? $number.'.'.(++$part).' ' : '';
                 $section->addText(
-                    $prefix.$label,
+                    $label,
                     ['bold' => true, 'size' => $this->context->appearance['field_font_size'], 'color' => $this->context->color('text_color')],
                     ['spaceBefore' => 160, 'spaceAfter' => 80, 'keepNext' => true],
                 );

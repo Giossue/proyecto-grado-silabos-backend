@@ -8,31 +8,30 @@ return [
      * En `tabla`, `columns` y `rows` son [clave => etiqueta]; el provisionador los expande.
      */
     'baseline' => [
-        ['identificacion', 'Identificación institucional', [
-            ['asignatura', 'Identificación institucional', 'automatico', ['source' => 'identification_card']],
-            ['discapacidad_tipo', 'Tipo de discapacidad', 'texto', []],
-            ['discapacidad_adaptacion', 'Descripción de la adaptación curricular', 'texto', []],
-            ['formacion_experiencia', 'Formación y experiencia académica-investigativa', 'texto', []],
+        ['identificacion', 'Identificación Institucional', [
+            ['asignatura', '', 'automatico', ['source' => 'identification_card']],
+            ['discapacidad_tipo', 'Estudiantes con discapacidad: Tipo de discapacidad', 'texto', []],
+            ['discapacidad_adaptacion', 'Estudiantes con discapacidad: Breve descripción', 'texto', []],
+            ['formacion_experiencia', 'Formación y experiencia académica – investigativa', 'texto', []],
         ]],
         ['descripcion', 'Descripción de la asignatura', [
-            ['descripcion', 'Descripción de la asignatura', 'ficha', ['adjustable' => false]],
+            ['descripcion', '', 'ficha', ['adjustable' => false]],
         ]],
         ['objetivos', 'Objetivo(s) de la asignatura', [
-            ['objetivo_general', 'Objetivo general', 'ficha', ['adjustable' => false]],
+            ['objetivo_general', 'Objetivo General', 'ficha', ['adjustable' => false]],
             ['objetivos_especificos', 'Objetivos específicos', 'ficha', ['adjustable' => false]],
         ]],
         ['resultados', 'Resultados de aprendizaje de la asignatura', [
-            ['resultados_aprendizaje', 'Resultados de aprendizaje', 'ficha', ['adjustable' => false]],
+            ['resultados_aprendizaje', '', 'ficha', ['adjustable' => false]],
         ]],
-        ['habilidades', 'Habilidades blandas de la asignatura', [
-            ['habilidades_blandas', 'Habilidades blandas', 'ficha', ['adjustable' => false]],
-            ['herramientas_tic', 'Herramientas TIC', 'ficha', ['adjustable' => false]],
+        ['habilidades', 'Habilidades Blandas de la asignatura', [
+            ['habilidades_blandas', '', 'ficha', ['adjustable' => false]],
         ]],
         ['planificacion', 'Distribución y planificación de las unidades curriculares', [
-            ['unidades', 'Planificación de unidades', 'tabla', [
+            ['unidades', '', 'tabla', [
                 'weeks' => 16,
                 'columns' => [
-                    'contenidos' => 'Contenidos temáticos',
+                    'contenidos' => 'Contenidos temáticos de la unidad',
                     'acd_h' => 'ACD (h)',
                     'ape_h' => 'APE (h)',
                     'aa_h' => 'AA (h)',
@@ -43,25 +42,29 @@ return [
                 ],
             ]],
         ]],
-        ['metodologia', 'Metodología y ambientes de aprendizaje', [
-            ['metodologia', 'Métodos de enseñanza-aprendizaje', 'texto', []],
+        ['metodologia', 'Metodología y Ambientes de Aprendizaje', [
+            ['metodologia', '7.1 Métodos de Enseñanza – Aprendizaje', 'texto', []],
+            ['tecnicas_ensenanza', '7.2 Técnicas de enseñanza', 'texto', []],
+            ['recursos_medios', '7.3 Recursos y medios didácticos', 'texto', []],
+            ['herramientas_tic', '7.4 Herramientas pedagógicas, Tecnologías de aprendizaje y conocimiento e Inteligencia Artificial en los procesos enseñanza-aprendizaje', 'texto', []],
+            ['ambientes_aprendizaje', '7.5 Ambientes o escenarios de aprendizaje', 'texto', []],
         ]],
-        ['evaluacion', 'Evaluación de los aprendizajes', [
-            ['indicadores_evaluacion', 'Indicadores de evaluación', 'fijo', ['content' => 'indicadores']],
-            ['componentes_evaluacion', 'Escala de valoración', 'fijo', ['content' => 'escala']],
+        ['evaluacion', 'EVALUACIÓN DE LOS APRENDIZAJES', [
+            ['indicadores_evaluacion', '', 'fijo', ['content' => 'indicadores']],
+            ['componentes_evaluacion', 'ESCALA DE VALORACIÓN', 'fijo', ['content' => 'escala']],
         ]],
-        ['perfil_egreso', 'Relación de la asignatura con los resultados de aprendizaje del perfil de egreso', [
-            ['contribucion_perfil', 'Contribución al perfil de egreso', 'ficha', ['adjustable' => false]],
+        ['perfil_egreso', 'Relación de la asignatura con los resultados de aprendizaje del Perfil de egreso de la carrera', [
+            ['contribucion_perfil', '', 'ficha', ['adjustable' => false]],
         ]],
         ['etica', 'Conducta y comportamiento ético', [
-            ['conducta_etica', 'Conducta y comportamiento ético', 'fijo', ['content' => 'etica']],
+            ['conducta_etica', '', 'fijo', ['content' => 'etica']],
         ]],
-        ['bibliografia', 'Bibliografía', [
-            ['bibliografia', 'Bibliografía básica', 'ficha', ['adjustable' => true]],
-            ['bibliografia_complementaria', 'Bibliografía complementaria', 'ficha', ['adjustable' => true]],
+        ['bibliografia', 'Bibliografía Básica', [
+            ['bibliografia', '', 'ficha', ['adjustable' => true]],
+            ['bibliografia_complementaria', 'Complementaria', 'ficha', ['adjustable' => true]],
         ]],
         ['revision', 'Revisión y aprobación', [
-            ['firmas', 'Revisión y aprobación', 'fijo', ['content' => 'firmas']],
+            ['firmas', '', 'fijo', ['content' => 'firmas']],
         ]],
     ],
 

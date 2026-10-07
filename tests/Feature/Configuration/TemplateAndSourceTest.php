@@ -9,6 +9,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\SyllabusTemplateSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -39,6 +40,20 @@ class TemplateAndSourceTest extends TestCase
         $this->coordinatorContext = $this->coordinator->roleAssignments()->firstOrFail();
     }
 
+    public function test_template_api_delivers_the_official_identification_table_for_the_sheet(): void
+    {
+        $this->seed(SyllabusTemplateSeeder::class);
+        $template = SyllabusTemplate::query()->firstOrFail();
+
+        $response = $this->actingAsAdministrator()->getJson(route('api.v1.admin.template.show', $template))->assertOk();
+        $fields = collect($response->json('template.sections'))->flatMap(fn ($section) => $section['blocks'])->flatMap(fn ($block) => $block['fields'])->keyBy('key');
+
+        $this->assertStringContainsString('FACULTAD:', json_encode($fields['asignatura']['document'], JSON_UNESCAPED_UNICODE));
+        $this->assertStringContainsString('Breve descripción', json_encode($fields['asignatura']['document'], JSON_UNESCAPED_UNICODE) ?: '');
+        $this->assertNull($fields['descripcion']['document']);
+        $this->assertSame('', $fields['descripcion']['label']);
+    }
+
     public function test_administrator_creates_an_empty_template_and_can_apply_the_official_format(): void
     {
         $this->actingAsAdministrator()
@@ -64,7 +79,7 @@ class TemplateAndSourceTest extends TestCase
 
         $template->refresh();
         $this->assertCount(12, $template->sections());
-        $this->assertCount(19, $template->fields()->get(), 'Un campo por bloque, de los cuatro tipos nuevos, sin contenido fijo.');
+        $this->assertCount(22, $template->fields()->get(), 'Un campo por bloque, de los cuatro tipos nuevos, sin contenido fijo.');
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion' => 'plantilla.formateada',
             'recurso_id' => $template->id,
@@ -72,7 +87,7 @@ class TemplateAndSourceTest extends TestCase
 
         $evaluation = $template->sections()->where('clave', 'evaluacion')->firstOrFail();
         $blocks = $evaluation->blocks()->orderBy('posicion');
-        $this->assertSame(['Indicadores de evaluación', 'Escala de valoración'], $blocks->pluck('titulo')->all());
+        $this->assertSame(['', 'ESCALA DE VALORACIÓN'], $blocks->pluck('titulo')->all());
         $this->assertSame(['fijo', 'fijo'], $template->fields()->whereIn('clave', ['indicadores_evaluacion', 'componentes_evaluacion'])->orderBy('posicion')->get()->map(fn ($field) => $field->fieldType()->key())->all());
         $this->assertDatabaseCount('valores_campo', 0);
         $this->assertFalse(Schema::hasTable('filas_repetibles'));
@@ -91,7 +106,7 @@ class TemplateAndSourceTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
 
                 ->has('template.sections', 12)
-                ->where('template.appearance.font_family', 'Times New Roman')
+                ->where('template.appearance.font_family', 'Arial')
                 ->where('template.titleBlock.text', TemplateTitleBlock::DEFAULT_TEXT)
                 ->where('logos.institution', fn (string $url): bool => str_contains($url, '/logos/institucion'))
                 ->where('logos.faculty', fn (string $url): bool => str_contains($url, '/images/silabo/facultad.jpeg'))

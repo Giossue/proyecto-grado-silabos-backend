@@ -552,7 +552,7 @@ class ConvocationAndDraftTest extends TestCase
             ->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertOk()
             ->assertJsonPath('syllabus.presentation.title', 'PROGRAMA DE ASIGNATURA (SÍLABO)')
-            ->assertJsonPath('syllabus.presentation.appearance.font_family', 'Times New Roman')
+            ->assertJsonPath('syllabus.presentation.appearance.font_family', 'Arial')
             ->assertJsonMissingPath('syllabus.identification')
             ->assertJsonStructure(['syllabus' => ['template_variables']])
             ->assertJsonStructure([
@@ -673,7 +673,7 @@ class ConvocationAndDraftTest extends TestCase
         $validation = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $messages = collect($validation->json('validation.results'))->groupBy('field_id');
         $this->assertArrayNotHasKey($text->id, $messages->all());
-        $this->assertSame('«'.$empty->etiqueta.'» está vacío. Complétalo antes de enviar.', $messages[$empty->id]->first()['message']);
+        $this->assertSame('«'.$empty->displayName().'» está vacío. Complétalo antes de enviar.', $messages[$empty->id]->first()['message']);
     }
 
     public function test_validation_skips_non_editable_and_automatic_parts_and_sends_a_missing_profile_to_coordination(): void

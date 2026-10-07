@@ -89,7 +89,10 @@ final class IdentificationCard
             'credits' => self::number($get('subject.credits')),
             'teacher' => self::join($teachers),
             'email' => self::join($emails),
-            'disability' => mb_strtolower(self::stripAccents($input('discapacidad_tiene'))),
+            // Sin la pregunta Sí/No (la plantilla oficial ya no la trae), basta que el docente describa el tipo.
+            'disability' => array_key_exists('discapacidad_tiene', $inputs)
+                ? mb_strtolower(self::stripAccents($input('discapacidad_tiene')))
+                : ($input('discapacidad_tipo') !== '' ? 'si' : 'no'),
             'disability_type' => $input('discapacidad_tipo'),
             'disability_description' => $input('discapacidad_adaptacion'),
             'formation' => $input('formacion_experiencia'),
@@ -150,7 +153,7 @@ final class IdentificationCard
             [$value('Unidad profesional', 6, 1, true), $number($mark(CurricularUnit::Profesional), 1, true)],
             [$value('Unidad de integración curricular', 6), $number($mark(CurricularUnit::IntegracionCurricular))],
             [$label('ESTUDIANTES CON DISCAPACIDAD', 2, 3), $value('Sí', 1, 2), self::cell($disability === 'si' ? 'X' : '', 1, 2, 'plain', true, false, true), $note('Tipo de discapacidad:', $v('disability_type'), 5)],
-            [$note('Descripción de la adaptación curricular:', $v('disability_description'), 5)],
+            [$note('Breve descripción:', $v('disability_description'), 5)],
             [$value('No'), $number($disability === 'no' ? 'X' : ''), $value('', 5)],
             [$label('COMPONENTES DE APRENDIZAJE EN EL PERÍODO ACADÉMICO', 2, 4), $small('HORAS DEL PROFESOR', 3), $small('HORAS DEL ESTUDIANTE', 3), $small('TOTAL DE HORAS POR PERÍODO', 1, 2)],
             [$small('HORAS DE DOCENCIA (ACD)', 3, 1, true), $small('HORAS DE PRÁCTICAS DE APLICACIÓN O EXPERIMENTACIÓN (APE)', 2, 1, true), $small('HORAS DE APRENDIZAJE AUTÓNOMAS (AA)', 1, 1, true)],

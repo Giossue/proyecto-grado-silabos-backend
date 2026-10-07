@@ -65,11 +65,11 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->assertSame('automatico', $types['asignatura']);
         $this->assertSame(['source' => 'identification_card'], $fields['asignatura']->typeConfig());
         $this->assertNull($fields['asignatura']->mostrar_si);
-        foreach (['discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia', 'metodologia'] as $key) {
+        foreach (['discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia', 'metodologia', 'herramientas_tic'] as $key) {
             $this->assertSame('texto', $types[$key], $key);
             $this->assertNull($fields[$key]->mostrar_si, $key);
         }
-        foreach (['descripcion', 'objetivo_general', 'objetivos_especificos', 'resultados_aprendizaje', 'habilidades_blandas', 'herramientas_tic', 'contribucion_perfil', 'bibliografia', 'bibliografia_complementaria'] as $key) {
+        foreach (['descripcion', 'objetivo_general', 'objetivos_especificos', 'resultados_aprendizaje', 'habilidades_blandas', 'contribucion_perfil', 'bibliografia', 'bibliografia_complementaria'] as $key) {
             $this->assertSame('ficha', $types[$key], $key);
             $this->assertTrue($fields[$key]->heredado, $key);
         }
@@ -80,7 +80,7 @@ class SyllabusTemplateSeederTest extends TestCase
         $planning = $fields['unidades'];
         $this->assertSame('tabla', $types['unidades']);
         $this->assertCount(16, $planning->typeConfig()['rows']);
-        $this->assertSame('Contenidos temáticos', $planning->typeConfig()['columns'][0]['label']);
+        $this->assertSame('Contenidos temáticos de la unidad', $planning->typeConfig()['columns'][0]['label']);
         $this->assertCount(8, $planning->typeConfig()['columns']);
         foreach (['indicadores_evaluacion', 'componentes_evaluacion', 'conducta_etica', 'firmas'] as $key) {
             $this->assertSame('fijo', $types[$key], $key);
@@ -94,5 +94,36 @@ class SyllabusTemplateSeederTest extends TestCase
         foreach ($template->blocks() as $block) {
             $this->assertNotContains($block->configuredContentType(), ['fixed', 'institutional', 'flow'], $block->titulo);
         }
+    }
+
+    public function test_the_official_template_reproduces_the_sections_and_fields_of_the_reference_pdf(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $this->seed(SyllabusTemplateSeeder::class);
+        $template = SyllabusTemplate::query()->firstOrFail();
+
+        $structure = $template->sections->map(fn ($section) => [
+            $section->titulo,
+            $section->blocks->flatMap(fn ($block) => $block->fields)->map(fn ($field) => $field->etiqueta.'|'.$field->fieldType()->key())->all(),
+        ])->all();
+
+        $this->assertSame([
+            ['Identificación Institucional', ['|automatico', 'Estudiantes con discapacidad: Tipo de discapacidad|texto', 'Estudiantes con discapacidad: Breve descripción|texto', 'Formación y experiencia académica – investigativa|texto']],
+            ['Descripción de la asignatura', ['|ficha']],
+            ['Objetivo(s) de la asignatura', ['Objetivo General|ficha', 'Objetivos específicos|ficha']],
+            ['Resultados de aprendizaje de la asignatura', ['|ficha']],
+            ['Habilidades Blandas de la asignatura', ['|ficha']],
+            ['Distribución y planificación de las unidades curriculares', ['|tabla']],
+            ['Metodología y Ambientes de Aprendizaje', [
+                '7.1 Métodos de Enseñanza – Aprendizaje|texto', '7.2 Técnicas de enseñanza|texto', '7.3 Recursos y medios didácticos|texto',
+                '7.4 Herramientas pedagógicas, Tecnologías de aprendizaje y conocimiento e Inteligencia Artificial en los procesos enseñanza-aprendizaje|texto',
+                '7.5 Ambientes o escenarios de aprendizaje|texto',
+            ]],
+            ['EVALUACIÓN DE LOS APRENDIZAJES', ['|fijo', 'ESCALA DE VALORACIÓN|fijo']],
+            ['Relación de la asignatura con los resultados de aprendizaje del Perfil de egreso de la carrera', ['|ficha']],
+            ['Conducta y comportamiento ético', ['|fijo']],
+            ['Bibliografía Básica', ['|ficha', 'Complementaria|ficha']],
+            ['Revisión y aprobación', ['|fijo']],
+        ], $structure);
     }
 }

@@ -22,9 +22,9 @@ final class TemplateAppearance
 
     /** @var array<string, mixed> */
     private const INSTITUTIONAL_STYLE = [
-        'font_family' => 'Times New Roman',
+        'font_family' => 'Arial',
         'body_font_size' => 10,
-        'title_font_size' => 10,
+        'title_font_size' => 14,
         'section_font_size' => 10,
         'field_font_size' => 10,
         'margin_cm' => 2.5,

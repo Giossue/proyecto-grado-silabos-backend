@@ -39,6 +39,7 @@ use App\Modules\Configuration\Presentation\Http\Requests\SaveTemplateTitleReques
 use App\Modules\Configuration\Presentation\Http\Requests\StoreInstitutionLogoRequest;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\JsonResponse;
@@ -153,6 +154,10 @@ class TemplateController extends Controller
                                     'help' => $field->ayuda,
                                     'type' => $field->tipo,
                                     'config' => $field->typeConfig(),
+                                    // La hoja del constructor dibuja la tabla oficial con datos de ejemplo.
+                                    'document' => $field->tipo === 'automatico' && ($field->typeConfig()['source'] ?? null) === 'identification_card'
+                                        ? IdentificationCard::document(IdentificationCard::sample())
+                                        : null,
                                     'options' => FieldOptions::options($field),
                                     'show_when' => FieldConditions::normalize($field->mostrar_si),
                                     'required' => true,

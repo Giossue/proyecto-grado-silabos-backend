@@ -118,7 +118,7 @@ class WordRendererTest extends TestCase
         $this->assertStringContainsString('PLAN ACADÉMICO INSTITUCIONAL', $documentXml);
         $this->assertStringNotContainsString(TemplateTitleBlock::DEFAULT_TEXT, $documentXml);
         $this->assertStringNotContainsString('<w:i w:val="1"/>', $documentXml);
-        $this->assertStringContainsString('Times New Roman', $stylesXml);
+        $this->assertStringContainsString('Arial', $stylesXml);
         $this->assertStringNotContainsString('Georgia', $stylesXml);
         $this->assertStringContainsString('w:color w:val="000000"', $stylesXml);
         $this->assertStringContainsString('w:sz w:val="20"', $stylesXml);
@@ -140,7 +140,7 @@ class WordRendererTest extends TestCase
         $zip->close();
         unlink($temporary);
 
-        $this->assertStringContainsString('Times New Roman', $stylesXml);
+        $this->assertStringContainsString('Arial', $stylesXml);
         $this->assertStringContainsString('w:jc w:val="both"', $stylesXml);
         $dom = new DOMDocument;
         $dom->loadXML($documentXml);
@@ -151,10 +151,41 @@ class WordRendererTest extends TestCase
         $this->assertSame(1, $xpath->query('.//w:rPr/w:b', $title)->length);
         $this->assertSame(1, $xpath->query('.//w:rPr/w:color[@w:val="2F5496"]', $title)->length);
         $this->assertSame(1, $xpath->query('./w:pPr/w:jc[@w:val="center"]', $title)->length);
+        $this->assertSame(1, $xpath->query('.//w:rPr/w:sz[@w:val="28"]', $title)->length, 'El título va a 14 pt.');
+        $this->assertStringNotContainsString('Times New Roman', $stylesXml.$documentXml);
         $boxes = $xpath->query('//w:tbl[w:tblPr/w:tblBorders/w:top[@w:color="0070C0"]][.//w:t[contains(., "Texto escrito por el docente")]]');
         $this->assertGreaterThanOrEqual(1, $boxes->length, 'El campo de texto debe ir en un recuadro de borde azul.');
         $identification = $xpath->query('//w:tbl[.//w:t[contains(., "FACULTAD:")]]')->item(0);
         $this->assertSame(0, $xpath->query('./w:tblPr/w:tblBorders/w:top[@w:color="0070C0"]', $identification)->length);
+    }
+
+    public function test_identification_inputs_print_inside_the_table_and_not_again_below_it(): void
+    {
+        $snapshot = $this->typedSnapshot();
+        $snapshot['sections'][0]['fields'][0]['value'] = IdentificationCard::build(
+            ['career' => ['name' => 'Software', 'faculty' => 'Facultad de Pruebas Integradas'], 'subject' => ['name' => 'IA']],
+            ['A'], ['DOCENTE'], ['d@ueb.edu.ec'],
+            ['discapacidad_tipo' => 'Visual', 'formacion_experiencia' => 'Ingeniera de pruebas'],
+        );
+        foreach (['discapacidad_tipo' => 'Estudiantes con discapacidad: Tipo de discapacidad', 'formacion_experiencia' => 'Formación y experiencia'] as $key => $label) {
+            $snapshot['sections'][0]['fields'][] = ['definition_id' => $key, 'key' => $key, 'label' => $label, 'type' => 'texto', 'legacy' => false, 'config' => [], 'value' => null];
+        }
+        $input = new DocumentRenderInput(
+            subject: 'IA', subjectCode: 'SW-P7-037', academicPeriod: '2026', revisionNumber: 1,
+            revisionFingerprint: str_repeat('ab', 32), generatedAt: '2026-09-07T20:00:00-05:00', locale: 'es-EC', snapshot: $snapshot,
+        );
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-ident-test-');
+        file_put_contents($temporary, app(DocumentRenderer::class)->render($input)->docx->bytes);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        unlink($temporary);
+
+        $this->assertSame(1, substr_count($xml, 'Tipo de discapacidad:'));
+        $this->assertStringContainsString('Visual', $xml);
+        $this->assertStringContainsString('Ingeniera de pruebas', $xml);
+        $this->assertStringNotContainsString('Formación y experiencia<', $xml);
     }
 
     public function test_unnamed_part_prints_no_subtitle_and_keeps_numbering_consecutive(): void
