@@ -65,16 +65,17 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->assertSame('automatico', $types['asignatura']);
         $this->assertSame(['source' => 'identification_card'], $fields['asignatura']->typeConfig());
         $this->assertNull($fields['asignatura']->mostrar_si);
-        foreach (['discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia', 'metodologia', 'herramientas_tic'] as $key) {
+        foreach (['discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia'] as $key) {
             $this->assertSame('texto', $types[$key], $key);
             $this->assertNull($fields[$key]->mostrar_si, $key);
         }
-        foreach (['descripcion', 'objetivo_general', 'objetivos_especificos', 'resultados_aprendizaje', 'habilidades_blandas', 'contribucion_perfil', 'bibliografia', 'bibliografia_complementaria'] as $key) {
+        foreach (['descripcion', 'objetivo_general', 'objetivos_especificos', 'resultados_aprendizaje', 'habilidades_blandas', 'contribucion_perfil', 'metodologia', 'tecnicas_ensenanza', 'recursos_medios', 'herramientas_tic', 'ambientes_aprendizaje', 'bibliografia', 'bibliografia_complementaria'] as $key) {
             $this->assertSame('ficha', $types[$key], $key);
             $this->assertTrue($fields[$key]->heredado, $key);
         }
         $this->assertTrue($fields['bibliografia']->typeConfig()['adjustable']);
-        $this->assertTrue($fields['bibliografia_complementaria']->typeConfig()['adjustable']);
+        $this->assertTrue($fields['bibliografia']->typeConfig()['optional']);
+        $this->assertTrue($fields['bibliografia_complementaria']->typeConfig()['optional']);
         $this->assertFalse($fields['descripcion']->typeConfig()['adjustable']);
 
         $planning = $fields['unidades'];
@@ -124,9 +125,9 @@ class SyllabusTemplateSeederTest extends TestCase
             ['Habilidades Blandas de la asignatura', ['|ficha']],
             ['Distribución y planificación de las unidades curriculares', ['|unidades']],
             ['Metodología y Ambientes de Aprendizaje', [
-                '7.1 Métodos de Enseñanza – Aprendizaje|texto', '7.2 Técnicas de enseñanza|texto', '7.3 Recursos y medios didácticos|texto',
-                '7.4 Herramientas pedagógicas, Tecnologías de aprendizaje y conocimiento e Inteligencia Artificial en los procesos enseñanza-aprendizaje|texto',
-                '7.5 Ambientes o escenarios de aprendizaje|texto',
+                '7.1 Métodos de Enseñanza – Aprendizaje|ficha', '7.2 Técnicas de enseñanza|ficha', '7.3 Recursos y medios didácticos|ficha',
+                '7.4 Herramientas pedagógicas, Tecnologías de aprendizaje y conocimiento e Inteligencia Artificial en los procesos enseñanza-aprendizaje|ficha',
+                '7.5 Ambientes o escenarios de aprendizaje|ficha',
             ]],
             ['EVALUACIÓN DE LOS APRENDIZAJES', ['|fijo', 'ESCALA DE VALORACIÓN|fijo']],
             ['Relación de la asignatura con los resultados de aprendizaje del Perfil de egreso de la carrera', ['|ficha']],

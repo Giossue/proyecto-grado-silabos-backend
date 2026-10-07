@@ -51,13 +51,13 @@ return [
         ],
         'metodologia' => [
             'title' => 'Metodología y Ambientes de Aprendizaje',
-            'summary' => 'Cinco textos que escribe el docente: métodos, técnicas, recursos, herramientas TIC, TAC e IA, y ambientes.',
+            'summary' => 'Cinco datos de la ficha de la asignatura: métodos, técnicas, recursos, herramientas TIC, TAC e IA, y ambientes.',
             'fields' => [
-                ['metodologia', '7.1 Métodos de Enseñanza – Aprendizaje', 'texto', []],
-                ['tecnicas_ensenanza', '7.2 Técnicas de enseñanza', 'texto', []],
-                ['recursos_medios', '7.3 Recursos y medios didácticos', 'texto', []],
-                ['herramientas_tic', '7.4 Herramientas pedagógicas, Tecnologías de aprendizaje y conocimiento e Inteligencia Artificial en los procesos enseñanza-aprendizaje', 'texto', []],
-                ['ambientes_aprendizaje', '7.5 Ambientes o escenarios de aprendizaje', 'texto', []],
+                ['metodologia', '7.1 Métodos de Enseñanza – Aprendizaje', 'ficha', ['adjustable' => false]],
+                ['tecnicas_ensenanza', '7.2 Técnicas de enseñanza', 'ficha', ['adjustable' => false]],
+                ['recursos_medios', '7.3 Recursos y medios didácticos', 'ficha', ['adjustable' => false]],
+                ['herramientas_tic', '7.4 Herramientas pedagógicas, Tecnologías de aprendizaje y conocimiento e Inteligencia Artificial en los procesos enseñanza-aprendizaje', 'ficha', ['adjustable' => false]],
+                ['ambientes_aprendizaje', '7.5 Ambientes o escenarios de aprendizaje', 'ficha', ['adjustable' => false]],
             ],
         ],
         'evaluacion' => [
@@ -84,10 +84,10 @@ return [
         ],
         'bibliografia' => [
             'title' => 'Bibliografía Básica',
-            'summary' => 'Bibliografía básica y complementaria, desde la ficha; el docente puede ajustarlas.',
+            'summary' => 'Bibliografía básica y complementaria en tabla, desde la ficha; el docente puede ajustarlas.',
             'fields' => [
-                ['bibliografia', '', 'ficha', ['adjustable' => true]],
-                ['bibliografia_complementaria', 'Complementaria', 'ficha', ['adjustable' => true]],
+                ['bibliografia', '', 'ficha', ['adjustable' => true, 'optional' => true]],
+                ['bibliografia_complementaria', 'Complementaria', 'ficha', ['adjustable' => true, 'optional' => true]],
             ],
         ],
         'revision' => [

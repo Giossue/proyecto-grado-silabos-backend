@@ -231,7 +231,7 @@ class LibraryReviewTest extends TestCase
 
         return match ($field->tipo) {
             'texto_libre', 'texto', 'ficha' => $this->freeTextValue("Contenido {$field->clave}"),
-            'tabla' => $this->filledTableValue($field),
+            'tabla', 'unidades' => $this->filledTableValue($field),
             'booleano' => true,
             'numero' => 1,
             'fecha' => now()->toDateString(),

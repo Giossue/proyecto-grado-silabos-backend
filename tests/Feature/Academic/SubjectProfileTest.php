@@ -147,7 +147,7 @@ class SubjectProfileTest extends TestCase
     public function test_the_initial_content_of_a_field_can_be_modified_or_removed(): void
     {
         $template = SyllabusTemplate::query()->firstOrFail();
-        $field = FieldDefinition::query()->where('clave', 'metodologia')->firstOrFail();
+        $field = FieldDefinition::query()->where('clave', 'discapacidad_tipo')->firstOrFail();
         $this->asRole('admin@silabos.test');
         $payload = ['block_id' => $field->campo_plantilla_id, 'key' => $field->clave, 'label' => $field->etiqueta, 'content_type' => 'text'];
 

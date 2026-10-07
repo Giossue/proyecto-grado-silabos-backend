@@ -20,12 +20,17 @@ final class ProfileFieldType implements FieldType
 
     public function configRules(): array
     {
-        return ['adjustable' => ['sometimes', 'boolean']];
+        return ['adjustable' => ['sometimes', 'boolean'], 'optional' => ['sometimes', 'boolean']];
     }
 
     public function normalizeConfig(array $config): array
     {
-        return ['adjustable' => filter_var($config['adjustable'] ?? false, FILTER_VALIDATE_BOOLEAN)];
+        $normalized = ['adjustable' => filter_var($config['adjustable'] ?? false, FILTER_VALIDATE_BOOLEAN)];
+        if (filter_var($config['optional'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            $normalized['optional'] = true;
+        }
+
+        return $normalized;
     }
 
     public function defaultValue(array $config): mixed

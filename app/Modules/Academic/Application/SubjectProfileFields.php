@@ -44,7 +44,8 @@ class SubjectProfileFields
      */
     public function completeBySubject(array $subjectIds): array
     {
-        $fieldIds = $this->fields()->pluck('id')->all();
+        // Los campos opcionales (bibliografía) no impiden que la ficha esté completa.
+        $fieldIds = $this->fields()->reject(fn (FieldDefinition $field): bool => ($field->typeConfig()['optional'] ?? false) === true)->pluck('id')->all();
         $filled = [];
         if ($fieldIds !== [] && $subjectIds !== []) {
             FieldValue::query()

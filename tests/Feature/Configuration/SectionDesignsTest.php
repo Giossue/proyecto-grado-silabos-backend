@@ -123,7 +123,7 @@ class SectionDesignsTest extends TestCase
         $this->assertCount(12, $sections);
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get();
         $this->assertSame([], $fields->filter(fn ($field) => $field->hasLegacyClass())->all());
-        $this->assertSame(['automatico' => 1, 'ficha' => 8, 'fijo' => 4, 'texto' => 8, 'unidades' => 1], $fields->countBy(fn ($field) => $field->fieldType()->key())->sortKeys()->all());
+        $this->assertSame(['automatico' => 1, 'ficha' => 13, 'fijo' => 4, 'texto' => 3, 'unidades' => 1], $fields->countBy(fn ($field) => $field->fieldType()->key())->sortKeys()->all());
         $this->assertSame(
             collect(config('syllabus_template.designs'))->pluck('title')->values()->all(),
             $sections->sortBy('posicion')->pluck('titulo')->values()->all(),
