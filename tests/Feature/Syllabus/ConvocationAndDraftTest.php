@@ -13,6 +13,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
+use App\Modules\Documents\Infrastructure\Rendering\WordFieldRenderer;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\Actions\OpenConvocation;
 use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
@@ -156,6 +157,34 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus->values()->where('definicion_campo_id', $definition->id)->update(['valor' => FreeText::fromText('Cambio posterior')]);
         app(SyllabusSnapshot::class)->restore($syllabus, $snapshot);
         $this->assertSame($description['value'], $syllabus->values()->where('definicion_campo_id', $definition->id)->firstOrFail()->valor);
+    }
+
+    public function test_the_official_template_syllabus_inherits_profile_fields_and_exports_word_by_type(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
+        $this->assertSame('Ficha de prueba: descripcion', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $description->id)->firstOrFail()->valor));
+
+        $snapshot = app(SyllabusSnapshot::class)->build($syllabus);
+        foreach ($snapshot['sections'] as $section) {
+            $this->assertTrue(WordFieldRenderer::usesTypes($section), "La sección {$section['key']} debe pintarse por tipo.");
+        }
+        $docx = app(DocumentRenderer::class)->render(new DocumentRenderInput(
+            subject: 'Materia', subjectCode: 'X-1', academicPeriod: 'P', revisionNumber: 1, revisionFingerprint: str_repeat('a', 64),
+            generatedAt: '2026-09-07T20:00:00-05:00', locale: 'es-EC', snapshot: $snapshot,
+        ))->docx;
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-oficial-');
+        file_put_contents($temporary, $docx->bytes);
+        $zip = new \ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        unlink($temporary);
+
+        $text = strip_tags($xml);
+        $this->assertStringContainsString('Ficha de prueba: descripcion', $text);
+        $this->assertStringContainsString('Contenidos temáticos', $text);
+        $this->assertStringContainsString('Revisión y aprobación', $text);
     }
 
     public function test_a_stored_v7_revision_renders_without_reading_live_data(): void
