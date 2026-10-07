@@ -543,6 +543,15 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   período y solo mantiene al docente si sigue activo, verificado y con rol vigente en la
   carrera; si no, el paralelo queda sin docente. La coordinación solo corrige lo que cambió.
   Se audita como `academico.periodo_arrastrado`.
+- **Proyecto de carrera** (COR-16, I-204) es un módulo aparte del Coordinador: tabla con todas las
+  materias de la malla (materia, código, ciclo y estado de la ficha) y un clic en la fila abre la ficha.
+  La ficha ya no está en «Materias y asignaciones». El botón **Importar documentos** abre el asistente:
+  se suben PDF o Excel de la carrera (hasta 6, 20 MB c/u), un trabajo lee el texto, busca en él lo que
+  habla de cada materia y la IA propone los campos de la ficha que define la plantilla, sin inventar
+  (lo que no tiene sustento queda vacío). Coordinación revisa la propuesta por materia, marca cuáles
+  aplicar y solo esas se escriben (reemplazan la ficha actual). Los archivos son temporales: se borran al
+  aplicar o descartar. Sin proveedor de IA (`AI_DRIVER` deepseek u openai con clave y modelo) el asistente
+  se desactiva con un aviso. Bloqueado mientras la convocatoria de la carrera esté activa.
 - COR-14 no programa materias una a una: **Preparar período** (visible solo mientras haya
   materias de la malla sin programar) abre un modal amplio con las materias activas que
   aún no están programadas en el período en curso. Coordinación

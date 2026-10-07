@@ -540,3 +540,5 @@ I-199 — paralelos y docentes persistentes (COR-14, ADM-12): `CarryOverPeriodSe
 I-200 — sin Panel docente (DOC-01): Docencia inicia en Mis sílabos; `/docente/panel` redirige. `ApiDashboardTest::test_teacher_has_no_dashboard_content` y `router.test.ts` cubren el cambio.
 
 I-201 — modal de creación de plantilla, sección 6 horizontal y pestañas del docente (ADM-06, DOC-02): `TemplateAndSourceTest`, `SyllabusTemplateSeederTest`, `AdminTemplatePage.test.ts` y `TeacherSyllabusDetailPage.test.ts`.
+
+I-204 — módulo Proyecto de carrera con asistente de IA (COR-16, CU-04): `FichaImportTest` y `FichaImportDialog.test.ts`; la ficha sale de Materias y asignaciones.
