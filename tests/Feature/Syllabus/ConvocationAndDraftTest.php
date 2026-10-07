@@ -80,8 +80,10 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertArrayNotHasKey('code', data_get($syllabus->contexto_academico, 'curriculum'));
         $this->assertNotNull($syllabus->parallel);
         $this->assertCount(1, $syllabus->currentTeachers()->get());
-        $master = $syllabus->values()->whereHas('field', fn ($field) => $field->where('heredado', true))->firstOrFail();
-        $this->assertSame('Arquitectura de Software', $master->valor['nombre']);
+        // La identificación es un dato automático: no guarda valor, se resuelve al enviar.
+        $automatic = FieldDefinition::query()->where('clave', 'asignatura')->firstOrFail();
+        $this->assertSame('automatico', $automatic->tipo);
+        $this->assertNull($syllabus->values()->where('definicion_campo_id', $automatic->id)->firstOrFail()->valor);
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion' => 'convocatoria.abierta',
             'recurso_id' => $convocation->id,
