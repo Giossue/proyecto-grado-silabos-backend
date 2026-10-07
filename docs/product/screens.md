@@ -532,6 +532,12 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   carrera» o una distinta), sin cambiar la modalidad visible de la carrera. COR-14 programa
   materias sin selector de modalidad: hereda la de la materia o, si no hay excepción, la
   de la carrera y la muestra en el listado (I-35).
+- Persistencia entre períodos (I-199): al abrir la convocatoria institucional, el servidor
+  copia a cada carrera los paralelos, jornadas y docentes de su período anterior (el último
+  anterior con paralelos). Solo copia materias activas que aún no tienen paralelos en el
+  período y solo mantiene al docente si sigue activo, verificado y con rol vigente en la
+  carrera; si no, el paralelo queda sin docente. La coordinación solo corrige lo que cambió.
+  Se audita como `academico.periodo_arrastrado`.
 - COR-14 no programa materias una a una: **Preparar período** (visible solo mientras haya
   materias de la malla sin programar) abre un modal amplio con las materias activas que
   aún no están programadas en el período en curso. Coordinación

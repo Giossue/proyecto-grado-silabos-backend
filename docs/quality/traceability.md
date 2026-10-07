@@ -533,3 +533,5 @@ exige cuentas de coordinación y de biblioteca, describe los campos de plantilla
 (Texto, Ficha, Tabla, Automático) y apunta a Convocatorias; el docente ve el orden
 Biblioteca → Coordinación y las tres firmas; Coordinación y Administración mencionan la
 importación con Excel. Biblioteca no tiene lista de puesta en marcha.
+
+I-199 — paralelos y docentes persistentes (COR-14, ADM-12): `CarryOverPeriodSetup` se ejecuta al abrir la convocatoria institucional; `SyllabusProcessTest` cubre la copia de código, jornada y docente.
