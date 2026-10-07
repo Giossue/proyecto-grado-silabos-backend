@@ -91,7 +91,7 @@ class TemplateAndSourceTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
 
                 ->has('template.sections', 12)
-                ->where('template.appearance.font_family', 'Arial')
+                ->where('template.appearance.font_family', 'Times New Roman')
                 ->where('template.titleBlock.text', TemplateTitleBlock::DEFAULT_TEXT)
                 ->where('logos.institution', fn (string $url): bool => str_contains($url, '/logos/institucion'))
                 ->where('logos.faculty', fn (string $url): bool => str_contains($url, '/images/silabo/facultad.jpeg'))
@@ -237,15 +237,8 @@ class TemplateAndSourceTest extends TestCase
             ->assertSuccessful()
             ->assertSuccessful();
 
-        $expected = [
-            ...TemplateAppearance::defaults(),
-            'body_font_size' => 12,
-            'title_font_size' => 18,
-            'section_font_size' => 14,
-            'field_font_size' => 12,
-            'margin_cm' => 2.0,
-            'orientation' => 'landscape',
-        ];
+        // El formato oficial es fijo: lo guardado se normaliza a los valores oficiales.
+        $expected = TemplateAppearance::defaults();
         $this->assertEquals($expected, $template->fresh()->mapeo_documento['appearance']);
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion' => 'plantilla.apariencia_actualizada',

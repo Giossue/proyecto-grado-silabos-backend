@@ -123,3 +123,11 @@ La condición «mostrar si» dependía de los tipos `seleccion_unica` y `boolean
 
 - Ajuste posterior a la etapa 7: el constructor y la vista previa se dibujan como hoja A4 (clases `template-stage`/`template-sheet` en `styles.css`) sobre fondo gris, con logos, título, secciones «1. Nombre», subtítulos «1.1 Nombre» solo con nombre, vista de cada tipo (`*View.vue`) y etiqueta del tipo. Los controles (subir, bajar, renombrar, propiedades, borrar) flotan sobre lo seleccionado; «Nueva sección» y «Cargar formato oficial UEB» viven en la hoja, también vacía. Sin revisión visual en navegador.
 - Etapa 8: se quitaron la pestaña «Vista previa» (`TemplatePreview`) y «Personalizar plantilla»; la pantalla es solo la hoja. El logo de la universidad se cambia sobre la hoja (`TemplateLogoControl`, botón «Cambiar logo», mismo `storeLogo`, toast y estado de carga). Estilo oficial: título azul (`--document-official-blue`), serif 10 pt justificado, campos texto/ficha/fijo en recuadro azul (`template-sheet-box`). Sin revisión visual en navegador.
+
+## Formato oficial del Word
+
+`TemplateAppearance` fija los valores oficiales (Times New Roman 10 pt, justificado, título azul UEB en
+negrita, margen 2,5 cm vertical) e ignora los guardados; los campos de texto, ficha y fijo salen en un
+recuadro de borde azul. Sin migración (la apariencia guardada ya no se usa). Pruebas:
+`WordRendererTest::test_docx_follows_the_official_format`. Pendiente: papel A4 y comprobar el PDF real.
+

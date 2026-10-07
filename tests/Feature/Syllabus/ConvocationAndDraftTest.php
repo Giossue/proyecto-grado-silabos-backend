@@ -552,7 +552,7 @@ class ConvocationAndDraftTest extends TestCase
             ->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertOk()
             ->assertJsonPath('syllabus.presentation.title', 'PROGRAMA DE ASIGNATURA (SÍLABO)')
-            ->assertJsonPath('syllabus.presentation.appearance.font_family', 'Arial')
+            ->assertJsonPath('syllabus.presentation.appearance.font_family', 'Times New Roman')
             ->assertJsonMissingPath('syllabus.identification')
             ->assertJsonStructure(['syllabus' => ['template_variables']])
             ->assertJsonStructure([

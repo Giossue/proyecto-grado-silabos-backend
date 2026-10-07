@@ -254,7 +254,7 @@ class ReviewWorkflowTest extends TestCase
             ->getJson(route('api.v1.coordination.reviews.show', $revision))
             ->assertOk()
             ->assertJsonPath('presentation.title', 'PROGRAMA DE ASIGNATURA (SÍLABO)')
-            ->assertJsonPath('presentation.appearance.font_family', 'Arial')
+            ->assertJsonPath('presentation.appearance.font_family', 'Times New Roman')
             ->assertJsonStructure([
                 'presentation' => ['logos' => ['institution', 'faculty']],
                 'revision' => ['snapshot' => ['sections']],
