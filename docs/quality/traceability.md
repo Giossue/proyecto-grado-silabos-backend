@@ -4,7 +4,7 @@
 
 | Cambio | IDs relacionados | Evidencia | Estado |
 |---|---|---|---|
-| Nombre, ruta canónica y creación del acceso administrativo | RF-008..016; RN-005..008; CU-03; ADM-04; CP-F estructura académica y CP-N navegación; PV-19 | Sidebar, breadcrumb, puesta en marcha y especificación usan **Facultades y carreras** bajo `/admin/estructura-academica`; las pestañas conservan Facultades y Carreras y el botón **Crear** abre cualquiera de los dos formularios | Implementado local; comprobación estática puntual, aceptación visual pendiente en PV-19 |
+| Nombre, ruta canónica y creación del acceso administrativo | RF-008..016; RN-005..008; CU-03; ADM-04; CP-F estructura académica y CP-N navegación; PV-19 | Sidebar, breadcrumb, puesta en marcha y especificación usan **Facultades y carreras** bajo `/admin/estructura-academica`; las pestañas conservan Facultades y Carreras y el botón **Crear** abre cualquiera de los dos formularios desde un menú ajustado al contenido | Implementado local; comprobación estática puntual, aceptación visual pendiente en PV-19 |
 
 ## Flujo hasta Coordinación — I-192
 
