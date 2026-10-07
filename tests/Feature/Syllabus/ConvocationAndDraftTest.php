@@ -535,7 +535,7 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus->refresh();
         // En el formato oficial el único texto largo (formación) se hereda del perfil: se vuelve editable para probar el tipo.
         $field = FieldDefinition::query()
-            ->where('tipo', 'texto_largo')
+            ->where('clave', 'formacion_experiencia')
             ->firstOrFail();
         $field->update(['heredado' => false, 'origen_maestro' => null, 'editable_docente' => true]);
         $syllabus->values()->where('definicion_campo_id', $field->id)->delete();
