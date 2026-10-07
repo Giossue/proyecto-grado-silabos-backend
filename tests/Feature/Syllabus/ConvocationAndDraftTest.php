@@ -671,7 +671,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertArrayNotHasKey($inFixed->id, $messages->all());
         $this->assertArrayNotHasKey($locked->id, $messages->all());
         $this->assertSame(
-            "Avise a Coordinación: falta el dato «{$inherited->etiqueta}» en la información de la carrera.",
+            "Avise a Coordinación: falta el dato «{$inherited->displayName()}» en la información de la carrera.",
             $messages[$inherited->id]->first()['message'],
         );
         $this->assertSame('error', $messages[$inherited->id]->first()['severity']);
