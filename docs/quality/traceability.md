@@ -222,7 +222,8 @@ los conteos completos y las acciones.
 I-68/I-123/I-125 — RF-008..045, RN-005..024, CU-03/04/06/07, ADM-04/06 y COR-01/02:
 `InstitutionalLogosTest` verifica el logo obligatorio al crear la facultad, el rechazo de
 PNG sin canal alfa, el reemplazo exclusivo por Administración, el rechazo a Coordinación
-y el archivo transparente normalizado a 600 × 180 px;
+y el archivo transparente normalizado a 600 × 180 px; ADM-04 presenta una columna Logo
+con miniatura y diálogo de vista completa usando el `logo_url` del contrato existente;
 `ApiDashboardTest` comprueba que el Panel de Coordinación no exponga gestión del logo;
 `ConvocationAndDraftTest` comprueba que no se abra ni se creen sílabos sin logo; y
 `TemplateAndSourceTest` conserva ambos logos antes del título en la proyección.

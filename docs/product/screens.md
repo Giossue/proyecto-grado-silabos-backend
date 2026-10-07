@@ -308,6 +308,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   conserva su PNG con transparencia y medida fija de 1012 × 190 px. El sistema ajusta
   ambos conservando la proporción y los centra sobre un lienzo transparente. La plantilla
   institucional usa el logo de facultad de muestra; el sílabo real usa el de su carrera.
+  La tabla de Facultades muestra cada logo como miniatura en una columna propia y permite
+  abrir la imagen completa al pulsarla; un registro anterior sin archivo indica **Sin logo**.
 - Si una sección tiene un solo campo, no lleva subtítulo «n.1»: basta el título de la
   sección, en la hoja, el editor docente, la revisión y el Word. Con varios campos sí
   se numeran.
