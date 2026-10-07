@@ -25,7 +25,7 @@ return new class extends Migration
         DB::statement('ALTER TABLE definiciones_campo DROP CONSTRAINT IF EXISTS definiciones_campo_tipo_check');
         DB::statement('UPDATE definiciones_campo SET clase_anterior_definicion_campo = tipo_definicion_campo');
         DB::statement("UPDATE definiciones_campo SET tipo_definicion_campo = CASE
-            WHEN clase_anterior_definicion_campo = 'texto_libre' AND heredado_definicion_campo AND origen_maestro_definicion_campo = 'ficha' THEN 'ficha'
+            WHEN clase_anterior_definicion_campo = 'texto_libre' AND heredado_definicion_campo AND origen_dato_definicion_campo = 'ficha' THEN 'ficha'
             WHEN clase_anterior_definicion_campo = 'referencia_maestra' THEN 'automatico'
             ELSE 'texto' END");
         DB::statement("ALTER TABLE definiciones_campo ADD CONSTRAINT definiciones_campo_tipo_check CHECK (tipo_definicion_campo IN ('texto', 'ficha', 'tabla', 'automatico'))");
