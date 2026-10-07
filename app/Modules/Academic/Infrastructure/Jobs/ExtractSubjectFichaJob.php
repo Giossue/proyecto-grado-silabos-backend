@@ -1,0 +1,87 @@
+<?php
+
+namespace App\Modules\Academic\Infrastructure\Jobs;
+
+use App\Modules\Academic\Application\FichaEvidence;
+use App\Modules\Academic\Application\SubjectProfileFields;
+use App\Modules\Academic\Domain\Contracts\FichaExtractionGateway;
+use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
+
+/** Propone la ficha de una materia y, si fue la última, deja la importación lista para revisar. */
+class ExtractSubjectFichaJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 2;
+
+    public int $timeout = 150;
+
+    public function __construct(public readonly string $importId, public readonly string $subjectId)
+    {
+        $this->onQueue('ia');
+    }
+
+    public function handle(FichaExtractionGateway $gateway, FichaEvidence $evidence, SubjectProfileFields $profile): void
+    {
+        $import = FichaImport::query()->find($this->importId);
+        if ($import === null || $import->estado_importacion !== FichaImport::RUNNING) {
+            return;
+        }
+        $subject = collect($import->propuesta_importacion['subjects'] ?? [])->firstWhere('subject_id', $this->subjectId);
+        if (! is_array($subject)) {
+            return;
+        }
+        $blocks = json_decode((string) Storage::disk('private')->get("importaciones-ficha/{$import->id}/bloques.json"), true) ?: [];
+        $fragments = $evidence->for($subject['name'], $subject['code'], $blocks);
+        if ($fragments === []) {
+            $this->store(['state' => 'sin_evidencia']);
+
+            return;
+        }
+        $fields = $profile->fields()->map(fn ($field): array => ['key' => $field->clave, 'label' => $field->etiqueta !== '' ? $field->etiqueta : $field->clave, 'help' => $field->ayuda])->values()->all();
+        $proposal = $gateway->propose(['code' => $subject['code'], 'name' => $subject['name'], 'cycle' => $subject['cycle']], $fields, $fragments);
+        $values = [];
+        foreach ($fields as $field) {
+            $value = $proposal[$field['key']] ?? null;
+            $clean = is_array($value)
+                ? array_values(array_filter(array_map(fn (mixed $item): string => is_scalar($item) ? trim((string) $item) : '', $value), fn (string $item): bool => $item !== ''))
+                : (is_scalar($value) ? trim((string) $value) : '');
+            if ($clean !== '' && $clean !== []) {
+                $values[$field['key']] = $clean;
+            }
+        }
+        $this->store(['state' => $values === [] ? 'sin_evidencia' : 'lista', 'values' => (object) $values]);
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        $this->store(['state' => 'fallida', 'error' => 'La IA no pudo proponer esta ficha.']);
+    }
+
+    /** @param array<string, mixed> $patch */
+    private function store(array $patch): void
+    {
+        DB::transaction(function () use ($patch): void {
+            $import = FichaImport::query()->lockForUpdate()->find($this->importId);
+            if ($import === null || $import->estado_importacion !== FichaImport::RUNNING) {
+                return;
+            }
+            $proposal = $import->propuesta_importacion ?? ['subjects' => []];
+            foreach ($proposal['subjects'] as $index => $entry) {
+                if ($entry['subject_id'] === $this->subjectId) {
+                    $proposal['subjects'][$index] = [...$entry, ...$patch];
+                }
+            }
+            $pending = collect($proposal['subjects'])->contains(fn (array $entry): bool => $entry['state'] === 'pendiente');
+            $import->update(['propuesta_importacion' => $proposal] + ($pending ? [] : ['estado_importacion' => FichaImport::READY]));
+        });
+    }
+}

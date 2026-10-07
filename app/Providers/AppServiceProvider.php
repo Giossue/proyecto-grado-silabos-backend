@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
+use App\Modules\Academic\Domain\Contracts\FichaExtractionGateway;
 use App\Modules\Academic\Infrastructure\Access\AcademicRoleEligibility;
+use App\Modules\Academic\Infrastructure\Gateways\DisabledFichaExtractionGateway;
+use App\Modules\Academic\Infrastructure\Gateways\HostedFichaExtractionGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiChatGateway;
@@ -46,6 +49,11 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(RoleEligibility::class, AcademicRoleEligibility::class);
         $this->app->bind(DocumentRenderer::class, PhpWordDocumentRenderer::class);
+        $this->app->bind(FichaExtractionGateway::class, function (): FichaExtractionGateway {
+            return in_array(strtolower((string) config('ai.driver')), ['openai', 'deepseek'], true)
+                ? app(HostedFichaExtractionGateway::class)
+                : app(DisabledFichaExtractionGateway::class);
+        });
         $this->app->bind(AiChatGateway::class, function (): AiChatGateway {
             return match ((string) config('ai.driver')) {
                 'baseline' => app(BaselineAiChatGateway::class),

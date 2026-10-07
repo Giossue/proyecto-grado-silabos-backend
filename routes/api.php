@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
 use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
+use App\Modules\Academic\Presentation\Http\Controllers\FichaImportsController;
 use App\Modules\Academic\Presentation\Http\Controllers\ScheduledImportController;
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectProfileController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
@@ -213,6 +214,14 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereUuid('asignatura')->name('api.v1.academic.subjects.profile.show');
             Route::put('academic/asignaturas/{asignatura}/ficha', [SubjectProfileController::class, 'update'])
                 ->middleware('active-role')->whereUuid('asignatura')->name('api.v1.academic.subjects.profile.update');
+            Route::get('coordination/ficha-imports', [FichaImportsController::class, 'index'])
+                ->middleware('active-role')->name('api.v1.coordination.ficha-imports.index');
+            Route::post('coordination/ficha-imports', [FichaImportsController::class, 'store'])
+                ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.coordination.ficha-imports.store');
+            Route::post('coordination/ficha-imports/{import}/apply', [FichaImportsController::class, 'apply'])
+                ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.ficha-imports.apply');
+            Route::delete('coordination/ficha-imports/{import}', [FichaImportsController::class, 'destroy'])
+                ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.ficha-imports.destroy');
             Route::get('coordination/academic/scheduled-subjects', [CareerAcademicStructureController::class, 'scheduledSubjects'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-subjects.index');
             Route::get('coordination/academic/teacher-assignments', [CareerAcademicStructureController::class, 'teacherAssignments'])
