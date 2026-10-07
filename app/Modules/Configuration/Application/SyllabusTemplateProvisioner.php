@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Application;
 
+use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -69,74 +70,43 @@ final class SyllabusTemplateProvisioner
 
     private function populateOfficialFormat(SyllabusTemplate $template): void
     {
-        /** @var list<array{0: string, 1: string, 2: list<array{0: string, 1: string, 2: string, 3: string|null}>}> $baseline */
+        /** @var list<array{0: string, 1: string, 2: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}> $baseline */
         $baseline = config('syllabus_template.baseline', []);
+        $types = app(FieldTypeRegistry::class);
 
         $sections = [];
         $fieldDefinitions = [];
         foreach ($baseline as $sectionPosition => [$sectionKey, $sectionTitle, $fields]) {
-            $sectionId = (string) Str::uuid();
             $blocks = [];
-
-            foreach ($fields as $blockPosition => [$fieldKey, $label, $contentType, $preset]) {
+            foreach ($fields as $blockPosition => [$fieldKey, $label, $typeKey, $rawConfig]) {
+                $type = $types->get($typeKey);
+                $config = $type->normalizeConfig($this->expandConfig($rawConfig));
                 $blockId = (string) Str::uuid();
-                $configuration = ['content_type' => $contentType];
-                if ($contentType === 'fixed') {
-                    $configuration['document'] = match ($preset) {
-                        'indicadores' => TemplateDocumentDefaults::evaluationIndicators(),
-                        'escala' => TemplateDocumentDefaults::gradingScale(),
-                        'firmas' => TemplateDocumentDefaults::signatures(),
-                        default => TemplateDocumentDefaults::fixedPlaceholder(),
-                    };
-                }
-                if ($contentType === 'free_text') {
-                    $configuration = ['content_type' => 'text', 'document' => TemplateDocumentDefaults::freeTextSheet($fieldKey, $label)];
-                }
-                if ($contentType === 'institutional') {
-                    $configuration['document'] = TemplateDocumentDefaults::identification();
-                    $configuration['compact'] = true;
-                }
 
                 $blocks[] = [
                     'id' => $blockId,
-                    'clave' => $blockPosition === 0 ? "{$sectionKey}_principal" : "{$sectionKey}_{$fieldKey}",
+                    'clave' => $fieldKey,
                     'titulo' => $label,
-                    'configuracion' => $configuration,
+                    'configuracion' => ['content_type' => 'text', 'document' => $typeKey === 'texto' || $typeKey === 'ficha'
+                        ? TemplateDocumentDefaults::freeTextSheet($fieldKey, $label)
+                        : TemplateDocumentDefaults::blankSheet()],
                     'posicion' => $blockPosition + 1,
                 ];
-                if ($contentType === 'fixed') {
-                    continue;
-                }
-                $profileKeys = [
-                    'descripcion', 'objetivo_general', 'objetivos_especificos', 'resultados_aprendizaje',
-                    'habilidades_blandas', 'herramientas_tic', 'contribucion_perfil',
-                    'bibliografia', 'bibliografia_complementaria',
-                ];
-                // La bibliografía llega como sugerencia: el docente puede agregar o quitar libros.
-                $teacherAdjusts = in_array($fieldKey, ['bibliografia', 'bibliografia_complementaria'], true);
-                $origin = $contentType === 'institutional'
-                    ? 'asignaturas'
-                    : (in_array($fieldKey, $profileKeys, true) ? FieldDefinition::ORIGIN_PROFILE : null);
-
                 $fieldDefinitions[] = [
                     'plantilla_id' => $template->id,
                     'campo_plantilla_id' => $blockId,
                     'clave' => $fieldKey,
                     'etiqueta' => $label,
-                    'tipo' => $this->fieldType($contentType),
-                    'heredado' => $origin !== null,
-                    'origen_maestro' => $origin,
-                    'editable_docente' => $origin === null || $teacherAdjusts,
+                    'tipo' => $typeKey,
                     'posicion' => 1,
+                    'opciones' => $config === [] ? null : $config,
+                    'mostrar_si' => null,
+                    ...$this->inheritance($typeKey, $config),
                 ];
-
-                if ($contentType === 'institutional') {
-                    array_push($fieldDefinitions, ...$this->identificationInputs($template->id, $blockId));
-                }
             }
 
             $sections[] = [
-                'id' => $sectionId,
+                'id' => (string) Str::uuid(),
                 'clave' => $sectionKey,
                 'titulo' => $sectionTitle,
                 'descripcion' => null,
@@ -153,6 +123,54 @@ final class SyllabusTemplateProvisioner
         foreach ($fieldDefinitions as $fieldDefinition) {
             FieldDefinition::query()->create($fieldDefinition);
         }
+    }
+
+    /**
+     * Convierte la forma corta de la configuración (`clave => etiqueta`, `weeks`) en la del registro.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    private function expandConfig(array $config): array
+    {
+        $axis = fn (array $items): array => array_map(
+            fn (string $key, string $label): array => ['key' => $key, 'label' => $label],
+            array_keys($items),
+            array_values($items),
+        );
+        if (isset($config['weeks'])) {
+            $config['rows'] = [];
+            for ($week = 1; $week <= (int) $config['weeks']; $week++) {
+                $config['rows']['semana_'.$week] = (string) $week;
+            }
+            unset($config['weeks']);
+        }
+        foreach (['columns', 'rows'] as $name) {
+            if (isset($config[$name])) {
+                $config[$name] = $axis($config[$name]);
+            }
+        }
+
+        return $config;
+    }
+
+    /**
+     * Columnas de la definición que dependen del tipo (igual que SaveTemplateStructure).
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    private function inheritance(string $typeKey, array $config): array
+    {
+        return match ($typeKey) {
+            'ficha' => [
+                'heredado' => true,
+                'origen_maestro' => FieldDefinition::ORIGIN_PROFILE,
+                'editable_docente' => (bool) ($config['adjustable'] ?? false),
+            ],
+            'automatico' => ['heredado' => true, 'origen_maestro' => (string) $config['source'], 'editable_docente' => false],
+            default => ['heredado' => false, 'origen_maestro' => null, 'editable_docente' => true],
+        };
     }
 
     /**
@@ -183,13 +201,5 @@ final class SyllabusTemplateProvisioner
         }
 
         return $definitions;
-    }
-
-    private function fieldType(string $contentType): string
-    {
-        return match ($contentType) {
-            'institutional' => 'referencia_maestra',
-            default => 'texto_libre',
-        };
     }
 }
