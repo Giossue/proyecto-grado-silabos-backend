@@ -27,6 +27,7 @@ class FieldTypesTest extends TestCase
     {
         $registry = $this->app->make(FieldTypeRegistry::class);
 
+        // Paridad con el frontend: al cambiar esta lista, actualice `registry.ts` y `registry.test.ts` (BACKEND_FIELD_TYPES).
         $this->assertSame(['texto', 'ficha', 'tabla', 'automatico', 'fijo'], $registry->keys());
         $this->assertInstanceOf(TableFieldType::class, $registry->get('tabla'));
     }

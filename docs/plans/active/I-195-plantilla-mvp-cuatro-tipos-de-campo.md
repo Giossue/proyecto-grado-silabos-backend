@@ -33,7 +33,7 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 - [x] 4. Snapshot v7 y render Word/PDF por tipo (ver Etapa 4).
 - [x] 5. Plantilla inicial (ver Etapa 5).
 - [x] 5b. Quinto tipo `fijo` y recuperación del contenido institucional (ver Etapa 5b).
-- [ ] 6. Frontend: registro y editor del docente.
+- [x] 6. Frontend: registro y editor del docente (ver Etapa 6).
 - [ ] 7. Frontend: constructor simple.
 - [ ] 8. Limpieza del modelo anterior.
 
@@ -105,3 +105,11 @@ La condición «mostrar si» dependía de los tipos `seleccion_unica` y `boolean
 - Plantilla oficial: `indicadores_evaluacion`, `componentes_evaluacion`, `conducta_etica` y `firmas` son `fijo` (`FixedContent::official`). Recuperado: tablas de indicadores (puntos y ponderación por parcial) y escala de valoración UEB, tomadas de `TemplateDocumentDefaults` y normalizadas a `FreeText`.
 - No se pudo conservar: (1) el texto de conducta ética nunca existió en el código (era un marcador «Escriba aquí el contenido fijo»); queda un texto provisional que Administración debe reemplazar; (2) las firmas usaban variables insertables (`firma_docente`, `nombre_docente`, fechas, firma electrónica de coordinación y biblioteca) que `FreeText` no admite; quedan como tabla en blanco Elaborado/Revisado/Aprobado por × Nombre/Cargo/Firma, sin firma electrónica ni fechas automáticas; (3) color de encabezado y centrado de las tablas antiguas (FreeText solo guarda negrita y combinación de celdas).
 - Deuda etapa 8: `TemplateDocumentDefaults::evaluationIndicators` y `gradingScale` ya no se pueden borrar; las usa `FixedContent`. La firma electrónica sobre el documento (`SignatureAnchor`) no está enlazada al contenido fijo.
+
+## Etapa 6: frontend, registro y vistas del docente y del revisor
+
+- `src/components/domain/fieldTypes/registry.ts` (frontend) mapea `texto|ficha|tabla|automatico|fijo` a `{label, icon, EditorComponent, ViewComponent, defaultConfig}` más `teacherEditable(config)` e `isEmpty`. Un componente `*FieldEditor.vue` (docente) y `*FieldView.vue` (lectura/revisión) por tipo; `FieldView.vue` es la tarjeta de solo lectura que usan las tres pantallas.
+- Paridad: `registry.test.ts` fija `BACKEND_FIELD_TYPES` (lista mantenida a mano); `FieldTypesTest::test_registry_resolves_the_five_configured_types` del backend avisa en su comentario. Si se suma un tipo, fallan ambas pruebas hasta actualizar el registro.
+- API del docente: cada sección suma `fields[]` planos (`type`, `config`, `legacy`, valor resuelto por el registro: la tabla trae sus filas vacías, el fijo su contenido, el automático los datos del sílabo; `document` con la cuadrícula oficial `IdentificationCard::document`). `blocks` se conserva por compatibilidad. En la API de revisión, `ReviewController` agrega `document` a los campos automáticos de la fotografía; Biblioteca y Coordinación ya recibían `fields[]` v7.
+- `TeacherSyllabusDetailPage`, `CoordinationReviewDetailPage` y `LibraryReviewDetailPage` recorren `section.fields` (en fotografías v6, `sectionFields` cae a los bloques) y usan el componente del tipo. `SubjectProfileSheet` usa el editor de texto del registro.
+- Deuda: no se tocó `TemplateVisualBuilder`/`AdminTemplatePage` (etapa 7). Las pantallas ya no pintan campos de la clase anterior (selección, número, fecha, booleano) ni bloques con diseño: se muestran como texto de solo lectura; los campos condicionales (`mostrar_si`) ya no se aplican en el docente. `CoordinationReviewComparisonPage` sigue leyendo `blocks` (etapa 8). Las fotografías v6 con bloques de diseño se ven como lista plana de campos. Falta revisión visual en navegador.
