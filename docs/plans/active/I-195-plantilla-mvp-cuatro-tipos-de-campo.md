@@ -30,7 +30,7 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 - [x] 1. Registro backend y los 4 tipos (aditivo; no cambia la plantilla actual ni migra).
 - [x] 2. Persistencia y herencia por tipo (migración `000202`; con capa de compatibilidad, ver Deuda).
 - [x] 3. API de plantilla simplificada (endpoints nuevos `structure/...`; ver Etapa 3).
-- [ ] 4. Snapshot v7 y render Word/PDF por tipo.
+- [x] 4. Snapshot v7 y render Word/PDF por tipo (ver Etapa 4).
 - [ ] 5. Plantilla inicial.
 - [ ] 6. Frontend: registro y editor del docente.
 - [ ] 7. Frontend: constructor simple.
@@ -68,6 +68,14 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 - Fallan en HEAD, antes de esta etapa (compat de la etapa 2): `ConvocationAndDraftTest`
   `test_autosave_enforces_template_type_and_rejects_html_in_long_text` y
   `test_part_shown_only_when_another_matches_is_not_required_while_hidden_and_prints_empty`.
+
+## Etapa 4: decisiones y deuda
+
+- `FieldType` suma `toSnapshot(value, config, context)` (el automático resuelve `identification_card` con la ficha de datos maestros al enviar) y `toWord(target, field, WordRenderContext)`. Texto y ficha pintan el documento `FreeText`; tabla, una tabla de filas y columnas fijas (`FreeText::fixedTable`); automático, `IdentificationCard::document` (cuadrícula oficial `IdentificationCard::grid`). El Word sale del snapshot, nunca de datos vivos.
+- `SyllabusSnapshot` pasa a `schema_version` 7: cada sección conserva `blocks` (respaldo) y suma `fields[]` planos con `definition_id`, `key`, `label`, `type`, `legacy`, `config` y valor resuelto. `restore` lee `fields[]` en v7 (omite el valor de los automáticos) y los bloques en v6 o anterior: los snapshots v6 locales se siguen leyendo y renderizando por la ruta vieja.
+- Render: `SyllabusWordDocument` usa el recorrido nuevo (`WordFieldRenderer::renderTyped`) en una sección solo si todos sus campos son del modelo nuevo (`legacy = false`); si alguno conserva clase anterior, usa el render viejo (`TemplateDocumentWord` con `document` del bloque). La plantilla institucional actual sigue en la ruta vieja hasta la etapa 5. Título, logos, márgenes y metadatos no cambian; el PDF sale de Gotenberg a partir del mismo Word.
+- Deuda etapa 8: quitar `blocks`/`document` del snapshot, la ruta vieja de `WordFieldRenderer::render`, la lectura de v6 en `restore` y el texto plano del PDF sin Gotenberg (`SyllabusDocumentContent` lee aún `blocks`; con el recorrido nuevo no muestra los campos automáticos). `FieldType` (dominio) depende de `WordRenderContext` (Documents): POR VALIDAR si se extrae una interfaz de escritor.
+- Se conserva `renderer_version` (`phpword-docx-v3+text-pdf-v2`): el render de revisiones viejas no cambia.
 
 ## POR VALIDAR
 

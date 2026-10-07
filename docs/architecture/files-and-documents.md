@@ -102,3 +102,13 @@ visual. Nunca declares éxito solo porque el archivo abre.
 
 No implementes borrado definitivo hasta resolver `PV-11` y `PV-12`. Una política futura
 debe cubrir originales, artefactos, temporales, backups y derecho/obligación de conservar.
+
+## Snapshot v7 y recorrido por tipo (I-195, etapa 4)
+
+El snapshot sube a `schema_version` 7: cada sección añade `fields[]` planos con `type`, `config` y
+valor resuelto (el automático `identification_card` guarda la ficha de datos maestros del momento
+del envío). `SyllabusWordDocument` conserva título, logos y metadatos; por sección, si todos los
+campos son del modelo nuevo delega en `FieldType::toWord` (`WordFieldRenderer::renderTyped`), y si
+alguno tiene clase anterior usa el render viejo. El PDF sigue saliendo de Gotenberg a partir del
+mismo Word. Los snapshots v6 se siguen leyendo; la deuda se retira en la etapa 8.
+

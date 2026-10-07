@@ -35,3 +35,12 @@ mientras haya un proceso abierto):
 `SaveTemplateStructure`); los errores de config salen como `config.<clave>`. La clave y el tipo
 de un campo no cambian después de crearlo. `GET admin/template/{template}` devuelve ahora
 `config` en cada campo.
+
+## Snapshot v7 y Word (etapa 4)
+
+Cada tipo implementa `toSnapshot` (valor que se congela al enviar; el automático resuelve su
+fuente) y `toWord` (se pinta solo con lo que trae el snapshot). El snapshot v7 lleva por sección
+`fields[]` planos: `definition_id`, `key`, `label`, `type`, `legacy`, `config`, `value`. `restore`
+acepta v7 y v6. El Word recorre sección → campos y delega en el tipo; secciones con campos de la
+clase anterior usan el render viejo hasta la etapa 8.
+
