@@ -255,7 +255,7 @@ class ConvocationScheduleTest extends TestCase
         })->filter()->values();
 
         return match (true) {
-            in_array($field->tipo, ['texto_libre', 'texto'], true) => ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")],
+            in_array($field->tipo, ['texto_libre', 'texto', 'ficha'], true) => ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")],
             $field->tipo === 'tabla' => ['version_bloqueo' => $lockVersion, 'value' => $this->filledTableValue($field)],
             $field->tipo === 'booleano' => ['version_bloqueo' => $lockVersion, 'value' => true],
             $field->tipo === 'numero' => ['version_bloqueo' => $lockVersion, 'value' => 1],

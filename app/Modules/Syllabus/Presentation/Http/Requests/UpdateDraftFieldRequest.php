@@ -55,6 +55,25 @@ class UpdateDraftFieldRequest extends FormRequest
     {
         $presence = 'nullable';
 
+        if (! $field->hasLegacyClass()) {
+            $type = $field->fieldType();
+
+            // El dato automático no se edita: la acción lo rechaza con un mensaje propio.
+            return $type->key() === 'automatico' ? [$presence] : [
+                $presence,
+                function (string $attribute, mixed $value, Closure $fail) use ($field, $type): void {
+                    if ($value === null) {
+                        return;
+                    }
+                    try {
+                        $type->validateValue($value, $field->typeConfig(), $attribute);
+                    } catch (ValidationException $exception) {
+                        $fail((string) collect($exception->errors())->flatten()->first());
+                    }
+                },
+            ];
+        }
+
         return match ($field->tipo) {
             'texto_corto' => [$presence, 'string', 'max:1000'],
             'texto_largo' => [

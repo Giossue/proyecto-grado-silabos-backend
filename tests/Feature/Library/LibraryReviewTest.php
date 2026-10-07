@@ -230,7 +230,7 @@ class LibraryReviewTest extends TestCase
         $option = collect($field->opciones ?? [])->map(fn (mixed $item): string => is_array($item) ? (string) ($item['value'] ?? 'opcion') : (string) $item)->first();
 
         return match ($field->tipo) {
-            'texto_libre', 'texto' => $this->freeTextValue("Contenido {$field->clave}"),
+            'texto_libre', 'texto', 'ficha' => $this->freeTextValue("Contenido {$field->clave}"),
             'tabla' => $this->filledTableValue($field),
             'booleano' => true,
             'numero' => 1,
