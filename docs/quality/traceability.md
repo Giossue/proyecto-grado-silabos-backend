@@ -527,3 +527,9 @@ con las acciones del alta individual; `ImportSpreadsheetDialog` muestra la revis
 `SpreadsheetImportTest` cubre revisión sin escritura, errores por fila, permisos y plantilla.
 
 I-197 — quitar rol de una cuenta (ADM-02, RF-001..008): `RemoveUserRole` y `DELETE admin/users/{user}/roles/{assignment}`; «Editar usuario» lista los roles con «Quitar». `ManagedUserUpdateTest` cubre retiro con historial, único rol, cuenta ajena y permiso.
+
+Puesta en marcha (2026-10-07): `SetupChecklist` se alinea con el flujo vigente. Administración
+exige cuentas de coordinación y de biblioteca, describe los campos de plantilla vigentes
+(Texto, Ficha, Tabla, Automático) y apunta a Convocatorias; el docente ve el orden
+Biblioteca → Coordinación y las tres firmas; Coordinación y Administración mencionan la
+importación con Excel. Biblioteca no tiene lista de puesta en marcha.

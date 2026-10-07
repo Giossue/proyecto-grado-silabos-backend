@@ -52,9 +52,10 @@ class SetupChecklist
         $coordinated = CoordinatorAssignment::query()->where('activo', true)->select('carrera_id');
         $careersWithoutCoordinator = (clone $careers)->whereNotIn('id', $coordinated)->count();
         $careerCount = (clone $careers)->count();
-        $accounts = User::query()->where('activo', true)->whereHas('roleAssignments', fn (Builder $query) => $query
+        $hasAccountWithRole = fn (RoleCode $role): bool => User::query()->where('activo', true)->whereHas('roleAssignments', fn (Builder $query) => $query
             ->where('activo', true)
-            ->whereIn('rol', [RoleCode::Coordinator->value, RoleCode::Teacher->value]))->count();
+            ->where('rol', $role->value))->exists();
+        $accountsReady = $hasAccountWithRole(RoleCode::Coordinator) && $hasAccountWithRole(RoleCode::Librarian);
         $template = SyllabusTemplate::query()->first();
         $templateReady = $template?->hasStructure() ?? false;
 
@@ -62,13 +63,13 @@ class SetupChecklist
             'Puesta en marcha de la institución',
             'En este orden. Cada paso habilita el siguiente; las coordinaciones no pueden empezar hasta que termine.',
             [
-                $this->step('faculties', 'Registrar las facultades', 'Elija el campus y cargue el logo de cada facultad (PNG sin fondo); sin logo no se abren convocatorias.', Faculty::query()->where('activo', true)->exists()),
-                $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada.', $careerCount > 0),
-                $this->step('periods', 'Registrar el periodo académico', 'El periodo que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists()),
-                $this->step('accounts', 'Crear las cuentas de coordinadores y docentes', 'Al menos las de coordinación; los docentes también puede crearlos cada Coordinación y los asigna a sus paralelos.', $accounts > 0),
+                $this->step('faculties', 'Registrar las facultades', 'Elija el campus y cargue el logo de cada facultad (PNG sin fondo); sin logo no se abren convocatorias. Puede importarlas desde Excel con su logo pegado en la fila.', Faculty::query()->where('activo', true)->exists()),
+                $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada. Puede importarlas desde Excel.', $careerCount > 0),
+                $this->step('periods', 'Registrar el periodo académico', 'Desde Convocatorias, con las fechas del periodo; es el que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists()),
+                $this->step('accounts', 'Crear las cuentas de coordinación y de biblioteca', 'Al menos una de cada una, también por importación desde Excel. Los docentes los crea cada Coordinación.', $accountsReady),
                 $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0),
-                $this->step('template', 'Armar la plantilla del sílabo', 'Secciones con campos de Texto libre (las escribe el docente) o Personalizado (hoja con datos automáticos y campos que llena el docente).', $templateReady),
-                $this->step('process', 'Abrir la convocatoria institucional', 'Desde Periodos académicos, en la fila del período, confirme las fechas de entrega; cada Coordinación abrirá después la de su carrera.', SyllabusProcess::query()->exists()),
+                $this->step('template', 'Armar la plantilla del sílabo', 'Secciones con campos de Texto (los escribe el docente), Ficha (la escribe Coordinación una vez por materia), Tabla (filas fijas) o Automático (datos de la malla y la carrera).', $templateReady),
+                $this->step('process', 'Abrir la convocatoria institucional', 'Desde Convocatorias, confirme las fechas de elaboración y entrega; cada Coordinación abrirá después la de su carrera.', SyllabusProcess::query()->exists()),
             ],
         );
     }
@@ -105,7 +106,7 @@ class SetupChecklist
                 $this->step(
                     'parallels',
                     'Crear los paralelos',
-                    $scheduledTotal === 0 ? 'Primero programe las materias del período.' : "{$scheduledWithParallels} de {$scheduledTotal} materias programadas tienen paralelos.",
+                    $scheduledTotal === 0 ? 'Primero programe las materias del período.' : "{$scheduledWithParallels} de {$scheduledTotal} materias programadas tienen paralelos. Puede importarlos desde Excel junto con su docente.",
                     $scheduledTotal > 0 && $scheduledWithParallels === $scheduledTotal,
                 ),
                 $this->step(
@@ -164,12 +165,12 @@ class SetupChecklist
 
         return $this->build(
             'Sus sílabos, paso a paso',
-            $total === 0 ? 'Cuando Coordinación abra la convocatoria, aquí aparecerán sus sílabos.' : 'Cada sílabo se abre, se completa, se envía a revisión y, una vez aprobado, se firma.',
+            $total === 0 ? 'Cuando Coordinación abra la convocatoria, aquí aparecerán sus sílabos.' : 'Cada sílabo se abre, se completa, lo revisan Biblioteca y Coordinación y, una vez aprobado, se firma.',
             [
                 $this->step('assigned', 'Recibir los sílabos asignados', $total > 0 ? "{$total} asignados." : 'Los asigna Coordinación al abrir la convocatoria.', $total > 0),
-                $this->step('started', 'Abrir cada sílabo', $total > 0 ? "{$started} de {$total} abiertos." : 'Al abrirlo, el borrador se inicia solo con los datos de la malla.', $total > 0 && $started === $total),
-                $this->step('submitted', 'Completar y enviar a revisión', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega. El asistente de unidades ayuda a redactar.', $total > 0 && $submitted === $total),
-                $this->step('signed', 'Firmar electrónicamente el sílabo aprobado', $approved > 0 ? "{$signed} de {$approved} aprobados firmados." : 'Cuando Coordinación lo apruebe, fírmelo con su certificado (.p12); después firma Coordinación.', $total > 0 && $approved === $total && $signed === $approved),
+                $this->step('started', 'Abrir cada sílabo', $total > 0 ? "{$started} de {$total} abiertos." : 'Al abrirlo, el borrador parte de la ficha de la materia; también puede copiar el de otro de sus paralelos.', $total > 0 && $started === $total),
+                $this->step('submitted', 'Completar y enviar a revisión', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega. Primero lo revisa Biblioteca y luego Coordinación; el asistente de IA ayuda a redactar.', $total > 0 && $submitted === $total),
+                $this->step('signed', 'Firmar electrónicamente el sílabo aprobado', $approved > 0 ? "{$signed} de {$approved} aprobados firmados." : 'Cuando Coordinación lo apruebe, fírmelo con su certificado (.p12); después firman Coordinación y Biblioteca.', $total > 0 && $approved === $total && $signed === $approved),
             ],
         );
     }
