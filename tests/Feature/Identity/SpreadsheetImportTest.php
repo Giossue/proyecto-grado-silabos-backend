@@ -5,6 +5,7 @@ namespace Tests\Feature\Identity;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use Database\Seeders\DatabaseSeeder;
@@ -125,6 +126,26 @@ class SpreadsheetImportTest extends TestCase
         foreach (['A2', 'C2', 'D2'] as $cell) {
             $this->assertSame('list', $scheduled->getCell($cell)->getDataValidation()->getType());
         }
+    }
+
+    public function test_admin_imports_careers_all_or_nothing(): void
+    {
+        $this->actingAsRole('admin@silabos.test');
+        $faculty = Faculty::query()->where('activo', true)->firstOrFail();
+        $header = ['Facultad', 'Modalidad', 'Código de carrera', 'Nombre de la carrera', 'Número de ciclos'];
+        $url = route('api.v1.admin.academic.careers.import');
+
+        $bad = $this->workbook([$header, [$faculty->nombre, 'Presencial', 'NC-1', 'Carrera Uno', '10'], ['Inexistente', 'Virtual', 'NC-2', 'Carrera Dos', '0']]);
+        $this->postJson($url, ['file' => $bad, 'confirm' => true])->assertOk()->assertJsonPath('valid', false)->assertJsonPath('created', 0);
+        $this->assertDatabaseMissing('carreras', ['codigo_carrera' => 'NC-1']);
+
+        $good = $this->workbook([$header, [$faculty->nombre, 'Presencial', 'NC-1', 'Carrera Uno', '10']]);
+        $this->postJson($url, ['file' => $good, 'confirm' => true])->assertOk()->assertJsonPath('created', 1);
+        $this->assertDatabaseHas('carreras', ['codigo_carrera' => 'NC-1']);
+
+        $sheet = IOFactory::load($this->templateFile(route('api.v1.admin.academic.careers.import-template')))->getSheetByName('Datos');
+        $this->assertSame('list', $sheet->getCell('A2')->getDataValidation()->getType());
+        $this->assertSame('list', $sheet->getCell('B2')->getDataValidation()->getType());
     }
 
     public function test_coordinator_imports_parallels_with_teacher_assignments(): void

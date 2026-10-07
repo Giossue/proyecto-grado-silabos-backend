@@ -15,6 +15,9 @@ Crear muchas cuentas o registros uno por uno es lento. Tres pantallas aceptan un
 - Coordinación → Materias y asignaciones: columnas Código de materia, Paralelo, Jornada,
   Correo del docente (opcional), sobre el período seleccionado. Crea el paralelo y asigna
   al docente con las mismas acciones del alta individual.
+- Administración → Facultades y carreras (pestaña Carreras): columnas Facultad, Modalidad,
+  Código de carrera, Nombre de la carrera y Número de ciclos. Las facultades no se importan
+  porque exigen logo.
 
 ## Reglas
 
@@ -32,7 +35,7 @@ Crear muchas cuentas o registros uno por uno es lento. Tres pantallas aceptan un
 ## Cambios
 
 - Backend: `SpreadsheetReader` y `SpreadsheetTemplate` (OpenSpout), acciones
-  `ImportManagedUsers`, `ImportCareerTeachers` e `ImportScheduledAssignments`, rutas
+  `ImportManagedUsers`, `ImportCareerTeachers`, `ImportCareers` e `ImportScheduledAssignments`, rutas
   `*/import` y `*/import-template`.
 - Frontend: `ImportSpreadsheetDialog` reutilizable (plantilla, revisión por fila, confirmar).
 
