@@ -82,7 +82,7 @@ class ImportFaculties
                 $preview = 'data:image/png;base64,'.base64_encode($row['images'][0]);
             }
 
-            $checked[] = [...array_diff_key($row, ['images' => 1]), 'errors' => array_values(array_unique($errors)), 'preview' => $preview];
+            $checked[] = ['line' => $row['line'], 'values' => $values, 'errors' => array_values(array_unique($errors)), 'preview' => $preview];
             $payloads[] = ['nombre' => $name, 'campus' => $campus, 'logo' => $logo];
         }
 

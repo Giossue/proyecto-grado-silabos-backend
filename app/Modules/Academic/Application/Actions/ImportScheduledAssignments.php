@@ -28,7 +28,7 @@ class ImportScheduledAssignments
         private readonly AcademicPeriodPlanning $planning,
     ) {}
 
-    /** @return array{subjects: list<string>, teachers: list<string>} */
+    /** @return array<string, list<string>|array<int, string>> */
     public function templateOptions(Request $request): array
     {
         $role = $this->roles->resolve($request);
@@ -39,7 +39,7 @@ class ImportScheduledAssignments
 
         return [
             'subjects' => Subject::query()->where('carrera_id', $role->carrera_id)->where('activo', true)
-                ->orderBy('ciclo')->orderBy('orden_en_ciclo')->pluck('codigo_asignatura')->map(fn (mixed $code): string => (string) $code)->all(),
+                ->orderBy('ciclo')->orderBy('orden_en_ciclo')->pluck('codigo_asignatura')->map(fn (mixed $code): string => (string) $code)->values()->all(),
             'teachers' => RoleAssignment::query()->effective()->with('user')
                 ->where('carrera_id', $role->carrera_id)->where('rol', RoleCode::Teacher->value)
                 ->whereHas('user', fn ($query) => $query->where('activo', true)->whereNotNull('correo_verificado_en'))

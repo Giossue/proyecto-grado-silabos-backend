@@ -28,14 +28,14 @@ class ImportCareers
         $this->authorize($request);
 
         return [
-            'faculties' => Faculty::query()->where('activo', true)->orderBy('nombre')->pluck('nombre')->all(),
+            'faculties' => array_values(array_map('strval', Faculty::query()->where('activo', true)->orderBy('nombre')->pluck('nombre')->all())),
             'modalities' => StudyModality::values(),
         ];
     }
 
     /**
      * @param  list<array{line: int, values: array<string, string>}>  $rows
-     * @return array{rows: list<array{line: int, values: array<string, string>, errors: list<string>}>, valid: bool, created: int}
+     * @return array{rows: list<array<string, mixed>>, valid: bool, created: int}
      */
     public function execute(array $rows, User $actor, Request $request, bool $confirm): array
     {

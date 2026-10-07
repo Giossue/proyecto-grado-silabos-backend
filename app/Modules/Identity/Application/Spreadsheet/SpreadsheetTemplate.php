@@ -16,7 +16,7 @@ class SpreadsheetTemplate
 {
     /**
      * @param  list<string>  $headers
-     * @param  array<int, list<string>>  $selects  posición de columna (desde 0) => opciones permitidas
+     * @param  array<int, array<int, string>>  $selects  posición de columna (desde 0) => opciones permitidas
      * @param  list<string>  $notes  indicaciones a la derecha, que la importación ignora
      */
     public function download(string $filename, array $headers, array $selects, array $notes, int $rowHeight = 0): StreamedResponse
@@ -61,7 +61,7 @@ class SpreadsheetTemplate
         }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
     }
 
-    /** @param list<string> $options */
+    /** @param array<int, string> $options */
     private function addSelect(Worksheet $sheet, Worksheet $lists, int $position, array $options): void
     {
         if ($options === []) {

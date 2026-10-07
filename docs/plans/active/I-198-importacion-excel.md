@@ -16,8 +16,12 @@ Crear muchas cuentas o registros uno por uno es lento. Tres pantallas aceptan un
   Correo del docente (opcional), sobre el período seleccionado. Crea el paralelo y asigna
   al docente con las mismas acciones del alta individual.
 - Administración → Facultades y carreras (pestaña Carreras): columnas Facultad, Modalidad,
-  Código de carrera, Nombre de la carrera y Número de ciclos. Las facultades no se importan
-  porque exigen logo.
+  Código de carrera, Nombre de la carrera y Número de ciclos.
+- Administración → Facultades y carreras (pestaña Facultades): columnas Nombre de la
+  facultad, Campus (lista del enum) y Logo. El logo es una imagen PNG transparente pegada
+  sobre la fila (no «en celda»); se asigna a la fila donde cae su centro, calculado con el
+  ancla y la altura real de las filas. La revisión muestra la miniatura detectada. Máximo
+  50 filas; una imagen por fila; mismas reglas de logo que el alta individual.
 
 ## Reglas
 
