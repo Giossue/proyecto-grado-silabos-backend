@@ -479,6 +479,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   de activación» y la misma acción de reenvío para la carrera activa. Cada fila de
   COR-15 tiene además **Editar docente** (I-170): nombre y correo en un panel lateral;
   el correo queda deshabilitado, con explicación, cuando la cuenta ya fue activada.
+  Al crear una cuenta o un docente, el nombre completo se transforma a mayúsculas mientras
+  se escribe y conserva tildes, diéresis y `ñ` mediante normalización Unicode en español.
   Por solicitud del responsable del producto del 2026-10-04, la columna Estado de
   Usuarios y Docentes muestra únicamente su etiqueta visible, sin tooltip.
 - Salida de personas (I-39): en ADM-04 Carreras la coordinación no ocupa una columna;
