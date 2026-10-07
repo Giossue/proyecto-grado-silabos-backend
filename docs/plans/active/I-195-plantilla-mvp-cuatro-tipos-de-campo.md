@@ -31,7 +31,7 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 - [x] 2. Persistencia y herencia por tipo (migración `000202`; con capa de compatibilidad, ver Deuda).
 - [x] 3. API de plantilla simplificada (endpoints nuevos `structure/...`; ver Etapa 3).
 - [x] 4. Snapshot v7 y render Word/PDF por tipo (ver Etapa 4).
-- [ ] 5. Plantilla inicial.
+- [x] 5. Plantilla inicial (ver Etapa 5).
 - [ ] 6. Frontend: registro y editor del docente.
 - [ ] 7. Frontend: constructor simple.
 - [ ] 8. Limpieza del modelo anterior.
@@ -73,9 +73,18 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 
 - `FieldType` suma `toSnapshot(value, config, context)` (el automático resuelve `identification_card` con la ficha de datos maestros al enviar) y `toWord(target, field, WordRenderContext)`. Texto y ficha pintan el documento `FreeText`; tabla, una tabla de filas y columnas fijas (`FreeText::fixedTable`); automático, `IdentificationCard::document` (cuadrícula oficial `IdentificationCard::grid`). El Word sale del snapshot, nunca de datos vivos.
 - `SyllabusSnapshot` pasa a `schema_version` 7: cada sección conserva `blocks` (respaldo) y suma `fields[]` planos con `definition_id`, `key`, `label`, `type`, `legacy`, `config` y valor resuelto. `restore` lee `fields[]` en v7 (omite el valor de los automáticos) y los bloques en v6 o anterior: los snapshots v6 locales se siguen leyendo y renderizando por la ruta vieja.
-- Render: `SyllabusWordDocument` usa el recorrido nuevo (`WordFieldRenderer::renderTyped`) en una sección solo si todos sus campos son del modelo nuevo (`legacy = false`); si alguno conserva clase anterior, usa el render viejo (`TemplateDocumentWord` con `document` del bloque). La plantilla institucional actual sigue en la ruta vieja hasta la etapa 5. Título, logos, márgenes y metadatos no cambian; el PDF sale de Gotenberg a partir del mismo Word.
+- Render: `SyllabusWordDocument` usa el recorrido nuevo (`WordFieldRenderer::renderTyped`) en una sección solo si todos sus campos son del modelo nuevo (`legacy = false`); si alguno conserva clase anterior, usa el render viejo (`TemplateDocumentWord` con `document` del bloque). La plantilla oficial provisionada (etapa 5) ya usa solo la ruta nueva. Título, logos, márgenes y metadatos no cambian; el PDF sale de Gotenberg a partir del mismo Word.
 - Deuda etapa 8: quitar `blocks`/`document` del snapshot, la ruta vieja de `WordFieldRenderer::render`, la lectura de v6 en `restore` y el texto plano del PDF sin Gotenberg (`SyllabusDocumentContent` lee aún `blocks`; con el recorrido nuevo no muestra los campos automáticos). `FieldType` (dominio) depende de `WordRenderContext` (Documents): POR VALIDAR si se extrae una interfaz de escritor.
 - Se conserva `renderer_version` (`phpword-docx-v3+text-pdf-v2`): el render de revisiones viejas no cambia.
+
+## Etapa 5: decisiones y deuda
+
+- `config/syllabus_template.php` `baseline` define `[sección, título, [[clave, etiqueta, tipo, config]]]`; el provisionador usa el registro (`normalizeConfig`) y las mismas columnas de herencia que `SaveTemplateStructure`. Planificación = `tabla` con 16 filas fijas (`semana_1`..`semana_16`) y 8 columnas; identificación = `automatico` + `discapacidad_tipo`, `discapacidad_adaptacion` y `formacion_experiencia` como `texto`; herramientas TIC se agrega como `ficha` en «Habilidades blandas».
+- Decisión a confirmar: evaluación (indicadores y escala), conducta ética y firmas eran bloques de texto fijo con contenido institucional (tablas de ponderación, variables de firma) que no cabe en los cuatro tipos. Quedan como `texto` (evaluación, ética) y `tabla` (firmas: elabora/revisa/aprueba por nombre, cargo, firma), vacíos: se pierde el texto fijo UEB. Si debe conservarse hace falta un quinto tipo (texto fijo) o contenido inicial por campo.
+- `formacion_experiencia` ya no se hereda del perfil del docente: lo escribe en cada sílabo. Se retiraron las pruebas de formación desde el perfil, de contenido inicial (`initial_content`) y de campos fijos/compactos/condicionales sobre la plantilla oficial.
+- Arreglos de pasada: `UpdateDraftFieldRequest` validaba solo clases anteriores (prohibía el valor de los tipos nuevos); `ValidateDraft` pide valor por tipo y no exige el automático; `SaveStructureFieldRequest` no exige `config` al editar sin enviarla.
+- Deuda etapa 8 (no se pudo borrar sin romper la API anterior): `SyllabusTemplateCatalog`, `catalog` e `identification_inputs` de la config (los usan `SaveFieldDefinition`, `SaveTemplateSection` y `TemplateController`), `TemplateDocumentDefaults::identification/evaluationIndicators/gradingScale/signatures/fixedPlaceholder`, `initial_content` en `InheritMasterValues`, ramas `institutional`/`fixed` de `SaveTemplateDocument` y `FieldConditions`. La API de documento por bloque (`blocks/{block}/document`) rechaza los bloques de la plantilla nueva (su documento usa `kind: texto_libre`).
+- Remota: sigue vacía; «Crear plantilla» (`createEmpty`) + «Aplicar formato oficial» (`format`) y el seeder usan el mismo `populateOfficialFormat`.
 
 ## POR VALIDAR
 

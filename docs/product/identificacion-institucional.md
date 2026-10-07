@@ -1,5 +1,11 @@
 # Ficha de identificación institucional
 
+> I-195, etapa 5: en la plantilla inicial oficial la ficha es un campo `automatico` (fuente
+> `identification_card`, sin valor guardado). Discapacidad (tipo y adaptación) y formación y
+> experiencia son campos `texto` sueltos de la misma sección, siempre visibles; ya no hay tabla
+> editable ni campo condicional. Lo que sigue describe la fuente de datos (`IdentificationCard`),
+> que no cambia, y el diseño editable anterior, que se retira en la etapa 8.
+
 La primera tabla parte del formato institucional. Administración puede modificarla
 desde «Editar diseño» (I-56), sin cambiar código para mover celdas o etiquetas. Las
 variables se llenan automáticamente; los espacios de discapacidad y formación los
