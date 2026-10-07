@@ -6,6 +6,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -38,14 +39,16 @@ class SpreadsheetTemplate
             }
 
             $noteColumn = count($headers) + 2;
-            $sheet->setCellValue([$noteColumn, 1], 'Indicaciones (no se importan)');
+            $last = Coordinate::stringFromColumnIndex($noteColumn);
+            $lastRow = max(10, count($notes) * 2 + 2);
+            $sheet->setCellValue([$noteColumn, 1], 'Indicaciones');
             $sheet->getStyle([$noteColumn, 1])->getFont()->setBold(true);
-            foreach ($notes as $offset => $note) {
-                $sheet->setCellValue([$noteColumn, $offset + 2], $note);
-            }
+            $sheet->mergeCells("{$last}2:{$last}{$lastRow}");
+            $sheet->setCellValue("{$last}2", implode("\n\n", $notes));
             $sheet->getColumnDimensionByColumn($noteColumn)->setWidth(70);
-            $sheet->getStyle([$noteColumn, 1, $noteColumn, count($notes) + 1])->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
-            $sheet->getStyle([$noteColumn, 1, $noteColumn, count($notes) + 1])->getFont()->getColor()->setRGB('64748B');
+            $sheet->getStyle("{$last}2:{$last}{$lastRow}")->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
+            $sheet->getStyle("{$last}2:{$last}{$lastRow}")->getFont()->getColor()->setRGB('64748B');
+            $sheet->getStyle("{$last}1:{$last}{$lastRow}")->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
 
             $lists->setSheetState(Worksheet::SHEETSTATE_HIDDEN);
             $book->setActiveSheetIndex(0);

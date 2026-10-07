@@ -110,7 +110,8 @@ class SpreadsheetImportTest extends TestCase
         $this->assertSame('Rol', $sheet->getCell('F1')->getValue());
         $this->assertSame('list', $sheet->getCell('F2')->getDataValidation()->getType());
         $this->assertSame('list', $sheet->getCell('G2')->getDataValidation()->getType());
-        $this->assertSame('Indicaciones (no se importan)', $sheet->getCell('I1')->getValue());
+        $this->assertSame('Indicaciones', $sheet->getCell('I1')->getValue());
+        $this->assertStringContainsString('Primer nombre', (string) $sheet->getCell('I2')->getValue());
     }
 
     public function test_coordinator_templates_download_with_lists(): void
