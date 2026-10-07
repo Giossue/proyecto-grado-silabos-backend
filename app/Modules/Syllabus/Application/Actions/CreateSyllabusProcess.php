@@ -3,6 +3,9 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Application\AcademicPeriodPlanning;
+use App\Modules\Academic\Application\CarryOverPeriodSetup;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -20,6 +23,8 @@ class CreateSyllabusProcess
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly TemplateStructureValidator $templateStructure,
+        private readonly CarryOverPeriodSetup $carryOver,
+        private readonly AcademicPeriodPlanning $periodPlanning,
     ) {}
 
     /** @param array{period_id: string, starts_at: string, due_at: string} $data */
@@ -92,6 +97,26 @@ class CreateSyllabusProcess
                 result: 'exito',
                 metadata: ['previous_state' => null],
             );
+
+            $period = AcademicPeriod::query()->find($process->periodo_academico_id);
+            if ($period !== null && $this->periodPlanning->mayPlan($period)) {
+                $carried = $this->carryOver->execute($period);
+                if ($carried['careers'] > 0) {
+                    $this->audit->execute(
+                        actorId: $actor->id,
+                        roleAssignmentId: $activeRole->id,
+                        action: 'academico.periodo_arrastrado',
+                        resourceType: 'periodo',
+                        resourceId: $period->id,
+                        result: 'exito',
+                        metadata: [
+                            'careers' => $carried['careers'],
+                            'parallels' => $carried['parallels'],
+                            'assignments' => $carried['assignments'],
+                        ],
+                    );
+                }
+            }
 
             return $process;
         });

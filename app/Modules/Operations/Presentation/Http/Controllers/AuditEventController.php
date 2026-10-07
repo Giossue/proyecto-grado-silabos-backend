@@ -121,6 +121,7 @@ class AuditEventController extends Controller
             'academico.oferta.actualizacion' => 'Programación de asignatura actualizada',
             'academico.oferta.eliminacion' => 'Materia programada eliminada',
             'academico.paralelo.creacion' => 'Paralelo creado',
+            'academico.periodo_arrastrado' => 'Paralelos y docentes copiados del período anterior',
             'academico.paralelo.actualizacion' => 'Paralelo actualizado',
             'academico.asignacion_docente.creacion' => 'Asignación docente creada',
             'academico.asignacion_docente.actualizacion' => 'Asignación docente actualizada',
