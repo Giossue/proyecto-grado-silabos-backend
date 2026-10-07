@@ -26,7 +26,7 @@ class SpreadsheetReader
             $reader->open($file->getRealPath());
             foreach ($reader->getSheetIterator() as $sheet) {
                 foreach ($sheet->getRowIterator() as $index => $row) {
-                    $cells = array_map(fn (mixed $cell): string => trim((string) $cell), $row->toArray());
+                    $cells = array_values(array_map(fn (mixed $cell): string => is_scalar($cell) ? trim((string) $cell) : '', $row->toArray()));
                     if ($map === null) {
                         $map = $this->headerMap($cells, $columns);
 

@@ -775,3 +775,8 @@ Consulta los códigos y puertas en `docs/plans/decisions-pending.md`. Incluyen:
 - documentación, trazabilidad y planes.
 
 No programes como irreversible una decisión institucional que sigue abierta.
+
+I-198 (7 de octubre de 2026), por instrucción explícita del responsable del producto,
+agrega importación con Excel (`.xlsx`) para crear en bloque cuentas (Administración),
+docentes y paralelos con su docente (Coordinación). Cada importación se revisa antes de
+confirmar y es todo o nada.
