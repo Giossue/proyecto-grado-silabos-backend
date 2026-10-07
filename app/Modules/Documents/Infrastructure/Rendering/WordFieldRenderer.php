@@ -3,6 +3,7 @@
 namespace App\Modules\Documents\Infrastructure\Rendering;
 
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
+use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
 use PhpOffice\PhpWord\Element\Section;
 
 final class WordFieldRenderer
@@ -35,12 +36,7 @@ final class WordFieldRenderer
 
         if (is_array($container['document'] ?? null)) {
             $resolved = TemplateDocumentResolver::resolve($container['document'], $fields, $this->context->templateVariables);
-            (new TemplateDocumentWord(
-                $this->context->hasAppearance ? (string) $this->context->appearance['body_alignment'] : null,
-                $this->context->hasAppearance ? $this->context->color('table_header_background') : null,
-                $this->context->hasAppearance ? $this->context->color('table_header_color') : null,
-                (int) $this->context->appearance['body_font_size'],
-            ))->append($section, $resolved, $this->context->contentWidth);
+            $this->context->documentWriter()->append($section, $resolved, $this->context->contentWidth);
 
             return;
         }
@@ -48,6 +44,40 @@ final class WordFieldRenderer
             return;
         }
         $this->text($section, $field['value'] ?? null);
+    }
+
+    /**
+     * Recorrido del snapshot v7: los campos planos de la sección, cada uno pintado por su tipo.
+     * Una sección con algún campo de la clase anterior usa `render` (deuda de la etapa 8).
+     *
+     * @param  array<string, mixed>  $snapshotSection
+     */
+    public static function usesTypes(array $snapshotSection): bool
+    {
+        $fields = WordValues::arrayList($snapshotSection['fields'] ?? null);
+
+        return $fields !== [] && array_filter($fields, fn (array $field): bool => ($field['legacy'] ?? false) === true || ! is_string($field['type'] ?? null)) === [];
+    }
+
+    /** @param array<string, mixed> $snapshotSection */
+    public function renderTyped(Section $section, array $snapshotSection, int $number): void
+    {
+        $types = app(FieldTypeRegistry::class);
+        $fields = WordValues::arrayList($snapshotSection['fields'] ?? null);
+        $part = 0;
+        foreach ($fields as $field) {
+            $type = $types->get((string) $field['type']);
+            $label = WordValues::string($field['label'] ?? null, '');
+            if ($type->key() !== 'automatico' && $label !== '') {
+                $prefix = count($fields) > 1 ? $number.'.'.(++$part).' ' : '';
+                $section->addText(
+                    $prefix.$label,
+                    ['bold' => true, 'size' => $this->context->appearance['field_font_size'], 'color' => $this->context->color('text_color')],
+                    ['spaceBefore' => 160, 'spaceAfter' => 80, 'keepNext' => true],
+                );
+            }
+            $type->toWord($section, $field, $this->context);
+        }
     }
 
     private function text(Section $section, mixed $value): void

@@ -114,6 +114,11 @@ class SyllabusWordDocument
                     'keepNext' => true,
                 ],
             );
+            if (WordFieldRenderer::usesTypes($block)) {
+                $activeFields->renderTyped($section, $block, $number);
+
+                continue;
+            }
             $containers = WordValues::arrayList($block['blocks'] ?? null);
             $partNumber = 0;
             foreach ($containers as $container) {

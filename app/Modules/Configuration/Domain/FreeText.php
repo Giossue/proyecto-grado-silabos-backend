@@ -124,6 +124,34 @@ final class FreeText
         ]]]];
     }
 
+    /**
+     * Tabla de filas y columnas fijas: encabezado con las columnas y la etiqueta de cada fila.
+     *
+     * @param  list<array{key: string, label: string}>  $columns
+     * @param  list<array{key: string, label: string}>  $rows
+     * @param  array<string, mixed>  $values  mapa fila → columna → texto
+     * @return array<string, mixed>
+     */
+    public static function fixedTable(array $columns, array $rows, array $values): array
+    {
+        $paragraph = fn (string $text): array => $text === '' ? ['type' => 'paragraph'] : ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]];
+        $cell = fn (string $text, string $type): array => ['type' => $type, 'attrs' => ['colspan' => 1, 'rowspan' => 1], 'content' => [$paragraph($text)]];
+        $header = ['type' => 'tableRow', 'content' => [
+            $cell('', 'tableHeader'),
+            ...array_map(fn (array $column): array => $cell($column['label'], 'tableHeader'), $columns),
+        ]];
+        $body = array_map(function (array $row) use ($columns, $values, $cell): array {
+            $cells = is_array($values[$row['key']] ?? null) ? $values[$row['key']] : [];
+
+            return ['type' => 'tableRow', 'content' => [
+                $cell($row['label'], 'tableHeader'),
+                ...array_map(fn (array $column): array => $cell(is_scalar($cells[$column['key']] ?? null) ? trim((string) $cells[$column['key']]) : '', 'tableCell'), $columns),
+            ]];
+        }, $rows);
+
+        return ['type' => 'doc', 'content' => [['type' => 'table', 'content' => [$header, ...$body]]]];
+    }
+
     /** @return list<array<string, mixed>> */
     public static function blocks(mixed $value): array
     {

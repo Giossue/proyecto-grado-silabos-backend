@@ -161,6 +161,41 @@ final class IdentificationCard
         ];
     }
 
+    /**
+     * La cuadrícula oficial como documento de tabla, lista para el Word.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function document(array $data): array
+    {
+        $total = array_sum(self::WIDTHS);
+        $rows = [];
+        foreach (self::grid($data) as $r => $cells) {
+            $row = ['type' => 'tableRow', 'attrs' => ['rowRole' => 'fixed'], 'content' => []];
+            foreach ($cells as $cell) {
+                $marks = [['type' => 'textStyle', 'attrs' => ['color' => $cell['style'] === 'blue' ? '#FFFFFF' : '#000000']]];
+                if ($cell['bold']) {
+                    $marks[] = ['type' => 'bold'];
+                }
+                $paragraphs = [];
+                foreach (explode("\n", $cell['text']) as $line) {
+                    $paragraphs[] = ['type' => 'paragraph', 'attrs' => ['textAlign' => $cell['center'] ? 'center' : 'left'], 'content' => $line === '' ? [] : [['type' => 'text', 'text' => $line, 'marks' => $marks]]];
+                }
+                $row['content'][] = ['type' => 'tableCell', 'attrs' => [
+                    'colspan' => $cell['span'], 'rowspan' => $cell['rows'],
+                    'colwidth' => $r === 0 ? array_map(fn (float $weight): int => (int) round(625 * $weight / $total), self::WIDTHS) : null,
+                    'backgroundColor' => match ($cell['style']) {
+                        'blue' => '#4F81BD', 'shade' => '#DBE5F1', default => null
+                    },
+                ], 'content' => $paragraphs];
+            }
+            $rows[] = $row;
+        }
+
+        return ['type' => 'doc', 'content' => [['type' => 'table', 'content' => $rows]]];
+    }
+
     /** @return array<string, mixed> */
     private static function inputs(Syllabus $syllabus): array
     {

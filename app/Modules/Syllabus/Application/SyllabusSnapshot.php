@@ -14,6 +14,9 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 
 class SyllabusSnapshot
 {
+    /** Versión 7 (I-195): cada sección lleva `fields[]` planos con `type`, `config` y valor resuelto. */
+    public const VERSION = 7;
+
     /** @return array<string, mixed> */
     public function build(Syllabus $syllabus): array
     {
@@ -29,8 +32,10 @@ class SyllabusSnapshot
             $definitions->mapWithKeys(fn (FieldDefinition $field): array => [$field->clave => $values->get($field->id)?->valor])->all(),
         ));
 
+        $context = ['identification' => $identification, 'academic_context' => $syllabus->contexto_academico];
+
         return [
-            'schema_version' => 6,
+            'schema_version' => self::VERSION,
             'template_id' => $template->id,
             'template_name' => SyllabusTemplate::INSTITUTIONAL_NAME,
             'document_mapping' => $template->mapeo_documento,
@@ -41,6 +46,20 @@ class SyllabusSnapshot
                 ->map(fn (TemplateSection $section): array => [
                     'key' => $section->clave,
                     'title' => $section->titulo,
+                    'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(function (FieldDefinition $field) use ($values, $context): array {
+                        $type = $field->fieldType();
+                        $config = $field->typeConfig();
+
+                        return [
+                            'definition_id' => $field->id,
+                            'key' => $field->clave,
+                            'label' => $field->etiqueta,
+                            'type' => $type->key(),
+                            'legacy' => $field->hasLegacyClass(),
+                            'config' => $config,
+                            'value' => $type->toSnapshot($values->get($field->id)?->valor, $config, $context),
+                        ];
+                    }))->values()->all(),
                     'blocks' => $section->blocks->map(fn (TemplateBlock $block): array => [
                         'key' => $block->clave,
                         'title' => $block->titulo,
@@ -70,13 +89,18 @@ class SyllabusSnapshot
     {
         $fieldIds = [];
         foreach ($this->sections($snapshot) as $section) {
-            foreach ($this->blocks($section) as $block) {
+            // v7: campos planos; los automáticos no guardan valor (se conservan sin tocar). v6 y anteriores: bloques.
+            $groups = ($snapshot['schema_version'] ?? 0) >= 7 ? [$section] : $this->blocks($section);
+            foreach ($groups as $block) {
                 foreach ($this->fields($block) as $field) {
                     $definitionId = $field['definition_id'] ?? null;
                     if (! is_string($definitionId)) {
                         continue;
                     }
                     $fieldIds[] = $definitionId;
+                    if (($field['type'] ?? null) === 'automatico') {
+                        continue;
+                    }
                     FieldValue::query()->updateOrCreate([
                         'silabo_id' => $syllabus->id,
                         'definicion_campo_id' => $definitionId,

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Documents\Infrastructure\Rendering;
 
+use PhpOffice\PhpWord\Element\AbstractContainer;
 use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\SimpleType\Jc;
 
@@ -48,6 +49,34 @@ final class WordRenderContext
         $copy->contentWidth = $pageWidth - (2 * (int) round(Converter::cmToTwip(self::COMPACT_MARGIN_CM)));
 
         return $copy;
+    }
+
+    /** Escritor de documentos con el aspecto congelado en la revisión. */
+    public function documentWriter(): TemplateDocumentWord
+    {
+        return new TemplateDocumentWord(
+            $this->hasAppearance ? (string) $this->appearance['body_alignment'] : null,
+            $this->hasAppearance ? $this->color('table_header_background') : null,
+            $this->hasAppearance ? $this->color('table_header_color') : null,
+            (int) $this->appearance['body_font_size'],
+        );
+    }
+
+    /**
+     * Pinta un documento de texto enriquecido; sin contenido deja la marca «Sin contenido».
+     *
+     * @param  array<string, mixed>|null  $document
+     */
+    public function writeDocument(AbstractContainer $target, ?array $document, bool $emptyMark = true): void
+    {
+        if ($document === null) {
+            if ($emptyMark) {
+                $target->addText('Sin contenido', ['italic' => true, 'color' => '595959']);
+            }
+
+            return;
+        }
+        $this->documentWriter()->append($target, $document, $this->contentWidth);
     }
 
     public function color(string $key): string

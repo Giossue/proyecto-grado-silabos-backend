@@ -3,6 +3,8 @@
 namespace App\Modules\Configuration\Domain\FieldTypes;
 
 use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Documents\Infrastructure\Rendering\WordRenderContext;
+use PhpOffice\PhpWord\Element\AbstractContainer;
 
 final class TextFieldType implements FieldType
 {
@@ -44,5 +46,16 @@ final class TextFieldType implements FieldType
     public function teacherEditable(): bool
     {
         return true;
+    }
+
+    public function toSnapshot(mixed $value, array $config, array $context): mixed
+    {
+        return $value;
+    }
+
+    public function toWord(AbstractContainer $target, array $field, WordRenderContext $context): void
+    {
+        $value = $field['value'] ?? null;
+        $context->writeDocument($target, FreeText::isDocument($value) && ! FreeText::isEmpty($value) ? $value : null);
     }
 }

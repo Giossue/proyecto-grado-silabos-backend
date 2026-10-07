@@ -2,7 +2,10 @@
 
 namespace App\Modules\Configuration\Domain\FieldTypes;
 
+use App\Modules\Documents\Infrastructure\Rendering\WordRenderContext;
+use App\Modules\Syllabus\Application\IdentificationCard;
 use Illuminate\Validation\ValidationException;
+use PhpOffice\PhpWord\Element\AbstractContainer;
 
 final class AutomaticFieldType implements FieldType
 {
@@ -55,5 +58,25 @@ final class AutomaticFieldType implements FieldType
     public function teacherEditable(): bool
     {
         return false;
+    }
+
+    public function toSnapshot(mixed $value, array $config, array $context): mixed
+    {
+        return match ($config['source'] ?? null) {
+            'identification_card' => is_array($context['identification'] ?? null) ? $context['identification'] : null,
+            default => null,
+        };
+    }
+
+    public function toWord(AbstractContainer $target, array $field, WordRenderContext $context): void
+    {
+        $config = is_array($field['config'] ?? null) ? $field['config'] : [];
+        $value = is_array($field['value'] ?? null) ? $field['value'] : null;
+        if (($config['source'] ?? null) === 'identification_card' && $value !== null) {
+            $context->writeDocument($target, IdentificationCard::document($value));
+
+            return;
+        }
+        $context->writeDocument($target, null);
     }
 }

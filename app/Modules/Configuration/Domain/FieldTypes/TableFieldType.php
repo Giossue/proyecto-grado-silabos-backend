@@ -2,7 +2,10 @@
 
 namespace App\Modules\Configuration\Domain\FieldTypes;
 
+use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Documents\Infrastructure\Rendering\WordRenderContext;
 use Illuminate\Validation\ValidationException;
+use PhpOffice\PhpWord\Element\AbstractContainer;
 
 final class TableFieldType implements FieldType
 {
@@ -93,6 +96,18 @@ final class TableFieldType implements FieldType
     public function teacherEditable(): bool
     {
         return true;
+    }
+
+    public function toSnapshot(mixed $value, array $config, array $context): mixed
+    {
+        return is_array($value) ? $value : $this->defaultValue($config);
+    }
+
+    public function toWord(AbstractContainer $target, array $field, WordRenderContext $context): void
+    {
+        $config = is_array($field['config'] ?? null) ? $field['config'] : [];
+        $value = is_array($field['value'] ?? null) ? $field['value'] : [];
+        $context->writeDocument($target, FreeText::fixedTable($this->axis($config['columns'] ?? null, 'columns', self::MAX_COLUMNS), $this->axis($config['rows'] ?? null, 'rows', self::MAX_ROWS), $value));
     }
 
     /** @return list<array{key: string, label: string}> */
