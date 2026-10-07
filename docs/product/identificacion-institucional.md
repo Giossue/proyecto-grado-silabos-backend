@@ -13,7 +13,7 @@ completa Docencia. El diseño queda guardado dentro de la plantilla única.
 - `grid(...)`: coloca los valores en la **cuadrícula** del formato oficial (9 columnas,
   celdas combinadas). Cada fila es una lista de celdas con texto, columnas que abarca
   (`span`), filas que abarca (`rows`) y estilo.
-- `WIDTHS`: anchos de las 9 columnas, medidos del documento original.
+- `WIDTHS`: anchos de las 9 columnas, ajustados para que las etiquetas largas (Campus, Modalidad) no se partan tanto.
 
 `TemplateDocumentDefaults::identification` adapta esa cuadrícula inicial a un documento
 editable, reemplazando datos por variables y campos. Se usa sin escritura cuando no
