@@ -124,7 +124,7 @@ final class UnitsFieldType implements FieldType
         $units = array_values(array_filter($value, 'is_array'));
         // Sin datos se dibuja una unidad en blanco: la hoja conserva el formato oficial.
         if ($units === []) {
-            $units = [['nombre' => '', 'resultado' => '', 'semanas' => array_fill(0, 4, [])]];
+            $units = [['nombre' => '', 'resultado' => '', 'semanas' => array_fill(0, 16, [])]];
         }
         $week = 0;
         foreach ($units as $index => $unit) {
