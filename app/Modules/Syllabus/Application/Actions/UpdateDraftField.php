@@ -32,16 +32,14 @@ class UpdateDraftField
             if (! in_array($locked->estado, ['borrador', 'correccion_solicitada'], true)) {
                 throw ValidationException::withMessages(['syllabus' => 'El expediente no está en estado editable.']);
             }
-            if (! $field->editable_docente || $field->tipo === 'calculo') {
+            if (! $field->editable_docente || $field->tipo === 'calculo' || (! $field->hasLegacyClass() && ! $field->fieldType()->teacherEditable() && ! ($field->typeConfig()['adjustable'] ?? false))) {
                 throw ValidationException::withMessages(['field' => 'Este campo lo llena el sistema; el docente no puede cambiarlo.']);
             }
 
             FieldValue::query()->updateOrCreate([
                 'silabo_id' => $locked->id,
                 'definicion_campo_id' => $field->id,
-            ], ['valor' => $field->tipo === 'texto_libre' && isset($data['value'])
-                ? FreeText::normalize($data['value'])
-                : ($data['value'] ?? null)]);
+            ], ['valor' => $this->value($field, $data['value'] ?? null)]);
 
             $locked->update([
                 'version_bloqueo' => $locked->version_bloqueo + 1,
@@ -60,5 +58,14 @@ class UpdateDraftField
 
             return $locked;
         });
+    }
+
+    private function value(FieldDefinition $field, mixed $value): mixed
+    {
+        if ($field->hasLegacyClass()) {
+            return $field->tipo === 'texto_libre' && $value !== null ? FreeText::normalize($value) : $value;
+        }
+
+        return $field->fieldType()->validateValue($value, $field->typeConfig(), 'value');
     }
 }

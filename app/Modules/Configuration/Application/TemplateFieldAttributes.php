@@ -56,7 +56,7 @@ final class TemplateFieldAttributes
             $hydrated = [
                 ...$attrs,
                 'label' => $definition->etiqueta_definicion_campo,
-                'kind' => $definition->tipo_definicion_campo,
+                'kind' => $definition->clase_anterior_definicion_campo ?? $definition->tipo_definicion_campo,
                 'options' => is_array($options) ? $options : null,
             ];
             if (($attrs['choice'] ?? null) === null) {

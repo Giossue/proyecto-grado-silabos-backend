@@ -28,13 +28,29 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 
 - [x] 0. Documentación: este plan, ADR-0009, `docs/architecture/field-types.md`, trazabilidad.
 - [x] 1. Registro backend y los 4 tipos (aditivo; no cambia la plantilla actual ni migra).
-- [ ] 2. Persistencia y herencia por tipo.
+- [x] 2. Persistencia y herencia por tipo (migración `000202`; con capa de compatibilidad, ver Deuda).
 - [ ] 3. API de plantilla simplificada.
 - [ ] 4. Snapshot v7 y render Word/PDF por tipo.
 - [ ] 5. Plantilla inicial.
 - [ ] 6. Frontend: registro y editor del docente.
 - [ ] 7. Frontend: constructor simple.
 - [ ] 8. Limpieza del modelo anterior.
+
+## Etapa 2: decisiones y deuda
+
+- `definiciones_campo.tipo_definicion_campo` solo admite `texto|ficha|tabla|automatico`. La
+  configuración por tipo va en `opciones_definicion_campo` (objeto JSON): POR VALIDAR si merece
+  columna propia. En `ficha`, si falta `adjustable`, se toma de `editable_docente`.
+- Filas antiguas: la migración las convierte sin borrar (`texto_libre` heredado de la ficha a
+  `ficha`; `referencia_maestra` a `automatico`; el resto a `texto`) y guarda el tipo antiguo en
+  `clase_anterior_definicion_campo`.
+- `FieldDefinition::fieldType()` y `typeConfig()` leen del registro. `InheritMasterValues` usa
+  `defaultValue` y `UpdateDraftField` usa `validateValue` para campos sin clase anterior;
+  `SubjectProfileFields` filtra por tipo `ficha`.
+- Deuda a quitar en la etapa 8: columna `clase_anterior_definicion_campo`, el atributo `tipo`
+  que devuelve la clase anterior (`FieldDefinition::getAttribute/setAttribute/saving`),
+  `hasLegacyClass()` y las rutas de compatibilidad en `UpdateDraftField` e `InheritMasterValues`.
+  Las selecciones, número y fecha siguen existiendo solo por esa capa.
 
 ## POR VALIDAR
 

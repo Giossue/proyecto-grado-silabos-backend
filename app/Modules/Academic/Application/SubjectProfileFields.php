@@ -24,7 +24,7 @@ class SubjectProfileFields
 
         return $template->sections
             ->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields))
-            ->filter(fn (FieldDefinition $field): bool => $field->fromProfile() && $field->tipo === 'texto_libre')
+            ->filter(fn (FieldDefinition $field): bool => $field->fromProfile() && $field->fieldType()->key() === 'ficha')
             ->values();
     }
 

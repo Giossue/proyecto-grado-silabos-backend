@@ -204,6 +204,10 @@ usan su nombre completo (`heredado_definicion_campo`, `origen_maestro_definicion
 como alias. I-168 retiró `ia_habilitada` y `marcador_documento` (se escribían y nadie los
 leía), `valores_campo.heredado` y `origen_valor_campo` (copias de la definición) y
 `plantilla_silabo.revision_configuracion` con sus cuatro triggers `tocar_revision_*`.
+Desde I-195 (migración `000202`) `definiciones_campo.tipo_definicion_campo` solo admite
+`texto`, `ficha`, `tabla` y `automatico` (`definiciones_campo_tipo_check`) y la configuración
+del tipo vive en `opciones_definicion_campo`. `clase_anterior_definicion_campo` conserva el
+tipo antiguo como compatibilidad temporal hasta la etapa 8 del plan.
 No hay reglas por campo: `reglas_definicion_campo` se eliminó (migración `000111`). Todo
 campo del docente es obligatorio al enviar salvo las dos bibliografías, que I-187 vuelve
 opcionales; el estado `borrador` puede quedar incompleto.

@@ -24,6 +24,9 @@ class InheritMasterValues
         $template = SyllabusTemplate::query()->first();
         foreach ($fields->where('heredado', false) as $field) {
             $initial = $field->tipo === 'texto_libre' ? $template?->block($field->campo_plantilla_id)?->configuracion['initial_content'] ?? null : null;
+            if ($initial === null && ! $field->hasLegacyClass() && $field->fieldType()->teacherEditable()) {
+                $initial = $field->fieldType()->defaultValue($field->typeConfig());
+            }
             if (is_array($initial)) {
                 FieldValue::query()->create(['silabo_id' => $syllabus->id, 'definicion_campo_id' => $field->id, 'valor' => $initial]);
             }

@@ -2,6 +2,8 @@
 
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
+use App\Modules\Configuration\Domain\FieldTypes\FieldType;
+use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
 use App\Support\Database\MapsLegacyColumnNames;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -15,7 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $clave
  * @property string $etiqueta
  * @property string|null $ayuda
- * @property string $tipo
+ * @property string $tipo Tipo de la plantilla; mientras dure la compatibilidad (I-195, etapa 8) devuelve la clase anterior si existe
+ * @property string|null $clase_anterior
  * @property bool $heredado
  * @property string|null $origen_maestro
  * @property bool $editable_docente
@@ -34,6 +37,7 @@ class FieldDefinition extends Model
         'etiqueta' => 'etiqueta_definicion_campo',
         'ayuda' => 'ayuda_definicion_campo',
         'tipo' => 'tipo_definicion_campo',
+        'clase_anterior' => 'clase_anterior_definicion_campo',
         'opciones' => 'opciones_definicion_campo',
         'posicion' => 'posicion_definicion_campo',
         'heredado' => 'heredado_definicion_campo',
@@ -62,6 +66,7 @@ class FieldDefinition extends Model
         'etiqueta',
         'ayuda',
         'tipo',
+        'clase_anterior',
         'heredado',
         'origen_maestro',
         'editable_docente',
@@ -84,7 +89,75 @@ class FieldDefinition extends Model
 
     protected static function booted(): void
     {
+        static::saving(function (self $field): void {
+            $legacy = $field->getAttributes()['clase_anterior_definicion_campo'] ?? null;
+            if ($legacy === null) {
+                if (! isset($field->getAttributes()['tipo_definicion_campo'])) {
+                    $field->setAttribute('tipo', 'texto');
+                }
+
+                return;
+            }
+            $fromProfile = $field->heredado && $field->origen_maestro === self::ORIGIN_PROFILE;
+            $field->attributes['tipo_definicion_campo'] = match (true) {
+                $legacy === 'texto_libre' && $fromProfile => 'ficha',
+                $legacy === 'referencia_maestra' => 'automatico',
+                default => 'texto',
+            };
+        });
         static::addGlobalScope('vigente_en_plantilla', fn (Builder $query) => $query->where('vigente_en_plantilla', true));
+    }
+
+    /** Clases anteriores que se guardan como `texto` (compatibilidad temporal, deuda de la etapa 8 de I-195). */
+    private const LEGACY_CLASSES = [
+        'texto_corto', 'texto_largo', 'texto_libre', 'numero', 'fecha', 'seleccion_unica', 'seleccion_multiple',
+        'booleano', 'repetible', 'calculo', 'referencia_maestra',
+    ];
+
+    public function getAttribute($key): mixed
+    {
+        if ($key === 'tipo') {
+            return parent::getAttribute('clase_anterior_definicion_campo') ?? parent::getAttribute('tipo_definicion_campo');
+        }
+
+        return parent::getAttribute($this->mappedColumn($key));
+    }
+
+    public function setAttribute($key, $value): static
+    {
+        // Compatibilidad: un tipo antiguo se guarda como clase anterior y `saving` deriva el tipo real.
+        if ($key === 'tipo' && in_array($value, self::LEGACY_CLASSES, true)) {
+            return parent::setAttribute('clase_anterior_definicion_campo', $value);
+        }
+        if ($key === 'tipo') {
+            parent::setAttribute('clase_anterior_definicion_campo', null);
+        }
+
+        return parent::setAttribute($this->mappedColumn($key), $value);
+    }
+
+    /** Tipo del registro (texto, ficha, tabla, automatico), independiente de la clase anterior. */
+    public function fieldType(): FieldType
+    {
+        return app(FieldTypeRegistry::class)->get((string) parent::getAttribute('tipo_definicion_campo'));
+    }
+
+    /** Configuración propia del tipo, guardada en `opciones` cuando es un objeto. */
+    public function typeConfig(): array
+    {
+        $options = $this->opciones;
+        $config = is_array($options) && ! array_is_list($options) ? $options : [];
+        if ($this->fieldType()->key() === 'ficha' && ! array_key_exists('adjustable', $config)) {
+            $config['adjustable'] = (bool) $this->editable_docente;
+        }
+
+        return $config;
+    }
+
+    /** Verdadero mientras el campo conserva una clase anterior (selección, número, etc.). */
+    public function hasLegacyClass(): bool
+    {
+        return parent::getAttribute('clase_anterior_definicion_campo') !== null;
     }
 
     public function fromProfile(): bool
