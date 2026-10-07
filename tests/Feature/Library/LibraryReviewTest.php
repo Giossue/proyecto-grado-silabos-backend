@@ -129,7 +129,7 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('syllabus.review_comments.0.comment', 'El libro no está disponible en biblioteca; El código del libro es incorrecto.');
 
         // El docente corrige lo que haga falta (no solo la bibliografía) y reenvía: vuelve a biblioteca.
-        $other = FieldDefinition::query()->where('editable_docente', true)->where('heredado', false)->where('tipo', 'texto_libre')
+        $other = FieldDefinition::query()->where('editable_docente', true)->where('heredado', false)->whereIn('tipo', ['texto_libre', 'texto'])
             ->where('clave', '!=', 'bibliografia')->firstOrFail();
         $this->as('teacher')->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $other]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue('Ajuste general'),
@@ -230,7 +230,8 @@ class LibraryReviewTest extends TestCase
         $option = collect($field->opciones ?? [])->map(fn (mixed $item): string => is_array($item) ? (string) ($item['value'] ?? 'opcion') : (string) $item)->first();
 
         return match ($field->tipo) {
-            'texto_libre' => $this->freeTextValue("Contenido {$field->clave}"),
+            'texto_libre', 'texto' => $this->freeTextValue("Contenido {$field->clave}"),
+            'tabla' => $this->filledTableValue($field),
             'booleano' => true,
             'numero' => 1,
             'fecha' => now()->toDateString(),

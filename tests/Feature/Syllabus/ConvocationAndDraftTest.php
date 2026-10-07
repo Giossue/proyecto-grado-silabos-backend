@@ -624,7 +624,8 @@ class ConvocationAndDraftTest extends TestCase
             ->get();
         foreach ($requiredEditable as $field) {
             $payload = match (true) {
-                $field->tipo === 'texto_libre' => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue("Contenido {$field->clave}")],
+                in_array($field->tipo, ['texto_libre', 'texto'], true) => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue("Contenido {$field->clave}")],
+                $field->tipo === 'tabla' => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->filledTableValue($field)],
                 $field->tipo === 'seleccion_unica' => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => (string) ($field->opciones[0] ?? '')],
                 default => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => "Contenido {$field->clave}"],
             };
