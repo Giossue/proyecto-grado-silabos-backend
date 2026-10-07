@@ -521,5 +521,5 @@ El plan FE-SHADCN-2026-09-29 conserva el detalle y el resultado final de cada co
 
 I-198 — importación con Excel (ADM-05, COR-14 y COR-15): `ImportManagedUsers`,
 `ImportCareerTeachers` e `ImportScheduledAssignments` validan por fila y crean todo o nada
-con las acciones del alta individual; `ImportSpreadsheetSheet` muestra la revisión por fila.
+con las acciones del alta individual; `ImportSpreadsheetDialog` muestra la revisión por fila.
 `SpreadsheetImportTest` cubre revisión sin escritura, errores por fila, permisos y plantilla.

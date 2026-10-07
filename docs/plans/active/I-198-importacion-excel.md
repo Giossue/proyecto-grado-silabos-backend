@@ -30,7 +30,7 @@ Crear muchas cuentas o registros uno por uno es lento. Tres pantallas aceptan un
 - Backend: `SpreadsheetReader` y `SpreadsheetTemplate` (OpenSpout), acciones
   `ImportManagedUsers`, `ImportCareerTeachers` e `ImportScheduledAssignments`, rutas
   `*/import` y `*/import-template`.
-- Frontend: `ImportSpreadsheetSheet` reutilizable (plantilla, revisión por fila, confirmar).
+- Frontend: `ImportSpreadsheetDialog` reutilizable (plantilla, revisión por fila, confirmar).
 
 ## Verificación
 
