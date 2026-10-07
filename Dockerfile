@@ -37,7 +37,6 @@ RUN apk add --no-cache \
         freetype-dev \
         libjpeg-turbo-dev \
         libpng-dev \
-        poppler-utils \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_pgsql \
