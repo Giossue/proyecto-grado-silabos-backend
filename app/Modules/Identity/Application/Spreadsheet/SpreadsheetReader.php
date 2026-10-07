@@ -6,13 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use OpenSpout\Reader\XLSX\Reader;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Worksheet\BaseDrawing;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
-use PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Throwable;
-use ZipArchive;
 
 class SpreadsheetReader
 {
@@ -65,104 +59,6 @@ class SpreadsheetReader
         }
 
         return $rows;
-    }
-
-    /**
-     * Lee la primera hoja con PhpSpreadsheet y asigna cada imagen a la fila donde cae su centro.
-     *
-     * @param  array<string, string>  $columns
-     * @return list<array{line: int, values: array<string, string>, images: list<string>}>
-     */
-    public function readWithImages(UploadedFile $file, array $columns, int $maxRows = 50): array
-    {
-        $path = $file->getRealPath();
-        $zip = new ZipArchive;
-        $inCell = $zip->open($path) === true && $zip->locateName('xl/richData/rdrichvalue.xml') !== false;
-        $zip->close();
-
-        try {
-            $sheet = IOFactory::load($path)->getSheet(0);
-        } catch (Throwable) {
-            throw ValidationException::withMessages(['file' => 'No se pudo leer el archivo. Use la plantilla .xlsx.']);
-        }
-
-        $images = [];
-        foreach ($sheet->getDrawingCollection() as $drawing) {
-            $bytes = $this->imageBytes($drawing);
-            if ($bytes === null) {
-                continue;
-            }
-            $images[$this->centerRow($sheet, $drawing)][] = $bytes;
-        }
-        if ($images === [] && $inCell) {
-            throw ValidationException::withMessages(['file' => 'Las imágenes están dentro de las celdas. Péguelas con «Colocar sobre las celdas».']);
-        }
-
-        $rows = [];
-        $map = null;
-        foreach ($sheet->toArray(null, true, false, false) as $index => $raw) {
-            $cells = array_values(array_map(fn (mixed $cell): string => is_scalar($cell) ? trim((string) $cell) : '', $raw));
-            $line = $index + 1;
-            if ($map === null) {
-                $map = $this->headerMap($cells, $columns);
-
-                continue;
-            }
-            $values = [];
-            foreach ($map as $key => $position) {
-                $values[$key] = $cells[$position] ?? '';
-            }
-            $rowImages = $images[$line] ?? [];
-            if (implode('', $values) === '' && $rowImages === []) {
-                continue;
-            }
-            $rows[] = ['line' => $line, 'values' => $values, 'images' => $rowImages];
-            if (count($rows) > $maxRows) {
-                throw ValidationException::withMessages(['file' => "El archivo supera {$maxRows} filas."]);
-            }
-        }
-        if ($map === null || $rows === []) {
-            throw ValidationException::withMessages(['file' => 'El archivo no tiene filas para importar.']);
-        }
-
-        return $rows;
-    }
-
-    private function imageBytes(BaseDrawing $drawing): ?string
-    {
-        if ($drawing instanceof Drawing) {
-            $bytes = @file_get_contents($drawing->getPath());
-
-            return $bytes === false ? null : $bytes;
-        }
-        if ($drawing instanceof MemoryDrawing) {
-            ob_start();
-            imagepng($drawing->getImageResource());
-
-            return (string) ob_get_clean();
-        }
-
-        return null;
-    }
-
-    private function centerRow(Worksheet $sheet, BaseDrawing $drawing): int
-    {
-        $start = (int) preg_replace('/\D/', '', $drawing->getCoordinates());
-        $center = $drawing->getOffsetY() + $drawing->getHeight() / 2;
-        $row = $start;
-        $top = 0.0;
-        while ($row < $start + 500) {
-            $points = $sheet->getRowDimension($row)->getRowHeight();
-            $height = ($points > 0 ? $points : $sheet->getDefaultRowDimension()->getRowHeight()) * 96 / 72;
-            $height = $height > 0 ? $height : 20.0;
-            if ($center < $top + $height) {
-                return $row;
-            }
-            $top += $height;
-            $row++;
-        }
-
-        return $start;
     }
 
     /**

@@ -60,7 +60,7 @@ class SetupChecklist
             'Puesta en marcha de la institución',
             'En este orden. Cada paso habilita el siguiente; las coordinaciones no pueden empezar hasta que termine.',
             [
-                $this->step('faculties', 'Registrar las facultades', 'Elija el campus y cargue el logo de cada facultad (PNG sin fondo); sin logo no se abren convocatorias. Puede importarlas desde Excel con su logo pegado en la fila.', Faculty::query()->where('activo', true)->exists()),
+                $this->step('faculties', 'Registrar las facultades', 'Elija el campus y cargue el logo de cada facultad (PNG sin fondo); sin logo no se abren convocatorias.', Faculty::query()->where('activo', true)->exists()),
                 $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada. Puede importarlas desde Excel.', $careerCount > 0),
                 $this->step('periods', 'Registrar el periodo académico', 'Desde Convocatorias, con las fechas del periodo; es el que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists()),
                 $this->step('accounts', 'Crear las cuentas de coordinación y de biblioteca', 'Al menos una de cada una, también por importación desde Excel. Los docentes los crea cada Coordinación.', $accountsReady),

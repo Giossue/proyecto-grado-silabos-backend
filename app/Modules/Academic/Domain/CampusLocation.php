@@ -15,12 +15,6 @@ enum CampusLocation: string
         return $this->value;
     }
 
-    /** @return list<string> */
-    public static function values(): array
-    {
-        return array_map(fn (self $campus): string => $campus->value, self::cases());
-    }
-
     /** @return list<array{value: string, label: string}> */
     public static function options(): array
     {

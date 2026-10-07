@@ -527,6 +527,7 @@ I-198 — importación con Excel (ADM-05, COR-14 y COR-15): `ImportManagedUsers`
 `ImportCareerTeachers` e `ImportScheduledAssignments` validan por fila y crean todo o nada
 con las acciones del alta individual; `ImportSpreadsheetDialog` muestra la revisión por fila.
 `SpreadsheetImportTest` cubre revisión sin escritura, errores por fila, permisos y plantilla.
+La importación de facultades se retiró (2026-10-07): se crean una por una con su logo; ya no existen `ImportFaculties`, `readWithImages` ni las rutas `admin/academic/faculties/import*`.
 
 I-197 — quitar rol de una cuenta (ADM-02, RF-001..008): `RemoveUserRole` y `DELETE admin/users/{user}/roles/{assignment}`; «Editar usuario» lista los roles con «Quitar». `ManagedUserUpdateTest` cubre retiro con historial, único rol, cuenta ajena y permiso.
 

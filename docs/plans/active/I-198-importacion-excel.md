@@ -2,7 +2,7 @@
 
 ## Pedido del responsable, 2026-10-07
 
-Crear muchas cuentas o registros uno por uno es lento. Tres pantallas aceptan un archivo
+Crear muchas cuentas o registros uno por uno es lento. Cuatro pantallas aceptan un archivo
 `.xlsx` para crear registros en bloque.
 
 ## Alcance
@@ -17,11 +17,6 @@ Crear muchas cuentas o registros uno por uno es lento. Tres pantallas aceptan un
   al docente con las mismas acciones del alta individual.
 - Administración → Facultades y carreras (pestaña Carreras): columnas Facultad, Modalidad,
   Código de carrera, Nombre de la carrera y Número de ciclos.
-- Administración → Facultades y carreras (pestaña Facultades): columnas Nombre de la
-  facultad, Campus (lista del enum) y Logo. El logo es una imagen PNG transparente pegada
-  sobre la fila (no «en celda»); se asigna a la fila donde cae su centro, calculado con el
-  ancla y la altura real de las filas. La revisión muestra la miniatura detectada. Máximo
-  50 filas; una imagen por fila; mismas reglas de logo que el alta individual.
 
 ## Reglas
 
@@ -35,6 +30,15 @@ Crear muchas cuentas o registros uno por uno es lento. Tres pantallas aceptan un
   para Rol, Carrera, Código de materia, Jornada y Correo del docente, e indicaciones a la
   derecha que la importación ignora. El segundo nombre y el segundo apellido son opcionales.
 -  Los permisos son los del alta individual.
+
+## Retiro de la importación de facultades (2026-10-07)
+
+Por instrucción del responsable, la importación de facultades desde Excel se eliminó: en
+una universidad son pocas y se crean una por una con su logo. Se retiraron la acción
+`ImportFaculties`, las rutas `admin/academic/faculties/import` y `.../import-template`, la
+lectura de imágenes incrustadas (`SpreadsheetReader::readWithImages`), el alto de fila de
+`SpreadsheetTemplate`, `CampusLocation::values()` y la prueba del flujo con logos. Las
+demás importaciones no cambian.
 
 ## Cambios
 
