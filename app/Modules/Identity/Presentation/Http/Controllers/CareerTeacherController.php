@@ -10,6 +10,7 @@ use App\Modules\Identity\Application\Actions\RemoveCareerTeacher;
 use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetTemplate;
+use App\Modules\Identity\Domain\PersonNameColumns;
 use App\Modules\Identity\Presentation\Http\Requests\CreateCareerTeacherRequest;
 use App\Modules\Identity\Presentation\Http\Requests\ImportSpreadsheetRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateCareerTeacherRequest;
@@ -39,7 +40,10 @@ class CareerTeacherController extends Controller
     {
         Gate::authorize('createCareerTeacher', User::class);
 
-        return $template->download('plantilla-docentes.xlsx', array_values(ImportCareerTeachers::COLUMNS), ['Nombre Apellido', 'correo@ueb.edu.ec']);
+        return $template->download('plantilla-docentes.xlsx', array_values(ImportCareerTeachers::COLUMNS), [], [
+            ...PersonNameColumns::NOTES,
+            'Correo: use el correo institucional; si la cuenta ya existe, se incorpora a su carrera sin cambiar su nombre.',
+        ]);
     }
 
     public function import(ImportSpreadsheetRequest $request, SpreadsheetReader $reader, ImportCareerTeachers $action): JsonResponse

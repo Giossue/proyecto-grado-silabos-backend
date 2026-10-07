@@ -9,13 +9,26 @@ use App\Modules\Academic\Presentation\Http\Requests\ImportScheduledAssignmentsRe
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetTemplate;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ScheduledImportController extends Controller
 {
-    public function template(SpreadsheetTemplate $template): StreamedResponse
+    public function template(Request $request, SpreadsheetTemplate $template, ImportScheduledAssignments $action): StreamedResponse
     {
-        return $template->download('plantilla-materias-y-asignaciones.xlsx', array_values(ImportScheduledAssignments::COLUMNS), ['SW-P1-001', 'A', 'Matutina', 'docente@ueb.edu.ec']);
+        $options = $action->templateOptions($request);
+
+        return $template->download('plantilla-materias-y-asignaciones.xlsx', array_values(ImportScheduledAssignments::COLUMNS), [
+            0 => $options['subjects'],
+            2 => ['Matutina', 'Vespertina', 'Nocturna'],
+            3 => $options['teachers'],
+        ], [
+            'Una fila por paralelo; no deje filas vacías entre registros.',
+            'Código de materia, Jornada y Correo del docente: elija una opción de la lista.',
+            'Paralelo: escriba la letra o el código del paralelo, por ejemplo A.',
+            'Correo del docente es opcional: vacío crea el paralelo sin docente.',
+            'Si el paralelo ya existe en el período, indique un docente para asignarlo.',
+        ]);
     }
 
     public function import(ImportScheduledAssignmentsRequest $request, SpreadsheetReader $reader, ImportScheduledAssignments $action): JsonResponse

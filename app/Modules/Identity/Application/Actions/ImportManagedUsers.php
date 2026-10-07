@@ -5,6 +5,7 @@ namespace App\Modules\Identity\Application\Actions;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Identity\Domain\PersonNameColumns;
 use App\Modules\Identity\Presentation\Http\Requests\CreateManagedUserRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ use Illuminate\Support\Str;
 
 class ImportManagedUsers
 {
-    public const COLUMNS = ['nombre' => 'Nombre', 'correo' => 'Correo', 'rol' => 'Rol', 'carrera' => 'Carrera'];
+    public const COLUMNS = [...PersonNameColumns::COLUMNS, 'correo' => 'Correo', 'rol' => 'Rol', 'carrera' => 'Carrera'];
 
     public function __construct(private readonly CreateManagedUser $createUser) {}
 
@@ -37,7 +38,8 @@ class ImportManagedUsers
         $checked = [];
         $payloads = [];
         foreach ($rows as $row) {
-            $values = $row['values'];
+            [$values, $nameErrors] = PersonNameColumns::compose($row['values']);
+            $row['values'] = $values;
             $email = mb_strtolower($values['correo']);
             $payload = [
                 'nombre' => $values['nombre'],
@@ -46,7 +48,7 @@ class ImportManagedUsers
                 'career_id' => $values['carrera'] === '' ? null : ($careers->get($this->key($values['carrera'])) ?? $values['carrera']),
             ];
             $validator = Validator::make($payload, (new CreateManagedUserRequest)->rules(), (new CreateManagedUserRequest)->messages());
-            $errors = $validator->errors()->all();
+            $errors = [...$nameErrors, ...$validator->errors()->all()];
             if (isset($seen[$email])) {
                 $errors[] = "El correo se repite en la fila {$seen[$email]}.";
             }

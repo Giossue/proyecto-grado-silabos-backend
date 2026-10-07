@@ -28,6 +28,25 @@ class ImportScheduledAssignments
         private readonly AcademicPeriodPlanning $planning,
     ) {}
 
+    /** @return array{subjects: list<string>, teachers: list<string>} */
+    public function templateOptions(Request $request): array
+    {
+        $role = $this->roles->resolve($request);
+        if (! $role instanceof RoleAssignment || $role->carrera_id === null
+            || ! AcademicStructurePermissions::mayCreate($role, 'paralelo')) {
+            throw new AuthorizationException('No puede importar con el rol activo.');
+        }
+
+        return [
+            'subjects' => Subject::query()->where('carrera_id', $role->carrera_id)->where('activo', true)
+                ->orderBy('ciclo')->orderBy('orden_en_ciclo')->pluck('codigo_asignatura')->map(fn (mixed $code): string => (string) $code)->all(),
+            'teachers' => RoleAssignment::query()->effective()->with('user')
+                ->where('carrera_id', $role->carrera_id)->where('rol', RoleCode::Teacher->value)
+                ->whereHas('user', fn ($query) => $query->where('activo', true)->whereNotNull('correo_verificado_en'))
+                ->get()->map(fn (RoleAssignment $assignment): string => $assignment->user->correo_electronico)->sort()->values()->all(),
+        ];
+    }
+
     /**
      * @param  list<array{line: int, values: array<string, string>}>  $rows
      * @return array{rows: list<array{line: int, values: array<string, string>, errors: list<string>}>, valid: bool, created: int}

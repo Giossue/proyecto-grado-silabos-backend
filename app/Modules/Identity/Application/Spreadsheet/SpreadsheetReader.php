@@ -32,12 +32,12 @@ class SpreadsheetReader
 
                         continue;
                     }
-                    if (implode('', $cells) === '') {
-                        continue;
-                    }
                     $values = [];
                     foreach ($map as $key => $position) {
                         $values[$key] = $cells[$position] ?? '';
+                    }
+                    if (implode('', $values) === '') {
+                        continue;
                     }
                     $rows[] = ['line' => (int) $index, 'values' => $values];
                     if (count($rows) > self::MAX_ROWS) {

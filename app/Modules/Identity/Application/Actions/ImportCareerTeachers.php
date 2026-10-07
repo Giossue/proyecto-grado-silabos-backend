@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Identity\Domain\PersonNameColumns;
 use App\Modules\Identity\Presentation\Http\Requests\CreateCareerTeacherRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ImportCareerTeachers
 {
-    public const COLUMNS = ['nombre' => 'Nombre', 'correo' => 'Correo'];
+    public const COLUMNS = [...PersonNameColumns::COLUMNS, 'correo' => 'Correo'];
 
     public function __construct(private readonly CreateCareerTeacher $createTeacher) {}
 
@@ -27,10 +28,12 @@ class ImportCareerTeachers
         $checked = [];
         $payloads = [];
         foreach ($rows as $row) {
-            $email = mb_strtolower($row['values']['correo']);
-            $payload = ['nombre' => $row['values']['nombre'], 'correo_electronico' => $email];
+            [$values, $nameErrors] = PersonNameColumns::compose($row['values']);
+            $row['values'] = $values;
+            $email = mb_strtolower($values['correo']);
+            $payload = ['nombre' => $values['nombre'], 'correo_electronico' => $email];
             $rules = array_intersect_key((new CreateCareerTeacherRequest)->rules(), $payload);
-            $errors = Validator::make($payload, $rules)->errors()->all();
+            $errors = [...$nameErrors, ...Validator::make($payload, $rules)->errors()->all()];
             if (isset($seen[$email])) {
                 $errors[] = "El correo se repite en la fila {$seen[$email]}.";
             }

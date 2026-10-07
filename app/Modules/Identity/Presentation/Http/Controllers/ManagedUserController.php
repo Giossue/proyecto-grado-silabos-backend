@@ -16,6 +16,7 @@ use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Identity\Domain\PersonNameColumns;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Identity\Presentation\Http\Requests\CreateManagedUserRequest;
 use App\Modules\Identity\Presentation\Http\Requests\ImportSpreadsheetRequest;
@@ -147,7 +148,17 @@ class ManagedUserController extends Controller
     {
         Gate::authorize('create', User::class);
 
-        return $template->download('plantilla-usuarios.xlsx', array_values(ImportManagedUsers::COLUMNS), ['Nombre Apellido', 'correo@ueb.edu.ec', 'Docente', 'Software']);
+        $columns = array_keys(ImportManagedUsers::COLUMNS);
+
+        return $template->download('plantilla-usuarios.xlsx', array_values(ImportManagedUsers::COLUMNS), [
+            array_search('rol', $columns, true) => array_map(fn (RoleCode $role): string => $role->label(), RoleCode::cases()),
+            array_search('carrera', $columns, true) => Career::query()->where('activo', true)->orderBy('nombre')->pluck('nombre')->all(),
+        ], [
+            ...PersonNameColumns::NOTES,
+            'Correo: use el correo institucional; no puede repetirse.',
+            'Rol: elija una opción de la lista.',
+            'Carrera: elija una de la lista para Coordinador y Docente; déjela vacía para Administrador y Bibliotecario.',
+        ]);
     }
 
     public function import(ImportSpreadsheetRequest $request, SpreadsheetReader $reader, ImportManagedUsers $action): JsonResponse

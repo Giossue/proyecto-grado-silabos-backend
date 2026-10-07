@@ -13,6 +13,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Tests\TestCase;
 
 class SpreadsheetImportTest extends TestCase
@@ -51,9 +52,9 @@ class SpreadsheetImportTest extends TestCase
         $this->actingAsRole('admin@silabos.test');
         $career = Career::query()->where('activo', true)->firstOrFail();
         $file = fn () => $this->workbook([
-            ['Nombre', 'Correo', 'Rol', 'Carrera'],
-            ['Ana Uno', 'ana.uno@silabos.test', 'Docente', $career->nombre],
-            ['Luis Dos', 'luis.dos@silabos.test', 'Bibliotecario', ''],
+            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo', 'Rol', 'Carrera'],
+            ['Ana', '', 'Uno', '', 'ana.uno@silabos.test', 'Docente', $career->nombre],
+            ['Luis', 'Pedro', 'Dos', 'Tres', 'luis.dos@silabos.test', 'Bibliotecario', ''],
         ]);
 
         $this->postJson(route('api.v1.admin.users.import'), ['file' => $file()])
@@ -70,9 +71,9 @@ class SpreadsheetImportTest extends TestCase
     {
         $this->actingAsRole('admin@silabos.test');
         $file = $this->workbook([
-            ['Nombre', 'Correo', 'Rol', 'Carrera'],
-            ['Ana Uno', 'ana.uno@silabos.test', 'Docente', 'Carrera inexistente'],
-            ['Luis Dos', 'luis.dos@silabos.test', 'Bibliotecario', ''],
+            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo', 'Rol', 'Carrera'],
+            ['Ana', '', 'Uno', '', 'ana.uno@silabos.test', 'Docente', 'Carrera inexistente'],
+            ['Luis', 'Pedro', 'Dos', 'Tres', 'luis.dos@silabos.test', 'Bibliotecario', ''],
         ]);
 
         $this->postJson(route('api.v1.admin.users.import'), ['file' => $file, 'confirm' => true])
@@ -84,18 +85,18 @@ class SpreadsheetImportTest extends TestCase
     public function test_coordinator_imports_teachers_and_others_cannot(): void
     {
         $this->actingAsRole('coordinador@silabos.test');
-        $file = $this->workbook([['Nombre', 'Correo'], ['Doc Uno', 'doc.uno@silabos.test'], ['Doc Dos', 'doc.uno@silabos.test']]);
+        $file = $this->workbook([['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'], ['Doc', '', 'Uno', '', 'doc.uno@silabos.test'], ['Doc', '', 'Dos', '', 'doc.uno@silabos.test']]);
         $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $file, 'confirm' => true])
             ->assertOk()->assertJsonPath('valid', false)->assertJsonPath('created', 0);
 
-        $file = $this->workbook([['Nombre', 'Correo'], ['Doc Uno', 'doc.uno@silabos.test']]);
+        $file = $this->workbook([['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'], ['Doc', '', 'Uno', '', 'doc.uno@silabos.test']]);
         $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $file, 'confirm' => true])
             ->assertOk()->assertJsonPath('created', 1);
         $this->assertDatabaseHas('usuarios', ['correo_electronico' => 'doc.uno@silabos.test']);
 
         $this->getJson(route('api.v1.admin.users.import-template'))->assertForbidden();
         $this->actingAsRole('docente@silabos.test');
-        $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $this->workbook([['Nombre', 'Correo'], ['X', 'x@silabos.test']])])->assertForbidden();
+        $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $this->workbook([['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'], ['X', '', 'Y', '', 'x@silabos.test']])])->assertForbidden();
     }
 
     public function test_templates_download_as_xlsx(): void
@@ -103,6 +104,26 @@ class SpreadsheetImportTest extends TestCase
         $this->actingAsRole('admin@silabos.test');
         $this->get(route('api.v1.admin.users.import-template'))->assertOk()
             ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $book = IOFactory::load($this->templateFile(route('api.v1.admin.users.import-template')));
+        $sheet = $book->getSheetByName('Datos');
+        $this->assertSame('Segundo apellido', $sheet->getCell('D1')->getValue());
+        $this->assertSame('Rol', $sheet->getCell('F1')->getValue());
+        $this->assertSame('list', $sheet->getCell('F2')->getDataValidation()->getType());
+        $this->assertSame('list', $sheet->getCell('G2')->getDataValidation()->getType());
+        $this->assertSame('Indicaciones (no se importan)', $sheet->getCell('I1')->getValue());
+    }
+
+    public function test_coordinator_templates_download_with_lists(): void
+    {
+        $this->actingAsRole('coordinador@silabos.test');
+        $teachers = IOFactory::load($this->templateFile(route('api.v1.coordination.academic.teachers.import-template')))->getSheetByName('Datos');
+        $this->assertSame('Primer apellido', $teachers->getCell('C1')->getValue());
+
+        $scheduled = IOFactory::load($this->templateFile(route('api.v1.coordination.academic.scheduled-import.template')))->getSheetByName('Datos');
+        $this->assertSame('Código de materia', $scheduled->getCell('A1')->getValue());
+        foreach (['A2', 'C2', 'D2'] as $cell) {
+            $this->assertSame('list', $scheduled->getCell($cell)->getDataValidation()->getType());
+        }
     }
 
     public function test_coordinator_imports_parallels_with_teacher_assignments(): void
@@ -126,5 +147,15 @@ class SpreadsheetImportTest extends TestCase
         $again = $this->workbook([$header, ['SW-601', 'B', 'Matutina', 'docente@silabos.test']]);
         $this->postJson($url, ['file' => $again, 'period_id' => $period->id])
             ->assertOk()->assertJsonPath('valid', false);
+    }
+
+    private function templateFile(string $url): string
+    {
+        ob_start();
+        $this->get($url)->sendContent();
+        $path = tempnam(sys_get_temp_dir(), 'tpl').'.xlsx';
+        file_put_contents($path, (string) ob_get_clean());
+
+        return $path;
     }
 }
