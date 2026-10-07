@@ -8,6 +8,7 @@ use App\Modules\Configuration\Domain\FieldTypes\FixedFieldType;
 use App\Modules\Configuration\Domain\FieldTypes\ProfileFieldType;
 use App\Modules\Configuration\Domain\FieldTypes\TableFieldType;
 use App\Modules\Configuration\Domain\FieldTypes\TextFieldType;
+use App\Modules\Configuration\Domain\FieldTypes\UnitsFieldType;
 use App\Modules\Configuration\Domain\FreeText;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -28,7 +29,7 @@ class FieldTypesTest extends TestCase
         $registry = $this->app->make(FieldTypeRegistry::class);
 
         // Paridad con el frontend: al cambiar esta lista, actualice `registry.ts` y `registry.test.ts` (BACKEND_FIELD_TYPES).
-        $this->assertSame(['texto', 'ficha', 'tabla', 'automatico', 'fijo'], $registry->keys());
+        $this->assertSame(['texto', 'ficha', 'tabla', 'automatico', 'fijo', 'unidades'], $registry->keys());
         $this->assertInstanceOf(TableFieldType::class, $registry->get('tabla'));
     }
 
@@ -112,6 +113,51 @@ class FieldTypesTest extends TestCase
         }
         $this->expectException(ValidationException::class);
         $type->normalizeConfig(['columns' => [['key' => 'a', 'label' => 'A'], ['key' => 'a', 'label' => 'B']], 'rows' => [['key' => 'r', 'label' => 'R']]]);
+    }
+
+    public function test_units_type_validates_units_and_weeks_and_totals_hours_per_unit(): void
+    {
+        $type = new UnitsFieldType;
+        $this->assertSame([], $type->defaultValue([]));
+        $this->assertTrue($type->isEmpty([], []));
+
+        $week = fn (string $acd, string $text = 'Tema') => ['contenidos' => $text, 'acd_h' => $acd, 'ape_h' => '1', 'aa_h' => '3', 'acd' => 'Clase', 'ape' => 'Guía', 'aa' => 'Lectura', 'evaluacion' => 'Foro'];
+        $value = $type->validateValue([
+            ['nombre' => ' Fundamentos ', 'resultado' => 'Comprende', 'semanas' => [$week('2'), $week('2,5')]],
+            ['nombre' => 'Segunda', 'resultado' => '', 'semanas' => [$week('2')]],
+        ], []);
+        $this->assertSame('Fundamentos', $value[0]['nombre']);
+        $this->assertFalse($type->isEmpty($value, []));
+
+        $week = 0;
+        $table = $type->table($value[0], 1, $week);
+        $this->assertSame(2, $week);
+        $total = collect($table['content'])->last()['content'];
+        $this->assertSame('Total, horas', $total[0]['content'][0]['content'][0]['text']);
+        $this->assertSame('4.5', $total[1]['content'][0]['content'][0]['text']);
+        $this->assertSame('2', $total[2]['content'][0]['content'][0]['text']);
+        $this->assertSame('6', $total[3]['content'][0]['content'][0]['text']);
+        $second = $type->table($value[1], 2, $week);
+        $this->assertSame(3, $week);
+        $this->assertSame('3', $second['content'][5]['content'][1]['content'][0]['content'][0]['text']);
+    }
+
+    public function test_units_type_rejects_bad_hours_and_more_than_sixteen_weeks(): void
+    {
+        $type = new UnitsFieldType;
+        $week = ['contenidos' => 'x', 'acd_h' => '2', 'ape_h' => '1', 'aa_h' => '3', 'acd' => '', 'ape' => '', 'aa' => '', 'evaluacion' => ''];
+        foreach ([
+            [['nombre' => 'U', 'resultado' => '', 'semanas' => [[...$week, 'acd_h' => 'dos']]]],
+            [['nombre' => 'U', 'resultado' => '', 'semanas' => array_fill(0, 17, $week)]],
+            'texto',
+        ] as $bad) {
+            try {
+                $type->validateValue($bad, []);
+                $this->fail('Se esperaba ValidationException.');
+            } catch (ValidationException) {
+                $this->addToAssertionCount(1);
+            }
+        }
     }
 
     public function test_fixed_type_keeps_institutional_content_and_stores_no_value(): void

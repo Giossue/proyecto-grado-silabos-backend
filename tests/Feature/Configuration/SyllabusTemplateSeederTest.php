@@ -78,10 +78,8 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->assertFalse($fields['descripcion']->typeConfig()['adjustable']);
 
         $planning = $fields['unidades'];
-        $this->assertSame('tabla', $types['unidades']);
-        $this->assertCount(16, $planning->typeConfig()['rows']);
-        $this->assertSame('Contenidos temáticos de la unidad', $planning->typeConfig()['columns'][0]['label']);
-        $this->assertCount(8, $planning->typeConfig()['columns']);
+        $this->assertSame('unidades', $types['unidades']);
+        $this->assertSame([], $planning->typeConfig());
         foreach (['indicadores_evaluacion', 'componentes_evaluacion', 'conducta_etica', 'firmas'] as $key) {
             $this->assertSame('fijo', $types[$key], $key);
             $this->assertFalse($fields[$key]->editable_docente, $key);
@@ -121,7 +119,7 @@ class SyllabusTemplateSeederTest extends TestCase
             ['Objetivo(s) de la asignatura', ['Objetivo General|ficha', 'Objetivos específicos|ficha']],
             ['Resultados de aprendizaje de la asignatura', ['|ficha']],
             ['Habilidades Blandas de la asignatura', ['|ficha']],
-            ['Distribución y planificación de las unidades curriculares', ['|tabla']],
+            ['Distribución y planificación de las unidades curriculares', ['|unidades']],
             ['Metodología y Ambientes de Aprendizaje', [
                 '7.1 Métodos de Enseñanza – Aprendizaje|texto', '7.2 Técnicas de enseñanza|texto', '7.3 Recursos y medios didácticos|texto',
                 '7.4 Herramientas pedagógicas, Tecnologías de aprendizaje y conocimiento e Inteligencia Artificial en los procesos enseñanza-aprendizaje|texto',

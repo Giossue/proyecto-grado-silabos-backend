@@ -534,7 +534,7 @@ class TemplateDocumentTest extends TestCase
         $this->assertFalse($template->blocks()->contains(fn ($block) => in_array($block->configuredContentType(), ['flow', 'fixed', 'institutional'], true)));
         $this->assertNull($template->fields()->where('clave', 'estado_revision')->first());
         $this->assertEqualsCanonicalizing(
-            ['texto', 'ficha', 'tabla', 'automatico', 'fijo'],
+            ['texto', 'ficha', 'automatico', 'fijo', 'unidades'],
             $template->fields()->get()->map(fn ($field) => $field->fieldType()->key())->unique()->values()->all(),
         );
         foreach ($template->fields()->get() as $field) {

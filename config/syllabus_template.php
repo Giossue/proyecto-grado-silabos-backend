@@ -44,21 +44,9 @@ return [
         'planificacion' => [
             'orientation' => 'landscape',
             'title' => 'Distribución y planificación de las unidades curriculares',
-            'summary' => 'Tabla de 16 semanas con contenidos, horas, actividades y evaluación; la llena el docente.',
+            'summary' => 'Una tabla por unidad (nombre, resultados, semanas con horas, actividades y evaluación, y total de horas); la llena el docente.',
             'fields' => [
-                ['unidades', '', 'tabla', [
-                    'weeks' => 16,
-                    'columns' => [
-                        'contenidos' => 'Contenidos temáticos de la unidad',
-                        'acd_h' => 'ACD (h)',
-                        'ape_h' => 'APE (h)',
-                        'aa_h' => 'AA (h)',
-                        'acd' => 'Aprendizaje en contacto con el docente (ACD)',
-                        'ape' => 'Aprendizaje práctico-experimental (APE)',
-                        'aa' => 'Aprendizaje autónomo (AA)',
-                        'evaluacion' => 'Evaluación de los aprendizajes',
-                    ],
-                ]],
+                ['unidades', '', 'unidades', []],
             ],
         ],
         'metodologia' => [
