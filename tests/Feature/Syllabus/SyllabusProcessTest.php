@@ -335,6 +335,8 @@ class SyllabusProcessTest extends TestCase
             ->assertJsonPath('deadline.convocation_id', null)
             ->assertJsonPath('coordination_convocation.process_id', $process->id)
             ->assertJsonPath('coordination_convocation.can_open', true)
+            ->assertJsonPath('coordination_convocation.state', null)
+            ->assertJsonPath('coordination_convocation.process_open', true)
             ->assertJsonMissingPath('coordination_convocation.available_sources')
             ->assertJsonCount(5, 'setup.steps')
             ->assertJsonPath('setup.steps.4.action', 'open_convocation');

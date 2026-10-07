@@ -64,7 +64,7 @@ class TemplateAndSourceTest extends TestCase
 
         $template->refresh();
         $this->assertCount(12, $template->sections());
-        $this->assertCount(15, $template->fields()->get(), 'Incluye la ficha, las tablas del docente y los campos del PDF; el contenido fijo no tiene campos.');
+        $this->assertCount(19, $template->fields()->get(), 'Un campo por bloque, de los cuatro tipos nuevos, sin contenido fijo.');
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion' => 'plantilla.formateada',
             'recurso_id' => $template->id,
@@ -73,9 +73,7 @@ class TemplateAndSourceTest extends TestCase
         $evaluation = $template->sections()->where('clave', 'evaluacion')->firstOrFail();
         $blocks = $evaluation->blocks()->orderBy('posicion');
         $this->assertSame(['Indicadores de evaluación', 'Escala de valoración'], $blocks->pluck('titulo')->all());
-        $this->assertSame(['fixed', 'fixed'], $blocks->map->configuredContentType()->all());
-        $this->assertArrayNotHasKey('table', $blocks->first()->configuracion);
-        $this->assertNull($template->fields()->where('clave', 'indicadores_evaluacion')->first());
+        $this->assertSame(['texto', 'texto'], $template->fields()->whereIn('clave', ['indicadores_evaluacion', 'componentes_evaluacion'])->orderBy('posicion')->get()->map(fn ($field) => $field->fieldType()->key())->all());
         $this->assertDatabaseCount('valores_campo', 0);
         $this->assertFalse(Schema::hasTable('filas_repetibles'));
         $this->assertEquals(
@@ -403,34 +401,23 @@ class TemplateAndSourceTest extends TestCase
 
         $field = $template->fields()->where('clave', 'objetivo_general')->firstOrFail();
         $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [
-                'block_id' => $field->campo_plantilla_id,
-                'key' => $field->clave,
-                'label' => $field->etiqueta,
-                'content_type' => 'text',
-                'help' => 'Redáctelo en infinitivo.',
-            ])->assertSuccessful();
+            ->patchJson(route('api.v1.admin.template.structure.fields.update', [$template, $field]), ['help' => 'Redáctelo en infinitivo.'])
+            ->assertSuccessful();
         $field->refresh();
         $this->assertSame('Redáctelo en infinitivo.', $field->ayuda);
         $this->assertFalse($field->editable_docente);
         $this->assertTrue($field->heredado);
         $this->assertSame('ficha', $field->origen_maestro);
+        $this->assertSame('ficha', $field->fieldType()->key());
 
         $identification = $template->fields()->where('clave', 'asignatura')->firstOrFail();
         $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.template.fields.update', [$template, $identification]), [
-                'block_id' => $identification->campo_plantilla_id,
-                'key' => $identification->clave,
-                'label' => $identification->etiqueta,
-                'content_type' => 'institutional',
-                'help' => 'Se llena sola desde la malla y la programación de asignatura.',
-            ])
-            ->assertSuccessful()
+            ->patchJson(route('api.v1.admin.template.structure.fields.update', [$template, $identification]), ['help' => 'Se llena sola desde la malla y la programación de asignatura.'])
             ->assertSuccessful();
         $identification->refresh();
         $this->assertSame('Se llena sola desde la malla y la programación de asignatura.', $identification->ayuda);
         $this->assertTrue($identification->heredado);
-        $this->assertSame('asignaturas', $identification->origen_maestro);
+        $this->assertSame('identification_card', $identification->origen_maestro);
     }
 
     public function test_a_part_may_have_no_name_but_a_section_still_needs_one(): void

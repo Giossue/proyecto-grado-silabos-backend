@@ -220,7 +220,7 @@ final class NotificationDestination
     private function careerOptions(array $careers, Collection $eligible, bool $teacherFirst): array
     {
         $teacher = $this->withRole($eligible, RoleCode::Teacher, $careers, '/docente/mis-silabos');
-        $coordinator = $this->withRole($eligible, RoleCode::Coordinator, $careers, '/coordinacion/convocatorias');
+        $coordinator = $this->withRole($eligible, RoleCode::Coordinator, $careers, '/coordinacion/panel');
 
         return $teacherFirst ? [...$teacher, ...$coordinator] : [...$coordinator, ...$teacher];
     }
