@@ -108,18 +108,53 @@ class WordRendererTest extends TestCase
 
         $this->assertIsString($documentXml);
         $this->assertIsString($stylesXml);
-        $this->assertStringContainsString('w:orient="landscape"', $documentXml);
-        $this->assertStringContainsString('w:top="1134"', $documentXml);
+        // La apariencia guardada se ignora: el documento usa el formato oficial fijo.
+        $this->assertStringNotContainsString('w:orient="landscape"', $documentXml);
+        $this->assertStringContainsString('w:top="1417"', $documentXml);
         $this->assertStringContainsString('w:fill="4F81BD"', $documentXml);
         $this->assertStringContainsString('w:color w:val="FFFFFF"', $documentXml);
-        $this->assertStringContainsString('w:color w:val="0070C0"', $documentXml);
-        $this->assertStringContainsString('w:sz w:val="36"', $documentXml);
+        $this->assertStringContainsString('w:color w:val="2F5496"', $documentXml);
+        $this->assertStringContainsString('w:sz w:val="20"', $documentXml);
         $this->assertStringContainsString('PLAN ACADÉMICO INSTITUCIONAL', $documentXml);
         $this->assertStringNotContainsString(TemplateTitleBlock::DEFAULT_TEXT, $documentXml);
         $this->assertStringNotContainsString('<w:i w:val="1"/>', $documentXml);
-        $this->assertStringContainsString('Arial', $stylesXml);
+        $this->assertStringContainsString('Times New Roman', $stylesXml);
+        $this->assertStringNotContainsString('Georgia', $stylesXml);
         $this->assertStringContainsString('w:color w:val="000000"', $stylesXml);
-        $this->assertStringContainsString('w:sz w:val="24"', $stylesXml);
+        $this->assertStringContainsString('w:sz w:val="20"', $stylesXml);
+    }
+
+    public function test_docx_follows_the_official_format(): void
+    {
+        $input = new DocumentRenderInput(
+            subject: 'Inteligencia Artificial', subjectCode: 'SW-P7-037', academicPeriod: 'Marzo – Julio 2026',
+            revisionNumber: 1, revisionFingerprint: str_repeat('ab', 32), generatedAt: '2026-09-07T20:00:00-05:00',
+            locale: 'es-EC', snapshot: $this->typedSnapshot(),
+        );
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-official-test-');
+        file_put_contents($temporary, app(DocumentRenderer::class)->render($input)->docx->bytes);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $stylesXml = (string) $zip->getFromName('word/styles.xml');
+        $zip->close();
+        unlink($temporary);
+
+        $this->assertStringContainsString('Times New Roman', $stylesXml);
+        $this->assertStringContainsString('w:jc w:val="both"', $stylesXml);
+        $dom = new DOMDocument;
+        $dom->loadXML($documentXml);
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+        $title = $xpath->query('//w:p[.//w:t[contains(., "'.TemplateTitleBlock::DEFAULT_TEXT.'")]]')->item(0);
+        $this->assertNotNull($title);
+        $this->assertSame(1, $xpath->query('.//w:rPr/w:b', $title)->length);
+        $this->assertSame(1, $xpath->query('.//w:rPr/w:color[@w:val="2F5496"]', $title)->length);
+        $this->assertSame(1, $xpath->query('./w:pPr/w:jc[@w:val="center"]', $title)->length);
+        $boxes = $xpath->query('//w:tbl[w:tblPr/w:tblBorders/w:top[@w:color="0070C0"]][.//w:t[contains(., "Texto escrito por el docente")]]');
+        $this->assertGreaterThanOrEqual(1, $boxes->length, 'El campo de texto debe ir en un recuadro de borde azul.');
+        $identification = $xpath->query('//w:tbl[.//w:t[contains(., "FACULTAD:")]]')->item(0);
+        $this->assertSame(0, $xpath->query('./w:tblPr/w:tblBorders/w:top[@w:color="0070C0"]', $identification)->length);
     }
 
     public function test_unnamed_part_prints_no_subtitle_and_keeps_numbering_consecutive(): void

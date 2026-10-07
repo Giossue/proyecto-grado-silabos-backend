@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Mail;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
 
 class SpreadsheetImportTest extends TestCase
@@ -146,6 +149,45 @@ class SpreadsheetImportTest extends TestCase
         $sheet = IOFactory::load($this->templateFile(route('api.v1.admin.academic.careers.import-template')))->getSheetByName('Datos');
         $this->assertSame('list', $sheet->getCell('A2')->getDataValidation()->getType());
         $this->assertSame('list', $sheet->getCell('B2')->getDataValidation()->getType());
+    }
+
+    public function test_admin_imports_faculties_with_logos_placed_over_rows(): void
+    {
+        $this->actingAsRole('admin@silabos.test');
+        $url = route('api.v1.admin.academic.faculties.import');
+        $png = function (string $path): string {
+            $image = imagecreatetruecolor(60, 20);
+            imagealphablending($image, false);
+            imagesavealpha($image, true);
+            imagefill($image, 0, 0, (int) imagecolorallocatealpha($image, 0, 0, 0, 127));
+            imagepng($image, $path);
+
+            return $path;
+        };
+        $book = new Spreadsheet;
+        $sheet = $book->getActiveSheet();
+        foreach (['Nombre de la facultad', 'Campus', 'Logo'] as $i => $header) {
+            $sheet->setCellValue([$i + 1, 1], $header);
+        }
+        $sheet->fromArray(['Facultad Uno', 'Campus Laguacoto'], null, 'A2');
+        $sheet->fromArray(['Facultad Dos', 'Sede Chimbo'], null, 'A3');
+        foreach ([2, 3] as $row) {
+            $sheet->getRowDimension($row)->setRowHeight(52.5);
+        }
+        foreach ([['C2', 10, 'a'], ['C2', 50, 'b']] as [$cell, $offset, $tag]) {
+            $drawing = new Drawing;
+            $drawing->setPath($png(sys_get_temp_dir()."/logo-{$tag}.png"));
+            $drawing->setCoordinates($cell)->setOffsetY($offset)->setHeight($tag === 'a' ? 40 : 60)->setWorksheet($sheet);
+        }
+        $path = tempnam(sys_get_temp_dir(), 'fac').'.xlsx';
+        (new Xlsx($book))->save($path);
+        $file = fn () => new UploadedFile($path, 'facultades.xlsx', null, null, true);
+
+        $this->postJson($url, ['file' => $file()])->assertOk()
+            ->assertJsonPath('valid', true)->assertJsonPath('rows.0.line', 2)->assertJsonPath('rows.1.line', 3);
+        $this->postJson($url, ['file' => $file(), 'confirm' => true])->assertOk()->assertJsonPath('created', 2);
+        $this->assertDatabaseHas('facultades', ['nombre_facultad' => 'Facultad Uno']);
+        $this->assertNotNull(Faculty::query()->where('nombre', 'Facultad Dos')->value('logo_objeto_id'));
     }
 
     public function test_coordinator_imports_parallels_with_teacher_assignments(): void

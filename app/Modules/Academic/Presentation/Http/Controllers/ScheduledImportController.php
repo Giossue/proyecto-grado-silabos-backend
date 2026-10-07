@@ -5,6 +5,7 @@ namespace App\Modules\Academic\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Academic\Application\Actions\ImportCareers;
+use App\Modules\Academic\Application\Actions\ImportFaculties;
 use App\Modules\Academic\Application\Actions\ImportScheduledAssignments;
 use App\Modules\Academic\Presentation\Http\Requests\ImportScheduledAssignmentsRequest;
 use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
@@ -63,6 +64,28 @@ class ScheduledImportController extends Controller
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $rows = $reader->read($request->file('file'), ImportCareers::COLUMNS);
+
+        return response()->json($action->execute($rows, $actor, $request, $request->boolean('confirm')));
+    }
+
+    public function facultiesTemplate(Request $request, SpreadsheetTemplate $template, ImportFaculties $action): StreamedResponse
+    {
+        return $template->download('plantilla-facultades.xlsx', array_values(ImportFaculties::COLUMNS), [
+            1 => $action->campuses($request),
+        ], [
+            'Una fila por facultad; no deje filas vacías entre registros.',
+            'Campus: elija una opción de la lista.',
+            'Logo: PNG con fondo transparente. Péguelo o arrástrelo sobre la fila de su facultad, con «Colocar sobre las celdas» (no «Colocar en celda»).',
+            'No importa que la imagen no encaje exacta en la celda: se asigna a la fila donde queda su centro. Una sola imagen por fila.',
+            'Hasta 50 facultades por archivo.',
+        ], 70);
+    }
+
+    public function importFaculties(ImportSpreadsheetRequest $request, SpreadsheetReader $reader, ImportFaculties $action): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $rows = $reader->readWithImages($request->file('file'), ImportFaculties::COLUMNS);
 
         return response()->json($action->execute($rows, $actor, $request, $request->boolean('confirm')));
     }

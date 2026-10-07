@@ -71,6 +71,6 @@ final class FixedFieldType implements FieldType
     public function toWord(AbstractContainer $target, array $field, WordRenderContext $context): void
     {
         $value = $field['value'] ?? null;
-        $context->writeDocument($target, FreeText::isDocument($value) && ! FreeText::isEmpty($value) ? $value : null);
+        $context->writeBoxed($target, FreeText::isDocument($value) && ! FreeText::isEmpty($value) ? $value : null);
     }
 }

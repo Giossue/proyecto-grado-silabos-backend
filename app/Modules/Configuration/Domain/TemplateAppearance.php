@@ -8,9 +8,9 @@ final class TemplateAppearance
 
     public const BODY_SIZES = [10, 11, 12];
 
-    public const TITLE_SIZES = [14, 16, 18];
+    public const TITLE_SIZES = [10, 14, 16, 18];
 
-    public const SECTION_SIZES = [11, 12, 14];
+    public const SECTION_SIZES = [10, 11, 12, 14];
 
     public const FIELD_SIZES = [10, 11, 12];
 
@@ -22,9 +22,15 @@ final class TemplateAppearance
 
     /** @var array<string, mixed> */
     private const INSTITUTIONAL_STYLE = [
-        'font_family' => 'Arial',
+        'font_family' => 'Times New Roman',
+        'body_font_size' => 10,
+        'title_font_size' => 10,
+        'section_font_size' => 10,
+        'field_font_size' => 10,
+        'margin_cm' => 2.5,
+        'orientation' => 'portrait',
         'text_color' => '#000000',
-        'accent_color' => '#0070C0',
+        'accent_color' => '#2F5496',
         'table_header_background' => '#4F81BD',
         'table_header_color' => '#FFFFFF',
         'title_bold' => true,
@@ -33,7 +39,7 @@ final class TemplateAppearance
         'section_bold' => true,
         'section_italic' => false,
         'section_alignment' => 'left',
-        'body_alignment' => 'left',
+        'body_alignment' => 'justify',
     ];
 
     /** @var array<string, string> */
@@ -41,6 +47,7 @@ final class TemplateAppearance
         '#000000' => 'Negro',
         '#FFFFFF' => 'Blanco',
         '#0070C0' => 'Azul institucional',
+        '#2F5496' => 'Azul UEB',
         '#1F4E78' => 'Azul oscuro',
         '#4F81BD' => 'Azul medio',
         '#DBE5F1' => 'Azul claro',
@@ -54,24 +61,7 @@ final class TemplateAppearance
     public static function defaults(): array
     {
         return [
-            'font_family' => 'Arial',
-            'body_font_size' => 11,
-            'title_font_size' => 16,
-            'section_font_size' => 12,
-            'field_font_size' => 11,
-            'text_color' => '#000000',
-            'accent_color' => '#0070C0',
-            'table_header_background' => '#4F81BD',
-            'table_header_color' => '#FFFFFF',
-            'margin_cm' => 2.5,
-            'orientation' => 'portrait',
-            'title_bold' => true,
-            'title_italic' => false,
-            'title_alignment' => 'center',
-            'section_bold' => true,
-            'section_italic' => false,
-            'section_alignment' => 'left',
-            'body_alignment' => 'left',
+            ...self::INSTITUTIONAL_STYLE,
         ];
     }
 

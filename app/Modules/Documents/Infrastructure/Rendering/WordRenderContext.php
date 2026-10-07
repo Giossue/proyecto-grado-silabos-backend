@@ -5,6 +5,7 @@ namespace App\Modules\Documents\Infrastructure\Rendering;
 use PhpOffice\PhpWord\Element\AbstractContainer;
 use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\SimpleType\Jc;
+use PhpOffice\PhpWord\SimpleType\TblWidth;
 
 final class WordRenderContext
 {
@@ -15,6 +16,9 @@ final class WordRenderContext
     public const TOTAL_BLUE = 'B8CCE4';
 
     public const HEADER_TEXT = '365F91';
+
+    /** Azul fino del recuadro de los campos en el formato oficial. */
+    public const BOX_BORDER = '0070C0';
 
     public const TABLE_BORDER = '000000';
 
@@ -77,6 +81,25 @@ final class WordRenderContext
             return;
         }
         $this->documentWriter()->append($target, $document, $this->contentWidth);
+    }
+
+    /**
+     * Pinta el contenido de un campo dentro de un recuadro de borde azul fino, como el formato oficial.
+     *
+     * @param  array<string, mixed>|null  $document
+     */
+    public function writeBoxed(AbstractContainer $target, ?array $document): void
+    {
+        $table = $target->addTable([
+            'borderSize' => 6,
+            'borderColor' => self::BOX_BORDER,
+            'cellMargin' => 100,
+            'width' => $this->contentWidth,
+            'unit' => TblWidth::TWIP,
+        ]);
+        $cell = $table->addRow()->addCell($this->contentWidth);
+        $this->writeDocument($cell, $document);
+        $target->addTextBreak(0, null, ['spaceAfter' => 60]);
     }
 
     public function color(string $key): string

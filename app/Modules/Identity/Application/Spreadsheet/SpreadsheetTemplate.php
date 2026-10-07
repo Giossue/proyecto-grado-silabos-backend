@@ -19,9 +19,9 @@ class SpreadsheetTemplate
      * @param  array<int, list<string>>  $selects  posición de columna (desde 0) => opciones permitidas
      * @param  list<string>  $notes  indicaciones a la derecha, que la importación ignora
      */
-    public function download(string $filename, array $headers, array $selects, array $notes): StreamedResponse
+    public function download(string $filename, array $headers, array $selects, array $notes, int $rowHeight = 0): StreamedResponse
     {
-        return response()->streamDownload(function () use ($headers, $selects, $notes): void {
+        return response()->streamDownload(function () use ($headers, $selects, $notes, $rowHeight): void {
             $book = new Spreadsheet;
             $sheet = $book->getActiveSheet()->setTitle('Datos');
             $lists = $book->createSheet()->setTitle('Listas');
@@ -33,6 +33,11 @@ class SpreadsheetTemplate
             $sheet->getStyle([1, 1, count($headers), 1])->getFont()->setBold(true);
             $sheet->getStyle([1, 1, count($headers), 1])->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E2E8F0');
             $sheet->freezePane('A2');
+            if ($rowHeight > 0) {
+                for ($row = 2; $row <= 51; $row++) {
+                    $sheet->getRowDimension($row)->setRowHeight($rowHeight);
+                }
+            }
 
             foreach ($selects as $position => $options) {
                 $this->addSelect($sheet, $lists, $position, $options);
