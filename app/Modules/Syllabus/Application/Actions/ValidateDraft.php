@@ -41,7 +41,7 @@ class ValidateDraft
                 if (isset($hidden[$field->clave]) || ! $this->requiredFromTeacher($field)) {
                     continue;
                 }
-                if (! self::filled($values->get($field->id)?->valor)) {
+                if (! $this->hasValue($field, $values->get($field->id)?->valor)) {
                     $issues[] = [
                         'field_id' => $field->id,
                         'code' => $field->heredado ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
@@ -74,6 +74,10 @@ class ValidateDraft
 
     private function requiredFromTeacher(FieldDefinition $field): bool
     {
+        // El dato automático se resuelve solo al enviar; el docente no lo llena.
+        if (! $field->hasLegacyClass() && ! $field->fieldType()->teacherEditable() && $field->fieldType()->key() === 'automatico') {
+            return false;
+        }
         $block = $field->block;
         if ($block === null || $block->contentType() === 'fixed') {
             return false;
@@ -90,6 +94,9 @@ class ValidateDraft
         if (! $field->editable_docente) {
             return false;
         }
+        if (! $field->hasLegacyClass()) {
+            return true;
+        }
         $document = $configuration['document'] ?? null;
         if (! is_array($document)) {
             return true;
@@ -97,6 +104,14 @@ class ValidateDraft
         $keys = array_map(static fn (array $node): mixed => $node['attrs']['key'] ?? null, TemplateDocument::nodes($document, 'field'));
 
         return in_array($field->clave, $keys, true);
+    }
+
+    /** Los campos del modelo nuevo deciden por su tipo si están vacíos; los de la clase anterior, por su valor. */
+    private function hasValue(FieldDefinition $field, mixed $value): bool
+    {
+        return $field->hasLegacyClass()
+            ? self::filled($value)
+            : ! $field->fieldType()->isEmpty($value, $field->typeConfig());
     }
 
     public static function filled(mixed $value): bool

@@ -26,7 +26,7 @@ use Illuminate\Support\Carbon;
  * @phpstan-import-type CoordinatorReadiness from CoordinatorConvocationReadiness
  *
  * @phpstan-type DeadlinePayload array{period: string, starts_at: string, due_at: string, state: string, days_until_start: int, days_until_due: int, convocation_id: string|null}
- * @phpstan-type CoordinationConvocationPayload array{process_id: string, period: string, convocation_id: string|null, can_open: bool}
+ * @phpstan-type CoordinationConvocationPayload array{process_id: string, period: string, convocation_id: string|null, can_open: bool, state: string|null, process_open: bool}
  */
 class DashboardController extends Controller
 {
@@ -344,6 +344,8 @@ class DashboardController extends Controller
             'period' => $process->academicPeriod->codigo,
             'convocation_id' => $convocation?->id,
             'can_open' => $readiness['can_open'],
+            'state' => $convocation?->estado,
+            'process_open' => $process->estado === SyllabusProcess::STATE_OPEN,
         ];
     }
 

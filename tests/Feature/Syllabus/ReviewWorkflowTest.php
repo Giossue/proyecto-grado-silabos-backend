@@ -113,12 +113,10 @@ class ReviewWorkflowTest extends TestCase
     public function test_custom_design_change_never_purges_an_approved_syllabus(): void
     {
         $syllabus = $this->createValidDraft();
-        $block = SyllabusTemplate::institutional()->fields()->where('clave', 'objetivo_general')->firstOrFail()->block;
-        $url = route('api.v1.admin.template.blocks.document.update', [SyllabusTemplate::institutional(), $block]);
-        $document = $block->configuracion['document'];
-        $document['content'][] = ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Nueva instrucción']]];
-        $payload = ['document' => $document, 'fingerprint' => SaveTemplateDocument::fingerprint($block)];
-        $this->actingAsAdministrator()->patch($url, $payload)->assertJsonValidationErrors('process');
+        $field = SyllabusTemplate::institutional()->fields()->where('clave', 'objetivo_general')->firstOrFail();
+        $url = route('api.v1.admin.template.structure.fields.update', [SyllabusTemplate::institutional(), $field]);
+        $payload = ['label' => 'Objetivo general (ajustado)'];
+        $this->actingAsAdministrator()->patchJson($url, $payload)->assertJsonValidationErrors('process');
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
@@ -127,8 +125,8 @@ class ReviewWorkflowTest extends TestCase
         $this->approveThroughChain(SyllabusRevision::query()->findOrFail($revisionId));
         $approvalId = Approval::query()->firstOrFail()->id;
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'pausar']))->assertSuccessful();
-        $this->patch($url, $payload)->assertSuccessful();
-        $this->assertNotSame($block->configuracion['document'], $block->fresh()->configuracion['document']);
+        $this->patchJson($url, $payload)->assertSuccessful();
+        $this->assertSame('Objetivo general (ajustado)', $field->fresh()->etiqueta);
         $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
         $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revisionId]);
         $this->assertDatabaseHas('aprobaciones', ['aprobacion_id' => $approvalId]);
@@ -305,7 +303,7 @@ class ReviewWorkflowTest extends TestCase
         $syllabus->refresh();
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
-            'value' => 'Descripción corregida con evidencia académica.',
+            'value' => $this->freeTextValue('Descripción corregida con evidencia académica.'),
         ])->assertOk();
         $syllabus->refresh();
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $freeTextField]), [
@@ -595,7 +593,8 @@ class ReviewWorkflowTest extends TestCase
         $fresh = $syllabus->fresh();
         $this->assertSame('sin_iniciar', $fresh->estado);
         $this->assertSame(0, $fresh->version_bloqueo);
-        $this->assertSame(0, $fresh->values()->whereHas('field', fn ($field) => $field->where('heredado', false))->count());
+        $fresh->values()->whereHas('field', fn ($field) => $field->where('heredado', false))->with('field')->get()
+            ->each(fn ($value) => $this->assertTrue($value->field->fieldType()->isEmpty($value->valor, $value->field->typeConfig())));
         $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
         $this->assertWorkflowNotification($syllabus->id, 'silabo.reiniciado');
