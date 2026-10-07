@@ -29,7 +29,7 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 - [x] 0. Documentación: este plan, ADR-0009, `docs/architecture/field-types.md`, trazabilidad.
 - [x] 1. Registro backend y los 4 tipos (aditivo; no cambia la plantilla actual ni migra).
 - [x] 2. Persistencia y herencia por tipo (migración `000202`; con capa de compatibilidad, ver Deuda).
-- [ ] 3. API de plantilla simplificada.
+- [x] 3. API de plantilla simplificada (endpoints nuevos `structure/...`; ver Etapa 3).
 - [ ] 4. Snapshot v7 y render Word/PDF por tipo.
 - [ ] 5. Plantilla inicial.
 - [ ] 6. Frontend: registro y editor del docente.
@@ -51,6 +51,23 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
   que devuelve la clase anterior (`FieldDefinition::getAttribute/setAttribute/saving`),
   `hasLegacyClass()` y las rutas de compatibilidad en `UpdateDraftField` e `InheritMasterValues`.
   Las selecciones, número y fecha siguen existiendo solo por esa capa.
+
+## Etapa 3: decisiones y deuda
+
+- Endpoints nuevos bajo `admin/template/{template}/structure` (ver `field-types.md`); un campo es
+  un bloque más su definición. Reutilizan `DeleteTemplateSection`, `DeleteTemplateBlock`,
+  `ReorderTemplateSections`, `ReorderTemplateBlocks` y `SaveTemplateSection::update`; la creación y
+  edición de campos va en `SaveTemplateStructure`.
+- Se mantiene el bloqueo con proceso abierto (`assertTemplateEditable`); el aviso `purge_required`
+  de la plantilla no existe hoy en estas rutas.
+- `automatico` guarda `origen_maestro = source`; `TemplateStructureValidator` acepta `ficha` y
+  `automatico`.
+- Deuda etapa 8: borrar `SaveTemplateSection::create`, `SaveFieldDefinition`, `storeSection`,
+  `storeField`, `updateField`, `reorderBlocks`, `destroyBlock` y sus rutas, requests y presets
+  viejos, cuando el frontend (etapas 6-7) use solo `structure/...`.
+- Fallan en HEAD, antes de esta etapa (compat de la etapa 2): `ConvocationAndDraftTest`
+  `test_autosave_enforces_template_type_and_rejects_html_in_long_text` y
+  `test_part_shown_only_when_another_matches_is_not_required_while_hidden_and_prints_empty`.
 
 ## POR VALIDAR
 

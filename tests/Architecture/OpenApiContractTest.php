@@ -21,6 +21,8 @@ it('mantiene el contrato OpenAPI sincronizado con las rutas públicas v1', funct
             ->and($committed['paths'])->toHaveKeys([
                 '/api/v1/session',
                 '/api/v1/admin/template/{template}/sections',
+                '/api/v1/admin/template/{template}/structure/sections/{section}/fields',
+                '/api/v1/admin/template/{template}/structure/fields/{field}',
                 '/api/v1/teacher/syllabi/{syllabus}',
                 '/api/v1/teacher/syllabi/{syllabus}/ai-chat',
                 '/api/v1/coordination/reviews/{revision}',

@@ -7,6 +7,7 @@ use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureCo
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectProfileController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
+use App\Modules\Configuration\Presentation\Http\Controllers\TemplateStructureController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
 use App\Modules\Documents\Presentation\Http\Controllers\SignatureController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\ActivationController;
@@ -147,6 +148,22 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.fields.store');
             Route::patch('admin/template/{template}/fields/{field}', [TemplateController::class, 'updateField'])
                 ->middleware('active-role')->name('api.v1.admin.template.fields.update');
+            Route::post('admin/template/{template}/structure/sections', [TemplateStructureController::class, 'storeSection'])
+                ->middleware('active-role')->name('api.v1.admin.template.structure.sections.store');
+            Route::patch('admin/template/{template}/structure/sections/order', [TemplateStructureController::class, 'reorderSections'])
+                ->middleware('active-role')->name('api.v1.admin.template.structure.sections.reorder');
+            Route::patch('admin/template/{template}/structure/sections/{section}', [TemplateStructureController::class, 'updateSection'])
+                ->middleware('active-role')->name('api.v1.admin.template.structure.sections.update');
+            Route::delete('admin/template/{template}/structure/sections/{section}', [TemplateStructureController::class, 'destroySection'])
+                ->middleware('active-role')->name('api.v1.admin.template.structure.sections.destroy');
+            Route::post('admin/template/{template}/structure/sections/{section}/fields', [TemplateStructureController::class, 'storeField'])
+                ->middleware('active-role')->name('api.v1.admin.template.structure.fields.store');
+            Route::patch('admin/template/{template}/structure/sections/{section}/fields/order', [TemplateStructureController::class, 'reorderFields'])
+                ->middleware('active-role')->name('api.v1.admin.template.structure.fields.reorder');
+            Route::patch('admin/template/{template}/structure/fields/{field}', [TemplateStructureController::class, 'updateField'])
+                ->middleware('active-role')->name('api.v1.admin.template.structure.fields.update');
+            Route::delete('admin/template/{template}/structure/fields/{field}', [TemplateStructureController::class, 'destroyField'])
+                ->middleware('active-role')->name('api.v1.admin.template.structure.fields.destroy');
             Route::patch('admin/template/{template}/blocks/order', [TemplateController::class, 'reorderBlocks'])
                 ->middleware('active-role')->name('api.v1.admin.template.blocks.reorder');
             Route::patch('admin/template/{template}/blocks/{block}/document', [TemplateController::class, 'updateDocument'])

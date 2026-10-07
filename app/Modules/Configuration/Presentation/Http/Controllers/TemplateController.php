@@ -152,6 +152,7 @@ class TemplateController extends Controller
                                     'label' => $field->etiqueta,
                                     'help' => $field->ayuda,
                                     'type' => $field->tipo,
+                                    'config' => $field->typeConfig(),
                                     'options' => FieldOptions::options($field),
                                     'show_when' => FieldConditions::normalize($field->mostrar_si),
                                     'required' => true,

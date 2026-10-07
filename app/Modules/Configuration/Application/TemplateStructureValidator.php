@@ -58,7 +58,8 @@ class TemplateStructureValidator
         $valid = match (true) {
             ! $field->heredado => $origin === null,
             $origin === 'asignaturas' => $field->clave === 'asignatura' && ! $field->editable_docente,
-            $origin === FieldDefinition::ORIGIN_PROFILE => $field->tipo === 'texto_libre',
+            $field->tipo === 'automatico' => $origin === ($field->typeConfig()['source'] ?? null) && ! $field->editable_docente,
+            $origin === FieldDefinition::ORIGIN_PROFILE => in_array($field->tipo, ['texto_libre', 'ficha'], true),
             $origin === FieldDefinition::ORIGIN_TEACHER => $field->clave === 'formacion_experiencia' && ! $field->editable_docente,
             default => false,
         };
