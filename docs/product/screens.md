@@ -231,8 +231,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   encabezado autenticado global; conserva únicamente el cambio de tema y el formulario
   mantiene sus propias acciones operativas.
 - I-195 (etapa 7) reescribe ADM-06 como un constructor simple, sin hoja editable ni modo
-  «Editar»: dos pestañas, **Constructor** y **Vista previa**. El constructor dibuja el sílabo como una hoja A4
-  (logos, título, secciones «1. Nombre», campos «1.1 Nombre» solo si tienen nombre, la vista de
+  «Editar», sin pestañas: solo la hoja del constructor. Dibuja el sílabo como una hoja A4
+  (logos, título azul centrado en negrita, letra serif de 10 pt justificada, secciones «1. Nombre», campos «1.1 Nombre» solo si tienen nombre, la vista de
   cada tipo y una etiqueta discreta del tipo) con controles flotantes sobre lo seleccionado; la
   hoja vacía ofrece «Cargar formato oficial UEB» y «Nueva sección»; permite agregar, renombrar, borrar y subir/bajar
   secciones y campos. **Nueva sección** va en dos pasos (nombre y primer campo opcional);
@@ -240,9 +240,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   campo se elige quién lo escribe: «Lo escribe el docente», «Lo escribe Coordinación en la
   ficha de la asignatura» (con «El docente puede ajustarlo»), «Tabla de filas fijas»,
   «Dato automático» o «Texto fijo igual para todos»; la lista sale del registro de tipos y cada
-  tipo aporta su pieza de configuración. El nombre del campo es opcional (sin nombre, no lleva
-  subtítulo; en el constructor aparece como «Campo sin nombre»). La vista previa muestra el
-  sílabo como lo verá el docente, con logos y título. Con un proceso abierto todo queda
+  tipo aporta su pieza de configuración. El contenido de los campos de texto, ficha y texto fijo va en un recuadro de borde azul fino; la tabla no lleva recuadro. Sin «Personalizar plantilla» ni vista previa: el logo de la universidad se cambia sobre la hoja con «Cambiar logo» (PNG) al pasar el cursor. El nombre del campo es opcional (sin nombre, no lleva
+  subtítulo; en el constructor aparece como «Campo sin nombre»).  Con un proceso abierto todo queda
   deshabilitado con el aviso «Edición bloqueada».
 - Se retiraron de ADM-06 la hoja libre, la cinta Insertar, las marcas, los anchos por celda y
   la hoja horizontal, margen y letra por sección (descripciones anteriores de I-60 y I-156
@@ -267,10 +266,6 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   que redacte el docente. La muestra no garantiza los mismos cortes que Word o PDF.
   Las hojas se muestran directamente sobre el fondo de la pantalla, sin panel gris;
   los controles de alta aparecen en el punto del documento donde actuarán.
-- «Personalizar plantilla» permite ajustar orientación, márgenes y tres tamaños:
-  título, bloque y campo. El tamaño de campo se aplica uniformemente a texto,
-  variables y campos dentro de cualquier tabla. La fuente Arial, los colores globales,
-  las alineaciones y los énfasis institucionales son fijos y no aparecen como controles.
 - Durante una pausa institucional con cambios de plantilla, ADM-06 mantiene visible el
   aviso «Al reanudar el proceso, todos los sílabos de este período se rehacen desde cero».
 - Al editar tablas en ADM-06, las columnas se ajustan al ancho imprimible; un diseño
@@ -316,7 +311,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   si algo se borra.
 - Encabezado del sílabo: logo de la universidad a la izquierda y logo de la facultad de la
   carrera a la derecha, dentro del ancho útil de los márgenes y antes del bloque de título.
-  Administración reemplaza el logo institucional desde la hoja «Personalizar plantilla»
+  Administración reemplaza el logo institucional con «Cambiar logo» sobre la hoja
   de ADM-06 y es la única que puede cargar o reemplazar el logo de facultad al
   crearla o editarla en ADM-04. El logo es obligatorio al crear la facultad; el formulario
   indica 600 × 180 px como medida recomendada y exige un PNG sin fondo, con transparencia. Al editar,
