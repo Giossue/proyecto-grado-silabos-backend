@@ -14,8 +14,8 @@ carrera**, con un asistente (agente) como el que existió antes de I-169.
   `DiscardFichaImport`, trabajos `PrepareFichaImportJob` y `ExtractSubjectFichaJob`, puerta
   `FichaExtractionGateway` (hospedada con `ai.*`; desactivada sin proveedor) y rutas
   `GET|POST coordination/ficha-imports`, `POST …/{import}/apply`, `DELETE …/{import}`.
-- Lectura de documentos: solo Excel (PhpSpreadsheet); el PDF queda fuera por ahora (pedido del
-  responsable). Búsqueda de fragmentos por nombre o código de la materia.
+- Lectura de documentos: PDF con `pdftotext` (`poppler-utils` en el Dockerfile) y Excel con
+  PhpSpreadsheet; búsqueda de fragmentos por nombre o código de la materia.
 
 ## Decisiones
 

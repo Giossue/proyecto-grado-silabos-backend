@@ -16,7 +16,7 @@ class RequestFichaImportRequest extends FormRequest
     {
         return [
             'files' => ['required', 'array', 'min:1', 'max:6'],
-            'files.*' => ['file', 'mimes:xlsx,xls', 'max:20480'],
+            'files.*' => ['file', 'mimes:pdf,xlsx,xls', 'max:20480'],
         ];
     }
 
@@ -32,7 +32,7 @@ class RequestFichaImportRequest extends FormRequest
         return [
             'files.required' => 'Elija al menos un documento.',
             'files.max' => 'Puede subir hasta 6 documentos a la vez.',
-            'files.*.mimes' => 'Por ahora solo se admiten archivos de Excel.',
+            'files.*.mimes' => 'Solo se admiten archivos PDF o Excel.',
             'files.*.max' => 'Cada documento puede pesar hasta 20 MB.',
         ];
     }
