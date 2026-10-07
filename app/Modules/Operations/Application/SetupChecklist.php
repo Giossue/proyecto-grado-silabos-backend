@@ -8,11 +8,9 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Documents\Infrastructure\Persistence\Models\DocumentSignature;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -36,7 +34,6 @@ class SetupChecklist
         $checklist = match ($assignment->role->codigo_rol) {
             RoleCode::Administrator->value => $this->forAdministrator(),
             RoleCode::Coordinator->value => $this->forCoordinator($assignment->carrera_id),
-            RoleCode::Teacher->value => $this->forTeacher($user, $assignment->carrera_id),
             default => null,
         };
 
@@ -140,39 +137,6 @@ class SetupChecklist
             $readiness['can_open'] => 'Todo está listo. Puede abrir la convocatoria.',
             default => 'Complete los pasos anteriores para poder abrirla.',
         };
-    }
-
-    /** @return Checklist */
-    public function forTeacher(User $user, ?string $careerId): array
-    {
-        $own = Syllabus::query()
-            ->when($careerId !== null, fn (Builder $query) => $query->whereHas('convocation', fn (Builder $convocation) => $convocation->where('carrera_id', $careerId)))
-            ->whereCurrentTeacher($user);
-        $total = (clone $own)->count();
-        $started = (clone $own)->where('estado', '!=', 'sin_iniciar')->count();
-        $submitted = (clone $own)->whereIn('estado', ['en_revision', 'aprobado'])->count();
-        $approvedIds = (clone $own)->where('estado', 'aprobado')->pluck('id')->all();
-        $approved = count($approvedIds);
-        // Firmados por el docente: una firma «docente» sobre el documento de una revisión del sílabo aprobado.
-        $signed = $approvedIds === [] ? 0 : DocumentSignature::query()
-            ->where('rol_firma', DocumentSignature::ROLE_TEACHER)
-            ->whereHas('artifact.revision', fn (Builder $revision) => $revision->whereIn('silabo_id', $approvedIds))
-            ->with('artifact.revision:id,silabo_id')
-            ->get()
-            ->map(fn (DocumentSignature $signature): string => $signature->artifact->revision->silabo_id)
-            ->unique()
-            ->count();
-
-        return $this->build(
-            'Sus sílabos, paso a paso',
-            $total === 0 ? 'Cuando Coordinación abra la convocatoria, aquí aparecerán sus sílabos.' : 'Cada sílabo se abre, se completa, lo revisan Biblioteca y Coordinación y, una vez aprobado, se firma.',
-            [
-                $this->step('assigned', 'Recibir los sílabos asignados', $total > 0 ? "{$total} asignados." : 'Los asigna Coordinación al abrir la convocatoria.', $total > 0),
-                $this->step('started', 'Abrir cada sílabo', $total > 0 ? "{$started} de {$total} abiertos." : 'Al abrirlo, el borrador parte de la ficha de la materia; también puede copiar el de otro de sus paralelos.', $total > 0 && $started === $total),
-                $this->step('submitted', 'Completar y enviar a revisión', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega. Primero lo revisa Biblioteca y luego Coordinación; el asistente de IA ayuda a redactar.', $total > 0 && $submitted === $total),
-                $this->step('signed', 'Firmar electrónicamente el sílabo aprobado', $approved > 0 ? "{$signed} de {$approved} aprobados firmados." : 'Cuando Coordinación lo apruebe, fírmelo con su certificado (.p12); después firman Coordinación y Biblioteca.', $total > 0 && $approved === $total && $signed === $approved),
-            ],
-        );
     }
 
     /**

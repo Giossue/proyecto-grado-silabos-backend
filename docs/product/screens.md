@@ -18,7 +18,7 @@ en el inventario como identificador histórico.
 
 | ID     | Pantalla                        |
 | ------ | ------------------------------- |
-| DOC-01 | Panel docente                   |
+| DOC-01 | (retirada en I-200) Panel docente |
 | DOC-02 | Mis sílabos                     |
 | DOC-03 | Resumen del sílabo              |
 | DOC-04 | Editor por secciones            |
@@ -294,7 +294,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   barra de progreso y los pasos en orden (Administración: facultades con logo, carreras,
   periodo, cuentas, coordinadores, plantilla, convocatoria institucional; Coordinación:
   malla, materias programadas, paralelos, docentes, datos del Proyecto de carrera,
-  convocatoria; Docencia: recibir, abrir, enviar, firmar). I-163 actualiza los textos al
+  convocatoria; Docencia ya no tiene Panel desde I-200: entra directo a Mis sílabos). I-163 actualiza los textos al
   sistema vigente (logo obligatorio, plantilla con Texto libre y Contenido de la
   plantilla, borrador que se inicia solo, firma electrónica del sílabo aprobado). Coordinación calcula
   los pasos contra el período institucional vigente y solo los completa cuando todas las

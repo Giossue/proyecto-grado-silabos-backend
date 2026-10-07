@@ -21,7 +21,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * El panel resume el trabajo con el alcance del rol activo. Ninguna métrica cruza ese
- * alcance: Coordinación cuenta dentro de su carrera y Docencia solo lo propio.
+ * alcance: Coordinación cuenta dentro de su carrera. Docencia no tiene panel: entra a Mis sílabos.
  *
  * @phpstan-import-type CoordinatorReadiness from CoordinatorConvocationReadiness
  *
@@ -49,7 +49,6 @@ class DashboardController extends Controller
             $activeRole === null || ! $user instanceof User => [],
             $activeRole->role->codigo_rol === RoleCode::Administrator->value => $this->administratorMetrics(),
             $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorMetrics($coordinatorReadiness),
-            $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherMetrics($user, $activeRole->carrera_id),
             $activeRole->role->codigo_rol === RoleCode::Librarian->value => $this->librarianMetrics($libraryReviews),
             default => [],
         };
@@ -58,14 +57,12 @@ class DashboardController extends Controller
             $activeRole === null || ! $user instanceof User => null,
             $activeRole->role->codigo_rol === RoleCode::Administrator->value => $setup->forAdministrator(),
             $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $setup->forCoordinator($activeRole->carrera_id, $coordinatorReadiness),
-            $activeRole->role->codigo_rol === RoleCode::Teacher->value => $setup->forTeacher($user, $activeRole->carrera_id),
             default => null,
         };
 
         $deadline = match (true) {
             $activeRole === null || ! $user instanceof User => null,
             $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorDeadline($coordinatorReadiness, $schedule),
-            $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherDeadline($user, $activeRole->carrera_id, $schedule),
             default => null,
         };
 
@@ -220,32 +217,6 @@ class DashboardController extends Controller
         ];
     }
 
-    /** @return list<array{key: string, label: string, value: int, suffix: string|null, hint: string}> */
-    private function teacherMetrics(User $user, ?string $careerId): array
-    {
-        $own = fn (): Builder => Syllabus::query()
-            ->whereHas('convocation', fn (Builder $query) => $query->where('carrera_id', $careerId))
-            ->whereCurrentTeacher($user);
-        $pending = $own()->whereNotIn('estado', ['en_revision', 'aprobado'])->count();
-
-        return [
-            [
-                'key' => 'pending',
-                'label' => 'Sílabos por entregar',
-                'value' => $pending,
-                'suffix' => null,
-                'hint' => $pending === 0 ? 'Nada pendiente por ahora' : 'Aún no enviados a revisión',
-            ],
-            [
-                'key' => 'correction_requested',
-                'label' => 'Por corregir',
-                'value' => $own()->where('estado', 'correccion_solicitada')->count(),
-                'suffix' => null,
-                'hint' => 'Devueltos por Coordinación con observaciones',
-            ],
-        ];
-    }
-
     /**
      * @param  CoordinatorReadiness|null  $readiness
      * @return DeadlinePayload|null
@@ -268,31 +239,6 @@ class DashboardController extends Controller
             $startsAt = $process->inicia_en;
             $dueAt = $process->entrega_en;
         }
-
-        return $this->deadlinePayload($process, $convocation, $startsAt, $dueAt);
-    }
-
-    /** @return DeadlinePayload|null */
-    private function teacherDeadline(User $user, ?string $careerId, ConvocationSchedule $schedule): ?array
-    {
-        $syllabus = Syllabus::query()
-            ->whereNotIn('estado', ['aprobado'])
-            ->whereCurrentTeacher($user)
-            ->when($careerId !== null, fn (Builder $query) => $query->whereHas('convocation', fn (Builder $convocation) => $convocation->where('carrera_id', $careerId)))
-            ->whereHas('convocation.process', fn (Builder $process) => $process->whereIn('estado', [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED]))
-            ->with(['convocation.process.academicPeriod'])
-            ->get()
-            ->sortBy(fn (Syllabus $item): int => $schedule->draftDeadline($item->convocation)->getTimestamp())
-            ->first();
-
-        if (! $syllabus instanceof Syllabus) {
-            return null;
-        }
-
-        $convocation = $syllabus->convocation;
-        $process = $convocation->process;
-        $startsAt = $schedule->startsAt($convocation);
-        $dueAt = $schedule->draftDeadline($convocation);
 
         return $this->deadlinePayload($process, $convocation, $startsAt, $dueAt);
     }
