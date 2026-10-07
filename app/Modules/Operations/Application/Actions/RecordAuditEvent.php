@@ -2,6 +2,8 @@
 
 namespace App\Modules\Operations\Application\Actions;
 
+use App\Models\User;
+use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 
 class RecordAuditEvent
@@ -16,8 +18,13 @@ class RecordAuditEvent
         string $result,
         array $metadata = [],
     ): AuditEvent {
+        $assignment = $roleAssignmentId === null ? null : RoleAssignment::query()->with('career:id,nombre')->find($roleAssignmentId);
+
         return AuditEvent::query()->create([
             'actor_usuario_id' => $actorId,
+            'actor_nombre' => $actorId === null ? null : User::query()->whereKey($actorId)->value('nombre_usuario'),
+            'actor_rol' => $assignment?->role->nombre_rol,
+            'actor_carrera' => $assignment?->career?->nombre,
             'asignacion_rol_id' => $roleAssignmentId,
             'accion' => $action,
             'tipo_recurso' => $resourceType,

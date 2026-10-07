@@ -55,13 +55,13 @@ class SaveTemplateSection
                 $blocks[] = [
                     'id' => $blockId,
                     'clave' => 'identificacion_principal',
-                    'titulo' => 'Identificación institucional',
+                    'titulo' => '',
                     'configuracion' => ['content_type' => 'institutional', 'compact' => true, 'document' => TemplateDocumentDefaults::identification()],
                     'posicion' => 1,
                 ];
                 $fieldDefinitions[] = [
                     'plantilla_id' => $template->id, 'campo_plantilla_id' => $blockId, 'clave' => 'asignatura',
-                    'etiqueta' => 'Identificación institucional', 'tipo' => 'referencia_maestra', 'heredado' => true,
+                    'etiqueta' => '', 'tipo' => 'referencia_maestra', 'heredado' => true,
                     'origen_maestro' => 'asignaturas', 'editable_docente' => false, 'posicion' => 1,
                 ];
                 array_push($fieldDefinitions, ...$this->provisioner->identificationInputs($template->id, $blockId));

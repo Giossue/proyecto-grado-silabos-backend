@@ -3,7 +3,7 @@
 return [
     'baseline' => [
         ['identificacion', 'Identificación institucional', [
-            ['asignatura', 'Identificación institucional', 'institutional', null],
+            ['asignatura', '', 'institutional', null],
         ]],
         ['descripcion', 'Descripción de la asignatura', [
             ['descripcion', 'Descripción de la asignatura', 'free_text', null],

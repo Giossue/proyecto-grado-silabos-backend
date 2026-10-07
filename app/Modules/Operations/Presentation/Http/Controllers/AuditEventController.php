@@ -33,6 +33,7 @@ class AuditEventController extends Controller
             $escaped = addcslashes($search, '%_\\');
             $query->where(fn ($builder) => $builder
                 ->where('accion', 'ilike', "%{$escaped}%")
+                ->orWhere('actor_nombre', 'ilike', "%{$escaped}%")
                 ->orWhereHas('actor', fn ($actor) => $actor->where('nombre', 'ilike', "%{$escaped}%")));
         }
         if ($from !== '') {
@@ -60,8 +61,8 @@ class AuditEventController extends Controller
                     'resource' => $this->resourceLabel($event->tipo_recurso),
                     'result' => $event->resultado,
                     'actor' => $this->actorName($event),
-                    'role' => $event->roleAssignment?->role->nombre_rol,
-                    'career' => $event->roleAssignment?->career?->nombre,
+                    'role' => $event->actor_rol ?? $event->roleAssignment?->role->nombre_rol,
+                    'career' => $event->actor_carrera ?? $event->roleAssignment?->career?->nombre,
                     'details' => $this->safeDetails($event->metadatos),
                     'occurred_at' => $event->ocurrido_en->toIso8601String(),
                 ]),
@@ -208,8 +209,14 @@ class AuditEventController extends Controller
     private function actorName(AuditEvent $event): string
     {
         $actor = $event->getRelation('actor');
+        if ($event->actor_nombre !== null) {
+            return $event->actor_nombre;
+        }
+        if ($actor instanceof User) {
+            return $actor->nombre;
+        }
 
-        return $actor instanceof User ? $actor->nombre : 'Sistema';
+        return $event->usuario_id === null ? 'Sistema' : 'Cuenta eliminada';
     }
 
     /**

@@ -335,7 +335,8 @@ protege mediante el contexto académico fijado en cada sílabo.
   se explica el motivo.
 - un catálogo sin dependencias se elimina; si tiene historia, las claves foráneas lo
   protegen y la aplicación muestra el motivo. Las cuentas con historia se desactivan,
-  porque su identidad participa en auditoría y revisiones.
+  porque su identidad participa en revisiones, aprobaciones y firmas. La auditoría no
+  depende de la cuenta (I-194): sin llaves hacia usuarios y con copia del actor en cada evento.
 - migraciones destructivas requieren copia, verificación, rollback ensayado y aprobación.
 
 ## Índices y restricciones
