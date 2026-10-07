@@ -4,7 +4,7 @@
 
 | Cambio | IDs relacionados | Evidencia | Estado |
 |---|---|---|---|
-| Nombre, ruta canónica y creación del acceso administrativo | RF-008..016; RN-005..008; CU-03; ADM-04; CP-F estructura académica y CP-N navegación; PV-19 | Sidebar, breadcrumb, puesta en marcha y especificación usan **Facultades y carreras** bajo `/admin/estructura-academica`; las pestañas conservan Facultades y Carreras y el botón **Crear** abre cualquiera de los dos formularios desde un menú ajustado al contenido | Implementado local; comprobación estática puntual, aceptación visual pendiente en PV-19 |
+| Nombre, ruta canónica y creación del acceso administrativo | RF-008..016; RN-005..008; CU-03; ADM-04; CP-F estructura académica y CP-N navegación; PV-19 | Sidebar, breadcrumb, puesta en marcha y especificación usan **Facultades y carreras** bajo `/admin/estructura-academica`; las pestañas sin fondo conservan Facultades y Carreras con `foreground` legible en ambos temas, y el botón **Crear** abre cualquiera de los dos formularios desde un menú ajustado al contenido | Implementado local; comprobación estática puntual, aceptación visual pendiente en PV-19 |
 
 ## Flujo hasta Coordinación — I-192
 
@@ -69,7 +69,7 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 
 | Cambio | IDs relacionados | Evidencia | Estado |
 |---|---|---|---|
-| Azul y rojo de marca en los temas compartidos | RNF-018..023, RNF-029..034; UI-01..04; ADM/COR/DOC/BIB vigentes; CP-N UX/accesibilidad/mantenibilidad; PV-19 | Solicitud del responsable del producto: `#2d4b6f` y `#ac231e`; tokens compartidos, sidebar, acceso, encabezados y métricas del frontend. Plan `docs/plans/completed/FE-UEB-2026-10-04-paleta-institucional.md`: ESLint, tipos, 14 pruebas existentes, Chromium en dos temas/tres anchos y 43 pares de contraste por tema. Las paletas semántica y documental conservan su función independiente. | Primera versión revertida por el responsable del producto (sidebar azul y fondos teñidos se veían mal); versión discreta vigente en `9ac168f`, solo tokens. PV-19 permanece abierta. |
+| Azul y rojo de marca en los temas compartidos | RNF-018..023, RNF-029..034; UI-01..04; ADM/COR/DOC/BIB vigentes; CP-N UX/accesibilidad/mantenibilidad; PV-19 | Solicitud del responsable del producto: `#2d4b6f` y `#ac231e`; tokens compartidos, sidebar, acceso, encabezados y métricas del frontend. Plan `docs/plans/completed/FE-UEB-2026-10-04-paleta-institucional.md`: ESLint, tipos, 14 pruebas existentes, Chromium en dos temas/tres anchos y 43 pares de contraste por tema. Las paletas semántica y documental conservan su función independiente. Los iconos de `PageFrame` usan `accent`/`accent-foreground` para mantener la misma jerarquía y contraste en claro y oscuro. | Primera versión revertida por el responsable del producto (sidebar azul y fondos teñidos se veían mal); versión discreta vigente en `9ac168f`, solo tokens. PV-19 permanece abierta. |
 
 ## Selección de texto uniforme — 2026-10-04
 
@@ -223,7 +223,8 @@ I-68/I-123/I-125 — RF-008..045, RN-005..024, CU-03/04/06/07, ADM-04/06 y COR-0
 `InstitutionalLogosTest` verifica el logo obligatorio al crear la facultad, el rechazo de
 PNG sin canal alfa, el reemplazo exclusivo por Administración, el rechazo a Coordinación
 y el archivo transparente normalizado a 600 × 180 px; ADM-04 presenta una columna Logo
-con miniatura y diálogo de vista completa usando el `logo_url` del contrato existente;
+con miniatura y diálogo de vista completa, cierre visible y nombre accesible usando el
+`logo_url` del contrato existente;
 `ApiDashboardTest` comprueba que el Panel de Coordinación no exponga gestión del logo;
 `ConvocationAndDraftTest` comprueba que no se abra ni se creen sílabos sin logo; y
 `TemplateAndSourceTest` conserva ambos logos antes del título en la proyección.
