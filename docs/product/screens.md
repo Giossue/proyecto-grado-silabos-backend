@@ -148,9 +148,9 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - Por solicitud del responsable del producto del 2026-10-04, el menú de usuario se
   traslada del sidebar al extremo derecho del encabezado autenticado común, después de
   la campana de notificaciones y el selector de tema. En escritorio muestra avatar
-  circular y el nombre completo; el control toma el ancho que necesita y desplaza hacia
-  la izquierda los accesos de notificaciones y tema. En móvil, el acceso muestra solo el
-  avatar con el nombre accesible «Menú de usuario». El menú abierto ajusta el nombre
+  circular y el nombre completo a 10 px; el control toma el ancho que necesita y desplaza
+  hacia la izquierda los accesos de notificaciones y tema. En móvil, el acceso muestra
+  solo el avatar con el nombre accesible «Menú de usuario». El menú abierto ajusta el nombre
   completo a varias líneas cuando hace falta. Conserva Configuración, cambio de carrera o
   rol cuando corresponde y Cerrar sesión, que usa la variante destructiva roja.
 - Todo módulo autenticado presenta el mismo encabezado mediante `PageFrame`: icono,
