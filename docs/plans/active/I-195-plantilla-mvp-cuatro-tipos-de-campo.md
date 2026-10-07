@@ -74,3 +74,7 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 - Formato exacto del valor de `tabla` (hoy: mapa `fila → columna → texto`).
 - Lista de fuentes de `automatico` (hoy solo `identification_card`).
 - Estrategia de migración de plantillas existentes (etapas 2 y 5).
+
+## Decisión: sin campos condicionales en el MVP
+
+La condición «mostrar si» dependía de los tipos `seleccion_unica` y `booleano`, retirados en la etapa 2. En el MVP los campos de discapacidad (tipo y adaptación) siempre se muestran; el docente los deja vacíos si no aplican. Se retiró la prueba de campos condicionales; el código de `FieldConditions` y `mostrar_si` se elimina en la etapa 8.
