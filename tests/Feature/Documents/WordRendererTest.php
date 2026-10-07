@@ -13,11 +13,50 @@ use App\Modules\Syllabus\Application\IdentificationCard;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
+use Tests\Support\BuildsTypedSnapshot;
 use Tests\TestCase;
 use ZipArchive;
 
 class WordRendererTest extends TestCase
 {
+    use BuildsTypedSnapshot;
+
+    public function test_v7_snapshot_paints_each_field_with_its_type(): void
+    {
+        $input = new DocumentRenderInput(
+            subject: 'Inteligencia Artificial', subjectCode: 'SW-P7-037', academicPeriod: 'Marzo – Julio 2026',
+            revisionNumber: 1, revisionFingerprint: str_repeat('ab', 32), generatedAt: '2026-09-07T20:00:00-05:00',
+            locale: 'es-EC', snapshot: $this->typedSnapshot(),
+        );
+        $docx = app(DocumentRenderer::class)->render($input)->docx;
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-typed-test-');
+        file_put_contents($temporary, $docx->bytes);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        unlink($temporary);
+        $dom = new DOMDocument;
+        $dom->loadXML($xml);
+        $text = $dom->textContent;
+
+        $this->assertStringContainsString('FACULTAD: Facultad de Pruebas Integradas', $text);
+        $this->assertStringContainsString('Texto escrito por el docente', $text);
+        $this->assertStringContainsString('Ficha heredada de la asignatura', $text);
+        $this->assertStringContainsString('Descripción de la asignatura', $text);
+        $this->assertStringNotContainsString('Identificación institucionalIdentificación institucional', $text);
+        foreach (['Tema', 'Horas', 'Semana uno', 'Introducción', 'Agentes'] as $cell) {
+            $this->assertStringContainsString($cell, $text);
+        }
+        $this->assertStringContainsString('Sin contenido', $text);
+        $this->assertStringContainsString('2. Contenido', $text);
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+        $this->assertGreaterThanOrEqual(2, $xpath->query('//w:tbl')->length);
+        $weights = array_map(fn ($col) => (int) $col->getAttributeNS('http://schemas.openxmlformats.org/wordprocessingml/2006/main', 'w'), iterator_to_array($xpath->query('//w:tbl[.//w:t[contains(., "FACULTAD:")]]/w:tblGrid/w:gridCol')));
+        $this->assertCount(count(IdentificationCard::WIDTHS), $weights);
+    }
+
     public function test_applies_the_frozen_template_appearance_to_docx(): void
     {
         $snapshot = $this->snapshot();

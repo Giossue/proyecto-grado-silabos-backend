@@ -11,6 +11,8 @@ use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
+use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
+use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\Actions\OpenConvocation;
 use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
@@ -23,6 +25,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Illuminate\Validation\ValidationException;
@@ -130,6 +133,60 @@ class ConvocationAndDraftTest extends TestCase
         $valueOf = fn (array $snapshot): mixed => collect($snapshot['sections'])->flatMap(fn ($section) => $section['blocks'])
             ->flatMap(fn ($block) => $block['fields'])->firstWhere('key', 'descripcion')['value'];
         $this->assertSame($valueOf($original), $valueOf($later));
+    }
+
+    public function test_snapshot_v7_carries_typed_fields_and_round_trips(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $snapshot = app(SyllabusSnapshot::class)->build($syllabus);
+        $this->assertSame(7, $snapshot['schema_version']);
+        $fields = collect($snapshot['sections'])->flatMap(fn ($section) => $section['fields']);
+        $this->assertNotEmpty($fields);
+        $this->assertSame([], $fields->filter(fn ($field) => ! in_array($field['type'], ['texto', 'ficha', 'tabla', 'automatico'], true))->all());
+        $description = $fields->firstWhere('key', 'descripcion');
+        $this->assertSame('ficha', $description['type']);
+        $this->assertSame(
+            $syllabus->values()->where('definicion_campo_id', $description['definition_id'])->firstOrFail()->valor,
+            $description['value'],
+        );
+
+        $definition = FieldDefinition::query()->findOrFail($description['definition_id']);
+        $syllabus->values()->where('definicion_campo_id', $definition->id)->update(['valor' => FreeText::fromText('Cambio posterior')]);
+        app(SyllabusSnapshot::class)->restore($syllabus, $snapshot);
+        $this->assertSame($description['value'], $syllabus->values()->where('definicion_campo_id', $definition->id)->firstOrFail()->valor);
+    }
+
+    public function test_a_stored_v7_revision_renders_without_reading_live_data(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $snapshot = app(SyllabusSnapshot::class)->build($syllabus);
+        $description = collect($snapshot['sections'])->flatMap(fn ($section) => $section['fields'])->firstWhere('key', 'descripcion');
+        $frozen = FreeText::plainText($description['value']);
+        FieldValue::query()->where('definicion_campo_id', $description['definition_id'])->update(['valor' => FreeText::fromText('Dato vivo posterior')]);
+        $snapshot['sections'] = array_map(function (array $section) use ($description): array {
+            $section['fields'] = array_map(function (array $field) use ($description): array {
+                return $field['key'] === 'descripcion' ? [...$field, 'value' => $description['value']] : $field;
+            }, $section['fields']);
+
+            return $section;
+        }, $snapshot['sections']);
+
+        DB::enableQueryLog();
+        $docx = app(DocumentRenderer::class)->render(new DocumentRenderInput(
+            subject: 'Materia', subjectCode: 'X-1', academicPeriod: 'P', revisionNumber: 1, revisionFingerprint: str_repeat('a', 64),
+            generatedAt: '2026-09-07T20:00:00-05:00', locale: 'es-EC', snapshot: $snapshot,
+        ))->docx;
+        $queries = array_filter(DB::getQueryLog(), fn (array $query): bool => str_contains($query['query'], 'valores_campo') || str_contains($query['query'], 'definiciones_campo'));
+        $this->assertSame([], array_values($queries));
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-hist-');
+        file_put_contents($temporary, $docx->bytes);
+        $zip = new \ZipArchive;
+        $zip->open($temporary);
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        unlink($temporary);
+        $this->assertStringContainsString(htmlspecialchars($frozen, ENT_XML1), $xml);
+        $this->assertStringNotContainsString('Dato vivo posterior', $xml);
     }
 
     public function test_missing_profile_reports_a_coordinator_action(): void

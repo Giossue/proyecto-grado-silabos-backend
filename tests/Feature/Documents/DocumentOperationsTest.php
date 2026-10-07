@@ -36,12 +36,14 @@ use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use LogicException;
 use RuntimeException;
+use Tests\Support\BuildsTypedSnapshot;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
 use ZipArchive;
 
 class DocumentOperationsTest extends TestCase
 {
+    use BuildsTypedSnapshot;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
 
@@ -226,6 +228,25 @@ class DocumentOperationsTest extends TestCase
             $this->fail('PostgreSQL permitió reescribir un objeto publicado.');
         } catch (QueryException) {
             $this->assertSame($docx->nombre_logico, $docx->fresh()->nombre_logico);
+        }
+    }
+
+    public function test_the_export_job_paints_a_v7_revision_with_the_four_field_types(): void
+    {
+        Queue::fake();
+        [, $revision] = $this->approvedRevision($this->typedSnapshot());
+        $this->actingAsTeacher()->postJson(route('api.v1.documents.store', $revision), ['idempotency_key' => (string) Str::uuid()]);
+        $artifact = ExportArtifact::query()->firstOrFail();
+        (new GenerateSyllabusExportJob($artifact->id))->handle(app(DocumentRenderer::class), app(RecordAuditEvent::class), app(DocumentBundleValidator::class));
+
+        $artifact->refresh()->load('docxObject');
+        $this->assertSame('completado', $artifact->estado);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open(Storage::disk('private')->path($artifact->docxObject->ruta_interna)) === true);
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        foreach (['Facultad de Pruebas Integradas', 'Texto escrito por el docente', 'Ficha heredada de la asignatura', 'Semana dos', 'Agentes'] as $text) {
+            $this->assertStringContainsString($text, $xml);
         }
     }
 
@@ -485,7 +506,7 @@ class DocumentOperationsTest extends TestCase
     }
 
     /** @return array{Syllabus, SyllabusRevision} */
-    private function approvedRevision(): array
+    private function approvedRevision(?array $custom = null): array
     {
         $career = Career::query()->firstOrFail();
         $subject = Subject::query()->firstOrFail();
@@ -509,7 +530,7 @@ class DocumentOperationsTest extends TestCase
             'iniciado_en' => now()->subDay(),
             'guardado_en' => now(),
         ]);
-        $snapshot = [
+        $snapshot = $custom ?? [
             'schema_version' => 1,
             'template_id' => $version->id,
             'sections' => [[
