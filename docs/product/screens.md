@@ -628,13 +628,11 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   permite iniciar únicamente el alcance de su carrera desde una abierta; hereda plantilla,
   período y fechas. El mismo inicio está disponible en COR-01 cuando la comprobación
   completa de malla, programación, paralelos, docentes, plantilla y logo indica que la
-  carrera está lista; los documentos de ingesta no son un requisito para convocar. COR-02 lista
-  los procesos institucionales desde antes de iniciar la carrera, con estado institucional
-  y estado de carrera separados; el filtro muestra solo convocatorias iniciadas, pausadas y
-  cerradas, y el seguimiento de expedientes se consulta en un `Sheet` lateral dentro de cada convocatoria. No tiene
-  aviso ni botón de alta independientes. El menú de tres puntos de cada fila reúne iniciar,
-  ver seguimiento, pausar y reanudar, con el mismo diálogo de
-  confirmación que ADM-12. ADM-12 no muestra un aviso de edición bloqueada porque desde
+  carrera está lista; los documentos de ingesta no son un requisito para convocar. COR-02 muestra
+  la convocatoria vigente de la carrera en una tarjeta de estado, sin tabla ni filtros, con
+  un solo botón según su estado (iniciar, pausar o reanudar) y el acceso a Ver seguimiento,
+  que abre el seguimiento de expedientes en un `Sheet` lateral. Pausar y reanudar usan el
+  mismo diálogo de confirmación que ADM-12. ADM-12 no muestra un aviso de edición bloqueada porque desde
   esa misma pantalla se pausa, reanuda o cierra el proceso. COR-04 es solo seguimiento y
   avisa cuando la convocatoria o
   el proceso institucional están en pausa o cerrados. ADM-05,

@@ -209,9 +209,10 @@ directo, según solicitud del responsable del producto. Se conserva el texto uti
 por la búsqueda y los filtros. Verificación puntual con ESLint y
 `TeacherAssignmentsPanel.test.ts`.
 
-COR-02 (I-46): el listado institucional incluye el alcance de la carrera activa y permite
-iniciarlo desde Acciones. Su filtro se limita a estados operativos (iniciada, pausada y
-cerrada) y el detalle de expedientes vive dentro de la convocatoria. `SyllabusProcessTest`
+COR-02 (I-46): la pantalla muestra la convocatoria vigente de la carrera activa en una
+tarjeta con un solo botón (iniciar, pausar o reanudar) y Ver seguimiento; ya no hay tabla,
+menú de tres puntos ni filtros (2026-10-07). El detalle de expedientes vive dentro de la
+convocatoria. `SyllabusProcessTest`
 comprueba la fila antes/después de iniciar y los filtros por estado de carrera;
 `ConvocationActions` conserva las validaciones del
 inicio atómico y las acciones de seguimiento, pausa y reanudación.
