@@ -59,11 +59,19 @@ class SyllabusWordDocument
 
         $word->addNumberingStyle('silabo-bullets', [
             'type' => 'multilevel',
-            'levels' => [['format' => 'bullet', 'text' => '•', 'left' => 360, 'hanging' => 360, 'font' => 'Symbol']],
+            'levels' => [
+                ['format' => 'bullet', 'text' => '•', 'left' => 360, 'hanging' => 360, 'font' => 'Symbol'],
+                ['format' => 'bullet', 'text' => 'o', 'left' => 720, 'hanging' => 360, 'font' => 'Courier New'],
+                ['format' => 'bullet', 'text' => '•', 'left' => 1080, 'hanging' => 360, 'font' => 'Symbol'],
+            ],
         ]);
         $word->addNumberingStyle('silabo-numbers', [
             'type' => 'multilevel',
-            'levels' => [['format' => 'decimal', 'text' => '%1.', 'left' => 360, 'hanging' => 360]],
+            'levels' => [
+                ['format' => 'decimal', 'text' => '%1.', 'left' => 360, 'hanging' => 360],
+                ['format' => 'lowerLetter', 'text' => '%2.', 'left' => 720, 'hanging' => 360],
+                ['format' => 'lowerRoman', 'text' => '%3.', 'left' => 1080, 'hanging' => 360],
+            ],
         ]);
 
         $currentOrientation = (string) $this->context->appearance['orientation'];

@@ -68,7 +68,7 @@ final class WordFieldRenderer
         // Lo que el docente escribe y se imprime dentro de la tabla de identificación no se repite debajo.
         $card = array_filter($fields, fn (array $field): bool => ($field['type'] ?? null) === 'automatico' && ($field['config']['source'] ?? null) === 'identification_card') !== [];
         foreach ($fields as $field) {
-            if ($card && ($field['type'] ?? null) === 'texto' && array_key_exists((string) ($field['key'] ?? ''), IdentificationCard::INPUT_KEYS)) {
+            if ($card && ($field['type'] ?? null) === 'texto' && (($field['config']['inside'] ?? null) === 'identification_card' || array_key_exists((string) ($field['key'] ?? ''), IdentificationCard::INPUT_KEYS))) {
                 continue;
             }
             $type = $types->get((string) $field['type']);

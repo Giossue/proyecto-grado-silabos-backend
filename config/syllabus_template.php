@@ -1,71 +1,118 @@
 <?php
 
 return [
-    /*
-     * Plantilla oficial inicial (I-195): solo los tipos del registro de campos (texto, ficha, tabla, automatico y fijo).
-     * En `fijo`, `content` es la clave del contenido institucional (FixedContent::official).
-     * [clave de sección, título, [[clave del campo, etiqueta, tipo, configuración]]]
-     * En `tabla`, `columns` y `rows` son [clave => etiqueta]; el provisionador los expande.
-     */
+    'designs' => [
+        'identificacion' => [
+            'title' => 'Identificación Institucional',
+            'summary' => 'Tabla oficial con los datos de la asignatura, el periodo y el docente. El docente completa dentro de ella la discapacidad y su formación.',
+            'fields' => [
+                ['asignatura', '', 'automatico', ['source' => 'identification_card']],
+                ['discapacidad_tipo', 'Estudiantes con discapacidad: Tipo de discapacidad', 'texto', ['inside' => 'identification_card']],
+                ['discapacidad_adaptacion', 'Estudiantes con discapacidad: Breve descripción', 'texto', ['inside' => 'identification_card']],
+                ['formacion_experiencia', 'Formación y experiencia académica – investigativa', 'texto', ['inside' => 'identification_card']],
+            ],
+        ],
+        'descripcion' => [
+            'title' => 'Descripción de la asignatura',
+            'summary' => 'Texto que Coordinación escribe una vez por asignatura en su ficha.',
+            'fields' => [
+                ['descripcion', '', 'ficha', ['adjustable' => false]],
+            ],
+        ],
+        'objetivos' => [
+            'title' => 'Objetivo(s) de la asignatura',
+            'summary' => 'Objetivo general y objetivos específicos, desde la ficha de la asignatura.',
+            'fields' => [
+                ['objetivo_general', 'Objetivo General', 'ficha', ['adjustable' => false]],
+                ['objetivos_especificos', 'Objetivos específicos', 'ficha', ['adjustable' => false]],
+            ],
+        ],
+        'resultados' => [
+            'title' => 'Resultados de aprendizaje de la asignatura',
+            'summary' => 'Lista de resultados de aprendizaje, desde la ficha de la asignatura.',
+            'fields' => [
+                ['resultados_aprendizaje', '', 'ficha', ['adjustable' => false]],
+            ],
+        ],
+        'habilidades' => [
+            'title' => 'Habilidades Blandas de la asignatura',
+            'summary' => 'Habilidades blandas con su definición, desde la ficha de la asignatura.',
+            'fields' => [
+                ['habilidades_blandas', '', 'ficha', ['adjustable' => false]],
+            ],
+        ],
+        'planificacion' => [
+            'title' => 'Distribución y planificación de las unidades curriculares',
+            'summary' => 'Tabla de 16 semanas con contenidos, horas, actividades y evaluación; la llena el docente.',
+            'fields' => [
+                ['unidades', '', 'tabla', [
+                    'weeks' => 16,
+                    'columns' => [
+                        'contenidos' => 'Contenidos temáticos de la unidad',
+                        'acd_h' => 'ACD (h)',
+                        'ape_h' => 'APE (h)',
+                        'aa_h' => 'AA (h)',
+                        'acd' => 'Aprendizaje en contacto con el docente (ACD)',
+                        'ape' => 'Aprendizaje práctico-experimental (APE)',
+                        'aa' => 'Aprendizaje autónomo (AA)',
+                        'evaluacion' => 'Evaluación de los aprendizajes',
+                    ],
+                ]],
+            ],
+        ],
+        'metodologia' => [
+            'title' => 'Metodología y Ambientes de Aprendizaje',
+            'summary' => 'Cinco textos que escribe el docente: métodos, técnicas, recursos, herramientas TIC, TAC e IA, y ambientes.',
+            'fields' => [
+                ['metodologia', '7.1 Métodos de Enseñanza – Aprendizaje', 'texto', []],
+                ['tecnicas_ensenanza', '7.2 Técnicas de enseñanza', 'texto', []],
+                ['recursos_medios', '7.3 Recursos y medios didácticos', 'texto', []],
+                ['herramientas_tic', '7.4 Herramientas pedagógicas, Tecnologías de aprendizaje y conocimiento e Inteligencia Artificial en los procesos enseñanza-aprendizaje', 'texto', []],
+                ['ambientes_aprendizaje', '7.5 Ambientes o escenarios de aprendizaje', 'texto', []],
+            ],
+        ],
+        'evaluacion' => [
+            'title' => 'EVALUACIÓN DE LOS APRENDIZAJES',
+            'summary' => 'Indicadores por parcial y escala de valoración de la UEB; igual en todos los sílabos.',
+            'fields' => [
+                ['indicadores_evaluacion', '', 'fijo', ['content' => 'indicadores']],
+                ['componentes_evaluacion', 'ESCALA DE VALORACIÓN', 'fijo', ['content' => 'escala']],
+            ],
+        ],
+        'perfil_egreso' => [
+            'title' => 'Relación de la asignatura con los resultados de aprendizaje del Perfil de egreso de la carrera',
+            'summary' => 'Contribución de la asignatura al perfil de egreso, desde la ficha de la asignatura.',
+            'fields' => [
+                ['contribucion_perfil', '', 'ficha', ['adjustable' => false]],
+            ],
+        ],
+        'etica' => [
+            'title' => 'Conducta y comportamiento ético',
+            'summary' => 'Compromisos y estándares de comportamiento de la UEB; igual en todos los sílabos.',
+            'fields' => [
+                ['conducta_etica', '', 'fijo', ['content' => 'etica']],
+            ],
+        ],
+        'bibliografia' => [
+            'title' => 'Bibliografía Básica',
+            'summary' => 'Bibliografía básica y complementaria, desde la ficha; el docente puede ajustarlas.',
+            'fields' => [
+                ['bibliografia', '', 'ficha', ['adjustable' => true]],
+                ['bibliografia_complementaria', 'Complementaria', 'ficha', ['adjustable' => true]],
+            ],
+        ],
+        'revision' => [
+            'title' => 'Revisión y aprobación',
+            'summary' => 'Cuadro de firmas del docente y de la coordinación con sus fechas; igual en todos los sílabos.',
+            'fields' => [
+                ['firmas', '', 'fijo', ['content' => 'firmas']],
+            ],
+        ],
+    ],
+
     'baseline' => [
-        ['identificacion', 'Identificación Institucional', [
-            ['asignatura', '', 'automatico', ['source' => 'identification_card']],
-            ['discapacidad_tipo', 'Estudiantes con discapacidad: Tipo de discapacidad', 'texto', []],
-            ['discapacidad_adaptacion', 'Estudiantes con discapacidad: Breve descripción', 'texto', []],
-            ['formacion_experiencia', 'Formación y experiencia académica – investigativa', 'texto', []],
-        ]],
-        ['descripcion', 'Descripción de la asignatura', [
-            ['descripcion', '', 'ficha', ['adjustable' => false]],
-        ]],
-        ['objetivos', 'Objetivo(s) de la asignatura', [
-            ['objetivo_general', 'Objetivo General', 'ficha', ['adjustable' => false]],
-            ['objetivos_especificos', 'Objetivos específicos', 'ficha', ['adjustable' => false]],
-        ]],
-        ['resultados', 'Resultados de aprendizaje de la asignatura', [
-            ['resultados_aprendizaje', '', 'ficha', ['adjustable' => false]],
-        ]],
-        ['habilidades', 'Habilidades Blandas de la asignatura', [
-            ['habilidades_blandas', '', 'ficha', ['adjustable' => false]],
-        ]],
-        ['planificacion', 'Distribución y planificación de las unidades curriculares', [
-            ['unidades', '', 'tabla', [
-                'weeks' => 16,
-                'columns' => [
-                    'contenidos' => 'Contenidos temáticos de la unidad',
-                    'acd_h' => 'ACD (h)',
-                    'ape_h' => 'APE (h)',
-                    'aa_h' => 'AA (h)',
-                    'acd' => 'Aprendizaje en contacto con el docente (ACD)',
-                    'ape' => 'Aprendizaje práctico-experimental (APE)',
-                    'aa' => 'Aprendizaje autónomo (AA)',
-                    'evaluacion' => 'Evaluación de los aprendizajes',
-                ],
-            ]],
-        ]],
-        ['metodologia', 'Metodología y Ambientes de Aprendizaje', [
-            ['metodologia', '7.1 Métodos de Enseñanza – Aprendizaje', 'texto', []],
-            ['tecnicas_ensenanza', '7.2 Técnicas de enseñanza', 'texto', []],
-            ['recursos_medios', '7.3 Recursos y medios didácticos', 'texto', []],
-            ['herramientas_tic', '7.4 Herramientas pedagógicas, Tecnologías de aprendizaje y conocimiento e Inteligencia Artificial en los procesos enseñanza-aprendizaje', 'texto', []],
-            ['ambientes_aprendizaje', '7.5 Ambientes o escenarios de aprendizaje', 'texto', []],
-        ]],
-        ['evaluacion', 'EVALUACIÓN DE LOS APRENDIZAJES', [
-            ['indicadores_evaluacion', '', 'fijo', ['content' => 'indicadores']],
-            ['componentes_evaluacion', 'ESCALA DE VALORACIÓN', 'fijo', ['content' => 'escala']],
-        ]],
-        ['perfil_egreso', 'Relación de la asignatura con los resultados de aprendizaje del Perfil de egreso de la carrera', [
-            ['contribucion_perfil', '', 'ficha', ['adjustable' => false]],
-        ]],
-        ['etica', 'Conducta y comportamiento ético', [
-            ['conducta_etica', '', 'fijo', ['content' => 'etica']],
-        ]],
-        ['bibliografia', 'Bibliografía Básica', [
-            ['bibliografia', '', 'ficha', ['adjustable' => true]],
-            ['bibliografia_complementaria', 'Complementaria', 'ficha', ['adjustable' => true]],
-        ]],
-        ['revision', 'Revisión y aprobación', [
-            ['firmas', '', 'fijo', ['content' => 'firmas']],
-        ]],
+        'identificacion', 'descripcion', 'objetivos', 'resultados', 'habilidades', 'planificacion',
+        'metodologia', 'evaluacion', 'perfil_egreso', 'etica', 'bibliografia', 'revision',
     ],
 
     /* Solo los usa la API anterior de plantilla (se borra en la etapa 8 de I-195). */

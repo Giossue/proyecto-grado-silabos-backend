@@ -36,6 +36,8 @@ interface FieldType
     /** @param array<string, mixed> $config */
     public function isEmpty(mixed $value, array $config): bool;
 
+    public function manual(): bool;
+
     public function teacherEditable(): bool;
 
     /**

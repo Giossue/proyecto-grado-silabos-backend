@@ -93,6 +93,11 @@ final class TableFieldType implements FieldType
         return true;
     }
 
+    public function manual(): bool
+    {
+        return true;
+    }
+
     public function teacherEditable(): bool
     {
         return true;

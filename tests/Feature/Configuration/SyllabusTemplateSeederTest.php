@@ -87,9 +87,17 @@ class SyllabusTemplateSeederTest extends TestCase
             $this->assertFalse($fields[$key]->editable_docente, $key);
             $this->assertFalse(FreeText::isEmpty($fields[$key]->typeConfig()['content']), $key);
         }
-        $this->assertStringContainsString('Primer parcial', FreeText::plainText($fields['indicadores_evaluacion']->typeConfig()['content']));
+        $this->assertStringContainsString('PRIMER PARCIAL', FreeText::plainText($fields['indicadores_evaluacion']->typeConfig()['content']));
         $this->assertStringContainsString('Excelente', FreeText::plainText($fields['componentes_evaluacion']->typeConfig()['content']));
-        $this->assertStringContainsString('Aprobado por', FreeText::plainText($fields['firmas']->typeConfig()['content']));
+        $this->assertStringContainsString('Fecha de entrega:', FreeText::plainText($fields['firmas']->typeConfig()['content']));
+        $ethics = FreeText::plainText($fields['conducta_etica']->typeConfig()['content']);
+        foreach (['código de ética y políticas de acción afirmativa', 'Puntualidad:', 'ZOOM', 'Registro de Asistencia:', 'UNO sobre diez', 'falsificación de datos'] as $text) {
+            $this->assertStringContainsString($text, $ethics);
+        }
+        $this->assertStringNotContainsString('pendiente', $ethics);
+        foreach (['discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia'] as $key) {
+            $this->assertSame(['inside' => 'identification_card'], $fields[$key]->typeConfig(), $key);
+        }
 
         foreach ($template->blocks() as $block) {
             $this->assertNotContains($block->configuredContentType(), ['fixed', 'institutional', 'flow'], $block->titulo);

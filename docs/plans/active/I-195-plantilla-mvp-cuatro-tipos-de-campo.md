@@ -103,7 +103,7 @@ La condición «mostrar si» dependía de los tipos `seleccion_unica` y `boolean
 - `FixedFieldType` (`fijo`): `config.content` = documento `FreeText` (párrafos, listas, tablas). `defaultValue` y `toSnapshot` devuelven ese contenido; `teacherEditable` falso; no guarda valor por sílabo (`validateValue` rechaza cualquier valor; `UpdateDraftField` responde 422; `ValidateDraft` no lo exige; `restore` no lo escribe). Decisión: el contenido NO puede quedar vacío (`config.content` obligatorio, error `config.content`): un texto fijo vacío no aporta y ocultaría un olvido de Administración.
 - Migración nueva `2026_10_07_000203_allow_fixed_field_type` (CHECK con cinco tipos). `SaveTemplateStructure` y el provisionador marcan `fijo` como no heredado y no editable por el docente. `TemplateStructureValidator` no cambia (un campo no heredado sin origen ya es válido).
 - Plantilla oficial: `indicadores_evaluacion`, `componentes_evaluacion`, `conducta_etica` y `firmas` son `fijo` (`FixedContent::official`). Recuperado: tablas de indicadores (puntos y ponderación por parcial) y escala de valoración UEB, tomadas de `TemplateDocumentDefaults` y normalizadas a `FreeText`.
-- No se pudo conservar: (1) el texto de conducta ética nunca existió en el código (era un marcador «Escriba aquí el contenido fijo»); queda un texto provisional que Administración debe reemplazar; (2) las firmas usaban variables insertables (`firma_docente`, `nombre_docente`, fechas, firma electrónica de coordinación y biblioteca) que `FreeText` no admite; quedan como tabla en blanco Elaborado/Revisado/Aprobado por × Nombre/Cargo/Firma, sin firma electrónica ni fechas automáticas; (3) color de encabezado y centrado de las tablas antiguas (FreeText solo guarda negrita y combinación de celdas).
+- No se pudo conservar: (1) el texto de conducta ética nunca existió en el código (era un marcador «Escriba aquí el contenido fijo»); resuelto después con el texto del PDF (ver «Decisión 2026-10-07 (II)»); (2) las firmas usaban variables insertables (`firma_docente`, `nombre_docente`, fechas, firma electrónica de coordinación y biblioteca) que `FreeText` no admite; quedan como tabla en blanco Elaborado/Revisado/Aprobado por × Nombre/Cargo/Firma, sin firma electrónica ni fechas automáticas; (3) color de encabezado y centrado de las tablas antiguas (FreeText solo guarda negrita y combinación de celdas).
 - Deuda etapa 8: `TemplateDocumentDefaults::evaluationIndicators` y `gradingScale` ya no se pueden borrar; las usa `FixedContent`. La firma electrónica sobre el documento (`SignatureAnchor`) no está enlazada al contenido fijo.
 
 ## Etapa 6: frontend, registro y vistas del docente y del revisor
@@ -131,15 +131,14 @@ La condición «mostrar si» dependía de los tipos `seleccion_unica` y `boolean
   los subtítulos con nombre llevan su numeración en el propio nombre (7.1 a 7.5) y ya no se numeran solos
   (hoja y Word). Metodología pasa a cinco textos del docente (7.1-7.5; `herramientas_tic` = 7.4, ya no ficha).
   Bibliografía: «Bibliografía Básica» + «Complementaria». Evaluación: indicadores y «ESCALA DE VALORACIÓN» `fijo`.
-- Identificación: ver `docs/product/identificacion-institucional.md`. Decisión: los tres textos del docente quedan bajo la tabla y se inyectan en ella; el Word no los repite. Pendiente: las pantallas de revisión
-  los muestran dos veces (en la tabla y como campo).
+- Identificación: ver `docs/product/identificacion-institucional.md`. Los tres textos del docente se inyectan en la tabla; la duplicación en revisión se resolvió en «Catálogo de diseños oficiales» (abajo).
 - Letra Arial y título 14 pt en Word y hoja; la cabecera de la página usa el ancho de la hoja; se quitó el botón «Cargar formato oficial UEB» de la cabecera (queda el de la hoja vacía); desbordes de la hoja corregidos.
 - No cabe en los cinco tipos (pendiente, no inventado): planificación por unidades (tabla de cada unidad con
   «Unidad No.», nombre, resultados, semanas y totales de horas por unidad; hoy es una tabla de 16 semanas);
   tabla de contribución al perfil de egreso (ALTA/MEDIA/BAJA y resultados de la carrera; hoy es una ficha de texto);
   tablas de bibliografía con columnas Autor/Título/Año/Ciudad/Editorial/ISBN/Código (hoy ficha de texto);
-  firmas con QR/firma electrónica y fechas (ya anotado en 5b); texto real de conducta ética (marcador provisional);
-  formato de cabecera de tablas (azul/sombreado) en `fijo`; hoja horizontal para la planificación.
+  firmas con QR/firma electrónica y nombres y fechas llenados solos; colores de cabecera distintos por tabla en `fijo`;
+  hoja horizontal para la planificación. El texto real de conducta ética ya no es marcador: ver abajo.
 - Sin verificación visual en navegador ni apertura del Word/PDF reales.
 
 ## Formato oficial del Word
@@ -149,3 +148,50 @@ negrita, margen 2,5 cm vertical) e ignora los guardados; los campos de texto, fi
 recuadro de borde azul. Sin migración (la apariencia guardada ya no se usa). Pruebas:
 `WordRendererTest::test_docx_follows_the_official_format`. Pendiente: papel A4 y comprobar el PDF real.
 
+## Decisión 2026-10-07 (II): se mantiene el rediseño y se añade el catálogo de diseños oficiales
+
+El responsable decidió no volver al modelo de hoja libre: se parte de lo que hay (cinco tipos de campo,
+constructor sobre hoja A4, plantilla oficial provisionada, Word por tipo) y se mejora. La restauración
+anterior (`restaurar-plantilla-libre`) quedó cancelada y no se usa. Hecho:
+
+- **Catálogo de diseños oficiales** (`config/syllabus_template.php` `designs` + `SectionDesigns`): doce secciones ya
+  armadas fieles al PDF (identificación, descripción, objetivos, resultados, habilidades blandas, planificación,
+  metodología, evaluación, perfil de egreso, conducta ética, bibliografía, firmas), cada una con sus campos y tipos.
+  La plantilla oficial provisionada (`baseline`) es la lista ordenada de esas mismas claves, así que el catálogo y el
+  botón «Cargar formato oficial UEB» no pueden diverger. `GET admin/template/{id}` entrega `sectionDesigns`
+  (clave, título, resumen, campos y `in_use`); `POST structure/sections` acepta `design` (con `title` y `position`
+  opcionales) y crea la sección con todos sus campos en una transacción. Un diseño se agrega una vez: si la plantilla ya
+  tiene su clave de sección o alguna clave de campo, responde 422 en `design`. «En blanco» sigue igual (`key` y `title`).
+  Cambiar el formato oficial = editar ese archivo y `FixedContent` (nada de interfaz).
+- **Tipos técnicos fuera del selector**: `FieldType::manual()` (texto, ficha y tabla sí; automático y fijo no) y
+  `FieldTypeRegistry::manualKeys()`; `SaveStructureFieldRequest` rechaza crear a mano `automatico`/`fijo` (422 en `type`).
+  El registro conserva los cinco y siguen editables (nombre, ayuda, contenido del texto fijo) los que vienen de un diseño. El
+  frontend lo refleja con `manual` en `registry.ts` y ya no tiene el selector «Dato que se completa solo».
+- **Identificación solo con la tabla**: los tres textos del docente son `texto` con `config.inside = identification_card`
+  (`TextFieldType::INSIDE`). Siguen siendo campos con valor propio (los llena el docente, obligatorios, entran en la
+  fotografía y se inyectan en la tabla por `IdentificationCard::INPUT_KEYS`), pero la hoja del constructor, las revisiones
+  de Coordinación y Biblioteca (`sectionFields`) y el Word no los repiten: solo se ve la tabla. En la pantalla del docente se
+  piden justo debajo de la tabla, con una nota de que se imprimen dentro de ella. Editar directamente las celdas de la tabla
+  en la pantalla del docente queda pendiente (la cuadrícula es HTML generado por el servidor).
+- **Contenido real recuperado** (ver Etapa 5b, ahora completada): conducta y comportamiento ético, transcrito del PDF de
+  referencia (páginas 8-9) y contrastado con la versión que existió en la base remota en `SQL_REMOTA_I-168.sql`
+  (la del PDF es más completa: suma puntualidad, videoconferencia y registro de asistencia, y separa lo inadmisible en
+  subpuntos); indicadores y escala de valoración con las palabras del PDF (puntos y ponderación por parcial, escala A-E con
+  «Igual a 10 o mayor o igual que 9»…); cuadro de firmas del PDF (Firma / Nombre y cargo / Fecha de entrega y de revisión);
+  etiquetas de la tabla de identificación («Unidad Básica / Profesional / de Titulación»). La BD local (`silabos_ueb`)
+  solo conserva el contenido genérico de `TemplateDocumentDefaults` (indicadores, escala y firmas con variables); no había
+  texto de ética en ella ni en el historial de git más allá de `SQL_REMOTA_I-168.sql`.
+- **Word**: las listas anidadas del contenido fijo salen con sangría por nivel (`TemplateDocumentWord::$listDepth`, tres niveles
+  de viñeta y de numeración).
+- **Frontend**: «Nueva sección» abre un catálogo («Usar un diseño oficial», con lo que incluye cada diseño y «Ya está en la
+  plantilla» si corresponde) y «En blanco» (nombre y primer campo). La hoja va directo sobre el fondo de la página y es papel
+  claro también en modo oscuro: `.template-sheet` redeclara los tokens claros (`:root, .theme-light, .template-sheet`), así sus
+  controles, textos y botones se ven bien en ambos temas sin colores sueltos. El papel blanco y el texto negro salen de
+  `--document-paper` y `--document-text`, que fija `initializeDocumentPalette` (paleta documental aislada).
+- **Sin cambio de tipo o de modelo**: no hay migraciones. La remota sigue vacía: tras el despliegue basta «Cargar formato oficial UEB».
+- **No cupo y queda anotado**: planificación por unidades con una tabla por unidad (el número de semanas por unidad cambia
+  de una asignatura a otra y `tabla` tiene filas fijas: se mantiene la tabla de 16 semanas), contribución ALTA/MEDIA/BAJA con
+  los resultados de la carrera, tablas de bibliografía por columnas (filas variables), hoja horizontal para la planificación,
+  firma electrónica con QR y nombres/fechas que se llenen solos.
+- **No verificado**: el aspecto real en navegador (claro y oscuro) y la apertura del Word y del PDF; pruebas automáticas
+  solamente.

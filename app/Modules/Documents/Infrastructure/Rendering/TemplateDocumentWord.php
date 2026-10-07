@@ -15,6 +15,8 @@ final class TemplateDocumentWord
 
     private ?int $tableFontSize = null;
 
+    private int $listDepth = 0;
+
     public function __construct(
         private readonly ?string $paragraphAlignment = null,
         private readonly ?string $tableHeaderBackground = null,
@@ -41,7 +43,7 @@ final class TemplateDocumentWord
             $style = ['spaceAfter' => $insideTable ? 0 : 80, 'alignment' => $alignment === 'justify' ? 'both' : $alignment];
             if ($list !== null) {
                 $style['numStyle'] = $list;
-                $style['numLevel'] = 0;
+                $style['numLevel'] = max(0, min(2, $this->listDepth - 1));
             }
             $run = $target->addTextRun($style);
             foreach ($node['content'] ?? [] as $text) {
@@ -80,9 +82,12 @@ final class TemplateDocumentWord
         $list = match ($node['type']) {
             'bulletList' => 'silabo-bullets', 'orderedList' => 'silabo-numbers', default => $list
         };
+        $isList = in_array($node['type'], ['bulletList', 'orderedList'], true);
+        $this->listDepth += $isList ? 1 : 0;
         foreach ($node['content'] ?? [] as $child) {
             $this->append($target, $child, $width, $list, $alignmentOverride, $insideTable);
         }
+        $this->listDepth -= $isList ? 1 : 0;
     }
 
     /** @param array<string, mixed> $node */

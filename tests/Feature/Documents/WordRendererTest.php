@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Documents;
 
+use App\Modules\Configuration\Application\FixedContent;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Application\SyllabusDocumentContent;
@@ -186,6 +188,44 @@ class WordRendererTest extends TestCase
         $this->assertStringContainsString('Visual', $xml);
         $this->assertStringContainsString('Ingeniera de pruebas', $xml);
         $this->assertStringNotContainsString('Formación y experiencia<', $xml);
+    }
+
+    public function test_official_fixed_content_prints_in_word_and_inside_inputs_are_not_repeated(): void
+    {
+        $snapshot = $this->typedSnapshot();
+        $field = fn (string $key, string $label, string $type, mixed $value, array $config = []): array => [
+            'definition_id' => $key, 'key' => $key, 'label' => $label, 'type' => $type, 'legacy' => false, 'config' => $config, 'value' => $value,
+        ];
+        $snapshot['sections'][0]['fields'][] = $field('dato_en_tabla', 'Dato dentro de la tabla', 'texto', FreeText::fromText('Valor escrito dentro de la tabla'), ['inside' => 'identification_card']);
+        $snapshot['sections'][] = ['key' => 'evaluacion', 'title' => 'EVALUACIÓN DE LOS APRENDIZAJES', 'fields' => [
+            $field('indicadores', '', 'fijo', FixedContent::official('indicadores'), ['content' => FixedContent::official('indicadores')]),
+            $field('escala', 'ESCALA DE VALORACIÓN', 'fijo', FixedContent::official('escala'), ['content' => FixedContent::official('escala')]),
+        ], 'blocks' => []];
+        $snapshot['sections'][] = ['key' => 'etica', 'title' => 'Conducta y comportamiento ético', 'fields' => [
+            $field('etica', '', 'fijo', FixedContent::official('etica'), ['content' => FixedContent::official('etica')]),
+        ], 'blocks' => []];
+        $snapshot['sections'][] = ['key' => 'revision', 'title' => 'Revisión y aprobación', 'fields' => [
+            $field('firmas', '', 'fijo', FixedContent::official('firmas'), ['content' => FixedContent::official('firmas')]),
+        ], 'blocks' => []];
+        $input = new DocumentRenderInput(
+            subject: 'IA', subjectCode: 'SW-P7-037', academicPeriod: '2026', revisionNumber: 1,
+            revisionFingerprint: str_repeat('ab', 32), generatedAt: '2026-09-07T20:00:00-05:00', locale: 'es-EC', snapshot: $snapshot,
+        );
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-fixed-test-');
+        file_put_contents($temporary, app(DocumentRenderer::class)->render($input)->docx->bytes);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        unlink($temporary);
+
+        $this->assertStringNotContainsString('Dato dentro de la tabla', $xml);
+        $this->assertStringNotContainsString('Valor escrito dentro de la tabla', $xml);
+        foreach (['PRIMER PARCIAL', '2.5 PUNTOS', 'ESCALA CUALITATIVA', 'Recuperación', 'Puntualidad:', 'Acceso a la Video Conferencia:', 'Se considera inadmisible lo siguiente:', 'La falsificación de datos.', 'Fecha de entrega:', 'Fecha de revisión:'] as $text) {
+            $this->assertStringContainsString($text, $xml, $text);
+        }
+        $this->assertStringContainsString('w:ilvl w:val="1"', $xml, 'La lista de lo inadmisible va anidada.');
+        $this->assertStringContainsString('w:shd', $xml, 'Los encabezados de las tablas llevan sombreado.');
     }
 
     public function test_unnamed_part_prints_no_subtitle_and_keeps_numbering_consecutive(): void

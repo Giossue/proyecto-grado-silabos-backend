@@ -124,3 +124,7 @@ hacía con colores y negritas; las columnas y valores guardados siguen en la bas
 sigue siendo Carta (el oficial es A4: pendiente). Gotenberg convierte este mismo Word a PDF; el parecido
 visual no se ha comprobado a mano.
 
+Contenido fijo oficial (I-195, 2026-10-07): las tablas de evaluación (indicadores y escala) y de firmas usan celdas de
+encabezado (`tableHeader`, con sombreado) y el texto de conducta ética lleva listas anidadas; el Word las escribe con
+sangría por nivel (hasta tres niveles de viñeta o numeración). Los textos del docente marcados `inside` no se repiten
+debajo de la tabla de identificación. Lo que no reproduce: color propio por tabla, hoja horizontal, firma electrónica con QR.

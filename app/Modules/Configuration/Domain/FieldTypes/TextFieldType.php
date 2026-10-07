@@ -8,6 +8,8 @@ use PhpOffice\PhpWord\Element\AbstractContainer;
 
 final class TextFieldType implements FieldType
 {
+    public const INSIDE = ['identification_card'];
+
     public function key(): string
     {
         return 'texto';
@@ -20,12 +22,14 @@ final class TextFieldType implements FieldType
 
     public function configRules(): array
     {
-        return [];
+        return ['inside' => ['sometimes', 'nullable', 'string', 'in:'.implode(',', self::INSIDE)]];
     }
 
     public function normalizeConfig(array $config): array
     {
-        return [];
+        $inside = $config['inside'] ?? null;
+
+        return is_string($inside) && in_array($inside, self::INSIDE, true) ? ['inside' => $inside] : [];
     }
 
     public function defaultValue(array $config): mixed
@@ -41,6 +45,11 @@ final class TextFieldType implements FieldType
     public function isEmpty(mixed $value, array $config): bool
     {
         return ! FreeText::isDocument($value) || FreeText::isEmpty($value);
+    }
+
+    public function manual(): bool
+    {
+        return true;
     }
 
     public function teacherEditable(): bool

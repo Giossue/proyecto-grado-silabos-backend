@@ -22,7 +22,7 @@ class SaveStructureFieldRequest extends ManageTemplatesRequest
         $rules = [
             'label' => ['nullable', 'string', 'max:180'],
             'help' => ['nullable', 'string', 'max:2000'],
-            'type' => [$creating ? 'required' : 'sometimes', 'string', Rule::in($registry->keys())],
+            'type' => [$creating ? 'required' : 'sometimes', 'string', Rule::in($creating ? $registry->manualKeys() : $registry->keys())],
             'config' => ['sometimes', 'nullable', 'array'],
         ];
         if ($creating) {
@@ -47,6 +47,6 @@ class SaveStructureFieldRequest extends ManageTemplatesRequest
     /** @return array<string, string> */
     public function messages(): array
     {
-        return ['type.in' => 'Elija un tipo de campo de la lista.'];
+        return ['type.in' => 'Elija un tipo de campo de la lista: los datos automáticos y los textos fijos solo vienen en los diseños oficiales de sección.'];
     }
 }

@@ -18,6 +18,7 @@ use App\Modules\Configuration\Application\Actions\SaveTemplateTitle;
 use App\Modules\Configuration\Application\FieldConditions;
 use App\Modules\Configuration\Application\FieldOptions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
+use App\Modules\Configuration\Application\SectionDesigns;
 use App\Modules\Configuration\Application\SyllabusTemplateCatalog;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
@@ -172,6 +173,7 @@ class TemplateController extends Controller
                 ])->values()->all(),
             ],
             'presets' => app(SyllabusTemplateCatalog::class)->options(),
+            'sectionDesigns' => app(SectionDesigns::class)->options($template),
             'blockTypes' => [
                 ['value' => 'free_text', 'label' => 'Texto libre'],
                 ['value' => 'template', 'label' => 'Personalizado'],

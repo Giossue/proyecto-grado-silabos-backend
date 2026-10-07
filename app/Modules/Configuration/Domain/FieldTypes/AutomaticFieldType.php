@@ -55,6 +55,11 @@ final class AutomaticFieldType implements FieldType
         return false;
     }
 
+    public function manual(): bool
+    {
+        return false;
+    }
+
     public function teacherEditable(): bool
     {
         return false;

@@ -232,7 +232,11 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertStringContainsString('Ficha de prueba: descripcion', $text);
         $this->assertStringContainsString('Contenidos temáticos', $text);
         $this->assertStringContainsString('Revisión y aprobación', $text);
-        foreach (['Indicadores', 'Primer parcial', 'Evaluación parcial', 'Escala cualitativa', 'Excelente', 'Conducta y comportamiento ético', 'Elaborado por', 'Aprobado por', 'Cargo', 'Firma'] as $expected) {
+        $this->assertSame(1, substr_count($text, 'Tipo de discapacidad'), 'La discapacidad va solo dentro de la tabla de identificación.');
+        $this->assertSame(1, substr_count(mb_strtoupper($text), 'FORMACIÓN Y EXPERIENCIA ACADÉMICA'), 'La formación va solo dentro de la tabla de identificación.');
+        $inside = collect($snapshot['sections'][0]['fields'])->filter(fn ($field) => ($field['config']['inside'] ?? null) === 'identification_card')->pluck('key')->all();
+        $this->assertSame(['discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia'], $inside);
+        foreach (['INDICADORES', 'PRIMER PARCIAL', 'Evaluación parcial de los aprendizajes', 'ESCALA CUALITATIVA', 'Excelente', 'Conducta y comportamiento ético', 'Puntualidad:', 'Fecha de entrega:', 'Fecha de revisión:', 'Firma:'] as $expected) {
             $this->assertStringContainsString($expected, $text);
         }
     }
@@ -587,7 +591,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $syllabus->refresh();
         $inherited = FieldDefinition::query()
-            ->where('heredado', true)->firstOrFail();
+            ->where('heredado', true)->where('editable_docente', false)->firstOrFail();
 
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $inherited]), [
             'version_bloqueo' => $syllabus->version_bloqueo,

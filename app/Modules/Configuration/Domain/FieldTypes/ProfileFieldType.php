@@ -43,6 +43,11 @@ final class ProfileFieldType implements FieldType
         return ! FreeText::isDocument($value) || FreeText::isEmpty($value);
     }
 
+    public function manual(): bool
+    {
+        return true;
+    }
+
     public function teacherEditable(): bool
     {
         return false;

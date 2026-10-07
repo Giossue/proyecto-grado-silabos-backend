@@ -38,6 +38,12 @@ final class FieldTypeRegistry
         return array_keys($this->types);
     }
 
+    /** @return list<string> */
+    public function manualKeys(): array
+    {
+        return array_keys(array_filter($this->types, fn (FieldType $type): bool => $type->manual()));
+    }
+
     /** @return array<string, FieldType> */
     public function all(): array
     {

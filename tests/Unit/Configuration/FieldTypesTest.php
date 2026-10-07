@@ -32,6 +32,15 @@ class FieldTypesTest extends TestCase
         $this->assertInstanceOf(TableFieldType::class, $registry->get('tabla'));
     }
 
+    public function test_only_the_general_types_can_be_chosen_by_hand(): void
+    {
+        $registry = $this->app->make(FieldTypeRegistry::class);
+
+        $this->assertSame(['texto', 'ficha', 'tabla'], $registry->manualKeys());
+        $this->assertFalse($registry->get('automatico')->manual());
+        $this->assertFalse($registry->get('fijo')->manual());
+    }
+
     public function test_registry_fails_clearly_for_unknown_type_and_duplicates(): void
     {
         $registry = new FieldTypeRegistry([new TextFieldType]);
@@ -53,6 +62,8 @@ class FieldTypesTest extends TestCase
 
         $this->assertTrue($type->teacherEditable());
         $this->assertSame([], $type->normalizeConfig(['x' => 1]));
+        $this->assertSame([], $type->normalizeConfig(['inside' => 'otra_fuente']));
+        $this->assertSame(['inside' => 'identification_card'], $type->normalizeConfig(['inside' => 'identification_card']));
         $this->assertTrue($type->isEmpty($type->defaultValue([]), []));
         $value = $type->validateValue(FreeText::fromText('Hola'), []);
         $this->assertFalse($type->isEmpty($value, []));

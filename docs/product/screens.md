@@ -235,12 +235,17 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   (logos, título azul centrado en negrita, letra Arial de 10 pt justificada y título de 14 pt, secciones «1. Nombre», subtítulos de campo con el nombre tal cual (sin numeración automática; solo si tienen nombre), la tabla oficial de identificación dibujada con datos de ejemplo, la vista de
   cada tipo y una etiqueta discreta del tipo) con controles flotantes sobre lo seleccionado; la
   hoja vacía ofrece «Cargar formato oficial UEB» (ya no está en la cabecera de la página, cuyo ancho coincide con el de la hoja) y «Nueva sección»; la etiqueta del tipo baja de línea en vez de desbordar; permite agregar, renombrar, borrar y subir/bajar
-  secciones y campos. **Nueva sección** va en dos pasos (nombre y primer campo opcional);
+  secciones y campos. **Nueva sección** abre primero un catálogo: «Usar un diseño oficial» lista las doce secciones
+  ya armadas del formato UEB (cada una muestra lo que incluye; «Ya está en la plantilla» si ya se agregó) y se agrega con un
+  paso; «En blanco» sigue en dos pasos (nombre y primer campo opcional). La hoja va directo sobre el fondo de la página, sin
+  contenedor gris, y es siempre papel blanco con texto oscuro: en modo oscuro sus controles y textos conservan los tokens claros;
   **Propiedades del campo** cambia nombre, ayuda y opciones (el tipo no cambia). Al agregar un
   campo se elige quién lo escribe: «Lo escribe el docente», «Lo escribe Coordinación en la
-  ficha de la asignatura» (con «El docente puede ajustarlo»), «Tabla de filas fijas»,
-  «Dato automático» o «Texto fijo igual para todos»; la lista sale del registro de tipos y cada
-  tipo aporta su pieza de configuración. El contenido de los campos de texto, ficha y texto fijo va en un recuadro de borde azul fino; la tabla no lleva recuadro. Sin «Personalizar plantilla» ni vista previa: el logo de la universidad se cambia sobre la hoja con «Cambiar logo» (PNG) al pasar el cursor. El nombre del campo es opcional (sin nombre, no lleva
+  ficha de la asignatura» (con «El docente puede ajustarlo») o «Tabla de filas fijas»; los tipos
+  técnicos (dato automático y texto fijo) no se eligen a mano: vienen solo en los diseños oficiales (Identificación,
+  Evaluación, Conducta ética y Firmas) y siguen editándose en «Propiedades del campo»; la lista sale del registro
+  de tipos y cada tipo aporta su pieza de configuración. Los textos del docente que se escriben dentro de la tabla de
+  identificación no aparecen como campos en la hoja ni en las revisiones; el docente los completa justo debajo de la tabla. El contenido de los campos de texto, ficha y texto fijo va en un recuadro de borde azul fino; la tabla no lleva recuadro. Sin «Personalizar plantilla» ni vista previa: el logo de la universidad se cambia sobre la hoja con «Cambiar logo» (PNG) al pasar el cursor. El nombre del campo es opcional (sin nombre, no lleva
   subtítulo; en el constructor aparece como «Campo sin nombre»).  Con un proceso abierto todo queda
   deshabilitado con el aviso «Edición bloqueada».
 - Se retiraron de ADM-06 la hoja libre, la cinta Insertar, las marcas, los anchos por celda y

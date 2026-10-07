@@ -62,8 +62,6 @@ class TemplateStructureApiTest extends TestCase
             'columns' => [['key' => 'tema', 'label' => 'Tema']],
             'rows' => [['key' => 's1', 'label' => 'Semana 1'], ['key' => 's2', 'label' => 'Semana 2']],
         ]])->assertCreated()->assertJsonPath('field.type', 'tabla');
-        $this->field($section, 'identificacion', 'automatico', ['config' => ['source' => 'identification_card']])
-            ->assertCreated()->assertJsonPath('field.config.source', 'identification_card');
 
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get()->keyBy('clave');
         $this->assertTrue($fields['resumen']->editable_docente);
@@ -71,8 +69,6 @@ class TemplateStructureApiTest extends TestCase
         $this->assertSame(FieldDefinition::ORIGIN_PROFILE, $fields['perfil']->origen_maestro);
         $this->assertTrue($fields['perfil']->editable_docente);
         $this->assertSame(['s1', 's2'], array_column($fields['semanas']->typeConfig()['rows'], 'key'));
-        $this->assertFalse($fields['identificacion']->editable_docente);
-        $this->assertSame('identification_card', $fields['identificacion']->origen_maestro);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.campo_creado']);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.seccion_creada']);
 
@@ -88,27 +84,31 @@ class TemplateStructureApiTest extends TestCase
         $this->field($section, 'a', 'seleccion')->assertJsonValidationErrors('type');
         $this->field($section, 'b', 'tabla', ['config' => ['columns' => [], 'rows' => []]])
             ->assertJsonValidationErrors(['config.columns', 'config.rows']);
-        $this->field($section, 'c', 'automatico', ['config' => ['source' => 'inventada']])
-            ->assertJsonValidationErrors('config.source');
-        $this->field($section, 'd', 'automatico')->assertJsonValidationErrors('config.source');
+        $this->field($section, 'c', 'automatico', ['config' => ['source' => 'identification_card']])->assertJsonValidationErrors('type');
+        $this->field($section, 'd', 'fijo', ['config' => ['content' => FreeText::fromText('Fijo')]])->assertJsonValidationErrors('type');
         $this->field($section, 'e', 'texto')->assertCreated();
         $this->field($section, 'e', 'texto')->assertJsonValidationErrors('key');
         $this->assertSame(1, FieldDefinition::query()->where('plantilla_id', $this->template->id)->count());
     }
 
-    public function test_creates_and_validates_a_fixed_text_field(): void
+    public function test_automatic_and_fixed_fields_cannot_be_created_by_hand_but_their_content_can_be_edited(): void
     {
         $section = $this->section();
-        $content = FreeText::fromText('Texto institucional fijo');
+        $this->field($section, 'etica', 'fijo', ['config' => ['content' => FreeText::fromText('Texto institucional fijo')]])
+            ->assertJsonValidationErrors('type');
+        $this->field($section, 'identificacion', 'automatico', ['config' => ['source' => 'identification_card']])
+            ->assertJsonValidationErrors('type');
 
-        $this->field($section, 'etica', 'fijo', ['config' => ['content' => $content]])->assertCreated()
-            ->assertJsonPath('field.type', 'fijo')->assertJsonPath('field.config.content', $content);
-        $definition = FieldDefinition::query()->where('clave', 'etica')->firstOrFail();
+        $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), ['design' => 'etica'])->assertCreated();
+        $definition = FieldDefinition::query()->where('clave', 'conducta_etica')->firstOrFail();
         $this->assertFalse($definition->editable_docente);
         $this->assertFalse($definition->heredado);
+        $url = route('api.v1.admin.template.structure.fields.update', [$this->template, $definition->id]);
 
-        $this->field($section, 'sin', 'fijo')->assertJsonValidationErrors('config.content');
-        $this->field($section, 'vacio', 'fijo', ['config' => ['content' => FreeText::fromText('')]])->assertJsonValidationErrors('config.content');
+        $content = FreeText::fromText('Texto institucional corregido');
+        $this->patchJson($url, ['config' => ['content' => $content]])->assertOk()->assertJsonPath('field.config.content', $content);
+        $this->patchJson($url, ['config' => []])->assertJsonValidationErrors('config.content');
+        $this->patchJson($url, ['config' => ['content' => FreeText::fromText('')]])->assertJsonValidationErrors('config.content');
     }
 
     public function test_updates_a_field_without_changing_its_type_or_key(): void
