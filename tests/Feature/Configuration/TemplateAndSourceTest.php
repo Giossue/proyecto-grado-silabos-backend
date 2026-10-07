@@ -54,6 +54,19 @@ class TemplateAndSourceTest extends TestCase
         $this->assertSame('', $fields['descripcion']['label']);
     }
 
+    public function test_administrator_creates_the_template_directly_with_the_official_format(): void
+    {
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.template.store'), ['official' => true])
+            ->assertCreated()
+            ->assertJsonPath('message', 'Plantilla creada con el formato oficial.');
+
+        $template = SyllabusTemplate::query()->firstOrFail();
+        $this->assertGreaterThan(0, $template->sections()->count());
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.creada', 'recurso_id' => $template->id]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.formateada', 'recurso_id' => $template->id]);
+    }
+
     public function test_administrator_creates_an_empty_template_and_can_apply_the_official_format(): void
     {
         $this->actingAsAdministrator()

@@ -8,6 +8,7 @@ class CreateTemplateRequest extends ManageTemplatesRequest
     public function rules(): array
     {
         return [
+            'official' => ['sometimes', 'boolean'],
         ];
     }
 }

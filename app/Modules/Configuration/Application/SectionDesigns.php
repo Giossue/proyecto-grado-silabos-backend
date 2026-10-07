@@ -74,7 +74,7 @@ final class SectionDesigns
                 'id' => $blockId,
                 'clave' => $fieldKey,
                 'titulo' => $label,
-                'configuracion' => ['content_type' => 'text', 'document' => $typeKey === 'texto' || $typeKey === 'ficha'
+                'configuracion' => [...($design['orientation'] ?? null) === 'landscape' ? ['page_orientation' => 'landscape'] : [], 'content_type' => 'text', 'document' => $typeKey === 'texto' || $typeKey === 'ficha'
                     ? TemplateDocumentDefaults::freeTextSheet($fieldKey, $label)
                     : TemplateDocumentDefaults::blankSheet()],
                 'posicion' => $index + 1,

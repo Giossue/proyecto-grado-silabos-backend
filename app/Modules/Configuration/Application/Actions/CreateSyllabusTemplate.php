@@ -19,11 +19,12 @@ class CreateSyllabusTemplate
         private readonly SyllabusTemplateProvisioner $provisioner,
     ) {}
 
-    public function execute(User $actor, Request $request): SyllabusTemplate
+    /** Con `$official` la plantilla nace con el formato oficial; si no, nace en blanco. */
+    public function execute(User $actor, Request $request, bool $official = false): SyllabusTemplate
     {
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
-        $template = $this->provisioner->createEmpty();
+        $template = $official ? $this->provisioner->createWithOfficialFormat() : $this->provisioner->createEmpty();
 
         $this->audit->execute(
             actorId: $actor->id,
@@ -33,6 +34,16 @@ class CreateSyllabusTemplate
             resourceId: $template->id,
             result: 'exito',
         );
+        if ($official) {
+            $this->audit->execute(
+                actorId: $actor->id,
+                roleAssignmentId: $activeRole?->id,
+                action: 'plantilla.formateada',
+                resourceType: 'plantilla_silabo',
+                resourceId: $template->id,
+                result: 'exito',
+            );
+        }
 
         return $template;
     }

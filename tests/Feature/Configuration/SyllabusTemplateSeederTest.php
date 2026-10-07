@@ -133,5 +133,9 @@ class SyllabusTemplateSeederTest extends TestCase
             ['Bibliografía Básica', ['|ficha', 'Complementaria|ficha']],
             ['Revisión y aprobación', ['|fijo']],
         ], $structure);
+
+        $planning = $template->sections->firstWhere('clave', 'planificacion');
+        $this->assertSame('landscape', $planning->blocks->first()->pageOrientation());
+        $this->assertNull($template->sections->firstWhere('clave', 'descripcion')->blocks->first()->pageOrientation());
     }
 }

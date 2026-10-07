@@ -42,6 +42,7 @@ return [
             ],
         ],
         'planificacion' => [
+            'orientation' => 'landscape',
             'title' => 'Distribución y planificación de las unidades curriculares',
             'summary' => 'Tabla de 16 semanas con contenidos, horas, actividades y evaluación; la llena el docente.',
             'fields' => [

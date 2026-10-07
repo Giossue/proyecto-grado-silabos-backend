@@ -79,9 +79,13 @@ class TemplateController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $template = $action->execute($actor, $request);
+        $official = $request->boolean('official');
+        $template = $action->execute($actor, $request, $official);
 
-        return response()->json(['message' => 'Plantilla vacía creada.', 'template_id' => $template->id], 201);
+        return response()->json([
+            'message' => $official ? 'Plantilla creada con el formato oficial.' : 'Plantilla vacía creada.',
+            'template_id' => $template->id,
+        ], 201);
     }
 
     public function format(SyllabusTemplate $template, ManageTemplatesRequest $request, FormatSyllabusTemplate $action): JsonResponse
