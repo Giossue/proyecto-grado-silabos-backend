@@ -115,11 +115,11 @@ mismo Word. Los snapshots v6 se siguen leyendo; la deuda se retira en la etapa 8
 ## Formato oficial del Word (I-195)
 
 El Word imita el sílabo oficial: dos logos arriba, título «PROGRAMA DE ASIGNATURA (SÍLABO)» centrado,
-en negrita y azul UEB (`#2F5496`), Times New Roman de 10 pt, texto justificado y títulos de sección
+en negrita y azul UEB (`#2F5496`), Arial de 10 pt (título a 14 pt), texto justificado y títulos de sección
 numerados en negrita. El contenido de los campos de texto, ficha y fijo (`WordRenderContext::writeBoxed`)
 va en un recuadro de borde azul fino (`#0070C0`); la tabla de identificación y las tablas no llevan
 recuadro extra. Decisión: `TemplateAppearance::INSTITUTIONAL_STYLE` fija estos valores y `normalize`
-ignora los guardados (fuente, tamaños, margen 2,5 cm, orientación vertical, alineación), igual que ya
+ignora los guardados (fuente Arial, tamaños, margen 2,5 cm, orientación vertical, alineación), igual que ya
 hacía con colores y negritas; las columnas y valores guardados siguen en la base sin migración. El papel
 sigue siendo Carta (el oficial es A4: pendiente). Gotenberg convierte este mismo Word a PDF; el parecido
 visual no se ha comprobado a mano.

@@ -232,9 +232,9 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   mantiene sus propias acciones operativas.
 - I-195 (etapa 7) reescribe ADM-06 como un constructor simple, sin hoja editable ni modo
   «Editar», sin pestañas: solo la hoja del constructor. Dibuja el sílabo como una hoja A4
-  (logos, título azul centrado en negrita, letra serif de 10 pt justificada, secciones «1. Nombre», campos «1.1 Nombre» solo si tienen nombre, la vista de
+  (logos, título azul centrado en negrita, letra Arial de 10 pt justificada y título de 14 pt, secciones «1. Nombre», subtítulos de campo con el nombre tal cual (sin numeración automática; solo si tienen nombre), la tabla oficial de identificación dibujada con datos de ejemplo, la vista de
   cada tipo y una etiqueta discreta del tipo) con controles flotantes sobre lo seleccionado; la
-  hoja vacía ofrece «Cargar formato oficial UEB» y «Nueva sección»; permite agregar, renombrar, borrar y subir/bajar
+  hoja vacía ofrece «Cargar formato oficial UEB» (ya no está en la cabecera de la página, cuyo ancho coincide con el de la hoja) y «Nueva sección»; la etiqueta del tipo baja de línea en vez de desbordar; permite agregar, renombrar, borrar y subir/bajar
   secciones y campos. **Nueva sección** va en dos pasos (nombre y primer campo opcional);
   **Propiedades del campo** cambia nombre, ayuda y opciones (el tipo no cambia). Al agregar un
   campo se elige quién lo escribe: «Lo escribe el docente», «Lo escribe Coordinación en la

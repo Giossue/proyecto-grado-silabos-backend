@@ -124,9 +124,27 @@ La condición «mostrar si» dependía de los tipos `seleccion_unica` y `boolean
 - Ajuste posterior a la etapa 7: el constructor y la vista previa se dibujan como hoja A4 (clases `template-stage`/`template-sheet` en `styles.css`) sobre fondo gris, con logos, título, secciones «1. Nombre», subtítulos «1.1 Nombre» solo con nombre, vista de cada tipo (`*View.vue`) y etiqueta del tipo. Los controles (subir, bajar, renombrar, propiedades, borrar) flotan sobre lo seleccionado; «Nueva sección» y «Cargar formato oficial UEB» viven en la hoja, también vacía. Sin revisión visual en navegador.
 - Etapa 8: se quitaron la pestaña «Vista previa» (`TemplatePreview`) y «Personalizar plantilla»; la pantalla es solo la hoja. El logo de la universidad se cambia sobre la hoja (`TemplateLogoControl`, botón «Cambiar logo», mismo `storeLogo`, toast y estado de carga). Estilo oficial: título azul (`--document-official-blue`), serif 10 pt justificado, campos texto/ficha/fijo en recuadro azul (`template-sheet-box`). Sin revisión visual en navegador.
 
+## Plantilla oficial fiel al PDF y estilo Arial (2026-10-07)
+
+- Revisado el PDF real (10 páginas, `temp/silabo-ejemplo`). `config/syllabus_template.php` reproduce sus 12
+  secciones con sus títulos exactos; los campos únicos de una sección no llevan nombre (sin subtítulo);
+  los subtítulos con nombre llevan su numeración en el propio nombre (7.1 a 7.5) y ya no se numeran solos
+  (hoja y Word). Metodología pasa a cinco textos del docente (7.1-7.5; `herramientas_tic` = 7.4, ya no ficha).
+  Bibliografía: «Bibliografía Básica» + «Complementaria». Evaluación: indicadores y «ESCALA DE VALORACIÓN» `fijo`.
+- Identificación: ver `docs/product/identificacion-institucional.md`. Decisión: los tres textos del docente quedan bajo la tabla y se inyectan en ella; el Word no los repite. Pendiente: las pantallas de revisión
+  los muestran dos veces (en la tabla y como campo).
+- Letra Arial y título 14 pt en Word y hoja; la cabecera de la página usa el ancho de la hoja; se quitó el botón «Cargar formato oficial UEB» de la cabecera (queda el de la hoja vacía); desbordes de la hoja corregidos.
+- No cabe en los cinco tipos (pendiente, no inventado): planificación por unidades (tabla de cada unidad con
+  «Unidad No.», nombre, resultados, semanas y totales de horas por unidad; hoy es una tabla de 16 semanas);
+  tabla de contribución al perfil de egreso (ALTA/MEDIA/BAJA y resultados de la carrera; hoy es una ficha de texto);
+  tablas de bibliografía con columnas Autor/Título/Año/Ciudad/Editorial/ISBN/Código (hoy ficha de texto);
+  firmas con QR/firma electrónica y fechas (ya anotado en 5b); texto real de conducta ética (marcador provisional);
+  formato de cabecera de tablas (azul/sombreado) en `fijo`; hoja horizontal para la planificación.
+- Sin verificación visual en navegador ni apertura del Word/PDF reales.
+
 ## Formato oficial del Word
 
-`TemplateAppearance` fija los valores oficiales (Times New Roman 10 pt, justificado, título azul UEB en
+`TemplateAppearance` fija los valores oficiales (Arial 10 pt, justificado, título azul UEB en
 negrita, margen 2,5 cm vertical) e ignora los guardados; los campos de texto, ficha y fijo salen en un
 recuadro de borde azul. Sin migración (la apariencia guardada ya no se usa). Pruebas:
 `WordRendererTest::test_docx_follows_the_official_format`. Pendiente: papel A4 y comprobar el PDF real.

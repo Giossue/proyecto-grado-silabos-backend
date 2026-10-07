@@ -1,5 +1,12 @@
 # Ficha de identificación institucional
 
+> Plantilla oficial fiel al PDF de referencia (2026-10-07): la sección 1 es «Identificación Institucional»
+> con la tabla automática y, justo debajo, tres textos del docente con el nombre del PDF
+> («Estudiantes con discapacidad: Tipo de discapacidad», «…: Breve descripción» y «Formación y experiencia
+> académica – investigativa»). Sus valores se inyectan en la tabla (`IdentificationCard::INPUT_KEYS`) y el
+> Word no los repite debajo. Sin la pregunta Sí/No, «Estudiantes con discapacidad» marca Sí si hay tipo y No si no.
+> La API de plantilla entrega `document` de la tabla con `IdentificationCard::sample()` para dibujarla en la hoja.
+>
 > I-195, etapa 5: en la plantilla inicial oficial la ficha es un campo `automatico` (fuente
 > `identification_card`, sin valor guardado). Discapacidad (tipo y adaptación) y formación y
 > experiencia son campos `texto` sueltos de la misma sección, siempre visibles; ya no hay tabla
