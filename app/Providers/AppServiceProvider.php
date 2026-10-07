@@ -9,6 +9,7 @@ use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiChatGateway;
+use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Policies\ExportArtifactPolicy;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
@@ -39,6 +40,10 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton(FieldTypeRegistry::class, fn ($app): FieldTypeRegistry => new FieldTypeRegistry(
+            array_map(fn (string $class): object => $app->make($class), config('field_types.types', [])),
+        ));
+
         $this->app->bind(RoleEligibility::class, AcademicRoleEligibility::class);
         $this->app->bind(DocumentRenderer::class, PhpWordDocumentRenderer::class);
         $this->app->bind(AiChatGateway::class, function (): AiChatGateway {

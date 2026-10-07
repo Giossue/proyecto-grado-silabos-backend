@@ -1,0 +1,122 @@
+<?php
+
+namespace Tests\Unit\Configuration;
+
+use App\Modules\Configuration\Domain\FieldTypes\AutomaticFieldType;
+use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
+use App\Modules\Configuration\Domain\FieldTypes\ProfileFieldType;
+use App\Modules\Configuration\Domain\FieldTypes\TableFieldType;
+use App\Modules\Configuration\Domain\FieldTypes\TextFieldType;
+use App\Modules\Configuration\Domain\FreeText;
+use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
+use Tests\TestCase;
+
+class FieldTypesTest extends TestCase
+{
+    private function table(): array
+    {
+        return [
+            'columns' => [['key' => 'tema', 'label' => 'Tema'], ['key' => 'horas', 'label' => 'Horas']],
+            'rows' => [['key' => 's1', 'label' => 'Semana 1'], ['key' => 's2', 'label' => 'Semana 2']],
+        ];
+    }
+
+    public function test_registry_resolves_the_four_configured_types(): void
+    {
+        $registry = $this->app->make(FieldTypeRegistry::class);
+
+        $this->assertSame(['texto', 'ficha', 'tabla', 'automatico'], $registry->keys());
+        $this->assertInstanceOf(TableFieldType::class, $registry->get('tabla'));
+    }
+
+    public function test_registry_fails_clearly_for_unknown_type_and_duplicates(): void
+    {
+        $registry = new FieldTypeRegistry([new TextFieldType]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('«firma» no existe');
+        try {
+            new FieldTypeRegistry([new TextFieldType, new TextFieldType]);
+            $this->fail('Se esperaba error por tipo repetido.');
+        } catch (InvalidArgumentException $e) {
+            $this->assertStringContainsString('dos veces', $e->getMessage());
+        }
+        $registry->get('firma');
+    }
+
+    public function test_text_type(): void
+    {
+        $type = new TextFieldType;
+
+        $this->assertTrue($type->teacherEditable());
+        $this->assertSame([], $type->normalizeConfig(['x' => 1]));
+        $this->assertTrue($type->isEmpty($type->defaultValue([]), []));
+        $value = $type->validateValue(FreeText::fromText('Hola'), []);
+        $this->assertFalse($type->isEmpty($value, []));
+        $this->expectException(ValidationException::class);
+        $type->validateValue('texto plano', []);
+    }
+
+    public function test_profile_type_is_not_teacher_editable_and_normalizes_adjustable(): void
+    {
+        $type = new ProfileFieldType;
+
+        $this->assertFalse($type->teacherEditable());
+        $this->assertSame(['adjustable' => false], $type->normalizeConfig([]));
+        $this->assertSame(['adjustable' => true], $type->normalizeConfig(['adjustable' => '1', 'otro' => 1]));
+        $this->assertArrayHasKey('adjustable', $type->configRules());
+        $this->assertTrue($type->isEmpty(null, []));
+    }
+
+    public function test_table_type_keeps_fixed_rows_and_columns(): void
+    {
+        $type = new TableFieldType;
+        $config = $type->normalizeConfig($this->table());
+
+        $default = $type->defaultValue($config);
+        $this->assertSame(['tema' => '', 'horas' => ''], $default['s1']);
+        $this->assertTrue($type->isEmpty($default, $config));
+
+        $value = $type->validateValue(['s1' => ['tema' => ' Intro ']], $config);
+        $this->assertSame('Intro', $value['s1']['tema']);
+        $this->assertSame(['tema' => '', 'horas' => ''], $value['s2']);
+        $this->assertFalse($type->isEmpty($value, $config));
+    }
+
+    public function test_table_type_rejects_extra_rows_cells_and_bad_config(): void
+    {
+        $type = new TableFieldType;
+        $config = $type->normalizeConfig($this->table());
+
+        foreach ([['s9' => ['tema' => 'x']], ['s1' => ['otra' => 'x']], 'texto'] as $bad) {
+            try {
+                $type->validateValue($bad, $config);
+                $this->fail('Se esperaba ValidationException.');
+            } catch (ValidationException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+        $this->expectException(ValidationException::class);
+        $type->normalizeConfig(['columns' => [['key' => 'a', 'label' => 'A'], ['key' => 'a', 'label' => 'B']], 'rows' => [['key' => 'r', 'label' => 'R']]]);
+    }
+
+    public function test_automatic_type_stores_no_value(): void
+    {
+        $type = new AutomaticFieldType;
+
+        $this->assertSame(['source' => 'identification_card'], $type->normalizeConfig(['source' => 'identification_card']));
+        $this->assertNull($type->defaultValue([]));
+        $this->assertNull($type->validateValue(null, []));
+        $this->assertFalse($type->isEmpty(null, []));
+        $this->assertFalse($type->teacherEditable());
+        $this->expectException(ValidationException::class);
+        $type->normalizeConfig(['source' => 'inexistente']);
+    }
+
+    public function test_automatic_type_rejects_a_stored_value(): void
+    {
+        $this->expectException(ValidationException::class);
+        (new AutomaticFieldType)->validateValue('algo', []);
+    }
+}

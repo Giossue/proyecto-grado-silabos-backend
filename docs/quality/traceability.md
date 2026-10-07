@@ -498,3 +498,4 @@ se cerraron en I-166; la comprobación específica de API/OpenAPI pasa.
 El plan FE-SHADCN-2026-09-29 conserva el detalle y el resultado final de cada comando.
 
 | Sección compacta de identificación (I-193) | RF-017..026 | RN-009..012 | CU-04, CU-07 | ADM-06, DOC editor | CP-F plantilla | `compact` (bool) por sección, sin migración: 9 pt y margen 1.5 cm solo en esa hoja (editor y Word); por defecto en Identificación institucional | `TemplateDocumentTest` | Verificado local |
+| Tipos de campo y registro (I-195, etapas 0-1) | RF-017..026 | RN-009..012 | CU-04, CU-07 | ADM-06 | CP-F plantilla | `FieldType` + `FieldTypeRegistry` (`config/field_types.php`): texto, ficha, tabla, automatico; aditivo, sin cambiar la plantilla actual (ADR-0009 POR VALIDAR) | `FieldTypesTest` | Verificado local |
