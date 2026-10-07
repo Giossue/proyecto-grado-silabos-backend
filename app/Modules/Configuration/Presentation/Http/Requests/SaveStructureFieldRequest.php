@@ -34,7 +34,8 @@ class SaveStructureFieldRequest extends ManageTemplatesRequest
                     ->where('vigente_en_plantilla', true),
             ];
         }
-        if (is_string($typeKey) && $registry->has($typeKey)) {
+        // Al editar sin enviar `config` se conserva la configuración actual del campo.
+        if (is_string($typeKey) && $registry->has($typeKey) && ($creating || $this->has('config'))) {
             foreach ($registry->get($typeKey)->configRules() as $key => $keyRules) {
                 $rules['config.'.$key] = $keyRules;
             }

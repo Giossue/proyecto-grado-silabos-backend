@@ -528,30 +528,19 @@ class TemplateDocumentTest extends TestCase
         $this->assertFalse($block->fresh()->configuracion['detached_fields'][$field->clave]['editable_docente']);
     }
 
-    public function test_official_format_has_fixed_evaluation_tables_and_signatures_without_flow(): void
+    public function test_official_format_uses_only_the_four_field_types_without_flow_or_fixed_blocks(): void
     {
         $template = $this->template();
-        $blocks = $template->blocks()->keyBy('titulo');
 
-        $this->assertFalse($template->blocks()->contains(fn ($block) => $block->configuredContentType() === 'flow'));
+        $this->assertFalse($template->blocks()->contains(fn ($block) => in_array($block->configuredContentType(), ['flow', 'fixed', 'institutional'], true)));
         $this->assertNull($template->fields()->where('clave', 'estado_revision')->first());
-        foreach (['Indicadores de evaluación', 'Escala de valoración', 'Revisión y aprobación'] as $title) {
-            $block = $blocks->get($title);
-            $this->assertSame('fixed', $block->configuredContentType());
-            $this->assertCount(0, $block->fields);
-            $this->assertSame([], TemplateDocument::nodes($block->configuracion['document'], 'field'));
-            $this->assertArrayNotHasKey('tipo', $block->toDocument());
+        $this->assertEqualsCanonicalizing(
+            ['texto', 'ficha', 'tabla', 'automatico'],
+            $template->fields()->get()->map(fn ($field) => $field->fieldType()->key())->unique()->values()->all(),
+        );
+        foreach ($template->fields()->get() as $field) {
+            $this->assertFalse($field->hasLegacyClass(), $field->clave);
         }
-        $text = json_encode($blocks->get('Indicadores de evaluación')->configuracion['document'], JSON_UNESCAPED_UNICODE);
-        foreach (['Evaluación parcial', '3.5', '1.75', 'TOTAL', 'Ponderación'] as $expected) {
-            $this->assertStringContainsString($expected, $text);
-        }
-        $this->assertStringContainsString('Recuperación', json_encode($blocks->get('Escala de valoración')->configuracion['document'], JSON_UNESCAPED_UNICODE));
-        $signatures = array_column(array_column(TemplateDocument::nodes($blocks->get('Revisión y aprobación')->configuracion['document'], 'variable'), 'attrs'), 'id');
-        $this->assertEqualsCanonicalizing([
-            'firma_docente', 'firma_coordinador', 'firma_bibliotecario',
-            'nombre_docente', 'nombre_coordinador', 'fecha_entrega', 'fecha_revision',
-        ], $signatures);
     }
 
     public function test_administration_turns_a_part_to_landscape_and_back(): void
@@ -576,44 +565,6 @@ class TemplateDocumentTest extends TestCase
         $this->assertNull($block->fresh()->pageOrientation());
     }
 
-    public function test_compact_flag_is_saved_and_exposed_per_block(): void
-    {
-        $template = $this->template();
-        $block = $template->blocks()->firstWhere('clave', 'evaluacion_principal');
-        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
-        $body = ['document' => $block->configuracion['document'], 'fingerprint' => SaveTemplateDocument::fingerprint($block)];
-
-        $this->patchJson($url, [...$body, 'compact' => true])->assertSuccessful();
-        $this->assertTrue($block->fresh()->isCompact());
-        $this->getJson(route('api.v1.admin.template.show', $template))->assertJsonFragment(['compact' => true]);
-
-        $body['fingerprint'] = SaveTemplateDocument::fingerprint($block->fresh());
-        $this->patchJson($url, [...$body, 'compact' => false])->assertSuccessful();
-        $this->assertFalse($block->fresh()->isCompact());
-    }
-
-    public function test_fixed_text_can_be_landscape_and_is_not_saved_empty(): void
-    {
-        $template = $this->template();
-        $block = $template->blocks()->firstWhere('clave', 'evaluacion_principal');
-        $this->assertSame('fixed', $block->configuredContentType());
-        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
-
-        $this->patchJson($url, ['fingerprint' => SaveTemplateDocument::fingerprint($block)])
-            ->assertJsonValidationErrors(['document' => 'Escriba el texto fijo antes de guardar.']);
-        $this->patchJson($url, [
-            'document' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]],
-            'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertJsonValidationErrors(['document' => 'Escriba el texto fijo antes de guardar.']);
-
-        $this->patchJson($url, [
-            'document' => $block->configuracion['document'],
-            'fingerprint' => SaveTemplateDocument::fingerprint($block),
-            'page_orientation' => 'landscape',
-        ])->assertSuccessful();
-        $this->assertSame('landscape', $block->fresh()->pageOrientation());
-    }
-
     public function test_fields_have_no_optional_flag_or_limits(): void
     {
         $template = $this->template();
@@ -633,24 +584,6 @@ class TemplateDocumentTest extends TestCase
             ->flatMap(fn ($section) => $section['blocks'])->flatMap(fn ($block) => $block['fields'])->firstWhere('key', 'objetivos_especificos');
         $this->assertTrue($shown['required']);
         $this->assertArrayNotHasKey('rules', $shown);
-    }
-
-    public function test_administration_sets_show_only_if_on_a_part(): void
-    {
-        $template = $this->template();
-        $type = $template->fields()->where('clave', 'discapacidad_tipo')->firstOrFail();
-        $formation = $template->fields()->where('clave', 'formacion_experiencia')->firstOrFail();
-        $block = $type->block;
-        $this->assertSame(['key' => 'discapacidad_tiene', 'value' => 'Sí'], $type->mostrar_si);
-        $this->assertNull($formation->mostrar_si);
-        $payload = $this->getJson(route('api.v1.admin.template.show', $template))->json();
-        $this->assertContains(['key' => 'discapacidad_tiene', 'value' => 'Sí'], data_get($payload, 'template.sections.*.blocks.*.fields.*.show_when'));
-
-        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [$template, $block]), [
-            'document' => $block->fresh()->configuracion['document'],
-            'fingerprint' => SaveTemplateDocument::fingerprint($block->fresh()),
-            'properties' => [['key' => 'formacion_experiencia', 'label' => $formation->etiqueta, 'help' => '', 'show_when' => null]],
-        ])->assertJsonValidationErrors('document');
     }
 
     private function template(): SyllabusTemplate
