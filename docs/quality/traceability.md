@@ -1,5 +1,11 @@
 # Trazabilidad
 
+## Normalización cromática de temas — I-197
+
+| Cambio | IDs relacionados | Evidencia | Estado |
+|---|---|---|---|
+| Tokens y primitivas coherentes en claro y oscuro | RNF-018..023, RNF-029..034; UI-01..04; ADM/COR/DOC/BIB vigentes; CP-N experiencia, accesibilidad y mantenibilidad; PV-19 | `src/styles.css`, primitivas de botón, badge, campos, selección, radio, checkbox, menús, navegación y pestañas; ausencia de variantes cromáticas `dark:` y de colores literales operativos fuera de los tokens. Contraste calculado: texto normal ≥ 5,29:1, colores semánticos usados como texto ≥ 5,50:1 y bordes de campo ≥ 3,19:1 en ambos temas. Las paletas documental, gráfica y curricular quedan aisladas. | ESLint de `src`, TypeScript y comprobación estática aprobados; aceptación visual real pendiente en PV-19 |
+
 ## Facultades y carreras — I-196
 
 | Cambio | IDs relacionados | Evidencia | Estado |

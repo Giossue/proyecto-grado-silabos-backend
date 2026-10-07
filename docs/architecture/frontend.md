@@ -54,6 +54,13 @@ solo como barra del ítem activo del menú. Fondos y sidebar siguen neutros; tod
 en los tokens de `src/styles.css`. Éxito, advertencia y acción destructiva tienen
 colores semánticos independientes. Los valores proceden del
 pedido del usuario y no acreditan una guía oficial de identidad de la UEB.
+I-197 normaliza esos roles para toda la interfaz operativa: texto, superficies,
+acciones, campos, estados y foco se resuelven exclusivamente desde los tokens del tema.
+En oscuro, `primary`, `destructive`, `success` y `warning` usan variantes claras con su
+texto contrastado; los bordes de campos conservan una relación mínima de 3:1 con las
+superficies. Las primitivas compartidas no añaden excepciones cromáticas `dark:` y las
+pestañas se dibujan sin fondo propio. Esta normalización no altera la paleta documental,
+los gráficos ni los colores que identifican unidades curriculares.
 `WorkspaceLayout` comparte la composición de sílabo y revisión
 con sus skeletons. `LoadingSkeleton` mantiene el anuncio accesible de carga y delega
 las composiciones en `src/components/domain/loading`: `TableLoadingSkeleton` recibe

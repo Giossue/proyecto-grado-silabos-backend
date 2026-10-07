@@ -55,6 +55,14 @@ entrada y no se generan desde la navegación vigente. La acción principal es un
 fijo **Crear** que permite elegir **Facultad** o **Carrera** sin depender de la pestaña
 activa.
 
+I-197 (7 de octubre de 2026), por instrucción explícita del responsable del producto,
+normaliza los colores de toda la interfaz operativa en claro y oscuro. Los componentes
+compartidos consumen los mismos roles semánticos para texto, superficies, acciones,
+campos, estados y foco; el tema oscuro usa variantes claras cuando un color funciona
+como texto o borde. Las pestañas no tienen una superficie propia. Las paletas de papel,
+documentos, gráficos y unidades curriculares conservan su significado independiente.
+La aceptación en navegadores y dispositivos reales permanece en PV-19.
+
 I-172 (4 de octubre de 2026), por instrucción del responsable del producto, funde la
 pantalla de Periodos académicos en **Convocatorias** (ADM-12): una fila por periodo con
 sus fechas de clases, las de elaboración de sílabos y el estado de la convocatoria, y un
