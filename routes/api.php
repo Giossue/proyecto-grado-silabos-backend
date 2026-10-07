@@ -19,7 +19,6 @@ use App\Modules\Identity\Presentation\Http\Controllers\CareerTeacherController;
 use App\Modules\Identity\Presentation\Http\Controllers\ManagedUserController;
 use App\Modules\Library\Presentation\Http\Controllers\LibraryReviewController;
 use App\Modules\Operations\Presentation\Http\Controllers\AuditEventController;
-use App\Modules\Operations\Presentation\Http\Controllers\JobExecutionController;
 use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ConvocationController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ReviewController;
@@ -105,10 +104,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.users.destroy');
             Route::get('admin/audit-events', [AuditEventController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.admin.audit-events.index');
-            Route::get('admin/job-executions', [JobExecutionController::class, 'index'])
-                ->middleware('active-role')->name('api.v1.admin.job-executions.index');
-            Route::post('admin/job-executions/{execution}/retry', [JobExecutionController::class, 'retry'])
-                ->middleware('active-role')->name('api.v1.admin.job-executions.retry');
             Route::get('admin/academic/{section?}', [AcademicGovernanceController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.admin.academic.index');
             Route::post('admin/academic/{entity}', [AcademicGovernanceController::class, 'store'])

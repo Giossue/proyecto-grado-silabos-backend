@@ -26,7 +26,7 @@
 - Un reintento genera un resultado coherente sin alterar aprobación.
 - DOCX y PDF no omiten campos obligatorios y se vinculan a igual revisión.
 - Un reporte agregado no filtra datos fuera del alcance del actor.
-- El administrador puede diagnosticar un trabajo sin ver secretos ni contenido sensible.
+- Un fallo de generación o de notificación queda en la auditoría sin secretos ni contenido sensible.
 
 ## Estado de implementación I-05
 
@@ -42,7 +42,7 @@
   `PV-15` continúe abierto.
 - COR-12 (Informes) se retiró en I-122: el avance de la carrera se consulta en el Panel
   de Coordinación.
-- ADM-09 expone estado, progreso, conteo acumulado y causa segura; el reintento conserva
-  la evidencia anterior en auditoría. ADM-10 no entrega payloads, rutas, contenido ni
+- ADM-09 (Procesos/Trabajos fallidos) se retiró en I-196: no hay pantalla ni reintento
+  administrativo; el fallo queda en `trabajos_en_cola` y en la auditoría. ADM-10 no entrega payloads, rutas, contenido ni
   UUID de recursos en la interfaz.
 - No existe borrado ni purga hasta resolver `PV-11` y `PV-12`.

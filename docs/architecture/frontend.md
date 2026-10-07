@@ -59,8 +59,10 @@ acciones, campos, estados y foco se resuelven exclusivamente desde los tokens de
 En oscuro, `primary`, `destructive`, `success` y `warning` usan variantes claras con su
 texto contrastado; los bordes de campos conservan una relación mínima de 3:1 con las
 superficies. Las primitivas compartidas no añaden excepciones cromáticas `dark:` y las
-pestañas se dibujan sin fondo propio. Esta normalización no altera la paleta documental,
-los gráficos ni los colores que identifican unidades curriculares.
+pestañas se dibujan sin fondo propio. El azul oscuro usa un tono medio de saturación
+moderada y el sidebar comparte esa familia en su fondo, estados activos, bordes y foco.
+Esta normalización no altera la paleta documental, los gráficos ni los colores que
+identifican unidades curriculares.
 `WorkspaceLayout` comparte la composición de sílabo y revisión
 con sus skeletons. `LoadingSkeleton` mantiene el anuncio accesible de carga y delega
 las composiciones en `src/components/domain/loading`: `TableLoadingSkeleton` recibe

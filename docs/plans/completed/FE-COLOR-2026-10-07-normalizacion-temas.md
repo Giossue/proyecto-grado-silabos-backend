@@ -31,8 +31,8 @@ los colores documentales, gráficos y de unidades académicas mantienen su signi
 
 ## Verificación
 
-- Cálculo WCAG: texto normal ≥ 5,29:1, colores semánticos usados como texto ≥ 5,50:1,
-  texto sobre acciones ≥ 5,71:1 y bordes de campo ≥ 3,19:1 en ambos temas.
+- Cálculo WCAG: texto normal ≥ 5,29:1, azul semántico usado como texto ≥ 4,58:1,
+  texto sobre azul ≥ 4,61:1 y bordes de campo ≥ 3,19:1 en ambos temas.
 - `npx eslint src`: aprobado.
 - `npm run typecheck`: aprobado.
 - Búsqueda de `dark:` y colores Tailwind literales fuera de pruebas: sin resultados.

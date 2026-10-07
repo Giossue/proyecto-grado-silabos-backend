@@ -98,7 +98,7 @@ En ADM-02, Bibliotecario no pide carrera. En ADM-06, el menú Insertar ofrece el
 | ADM-05 | Plantillas                                                 |
 | ADM-06 | Constructor de plantilla                                   |
 | ADM-07 | Previsualizar y publicar                                   |
-| ADM-09 | Procesos (correos, documentos y análisis en segundo plano) |
+| ADM-09 | (retirada en I-196) Trabajos fallidos                      |
 | ADM-10 | Auditoría                                                  |
 | ADM-11 | Configuración                                              |
 | ADM-12 | Convocatorias (proceso institucional de sílabos)           |
@@ -138,9 +138,11 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   oficial de identidad de la UEB.
 - I-197 aplica los mismos roles cromáticos a toda la interfaz operativa en ambos temas.
   Texto, superficies, acciones, campos, estados y foco mantienen contraste; en oscuro,
-  las acciones y estados usan variantes claras con texto oscuro cuando corresponde.
-  Las primitivas compartidas no definen excepciones locales por tema. El papel, los
-  gráficos y los colores de unidades curriculares permanecen fuera de esta normalización.
+  las acciones usan un azul medio de saturación moderada y texto oscuro cuando
+  corresponde. El sidebar oscuro comparte esa familia azul en fondo, estados activos,
+  bordes y foco. Las primitivas compartidas no definen excepciones locales por tema. El
+  papel, los gráficos y los colores de unidades curriculares permanecen fuera de esta
+  normalización.
 - El menú lateral de escritorio conserva su estado expandido o colapsado en la cookie
   `sidebar_state` del navegador durante siete días. Lo restaura al recargar o montar
   de nuevo el layout; sin preferencia guardada, aparece expandido.
@@ -586,8 +588,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   correctiva.
 - **Auditoría** abre directamente ADM-10, sin pestañas ni filtros. Presenta un único
   registro paginado con fecha, actividad, responsable y resultado; acción y recurso se
-  agrupan en la misma celda y no se muestran metadatos secundarios. ADM-09 conserva su
-  ruta independiente para diagnosticar y reintentar trabajos.
+  agrupan en la misma celda y no se muestran metadatos secundarios. ADM-09 (Trabajos
+  fallidos) se retiró en I-196: no hay pantalla ni reintento de trabajos.
 - ADM-12 **Convocatorias** (I-172) es la única pantalla de periodos y convocatorias: una
   fila por periodo lectivo con sus fechas de clases, las fechas de elaboración de sílabos
   (o «Sin fechas») y el estado: **Sin iniciar** (periodo sin convocatoria), **Abierto**,

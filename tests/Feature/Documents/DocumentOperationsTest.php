@@ -252,24 +252,6 @@ class DocumentOperationsTest extends TestCase
             'accion' => 'documento.exportacion_fallida',
             'resultado' => 'fallido',
         ]);
-        $this->actingAsAdministrator()
-            ->getJson(route('api.v1.admin.job-executions.index', ['q' => 'Generación documental']))
-            ->assertOk()
-            ->assertDontSee($secret)
-            ->assertJson(fn (Assert $page) => $page->etc()
-
-                ->where('filters.q', 'Generación documental')
-                ->where('executions.total', 1)
-                ->where('executions.data.0.reintentable', true));
-        $this->actingAsTeacher()->postJson(route('api.v1.admin.job-executions.retry', $execution))->assertForbidden();
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.job-executions.retry', $execution))->assertSuccessful();
-
-        $this->assertSame('pendiente', $artifact->fresh()->estado);
-        $this->assertSame('pendiente', $execution->fresh()->estado);
-        $this->assertSame(3, $execution->fresh()->intentos);
-        Queue::assertPushed(GenerateSyllabusExportJob::class, 2);
-        $retryAudit = AuditEvent::query()->where('accion', 'trabajo.reintento_solicitado')->firstOrFail();
-        $this->assertSame(3, $retryAudit->metadatos['previous_attempts']);
     }
 
     public function test_cp_f_workflow_job_delivers_one_internal_notification_and_enforces_ownership(): void

@@ -68,8 +68,7 @@ aviso con `Syllabus\Application\Queries\SyllabusNavigationLookup`,
 `Documents\Application\Queries\ExportArtifactLookup`.
 
 Deuda conocida: aún quedan usos directos de modelos de otros módulos (por ejemplo
-`WorkflowNotificationRecipients`, `SetupChecklist` y `RetryJobExecution` en
-Operaciones, y Sílabos sobre modelos de Académico/Configuración). Se migran a este
+`WorkflowNotificationRecipients` y `SetupChecklist` en Operaciones, y Sílabos sobre modelos de Académico/Configuración). Se migran a este
 patrón cuando se toquen; no hay prueba de arquitectura que los bloquee todavía.
 
 ## Eventos recomendados
