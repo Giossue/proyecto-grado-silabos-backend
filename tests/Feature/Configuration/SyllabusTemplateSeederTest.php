@@ -4,6 +4,7 @@ namespace Tests\Feature\Configuration;
 
 use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\SyllabusTemplateSeeder;
@@ -50,7 +51,7 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->assertGreaterThan(0, $template->fresh()->fields()->count());
     }
 
-    public function test_the_official_template_is_built_only_with_the_four_field_types_and_is_usable(): void
+    public function test_the_official_template_is_built_only_with_the_five_field_types_and_is_usable(): void
     {
         $this->seed(DatabaseSeeder::class);
         $this->seed(SyllabusTemplateSeeder::class);
@@ -81,7 +82,14 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->assertCount(16, $planning->typeConfig()['rows']);
         $this->assertSame('Contenidos temáticos', $planning->typeConfig()['columns'][0]['label']);
         $this->assertCount(8, $planning->typeConfig()['columns']);
-        $this->assertSame('tabla', $types['firmas']);
+        foreach (['indicadores_evaluacion', 'componentes_evaluacion', 'conducta_etica', 'firmas'] as $key) {
+            $this->assertSame('fijo', $types[$key], $key);
+            $this->assertFalse($fields[$key]->editable_docente, $key);
+            $this->assertFalse(FreeText::isEmpty($fields[$key]->typeConfig()['content']), $key);
+        }
+        $this->assertStringContainsString('Primer parcial', FreeText::plainText($fields['indicadores_evaluacion']->typeConfig()['content']));
+        $this->assertStringContainsString('Excelente', FreeText::plainText($fields['componentes_evaluacion']->typeConfig()['content']));
+        $this->assertStringContainsString('Aprobado por', FreeText::plainText($fields['firmas']->typeConfig()['content']));
 
         foreach ($template->blocks() as $block) {
             $this->assertNotContains($block->configuredContentType(), ['fixed', 'institutional', 'flow'], $block->titulo);

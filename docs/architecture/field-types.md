@@ -1,6 +1,6 @@
 # Tipos de campo de la plantilla
 
-Plan: `docs/plans/active/I-195-plantilla-mvp-cuatro-tipos-de-campo.md`. ADR-0009.
+Plan: `docs/plans/active/I-195-plantilla-mvp-cuatro-tipos-de-campo.md` (ahora cinco tipos). ADR-0009.
 
 | Clave | Quién llena | Config | Valor |
 |---|---|---|---|
@@ -8,6 +8,10 @@ Plan: `docs/plans/active/I-195-plantilla-mvp-cuatro-tipos-de-campo.md`. ADR-0009
 | `ficha` | Coordinación, una vez por materia | `adjustable` | texto libre heredado |
 | `tabla` | Docente | `columns`, `rows` fijas | `fila → columna → texto` |
 | `automatico` | Nadie | `source` | ninguno |
+| `fijo` | Administración, en la plantilla | `content` (documento `FreeText`) | ninguno (el snapshot guarda el contenido) |
+
+`fijo` es la quinta excepción justificada por el contenido institucional de la UEB (evaluación,
+conducta ética y firmas): igual en todos los sílabos, el docente no lo edita y no puede estar vacío.
 
 ## Cómo agregar un tipo
 

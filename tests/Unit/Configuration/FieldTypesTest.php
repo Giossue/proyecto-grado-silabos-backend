@@ -4,6 +4,7 @@ namespace Tests\Unit\Configuration;
 
 use App\Modules\Configuration\Domain\FieldTypes\AutomaticFieldType;
 use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
+use App\Modules\Configuration\Domain\FieldTypes\FixedFieldType;
 use App\Modules\Configuration\Domain\FieldTypes\ProfileFieldType;
 use App\Modules\Configuration\Domain\FieldTypes\TableFieldType;
 use App\Modules\Configuration\Domain\FieldTypes\TextFieldType;
@@ -22,11 +23,11 @@ class FieldTypesTest extends TestCase
         ];
     }
 
-    public function test_registry_resolves_the_four_configured_types(): void
+    public function test_registry_resolves_the_five_configured_types(): void
     {
         $registry = $this->app->make(FieldTypeRegistry::class);
 
-        $this->assertSame(['texto', 'ficha', 'tabla', 'automatico'], $registry->keys());
+        $this->assertSame(['texto', 'ficha', 'tabla', 'automatico', 'fijo'], $registry->keys());
         $this->assertInstanceOf(TableFieldType::class, $registry->get('tabla'));
     }
 
@@ -99,6 +100,30 @@ class FieldTypesTest extends TestCase
         }
         $this->expectException(ValidationException::class);
         $type->normalizeConfig(['columns' => [['key' => 'a', 'label' => 'A'], ['key' => 'a', 'label' => 'B']], 'rows' => [['key' => 'r', 'label' => 'R']]]);
+    }
+
+    public function test_fixed_type_keeps_institutional_content_and_stores_no_value(): void
+    {
+        $type = new FixedFieldType;
+        $content = FreeText::fromText('Texto institucional');
+        $config = $type->normalizeConfig(['content' => $content]);
+
+        $this->assertSame(['content' => $content], $config);
+        $this->assertFalse($type->teacherEditable());
+        $this->assertSame($content, $type->defaultValue($config));
+        $this->assertSame($content, $type->toSnapshot(null, $config, []));
+        $this->assertNull($type->validateValue(null, $config));
+        $this->assertFalse($type->isEmpty(null, $config));
+        foreach ([null, 'texto', FreeText::fromText('  ')] as $bad) {
+            try {
+                $type->normalizeConfig(['content' => $bad]);
+                $this->fail('Se esperaba ValidationException.');
+            } catch (ValidationException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+        $this->expectException(ValidationException::class);
+        $type->validateValue($content, $config);
     }
 
     public function test_automatic_type_stores_no_value(): void

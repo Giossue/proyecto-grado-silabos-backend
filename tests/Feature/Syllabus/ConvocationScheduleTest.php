@@ -220,7 +220,7 @@ class ConvocationScheduleTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
 
         $fields = FieldDefinition::query()
-            ->where('heredado', false)
+            ->where('heredado', false)->where('editable_docente', true)
             ->get();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(

@@ -73,7 +73,7 @@ class TemplateAndSourceTest extends TestCase
         $evaluation = $template->sections()->where('clave', 'evaluacion')->firstOrFail();
         $blocks = $evaluation->blocks()->orderBy('posicion');
         $this->assertSame(['Indicadores de evaluación', 'Escala de valoración'], $blocks->pluck('titulo')->all());
-        $this->assertSame(['texto', 'texto'], $template->fields()->whereIn('clave', ['indicadores_evaluacion', 'componentes_evaluacion'])->orderBy('posicion')->get()->map(fn ($field) => $field->fieldType()->key())->all());
+        $this->assertSame(['fijo', 'fijo'], $template->fields()->whereIn('clave', ['indicadores_evaluacion', 'componentes_evaluacion'])->orderBy('posicion')->get()->map(fn ($field) => $field->fieldType()->key())->all());
         $this->assertDatabaseCount('valores_campo', 0);
         $this->assertFalse(Schema::hasTable('filas_repetibles'));
         $this->assertEquals(

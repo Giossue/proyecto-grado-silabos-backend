@@ -2,7 +2,8 @@
 
 return [
     /*
-     * Plantilla oficial inicial (I-195): solo los cuatro tipos del registro de campos.
+     * Plantilla oficial inicial (I-195): solo los tipos del registro de campos (texto, ficha, tabla, automatico y fijo).
+     * En `fijo`, `content` es la clave del contenido institucional (FixedContent::official).
      * [clave de sección, título, [[clave del campo, etiqueta, tipo, configuración]]]
      * En `tabla`, `columns` y `rows` son [clave => etiqueta]; el provisionador los expande.
      */
@@ -46,24 +47,21 @@ return [
             ['metodologia', 'Métodos de enseñanza-aprendizaje', 'texto', []],
         ]],
         ['evaluacion', 'Evaluación de los aprendizajes', [
-            ['indicadores_evaluacion', 'Indicadores de evaluación', 'texto', []],
-            ['componentes_evaluacion', 'Escala de valoración', 'texto', []],
+            ['indicadores_evaluacion', 'Indicadores de evaluación', 'fijo', ['content' => 'indicadores']],
+            ['componentes_evaluacion', 'Escala de valoración', 'fijo', ['content' => 'escala']],
         ]],
         ['perfil_egreso', 'Relación de la asignatura con los resultados de aprendizaje del perfil de egreso', [
             ['contribucion_perfil', 'Contribución al perfil de egreso', 'ficha', ['adjustable' => false]],
         ]],
         ['etica', 'Conducta y comportamiento ético', [
-            ['conducta_etica', 'Conducta y comportamiento ético', 'texto', []],
+            ['conducta_etica', 'Conducta y comportamiento ético', 'fijo', ['content' => 'etica']],
         ]],
         ['bibliografia', 'Bibliografía', [
             ['bibliografia', 'Bibliografía básica', 'ficha', ['adjustable' => true]],
             ['bibliografia_complementaria', 'Bibliografía complementaria', 'ficha', ['adjustable' => true]],
         ]],
         ['revision', 'Revisión y aprobación', [
-            ['firmas', 'Revisión y aprobación', 'tabla', [
-                'rows' => ['elabora' => 'Elaborado por', 'revisa' => 'Revisado por', 'aprueba' => 'Aprobado por'],
-                'columns' => ['nombre' => 'Nombre', 'cargo' => 'Cargo', 'firma' => 'Firma'],
-            ]],
+            ['firmas', 'Revisión y aprobación', 'fijo', ['content' => 'firmas']],
         ]],
     ],
 

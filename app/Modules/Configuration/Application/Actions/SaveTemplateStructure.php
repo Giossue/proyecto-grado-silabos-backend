@@ -170,6 +170,7 @@ class SaveTemplateStructure
                 'editable_docente' => (bool) ($config['adjustable'] ?? false),
             ],
             'automatico' => ['heredado' => true, 'origen_maestro' => (string) $config['source'], 'editable_docente' => false],
+            'fijo' => ['heredado' => false, 'origen_maestro' => null, 'editable_docente' => false],
             default => ['heredado' => false, 'origen_maestro' => null, 'editable_docente' => true],
         };
     }

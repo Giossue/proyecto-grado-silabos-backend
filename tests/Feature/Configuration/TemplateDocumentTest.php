@@ -528,14 +528,14 @@ class TemplateDocumentTest extends TestCase
         $this->assertFalse($block->fresh()->configuracion['detached_fields'][$field->clave]['editable_docente']);
     }
 
-    public function test_official_format_uses_only_the_four_field_types_without_flow_or_fixed_blocks(): void
+    public function test_official_format_uses_only_the_five_field_types_without_flow_or_fixed_blocks(): void
     {
         $template = $this->template();
 
         $this->assertFalse($template->blocks()->contains(fn ($block) => in_array($block->configuredContentType(), ['flow', 'fixed', 'institutional'], true)));
         $this->assertNull($template->fields()->where('clave', 'estado_revision')->first());
         $this->assertEqualsCanonicalizing(
-            ['texto', 'ficha', 'tabla', 'automatico'],
+            ['texto', 'ficha', 'tabla', 'automatico', 'fijo'],
             $template->fields()->get()->map(fn ($field) => $field->fieldType()->key())->unique()->values()->all(),
         );
         foreach ($template->fields()->get() as $field) {

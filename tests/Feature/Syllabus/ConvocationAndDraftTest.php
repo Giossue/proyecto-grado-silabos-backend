@@ -127,6 +127,27 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('Libro añadido por el docente', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
     }
 
+    public function test_fixed_fields_are_frozen_in_the_snapshot_and_the_teacher_cannot_edit_them(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $fixed = FieldDefinition::query()->where('clave', 'indicadores_evaluacion')->firstOrFail();
+        $this->assertSame('fijo', $fixed->tipo);
+        $this->assertNull($syllabus->values()->where('definicion_campo_id', $fixed->id)->first()?->valor);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $fixed]), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+            'value' => $this->freeTextValue('Cambio no autorizado'),
+        ])->assertUnprocessable();
+
+        $snapshot = app(SyllabusSnapshot::class)->build($syllabus->fresh());
+        $field = collect($snapshot['sections'])->flatMap(fn ($section) => $section['fields'])->firstWhere('key', 'indicadores_evaluacion');
+        $this->assertSame('fijo', $field['type']);
+        $this->assertSame($fixed->typeConfig()['content'], $field['value']);
+        app(SyllabusSnapshot::class)->restore($syllabus->fresh(), $snapshot);
+        $this->assertNull($syllabus->values()->where('definicion_campo_id', $fixed->id)->first()?->valor);
+    }
+
     public function test_profile_changes_do_not_rewrite_an_existing_syllabus(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
@@ -145,7 +166,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame(7, $snapshot['schema_version']);
         $fields = collect($snapshot['sections'])->flatMap(fn ($section) => $section['fields']);
         $this->assertNotEmpty($fields);
-        $this->assertSame([], $fields->filter(fn ($field) => ! in_array($field['type'], ['texto', 'ficha', 'tabla', 'automatico'], true))->all());
+        $this->assertSame([], $fields->filter(fn ($field) => ! in_array($field['type'], ['texto', 'ficha', 'tabla', 'automatico', 'fijo'], true))->all());
         $description = $fields->firstWhere('key', 'descripcion');
         $this->assertSame('ficha', $description['type']);
         $this->assertSame(
@@ -185,6 +206,9 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertStringContainsString('Ficha de prueba: descripcion', $text);
         $this->assertStringContainsString('Contenidos temáticos', $text);
         $this->assertStringContainsString('Revisión y aprobación', $text);
+        foreach (['Indicadores', 'Primer parcial', 'Evaluación parcial', 'Escala cualitativa', 'Excelente', 'Conducta y comportamiento ético', 'Elaborado por', 'Aprobado por', 'Cargo', 'Firma'] as $expected) {
+            $this->assertStringContainsString($expected, $text);
+        }
     }
 
     public function test_a_stored_v7_revision_renders_without_reading_live_data(): void
@@ -587,7 +611,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.validado', 'recurso_id' => $syllabus->id]);
 
         $requiredEditable = FieldDefinition::query()
-            ->where('heredado', false)
+            ->where('heredado', false)->where('editable_docente', true)
             ->get();
         foreach ($requiredEditable as $field) {
             $payload = match (true) {

@@ -89,7 +89,7 @@ class SyllabusSnapshot
     {
         $fieldIds = [];
         foreach ($this->sections($snapshot) as $section) {
-            // v7: campos planos; los automáticos no guardan valor (se conservan sin tocar). v6 y anteriores: bloques.
+            // v7: campos planos; los automáticos y fijos no guardan valor (se conservan sin tocar). v6 y anteriores: bloques.
             $groups = ($snapshot['schema_version'] ?? 0) >= 7 ? [$section] : $this->blocks($section);
             foreach ($groups as $block) {
                 foreach ($this->fields($block) as $field) {
@@ -98,7 +98,7 @@ class SyllabusSnapshot
                         continue;
                     }
                     $fieldIds[] = $definitionId;
-                    if (($field['type'] ?? null) === 'automatico') {
+                    if (in_array($field['type'] ?? null, ['automatico', 'fijo'], true)) {
                         continue;
                     }
                     FieldValue::query()->updateOrCreate([

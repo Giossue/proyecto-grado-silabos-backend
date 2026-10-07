@@ -203,7 +203,7 @@ class LibraryReviewTest extends TestCase
         $this->assertSame(1, Convocation::query()->count());
         $syllabus = Syllabus::query()->firstOrFail();
         $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
-        foreach (FieldDefinition::query()->where('heredado', false)->get() as $field) {
+        foreach (FieldDefinition::query()->where('heredado', false)->where('editable_docente', true)->get() as $field) {
             $this->as('teacher')->patchJson(
                 route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
                 ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->valueFor($field)],

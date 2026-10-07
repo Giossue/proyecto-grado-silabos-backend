@@ -3,6 +3,7 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\User;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Database\Seeders\DatabaseSeeder;
@@ -93,6 +94,21 @@ class TemplateStructureApiTest extends TestCase
         $this->field($section, 'e', 'texto')->assertCreated();
         $this->field($section, 'e', 'texto')->assertJsonValidationErrors('key');
         $this->assertSame(1, FieldDefinition::query()->where('plantilla_id', $this->template->id)->count());
+    }
+
+    public function test_creates_and_validates_a_fixed_text_field(): void
+    {
+        $section = $this->section();
+        $content = FreeText::fromText('Texto institucional fijo');
+
+        $this->field($section, 'etica', 'fijo', ['config' => ['content' => $content]])->assertCreated()
+            ->assertJsonPath('field.type', 'fijo')->assertJsonPath('field.config.content', $content);
+        $definition = FieldDefinition::query()->where('clave', 'etica')->firstOrFail();
+        $this->assertFalse($definition->editable_docente);
+        $this->assertFalse($definition->heredado);
+
+        $this->field($section, 'sin', 'fijo')->assertJsonValidationErrors('config.content');
+        $this->field($section, 'vacio', 'fijo', ['config' => ['content' => FreeText::fromText('')]])->assertJsonValidationErrors('config.content');
     }
 
     public function test_updates_a_field_without_changing_its_type_or_key(): void

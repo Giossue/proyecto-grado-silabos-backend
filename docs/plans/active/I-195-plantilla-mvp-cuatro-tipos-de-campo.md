@@ -1,7 +1,7 @@
-# I-195 Plantilla MVP con cuatro tipos de campo y registro único
+# I-195 Plantilla MVP con cinco tipos de campo y registro único
 
 Pedido del responsable, 2026-10-07: rehacer la plantilla del sílabo como MVP con solo
-cuatro tipos de campo fijos, definidos en un único registro fácil de extender.
+cinco tipos de campo (cuatro generales más `fijo`, ver Etapa 5b), definidos en un único registro fácil de extender.
 
 ## Decisiones confirmadas
 
@@ -32,6 +32,7 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 - [x] 3. API de plantilla simplificada (endpoints nuevos `structure/...`; ver Etapa 3).
 - [x] 4. Snapshot v7 y render Word/PDF por tipo (ver Etapa 4).
 - [x] 5. Plantilla inicial (ver Etapa 5).
+- [x] 5b. Quinto tipo `fijo` y recuperación del contenido institucional (ver Etapa 5b).
 - [ ] 6. Frontend: registro y editor del docente.
 - [ ] 7. Frontend: constructor simple.
 - [ ] 8. Limpieza del modelo anterior.
@@ -80,7 +81,7 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 ## Etapa 5: decisiones y deuda
 
 - `config/syllabus_template.php` `baseline` define `[sección, título, [[clave, etiqueta, tipo, config]]]`; el provisionador usa el registro (`normalizeConfig`) y las mismas columnas de herencia que `SaveTemplateStructure`. Planificación = `tabla` con 16 filas fijas (`semana_1`..`semana_16`) y 8 columnas; identificación = `automatico` + `discapacidad_tipo`, `discapacidad_adaptacion` y `formacion_experiencia` como `texto`; herramientas TIC se agrega como `ficha` en «Habilidades blandas».
-- Decisión a confirmar: evaluación (indicadores y escala), conducta ética y firmas eran bloques de texto fijo con contenido institucional (tablas de ponderación, variables de firma) que no cabe en los cuatro tipos. Quedan como `texto` (evaluación, ética) y `tabla` (firmas: elabora/revisa/aprueba por nombre, cargo, firma), vacíos: se pierde el texto fijo UEB. Si debe conservarse hace falta un quinto tipo (texto fijo) o contenido inicial por campo.
+- Decisión tomada (ver Etapa 5b): evaluación, conducta ética y firmas son campos `fijo` (quinto tipo).
 - `formacion_experiencia` ya no se hereda del perfil del docente: lo escribe en cada sílabo. Se retiraron las pruebas de formación desde el perfil, de contenido inicial (`initial_content`) y de campos fijos/compactos/condicionales sobre la plantilla oficial.
 - Arreglos de pasada: `UpdateDraftFieldRequest` validaba solo clases anteriores (prohibía el valor de los tipos nuevos); `ValidateDraft` pide valor por tipo y no exige el automático; `SaveStructureFieldRequest` no exige `config` al editar sin enviarla.
 - Deuda etapa 8 (no se pudo borrar sin romper la API anterior): `SyllabusTemplateCatalog`, `catalog` e `identification_inputs` de la config (los usan `SaveFieldDefinition`, `SaveTemplateSection` y `TemplateController`), `TemplateDocumentDefaults::identification/evaluationIndicators/gradingScale/signatures/fixedPlaceholder`, `initial_content` en `InheritMasterValues`, ramas `institutional`/`fixed` de `SaveTemplateDocument` y `FieldConditions`. La API de documento por bloque (`blocks/{block}/document`) rechaza los bloques de la plantilla nueva (su documento usa `kind: texto_libre`).
@@ -95,3 +96,12 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 ## Decisión: sin campos condicionales en el MVP
 
 La condición «mostrar si» dependía de los tipos `seleccion_unica` y `booleano`, retirados en la etapa 2. En el MVP los campos de discapacidad (tipo y adaptación) siempre se muestran; el docente los deja vacíos si no aplican. Se retiró la prueba de campos condicionales; el código de `FieldConditions` y `mostrar_si` se elimina en la etapa 8.
+
+## Etapa 5b: quinto tipo `fijo` (texto fijo)
+
+- Excepción justificada a «cuatro tipos»: la UEB exige contenido institucional idéntico en todos los sílabos y que el docente no edita (indicadores y escala de evaluación, conducta ética, firmas). Administración lo escribe una vez en la plantilla. ADR-0009 lleva la enmienda.
+- `FixedFieldType` (`fijo`): `config.content` = documento `FreeText` (párrafos, listas, tablas). `defaultValue` y `toSnapshot` devuelven ese contenido; `teacherEditable` falso; no guarda valor por sílabo (`validateValue` rechaza cualquier valor; `UpdateDraftField` responde 422; `ValidateDraft` no lo exige; `restore` no lo escribe). Decisión: el contenido NO puede quedar vacío (`config.content` obligatorio, error `config.content`): un texto fijo vacío no aporta y ocultaría un olvido de Administración.
+- Migración nueva `2026_10_07_000203_allow_fixed_field_type` (CHECK con cinco tipos). `SaveTemplateStructure` y el provisionador marcan `fijo` como no heredado y no editable por el docente. `TemplateStructureValidator` no cambia (un campo no heredado sin origen ya es válido).
+- Plantilla oficial: `indicadores_evaluacion`, `componentes_evaluacion`, `conducta_etica` y `firmas` son `fijo` (`FixedContent::official`). Recuperado: tablas de indicadores (puntos y ponderación por parcial) y escala de valoración UEB, tomadas de `TemplateDocumentDefaults` y normalizadas a `FreeText`.
+- No se pudo conservar: (1) el texto de conducta ética nunca existió en el código (era un marcador «Escriba aquí el contenido fijo»); queda un texto provisional que Administración debe reemplazar; (2) las firmas usaban variables insertables (`firma_docente`, `nombre_docente`, fechas, firma electrónica de coordinación y biblioteca) que `FreeText` no admite; quedan como tabla en blanco Elaborado/Revisado/Aprobado por × Nombre/Cargo/Firma, sin firma electrónica ni fechas automáticas; (3) color de encabezado y centrado de las tablas antiguas (FreeText solo guarda negrita y combinación de celdas).
+- Deuda etapa 8: `TemplateDocumentDefaults::evaluationIndicators` y `gradingScale` ya no se pueden borrar; las usa `FixedContent`. La firma electrónica sobre el documento (`SignatureAnchor`) no está enlazada al contenido fijo.
