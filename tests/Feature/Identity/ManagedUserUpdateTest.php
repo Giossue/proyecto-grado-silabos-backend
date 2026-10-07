@@ -106,6 +106,53 @@ class ManagedUserUpdateTest extends TestCase
         ]);
     }
 
+    public function test_an_administrator_removes_one_role_and_keeps_the_history(): void
+    {
+        $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
+        $coordination = $this->coordinator->roleAssignments()->firstOrFail();
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.users.update', $this->coordinator), [
+            'nombre' => $this->coordinator->nombre,
+            'correo_electronico' => $this->coordinator->correo_electronico,
+            'active' => true,
+            'role_code' => RoleCode::Teacher->value,
+            'career_id' => $career->id,
+        ])->assertSuccessful();
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.users.roles.destroy', [$this->coordinator, $coordination]))
+            ->assertSuccessful();
+
+        $this->assertDatabaseHas('asignaciones_rol', ['asignacion_rol_id' => $coordination->id, 'asignacion_rol_activa' => false]);
+        $this->assertDatabaseHas('asignaciones_rol', [
+            'usuario_id' => $this->coordinator->id,
+            'rol' => RoleCode::Teacher->value,
+            'asignacion_rol_activa' => true,
+        ]);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.rol_retirado', 'recurso_id' => $this->coordinator->id]);
+    }
+
+    public function test_the_only_role_of_an_account_cannot_be_removed(): void
+    {
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.users.roles.destroy', [$this->coordinator, $this->coordinatorContext]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('role');
+
+        $this->assertDatabaseHas('asignaciones_rol', ['asignacion_rol_id' => $this->coordinatorContext->id, 'asignacion_rol_activa' => true]);
+    }
+
+    public function test_a_role_of_another_account_or_a_non_administrator_is_rejected(): void
+    {
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.users.roles.destroy', [$this->teacher, $this->coordinatorContext]))
+            ->assertNotFound();
+
+        $this->actingAs($this->coordinator)
+            ->withSession(['active_role_assignment_id' => $this->coordinatorContext->id])
+            ->deleteJson(route('api.v1.admin.users.roles.destroy', [$this->coordinator, $this->coordinatorContext]))
+            ->assertForbidden();
+    }
+
     public function test_saving_without_touching_status_or_role_registers_nothing_extra(): void
     {
         $assignmentsBefore = $this->teacher->roleAssignments()->count();

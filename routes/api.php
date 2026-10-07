@@ -106,6 +106,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.users.update');
             Route::post('admin/users/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
                 ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.admin.users.activation.resend');
+            Route::delete('admin/users/{user}/roles/{assignment}', [ManagedUserController::class, 'removeRole'])
+                ->middleware('active-role')->name('api.v1.admin.users.roles.destroy');
             Route::delete('admin/users/{user}', [ManagedUserController::class, 'destroy'])
                 ->middleware('active-role')->name('api.v1.admin.users.destroy');
             Route::get('admin/audit-events', [AuditEventController::class, 'index'])

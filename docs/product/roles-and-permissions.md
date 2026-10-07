@@ -91,7 +91,8 @@ Administrador.
 ## Acumulación de roles
 
 Una persona puede ser coordinadora de varias carreras y también docente. Cada asignación
-de rol conserva su propia carrera y se retira manualmente al finalizarla. Administración
+de rol conserva su propia carrera y Administración la retira desde «Editar usuario» (I-197) al
+finalizarla; nunca se retira el único rol vigente (se deshabilita el acceso). Administración
 es una excepción exclusiva: una cuenta con el rol `administrador` activo no puede tener
 `coordinador` ni `docente` activos, y tampoco se puede conceder `administrador` mientras
 conserve otro rol activo. Las asignaciones finalizadas se conservan como historial.

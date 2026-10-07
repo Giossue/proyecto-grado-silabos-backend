@@ -9,6 +9,7 @@ use App\Modules\Identity\Application\Actions\AssignRole;
 use App\Modules\Identity\Application\Actions\CreateManagedUser;
 use App\Modules\Identity\Application\Actions\DeleteManagedUser;
 use App\Modules\Identity\Application\Actions\ImportManagedUsers;
+use App\Modules\Identity\Application\Actions\RemoveUserRole;
 use App\Modules\Identity\Application\Actions\ResendManagedUserActivation;
 use App\Modules\Identity\Application\Actions\SetUserStatus;
 use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
@@ -93,6 +94,7 @@ class ManagedUserController extends Controller
                     'pending_activation' => $user->correo_verificado_en === null,
                     'two_factor_enabled' => $user->dos_factores_confirmado_en !== null,
                     'roles' => $effective->map(fn (RoleAssignment $assignment): array => [
+                        'id' => $assignment->id,
                         'code' => $assignment->rol,
                         'name' => $assignment->role->nombre_rol,
                         'career_name' => $assignment->career?->nombre,
@@ -188,6 +190,16 @@ class ManagedUserController extends Controller
         $action->execute($user, $actor, $request);
 
         return response()->json(['message' => 'Cuenta eliminada.']);
+    }
+
+    public function removeRole(User $user, RoleAssignment $assignment, Request $request, RemoveUserRole $action): JsonResponse
+    {
+        Gate::authorize('updateProfileData', $user);
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $action->execute($user, $assignment, $actor, $request);
+
+        return response()->json(['message' => 'Rol retirado.']);
     }
 
     public function update(

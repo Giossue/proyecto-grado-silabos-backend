@@ -157,6 +157,7 @@ class AuditEventController extends Controller
             'plantilla.version_clonada' => 'Versión de plantilla clonada',
             'usuario.creado' => 'Usuario creado',
             'usuario.rol_asignado' => 'Rol asignado',
+            'usuario.rol_retirado' => 'Rol retirado',
             'usuario.activado' => 'Cuenta activada',
             'usuario.desactivado' => 'Cuenta desactivada',
             'usuario.perfil_actualizado' => 'Perfil actualizado',

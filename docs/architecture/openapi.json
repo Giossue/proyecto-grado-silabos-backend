@@ -2268,6 +2268,87 @@
                 ]
             }
         },
+        "/api/v1/admin/users/import": {
+            "post": {
+                "tags": [
+                    "Administración"
+                ],
+                "operationId": "api_v1_admin_users_import",
+                "summary": "api.v1.admin.users.import",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/import-template": {
+            "get": {
+                "tags": [
+                    "Administración"
+                ],
+                "operationId": "api_v1_admin_users_import-template",
+                "summary": "api.v1.admin.users.import-template",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/users/{user}": {
             "delete": {
                 "tags": [
@@ -2409,6 +2490,70 @@
                 "parameters": [
                     {
                         "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/{user}/roles/{assignment}": {
+            "delete": {
+                "tags": [
+                    "Administración"
+                ],
+                "operationId": "api_v1_admin_users_roles_destroy",
+                "summary": "api.v1.admin.users.roles.destroy",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "assignment",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -3880,6 +4025,87 @@
                 ]
             }
         },
+        "/api/v1/coordination/academic/scheduled-import": {
+            "post": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_academic_scheduled-import_store",
+                "summary": "api.v1.coordination.academic.scheduled-import.store",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/coordination/academic/scheduled-import-template": {
+            "get": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_academic_scheduled-import_template",
+                "summary": "api.v1.coordination.academic.scheduled-import.template",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/coordination/academic/scheduled-subjects": {
             "get": {
                 "tags": [
@@ -4005,6 +4231,87 @@
                                 "additionalProperties": true
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/coordination/academic/teachers/import": {
+            "post": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_academic_teachers_import",
+                "summary": "api.v1.coordination.academic.teachers.import",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/coordination/academic/teachers/import-template": {
+            "get": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_academic_teachers_import-template",
+                "summary": "api.v1.coordination.academic.teachers.import-template",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
                     }
                 },
                 "security": [
@@ -6202,132 +6509,6 @@
                         "sanctumCookie": []
                     }
                 ]
-            }
-        },
-        "/api/v1/admin/users/import": {
-            "post": {
-                "summary": "Revisar o importar cuentas desde Excel",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                },
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "file"
-                                ],
-                                "properties": {
-                                    "file": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    },
-                                    "confirm": {
-                                        "type": "boolean"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/admin/users/import-template": {
-            "get": {
-                "summary": "Plantilla de cuentas",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/api/v1/coordination/academic/teachers/import": {
-            "post": {
-                "summary": "Revisar o importar docentes desde Excel",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                },
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "file"
-                                ],
-                                "properties": {
-                                    "file": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    },
-                                    "confirm": {
-                                        "type": "boolean"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/coordination/academic/teachers/import-template": {
-            "get": {
-                "summary": "Plantilla de docentes",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
-        "/api/v1/coordination/academic/scheduled-import": {
-            "post": {
-                "summary": "Revisar o importar paralelos y asignaciones desde Excel",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                },
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "file"
-                                ],
-                                "properties": {
-                                    "file": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    },
-                                    "confirm": {
-                                        "type": "boolean"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/coordination/academic/scheduled-import-template": {
-            "get": {
-                "summary": "Plantilla de materias y asignaciones",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
             }
         }
     },
