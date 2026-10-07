@@ -148,6 +148,32 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertNull($syllabus->values()->where('definicion_campo_id', $fixed->id)->first()?->valor);
     }
 
+    public function test_teacher_payload_exposes_typed_fields_with_config_and_resolved_values(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+
+        $payload = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertSuccessful()->json('syllabus');
+        $fields = collect($payload['sections'])->flatMap(fn ($section) => $section['fields'])->keyBy('key');
+
+        $this->assertSame(
+            collect($payload['sections'])->flatMap(fn ($section) => collect($section['blocks'])->flatMap(fn ($block) => $block['fields']))->pluck('key')->all(),
+            $fields->keys()->all(),
+        );
+        $this->assertSame('fijo', $fields['indicadores_evaluacion']['type']);
+        $this->assertSame('doc', $fields['indicadores_evaluacion']['value']['type']);
+        $this->assertSame('tabla', $fields['unidades']['type']);
+        $this->assertCount(8, $fields['unidades']['config']['columns']);
+        $this->assertIsArray($fields['unidades']['value']);
+        $automatic = $fields->firstWhere('type', 'automatico');
+        $this->assertSame('identification_card', $automatic['config']['source']);
+        $this->assertSame('table', $automatic['document']['content'][0]['type']);
+        $this->assertFalse($fields['descripcion']['legacy']);
+        $this->assertArrayHasKey('adjustable', $fields['descripcion']['config']);
+
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertJsonPath('syllabus.sections.0.fields.0.type', fn ($type) => is_string($type));
+    }
+
     public function test_profile_changes_do_not_rewrite_an_existing_syllabus(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();

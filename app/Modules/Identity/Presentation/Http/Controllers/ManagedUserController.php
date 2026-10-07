@@ -8,12 +8,16 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Identity\Application\Actions\AssignRole;
 use App\Modules\Identity\Application\Actions\CreateManagedUser;
 use App\Modules\Identity\Application\Actions\DeleteManagedUser;
+use App\Modules\Identity\Application\Actions\ImportManagedUsers;
 use App\Modules\Identity\Application\Actions\ResendManagedUserActivation;
 use App\Modules\Identity\Application\Actions\SetUserStatus;
 use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
+use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
+use App\Modules\Identity\Application\Spreadsheet\SpreadsheetTemplate;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Identity\Presentation\Http\Requests\CreateManagedUserRequest;
+use App\Modules\Identity\Presentation\Http\Requests\ImportSpreadsheetRequest;
 use App\Modules\Identity\Presentation\Http\Requests\IndexUsersRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateManagedUserRequest;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ManagedUserController extends Controller
 {
@@ -134,6 +139,24 @@ class ManagedUserController extends Controller
             'message' => 'Cuenta creada con su rol inicial.',
             'user' => ['id' => $created->id, 'nombre' => $created->nombre, 'correo_electronico' => $created->correo_electronico],
         ], 201);
+    }
+
+    public function importTemplate(SpreadsheetTemplate $template): StreamedResponse
+    {
+        Gate::authorize('create', User::class);
+
+        return $template->download('plantilla-usuarios.xlsx', array_values(ImportManagedUsers::COLUMNS), ['Nombre Apellido', 'correo@ueb.edu.ec', 'Docente', 'Software']);
+    }
+
+    public function import(ImportSpreadsheetRequest $request, SpreadsheetReader $reader, ImportManagedUsers $action): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        Gate::authorize('create', User::class);
+        $rows = $reader->read($request->file('file'), ImportManagedUsers::COLUMNS);
+        $result = $action->execute($rows, $actor, $request, $request->boolean('confirm'));
+
+        return response()->json($result);
     }
 
     /** @return list<array{codigo: string, nombre: string}> */

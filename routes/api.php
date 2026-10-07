@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
 use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
+use App\Modules\Academic\Presentation\Http\Controllers\ScheduledImportController;
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectProfileController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
@@ -97,6 +98,10 @@ Route::prefix('v1')->group(function (): void {
             Route::post('admin/users', [ManagedUserController::class, 'store'])
                 ->middleware('active-role')
                 ->name('api.v1.admin.users.store');
+            Route::get('admin/users/import-template', [ManagedUserController::class, 'importTemplate'])
+                ->middleware('active-role')->name('api.v1.admin.users.import-template');
+            Route::post('admin/users/import', [ManagedUserController::class, 'import'])
+                ->middleware('active-role')->name('api.v1.admin.users.import');
             Route::patch('admin/users/{user}', [ManagedUserController::class, 'update'])
                 ->middleware('active-role')->name('api.v1.admin.users.update');
             Route::post('admin/users/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
@@ -204,6 +209,10 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.academic.teacher-assignments.index');
             Route::post('coordination/academic/teachers', [CareerTeacherController::class, 'store'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.store');
+            Route::get('coordination/academic/teachers/import-template', [CareerTeacherController::class, 'importTemplate'])
+                ->middleware('active-role')->name('api.v1.coordination.academic.teachers.import-template');
+            Route::post('coordination/academic/teachers/import', [CareerTeacherController::class, 'import'])
+                ->middleware('active-role')->name('api.v1.coordination.academic.teachers.import');
             Route::patch('coordination/academic/teachers/{user}', [CareerTeacherController::class, 'update'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.update');
             Route::delete('coordination/academic/teachers/{user}', [CareerTeacherController::class, 'destroy'])
@@ -212,6 +221,10 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.coordination.academic.teachers.activation.resend');
             Route::post('coordination/academic/prepare-period', [CareerAcademicStructureController::class, 'preparePeriod'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.period.prepare');
+            Route::get('coordination/academic/scheduled-import-template', [ScheduledImportController::class, 'template'])
+                ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-import.template');
+            Route::post('coordination/academic/scheduled-import', [ScheduledImportController::class, 'import'])
+                ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-import.store');
             Route::post('coordination/academic/parallels', [CareerAcademicStructureController::class, 'storeParallels'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.parallels.store');
             Route::patch('coordination/academic/parallels/{parallel}', [CareerAcademicStructureController::class, 'updateParallel'])

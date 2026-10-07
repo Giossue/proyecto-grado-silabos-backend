@@ -12,6 +12,7 @@ use App\Modules\Syllabus\Application\Actions\ApproveSyllabus;
 use App\Modules\Syllabus\Application\Actions\DeleteSyllabus;
 use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
 use App\Modules\Syllabus\Application\Actions\ResetSyllabus;
+use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\RevisionDiff;
 use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
@@ -227,7 +228,7 @@ class ReviewController extends Controller
                 'number' => $revision->numero_revision,
                 'submitted_at' => $revision->enviado_en->toIso8601String(),
                 'submitted_by' => $revision->submitter->nombre,
-                'snapshot' => $revision->fotografia,
+                'snapshot' => $this->withAutomaticDocuments($revision->fotografia),
                 'is_current' => $latest?->id === $revision->id,
             ],
             'history' => $syllabus->revisions->sortBy('numero_revision')->map(fn (SyllabusRevision $item): array => [
@@ -276,5 +277,27 @@ class ReviewController extends Controller
         $message = 'Sílabo reiniciado. El docente empieza de cero con la malla y la plantilla actuales; el historial se conserva.';
 
         return response()->json(['message' => $message]);
+    }
+
+    /**
+     * La cuadrícula oficial de identificación se arma en el servidor: el campo automático lleva su `document`.
+     *
+     * @param  mixed  $snapshot
+     * @return mixed
+     */
+    private function withAutomaticDocuments($snapshot)
+    {
+        if (! is_array($snapshot) || ! is_array($snapshot['sections'] ?? null)) {
+            return $snapshot;
+        }
+        foreach ($snapshot['sections'] as $s => $section) {
+            foreach (is_array($section['fields'] ?? null) ? $section['fields'] : [] as $f => $field) {
+                if (($field['type'] ?? null) === 'automatico' && (($field['config']['source'] ?? null) === 'identification_card') && is_array($field['value'] ?? null)) {
+                    $snapshot['sections'][$s]['fields'][$f]['document'] = IdentificationCard::document($field['value']);
+                }
+            }
+        }
+
+        return $snapshot;
     }
 }

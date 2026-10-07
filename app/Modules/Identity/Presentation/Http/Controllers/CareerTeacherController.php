@@ -5,12 +5,18 @@ namespace App\Modules\Identity\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Identity\Application\Actions\CreateCareerTeacher;
+use App\Modules\Identity\Application\Actions\ImportCareerTeachers;
 use App\Modules\Identity\Application\Actions\RemoveCareerTeacher;
 use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
+use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
+use App\Modules\Identity\Application\Spreadsheet\SpreadsheetTemplate;
 use App\Modules\Identity\Presentation\Http\Requests\CreateCareerTeacherRequest;
+use App\Modules\Identity\Presentation\Http\Requests\ImportSpreadsheetRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateCareerTeacherRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CareerTeacherController extends Controller
 {
@@ -27,6 +33,23 @@ class CareerTeacherController extends Controller
                 : 'El docente ya está disponible en su carrera. Conserva su nombre y acceso actuales.');
 
         return response()->json(['message' => $message]);
+    }
+
+    public function importTemplate(SpreadsheetTemplate $template): StreamedResponse
+    {
+        Gate::authorize('createCareerTeacher', User::class);
+
+        return $template->download('plantilla-docentes.xlsx', array_values(ImportCareerTeachers::COLUMNS), ['Nombre Apellido', 'correo@ueb.edu.ec']);
+    }
+
+    public function import(ImportSpreadsheetRequest $request, SpreadsheetReader $reader, ImportCareerTeachers $action): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        Gate::authorize('createCareerTeacher', User::class);
+        $rows = $reader->read($request->file('file'), ImportCareerTeachers::COLUMNS);
+
+        return response()->json($action->execute($rows, $actor, $request, $request->boolean('confirm')));
     }
 
     public function update(User $user, UpdateCareerTeacherRequest $request, UpdateManagedUserProfile $action): JsonResponse

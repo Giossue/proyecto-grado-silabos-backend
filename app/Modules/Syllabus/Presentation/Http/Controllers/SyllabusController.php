@@ -191,6 +191,7 @@ class SyllabusController extends Controller
         ]);
         $values = $syllabus->values->keyBy('definicion_campo_id');
         $template = SyllabusTemplate::institutional();
+        $identification = IdentificationCard::fromSyllabus($syllabus);
 
         return [
             'id' => $syllabus->id,
@@ -217,9 +218,9 @@ class SyllabusController extends Controller
                     'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
                 ],
             ],
-            'template_variables' => TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($syllabus)]),
+            'template_variables' => TemplateVariables::resolve(['identification' => $identification]),
             'sections' => $template->sections
-                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values))
+                ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, ['identification' => $identification]))
                 ->values(),
             'revisions' => $syllabus->revisions->sortBy('numero_revision')->map(fn (SyllabusRevision $revision): array => [
                 'id' => $revision->id,
@@ -272,13 +273,14 @@ class SyllabusController extends Controller
 
     /**
      * @param  Collection<string, FieldValue>  $values
+     * @param  array<string, mixed>  $context
      * @return array<string, mixed>
      */
-    private function sectionPayload(TemplateSection $section, $values): array
+    private function sectionPayload(TemplateSection $section, $values, array $context): array
     {
         $blocks = [];
         foreach ($section->blocks as $block) {
-            $blocks[] = $this->blockPayload($block, $values);
+            $blocks[] = $this->blockPayload($block, $values, $context);
         }
 
         return [
@@ -286,21 +288,28 @@ class SyllabusController extends Controller
             'key' => $section->clave,
             'title' => $section->titulo,
             'description' => $section->descripcion,
+            // I-195: lista plana de campos, cada uno con su tipo y configuración (el frontend usa su registro).
+            'fields' => array_values(array_merge(...array_map(fn (array $block): array => $block['fields'], $blocks ?: [['fields' => []]]))),
             'blocks' => $blocks,
         ];
     }
 
     /**
      * @param  Collection<string, FieldValue>  $values
+     * @param  array<string, mixed>  $context
      * @return array<string, mixed>
      */
-    private function blockPayload(TemplateBlock $block, Collection $values): array
+    private function blockPayload(TemplateBlock $block, Collection $values, array $context): array
     {
         $fields = [];
         foreach ($block->fields as $field) {
             if (isset($block->configuracion['detached_fields'][$field->clave])) {
                 continue;
             }
+            $legacy = $field->hasLegacyClass();
+            $type = $field->fieldType();
+            $config = $field->typeConfig();
+            $stored = $values->get($field->id)?->valor;
             $fields[] = [
                 'id' => $field->id,
                 'key' => $field->clave,
@@ -312,7 +321,13 @@ class SyllabusController extends Controller
                 'required' => ! ($field->fromProfile() && $field->editable_docente),
                 'inherited' => $field->heredado,
                 'teacher_editable' => $field->editable_docente,
-                'value' => $values->get($field->id)?->valor,
+                'legacy' => $legacy,
+                'config' => $config === [] ? new \stdClass : $config,
+                // Tipos nuevos: el valor sale del registro (tabla con sus filas, automático resuelto, fijo con su contenido).
+                'value' => $legacy ? $stored : $type->toSnapshot($stored, $config, $context),
+                'document' => ! $legacy && ($config['source'] ?? null) === 'identification_card' && is_array($identification = $context['identification'] ?? null)
+                    ? IdentificationCard::document($identification)
+                    : null,
             ];
         }
 

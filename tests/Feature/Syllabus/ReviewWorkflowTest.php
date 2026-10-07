@@ -226,6 +226,17 @@ class ReviewWorkflowTest extends TestCase
         $this->assertDatabaseCount('revisiones_silabo', 0);
     }
 
+    public function test_review_snapshot_carries_the_official_identification_document(): void
+    {
+        [, $revision] = $this->submitValidDraft();
+
+        $fields = collect($this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))->assertOk()->json('revision.snapshot.sections'))
+            ->flatMap(fn ($section) => $section['fields']);
+        $automatic = $fields->firstWhere('type', 'automatico');
+        $this->assertSame('table', $automatic['document']['content'][0]['type']);
+        $this->assertArrayNotHasKey('document', $fields->firstWhere('type', 'texto'));
+    }
+
     public function test_cp_f_review_workspace_enforces_role_and_record_scope(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();
