@@ -230,14 +230,21 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   el chat procesa o falla. La ruta de detalle docente usa una superficie documental sin sidebar ni
   encabezado autenticado global; conserva únicamente el cambio de tema y el formulario
   mantiene sus propias acciones operativas.
-- I-60 separa los dos estados de ADM-06. `/admin/plantilla/{id}` presenta la plantilla
-  completa en solo lectura y ofrece **Editar**. `/admin/plantilla/{id}/editar` conserva
-  la hoja y añade una cinta contextual: al seleccionar un bloque, campo o tabla muestra
-  únicamente sus acciones. El editor de celdas trabaja dentro de la hoja y no encierra
-  el documento en un diálogo de pantalla completa. Durante esta edición no se muestran
-  el sidebar ni el encabezado administrativo: una sola cabecera fija de ancho completo
-  reúne **Volver a la vista**, las acciones contextuales y **Documento**, sin fila ni
-  etiqueta adicional de selección, mientras la hoja se desplaza por debajo.
+- I-195 (etapa 7) reescribe ADM-06 como un constructor simple, sin hoja editable ni modo
+  «Editar»: dos pestañas, **Constructor** y **Vista previa**. El constructor lista secciones
+  numeradas y, dentro, sus campos; permite agregar, renombrar, borrar y subir/bajar
+  secciones y campos. **Nueva sección** va en dos pasos (nombre y primer campo opcional);
+  **Propiedades del campo** cambia nombre, ayuda y opciones (el tipo no cambia). Al agregar un
+  campo se elige quién lo escribe: «Lo escribe el docente», «Lo escribe Coordinación en la
+  ficha de la asignatura» (con «El docente puede ajustarlo»), «Tabla de filas fijas»,
+  «Dato automático» o «Texto fijo igual para todos»; la lista sale del registro de tipos y cada
+  tipo aporta su pieza de configuración. El nombre del campo es opcional (sin nombre, no lleva
+  subtítulo; en el constructor aparece como «Campo sin nombre»). La vista previa muestra el
+  sílabo como lo verá el docente, con logos y título. Con un proceso abierto todo queda
+  deshabilitado con el aviso «Edición bloqueada».
+- Se retiraron de ADM-06 la hoja libre, la cinta Insertar, las marcas, los anchos por celda y
+  la hoja horizontal, margen y letra por sección (descripciones anteriores de I-60 y I-156
+  sobre esos controles ya no aplican).
 - En una tabla, **Fondo de celda** y **Color de fuente** son controles distintos y se
   aplican a la celda o las celdas seleccionadas.
 - ADM-06 presenta el título principal como un bloque raíz único y siempre primero.

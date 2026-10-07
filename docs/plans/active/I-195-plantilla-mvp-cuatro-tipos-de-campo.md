@@ -34,7 +34,7 @@ Docente/Sí-No/Firma/Dato automático insertables, anchos por celda.
 - [x] 5. Plantilla inicial (ver Etapa 5).
 - [x] 5b. Quinto tipo `fijo` y recuperación del contenido institucional (ver Etapa 5b).
 - [x] 6. Frontend: registro y editor del docente (ver Etapa 6).
-- [ ] 7. Frontend: constructor simple.
+- [x] 7. Frontend: constructor simple (ver Etapa 7).
 - [ ] 8. Limpieza del modelo anterior.
 
 ## Etapa 2: decisiones y deuda
@@ -113,3 +113,10 @@ La condición «mostrar si» dependía de los tipos `seleccion_unica` y `boolean
 - API del docente: cada sección suma `fields[]` planos (`type`, `config`, `legacy`, valor resuelto por el registro: la tabla trae sus filas vacías, el fijo su contenido, el automático los datos del sílabo; `document` con la cuadrícula oficial `IdentificationCard::document`). `blocks` se conserva por compatibilidad. En la API de revisión, `ReviewController` agrega `document` a los campos automáticos de la fotografía; Biblioteca y Coordinación ya recibían `fields[]` v7.
 - `TeacherSyllabusDetailPage`, `CoordinationReviewDetailPage` y `LibraryReviewDetailPage` recorren `section.fields` (en fotografías v6, `sectionFields` cae a los bloques) y usan el componente del tipo. `SubjectProfileSheet` usa el editor de texto del registro.
 - Deuda: no se tocó `TemplateVisualBuilder`/`AdminTemplatePage` (etapa 7). Las pantallas ya no pintan campos de la clase anterior (selección, número, fecha, booleano) ni bloques con diseño: se muestran como texto de solo lectura; los campos condicionales (`mostrar_si`) ya no se aplican en el docente. `CoordinationReviewComparisonPage` sigue leyendo `blocks` (etapa 8). Las fotografías v6 con bloques de diseño se ven como lista plana de campos. Falta revisión visual en navegador.
+
+## Etapa 7: frontend, constructor simple de plantilla
+
+- `AdminTemplatePage` tiene pestañas Constructor y Vista previa (sin modo «Editar» ni hoja). `TemplateVisualBuilder.vue` (reescrito) lista secciones numeradas con sus campos y usa solo `api/template-structure.ts` (`structure/...`); tras cada cambio recarga la plantilla. `TemplateSectionDialog` («Nueva sección» en dos pasos y renombrar), `TemplateFieldDialog` («Agregar campo» y «Propiedades del campo») y `TemplateFieldForm` (selector de tipo, nombre opcional, ayuda y configuración). `TemplatePreview` pinta el sílabo con las `*View.vue` del registro.
+- Registro del frontend: cada tipo suma `adminLabel`, `adminHint`, `BuilderComponent` (`*FieldBuilder.vue`) y `validateConfig`; el selector de tipo sale del registro. Las claves de secciones y campos se generan del nombre (`uniqueKey`); un campo sin nombre usa `campo`, `campo_2`...
+- Se eliminaron `TemplateTableEditor/Designer/InlineNode`, `TemplateInsertPopover`, `template-table/*`, `TemplateBlockCreator`, `TemplateFieldCreator/Actions`, `TemplateSectionActions`, `TemplateDocumentView`, `templateDocumentInput/Render`, `TemplateIconPopover`, `TemplateToolbarSelect`, `lib/templateParts`, `lib/templatePreview`, `lib/wordTableResize` y sus pruebas. «Personalizar plantilla» queda solo con el logo.
+- Deuda: `lib/templateDocument.ts` (tipos de documento con marcas) y `TemplateTitleActions` (usa `PATCH .../title` de la API anterior y el evento `silabos:template-changed` de `ApiForm`/`apiVisit`) siguen vivos; `state/templateEditor.ts` ya no lo abre nadie (el layout lo lee; quitar en etapa 8). No hay recuperación de «proceso abierto» más allá del bloqueo y del mensaje del servidor. Sin revisión visual en navegador.
