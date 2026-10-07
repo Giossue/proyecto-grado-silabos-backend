@@ -65,6 +65,13 @@ documento, la revisión y la exportación dibujan solo el diseño guardado en la
 | Estudiantes con discapacidad (Sí/No, tipo, adaptación) | `disability`, `disability_type`, `disability_description` | Lo escribe el docente: campos `discapacidad_tiene`, `discapacidad_tipo`, `discapacidad_adaptacion` del bloque de identificación (`valores_campo`) |
 | Formación y experiencia académica-investigativa | `formation` | Lo escribe el docente: campo `formacion_experiencia` del mismo bloque; última fila de la tabla |
 
+En la pantalla del docente, mientras el sílabo se puede editar (borrador o corrección solicitada y sin
+convocatoria en pausa), la etiqueta «FORMACIÓN Y EXPERIENCIA ACADÉMICA – INVESTIGATIVA:» de la última fila es un
+botón con aspecto de enlace (`aria-label` «Editar formación y experiencia») que abre un modal con el mismo
+campo del Perfil (`TeacherFormationField`, `useTeacherFormation`). Guardar llama a `PUT authentication/formation`
+(`UpdateTeacherFormation`), que actualiza el perfil y los sílabos aún editables, y la página recarga el sílabo para
+mostrar el texto nuevo. En revisión, enviado o aprobado la etiqueta sigue siendo texto plano.
+
 Los campos que llena el docente viven en el mismo bloque «Identificación institucional»
 de la plantilla (`IdentificationCard::INPUT_KEYS`). Con diseño guardado se completan
 dentro de sus celdas; el lector anterior los sigue mostrando debajo de la ficha.
