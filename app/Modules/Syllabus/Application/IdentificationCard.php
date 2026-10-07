@@ -32,7 +32,7 @@ final class IdentificationCard
 
     public const SHIFT_LABELS = ['matutina' => 'Matutina', 'vespertina' => 'Vespertina', 'nocturna' => 'Nocturna'];
 
-    public const WIDTHS = [19.0, 9.4, 4.6, 3.7, 8.5, 4.3, 17.0, 14.5, 19.0];
+    public const WIDTHS = [23.5, 10.5, 4.0, 3.5, 8.0, 4.0, 20.0, 13.5, 13.0];
 
     /** @return Data */
     public static function fromSyllabus(Syllabus $syllabus): array
