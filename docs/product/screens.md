@@ -239,6 +239,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - ADM-06 muestra hojas carta separadas y numeradas (I-53). El pie derecho muestra
   únicamente el número de página (1, 2, 3…), sin el total. La cantidad se recalcula
   según el contenido de muestra al agregar, retirar, reordenar o renombrar piezas.
+  En la vista de lectura, el título y las acciones del encabezado se alinean con los
+  bordes izquierdo y derecho de la primera hoja, incluida su orientación vigente.
   Los títulos acompañan al primer contenido; un bloque con varios campos puede continuar
   entre hojas y cada subtítulo acompaña la primera línea de su campo. Los textos extensos
   se dividen entre líneas visuales. Las tablas pueden ocupar varias hojas, se dividen
