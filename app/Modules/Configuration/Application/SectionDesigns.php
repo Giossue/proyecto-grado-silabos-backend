@@ -67,6 +67,7 @@ final class SectionDesigns
         $definitions = [];
         foreach ($design['fields'] as $index => [$fieldKey, $label, $typeKey, $rawConfig]) {
             $type = $this->types->get($typeKey);
+            $fromTeacherProfile = ($rawConfig['from'] ?? null) === 'perfil_docente';
             $config = $type->normalizeConfig($this->expandConfig($rawConfig));
             $blockId = (string) Str::uuid();
 
@@ -88,7 +89,9 @@ final class SectionDesigns
                 'posicion' => 1,
                 'opciones' => $config === [] ? null : $config,
                 'mostrar_si' => null,
-                ...$this->inheritance($typeKey, $config),
+                ...($fromTeacherProfile
+                    ? ['heredado' => true, 'origen_maestro' => FieldDefinition::ORIGIN_TEACHER, 'editable_docente' => false]
+                    : $this->inheritance($typeKey, $config)),
             ];
         }
 

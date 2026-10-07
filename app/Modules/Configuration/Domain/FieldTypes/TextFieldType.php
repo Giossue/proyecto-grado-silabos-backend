@@ -22,14 +22,22 @@ final class TextFieldType implements FieldType
 
     public function configRules(): array
     {
-        return ['inside' => ['sometimes', 'nullable', 'string', 'in:'.implode(',', self::INSIDE)]];
+        return [
+            'inside' => ['sometimes', 'nullable', 'string', 'in:'.implode(',', self::INSIDE)],
+            'optional' => ['sometimes', 'boolean'],
+        ];
     }
 
     public function normalizeConfig(array $config): array
     {
         $inside = $config['inside'] ?? null;
+        $normalized = is_string($inside) && in_array($inside, self::INSIDE, true) ? ['inside' => $inside] : [];
+        // Opcional: el docente puede dejarlo en blanco (p. ej. discapacidad cuando no hay estudiantes con ella).
+        if (filter_var($config['optional'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            $normalized['optional'] = true;
+        }
 
-        return is_string($inside) && in_array($inside, self::INSIDE, true) ? ['inside' => $inside] : [];
+        return $normalized;
     }
 
     public function defaultValue(array $config): mixed

@@ -7,9 +7,9 @@ return [
             'summary' => 'Tabla oficial con los datos de la asignatura, el periodo y el docente. El docente completa dentro de ella la discapacidad y su formación.',
             'fields' => [
                 ['asignatura', '', 'automatico', ['source' => 'identification_card']],
-                ['discapacidad_tipo', 'Estudiantes con discapacidad: Tipo de discapacidad', 'texto', ['inside' => 'identification_card']],
-                ['discapacidad_adaptacion', 'Estudiantes con discapacidad: Breve descripción', 'texto', ['inside' => 'identification_card']],
-                ['formacion_experiencia', 'Formación y experiencia académica – investigativa', 'texto', ['inside' => 'identification_card']],
+                ['discapacidad_tipo', 'Estudiantes con discapacidad: Tipo de discapacidad', 'texto', ['inside' => 'identification_card', 'optional' => true]],
+                ['discapacidad_adaptacion', 'Estudiantes con discapacidad: Breve descripción', 'texto', ['inside' => 'identification_card', 'optional' => true]],
+                ['formacion_experiencia', 'Formación y experiencia académica – investigativa', 'texto', ['inside' => 'identification_card', 'from' => 'perfil_docente']],
             ],
         ],
         'descripcion' => [

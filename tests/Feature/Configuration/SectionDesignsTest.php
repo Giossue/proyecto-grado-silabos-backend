@@ -77,8 +77,8 @@ class SectionDesignsTest extends TestCase
         $this->assertTrue($fields['asignatura']->heredado);
         foreach (['discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia'] as $key) {
             $this->assertSame('texto', $fields[$key]->fieldType()->key());
-            $this->assertSame(['inside' => 'identification_card'], $fields[$key]->typeConfig());
-            $this->assertTrue($fields[$key]->editable_docente);
+            $this->assertSame($key === 'formacion_experiencia' ? ['inside' => 'identification_card'] : ['inside' => 'identification_card', 'optional' => true], $fields[$key]->typeConfig());
+            $this->assertSame($key !== 'formacion_experiencia', $fields[$key]->editable_docente);
         }
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.seccion_creada']);
 

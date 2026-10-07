@@ -318,7 +318,7 @@ class SyllabusController extends Controller
                 'type' => $field->tipo,
                 'options' => FieldOptions::options($field),
                 'show_when' => FieldConditions::normalize($field->mostrar_si),
-                'required' => ! ($field->fromProfile() && $field->editable_docente),
+                'required' => ! ($field->fromProfile() && $field->editable_docente) && ($config['optional'] ?? false) !== true,
                 'inherited' => $field->heredado,
                 'teacher_editable' => $field->editable_docente,
                 'legacy' => $legacy,

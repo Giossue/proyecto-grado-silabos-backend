@@ -115,6 +115,14 @@ class FieldTypesTest extends TestCase
         $type->normalizeConfig(['columns' => [['key' => 'a', 'label' => 'A'], ['key' => 'a', 'label' => 'B']], 'rows' => [['key' => 'r', 'label' => 'R']]]);
     }
 
+    public function test_text_type_keeps_the_optional_flag(): void
+    {
+        $type = new TextFieldType;
+
+        $this->assertSame(['inside' => 'identification_card', 'optional' => true], $type->normalizeConfig(['inside' => 'identification_card', 'optional' => true]));
+        $this->assertSame([], $type->normalizeConfig(['optional' => false]));
+    }
+
     public function test_units_type_validates_units_and_weeks_and_totals_hours_per_unit(): void
     {
         $type = new UnitsFieldType;

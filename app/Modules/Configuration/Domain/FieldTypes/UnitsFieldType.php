@@ -122,10 +122,9 @@ final class UnitsFieldType implements FieldType
     {
         $value = is_array($field['value'] ?? null) ? $field['value'] : [];
         $units = array_values(array_filter($value, 'is_array'));
+        // Sin datos se dibuja una unidad en blanco: la hoja conserva el formato oficial.
         if ($units === []) {
-            $context->writeDocument($target, null);
-
-            return;
+            $units = [['nombre' => '', 'resultado' => '', 'semanas' => array_fill(0, 4, [])]];
         }
         $week = 0;
         foreach ($units as $index => $unit) {

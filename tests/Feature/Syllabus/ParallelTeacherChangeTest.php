@@ -249,7 +249,7 @@ class ParallelTeacherChangeTest extends TestCase
 
         return match (true) {
             in_array($field->tipo, ['texto_libre', 'texto', 'ficha'], true) => ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")],
-            $field->tipo === 'tabla' => ['version_bloqueo' => $lockVersion, 'value' => $this->filledTableValue($field)],
+            in_array($field->tipo, ['tabla', 'unidades'], true) => ['version_bloqueo' => $lockVersion, 'value' => $this->filledTableValue($field)],
             $field->tipo === 'booleano' => ['version_bloqueo' => $lockVersion, 'value' => true],
             $field->tipo === 'numero' => ['version_bloqueo' => $lockVersion, 'value' => 1],
             $field->tipo === 'fecha' => ['version_bloqueo' => $lockVersion, 'value' => now()->toDateString()],

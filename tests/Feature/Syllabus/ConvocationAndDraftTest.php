@@ -162,8 +162,7 @@ class ConvocationAndDraftTest extends TestCase
         );
         $this->assertSame('fijo', $fields['indicadores_evaluacion']['type']);
         $this->assertSame('doc', $fields['indicadores_evaluacion']['value']['type']);
-        $this->assertSame('tabla', $fields['unidades']['type']);
-        $this->assertCount(8, $fields['unidades']['config']['columns']);
+        $this->assertSame('unidades', $fields['unidades']['type']);
         $this->assertIsArray($fields['unidades']['value']);
         $automatic = $fields->firstWhere('type', 'automatico');
         $this->assertSame('identification_card', $automatic['config']['source']);
@@ -192,7 +191,7 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame(7, $snapshot['schema_version']);
         $fields = collect($snapshot['sections'])->flatMap(fn ($section) => $section['fields']);
         $this->assertNotEmpty($fields);
-        $this->assertSame([], $fields->filter(fn ($field) => ! in_array($field['type'], ['texto', 'ficha', 'tabla', 'automatico', 'fijo'], true))->all());
+        $this->assertSame([], $fields->filter(fn ($field) => ! in_array($field['type'], ['texto', 'ficha', 'tabla', 'automatico', 'fijo', 'unidades'], true))->all());
         $description = $fields->firstWhere('key', 'descripcion');
         $this->assertSame('ficha', $description['type']);
         $this->assertSame(
@@ -646,7 +645,7 @@ class ConvocationAndDraftTest extends TestCase
         foreach ($requiredEditable as $field) {
             $payload = match (true) {
                 in_array($field->tipo, ['texto_libre', 'texto', 'ficha'], true) => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue("Contenido {$field->clave}")],
-                $field->tipo === 'tabla' => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->filledTableValue($field)],
+                in_array($field->tipo, ['tabla', 'unidades'], true) => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->filledTableValue($field)],
                 $field->tipo === 'seleccion_unica' => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => (string) ($field->opciones[0] ?? '')],
                 default => ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => "Contenido {$field->clave}"],
             };

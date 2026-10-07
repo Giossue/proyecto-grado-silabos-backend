@@ -17,6 +17,10 @@ trait CreatesSyllabusProcess
     /** Valor válido para una `tabla`: todas las celdas fijas con texto. */
     protected function filledTableValue(FieldDefinition $field): array
     {
+        if ($field->fieldType()->key() === 'unidades') {
+            return [['nombre' => 'Unidad de prueba', 'resultado' => 'Resultado de prueba', 'semanas' => [['contenidos' => 'Tema', 'acd_h' => '2', 'ape_h' => '1', 'aa_h' => '3', 'acd' => 'Clase', 'ape' => 'Guía', 'aa' => 'Lectura', 'evaluacion' => 'Foro']]]];
+        }
+
         return array_map(
             fn (array $cells): array => array_map(fn (): string => 'Dato de prueba', $cells),
             $field->fieldType()->defaultValue($field->typeConfig()),

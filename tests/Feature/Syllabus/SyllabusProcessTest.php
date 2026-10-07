@@ -389,9 +389,8 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsTeacher()
             ->getJson(route('api.v1.dashboard.show'))
             ->assertOk()
-            ->assertJsonCount(2, 'metrics')
-            ->assertJsonPath('deadline.state', 'active')
-            ->assertJsonPath('deadline.convocation_id', $convocation->id)
+            ->assertJsonCount(0, 'metrics')
+            ->assertJsonPath('deadline', null)
             ->assertJsonPath('coordination_convocation', null);
 
         $this->transition($process, 'pausar', 'Se corrige la configuración institucional.')->assertSuccessful();
@@ -399,7 +398,7 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsTeacher()
             ->getJson(route('api.v1.dashboard.show'))
             ->assertOk()
-            ->assertJsonPath('deadline.state', 'paused');
+            ->assertJsonPath('deadline', null);
     }
 
     public function test_only_one_process_can_be_in_progress(): void

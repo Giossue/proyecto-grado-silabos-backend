@@ -93,9 +93,12 @@ class SyllabusTemplateSeederTest extends TestCase
             $this->assertStringContainsString($text, $ethics);
         }
         $this->assertStringNotContainsString('pendiente', $ethics);
-        foreach (['discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia'] as $key) {
-            $this->assertSame(['inside' => 'identification_card'], $fields[$key]->typeConfig(), $key);
+        foreach (['discapacidad_tipo', 'discapacidad_adaptacion'] as $key) {
+            $this->assertSame(['inside' => 'identification_card', 'optional' => true], $fields[$key]->typeConfig(), $key);
         }
+        $this->assertSame(['inside' => 'identification_card'], $fields['formacion_experiencia']->typeConfig());
+        $this->assertTrue($fields['formacion_experiencia']->heredado);
+        $this->assertFalse($fields['formacion_experiencia']->editable_docente);
 
         foreach ($template->blocks() as $block) {
             $this->assertNotContains($block->configuredContentType(), ['fixed', 'institutional', 'flow'], $block->titulo);

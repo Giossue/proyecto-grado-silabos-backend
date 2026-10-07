@@ -78,6 +78,9 @@ class ValidateDraft
         if (! $field->hasLegacyClass() && ! $field->fieldType()->teacherEditable() && $field->fieldType()->key() === 'automatico') {
             return false;
         }
+        if (($field->typeConfig()['optional'] ?? false) === true) {
+            return false;
+        }
         $block = $field->block;
         if ($block === null || $block->contentType() === 'fixed') {
             return false;
@@ -109,7 +112,8 @@ class ValidateDraft
     /** Los campos del modelo nuevo deciden por su tipo si están vacíos; los de la clase anterior, por su valor. */
     private function hasValue(FieldDefinition $field, mixed $value): bool
     {
-        return $field->hasLegacyClass()
+        // La formación del docente se hereda de su perfil como texto plano, no como documento.
+        return $field->hasLegacyClass() || $field->origen_maestro === FieldDefinition::ORIGIN_TEACHER
             ? self::filled($value)
             : ! $field->fieldType()->isEmpty($value, $field->typeConfig());
     }
