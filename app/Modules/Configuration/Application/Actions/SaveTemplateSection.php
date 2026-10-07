@@ -56,7 +56,7 @@ class SaveTemplateSection
                     'id' => $blockId,
                     'clave' => 'identificacion_principal',
                     'titulo' => 'Identificación institucional',
-                    'configuracion' => ['content_type' => 'institutional', 'document' => TemplateDocumentDefaults::identification()],
+                    'configuracion' => ['content_type' => 'institutional', 'compact' => true, 'document' => TemplateDocumentDefaults::identification()],
                     'posicion' => 1,
                 ];
                 $fieldDefinitions[] = [

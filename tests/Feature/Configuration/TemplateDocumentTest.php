@@ -576,6 +576,22 @@ class TemplateDocumentTest extends TestCase
         $this->assertNull($block->fresh()->pageOrientation());
     }
 
+    public function test_compact_flag_is_saved_and_exposed_per_block(): void
+    {
+        $template = $this->template();
+        $block = $template->blocks()->firstWhere('clave', 'evaluacion_principal');
+        $url = route('api.v1.admin.template.blocks.document.update', [$template, $block]);
+        $body = ['document' => $block->configuracion['document'], 'fingerprint' => SaveTemplateDocument::fingerprint($block)];
+
+        $this->patchJson($url, [...$body, 'compact' => true])->assertSuccessful();
+        $this->assertTrue($block->fresh()->isCompact());
+        $this->getJson(route('api.v1.admin.template.show', $template))->assertJsonFragment(['compact' => true]);
+
+        $body['fingerprint'] = SaveTemplateDocument::fingerprint($block->fresh());
+        $this->patchJson($url, [...$body, 'compact' => false])->assertSuccessful();
+        $this->assertFalse($block->fresh()->isCompact());
+    }
+
     public function test_fixed_text_can_be_landscape_and_is_not_saved_empty(): void
     {
         $template = $this->template();

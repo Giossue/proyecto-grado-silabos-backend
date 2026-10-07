@@ -118,6 +118,12 @@ final class TemplateBlock implements UrlRoutable
         return in_array($orientation, ['portrait', 'landscape'], true) ? $orientation : null;
     }
 
+    /** Sección compacta: letra de 9 pt y margen de 1.5 cm solo en esa hoja. */
+    public function isCompact(): bool
+    {
+        return ($this->configuracion['compact'] ?? false) === true;
+    }
+
     /** @return array<string, mixed> */
     public function toArray(): array
     {

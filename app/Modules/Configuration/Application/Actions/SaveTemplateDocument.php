@@ -210,6 +210,13 @@ final class SaveTemplateDocument
                 unset($configuration['page_orientation']);
             }
         }
+        if ($request->has('compact')) {
+            if ($request->boolean('compact')) {
+                $configuration['compact'] = true;
+            } else {
+                unset($configuration['compact']);
+            }
+        }
         $block->update([
             'titulo' => $request->has('title') ? $request->string('title')->trim()->value() : $block->titulo,
             'configuracion' => $configuration,

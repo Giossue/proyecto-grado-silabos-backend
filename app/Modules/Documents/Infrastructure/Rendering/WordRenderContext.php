@@ -2,6 +2,7 @@
 
 namespace App\Modules\Documents\Infrastructure\Rendering;
 
+use PhpOffice\PhpWord\Shared\Converter;
 use PhpOffice\PhpWord\SimpleType\Jc;
 
 final class WordRenderContext
@@ -30,6 +31,24 @@ final class WordRenderContext
         public readonly array $templateVariables = [],
         public readonly array $academicContext = [],
     ) {}
+
+    public const COMPACT_FONT_SIZE = 9;
+
+    public const COMPACT_MARGIN_CM = 1.5;
+
+    /** Copia para una sección compacta: letra de 9 pt y margen de 1.5 cm. */
+    public function compact(int $pageWidth): self
+    {
+        $copy = new self(
+            [...$this->appearance, 'body_font_size' => self::COMPACT_FONT_SIZE, 'field_font_size' => self::COMPACT_FONT_SIZE, 'margin_cm' => self::COMPACT_MARGIN_CM],
+            $this->hasAppearance,
+            $this->templateVariables,
+            $this->academicContext,
+        );
+        $copy->contentWidth = $pageWidth - (2 * (int) round(Converter::cmToTwip(self::COMPACT_MARGIN_CM)));
+
+        return $copy;
+    }
 
     public function color(string $key): string
     {

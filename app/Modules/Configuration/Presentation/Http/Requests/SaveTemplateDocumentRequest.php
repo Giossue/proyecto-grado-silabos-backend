@@ -23,6 +23,7 @@ class SaveTemplateDocumentRequest extends ManageTemplatesRequest
             'properties.*.show_when' => ['sometimes', 'nullable', 'array:key,value'],
             'confirm_purge' => ['nullable', 'boolean'],
             'page_orientation' => ['sometimes', 'nullable', 'in:portrait,landscape'],
+            'compact' => ['sometimes', 'boolean'],
         ];
     }
 

@@ -258,6 +258,7 @@ return [
         'margin_cm' => 'margen',
         'orientation' => 'orientación',
         'page_orientation' => 'orientación de la página',
+        'compact' => 'sección compacta',
         'body_alignment' => 'alineación del texto',
         'body_font_size' => 'tamaño del texto',
         'field_font_size' => 'tamaño de los campos',

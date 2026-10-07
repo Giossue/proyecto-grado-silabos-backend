@@ -68,6 +68,8 @@ class SyllabusWordDocument
 
         $currentOrientation = (string) $this->context->appearance['orientation'];
         $section = $this->addSection($word, $currentOrientation, $margin);
+        $currentCompact = false;
+        $activeFields = $fields;
 
         $this->logos($section, $input);
         $section->addText(
@@ -87,9 +89,14 @@ class SyllabusWordDocument
 
         foreach (WordValues::arrayList($input->snapshot['sections'] ?? null) as $sectionIndex => $block) {
             $desiredOrientation = $this->sectionOrientation($block);
-            if ($desiredOrientation !== $currentOrientation) {
-                $section = $this->addSection($word, $desiredOrientation, $margin);
+            $desiredCompact = $this->sectionCompact($block);
+            if ($desiredOrientation !== $currentOrientation || $desiredCompact !== $currentCompact) {
+                $sectionMargin = $desiredCompact ? (int) round(Converter::cmToTwip(WordRenderContext::COMPACT_MARGIN_CM)) : $margin;
+                $section = $this->addSection($word, $desiredOrientation, $sectionMargin);
                 $currentOrientation = $desiredOrientation;
+                $currentCompact = $desiredCompact;
+                $pageWidth = $desiredOrientation === 'landscape' ? 15840 : 12240;
+                $activeFields = $desiredCompact ? new WordFieldRenderer($this->context->compact($pageWidth)) : $fields;
             }
             $number = $sectionIndex + 1;
             $section->addText(
@@ -111,7 +118,7 @@ class SyllabusWordDocument
             $partNumber = 0;
             foreach ($containers as $container) {
                 $numbered = count($containers) > 1 && WordFieldRenderer::hasTitle($container);
-                $fields->render($section, $container, $numbered ? $number.'.'.(++$partNumber) : null);
+                $activeFields->render($section, $container, $numbered ? $number.'.'.(++$partNumber) : null);
             }
         }
 
@@ -148,6 +155,18 @@ class SyllabusWordDocument
         }
 
         return (string) $this->context->appearance['orientation'];
+    }
+
+    /** @param array<string, mixed> $snapshotSection */
+    private function sectionCompact(array $snapshotSection): bool
+    {
+        foreach (WordValues::arrayList($snapshotSection['blocks'] ?? null) as $block) {
+            if (($block['compact'] ?? false) === true) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function logos(Section $section, DocumentRenderInput $input): void

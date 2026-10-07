@@ -94,6 +94,7 @@ final class SyllabusTemplateProvisioner
                 }
                 if ($contentType === 'institutional') {
                     $configuration['document'] = TemplateDocumentDefaults::identification();
+                    $configuration['compact'] = true;
                 }
 
                 $blocks[] = [

@@ -321,6 +321,7 @@ class SyllabusController extends Controller
             'title' => $block->titulo,
             'content_type' => $block->contentType(),
             'page_orientation' => $block->pageOrientation(),
+            'compact' => $block->isCompact(),
             'document' => $block->configuracion['document'] ?? null,
             'fields' => $fields,
         ];

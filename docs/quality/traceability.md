@@ -496,3 +496,5 @@ arrastre y los layouts en ambos temas y tres anchos. PV-07/PV-19 permanecen abie
 para aceptación real. Los dos fallos generales de backend relacionados con I-164/I-78
 se cerraron en I-166; la comprobación específica de API/OpenAPI pasa.
 El plan FE-SHADCN-2026-09-29 conserva el detalle y el resultado final de cada comando.
+
+| Sección compacta de identificación (I-193) | RF-017..026 | RN-009..012 | CU-04, CU-07 | ADM-06, DOC editor | CP-F plantilla | `compact` (bool) por sección, sin migración: 9 pt y margen 1.5 cm solo en esa hoja (editor y Word); por defecto en Identificación institucional | `TemplateDocumentTest` | Verificado local |

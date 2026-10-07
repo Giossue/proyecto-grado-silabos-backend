@@ -140,6 +140,7 @@ class TemplateController extends Controller
                             'type' => $block->tipo,
                             'content_type' => $block->contentType(),
                             'page_orientation' => $block->pageOrientation(),
+                            'compact' => $block->isCompact(),
                             'document' => $block->configuracion['document'] ?? null,
                             'fingerprint' => SaveTemplateDocument::fingerprint($block),
                             'fields' => $fields

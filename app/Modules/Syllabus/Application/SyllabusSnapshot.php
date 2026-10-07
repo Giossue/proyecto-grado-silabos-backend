@@ -46,6 +46,7 @@ class SyllabusSnapshot
                         'title' => $block->titulo,
                         'content_type' => $block->contentType(),
                         'page_orientation' => $block->pageOrientation(),
+                        'compact' => $block->isCompact(),
                         'document' => $block->configuracion['document'] ?? null,
                         'fields' => $block->fields->map(fn (FieldDefinition $field): array => [
                             'show_when' => FieldConditions::normalize($field->mostrar_si),
