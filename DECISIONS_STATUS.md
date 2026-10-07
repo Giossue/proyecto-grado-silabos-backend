@@ -1,6 +1,6 @@
 # Estado de decisiones
 
-Fecha de corte: **4 de octubre de 2026**.
+Fecha de corte: **7 de octubre de 2026**.
 
 ## Etiquetas
 
@@ -46,6 +46,15 @@ biblioteca. I-192 sustituye la etapa de decanato, el rol y la cuarta firma de I-
 conservando el orden Biblioteca → Coordinación. Migración nueva `000198`; el plan activo
 registra las condiciones de migración para datos históricos y plantilla existente.
 
+I-196 (7 de octubre de 2026), por instrucción explícita del responsable del producto,
+denomina **Facultades y carreras** al acceso de Administración para ADM-04. El enlace del
+menú lateral, el breadcrumb y los accesos de puesta en marcha usan la ruta canónica
+`/admin/estructura-academica`; sus pestañas seleccionan Facultades o Carreras dentro de
+esa pantalla. Las rutas con segmento se conservan únicamente como compatibilidad de
+entrada y no se generan desde la navegación vigente. La acción principal es un botón
+fijo **Crear** que permite elegir **Facultad** o **Carrera** sin depender de la pestaña
+activa.
+
 I-172 (4 de octubre de 2026), por instrucción del responsable del producto, funde la
 pantalla de Periodos académicos en **Convocatorias** (ADM-12): una fila por periodo con
 sus fechas de clases, las de elaboración de sílabos y el estado de la convocatoria, y un
@@ -58,8 +67,8 @@ convocatoria y abrir otra. Por eso **Eliminar** se admite en cualquier estado y 
 el historial, incluidos sílabos iniciados, aprobados y firmados (reemplaza I-117). Las
 tablas, reglas de unicidad y las fechas vacías por defecto (I-110, I-113) no cambian; el
 alta de periodo devuelve el `id` creado. La columna de semanas lectivas deja de mostrarse;
-el valor se sigue calculando para el sílabo. Periodos sale del submenú Estructura
-académica y su ruta antigua redirige a Convocatorias.
+el valor se sigue calculando para el sílabo. Periodos sale del acceso **Facultades y
+carreras** y su ruta antigua redirige a Convocatorias.
 
 I-171 (4 de octubre de 2026), por instrucción del responsable del producto, funde COR-15
 en COR-14: una sola pantalla **Materias y paralelos** del período en curso (sin selector
@@ -448,9 +457,9 @@ servidor. Este cambio
 no resuelve ni modifica `PV-16`, que trata la edición excepcional de contenido docente.
 
 I-10 unifica la presentación de listados por decisión explícita del responsable del
-producto: el fondo se conserva y las superficies usan tokens diferenciados; ADM-04 se
-navega mediante el submenú Estructura académica con rutas propias; toda barra de consulta
-ordena búsqueda, filtros y acción; y las 24 superficies tabulares comparten el mismo pie
+producto: el fondo se conserva y las superficies usan tokens diferenciados; desde I-196,
+ADM-04 se navega mediante **Facultades y carreras** en una ruta canónica; toda barra de
+consulta ordena búsqueda, filtros y acción; y las 24 superficies tabulares comparten el mismo pie
 de paginación. Las acciones operativas de Administrador y Coordinador se agrupan detrás
 de un botón accesible de tres puntos sin cambiar autorización ni ciclo de vida. Las 29
 páginas operativas y el layout compartido de Configuración usan el mismo encabezado con

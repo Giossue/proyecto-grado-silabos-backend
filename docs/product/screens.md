@@ -496,9 +496,10 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   sílabos reemplazará. La confirmación aclara que también desaparecen revisiones,
   aprobaciones, IA y exportaciones antes de regenerarlos (I-118).
 - Los IDs internos y detalles de infraestructura no se muestran.
-- ADM-04 usa el submenú **Estructura académica** con rutas independientes para Facultades
-  y Carreras; los periodos académicos se administran en ADM-12 (I-172) y la ruta antigua
-  de Periodos redirige allí. El formulario de facultad exige elegir uno de los cinco
+- ADM-04 usa el acceso **Facultades y carreras** en `/admin/estructura-academica`, con
+  pestañas para ambos catálogos y un botón **Crear** que ofrece **Facultad** y **Carrera**
+  sin cambiar de pestaña; los periodos académicos se administran en ADM-12 (I-172) y la
+  ruta antigua de Periodos redirige allí. El formulario de facultad exige elegir uno de los cinco
   campus institucionales y no solicita código; la tabla de facultades muestra su campus.
   Carreras exige el código de carrera y muestra su Facultad, Modalidad y campus heredado.
   El período genera automáticamente su etiqueta con el rango de meses y año; su

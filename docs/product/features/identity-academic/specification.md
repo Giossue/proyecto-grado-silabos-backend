@@ -37,8 +37,10 @@
   sus opciones conservan formularios y permisos independientes.
 - Solo el Administrador puede corregir el nombre o el correo de una cuenta. Coordinadores
   y Docentes consultan esos datos en su perfil y solicitan la corrección a Administración.
-- ADM-04 presenta Facultades, Carreras y Periodos académicos como rutas hijas del submenú
-  Estructura académica. Al crear o editar una facultad, Administración elige su campus
+- ADM-04 presenta Facultades y Carreras como pestañas del acceso **Facultades y carreras**
+  en `/admin/estructura-academica`; Periodos académicos se gestiona en Convocatorias.
+  Su botón **Crear** permite elegir Facultad o Carrera desde cualquier pestaña. Al crear o
+  editar una facultad, Administración elige su campus
   obligatorio entre Campus Matriz Dr. Gabriel Galarza López, Campus Laguacoto, Campus CENI
   (Centro de Eventos Nacionales e Internacionales), Extensión San Miguel y Sede Chimbo.
   Carreras muestra el campus heredado de su facultad; no hay catálogo, código ni ruta de
