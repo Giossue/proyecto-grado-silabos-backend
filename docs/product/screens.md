@@ -177,6 +177,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   pantalla Dashboard de cada rol. Fuera del Dashboard no se presentan bloques de
   conteos, totales, promedios o porcentajes; un valor solo permanece cuando forma parte
   del contexto operativo de un registro, una tabla o el contenido que se está editando.
+  Las tarjetas móviles que representan registros de un listado son una excepción de
+  composición autorizada el 2026-10-07; no incorporan resúmenes métricos.
 - Los dashboards priorizan tareas vencidas, bloqueos y próximos pasos; evitan métricas
   decorativas.
 - Listados de volumen variable usan URL para filtros, orden y paginación.
@@ -187,12 +189,20 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   los datos que esa búsqueda consulta; su nombre accesible comunica el mismo alcance.
 - Toda tabla muestra el mismo pie con rango, total, página actual y navegación, incluso
   cuando el resultado ocupa una sola página.
+- Por solicitud del responsable del producto del 2026-10-07, los listados convierten
+  cada fila en una tarjeta bajo 640 px. Conservan todos los datos con las etiquetas de
+  sus columnas y las acciones del registro; no requieren «Ver más» ni duplican campos
+  editables. Desde 640 px conservan la tabla con desplazamiento horizontal interno.
+  Las tablas documentales de consulta conservan su cuadrícula y desplazamiento interno.
+  En móvil, la paginación muestra «Página N de M» entre Anterior y Siguiente; en pantallas
+  amplias conserva los números de página. Todos sus controles caben dentro del listado.
 - Toda tabla diferencia visualmente el encabezado y alterna el fondo de sus registros;
   el primer registro usa la superficie base y el segundo el tono alterno.
 - Las cargas iniciales reproducen la composición vigente de su pantalla mediante
   esqueletos: cantidad de columnas, búsqueda y filtros, filas y pie de paginación. En
-  móvil representan los dos datos visibles y el espacio de «Ver más» sin controles
-  interactivos. Los filtros ya visibles fuera de la región de carga no se duplican.
+  móvil representan tarjetas con etiquetas, todos sus datos y el espacio de acciones
+  cuando corresponda, sin controles interactivos. Los filtros ya visibles fuera de la
+  región de carga no se duplican.
   El Panel representa los tres indicadores visibles y limita plazo y puesta en marcha
   a los roles que todavía usan esos bloques. La Malla conserva niveles horizontales,
   leyenda y zoom; Materias, Docentes y Proyecto de carrera conservan sus tablas y
@@ -264,6 +274,10 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   identificación no aparecen como campos en la hoja ni en las revisiones; el docente los completa justo debajo de la tabla. En el constructor, cada campo usa únicamente el contorno discontinuo de edición; su contenido no añade otro recuadro y las tablas conservan sus propios bordes de celda. Sin «Personalizar plantilla» ni vista previa: el logo de la universidad se cambia sobre la hoja con «Cambiar logo» (PNG) al pasar el cursor. El nombre del campo es opcional (sin nombre, no lleva
   subtítulo; en el constructor aparece como «Campo sin nombre»).  Con un proceso abierto todo queda
   deshabilitado con el aviso «Edición bloqueada».
+- La plantilla mantiene el ancho del papel (210 mm en vertical y 279 mm en la variante
+  horizontal vigente) dentro de una región desplazable por hoja, también durante la
+  carga. En pantallas estrechas no comprime el contenido; la región cargada se puede
+  enfocar y desplazar mediante teclado, sin desplazamiento horizontal global.
 - Se retiraron de ADM-06 la hoja libre, la cinta Insertar, las marcas, los anchos por celda y
   la hoja horizontal, margen y letra por sección (descripciones anteriores de I-60 y I-156
   sobre esos controles ya no aplican).

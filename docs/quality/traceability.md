@@ -118,7 +118,13 @@ esperado permite validar la interpretación del pedido.
 
 | Cambio | IDs relacionados | Evidencia | Estado |
 |---|---|---|---|
-| Entrada y salida uniforme de todos los `Sheet` | RNF-018..023; UI-01..04; CP-N experiencia/accesibilidad; PV-19 | Auditoría de todos los usos de `SheetContent`: el sidebar móvil es el único panel izquierdo; formularios y detalles usan derecha y las filas móviles usan abajo. Ningún uso redefine la animación. `SheetContent` y `SheetOverlay` comparten `300 ms` y `ease-in-out` en ambos estados; `frontend-components.spec.ts` comprueba en Chromium los valores calculados durante entrada y salida. | TypeScript, ESLint focalizado y prueba Chromium aprobados; aceptación perceptiva en dispositivos reales pendiente en PV-19. |
+| Entrada y salida uniforme de todos los `Sheet` | RNF-018..023; UI-01..04; CP-N experiencia/accesibilidad; PV-19 | Auditoría de los usos de `SheetContent`: el sidebar móvil es el único panel izquierdo; formularios y detalles usan derecha. La hoja inferior de detalle de filas se retiró al adoptar tarjetas móviles el 2026-10-07. Ningún uso redefine la animación. `SheetContent` y `SheetOverlay` comparten `300 ms` y `ease-in-out` en ambos estados; `frontend-components.spec.ts` comprueba en Chromium los valores calculados durante entrada y salida. | TypeScript, ESLint focalizado y prueba Chromium aprobados; aceptación perceptiva en dispositivos reales pendiente en PV-19. |
+
+## Responsividad: tablas a tarjetas — 2026-10-07
+
+| Cambio | IDs relacionados | Evidencia | Estado |
+|---|---|---|---|
+| Un registro por tarjeta móvil, paginación compacta y papel desplazable | RNF-018..023; UI-01..04; ADM-02/04/06/10/12, COR-05/13..16, DOC-02/04/10, BIB-02/03; CP-F listados/editor y CP-N experiencia/accesibilidad; PV-19 | Pedido confirmado del responsable: `TableRow` conserva todos los datos etiquetados y una sola instancia de los campos, `TablePagination` presenta página/total, las vistas documentales conservan su matriz, plantilla y carga mantienen ancho de papel, sidebar comparte el límite `md`. `responsive-layout.spec.ts`, `curriculum-drag.spec.ts`, `loading-skeletons.spec.ts`, `frontend-components.spec.ts` y `AdminTemplatePage.test.ts`; datos sintéticos y API local interceptada. Plan `docs/plans/completed/FE-RESP-2026-10-07-tablas-tarjetas.md`. | Verificación local en Chromium, ambos temas y 320–1440 px; PV-19 conserva pendiente dispositivos/navegadores reales y zoom del navegador. La revisión autenticada con la API local tiene migraciones pendientes y falta una cuenta de Biblioteca. |
 
 ## Buscadores de tablas y bandeja de Biblioteca — 2026-10-07
 

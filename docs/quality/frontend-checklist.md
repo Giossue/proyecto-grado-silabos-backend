@@ -50,6 +50,10 @@
 - [ ] Contraste y significado sin depender del color.
 - [ ] Claro y oscuro revisados.
 - [ ] 360 px, tablet y escritorio sin scroll horizontal global.
+- [ ] Bajo 640 px, cada fila de listado es una tarjeta con todos sus datos etiquetados
+      y acciones accesibles; cambiar de ancho no duplica campos editables.
+- [ ] La paginación cabe completa y las cuadrículas documentales/hojas de plantilla
+      mantienen desplazamiento interno accesible por teclado.
 - [ ] Zoom 200 % y texto largo no rompen acciones.
 
 ## Calidad

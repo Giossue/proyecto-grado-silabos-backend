@@ -87,7 +87,20 @@ no agrega búsqueda ni filtros por defecto cuando esos controles ya están visib
 «Buscar por…» y mantienen el placeholder alineado con las propiedades que filtra el
 cliente o acepta el endpoint.
 Las tablas declaran si su última columna contiene acciones para que las filas navegables
-de Revisiones y Proyecto de carrera mantengan contenido normal. El Panel limita su carga
+de Revisiones y Proyecto de carrera mantengan contenido normal. `Table` usa tarjetas
+por defecto bajo 640 px mediante `data-cards`; `TableRow` etiqueta sus celdas con los
+encabezados y detecta `TableActionsMenu` con `data-table-actions`, un marcador que
+conserva el menú al componer `as-child`, sin volver a montar los slots. Los valores y
+campos editables conservan una sola instancia al cambiar de ancho. `cards=false`
+mantiene las cuadrículas documentales de `TableFieldView` y `UnitsFieldView`. Los
+estilos móviles están en la capa `utilities` para prevalecer sobre anchos y
+`whitespace-nowrap` de las celdas. `TablePagination` conserva el rango y total y
+sustituye los números por «Página N de M» bajo 640 px. Sus controles pueden envolver
+en un pie estrecho. El sidebar usa `width < 48rem`, alineado con `md` de CSS.
+La plantilla mantiene sus medidas documentales y cada hoja dispone de una región con
+desplazamiento horizontal; el contenido cargado permite enfocarla por teclado.
+Los esqueletos comparten esas tarjetas, paginación y regiones desplazables.
+El Panel limita su carga
 a los tres indicadores visibles; Docencia muestra dos indicadores propios. Coordinación
 y Docencia representan el plazo de su convocatoria. El sílabo editable carga una barra de pestañas y una sección, mientras la
 lectura conserva secciones consecutivas. La plantilla reutiliza `template-sheet` y su
