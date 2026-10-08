@@ -54,7 +54,7 @@ class AuditEventController extends Controller
                 'to' => $to,
             ],
             'action_options' => $this->actionOptions(),
-            'events' => $query->latest('ocurrido_en')->paginate(30)->withQueryString()
+            'events' => $query->latest('ocurrido_en')->paginate(20)->withQueryString()
                 ->through(fn (AuditEvent $event): array => [
                     'id' => $event->id,
                     'action' => $this->actionLabel($event->accion),

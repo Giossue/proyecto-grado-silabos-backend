@@ -47,7 +47,7 @@ class ConvocationController extends Controller
                     'convocations' => fn ($career) => $career->where('carrera_id', $careerId)->withCount('syllabi'),
                 ])
                 ->orderByDesc('inicia_en')
-                ->paginate(15)
+                ->paginate(20)
                 ->withQueryString()
                 ->through(function (SyllabusProcess $process): array {
                     $convocation = $process->convocations->first();

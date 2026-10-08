@@ -63,7 +63,7 @@ class ReviewController extends Controller
 
         $payload = [
             'filters' => ['state' => $state, 'search' => $search],
-            'syllabi' => $query->orderByRaw('guardado_en DESC NULLS LAST')->paginate(15)->withQueryString()
+            'syllabi' => $query->orderByRaw('guardado_en DESC NULLS LAST')->paginate(20)->withQueryString()
                 ->through(function (Syllabus $syllabus): array {
                     $revision = $syllabus->revisions->first();
 

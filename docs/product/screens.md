@@ -175,6 +175,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - Los dashboards priorizan tareas vencidas, bloqueos y próximos pasos; evitan métricas
   decorativas.
 - Listados de volumen variable usan URL para filtros, orden y paginación.
+- Las tablas paginadas muestran hasta 20 filas por página en todos los roles.
 - Toda barra de consulta ordena sus controles como búsqueda, filtros y acción de aplicar;
   en móvil se apilan sin distribuir campos en extremos inconexos.
 - El placeholder de cada búsqueda de tabla empieza con «Buscar por» y enumera únicamente

@@ -73,6 +73,12 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 | Restaurar y alinear el menú lateral desde el navegador | RNF-018..023; UI-02, ADM/COR/DOC/BIB; CP-N experiencia; PV-19 | `AppShell` delega el estado inicial a `SidebarProvider`, que lee `sidebar_state` en cada montaje; cookie vigente durante siete días. `AppSidebar` elimina gradualmente el padding adicional del logo al contraerse y el layout estándar conserva el eje de los iconos durante la transición | Verificación puntual del layout; revisión visual real pendiente en PV-19 |
 | Retirar el bloque redundante de rol y carrera | RNF-018..023; UI-02..04, ADM/COR/DOC/BIB; CP-N experiencia; PV-19 | `AppSidebar` conserva la identidad institucional y la navegación; el contexto activo permanece disponible en el menú de usuario del encabezado. `AppShell.test.ts` comprueba que el sidebar no presenta «Rol y carrera activos» | Verificación puntual del layout; revisión visual real pendiente en PV-19 |
 
+## Paginación uniforme de tablas — 2026-10-07
+
+| Cambio | IDs relacionados | Evidencia | Estado |
+|---|---|---|---|
+| Mostrar hasta 20 filas por página en todas las tablas paginadas | RNF-018..023; ADM/COR/DOC/BIB vigentes; CP-N experiencia/rendimiento; PV-19 | `useClientPagination` usa 20 como valor predeterminado; los controladores de sílabos, convocatorias, revisiones, biblioteca, usuarios, notificaciones y auditoría paginan en 20 | Comprobación estática puntual; revisión visual real pendiente en PV-19 |
+
 ## Paleta institucional de la interfaz — 2026-10-04
 
 | Cambio | IDs relacionados | Evidencia | Estado |

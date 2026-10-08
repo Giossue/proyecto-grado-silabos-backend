@@ -37,7 +37,7 @@ class LibraryReviewController extends Controller
         $search = is_string($request->validated('q')) ? trim($request->validated('q')) : null;
         $page = $this->reviews->query(is_string($state) ? $state : null, $search)
             ->with('revision.submitter:id,nombre')
-            ->paginate(15)
+            ->paginate(20)
             ->withQueryString();
         $syllabi = $this->syllabi(array_values(collect($page->items())->pluck('silabo_id')->all()));
 
