@@ -601,7 +601,7 @@ class TemplateDocumentTest extends TestCase
     private function document(): array
     {
         $p = fn ($content) => ['type' => 'paragraph', 'attrs' => ['textAlign' => 'right'], 'content' => $content];
-        $cell = fn ($content, $span = 1, $height = 1) => ['type' => 'tableCell', 'attrs' => ['colspan' => $span, 'rowspan' => $height, 'backgroundColor' => '#DBE5F1'], 'content' => [$p($content)]];
+        $cell = fn ($content, $span = 1, $height = 1) => ['type' => 'tableCell', 'attrs' => ['colspan' => $span, 'rowspan' => $height, 'backgroundColor' => '#C3D4EA'], 'content' => [$p($content)]];
         $field = fn ($key, $label, $kind) => ['type' => 'field', 'attrs' => ['key' => $key, 'label' => $label, 'kind' => $kind]];
 
         $document = ['type' => 'doc', 'content' => [['type' => 'table', 'content' => [

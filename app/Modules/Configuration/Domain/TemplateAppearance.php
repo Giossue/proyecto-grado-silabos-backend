@@ -50,7 +50,7 @@ final class TemplateAppearance
         '#2F5496' => 'Azul UEB',
         '#1F4E78' => 'Azul oscuro',
         '#4F81BD' => 'Azul medio',
-        '#DBE5F1' => 'Azul claro',
+        '#C3D4EA' => 'Azul claro',
         '#595959' => 'Gris',
         '#E7E6E6' => 'Gris claro',
         '#C00000' => 'Rojo',

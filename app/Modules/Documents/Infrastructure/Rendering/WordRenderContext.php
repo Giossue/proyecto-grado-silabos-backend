@@ -11,7 +11,7 @@ final class WordRenderContext
 {
     public const BLUE = '4F81BD';
 
-    public const LIGHT_BLUE = 'DBE5F1';
+    public const LIGHT_BLUE = 'C3D4EA';
 
     public const TOTAL_BLUE = 'B8CCE4';
 

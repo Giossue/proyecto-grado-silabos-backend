@@ -60,7 +60,7 @@ final class TemplateDocumentDefaults
                 $row['content'][] = ['type' => 'tableCell', 'attrs' => [
                     'colspan' => $cell['span'], 'rowspan' => $cell['rows'], 'colwidth' => $r === 0 ? array_map(fn ($weight) => (int) round(625 * $weight / array_sum(IdentificationCard::WIDTHS)), IdentificationCard::WIDTHS) : null,
                     'backgroundColor' => match ($cell['style']) {
-                        'blue' => '#4F81BD', 'shade' => '#DBE5F1', default => null
+                        'blue' => '#4F81BD', 'shade' => '#C3D4EA', default => null
                     },
                 ], 'content' => $paragraphs];
             }
@@ -157,7 +157,7 @@ final class TemplateDocumentDefaults
 
                 return ['type' => 'tableCell', 'attrs' => [
                     'colspan' => $cell[1] ?? 1, 'rowspan' => $cell[2] ?? 1, 'colwidth' => null,
-                    'backgroundColor' => $header ? '#DBE5F1' : null,
+                    'backgroundColor' => $header ? '#C3D4EA' : null,
                 ], 'content' => [['type' => 'paragraph', 'attrs' => ['textAlign' => $header ? 'center' : 'left'], 'content' => $inline]]];
             }, $cells)];
         }

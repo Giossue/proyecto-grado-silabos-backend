@@ -189,7 +189,7 @@ final class IdentificationCard
                     'colspan' => $cell['span'], 'rowspan' => $cell['rows'],
                     'colwidth' => $r === 0 ? array_map(fn (float $weight): int => (int) round(625 * $weight / $total), self::WIDTHS) : null,
                     'backgroundColor' => match ($cell['style']) {
-                        'blue' => '#4F81BD', 'shade' => '#DBE5F1', default => null
+                        'blue' => '#4F81BD', 'shade' => '#C3D4EA', default => null
                     },
                 ], 'content' => $paragraphs];
             }
