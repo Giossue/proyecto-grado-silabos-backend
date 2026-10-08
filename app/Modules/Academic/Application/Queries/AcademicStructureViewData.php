@@ -337,7 +337,7 @@ class AcademicStructureViewData
             ->orderBy('orden_en_ciclo')
             ->orderBy('nombre')
             ->get(['id', 'codigo_asignatura', 'nombre', 'ciclo']);
-        $activeComplete = $this->profiles->completeBySubject($activeSubjects->map(fn (Subject $subject): string => $subject->id)->all());
+        $activeProgress = $this->profiles->progressBySubject($activeSubjects->map(fn (Subject $subject): string => $subject->id)->all());
 
         return [
             'career' => [
@@ -366,7 +366,9 @@ class AcademicStructureViewData
                         'codigo_asignatura' => $subject->codigo_asignatura,
                         'nombre' => $subject->nombre,
                         'ciclo' => $subject->ciclo,
-                        'profile_complete' => $activeComplete[$subject->id] ?? false,
+                        'profile_complete' => ($activeProgress[$subject->id]['filled'] ?? 0) === ($activeProgress[$subject->id]['total'] ?? 0),
+                        'profile_filled' => $activeProgress[$subject->id]['filled'] ?? 0,
+                        'profile_total' => $activeProgress[$subject->id]['total'] ?? 0,
                     ]),
                 'scheduledSubjects' => $periods
                     ->filter(fn (AcademicPeriod $period): bool => $this->periodPlanning->mayPlan($period))

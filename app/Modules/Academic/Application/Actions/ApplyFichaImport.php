@@ -55,6 +55,10 @@ final class ApplyFichaImport
                     $document = is_array($value)
                         ? FreeText::fromRows([['key' => 't', 'label' => '']], array_map(fn (string $item): array => ['t' => $item], $value))
                         : FreeText::fromText((string) $value);
+                    // Lo que el documento no trae no borra lo que la ficha ya tenía.
+                    if (FreeText::isEmpty(FreeText::normalize($document))) {
+                        continue;
+                    }
                     FieldValue::query()->updateOrCreate(
                         ['asignatura_id' => $entry['subject_id'], 'definicion_campo_id' => $field->id],
                         ['valor' => FreeText::normalize($document)],

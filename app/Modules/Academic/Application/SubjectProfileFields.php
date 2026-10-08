@@ -44,7 +44,17 @@ class SubjectProfileFields
      */
     public function completeBySubject(array $subjectIds): array
     {
-        // Los campos opcionales (bibliografía) no impiden que la ficha esté completa.
+        return array_map(fn (array $progress): bool => $progress['filled'] === $progress['total'], $this->progressBySubject($subjectIds));
+    }
+
+    /**
+     * Campos obligatorios llenos y en total por materia (los opcionales, como la bibliografía, no cuentan).
+     *
+     * @param  array<int, string>  $subjectIds
+     * @return array<string, array{filled: int, total: int}>
+     */
+    public function progressBySubject(array $subjectIds): array
+    {
         $fieldIds = $this->fields()->reject(fn (FieldDefinition $field): bool => ($field->typeConfig()['optional'] ?? false) === true)->pluck('id')->all();
         $filled = [];
         if ($fieldIds !== [] && $subjectIds !== []) {
@@ -59,11 +69,11 @@ class SubjectProfileFields
                 });
         }
 
-        $complete = [];
+        $progress = [];
         foreach ($subjectIds as $subjectId) {
-            $complete[$subjectId] = count($filled[$subjectId] ?? []) === count($fieldIds);
+            $progress[$subjectId] = ['filled' => count($filled[$subjectId] ?? []), 'total' => count($fieldIds)];
         }
 
-        return $complete;
+        return $progress;
     }
 }
