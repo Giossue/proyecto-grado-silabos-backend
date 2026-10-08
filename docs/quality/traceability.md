@@ -71,6 +71,7 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 | Cambio | IDs relacionados | Evidencia | Estado |
 |---|---|---|---|
 | Restaurar el menú lateral desde el navegador | RNF-018..023; UI-02, ADM/COR/DOC/BIB; CP-N experiencia; PV-19 | `AppShell` delega el estado inicial a `SidebarProvider`, que lee `sidebar_state` en cada montaje; cookie vigente durante siete días | Verificación puntual del layout; revisión visual real pendiente en PV-19 |
+| Retirar el bloque redundante de rol y carrera | RNF-018..023; UI-02..04, ADM/COR/DOC/BIB; CP-N experiencia; PV-19 | `AppSidebar` conserva la identidad institucional y la navegación; el contexto activo permanece disponible en el menú de usuario del encabezado. `AppShell.test.ts` comprueba que el sidebar no presenta «Rol y carrera activos» | Verificación puntual del layout; revisión visual real pendiente en PV-19 |
 
 ## Paleta institucional de la interfaz — 2026-10-04
 

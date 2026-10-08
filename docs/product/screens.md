@@ -66,10 +66,9 @@ de asignación. Ninguna operación levanta los bloqueos académicos.
 | BIB-02 | Revisiones de biblioteca                   |
 | BIB-03 | Revisión de bibliografía (aprobar, devolver con motivos o firmar) |
 
-El bibliotecario no tiene carrera: entra directo, como Administración, y su tarjeta de
-ámbito dice «Biblioteca · toda la universidad». El menú lateral tiene «Panel» y
-«Revisiones de biblioteca». BIB-01 muestra «Por verificar», «Por firmar», «Con
-comentario» y «Firmados», sin plazo ni Puesta en marcha. BIB-02 es la bandeja de todos
+El bibliotecario no tiene carrera y entra directo, como Administración. El menú lateral
+tiene «Panel» y «Revisiones de biblioteca». BIB-01 muestra «Por verificar», «Por firmar»,
+«Con comentario» y «Firmados», sin plazo ni Puesta en marcha. BIB-02 es la bandeja de todos
 los sílabos enviados (cada envío del docente llega primero aquí), con búsqueda por
 asignatura o código, filtro de estado («Por revisar», «Aprobada por biblioteca», «Por
 firmar», «Firmado», «Con comentario», «Anulado») y las columnas Asignatura, Carrera,
@@ -110,6 +109,9 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 ## Patrones comunes
 
 - El menú depende del rol activo y de las capacidades efectivas.
+- El encabezado del menú lateral muestra la identidad institucional, sin repetir el rol
+  ni la carrera activos. Ese contexto se consulta y cambia desde el menú de usuario del
+  encabezado autenticado.
 - UI-02 recibe a Coordinación con cards de sus carreras vigentes. Para Docencia, las
   cards representan únicamente una asignación de rol por carrera, nunca una materia ni
   un paralelo; al elegirla se abre directamente DOC-02 **Mis sílabos**. Coordinación y
