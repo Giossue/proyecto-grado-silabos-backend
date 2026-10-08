@@ -132,9 +132,9 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   la opción «Sistema». Sin preferencia guardada, la aplicación arranca en claro.
 - La selección de texto comparte un fondo y un color de texto por tema en toda la
   interfaz, incluidos formularios y documentos. En claro usa azul oscuro con texto
-  claro; en oscuro, azul real intenso con texto blanco. Los pares son opacos para mantener
+  claro; en oscuro, azul moderado con texto blanco. Los pares son opacos para mantener
   legibilidad sobre las distintas superficies.
-- La identidad visual usa el azul `#2d4b6f` en claro, el azul real `#1a4beb` en oscuro y
+- La identidad visual usa el azul `#2d4b6f` en claro, el azul `#4669c8` en oscuro y
   el rojo `#ac231e` proporcionados por el responsable del producto. El azul marca acciones
   primarias, foco e ítem activo del menú; el rojo aparece solo como barra del ítem activo.
   Fondos y sidebar se mantienen sobrios para que la interfaz no se vea recargada.
@@ -144,7 +144,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   oficial de identidad de la UEB.
 - I-197 aplica los mismos roles cromáticos a toda la interfaz operativa en ambos temas.
   Texto, superficies, acciones, campos, estados y foco mantienen contraste; en oscuro,
-  las acciones usan el azul real intenso `#1a4beb` con texto blanco y una variante clara
+  las acciones usan el azul moderado `#4669c8` con texto blanco y una variante clara
   cuando el azul funciona como texto. El sidebar oscuro combina un fondo azul noche con
   ese tono en sus estados activos y comparte la familia en bordes y foco. Las primitivas
   compartidas no definen excepciones locales por tema. El
