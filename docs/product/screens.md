@@ -181,14 +181,18 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   esqueletos: cantidad de columnas, búsqueda y filtros, filas y pie de paginación. En
   móvil representan los dos datos visibles y el espacio de «Ver más» sin controles
   interactivos. Los filtros ya visibles fuera de la región de carga no se duplican.
-  El Panel diferencia indicadores, plazo y puesta en marcha según el rol; biblioteca
-  solo espera sus indicadores. La Malla conserva niveles horizontales,
-  leyenda y zoom; Materias y Docentes conservan sus composiciones independientes.
-  El sílabo mantiene su contexto académico y asistente; la revisión distingue
-  biblioteca y coordinación. Plantilla conserva las dimensiones de sus hojas
-  dentro del desplazamiento local. Notificaciones, conversación, firma y seguridad
-  también representan sus cargas de contenido. Cada región anuncia la carga una vez,
-  oculta los adornos al lector de pantalla y respeta movimiento reducido y ambos temas.
+  El Panel representa los tres indicadores visibles y limita plazo y puesta en marcha
+  a los roles que todavía usan esos bloques. La Malla conserva niveles horizontales,
+  leyenda y zoom; Materias, Docentes y Proyecto de carrera conservan sus tablas y
+  herramientas propias. Las filas que se abren completas no inventan un menú de
+  acciones durante la carga. El formulario del sílabo representa sus pestañas y solo
+  una sección editable; la consulta conserva las secciones consecutivas. La revisión
+  distingue biblioteca y coordinación. Plantilla usa las mismas hojas del constructor:
+  verticales para las secciones generales y horizontal para la planificación de 16
+  semanas. La ficha de cada materia carga sus campos dentro del panel lateral.
+  Notificaciones, conversación, firma y seguridad también representan sus cargas de
+  contenido. Cada región anuncia la carga una vez, oculta los adornos al lector de
+  pantalla y respeta movimiento reducido y ambos temas.
 - Configuración conserva su título y la navegación Perfil/Seguridad durante la carga.
   Seguridad representa juntos los tres campos de contraseña, Guardar y el bloque de
   segundo factor hasta terminar su consulta. Un fallo libera el formulario de contraseña
@@ -245,7 +249,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   técnicos (dato automático y texto fijo) no se eligen a mano: vienen solo en los diseños oficiales (Identificación,
   Evaluación, Conducta ética y Firmas) y siguen editándose en «Propiedades del campo»; la lista sale del registro
   de tipos y cada tipo aporta su pieza de configuración. Los textos del docente que se escriben dentro de la tabla de
-  identificación no aparecen como campos en la hoja ni en las revisiones; el docente los completa justo debajo de la tabla. El contenido de los campos de texto, ficha y texto fijo va en un recuadro de borde azul fino; la tabla no lleva recuadro. Sin «Personalizar plantilla» ni vista previa: el logo de la universidad se cambia sobre la hoja con «Cambiar logo» (PNG) al pasar el cursor. El nombre del campo es opcional (sin nombre, no lleva
+  identificación no aparecen como campos en la hoja ni en las revisiones; el docente los completa justo debajo de la tabla. En el constructor, cada campo usa únicamente el contorno discontinuo de edición; su contenido no añade otro recuadro y las tablas conservan sus propios bordes de celda. Sin «Personalizar plantilla» ni vista previa: el logo de la universidad se cambia sobre la hoja con «Cambiar logo» (PNG) al pasar el cursor. El nombre del campo es opcional (sin nombre, no lleva
   subtítulo; en el constructor aparece como «Campo sin nombre»).  Con un proceso abierto todo queda
   deshabilitado con el aviso «Edición bloqueada».
 - Se retiraron de ADM-06 la hoja libre, la cinta Insertar, las marcas, los anchos por celda y

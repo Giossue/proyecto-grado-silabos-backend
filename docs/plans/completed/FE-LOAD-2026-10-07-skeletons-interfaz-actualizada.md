@@ -2,7 +2,8 @@
 
 ## Estado
 
-En curso.
+Completado técnicamente el 2026-10-07. PV-19 mantiene pendiente la aceptación visual
+con dispositivos reales.
 
 ## Trazabilidad
 
@@ -21,7 +22,7 @@ sílabo por pestañas y tablas con o sin acciones según su interacción real.
 
 ## Decisiones y supuestos
 
-- La interfaz renderizada y las decisiones confirmadas hasta I-204 son la referencia.
+- La interfaz renderizada y las decisiones confirmadas hasta I-205 son la referencia.
 - No existe una decisión `POR VALIDAR` que cambie esta corrección visual reversible.
 - Las cantidades desconocidas durante la consulta se representan con una muestra
   estable; el rol, modo y etapa ya conocidos sí determinan la composición.
@@ -45,10 +46,10 @@ PV-19 conserva la aceptación visual en dispositivos reales.
 ## Pasos
 
 - [x] Inventariar las cargas y compararlas con la interfaz actual.
-- [ ] Actualizar tablas, panel, configuración académica y documentos.
-- [ ] Ajustar cada llamada con su estructura real.
-- [ ] Sincronizar documentación y trazabilidad.
-- [ ] Ejecutar comprobaciones estáticas aplicables y cerrar el plan.
+- [x] Actualizar tablas, panel, configuración académica y documentos.
+- [x] Ajustar cada llamada con su estructura real.
+- [x] Sincronizar documentación y trazabilidad.
+- [x] Ejecutar comprobaciones estáticas aplicables y cerrar el plan.
 
 ## Riesgos y reversión
 
@@ -58,4 +59,10 @@ permisos, datos ni migraciones.
 
 ## Evidencia de cierre
 
-Pendiente.
+- `npm run typecheck`: aprobado.
+- ESLint puntual de los nueve archivos frontend modificados: aprobado.
+- `git diff --check`: aprobado en el frontend.
+- Inventario estático de las cargas de página y de seguimiento de convocatoria, ficha
+  de materia, notificaciones interiores, conversación, firma y segundo factor.
+- No se ejecutaron suites de pruebas ni revisión visual automatizada en este cambio.
+  PV-19 conserva la aceptación visual real.

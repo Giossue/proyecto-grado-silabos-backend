@@ -77,6 +77,13 @@ realizar una sola consulta y muestra el esqueleto completo de la subsección has
 responde, incluso con error. `ProfilePage` espera los datos reactivos de sesión.
 Las páginas pasan la estructura que renderizan actualmente; `table-body`
 no agrega búsqueda ni filtros por defecto cuando esos controles ya están visibles.
+Las tablas declaran si su última columna contiene acciones para que las filas navegables
+de Revisiones y Proyecto de carrera mantengan contenido normal. El Panel limita su carga
+a los tres indicadores que muestra y solo Coordinación representa el plazo; Docencia ya
+no tiene panel. El sílabo editable carga una barra de pestañas y una sección, mientras la
+lectura conserva secciones consecutivas. La plantilla reutiliza `template-sheet` y su
+variante horizontal para la tabla de planificación de 16 semanas. `SubjectProfileSheet`
+usa la variante de formulario mientras consulta los campos definidos por la plantilla.
 Las superficies usan `Card` y `Skeleton` locales y las tablas decorativas no montan
 controles de detalle durante la carga. Los componentes de notificaciones, chat, firma
 y segundo factor conservan el título o controles estables y cargan su contenido dentro
