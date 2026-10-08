@@ -62,9 +62,9 @@ texto contrastado; los bordes de campos conservan una relación mínima de 3:1 c
 superficies. Las primitivas compartidas no añaden excepciones cromáticas `dark:` y las
 pestañas se dibujan sin fondo propio. El tema oscuro usa el azul moderado `#4669c8`
 con texto blanco en superficies sólidas y una variante clara de la misma familia cuando
-el azul funciona como texto. El sidebar oscuro usa el azul desaturado `#536cb5`, cercano
-al tono solicitado, y un hover ligeramente más claro con transición de 200 ms. El foco
-conserva la familia azul principal.
+el azul funciona como texto. El sidebar oscuro usa la superficie azul grisácea `#2d4358`,
+ligeramente elevada sobre el fondo del contenido, y un hover `#354f68` con transición de
+200 ms. El foco usa `#9eb5e8` para conservar contraste sobre esa superficie.
 Esta normalización no altera la paleta documental, los gráficos ni los colores que
 identifican unidades curriculares.
 `WorkspaceLayout` comparte la composición de sílabo y revisión
