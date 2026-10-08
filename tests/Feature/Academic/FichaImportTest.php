@@ -7,6 +7,7 @@ use App\Modules\Academic\Domain\Contracts\FichaExtractionGateway;
 use App\Modules\Academic\Infrastructure\Gateways\DisabledFichaExtractionGateway;
 use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -90,6 +91,31 @@ class FichaImportTest extends TestCase
         $this->assertStringContainsString('Ficha propuesta', json_encode($description->valor, JSON_UNESCAPED_UNICODE));
         $this->assertSame('aplicada', FichaImport::query()->findOrFail($importId)->estado_importacion);
         Storage::disk('private')->assertMissing("importaciones-ficha/{$importId}/bloques.json");
+    }
+
+    public function test_the_proposal_shows_the_current_profile_and_applies_only_the_chosen_fields(): void
+    {
+        $subject = Subject::query()->where('carrera_id', $this->context->carrera_id)->where('activo', true)->firstOrFail();
+        $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
+        FieldValue::query()->updateOrCreate(
+            ['asignatura_id' => $subject->id, 'definicion_campo_id' => $description->id],
+            ['valor' => FreeText::fromText('Descripción que ya estaba')],
+        );
+
+        $importId = $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.store'), ['files' => [$this->workbook($subject->nombre)]], ['Accept' => 'application/json'])->json('import.id');
+        $entry = collect($this->asCoordinator()->getJson(route('api.v1.coordination.ficha-imports.index'))->json('import.subjects'))->firstWhere('subject_id', $subject->id);
+        $this->assertTrue($entry['replaces']);
+        $this->assertSame('Descripción que ya estaba', $entry['current']['descripcion']);
+
+        $this->asCoordinator()->postJson(route('api.v1.coordination.ficha-imports.apply', $importId), [
+            'subjects' => [$subject->id],
+            'fields' => [$subject->id => ['objetivos_especificos']],
+        ])->assertOk();
+
+        $kept = FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $description->id)->firstOrFail();
+        $this->assertStringContainsString('Descripción que ya estaba', json_encode($kept->valor, JSON_UNESCAPED_UNICODE));
+        $objectives = FieldDefinition::query()->where('clave', 'objetivos_especificos')->firstOrFail();
+        $this->assertTrue(FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $objectives->id)->exists());
     }
 
     public function test_only_the_career_coordinator_can_use_the_assistant(): void

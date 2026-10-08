@@ -13,6 +13,7 @@ use App\Modules\Academic\Domain\Contracts\FichaExtractionGateway;
 use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
 use App\Modules\Academic\Presentation\Http\Requests\ApplyFichaImportRequest;
 use App\Modules\Academic\Presentation\Http\Requests\RequestFichaImportRequest;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use Illuminate\Http\JsonResponse;
@@ -43,7 +44,7 @@ class FichaImportsController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $record = $action->execute(FichaImport::query()->findOrFail($import), array_values($request->validated('subjects')), $actor, $request);
+        $record = $action->execute(FichaImport::query()->findOrFail($import), array_values($request->validated('subjects')), $actor, $request, $request->validated('fields'));
 
         return response()->json(['message' => 'Fichas aplicadas.', 'import' => $this->detail($record, $profile)]);
     }
@@ -71,8 +72,16 @@ class FichaImportsController extends Controller
         $fields = $profile->fields()->map(fn ($field): array => ['key' => $field->clave, 'label' => $field->etiqueta !== '' ? $field->etiqueta : $field->clave])->values()->all();
         $subjects = $import->propuesta_importacion['subjects'] ?? [];
         $fieldIds = $profile->fields()->pluck('id', 'clave');
-        $withValue = FieldValue::query()->whereIn('asignatura_id', array_column($subjects, 'subject_id'))
-            ->whereIn('definicion_campo_id', $fieldIds->values()->all())->pluck('asignatura_id')->unique()->flip();
+        $keysById = $fieldIds->flip();
+        $current = [];
+        FieldValue::query()->whereIn('asignatura_id', array_column($subjects, 'subject_id'))
+            ->whereIn('definicion_campo_id', $fieldIds->values()->all())->get()
+            ->each(function (FieldValue $value) use (&$current, $keysById): void {
+                $text = FreeText::isDocument($value->valor) ? trim(FreeText::plainText(FreeText::normalize($value->valor))) : '';
+                if ($text !== '') {
+                    $current[$value->asignatura_id][(string) $keysById[$value->definicion_campo_id]] = $text;
+                }
+            });
 
         return [
             'id' => $import->id,
@@ -83,7 +92,8 @@ class FichaImportsController extends Controller
             'fields' => $fields,
             'subjects' => array_map(fn (array $entry): array => [
                 'subject_id' => $entry['subject_id'], 'code' => $entry['code'], 'name' => $entry['name'], 'cycle' => $entry['cycle'],
-                'state' => $entry['state'], 'values' => (object) ($entry['values'] ?? []), 'replaces' => $withValue->has($entry['subject_id']),
+                'state' => $entry['state'], 'values' => (object) ($entry['values'] ?? []), 'replaces' => isset($current[$entry['subject_id']]),
+                'current' => (object) ($current[$entry['subject_id']] ?? []),
             ], $subjects),
         ];
     }

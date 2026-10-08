@@ -14,12 +14,15 @@ class ApplyFichaImportRequest extends FormRequest
     /** @return array<string, list<string>> */
     public function rules(): array
     {
-        return ['subjects' => ['required', 'array', 'min:1', 'max:100'], 'subjects.*' => ['uuid']];
+        return [
+            'subjects' => ['required', 'array', 'min:1', 'max:100'], 'subjects.*' => ['uuid'],
+            'fields' => ['sometimes', 'array'], 'fields.*' => ['array'], 'fields.*.*' => ['string', 'max:100'],
+        ];
     }
 
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['subjects' => 'materias', 'subjects.*' => 'materia'];
+        return ['subjects' => 'materias', 'subjects.*' => 'materia', 'fields' => 'campos'];
     }
 }

@@ -28,15 +28,18 @@ final class ApplyFichaImport
         private readonly InProgressWork $work,
     ) {}
 
-    /** @param list<string> $subjectIds */
-    public function execute(FichaImport $import, array $subjectIds, User $actor, Request $request): FichaImport
+    /**
+     * @param  list<string>  $subjectIds
+     * @param  array<string, list<string>>|null  $fieldsBySubject  campos elegidos por materia; sin elegir se aplican todos
+     */
+    public function execute(FichaImport $import, array $subjectIds, User $actor, Request $request, ?array $fieldsBySubject = null): FichaImport
     {
         $role = $this->roles->resolve($request);
         abort_unless($actor->activo && AcademicStructurePermissions::isCareerContext($role) && $role?->carrera_id === $import->carrera_id, 403);
         $this->locks->assertCareerEditable($import->carrera_id);
 
         // Aplicar fichas rehace desde cero los sílabos en curso de esas materias (previa confirmación).
-        return $this->work->replace($request, fn (): FichaImport => DB::transaction(function () use ($import, $subjectIds, $actor, $role): FichaImport {
+        return $this->work->replace($request, fn (): FichaImport => DB::transaction(function () use ($import, $subjectIds, $actor, $role, $fieldsBySubject): FichaImport {
             $locked = FichaImport::query()->lockForUpdate()->findOrFail($import->id);
             if ($locked->estado_importacion !== FichaImport::READY) {
                 throw ValidationException::withMessages(['subjects' => 'La propuesta ya no está lista para aplicarse.']);
@@ -47,7 +50,11 @@ final class ApplyFichaImport
                 if (! in_array($entry['subject_id'], $subjectIds, true) || $entry['state'] !== 'lista') {
                     continue;
                 }
+                $chosenFields = $fieldsBySubject[$entry['subject_id']] ?? null;
                 foreach ($entry['values'] as $key => $value) {
+                    if (is_array($chosenFields) && ! in_array($key, $chosenFields, true)) {
+                        continue;
+                    }
                     $field = $fields->get($key);
                     if ($field === null) {
                         continue;
