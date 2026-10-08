@@ -21,8 +21,9 @@
 ## Formularios
 
 - [ ] Etiquetas, ayudas y requerido son claros.
-- [ ] Todo campo de texto muestra un ejemplo contextual con `Ej. ...` como placeholder;
-      las ayudas no exponen claves internas, nombres de columnas ni contratos técnicos.
+- [ ] Todo campo de texto que captura datos muestra un ejemplo contextual con `Ej. ...`;
+      los buscadores de tablas usan `Buscar por...` con los datos consultados. Las ayudas
+      no exponen claves internas, nombres de columnas ni contratos técnicos.
 - [ ] Error indica campo, causa y corrección.
 - [ ] Valores heredados muestran origen y aspecto de solo lectura.
 - [ ] Pendiente bloquea duplicados sin congelar toda la pantalla.

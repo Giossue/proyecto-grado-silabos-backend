@@ -77,6 +77,9 @@ realizar una sola consulta y muestra el esqueleto completo de la subsección has
 responde, incluso con error. `ProfilePage` espera los datos reactivos de sesión.
 Las páginas pasan la estructura que renderizan actualmente; `table-body`
 no agrega búsqueda ni filtros por defecto cuando esos controles ya están visibles.
+`ClientFilterBar` y los usos de `FilterToolbar` presentan cada búsqueda de tabla con
+«Buscar por…» y mantienen el placeholder alineado con las propiedades que filtra el
+cliente o acepta el endpoint.
 Las tablas declaran si su última columna contiene acciones para que las filas navegables
 de Revisiones y Proyecto de carrera mantengan contenido normal. El Panel limita su carga
 a los tres indicadores que muestra y solo Coordinación representa el plazo; Docencia ya

@@ -70,9 +70,10 @@ El bibliotecario no tiene carrera: entra directo, como Administración, y su tar
 ámbito dice «Biblioteca · toda la universidad». El menú lateral tiene «Panel» y
 «Revisiones de biblioteca». BIB-01 muestra «Por verificar», «Por firmar», «Con
 comentario» y «Firmados», sin plazo ni Puesta en marcha. BIB-02 es la bandeja de todos
-los sílabos enviados (cada envío del docente llega primero aquí), con búsqueda y filtro
-de estado («Por revisar», «Aprobada por biblioteca», «Por firmar», «Firmado», «Con
-comentario», «Anulado») y la acción «Abrir». BIB-03 muestra la Bibliografía de la
+los sílabos enviados (cada envío del docente llega primero aquí), con búsqueda por
+asignatura o código, filtro de estado («Por revisar», «Aprobada por biblioteca», «Por
+firmar», «Firmado», «Con comentario», «Anulado») y las columnas Asignatura, Carrera,
+Docente y Estado. La fila completa abre la revisión. BIB-03 muestra la Bibliografía de la
 revisión en solo lectura y, en etapa biblioteca, las tarjetas «Aprobar bibliografía» (el
 sílabo pasa a coordinación) y «Devolver al docente» (casillas con motivos predefinidos, sin texto libre; vuelve al docente, que corrige todo el
 sílabo y reenvía; la revisión nueva vuelve a biblioteca). Cuando Coordinación aprueba,
@@ -173,6 +174,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - Listados de volumen variable usan URL para filtros, orden y paginación.
 - Toda barra de consulta ordena sus controles como búsqueda, filtros y acción de aplicar;
   en móvil se apilan sin distribuir campos en extremos inconexos.
+- El placeholder de cada búsqueda de tabla empieza con «Buscar por» y enumera únicamente
+  los datos que esa búsqueda consulta; su nombre accesible comunica el mismo alcance.
 - Toda tabla muestra el mismo pie con rango, total, página actual y navegación, incluso
   cuando el resultado ocupa una sola página.
 - Toda tabla diferencia visualmente el encabezado y alterna el fondo de sus registros;

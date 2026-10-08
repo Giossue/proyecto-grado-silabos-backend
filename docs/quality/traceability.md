@@ -112,6 +112,12 @@ esperado permite validar la interpretación del pedido.
 |---|---|---|---|
 | Entrada y salida uniforme de todos los `Sheet` | RNF-018..023; UI-01..04; CP-N experiencia/accesibilidad; PV-19 | Auditoría de todos los usos de `SheetContent`: el sidebar móvil es el único panel izquierdo; formularios y detalles usan derecha y las filas móviles usan abajo. Ningún uso redefine la animación. `SheetContent` y `SheetOverlay` comparten `300 ms` y `ease-in-out` en ambos estados; `frontend-components.spec.ts` comprueba en Chromium los valores calculados durante entrada y salida. | TypeScript, ESLint focalizado y prueba Chromium aprobados; aceptación perceptiva en dispositivos reales pendiente en PV-19. |
 
+## Buscadores de tablas y bandeja de Biblioteca — 2026-10-07
+
+| Cambio | IDs relacionados | Evidencia | Estado |
+|---|---|---|---|
+| Placeholders explícitos y BIB-02 con cuatro columnas | RF-001..026/062..069; RNF-018..023; UI-02..04; BIB-02 y CP-N experiencia/accesibilidad; PV-19 | Auditoría de los cinco `Input type="search"` y los nueve usos de `ClientFilterBar`; todos indican «Buscar por…» según el filtro real. `LibraryReviewsPage` muestra Asignatura, Carrera, Docente y Estado, con skeleton y vacío de cuatro columnas. Plan `docs/plans/completed/FE-TABLE-2026-10-07-buscadores-y-biblioteca.md`. | Verificación frontend focalizada; aceptación perceptiva en dispositivos reales pendiente en PV-19. |
+
 ### Configuración omitida en el inventario inicial
 
 UI-04, RF-001..007, RNF-018..023, RN-001..004, CU-01/02 y CP-F identidad/segundo
