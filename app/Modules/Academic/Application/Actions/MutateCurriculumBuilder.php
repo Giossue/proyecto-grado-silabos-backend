@@ -76,6 +76,19 @@ class MutateCurriculumBuilder
                 ]);
             }
 
+            $subjectCycle = (int) $subjects->firstWhere('id', $data['subject_id'])?->ciclo;
+            $requirementCycle = (int) $subjects->firstWhere('id', $data['requirement_id'])?->ciclo;
+            if ($data['type'] === 'prerrequisito' && $requirementCycle >= $subjectCycle) {
+                throw ValidationException::withMessages([
+                    'requirement_id' => 'Un prerrequisito debe estar en un ciclo anterior.',
+                ]);
+            }
+            if ($data['type'] === 'correquisito' && $requirementCycle !== $subjectCycle) {
+                throw ValidationException::withMessages([
+                    'requirement_id' => 'Un correquisito debe estar en el mismo ciclo.',
+                ]);
+            }
+
             if ($data['type'] === 'prerrequisito' && $this->createsCycle($career->id, $data['subject_id'], $data['requirement_id'])) {
                 throw ValidationException::withMessages([
                     'requirement_id' => 'La relación produciría un ciclo de prerrequisitos.',

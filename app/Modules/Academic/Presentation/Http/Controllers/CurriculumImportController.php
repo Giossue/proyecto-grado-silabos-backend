@@ -27,7 +27,7 @@ class CurriculumImportController extends Controller
             'Ciclo: un número entre 1 y el número de ciclos de la carrera.',
             'Unidad de organización y Modalidad: elija una opción de la lista (la modalidad es opcional).',
             'Horas y créditos: números; las horas totales se calculan solas.',
-            'Prerrequisitos y correquisitos: códigos separados por coma; pueden ser materias de la malla o del mismo archivo.',
+            'Prerrequisitos (de un ciclo anterior) y correquisitos (del mismo ciclo): códigos separados por coma; pueden ser materias de la malla o del mismo archivo.',
         ]);
     }
 

@@ -185,9 +185,10 @@ class CareerAcademicStructureController extends Controller
         StoreSubjectRequirementRequest $request,
         MutateCurriculumBuilder $action,
     ): JsonResponse {
-        $action->createRequirement($curriculum, $request->validated(), $this->actor($request), $request);
+        $data = $request->validated();
+        $action->createRequirement($curriculum, $data, $this->actor($request), $request);
 
-        return $this->success($request, 'Relación académica agregada.');
+        return $this->success($request, $data['type'] === 'correquisito' ? 'Correquisito agregado.' : 'Prerrequisito agregado.');
     }
 
     public function destroySubjectRequirement(

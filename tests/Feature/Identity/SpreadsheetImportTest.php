@@ -123,6 +123,26 @@ class SpreadsheetImportTest extends TestCase
         $this->getJson(route('api.v1.coordination.academic.curriculum-import.template'))->assertForbidden();
     }
 
+    public function test_requirement_types_follow_the_cycles(): void
+    {
+        $this->actingAsRole('coordinador@silabos.test');
+        $header = ['Código', 'Nombre de la materia', 'Ciclo', 'Unidad de organización', 'Modalidad', 'Horas ACD', 'Horas APE', 'Horas AA', 'Créditos', 'Prerrequisitos (códigos)', 'Correquisitos (códigos)'];
+        $wrong = $this->workbook([$header, ['CIC-001', 'Base', '1', 'Unidad básica', '', '1', '1', '1', '1', '', ''], ['CIC-002', 'Par', '1', 'Unidad básica', '', '1', '1', '1', '1', 'CIC-001', '']]);
+        $this->postJson(route('api.v1.coordination.academic.curriculum-import.store'), ['file' => $wrong])
+            ->assertOk()->assertJsonPath('valid', false)->assertJsonPath('rows.1.errors.0', 'El prerrequisito CIC-001 debe estar en un ciclo anterior.');
+
+        $file = $this->workbook([$header, ['CIC-001', 'Base', '1', 'Unidad básica', '', '1', '1', '1', '1', '', ''], ['CIC-002', 'Siguiente', '2', 'Unidad básica', '', '1', '1', '1', '1', '', '']]);
+        $this->postJson(route('api.v1.coordination.academic.curriculum-import.store'), ['file' => $file, 'confirm' => true])->assertJsonPath('created', 2);
+        $subjects = Subject::query()->whereIn('codigo_asignatura', ['CIC-001', 'CIC-002'])->get()->keyBy('codigo_asignatura');
+        $career = $subjects['CIC-001']->carrera_id;
+        $this->postJson(route('api.v1.coordination.academic.curriculum.requirements.store', $career), [
+            'subject_id' => $subjects['CIC-002']->id, 'requirement_id' => $subjects['CIC-001']->id, 'type' => 'correquisito',
+        ])->assertJsonValidationErrors('requirement_id');
+        $this->postJson(route('api.v1.coordination.academic.curriculum.requirements.store', $career), [
+            'subject_id' => $subjects['CIC-002']->id, 'requirement_id' => $subjects['CIC-001']->id, 'type' => 'prerrequisito',
+        ])->assertSuccessful()->assertJsonPath('message', 'Prerrequisito agregado.');
+    }
+
     public function test_templates_download_as_xlsx(): void
     {
         $this->actingAsRole('admin@silabos.test');

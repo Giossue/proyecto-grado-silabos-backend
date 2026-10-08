@@ -57,8 +57,10 @@ class ImportCurriculum
     public function execute(array $rows, User $actor, Request $request, bool $confirm): array
     {
         $career = $this->career($request);
-        $existing = Subject::query()->where('carrera_id', $career->id)->get(['id', 'codigo_asignatura'])
-            ->mapWithKeys(fn (Subject $subject): array => [$this->key((string) $subject->codigo_asignatura) => (string) $subject->id]);
+        $stored = Subject::query()->where('carrera_id', $career->id)->get(['id', 'codigo_asignatura', 'ciclo']);
+        $existing = $stored->mapWithKeys(fn (Subject $subject): array => [$this->key((string) $subject->codigo_asignatura) => (string) $subject->id]);
+        $cycles = $stored->mapWithKeys(fn (Subject $subject): array => [$this->key((string) $subject->codigo_asignatura) => (int) $subject->ciclo])
+            ->merge(collect($rows)->mapWithKeys(fn (array $row): array => [$this->key($row['values']['codigo']) => (int) $row['values']['ciclo']]));
         $modalities = collect(StudyModality::values())->mapWithKeys(fn (string $value): array => [$this->key($value) => $value]);
         $fileCodes = collect($rows)->mapWithKeys(fn (array $row): array => [$this->key($row['values']['codigo']) => $row['line']]);
 
@@ -110,6 +112,10 @@ class ImportCurriculum
                         $errors[] = 'Una materia no puede ser requisito de sí misma.';
                     } elseif (! $existing->has($requirementKey) && ! $fileCodes->has($requirementKey)) {
                         $errors[] = "El requisito {$requirement} no está en la malla ni en el archivo.";
+                    } elseif ($type === 'prerrequisito' && (int) $cycles->get($requirementKey) >= (int) $cycle) {
+                        $errors[] = "El prerrequisito {$requirement} debe estar en un ciclo anterior.";
+                    } elseif ($type === 'correquisito' && (int) $cycles->get($requirementKey) !== (int) $cycle) {
+                        $errors[] = "El correquisito {$requirement} debe estar en el mismo ciclo.";
                     } else {
                         $relations[] = ['code' => $requirementKey, 'type' => $type];
                     }
