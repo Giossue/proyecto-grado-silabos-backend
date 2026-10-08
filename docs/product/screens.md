@@ -681,7 +681,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   fila por periodo lectivo con sus fechas de clases, las fechas de elaboración de sílabos
   (o «Sin fechas») y el estado: **Sin iniciar** (periodo sin convocatoria), **Abierto**,
   **Pausado** y **Finalizado**. La tabla no tiene columna de acciones: al pulsar una fila
-  se abre un modal con las opciones del periodo o de la convocatoria (pausar, reanudar, prorrogar, eliminar o abrir). Finalizar no es una opción: la convocatoria se finaliza sola cuando pasa su fecha de entrega (tarea diaria `procesos:finalizar-vencidos`). El botón **Nueva convocatoria** abre un solo `Sheet` sin
+  se abre un modal con las opciones del periodo o de la convocatoria (pausar, reanudar, prorrogar, finalizar, eliminar o abrir). El botón **Nueva convocatoria** abre un solo `Sheet` sin
   descripción general, con dos bloques y una línea de ayuda bajo cada uno: fechas del
   periodo (la etiqueta se genera sola) y fechas de elaboración; las cuatro son
   obligatorias. Al enviar, un diálogo confirma que, una vez abierta, el periodo y sus
