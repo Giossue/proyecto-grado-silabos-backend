@@ -23,6 +23,6 @@ class ApplyFichaImportRequest extends FormRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['subjects' => 'materias', 'subjects.*' => 'materia', 'fields' => 'campos'];
+        return ['subjects' => 'materias', 'subjects.*' => 'materia', 'fields' => 'campos', 'fields.*' => 'campos de la materia', 'fields.*.*' => 'campo'];
     }
 }
