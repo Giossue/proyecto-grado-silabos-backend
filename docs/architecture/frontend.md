@@ -49,7 +49,8 @@ AGPL: `blobGeometry.ts` modela una esfera (radio 120, foco 620) con dos cápsula
 proyectadas sobre su superficie; cada expresión gira la cabeza y cambia tamaño, separación
 y ángulo de los ojos, y cada modo o emoción encadena expresiones con transición suave y
 parpadeo (`ANIMATIONS`). Colores: `--avatar-body` y `--avatar-outline` (I-174, 2026-10-04). La paleta solicitada por el responsable del producto el
-2026-10-04 usa el azul `#2d4b6f` en el tema claro y el azul `#4669c8` en las
+2026-10-04 usa el azul `#2d4b6f` en el tema claro. En oscuro, la revisión del
+2026-10-07 adopta el azul acero `#5274a8` en las
 acciones y estados activos del tema oscuro; el rojo `#ac231e` se conserva solo como
 barra del ítem activo del menú. Fondos y sidebar usan superficies sobrias; todo vive
 en los tokens de `src/styles.css`. Éxito, advertencia y acción destructiva tienen
@@ -60,9 +61,10 @@ acciones, campos, estados y foco se resuelven exclusivamente desde los tokens de
 En oscuro, `primary`, `destructive`, `success` y `warning` usan variantes con su
 texto contrastado; los bordes de campos conservan una relación mínima de 3:1 con las
 superficies. Las primitivas compartidas no añaden excepciones cromáticas `dark:` y las
-pestañas se dibujan sin fondo propio. El tema oscuro usa el azul moderado `#4669c8`
-con texto blanco en superficies sólidas y una variante clara de la misma familia cuando
-el azul funciona como texto. El sidebar oscuro usa la superficie azul grisácea `#2d4358`,
+pestañas se dibujan sin fondo propio. El tema oscuro usa el azul acero `#5274a8`
+con texto blanco en superficies sólidas, `#a9c1e2` cuando funciona como texto y
+`#304761` con texto `#d0dbea` en iconos y estados suaves. El sidebar oscuro usa la
+superficie azul grisácea `#2d4358`,
 ligeramente elevada sobre el fondo del contenido, y un hover `#354f68` con transición de
 200 ms. El foco usa `#9eb5e8` para conservar contraste sobre esa superficie.
 Esta normalización no altera la paleta documental, los gráficos ni los colores que

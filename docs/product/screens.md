@@ -134,9 +134,9 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   interfaz, incluidos formularios y documentos. En claro usa azul oscuro con texto
   claro; en oscuro, azul moderado con texto blanco. Los pares son opacos para mantener
   legibilidad sobre las distintas superficies.
-- La identidad visual usa el azul `#2d4b6f` en claro, el azul `#4669c8` en oscuro y
-  el rojo `#ac231e` proporcionados por el responsable del producto. El azul marca acciones
-  primarias, foco e ítem activo del menú; el rojo aparece solo como barra del ítem activo.
+- La identidad visual usa el azul `#2d4b6f` en claro y el azul acero `#5274a8` en oscuro.
+  El rojo `#ac231e`, proporcionado por el responsable del producto, aparece solo como
+  barra del ítem activo. El azul marca acciones primarias, foco e ítem activo del menú.
   Fondos y sidebar se mantienen sobrios para que la interfaz no se vea recargada.
   Éxito, advertencia y acción destructiva mantienen su significado propio mediante
   colores semánticos, texto e iconos. El papel y los colores de plantillas y sílabos
@@ -144,8 +144,9 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   oficial de identidad de la UEB.
 - I-197 aplica los mismos roles cromáticos a toda la interfaz operativa en ambos temas.
   Texto, superficies, acciones, campos, estados y foco mantienen contraste; en oscuro,
-  las acciones usan el azul moderado `#4669c8` con texto blanco y una variante clara
-  cuando el azul funciona como texto. El sidebar oscuro usa la superficie azul grisácea
+  las acciones usan el azul acero `#5274a8` con texto blanco, `#a9c1e2` cuando funciona
+  como texto y `#304761` con texto `#d0dbea` para iconos y estados suaves. El sidebar
+  oscuro usa la superficie azul grisácea
   `#2d4358`, un hover `#354f68` con transición de 200 ms y foco `#9eb5e8`. Las primitivas
   compartidas no definen excepciones locales por tema. El
   papel, los gráficos y los colores de unidades curriculares permanecen fuera de esta
