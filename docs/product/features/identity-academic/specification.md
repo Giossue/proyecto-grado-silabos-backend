@@ -39,10 +39,11 @@
   y Docentes consultan esos datos en su perfil y solicitan la corrección a Administración.
 - ADM-04 presenta Facultades y Carreras como pestañas del acceso **Facultades y carreras**
   en `/admin/estructura-academica`; Periodos académicos se gestiona en Convocatorias.
-  Su botón **Crear** permite elegir Facultad o Carrera desde cualquier pestaña. Al crear o
-  editar una facultad, Administración elige su campus
-  obligatorio entre Campus Matriz Dr. Gabriel Galarza López, Campus Laguacoto, Campus CENI
-  (Centro de Eventos Nacionales e Internacionales), Extensión San Miguel y Sede Chimbo.
+  La acción principal corresponde a la pestaña activa: **Crear facultad** en Facultades y
+  **Crear carrera** en Carreras. Al crear o editar una facultad, Administración elige su
+  campus obligatorio entre Campus Matriz Dr. Gabriel Galarza López, Campus Laguacoto,
+  Campus CENI (Centro de Eventos Nacionales e Internacionales), Extensión San Miguel y
+  Sede Chimbo.
   Carreras muestra el campus heredado de su facultad; no hay catálogo, código ni ruta de
   administración de campus.
 - Facultad se identifica por nombre, campus y logo obligatorios; no tiene código. El logo

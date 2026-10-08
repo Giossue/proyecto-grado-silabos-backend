@@ -52,8 +52,9 @@ menú lateral, el breadcrumb y los accesos de puesta en marcha usan la ruta can�
 `/admin/estructura-academica`; sus pestañas seleccionan Facultades o Carreras dentro de
 esa pantalla. Las rutas con segmento se conservan únicamente como compatibilidad de
 entrada y no se generan desde la navegación vigente. La acción principal es un botón
-fijo **Crear** que permite elegir **Facultad** o **Carrera** sin depender de la pestaña
-activa.
+específico para la pestaña activa: **Crear facultad** en Facultades y **Crear carrera**
+en Carreras. Este ajuste fue confirmado por el responsable del producto el 7 de octubre
+de 2026 y reemplaza el menú compartido definido inicialmente en I-196.
 
 I-197 (7 de octubre de 2026), por instrucción explícita del responsable del producto,
 normaliza los colores de toda la interfaz operativa en claro y oscuro. Los componentes
