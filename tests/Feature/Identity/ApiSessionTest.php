@@ -27,7 +27,7 @@ class ApiSessionTest extends TestCase
         config(['sanctum.stateful' => ['localhost:5173']]);
     }
 
-    public function test_authenticated_teacher_receives_a_session_payload_and_must_choose_its_sole_role(): void
+    public function test_authenticated_teacher_receives_a_session_payload_and_enters_directly_with_its_sole_role(): void
     {
         $this->seed(DatabaseSeeder::class);
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
@@ -41,7 +41,7 @@ class ApiSessionTest extends TestCase
             ->assertJsonPath('user.name', $teacher->nombre)
             ->assertJsonPath('user.email', $teacher->correo_electronico)
             ->assertJsonPath('user.can_edit_identity', false)
-            ->assertJsonPath('active_role', null)
+            ->assertJsonPath('active_role.id', $assignment->id)
             ->assertJsonPath('available_roles.0.id', $assignment->id)
             ->assertJsonCount(1, 'available_roles');
     }

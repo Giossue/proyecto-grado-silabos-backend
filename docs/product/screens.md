@@ -112,6 +112,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   de la UEB con una superposición azul semitransparente y el texto institucional encima.
   En anchos menores el formulario de acceso ocupa la pantalla sin ese panel.
 - El menú depende del rol activo y de las capacidades efectivas.
+- Con una sola asignación vigente, administración, biblioteca y docencia entran directo a su panel sin pasar por la selección de rol; coordinación siempre elige su carrera, y quien tiene varias asignaciones (por ejemplo, docente de varias carreras o docente y coordinador) elige en «/rol».
 - El encabezado del menú lateral muestra la identidad institucional, sin repetir el rol
   ni la carrera activos. Ese contexto se consulta y cambia desde el menú de usuario del
   encabezado autenticado.

@@ -406,6 +406,19 @@ class DocumentOperationsTest extends TestCase
             'notificado_en' => now(),
         ]);
         $career = $syllabus->convocation->career->nombre;
+        $otherCareer = Career::query()->create([
+            'facultad_id' => $syllabus->convocation->career->facultad_id,
+            'codigo_carrera' => 'CARR-OTRA-DOCENCIA',
+            'nombre' => 'Otra carrera con docencia',
+            'cantidad_ciclos_malla' => 8,
+            'activo' => true,
+        ]);
+        RoleAssignment::query()->create([
+            'usuario_id' => $this->teacher->id,
+            'rol' => 'docente',
+            'carrera_id' => $otherCareer->id,
+            'activo' => true,
+        ]);
 
         $this->actingAs($this->teacher)
             ->getJson(route('api.v1.session.show'))

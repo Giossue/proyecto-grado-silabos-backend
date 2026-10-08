@@ -93,7 +93,7 @@ class ActiveRole
 
     public function requiresExplicitSelection(RoleAssignment $assignment): bool
     {
-        return in_array($assignment->role->codigo_rol, [RoleCode::Coordinator->value, RoleCode::Teacher->value], true);
+        return $assignment->role->codigo_rol === RoleCode::Coordinator->value;
     }
 
     public function isEligible(RoleAssignment $assignment): bool
