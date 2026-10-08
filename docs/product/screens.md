@@ -596,7 +596,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - **Accesibilidad** (I-206): un botón en el encabezado, junto al del tema, abre un modal con tamaño del texto,
   alto contraste, sin animaciones, subrayar enlaces y texto más espaciado. Se guarda en el navegador.
 - **Ayuda contextual** (I-205): un botón flotante con el ícono de ayuda aparece en el área de contenido de
-  toda pantalla que tenga una ayuda activa; se arrastra dentro del contenido, recuerda su posición en el
+  toda pantalla que tenga una ayuda activa; se arrastra y se acomoda en una de las cuatro esquinas del contenido, recuerda la esquina en el
   navegador y abre un panel con el título y el texto de esa pantalla, sin ocupar espacio en la página.
   Administración escribe los textos en **Ayuda de pantallas** (`/admin/ayuda`): una tabla con todas las
   pantallas por rol, su estado (con ayuda, sin ayuda, inactiva) y un `Sheet` para editar título, texto
