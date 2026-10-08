@@ -18,7 +18,7 @@ en el inventario como identificador histórico.
 
 | ID     | Pantalla                        |
 | ------ | ------------------------------- |
-| DOC-01 | (retirada en I-200) Panel docente |
+| DOC-01 | Panel docente                    |
 | DOC-02 | Mis sílabos                     |
 | DOC-03 | Resumen del sílabo              |
 | DOC-04 | Editor por secciones            |
@@ -114,7 +114,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   encabezado autenticado.
 - UI-02 recibe a Coordinación con cards de sus carreras vigentes. Para Docencia, las
   cards representan únicamente una asignación de rol por carrera, nunca una materia ni
-  un paralelo; al elegirla se abre directamente DOC-02 **Mis sílabos**. Coordinación y
+  un paralelo; al elegirla se abre DOC-01 **Panel docente**. Coordinación y
   Docencia eligen siempre, aunque tengan una sola asignación vigente (I-121); solo
   Administración entra directo. UI-02 no muestra el menú lateral: su cabecera ofrece el
   logo, la campana de avisos, el tema y el menú de usuario con «Cerrar sesión». Cada aviso
@@ -310,7 +310,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   barra de progreso y los pasos en orden (Administración: facultades con logo, carreras,
   periodo, cuentas, coordinadores, plantilla, convocatoria institucional; Coordinación:
   malla, materias programadas, paralelos, docentes, datos del Proyecto de carrera,
-  convocatoria; Docencia ya no tiene Panel desde I-200: entra directo a Mis sílabos). I-163 actualiza los textos al
+  convocatoria; Docencia: recibir, abrir, enviar y firmar sus sílabos). I-163 actualiza los textos al
   sistema vigente (logo obligatorio, plantilla con Texto libre y Contenido de la
   plantilla, borrador que se inicia solo, firma electrónica del sílabo aprobado). Coordinación calcula
   los pasos contra el período institucional vigente y solo los completa cuando todas las
@@ -319,9 +319,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   I-146 retira la selección y el requisito de Fuentes académicas. Una vez abierta, la tarjeta de plazo abre su
   seguimiento. Docencia continúa desde esa tarjeta hacia **Mis sílabos**. Cada paso
   se calcula con datos reales; el siguiente lleva su botón y la tarjeta desaparece al
-  completarse. Administración conserva «Panel» en el sidebar; Coordinación y Docencia
-  conservan la pantalla y el checklist, pero no tienen esa entrada lateral ni un atajo
-  desde la marca del sidebar. Por solicitud del responsable del producto del 2026-10-04,
+  completarse. Administración, Coordinación, Docencia y Biblioteca conservan «Panel»
+  como primera entrada de su sidebar. Por solicitud del responsable del producto del 2026-10-04,
   el avance de puesta en marcha se muestra en el Panel y se retira su indicador en
   miniatura del encabezado. El checklist se calcula con los datos vigentes y reaparece
   si algo se borra.

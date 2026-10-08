@@ -64,6 +64,12 @@ como texto o borde. Las pestañas no tienen una superficie propia. Las paletas d
 documentos, gráficos y unidades curriculares conservan su significado independiente.
 La aceptación en navegadores y dispositivos reales permanece en PV-19.
 
+I-205 (7 de octubre de 2026), por instrucción explícita del responsable del producto,
+restaura el Panel docente (DOC-01) con el mismo patrón de Panel de Coordinación. Docencia
+inicia en `/docente/panel`, dispone del acceso **Panel** en su menú lateral y consulta
+indicadores, plazo y avance limitados a sus sílabos en la carrera activa. I-205 sustituye
+I-200, que había retirado esta pantalla.
+
 I-172 (4 de octubre de 2026), por instrucción del responsable del producto, funde la
 pantalla de Periodos académicos en **Convocatorias** (ADM-12): una fila por periodo con
 sus fechas de clases, las de elaboración de sílabos y el estado de la convocatoria, y un

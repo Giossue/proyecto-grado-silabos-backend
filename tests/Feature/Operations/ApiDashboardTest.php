@@ -21,7 +21,7 @@ class ApiDashboardTest extends TestCase
         config(['sanctum.stateful' => ['localhost:5173']]);
     }
 
-    public function test_teacher_has_no_dashboard_content(): void
+    public function test_teacher_receives_only_their_dashboard_content(): void
     {
         $this->seed(DatabaseSeeder::class);
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
@@ -31,8 +31,12 @@ class ApiDashboardTest extends TestCase
             ->withHeader('Origin', 'http://localhost:5173')
             ->getJson(route('api.v1.dashboard.show'))
             ->assertOk()
-            ->assertJsonCount(0, 'metrics')
-            ->assertJsonPath('setup', null)
+            ->assertJsonCount(2, 'metrics')
+            ->assertJsonPath('metrics.0.key', 'pending')
+            ->assertJsonPath('metrics.1.key', 'correction_requested')
+            ->assertJsonPath('setup.title', 'Sus sílabos, paso a paso')
+            ->assertJsonCount(4, 'setup.steps')
+            ->assertJsonPath('setup.steps.3.key', 'signed')
             ->assertJsonPath('deadline', null);
     }
 

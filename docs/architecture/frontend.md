@@ -82,8 +82,8 @@ no agrega búsqueda ni filtros por defecto cuando esos controles ya están visib
 cliente o acepta el endpoint.
 Las tablas declaran si su última columna contiene acciones para que las filas navegables
 de Revisiones y Proyecto de carrera mantengan contenido normal. El Panel limita su carga
-a los tres indicadores que muestra y solo Coordinación representa el plazo; Docencia ya
-no tiene panel. El sílabo editable carga una barra de pestañas y una sección, mientras la
+a los tres indicadores visibles; Docencia muestra dos indicadores propios. Coordinación
+y Docencia representan el plazo de su convocatoria. El sílabo editable carga una barra de pestañas y una sección, mientras la
 lectura conserva secciones consecutivas. La plantilla reutiliza `template-sheet` y su
 variante horizontal para la tabla de planificación de 16 semanas. `SubjectProfileSheet`
 usa la variante de formulario mientras consulta los campos definidos por la plantilla.
