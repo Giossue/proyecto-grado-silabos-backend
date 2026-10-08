@@ -49,18 +49,21 @@ AGPL: `blobGeometry.ts` modela una esfera (radio 120, foco 620) con dos cápsula
 proyectadas sobre su superficie; cada expresión gira la cabeza y cambia tamaño, separación
 y ángulo de los ojos, y cada modo o emoción encadena expresiones con transición suave y
 parpadeo (`ANIMATIONS`). Colores: `--avatar-body` y `--avatar-outline` (I-174, 2026-10-04). La paleta solicitada por el responsable del producto el
-2026-10-04 usa el azul `#2d4b6f` en acciones primarias, foco y menú activo, y el rojo `#ac231e`
-solo como barra del ítem activo del menú. Fondos y sidebar siguen neutros; todo vive
+2026-10-04 usa el azul `#2d4b6f` en el tema claro y el azul real `#1a4beb` en las
+acciones y estados activos del tema oscuro; el rojo `#ac231e` se conserva solo como
+barra del ítem activo del menú. Fondos y sidebar usan superficies sobrias; todo vive
 en los tokens de `src/styles.css`. Éxito, advertencia y acción destructiva tienen
 colores semánticos independientes. Los valores proceden del
 pedido del usuario y no acreditan una guía oficial de identidad de la UEB.
 I-197 normaliza esos roles para toda la interfaz operativa: texto, superficies,
 acciones, campos, estados y foco se resuelven exclusivamente desde los tokens del tema.
-En oscuro, `primary`, `destructive`, `success` y `warning` usan variantes claras con su
+En oscuro, `primary`, `destructive`, `success` y `warning` usan variantes con su
 texto contrastado; los bordes de campos conservan una relación mínima de 3:1 con las
 superficies. Las primitivas compartidas no añaden excepciones cromáticas `dark:` y las
-pestañas se dibujan sin fondo propio. El azul oscuro usa un tono medio de saturación
-moderada y el sidebar comparte esa familia en su fondo, estados activos, bordes y foco.
+pestañas se dibujan sin fondo propio. El azul oscuro usa el azul real intenso `#1a4beb`
+con texto blanco en superficies sólidas y una variante clara de la misma familia cuando
+el azul funciona como texto; el sidebar combina un fondo azul noche con el tono principal
+en sus estados activos y conserva la misma familia en bordes y foco.
 Esta normalización no altera la paleta documental, los gráficos ni los colores que
 identifican unidades curriculares.
 `WorkspaceLayout` comparte la composición de sílabo y revisión
