@@ -3675,6 +3675,87 @@
                 ]
             }
         },
+        "/api/v1/coordination/academic/curriculum-import": {
+            "post": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_academic_curriculum-import_store",
+                "summary": "api.v1.coordination.academic.curriculum-import.store",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/coordination/academic/curriculum-import/template": {
+            "get": {
+                "tags": [
+                    "Coordinación"
+                ],
+                "operationId": "api_v1_coordination_academic_curriculum-import_template",
+                "summary": "api.v1.coordination.academic.curriculum-import.template",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/coordination/academic/curriculum/{curriculum}": {
             "get": {
                 "tags": [

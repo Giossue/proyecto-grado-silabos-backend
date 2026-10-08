@@ -5,6 +5,8 @@ namespace Tests\Feature\Identity;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -95,6 +97,30 @@ class SpreadsheetImportTest extends TestCase
         $this->getJson(route('api.v1.admin.users.import-template'))->assertForbidden();
         $this->actingAsRole('docente@silabos.test');
         $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $this->workbook([['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'], ['X', '', 'Y', '', 'x@silabos.test']])])->assertForbidden();
+    }
+
+    public function test_coordinator_imports_the_curriculum_with_its_requirements_all_or_nothing(): void
+    {
+        $this->actingAsRole('coordinador@silabos.test');
+        $header = ['Código', 'Nombre de la materia', 'Ciclo', 'Unidad de organización', 'Modalidad', 'Horas ACD', 'Horas APE', 'Horas AA', 'Créditos', 'Prerrequisitos (códigos)', 'Correquisitos (códigos)'];
+        $bad = $this->workbook([$header, ['IMP-001', 'Programación I', '1', 'Unidad básica', 'Presencial', '48', '32', '64', '3', 'NO-EXISTE', '']]);
+        $this->postJson(route('api.v1.coordination.academic.curriculum-import.store'), ['file' => $bad, 'confirm' => true])
+            ->assertOk()->assertJsonPath('valid', false)->assertJsonPath('created', 0);
+
+        $file = $this->workbook([
+            $header,
+            ['IMP-001', 'Programación I', '1', 'Unidad básica', 'Presencial', '48', '32', '64', '3', '', ''],
+            ['IMP-002', 'Programación II', '2', 'Unidad profesional', '', '48', '32', '64', '3', 'IMP-001', ''],
+        ]);
+        $this->postJson(route('api.v1.coordination.academic.curriculum-import.store'), ['file' => $file, 'confirm' => true])
+            ->assertOk()->assertJsonPath('valid', true)->assertJsonPath('created', 2);
+        $this->assertSame(144, Subject::query()->where('codigo_asignatura', 'IMP-002')->firstOrFail()->horas_totales);
+        $this->assertSame(1, SubjectRequirement::query()
+            ->whereHas('subject', fn ($query) => $query->where('codigo_asignatura', 'IMP-002'))->count());
+
+        $this->getJson(route('api.v1.coordination.academic.curriculum-import.template'))->assertOk();
+        $this->actingAsRole('docente@silabos.test');
+        $this->getJson(route('api.v1.coordination.academic.curriculum-import.template'))->assertForbidden();
     }
 
     public function test_templates_download_as_xlsx(): void

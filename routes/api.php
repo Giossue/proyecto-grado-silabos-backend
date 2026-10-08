@@ -5,6 +5,7 @@ use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
 use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
 use App\Modules\Academic\Presentation\Http\Controllers\CareerImportController;
+use App\Modules\Academic\Presentation\Http\Controllers\CurriculumImportController;
 use App\Modules\Academic\Presentation\Http\Controllers\FichaImportsController;
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectProfileController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
@@ -238,6 +239,10 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.academic.teacher-assignments.index');
             Route::post('coordination/academic/teachers', [CareerTeacherController::class, 'store'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.store');
+            Route::get('coordination/academic/curriculum-import/template', [CurriculumImportController::class, 'template'])
+                ->middleware('active-role')->name('api.v1.coordination.academic.curriculum-import.template');
+            Route::post('coordination/academic/curriculum-import', [CurriculumImportController::class, 'store'])
+                ->middleware(['active-role', 'throttle:10,1'])->name('api.v1.coordination.academic.curriculum-import.store');
             Route::get('coordination/academic/teachers/import-template', [CareerTeacherController::class, 'importTemplate'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.import-template');
             Route::post('coordination/academic/teachers/import', [CareerTeacherController::class, 'import'])
