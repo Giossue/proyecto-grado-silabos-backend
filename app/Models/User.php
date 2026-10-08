@@ -26,6 +26,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $contrasena
  * @property bool $activo
  * @property string|null $formacion_experiencia
+ * @property array{high_contrast: bool, text_size: string, no_motion: bool, underline_links: bool, wide_spacing: bool}|null $preferencias_accesibilidad
  * @property string|null $secreto_dos_factores
  * @property string|null $codigos_recuperacion_dos_factores
  * @property Carbon|null $dos_factores_confirmado_en
@@ -46,6 +47,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
         'nombre' => 'nombre_usuario',
         'activo' => 'usuario_activo',
         'formacion_experiencia' => 'formacion_experiencia_usuario',
+        'preferencias_accesibilidad' => 'preferencias_accesibilidad_usuario',
     ];
 
     public $timestamps = false;
@@ -130,6 +132,7 @@ class User extends Authenticatable implements MustVerifyEmailContract
             'correo_verificado_en' => 'datetime',
             'contrasena' => 'hashed',
             'activo' => 'boolean',
+            'preferencias_accesibilidad' => 'array',
             'dos_factores_confirmado_en' => 'datetime',
         ];
     }

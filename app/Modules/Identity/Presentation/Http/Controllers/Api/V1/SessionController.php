@@ -7,12 +7,14 @@ use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\User;
 use App\Modules\Identity\Application\Actions\SelectActiveRole;
+use App\Modules\Identity\Application\Actions\UpdateAccessibilityPreferences;
 use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
 use App\Modules\Identity\Application\Actions\UpdateTeacherFormation;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Identity\Presentation\Http\Requests\Api\LoginRequest;
 use App\Modules\Identity\Presentation\Http\Requests\SelectActiveRoleRequest;
+use App\Modules\Identity\Presentation\Http\Requests\UpdateAccessibilityRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateTeacherFormationRequest;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use Illuminate\Http\JsonResponse;
@@ -150,6 +152,22 @@ class SessionController extends Controller
         return response()->json($this->sessionPayload($updated, $request));
     }
 
+    public function updateAccessibility(
+        UpdateAccessibilityRequest $request,
+        UpdateAccessibilityPreferences $action,
+    ): JsonResponse {
+        $user = $this->authenticatedUser($request);
+        $updated = $action->execute($user, [
+            'high_contrast' => $request->boolean('high_contrast'),
+            'text_size' => $request->string('text_size')->toString(),
+            'no_motion' => $request->boolean('no_motion'),
+            'underline_links' => $request->boolean('underline_links'),
+            'wide_spacing' => $request->boolean('wide_spacing'),
+        ]);
+
+        return response()->json($this->sessionPayload($updated, $request));
+    }
+
     public function selectActiveRole(SelectActiveRoleRequest $request, SelectActiveRole $action): JsonResponse
     {
         $user = $this->authenticatedUser($request);
@@ -167,7 +185,7 @@ class SessionController extends Controller
         return $user;
     }
 
-    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, can_edit_identity: bool, formation: string|null}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>} */
+    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, can_edit_identity: bool, formation: string|null, accessibility: array{high_contrast: bool, text_size: string, no_motion: bool, underline_links: bool, wide_spacing: bool}|null}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>} */
     private function sessionPayload(User $user, Request $request): array
     {
         $activeRole = $this->roles->resolve($request);
@@ -180,6 +198,7 @@ class SessionController extends Controller
                 'email_verified' => $user->hasVerifiedEmail(),
                 'can_edit_identity' => $user->can('updateProfileData', $user),
                 'formation' => $user->formacion_experiencia,
+                'accessibility' => $user->preferencias_accesibilidad,
             ],
             'active_role' => $activeRole === null ? null : $this->rolePayload($activeRole),
             'available_roles' => array_values($this->roles->eligible($user)

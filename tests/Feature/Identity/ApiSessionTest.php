@@ -442,4 +442,20 @@ class ApiSessionTest extends TestCase
 
         $this->assertNotSame($before, $user->fresh()->recoveryCodes());
     }
+
+    public function test_user_saves_accessibility_preferences_and_gets_them_back_in_the_session(): void
+    {
+        $user = User::factory()->create();
+        $payload = ['high_contrast' => true, 'text_size' => '130', 'no_motion' => true, 'underline_links' => false, 'wide_spacing' => true];
+
+        $this->actingAs($user)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->putJson(route('api.v1.authentication.accessibility.update'), $payload)
+            ->assertOk()
+            ->assertJsonPath('user.accessibility', $payload);
+
+        $this->getJson(route('api.v1.session.show'))->assertJsonPath('user.accessibility.text_size', '130');
+        $this->putJson(route('api.v1.authentication.accessibility.update'), [...$payload, 'text_size' => '999'])
+            ->assertUnprocessable()->assertJsonValidationErrors('text_size');
+    }
 }

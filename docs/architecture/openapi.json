@@ -2783,6 +2783,52 @@
                 ]
             }
         },
+        "/api/v1/authentication/accessibility": {
+            "put": {
+                "tags": [
+                    "Identidad"
+                ],
+                "operationId": "api_v1_authentication_accessibility_update",
+                "summary": "api.v1.authentication.accessibility.update",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/authentication/account-activation": {
             "post": {
                 "tags": [

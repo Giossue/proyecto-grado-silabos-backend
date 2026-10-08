@@ -80,6 +80,8 @@ Route::prefix('v1')->group(function (): void {
             Route::put('authentication/profile', [SessionController::class, 'updateProfile'])
                 ->middleware('active-role')
                 ->name('api.v1.authentication.profile.update');
+            Route::put('authentication/accessibility', [SessionController::class, 'updateAccessibility'])
+                ->name('api.v1.authentication.accessibility.update');
             Route::put('authentication/formation', [SessionController::class, 'updateFormation'])
                 ->middleware('active-role')
                 ->name('api.v1.authentication.formation.update');
