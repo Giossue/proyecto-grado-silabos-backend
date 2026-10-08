@@ -95,6 +95,10 @@ campos editables conservan una sola instancia al cambiar de ancho. `cards=false`
 mantiene las cuadrículas documentales de `TableFieldView` y `UnitsFieldView`. Los
 estilos móviles están en la capa `utilities` para prevalecer sobre anchos y
 `whitespace-nowrap` de las celdas. `TablePagination` conserva el rango y total y
+Las tarjetas móviles tienen fondo sólido `card`/`secondary`, borde `input` y sombra
+`shadow-surface-value`, sobre una región `background` con padding. La regla explícita
+para `tr:last-child` prevalece sobre `[&_tr:last-child]:border-0` de `TableBody`.
+Los esqueletos móviles usan esos mismos tokens.
 sustituye los números por «Página N de M» bajo 640 px. Sus controles pueden envolver
 en un pie estrecho. El sidebar usa `width < 48rem`, alineado con `md` de CSS.
 La plantilla mantiene sus medidas documentales y cada hoja dispone de una región con

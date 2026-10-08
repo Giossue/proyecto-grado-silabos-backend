@@ -65,3 +65,14 @@ Actualizar ese entorno y confirmar la matriz real de dispositivos/navegadores y
 zoom 200 % de PV-19 permanecen pendientes; no son criterios declarados aprobados.
 
 Reversión: revertir únicamente los cambios de esta unidad, sin operaciones de datos.
+
+## Ajuste visual posterior: bordes y fondos
+
+El responsable indicó que las tarjetas no se distinguían. La última fila heredaba
+`[&_tr:last-child]:border-0` de `TableBody` y el primer fondo `card` coincidía con
+el contenedor. Se ajustaron únicamente los estilos móviles y su esqueleto: borde
+`input` en todas las tarjetas, incluida la última/única, fondos sólidos alternos
+`card`/`secondary` y sombra de superficie sobre un conjunto `background` con padding.
+No cambia el límite de 640 px, los datos, acciones, tablas documentales o escritorio.
+Verificación puntual: revisión de especificidad y `git diff --check`; ESLint del
+esqueleto. No se añadieron ni ejecutaron pruebas ni un build en este ajuste.

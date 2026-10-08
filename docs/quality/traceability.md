@@ -128,6 +128,13 @@ esperado permite validar la interpretación del pedido.
 
 ## Responsividad: tablas a tarjetas — 2026-10-07
 
+Ajuste visual solicitado después: todas las tarjetas móviles, incluida la última o
+única, tienen borde `input`, fondo sólido `card`/`secondary` y sombra sobre un conjunto
+`background` separado; la carga conserva esa composición. La especificidad móvil
+corrige la eliminación del borde final de `TableBody`. Revisión puntual de formato
+y ESLint del esqueleto; la evidencia Chromium anterior corresponde a la primera
+versión y la aceptación visual del ajuste permanece pendiente en PV-19.
+
 | Cambio | IDs relacionados | Evidencia | Estado |
 |---|---|---|---|
 | Un registro por tarjeta móvil, paginación compacta y papel desplazable | RNF-018..023; UI-01..04; ADM-02/04/06/10/12, COR-05/13..16, DOC-02/04/10, BIB-02/03; CP-F listados/editor y CP-N experiencia/accesibilidad; PV-19 | Pedido confirmado del responsable: `TableRow` conserva todos los datos etiquetados y una sola instancia de los campos, `TablePagination` presenta página/total, las vistas documentales conservan su matriz, plantilla y carga mantienen ancho de papel, sidebar comparte el límite `md`. `responsive-layout.spec.ts`, `curriculum-drag.spec.ts`, `loading-skeletons.spec.ts`, `frontend-components.spec.ts` y `AdminTemplatePage.test.ts`; datos sintéticos y API local interceptada. Plan `docs/plans/completed/FE-RESP-2026-10-07-tablas-tarjetas.md`. | Verificación local en Chromium, ambos temas y 320–1440 px; PV-19 conserva pendiente dispositivos/navegadores reales y zoom del navegador. La revisión autenticada con la API local tiene migraciones pendientes y falta una cuenta de Biblioteca. |

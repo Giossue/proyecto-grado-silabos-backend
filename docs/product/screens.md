@@ -196,6 +196,10 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   Las tablas documentales de consulta conservan su cuadrícula y desplazamiento interno.
   En móvil, la paginación muestra «Página N de M» entre Anterior y Siguiente; en pantallas
   amplias conserva los números de página. Todos sus controles caben dentro del listado.
+  Tras la revisión del responsable, las tarjetas móviles usan fondo sólido `card`
+  alternado con `secondary`, borde visible `input` y sombra de superficie; el conjunto
+  tiene fondo `background` y separación. La última tarjeta conserva el mismo borde,
+  también cuando hay un solo registro. La carga representa esas mismas superficies.
 - Toda tabla diferencia visualmente el encabezado y alterna el fondo de sus registros;
   el primer registro usa la superficie base y el segundo el tono alterno.
 - Las cargas iniciales reproducen la composición vigente de su pantalla mediante
