@@ -21,7 +21,11 @@ final class UnitsFieldType implements FieldType
 
     private const TEXTS = ['contenidos' => 2000, 'acd' => 2000, 'ape' => 2000, 'aa' => 2000, 'evaluacion' => 2000];
 
-    private const FILL = 'D9E2F3';
+    private const FILL = 'C3D4EA';
+
+    private const BAND = 'E1E9F4';
+
+    private const HEADER_TEXT = '365F91';
 
     public function key(): string
     {
@@ -140,15 +144,17 @@ final class UnitsFieldType implements FieldType
      */
     public function table(array $unit, int $number, int &$week): array
     {
-        $cell = fn (string $text, int $cols = 1, int $rows = 1, bool $head = false, ?string $align = null, bool $bold = false): array => [
+        $cell = fn (string $text, int $cols = 1, int $rows = 1, bool $head = false, ?string $align = null, bool $bold = false, bool $band = false): array => [
             'type' => $head ? 'tableHeader' : 'tableCell',
             'attrs' => array_filter([
                 'colspan' => $cols,
                 'rowspan' => $rows,
-                'backgroundColor' => $head ? '#'.self::FILL : null,
+                'backgroundColor' => $head ? '#'.self::FILL : ($band ? '#'.self::BAND : null),
                 'textAlign' => $align ?? ($head ? 'center' : null),
             ], fn (mixed $v): bool => $v !== null),
-            'content' => [$text === '' ? ['type' => 'paragraph'] : ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text] + ($bold || $head ? ['marks' => [['type' => 'bold']]] : [])]]],
+            'content' => [$text === '' ? ['type' => 'paragraph'] : ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text] + ($head
+                ? ['marks' => [['type' => 'bold'], ['type' => 'textStyle', 'attrs' => ['color' => '#'.self::HEADER_TEXT]]]]
+                : ($bold ? ['marks' => [['type' => 'bold']]] : []))]]],
         ];
         $row = fn (array $cells): array => ['type' => 'tableRow', 'content' => $cells];
         $text = fn (mixed $v): string => is_scalar($v) ? trim((string) $v) : '';
@@ -167,10 +173,11 @@ final class UnitsFieldType implements FieldType
             foreach (self::HOURS as $i => $key) {
                 $totals[$i] += (float) str_replace(',', '.', $text($item[$key] ?? null));
             }
+            $band = $week % 2 === 1;
             $rows[] = $row([
-                $cell($text($item['contenidos'] ?? null)), $cell((string) $week, 1, 1, false, 'center'),
-                $cell($text($item['acd_h'] ?? null), 1, 1, false, 'center'), $cell($text($item['ape_h'] ?? null), 1, 1, false, 'center'), $cell($text($item['aa_h'] ?? null), 1, 1, false, 'center'),
-                $cell($text($item['acd'] ?? null)), $cell($text($item['ape'] ?? null)), $cell($text($item['aa'] ?? null)), $cell($text($item['evaluacion'] ?? null)),
+                $cell($text($item['contenidos'] ?? null), 1, 1, false, null, false, $band), $cell((string) $week, 1, 1, false, 'center', false, $band),
+                $cell($text($item['acd_h'] ?? null), 1, 1, false, 'center', false, $band), $cell($text($item['ape_h'] ?? null), 1, 1, false, 'center', false, $band), $cell($text($item['aa_h'] ?? null), 1, 1, false, 'center', false, $band),
+                $cell($text($item['acd'] ?? null), 1, 1, false, null, false, $band), $cell($text($item['ape'] ?? null), 1, 1, false, null, false, $band), $cell($text($item['aa'] ?? null), 1, 1, false, null, false, $band), $cell($text($item['evaluacion'] ?? null), 1, 1, false, null, false, $band),
             ]);
         }
         $fmt = fn (float $n): string => rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
