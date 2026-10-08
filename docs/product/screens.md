@@ -675,7 +675,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - ADM-12 **Convocatorias** (I-172) es la única pantalla de periodos y convocatorias: una
   fila por periodo lectivo con sus fechas de clases, las fechas de elaboración de sílabos
   (o «Sin fechas») y el estado: **Sin iniciar** (periodo sin convocatoria), **Abierto**,
-  **Pausado** y **Finalizado**. El botón **Nueva convocatoria** abre un solo `Sheet` sin
+  **Pausado** y **Finalizado**. La tabla no tiene columna de acciones: al pulsar una fila
+  se abre una hoja con los datos y las acciones del periodo o de la convocatoria. El botón **Nueva convocatoria** abre un solo `Sheet` sin
   descripción general, con dos bloques y una línea de ayuda bajo cada uno: fechas del
   periodo (la etiqueta se genera sola) y fechas de elaboración; las cuatro son
   obligatorias. Al enviar, un diálogo confirma que, una vez abierta, el periodo y sus
