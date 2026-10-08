@@ -116,14 +116,14 @@ class WordRendererTest extends TestCase
         $this->assertStringContainsString('w:fill="4F81BD"', $documentXml);
         $this->assertStringContainsString('w:color w:val="FFFFFF"', $documentXml);
         $this->assertStringContainsString('w:color w:val="2F5496"', $documentXml);
-        $this->assertStringContainsString('w:sz w:val="24"', $documentXml);
+        $this->assertStringContainsString('w:sz w:val="22"', $documentXml);
         $this->assertStringContainsString('PLAN ACADÉMICO INSTITUCIONAL', $documentXml);
         $this->assertStringNotContainsString(TemplateTitleBlock::DEFAULT_TEXT, $documentXml);
         $this->assertStringNotContainsString('<w:i w:val="1"/>', $documentXml);
         $this->assertStringContainsString('Arial', $stylesXml);
         $this->assertStringNotContainsString('Georgia', $stylesXml);
         $this->assertStringContainsString('w:color w:val="000000"', $stylesXml);
-        $this->assertStringContainsString('w:sz w:val="24"', $stylesXml);
+        $this->assertStringContainsString('w:sz w:val="22"', $stylesXml);
     }
 
     public function test_docx_follows_the_official_format(): void
