@@ -585,7 +585,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   período y solo mantiene al docente si sigue activo, verificado y con rol vigente en la
   carrera; si no, el paralelo queda sin docente. La coordinación solo corrige lo que cambió.
   Se audita como `academico.periodo_arrastrado`.
-- **Usuarios y roles**: la tabla muestra solo el primer rol y su carrera; un clic en la fila abre una única hoja con
+- **Usuarios y roles**: la tabla muestra el primer rol y su carrera, con un «+N» y un tooltip con el resto cuando hay más de uno; un clic en la fila abre una única hoja con
   la ficha de la cuenta (todos los roles vigentes y finalizados) y el botón **Editar**, que cambia la misma hoja al
   formulario de edición. La acción «Ver» ya no está en el menú; la propia cuenta solo se consulta.
 - **Aviso de edición bloqueada**: una sola franja compacta (`ProcessLockAlert`) en la plantilla, la malla, Materias y
