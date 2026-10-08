@@ -23,6 +23,7 @@ use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Facades\DB;
 
 class AcademicStructureViewData
 {
@@ -74,6 +75,7 @@ class AcademicStructureViewData
                         'code' => $career->codigo_carrera,
                         'name' => $career->nombre,
                         'active' => $career->activo,
+                        'delete_blocked_reason' => $this->careerDeleteBlock((string) $career->id),
                     ]),
                 'periods' => AcademicPeriod::query()
                     ->orderByDesc('fecha_inicio')
@@ -522,5 +524,28 @@ class AcademicStructureViewData
             'coordinatorUsers' => [],
             'teacherUsers' => [],
         ];
+    }
+
+    /** @var array<string, array<string, int>>|null */
+    private ?array $careerDependencies = null;
+
+    /** Motivo por el que una carrera no se puede eliminar (las mismas reglas que al borrarla), o null. */
+    private function careerDeleteBlock(string $careerId): ?string
+    {
+        $this->careerDependencies ??= [
+            'subjects' => Subject::query()->get(['carrera_id'])->countBy(fn (Subject $subject) => (string) $subject->carrera_id)->all(),
+            'convocations' => DB::table('convocatorias_carreras')->selectRaw('carrera_id, count(*) as total')->groupBy('carrera_id')->pluck('total', 'carrera_id')->all(),
+            'roles' => DB::table('asignaciones_rol')->selectRaw('carrera_id, count(*) as total')->whereNotNull('carrera_id')->groupBy('carrera_id')->pluck('total', 'carrera_id')->all(),
+            'imports' => DB::table('importaciones_ficha')->selectRaw('carrera_id, count(*) as total')->whereNotNull('carrera_id')->groupBy('carrera_id')->pluck('total', 'carrera_id')->all(),
+        ];
+        $count = fn (string $kind): int => (int) ($this->careerDependencies[$kind][$careerId] ?? 0);
+
+        return match (true) {
+            $count('subjects') > 0 => 'No se puede eliminar: tiene '.$count('subjects').($count('subjects') === 1 ? ' materia.' : ' materias.'),
+            $count('convocations') > 0 => 'No se puede eliminar: ya tuvo convocatorias.',
+            $count('roles') > 0 => 'No se puede eliminar: tiene usuarios asignados.',
+            $count('imports') > 0 => 'No se puede eliminar: tiene fichas importadas.',
+            default => null,
+        };
     }
 }
