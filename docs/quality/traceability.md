@@ -577,3 +577,4 @@ plazo y avance a los sílabos del docente en la carrera activa.
 I-201 — modal de creación de plantilla, sección 6 horizontal y pestañas del docente (ADM-06, DOC-02): `TemplateAndSourceTest`, `SyllabusTemplateSeederTest`, `AdminTemplatePage.test.ts` y `TeacherSyllabusDetailPage.test.ts`.
 
 I-204 — módulo Proyecto de carrera con asistente de IA (COR-16, CU-04): `FichaImportTest` y `FichaImportDialog.test.ts`; la ficha sale de Materias y asignaciones.
+I-205 — ayuda contextual por pantalla con botón flotante y módulo «Ayuda de pantallas» de Administración: `ScreenHelpTest`, `ScreenHelpButton.test.ts` y `AdminHelpPage.test.ts`.

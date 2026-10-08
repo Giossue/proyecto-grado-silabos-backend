@@ -164,6 +164,8 @@ class AuditEventController extends Controller
             'usuario.perfil_actualizado' => 'Perfil actualizado',
             'usuario.contrasena_actualizada' => 'Contraseña actualizada',
             'usuario.invitacion_activacion_enviada' => 'Invitación de activación enviada',
+            'ayuda.guardada' => 'Ayuda de pantalla guardada',
+            'ayuda.eliminada' => 'Ayuda de pantalla eliminada',
             'rol_activo.seleccionado' => 'Rol activo seleccionado',
             'ia.analisis_solicitado' => 'Análisis de IA solicitado',
             'ia.analisis_completado' => 'Análisis de IA completado',
@@ -204,6 +206,7 @@ class AuditEventController extends Controller
             'ejecucion_ia' => 'Análisis de IA',
             'asignacion_rol' => 'Asignación de rol',
             'usuario' => 'Usuario',
+            'ayuda_pantalla' => 'Ayuda de pantalla',
             default => 'Recurso del sistema',
         };
     }

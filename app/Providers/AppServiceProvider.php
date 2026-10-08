@@ -101,6 +101,11 @@ class AppServiceProvider extends ServiceProvider
                 && app(ActiveRole::class)->hasRole(request(), RoleCode::Librarian),
         );
         Gate::define(
+            'manage-help',
+            fn (User $user): bool => $user->activo
+                && app(ActiveRole::class)->hasRole(request(), RoleCode::Administrator),
+        );
+        Gate::define(
             'view-audit',
             fn (User $user): bool => $user->activo
                 && app(ActiveRole::class)->hasRole(request(), RoleCode::Administrator),

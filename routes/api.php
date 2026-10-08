@@ -23,6 +23,7 @@ use App\Modules\Identity\Presentation\Http\Controllers\ManagedUserController;
 use App\Modules\Library\Presentation\Http\Controllers\LibraryReviewController;
 use App\Modules\Operations\Presentation\Http\Controllers\AuditEventController;
 use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
+use App\Modules\Operations\Presentation\Http\Controllers\ScreenHelpController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ConvocationController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\ReviewController;
 use App\Modules\Syllabus\Presentation\Http\Controllers\SyllabusController;
@@ -93,6 +94,14 @@ Route::prefix('v1')->group(function (): void {
                 ->name('api.v1.notifications.read');
             Route::post('notifications/{notification}/open', [NotificationController::class, 'open'])
                 ->name('api.v1.notifications.open');
+            Route::get('help', [ScreenHelpController::class, 'show'])
+                ->middleware('active-role')->name('api.v1.help.show');
+            Route::get('admin/help', [ScreenHelpController::class, 'index'])
+                ->middleware('active-role')->name('api.v1.admin.help.index');
+            Route::put('admin/help', [ScreenHelpController::class, 'update'])
+                ->middleware('active-role')->name('api.v1.admin.help.update');
+            Route::delete('admin/help', [ScreenHelpController::class, 'destroy'])
+                ->middleware('active-role')->name('api.v1.admin.help.destroy');
             Route::get('admin/users', [ManagedUserController::class, 'index'])
                 ->middleware('active-role')
                 ->name('api.v1.admin.users.index');

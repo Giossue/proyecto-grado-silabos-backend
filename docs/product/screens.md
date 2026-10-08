@@ -573,6 +573,12 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   período y solo mantiene al docente si sigue activo, verificado y con rol vigente en la
   carrera; si no, el paralelo queda sin docente. La coordinación solo corrige lo que cambió.
   Se audita como `academico.periodo_arrastrado`.
+- **Ayuda contextual** (I-205): un botón flotante con el ícono de ayuda aparece en el área de contenido de
+  toda pantalla que tenga una ayuda activa; se arrastra dentro del contenido, recuerda su posición en el
+  navegador y abre un panel con el título y el texto de esa pantalla, sin ocupar espacio en la página.
+  Administración escribe los textos en **Ayuda de pantallas** (`/admin/ayuda`): una tabla con todas las
+  pantallas por rol, su estado (con ayuda, sin ayuda, inactiva) y un `Sheet` para editar título, texto
+  y activa. Administración tiene su propia ayuda en sus pantallas.
 - **Proyecto de carrera** (COR-16, I-204) es un módulo aparte del Coordinador: tabla con todas las
   materias de la malla (materia, código, ciclo y estado de la ficha) y un clic en la fila abre la ficha.
   La ficha ya no está en «Materias y asignaciones». El botón **Importar documentos** abre el asistente:
