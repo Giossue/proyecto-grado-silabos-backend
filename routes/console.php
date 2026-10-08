@@ -9,3 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('auth:clear-resets')->everyFifteenMinutes()->withoutOverlapping();
+
+Schedule::command('procesos:finalizar-vencidos')->dailyAt('00:10')->withoutOverlapping();
