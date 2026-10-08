@@ -62,7 +62,7 @@ texto contrastado; los bordes de campos conservan una relación mínima de 3:1 c
 superficies. Las primitivas compartidas no añaden excepciones cromáticas `dark:` y las
 pestañas se dibujan sin fondo propio. El tema oscuro usa el azul moderado `#4669c8`
 con texto blanco en superficies sólidas y una variante clara de la misma familia cuando
-el azul funciona como texto. El sidebar oscuro usa un fondo grafito y reserva un azul
+el azul funciona como texto. El sidebar oscuro usa un fondo grafito medio y reserva un azul
 discreto para los estados activos; el foco conserva la familia azul principal.
 Esta normalización no altera la paleta documental, los gráficos ni los colores que
 identifican unidades curriculares.

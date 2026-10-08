@@ -145,7 +145,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - I-197 aplica los mismos roles cromáticos a toda la interfaz operativa en ambos temas.
   Texto, superficies, acciones, campos, estados y foco mantienen contraste; en oscuro,
   las acciones usan el azul moderado `#4669c8` con texto blanco y una variante clara
-  cuando el azul funciona como texto. El sidebar oscuro usa fondo grafito y un azul
+  cuando el azul funciona como texto. El sidebar oscuro usa fondo grafito medio y un azul
   discreto en sus estados activos; el foco conserva la familia principal. Las primitivas
   compartidas no definen excepciones locales por tema. El
   papel, los gráficos y los colores de unidades curriculares permanecen fuera de esta
