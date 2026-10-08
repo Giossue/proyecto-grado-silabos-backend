@@ -2,12 +2,13 @@
 
 namespace App\Modules\Academic\Application;
 
+use App\Modules\Academic\Infrastructure\Gateways\OpenParserPdfReader;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 use ZipArchive;
 
-/** Convierte un PDF o un Excel de la carrera en fragmentos de texto para buscar evidencia por materia. */
+/** Convierte un PDF (con el OCR de OpenParser si está configurado) o un Excel de la carrera en fragmentos de texto para buscar evidencia por materia. */
 final class FichaDocumentText
 {
     private const BLOCK = 1800;
@@ -18,11 +19,13 @@ final class FichaDocumentText
 
     private const MAX_UNCOMPRESSED_BYTES = 150 * 1024 * 1024;
 
+    public function __construct(private readonly OpenParserPdfReader $ocr) {}
+
     /** @return list<string> */
     public function blocks(string $absolutePath, string $name): array
     {
         $text = match (strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION))) {
-            'pdf' => $this->pdf($absolutePath),
+            'pdf' => $this->ocr->available() ? $this->ocr->text($absolutePath, $name) : $this->pdf($absolutePath),
             'xlsx', 'xls' => $this->workbook($absolutePath),
             default => throw new RuntimeException('Solo se admiten archivos PDF o Excel.'),
         };

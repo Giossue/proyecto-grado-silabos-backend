@@ -21,7 +21,7 @@ class PrepareFichaImportJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 180;
+    public int $timeout = 900;
 
     public function __construct(public readonly string $importId)
     {
