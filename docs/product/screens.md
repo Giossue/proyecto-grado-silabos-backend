@@ -148,7 +148,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   normalización.
 - El menú lateral de escritorio conserva su estado expandido o colapsado en la cookie
   `sidebar_state` del navegador durante siete días. Lo restaura al recargar o montar
-  de nuevo el layout; sin preferencia guardada, aparece expandido.
+  de nuevo el layout; sin preferencia guardada, aparece expandido. En el estado
+  colapsado, el logo y los iconos de navegación quedan centrados en el ancho disponible.
 - UI-03 se abre desde el acceso de **Notificaciones** situado junto al selector de tema en
   el encabezado autenticado común. Por solicitud del responsable del producto del
   2026-10-04, el acceso indica avisos sin leer mediante un punto rojo pequeño, sin número,
