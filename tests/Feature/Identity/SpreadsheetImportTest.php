@@ -7,6 +7,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
+use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -121,6 +122,26 @@ class SpreadsheetImportTest extends TestCase
         $this->getJson(route('api.v1.coordination.academic.curriculum-import.template'))->assertOk();
         $this->actingAsRole('docente@silabos.test');
         $this->getJson(route('api.v1.coordination.academic.curriculum-import.template'))->assertForbidden();
+    }
+
+    public function test_curriculum_imports_into_a_career_without_subjects(): void
+    {
+        $coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
+        $career = Career::query()->create([
+            'facultad_id' => Faculty::query()->firstOrFail()->id,
+            'codigo_carrera' => 'CARR-VACIA',
+            'nombre' => 'Carrera sin malla',
+            'cantidad_ciclos_malla' => 8,
+            'activo' => true,
+        ]);
+        $role = RoleAssignment::query()->create(['usuario_id' => $coordinator->id, 'rol' => 'coordinador', 'carrera_id' => $career->id, 'activo' => true]);
+        $this->actingAs($coordinator)->withSession(['active_role_assignment_id' => $role->id]);
+        $header = ['Código', 'Nombre de la materia', 'Ciclo', 'Unidad de organización', 'Modalidad', 'Horas ACD', 'Horas APE', 'Horas AA', 'Créditos', 'Prerrequisitos (códigos)', 'Correquisitos (códigos)'];
+        $file = $this->workbook([$header, ['VAC-001', 'Base', '1', 'Unidad básica', '', '1', '1', '1', '1', '', ''], ['VAC-002', 'Siguiente', '2', 'Unidad básica', '', '1', '1', '1', '1', 'VAC-001', '']]);
+
+        $this->postJson(route('api.v1.coordination.academic.curriculum-import.store'), ['file' => $file, 'confirm' => true])
+            ->assertOk()->assertJsonPath('valid', true)->assertJsonPath('created', 2);
+        $this->assertSame(2, Subject::query()->where('carrera_id', $career->id)->count());
     }
 
     public function test_requirement_types_follow_the_cycles(): void

@@ -57,7 +57,7 @@ class ImportCurriculum
     public function execute(array $rows, User $actor, Request $request, bool $confirm): array
     {
         $career = $this->career($request);
-        $stored = Subject::query()->where('carrera_id', $career->id)->get(['id', 'codigo_asignatura', 'ciclo']);
+        $stored = Subject::query()->where('carrera_id', $career->id)->get(['id', 'codigo_asignatura', 'ciclo'])->toBase();
         $existing = $stored->mapWithKeys(fn (Subject $subject): array => [$this->key((string) $subject->codigo_asignatura) => (string) $subject->id]);
         $cycles = $stored->mapWithKeys(fn (Subject $subject): array => [$this->key((string) $subject->codigo_asignatura) => (int) $subject->ciclo])
             ->merge(collect($rows)->mapWithKeys(fn (array $row): array => [$this->key($row['values']['codigo']) => (int) $row['values']['ciclo']]));
