@@ -23,10 +23,10 @@ final class TemplateAppearance
     /** @var array<string, mixed> */
     private const INSTITUTIONAL_STYLE = [
         'font_family' => 'Arial',
-        'body_font_size' => 10,
+        'body_font_size' => 12,
         'title_font_size' => 14,
-        'section_font_size' => 10,
-        'field_font_size' => 10,
+        'section_font_size' => 12,
+        'field_font_size' => 12,
         'margin_cm' => 2.5,
         'orientation' => 'portrait',
         'text_color' => '#000000',
