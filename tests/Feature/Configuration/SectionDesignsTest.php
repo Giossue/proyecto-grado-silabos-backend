@@ -147,7 +147,7 @@ class SectionDesignsTest extends TestCase
         foreach (['Puntualidad:', 'Acceso a la Video Conferencia:', 'Registro de Asistencia:', 'Trabajo en Equipo:', 'Dentro de los estándares de comportamiento', 'Se considera inadmisible lo siguiente:', 'Las violaciones serán analizadas'] as $expected) {
             $this->assertStringContainsString($expected, $text('conducta_etica'));
         }
-        foreach (['Firma:', 'Nombre:', 'Fecha de entrega:', 'Fecha de revisión:'] as $expected) {
+        foreach (['Firma:', 'Nombre:', 'Bibliotecario', 'Fecha de entrega:', 'Fecha de revisión:', 'Fecha de verificación:'] as $expected) {
             $this->assertStringContainsString($expected, $text('firmas'));
         }
     }

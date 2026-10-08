@@ -99,9 +99,9 @@ final class FixedContent
         $signature = fn (): array => self::cell(['', '', 'Firma:']);
 
         return self::doc([self::table([
-            [$signature(), $signature()],
-            [self::cell(['Nombre:', 'Profesor – Investigador']), self::cell(['Nombre:', 'Coordinador de Carrera'])],
-            [self::header('Fecha de entrega:'), self::header('Fecha de revisión:')],
+            [$signature(), $signature(), $signature()],
+            [self::cell(['Nombre:', 'Profesor – Investigador']), self::cell(['Nombre:', 'Coordinador de Carrera']), self::cell(['Nombre:', 'Bibliotecario'])],
+            [self::header('Fecha de entrega:'), self::header('Fecha de revisión:'), self::header('Fecha de verificación:')],
         ])]);
     }
 

@@ -92,7 +92,7 @@ return [
         ],
         'revision' => [
             'title' => 'Revisión y aprobación',
-            'summary' => 'Cuadro de firmas del docente y de la coordinación con sus fechas; igual en todos los sílabos.',
+            'summary' => 'Cuadro de firmas del docente, de la coordinación y de biblioteca con sus fechas; igual en todos los sílabos.',
             'fields' => [
                 ['firmas', '', 'fijo', ['content' => 'firmas']],
             ],
