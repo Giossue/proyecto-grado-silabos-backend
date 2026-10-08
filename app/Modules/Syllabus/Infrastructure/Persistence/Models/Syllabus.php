@@ -106,6 +106,28 @@ class Syllabus extends Model
         return $query->whereHas('parallel', fn (Builder $parallel) => $parallel->whereIn('asignatura_id', $subjectIds));
     }
 
+    /**
+     * Sílabos cuyo período académico sigue vigente (no ha llegado su fecha de fin).
+     *
+     * @param  Builder<Syllabus>  $query
+     */
+    public function scopeInCurrentPeriod(Builder $query): void
+    {
+        $query->whereHas('convocation.process.academicPeriod', fn (Builder $period): Builder => $period
+            ->whereDate('fecha_fin_periodo', '>=', now()->toDateString()));
+    }
+
+    /**
+     * Sílabos de períodos académicos ya terminados.
+     *
+     * @param  Builder<Syllabus>  $query
+     */
+    public function scopeInPastPeriod(Builder $query): void
+    {
+        $query->whereHas('convocation.process.academicPeriod', fn (Builder $period): Builder => $period
+            ->whereDate('fecha_fin_periodo', '<', now()->toDateString()));
+    }
+
     /** @return HasOneThrough<Career, Convocation, $this> */
     public function career(): HasOneThrough
     {

@@ -275,6 +275,12 @@ Route::prefix('v1')->group(function (): void {
             Route::get('teacher/syllabi', [SyllabusController::class, 'index'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.index');
+            Route::get('teacher/history', [SyllabusController::class, 'history'])
+                ->middleware('active-role')
+                ->name('api.v1.teacher.history.index');
+            Route::get('teacher/history/{career}', [SyllabusController::class, 'historyCareer'])
+                ->middleware('active-role')->whereUuid('career')
+                ->name('api.v1.teacher.history.show');
             Route::get('teacher/syllabi/{syllabus}', [SyllabusController::class, 'show'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.show');

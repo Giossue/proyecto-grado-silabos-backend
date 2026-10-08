@@ -57,14 +57,11 @@ class SyllabusController extends Controller
         $syllabi = Syllabus::query()
             ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $activeRole?->carrera_id))
             ->whereCurrentTeacher($user)
-            ->when($search, fn ($query, string $term) => $query->where(
-                fn ($outer) => $outer
-                    ->whereRaw("datos_academicos_silabo->'subject'->>'name' ILIKE ?", ['%'.addcslashes($term, '%_\\').'%'])
-                    ->orWhereHas('convocation.process.academicPeriod', fn ($period) => $period
-                        ->whereRaw('codigo_periodo_academico ILIKE ?', ['%'.addcslashes($term, '%_\\').'%'])),
-            ))
+            ->inCurrentPeriod()
+            ->when($search, fn ($query, string $term) => $query
+                ->whereRaw("datos_academicos_silabo->'subject'->>'name' ILIKE ?", ['%'.addcslashes($term, '%_\\').'%']))
             ->when($state, fn ($query, string $value) => $query->where('estado', $value))
-            ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'parallel.subject:id,nombre,codigo_asignatura', 'parallel:id,codigo'])
+            ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'parallel.subject'])
             ->orderByRaw('guardado_en DESC NULLS LAST')
             ->paginate(20)
             ->withQueryString()
@@ -86,6 +83,56 @@ class SyllabusController extends Controller
         ];
 
         return response()->json($payload);
+    }
+
+    public function history(ViewSyllabiRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
+        $careers = Syllabus::query()
+            ->whereCurrentTeacher($user)
+            ->inPastPeriod()
+            ->with(['convocation:id,carrera_id', 'convocation.career:id,nombre'])
+            ->get()
+            ->groupBy(fn (Syllabus $syllabus): string => $syllabus->convocation->carrera_id)
+            ->map(fn (Collection $group, string $careerId): array => [
+                'id' => $careerId,
+                'name' => $group->first()->convocation->career->nombre,
+                'syllabi_count' => $group->count(),
+            ])
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
+        return response()->json(['careers' => $careers]);
+    }
+
+    public function historyCareer(string $career, ViewSyllabiRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
+        $syllabi = Syllabus::query()
+            ->whereCurrentTeacher($user)
+            ->inPastPeriod()
+            ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $career))
+            ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo,fecha_fin', 'parallel.subject'])
+            ->get()
+            ->sortByDesc(fn (Syllabus $syllabus) => $syllabus->convocation->process->academicPeriod->fecha_fin)
+            ->values();
+        abort_if($syllabi->isEmpty(), 404);
+
+        return response()->json([
+            'career' => ['id' => $career, 'name' => $syllabi->first()->convocation->career->nombre],
+            'syllabi' => $syllabi->map(fn (Syllabus $syllabus): array => [
+                'id' => $syllabus->id,
+                'subject' => $syllabus->academicSubjectName(),
+                'period' => $syllabus->convocation->process->academicPeriod->codigo,
+                'state' => $syllabus->estado,
+                'parallels' => [$syllabus->parallel->codigo],
+                'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
+            ])->values(),
+        ]);
     }
 
     public function show(Syllabus $syllabus, Request $request): JsonResponse
