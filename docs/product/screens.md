@@ -674,7 +674,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   agrupan en la misma celda y no se muestran metadatos secundarios. ADM-09 (Trabajos
   fallidos) se retiró en I-196: no hay pantalla ni reintento de trabajos.
 - **Mis sílabos** (docente) muestra solo los sílabos del período vigente, hasta que llega su
-  fecha de fin; el buscador filtra por asignatura. **Historial** (menú lateral, solo lectura)
+  fecha de fin, como tarjetas (una por materia y paralelo, con su estado y último guardado) en vez de tabla. **Historial** (menú lateral, solo lectura)
   lista primero las carreras con sílabos de períodos terminados; al entrar a una carrera
   salen sus sílabos agrupados por período.
 - ADM-12 **Convocatorias** (I-172) es la única pantalla de periodos y convocatorias: una
