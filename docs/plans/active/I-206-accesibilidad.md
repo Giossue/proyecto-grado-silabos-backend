@@ -18,3 +18,13 @@ Un botón de accesibilidad junto al del tema, que abre un modal con las opciones
 ## Verificación
 
 `useAccessibility.test.ts` y `AccessibilityDialog.test.ts`. Revisión manual de contraste en ambos temas.
+
+## Teclado y lector de pantalla (auditoría 2026-10-10)
+
+- Hecho: título de pestaña por ruta y foco al contenido tras navegar, enlace «Saltar al contenido»,
+  `<main>` en el acceso, Espacio en las filas clicables, tablas con nombre, anuncio del estado de guardado,
+  avisos de error de 10 s y paginación sin anuncios duplicados.
+- Malla curricular sin arrastrar: el menú de cada materia trae «Mover a la izquierda/derecha», «Requiere otra
+  materia…» y «Es requisito de otra materia…», y el botón «Relaciones» abre la lista de relaciones con su eliminación.
+- Pendiente: lista de errores enlazada al campo (`aria-describedby`), foco al cerrar diálogos abiertos desde menús y
+  jerarquía de encabezados en hojas y nodos.
