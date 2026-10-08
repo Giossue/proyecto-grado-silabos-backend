@@ -794,6 +794,31 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame('abierta', $convocation->fresh()->estado);
     }
 
+    public function test_changing_a_subject_profile_restarts_only_that_subjects_syllabi_after_confirmation(): void
+    {
+        $convocation = $this->openedConvocation();
+        $syllabus = Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail();
+        $subjectId = $syllabus->subject->id;
+        $others = Syllabus::query()->where('convocatoria_id', $convocation->id)->whereKeyNot($syllabus->id)->pluck('id')->all();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))->assertSuccessful();
+
+        $this->actingAsCoordinator()
+            ->putJson(route('api.v1.academic.subjects.profile.update', $subjectId), ['values' => []])
+            ->assertJsonValidationErrors('purge_required');
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
+
+        $this->actingAsCoordinator()
+            ->putJson(route('api.v1.academic.subjects.profile.update', $subjectId), ['values' => [], 'confirm_purge' => true])
+            ->assertSuccessful();
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
+        foreach ($others as $id) {
+            $syllabusOfOther = Syllabus::query()->find($id);
+            if ($syllabusOfOther !== null && $syllabusOfOther->subject->id !== $subjectId) {
+                $this->assertDatabaseHas('silabos', ['silabo_id' => $id]);
+            }
+        }
+    }
+
     public function test_an_open_cycle_only_freezes_the_template_and_the_active_careers_structure(): void
     {
         $convocation = $this->openedConvocation();

@@ -9,6 +9,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ final class ApplyFichaImport
         private readonly ProcessLocks $locks,
         private readonly SubjectProfileFields $profile,
         private readonly RecordAuditEvent $audit,
+        private readonly InProgressWork $work,
     ) {}
 
     /** @param list<string> $subjectIds */
@@ -33,7 +35,8 @@ final class ApplyFichaImport
         abort_unless($actor->activo && AcademicStructurePermissions::isCareerContext($role) && $role?->carrera_id === $import->carrera_id, 403);
         $this->locks->assertCareerEditable($import->carrera_id);
 
-        return DB::transaction(function () use ($import, $subjectIds, $actor, $role): FichaImport {
+        // Aplicar fichas rehace desde cero los sílabos en curso de esas materias (previa confirmación).
+        return $this->work->replace($request, fn (): FichaImport => DB::transaction(function () use ($import, $subjectIds, $actor, $role): FichaImport {
             $locked = FichaImport::query()->lockForUpdate()->findOrFail($import->id);
             if ($locked->estado_importacion !== FichaImport::READY) {
                 throw ValidationException::withMessages(['subjects' => 'La propuesta ya no está lista para aplicarse.']);
@@ -67,6 +70,6 @@ final class ApplyFichaImport
             $this->audit->execute($actor->id, $role->id, 'academico.ficha_importacion_aplicada', 'carrera', $locked->carrera_id, 'exito', ['subjects' => $applied]);
 
             return $locked;
-        });
+        }), $import->carrera_id, null, 'Coordinación actualizó la ficha de la asignatura', null, array_values($subjectIds));
     }
 }

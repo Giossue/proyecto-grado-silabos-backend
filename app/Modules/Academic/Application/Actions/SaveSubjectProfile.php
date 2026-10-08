@@ -9,10 +9,10 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class SaveSubjectProfile
@@ -22,6 +22,7 @@ class SaveSubjectProfile
         private readonly ProcessLocks $locks,
         private readonly RecordAuditEvent $audit,
         private readonly SubjectProfileFields $fields,
+        private readonly InProgressWork $work,
     ) {}
 
     public function authorize(Subject $subject, Request $request): void
@@ -46,7 +47,8 @@ class SaveSubjectProfile
             }
         }
 
-        return DB::transaction(function () use ($actor, $request, $subject, $values): array {
+        // Cambiar la ficha rehace desde cero los sílabos en curso de esta materia (previa confirmación).
+        return $this->work->replace($request, function () use ($actor, $request, $subject, $values): array {
             $lockedSubject = Subject::query()->whereKey($subject->id)->lockForUpdate()->firstOrFail();
             $this->authorize($lockedSubject, $request);
             $this->locks->assertCareerEditable($lockedSubject->carrera_id);
@@ -77,6 +79,6 @@ class SaveSubjectProfile
             );
 
             return $this->fields->values($lockedSubject->id);
-        });
+        }, $subject->carrera_id, null, 'Coordinación actualizó la ficha de la asignatura', $subject->id);
     }
 }
