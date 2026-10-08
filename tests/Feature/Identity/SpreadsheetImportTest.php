@@ -3,11 +3,8 @@
 namespace Tests\Feature\Identity;
 
 use App\Models\User;
-use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -115,17 +112,11 @@ class SpreadsheetImportTest extends TestCase
         $this->assertStringContainsString('Primer nombre', (string) $sheet->getCell('I2')->getValue());
     }
 
-    public function test_coordinator_templates_download_with_lists(): void
+    public function test_coordinator_teacher_template_downloads_with_names(): void
     {
         $this->actingAsRole('coordinador@silabos.test');
         $teachers = IOFactory::load($this->templateFile(route('api.v1.coordination.academic.teachers.import-template')))->getSheetByName('Datos');
         $this->assertSame('Primer apellido', $teachers->getCell('C1')->getValue());
-
-        $scheduled = IOFactory::load($this->templateFile(route('api.v1.coordination.academic.scheduled-import.template')))->getSheetByName('Datos');
-        $this->assertSame('Código de materia', $scheduled->getCell('A1')->getValue());
-        foreach (['A2', 'C2', 'D2'] as $cell) {
-            $this->assertSame('list', $scheduled->getCell($cell)->getDataValidation()->getType());
-        }
     }
 
     public function test_admin_imports_careers_all_or_nothing(): void
@@ -146,29 +137,6 @@ class SpreadsheetImportTest extends TestCase
         $sheet = IOFactory::load($this->templateFile(route('api.v1.admin.academic.careers.import-template')))->getSheetByName('Datos');
         $this->assertSame('list', $sheet->getCell('A2')->getDataValidation()->getType());
         $this->assertSame('list', $sheet->getCell('B2')->getDataValidation()->getType());
-    }
-
-    public function test_coordinator_imports_parallels_with_teacher_assignments(): void
-    {
-        $this->actingAsRole('coordinador@silabos.test');
-        $period = AcademicPeriod::query()->firstOrFail();
-        $header = ['Código de materia', 'Paralelo', 'Jornada', 'Correo del docente'];
-        $url = route('api.v1.coordination.academic.scheduled-import.store');
-
-        $bad = $this->workbook([$header, ['NO-EXISTE', 'B', 'Matutina', ''], ['SW-601', 'C', 'Diurna', '']]);
-        $this->postJson($url, ['file' => $bad, 'period_id' => $period->id, 'confirm' => true])
-            ->assertOk()->assertJsonPath('valid', false)->assertJsonPath('created', 0);
-
-        $good = $this->workbook([$header, ['SW-601', 'B', 'Matutina', 'docente@silabos.test']]);
-        $this->postJson($url, ['file' => $good, 'period_id' => $period->id, 'confirm' => true])
-            ->assertOk()->assertJsonPath('valid', true)->assertJsonPath('created', 1);
-        $parallel = Parallel::query()->where('codigo', 'B')->firstOrFail();
-        $this->assertSame('matutina', $parallel->jornada);
-        $this->assertTrue(TeacherAssignment::query()->where('paralelo_id', $parallel->id)->where('activo', true)->exists());
-
-        $again = $this->workbook([$header, ['SW-601', 'B', 'Matutina', 'docente@silabos.test']]);
-        $this->postJson($url, ['file' => $again, 'period_id' => $period->id])
-            ->assertOk()->assertJsonPath('valid', false);
     }
 
     private function templateFile(string $url): string

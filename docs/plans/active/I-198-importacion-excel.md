@@ -2,7 +2,7 @@
 
 ## Pedido del responsable, 2026-10-07
 
-Crear muchas cuentas o registros uno por uno es lento. Cuatro pantallas aceptan un archivo
+Crear muchas cuentas o registros uno por uno es lento. Tres pantallas aceptan un archivo
 `.xlsx` para crear registros en bloque.
 
 ## Alcance
@@ -12,9 +12,6 @@ Crear muchas cuentas o registros uno por uno es lento. Cuatro pantallas aceptan 
   Crea cada cuenta con su invitación de activación, igual que el alta individual.
 - Coordinación → Docentes: columnas de nombre y apellidos (como arriba) y Correo. Reutiliza `CreateCareerTeacher`
   (incorpora a la carrera una cuenta existente sin tocar su nombre ni su acceso).
-- Coordinación → Materias y asignaciones: columnas Código de materia, Paralelo, Jornada,
-  Correo del docente (opcional), sobre el período seleccionado. Crea el paralelo y asigna
-  al docente con las mismas acciones del alta individual.
 - Administración → Facultades y carreras (pestaña Carreras): columnas Facultad, Modalidad,
   Código de carrera, Nombre de la carrera y Número de ciclos.
 
@@ -27,7 +24,7 @@ Crear muchas cuentas o registros uno por uno es lento. Cuatro pantallas aceptan 
 - Máximo 500 filas y 2 MB; las filas vacías se ignoran; el correo repetido dentro del
   archivo es error.
 - Plantilla descargable por pantalla (PhpSpreadsheet): listas desplegables con validación
-  para Rol, Carrera, Código de materia, Jornada y Correo del docente, e indicaciones a la
+  para Rol y Carrera, e indicaciones a la
   derecha que la importación ignora. El segundo nombre y el segundo apellido son opcionales.
 -  Los permisos son los del alta individual.
 
@@ -40,10 +37,16 @@ lectura de imágenes incrustadas (`SpreadsheetReader::readWithImages`), el alto 
 `SpreadsheetTemplate`, `CampusLocation::values()` y la prueba del flujo con logos. Las
 demás importaciones no cambian.
 
+## Retiro de la importación de Materias y asignaciones (2026-10-07)
+
+Por instrucción del responsable, COR-14 deja de importar paralelos y docentes desde
+Excel. Los paralelos se crean y se asignan desde las acciones de cada materia. Se retiran
+la acción `ImportScheduledAssignments`, sus rutas y la plantilla descargable.
+
 ## Cambios
 
 - Backend: `SpreadsheetReader` y `SpreadsheetTemplate` (OpenSpout), acciones
-  `ImportManagedUsers`, `ImportCareerTeachers`, `ImportCareers` e `ImportScheduledAssignments`, rutas
+  `ImportManagedUsers`, `ImportCareerTeachers` e `ImportCareers`, rutas
   `*/import` y `*/import-template`.
 - Frontend: `ImportSpreadsheetDialog` reutilizable (plantilla, revisión por fila, confirmar).
 

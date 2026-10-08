@@ -543,11 +543,13 @@ El plan FE-SHADCN-2026-09-29 conserva el detalle y el resultado final de cada co
 | Constructor simple de plantilla en el frontend (I-195, etapa 7) | RF-017..026 | RN-009..012 | CU-04 | ADM-06 | CP-F plantilla | `AdminTemplatePage`, `TemplateVisualBuilder`, `TemplateSectionDialog`, `TemplateFieldDialog`, `TemplateFieldForm`, `TemplatePreview`, `api/template-structure.ts` y `*FieldBuilder.vue` por tipo (registro `fieldTypes/registry.ts`); retira el editor de hoja libre | `TemplateVisualBuilder.test.ts`, `AdminTemplatePage.test.ts`, `registry.test.ts` | Verificado local (sin revisión visual en navegador) |
 | Catálogo de diseños oficiales de sección, tipos técnicos ocultos e identificación solo con la tabla (I-195, 2026-10-07 II) | RF-017..026 | RN-009..012 | CU-04, CU-07 | ADM-06, DOC-04 | CP-F plantilla | `config/syllabus_template.php` (`designs`, `baseline`), `SectionDesigns`, `FixedContent` (texto real de ética, indicadores, escala y firmas del PDF), `SaveTemplateStructure::createSection` (`design`), `FieldType::manual()`, `TextFieldType` (`inside`), `WordFieldRenderer`/`TemplateDocumentWord` (listas anidadas); frontend `TemplateSectionDialog` (catálogo), `registry.ts` (`manual`, `isEmbeddedField`), `styles.css` (hoja siempre clara, sin contenedor), `TeacherSyllabusDetailPage` | `SectionDesignsTest`, `TemplateStructureApiTest`, `SyllabusTemplateSeederTest`, `FieldTypesTest`, `WordRendererTest`, `ConvocationAndDraftTest`; frontend `TemplateVisualBuilder.test.ts`, `AdminTemplatePage.test.ts`, `registry.test.ts`, `styles.test.ts` | Verificado local (sin revisión visual en navegador ni apertura del Word) |
 
-I-198 — importación con Excel (ADM-05, COR-14 y COR-15): `ImportManagedUsers`,
-`ImportCareerTeachers` e `ImportScheduledAssignments` validan por fila y crean todo o nada
+I-198 — importación con Excel (ADM-05 y COR-15): `ImportManagedUsers` e
+`ImportCareerTeachers` validan por fila y crean todo o nada
 con las acciones del alta individual; `ImportSpreadsheetDialog` muestra la revisión por fila.
 `SpreadsheetImportTest` cubre revisión sin escritura, errores por fila, permisos y plantilla.
 La importación de facultades se retiró (2026-10-07): se crean una por una con su logo; ya no existen `ImportFaculties`, `readWithImages` ni las rutas `admin/academic/faculties/import*`.
+La importación de Materias y asignaciones también se retiró: COR-14 usa las acciones de
+cada materia y ya no expone `ImportScheduledAssignments` ni rutas `scheduled-import*`.
 
 I-197 — quitar rol de una cuenta (ADM-02, RF-001..008): `RemoveUserRole` y `DELETE admin/users/{user}/roles/{assignment}`; «Editar usuario» lista los roles con «Quitar». `ManagedUserUpdateTest` cubre retiro con historial, único rol, cuenta ajena y permiso.
 

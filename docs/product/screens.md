@@ -294,8 +294,9 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   docente en su lugar dentro de la tabla. Mapa: `docs/product/identificacion-institucional.md`.
   COR-14 concentra sus paralelos dentro de **Materias y asignaciones**. Desde las acciones de cada materia,
   **Paralelos y docentes** crea o corrige paralelos con código y jornada y elige el docente
-  de cada uno (asignar o retirar); el servidor rechaza códigos repetidos. La pantalla
-  muestra solo el período en curso (o el próximo si aún no empieza), sin selector, y la
+  de cada uno (asignar o retirar); el servidor rechaza códigos repetidos. La pantalla no
+  ofrece importación desde Excel y muestra solo el período en curso (o el próximo si aún
+  no empieza), sin selector, y la
   pestaña **Materias** lista materia, código, ciclo y cada paralelo con jornada y docente.
   La pestaña **Docentes** lista los docentes de la carrera con sus paralelos del período,
   estado de activación, **Editar docente** y **Reenviar invitación** (I-171).

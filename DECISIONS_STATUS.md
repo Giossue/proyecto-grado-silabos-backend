@@ -785,5 +785,7 @@ No programes como irreversible una decisión institucional que sigue abierta.
 
 I-198 (7 de octubre de 2026), por instrucción explícita del responsable del producto,
 agrega importación con Excel (`.xlsx`) para crear en bloque cuentas (Administración),
-carreras (Administración), docentes y paralelos con su docente (Coordinación). Cada importación se revisa antes de
-confirmar y es todo o nada. Ese mismo día, la importación de facultades se retiró por instrucción del responsable: se crean una por una con su logo.
+carreras (Administración) y docentes (Coordinación). Cada importación se revisa antes de
+confirmar y es todo o nada. Ese mismo día, las importaciones de facultades y de Materias
+y asignaciones se retiraron por instrucción del responsable: las facultades se crean una
+por una con su logo y los paralelos se gestionan desde las acciones de cada materia.

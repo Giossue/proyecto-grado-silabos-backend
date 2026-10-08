@@ -4,8 +4,8 @@ use App\Http\Controllers\DashboardController;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Presentation\Http\Controllers\AcademicGovernanceController;
 use App\Modules\Academic\Presentation\Http\Controllers\CareerAcademicStructureController;
+use App\Modules\Academic\Presentation\Http\Controllers\CareerImportController;
 use App\Modules\Academic\Presentation\Http\Controllers\FichaImportsController;
-use App\Modules\Academic\Presentation\Http\Controllers\ScheduledImportController;
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectProfileController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
@@ -119,9 +119,9 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.academic.store');
             Route::post('admin/academic/careers/{career}/coordinator', [AcademicGovernanceController::class, 'replaceCoordinator'])
                 ->middleware('active-role')->whereUuid('career')->name('api.v1.admin.academic.careers.coordinator.replace');
-            Route::get('admin/academic/careers/import-template', [ScheduledImportController::class, 'careersTemplate'])
+            Route::get('admin/academic/careers/import-template', [CareerImportController::class, 'template'])
                 ->middleware('active-role')->name('api.v1.admin.academic.careers.import-template');
-            Route::post('admin/academic/careers/import', [ScheduledImportController::class, 'importCareers'])
+            Route::post('admin/academic/careers/import', [CareerImportController::class, 'store'])
                 ->middleware('active-role')->name('api.v1.admin.academic.careers.import');
             Route::patch('admin/academic/{entity}/{record}', [AcademicGovernanceController::class, 'update'])
                 ->middleware('active-role')->name('api.v1.admin.academic.update');
@@ -236,10 +236,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware(['active-role', 'throttle:password-recovery'])->name('api.v1.coordination.academic.teachers.activation.resend');
             Route::post('coordination/academic/prepare-period', [CareerAcademicStructureController::class, 'preparePeriod'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.period.prepare');
-            Route::get('coordination/academic/scheduled-import-template', [ScheduledImportController::class, 'template'])
-                ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-import.template');
-            Route::post('coordination/academic/scheduled-import', [ScheduledImportController::class, 'import'])
-                ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-import.store');
             Route::post('coordination/academic/parallels', [CareerAcademicStructureController::class, 'storeParallels'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.parallels.store');
             Route::patch('coordination/academic/parallels/{parallel}', [CareerAcademicStructureController::class, 'updateParallel'])
