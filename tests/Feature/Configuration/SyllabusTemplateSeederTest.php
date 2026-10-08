@@ -112,8 +112,9 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->seed(SyllabusTemplateSeeder::class);
         $template = SyllabusTemplate::query()->firstOrFail();
 
+        $this->assertSame('1. Identificación Institucional', $template->sections->first()->titulo);
         $structure = $template->sections->map(fn ($section) => [
-            $section->titulo,
+            preg_replace('/^\d+\.\s*/', '', $section->titulo),
             $section->blocks->flatMap(fn ($block) => $block->fields)->map(fn ($field) => $field->etiqueta.'|'.$field->fieldType()->key())->all(),
         ])->all();
 

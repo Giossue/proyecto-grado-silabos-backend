@@ -99,7 +99,7 @@ final class SectionDesigns
             'section' => [
                 'id' => (string) Str::uuid(),
                 'clave' => $key,
-                'titulo' => $title !== null && trim($title) !== '' ? trim($title) : $design['title'],
+                'titulo' => $title !== null && trim($title) !== '' ? trim($title) : $position.'. '.$design['title'],
                 'descripcion' => null,
                 'posicion' => $position,
                 'bloques' => $blocks,

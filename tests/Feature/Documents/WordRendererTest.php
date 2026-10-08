@@ -51,7 +51,7 @@ class WordRendererTest extends TestCase
             $this->assertStringContainsString($cell, $text);
         }
         $this->assertStringContainsString('Sin contenido', $text);
-        $this->assertStringContainsString('2. Contenido', $text);
+        $this->assertStringContainsString('Contenido', $text);
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
         $this->assertGreaterThanOrEqual(2, $xpath->query('//w:tbl')->length);
@@ -228,7 +228,7 @@ class WordRendererTest extends TestCase
         $this->assertStringContainsString('w:shd', $xml, 'Los encabezados de las tablas llevan sombreado.');
     }
 
-    public function test_unnamed_part_prints_no_subtitle_and_keeps_numbering_consecutive(): void
+    public function test_unnamed_part_prints_no_subtitle_and_titles_print_as_stored(): void
     {
         $snapshot = $this->snapshot();
         array_splice($snapshot['sections'][2]['blocks'], 1, 0, [[
@@ -260,9 +260,9 @@ class WordRendererTest extends TestCase
         $this->assertIsString($document);
 
         $this->assertStringContainsString('Contenido sin subtítulo', $document);
-        $this->assertStringContainsString('3.1 Descripción', $document);
-        $this->assertStringContainsString('3.2 Objetivos', $document);
-        $this->assertStringNotContainsString('3.3', $document);
+        $this->assertStringContainsString('Descripción', $document);
+        $this->assertStringContainsString('Objetivos', $document);
+        $this->assertStringNotContainsString('3.1 Descripción', $document);
         $this->assertStringNotContainsString('Campo', $document);
     }
 

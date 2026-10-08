@@ -68,7 +68,7 @@ class SectionDesignsTest extends TestCase
 
         $template = $this->template->fresh();
         $section = $template->sections()->first();
-        $this->assertSame('Identificación Institucional', $section->titulo);
+        $this->assertSame('1. Identificación Institucional', $section->titulo);
         $this->assertSame('identificacion', $section->clave);
         $fields = FieldDefinition::query()->where('plantilla_id', $template->id)->get()->keyBy('clave');
         $this->assertEqualsCanonicalizing(['asignatura', 'discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia'], $fields->keys()->all());
@@ -109,7 +109,7 @@ class SectionDesignsTest extends TestCase
         $this->addDesign('revision', ['title' => 'Firmas del sílabo', 'position' => 1])->assertCreated();
 
         $titles = $this->template->fresh()->sections()->sortBy('posicion')->pluck('titulo')->all();
-        $this->assertSame(['Firmas del sílabo', 'Conducta y comportamiento ético'], $titles);
+        $this->assertSame(['Firmas del sílabo', '1. Conducta y comportamiento ético'], $titles);
     }
 
     public function test_adding_every_design_builds_the_usable_official_template(): void
@@ -125,7 +125,7 @@ class SectionDesignsTest extends TestCase
         $this->assertSame([], $fields->filter(fn ($field) => $field->hasLegacyClass())->all());
         $this->assertSame(['automatico' => 1, 'ficha' => 13, 'fijo' => 4, 'texto' => 3, 'unidades' => 1], $fields->countBy(fn ($field) => $field->fieldType()->key())->sortKeys()->all());
         $this->assertSame(
-            collect(config('syllabus_template.designs'))->pluck('title')->values()->all(),
+            collect(config('syllabus_template.designs'))->pluck('title')->values()->map(fn ($title, $index) => ($index + 1).'. '.$title)->all(),
             $sections->sortBy('posicion')->pluck('titulo')->values()->all(),
         );
     }

@@ -18,14 +18,14 @@ final class WordFieldRenderer
     }
 
     /** @param array<string, mixed> $container */
-    public function render(Section $section, array $container, ?string $number): void
+    public function render(Section $section, array $container, bool $titled): void
     {
         $fields = WordValues::arrayList($container['fields'] ?? null);
         $field = $fields[0] ?? [];
         $label = WordValues::string($field['label'] ?? null, WordValues::string($container['title'] ?? null, 'Campo'));
-        if ($number !== null && self::hasTitle($container)) {
+        if ($titled && self::hasTitle($container)) {
             $section->addText(
-                $number.' '.$label,
+                $label,
                 [
                     'bold' => true,
                     'size' => $this->context->appearance['field_font_size'],
@@ -61,7 +61,7 @@ final class WordFieldRenderer
     }
 
     /** @param array<string, mixed> $snapshotSection */
-    public function renderTyped(Section $section, array $snapshotSection, int $number): void
+    public function renderTyped(Section $section, array $snapshotSection): void
     {
         $types = app(FieldTypeRegistry::class);
         $fields = WordValues::arrayList($snapshotSection['fields'] ?? null);

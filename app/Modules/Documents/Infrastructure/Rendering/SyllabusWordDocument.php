@@ -106,9 +106,8 @@ class SyllabusWordDocument
                 $pageWidth = $desiredOrientation === 'landscape' ? 15840 : 12240;
                 $activeFields = $desiredCompact ? new WordFieldRenderer($this->context->compact($pageWidth)) : $fields;
             }
-            $number = $sectionIndex + 1;
             $section->addText(
-                $number.'. '.WordValues::string($block['title'] ?? null, 'Bloque'),
+                WordValues::string($block['title'] ?? null, 'Bloque'),
                 [
                     'bold' => $this->context->appearance['section_bold'],
                     'italic' => $this->context->appearance['section_italic'],
@@ -123,15 +122,13 @@ class SyllabusWordDocument
                 ],
             );
             if (WordFieldRenderer::usesTypes($block)) {
-                $activeFields->renderTyped($section, $block, $number);
+                $activeFields->renderTyped($section, $block);
 
                 continue;
             }
             $containers = WordValues::arrayList($block['blocks'] ?? null);
-            $partNumber = 0;
             foreach ($containers as $container) {
-                $numbered = count($containers) > 1 && WordFieldRenderer::hasTitle($container);
-                $activeFields->render($section, $container, $numbered ? $number.'.'.(++$partNumber) : null);
+                $activeFields->render($section, $container, count($containers) > 1 && WordFieldRenderer::hasTitle($container));
             }
         }
 
