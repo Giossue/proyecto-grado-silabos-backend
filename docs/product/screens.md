@@ -308,7 +308,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   entre hojas y cada subtítulo acompaña la primera línea de su campo. Los textos extensos
   se dividen entre líneas visuales. Las tablas pueden ocupar varias hojas, se dividen
   entre grupos de filas que no atraviesen celdas combinadas y repiten su cabecera al
-  continuar. Cada hoja conserva los márgenes de 2.5 cm.
+  continuar. Cada hoja conserva los márgenes de 1,5 cm.
   En pantallas pequeñas, la hoja mantiene su ancho y se desplaza dentro de su área.
   Estos saltos no se guardan: cada sílabo puede ocupar más o menos páginas según lo
   que redacte el docente. La muestra no garantiza los mismos cortes que Word o PDF.
