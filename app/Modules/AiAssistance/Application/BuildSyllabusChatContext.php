@@ -2,7 +2,6 @@
 
 namespace App\Modules\AiAssistance\Application;
 
-use App\Modules\Configuration\Domain\FieldTypes\UnitsFieldType;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -26,14 +25,13 @@ class BuildSyllabusChatContext
             'subject.cycle' => 'Ciclo', 'subject.organization_unit' => 'Unidad curricular',
             'subject.credits' => 'Créditos', 'subject.hours_ac' => 'Horas ACD',
             'subject.hours_pae' => 'Horas APE', 'subject.hours_aa' => 'Horas AA',
+            'scheduled_subject.teaching_weeks' => 'Semanas lectivas',
         ] as $path => $label) {
             $value = data_get($context, $path);
             if (is_scalar($value) && trim((string) $value) !== '') {
                 $academic[] = $label.': '.$value;
             }
         }
-        // La planificación del sílabo siempre es de 16 semanas, aunque el período dure más.
-        $academic[] = 'Semanas de planificación: '.UnitsFieldType::MAX_WEEKS;
         $items = [];
         if ($academic !== []) {
             $items[] = $this->item('contexto_academico', 'Carrera y asignatura', implode("\n", $academic));
