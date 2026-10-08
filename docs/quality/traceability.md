@@ -84,6 +84,7 @@ anteriores que describen el CRUD/revisor son cortes históricos sujetos a esta r
 | Cambio | IDs relacionados | Evidencia | Estado |
 |---|---|---|---|
 | Azul y rojo de marca en los temas compartidos | RNF-018..023, RNF-029..034; UI-01..04; ADM/COR/DOC/BIB vigentes; CP-N UX/accesibilidad/mantenibilidad; PV-19 | Solicitud del responsable del producto: `#2d4b6f` y `#ac231e`; tokens compartidos, sidebar, acceso, encabezados y métricas del frontend. Plan `docs/plans/completed/FE-UEB-2026-10-04-paleta-institucional.md`: ESLint, tipos, 14 pruebas existentes, Chromium en dos temas/tres anchos y 43 pares de contraste por tema. Las paletas semántica y documental conservan su función independiente. Los iconos de `PageFrame` usan `accent`/`accent-foreground` para mantener la misma jerarquía y contraste en claro y oscuro. | Primera versión revertida por el responsable del producto (sidebar azul y fondos teñidos se veían mal); versión discreta vigente en `9ac168f`, solo tokens. PV-19 permanece abierta. |
+| Fotografía institucional en el acceso | RNF-018..023; UI-01; CP-N experiencia/accesibilidad; PV-19 | `AuthSplitLayout` usa en escritorio una copia local optimizada de la fotografía panorámica proporcionada por el responsable del producto, con cobertura completa, superposición `brand-surface` semitransparente y texto institucional legible encima. | TypeScript y ESLint focalizado; aceptación visual real pendiente en PV-19. |
 
 ## Selección de texto uniforme — 2026-10-04
 
