@@ -60,7 +60,6 @@ class SyllabusController extends Controller
             ->when($search, fn ($query, string $term) => $query->where(
                 fn ($outer) => $outer
                     ->whereRaw("datos_academicos_silabo->'subject'->>'name' ILIKE ?", ['%'.addcslashes($term, '%_\\').'%'])
-                    ->orWhereRaw("datos_academicos_silabo->'subject'->>'code' ILIKE ?", ['%'.addcslashes($term, '%_\\').'%'])
                     ->orWhereHas('convocation.process.academicPeriod', fn ($period) => $period
                         ->whereRaw('codigo_periodo_academico ILIKE ?', ['%'.addcslashes($term, '%_\\').'%'])),
             ))
