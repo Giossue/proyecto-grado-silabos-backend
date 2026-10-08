@@ -20,6 +20,9 @@ use Illuminate\Validation\ValidationException;
 /** Coordinación confirma qué materias reciben la ficha propuesta; lo no marcado no se toca. */
 final class ApplyFichaImport
 {
+    /** Columnas de la tabla de bibliografía, en el mismo orden que la ficha. */
+    private const BIBLIOGRAPHY_COLUMNS = ['Autor', 'Título', 'Año', 'Ciudad', 'Editorial', 'ISBN', 'Código'];
+
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly ProcessLocks $locks,
@@ -59,9 +62,14 @@ final class ApplyFichaImport
                     if ($field === null) {
                         continue;
                     }
-                    $document = is_array($value)
-                        ? FreeText::fromRows([['key' => 't', 'label' => '']], array_map(fn (string $item): array => ['t' => $item], $value))
-                        : FreeText::fromText((string) $value);
+                    $document = match (true) {
+                        is_array($value) && str_starts_with((string) $key, 'bibliografia') => FreeText::fromRows(
+                            array_map(fn (string $column): array => ['key' => $column, 'label' => $column], self::BIBLIOGRAPHY_COLUMNS),
+                            array_map(fn (string $item): array => array_combine(self::BIBLIOGRAPHY_COLUMNS, array_pad(array_slice(array_map('trim', explode('|', $item)), 0, count(self::BIBLIOGRAPHY_COLUMNS)), count(self::BIBLIOGRAPHY_COLUMNS), '')), $value),
+                        ),
+                        is_array($value) => FreeText::fromRows([['key' => 't', 'label' => '']], array_map(fn (string $item): array => ['t' => $item], $value)),
+                        default => FreeText::fromText((string) $value),
+                    };
                     // Lo que el documento no trae no borra lo que la ficha ya tenía.
                     if (FreeText::isEmpty(FreeText::normalize($document))) {
                         continue;
