@@ -26,6 +26,43 @@ class ProcessLocks
         return self::PROCESS_LOCK_REASON;
     }
 
+    /** @return array{scope: string, period: string|null, institutional_pause: bool, delivery_on: string|null}|null */
+    public function templateLock(): ?array
+    {
+        $process = SyllabusProcess::query()
+            ->where('estado', SyllabusProcess::STATE_OPEN)
+            ->with('academicPeriod:id,codigo')
+            ->first();
+
+        return $process === null ? null : [
+            'scope' => 'process',
+            'period' => $process->academicPeriod?->codigo,
+            'institutional_pause' => false,
+            'delivery_on' => $process->entrega_en->toDateString(),
+        ];
+    }
+
+    /** @return array{scope: string, period: string|null, institutional_pause: bool, delivery_on: string|null}|null */
+    public function careerLock(?string $careerId): ?array
+    {
+        if ($careerId === null) {
+            return null;
+        }
+
+        $convocation = Convocation::query()
+            ->where('carrera_id', $careerId)
+            ->lockingCareerData()
+            ->with('process.academicPeriod:id,codigo')
+            ->first();
+
+        return $convocation === null ? null : [
+            'scope' => 'convocation',
+            'period' => $convocation->process->academicPeriod?->codigo,
+            'institutional_pause' => $convocation->process->estado === SyllabusProcess::STATE_PAUSED,
+            'delivery_on' => $convocation->process->entrega_en->toDateString(),
+        ];
+    }
+
     public function assertTemplateEditable(): void
     {
         $reason = $this->templateLockReason();

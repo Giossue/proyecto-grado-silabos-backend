@@ -59,6 +59,7 @@ class TemplateController extends Controller
 
         $payload = [
             'processLock' => $locks->templateLockReason(),
+            'processLockDetail' => $locks->templateLock(),
             'template' => null,
         ];
 
@@ -116,6 +117,7 @@ class TemplateController extends Controller
 
         return [
             'processLock' => $locks->templateLockReason(),
+            'processLockDetail' => $locks->templateLock(),
             'templateChangedDuringPause' => $templateChangedDuringPause,
             'variables' => TemplateVariables::catalog(),
             'identificationDesign' => TemplateDocumentDefaults::identification(),

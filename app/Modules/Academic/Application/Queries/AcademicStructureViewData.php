@@ -164,6 +164,7 @@ class AcademicStructureViewData
                 'cycle_count' => $career->cantidad_ciclos_malla,
                 'editable' => $lockReason === null,
                 'lock_reason' => $lockReason,
+                'lock' => $lockReason === null ? null : $this->locks->careerLock($careerId),
             ],
             'fixedFields' => $definitions->map(fn (array $field) => [
                 'id' => $field['system_key'],
@@ -341,6 +342,7 @@ class AcademicStructureViewData
                 'id' => $career->id,
                 'name' => $career->nombre,
                 'lock_reason' => $lockReason,
+                'lock' => $lockReason === null ? null : $this->locks->careerLock($careerId),
             ],
             'selectedPeriodId' => $selectedPeriodId,
             'scheduledSubjects' => $scheduledSubjects,
@@ -405,6 +407,7 @@ class AcademicStructureViewData
                 'id' => $career->id,
                 'name' => $career->nombre,
                 'lock_reason' => $lockReason,
+                'lock' => $lockReason === null ? null : $this->locks->careerLock($careerId),
             ],
             'teacherAssignments' => $teacherAssignments
                 ->map(fn (TeacherAssignment $assignment) => [

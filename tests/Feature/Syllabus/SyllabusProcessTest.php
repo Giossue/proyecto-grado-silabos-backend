@@ -778,7 +778,11 @@ class SyllabusProcessTest extends TestCase
             ->assertOk()
             ->assertJson(fn (Assert $page) => $page->etc()
                 ->where('curriculum.editable', false)
-                ->where('curriculum.lock_reason', 'Convocatoria activa'));
+                ->where('curriculum.lock_reason', 'Convocatoria activa')
+                ->where('curriculum.lock.scope', 'convocation')
+                ->where('curriculum.lock.institutional_pause', false)
+                ->has('curriculum.lock.period')
+                ->has('curriculum.lock.delivery_on'));
 
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))
