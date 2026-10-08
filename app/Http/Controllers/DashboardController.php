@@ -55,7 +55,6 @@ class DashboardController extends Controller
             $activeRole === null || ! $user instanceof User => null,
             $activeRole->role->codigo_rol === RoleCode::Administrator->value => $setup->forAdministrator(),
             $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $setup->forCoordinator($activeRole->carrera_id, $coordinatorReadiness),
-            $activeRole->role->codigo_rol === RoleCode::Teacher->value => $setup->forTeacher($user, $activeRole->carrera_id),
             default => null,
         };
 

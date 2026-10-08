@@ -343,7 +343,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   barra de progreso y los pasos en orden (Administración: facultades con logo, carreras,
   periodo, cuentas, coordinadores, plantilla, convocatoria institucional; Coordinación:
   malla, materias programadas, paralelos, docentes, datos del Proyecto de carrera,
-  convocatoria; Docencia: recibir, abrir, enviar y firmar sus sílabos). I-163 actualiza los textos al
+  convocatoria; Docencia no tiene lista de pasos: su panel muestra solo métricas y plazo). I-163 actualiza los textos al
   sistema vigente (logo obligatorio, plantilla con Texto libre y Contenido de la
   plantilla, borrador que se inicia solo, firma electrónica del sílabo aprobado). Coordinación calcula
   los pasos contra el período institucional vigente y solo los completa cuando todas las

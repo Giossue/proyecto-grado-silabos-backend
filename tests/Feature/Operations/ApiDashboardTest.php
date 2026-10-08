@@ -34,9 +34,7 @@ class ApiDashboardTest extends TestCase
             ->assertJsonCount(2, 'metrics')
             ->assertJsonPath('metrics.0.key', 'pending')
             ->assertJsonPath('metrics.1.key', 'correction_requested')
-            ->assertJsonPath('setup.title', 'Sus sílabos, paso a paso')
-            ->assertJsonCount(4, 'setup.steps')
-            ->assertJsonPath('setup.steps.3.key', 'signed')
+            ->assertJsonPath('setup', null)
             ->assertJsonPath('deadline', null);
     }
 
