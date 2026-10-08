@@ -158,12 +158,13 @@ conserva.
   registra durante la pausa y reanudar exige confirmación con conteos por estado para
   regenerar todos los sílabos del proceso en una transacción. Se borra el historial,
   incluso de aprobados y firmados; los procesos cerrados se conservan (I-188).
-- Corrección de base académica con el alcance pausado: previa confirmación, regenera
-  desde cero los expedientes afectados en curso sin aprobación conservada, incluidos
-  los enviados y sus revisiones, IA y exportaciones, en una sola transacción (I-118,
-  aclarada en I-144 el 2026-09-27). Conserva los aprobados y los procesos cerrados.
-  La corrección de resultados de aprendizaje se limita a los expedientes elegibles de la
-  asignatura modificada.
+- Corrección de base académica (malla o ficha de la asignatura) con el alcance pausado:
+  previa confirmación, regenera desde cero los expedientes afectados del período en curso,
+  en cualquier estado, incluidos los enviados y los aprobados con sus revisiones,
+  aprobaciones, firmas, IA y exportaciones, en una sola transacción (I-118, aclarada en
+  I-144 y ampliada el 2026-10-08 a los aprobados, igual que el cambio de plantilla). Los
+  procesos cerrados se conservan. Cambiar la ficha de una asignatura rehace solo los
+  sílabos de esa asignatura.
 - Confirmación de datos curriculares: afecta las nuevas fotografías y los expedientes
   regenerados según el alcance permitido; no reescribe historia protegida.
 - Edición o desactivación de la malla: bloquea trabajo nuevo cuando queda inactiva, pero

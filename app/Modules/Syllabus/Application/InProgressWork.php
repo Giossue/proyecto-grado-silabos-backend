@@ -51,8 +51,8 @@ final class InProgressWork
         if (! $request->boolean(self::CONFIRMATION_FIELD)) {
             throw ValidationException::withMessages([
                 'purge_required' => $count === 1
-                    ? 'Este cambio reemplazará 1 sílabo. Se eliminarán su borrador, revisiones y análisis de IA, y se generará nuevamente desde la base corregida.'
-                    : "Este cambio reemplazará {$count} sílabos. Se eliminarán sus borradores, revisiones y análisis de IA, y se generarán nuevamente desde la base corregida.",
+                    ? 'Este cambio reemplazará 1 sílabo. Se eliminará todo su contenido, incluso si ya estaba aprobado (borrador, revisiones, aprobación, firmas y análisis de IA), y se generará nuevamente desde la base corregida.'
+                    : "Este cambio reemplazará {$count} sílabos. Se eliminará todo su contenido, incluso los ya aprobados (borradores, revisiones, aprobaciones, firmas y análisis de IA), y se generarán nuevamente desde la base corregida.",
                 'purge_count' => (string) $count,
             ]);
         }
@@ -135,7 +135,7 @@ final class InProgressWork
                 recipientIds: $teachers[$syllabus->id] ?? [],
                 title: "Su sílabo de {$subject} se generó de nuevo",
                 message: "Su sílabo de {$subject} se generó de nuevo porque ".($reason ?? self::DEFAULT_REASON)
-                    .'. Se perdió el contenido anterior (borrador, revisiones y análisis de IA); debe completarlo otra vez.',
+                    .'. Se perdió el contenido anterior (borrador, revisiones, aprobación, firmas y análisis de IA); debe completarlo otra vez.',
                 resourceType: 'carrera',
                 resourceId: (string) $syllabus->convocation->carrera_id,
             );
@@ -352,8 +352,7 @@ final class InProgressWork
      */
     private function inProgress(string|array|null $careerIds, ?string $periodId = null, ?string $subjectId = null, ?array $subjectIds = null): Builder
     {
-        return Syllabus::query()->where('estado', '!=', 'aprobado')
-            ->whereDoesntHave('approvals')
+        return Syllabus::query()
             ->when($subjectId !== null, fn (Builder $query) => $query->forSubjects([$subjectId]))
             ->when($subjectIds !== null, fn (Builder $query) => $query->forSubjects($subjectIds))
             ->whereHas('convocation', fn (Builder $query) => $query
