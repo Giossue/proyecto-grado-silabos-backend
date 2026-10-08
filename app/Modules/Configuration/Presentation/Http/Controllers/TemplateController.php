@@ -159,10 +159,10 @@ class TemplateController extends Controller
                                     'key' => $field->clave,
                                     'label' => $field->etiqueta,
                                     'help' => $field->ayuda,
-                                    'type' => $field->tipo,
+                                    'type' => $field->fieldType()->key(),
                                     'config' => $field->typeConfig(),
                                     // La hoja del constructor dibuja la tabla oficial con datos de ejemplo.
-                                    'document' => $field->tipo === 'automatico' && ($field->typeConfig()['source'] ?? null) === 'identification_card'
+                                    'document' => $field->fieldType()->key() === 'automatico' && ($field->typeConfig()['source'] ?? null) === 'identification_card'
                                         ? IdentificationCard::document(IdentificationCard::sample())
                                         : null,
                                     'options' => FieldOptions::options($field),
