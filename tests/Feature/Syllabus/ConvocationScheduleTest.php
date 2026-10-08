@@ -195,7 +195,6 @@ class ConvocationScheduleTest extends TestCase
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'pausar']))->assertSuccessful();
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']))->assertSuccessful();
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();
 
         foreach ([$this->teacher, $this->coordinator] as $user) {
             $this->assertNotNotified($user->id, 'proceso.pausado');

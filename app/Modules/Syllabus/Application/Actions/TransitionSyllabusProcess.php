@@ -8,7 +8,6 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
@@ -21,13 +20,10 @@ class TransitionSyllabusProcess
 
     public const RESUME = 'reanudar';
 
-    public const CLOSE = 'cerrar';
-
     /** @var array<string, array{from: list<string>, to: string}> */
     private const TRANSITIONS = [
         self::PAUSE => ['from' => [SyllabusProcess::STATE_OPEN], 'to' => SyllabusProcess::STATE_PAUSED],
         self::RESUME => ['from' => [SyllabusProcess::STATE_PAUSED], 'to' => SyllabusProcess::STATE_OPEN],
-        self::CLOSE => ['from' => [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED], 'to' => SyllabusProcess::STATE_CLOSED],
     ];
 
     public function __construct(
@@ -109,14 +105,6 @@ class TransitionSyllabusProcess
                     ->where('convocatoria_universidad_id', $locked->id)
                     ->update(['pausado_en' => DB::raw('clock_timestamp()')]);
             }
-            // Al finalizar, las convocatorias de carrera en curso se finalizan con el proceso (I-172).
-            if ($rule['to'] === SyllabusProcess::STATE_CLOSED) {
-                Convocation::query()
-                    ->where('proceso_id', $locked->id)
-                    ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])
-                    ->update(['estado' => Convocation::STATE_CLOSED]);
-            }
-
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $activeRole->id,

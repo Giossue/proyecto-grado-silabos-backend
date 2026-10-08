@@ -166,7 +166,7 @@ class SyllabusProcessTest extends TestCase
         $process = $convocation->process()->firstOrFail();
         $syllabusIds = Syllabus::query()->where('convocatoria_id', $convocation->id)->pluck('id');
         $this->assertNotEmpty($syllabusIds);
-        $this->transition($process, 'cerrar')->assertSuccessful();
+        $this->closeProcess($process);
 
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.processes.destroy', $process))
@@ -206,17 +206,6 @@ class SyllabusProcessTest extends TestCase
             'accion' => 'proceso_silabos.eliminado',
             'recurso_id' => $process->id,
         ]);
-    }
-
-    public function test_closing_the_process_finalizes_the_career_convocations(): void
-    {
-        $convocation = $this->openedConvocation();
-        $process = $convocation->process()->firstOrFail();
-        $this->assertSame(Convocation::STATE_OPEN, $convocation->fresh()->estado);
-
-        $this->transition($process, 'cerrar')->assertSuccessful();
-
-        $this->assertSame(Convocation::STATE_CLOSED, $convocation->fresh()->estado);
     }
 
     public function test_coordination_cannot_delete_an_institutional_process(): void
@@ -423,11 +412,11 @@ class SyllabusProcessTest extends TestCase
             'period_id' => $otherPeriod->id,
         ])->assertJsonValidationErrors('process');
 
-        $this->transition($first, 'cerrar')->assertSuccessful();
+        $this->closeProcess($first);
         $second = $this->createProcess($template, 'Segundo', $otherPeriod->id);
         $this->assertSame('abierto', $second->estado);
 
-        $this->transition($second, 'cerrar')->assertSuccessful();
+        $this->closeProcess($second);
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.store'), [
             ...$this->processPayload($template),
             'period_id' => $first->periodo_academico_id,
@@ -932,10 +921,17 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame($convocation->career->nombre.' · '.$convocation->process->academicPeriod->codigo, $convocation->fresh()->nombre);
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'cerrar']))->assertNotFound();
+        $this->actingAsAdministrator()->postJson('/api/v1/admin/processes/'.$convocation->process()->firstOrFail()->id.'/cerrar')->assertNotFound();
         $syllabus = Syllabus::query()->firstOrFail();
-        $this->transition($convocation->process()->firstOrFail(), 'cerrar')->assertSuccessful();
+        $this->closeProcess($convocation->process()->firstOrFail());
         $this->assertSame('cerrada', $convocation->fresh()->estado);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertForbidden();
+    }
+
+    private function closeProcess(SyllabusProcess $process): void
+    {
+        $process->update(['estado' => SyllabusProcess::STATE_CLOSED]);
+        Convocation::query()->where('proceso_id', $process->id)->update(['estado' => Convocation::STATE_CLOSED]);
     }
 
     /** @return array{period_id: string, starts_at: string, due_at: string} */

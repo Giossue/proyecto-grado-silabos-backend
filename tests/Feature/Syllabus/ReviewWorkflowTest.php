@@ -90,8 +90,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame('Arquitectura de Software', $snapshot['template_variables']['nombre_asignatura']);
         $this->assertSame('docente@silabos.test', $snapshot['template_variables']['correo_docente']);
         $fingerprint = $revision->huella_sha256;
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$syllabus->convocation->process, 'cerrar']))
-            ->assertSuccessful();
+        $syllabus->convocation->process->update(['estado' => 'cerrado']);
         $changed = TemplateDocumentDefaults::identification();
         $changed['content'][] = ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Cambio futuro']]];
         $this->actingAsAdministrator()->patchJson(route('api.v1.admin.template.blocks.document.update', [SyllabusTemplate::institutional(), $block]), [
