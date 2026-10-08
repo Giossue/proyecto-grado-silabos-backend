@@ -22,7 +22,7 @@ si funcionan, el resto los reutiliza.
 
 | # | Página | Ruta | Qué patrón representa |
 |---|---|---|---|
-| 1 | Acceso | `/login` | Formulario simple y errores |
+| 1 | Acceso | `/ingresar` | Formulario simple y errores |
 | 2 | Panel | `/admin/panel`, `/coordinacion/panel`, `/docente/panel` | Indicadores y encabezado |
 | 3 | Carreras | `/admin/estructura-academica/carreras` | Listado, filtros, tabla, menú de fila y panel lateral |
 | 4 | Usuarios | `/admin/usuarios` | Listado con estados y acciones |
