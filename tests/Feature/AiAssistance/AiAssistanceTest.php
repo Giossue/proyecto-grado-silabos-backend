@@ -108,7 +108,7 @@ class AiAssistanceTest extends TestCase
         $this->assertSame($beforeValues, FieldValue::query()->get()->toArray());
         $this->assertSame(0, $this->syllabus->fresh()->version_bloqueo);
         $this->deleteJson($this->url())->assertOk();
-        $this->getJson($this->url())->assertJsonPath('conversation.hidden', true)->assertJsonCount(2, 'conversation.messages');
+        $this->getJson($this->url())->assertJsonPath('conversation.hidden', true)->assertJsonCount(0, 'conversation.messages')->assertJsonPath('limits.sessions_used', 1)->assertJsonPath('limits.messages_used', 1);
         $this->assertDatabaseCount('mensajes_ia', 3);
     }
 
@@ -203,6 +203,27 @@ class AiAssistanceTest extends TestCase
         return JobExecution::query()->create(['tipo' => $type, 'cola' => 'ia', 'estado' => 'pendiente', 'clave_idempotencia' => (string) Str::uuid(),
             'tipo_recurso' => 'mensaje_ia', 'recurso_id' => (string) Str::uuid(),
             'intentos' => 0]);
+    }
+
+    public function test_each_syllabus_allows_twenty_questions_and_three_chats(): void
+    {
+        config(['ai.limits.requests_per_minute' => 100]);
+        $store = route('api.v1.teacher.syllabi.ai-chat.messages.store', $this->syllabus);
+        $ask = fn (int $index) => $this->postJson($store, ['message' => "Pregunta {$index}", 'idempotency_key' => (string) Str::uuid()]);
+
+        $ask(1)->assertAccepted();
+        $this->deleteJson($this->url())->assertOk();
+        $ask(2)->assertAccepted();
+        $this->deleteJson($this->url())->assertOk();
+        $ask(3)->assertAccepted();
+        $this->deleteJson($this->url())->assertJsonValidationErrors('chat');
+        $this->getJson($this->url())->assertJsonPath('limits.sessions_used', 3)->assertJsonPath('limits.sessions_max', 3);
+
+        for ($index = 4; $index <= 20; $index++) {
+            $ask($index)->assertAccepted();
+        }
+        $ask(21)->assertJsonValidationErrors('message');
+        $this->getJson($this->url())->assertJsonPath('limits.messages_used', 20)->assertJsonPath('limits.messages_max', 20);
     }
 
     private function url(): string

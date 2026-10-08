@@ -4,6 +4,7 @@ namespace App\Modules\AiAssistance\Application\Actions;
 
 use App\Models\User;
 use App\Modules\AiAssistance\Application\BuildSyllabusChatContext;
+use App\Modules\AiAssistance\Application\SyllabusAiLimits;
 use App\Modules\AiAssistance\Infrastructure\Jobs\AnswerSyllabusChatJob;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -12,6 +13,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class SendSyllabusAiMessage
 {
@@ -36,6 +38,10 @@ class SendSyllabusAiMessage
                     ->session($session)
                     ->where('contenido_mensaje->entrada->respuesta_a_id', $existing->id)
                     ->firstOrFail();
+            }
+            $history = AiHistoryEntry::query()->session($session)->whereIn('contenido_mensaje->tipo', ['mensaje', 'ocultamiento'])->orderBy('enviado_en')->get();
+            if (SyllabusAiLimits::usage($history)['messages_used'] >= SyllabusAiLimits::MAX_MESSAGES) {
+                throw ValidationException::withMessages(['message' => 'Llegó al límite de '.SyllabusAiLimits::MAX_MESSAGES.' preguntas al asistente para este sílabo.']);
             }
             $question = AiHistoryEntry::query()->create([
                 ...$session,

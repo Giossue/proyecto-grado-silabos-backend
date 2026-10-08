@@ -5,12 +5,14 @@ namespace App\Modules\AiAssistance\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\AiAssistance\Application\Actions\SendSyllabusAiMessage;
+use App\Modules\AiAssistance\Application\SyllabusAiLimits;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
 use App\Modules\AiAssistance\Presentation\Http\AvatarHint;
 use App\Modules\AiAssistance\Presentation\Http\Requests\SendAiChatMessageRequest;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class AiChatController extends Controller
 {
@@ -24,12 +26,16 @@ class AiChatController extends Controller
             ->whereIn('contenido_mensaje->tipo', ['mensaje', 'ocultamiento'])
             ->orderBy('enviado_en')
             ->get();
+        // Cada «Nuevo chat» deja una marca de ocultamiento: solo se muestra la conversación actual.
         $messages = [];
         foreach ($chat as $message) {
-            if ($message->type() === 'mensaje') {
+            if ($message->type() === 'ocultamiento') {
+                $messages = [];
+            } elseif ($message->type() === 'mensaje') {
                 $messages[] = $this->messagePayload($message);
             }
         }
+        $limits = SyllabusAiLimits::usage($chat);
 
         return response()->json([
             'conversation' => $chat->isEmpty() ? null : [
@@ -37,6 +43,7 @@ class AiChatController extends Controller
                 'hidden' => $chat->last()->type() === 'ocultamiento',
                 'messages' => $messages,
             ],
+            'limits' => $limits,
             'suggested_questions' => [
                 'Propón contenidos para las unidades de esta asignatura.',
                 'Sugiere actividades para los resultados de aprendizaje confirmados.',
@@ -74,8 +81,12 @@ class AiChatController extends Controller
         $actor = $request->user();
         abort_unless($actor instanceof User && $actor->can('edit', $syllabus), 403);
         $session = AiHistoryEntry::chatSession($syllabus->id, $actor->id);
-        $last = AiHistoryEntry::query()->session($session)->latest('enviado_en')->first();
+        $chat = AiHistoryEntry::query()->session($session)->whereIn('contenido_mensaje->tipo', ['mensaje', 'ocultamiento'])->orderBy('enviado_en')->get();
+        $last = $chat->last();
         if ($last !== null && $last->type() !== 'ocultamiento') {
+            if (SyllabusAiLimits::usage($chat)['sessions_used'] >= SyllabusAiLimits::MAX_SESSIONS) {
+                throw ValidationException::withMessages(['chat' => 'Ya usó los '.SyllabusAiLimits::MAX_SESSIONS.' chats permitidos para este sílabo.']);
+            }
             AiHistoryEntry::query()->create([
                 ...$session,
                 'contenido_mensaje' => [
@@ -86,7 +97,7 @@ class AiChatController extends Controller
             ]);
         }
 
-        return response()->json(['message' => 'La conversación se ocultó de la vista.']);
+        return response()->json(['message' => 'Nuevo chat iniciado.']);
     }
 
     /** @return array<string, mixed> */
