@@ -126,6 +126,13 @@ La condición «mostrar si» dependía de los tipos `seleccion_unica` y `boolean
 
 ## Plantilla oficial fiel al PDF y estilo Arial (2026-10-07)
 
+La solicitud posterior del responsable devuelve la vista previa como un modo global
+de las mismas hojas, mediante un botón de ojo en la esquina superior derecha de cada
+una; no vuelve la pestaña `TemplatePreview`. El constructor y la consulta comparten
+`TemplateFieldContent`; la consulta oculta las herramientas, contornos y etiquetas
+de tipo. Sigue disponible con la edición bloqueada. Evidencia y límites en
+`docs/plans/completed/FE-PREVIEW-2026-10-07-ojo-por-hoja.md`.
+
 - Revisado el PDF real (10 páginas, `temp/silabo-ejemplo`). `config/syllabus_template.php` reproduce sus 12
   secciones con sus títulos exactos; los campos únicos de una sección no llevan nombre (sin subtítulo);
   los subtítulos con nombre llevan su numeración en el propio nombre (7.1 a 7.5) y ya no se numeran solos

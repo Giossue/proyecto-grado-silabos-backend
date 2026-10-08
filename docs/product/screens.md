@@ -271,9 +271,17 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   técnicos (dato automático y texto fijo) no se eligen a mano: vienen solo en los diseños oficiales (Identificación,
   Evaluación, Conducta ética y Firmas) y siguen editándose en «Propiedades del campo»; la lista sale del registro
   de tipos y cada tipo aporta su pieza de configuración. Los textos del docente que se escriben dentro de la tabla de
-  identificación no aparecen como campos en la hoja ni en las revisiones; el docente los completa justo debajo de la tabla. En el constructor, cada campo usa únicamente el contorno discontinuo de edición; su contenido no añade otro recuadro y las tablas conservan sus propios bordes de celda. Sin «Personalizar plantilla» ni vista previa: el logo de la universidad se cambia sobre la hoja con «Cambiar logo» (PNG) al pasar el cursor. El nombre del campo es opcional (sin nombre, no lleva
+  identificación no aparecen como campos en la hoja ni en las revisiones; el docente los completa justo debajo de la tabla. En el constructor, cada campo usa únicamente el contorno discontinuo de edición; su contenido no añade otro recuadro y las tablas conservan sus propios bordes de celda. Sin «Personalizar plantilla»: el logo de la universidad se cambia sobre la hoja con «Cambiar logo» (PNG) al pasar el cursor. El nombre del campo es opcional (sin nombre, no lleva
   subtítulo; en el constructor aparece como «Campo sin nombre»).  Con un proceso abierto todo queda
-  deshabilitado con el aviso «Edición bloqueada».
+  deshabilitado con el aviso «Edición bloqueada», excepto la consulta en vista previa.
+- Por solicitud del responsable del producto del 2026-10-07, cada hoja de ADM-06 tiene
+  un botón de ojo en su esquina superior derecha. Cualquiera activa una vista previa
+  común para toda la plantilla, sobre las mismas hojas, sin pestaña ni ventana aparte.
+  Oculta contornos de selección, etiquetas de tipo, marcadores de campo vacío y acciones
+  de edición; conserva logos, título, secciones, contenido institucional y cuadrículas.
+  El botón permanece disponible con la edición bloqueada y permite volver al constructor
+  desde cualquier hoja. Tiene nombre accesible, estado pulsado y tooltip; consultar no
+  guarda datos ni elimina la selección previa del constructor.
 - La plantilla mantiene el ancho del papel (210 mm en vertical y 279 mm en la variante
   horizontal vigente) dentro de una región desplazable por hoja, también durante la
   carga. En pantallas estrechas no comprime el contenido; la región cargada se puede

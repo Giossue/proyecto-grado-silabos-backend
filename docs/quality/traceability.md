@@ -120,6 +120,12 @@ esperado permite validar la interpretación del pedido.
 |---|---|---|---|
 | Entrada y salida uniforme de todos los `Sheet` | RNF-018..023; UI-01..04; CP-N experiencia/accesibilidad; PV-19 | Auditoría de los usos de `SheetContent`: el sidebar móvil es el único panel izquierdo; formularios y detalles usan derecha. La hoja inferior de detalle de filas se retiró al adoptar tarjetas móviles el 2026-10-07. Ningún uso redefine la animación. `SheetContent` y `SheetOverlay` comparten `300 ms` y `ease-in-out` en ambos estados; `frontend-components.spec.ts` comprueba en Chromium los valores calculados durante entrada y salida. | TypeScript, ESLint focalizado y prueba Chromium aprobados; aceptación perceptiva en dispositivos reales pendiente en PV-19. |
 
+## Vista previa global de plantilla — 2026-10-07
+
+| Cambio | IDs relacionados | Evidencia | Estado |
+|---|---|---|---|
+| Ojo en cada hoja para consultar toda la plantilla | RF-017..026; RNF-018..023; RN-009..012; CU-04; ADM-06; CP-F plantilla y CP-N experiencia/accesibilidad; PV-07/PV-19 | Pedido confirmado: `TemplateVisualBuilder` comparte el estado de vista previa entre todos los botones de ojo; `TemplateFieldContent` reutiliza las vistas del registro y omite etiquetas de tipo/instrucciones en consulta. El modo es accesible aun con edición bloqueada, oculta acciones y conserva selección/datos sin mutaciones de API. Plan `docs/plans/completed/FE-PREVIEW-2026-10-07-ojo-por-hoja.md`. | TypeScript y ESLint puntual aprobados. No se añadieron ni ejecutaron pruebas en esta unidad; aceptación visual en navegador y dispositivos pendiente. |
+
 ## Responsividad: tablas a tarjetas — 2026-10-07
 
 | Cambio | IDs relacionados | Evidencia | Estado |

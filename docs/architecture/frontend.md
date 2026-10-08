@@ -99,6 +99,13 @@ sustituye los números por «Página N de M» bajo 640 px. Sus controles pueden 
 en un pie estrecho. El sidebar usa `width < 48rem`, alineado con `md` de CSS.
 La plantilla mantiene sus medidas documentales y cada hoja dispone de una región con
 desplazamiento horizontal; el contenido cargado permite enfocarla por teclado.
+`TemplateVisualBuilder` mantiene un único estado reactivo `preview` para todas sus
+hojas. Cada esquina superior derecha compone `Button` y `Tooltip` con `Eye`/`EyeOff`
+para alternarlo, también con el proceso bloqueado. La consulta sustituye los
+disparadores por contenido estático y oculta herramientas, contornos y etiquetas del
+constructor. `TemplateFieldContent` comparte etiquetas y vistas del registro entre
+ambos modos; en consulta omite instrucciones y campos de texto todavía sin contenido.
+El estado es local, conserva la selección y no solicita mutaciones a la API.
 Los esqueletos comparten esas tarjetas, paginación y regiones desplazables.
 El Panel limita su carga
 a los tres indicadores visibles; Docencia muestra dos indicadores propios. Coordinación
