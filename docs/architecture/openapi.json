@@ -5698,6 +5698,41 @@
                 ]
             }
         },
+        "/api/v1/help/available": {
+            "get": {
+                "tags": [
+                    "Operación"
+                ],
+                "operationId": "api_v1_help_available",
+                "summary": "api.v1.help.available",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/library/reviews": {
             "get": {
                 "tags": [

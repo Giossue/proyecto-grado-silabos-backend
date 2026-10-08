@@ -8,6 +8,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\DeleteScreenHelp;
 use App\Modules\Operations\Application\Actions\SaveScreenHelp;
 use App\Modules\Operations\Infrastructure\Persistence\Models\ScreenHelp;
+use App\Modules\Operations\Presentation\Http\Requests\AvailableScreenHelpRequest;
 use App\Modules\Operations\Presentation\Http\Requests\ManageScreenHelpRequest;
 use App\Modules\Operations\Presentation\Http\Requests\ShowScreenHelpRequest;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +21,24 @@ class ScreenHelpController extends Controller
         $help = ScreenHelp::query()->where('pantalla', $request->string('screen')->toString())->where('activa', true)->first();
 
         return response()->json(['help' => $help === null ? null : $this->payload($help)]);
+    }
+
+    public function available(AvailableScreenHelpRequest $request, ActiveRole $roles): JsonResponse
+    {
+        $prefix = match ($roles->resolve($request)?->role->codigo_rol) {
+            'administrador' => '/admin',
+            'coordinador' => '/coordinacion',
+            'docente' => '/docente',
+            'bibliotecario' => '/biblioteca',
+            default => null,
+        };
+        $items = $prefix === null ? [] : ScreenHelp::query()
+            ->where('activa', true)
+            ->where(fn ($query) => $query->where('pantalla', $prefix)->orWhere('pantalla', 'like', $prefix.'/%'))
+            ->orderBy('pantalla')->get()
+            ->map(fn (ScreenHelp $help): array => $this->payload($help))->all();
+
+        return response()->json(['help' => $items]);
     }
 
     public function index(ManageScreenHelpRequest $request): JsonResponse

@@ -49,6 +49,20 @@ class ScreenHelpTest extends TestCase
         $this->getJson(route('api.v1.help.show', ['screen' => 'sin-barra']))->assertUnprocessable();
     }
 
+    public function test_the_active_role_receives_all_its_active_help_in_one_request(): void
+    {
+        ScreenHelp::query()->delete();
+        foreach ([['/docente/panel', true], ['/docente/mis-silabos', true], ['/docente/oculta', false], ['/admin/panel', true]] as [$screen, $active]) {
+            ScreenHelp::query()->create(['pantalla' => $screen, 'titulo_ayuda' => 'T', 'contenido_ayuda' => 'C', 'activa' => $active, 'editada_en_ayuda' => now()]);
+        }
+
+        $this->actingAsRole('docente@silabos.test')
+            ->getJson(route('api.v1.help.available'))
+            ->assertOk()
+            ->assertJsonCount(2, 'help')
+            ->assertJsonPath('help.0.screen', '/docente/mis-silabos');
+    }
+
     public function test_only_administration_manages_help(): void
     {
         ScreenHelp::query()->delete();

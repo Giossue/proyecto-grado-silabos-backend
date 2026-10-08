@@ -97,6 +97,8 @@ Route::prefix('v1')->group(function (): void {
                 ->name('api.v1.notifications.read');
             Route::post('notifications/{notification}/open', [NotificationController::class, 'open'])
                 ->name('api.v1.notifications.open');
+            Route::get('help/available', [ScreenHelpController::class, 'available'])
+                ->middleware('active-role')->name('api.v1.help.available');
             Route::get('help', [ScreenHelpController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.help.show');
             Route::get('admin/help', [ScreenHelpController::class, 'index'])
