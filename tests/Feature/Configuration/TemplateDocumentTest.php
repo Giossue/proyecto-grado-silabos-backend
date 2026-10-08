@@ -475,7 +475,7 @@ class TemplateDocumentTest extends TestCase
                 $this->assertStringContainsString($expected, $xml);
             }
             $this->assertStringNotContainsString('w:sz w:val="18"', $xml);
-            $this->assertStringContainsString('w:jc w:val="both"', $xml);
+            $this->assertStringNotContainsString('w:jc w:val="both"', $xml);
             $this->assertStringNotContainsString('Times New Roman', $xml);
             $this->assertStringNotContainsString('w:fill="548235"', $xml);
         } finally {

@@ -39,7 +39,7 @@ final class TemplateAppearance
         'section_bold' => true,
         'section_italic' => false,
         'section_alignment' => 'left',
-        'body_alignment' => 'justify',
+        'body_alignment' => 'left',
     ];
 
     /** @var array<string, string> */

@@ -143,7 +143,7 @@ class WordRendererTest extends TestCase
         unlink($temporary);
 
         $this->assertStringContainsString('Arial', $stylesXml);
-        $this->assertStringContainsString('w:jc w:val="both"', $stylesXml);
+        $this->assertStringNotContainsString('w:jc w:val="both"', $stylesXml);
         $dom = new DOMDocument;
         $dom->loadXML($documentXml);
         $xpath = new DOMXPath($dom);
