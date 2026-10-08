@@ -101,7 +101,7 @@ final class FixedContent
         return self::doc([self::table([
             [$signature(), $signature(), $signature()],
             [self::cell(['Nombre:', 'Profesor – Investigador']), self::cell(['Nombre:', 'Coordinador de Carrera']), self::cell(['Nombre:', 'Bibliotecario'])],
-            [self::header('Fecha de entrega:'), self::header('Fecha de revisión:'), self::header('Fecha de verificación:')],
+            [self::strongHeader('Fecha de entrega:'), self::strongHeader('Fecha de revisión:'), self::strongHeader('Fecha de verificación:')],
         ])]);
     }
 
@@ -135,19 +135,29 @@ final class FixedContent
     /** @return array<string, mixed> */
     private static function header(string $text, int $colspan = 1, int $rowspan = 1): array
     {
-        return self::tableCell('tableHeader', $text, $colspan, $rowspan);
+        return self::tableCell('tableHeader', $text, $colspan, $rowspan, '#C3D4EA');
+    }
+
+    /** @return array<string, mixed> */
+    private static function strongHeader(string $text): array
+    {
+        return self::tableCell('tableHeader', $text, 1, 1, '#4F81BD', '#FFFFFF');
     }
 
     /**
      * @param  string|list<string>  $text
      * @return array<string, mixed>
      */
-    private static function tableCell(string $type, string|array $text, int $colspan, int $rowspan): array
+    private static function tableCell(string $type, string|array $text, int $colspan, int $rowspan, ?string $fill = null, ?string $color = null): array
     {
+        $line = fn (string $line): array => $line === '' ? ['type' => 'paragraph'] : self::paragraph([
+            $color === null ? self::text($line) : ['type' => 'text', 'text' => $line, 'marks' => [['type' => 'bold'], ['type' => 'textStyle', 'attrs' => ['color' => $color]]]],
+        ]);
+
         return [
             'type' => $type,
-            'attrs' => ['colspan' => $colspan, 'rowspan' => $rowspan],
-            'content' => array_map(fn (string $line): array => $line === '' ? ['type' => 'paragraph'] : self::paragraph([self::text($line)]), (array) $text),
+            'attrs' => ['colspan' => $colspan, 'rowspan' => $rowspan] + ($fill === null ? [] : ['backgroundColor' => $fill]),
+            'content' => array_map($line, (array) $text),
         ];
     }
 
