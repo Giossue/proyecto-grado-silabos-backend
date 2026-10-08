@@ -112,7 +112,7 @@ class WordRendererTest extends TestCase
         $this->assertIsString($stylesXml);
         // La apariencia guardada se ignora: el documento usa el formato oficial fijo.
         $this->assertStringNotContainsString('w:orient="landscape"', $documentXml);
-        $this->assertStringContainsString('w:top="1417"', $documentXml);
+        $this->assertMatchesRegularExpression('/w:top="85[01]"/', $documentXml);
         $this->assertStringContainsString('w:fill="4F81BD"', $documentXml);
         $this->assertStringContainsString('w:color w:val="FFFFFF"', $documentXml);
         $this->assertStringContainsString('w:color w:val="2F5496"', $documentXml);
@@ -316,7 +316,7 @@ class WordRendererTest extends TestCase
             $total = array_sum($grid);
             $this->assertSame('fixed', $xpath->evaluate('string(w:tblPr/w:tblLayout/@w:type)', $table));
             $this->assertSame((string) $total, $xpath->evaluate('string(w:tblPr/w:tblW/@w:w)', $table));
-            $this->assertContains($total, [9408, 9407, 9406, 9405, 9404, 13006, 13007, 13005, 13004], 'La tabla no ocupa el ancho útil.');
+            $this->assertContains($total, [10542, 10541, 10540, 10539, 10538, 14142, 14141, 14140, 14139, 14138], 'La tabla no ocupa el ancho útil.');
             foreach ($xpath->query('w:tr', $table) ?: [] as $row) {
                 $columns = 0;
                 $width = 0;

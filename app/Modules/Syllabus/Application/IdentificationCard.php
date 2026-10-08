@@ -144,8 +144,8 @@ final class IdentificationCard
 
         return [
             [self::cell('FACULTAD: '.$v('faculty'), 9, 1, 'blue', true, false, false)],
-            [$label('CARRERA:', 1, 1, true), $value($v('career'), 5, 1, true), $label('MODALIDAD DE ESTUDIO O APRENDIZAJE', 1, 1, true), $value($v('modality'), 2, 1, true)],
-            [$label('CAMPUS UNIVERSITARIO:'), $value($v('campus'), 8)],
+            [$label('CARRERA:', 1, 1, true), $value($v('career'), 4, 1, true), $label('MODALIDAD DE ESTUDIO O APRENDIZAJE', 2, 1, true), $value($v('modality'), 2, 1, true)],
+            [$label('CAMPUS UNIVERSITARIO:', 2), $value($v('campus'), 7)],
             [$label('ASIGNATURA', 2, 1, true), $label('PERIODO ACADÉMICO', 4, 1, true), $label('CICLO', 1, 1, true), $label('PARALELO', 1, 1, true), $label('JORNADA', 1, 1, true)],
             [$value($v('subject'), 2), $value($v('period'), 4), $value($v('cycle')), $value($v('parallel')), $value($v('shift'))],
             [$label('CÓDIGO:', 1, 1, true), $value($v('code'), 1, 1, true), $label('PRERREQUISITOS:', 3, 1, true), $value($v('prerequisites'), 2, 1, true), $label('CORREQUISITOS:', 1, 1, true), $value($v('corequisites'), 1, 1, true)],

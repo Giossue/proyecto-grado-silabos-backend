@@ -27,7 +27,7 @@ final class TemplateAppearance
         'title_font_size' => 14,
         'section_font_size' => 11,
         'field_font_size' => 11,
-        'margin_cm' => 2.5,
+        'margin_cm' => 1.5,
         'orientation' => 'portrait',
         'text_color' => '#000000',
         'accent_color' => '#2F5496',
