@@ -16,6 +16,7 @@ class SetUserStatus
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly RevokeUserSessions $sessions,
     ) {}
 
     public function execute(User $target, bool $active, User $actor, Request $request): User
@@ -33,7 +34,7 @@ class SetUserStatus
             $closedCoordinations = [];
 
             if (! $active) {
-                DB::table('sesiones')->where('user_id', $target->id)->delete();
+                $this->sessions->execute($target);
                 $closedTeacherAssignments = DB::table('asignaciones_paralelo')
                     ->whereIn('asignacion_rol_id', RoleAssignment::query()->where('usuario_id', $target->id)->select('id'))
                     ->where('asignacion_paralelo_activa', true)

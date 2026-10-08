@@ -22,6 +22,6 @@ class LogoController
 
     private function file(string $path): BinaryFileResponse
     {
-        return response()->file($path, ['Cache-Control' => 'public, max-age=300']);
+        return response()->file($path, ['Cache-Control' => 'public, max-age=300', 'X-Content-Type-Options' => 'nosniff']);
     }
 }

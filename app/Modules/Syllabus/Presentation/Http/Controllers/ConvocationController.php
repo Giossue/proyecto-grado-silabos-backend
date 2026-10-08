@@ -33,7 +33,7 @@ class ConvocationController extends Controller
             'convocations' => SyllabusProcess::query()
                 ->when($search, fn ($query, string $term) => $query->where(
                     fn ($outer) => $outer->whereHas('academicPeriod', fn ($period) => $period
-                        ->whereRaw('codigo_periodo_academico ILIKE ?', ["%{$term}%"])),
+                        ->whereRaw('codigo_periodo_academico ILIKE ?', ['%'.addcslashes($term, '%_\\').'%'])),
                 ))
                 ->when($state, function ($query, string $value) use ($careerId): void {
                     if ($value === 'sin_iniciar') {

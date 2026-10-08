@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->statefulApi();
 
-        $middleware->trustProxies(at: '*');
+        $middleware->trustProxies(at: array_values(array_filter(array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', '*'))))));
 
         $middleware->trustHosts(at: ['^127\\.0\\.0\\.1$', '^localhost$']);
 

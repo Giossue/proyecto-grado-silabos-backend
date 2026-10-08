@@ -17,7 +17,10 @@ use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
 {
-    public function register(): void {}
+    public function register(): void
+    {
+        Fortify::ignoreRoutes();
+    }
 
     public function boot(): void
     {
@@ -64,7 +67,9 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureRateLimiting(): void
     {
         RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
+            $loginId = $request->session()->get('login.id');
+
+            return Limit::perMinute(10)->by(is_string($loginId) ? 'two-factor:'.$loginId : 'two-factor-ip:'.$request->ip());
         });
 
         RateLimiter::for('login', function (Request $request) {

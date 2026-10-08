@@ -47,6 +47,14 @@ class UserPolicy
             return false;
         }
 
+        $outsideCareer = $target->roleAssignments()
+            ->effective()
+            ->where(fn ($query) => $query->whereNull('carrera_id')->orWhere('carrera_id', '!=', $careerId))
+            ->exists();
+        if ($outsideCareer && $target->hasVerifiedEmail()) {
+            return false;
+        }
+
         return $target->roleAssignments()
             ->effective()
             ->where('rol', RoleCode::Teacher->value)

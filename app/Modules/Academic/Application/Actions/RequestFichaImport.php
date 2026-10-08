@@ -52,7 +52,8 @@ final class RequestFichaImport
             $import->save();
             $documents = [];
             foreach (array_values($files) as $index => $file) {
-                $extension = strtolower($file->getClientOriginalExtension());
+                $detected = strtolower((string) $file->extension());
+                $extension = in_array($detected, ['pdf', 'xlsx', 'xls'], true) ? $detected : strtolower($file->getClientOriginalExtension());
                 $path = "importaciones-ficha/{$import->id}/".($index + 1).'-'.Str::random(8).'.'.$extension;
                 Storage::disk('private')->put($path, (string) file_get_contents($file->getRealPath()));
                 $documents[] = ['name' => Str::limit($file->getClientOriginalName(), 120, ''), 'path' => $path, 'size' => (int) $file->getSize()];

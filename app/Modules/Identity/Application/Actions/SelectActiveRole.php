@@ -41,6 +41,7 @@ class SelectActiveRole
             );
 
             $request->session()->put('active_role_assignment_id', $assignment->id);
+            $request->session()->regenerate();
 
             return $assignment;
         });

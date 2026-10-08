@@ -11,4 +11,12 @@ class CreateTemplateRequest extends ManageTemplatesRequest
             'official' => ['sometimes', 'boolean'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return [
+            'official' => 'formato oficial',
+        ];
+    }
 }

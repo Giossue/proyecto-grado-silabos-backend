@@ -22,8 +22,8 @@ class ScreenHelpTest extends TestCase
 
     public function test_any_role_reads_only_the_active_help_of_its_screen(): void
     {
-        ScreenHelp::query()->create(['pantalla' => '/docente/mis-silabos', 'titulo_ayuda' => 'Mis sílabos', 'contenido_ayuda' => 'Texto', 'activa' => true, 'actualizado_en' => now()]);
-        ScreenHelp::query()->create(['pantalla' => '/docente/panel', 'titulo_ayuda' => 'Panel', 'contenido_ayuda' => 'Texto', 'activa' => false, 'actualizado_en' => now()]);
+        ScreenHelp::query()->create(['pantalla' => '/docente/mis-silabos', 'titulo_ayuda' => 'Mis sílabos', 'contenido_ayuda' => 'Texto', 'activa' => true, 'editada_en_ayuda' => now()]);
+        ScreenHelp::query()->create(['pantalla' => '/docente/panel', 'titulo_ayuda' => 'Panel', 'contenido_ayuda' => 'Texto', 'activa' => false, 'editada_en_ayuda' => now()]);
 
         $this->actingAsRole('docente@silabos.test')
             ->getJson(route('api.v1.help.show', ['screen' => '/docente/mis-silabos']))

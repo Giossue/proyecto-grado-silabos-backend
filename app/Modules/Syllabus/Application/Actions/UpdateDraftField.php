@@ -5,6 +5,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 use App\Models\User;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
@@ -31,6 +32,9 @@ class UpdateDraftField
             }
             if (! in_array($locked->estado, ['borrador', 'correccion_solicitada'], true)) {
                 throw ValidationException::withMessages(['syllabus' => 'El expediente no está en estado editable.']);
+            }
+            if ($field->plantilla_id !== SyllabusTemplate::institutional()->id) {
+                throw ValidationException::withMessages(['field' => 'El campo no pertenece a la plantilla vigente.']);
             }
             if (! $field->editable_docente || $field->tipo === 'calculo' || (! $field->hasLegacyClass() && ! $field->fieldType()->teacherEditable() && ! ($field->typeConfig()['adjustable'] ?? false))) {
                 throw ValidationException::withMessages(['field' => 'Este campo lo llena el sistema; el docente no puede cambiarlo.']);

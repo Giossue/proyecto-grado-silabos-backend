@@ -277,13 +277,13 @@ class ApiSessionTest extends TestCase
         $this->actingAs($user)
             ->withoutMiddleware(ValidateCsrfToken::class)
             ->withHeader('Origin', 'http://localhost:5173')
-            ->postJson(route('api.v1.authentication.two-factor.enable'))
+            ->postJson(route('api.v1.authentication.two-factor.enable'), ['current_password' => 'password'])
             ->assertOk()
             ->assertJsonPath('enabled', false)
             ->assertJsonPath('confirmation_required', true)
             ->assertJsonStructure(['qr_code_svg']);
 
-        $this->deleteJson(route('api.v1.authentication.two-factor.disable'))
+        $this->deleteJson(route('api.v1.authentication.two-factor.disable'), ['current_password' => 'password'])
             ->assertOk()
             ->assertJsonPath('enabled', false)
             ->assertJsonPath('confirmation_required', false);
@@ -296,7 +296,7 @@ class ApiSessionTest extends TestCase
         $this->actingAs($user)
             ->withoutMiddleware(ValidateCsrfToken::class)
             ->withHeader('Origin', 'http://localhost:5173')
-            ->postJson(route('api.v1.authentication.two-factor.enable'))
+            ->postJson(route('api.v1.authentication.two-factor.enable'), ['current_password' => 'password'])
             ->assertOk();
 
         $secret = decrypt($user->fresh()->two_factor_secret);
@@ -319,7 +319,7 @@ class ApiSessionTest extends TestCase
         $this->actingAs($user)
             ->withoutMiddleware(ValidateCsrfToken::class)
             ->withHeader('Origin', 'http://localhost:5173')
-            ->postJson(route('api.v1.authentication.two-factor.enable'))
+            ->postJson(route('api.v1.authentication.two-factor.enable'), ['current_password' => 'password'])
             ->assertOk();
 
         $this->postJson(route('api.v1.authentication.two-factor.confirm'), ['code' => '000000'])

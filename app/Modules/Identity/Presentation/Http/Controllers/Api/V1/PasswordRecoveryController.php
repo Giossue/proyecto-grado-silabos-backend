@@ -4,6 +4,7 @@ namespace App\Modules\Identity\Presentation\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Identity\Application\Actions\RevokeUserSessions;
 use App\Modules\Identity\Presentation\Http\Requests\Api\ResetForgottenPasswordRequest;
 use App\Modules\Identity\Presentation\Http\Requests\Api\SendPasswordResetLinkRequest;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,8 @@ use Illuminate\Support\Str;
 
 class PasswordRecoveryController extends Controller
 {
+    public function __construct(private readonly RevokeUserSessions $sessions) {}
+
     public function sendLink(SendPasswordResetLinkRequest $request): JsonResponse
     {
         Password::sendResetLink([
@@ -35,6 +38,7 @@ class PasswordRecoveryController extends Controller
                 'contrasena' => $password,
             ])->setRememberToken(Str::random(60));
             $user->save();
+            $this->sessions->execute($user);
         });
 
         if ($status !== Password::PASSWORD_RESET) {

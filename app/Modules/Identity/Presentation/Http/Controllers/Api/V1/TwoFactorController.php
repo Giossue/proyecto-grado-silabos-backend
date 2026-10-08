@@ -31,7 +31,7 @@ class TwoFactorController extends Controller
         return response()->json($this->statusPayload($user));
     }
 
-    public function enable(Request $request, EnableTwoFactorAuthentication $enable): JsonResponse
+    public function enable(ConfirmCurrentPasswordRequest $request, EnableTwoFactorAuthentication $enable): JsonResponse
     {
         $user = $this->authenticatedUser($request);
         $enable($user);
@@ -56,7 +56,7 @@ class TwoFactorController extends Controller
         ]);
     }
 
-    public function disable(Request $request, DisableTwoFactorAuthentication $disable): JsonResponse
+    public function disable(ConfirmCurrentPasswordRequest $request, DisableTwoFactorAuthentication $disable): JsonResponse
     {
         $user = $this->authenticatedUser($request);
         $disable($user);
@@ -87,7 +87,14 @@ class TwoFactorController extends Controller
             return response()->json(['message' => 'La sesión de verificación ya no es válida. Ingrese nuevamente.'], 422);
         }
 
-        $throttleKey = 'two-factor-login:'.$user->id.'|'.$request->ip();
+        $startedAt = (int) $request->session()->get('login.at', 0);
+        if ($startedAt === 0 || now()->timestamp - $startedAt > 600) {
+            $request->session()->forget(['login.id', 'login.remember', 'login.at']);
+
+            return response()->json(['message' => 'La sesión de verificación ya no es válida. Ingrese nuevamente.'], 422);
+        }
+
+        $throttleKey = 'two-factor-login:'.$user->id;
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             return response()->json(['message' => 'Demasiados intentos. Intente nuevamente en unos minutos.'], 429);
         }
@@ -104,14 +111,14 @@ class TwoFactorController extends Controller
             }
         }
         if (! $valid) {
-            RateLimiter::hit($throttleKey, 60);
+            RateLimiter::hit($throttleKey, 300);
 
             throw ValidationException::withMessages(['code' => 'El código de autenticación no es válido.']);
         }
 
         RateLimiter::clear($throttleKey);
         $remember = (bool) $request->session()->pull('login.remember', false);
-        $request->session()->forget('login.id');
+        $request->session()->forget(['login.id', 'login.at']);
         Auth::guard('web')->login($user, $remember);
         $request->session()->regenerate();
         $this->audit->execute(

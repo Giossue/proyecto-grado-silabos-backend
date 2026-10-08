@@ -44,6 +44,7 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:password-recovery')
         ->name('api.v1.authentication.account-activation');
     Route::post('authentication/email-verification/{user}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware('throttle:10,1')
         ->name('api.v1.authentication.email-verification.verify');
     Route::post('authentication/two-factor/challenge', [TwoFactorController::class, 'challenge'])
         ->middleware('throttle:two-factor')
@@ -113,7 +114,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('admin/users/import-template', [ManagedUserController::class, 'importTemplate'])
                 ->middleware('active-role')->name('api.v1.admin.users.import-template');
             Route::post('admin/users/import', [ManagedUserController::class, 'import'])
-                ->middleware('active-role')->name('api.v1.admin.users.import');
+                ->middleware(['active-role', 'throttle:10,1'])->name('api.v1.admin.users.import');
             Route::patch('admin/users/{user}', [ManagedUserController::class, 'update'])
                 ->middleware('active-role')->name('api.v1.admin.users.update');
             Route::post('admin/users/{user}/resend-activation', [ManagedUserController::class, 'resendActivation'])
@@ -133,7 +134,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('admin/academic/careers/import-template', [CareerImportController::class, 'template'])
                 ->middleware('active-role')->name('api.v1.admin.academic.careers.import-template');
             Route::post('admin/academic/careers/import', [CareerImportController::class, 'store'])
-                ->middleware('active-role')->name('api.v1.admin.academic.careers.import');
+                ->middleware(['active-role', 'throttle:10,1'])->name('api.v1.admin.academic.careers.import');
             Route::patch('admin/academic/{entity}/{record}', [AcademicGovernanceController::class, 'update'])
                 ->middleware('active-role')->name('api.v1.admin.academic.update');
             Route::patch('admin/academic/{entity}/{record}/status', [AcademicGovernanceController::class, 'setStatus'])
@@ -152,7 +153,7 @@ Route::prefix('v1')->group(function (): void {
             Route::post('admin/template/{template}/format', [TemplateController::class, 'format'])
                 ->middleware('active-role')->name('api.v1.admin.template.format');
             Route::post('admin/template/logo', [TemplateController::class, 'storeLogo'])
-                ->middleware('active-role')->name('api.v1.admin.template.logo.store');
+                ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.admin.template.logo.store');
             Route::get('admin/template/{template}', [TemplateController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.admin.template.show');
             Route::patch('admin/template/{template}/appearance', [TemplateController::class, 'updateAppearance'])
@@ -238,7 +239,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('coordination/academic/teachers/import-template', [CareerTeacherController::class, 'importTemplate'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.import-template');
             Route::post('coordination/academic/teachers/import', [CareerTeacherController::class, 'import'])
-                ->middleware('active-role')->name('api.v1.coordination.academic.teachers.import');
+                ->middleware(['active-role', 'throttle:10,1'])->name('api.v1.coordination.academic.teachers.import');
             Route::patch('coordination/academic/teachers/{user}', [CareerTeacherController::class, 'update'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.teachers.update');
             Route::delete('coordination/academic/teachers/{user}', [CareerTeacherController::class, 'destroy'])
@@ -302,7 +303,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('revisions/{revision}/documents', [DocumentController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.documents.show');
             Route::post('revisions/{revision}/documents', [DocumentController::class, 'store'])
-                ->middleware('active-role')->name('api.v1.documents.store');
+                ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.documents.store');
             Route::get('exports/{artifact}/{format}', [DocumentController::class, 'download'])
                 ->middleware('active-role')->whereIn('format', ['docx', 'pdf'])->name('api.v1.documents.download');
             Route::get('revisions/{revision}/signature', [SignatureController::class, 'show'])
@@ -310,7 +311,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('revisions/{revision}/signature/pdf', [SignatureController::class, 'pdf'])
                 ->middleware('active-role')->name('api.v1.signature.pdf');
             Route::post('revisions/{revision}/signature', [SignatureController::class, 'store'])
-                ->middleware('active-role')->name('api.v1.signature.store');
+                ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.signature.store');
             Route::get('library/reviews', [LibraryReviewController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.library.reviews.index');
             Route::get('library/reviews/{revision}', [LibraryReviewController::class, 'show'])

@@ -13,6 +13,7 @@ class ActivateManagedUser
 {
     public function __construct(
         private readonly RecordAuditEvent $audit,
+        private readonly RevokeUserSessions $sessions,
     ) {}
 
     public function execute(string $token, string $password, Request $request): void
@@ -41,6 +42,7 @@ class ActivateManagedUser
                 'correo_verificado_en' => now(),
             ])->save();
             $invitation->forceFill(['usada_en' => now()])->save();
+            $this->sessions->execute($user);
             ActivationInvitation::query()
                 ->where('usuario_id', $user->id)
                 ->whereNull('usada_en')

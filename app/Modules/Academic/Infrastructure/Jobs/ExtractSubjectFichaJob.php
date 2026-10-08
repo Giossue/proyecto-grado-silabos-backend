@@ -13,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Throwable;
 
 /** Propone la ficha de una materia y, si fue la última, deja la importación lista para revisar. */
@@ -52,8 +53,8 @@ class ExtractSubjectFichaJob implements ShouldQueue
         foreach ($fields as $field) {
             $value = $proposal[$field['key']] ?? null;
             $clean = is_array($value)
-                ? array_values(array_filter(array_map(fn (mixed $item): string => is_scalar($item) ? trim((string) $item) : '', $value), fn (string $item): bool => $item !== ''))
-                : (is_scalar($value) ? trim((string) $value) : '');
+                ? array_slice(array_values(array_filter(array_map(fn (mixed $item): string => is_scalar($item) ? Str::limit(trim((string) $item), 1500, '') : '', $value), fn (string $item): bool => $item !== '')), 0, 40)
+                : (is_scalar($value) ? Str::limit(trim((string) $value), 4000, '') : '');
             if ($clean !== '' && $clean !== []) {
                 $values[$field['key']] = $clean;
             }

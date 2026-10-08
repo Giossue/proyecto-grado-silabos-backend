@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\User;
+use App\Modules\Identity\Application\Actions\RevokeUserSessions;
 use App\Modules\Identity\Application\Actions\SelectActiveRole;
 use App\Modules\Identity\Application\Actions\UpdateAccessibilityPreferences;
 use App\Modules\Identity\Application\Actions\UpdateManagedUserProfile;
@@ -29,6 +30,7 @@ class SessionController extends Controller
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly RevokeUserSessions $sessions,
     ) {}
 
     public function show(Request $request): JsonResponse
@@ -36,6 +38,13 @@ class SessionController extends Controller
         $user = $this->authenticatedUser($request);
 
         return response()->json($this->sessionPayload($user, $request));
+    }
+
+    private static ?string $dummyHash = null;
+
+    private static function dummyHash(): string
+    {
+        return self::$dummyHash ??= Hash::make(Str::random(40));
     }
 
     public function login(LoginRequest $request): JsonResponse
@@ -54,8 +63,19 @@ class SessionController extends Controller
             ->where('activo', true)
             ->first();
 
-        if (! $user instanceof User || ! Hash::check($request->string('password')->toString(), $user->contrasena)) {
+        $hash = $user instanceof User ? $user->contrasena : self::dummyHash();
+        $matches = Hash::check($request->string('password')->toString(), $hash);
+        $accountKey = 'login-account:'.$email;
+
+        if (RateLimiter::tooManyAttempts($accountKey, 20)) {
+            return response()->json([
+                'message' => 'Demasiados intentos. Intente nuevamente en unos minutos.',
+            ], 429)->header('Retry-After', (string) RateLimiter::availableIn($accountKey));
+        }
+
+        if (! $user instanceof User || ! $matches) {
             RateLimiter::hit($throttleKey, 60);
+            RateLimiter::hit($accountKey, 3600);
 
             return response()->json([
                 'message' => 'Las credenciales proporcionadas no son válidas.',
@@ -66,6 +86,7 @@ class SessionController extends Controller
         if ($user->hasEnabledTwoFactorAuthentication()) {
             $request->session()->put('login.id', $user->id);
             $request->session()->put('login.remember', $request->boolean('remember'));
+            $request->session()->put('login.at', now()->timestamp);
 
             return response()->json([
                 'two_factor_required' => true,
@@ -116,6 +137,7 @@ class SessionController extends Controller
         $user->update([
             'contrasena' => $request->string('password')->toString(),
         ]);
+        $this->sessions->execute($user, $request->session()->getId());
 
         $this->audit->execute(
             actorId: $user->id,

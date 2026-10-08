@@ -22,4 +22,16 @@ class UpdateAccessibilityRequest extends FormRequest
             'wide_spacing' => ['required', 'boolean'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return [
+            'high_contrast' => 'alto contraste',
+            'text_size' => 'tamaño del texto',
+            'no_motion' => 'sin animaciones',
+            'underline_links' => 'subrayar enlaces',
+            'wide_spacing' => 'texto espaciado',
+        ];
+    }
 }

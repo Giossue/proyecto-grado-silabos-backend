@@ -5,16 +5,23 @@ namespace App\Modules\Academic\Application;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use RuntimeException;
 use Symfony\Component\Process\Process;
+use ZipArchive;
 
 /** Convierte un PDF o un Excel de la carrera en fragmentos de texto para buscar evidencia por materia. */
 final class FichaDocumentText
 {
     private const BLOCK = 1800;
 
+    private const MAX_SHEETS = 20;
+
+    private const MAX_ROWS = 5000;
+
+    private const MAX_UNCOMPRESSED_BYTES = 150 * 1024 * 1024;
+
     /** @return list<string> */
     public function blocks(string $absolutePath, string $name): array
     {
-        $text = match (strtolower(pathinfo($name, PATHINFO_EXTENSION))) {
+        $text = match (strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION))) {
             'pdf' => $this->pdf($absolutePath),
             'xlsx', 'xls' => $this->workbook($absolutePath),
             default => throw new RuntimeException('Solo se admiten archivos PDF o Excel.'),
@@ -35,13 +42,33 @@ final class FichaDocumentText
         return $process->getOutput();
     }
 
+    private function assertSafeArchive(string $path): void
+    {
+        $zip = new ZipArchive;
+        if ($zip->open($path) !== true) {
+            return;
+        }
+        $total = 0;
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            $total += (int) ($zip->statIndex($index)['size'] ?? 0);
+        }
+        $zip->close();
+        if ($total > self::MAX_UNCOMPRESSED_BYTES) {
+            throw new RuntimeException('El archivo de Excel es demasiado grande para procesarlo.');
+        }
+    }
+
     private function workbook(string $path): string
     {
-        $book = IOFactory::load($path);
+        $this->assertSafeArchive($path);
+        $type = IOFactory::identify($path, [IOFactory::READER_XLSX, IOFactory::READER_XLS]);
+        $reader = IOFactory::createReader($type);
+        $reader->setReadDataOnly(true);
+        $book = $reader->load($path);
         $lines = [];
-        foreach ($book->getAllSheets() as $sheet) {
+        foreach (array_slice($book->getAllSheets(), 0, self::MAX_SHEETS) as $sheet) {
             $lines[] = '## '.$sheet->getTitle();
-            foreach ($sheet->toArray(null, true, true, false) as $row) {
+            foreach (array_slice($sheet->toArray(null, true, true, false), 0, self::MAX_ROWS) as $row) {
                 $cells = array_filter(array_map(fn (mixed $cell): string => trim(preg_replace('/\s+/u', ' ', (string) $cell) ?? ''), $row), fn (string $cell): bool => $cell !== '');
                 if ($cells !== []) {
                     $lines[] = implode(' | ', $cells);

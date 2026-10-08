@@ -5,15 +5,16 @@ use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Laravel\Sanctum\Http\Middleware\AuthenticateSession;
 use Laravel\Sanctum\Sanctum;
 
+$localDomains = env('APP_ENV') === 'production' ? '' : 'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1';
 $statefulDomains = env('SANCTUM_STATEFUL_DOMAINS', sprintf(
     '%s%s',
-    'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1',
+    $localDomains,
     Sanctum::currentApplicationUrlWithPort(),
 ));
 
 return [
 
-    'stateful' => explode(',', is_string($statefulDomains) ? $statefulDomains : ''),
+    'stateful' => array_values(array_filter(explode(',', is_string($statefulDomains) ? $statefulDomains : ''))),
 
     'guard' => ['web'],
 

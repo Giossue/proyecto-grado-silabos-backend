@@ -59,10 +59,10 @@ class SyllabusController extends Controller
             ->whereCurrentTeacher($user)
             ->when($search, fn ($query, string $term) => $query->where(
                 fn ($outer) => $outer
-                    ->whereRaw("datos_academicos_silabo->'subject'->>'name' ILIKE ?", ["%{$term}%"])
-                    ->orWhereRaw("datos_academicos_silabo->'subject'->>'code' ILIKE ?", ["%{$term}%"])
+                    ->whereRaw("datos_academicos_silabo->'subject'->>'name' ILIKE ?", ['%'.addcslashes($term, '%_\\').'%'])
+                    ->orWhereRaw("datos_academicos_silabo->'subject'->>'code' ILIKE ?", ['%'.addcslashes($term, '%_\\').'%'])
                     ->orWhereHas('convocation.process.academicPeriod', fn ($period) => $period
-                        ->whereRaw('codigo_periodo_academico ILIKE ?', ["%{$term}%"])),
+                        ->whereRaw('codigo_periodo_academico ILIKE ?', ['%'.addcslashes($term, '%_\\').'%'])),
             ))
             ->when($state, fn ($query, string $value) => $query->where('estado', $value))
             ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'parallel.subject:id,nombre,codigo_asignatura', 'parallel:id,codigo'])

@@ -16,4 +16,12 @@ class ShowScreenHelpRequest extends FormRequest
     {
         return ['screen' => ['required', 'string', 'max:160', 'regex:/^\/[a-z0-9\/:_-]*$/']];
     }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return [
+            'screen' => 'pantalla',
+        ];
+    }
 }

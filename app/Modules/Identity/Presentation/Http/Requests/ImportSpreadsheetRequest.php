@@ -19,4 +19,13 @@ class ImportSpreadsheetRequest extends FormRequest
             'confirm' => ['sometimes', 'boolean'],
         ];
     }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return [
+            'file' => 'archivo',
+            'confirm' => 'confirmación',
+        ];
+    }
 }

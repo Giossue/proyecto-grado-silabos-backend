@@ -19,7 +19,7 @@ class SaveScreenHelp
                 'contenido_ayuda' => $content,
                 'activa' => $active,
                 'actualizado_por' => $actor->id,
-                'actualizado_en' => now(),
+                'editada_en_ayuda' => now(),
             ]);
 
             $this->audit->execute(

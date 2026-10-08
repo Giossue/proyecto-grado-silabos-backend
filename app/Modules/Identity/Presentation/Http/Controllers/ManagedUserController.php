@@ -56,8 +56,8 @@ class ManagedUserController extends Controller
             ])
             ->when($search, fn (Builder $query, string $term) => $query->where(
                 fn (Builder $searchQuery) => $searchQuery
-                    ->whereRaw('nombre_usuario ILIKE ?', ["%{$term}%"])
-                    ->orWhereRaw('correo_electronico ILIKE ?', ["%{$term}%"]),
+                    ->whereRaw('nombre_usuario ILIKE ?', ['%'.addcslashes($term, '%_\\').'%'])
+                    ->orWhereRaw('correo_electronico ILIKE ?', ['%'.addcslashes($term, '%_\\').'%']),
             ))
             ->when($status === 'active', fn (Builder $query) => $query
                 ->where('activo', true)->whereNotNull('correo_verificado_en'))

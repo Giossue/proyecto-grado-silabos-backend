@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $contenido_ayuda
  * @property bool $activa
  * @property string|null $actualizado_por
- * @property CarbonImmutable $actualizado_en
+ * @property CarbonImmutable $editada_en_ayuda
  */
 class ScreenHelp extends Model
 {
@@ -29,11 +29,11 @@ class ScreenHelp extends Model
     protected $primaryKey = 'ayuda_pantalla_id';
 
     /** @var list<string> */
-    protected $fillable = ['pantalla', 'titulo_ayuda', 'contenido_ayuda', 'activa', 'actualizado_por', 'actualizado_en'];
+    protected $fillable = ['pantalla', 'titulo_ayuda', 'contenido_ayuda', 'activa', 'actualizado_por', 'editada_en_ayuda'];
 
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['activa' => 'boolean', 'actualizado_en' => 'immutable_datetime'];
+        return ['activa' => 'boolean', 'editada_en_ayuda' => 'immutable_datetime'];
     }
 }

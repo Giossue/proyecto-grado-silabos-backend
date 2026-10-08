@@ -54,8 +54,8 @@ final class LibraryReviews
             ->when($state !== null, fn (Builder $query) => $query->whereRaw('('.self::STATE_SQL.') = ?', [$state]))
             ->when($search !== null && $search !== '', fn (Builder $query) => $query->where(
                 fn (Builder $outer) => $outer
-                    ->whereRaw("silabo.datos_academicos_silabo->'subject'->>'name' ILIKE ?", ["%{$search}%"])
-                    ->orWhereRaw("silabo.datos_academicos_silabo->'subject'->>'code' ILIKE ?", ["%{$search}%"]),
+                    ->whereRaw("silabo.datos_academicos_silabo->'subject'->>'name' ILIKE ?", ['%'.addcslashes($search, '%_\\').'%'])
+                    ->orWhereRaw("silabo.datos_academicos_silabo->'subject'->>'code' ILIKE ?", ['%'.addcslashes($search, '%_\\').'%']),
             ))
             ->orderByDesc('revision.enviado_en');
     }

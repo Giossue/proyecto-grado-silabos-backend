@@ -15,6 +15,7 @@ class EmailVerificationController extends Controller
     public function verify(User $user, string $hash, Request $request): JsonResponse
     {
         abort_unless(URL::hasValidRelativeSignature($request), 403);
+        abort_unless($user->activo, 403);
         abort_unless(hash_equals(sha1($user->getEmailForVerification()), $hash), 403);
 
         if (! $user->hasVerifiedEmail()) {

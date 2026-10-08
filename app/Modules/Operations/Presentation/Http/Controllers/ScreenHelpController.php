@@ -60,7 +60,7 @@ class ScreenHelpController extends Controller
             'title' => $help->titulo_ayuda,
             'content' => $help->contenido_ayuda,
             'active' => $help->activa,
-            'updated_at' => $help->actualizado_en->toIso8601String(),
+            'updated_at' => $help->editada_en_ayuda->toIso8601String(),
         ];
     }
 }

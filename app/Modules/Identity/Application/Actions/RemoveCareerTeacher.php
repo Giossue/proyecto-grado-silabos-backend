@@ -24,6 +24,7 @@ class RemoveCareerTeacher
         private readonly ActiveRole $roles,
         private readonly AcademicPeriodPlanning $periodPlanning,
         private readonly RecordAuditEvent $audit,
+        private readonly RevokeUserSessions $sessions,
     ) {}
 
     /** @return array{removed_parallel_assignments: int} */
@@ -56,7 +57,9 @@ class RemoveCareerTeacher
             }
 
             $roleAssignment->update(['activo' => false]);
-            DB::table('sesiones')->where('user_id', $target->id)->delete();
+            if (! RoleAssignment::query()->effective()->where('usuario_id', $target->id)->exists()) {
+                $this->sessions->execute($target);
+            }
 
             $this->audit->execute(
                 actorId: $actor->id,
