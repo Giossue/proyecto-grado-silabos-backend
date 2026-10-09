@@ -128,7 +128,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   convocatoria en pausa, proceso cerrado) no llevan enlace ni botón «Abrir» (I-163); los
   que piden actuar (sílabos por elaborar, corrección, aprobación, firma, reanudación,
   nuevo rol, coordinación asignada) abren la pantalla donde se actúa. La carrera activa se muestra bajo el nombre de usuario y puede
-  cambiarse desde un `Sheet` en ese mismo menú.
+  cambiarse desde un modal en ese mismo menú.
 - El selector de tema del encabezado alterna únicamente entre claro y oscuro; no existe
   la opción «Sistema». Sin preferencia guardada, la aplicación arranca en claro.
 - La selección de texto comparte un fondo y un color de texto por tema en toda la
@@ -216,7 +216,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   una sección editable; la consulta conserva las secciones consecutivas. La revisión
   distingue biblioteca y coordinación. Plantilla usa las mismas hojas del constructor:
   verticales para las secciones generales y horizontal para la planificación de 16
-  semanas. La ficha de cada materia carga sus campos dentro del panel lateral.
+  semanas. La ficha de cada materia carga sus campos dentro del modal.
   Notificaciones, conversación, firma y seguridad también representan sus cargas de
   contenido. Cada región anuncia la carga una vez, oculta los adornos al lector de
   pantalla y respeta movimiento reducido y ambos temas.
@@ -233,7 +233,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   acción disponible; nunca se muestran botones, enlaces o texto de acción directamente
   en la celda.
 - En pantallas de gestión con listados, el formulario de alta no ocupa la vista inicial:
-  una acción principal abre un panel lateral desde la derecha, conserva los errores en el
+  una acción principal abre un modal centrado, conserva los errores en el
   panel y lo cierra únicamente después de una respuesta exitosa.
 - Todo dato obligatorio muestra un asterisco rojo junto a su etiqueta y anuncia
   «obligatorio» a tecnologías asistivas. Las condiciones como «si es heredado» o «salvo
@@ -242,7 +242,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - La ayuda breve que aparece al pasar el puntero o enfocar un control usa `Tooltip` de
   shadcn. Los elementos HTML no usan el atributo `title` como tooltip nativo; cuando un
   control necesita nombre accesible, lo conserva mediante texto visible o `aria-label`.
-- Los formularios en panel lateral mantienen **Cancelar** y la acción principal en un pie
+- Los formularios en modal mantienen **Cancelar** y la acción principal en un pie
   fijo. Solo el contenido central se desplaza, conserva espacio inferior y pasa por debajo
   del pie sin ocultar el último campo.
 - Los botones secundarios textuales (`outline` o `secondary`) no llevan iconos de acción;
@@ -381,7 +381,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - I-187 / I-189 presentan los textos de ficha heredados como bloques de solo lectura en DOC-04;
   si Administración marcó «El docente puede ajustarlo» (la bibliografía, en el formato oficial),
   el campo llega con el valor de la ficha y sigue editable. COR-14 muestra «Ficha completa /
-  incompleta» en cada materia y abre su edición en una hoja lateral con un editor de texto por
+  incompleta» en cada materia y abre su edición en un modal con un editor de texto por
   cada campo marcado «Se llena desde la ficha»; la preparación del período avisa qué materias
   carecen de ficha completa. En «Propiedades del campo» (ADM-04) Administración marca esos
   campos: agregar un dato nuevo a la ficha no requiere programar.
@@ -536,7 +536,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   la invitación anterior y emite otra al nuevo correo (I-38, I-88). COR-15 muestra las
   cuentas pendientes dentro de la tabla de docentes y asignaciones, con estado «Pendiente
   de activación» y la misma acción de reenvío para la carrera activa. Cada fila de
-  COR-15 tiene además **Editar docente** (I-170): nombre y correo en un panel lateral;
+  COR-15 tiene además **Editar docente** (I-170): nombre y correo en un modal;
   el correo queda deshabilitado, con explicación, cuando la cuenta ya fue activada.
   Al crear una cuenta o un docente, el nombre completo se transforma a mayúsculas mientras
   se escribe y conserva tildes, diéresis y `ñ` mediante normalización Unicode en español.
@@ -600,7 +600,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   toda pantalla que tenga una ayuda activa; se arrastra y se acomoda en una de las cuatro esquinas del contenido, recuerda la esquina en el
   navegador y abre un panel con el título y el texto de esa pantalla, sin ocupar espacio en la página.
   Administración escribe los textos en **Ayuda de pantallas** (`/admin/ayuda`): una tabla con todas las
-  pantallas por rol, su estado (con ayuda, sin ayuda, inactiva) y un `Sheet` para editar título, texto
+  pantallas por rol, su estado (con ayuda, sin ayuda, inactiva) y un modal para editar título, texto
   y activa. Administración tiene su propia ayuda en sus pantallas.
 - **Proyecto de carrera** (COR-16, I-204) es un módulo aparte del Coordinador: tabla con todas las
   materias de la malla (materia, código, ciclo y estado de la ficha) y un clic en la fila abre la ficha.
@@ -681,7 +681,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   fila por periodo lectivo con sus fechas de clases, las fechas de elaboración de sílabos
   (o «Sin fechas») y el estado: **Sin iniciar** (periodo sin convocatoria), **Abierto**,
   **Pausado** y **Finalizado**. La tabla no tiene columna de acciones: al pulsar una fila
-  se abre un modal con las opciones del periodo o de la convocatoria (pausar, reanudar, prorrogar, eliminar o abrir); no se puede finalizar a mano. El botón **Nueva convocatoria** abre un solo `Sheet` sin
+  se abre un modal con las opciones del periodo o de la convocatoria (pausar, reanudar, prorrogar, eliminar o abrir); no se puede finalizar a mano. El botón **Nueva convocatoria** abre un solo modal sin
   descripción general, con dos bloques y una línea de ayuda bajo cada uno: fechas del
   periodo (la etiqueta se genera sola) y fechas de elaboración; las cuatro son
   obligatorias. Al enviar, un diálogo confirma que, una vez abierta, el periodo y sus
@@ -719,7 +719,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   carrera está lista; los documentos de ingesta no son un requisito para convocar. COR-02 ya no es una
   pantalla: la tarjeta del plazo en el Panel del coordinador (COR-01) trae un solo botón
   según el estado de la convocatoria de su carrera (iniciar, pausar o reanudar) junto a Ver
-  seguimiento, que abre el seguimiento de expedientes en un `Sheet` lateral. Pausar y
+  seguimiento, que abre el seguimiento de expedientes en un modal. Pausar y
   reanudar usan el mismo diálogo de confirmación que ADM-12. ADM-12 no muestra un aviso de edición bloqueada porque desde
   esa misma pantalla se pausa, reanuda o cierra el proceso. COR-04 es solo seguimiento y
   avisa cuando la convocatoria o
@@ -730,16 +730,16 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   malla, datos curriculares, programaciones, paralelos y asignaciones genéricas. Facultades, carreras,
   períodos, cuentas y roles continúan administrables durante el proceso abierto.
 - El menú de acciones de ADM-04 distingue edición y eliminación: **Editar** abre un
-  `Sheet` precargado; **Eliminar** pide confirmación y explica si una dependencia o
+  modal precargado; **Eliminar** pide confirmación y explica si una dependencia o
   historial institucional protege el registro.
 - El fondo de página y las superficies de trabajo usan tokens distintos en claro y
-  oscuro; tarjetas, paneles laterales y popovers conservan contraste semántico común.
+  oscuro; tarjetas, modales y popovers conservan contraste semántico común.
 
 ### Cobertura del patrón de altas
 
 | Rol           | Interfaces cubiertas                            | Comportamiento                                                                                                                                                                                                                                 |
 | ------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Administrador | ADM-02, ADM-03, ADM-04, ADM-05, ADM-06 y ADM-12 | Cuentas, roles, catálogos, coordinaciones, campos y procesos de sílabos se crean desde una acción que abre el `Sheet` derecho. La única plantilla institucional se crea desde un modal con dos opciones (I-201): «En blanco» o «Plantilla oficial UEB» (estructura oficial ya cargada); en blanco, «Formatear» sigue disponible mientras no tenga secciones. En la plantilla oficial, la sección 6 (distribución y planificación) usa hoja horizontal. En Mis sílabos el docente edita por pestañas, una por sección, y la vista de solo lectura se mantiene completa. |
+| Administrador | ADM-02, ADM-03, ADM-04, ADM-05, ADM-06 y ADM-12 | Cuentas, roles, catálogos, coordinaciones, campos y procesos de sílabos se crean desde una acción que abre un modal. La única plantilla institucional se crea desde un modal con dos opciones (I-201): «En blanco» o «Plantilla oficial UEB» (estructura oficial ya cargada); en blanco, «Formatear» sigue disponible mientras no tenga secciones. En la plantilla oficial, la sección 6 (distribución y planificación) usa hoja horizontal. En Mis sílabos el docente edita por pestañas, una por sección, y la vista de solo lectura se mantiene completa. |
 | Coordinador   | COR-02, COR-06, COR-13, COR-14 y COR-15 | Convocatorias, revisiones, mallas, materias programadas, paralelos y asignaciones docentes usan el mismo patrón. En COR-15, los selectores permiten buscar docentes por nombre o correo y paralelos por materia, período o código. |
 | Docente       | DOC-02 a DOC-10                                 | No administra colecciones maestras. Edición, IA, envío y respuestas son flujos académicos de página completa, no formularios de alta.                                                                                                          |
 | Bibliotecario | BIB-01 a BIB-03 | No administra colecciones. Aprueba, devuelve con motivos o firma desde el detalle de la revisión; no hay formularios de alta. |

@@ -123,9 +123,9 @@ controles de detalle durante la carga. Los componentes de notificaciones, chat, 
 y segundo factor conservan el título o controles estables y cargan su contenido dentro
 de la misma región. `styles.css` comparte las columnas y desactiva la animación de los
 esqueletos con movimiento reducido.
-`SheetContent` centraliza el movimiento de todos los paneles laterales: entrada y
-salida usan `300 ms` con `ease-in-out`, y el overlay comparte esos parámetros. El
-lado solo determina el eje y la dirección; ningún uso redefine duración o curva.
+`SheetContent` centraliza el movimiento de todos los formularios emergentes, que son
+modales centrados (no paneles laterales): entrada y salida usan fundido y zoom de
+`200 ms`, y el overlay comparte esos parámetros; ningún uso redefine duración o curva.
 `documentPalette.ts` mantiene los colores que se serializan y
 establece sus variables CSS durante el arranque; `documentDefaults.ts` reúne los
 valores documentales por defecto. Los colores del papel conservan su identidad en ambos
