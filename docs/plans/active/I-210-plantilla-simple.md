@@ -61,7 +61,7 @@ Reemplaza los cinco tipos (`texto`, `ficha`, `tabla`, `automatico`, `fijo`, ADR-
   importación de bibliografía de la ficha de la materia deja de usarse.
 - El docente edita tablas libremente (puede agregar filas); antes eran filas fijas.
 
-## Etapas (sin empezar)
+## Etapas (en ejecución)
 
 1. Documentación: ADR que reemplaza ADR-0009, `field-types.md`, especificación y trazabilidad.
 2. Backend: campo con `quien_llena` y contenido documento; migración y reinicio de sílabos;
@@ -69,3 +69,10 @@ Reemplaza los cinco tipos (`texto`, `ficha`, `tabla`, `automatico`, `fijo`, ADR-
 3. Frontend: constructor (agregar sección/campo, elegir quién lo llena, editar contenido) y
    editor del docente.
 4. Plantilla oficial cargada desde `config/syllabus_template.php`.
+
+## Registro de ejecución — 2026-10-09
+
+- Alcance: RF-017..026, RN-009..016, CU-04/CU-07, ADM-06, COR ficha, DOC-02/DOC-04; CP-F plantilla, borrador y documentos. PV-01/02/07/16/19 no se cierran por esta tarea.
+- Etapa 1: ADR-0010 reemplaza ADR-0009; documentación del modelo y especificación actualizadas. Puertas ejecutadas antes del commit: `npm test` pasa (360 pruebas, 1 omitida); `composer verify` bloqueado por el SQL ya versionado `SQL_REMOTA_I-168.sql`. El diagnóstico `composer test` pasa Pint y encuentra 19 errores preexistentes de Larastan; no llega a la suite PHP. Se conserva el archivo ajeno a I-210. No se declara verificación backend satisfactoria.
+- Se consultó al responsable el reparto propuesto de responsables, filas libres y totales manuales. Hasta respuesta, no se implementan reglas dependientes de esas decisiones.
+- Repositorios inicialmente limpios. Commits por etapa autorizados; no hay autorización de push/despliegue. No se modifica producción.

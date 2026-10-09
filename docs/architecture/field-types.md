@@ -1,66 +1,44 @@
-# Tipos de campo de la plantilla
+# Campos de documento de la plantilla
 
-Plan: `docs/plans/active/I-195-plantilla-mvp-cuatro-tipos-de-campo.md` (ahora cinco tipos). ADR-0009.
+Fuente: [I-210](../plans/active/I-210-plantilla-simple.md) y
+[ADR-0010](adr/0010-simple-template-documents.md), que reemplaza ADR-0009.
 
-| Clave | Quién llena | Config | Valor |
-|---|---|---|---|
-| `texto` | Docente | ninguna | texto libre (`FreeText`) |
-| `ficha` | Coordinación, una vez por materia | `adjustable` | texto libre heredado |
-| `tabla` | Docente | `columns`, `rows` fijas | `fila → columna → texto` |
-| `automatico` | Nadie | `source` | ninguno |
-| `fijo` | Administración, en la plantilla | `content` (documento `FreeText`) | ninguno (el snapshot guarda el contenido) |
+Los campos no tienen tipo. Todos contienen un documento JSON libre: texto, listas
+y tablas del mismo editor. La estructura del contenido no cambia su responsable.
 
-`texto` admite `config.inside = identification_card`: el texto se escribe dentro de la tabla oficial de
-identificación y no se repite como campo aparte en la hoja, la revisión ni el Word.
+| `quien_llena` | Contenido inicial y valor efectivo | Permiso docente |
+|---|---|---|
+| `docente` | Documento inicial de Administración; luego documento del sílabo | Editar |
+| `coordinacion` | Documento de la ficha por materia, copiado al crear el sílabo | Solo lectura |
+| `institucional` | Documento de la plantilla, con variables del catálogo | Solo lectura |
 
-Solo `texto`, `ficha` y `tabla` se eligen a mano (`FieldType::manual()`, `FieldTypeRegistry::manualKeys()`);
-`automatico` y `fijo` nacen únicamente de los diseños oficiales y la API de campos rechaza crearlos a mano.
+Bibliografía es docente. El reparto restante de la plantilla oficial conserva el
+estado indicado en «Por validar» de I-210. Título y logos son fijos y no son campos.
 
-`fijo` es la quinta excepción justificada por el contenido institucional de la UEB (evaluación,
-conducta ética y firmas): igual en todos los sílabos, el docente no lo edita y no puede estar vacío.
+## API
 
-## Diseños oficiales de sección
+La API de estructura conserva las operaciones de secciones y campos bajo
+`admin/template/{template}/structure`. Las secciones conservan título, orden y
+orientación. Un campo recibe `key`, `label`, `help`, `quien_llena`, `content` y orden.
+`content` es un documento JSON; las variables solo pueden usar claves de
+`template_variables`. Se retiran `type`, `config`, filas fijas y ajuste de ficha.
 
-`config/syllabus_template.php` define `designs` (clave → título, resumen y campos `[clave, etiqueta, tipo, config]`)
-y `baseline` (orden de la plantilla oficial). `SectionDesigns` los lee, los ofrece en `sectionDesigns` de
-`GET admin/template/{id}` y los instancia (`POST structure/sections` con `design`); el provisionador usa la misma clase para
-«Cargar formato oficial UEB». El contenido de los campos `fijo` (`content`) lo arma `FixedContent::official`. Para cambiar el
-formato oficial se edita ese archivo y esa clase: no hay migración ni cambio de interfaz. En `tabla`, `columns` y `rows` son
-`clave => etiqueta` y `weeks` genera una fila por semana.
+El servidor comprueba Administración, alcance, bloqueo de edición y confirmación
+del reinicio conforme a I-118. La ficha acepta únicamente campos de Coordinación;
+la actualización de borrador acepta únicamente campos docentes. Las revisiones
+aprobadas conservan sus documentos y no se adaptan a cambios de la plantilla viva.
 
-## Cómo agregar un tipo
+## Persistencia y exportación
 
-1. Crear la clase en `app/Modules/Configuration/Domain/FieldTypes/` que implemente
-   `FieldType`: `key`, `label`, `configRules`, `normalizeConfig`, `defaultValue`,
-   `validateValue`, `isEmpty`, `teacherEditable`.
-2. Registrarla en `config/field_types.php`.
-3. Agregar pruebas en `tests/Unit/Configuration/`.
-4. Decidir `manual()`: verdadero solo si Administración puede elegirlo a mano al crear un campo.
-5. Actualizar esta tabla y `docs/quality/traceability.md`.
+Una migración nueva incorpora responsable y contenido documental, carga el formato
+oficial de `config/syllabus_template.php` y retira columnas y compatibilidad de tipos.
+El reinicio conserva aprobados y procesos cerrados según I-118/I-144. Los valores de
+ficha y borrador son documentos saneados; al enviar se fotografían los documentos
+efectivos con variables resueltas. Word recorre sección y documento de cada campo;
+PDF se obtiene del mismo Word. El render histórico permanece para evidencia aprobada.
 
-No se debe ramificar por clave de tipo fuera del registro.
+## Verificación
 
-POR VALIDAR: formato del valor de `tabla` y lista de fuentes de `automatico`.
-
-## API de plantilla (etapa 3)
-
-Rutas bajo `admin/template/{template}/structure` (solo Administración, auditadas, bloqueadas
-mientras haya un proceso abierto):
-
-- `POST sections`, `PATCH sections/order` (`section_ids`), `PATCH sections/{section}`, `DELETE sections/{section}`.
-- `POST sections/{section}/fields` con `{key, label?, help?, type, config?, position?}`.
-- `PATCH sections/{section}/fields/order` (`field_ids`), `PATCH fields/{field}`, `DELETE fields/{field}`.
-
-`type` y `config` los valida el registro (`configRules` en el FormRequest, `normalizeConfig` en
-`SaveTemplateStructure`); los errores de config salen como `config.<clave>`. La clave y el tipo
-de un campo no cambian después de crearlo. `GET admin/template/{template}` devuelve ahora
-`config` en cada campo.
-
-## Snapshot v7 y Word (etapa 4)
-
-Cada tipo implementa `toSnapshot` (valor que se congela al enviar; el automático resuelve su
-fuente) y `toWord` (se pinta solo con lo que trae el snapshot). El snapshot v7 lleva por sección
-`fields[]` planos: `definition_id`, `key`, `label`, `type`, `legacy`, `config`, `value`. `restore`
-acepta v7 y v6. El Word recorre sección → campos y delega en el tipo; secciones con campos de la
-clase anterior usan el render viejo hasta la etapa 8.
-
+API y OpenAPI, permisos docentes y de ficha, contenido inicial, snapshot inmutable,
+reinicio con conservación de aprobados y estructura de Word/PDF requieren pruebas.
+No se afirma aceptación visual institucional por la suite automatizada (PV-07/PV-19).

@@ -2,7 +2,7 @@
 
 ## Estado
 
-Propuesto — 2026-10-07 (POR VALIDAR hasta cerrar la etapa 3 de I-195).
+Reemplazado por ADR-0010 e I-210 — 2026-10-09. Se conserva como antecedente.
 
 ## Contexto
 
