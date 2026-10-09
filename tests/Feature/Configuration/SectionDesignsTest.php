@@ -121,7 +121,7 @@ class SectionDesignsTest extends TestCase
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get();
         $this->assertSame(['coordinacion' => 6, 'docente' => 10, 'institucional' => 5], $fields->countBy('quien_llena')->sortKeys()->all());
         $this->assertSame(
-            collect(config('syllabus_template.designs'))->pluck('title')->values()->map(fn ($title, $index) => ($index + 1).'. '.$title)->all(),
+            collect(config('syllabus_template.designs'))->values()->map(fn ($design, $index) => (($design['numbered'] ?? true) ? ($index + 1).'. ' : '').$design['title'])->all(),
             $sections->sortBy('posicion')->pluck('titulo')->values()->all(),
         );
     }
@@ -143,7 +143,7 @@ class SectionDesignsTest extends TestCase
         foreach (['Puntualidad:', 'Acceso a la Video Conferencia:', 'Registro de Asistencia:', 'Trabajo en Equipo:', 'Dentro de los estándares de comportamiento', 'Se considera inadmisible lo siguiente:', 'Las violaciones serán analizadas'] as $expected) {
             $this->assertStringContainsString($expected, $text('conducta_etica'));
         }
-        foreach (['Elaborado por', 'Revisado y aprobado por', 'Bibliografía verificada por', 'Fecha de entrega:', 'Fecha de aprobación:'] as $expected) {
+        foreach (['Elaborado por', 'Revisado y aprobado por', 'Bibliografía verificada por', 'Fecha de entrega:', 'Fecha de revisión:'] as $expected) {
             $this->assertStringContainsString($expected, $text('firmas'));
         }
     }

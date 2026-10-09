@@ -5,6 +5,10 @@ chat de elaboración con contexto académico/curricular; la importación I-145 c
 documentos privados internos y revisión por lote, sin editor de fuentes. COR-11 queda
 en el inventario como identificador histórico.
 
+I-210 sustituye los apartados anteriores sobre tipos de campo, marcas docentes,
+condiciones, ajuste de ficha y tablas especializadas. Se conservan como antecedente
+histórico cuando identifican I-151..I-159; no gobiernan la plantilla vigente.
+
 ## Globales
 
 | ID    | Pantalla                   |
@@ -261,28 +265,26 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   el chat procesa o falla. La ruta de detalle docente usa una superficie documental sin sidebar ni
   encabezado autenticado global; conserva únicamente el cambio de tema y el formulario
   mantiene sus propias acciones operativas.
-- I-195 (etapa 7) reescribe ADM-06 como un constructor simple, sin hoja editable ni modo
-  «Editar», sin pestañas: solo la hoja del constructor. Dibuja el sílabo como una hoja A4
-  (logos, título azul centrado en negrita, letra Arial de 11 pt alineada a la izquierda y título de 14 pt, secciones con el nombre tal cual lo escribe Administración (la numeración, como «1. Nombre», es parte del texto, no automática), subtítulos de campo con el nombre tal cual (sin numeración automática; solo si tienen nombre), la tabla oficial de identificación dibujada con datos de ejemplo, la vista de
-  cada tipo y una etiqueta discreta del tipo) con controles flotantes sobre lo seleccionado; la
-  hoja vacía ofrece «Cargar formato oficial UEB» (ya no está en la cabecera de la página, cuyo ancho coincide con el de la hoja) y «Nueva sección»; la etiqueta del tipo baja de línea en vez de desbordar; permite agregar, renombrar, borrar y subir/bajar
-  secciones y campos. **Nueva sección** abre primero un catálogo: «Usar un diseño oficial» lista las doce secciones
-  ya armadas del formato UEB (cada una muestra lo que incluye; «Ya está en la plantilla» si ya se agregó) y se agrega con un
-  paso; «En blanco» sigue en dos pasos (nombre y primer campo opcional). La hoja va directo sobre el fondo de la página, sin
-  contenedor gris, y es siempre papel blanco con texto oscuro: en modo oscuro sus controles y textos conservan los tokens claros;
-  **Propiedades del campo** cambia nombre, ayuda y opciones (el tipo no cambia). Al agregar un
-  campo se elige quién lo escribe: «Lo escribe el docente», «Lo escribe Coordinación en la
-  ficha de la asignatura» (con «El docente puede ajustarlo») o «Tabla de filas fijas»; los tipos
-  técnicos (dato automático y texto fijo) no se eligen a mano: vienen solo en los diseños oficiales (Identificación,
-  Evaluación, Conducta ética y Firmas) y siguen editándose en «Propiedades del campo»; la lista sale del registro
-  de tipos y cada tipo aporta su pieza de configuración. Los textos del docente que se escriben dentro de la tabla de
-  identificación no aparecen como campos en la hoja ni en las revisiones; el docente los completa justo debajo de la tabla. En el constructor, cada campo usa únicamente el contorno discontinuo de edición; su contenido no añade otro recuadro y las tablas conservan sus propios bordes de celda. Sin «Personalizar plantilla»: el logo de la universidad se cambia sobre la hoja con «Cambiar logo» (PNG) al pasar el cursor. El nombre del campo es opcional (sin nombre, no lleva
-  subtítulo; en el constructor aparece como «Campo sin nombre»).  Con un proceso abierto todo queda
-  deshabilitado con el aviso «Edición bloqueada», excepto la consulta en vista previa.
+- I-210 reemplaza I-195 en ADM-06: un constructor sobre hojas documentales con
+  título y logos fijos. Administración agrega, ordena, edita o elimina secciones y
+  campos. La sección conserva nombre y orientación. Cada campo tiene nombre opcional,
+  ayuda, quién lo llena (Docente, Coordinación o Institucional) y contenido inicial.
+  El responsable puede cambiarse sin convertir el documento. El mismo editor permite
+  párrafos con formato, listas, tablas, filas/columnas libres y celdas combinadas;
+  Administración inserta variables del catálogo. No hay selector de tipo, ajuste de
+  ficha, tablas especiales por sección ni edición de título o logos.
+  **Nueva sección** permite usar uno de los doce diseños oficiales o crear una sección
+  en blanco con un primer campo opcional. **Propiedades del campo** cambia nombre,
+  ayuda, responsable y contenido. El campo sin nombre no lleva subtítulo y aparece
+  como «Campo sin nombre» en el constructor. La hoja vacía ofrece «Cargar formato
+  oficial UEB» y «Nueva sección». Los controles son contextuales; un proceso abierto
+  bloquea las mutaciones y mantiene la consulta. La planificación oficial es horizontal.
+  La hoja permanece clara en ambos temas, con contorno discontinuo por campo; las
+  tablas muestran únicamente sus bordes de celda.
 - Por solicitud del responsable del producto del 2026-10-07, cada hoja de ADM-06 tiene
   un botón de ojo en su esquina superior derecha. Cualquiera activa una vista previa
   común para toda la plantilla, sobre las mismas hojas, sin pestaña ni ventana aparte.
-  Oculta contornos de selección, etiquetas de tipo, marcadores de campo vacío y acciones
+  Oculta contornos de selección, etiquetas de responsable, marcadores de campo vacío y acciones
   de edición; conserva logos, título, secciones, contenido institucional y cuadrículas.
   El botón permanece disponible con la edición bloqueada y permite volver al constructor
   desde cualquier hoja. Tiene nombre accesible, estado pulsado y tooltip; consultar no
@@ -297,8 +299,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - En una tabla, **Fondo de celda** y **Color de fuente** son controles distintos y se
   aplican a la celda o las celdas seleccionadas.
 - ADM-06 presenta el título principal como un bloque raíz único y siempre primero.
-  Administración puede seleccionarlo y editar su texto desde la cinta, pero no eliminarlo,
-  duplicarlo, moverlo ni agregarle campos.
+  Su título y logos son fijos; no se seleccionan ni se editan como campos.
 - ADM-06 muestra hojas carta separadas y numeradas (I-53). El pie derecho muestra
   únicamente el número de página (1, 2, 3…), sin el total. La cantidad se recalcula
   según el contenido de muestra al agregar, retirar, reordenar o renombrar piezas.
@@ -318,12 +319,11 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   aviso «Al reanudar el proceso, todos los sílabos de este período se rehacen desde cero».
 - Al editar tablas en ADM-06, las columnas se ajustan al ancho imprimible; un diseño
   excepcionalmente ancho conserva desplazamiento horizontal dentro de la hoja. El
-  selector `@` permite buscar y recorrer todos los datos automáticos del catálogo y
-  se sitúa dentro de la ventana cerca de la celda activa.
+  control «Dato del sistema» inserta una variable del catálogo dentro del documento.
 - La ficha institucional parte del formato oficial y conserva su diseño al mostrarse en
   el constructor. Sus variables muestran datos de malla, programación, paralelos y docentes;
   no son campos de escritura. Discapacidad y formación son campos que completa el
-  docente en su lugar dentro de la tabla. Mapa: `docs/product/identificacion-institucional.md`.
+  docente como documentos independientes. Mapa: `docs/product/identificacion-institucional.md`.
   COR-14 concentra sus paralelos dentro de **Materias y asignaciones**. La pestaña **Materias**
   lista toda la malla activa, con o sin paralelos, sin selector de período: materia, ciclo y,
   por cada paralelo, código, jornada y docente. Un clic en la fila abre **Paralelos y
@@ -362,8 +362,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   si algo se borra.
 - Encabezado del sílabo: logo de la universidad a la izquierda y logo de la facultad de la
   carrera a la derecha, dentro del ancho útil de los márgenes y antes del bloque de título.
-  Administración reemplaza el logo institucional con «Cambiar logo» sobre la hoja
-  de ADM-06 y es la única que puede cargar o reemplazar el logo de facultad al
+  El logo institucional es fijo en ADM-06. Administración puede cargar o reemplazar
+  el logo de facultad al
   crearla o editarla en ADM-04. El logo es obligatorio al crear la facultad; el formulario
   indica 600 × 180 px como medida recomendada y exige un PNG sin fondo, con transparencia. Al editar,
   solo vuelve a exigirse si el registro anterior no tiene logo. El logo institucional
@@ -372,35 +372,23 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   institucional usa el logo de facultad de muestra; el sílabo real usa el de su carrera.
   La tabla de Facultades muestra cada logo como miniatura en una columna propia y permite
   abrir la imagen completa al pulsarla; un registro anterior sin archivo indica **Sin logo**.
-- Si una sección tiene un solo campo, no lleva subtítulo «n.1»: basta el título de la
-  sección, en la hoja, el editor docente, la revisión y el Word. Con varios campos sí
-  se numeran.
-- DOC-04 separa la captura del formato de impresión. La ficha institucional aparece
-  como un resumen académico de solo lectura y sus respuestas docentes usan controles
-  normales debajo. Los bloques de texto y listas se completan como formulario; solo
-  planificación, evaluación, bibliografía y otras estructuras realmente tabulares
-  conservan una cuadrícula, porque filas y columnas forman parte de sus datos. El diseño
-  oficial permanece en la plantilla, las revisiones y las exportaciones.
-- I-187 / I-189 presentan los textos de ficha heredados como bloques de solo lectura en DOC-04;
-  si Administración marcó «El docente puede ajustarlo» (la bibliografía, en el formato oficial),
-  el campo llega con el valor de la ficha y sigue editable. COR-14 muestra «Ficha completa /
-  incompleta» en cada materia y abre su edición en un modal con un editor de texto por
-  cada campo marcado «Se llena desde la ficha»; la preparación del período avisa qué materias
-  carecen de ficha completa. En «Propiedades del campo» (ADM-04) Administración marca esos
-  campos: agregar un dato nuevo a la ficha no requiere programar.
-- El editor presenta todas las secciones consecutivamente como un formulario continuo.
-  No añade un índice lateral, un selector de sección ni pasos anterior/siguiente. Las
-  secciones se separan con encabezado y divisor, no con una tarjeta repetida; `FieldSet`
-  y `FieldGroup` agrupan los controles y evitan repetir el nombre del bloque cuando ya
-  coincide con el único campo que contiene.
+- Los campos conservan el nombre que escribe Administración, sin numeración
+  automática. Un nombre vacío no genera subtítulo.
+- I-210: DOC-04 edita por pestañas de sección (I-201) y usa el mismo editor de
+  documentos para todos los campos docentes, incluidos discapacidad, formación y
+  bibliografía. Las filas son libres y los totales se escriben sin cálculo ni validación.
+  Los documentos de Coordinación e Institucional se consultan en solo lectura. La
+  ficha de COR-14 presenta solo los campos de Coordinación, con sus documentos iniciales,
+  y los sílabos nuevos heredan esa copia. Bibliografía no se importa desde la ficha.
+  La lectura de una revisión muestra todas las secciones y su contenido congelado.
 - DOC-04 no presenta acciones «Guardar ahora» por campo. Cada cambio activa el
   autoguardado y el único estado de guardado visible se mantiene en el encabezado.
-- ADM-06 no mezcla lectura y edición: la ruta normal nunca monta controles mutables. La
-  ruta `/editar` reutiliza los mismos bloques, campos y documentos persistidos.
+- ADM-06 conserva un constructor y alterna una consulta de toda la plantilla en las
+  mismas hojas; no necesita una ruta de edición separada.
 - I-156 retira las tablas repetibles y la planificación automática: lo que sigue en
   este apartado sobre filas, unidades, totales y semanas describe el comportamiento
   anterior. La planificación y toda tabla o lista del docente se escriben como Texto
-  libre; las tablas de Personalizado son fijas.
+  libre. I-210 sustituye Personalizado y permite filas libres en cualquier tabla.
 - (Anterior a I-156) Las tablas repetibles conservaban sus unidades, columnas tipadas y sumas. El diseño
   distingue cabecera fija, datos, datos de unidad y total: se combinan celdas dentro
   de cada grupo, sin atravesar grupos que se repiten distintas cantidades de veces.
@@ -736,10 +724,11 @@ de esa regla porque no crean una colección desde un listado. `ManagementCreatio
 protege la clasificación y falla si una alta de gestión vuelve a incrustarse en una
 página.
 
-- I-190: «Agregar campo» ofrece un catálogo de plantillas oficiales (Descripción, objetivos,
+- Antecedente I-190, sustituido por I-210: «Agregar campo» ofrecía un catálogo de plantillas oficiales (Descripción, objetivos,
   resultados, habilidades, Distribución y planificación de 16 semanas, Metodología, bibliografías,
   perfil de egreso). Al elegir una se inserta ya configurada y se modifica en «Propiedades del campo»,
   donde un campo de texto libre propio también admite «Contenido inicial» (por ejemplo la tabla de
   planificación que cada sílabo nuevo trae vacía). La Identificación institucional sigue siendo fija.
   En Configuración › Perfil el docente escribe su «Formación y experiencia académica-investigativa»
-  una sola vez; sus sílabos la copian y, si la cambia, se actualizan los que aún no ha enviado.
+  una sola vez. I-210 retira la copia y actualización automática de formación: se
+  escribe en el documento docente de cada sílabo.

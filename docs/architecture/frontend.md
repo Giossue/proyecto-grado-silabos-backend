@@ -108,8 +108,10 @@ desplazamiento horizontal; el contenido cargado permite enfocarla por teclado.
 hojas. Cada esquina superior derecha compone `Button` y `Tooltip` con `Eye`/`EyeOff`
 para alternarlo, también con el proceso bloqueado. La consulta sustituye los
 disparadores por contenido estático y oculta herramientas, contornos y etiquetas del
-constructor. `TemplateFieldContent` comparte etiquetas y vistas del registro entre
-ambos modos; en consulta omite instrucciones y campos de texto todavía sin contenido.
+constructor. `TemplateFieldContent` muestra el documento y el responsable de cada campo. En
+consulta resuelve las variables con muestras y oculta el responsable. Constructor,
+ficha y editor docente comparten `FreeTextEditor` para texto, listas y tablas; no
+existe registro de tipos. Título y logos son fijos.
 El estado es local, conserva la selección y no solicita mutaciones a la API.
 Los esqueletos comparten esas tarjetas, paginación y regiones desplazables.
 El Panel limita su carga

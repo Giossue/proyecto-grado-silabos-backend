@@ -217,9 +217,9 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertStringContainsString('Ficha de prueba: descripcion', $text);
         $this->assertStringContainsString('Contenidos', $text);
         $this->assertStringContainsString('Revisión y aprobación', $text);
-        $this->assertSame(1, substr_count($text, 'Tipo de discapacidad'), 'La discapacidad va solo dentro de la tabla de identificación.');
-        $this->assertSame(1, substr_count(mb_strtoupper($text), 'FORMACIÓN Y EXPERIENCIA ACADÉMICA'), 'La formación va solo dentro de la tabla de identificación.');
-        foreach (['INDICADORES', 'PRIMER PARCIAL', 'Evaluación parcial de los aprendizajes', 'ESCALA CUALITATIVA', 'Excelente', 'Conducta y comportamiento ético', 'Puntualidad:', 'Fecha de entrega:', 'Fecha de aprobación:', 'Firma del docente'] as $expected) {
+        $this->assertSame(1, substr_count($text, 'Tipo de discapacidad'), 'La discapacidad pertenece a un solo documento docente.');
+        $this->assertSame(1, substr_count(mb_strtoupper($text), 'FORMACIÓN Y EXPERIENCIA ACADÉMICA'), 'La formación pertenece a un solo documento docente.');
+        foreach (['INDICADORES', 'PRIMER PARCIAL', 'Evaluación parcial de los aprendizajes', 'ESCALA CUALITATIVA', 'Excelente', 'Conducta y comportamiento ético', 'Puntualidad:', 'Fecha de entrega:', 'Fecha de revisión:', 'Firma del docente'] as $expected) {
             $this->assertStringContainsString($expected, $text);
         }
     }

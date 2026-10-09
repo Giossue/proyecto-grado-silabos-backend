@@ -66,7 +66,7 @@ la evidencia aprobada vinculada tras reapertura y los procesos cerrados, como I-
 Los cambios futuros de plantilla mantienen I-188: no se revierte su reinicio al reanudar.
 `domain-model.md` y `syllabus-lifecycle.md` se restauran a su estado previo.
 
-## Etapas (en ejecución)
+## Etapas (implementadas localmente)
 
 1. Documentación: ADR que reemplaza ADR-0009, `field-types.md`, especificación y trazabilidad.
 2. Backend: campo con `quien_llena` y contenido documento; migración y reinicio de sílabos;
@@ -152,3 +152,47 @@ y autorizó las etapas 2–4. El bloqueo anterior queda resuelto. Se conserva si
 - Una ejecución intermedia mostró un fallo intermitente en la prueba preexistente
   de firma PDF (longitud de mensaje cifrado); la suite completa posterior pasó sin
   modificar ese código. Aceptación visual institucional y despliegue pendientes.
+
+### Etapa 4 — Plantilla oficial y cierre
+
+- `config/syllabus_template.php` contiene las doce secciones y 21 campos conforme al
+  reparto confirmado. Identificación usa una tabla documental con variables y celdas
+  combinadas; planificación horizontal trae los encabezados del PDF, datos de unidad,
+  16 semanas y total vacío. No hay cálculos, validación de horas ni filas predeterminadas
+  como restricción de edición. Bibliografías conservan el orden de columnas del PDF.
+- Metodología conserva sus cinco apartados; evaluación y ética conservan el contenido
+  institucional de referencia. Relación con el perfil de egreso usa una tabla documental
+  de partida. Revisión/aprobación queda sin numeración, como en el PDF y el plan.
+- Se ajustaron las ayudas de puesta en marcha y la documentación de pantallas,
+  identificación y arquitectura frontend para retirar referencias a tipos, tablas
+  especiales, ajuste de ficha y copia automática de formación del perfil personal.
+  Los apartados de trazabilidad anteriores quedan identificados como evidencia histórica.
+- Pruebas específicas de I-210: 94 satisfactorias, 2025 aserciones.
+  Suite PHP completa: 376 pruebas, 375 satisfactorias, 4754 aserciones; solo persiste
+  el fallo previo de métricas. La prueba nueva de Word v8 verifica tablas documentales,
+  variables, orientación horizontal y anclas de las tres firmas. PDF se comprueba con
+  el render local de respaldo textual; no se comprobó visualmente Word/PDF ni la
+  conversión real con LibreOffice/Gotenberg.
+- `composer verify` se ejecuta antes del commit y conserva el bloqueo del SQL.
+  Larastan mantiene 11 errores previos, ninguno nuevo de I-210. Frontend: 341 pruebas
+  satisfactorias y 1 omitida, tipos, lint y compilación satisfactorios; el comprobador
+  del contrato solo mantiene los dos consumidores dinámicos previos de importación.
+  OpenAPI regenerado, sin cambios nuevos de contrato en esta etapa.
+
+### Elecciones técnicas no detalladas en el plan
+
+- Se conserva la tercera columna/ancla de firma de Biblioteca ya vigente por I-165.
+  El PDF de referencia muestra solo Docente y Coordinación; no se retira la firma
+  confirmada de Biblioteca ni se crean nuevos campos o permisos.
+- En una instalación sin plantilla previa, el provisionador/seeder instala el mismo
+  formato configurado. La migración sustituye el formato cuando ya existe una plantilla.
+- El lector aislado de fotografías anteriores sigue reproduciendo evidencia histórica;
+  no conserva tipos ni compatibilidad en edición, validación o creación de campos.
+
+### Pendiente de despliegue y aceptación
+
+No se hizo push, no se modificó producción y no se aplicó la migración remota.
+El despliegue de backend y frontend debe coordinarse. Siguen pendientes la resolución
+externa de las puertas preexistentes y la aceptación visual institucional de PV-07/PV-19.
+La excepción de conservación de esta carga se limita a este plan y ADR-0010;
+`domain-model.md` y `syllabus-lifecycle.md` quedan idénticos al inicio de I-210.

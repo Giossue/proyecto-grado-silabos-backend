@@ -5,6 +5,7 @@ namespace Tests\Feature\Documents;
 use App\Modules\Configuration\Application\FixedContent;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -22,6 +23,49 @@ use ZipArchive;
 class WordRendererTest extends TestCase
 {
     use BuildsTypedSnapshot;
+
+    public function test_v8_official_documents_render_generic_tables_variables_and_landscape(): void
+    {
+        $variables = array_column(TemplateVariables::catalog(), 'sample', 'key');
+        $sections = [];
+        foreach (config('syllabus_template.designs') as $key => $design) {
+            $fields = [];
+            foreach ($design['fields'] as [$fieldKey, $label, $responsible, $content]) {
+                $document = FieldDocument::normalize($content);
+                $fields[] = ['key' => $fieldKey, 'label' => $label, 'quien_llena' => $responsible, 'document' => $document, 'value' => FieldDocument::resolve($document, $variables)];
+            }
+            $sections[] = ['key' => $key, 'title' => $design['title'], 'orientation' => $design['orientation'] ?? 'portrait', 'fields' => $fields];
+        }
+        $input = new DocumentRenderInput(
+            subject: 'Asignatura de prueba', subjectCode: 'SW-TEST', academicPeriod: 'Período de prueba',
+            revisionNumber: 1, revisionFingerprint: str_repeat('ab', 32), generatedAt: '2026-10-09T15:00:00Z',
+            locale: 'es-EC', snapshot: ['schema_version' => 8, 'template_variables' => $variables, 'sections' => $sections],
+        );
+        $bundle = app(DocumentRenderer::class)->render($input);
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-document-test-');
+        file_put_contents($temporary, $bundle->docx->bytes);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        unlink($temporary);
+        $dom = new DOMDocument;
+        $dom->loadXML($xml);
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+        $this->assertSame(10, $xpath->query('//w:tbl[.//w:t]')->length);
+        $this->assertSame(20, $xpath->query('//w:tbl[.//w:t[contains(., "Contenidos temáticos")]]/w:tr')->length);
+        $this->assertStringContainsString('w:orient="landscape"', $xml);
+        foreach (['FACULTAD:', 'Semanas (16)', 'Puntualidad:', 'Firma del docente', 'Firma de coordinación', 'Firma de biblioteca', 'Fecha de revisión:', 'Nivel de contribución', 'ISBN'] as $text) {
+            $this->assertStringContainsString($text, $dom->textContent);
+        }
+        $this->assertStringNotContainsString('nombre_facultad', $dom->textContent);
+        $this->assertStringNotContainsString('quien_llena', $dom->textContent);
+        $this->assertStringStartsWith('%PDF-', $bundle->pdf->bytes);
+        $lines = implode(' ', app(SyllabusDocumentContent::class)->lines($input));
+        $this->assertStringContainsString($variables['nombre_docente'], $lines);
+        $this->assertStringContainsString('Aprendizaje autónomo', $lines);
+    }
 
     public function test_v7_snapshot_paints_each_field_with_its_type(): void
     {

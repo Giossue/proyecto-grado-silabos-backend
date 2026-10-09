@@ -37,7 +37,7 @@ final class SectionDesigns
     }
 
     /**
-     * @return list<array{key: string, title: string, summary: string, orientation?: string, fields: list<array{label: string, quien_llena: string}>, in_use: bool}>
+     * @return list<array{key: string, title: string, summary: string, orientation?: string, numbered?: bool, fields: list<array{label: string, quien_llena: string}>, in_use: bool}>
      */
     public function options(SyllabusTemplate $template): array
     {
@@ -96,7 +96,7 @@ final class SectionDesigns
             'section' => [
                 'id' => (string) Str::uuid(),
                 'clave' => $key,
-                'titulo' => $title !== null && trim($title) !== '' ? trim($title) : $position.'. '.$design['title'],
+                'titulo' => $title !== null && trim($title) !== '' ? trim($title) : (($design['numbered'] ?? true) ? $position.'. ' : '').$design['title'],
                 'descripcion' => null,
                 'posicion' => $position,
                 'bloques' => $blocks,
@@ -107,12 +107,12 @@ final class SectionDesigns
     }
 
     /**
-     * @return array<string, array{title: string, summary: string, orientation?: string, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}>
+     * @return array<string, array{title: string, summary: string, orientation?: string, numbered?: bool, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}>
      */
     private function all(): array
     {
         /**
-         * @var array<string, array{title: string, summary: string, orientation?: string, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}> $designs
+         * @var array<string, array{title: string, summary: string, orientation?: string, numbered?: bool, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}> $designs
          */
         $designs = config('syllabus_template.designs', []);
 
@@ -131,7 +131,7 @@ final class SectionDesigns
     }
 
     /**
-     * @param  array{title: string, summary: string, orientation?: string, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}  $design
+     * @param  array{title: string, summary: string, orientation?: string, numbered?: bool, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}  $design
      * @param  array{sections: list<string>, fields: list<string>}  $used
      */
     private function collides(array $design, string $key, array $used): bool

@@ -1,3 +1,33 @@
+# Identificación institucional
+
+## Modelo vigente: I-210
+
+La sección contiene tres campos independientes:
+
+| Campo | Responsable | Contenido inicial |
+|---|---|---|
+| Datos de identificación | Institucional | Tabla documental con variables del catálogo |
+| Estudiantes con discapacidad | Docente | Tabla libre de tipo y breve descripción |
+| Formación y experiencia académica – investigativa | Docente | Documento vacío |
+
+La tabla institucional es contenido de `config/syllabus_template.php`, con celdas
+combinadas, encabezados y variables; no existe un editor especial para esa sección.
+Los datos académicos, horas, créditos, paralelos y docentes salen del contexto del sílabo.
+Las marcas de unidad curricular usan las variables existentes del catálogo. Docencia
+consulta ese documento y escribe discapacidad y formación en el editor común, sin
+preguntas condicionales ni un enlace al perfil. Editar el perfil personal no modifica
+los documentos de los sílabos.
+
+El snapshot congela los documentos y las variables. Word/PDF los renderizan con el
+mismo recorrido de cualquier campo. El título y los logos son fijos y quedan fuera
+de esta sección y sus campos. Fuentes: I-210 y ADR-0010.
+
+## Antecedente histórico anterior a I-210
+
+La descripción siguiente corresponde al formato retirado y solo sirve para interpretar
+fotografías antiguas. Sus tablas especializadas, preguntas y enlace al perfil no se usan
+en la plantilla ni en los borradores nuevos.
+
 # Ficha de identificación institucional
 
 > Plantilla oficial fiel al PDF de referencia (2026-10-07): la sección 1 es «Identificación Institucional»
