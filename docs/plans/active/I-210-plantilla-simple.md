@@ -130,3 +130,25 @@ y autorizó las etapas 2–4. El bloqueo anterior queda resuelto. Se conserva si
   permisos, fotografías, comparación y documentos pasan. Pint aplicado; Larastan
   sin diagnósticos nuevos. Las pruebas de tipos y rutas retirados se sustituyeron
   por cobertura de responsable/documento y evidencia histórica. No se migró producción.
+
+### Etapa 3 — Frontend
+
+- Constructor, ficha de Coordinación y editor docente comparten el editor documental:
+  párrafos con formato, listas, tablas, filas/columnas libres y celdas combinadas.
+  Administración inserta variables del catálogo. El responsable se elige o cambia
+  sin convertir ni borrar el contenido del campo. Se retiraron registro y componentes
+  de tipos, condiciones, tabla automática y formulario especial de discapacidad.
+- Título y logos fijos; secciones con orientación y campos planos. El docente solo
+  edita sus documentos, incluida bibliografía, formación y discapacidad. Coordinación
+  e Institucional son de lectura. Se conservan autoguardado, conflictos, pausas,
+  copia entre paralelos, revisión de biblioteca y lectura de fotografías.
+- Commit frontend `a3e0cf9`. Vitest: 341 satisfactorias y 1 omitida; TypeScript,
+  ESLint y compilación satisfactorios. Las pruebas retiradas corresponden a los
+  tipos eliminados; se añadió cobertura del editor compartido y totales manuales.
+- `composer verify` ejecutado antes del commit: mismo bloqueo de SQL. El chequeo
+  estático del contrato coincide para las rutas de plantilla; queda bloqueado por
+  dos consumidores previos de `spreadsheet-import.ts` con rutas dinámicas que el
+  comprobador no interpreta. No se modifica ese módulo ajeno a I-210.
+- Una ejecución intermedia mostró un fallo intermitente en la prueba preexistente
+  de firma PDF (longitud de mensaje cifrado); la suite completa posterior pasó sin
+  modificar ese código. Aceptación visual institucional y despliegue pendientes.
