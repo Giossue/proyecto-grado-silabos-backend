@@ -1,6 +1,6 @@
 # Estado de decisiones
 
-Fecha de corte: **7 de octubre de 2026**.
+Fecha de corte: **9 de octubre de 2026**.
 
 ## Etiquetas
 
@@ -10,6 +10,17 @@ Fecha de corte: **7 de octubre de 2026**.
 - `DERIVADO`: conclusión coherente con fuentes confirmadas; debe conservar trazabilidad.
 
 ## Confirmado
+
+I-210 (9 de octubre de 2026), por pedido explícito del responsable, reemplaza los tipos
+de plantilla y ADR-0009 por campos con responsable (`docente`, `coordinacion`,
+`institucional`) y documentos libres de texto, listas y tablas. Coordinación llena una
+vez por materia; Docencia no ajusta esos campos. Bibliografía corresponde a Docencia.
+Título y logos son fijos, fuera de los campos. La migración carga el documento del PDF
+y reinicia los expedientes en curso sin aprobación conservada; preserva aprobados,
+revisiones vinculadas tras reapertura y procesos cerrados como I-118/I-144. Este alcance
+reemplaza el antecedente de I-188 que eliminaba aprobados al cambiar la plantilla.
+El reparto restante de responsables, los totales manuales y las filas libres mantienen
+el estado «Por validar» del plan; no son reglas confirmadas.
 
 - Producto centralizado, configurable y trazable para el ciclo de vida del sílabo.
 - Alcance inicial: Carrera de Software UEB.

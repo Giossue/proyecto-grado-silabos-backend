@@ -76,3 +76,21 @@ Reemplaza los cinco tipos (`texto`, `ficha`, `tabla`, `automatico`, `fijo`, ADR-
 - Etapa 1: ADR-0010 reemplaza ADR-0009; documentación del modelo y especificación actualizadas. Puertas ejecutadas antes del commit: `npm test` pasa (360 pruebas, 1 omitida); `composer verify` bloqueado por el SQL ya versionado `SQL_REMOTA_I-168.sql`. El diagnóstico `composer test` pasa Pint y encuentra 19 errores preexistentes de Larastan; no llega a la suite PHP. Se conserva el archivo ajeno a I-210. No se declara verificación backend satisfactoria.
 - Se consultó al responsable el reparto propuesto de responsables, filas libres y totales manuales. Hasta respuesta, no se implementan reglas dependientes de esas decisiones.
 - Repositorios inicialmente limpios. Commits por etapa autorizados; no hay autorización de push/despliegue. No se modifica producción.
+
+### Bloqueo antes de la etapa 2
+
+La migración solicitada debe cargar la plantilla oficial. Esa carga obliga a asignar
+responsables a las secciones cuyo reparto la propia fuente marca como propuesta;
+asignarlos determinaría permisos y datos de ficha. El editor de planificación también
+depende de la confirmación de filas libres y totales manuales. La consulta permanece
+pendiente: no se convierte el reparto propuesto en permisos efectivos ni se inicia una
+migración parcial que no cargue el formato requerido. Etapas 2–4 pendientes.
+
+Las fuentes anteriores (`domain-model.md`, `syllabus-lifecycle.md`) describían el reinicio
+de aprobados por I-188. El pedido explícito de I-210 resuelve ese alcance conservándolos
+como I-118/I-144; se documentó la sustitución sin extenderla a operaciones ajenas.
+
+Diagnóstico adicional del estado inicial: `php artisan test` ejecutó 418 pruebas,
+417 satisfactorias y 1 fallo preexistente en el conteo de métricas de
+`SyllabusProcessTest::test_dashboards_expose_the_shared_deadline_and_allow_coordination_to_open_its_scope`.
+No se modificó código ni se ejecutaron migraciones en producción.
