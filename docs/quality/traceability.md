@@ -591,3 +591,5 @@ I-201 — modal de creación de plantilla, sección 6 horizontal y pestañas del
 
 I-204 — módulo Proyecto de carrera con asistente de IA (COR-16, CU-04): `FichaImportTest` y `FichaImportDialog.test.ts`; la ficha sale de Materias y asignaciones.
 I-205 — ayuda contextual por pantalla con botón flotante y módulo «Ayuda de pantallas» de Administración: `ScreenHelpTest`, `ScreenHelpButton.test.ts` y `AdminHelpPage.test.ts`.
+
+| Paralelos configurados en la tabla de materias (I-209) | RF-007..016 | RN-005..008 | CU-03 | COR-14 | CP-F estructura académica | `ScheduledSubjectsTab` lista toda la malla del período y `SubjectParallelsEditor` guarda cada cambio con los endpoints de paralelos y asignaciones; se retira `PeriodPreparationSheet` | `ScheduledSubjectsTab.test.ts`, `parallelCodes.test.ts` | Verificado local; revisión manual COR-14 pendiente |
