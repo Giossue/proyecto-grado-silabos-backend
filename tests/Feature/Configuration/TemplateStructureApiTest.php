@@ -3,12 +3,12 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\User;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Testing\TestResponse;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
 
@@ -21,166 +21,93 @@ class TemplateStructureApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-
         $this->seed(DatabaseSeeder::class);
         $this->actingAsRole('admin@silabos.test');
-        $this->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla MVP'])->assertCreated();
-        $this->template = SyllabusTemplate::query()->firstOrFail();
+        $this->postJson(route('api.v1.admin.template.store'))->assertCreated();
+        $this->template = SyllabusTemplate::institutional();
     }
 
     private function actingAsRole(string $email): void
     {
         $user = User::query()->where('correo_electronico', $email)->firstOrFail();
-        $assignment = $user->roleAssignments()->firstOrFail();
-        $this->actingAs($user)->withSession(['active_role_assignment_id' => $assignment->id]);
+        $this->actingAs($user)->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id]);
     }
 
-    private function section(string $key = 'datos', string $title = 'Datos'): string
+    private function section(string $key = 'datos'): string
     {
-        return (string) $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), [
-            'key' => $key, 'title' => $title,
-        ])->assertCreated()->json('section_id');
+        return $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), ['key' => $key, 'title' => 'Datos'])->assertCreated()->json('section_id');
     }
 
-    /** @param array<string, mixed> $extra */
-    private function field(string $section, string $key, string $type, array $extra = []): TestResponse
-    {
-        return $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $section]), [
-            'key' => $key, 'label' => 'Campo '.$key, 'type' => $type, ...$extra,
-        ]);
-    }
-
-    public function test_creates_a_field_of_each_type_with_its_config(): void
+    public function test_creates_documents_for_each_responsible_without_types(): void
     {
         $section = $this->section();
-
-        $this->field($section, 'resumen', 'texto', ['help' => 'Escriba un resumen.'])->assertCreated()
-            ->assertJsonPath('field.type', 'texto')->assertJsonPath('field.help', 'Escriba un resumen.');
-        $this->field($section, 'perfil', 'ficha', ['config' => ['adjustable' => true]])->assertCreated()
-            ->assertJsonPath('field.config.adjustable', true);
-        $this->field($section, 'semanas', 'tabla', ['config' => [
-            'columns' => [['key' => 'tema', 'label' => 'Tema']],
-            'rows' => [['key' => 's1', 'label' => 'Semana 1'], ['key' => 's2', 'label' => 'Semana 2']],
-        ]])->assertCreated()->assertJsonPath('field.type', 'tabla');
-
-        $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get()->keyBy('clave');
-        $this->assertTrue($fields['resumen']->editable_docente);
-        $this->assertTrue($fields['perfil']->heredado);
-        $this->assertSame(FieldDefinition::ORIGIN_PROFILE, $fields['perfil']->origen_maestro);
-        $this->assertTrue($fields['perfil']->editable_docente);
-        $this->assertSame(['s1', 's2'], array_column($fields['semanas']->typeConfig()['rows'], 'key'));
-        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.campo_creado']);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.seccion_creada']);
-
-        $this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk()
-            ->assertJsonPath('template.sections.0.blocks.2.fields.0.type', 'tabla')
-            ->assertJsonPath('template.sections.0.blocks.1.fields.0.config.adjustable', true);
-    }
-
-    public function test_rejects_invalid_type_and_config(): void
-    {
-        $section = $this->section();
-
-        $this->field($section, 'a', 'seleccion')->assertJsonValidationErrors('type');
-        $this->field($section, 'b', 'tabla', ['config' => ['columns' => [], 'rows' => []]])
-            ->assertJsonValidationErrors(['config.columns', 'config.rows']);
-        $this->field($section, 'c', 'automatico', ['config' => ['source' => 'identification_card']])->assertJsonValidationErrors('type');
-        $this->field($section, 'd', 'fijo', ['config' => ['content' => FreeText::fromText('Fijo')]])->assertJsonValidationErrors('type');
-        $this->field($section, 'e', 'texto')->assertCreated();
-        $this->field($section, 'e', 'texto')->assertJsonValidationErrors('key');
-        $this->assertSame(1, FieldDefinition::query()->where('plantilla_id', $this->template->id)->count());
-    }
-
-    public function test_automatic_and_fixed_fields_cannot_be_created_by_hand_but_their_content_can_be_edited(): void
-    {
-        $section = $this->section();
-        $this->field($section, 'etica', 'fijo', ['config' => ['content' => FreeText::fromText('Texto institucional fijo')]])
-            ->assertJsonValidationErrors('type');
-        $this->field($section, 'identificacion', 'automatico', ['config' => ['source' => 'identification_card']])
-            ->assertJsonValidationErrors('type');
-
-        $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), ['design' => 'etica'])->assertCreated();
-        $definition = FieldDefinition::query()->where('clave', 'conducta_etica')->firstOrFail();
-        $this->assertFalse($definition->editable_docente);
-        $this->assertFalse($definition->heredado);
-        $url = route('api.v1.admin.template.structure.fields.update', [$this->template, $definition->id]);
-
-        $content = FreeText::fromText('Texto institucional corregido');
-        $this->patchJson($url, ['config' => ['content' => $content]])->assertOk()->assertJsonPath('field.config.content', $content);
-        $this->patchJson($url, ['config' => []])->assertJsonValidationErrors('config.content');
-        $this->patchJson($url, ['config' => ['content' => FreeText::fromText('')]])->assertJsonValidationErrors('config.content');
-    }
-
-    public function test_updates_a_field_without_changing_its_type_or_key(): void
-    {
-        $section = $this->section();
-        $id = (string) $this->field($section, 'perfil', 'ficha')->assertCreated()->json('field.id');
-        $url = route('api.v1.admin.template.structure.fields.update', [$this->template, $id]);
-
-        $this->patchJson($url, ['label' => 'Perfil nuevo', 'help' => 'Ayuda', 'config' => ['adjustable' => true]])
-            ->assertOk()->assertJsonPath('field.label', 'Perfil nuevo')->assertJsonPath('field.config.adjustable', true);
-        $field = FieldDefinition::query()->findOrFail($id);
-        $this->assertTrue($field->editable_docente);
-        $this->assertSame('Perfil nuevo', $field->block->titulo);
-
-        $this->patchJson($url, ['type' => 'texto'])->assertJsonValidationErrors('type');
-        $this->patchJson($url, ['config' => ['adjustable' => 'quizas']])->assertJsonValidationErrors('config.adjustable');
-        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.campo_actualizado']);
-    }
-
-    public function test_reorders_deletes_and_renames_sections_and_fields(): void
-    {
-        $first = $this->section('uno', 'Uno');
-        $second = $this->section('dos', 'Dos');
-        $a = (string) $this->field($first, 'a', 'texto')->json('field.id');
-        $b = (string) $this->field($first, 'b', 'texto', ['position' => 1])->json('field.id');
-
-        $this->template->refresh();
-        $this->assertSame([$b, $a], $this->template->section($first)->blocks()->map(fn ($block) => $block->fields->first()->id)->all());
-
-        $this->patchJson(route('api.v1.admin.template.structure.fields.reorder', [$this->template, $first]), ['field_ids' => [$a, $b]])->assertOk();
-        $this->assertSame([$a, $b], $this->template->fresh()->section($first)->blocks()->map(fn ($block) => $block->fields->first()->id)->all());
-        $this->patchJson(route('api.v1.admin.template.structure.fields.reorder', [$this->template, $first]), ['field_ids' => [$a]])
-            ->assertJsonValidationErrors('blocks');
-
-        $this->patchJson(route('api.v1.admin.template.structure.sections.reorder', $this->template), ['section_ids' => [$second, $first]])->assertOk();
-        $this->assertSame([$second, $first], $this->template->fresh()->sections()->pluck('id')->all());
-        $this->patchJson(route('api.v1.admin.template.structure.sections.update', [$this->template, $first]), ['title' => 'Uno renombrada'])->assertOk();
-        $this->assertSame('Uno renombrada', $this->template->fresh()->section($first)->titulo);
-
-        $this->deleteJson(route('api.v1.admin.template.structure.fields.destroy', [$this->template, $a]))->assertOk();
-        $this->assertNull(FieldDefinition::query()->find($a));
-        $this->deleteJson(route('api.v1.admin.template.structure.sections.destroy', [$this->template, $second]))->assertOk();
-        $this->assertCount(1, $this->template->fresh()->sections());
-    }
-
-    public function test_only_administration_manages_the_structure(): void
-    {
-        $section = $this->section();
-        $id = (string) $this->field($section, 'a', 'texto')->json('field.id');
-
-        foreach (['coordinador@silabos.test', 'docente@silabos.test'] as $email) {
-            $this->actingAsRole($email);
-            $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), ['key' => 'x', 'title' => 'X'])->assertForbidden();
-            $this->field($section, 'z', 'texto')->assertForbidden();
-            $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$this->template, $id]), ['label' => 'No'])->assertForbidden();
-            $this->deleteJson(route('api.v1.admin.template.structure.fields.destroy', [$this->template, $id]))->assertForbidden();
-            $this->patchJson(route('api.v1.admin.template.structure.sections.reorder', $this->template), ['section_ids' => [$section]])->assertForbidden();
-            $this->deleteJson(route('api.v1.admin.template.structure.sections.destroy', [$this->template, $section]))->assertForbidden();
+        foreach (FieldDefinition::RESPONSIBLES as $responsible) {
+            $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $section]), [
+                'key' => $responsible, 'label' => 'Contenido', 'help' => 'Ayuda', 'quien_llena' => $responsible, 'content' => FreeText::fromText('Contenido inicial'),
+            ])->assertCreated()->assertJsonPath('field.quien_llena', $responsible)->assertJsonMissingPath('field.type');
         }
+        $this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk()
+            ->assertJsonCount(3, 'template.sections.0.fields')->assertJsonPath('template.sections.0.fields.0.content.type', 'doc');
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.campo_creado']);
     }
 
-    public function test_an_open_process_blocks_every_structure_change(): void
+    public function test_rejects_old_types_invalid_responsibles_and_unknown_variables(): void
     {
         $section = $this->section();
-        $id = (string) $this->field($section, 'a', 'texto')->json('field.id');
-        $this->openSyllabusProcess($this->template->id);
+        $url = route('api.v1.admin.template.structure.fields.store', [$this->template, $section]);
+        $data = ['key' => 'dato', 'label' => '', 'quien_llena' => 'docente', 'content' => FieldDocument::empty()];
+        $this->postJson($url, [...$data, 'type' => 'texto'])->assertJsonValidationErrors('type');
+        $this->postJson($url, [...$data, 'config' => ['rows' => []]])->assertJsonValidationErrors('config');
+        $this->postJson($url, [...$data, 'quien_llena' => 'otro'])->assertJsonValidationErrors('quien_llena');
+        $this->postJson($url, [...$data, 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'variable', 'attrs' => ['id' => 'inexistente']]]]]]])->assertJsonValidationErrors('content');
+        $this->assertSame(0, $this->template->fields()->count());
+    }
 
-        $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), ['key' => 'x', 'title' => 'X'])->assertJsonValidationErrors('process');
-        $this->field($section, 'z', 'texto')->assertJsonValidationErrors('process');
-        $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$this->template, $id]), ['label' => 'No'])->assertJsonValidationErrors('process');
-        $this->deleteJson(route('api.v1.admin.template.structure.fields.destroy', [$this->template, $id]))->assertJsonValidationErrors('process');
-        $this->deleteJson(route('api.v1.admin.template.structure.sections.destroy', [$this->template, $section]))->assertJsonValidationErrors('process');
-        $this->assertNotNull(FieldDefinition::query()->find($id));
+    public function test_edits_content_responsible_help_and_orientation(): void
+    {
+        $section = $this->section();
+        $field = $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $section]), [
+            'key' => 'dato', 'label' => '', 'quien_llena' => 'docente', 'content' => FieldDocument::empty(),
+        ])->assertCreated()->json('field.id');
+        $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$this->template, $field]), [
+            'quien_llena' => 'coordinacion', 'content' => FreeText::fromText('Desde la ficha'), 'help' => 'Ayuda actualizada',
+        ])->assertOk()->assertJsonPath('field.quien_llena', 'coordinacion');
+        $this->patchJson(route('api.v1.admin.template.structure.sections.update', [$this->template, $section]), [
+            'title' => 'Planificación', 'orientation' => 'landscape',
+        ])->assertOk();
+        $this->getJson(route('api.v1.admin.template.show', $this->template))->assertJsonPath('template.sections.0.orientation', 'landscape');
+    }
+
+    public function test_reorders_and_deletes_fields_and_sections(): void
+    {
+        $section = $this->section();
+        $ids = [];
+        foreach (['primero', 'segundo'] as $key) {
+            $ids[] = $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $section]), [
+                'key' => $key, 'label' => $key, 'quien_llena' => 'docente', 'content' => FieldDocument::empty(),
+            ])->assertCreated()->json('field.id');
+        }
+        $this->patchJson(route('api.v1.admin.template.structure.fields.reorder', [$this->template, $section]), ['field_ids' => array_reverse($ids)])->assertOk();
+        $this->getJson(route('api.v1.admin.template.show', $this->template))->assertJsonPath('template.sections.0.fields.0.id', $ids[1]);
+        $this->deleteJson(route('api.v1.admin.template.structure.fields.destroy', [$this->template, $ids[0]]))->assertOk();
+        $this->deleteJson(route('api.v1.admin.template.structure.sections.destroy', [$this->template, $section]))->assertOk();
+        $this->assertCount(0, $this->template->fresh()->sections);
+    }
+
+    public function test_denies_non_administrators_and_blocks_changes_with_open_process(): void
+    {
+        $this->actingAsRole('docente@silabos.test');
+        $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), ['key' => 'datos', 'title' => 'Datos'])->assertForbidden();
+        $this->actingAsRole('admin@silabos.test');
+        $this->openSyllabusProcess($this->template->id);
+        $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), ['key' => 'datos', 'title' => 'Datos'])->assertUnprocessable();
+    }
+
+    public function test_title_logo_and_old_field_apis_are_removed(): void
+    {
+        foreach (['title', 'appearance', 'fields', 'blocks/ejemplo/document'] as $path) {
+            $this->patchJson('/api/v1/admin/template/'.$this->template->id.'/'.$path, [])->assertNotFound();
+        }
+        $this->postJson('/api/v1/admin/template/logo', [])->assertStatus(405);
     }
 }

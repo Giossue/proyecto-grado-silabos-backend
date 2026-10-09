@@ -3,7 +3,7 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
@@ -22,7 +22,9 @@ class UpdateDraftField
         private readonly RecordAuditEvent $audit,
     ) {}
 
-    /** @param array{version_bloqueo: int, value?: mixed} $data */
+    /**
+     * @param  array{version_bloqueo: int, value?: mixed}  $data
+     */
     public function execute(Syllabus $syllabus, FieldDefinition $field, array $data, User $actor, Request $request): Syllabus
     {
         return DB::transaction(function () use ($actor, $data, $field, $request, $syllabus): Syllabus {
@@ -33,17 +35,17 @@ class UpdateDraftField
             if (! in_array($locked->estado, ['borrador', 'correccion_solicitada'], true)) {
                 throw ValidationException::withMessages(['syllabus' => 'El expediente no está en estado editable.']);
             }
-            if ($field->plantilla_id !== SyllabusTemplate::institutional()->id) {
+            if ($field->plantilla_id !== SyllabusTemplate::institutional()->id || (! $field->getAttribute('vigente_en_plantilla') && ! $locked->values()->where('definicion_campo_id', $field->id)->exists())) {
                 throw ValidationException::withMessages(['field' => 'El campo no pertenece a la plantilla vigente.']);
             }
-            if (! $field->editable_docente || $field->tipo === 'calculo' || (! $field->hasLegacyClass() && ! $field->fieldType()->teacherEditable() && ! ($field->typeConfig()['adjustable'] ?? false))) {
-                throw ValidationException::withMessages(['field' => 'Este campo lo llena el sistema; el docente no puede cambiarlo.']);
+            if (! $field->teacherEditable()) {
+                throw ValidationException::withMessages(['field' => 'Este campo pertenece a Coordinación o a la institución y el docente no puede cambiarlo.']);
             }
 
             FieldValue::query()->updateOrCreate([
                 'silabo_id' => $locked->id,
                 'definicion_campo_id' => $field->id,
-            ], ['valor' => $this->value($field, $data['value'] ?? null)]);
+            ], ['valor' => FieldDocument::normalize($data['value'] ?? FieldDocument::empty(), 'value')]);
 
             $locked->update([
                 'version_bloqueo' => $locked->version_bloqueo + 1,
@@ -62,14 +64,5 @@ class UpdateDraftField
 
             return $locked;
         });
-    }
-
-    private function value(FieldDefinition $field, mixed $value): mixed
-    {
-        if ($field->hasLegacyClass()) {
-            return $field->tipo === 'texto_libre' && $value !== null ? FreeText::normalize($value) : $value;
-        }
-
-        return $field->fieldType()->validateValue($value, $field->typeConfig(), 'value');
     }
 }

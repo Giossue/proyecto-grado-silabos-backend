@@ -7,10 +7,13 @@ use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TemplateDocument;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
+use App\Modules\Documents\Infrastructure\Rendering\HistoricalFieldDocument;
 
 class SyllabusDocumentContent
 {
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function lines(DocumentRenderInput $input): array
     {
         $mapping = is_array($input->snapshot['document_mapping'] ?? null)
@@ -28,6 +31,10 @@ class SyllabusDocumentContent
 
         foreach ($this->arrayList($input->snapshot['sections'] ?? null) as $section) {
             $lines[] = $this->string($section['title'] ?? null, 'Sección');
+            foreach ($this->arrayList($section['fields'] ?? null) as $field) {
+                $resolved = TemplateDocumentResolver::resolve(HistoricalFieldDocument::of($field), [], $input->snapshot['template_variables'] ?? []);
+                $lines[] = $this->string($field['label'] ?? null, '').': '.FreeText::plainText($resolved);
+            }
             foreach ($this->arrayList($section['blocks'] ?? null) as $block) {
                 $lines[] = '  '.$this->string($block['title'] ?? null, 'Bloque');
                 if (is_array($block['document'] ?? null)) {
@@ -56,7 +63,9 @@ class SyllabusDocumentContent
             return 'Sin contenido';
         }
         if (FreeText::isDocument($value)) {
-            /** @var array<string, mixed> $value */
+            /**
+             * @var array<string, mixed> $value
+             */
             return FreeText::plainText($value);
         }
         if (is_bool($value)) {
@@ -85,7 +94,9 @@ class SyllabusDocumentContent
         return is_string($value) && trim($value) !== '' ? trim($value) : $fallback;
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * @return list<array<string, mixed>>
+     */
     private function arrayList(mixed $value): array
     {
         if (! is_array($value)) {

@@ -87,34 +87,4 @@ final class SyllabusTemplateProvisioner
             FieldDefinition::query()->create($definition);
         }
     }
-
-    /**
-     * Campos que llena quien arma el sílabo dentro de la tabla de identificación (discapacidad, formación…).
-     *
-     * @return list<array<string, mixed>>
-     */
-    public function identificationInputs(string $templateId, string $blockId): array
-    {
-        /** @var list<array{0: string, 1: string, 2: string, 3: list<string>|null, 4?: array{key: string, value: string}|null}> $inputs */
-        $inputs = config('syllabus_template.identification_inputs', []);
-        $definitions = [];
-        foreach ($inputs as $position => [$key, $label, $type, $options]) {
-            $teacher = $key === 'formacion_experiencia';
-            $definitions[] = [
-                'plantilla_id' => $templateId,
-                'campo_plantilla_id' => $blockId,
-                'clave' => $key,
-                'etiqueta' => $label,
-                'tipo' => $type,
-                'heredado' => $teacher,
-                'origen_maestro' => $teacher ? FieldDefinition::ORIGIN_TEACHER : null,
-                'editable_docente' => ! $teacher,
-                'opciones' => $options,
-                'mostrar_si' => $inputs[$position][4] ?? null,
-                'posicion' => $position + 2,
-            ];
-        }
-
-        return $definitions;
-    }
 }

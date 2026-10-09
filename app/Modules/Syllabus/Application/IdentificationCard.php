@@ -3,21 +3,10 @@
 namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Academic\Domain\CurricularUnit;
-use App\Modules\Configuration\Application\FieldConditions;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Support\Collection;
 
 /**
- * Ficha de identificación institucional: la primera tabla del sílabo, calcada del
- * formato oficial (9 columnas, celdas combinadas por fila). Casi todo sale de datos
- * maestros; el docente solo llena discapacidad y su formación, que son campos del
- * mismo bloque y se imprimen dentro de la tabla. `build` reúne los valores, `grid`
- * los coloca en la cuadrícula que pintan la hoja, el editor, la revisión y el Word.
- *
- * Mapa celda → origen: docs/product/identificacion-institucional.md
- *
  * @phpstan-type Data array<string, string>
  * @phpstan-type Cell array{text: string, span: int, rows: int, style: string, bold: bool, small: bool, center: bool}
  */
@@ -34,7 +23,9 @@ final class IdentificationCard
 
     public const WIDTHS = [23.0, 10.5, 6.0, 4.5, 8.0, 4.0, 17.5, 13.5, 13.0];
 
-    /** @return Data */
+    /**
+     * @return Data
+     */
     public static function fromSyllabus(Syllabus $syllabus): array
     {
         $syllabus->loadMissing(['parallel', 'teachers']);
@@ -44,7 +35,6 @@ final class IdentificationCard
             self::strings(collect([$syllabus->academicParallelCode()])),
             self::strings($syllabus->teachers->pluck('nombre')),
             self::strings($syllabus->teachers->pluck('correo_electronico')),
-            self::inputs($syllabus),
         );
         $data['shift'] = implode(', ', array_map(
             fn (string $shift): string => self::SHIFT_LABELS[$shift] ?? ucfirst($shift),
@@ -89,7 +79,7 @@ final class IdentificationCard
             'credits' => self::number($get('subject.credits')),
             'teacher' => self::join($teachers),
             'email' => self::join($emails),
-            // Sin la pregunta Sí/No (la plantilla oficial ya no la trae), basta que el docente describa el tipo.
+
             'disability' => array_key_exists('discapacidad_tiene', $inputs)
                 ? mb_strtolower(self::stripAccents($input('discapacidad_tiene')))
                 : ($input('discapacidad_tipo') !== '' ? 'si' : 'no'),
@@ -99,7 +89,9 @@ final class IdentificationCard
         ];
     }
 
-    /** @return Data Valores de muestra para la hoja de la plantilla. */
+    /**
+     * @return Data Valores de muestra para la hoja de la plantilla.
+     */
     public static function sample(): array
     {
         $data = self::build(
@@ -165,8 +157,6 @@ final class IdentificationCard
     }
 
     /**
-     * La cuadrícula oficial como documento de tabla, lista para el Word.
-     *
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
@@ -199,33 +189,9 @@ final class IdentificationCard
         return ['type' => 'doc', 'content' => [['type' => 'table', 'content' => $rows]]];
     }
 
-    /** @return array<string, mixed> */
-    private static function inputs(Syllabus $syllabus): array
-    {
-        $definitions = FieldDefinition::query()
-            ->whereIn('clave', array_keys(self::INPUT_KEYS))
-            ->get(['id', 'clave', 'tipo', 'mostrar_si']);
-        if ($definitions->isEmpty()) {
-            return [];
-        }
-        $values = FieldValue::query()
-            ->where('silabo_id', $syllabus->id)
-            ->whereIn('definicion_campo_id', $definitions->pluck('id'))
-            ->get(['definicion_campo_id', 'valor'])
-            ->keyBy('definicion_campo_id');
-
-        $inputs = [];
-        foreach ($definitions as $definition) {
-            $inputs[$definition->clave] = $values->get($definition->id)?->valor;
-        }
-        foreach (FieldConditions::hiddenKeys($definitions, $inputs) as $key) {
-            $inputs[$key] = null;
-        }
-
-        return $inputs;
-    }
-
-    /** @return Cell */
+    /**
+     * @return Cell
+     */
     private static function cell(string $text, int $span, int $rows, string $style, bool $bold, bool $small, bool $center): array
     {
         return ['text' => $text, 'span' => $span, 'rows' => $rows, 'style' => $style, 'bold' => $bold, 'small' => $small, 'center' => $center];

@@ -9,6 +9,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -187,7 +188,6 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful();
         $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'borrador']);
 
-        // I-172: la convocatoria se elimina con todo su historial, sin importar la actividad docente.
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.processes.destroy', $process))
             ->assertOk();
@@ -475,7 +475,7 @@ class SyllabusProcessTest extends TestCase
             'first_field_content_type' => 'free_text',
         ];
 
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $sectionPayload)
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.structure.sections.store', $template), $sectionPayload)
             ->assertJsonValidationErrors('process');
         $this->assertSame(12, $template->sections()->count());
 
@@ -487,7 +487,7 @@ class SyllabusProcessTest extends TestCase
 
         $this->transition($process, 'pausar', 'Hay que corregir el bloque de bibliografía.')->assertSuccessful();
 
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $sectionPayload)
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.structure.sections.store', $template), $sectionPayload)
             ->assertSuccessful()
             ->assertSuccessful();
         $this->assertSame(13, $template->fresh()->sections()->count());
@@ -543,17 +543,20 @@ class SyllabusProcessTest extends TestCase
             'first_field_content_type' => 'free_text',
         ];
 
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.sections.store', $template), $sectionPayload)
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.structure.sections.store', $template), $sectionPayload)
             ->assertSuccessful();
         $createdSection = $template->fresh()->sections()->firstWhere('clave', 'anexos');
-        $field = $createdSection->blocks()->firstOrFail()->fields()->firstOrFail();
+        $createdField = $this->postJson(route('api.v1.admin.template.structure.fields.store', [$template, $createdSection]), [
+            'key' => 'anexo', 'label' => 'Anexo', 'quien_llena' => 'docente', 'content' => FreeText::fromText('Contenido inicial'),
+        ])->assertCreated()->json('field.id');
+        $field = FieldDefinition::query()->findOrFail($createdField);
         $value = FieldValue::query()->create([
             'silabo_id' => $syllabus->id,
             'definicion_campo_id' => $field->id,
             'valor' => ['content' => 'Se conserva hasta reanudar.'],
         ]);
         $this->actingAsAdministrator()
-            ->deleteJson(route('api.v1.admin.template.sections.destroy', ['template' => $template, 'section' => $createdSection]))
+            ->deleteJson(route('api.v1.admin.template.structure.sections.destroy', ['template' => $template, 'section' => $createdSection]))
             ->assertSuccessful();
         $this->assertGreaterThan(
             (float) $process->fresh()->pausado_en->format('U.u'),
@@ -861,7 +864,7 @@ class SyllabusProcessTest extends TestCase
             ])
             ->assertSuccessful();
         $this->assertSame(CampusLocation::Chimbo, $faculty->fresh()->campus);
-        // El campus de la programación se deriva de la facultad: cambia con ella.
+
         $this->assertSame(CampusLocation::Chimbo->value, $scheduledSubject->fresh()->campus_programacion);
         $syllabus = Syllabus::query()->findOrFail($syllabusId);
         $this->assertSame('Facultad renombrada', data_get($syllabus->contexto_academico, 'career.faculty'));
@@ -889,7 +892,7 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
         $editableField = FieldDefinition::query()
-            ->where('editable_docente', true)
+            ->where('quien_llena', 'docente')
             ->firstOrFail();
 
         $this->actingAsCoordinator()
@@ -950,7 +953,9 @@ class SyllabusProcessTest extends TestCase
         Convocation::query()->where('proceso_id', $process->id)->update(['estado' => Convocation::STATE_CLOSED]);
     }
 
-    /** @return array{period_id: string, starts_at: string, due_at: string} */
+    /**
+     * @return array{period_id: string, starts_at: string, due_at: string}
+     */
     private function processPayload(SyllabusTemplate $template): array
     {
         return [

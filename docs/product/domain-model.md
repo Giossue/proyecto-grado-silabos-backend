@@ -111,13 +111,15 @@ relevos aplican la misma protección en el servidor (I-64).
 No hay publicación: la estructura se comprueba al abrir o reanudar el proceso. Un sílabo
 sin enviar lee la plantilla institucional viva; no conserva una copia de la plantilla con
 la que nació. Una revisión enviada conserva su copia completa y ya no depende de ella
-durante el flujo normal. I-210 restablece para cambios de plantilla la conservación
-acordada en I-118/I-144: el cambio confirmado y el reinicio de expedientes en curso sin
-aprobación conservada son una transacción. Se conservan aprobados, evidencia aprobada
-tras reapertura y procesos cerrados. El antecedente I-188 que eliminaba aprobados por
-cambio de plantilla queda reemplazado en este alcance. Cambiar fechas o pausar y
-reanudar sin cambios no rehace sílabos. Corregir resultados de aprendizaje solo alcanza
-a la asignatura modificada.
+durante el flujo normal. Cuando Administración cambia la plantilla durante una pausa,
+reanudar requiere confirmación y rehace desde cero todos los sílabos de ese proceso, en
+cualquier estado, incluidos los aprobados y firmados. El reinicio borra sus revisiones,
+aprobaciones, firmas, exportaciones, archivos y mensajes de IA; una auditoría conserva
+el conteo por estado y quién confirmó. El cambio queda marcado durante la pausa y no
+afecta procesos cerrados. Cambiar fechas o pausar y reanudar sin cambios de plantilla no
+rehace sílabos (I-188). Las correcciones de bases académicas mantienen el alcance y las
+protecciones acordadas en I-118/I-144; corregir resultados de aprendizaje solo alcanza a
+la asignatura modificada.
 
 ### Proceso de sílabos y convocatoria
 
@@ -203,9 +205,11 @@ establece; una recomendación de IA nunca bloquea por sí sola.
 2. No se crean dos coordinaciones activas superpuestas para una misma carrera.
 3. La única plantilla institucional activa crea nuevos sílabos en una convocatoria de cualquier carrera.
 4. Una revisión enviada/aprobada es inmutable en el flujo normal y contiene su propia
-   copia de la plantilla. I-210 conserva aprobados y revisiones vinculadas tras
-   reapertura en el reinicio de plantilla, conforme a I-118/I-144. Los procesos
-   cerrados se conservan.
+   copia de la plantilla. El reinicio institucional confirmado de I-188 puede eliminar el
+   agregado completo de cualquier estado del proceso pausado cuya plantilla cambió,
+   incluidas aprobaciones y firmas. Las reglas de I-118 siguen aplicando a correcciones
+   de bases académicas. Un sílabo aprobado no se reabre (I-178): cuando aplica el reinicio
+   institucional, se elimina completo y se genera otro sin iniciar.
 5. Todo envío o reenvío inserta una revisión; nunca actualiza la anterior.
 6. Una aprobación apunta a una revisión concreta.
 7. Una aprobación es inmutable; un sílabo aprobado solo puede eliminarse completo.
@@ -225,18 +229,24 @@ establece; una recomendación de IA nunca bloquea por sí sola.
 16. Las horas totales de una materia se derivan de sus componentes horarios activos y no
     de un valor ingresado manualmente.
 
-## Campos de documento de plantilla (I-210)
+## Tipos de campo de plantilla
 
-La plantilla contiene secciones ordenadas, con orientación opcional, y campos sin tipo.
-Cada campo conserva clave, título, ayuda opcional, `quien_llena` y documento libre de
-texto, listas y tablas. Docencia edita sus campos desde el contenido inicial;
-Coordinación llena los suyos una vez por materia y el sílabo los hereda sin ajuste
-docente; el contenido institucional se define en plantilla y admite variables.
-Bibliografía corresponde a Docencia. Título y logos son fijos y no son campos.
+- grupo/sección;
+- texto corto;
+- texto largo con presentación estructurada;
+- número;
+- fecha;
+- selección única o múltiple;
+- booleano;
+- lista o tabla repetible;
+- cálculo;
+- referencia a maestro;
+- campo condicional.
 
-El reparto restante de responsables de la plantilla oficial y las decisiones sobre
-filas y totales mantienen el estado «Por validar» de I-210. ADR-0010 reemplaza ADR-0009.
-La cobertura de las doce secciones y sus pendientes se detalla en el plan I-210.
+Cada definición tiene clave estable, etiqueta, ayuda, tipo, obligatoriedad, visibilidad,
+origen, permisos, reglas, posición y habilitación de IA.
+
+La cobertura funcional de las doce secciones se detalla en `syllabus-sections.md`.
 
 ## Datos estructurados frente a narrativa
 

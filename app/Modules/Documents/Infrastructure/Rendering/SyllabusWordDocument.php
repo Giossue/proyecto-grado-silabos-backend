@@ -121,8 +121,8 @@ class SyllabusWordDocument
                     'keepNext' => true,
                 ],
             );
-            if (WordFieldRenderer::usesTypes($block)) {
-                $activeFields->renderTyped($section, $block);
+            if (is_array($block['fields'] ?? null) && $block['fields'] !== [] && array_filter($block['fields'], fn (array $field): bool => ($field['legacy'] ?? false) === true) === []) {
+                $activeFields->renderDocuments($section, $block);
 
                 continue;
             }
@@ -154,9 +154,14 @@ class SyllabusWordDocument
         ]);
     }
 
-    /** @param array<string, mixed> $snapshotSection */
+    /**
+     * @param  array<string, mixed>  $snapshotSection
+     */
     private function sectionOrientation(array $snapshotSection): string
     {
+        if (in_array($snapshotSection['orientation'] ?? null, ['portrait', 'landscape'], true)) {
+            return $snapshotSection['orientation'];
+        }
         foreach (WordValues::arrayList($snapshotSection['blocks'] ?? null) as $block) {
             $orientation = $block['page_orientation'] ?? null;
             if (in_array($orientation, ['portrait', 'landscape'], true)) {
@@ -167,7 +172,9 @@ class SyllabusWordDocument
         return (string) $this->context->appearance['orientation'];
     }
 
-    /** @param array<string, mixed> $snapshotSection */
+    /**
+     * @param  array<string, mixed>  $snapshotSection
+     */
     private function sectionCompact(array $snapshotSection): bool
     {
         foreach (WordValues::arrayList($snapshotSection['blocks'] ?? null) as $block) {

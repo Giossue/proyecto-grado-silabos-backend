@@ -21,7 +21,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-/** API simplificada de la plantilla (I-195, etapa 3): secciones y campos con tipo y configuración. */
 final class TemplateStructureController extends Controller
 {
     public function storeSection(SyllabusTemplate $template, SaveStructureSectionRequest $request, SaveTemplateStructure $action): JsonResponse
@@ -98,7 +97,9 @@ final class TemplateStructureController extends Controller
         return response()->json(['message' => 'Campo eliminado.']);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function payload(FieldDefinition $field): array
     {
         return [
@@ -106,8 +107,8 @@ final class TemplateStructureController extends Controller
             'key' => $field->clave,
             'label' => $field->etiqueta,
             'help' => $field->ayuda,
-            'type' => $field->fieldType()->key(),
-            'config' => $field->typeConfig(),
+            'quien_llena' => $field->quien_llena,
+            'content' => $field->contenido,
         ];
     }
 

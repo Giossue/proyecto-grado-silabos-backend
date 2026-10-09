@@ -12,9 +12,9 @@ use App\Modules\Syllabus\Application\Actions\ApproveSyllabus;
 use App\Modules\Syllabus\Application\Actions\DeleteSyllabus;
 use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
 use App\Modules\Syllabus\Application\Actions\ResetSyllabus;
-use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\RevisionDiff;
+use App\Modules\Syllabus\Application\SnapshotDocuments;
 use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
@@ -175,7 +175,9 @@ class ReviewController extends Controller
         return response()->json($payload);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function reviewPayload(SyllabusRevision $revision): array
     {
         $revision->load([
@@ -212,7 +214,7 @@ class ReviewController extends Controller
                 'teachers' => $syllabus->teachers->pluck('nombre')->values(),
             ],
             'my_stage' => $myStage,
-            // Solo el revisor de la etapa vigente decide; los demás consultan.
+
             'can_decide' => $decisionsAllowed && $stage !== null && $stage === $myStage,
             'can_delete' => $decisionsAllowed && $syllabus->estado === 'aprobado' && $myStage === ReviewStage::COORDINATION,
             'presentation' => [
@@ -228,7 +230,7 @@ class ReviewController extends Controller
                 'number' => $revision->numero_revision,
                 'submitted_at' => $revision->enviado_en->toIso8601String(),
                 'submitted_by' => $revision->submitter->nombre,
-                'snapshot' => $this->withAutomaticDocuments($revision->fotografia),
+                'snapshot' => SnapshotDocuments::present($revision->fotografia),
                 'is_current' => $latest?->id === $revision->id,
             ],
             'history' => $syllabus->revisions->sortBy('numero_revision')->map(fn (SyllabusRevision $item): array => [
@@ -256,7 +258,6 @@ class ReviewController extends Controller
         ];
     }
 
-    /** Etapa a partir de las relaciones ya cargadas de la revisión. */
     private static function stageOf(SyllabusRevision $revision): string
     {
         return match (true) {
@@ -277,27 +278,5 @@ class ReviewController extends Controller
         $message = 'Sílabo reiniciado. El docente empieza de cero con la malla y la plantilla actuales; el historial se conserva.';
 
         return response()->json(['message' => $message]);
-    }
-
-    /**
-     * La cuadrícula oficial de identificación se arma en el servidor: el campo automático lleva su `document`.
-     *
-     * @param  mixed  $snapshot
-     * @return mixed
-     */
-    private function withAutomaticDocuments($snapshot)
-    {
-        if (! is_array($snapshot) || ! is_array($snapshot['sections'] ?? null)) {
-            return $snapshot;
-        }
-        foreach ($snapshot['sections'] as $s => $section) {
-            foreach (is_array($section['fields'] ?? null) ? $section['fields'] : [] as $f => $field) {
-                if (($field['type'] ?? null) === 'automatico' && (($field['config']['source'] ?? null) === 'identification_card') && is_array($field['value'] ?? null)) {
-                    $snapshot['sections'][$s]['fields'][$f]['document'] = IdentificationCard::document($field['value']);
-                }
-            }
-        }
-
-        return $snapshot;
     }
 }

@@ -9,6 +9,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\MakesTransparentPng;
 use Tests\TestCase;
@@ -37,35 +38,10 @@ class InstitutionalLogosTest extends TestCase
         $this->coordinatorContext = $this->coordinator->roleAssignments()->firstOrFail();
     }
 
-    public function test_administrator_replaces_the_university_logo_and_it_is_served_publicly(): void
+    public function test_the_fixed_institution_logo_is_public_and_has_no_template_upload_route(): void
     {
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.template.logo.store'), ['logo' => $this->transparentPng(1012, 190)])
-            ->assertSuccessful()
-            ->assertSuccessful();
-
-        Storage::disk('private')->assertExists('logos/institucion.png');
-        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'institucion.logo_actualizado']);
-
-        $this->get(route('logos.institution'))
-            ->assertOk()
-            ->assertHeader('Content-Type', 'image/png')
-            ->assertHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    }
-
-    public function test_the_university_logo_is_fitted_to_its_size_and_must_be_transparent(): void
-    {
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.template.logo.store'), ['logo' => $this->opaquePng(1012, 190)])
-            ->assertJsonValidationErrors('logo');
-        Storage::disk('private')->assertMissing('logos/institucion.png');
-
-        $this->actingAsAdministrator()
-            ->postJson(route('api.v1.admin.template.logo.store'), ['logo' => $this->transparentPng(1600, 400)])
-            ->assertSuccessful()
-            ->assertSuccessful();
-
-        $this->assertStoredPngHasSize('logos/institucion.png', 1012, 190);
+        $this->get(route('logos.institution'))->assertOk()->assertHeader('Content-Type', 'image/png');
+        $this->assertFalse(Route::has('api.v1.admin.template.logo.store'));
     }
 
     public function test_administrator_must_create_a_faculty_with_a_transparent_logo(): void

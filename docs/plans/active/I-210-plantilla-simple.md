@@ -52,14 +52,19 @@ Reemplaza los cinco tipos (`texto`, `ficha`, `tabla`, `automatico`, `fijo`, ADR-
 - Se reemplaza la plantilla y los sílabos en curso por la del PDF; los aprobados se conservan
   (confirmado, mismo criterio que I-118).
 
-## Por validar
+## Validaciones resueltas por el responsable
 
-- Los totales de horas de la sección 6 se pierden como cálculo automático: el docente los escribe.
-  Se podría validar luego contra las horas de la materia.
-- Cuáles secciones llena Coordinación y cuáles el docente: la bibliografía es del docente
-  (confirmado); el resto de la tabla es una propuesta. Si la bibliografía pasa al docente, la
-  importación de bibliografía de la ficha de la materia deja de usarse.
-- El docente edita tablas libremente (puede agregar filas); antes eran filas fijas.
+- Se usa el reparto propuesto en la tabla del plan.
+- El docente edita tablas libremente y puede agregar filas.
+- El docente escribe los totales de horas, sin cálculo ni validación.
+- La bibliografía es docente y deja de importarse desde la ficha.
+
+## Excepción de conservación para esta migración
+
+Solo la migración que carga la plantilla del PDF conserva los sílabos aprobados,
+la evidencia aprobada vinculada tras reapertura y los procesos cerrados, como I-118.
+Los cambios futuros de plantilla mantienen I-188: no se revierte su reinicio al reanudar.
+`domain-model.md` y `syllabus-lifecycle.md` se restauran a su estado previo.
 
 ## Etapas (en ejecución)
 
@@ -87,10 +92,41 @@ pendiente: no se convierte el reparto propuesto en permisos efectivos ni se inic
 migración parcial que no cargue el formato requerido. Etapas 2–4 pendientes.
 
 Las fuentes anteriores (`domain-model.md`, `syllabus-lifecycle.md`) describían el reinicio
-de aprobados por I-188. El pedido explícito de I-210 resuelve ese alcance conservándolos
-como I-118/I-144; se documentó la sustitución sin extenderla a operaciones ajenas.
+de aprobados por I-188. La interpretación inicial de I-210 extendió esa conservación a cambios futuros.
+El responsable corrigió esa interpretación: la excepción solo aplica a la migración
+y las fuentes de I-188 se restauran.
 
 Diagnóstico adicional del estado inicial: `php artisan test` ejecutó 418 pruebas,
 417 satisfactorias y 1 fallo preexistente en el conteo de métricas de
 `SyllabusProcessTest::test_dashboards_expose_the_shared_deadline_and_allow_coordination_to_open_its_scope`.
 No se modificó código ni se ejecutaron migraciones en producción.
+
+### Continuación autorizada
+
+El responsable resolvió los tres pendientes, limitó la conservación a esta migración
+y autorizó las etapas 2–4. El bloqueo anterior queda resuelto. Se conserva sin tocar
+`SQL_REMOTA_I-168.sql` y los errores previos de Larastan. No hay push ni despliegue.
+
+### Etapa 2 — Backend
+
+- Campos con responsable y documento; se retiran tipos, registro, opciones y condiciones
+  de tipos, así como sus rutas anteriores. El título y los logos no admiten edición
+  desde la plantilla. Herencia de ficha solo para Coordinación; bibliografía y
+  metodología docentes. Contrato OpenAPI regenerado desde Artisan.
+- Migración nueva `000219`, sin cambios en migraciones anteriores. El formato usa
+  `config/syllabus_template.php`. Si aún no existe una plantilla, la instalación
+  inicial usa el provisionador/seeder con esa misma configuración.
+- Fotografías v8 con documentos, variables congeladas, sección y orientación.
+  Word/PDF y comparación de revisiones usan los documentos. El lector de fotografías
+  anteriores queda aislado para conservar su evidencia; no participa en crear campos.
+- Los borradores históricos conservados guardan documentos en sus definiciones y
+  valores anteriores; sus registros y evidencia mantienen sus identificadores.
+- `composer verify` ejecutado: continúa bloqueado por `SQL_REMOTA_I-168.sql`.
+  Larastan conserva 11 errores previos en módulos no modificados por I-210; se retiraron
+  las clases donde estaban los restantes, sin corregir errores ajenos.
+  Frontend anterior: `npm test`, 360 satisfactorias y 1 omitida.
+- Cierre local de etapa 2: suite PHP completa, 374 pruebas, 373 satisfactorias y
+  el mismo fallo previo de métricas; 4669 aserciones. Las pruebas de migración,
+  permisos, fotografías, comparación y documentos pasan. Pint aplicado; Larastan
+  sin diagnósticos nuevos. Las pruebas de tipos y rutas retirados se sustituyeron
+  por cobertura de responsable/documento y evidencia histórica. No se migró producción.

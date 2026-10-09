@@ -155,26 +155,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.store');
             Route::post('admin/template/{template}/format', [TemplateController::class, 'format'])
                 ->middleware('active-role')->name('api.v1.admin.template.format');
-            Route::post('admin/template/logo', [TemplateController::class, 'storeLogo'])
-                ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.admin.template.logo.store');
             Route::get('admin/template/{template}', [TemplateController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.admin.template.show');
-            Route::patch('admin/template/{template}/appearance', [TemplateController::class, 'updateAppearance'])
-                ->middleware('active-role')->name('api.v1.admin.template.appearance.update');
-            Route::patch('admin/template/{template}/title', [TemplateController::class, 'updateTitle'])
-                ->middleware('active-role')->name('api.v1.admin.template.title.update');
-            Route::post('admin/template/{template}/sections', [TemplateController::class, 'storeSection'])
-                ->middleware('active-role')->name('api.v1.admin.template.sections.store');
-            Route::patch('admin/template/{template}/sections/order', [TemplateController::class, 'reorderSections'])
-                ->middleware('active-role')->name('api.v1.admin.template.sections.reorder');
-            Route::patch('admin/template/{template}/sections/{section}', [TemplateController::class, 'updateSection'])
-                ->middleware('active-role')->name('api.v1.admin.template.sections.update');
-            Route::delete('admin/template/{template}/sections/{section}', [TemplateController::class, 'destroySection'])
-                ->middleware('active-role')->name('api.v1.admin.template.sections.destroy');
-            Route::post('admin/template/{template}/fields', [TemplateController::class, 'storeField'])
-                ->middleware('active-role')->name('api.v1.admin.template.fields.store');
-            Route::patch('admin/template/{template}/fields/{field}', [TemplateController::class, 'updateField'])
-                ->middleware('active-role')->name('api.v1.admin.template.fields.update');
             Route::post('admin/template/{template}/structure/sections', [TemplateStructureController::class, 'storeSection'])
                 ->middleware('active-role')->name('api.v1.admin.template.structure.sections.store');
             Route::patch('admin/template/{template}/structure/sections/order', [TemplateStructureController::class, 'reorderSections'])
@@ -191,12 +173,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.structure.fields.update');
             Route::delete('admin/template/{template}/structure/fields/{field}', [TemplateStructureController::class, 'destroyField'])
                 ->middleware('active-role')->name('api.v1.admin.template.structure.fields.destroy');
-            Route::patch('admin/template/{template}/blocks/order', [TemplateController::class, 'reorderBlocks'])
-                ->middleware('active-role')->name('api.v1.admin.template.blocks.reorder');
-            Route::patch('admin/template/{template}/blocks/{block}/document', [TemplateController::class, 'updateDocument'])
-                ->middleware('active-role')->name('api.v1.admin.template.blocks.document.update');
-            Route::delete('admin/template/{template}/blocks/{block}', [TemplateController::class, 'destroyBlock'])
-                ->middleware('active-role')->name('api.v1.admin.template.blocks.destroy');
             Route::get('coordination/convocations', [ConvocationController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.coordination.convocations.index');
             Route::post('coordination/convocations', [ConvocationController::class, 'store'])

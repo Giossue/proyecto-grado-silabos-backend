@@ -2,7 +2,6 @@
 
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
-use App\Modules\Configuration\Application\TemplateFieldAttributes;
 use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -29,14 +28,13 @@ class SyllabusTemplate extends Model
     ];
 
     /**
-     * Secciones y campos viven en `secciones_plantilla` y `campos_plantilla` (I-164, I-166); aquí se
-     * arman como un documento para que el resto del código siga leyendo y escribiendo igual.
-     *
      * @var array{version_esquema: int, secciones: list<array<string, mixed>>}|null
      */
     private ?array $documentCache = null;
 
-    /** @var array<string, mixed>|null Documento asignado antes de guardar; se vuelca al guardar. */
+    /**
+     * @var array<string, mixed>|null Documento asignado antes de guardar; se vuelca al guardar.
+     */
     private ?array $pendingDocument = null;
 
     public const INSTITUTIONAL_NAME = 'Plantilla institucional de sílabo';
@@ -47,14 +45,18 @@ class SyllabusTemplate extends Model
 
     protected $primaryKey = 'plantilla_id';
 
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     protected $fillable = ['documento', 'mapeo_documento'];
 
     protected $casts = [
         'plantilla_modificada_en' => 'immutable_datetime',
     ];
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
@@ -73,7 +75,9 @@ class SyllabusTemplate extends Model
         });
     }
 
-    /** @param array<string, mixed>|null $value */
+    /**
+     * @param  array<string, mixed>|null  $value
+     */
     public function setDocumentoAttribute(?array $value): static
     {
         $this->pendingDocument = $value ?? ['version_esquema' => 1, 'secciones' => []];
@@ -82,7 +86,9 @@ class SyllabusTemplate extends Model
         return $this;
     }
 
-    /** @return array{version_esquema: int, secciones: list<array<string, mixed>>} */
+    /**
+     * @return array{version_esquema: int, secciones: list<array<string, mixed>>}
+     */
     public function getDocumentoAttribute(): array
     {
         return $this->document();
@@ -100,7 +106,9 @@ class SyllabusTemplate extends Model
         return self::query()->firstOrFail();
     }
 
-    /** @return EmbeddedTemplateCollection<int, TemplateSection> */
+    /**
+     * @return EmbeddedTemplateCollection<int, TemplateSection>
+     */
     public function sections(): EmbeddedTemplateCollection
     {
         return new EmbeddedTemplateCollection(array_map(
@@ -109,7 +117,9 @@ class SyllabusTemplate extends Model
         ));
     }
 
-    /** @return EmbeddedTemplateCollection<int, TemplateBlock> */
+    /**
+     * @return EmbeddedTemplateCollection<int, TemplateBlock>
+     */
     public function blocks(): EmbeddedTemplateCollection
     {
         return new EmbeddedTemplateCollection(
@@ -117,7 +127,9 @@ class SyllabusTemplate extends Model
         );
     }
 
-    /** @return HasMany<FieldDefinition, $this> */
+    /**
+     * @return HasMany<FieldDefinition, $this>
+     */
     public function fields(): HasMany
     {
         return $this->hasMany(FieldDefinition::class, 'plantilla_id');
@@ -130,13 +142,17 @@ class SyllabusTemplate extends Model
             && $this->fields()->exists();
     }
 
-    /** @return EmbeddedTemplateCollection<int, TemplateSection> */
+    /**
+     * @return EmbeddedTemplateCollection<int, TemplateSection>
+     */
     public function getSectionsAttribute(): EmbeddedTemplateCollection
     {
         return $this->sections();
     }
 
-    /** @return EmbeddedTemplateCollection<int, TemplateBlock> */
+    /**
+     * @return EmbeddedTemplateCollection<int, TemplateBlock>
+     */
     public function getBlocksAttribute(): EmbeddedTemplateCollection
     {
         return $this->blocks();
@@ -162,7 +178,9 @@ class SyllabusTemplate extends Model
         return $this->block($id) ?? throw (new ModelNotFoundException)->setModel(self::class, [$id]);
     }
 
-    /** @param array<string, mixed> $section */
+    /**
+     * @param  array<string, mixed>  $section
+     */
     public function appendSection(array $section): TemplateSection
     {
         $document = $this->document();
@@ -172,7 +190,9 @@ class SyllabusTemplate extends Model
         return $this->sectionOrFail((string) $section['id']);
     }
 
-    /** @param array<string, mixed> $block */
+    /**
+     * @param  array<string, mixed>  $block
+     */
     public function appendBlock(string $sectionId, array $block): TemplateBlock
     {
         $document = $this->document();
@@ -188,7 +208,9 @@ class SyllabusTemplate extends Model
         throw (new ModelNotFoundException)->setModel(self::class, [$sectionId]);
     }
 
-    /** @param array<string, mixed> $attributes */
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
     public function updateSectionDocument(string $sectionId, array $attributes): TemplateSection
     {
         $document = $this->document();
@@ -204,7 +226,9 @@ class SyllabusTemplate extends Model
         throw (new ModelNotFoundException)->setModel(self::class, [$sectionId]);
     }
 
-    /** @param array<string, mixed> $attributes */
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
     public function updateBlockDocument(string $blockId, array $attributes): TemplateBlock
     {
         $document = $this->document();
@@ -244,7 +268,9 @@ class SyllabusTemplate extends Model
         $this->saveDocument($document);
     }
 
-    /** @param list<string> $sectionIds */
+    /**
+     * @param  list<string>  $sectionIds
+     */
     public function reorderSections(array $sectionIds): void
     {
         $document = $this->document();
@@ -257,7 +283,9 @@ class SyllabusTemplate extends Model
         $this->saveDocument($document);
     }
 
-    /** @param list<string> $blockIds */
+    /**
+     * @param  list<string>  $blockIds
+     */
     public function reorderBlocks(string $sectionId, array $blockIds): void
     {
         $document = $this->document();
@@ -280,7 +308,9 @@ class SyllabusTemplate extends Model
         throw (new ModelNotFoundException)->setModel(self::class, [$sectionId]);
     }
 
-    /** @return array{version_esquema: int, secciones: list<array<string, mixed>>} */
+    /**
+     * @return array{version_esquema: int, secciones: list<array<string, mixed>>}
+     */
     public function document(): array
     {
         if ($this->pendingDocument !== null) {
@@ -293,36 +323,28 @@ class SyllabusTemplate extends Model
         return $this->documentCache;
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * @return list<array<string, mixed>>
+     */
     private function loadSections(): array
     {
         $blocks = DB::table('campos_plantilla')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', true)
             ->orderBy('posicion_campo_plantilla')->orderBy('clave_campo_plantilla')->get()
             ->groupBy('seccion_plantilla_id');
-        $definitions = DB::table('definiciones_campo')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', true)->get()
-            ->groupBy('campo_plantilla_id')
-            ->map(fn ($rows) => $rows->keyBy('clave_definicion_campo')->all());
 
         return array_values(DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', true)
             ->orderBy('posicion_seccion_plantilla')->orderBy('clave_seccion_plantilla')->get()
             ->map(fn (object $section): array => [
                 'id' => $section->seccion_plantilla_id, 'clave' => $section->clave_seccion_plantilla, 'titulo' => $section->titulo_seccion_plantilla,
-                'descripcion' => $section->descripcion_seccion_plantilla, 'posicion' => (int) $section->posicion_seccion_plantilla,
+                'descripcion' => $section->descripcion_seccion_plantilla, 'orientacion' => $section->orientacion_seccion_plantilla, 'posicion' => (int) $section->posicion_seccion_plantilla,
                 'bloques' => ($blocks->get($section->seccion_plantilla_id) ?? collect())->map(fn (object $block): array => [
                     'id' => $block->campo_plantilla_id, 'clave' => $block->clave_campo_plantilla, 'titulo' => $block->titulo_campo_plantilla,
                     'posicion' => (int) $block->posicion_campo_plantilla,
-                    'configuracion' => TemplateFieldAttributes::hydrate(
-                        TemplateFieldAttributes::withoutFixedDocument(is_string($block->configuracion_campo_plantilla) ? json_decode($block->configuracion_campo_plantilla, true, 512, JSON_THROW_ON_ERROR) : []),
-                        $definitions->get($block->campo_plantilla_id, []),
-                    ),
+                    'configuracion' => is_string($block->configuracion_campo_plantilla) ? json_decode($block->configuracion_campo_plantilla, true, 512, JSON_THROW_ON_ERROR) : [],
                 ])->values()->all(),
             ])->all());
     }
 
-    /**
-     * Lo retirado de la plantilla se borra; solo se conserva lo que todavía tiene valores guardados
-     * (un sílabo de un periodo anterior), porque esos valores apuntan a su definición.
-     */
     private function purgeUnusedRetired(): void
     {
         DB::table('definiciones_campo')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', false)
@@ -339,16 +361,15 @@ class SyllabusTemplate extends Model
             ->delete();
     }
 
-    /** @param array<string, mixed> $document */
+    /**
+     * @param  array<string, mixed>  $document
+     */
     private function saveDocument(array $document): void
     {
         $this->syncDocument($document);
     }
 
     /**
-     * Vuelca el documento a las tablas: primero retira lo que ya no está (así un campo nuevo
-     * puede reutilizar una clave) y después inserta o actualiza cada sección y campo.
-     *
      * @param  array<string, mixed>  $document
      */
     private function syncDocument(array $document): void
@@ -374,6 +395,7 @@ class SyllabusTemplate extends Model
                     'clave_seccion_plantilla' => (string) $section['clave'],
                     'titulo_seccion_plantilla' => (string) ($section['titulo'] ?? ''),
                     'descripcion_seccion_plantilla' => is_string($section['descripcion'] ?? null) ? $section['descripcion'] : null,
+                    'orientacion_seccion_plantilla' => $section['orientacion'] ?? 'portrait',
                     'posicion_seccion_plantilla' => (int) ($section['posicion'] ?? $sectionIndex + 1),
                 ]);
                 foreach (array_values(is_array($section['bloques'] ?? null) ? $section['bloques'] : []) as $blockIndex => $block) {
@@ -383,7 +405,7 @@ class SyllabusTemplate extends Model
                         'clave_campo_plantilla' => (string) $block['clave'],
                         'titulo_campo_plantilla' => (string) ($block['titulo'] ?? ''),
                         'posicion_campo_plantilla' => (int) ($block['posicion'] ?? $blockIndex + 1),
-                        'configuracion_campo_plantilla' => json_encode(TemplateFieldAttributes::store(is_array($block['configuracion'] ?? null) ? $block['configuracion'] : []), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+                        'configuracion_campo_plantilla' => json_encode(is_array($block['configuracion'] ?? null) ? $block['configuracion'] : [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                     ]);
                 }
             }

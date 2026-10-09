@@ -26,14 +26,15 @@ pueden ser horizontales. El snapshot congela cada documento resuelto y Word/PDF
 renderizan esos documentos sin depender de la plantilla viva.
 
 Una migración nueva carga la plantilla oficial desde `config/syllabus_template.php`
-y reemplaza el trabajo en curso siguiendo I-118/I-144: conserva aprobados, revisiones
-vinculadas tras reapertura y procesos cerrados. No modifica migraciones aplicadas.
+y reemplaza el trabajo en curso. Solo esta migración conserva aprobados, revisiones
+vinculadas tras reapertura y procesos cerrados conforme a I-118/I-144. Esta excepción
+no cambia I-188: los cambios futuros de plantilla conservan su reinicio al reanudar.
+No modifica migraciones aplicadas.
 
-## Pendientes de validación
+## Validación del responsable
 
-El reparto restante de la tabla oficial, los totales de horas escritos por Docencia
-y la edición libre de filas conservan el estado «Por validar» del plan hasta que el
-responsable los confirme. Esta decisión no fija validaciones académicas de horas.
+Confirmado en la continuación de I-210: se usa el reparto de la tabla del plan,
+Docencia puede agregar filas libremente y escribe los totales sin cálculo ni validación.
 PV-01, PV-02, PV-07, PV-16 y PV-19 mantienen sus alcances existentes.
 
 ## Consecuencias

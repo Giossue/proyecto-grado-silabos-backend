@@ -100,11 +100,13 @@ repetir proceso por período o alcance por carrera/período.
 
 Una pausa detiene el reloj para el alcance que la decide. Administración pausa el
 proceso y ningún docente de la universidad edita ni envía hasta que lo reanude; entre
-tanto la plantilla vuelve a ser editable. I-210 restablece I-118/I-144 para los cambios
-de plantilla: se confirma el reinicio de expedientes en curso sin aprobación conservada.
-Se conservan aprobados, revisiones vinculadas tras reapertura y procesos cerrados; el
-cambio y la regeneración son una transacción. Sin cambios de plantilla, reanudar no
-reinicia expedientes; cambiar fechas de entrega tampoco los reinicia. Coordinación pausa su convocatoria y solo los
+tanto la plantilla vuelve a ser editable. Cada cambio de plantilla queda asociado a esa
+pausa. Si la plantilla cambió, antes de reanudar Administración consulta el conteo por
+estado y confirma **Reanudar y rehacer sílabos**. La confirmación elimina todo el
+historial de los sílabos de ese proceso, incluidos borradores, revisiones, aprobaciones,
+firmas y exportaciones, y crea expedientes sin iniciar con la plantilla vigente. Sin
+confirmación el proceso permanece pausado. Si no hubo cambios, reanudar no reinicia
+expedientes. Cambiar las fechas de entrega tampoco reinicia sílabos. Coordinación pausa su convocatoria y solo los
 docentes de esa carrera se detienen; entre tanto la malla y los datos curriculares de
 la carrera vuelven a ser editables según sus permisos y confirmaciones de regeneración.
 Los borradores se conservan tal cual durante pausas sin cambio de plantilla. Ambas pausas exigen
@@ -152,9 +154,10 @@ conserva.
 
 - Doble clic/reintento de envío: una sola revisión mediante idempotencia.
 - Edición concurrente: conflicto visible; no sobrescritura silenciosa.
-- Cambio de plantilla institucional: editar requiere el proceso pausado y confirmación
-  del reinicio de expedientes elegibles. I-210 conserva los aprobados, sus revisiones
-  vinculadas tras reapertura y los procesos cerrados, conforme a I-118/I-144.
+- Cambio de plantilla institucional: editar requiere el proceso pausado; el cambio se
+  registra durante la pausa y reanudar exige confirmación con conteos por estado para
+  regenerar todos los sílabos del proceso en una transacción. Se borra el historial,
+  incluso de aprobados y firmados; los procesos cerrados se conservan (I-188).
 - Corrección de base académica (malla o ficha de la asignatura) con el alcance pausado:
   previa confirmación, regenera desde cero los expedientes afectados del período en curso,
   en cualquier estado, incluidos los enviados y los aprobados con sus revisiones,

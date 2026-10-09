@@ -3,6 +3,7 @@
 namespace Tests\Support;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Carbon\CarbonInterface;
@@ -11,20 +12,12 @@ trait CreatesSyllabusProcess
 {
     protected function freeTextValue(string $text): array
     {
-        return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]]]];
+        return FieldDocument::normalize(['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]]]]);
     }
 
-    /** Valor válido para una `tabla`: todas las celdas fijas con texto. */
     protected function filledTableValue(FieldDefinition $field): array
     {
-        if ($field->fieldType()->key() === 'unidades') {
-            return [['nombre' => 'Unidad de prueba', 'resultado' => 'Resultado de prueba', 'semanas' => [['contenidos' => 'Tema', 'acd_h' => '2', 'ape_h' => '1', 'aa_h' => '3', 'acd' => 'Clase', 'ape' => 'Guía', 'aa' => 'Lectura', 'evaluacion' => 'Foro']]]];
-        }
-
-        return array_map(
-            fn (array $cells): array => array_map(fn (): string => 'Dato de prueba', $cells),
-            $field->fieldType()->defaultValue($field->typeConfig()),
-        );
+        return $this->freeTextValue('Unidad de prueba. Resultado de prueba. Horas escritas por el docente.');
     }
 
     protected function openSyllabusProcess(

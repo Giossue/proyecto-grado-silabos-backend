@@ -66,6 +66,74 @@ class ExportOpenApi extends Command
                         'required' => ['message'],
                         'properties' => ['message' => ['type' => 'string']],
                     ],
+                    'FieldDocument' => [
+                        'type' => 'object',
+                        'required' => ['type', 'content'],
+                        'properties' => [
+                            'type' => ['const' => 'doc'],
+                            'content' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/DocumentNode']],
+                        ],
+                        'additionalProperties' => false,
+                    ],
+                    'DocumentNode' => [
+                        'type' => 'object',
+                        'required' => ['type'],
+                        'properties' => [
+                            'type' => ['enum' => ['paragraph', 'text', 'hardBreak', 'variable', 'bulletList', 'orderedList', 'listItem', 'table', 'tableRow', 'tableCell', 'tableHeader']],
+                            'text' => ['type' => 'string'],
+                            'attrs' => ['type' => 'object', 'additionalProperties' => true],
+                            'marks' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => true]],
+                            'content' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/DocumentNode']],
+                        ],
+                        'additionalProperties' => false,
+                    ],
+                    'TemplateField' => [
+                        'type' => 'object',
+                        'required' => ['id', 'key', 'label', 'quien_llena', 'content'],
+                        'properties' => [
+                            'id' => ['type' => 'string', 'format' => 'uuid'],
+                            'key' => ['type' => 'string'],
+                            'label' => ['type' => 'string'],
+                            'help' => ['type' => ['string', 'null']],
+                            'quien_llena' => ['enum' => ['docente', 'coordinacion', 'institucional']],
+                            'content' => ['$ref' => '#/components/schemas/FieldDocument'],
+                        ],
+                        'additionalProperties' => false,
+                    ],
+                    'TemplateSection' => [
+                        'type' => 'object',
+                        'required' => ['id', 'key', 'title', 'orientation', 'fields'],
+                        'properties' => [
+                            'id' => ['type' => 'string', 'format' => 'uuid'],
+                            'key' => ['type' => 'string'],
+                            'title' => ['type' => 'string'],
+                            'description' => ['type' => ['string', 'null']],
+                            'orientation' => ['enum' => ['portrait', 'landscape']],
+                            'fields' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/TemplateField']],
+                        ],
+                        'additionalProperties' => false,
+                    ],
+                    'TemplateFieldInput' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'key' => ['type' => 'string', 'pattern' => '^[a-z][a-z0-9_]*$'],
+                            'label' => ['type' => ['string', 'null'], 'maxLength' => 180],
+                            'help' => ['type' => ['string', 'null'], 'maxLength' => 2000],
+                            'quien_llena' => ['enum' => ['docente', 'coordinacion', 'institucional']],
+                            'content' => ['$ref' => '#/components/schemas/FieldDocument'],
+                            'position' => ['type' => 'integer', 'minimum' => 1],
+                        ],
+                        'additionalProperties' => false,
+                    ],
+                    'DraftFieldInput' => [
+                        'type' => 'object',
+                        'required' => ['version_bloqueo', 'value'],
+                        'properties' => [
+                            'version_bloqueo' => ['type' => 'integer', 'minimum' => 0],
+                            'value' => ['oneOf' => [['$ref' => '#/components/schemas/FieldDocument'], ['type' => 'null']]],
+                        ],
+                        'additionalProperties' => false,
+                    ],
                     'SubjectProfile' => [
                         'type' => 'object',
                         'required' => ['fields', 'values', 'complete'],
@@ -79,6 +147,8 @@ class ExportOpenApi extends Command
                                     'label' => ['type' => 'string'],
                                     'help' => ['type' => ['string', 'null']],
                                     'section' => ['type' => ['string', 'null']],
+                                    'quien_llena' => ['const' => 'coordinacion'],
+                                    'content' => ['$ref' => '#/components/schemas/FieldDocument'],
                                 ],
                             ]],
                             'values' => ['type' => 'object', 'additionalProperties' => ['type' => ['object', 'null']]],
@@ -133,7 +203,9 @@ class ExportOpenApi extends Command
         return self::SUCCESS;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function operation(Route $route, string $name, string $path, string $method): array
     {
         preg_match_all('/\{([^}]+)\}/', $path, $matches);
@@ -169,7 +241,17 @@ class ExportOpenApi extends Command
         if ($isTemplateRead) {
             $successContent = ['application/json' => ['schema' => [
                 'type' => 'object',
-                'properties' => ['templateChangedDuringPause' => ['type' => 'boolean']],
+                'properties' => [
+                    'templateChangedDuringPause' => ['type' => 'boolean'],
+                    'template' => ['oneOf' => [
+                        ['type' => 'null'],
+                        ['type' => 'object', 'required' => ['id', 'sections'], 'properties' => [
+                            'id' => ['type' => 'string', 'format' => 'uuid'],
+                            'sections' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/TemplateSection']],
+                            'titleBlock' => ['type' => 'object', 'properties' => ['text' => ['const' => 'PROGRAMA DE ASIGNATURA (SÍLABO)']]],
+                        ], 'additionalProperties' => true],
+                    ]],
+                ],
                 'additionalProperties' => true,
             ]]];
         }
@@ -231,6 +313,15 @@ class ExportOpenApi extends Command
                     'additionalProperties' => false,
                 ]]];
             }
+            if (in_array($name, ['api.v1.admin.template.structure.fields.store', 'api.v1.admin.template.structure.fields.update'], true)) {
+                $content = ['application/json' => ['schema' => [
+                    'allOf' => [['$ref' => '#/components/schemas/TemplateFieldInput']],
+                    'required' => $method === 'POST' ? ['key', 'quien_llena', 'content'] : [],
+                ]]];
+            }
+            if ($name === 'api.v1.teacher.syllabi.fields.update') {
+                $content = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/DraftFieldInput']]];
+            }
             $operation['requestBody'] = [
                 'required' => $isSubjectProfile,
                 'content' => $content,
@@ -243,7 +334,8 @@ class ExportOpenApi extends Command
         return $operation;
     }
 
-    /** @param list<string> $values
+    /**
+     * @param  list<string>  $values
      * @return array<string, mixed>
      */
     private function catalogOptions(array $values): array
@@ -262,7 +354,9 @@ class ExportOpenApi extends Command
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function errorResponse(string $description): array
     {
         return [

@@ -3,9 +3,6 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
-use App\Modules\Configuration\Application\TemplateDocumentDefaults;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Identity\Application\ActiveRole;
@@ -13,8 +10,6 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
 class SaveTemplateSection
 {
@@ -23,128 +18,11 @@ class SaveTemplateSection
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
-        private readonly SaveFieldDefinition $fields,
-        private readonly SyllabusTemplateProvisioner $provisioner,
     ) {}
 
-    /** @param array<string, mixed> $data */
-    public function create(string $templateId, array $data, User $actor, Request $request): TemplateSection
-    {
-        $activeRole = $this->roles->resolve($request);
-        $this->locks->assertTemplateEditable();
-
-        return $this->work->replaceTemplate(function () use ($activeRole, $actor, $data, $request, $templateId): TemplateSection {
-            $template = SyllabusTemplate::query()->whereKey($templateId)->lockForUpdate()->firstOrFail();
-
-            $sections = $template->sections()->sortBy('posicion')->values();
-            $position = min(
-                max(1, ((int) ($data['position'] ?? $sections->count() + 1))),
-                $sections->count() + 1,
-            );
-            $sectionId = (string) Str::uuid();
-            $blocks = [];
-            $fieldDefinitions = [];
-
-            $preset = is_string($data['preset'] ?? null) ? $data['preset'] : null;
-            $identification = $preset === 'identificacion';
-            if ($identification) {
-                if ($template->fields()->where('clave', 'asignatura')->exists()) {
-                    throw ValidationException::withMessages(['preset' => 'La plantilla ya tiene la identificación institucional.']);
-                }
-                $blockId = (string) Str::uuid();
-                $blocks[] = [
-                    'id' => $blockId,
-                    'clave' => 'identificacion_principal',
-                    'titulo' => '',
-                    'configuracion' => ['content_type' => 'institutional', 'compact' => true, 'document' => TemplateDocumentDefaults::identification()],
-                    'posicion' => 1,
-                ];
-                $fieldDefinitions[] = [
-                    'plantilla_id' => $template->id, 'campo_plantilla_id' => $blockId, 'clave' => 'asignatura',
-                    'etiqueta' => '', 'tipo' => 'referencia_maestra', 'heredado' => true,
-                    'origen_maestro' => 'asignaturas', 'editable_docente' => false, 'posicion' => 1,
-                ];
-                array_push($fieldDefinitions, ...$this->provisioner->identificationInputs($template->id, $blockId));
-            }
-            foreach ($preset !== null ? [] : $this->fields($data) as $fieldPosition => $fieldData) {
-                $blockId = (string) Str::uuid();
-                $fieldKey = $this->stringValue($fieldData, 'key');
-                $fieldLabel = trim((string) ($fieldData['label'] ?? ''));
-                $freeText = $this->stringValue($fieldData, 'content_type') === 'free_text';
-                $label = $fieldLabel !== '' ? $fieldLabel : $this->stringValue($data, 'title');
-                $blocks[] = [
-                    'id' => $blockId,
-                    'clave' => $fieldKey,
-                    'titulo' => $fieldLabel,
-                    'configuracion' => ['content_type' => 'text', 'document' => $freeText
-                        ? TemplateDocumentDefaults::freeTextSheet($fieldKey, $label)
-                        : TemplateDocumentDefaults::blankSheet()],
-                    'posicion' => $fieldPosition + 1,
-                ];
-                if (! $freeText) {
-                    continue;
-                }
-                $fieldDefinitions[] = [
-                    'plantilla_id' => $template->id,
-                    'campo_plantilla_id' => $blockId,
-                    'clave' => $fieldKey,
-                    'etiqueta' => $label,
-                    'tipo' => 'texto_libre',
-                    'ayuda' => $fieldData['help'] ?? null,
-                    'heredado' => false,
-                    'editable_docente' => true,
-                    'posicion' => 1,
-                ];
-            }
-
-            $orderedSections = $sections
-                ->map(fn (TemplateSection $existingSection): array => $existingSection->toDocument())
-                ->all();
-            array_splice($orderedSections, $position - 1, 0, [[
-                'id' => $sectionId,
-                'clave' => $this->stringValue($data, 'key'),
-                'titulo' => $this->stringValue($data, 'title'),
-                'descripcion' => null,
-                'posicion' => $position,
-                'bloques' => $blocks,
-            ]]);
-            $orderedSections = array_map(
-                fn (array $section, int $index): array => [...$section, 'posicion' => $index + 1],
-                $orderedSections,
-                array_keys($orderedSections),
-            );
-            $template->update(['documento' => [
-                'version_esquema' => 1,
-                'secciones' => $orderedSections,
-            ]]);
-
-            foreach ($fieldDefinitions as $fieldDefinition) {
-                FieldDefinition::query()->create($fieldDefinition);
-            }
-
-            if ($preset !== null && ! $identification) {
-                $this->fields->create($template->id, [
-                    'preset' => $preset, 'section_id' => $sectionId, 'position' => 1,
-                    'key' => '', 'label' => '', 'content_type' => 'free_text',
-                ], $actor, $request);
-            }
-
-            $section = $template->fresh()->sectionOrFail($sectionId);
-
-            $this->audit->execute(
-                actorId: $actor->id,
-                roleAssignmentId: $activeRole?->id,
-                action: 'plantilla.seccion_creada',
-                resourceType: 'seccion_plantilla',
-                resourceId: $section->id,
-                result: 'exito',
-            );
-
-            return $section;
-        });
-    }
-
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function update(TemplateSection $section, array $data, User $actor, Request $request): TemplateSection
     {
         $activeRole = $this->roles->resolve($request);
@@ -153,7 +31,8 @@ class SaveTemplateSection
         return $this->work->replaceTemplate(function () use ($activeRole, $actor, $data, $section): TemplateSection {
             $template = SyllabusTemplate::query()->whereKey($section->plantilla_id)->lockForUpdate()->firstOrFail();
             $section = $template->updateSectionDocument($section->id, [
-                'titulo' => $this->stringValue($data, 'title'),
+                'titulo' => (string) $data['title'],
+                'orientacion' => $data['orientation'] ?? $section->orientacion,
             ]);
 
             $this->audit->execute(
@@ -167,34 +46,5 @@ class SaveTemplateSection
 
             return $section;
         });
-    }
-
-    /** @param array<string, mixed> $data */
-    private function stringValue(array $data, string $key): string
-    {
-        $value = $data[$key] ?? null;
-
-        if (! is_string($value)) {
-            throw ValidationException::withMessages([$key => 'El valor no es válido.']);
-        }
-
-        return $value;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     * @return list<array<string, mixed>>
-     */
-    private function fields(array $data): array
-    {
-        if (is_array($data['fields'] ?? null) && $data['fields'] !== []) {
-            return array_values(array_filter($data['fields'], is_array(...)));
-        }
-
-        return [[
-            'key' => $this->stringValue($data, 'first_field_key'),
-            'label' => $this->stringValue($data, 'first_field_label'),
-            'content_type' => $this->stringValue($data, 'first_field_content_type'),
-        ]];
     }
 }

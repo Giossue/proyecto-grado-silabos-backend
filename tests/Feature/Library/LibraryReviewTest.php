@@ -38,7 +38,9 @@ class LibraryReviewTest extends TestCase
     use RefreshDatabase;
     use SignsPdfIncrementally;
 
-    /** @var array<string, array{User, RoleAssignment}> */
+    /**
+     * @var array<string, array{User, RoleAssignment}>
+     */
     private array $people = [];
 
     protected function setUp(): void
@@ -95,14 +97,13 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('review.sections.0.key', 'bibliografia')
             ->assertJsonCount(1, 'review.sections');
         $this->assertNotEmpty($detail->json('review.template_variables'));
-        $this->assertStringContainsString('Ficha de prueba: bibliografia', json_encode($detail->json('review.sections'), JSON_THROW_ON_ERROR));
+        $this->assertStringContainsString('Contenido bibliografia', json_encode($detail->json('review.sections'), JSON_THROW_ON_ERROR));
         FieldValue::query()->where('asignatura_id', $syllabus->subject->id)
             ->update(['valor' => FreeText::fromText('Referencia posterior')]);
         $this->assertSame($detail->json('review.sections'), $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertOk()->json('review.sections'));
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])
             ->assertJsonValidationErrors('revision');
 
-        // Solo motivos predefinidos: sin texto libre, sin motivos vacíos ni inventados.
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
             'reasons' => [], 'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('reasons');
@@ -128,8 +129,7 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('syllabus.review_comments.0.stage', 'biblioteca')
             ->assertJsonPath('syllabus.review_comments.0.comment', 'El libro no está disponible en biblioteca; El código del libro es incorrecto.');
 
-        // El docente corrige lo que haga falta (no solo la bibliografía) y reenvía: vuelve a biblioteca.
-        $other = FieldDefinition::query()->where('editable_docente', true)->where('heredado', false)->whereIn('tipo', ['texto_libre', 'texto'])
+        $other = FieldDefinition::query()->where('quien_llena', 'docente')
             ->where('clave', '!=', 'bibliografia')->firstOrFail();
         $this->as('teacher')->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $other]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue('Ajuste general'),
@@ -190,7 +190,9 @@ class LibraryReviewTest extends TestCase
         $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))->assertJsonPath('state', 'firmado')->assertJsonCount(3, 'signatures');
     }
 
-    /** @return array{Syllabus, SyllabusRevision} */
+    /**
+     * @return array{Syllabus, SyllabusRevision}
+     */
     private function submittedRevision(): array
     {
         $this->as('admin')->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-165']);
@@ -203,7 +205,7 @@ class LibraryReviewTest extends TestCase
         $this->assertSame(1, Convocation::query()->count());
         $syllabus = Syllabus::query()->firstOrFail();
         $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
-        foreach (FieldDefinition::query()->where('heredado', false)->where('editable_docente', true)->get() as $field) {
+        foreach (FieldDefinition::query()->where('quien_llena', 'docente')->get() as $field) {
             $this->as('teacher')->patchJson(
                 route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
                 ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->valueFor($field)],
@@ -227,18 +229,7 @@ class LibraryReviewTest extends TestCase
 
     private function valueFor(FieldDefinition $field): mixed
     {
-        $option = collect($field->opciones ?? [])->map(fn (mixed $item): string => is_array($item) ? (string) ($item['value'] ?? 'opcion') : (string) $item)->first();
-
-        return match ($field->tipo) {
-            'texto_libre', 'texto', 'ficha' => $this->freeTextValue("Contenido {$field->clave}"),
-            'tabla', 'unidades' => $this->filledTableValue($field),
-            'booleano' => true,
-            'numero' => 1,
-            'fecha' => now()->toDateString(),
-            'seleccion_unica' => $option,
-            'seleccion_multiple' => [$option],
-            default => "Contenido {$field->clave}",
-        };
+        return $this->freeTextValue("Contenido {$field->clave}");
     }
 
     private function field(string $key): FieldDefinition

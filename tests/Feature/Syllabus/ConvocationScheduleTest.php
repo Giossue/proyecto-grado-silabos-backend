@@ -183,7 +183,6 @@ class ConvocationScheduleTest extends TestCase
             'due_at' => now()->addMonth()->toIso8601String(),
         ])->assertSuccessful();
 
-        // I-186: abrir la convocatoria institucional ya no genera avisos.
         $this->assertNotNotified($this->coordinator->id, 'proceso.abierto');
         $this->assertNotNotified($this->teacher->id, 'proceso.abierto');
     }
@@ -219,7 +218,7 @@ class ConvocationScheduleTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
 
         $fields = FieldDefinition::query()
-            ->where('heredado', false)->where('editable_docente', true)
+            ->where('quien_llena', 'docente')
             ->get();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(
@@ -242,27 +241,12 @@ class ConvocationScheduleTest extends TestCase
         return Convocation::query()->firstOrFail();
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function validFieldPayload(FieldDefinition $field, int $lockVersion): array
     {
-        $optionValues = collect($field->opciones ?? [])->map(function (mixed $option): string {
-            if (is_array($option)) {
-                return (string) ($option['value'] ?? 'opcion');
-            }
-
-            return (string) $option;
-        })->filter()->values();
-
-        return match (true) {
-            in_array($field->tipo, ['texto_libre', 'texto', 'ficha'], true) => ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")],
-            in_array($field->tipo, ['tabla', 'unidades'], true) => ['version_bloqueo' => $lockVersion, 'value' => $this->filledTableValue($field)],
-            $field->tipo === 'booleano' => ['version_bloqueo' => $lockVersion, 'value' => true],
-            $field->tipo === 'numero' => ['version_bloqueo' => $lockVersion, 'value' => 1],
-            $field->tipo === 'fecha' => ['version_bloqueo' => $lockVersion, 'value' => now()->toDateString()],
-            $field->tipo === 'seleccion_unica' => ['version_bloqueo' => $lockVersion, 'value' => $optionValues->first()],
-            $field->tipo === 'seleccion_multiple' => ['version_bloqueo' => $lockVersion, 'value' => [$optionValues->first()]],
-            default => ['version_bloqueo' => $lockVersion, 'value' => "Contenido académico {$field->clave}"],
-        };
+        return ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")];
     }
 
     private function publishedConfiguration(): SyllabusTemplate

@@ -24,7 +24,9 @@ class SubjectProfileController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var array<string, mixed> $values */
+        /**
+         * @var array<string, mixed> $values
+         */
         $values = $request->validated('values');
 
         return response()->json($this->payload($asignatura->id, $action->execute($asignatura, $values, $actor, $request), $profile));
@@ -42,6 +44,8 @@ class SubjectProfileController extends Controller
                 'key' => $field->clave,
                 'label' => $field->etiqueta,
                 'help' => $field->ayuda,
+                'quien_llena' => $field->quien_llena,
+                'content' => $field->contenido,
                 'section' => $field->block?->section?->titulo,
             ])->all(),
             'values' => (object) $values,

@@ -3,7 +3,7 @@
 namespace App\Modules\Documents\Infrastructure\Rendering;
 
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
-use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use PhpOffice\PhpWord\Element\Section;
 
@@ -11,13 +11,17 @@ final class WordFieldRenderer
 {
     public function __construct(private readonly WordRenderContext $context) {}
 
-    /** @param  array<string, mixed>  $container */
+    /**
+     * @param  array<string, mixed>  $container
+     */
     public static function hasTitle(array $container): bool
     {
         return WordValues::string($container['title'] ?? null, '') !== '';
     }
 
-    /** @param array<string, mixed> $container */
+    /**
+     * @param  array<string, mixed>  $container
+     */
     public function render(Section $section, array $container, bool $titled): void
     {
         $fields = WordValues::arrayList($container['fields'] ?? null);
@@ -48,39 +52,29 @@ final class WordFieldRenderer
     }
 
     /**
-     * Recorrido del snapshot v7: los campos planos de la sección, cada uno pintado por su tipo.
-     * Una sección con algún campo de la clase anterior usa `render` (deuda de la etapa 8).
-     *
      * @param  array<string, mixed>  $snapshotSection
      */
-    public static function usesTypes(array $snapshotSection): bool
+    public function renderDocuments(Section $section, array $snapshotSection): void
     {
         $fields = WordValues::arrayList($snapshotSection['fields'] ?? null);
-
-        return $fields !== [] && array_filter($fields, fn (array $field): bool => ($field['legacy'] ?? false) === true || ! is_string($field['type'] ?? null)) === [];
-    }
-
-    /** @param array<string, mixed> $snapshotSection */
-    public function renderTyped(Section $section, array $snapshotSection): void
-    {
-        $types = app(FieldTypeRegistry::class);
-        $fields = WordValues::arrayList($snapshotSection['fields'] ?? null);
-        // Lo que el docente escribe y se imprime dentro de la tabla de identificación no se repite debajo.
-        $card = array_filter($fields, fn (array $field): bool => ($field['type'] ?? null) === 'automatico' && ($field['config']['source'] ?? null) === 'identification_card') !== [];
+        $historicalCard = array_filter($fields, fn (array $field): bool => ($field['type'] ?? null) === 'automatico' && ($field['config']['source'] ?? null) === 'identification_card') !== [];
         foreach ($fields as $field) {
-            if ($card && ($field['type'] ?? null) === 'texto' && (($field['config']['inside'] ?? null) === 'identification_card' || array_key_exists((string) ($field['key'] ?? ''), IdentificationCard::INPUT_KEYS))) {
+            if ($historicalCard && ($field['type'] ?? null) === 'texto' && (($field['config']['inside'] ?? null) === 'identification_card' || array_key_exists((string) ($field['key'] ?? ''), IdentificationCard::INPUT_KEYS))) {
                 continue;
             }
-            $type = $types->get((string) $field['type']);
             $label = WordValues::string($field['label'] ?? null, '');
-            if ($type->key() !== 'automatico' && $label !== '') {
-                $section->addText(
-                    $label,
+            if ($label !== '') {
+                $section->addText($label,
                     ['bold' => true, 'size' => $this->context->appearance['field_font_size'], 'color' => $this->context->color('text_color')],
-                    ['spaceBefore' => 160, 'spaceAfter' => 80, 'keepNext' => true],
-                );
+                    ['spaceBefore' => 160, 'spaceAfter' => 80, 'keepNext' => true]);
             }
-            $type->toWord($section, $field, $this->context);
+            $document = TemplateDocumentResolver::resolve(HistoricalFieldDocument::of($field), [], $this->context->templateVariables);
+            $document = FieldDocument::isEmpty($document) ? null : $document;
+            if (in_array($field['type'] ?? null, ['texto', 'ficha'], true)) {
+                $this->context->writeBoxed($section, $document);
+            } else {
+                $this->context->writeDocument($section, $document);
+            }
         }
     }
 

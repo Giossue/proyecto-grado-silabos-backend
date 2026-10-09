@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
-use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
@@ -47,18 +47,17 @@ class SaveSubjectProfile
             }
         }
 
-        // Cambiar la ficha rehace desde cero los sílabos en curso de esta materia (previa confirmación).
         return $this->work->replace($request, function () use ($actor, $request, $subject, $values): array {
             $lockedSubject = Subject::query()->whereKey($subject->id)->lockForUpdate()->firstOrFail();
             $this->authorize($lockedSubject, $request);
             $this->locks->assertCareerEditable($lockedSubject->carrera_id);
 
             foreach ($values as $fieldId => $value) {
-                $document = is_array($value) ? FreeText::normalize($value, "values.{$fieldId}") : null;
+                $document = is_array($value) ? FieldDocument::normalize($value, "values.{$fieldId}") : null;
                 $query = FieldValue::query()
                     ->where('asignatura_id', $lockedSubject->id)
                     ->where('definicion_campo_id', $fieldId);
-                if ($document === null || FreeText::isEmpty($document)) {
+                if ($document === null || FieldDocument::isEmpty($document)) {
                     $query->delete();
 
                     continue;

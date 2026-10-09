@@ -4,8 +4,7 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Configuration\Application\SectionDesigns;
-use App\Modules\Configuration\Application\TemplateDocumentDefaults;
-use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
@@ -15,13 +14,7 @@ use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 
-/**
- * Plantilla simplificada de I-195: secciones con campos de los cuatro tipos del registro.
- * Cada campo es un bloque de la sección más su definición; el tipo y su configuración
- * los valida el registro, nunca esta clase.
- */
 class SaveTemplateStructure
 {
     public function __construct(
@@ -29,11 +22,12 @@ class SaveTemplateStructure
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
-        private readonly FieldTypeRegistry $types,
         private readonly SectionDesigns $designs,
     ) {}
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function createSection(SyllabusTemplate $template, array $data, User $actor, Request $request): TemplateSection
     {
         $activeRole = $this->roles->resolve($request);
@@ -57,6 +51,7 @@ class SaveTemplateStructure
                     'descripcion' => null,
                     'posicion' => $count + 1,
                     'bloques' => [],
+                    'orientacion' => $data['orientation'] ?? 'portrait',
                 ];
             }
             $sectionId = (string) $section['id'];
@@ -80,7 +75,9 @@ class SaveTemplateStructure
         });
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function createField(SyllabusTemplate $template, string $sectionId, array $data, User $actor, Request $request): FieldDefinition
     {
         $activeRole = $this->roles->resolve($request);
@@ -89,8 +86,7 @@ class SaveTemplateStructure
         return $this->work->replaceTemplate(function () use ($activeRole, $actor, $data, $sectionId, $template): FieldDefinition {
             $locked = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
             $section = $locked->sectionOrFail($sectionId);
-            $type = $this->types->get((string) $data['type']);
-            $config = $this->config($data['type'], $data['config'] ?? []);
+            $content = FieldDocument::normalize($data['content']);
             $label = trim((string) ($data['label'] ?? ''));
             $count = $section->blocks()->count();
 
@@ -99,9 +95,7 @@ class SaveTemplateStructure
                 'id' => $blockId,
                 'clave' => (string) $data['key'],
                 'titulo' => $label,
-                'configuracion' => ['content_type' => 'text', 'document' => $type->teacherEditable() || $type->key() === 'ficha'
-                    ? TemplateDocumentDefaults::freeTextSheet((string) $data['key'], $label)
-                    : TemplateDocumentDefaults::blankSheet()],
+                'configuracion' => [],
                 'posicion' => $count + 1,
             ]);
             $position = min(max(1, (int) ($data['position'] ?? $count + 1)), $count + 1);
@@ -117,9 +111,9 @@ class SaveTemplateStructure
                 'clave' => (string) $data['key'],
                 'etiqueta' => $label,
                 'ayuda' => $data['help'] ?? null,
-                'tipo' => $type->key(),
+                'quien_llena' => $data['quien_llena'],
+                'contenido' => $content,
                 'posicion' => 1,
-                ...$this->attributesFor($type->key(), $config),
             ]);
             $this->auditField($field, 'plantilla.campo_creado', $actor, $activeRole?->id);
 
@@ -127,7 +121,9 @@ class SaveTemplateStructure
         });
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function updateField(SyllabusTemplate $template, FieldDefinition $field, array $data, User $actor, Request $request): FieldDefinition
     {
         $activeRole = $this->roles->resolve($request);
@@ -135,59 +131,19 @@ class SaveTemplateStructure
 
         return $this->work->replaceTemplate(function () use ($activeRole, $actor, $data, $field, $template): FieldDefinition {
             $locked = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
-            $typeKey = $field->fieldType()->key();
-            if (isset($data['type']) && $data['type'] !== $typeKey) {
-                throw ValidationException::withMessages(['type' => 'El tipo de un campo no se cambia. Elimínelo y cree uno nuevo con el tipo que necesita.']);
-            }
-            $config = array_key_exists('config', $data) ? $this->config($typeKey, $data['config'] ?? []) : $field->typeConfig();
             $label = array_key_exists('label', $data) ? trim((string) $data['label']) : $field->etiqueta;
 
             $field->update([
                 'etiqueta' => $label,
                 'ayuda' => array_key_exists('help', $data) ? $data['help'] : $field->ayuda,
-                ...$this->attributesFor($typeKey, $config),
+                'quien_llena' => $data['quien_llena'] ?? $field->quien_llena,
+                'contenido' => array_key_exists('content', $data) ? FieldDocument::normalize($data['content']) : $field->contenido,
             ]);
             $locked->updateBlockDocument($field->campo_plantilla_id, ['titulo' => $label]);
             $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id);
 
             return $field;
         });
-    }
-
-    /** @return array<string, mixed> */
-    private function config(mixed $typeKey, mixed $config): array
-    {
-        try {
-            return $this->types->get((string) $typeKey)->normalizeConfig(is_array($config) ? $config : []);
-        } catch (ValidationException $exception) {
-            $errors = [];
-            foreach ($exception->errors() as $key => $messages) {
-                $errors['config.'.$key] = $messages;
-            }
-            throw ValidationException::withMessages($errors);
-        }
-    }
-
-    /**
-     * Columnas de la definición que dependen del tipo (herencia y quién lo edita).
-     *
-     * @param  array<string, mixed>  $config
-     * @return array<string, mixed>
-     */
-    private function attributesFor(string $typeKey, array $config): array
-    {
-        $base = ['opciones' => $config === [] ? null : $config, 'mostrar_si' => null];
-
-        return $base + match ($typeKey) {
-            'ficha' => [
-                'heredado' => true,
-                'origen_maestro' => FieldDefinition::ORIGIN_PROFILE,
-                'editable_docente' => (bool) ($config['adjustable'] ?? false),
-            ],
-            'automatico' => ['heredado' => true, 'origen_maestro' => (string) $config['source'], 'editable_docente' => false],
-            'fijo' => ['heredado' => false, 'origen_maestro' => null, 'editable_docente' => false],
-            default => ['heredado' => false, 'origen_maestro' => null, 'editable_docente' => true],
-        };
     }
 
     private function auditField(FieldDefinition $field, string $action, User $actor, ?string $roleAssignmentId): void

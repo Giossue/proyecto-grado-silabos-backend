@@ -6,7 +6,9 @@ use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
-/** @property-read Collection<int, FieldDefinition> $fields */
+/**
+ * @property-read Collection<int, FieldDefinition> $fields
+ */
 final class TemplateBlock implements UrlRoutable
 {
     public string $id;
@@ -21,12 +23,16 @@ final class TemplateBlock implements UrlRoutable
 
     public string $titulo;
 
-    /** @var array<string, mixed> */
+    /**
+     * @var array<string, mixed>
+     */
     public array $configuracion;
 
     public int $posicion;
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function __construct(
         public readonly SyllabusTemplate $template,
         public readonly TemplateSection $section,
@@ -35,7 +41,9 @@ final class TemplateBlock implements UrlRoutable
         $this->hydrate($data);
     }
 
-    /** @return Builder<FieldDefinition> */
+    /**
+     * @return Builder<FieldDefinition>
+     */
     public function fields(): Builder
     {
         return FieldDefinition::query()
@@ -60,7 +68,9 @@ final class TemplateBlock implements UrlRoutable
         return $this->{$key} ?? null;
     }
 
-    /** @param array<string, mixed> $attributes */
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
     public function update(array $attributes): bool
     {
         $fresh = $this->template->fresh()->updateBlockDocument($this->id, $attributes);
@@ -99,32 +109,9 @@ final class TemplateBlock implements UrlRoutable
         return $this;
     }
 
-    public function configuredContentType(): ?string
-    {
-        $contentType = $this->configuracion['content_type'] ?? null;
-
-        return is_string($contentType) ? $contentType : null;
-    }
-
-    public function contentType(): string
-    {
-        return $this->configuredContentType() ?? 'text';
-    }
-
-    public function pageOrientation(): ?string
-    {
-        $orientation = $this->configuracion['page_orientation'] ?? null;
-
-        return in_array($orientation, ['portrait', 'landscape'], true) ? $orientation : null;
-    }
-
-    /** Sección compacta: letra de 9 pt y margen de 1.5 cm solo en esa hoja. */
-    public function isCompact(): bool
-    {
-        return ($this->configuracion['compact'] ?? false) === true;
-    }
-
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         return [
@@ -164,13 +151,17 @@ final class TemplateBlock implements UrlRoutable
         return $this->id;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     public function toDocument(): array
     {
         return $this->data;
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     */
     private function hydrate(array $data): void
     {
         $this->data = $data;

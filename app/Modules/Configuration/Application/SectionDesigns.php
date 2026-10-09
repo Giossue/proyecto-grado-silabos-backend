@@ -2,7 +2,7 @@
 
 namespace App\Modules\Configuration\Application;
 
-use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Illuminate\Support\Str;
@@ -10,9 +10,9 @@ use Illuminate\Validation\ValidationException;
 
 final class SectionDesigns
 {
-    public function __construct(private readonly FieldTypeRegistry $types) {}
-
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function keys(): array
     {
         return array_keys($this->all());
@@ -23,16 +23,22 @@ final class SectionDesigns
         return array_key_exists($key, $this->all());
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     public function baseline(): array
     {
-        /** @var list<string> $keys */
+        /**
+         * @var list<string> $keys
+         */
         $keys = config('syllabus_template.baseline', []);
 
         return $keys;
     }
 
-    /** @return list<array{key: string, title: string, summary: string, fields: list<array{label: string, type: string}>, in_use: bool}> */
+    /**
+     * @return list<array{key: string, title: string, summary: string, orientation?: string, fields: list<array{label: string, quien_llena: string}>, in_use: bool}>
+     */
     public function options(SyllabusTemplate $template): array
     {
         $used = $this->usedKeys($template);
@@ -41,7 +47,7 @@ final class SectionDesigns
             'key' => $key,
             'title' => $design['title'],
             'summary' => $design['summary'],
-            'fields' => array_map(fn (array $field): array => ['label' => $field[1], 'type' => $field[2]], $design['fields']),
+            'fields' => array_map(fn (array $field): array => ['label' => $field[1], 'quien_llena' => $field[2]], $design['fields']),
             'in_use' => $this->collides($design, $key, $used),
         ], $this->all(), array_keys($this->all()));
     }
@@ -65,19 +71,14 @@ final class SectionDesigns
 
         $blocks = [];
         $definitions = [];
-        foreach ($design['fields'] as $index => [$fieldKey, $label, $typeKey, $rawConfig]) {
-            $type = $this->types->get($typeKey);
-            $fromTeacherProfile = ($rawConfig['from'] ?? null) === 'perfil_docente';
-            $config = $type->normalizeConfig($this->expandConfig($rawConfig));
+        foreach ($design['fields'] as $index => [$fieldKey, $label, $responsible, $document]) {
             $blockId = (string) Str::uuid();
 
             $blocks[] = [
                 'id' => $blockId,
                 'clave' => $fieldKey,
                 'titulo' => $label,
-                'configuracion' => [...($design['orientation'] ?? null) === 'landscape' ? ['page_orientation' => 'landscape'] : [], 'content_type' => 'text', 'document' => $typeKey === 'texto' || $typeKey === 'ficha'
-                    ? TemplateDocumentDefaults::freeTextSheet($fieldKey, $label)
-                    : TemplateDocumentDefaults::blankSheet()],
+                'configuracion' => [],
                 'posicion' => $index + 1,
             ];
             $definitions[] = [
@@ -85,13 +86,9 @@ final class SectionDesigns
                 'campo_plantilla_id' => $blockId,
                 'clave' => $fieldKey,
                 'etiqueta' => $label,
-                'tipo' => $typeKey,
+                'quien_llena' => $responsible,
+                'contenido' => FieldDocument::normalize($document),
                 'posicion' => 1,
-                'opciones' => $config === [] ? null : $config,
-                'mostrar_si' => null,
-                ...($fromTeacherProfile
-                    ? ['heredado' => true, 'origen_maestro' => FieldDefinition::ORIGIN_TEACHER, 'editable_docente' => false]
-                    : $this->inheritance($typeKey, $config)),
             ];
         }
 
@@ -103,21 +100,28 @@ final class SectionDesigns
                 'descripcion' => null,
                 'posicion' => $position,
                 'bloques' => $blocks,
+                'orientacion' => $design['orientation'] ?? 'portrait',
             ],
             'definitions' => $definitions,
         ];
     }
 
-    /** @return array<string, array{title: string, summary: string, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}> */
+    /**
+     * @return array<string, array{title: string, summary: string, orientation?: string, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}>
+     */
     private function all(): array
     {
-        /** @var array<string, array{title: string, summary: string, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}> $designs */
+        /**
+         * @var array<string, array{title: string, summary: string, orientation?: string, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}> $designs
+         */
         $designs = config('syllabus_template.designs', []);
 
         return $designs;
     }
 
-    /** @return array{sections: list<string>, fields: list<string>} */
+    /**
+     * @return array{sections: list<string>, fields: list<string>}
+     */
     private function usedKeys(SyllabusTemplate $template): array
     {
         return [
@@ -127,60 +131,12 @@ final class SectionDesigns
     }
 
     /**
-     * @param  array{title: string, summary: string, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}  $design
+     * @param  array{title: string, summary: string, orientation?: string, fields: list<array{0: string, 1: string, 2: string, 3: array<string, mixed>}>}  $design
      * @param  array{sections: list<string>, fields: list<string>}  $used
      */
     private function collides(array $design, string $key, array $used): bool
     {
         return in_array($key, $used['sections'], true)
             || array_intersect(array_column($design['fields'], 0), $used['fields']) !== [];
-    }
-
-    /**
-     * @param  array<string, mixed>  $config
-     * @return array<string, mixed>
-     */
-    private function expandConfig(array $config): array
-    {
-        $axis = fn (array $items): array => array_map(
-            fn (string $key, string $label): array => ['key' => $key, 'label' => $label],
-            array_keys($items),
-            array_values($items),
-        );
-        if (isset($config['content']) && is_string($config['content'])) {
-            $config['content'] = FixedContent::official($config['content']);
-        }
-        if (isset($config['weeks'])) {
-            $config['rows'] = [];
-            for ($week = 1; $week <= (int) $config['weeks']; $week++) {
-                $config['rows']['semana_'.$week] = (string) $week;
-            }
-            unset($config['weeks']);
-        }
-        foreach (['columns', 'rows'] as $name) {
-            if (isset($config[$name])) {
-                $config[$name] = $axis($config[$name]);
-            }
-        }
-
-        return $config;
-    }
-
-    /**
-     * @param  array<string, mixed>  $config
-     * @return array<string, mixed>
-     */
-    private function inheritance(string $typeKey, array $config): array
-    {
-        return match ($typeKey) {
-            'ficha' => [
-                'heredado' => true,
-                'origen_maestro' => FieldDefinition::ORIGIN_PROFILE,
-                'editable_docente' => (bool) ($config['adjustable'] ?? false),
-            ],
-            'automatico' => ['heredado' => true, 'origen_maestro' => (string) $config['source'], 'editable_docente' => false],
-            'fijo' => ['heredado' => false, 'origen_maestro' => null, 'editable_docente' => false],
-            default => ['heredado' => false, 'origen_maestro' => null, 'editable_docente' => true],
-        };
     }
 }

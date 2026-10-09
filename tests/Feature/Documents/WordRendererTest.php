@@ -110,7 +110,7 @@ class WordRendererTest extends TestCase
 
         $this->assertIsString($documentXml);
         $this->assertIsString($stylesXml);
-        // La apariencia guardada se ignora: el documento usa el formato oficial fijo.
+
         $this->assertStringNotContainsString('w:orient="landscape"', $documentXml);
         $this->assertMatchesRegularExpression('/w:top="85[01]"/', $documentXml);
         $this->assertStringContainsString('w:fill="4F81BD"', $documentXml);
@@ -270,7 +270,7 @@ class WordRendererTest extends TestCase
     {
         $snapshot = $this->snapshot();
         $snapshot['template_variables'] = TemplateVariables::resolve(['identification' => $snapshot['identification']]);
-        $snapshot['sections'][0]['blocks'][0]['document'] = TemplateDocumentDefaults::identification();
+        $snapshot['sections'][0]['blocks'][0]['document'] = IdentificationCard::document($snapshot['identification']);
         $snapshot['sections'][2]['blocks'][] = [
             'key' => 'firmas',
             'title' => 'Revisión',
@@ -338,7 +338,9 @@ class WordRendererTest extends TestCase
         $this->assertTrue($identification);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function snapshot(): array
     {
         $paragraph = fn (string $text): array => ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]];
@@ -354,7 +356,7 @@ class WordRendererTest extends TestCase
             ['type' => 'listItem', 'content' => [$paragraph('Primer objetivo')]],
             ['type' => 'listItem', 'content' => [$paragraph('Segundo objetivo')]],
         ]]]];
-        $sheet = fn (string $key, string $label): array => TemplateDocumentDefaults::freeTextSheet($key, $label);
+        $sheet = fn (string $key, string $label): array => $this->legacySheet($key, $label);
 
         $snapshot = [
             'schema_version' => 2,
@@ -413,8 +415,13 @@ class WordRendererTest extends TestCase
             ],
         ];
         $snapshot['template_variables'] = TemplateVariables::resolve(['identification' => $snapshot['identification']]);
-        $snapshot['sections'][0]['blocks'][0]['document'] = TemplateDocumentDefaults::identification();
+        $snapshot['sections'][0]['blocks'][0]['document'] = IdentificationCard::document($snapshot['identification']);
 
         return $snapshot;
+    }
+
+    private function legacySheet(string $key, string $label = ''): array
+    {
+        return ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'field', 'attrs' => ['key' => $key, 'kind' => 'texto_libre']]]]]];
     }
 }

@@ -12,8 +12,8 @@ y tablas del mismo editor. La estructura del contenido no cambia su responsable.
 | `coordinacion` | Documento de la ficha por materia, copiado al crear el sílabo | Solo lectura |
 | `institucional` | Documento de la plantilla, con variables del catálogo | Solo lectura |
 
-Bibliografía es docente. El reparto restante de la plantilla oficial conserva el
-estado indicado en «Por validar» de I-210. Título y logos son fijos y no son campos.
+Bibliografía es docente. El responsable confirmó el reparto de la tabla de I-210,
+las filas libres y los totales escritos por Docencia sin validación. Título y logos son fijos y no son campos.
 
 ## API
 
@@ -23,22 +23,20 @@ orientación. Un campo recibe `key`, `label`, `help`, `quien_llena`, `content` y
 `content` es un documento JSON; las variables solo pueden usar claves de
 `template_variables`. Se retiran `type`, `config`, filas fijas y ajuste de ficha.
 
-El servidor comprueba Administración, alcance, bloqueo de edición y confirmación
-del reinicio conforme a I-118. La ficha acepta únicamente campos de Coordinación;
-la actualización de borrador acepta únicamente campos docentes. Las revisiones
-aprobadas conservan sus documentos y no se adaptan a cambios de la plantilla viva.
+El servidor comprueba Administración, alcance y bloqueo de edición.
+Los cambios posteriores conservan el reinicio al reanudar de I-188. La ficha acepta únicamente campos de Coordinación;
+la actualización de borrador acepta únicamente campos docentes. Cada revisión enviada fotografía los documentos y las variables vigentes.
 
 ## Persistencia y exportación
 
 Una migración nueva incorpora responsable y contenido documental, carga el formato
 oficial de `config/syllabus_template.php` y retira columnas y compatibilidad de tipos.
-El reinicio conserva aprobados y procesos cerrados según I-118/I-144. Los valores de
-ficha y borrador son documentos saneados; al enviar se fotografían los documentos
+Los valores de ficha y borrador son documentos saneados; al enviar se fotografían los documentos
 efectivos con variables resueltas. Word recorre sección y documento de cada campo;
 PDF se obtiene del mismo Word. El render histórico permanece para evidencia aprobada.
 
 ## Verificación
 
 API y OpenAPI, permisos docentes y de ficha, contenido inicial, snapshot inmutable,
-reinicio con conservación de aprobados y estructura de Word/PDF requieren pruebas.
+reinicio y estructura de Word/PDF se comprueban en las pruebas indicadas en trazabilidad.
 No se afirma aceptación visual institucional por la suite automatizada (PV-07/PV-19).

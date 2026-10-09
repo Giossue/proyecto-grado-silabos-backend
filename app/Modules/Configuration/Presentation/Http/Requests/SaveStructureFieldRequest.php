@@ -2,51 +2,44 @@
 
 namespace App\Modules\Configuration\Presentation\Http\Requests;
 
-use App\Modules\Configuration\Domain\FieldTypes\FieldTypeRegistry;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Illuminate\Validation\Rule;
 
 class SaveStructureFieldRequest extends ManageTemplatesRequest
 {
-    /** @return array<string, list<mixed>> */
+    /**
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
-        $registry = app(FieldTypeRegistry::class);
         $template = $this->route('template');
         $templateId = $template instanceof SyllabusTemplate ? $template->id : (string) $template;
-        $field = $this->route('field');
-        $creating = ! $field instanceof FieldDefinition;
-        $typeKey = $creating ? $this->input('type') : $field->fieldType()->key();
-
+        $creating = ! $this->route('field') instanceof FieldDefinition;
         $rules = [
             'label' => ['nullable', 'string', 'max:180'],
             'help' => ['nullable', 'string', 'max:2000'],
-            'type' => [$creating ? 'required' : 'sometimes', 'string', Rule::in($creating ? $registry->manualKeys() : $registry->keys())],
-            'config' => ['sometimes', 'nullable', 'array'],
+            'quien_llena' => [$creating ? 'required' : 'sometimes', Rule::in(FieldDefinition::RESPONSIBLES)],
+            'content' => [$creating ? 'required' : 'sometimes', 'array', function (string $attribute, mixed $value): void {
+                FieldDocument::normalize($value, $attribute);
+            }],
+            'type' => ['prohibited'],
+            'config' => ['prohibited'],
         ];
         if ($creating) {
             $rules['position'] = ['sometimes', 'integer', 'min:1'];
-            $rules['key'] = [
-                'required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'max:100',
-                Rule::unique('definiciones_campo', 'clave_definicion_campo')
-                    ->where('plantilla_id', $templateId)
-                    ->where('vigente_en_plantilla', true),
-            ];
-        }
-        // Al editar sin enviar `config` se conserva la configuración actual del campo.
-        if (is_string($typeKey) && $registry->has($typeKey) && ($creating || $this->has('config'))) {
-            foreach ($registry->get($typeKey)->configRules() as $key => $keyRules) {
-                $rules['config.'.$key] = $keyRules;
-            }
+            $rules['key'] = ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'max:100', Rule::unique('definiciones_campo', 'clave_definicion_campo')->where('plantilla_id', $templateId)->where('vigente_en_plantilla', true)];
         }
 
         return $rules;
     }
 
-    /** @return array<string, string> */
-    public function messages(): array
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
     {
-        return ['type.in' => 'Elija un tipo de campo de la lista: los datos automáticos y los textos fijos solo vienen en los diseños oficiales de sección.'];
+        return ['quien_llena' => 'quién lo llena', 'content' => 'contenido', 'label' => 'título', 'help' => 'ayuda', 'key' => 'clave', 'type' => 'tipo retirado', 'config' => 'configuración retirada'];
     }
 }

@@ -2,19 +2,18 @@
 
 namespace App\Modules\Academic\Application;
 
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use Illuminate\Support\Collection;
 
-/**
- * Ficha de asignatura: los campos de la plantilla marcados «se llena desde la ficha» y sus valores,
- * que se guardan una sola vez por materia en `valores_campo` (I-189).
- */
 class SubjectProfileFields
 {
-    /** @return Collection<int, FieldDefinition> */
+    /**
+     * @return Collection<int, FieldDefinition>
+     */
     public function fields(): Collection
     {
         $template = SyllabusTemplate::query()->first();
@@ -24,17 +23,19 @@ class SubjectProfileFields
 
         return $template->sections
             ->flatMap(fn ($section) => $section->blocks->flatMap(fn ($block) => $block->fields))
-            ->filter(fn (FieldDefinition $field): bool => $field->fromProfile() && $field->fieldType()->key() === 'ficha')
+            ->filter(fn (FieldDefinition $field): bool => $field->fromProfile())
             ->values();
     }
 
-    /** @return array<string, array<string, mixed>|null> valor por definición de campo */
+    /**
+     * @return array<string, array<string, mixed>|null> valor por definición de campo
+     */
     public function values(string $subjectId): array
     {
         return FieldValue::query()
             ->where('asignatura_id', $subjectId)
             ->get()
-            ->mapWithKeys(fn (FieldValue $value): array => [$value->definicion_campo_id => FreeText::isDocument($value->valor) ? FreeText::normalize($value->valor) : null])
+            ->mapWithKeys(fn (FieldValue $value): array => [$value->definicion_campo_id => FreeText::isDocument($value->valor) ? FieldDocument::normalize($value->valor) : null])
             ->all();
     }
 
@@ -48,14 +49,12 @@ class SubjectProfileFields
     }
 
     /**
-     * Campos obligatorios llenos y en total por materia (los opcionales, como la bibliografía, no cuentan).
-     *
      * @param  array<int, string>  $subjectIds
      * @return array<string, array{filled: int, total: int}>
      */
     public function progressBySubject(array $subjectIds): array
     {
-        $fieldIds = $this->fields()->reject(fn (FieldDefinition $field): bool => ($field->typeConfig()['optional'] ?? false) === true)->pluck('id')->all();
+        $fieldIds = $this->fields()->pluck('id')->all();
         $filled = [];
         if ($fieldIds !== [] && $subjectIds !== []) {
             FieldValue::query()
@@ -63,7 +62,7 @@ class SubjectProfileFields
                 ->whereIn('definicion_campo_id', $fieldIds)
                 ->get()
                 ->each(function (FieldValue $value) use (&$filled): void {
-                    if (FreeText::isDocument($value->valor) && ! FreeText::isEmpty(FreeText::normalize($value->valor))) {
+                    if (FreeText::isDocument($value->valor) && ! FreeText::isEmpty(FieldDocument::normalize($value->valor))) {
                         $filled[$value->asignatura_id][$value->definicion_campo_id] = true;
                     }
                 });

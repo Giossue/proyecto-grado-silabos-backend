@@ -32,24 +32,20 @@ egreso, Conducta ética, Bibliografía y Revisión/aprobación.
 
 ## Cambios y conservación
 
-Una corrección de plantilla sigue I-118/I-144: con el ámbito pausado y confirmación,
-el cambio y la regeneración son una transacción. Se reemplazan los expedientes en
-curso sin aprobación, incluidas revisiones, IA y exportaciones. Se conservan aprobados,
-sus revisiones vinculadas tras reapertura y procesos cerrados. La migración I-210 aplica
-ese mismo criterio al cargar el formato del PDF; nunca ejecuta reinicios destructivos
-del esquema ni seeders de demostración.
+La plantilla se modifica con el proceso pausado. Los cambios posteriores conservan el
+comportamiento de I-188: reanudar exige confirmar el reinicio del proceso. La migración
+I-210 es una carga inicial excepcional; su alcance está en el plan y ADR-0010.
+Nunca ejecuta reinicios destructivos del esquema ni seeders de demostración.
 
 La API comprueba todos los permisos en servidor. Un borrador incompleto se guarda;
 la validación determinística señala los contenidos pendientes sin depender de IA.
 El Word y su PDF se construyen desde documentos fotografiados. Un sílabo histórico
 sigue renderizando después de editar la plantilla viva.
 
-## Pendientes de I-210
+## Confirmaciones de I-210
 
-El reparto restante de responsables, la escritura manual de totales y la edición
-libre de filas permanecen «Por validar» hasta confirmación del responsable. No se
-convierten en reglas de aceptación por este documento. Los bloqueos y respuestas se
-registran en el plan.
+Se usa el reparto de responsables de la tabla del plan. Docencia agrega filas libremente
+y escribe los totales de horas, sin cálculo ni validación.
 
 ## Importación curricular
 

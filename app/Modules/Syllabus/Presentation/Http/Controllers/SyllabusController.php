@@ -4,10 +4,9 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Modules\Configuration\Application\FieldConditions;
-use App\Modules\Configuration\Application\FieldOptions;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -23,6 +22,8 @@ use App\Modules\Syllabus\Application\Actions\ValidateDraft;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\ReviewComments;
 use App\Modules\Syllabus\Application\ReviewStage;
+use App\Modules\Syllabus\Application\SnapshotDocuments;
+use App\Modules\Syllabus\Application\SyllabusDocumentFields;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -225,7 +226,9 @@ class SyllabusController extends Controller
         ]);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function syllabusPayload(Syllabus $syllabus): array
     {
         $syllabus->load([
@@ -238,6 +241,20 @@ class SyllabusController extends Controller
         $values = $syllabus->values->keyBy('definicion_campo_id');
         $template = SyllabusTemplate::institutional();
         $identification = IdentificationCard::fromSyllabus($syllabus);
+        $revision = $syllabus->revisions->sortByDesc('numero_revision')->first();
+        $frozen = $revision instanceof SyllabusRevision && in_array($syllabus->estado, ['en_revision', 'aprobado'], true)
+            ? SnapshotDocuments::present($revision->fotografia) : null;
+        $archived = $frozen === null ? SyllabusDocumentFields::archivedSections($syllabus) : null;
+        $archivedView = $archived === null ? null : SnapshotDocuments::present(['sections' => $archived, 'identification' => $identification]);
+        if ($archivedView !== null) {
+            foreach ($archivedView['sections'] as &$section) {
+                foreach ($section['fields'] as &$field) {
+                    $field['teacher_editable'] = $field['quien_llena'] === 'docente';
+                    $field['required'] = $field['quien_llena'] !== 'institucional';
+                }
+            }
+        }
+        $mapping = $frozen['document_mapping'] ?? $template->mapeo_documento;
 
         return [
             'id' => $syllabus->id,
@@ -257,15 +274,15 @@ class SyllabusController extends Controller
                 ? $syllabus->revisions()->whereHas('approval')->latest('numero_revision')->value('id')
                 : null,
             'presentation' => [
-                'appearance' => TemplateAppearance::fromMapping($template->mapeo_documento),
-                'title' => TemplateTitleBlock::fromMapping($template->mapeo_documento)['text'],
+                'appearance' => TemplateAppearance::fromMapping($mapping),
+                'title' => TemplateTitleBlock::fromMapping($mapping)['text'],
                 'logos' => [
                     'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
                     'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
                 ],
             ],
-            'template_variables' => TemplateVariables::resolve(['identification' => $identification]),
-            'sections' => $template->sections
+            'template_variables' => $frozen['template_variables'] ?? TemplateVariables::resolve(['identification' => $identification]),
+            'sections' => $frozen['sections'] ?? $archivedView['sections'] ?? $template->sections
                 ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, ['identification' => $identification]))
                 ->values(),
             'revisions' => $syllabus->revisions->sortBy('numero_revision')->map(fn (SyllabusRevision $revision): array => [
@@ -280,7 +297,9 @@ class SyllabusController extends Controller
         ];
     }
 
-    /** @return list<array{id: string, parallel: string, state: string}> */
+    /**
+     * @return list<array{id: string, parallel: string, state: string}>
+     */
     private function copySources(Syllabus $syllabus): array
     {
         $user = request()->user();
@@ -297,7 +316,9 @@ class SyllabusController extends Controller
             ])->all());
     }
 
-    /** @return array{editable: bool, edit_block_reason: string|null} */
+    /**
+     * @return array{editable: bool, edit_block_reason: string|null}
+     */
     private function teacherEditability(Syllabus $syllabus): array
     {
         $user = request()->user();
@@ -324,67 +345,29 @@ class SyllabusController extends Controller
      */
     private function sectionPayload(TemplateSection $section, $values, array $context): array
     {
-        $blocks = [];
-        foreach ($section->blocks as $block) {
-            $blocks[] = $this->blockPayload($block, $values, $context);
-        }
+        $variables = TemplateVariables::resolve($context);
 
         return [
             'id' => $section->id,
             'key' => $section->clave,
             'title' => $section->titulo,
-            'description' => $section->descripcion,
-            // I-195: lista plana de campos, cada uno con su tipo y configuración (el frontend usa su registro).
-            'fields' => array_values(array_merge(...array_map(fn (array $block): array => $block['fields'], $blocks ?: [['fields' => []]]))),
-            'blocks' => $blocks,
-        ];
-    }
+            'orientation' => $section->orientacion,
+            'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(function (FieldDefinition $field) use ($values, $variables): array {
+                $stored = ($values->get($field->id) instanceof FieldValue ? $values->get($field->id)->valor : $field->contenido);
+                $document = FieldDocument::normalize($field->quien_llena === FieldDefinition::INSTITUTIONAL ? $field->contenido : $stored);
 
-    /**
-     * @param  Collection<string, FieldValue>  $values
-     * @param  array<string, mixed>  $context
-     * @return array<string, mixed>
-     */
-    private function blockPayload(TemplateBlock $block, Collection $values, array $context): array
-    {
-        $fields = [];
-        foreach ($block->fields as $field) {
-            if (isset($block->configuracion['detached_fields'][$field->clave])) {
-                continue;
-            }
-            $legacy = $field->hasLegacyClass();
-            $type = $field->fieldType();
-            $config = $field->typeConfig();
-            $stored = $values->get($field->id)?->valor;
-            $fields[] = [
-                'id' => $field->id,
-                'key' => $field->clave,
-                'label' => $field->etiqueta,
-                'help' => $field->ayuda,
-                'type' => $field->tipo,
-                'options' => FieldOptions::options($field),
-                'show_when' => FieldConditions::normalize($field->mostrar_si),
-                'required' => ! ($field->fromProfile() && $field->editable_docente) && ($config['optional'] ?? false) !== true,
-                'inherited' => $field->heredado,
-                'teacher_editable' => $field->editable_docente,
-                'legacy' => $legacy,
-                'config' => $config === [] ? new \stdClass : $config,
-                // Tipos nuevos: el valor sale del registro (tabla con sus filas, automático resuelto, fijo con su contenido).
-                'value' => $legacy ? $stored : $type->toSnapshot($stored, $config, $context),
-                'document' => ! $legacy && ($config['source'] ?? null) === 'identification_card' && is_array($identification = $context['identification'] ?? null)
-                    ? IdentificationCard::document($identification)
-                    : null,
-            ];
-        }
-
-        return [
-            'id' => $block->id,
-            'title' => $block->titulo,
-            'content_type' => $block->contentType(),
-            'page_orientation' => $block->pageOrientation(),
-            'compact' => $block->isCompact(),
-            'document' => $block->configuracion['document'] ?? null,
-            'fields' => $fields,
+                return [
+                    'id' => $field->id,
+                    'key' => $field->clave,
+                    'label' => $field->etiqueta,
+                    'help' => $field->ayuda,
+                    'quien_llena' => $field->quien_llena,
+                    'teacher_editable' => $field->teacherEditable(),
+                    'required' => $field->quien_llena !== FieldDefinition::INSTITUTIONAL,
+                    'value' => $document,
+                    'document' => FieldDocument::resolve($document, $variables),
+                ];
+            })->all())->values()->all(),
         ];
     }
 }

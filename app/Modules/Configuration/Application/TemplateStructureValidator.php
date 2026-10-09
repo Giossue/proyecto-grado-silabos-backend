@@ -2,14 +2,15 @@
 
 namespace App\Modules\Configuration\Application;
 
-use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use Illuminate\Validation\ValidationException;
 
 class TemplateStructureValidator
 {
-    /** @var list<string> */
+    /**
+     * @var list<string>
+     */
     public const REQUIRED_SECTIONS = [
         'identificacion',
         'descripcion',
@@ -25,7 +26,9 @@ class TemplateStructureValidator
         'revision',
     ];
 
-    /** @throws ValidationException */
+    /**
+     * @throws ValidationException
+     */
     public function assertUsable(SyllabusTemplate $template, string $errorKey = 'template'): void
     {
         $missing = array_values(array_diff(self::REQUIRED_SECTIONS, $template->sections->pluck('clave')->all()));
@@ -46,33 +49,9 @@ class TemplateStructureValidator
                 }
 
                 foreach ($block->fields as $field) {
-                    $this->assertField($field, $block, $errorKey);
+                    FieldDocument::normalize($field->contenido, $errorKey);
                 }
             }
-        }
-    }
-
-    private function assertField(FieldDefinition $field, TemplateBlock $block, string $errorKey): void
-    {
-        $origin = $field->origen_maestro;
-        $valid = match (true) {
-            ! $field->heredado => $origin === null,
-            $origin === 'asignaturas' => $field->clave === 'asignatura' && ! $field->editable_docente,
-            $field->tipo === 'automatico' => $origin === ($field->typeConfig()['source'] ?? null) && ! $field->editable_docente,
-            $origin === FieldDefinition::ORIGIN_PROFILE => in_array($field->tipo, ['texto_libre', 'ficha'], true),
-            $origin === FieldDefinition::ORIGIN_TEACHER => $field->clave === 'formacion_experiencia' && ! $field->editable_docente,
-            default => false,
-        };
-        if (! $valid) {
-            throw ValidationException::withMessages([
-                $errorKey => "El dato automático «{$field->etiqueta}» está mal configurado. Vuelva a cargar el formato oficial UEB.",
-            ]);
-        }
-
-        if ($field->tipo === 'calculo') {
-            throw ValidationException::withMessages([
-                $errorKey => 'Los cálculos automáticos todavía no están disponibles.',
-            ]);
         }
     }
 }

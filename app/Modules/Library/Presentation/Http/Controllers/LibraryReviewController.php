@@ -19,6 +19,7 @@ use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
 use App\Modules\Syllabus\Application\BibliographySections;
 use App\Modules\Syllabus\Application\ReviewComments;
 use App\Modules\Syllabus\Application\ReviewStage;
+use App\Modules\Syllabus\Application\SnapshotDocuments;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Http\JsonResponse;
@@ -64,7 +65,7 @@ class LibraryReviewController extends Controller
         $reviewable = $state === LibraryReviews::STATE_PENDING
             && $syllabus->estado === 'en_revision'
             && ReviewStage::ofRevision($revision) === ReviewStage::LIBRARY;
-        $snapshot = $revision->fotografia;
+        $snapshot = SnapshotDocuments::present($revision->fotografia);
         $mapping = is_array($snapshot['document_mapping'] ?? null) ? $snapshot['document_mapping'] : [];
 
         return response()->json(['review' => [
@@ -96,7 +97,9 @@ class LibraryReviewController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var list<string> $reasons */
+        /**
+         * @var list<string> $reasons
+         */
         $reasons = $request->validated('reasons');
         $action->execute($revision, LibraryCommentReasons::text($reasons), $actor, $request);
 
@@ -112,7 +115,9 @@ class LibraryReviewController extends Controller
         return response()->json(['message' => 'Bibliografía aprobada. El sílabo pasa a coordinación.'], 201);
     }
 
-    /** @return list<array{comment: string, commented_at: string, commented_by: string, revision_number: int}> */
+    /**
+     * @return list<array{comment: string, commented_at: string, commented_by: string, revision_number: int}>
+     */
     public static function comments(Syllabus $syllabus): array
     {
         return array_map(fn (array $comment): array => [
@@ -141,7 +146,9 @@ class LibraryReviewController extends Controller
             ->keyBy('id');
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function summary(?Syllabus $syllabus, int $revisionNumber): array
     {
         return [

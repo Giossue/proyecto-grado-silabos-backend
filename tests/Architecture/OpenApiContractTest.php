@@ -20,7 +20,7 @@ it('mantiene el contrato OpenAPI sincronizado con las rutas públicas v1', funct
             ->and($committed['openapi'])->toBe('3.1.0')
             ->and($committed['paths'])->toHaveKeys([
                 '/api/v1/session',
-                '/api/v1/admin/template/{template}/sections',
+                '/api/v1/admin/template/{template}/structure/sections',
                 '/api/v1/admin/template/{template}/structure/sections/{section}/fields',
                 '/api/v1/admin/template/{template}/structure/fields/{field}',
                 '/api/v1/teacher/syllabi/{syllabus}',
@@ -29,8 +29,6 @@ it('mantiene el contrato OpenAPI sincronizado con las rutas públicas v1', funct
                 '/api/v1/exports/{artifact}/{format}',
             ])
             ->and($committed['paths']['/api/v1/session']['get']['security'])->toBe([['sanctumCookie' => []]])
-            ->and($committed['paths']['/api/v1/admin/template/logo']['post']['requestBody']['content'])
-            ->toHaveKey('multipart/form-data')
             ->and($committed['paths']['/api/v1/exports/{artifact}/{format}']['get']['responses']['200']['content'])
             ->toHaveKey('application/octet-stream')
             ->and($committed['paths']['/api/v1/admin/processes/{process}/{transition}']['post']['requestBody']['content']['application/json']['schema']['properties'])

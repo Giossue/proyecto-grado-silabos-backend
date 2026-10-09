@@ -2,6 +2,7 @@
 
 namespace App\Modules\AiAssistance\Application;
 
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -14,7 +15,9 @@ class BuildSyllabusChatContext
 
     public function __construct(private readonly CanonicalHasher $hasher) {}
 
-    /** @return list<array{id: string, type: string, label: string, excerpt: string, fingerprint: string, field_id: string|null, source_id: null, fragment_id: null}> */
+    /**
+     * @return list<array{id: string, type: string, label: string, excerpt: string, fingerprint: string, field_id: string|null, source_id: null, fragment_id: null}>
+     */
     public function build(Syllabus $syllabus): array
     {
         $syllabus->loadMissing('values');
@@ -40,14 +43,9 @@ class BuildSyllabusChatContext
             foreach ($section->blocks->sortBy('posicion') as $block) {
                 foreach ($block->fields->sortBy('posicion') as $field) {
                     $value = $syllabus->values->firstWhere('definicion_campo_id', $field->id)?->valor;
-                    $type = $field->fieldType()->key();
-                    $content = match (true) {
-                        in_array($type, ['texto', 'ficha'], true) && FreeText::isDocument($value) => trim(FreeText::plainText(FreeText::normalize($value))),
-                        $type === 'unidades' && is_array($value) => $this->units($value),
-                        default => '',
-                    };
+                    $content = FreeText::isDocument($value) ? trim(FreeText::plainText(FieldDocument::normalize($value))) : '';
                     if ($content !== '') {
-                        $items[] = $this->item($type === 'unidades' ? 'planificacion' : 'seccion_silabo', $field->displayName() !== '' ? $field->displayName() : $section->titulo, $content, $field->id);
+                        $items[] = $this->item('seccion_silabo', $field->displayName() !== '' ? $field->displayName() : $section->titulo, $content, $field->id);
                     }
                 }
             }
@@ -56,21 +54,9 @@ class BuildSyllabusChatContext
         return array_slice($items, 0, max(1, (int) config('ai.limits.evidence_items')));
     }
 
-    /** Resumen de la planificación ya escrita: nombre, resultado y temas de cada unidad. */
-    private function units(array $value): string
-    {
-        $lines = [];
-        foreach (array_values(array_filter($value, 'is_array')) as $index => $unit) {
-            $topics = array_filter(array_map(fn (mixed $week): string => is_array($week) && is_string($week['contenidos'] ?? null) ? trim($week['contenidos']) : '', is_array($unit['semanas'] ?? null) ? $unit['semanas'] : []));
-            $lines[] = 'Unidad '.($index + 1).': '.trim((string) ($unit['nombre'] ?? ''))
-                .(trim((string) ($unit['resultado'] ?? '')) !== '' ? ' — Resultado: '.trim((string) $unit['resultado']) : '')
-                .($topics !== [] ? ' — Temas: '.implode('; ', $topics) : '');
-        }
-
-        return implode("\n", $lines);
-    }
-
-    /** @return array{id: string, type: string, label: string, excerpt: string, fingerprint: string, field_id: string|null, source_id: null, fragment_id: null} */
+    /**
+     * @return array{id: string, type: string, label: string, excerpt: string, fingerprint: string, field_id: string|null, source_id: null, fragment_id: null}
+     */
     private function item(string $type, string $label, string $content, ?string $fieldId = null): array
     {
         $excerpt = mb_substr($content, 0, (int) config('ai.limits.evidence_excerpt_characters'));

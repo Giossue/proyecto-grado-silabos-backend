@@ -6,7 +6,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
 use App\Modules\Operations\Application\Actions\ScheduleInternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Closure;
@@ -169,11 +168,6 @@ final class InProgressWork
             ->all();
     }
 
-    /**
-     * Un docente nuevo empieza el sílabo del paralelo desde cero: se borra el sílabo
-     * anterior con todo su historial, sin importar su estado, y se genera uno en blanco.
-     * Debe llamarse dentro de una transacción. Devuelve cuántos sílabos se reiniciaron.
-     */
     public function restartForParallel(string $parallelId): int
     {
         $syllabi = Syllabus::query()
@@ -193,10 +187,6 @@ final class InProgressWork
         return $syllabi->count();
     }
 
-    /**
-     * Borra un sílabo con todo su historial y crea el nuevo, sin iniciar, de su paralelo en la
-     * misma convocatoria. Debe llamarse dentro de una transacción.
-     */
     public function restartSyllabus(Syllabus $syllabus): Syllabus
     {
         $syllabus->loadMissing(['convocation.process', 'parallel']);
@@ -212,9 +202,6 @@ final class InProgressWork
     }
 
     /**
-     * Borra los sílabos indicados con todo su historial (revisiones, aprobaciones, documentos,
-     * firmas y envíos a biblioteca), sin importar su estado. Debe llamarse dentro de una transacción.
-     *
      * @param  list<string>  $syllabusIds
      */
     public function purge(array $syllabusIds): void
@@ -224,7 +211,9 @@ final class InProgressWork
         }
     }
 
-    /** @param list<string> $syllabusIds */
+    /**
+     * @param  list<string>  $syllabusIds
+     */
     private function deleteAggregates(array $syllabusIds): void
     {
         DB::statement("SET LOCAL app.reinicio_institucional = 'on'");
@@ -258,7 +247,9 @@ final class InProgressWork
         Syllabus::query()->whereKey($syllabusIds)->delete();
     }
 
-    /** @param  list<string>  $careerIds */
+    /**
+     * @param  list<string>  $careerIds
+     */
     public function refreshIdentification(array $careerIds): int
     {
         if ($careerIds === []) {
@@ -280,17 +271,6 @@ final class InProgressWork
             data_set($context, 'parallel.shift', $scheduled->jornada);
             data_set($context, 'scheduled_subject.campus', $scheduled->campus_programacion);
             data_set($context, 'scheduled_subject.modality', $scheduled->modalidad->label());
-            $syllabus->values()->with('field')->get()
-                ->filter(fn (FieldValue $value): bool => $value->field->origen_maestro === 'asignaturas')
-                ->each(function (FieldValue $value) use ($scheduled): void {
-                    $current = is_array($value->valor) ? $value->valor : [];
-                    $value->update(['valor' => [
-                        ...$current,
-                        'campus' => $scheduled->campus_programacion,
-                        'modalidad' => $scheduled->modalidad->label(),
-                    ]]);
-                });
-
             $syllabus->contexto_academico = $context;
             $syllabus->save();
         }
@@ -332,17 +312,6 @@ final class InProgressWork
             $syllabus->contexto_academico = $context;
             $syllabus->save();
 
-            $syllabus->values()->with('field')->get()
-                ->filter(fn (FieldValue $value): bool => $value->field->origen_maestro === 'asignaturas')
-                ->each(function (FieldValue $value) use ($subject): void {
-                    $current = is_array($value->valor) ? $value->valor : [];
-                    $value->update(['valor' => [
-                        ...$current,
-                        'codigo' => $subject->codigo_asignatura,
-                        'nombre' => $subject->nombre,
-                        'ciclo' => $subject->ciclo,
-                    ]]);
-                });
         }
 
         return $syllabi->count();

@@ -22,7 +22,9 @@ class CopySyllabusContent
         private readonly RecordAuditEvent $audit,
     ) {}
 
-    /** @return Collection<int, Syllabus> */
+    /**
+     * @return Collection<int, Syllabus>
+     */
     public static function sources(Syllabus $syllabus, User $teacher): Collection
     {
         if (! in_array($syllabus->estado, ['sin_iniciar', 'borrador'], true)) {
@@ -56,8 +58,7 @@ class CopySyllabusContent
 
             $fieldIds = FieldDefinition::query()
                 ->where('plantilla_id', SyllabusTemplate::institutional()->id)
-                ->where('editable_docente', true)
-                ->where('tipo', '!=', 'calculo')
+                ->where('quien_llena', FieldDefinition::TEACHER)
                 ->pluck('id');
             $sourceValues = FieldValue::query()
                 ->where('silabo_id', $source->id)

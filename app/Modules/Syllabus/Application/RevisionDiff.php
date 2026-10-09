@@ -9,7 +9,9 @@ class RevisionDiff
 {
     public function __construct(private readonly CanonicalHasher $hasher) {}
 
-    /** @return array{before_revision: int, after_revision: int, changed_fields: int, changes: list<array<string, mixed>>} */
+    /**
+     * @return array{before_revision: int, after_revision: int, changed_fields: int, changes: list<array<string, mixed>>}
+     */
     public function compare(SyllabusRevision $before, SyllabusRevision $after): array
     {
         $beforeFields = $this->flatten($before->fotografia);
@@ -29,7 +31,7 @@ class RevisionDiff
                 'section_title' => $new['section_title'] ?? $old['section_title'] ?? '',
                 'field_key' => $new['field_key'] ?? $old['field_key'] ?? '',
                 'label' => $new['label'] ?? $old['label'] ?? '',
-                'type' => $new['type'] ?? $old['type'] ?? '',
+                'quien_llena' => $new['quien_llena'] ?? $old['quien_llena'] ?? 'docente',
                 'change' => $old === null ? 'added' : ($new === null ? 'removed' : 'modified'),
                 'before' => $old === null ? null : ['value' => $old['value']],
                 'after' => $new === null ? null : ['value' => $new['value']],
@@ -54,7 +56,7 @@ class RevisionDiff
         foreach ($this->arrayList($snapshot['sections'] ?? null) as $section) {
             $sectionKey = is_string($section['key'] ?? null) ? $section['key'] : '';
             $sectionTitle = is_string($section['title'] ?? null) ? $section['title'] : $sectionKey;
-            foreach ($this->arrayList($section['blocks'] ?? null) as $block) {
+            foreach (isset($section['fields']) ? [$section] : $this->arrayList($section['blocks'] ?? null) as $block) {
                 foreach ($this->arrayList($block['fields'] ?? null) as $field) {
                     $fieldKey = is_string($field['key'] ?? null) ? $field['key'] : '';
                     if ($sectionKey === '' || $fieldKey === '') {
@@ -65,7 +67,7 @@ class RevisionDiff
                         'section_title' => $sectionTitle,
                         'field_key' => $fieldKey,
                         'label' => is_string($field['label'] ?? null) ? $field['label'] : $fieldKey,
-                        'type' => is_string($field['type'] ?? null) ? $field['type'] : '',
+                        'quien_llena' => $field['quien_llena'] ?? 'docente',
                         'value' => $field['value'] ?? null,
                     ];
                 }
@@ -75,7 +77,9 @@ class RevisionDiff
         return $fields;
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * @return list<array<string, mixed>>
+     */
     private function arrayList(mixed $value): array
     {
         if (! is_array($value)) {

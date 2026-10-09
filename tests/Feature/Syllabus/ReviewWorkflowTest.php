@@ -5,14 +5,16 @@ namespace Tests\Feature\Syllabus;
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Configuration\Application\Actions\SaveTemplateDocument;
-use App\Modules\Configuration\Application\TemplateDocumentDefaults;
+use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
+use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
+use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Application\RevisionDiff;
+use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -24,6 +26,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use LogicException;
@@ -72,41 +75,21 @@ class ReviewWorkflowTest extends TestCase
         $this->librarianContext = $this->librarian->roleAssignments()->firstOrFail();
     }
 
-    public function test_custom_design_and_variables_are_frozen_with_the_submitted_revision(): void
+    public function test_documents_and_variables_are_frozen_with_the_submitted_revision(): void
     {
-        $syllabus = $this->createValidDraft();
-        $block = SyllabusTemplate::institutional()->fields()->where('clave', 'asignatura')->firstOrFail()->block;
-        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()
-            ->assertJson(fn (Assert $page) => $page->etc()
-                ->where('syllabus.template_variables.nombre_asignatura', 'Arquitectura de Software')
-                ->where('syllabus.template_variables.correo_docente', 'docente@silabos.test')
-                ->has('syllabus.sections.0.blocks.0.document'));
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
-            'version_bloqueo' => $syllabus->version_bloqueo, 'idempotency_key' => (string) Str::uuid(),
-        ])->assertSuccessful();
-        $revision = SyllabusRevision::query()->firstOrFail();
+        [$syllabus, $revision] = $this->submitValidDraft();
         $snapshot = $revision->fotografia;
-        $this->assertEquals($block->configuracion['document'], $snapshot['sections'][0]['blocks'][0]['document']);
-        $this->assertSame('Arquitectura de Software', $snapshot['template_variables']['nombre_asignatura']);
-        $this->assertSame('docente@silabos.test', $snapshot['template_variables']['correo_docente']);
         $fingerprint = $revision->huella_sha256;
+        $this->assertSame('Arquitectura de Software', $snapshot['template_variables']['nombre_asignatura']);
+        $field = SyllabusTemplate::institutional()->fields()->where('clave', 'asignatura')->firstOrFail();
         $syllabus->convocation->process->update(['estado' => 'cerrado']);
-        $changed = TemplateDocumentDefaults::identification();
-        $changed['content'][] = ['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Cambio futuro']]];
-        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.template.blocks.document.update', [SyllabusTemplate::institutional(), $block]), [
-            'document' => $changed, 'fingerprint' => SaveTemplateDocument::fingerprint($block),
-        ])->assertJsonValidationErrors('document');
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.template.structure.fields.update', [SyllabusTemplate::institutional(), $field]), [
+            'content' => FreeText::fromText('Texto institucional futuro'),
+        ])->assertOk();
         $this->assertSame($snapshot, $revision->fresh()->fotografia);
         $this->assertSame($fingerprint, $revision->fresh()->huella_sha256);
-        $objective = SyllabusTemplate::institutional()->fields()->where('clave', 'objetivo_general')->firstOrFail();
-        $objectiveBlock = $objective->block;
-        $this->patchJson(route('api.v1.admin.template.blocks.document.update', [SyllabusTemplate::institutional(), $objectiveBlock]), [
-            'document' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Texto fijo futuro']]]]],
-            'fingerprint' => SaveTemplateDocument::fingerprint($objectiveBlock),
-        ])->assertSuccessful();
-        $this->assertFalse($objective->fresh()->editable_docente);
-        $this->assertTrue($syllabus->values()->where('definicion_campo_id', $objective->id)->exists());
-        $this->assertSame($snapshot, $revision->fresh()->fotografia);
+        $payload = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
+        $this->assertEquals($snapshot['sections'][0]['fields'][0]['value'], $payload->json('syllabus.sections.0.fields.0.document'));
     }
 
     public function test_custom_design_change_never_purges_an_approved_syllabus(): void
@@ -231,9 +214,9 @@ class ReviewWorkflowTest extends TestCase
 
         $fields = collect($this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))->assertOk()->json('revision.snapshot.sections'))
             ->flatMap(fn ($section) => $section['fields']);
-        $automatic = $fields->firstWhere('type', 'automatico');
+        $automatic = $fields->firstWhere('key', 'asignatura');
         $this->assertSame('table', $automatic['document']['content'][0]['type']);
-        $this->assertArrayNotHasKey('document', $fields->firstWhere('type', 'texto'));
+        $this->assertSame('doc', $fields->firstWhere('key', 'bibliografia')['document']['type']);
     }
 
     public function test_cp_f_review_workspace_enforces_role_and_record_scope(): void
@@ -279,12 +262,11 @@ class ReviewWorkflowTest extends TestCase
         $freeTextField = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
         $firstSnapshot = $firstRevision->fotografia;
 
-        // I-173: mientras biblioteca revisa, coordinación no decide.
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $firstRevision), [
             'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
         ])->assertUnprocessable()->assertJsonPath('errors.revision.0', 'La revisión no está en su etapa; otro revisor la tiene ahora.');
         $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $firstRevision))->assertCreated();
-        // I-177: un comentario general, sin observaciones por campo.
+
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $firstRevision), [
             'justification' => 'Corto',
         ])->assertJsonValidationErrors('justification');
@@ -380,7 +362,6 @@ class ReviewWorkflowTest extends TestCase
     {
         [$syllabus, $revision] = $this->submitValidDraft();
 
-        // Solo se elimina un sílabo aprobado; antes de eso se reinicia.
         $this->actingAsCoordinator()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
 
         $this->approveThroughChain($revision);
@@ -410,7 +391,6 @@ class ReviewWorkflowTest extends TestCase
         $approval = Approval::query()->firstOrFail();
         $approvedAt = $approval->aprobado_en;
 
-        // La aprobación es totalmente inmutable, en el modelo y en la base.
         try {
             $approval->update(['aprobado_en' => now()->addDay()]);
             $this->fail('El modelo permitió modificar una aprobación.');
@@ -430,7 +410,6 @@ class ReviewWorkflowTest extends TestCase
             $this->assertDatabaseCount('aprobaciones', 1);
         }
 
-        // La solicitud de corrección de la revisión se escribe una vez y completa.
         $this->assertFalse($revision->fresh()->hasCorrectionRequest());
         try {
             DB::transaction(fn () => DB::table('revisiones_silabo')->where('revision_silabo_id', $revision->id)->update(['correccion_etapa' => 'coordinacion']));
@@ -463,7 +442,7 @@ class ReviewWorkflowTest extends TestCase
     {
         [$syllabus, $revision] = $this->submitValidDraft();
         $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
-        // I-186: la bibliografía aprobada avisa al docente (avance) y al coordinador (le toca revisar).
+
         $this->assertWorkflowNotification($syllabus->id, 'biblioteca.verificado');
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
             'justification' => 'Falta alinear los resultados de aprendizaje.',
@@ -539,7 +518,9 @@ class ReviewWorkflowTest extends TestCase
         }
     }
 
-    /** @return array{Syllabus, SyllabusRevision} */
+    /**
+     * @return array{Syllabus, SyllabusRevision}
+     */
     private function submitValidDraft(): array
     {
         $syllabus = $this->createValidDraft();
@@ -555,7 +536,7 @@ class ReviewWorkflowTest extends TestCase
     {
         $syllabus = $this->createStartedDraft();
         $fields = FieldDefinition::query()
-            ->where('editable_docente', true)
+            ->where('quien_llena', 'docente')
             ->get();
         foreach ($fields as $field) {
             $this->actingAsTeacher()->patchJson(
@@ -567,27 +548,12 @@ class ReviewWorkflowTest extends TestCase
         return $syllabus->fresh();
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     private function validFieldPayload(FieldDefinition $field, int $lockVersion): array
     {
-        $optionValues = collect($field->opciones ?? [])->map(function (mixed $option): string {
-            if (is_array($option)) {
-                return (string) ($option['value'] ?? 'opcion');
-            }
-
-            return (string) $option;
-        })->filter()->values();
-
-        return match (true) {
-            in_array($field->tipo, ['texto_libre', 'texto', 'ficha'], true) => ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")],
-            in_array($field->tipo, ['tabla', 'unidades'], true) => ['version_bloqueo' => $lockVersion, 'value' => $this->filledTableValue($field)],
-            $field->tipo === 'booleano' => ['version_bloqueo' => $lockVersion, 'value' => true],
-            $field->tipo === 'numero' => ['version_bloqueo' => $lockVersion, 'value' => 1],
-            $field->tipo === 'fecha' => ['version_bloqueo' => $lockVersion, 'value' => now()->toDateString()],
-            $field->tipo === 'seleccion_unica' => ['version_bloqueo' => $lockVersion, 'value' => $optionValues->first()],
-            $field->tipo === 'seleccion_multiple' => ['version_bloqueo' => $lockVersion, 'value' => [$optionValues->first()]],
-            default => ['version_bloqueo' => $lockVersion, 'value' => "Contenido académico {$field->clave}"],
-        };
+        return ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")];
     }
 
     public function test_coordinator_resets_a_submitted_syllabus_so_the_teacher_starts_over(): void
@@ -603,8 +569,8 @@ class ReviewWorkflowTest extends TestCase
         $fresh = $syllabus->fresh();
         $this->assertSame('sin_iniciar', $fresh->estado);
         $this->assertSame(0, $fresh->version_bloqueo);
-        $fresh->values()->whereHas('field', fn ($field) => $field->where('heredado', false))->with('field')->get()
-            ->each(fn ($value) => $this->assertTrue($value->field->fieldType()->isEmpty($value->valor, $value->field->typeConfig())));
+        $fresh->values()->whereHas('field', fn ($field) => $field->where('quien_llena', 'docente'))->with('field')->get()
+            ->each(fn ($value) => $this->assertEquals($value->field->contenido, $value->valor));
         $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
         $this->assertWorkflowNotification($syllabus->id, 'silabo.reiniciado');
@@ -639,6 +605,102 @@ class ReviewWorkflowTest extends TestCase
 
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('aprobaciones', 0);
+    }
+
+    public function test_pdf_template_migration_preserves_approval_and_restarts_unapproved_evidence(): void
+    {
+        [$approved, $revision] = $this->submitValidDraft();
+        $this->approveThroughChain($revision);
+        $snapshot = $revision->fotografia;
+        $fingerprint = $revision->huella_sha256;
+        $parallel = $approved->parallel->replicate();
+        $parallel->codigo = 'B';
+        $parallel->save();
+        TeacherAssignment::query()->create([
+            'asignacion_rol_id' => $this->teacherContext->id, 'paralelo_id' => $parallel->id, 'activo' => true,
+        ]);
+        app(GenerateConvocationSyllabi::class)->generateForParallel($approved->convocation, $parallel);
+        $pending = Syllabus::query()->where('paralelo_id', $parallel->id)->firstOrFail();
+        $pending->update(['estado' => 'borrador', 'iniciado_en' => now()]);
+        foreach ($approved->values()->get() as $value) {
+            $pending->values()->where('definicion_campo_id', $value->definicion_campo_id)->update(['valor' => $value->valor]);
+        }
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $pending), [
+            'version_bloqueo' => 0, 'idempotency_key' => (string) Str::uuid(),
+        ])->assertOk();
+        $pendingRevision = $pending->revisions()->firstOrFail()->id;
+        $this->restorePreviousFieldColumns();
+        $migration = require database_path('migrations/2026_10_13_000219_replace_template_with_field_documents.php');
+        $migration->up();
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $approved->id, 'estado_silabo' => 'aprobado']);
+        $this->assertSame($snapshot, $revision->fresh()->fotografia);
+        $this->assertSame($fingerprint, $revision->fresh()->huella_sha256);
+        $this->assertDatabaseHas('aprobaciones', ['revision_silabo_id' => $revision->id]);
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $pending->id]);
+        $this->assertDatabaseMissing('revisiones_silabo', ['revision_silabo_id' => $pendingRevision]);
+        $replacement = Syllabus::query()->where('paralelo_id', $parallel->id)->firstOrFail();
+        $this->assertSame('sin_iniciar', $replacement->estado);
+        $this->assertSame(0, $replacement->version_bloqueo);
+        $this->assertCount(12, SyllabusTemplate::institutional()->sections);
+        $this->assertFalse(Schema::hasColumn('definiciones_campo', 'tipo_definicion_campo'));
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $approved))->assertOk()
+            ->assertJsonPath('syllabus.sections.0.fields.0.key', $snapshot['sections'][0]['fields'][0]['key']);
+        $description = SyllabusTemplate::institutional()->fields()->where('clave', 'descripcion')->firstOrFail();
+        $this->assertStringContainsString('Ficha de prueba', FreeText::plainText($replacement->values()->where('definicion_campo_id', $description->id)->firstOrFail()->valor));
+    }
+
+    public function test_pdf_template_migration_preserves_a_reopened_draft_and_its_approved_evidence(): void
+    {
+        [$syllabus, $revision] = $this->submitValidDraft();
+        $this->approveThroughChain($revision);
+        $snapshot = $revision->fotografia;
+        DB::statement("SET LOCAL app.reinicio_institucional = 'on'");
+        $syllabus->update(['estado' => 'borrador']);
+        DB::statement("SET LOCAL app.reinicio_institucional = 'off'");
+        $field = $this->editableScalarField($syllabus);
+        $this->restorePreviousFieldColumns();
+        $migration = require database_path('migrations/2026_10_13_000219_replace_template_with_field_documents.php');
+        $migration->up();
+        $this->assertSame($snapshot, $revision->fresh()->fotografia);
+        $this->assertSame('borrador', $syllabus->fresh()->estado);
+        $this->assertFalse($field->fresh()->getAttribute('vigente_en_plantilla'));
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+            'value' => $this->freeTextValue('Contenido conservado tras reapertura'),
+        ])->assertOk();
+        $this->assertSame($snapshot, $revision->fresh()->fotografia);
+        $detail = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
+        $this->assertStringContainsString('Contenido conservado tras reapertura', json_encode($detail->json('syllabus.sections'), JSON_THROW_ON_ERROR));
+        $this->assertSame(8, app(SyllabusSnapshot::class)->build($syllabus->fresh())['schema_version']);
+    }
+
+    private function restorePreviousFieldColumns(): void
+    {
+        $definitions = FieldDefinition::query()->get();
+        DB::unprepared(<<<'SQL'
+            ALTER TABLE definiciones_campo
+                ADD COLUMN tipo_definicion_campo varchar(40) DEFAULT 'texto',
+                ADD COLUMN clase_anterior_definicion_campo varchar(40),
+                ADD COLUMN heredado_definicion_campo boolean DEFAULT false,
+                ADD COLUMN origen_dato_definicion_campo varchar(100),
+                ADD COLUMN editable_docente_definicion_campo boolean DEFAULT true,
+                ADD COLUMN opciones_definicion_campo jsonb,
+                ADD COLUMN condicion_definicion_campo jsonb;
+            SQL);
+        foreach ($definitions as $field) {
+            DB::table('definiciones_campo')->where('definicion_campo_id', $field->id)->update([
+                'tipo_definicion_campo' => match ($field->quien_llena) {
+                    'institucional' => 'fijo', 'coordinacion' => 'ficha', default => 'texto'
+                },
+                'origen_dato_definicion_campo' => $field->quien_llena === 'coordinacion' ? 'ficha' : null,
+                'opciones_definicion_campo' => json_encode(['content' => $field->contenido], JSON_THROW_ON_ERROR),
+            ]);
+        }
+        DB::unprepared(<<<'SQL'
+            ALTER TABLE definiciones_campo DROP CONSTRAINT definiciones_campo_responsable_check, DROP CONSTRAINT definiciones_campo_documento_check,
+                DROP COLUMN quien_llena_definicion_campo, DROP COLUMN contenido_definicion_campo;
+            ALTER TABLE secciones_plantilla DROP CONSTRAINT secciones_plantilla_orientacion_check, DROP COLUMN orientacion_seccion_plantilla;
+            SQL);
     }
 
     private function assertWorkflowNotification(string $syllabusId, string $eventType): void
@@ -677,9 +739,9 @@ class ReviewWorkflowTest extends TestCase
     private function editableScalarField(Syllabus $syllabus): FieldDefinition
     {
         return FieldDefinition::query()
-            ->where('heredado', false)
-            ->where('editable_docente', true)
-            ->where('clave', 'discapacidad_adaptacion')
+            ->where('quien_llena', 'docente')
+            ->where('quien_llena', 'docente')
+            ->where('clave', 'discapacidad')
             ->firstOrFail();
     }
 

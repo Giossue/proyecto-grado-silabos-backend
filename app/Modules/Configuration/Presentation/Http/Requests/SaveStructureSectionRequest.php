@@ -8,7 +8,9 @@ use Illuminate\Validation\Rule;
 
 class SaveStructureSectionRequest extends ManageTemplatesRequest
 {
-    /** @return array<string, list<mixed>> */
+    /**
+     * @return array<string, list<mixed>>
+     */
     public function rules(): array
     {
         $template = $this->route('template');
@@ -17,6 +19,7 @@ class SaveStructureSectionRequest extends ManageTemplatesRequest
 
         $rules = [
             'title' => [$sectionId === null && $this->filled('design') ? 'nullable' : 'required', 'string', 'max:180'],
+            'orientation' => ['sometimes', Rule::in(['portrait', 'landscape'])],
             'position' => ['sometimes', 'integer', 'min:1'],
         ];
         if ($sectionId === null) {
@@ -34,13 +37,17 @@ class SaveStructureSectionRequest extends ManageTemplatesRequest
         return $rules;
     }
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     public function messages(): array
     {
         return ['design.in' => 'El diseño oficial elegido no existe.'];
     }
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     public function attributes(): array
     {
         return ['design' => 'diseño oficial'];

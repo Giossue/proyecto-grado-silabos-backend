@@ -4,7 +4,9 @@ namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
 use Illuminate\Contracts\Routing\UrlRoutable;
 
-/** @property-read EmbeddedTemplateCollection<int, TemplateBlock> $blocks */
+/**
+ * @property-read EmbeddedTemplateCollection<int, TemplateBlock> $blocks
+ */
 final class TemplateSection implements UrlRoutable
 {
     public string $id;
@@ -19,13 +21,19 @@ final class TemplateSection implements UrlRoutable
 
     public int $posicion;
 
-    /** @param array<string, mixed> $data */
+    public string $orientacion;
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function __construct(public readonly SyllabusTemplate $template, private array $data)
     {
         $this->hydrate($data);
     }
 
-    /** @return EmbeddedTemplateCollection<int, TemplateBlock> */
+    /**
+     * @return EmbeddedTemplateCollection<int, TemplateBlock>
+     */
     public function blocks(): EmbeddedTemplateCollection
     {
         return new EmbeddedTemplateCollection(array_map(
@@ -39,7 +47,9 @@ final class TemplateSection implements UrlRoutable
         return $name === 'blocks' ? $this->blocks() : null;
     }
 
-    /** @param array<string, mixed> $attributes */
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
     public function update(array $attributes): bool
     {
         $fresh = $this->template->fresh()->updateSectionDocument($this->id, $attributes);
@@ -60,7 +70,9 @@ final class TemplateSection implements UrlRoutable
         return $this->template->fresh()->sectionOrFail($this->id);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array<string, mixed>
+     */
     public function toDocument(): array
     {
         return $this->data;
@@ -91,7 +103,9 @@ final class TemplateSection implements UrlRoutable
         return $this->id;
     }
 
-    /** @param array<string, mixed> $data */
+    /**
+     * @param  array<string, mixed>  $data
+     */
     private function hydrate(array $data): void
     {
         $this->data = $data;
@@ -100,6 +114,7 @@ final class TemplateSection implements UrlRoutable
         $this->clave = (string) $data['clave'];
         $this->titulo = (string) $data['titulo'];
         $this->descripcion = is_string($data['descripcion'] ?? null) ? $data['descripcion'] : null;
+        $this->orientacion = (string) ($data['orientacion'] ?? 'portrait');
         $this->posicion = (int) ($data['posicion'] ?? 1);
     }
 }

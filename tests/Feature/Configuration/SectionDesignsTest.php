@@ -58,8 +58,8 @@ class SectionDesignsTest extends TestCase
             $this->assertFalse($design['in_use']);
         }
         $identification = collect($designs)->firstWhere('key', 'identificacion');
-        $this->assertSame(['automatico', 'texto', 'texto', 'texto'], array_column($identification['fields'], 'type'));
-        $this->assertSame('Identificación Institucional', $identification['title']);
+        $this->assertSame(['institucional', 'docente', 'docente'], array_column($identification['fields'], 'quien_llena'));
+        $this->assertSame('Identificación institucional', $identification['title']);
     }
 
     public function test_adding_a_design_creates_its_section_with_every_field_defined(): void
@@ -68,23 +68,20 @@ class SectionDesignsTest extends TestCase
 
         $template = $this->template->fresh();
         $section = $template->sections()->first();
-        $this->assertSame('1. Identificación Institucional', $section->titulo);
+        $this->assertSame('1. Identificación institucional', $section->titulo);
         $this->assertSame('identificacion', $section->clave);
         $fields = FieldDefinition::query()->where('plantilla_id', $template->id)->get()->keyBy('clave');
-        $this->assertEqualsCanonicalizing(['asignatura', 'discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia'], $fields->keys()->all());
-        $this->assertSame('automatico', $fields['asignatura']->fieldType()->key());
-        $this->assertSame(['source' => 'identification_card'], $fields['asignatura']->typeConfig());
-        $this->assertTrue($fields['asignatura']->heredado);
-        foreach (['discapacidad_tipo', 'discapacidad_adaptacion', 'formacion_experiencia'] as $key) {
-            $this->assertSame('texto', $fields[$key]->fieldType()->key());
-            $this->assertSame($key === 'formacion_experiencia' ? ['inside' => 'identification_card'] : ['inside' => 'identification_card', 'optional' => true], $fields[$key]->typeConfig());
-            $this->assertSame($key !== 'formacion_experiencia', $fields[$key]->editable_docente);
+        $this->assertEqualsCanonicalizing(['asignatura', 'discapacidad', 'formacion_experiencia'], $fields->keys()->all());
+        $this->assertSame('institucional', $fields['asignatura']->quien_llena);
+        $this->assertSame('table', $fields['asignatura']->contenido['content'][0]['type']);
+        foreach (['discapacidad', 'formacion_experiencia'] as $key) {
+            $this->assertSame('docente', $fields[$key]->quien_llena);
         }
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.seccion_creada']);
 
         $payload = $this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk();
         $this->assertTrue(collect($payload->json('sectionDesigns'))->firstWhere('key', 'identificacion')['in_use']);
-        $this->assertCount(4, $payload->json('template.sections.0.blocks'));
+        $this->assertCount(3, $payload->json('template.sections.0.fields'));
     }
 
     public function test_each_design_is_added_once_and_unknown_designs_are_rejected(): void
@@ -122,8 +119,7 @@ class SectionDesignsTest extends TestCase
         $sections = $this->template->fresh()->sections();
         $this->assertCount(12, $sections);
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get();
-        $this->assertSame([], $fields->filter(fn ($field) => $field->hasLegacyClass())->all());
-        $this->assertSame(['automatico' => 1, 'ficha' => 13, 'fijo' => 4, 'texto' => 3, 'unidades' => 1], $fields->countBy(fn ($field) => $field->fieldType()->key())->sortKeys()->all());
+        $this->assertSame(['coordinacion' => 6, 'docente' => 10, 'institucional' => 5], $fields->countBy('quien_llena')->sortKeys()->all());
         $this->assertSame(
             collect(config('syllabus_template.designs'))->pluck('title')->values()->map(fn ($title, $index) => ($index + 1).'. '.$title)->all(),
             $sections->sortBy('posicion')->pluck('titulo')->values()->all(),
@@ -136,7 +132,7 @@ class SectionDesignsTest extends TestCase
             $this->addDesign($key)->assertCreated();
         }
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get()->keyBy('clave');
-        $text = fn (string $key): string => FreeText::plainText($fields[$key]->typeConfig()['content']);
+        $text = fn (string $key): string => FreeText::plainText($fields[$key]->contenido);
 
         foreach (['INDICADORES', 'PRIMER PARCIAL', 'SEGUNDO PARCIAL', 'PONDERACIÓN', '2.5 PUNTOS', '1.25', '3.5 PUNTOS', '1.75', '10 PUNTOS', '5 PUNTOS'] as $expected) {
             $this->assertStringContainsString($expected, $text('indicadores_evaluacion'));
@@ -147,7 +143,7 @@ class SectionDesignsTest extends TestCase
         foreach (['Puntualidad:', 'Acceso a la Video Conferencia:', 'Registro de Asistencia:', 'Trabajo en Equipo:', 'Dentro de los estándares de comportamiento', 'Se considera inadmisible lo siguiente:', 'Las violaciones serán analizadas'] as $expected) {
             $this->assertStringContainsString($expected, $text('conducta_etica'));
         }
-        foreach (['Firma:', 'Nombre:', 'Bibliotecario', 'Fecha de entrega:', 'Fecha de revisión:', 'Fecha de verificación:'] as $expected) {
+        foreach (['Elaborado por', 'Revisado y aprobado por', 'Bibliografía verificada por', 'Fecha de entrega:', 'Fecha de aprobación:'] as $expected) {
             $this->assertStringContainsString($expected, $text('firmas'));
         }
     }

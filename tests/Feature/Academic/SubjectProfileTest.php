@@ -37,7 +37,7 @@ class SubjectProfileTest extends TestCase
         $response = $this->getJson(route('api.v1.academic.subjects.profile.show', $subject))->assertOk();
         $keys = array_column($response->json('fields'), 'key');
         $this->assertContains('descripcion', $keys);
-        $this->assertContains('bibliografia', $keys);
+        $this->assertNotContains('bibliografia', $keys);
         $this->assertNotContains('formacion_experiencia', $keys);
         $this->assertFalse($response->json('complete'));
         $this->assertSame([], $response->json('values'));
@@ -46,7 +46,7 @@ class SubjectProfileTest extends TestCase
     public function test_coordinator_and_administrator_save_values_and_the_profile_completes(): void
     {
         $subject = Subject::query()->firstOrFail();
-        $fields = FieldDefinition::query()->where('origen_dato_definicion_campo', 'ficha')->get();
+        $fields = FieldDefinition::query()->where('quien_llena', 'coordinacion')->get();
         $values = $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->id => FreeText::fromText("Texto de {$field->clave}")])->all();
 
         $this->asRole('coordinador@silabos.test');
@@ -84,7 +84,7 @@ class SubjectProfileTest extends TestCase
     public function test_only_profile_fields_and_valid_documents_are_accepted(): void
     {
         $subject = Subject::query()->firstOrFail();
-        $profileField = FieldDefinition::query()->where('origen_dato_definicion_campo', 'ficha')->firstOrFail();
+        $profileField = FieldDefinition::query()->where('quien_llena', 'coordinacion')->firstOrFail();
         $teacherField = FieldDefinition::query()->where('clave', 'formacion_experiencia')->firstOrFail();
         $this->asRole('coordinador@silabos.test');
 
@@ -101,9 +101,9 @@ class SubjectProfileTest extends TestCase
         $template = SyllabusTemplate::query()->firstOrFail();
         $section = $template->sections->first();
         $this->asRole('admin@silabos.test');
-        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
+        $this->postJson(route('api.v1.admin.template.structure.fields.store', [$template, $section->id]), [
             'section_id' => $section->id, 'key' => 'vinculacion', 'label' => 'Vinculación con la sociedad',
-            'content_type' => 'free_text', 'from_profile' => true, 'teacher_editable' => false,
+            'quien_llena' => 'coordinacion', 'content' => FreeText::fromText(''),
         ])->assertSuccessful();
 
         $subject = Subject::query()->firstOrFail();
@@ -112,57 +112,22 @@ class SubjectProfileTest extends TestCase
         $this->assertContains('vinculacion', array_column($fields, 'key'));
     }
 
-    public function test_a_catalog_template_adds_a_ready_made_field_and_its_initial_content_reaches_new_syllabi(): void
-    {
-        $template = SyllabusTemplate::query()->firstOrFail();
-        $section = $template->sections->first();
-        $this->asRole('admin@silabos.test');
-        $this->assertContains('distribucion', array_column($this->getJson(route('api.v1.admin.template.show', $template))->json('presets'), 'key'));
-
-        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
-            'section_id' => $section->id, 'key' => 'ignorada', 'label' => '', 'content_type' => 'free_text', 'preset' => 'distribucion',
-        ])->assertSuccessful();
-        $field = FieldDefinition::query()->where('clave', 'unidades_2')->firstOrFail();
-        $this->assertSame('Distribución y planificación (16 semanas)', $field->etiqueta);
-        $this->assertFalse($field->heredado);
-        $block = $template->fresh()->block($field->campo_plantilla_id);
-        $table = $block->configuracion['initial_content']['content'][0];
-        $this->assertSame('table', $table['type']);
-        $this->assertCount(17, $table['content']);
-        $this->assertSame('Semana', $table['content'][0]['content'][0]['content'][0]['content'][0]['text']);
-
-        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
-            'section_id' => $section->id, 'key' => 'x', 'content_type' => 'free_text', 'preset' => 'bibliografia_basica',
-        ])->assertSuccessful();
-        $bibliography = FieldDefinition::query()->where('clave', 'bibliografia_2')->firstOrFail();
-        $this->assertTrue($bibliography->heredado);
-        $this->assertSame('ficha', $bibliography->origen_maestro);
-        $this->assertTrue($bibliography->editable_docente);
-
-        $this->postJson(route('api.v1.admin.template.fields.store', $template), [
-            'section_id' => $section->id, 'key' => 'x', 'content_type' => 'free_text', 'preset' => 'inventada',
-        ])->assertUnprocessable()->assertJsonValidationErrors('preset');
-    }
-
     public function test_the_initial_content_of_a_field_can_be_modified_or_removed(): void
     {
         $template = SyllabusTemplate::query()->firstOrFail();
-        $field = FieldDefinition::query()->where('clave', 'discapacidad_tipo')->firstOrFail();
+        $field = FieldDefinition::query()->where('clave', 'discapacidad')->firstOrFail();
         $this->asRole('admin@silabos.test');
-        $payload = ['block_id' => $field->campo_plantilla_id, 'key' => $field->clave, 'label' => $field->etiqueta, 'content_type' => 'text'];
-
-        $this->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [...$payload, 'initial_content' => FreeText::fromText('Texto inicial sugerido')])
-            ->assertSuccessful();
-        $this->assertSame('Texto inicial sugerido', FreeText::plainText($template->fresh()->block($field->campo_plantilla_id)->configuracion['initial_content']));
-
-        $this->patchJson(route('api.v1.admin.template.fields.update', [$template, $field]), [...$payload, 'initial_content' => null])->assertSuccessful();
-        $this->assertArrayNotHasKey('initial_content', $template->fresh()->block($field->campo_plantilla_id)->configuracion);
+        $payload = ['label' => $field->etiqueta, 'quien_llena' => 'docente'];
+        $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$template, $field]), [...$payload, 'content' => FreeText::fromText('Texto inicial sugerido')])->assertSuccessful();
+        $this->assertSame('Texto inicial sugerido', FreeText::plainText($field->fresh()->contenido));
+        $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$template, $field]), [...$payload, 'content' => FreeText::fromText('')])->assertSuccessful();
+        $this->assertTrue(FreeText::isEmpty($field->fresh()->contenido));
     }
 
     public function test_a_value_belongs_to_exactly_one_owner(): void
     {
         $subject = Subject::query()->firstOrFail();
-        $field = FieldDefinition::query()->where('origen_dato_definicion_campo', 'ficha')->firstOrFail();
+        $field = FieldDefinition::query()->where('quien_llena', 'coordinacion')->firstOrFail();
 
         $this->expectException(QueryException::class);
         FieldValue::query()->create(['definicion_campo_id' => $field->id, 'valor' => FreeText::fromText('Sin dueño')]);
@@ -172,7 +137,7 @@ class SubjectProfileTest extends TestCase
     public function test_one_value_per_subject_and_field_is_enforced_by_postgresql(): void
     {
         $subject = Subject::query()->firstOrFail();
-        $field = FieldDefinition::query()->where('origen_dato_definicion_campo', 'ficha')->firstOrFail();
+        $field = FieldDefinition::query()->where('quien_llena', 'coordinacion')->firstOrFail();
         FieldValue::query()->create(['asignatura_id' => $subject->id, 'definicion_campo_id' => $field->id, 'valor' => FreeText::fromText('Uno')]);
 
         $this->expectException(QueryException::class);

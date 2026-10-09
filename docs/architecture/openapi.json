@@ -1018,6 +1018,41 @@
                                     "properties": {
                                         "templateChangedDuringPause": {
                                             "type": "boolean"
+                                        },
+                                        "template": {
+                                            "oneOf": [
+                                                {
+                                                    "type": "null"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "id",
+                                                        "sections"
+                                                    ],
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "format": "uuid"
+                                                        },
+                                                        "sections": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/TemplateSection"
+                                                            }
+                                                        },
+                                                        "titleBlock": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "text": {
+                                                                    "const": "PROGRAMA DE ASIGNATURA (SÍLABO)"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "additionalProperties": true
+                                                }
+                                            ]
                                         }
                                     },
                                     "additionalProperties": true
@@ -1086,60 +1121,6 @@
                 ]
             }
         },
-        "/api/v1/admin/template/logo": {
-            "post": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_logo_store",
-                "summary": "api.v1.admin.template.logo.store",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "logo"
-                                ],
-                                "properties": {
-                                    "logo": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
         "/api/v1/admin/template/{template}": {
             "get": {
                 "tags": [
@@ -1157,6 +1138,41 @@
                                     "properties": {
                                         "templateChangedDuringPause": {
                                             "type": "boolean"
+                                        },
+                                        "template": {
+                                            "oneOf": [
+                                                {
+                                                    "type": "null"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "id",
+                                                        "sections"
+                                                    ],
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string",
+                                                            "format": "uuid"
+                                                        },
+                                                        "sections": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/TemplateSection"
+                                                            }
+                                                        },
+                                                        "titleBlock": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "text": {
+                                                                    "const": "PROGRAMA DE ASIGNATURA (SÍLABO)"
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    "additionalProperties": true
+                                                }
+                                            ]
                                         }
                                     },
                                     "additionalProperties": true
@@ -1184,366 +1200,6 @@
                         }
                     }
                 ],
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/template/{template}/appearance": {
-            "patch": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_appearance_update",
-                "summary": "api.v1.admin.template.appearance.update",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/template/{template}/blocks/order": {
-            "patch": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_blocks_reorder",
-                "summary": "api.v1.admin.template.blocks.reorder",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/template/{template}/blocks/{block}": {
-            "delete": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_blocks_destroy",
-                "summary": "api.v1.admin.template.blocks.destroy",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "block",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/template/{template}/blocks/{block}/document": {
-            "patch": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_blocks_document_update",
-                "summary": "api.v1.admin.template.blocks.document.update",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "block",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/template/{template}/fields": {
-            "post": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_fields_store",
-                "summary": "api.v1.admin.template.fields.store",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/template/{template}/fields/{field}": {
-            "patch": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_fields_update",
-                "summary": "api.v1.admin.template.fields.update",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "field",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
                 "security": [
                     {
                         "sanctumCookie": []
@@ -1582,244 +1238,6 @@
                 "parameters": [
                     {
                         "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/template/{template}/sections": {
-            "post": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_sections_store",
-                "summary": "api.v1.admin.template.sections.store",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/template/{template}/sections/order": {
-            "patch": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_sections_reorder",
-                "summary": "api.v1.admin.template.sections.reorder",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/template/{template}/sections/{section}": {
-            "delete": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_sections_destroy",
-                "summary": "api.v1.admin.template.sections.destroy",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "section",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            },
-            "patch": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_sections_update",
-                "summary": "api.v1.admin.template.sections.update",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "section",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -1958,8 +1376,12 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "additionalProperties": true
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/TemplateFieldInput"
+                                    }
+                                ],
+                                "required": []
                             }
                         }
                     }
@@ -2260,8 +1682,16 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "additionalProperties": true
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/TemplateFieldInput"
+                                    }
+                                ],
+                                "required": [
+                                    "key",
+                                    "quien_llena",
+                                    "content"
+                                ]
                             }
                         }
                     }
@@ -2312,62 +1742,6 @@
                     },
                     {
                         "name": "section",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/admin/template/{template}/title": {
-            "patch": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_template_title_update",
-                "summary": "api.v1.admin.template.title.update",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "template",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -6827,8 +6201,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "additionalProperties": true
+                                "$ref": "#/components/schemas/DraftFieldInput"
                             }
                         }
                     }
@@ -7090,6 +6463,211 @@
                     }
                 }
             },
+            "FieldDocument": {
+                "type": "object",
+                "required": [
+                    "type",
+                    "content"
+                ],
+                "properties": {
+                    "type": {
+                        "const": "doc"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DocumentNode"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DocumentNode": {
+                "type": "object",
+                "required": [
+                    "type"
+                ],
+                "properties": {
+                    "type": {
+                        "enum": [
+                            "paragraph",
+                            "text",
+                            "hardBreak",
+                            "variable",
+                            "bulletList",
+                            "orderedList",
+                            "listItem",
+                            "table",
+                            "tableRow",
+                            "tableCell",
+                            "tableHeader"
+                        ]
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "attrs": {
+                        "type": "object",
+                        "additionalProperties": true
+                    },
+                    "marks": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DocumentNode"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TemplateField": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "key",
+                    "label",
+                    "quien_llena",
+                    "content"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "help": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "quien_llena": {
+                        "enum": [
+                            "docente",
+                            "coordinacion",
+                            "institucional"
+                        ]
+                    },
+                    "content": {
+                        "$ref": "#/components/schemas/FieldDocument"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TemplateSection": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "key",
+                    "title",
+                    "orientation",
+                    "fields"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "orientation": {
+                        "enum": [
+                            "portrait",
+                            "landscape"
+                        ]
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TemplateField"
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "TemplateFieldInput": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 180
+                    },
+                    "help": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "quien_llena": {
+                        "enum": [
+                            "docente",
+                            "coordinacion",
+                            "institucional"
+                        ]
+                    },
+                    "content": {
+                        "$ref": "#/components/schemas/FieldDocument"
+                    },
+                    "position": {
+                        "type": "integer",
+                        "minimum": 1
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DraftFieldInput": {
+                "type": "object",
+                "required": [
+                    "version_bloqueo",
+                    "value"
+                ],
+                "properties": {
+                    "version_bloqueo": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "value": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/FieldDocument"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "additionalProperties": false
+            },
             "SubjectProfile": {
                 "type": "object",
                 "required": [
@@ -7129,6 +6707,12 @@
                                         "string",
                                         "null"
                                     ]
+                                },
+                                "quien_llena": {
+                                    "const": "coordinacion"
+                                },
+                                "content": {
+                                    "$ref": "#/components/schemas/FieldDocument"
                                 }
                             }
                         }
