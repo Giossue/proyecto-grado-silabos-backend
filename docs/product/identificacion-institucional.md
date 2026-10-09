@@ -77,8 +77,9 @@ de la plantilla (`IdentificationCard::INPUT_KEYS`). Con diseño guardado se comp
 dentro de sus celdas; el lector anterior los sigue mostrando debajo de la ficha.
 
 Los datos de la malla y la programación llegan por `contexto_academico` (copiado al abrir la
-convocatoria por `AcademicContextSnapshot`). Paralelos y docentes se leen del
-expediente en el momento. Al enviar una revisión, la ficha ya armada se guarda dentro
+convocatoria por `AcademicContextSnapshot`). El código y la jornada del paralelo se guardan en esa
+fotografía (`parallel`, desde I-209; los sílabos anteriores los leen del paralelo vivo); los
+docentes se leen del expediente en el momento. Al enviar una revisión, la ficha ya armada se guarda dentro
 de la copia (`fotografia.identification`). Además se guardan el diseño de cada bloque
 y `fotografia.template_variables`; la revisión y el Word no consultan el catálogo vivo
 para reemplazar las variables de una revisión histórica.

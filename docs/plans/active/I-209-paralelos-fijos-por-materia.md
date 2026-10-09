@@ -25,6 +25,10 @@ materias» sobra; la tabla de materias sigue la malla y permite acciones masivas
   «Paralelos y docentes» se conserva. La preparación por ciclos (I-208) y la edición en la tabla
   quedan reemplazadas.
 
+- `contexto_academico` (versión 6) guarda `parallel.{id,code,shift}`; el sílabo lee de ahí
+  (`academicParallelCode/Shift`) y cae al paralelo vivo si es un sílabo anterior. Cambiar el
+  código o la jornada de un paralelo no altera sílabos ya creados.
+
 ## Verificación
 
 Backend: suite de pruebas sin regresiones (la prueba del tablero del docente ya fallaba antes del

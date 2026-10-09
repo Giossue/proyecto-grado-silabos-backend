@@ -275,6 +275,9 @@ final class InProgressWork
             data_set($context, 'career.faculty_id', $career->facultad_id);
 
             $scheduled = $syllabus->parallel;
+            data_set($context, 'parallel.id', $scheduled->id);
+            data_set($context, 'parallel.code', $scheduled->codigo);
+            data_set($context, 'parallel.shift', $scheduled->jornada);
             data_set($context, 'scheduled_subject.campus', $scheduled->campus_programacion);
             data_set($context, 'scheduled_subject.modality', $scheduled->modalidad->label());
             $syllabus->values()->with('field')->get()

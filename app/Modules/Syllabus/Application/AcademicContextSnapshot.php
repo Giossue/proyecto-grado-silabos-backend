@@ -25,7 +25,7 @@ class AcademicContextSnapshot
             ->all();
 
         return [
-            'schema_version' => 5,
+            'schema_version' => 6,
             'career' => [
                 'id' => $career->id,
                 'code' => $career->codigo_carrera,
@@ -51,6 +51,11 @@ class AcademicContextSnapshot
                 'hours_aa' => $subject->horas_aa,
                 'prerequisites' => $requirementCodes('prerrequisito'),
                 'corequisites' => $requirementCodes('correquisito'),
+            ],
+            'parallel' => [
+                'id' => $parallel->id,
+                'code' => $parallel->codigo,
+                'shift' => $parallel->jornada,
             ],
             'scheduled_subject' => [
                 'period' => $period->codigo,

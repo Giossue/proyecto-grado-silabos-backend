@@ -41,14 +41,14 @@ final class IdentificationCard
 
         $data = self::build(
             $syllabus->contexto_academico ?? [],
-            self::strings(collect([$syllabus->parallel->codigo])),
+            self::strings(collect([$syllabus->academicParallelCode()])),
             self::strings($syllabus->teachers->pluck('nombre')),
             self::strings($syllabus->teachers->pluck('correo_electronico')),
             self::inputs($syllabus),
         );
         $data['shift'] = implode(', ', array_map(
             fn (string $shift): string => self::SHIFT_LABELS[$shift] ?? ucfirst($shift),
-            self::strings(collect([$syllabus->parallel->jornada])),
+            self::strings(collect([$syllabus->academicParallelShift()])),
         ));
 
         return $data;

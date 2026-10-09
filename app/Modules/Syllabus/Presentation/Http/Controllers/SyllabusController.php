@@ -73,7 +73,7 @@ class SyllabusController extends Controller
                 'period' => $syllabus->convocation->process->academicPeriod->codigo,
                 'state' => $syllabus->estado,
                 'iniciado_en' => $syllabus->iniciado_en?->toIso8601String(),
-                'parallels' => [$syllabus->parallel->codigo],
+                'parallels' => [$syllabus->academicParallelCode()],
                 'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
             ]);
 
@@ -129,7 +129,7 @@ class SyllabusController extends Controller
                 'subject' => $syllabus->academicSubjectName(),
                 'period' => $syllabus->convocation->process->academicPeriod->codigo,
                 'state' => $syllabus->estado,
-                'parallels' => [$syllabus->parallel->codigo],
+                'parallels' => [$syllabus->academicParallelCode()],
                 'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
             ])->values(),
         ]);
@@ -204,7 +204,7 @@ class SyllabusController extends Controller
         $updated = $action->execute($syllabus, $source, $request->integer('version_bloqueo'), $actor, $request);
 
         return response()->json([
-            'message' => "Contenido copiado desde el paralelo {$source->parallel->codigo}.",
+            'message' => "Contenido copiado desde el paralelo {$source->academicParallelCode()}.",
             'syllabus' => $this->syllabusPayload($updated),
         ]);
     }
@@ -250,7 +250,7 @@ class SyllabusController extends Controller
             'version_bloqueo' => $syllabus->version_bloqueo,
             'guardado_en' => $syllabus->guardado_en?->toIso8601String(),
             ...$this->teacherEditability($syllabus),
-            'parallels' => [$syllabus->parallel->codigo],
+            'parallels' => [$syllabus->academicParallelCode()],
             'copy_sources' => $this->copySources($syllabus),
             'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
             'approved_revision_id' => $syllabus->estado === 'aprobado'
@@ -292,7 +292,7 @@ class SyllabusController extends Controller
         return array_values(CopySyllabusContent::sources($syllabus, $user)
             ->map(fn (Syllabus $source): array => [
                 'id' => $source->id,
-                'parallel' => $source->parallel->codigo,
+                'parallel' => $source->academicParallelCode(),
                 'state' => $source->estado,
             ])->all());
     }

@@ -87,7 +87,7 @@ class ConvocationController extends Controller
         $syllabi = $convocation->syllabi()
             ->with(['parallel:id,codigo,asignatura_id', 'parallel.subject:id,nombre,codigo_asignatura', 'teachers:id,nombre'])
             ->get()
-            ->sortBy(fn ($syllabus): string => $syllabus->subject->nombre.'|'.$syllabus->parallel->codigo)
+            ->sortBy(fn ($syllabus): string => $syllabus->subject->nombre.'|'.$syllabus->academicParallelCode())
             ->values();
 
         $payload = [
@@ -116,7 +116,7 @@ class ConvocationController extends Controller
                     'code' => $syllabus->academicSubjectCode(),
                     'state' => $syllabus->estado,
                     'iniciado_en' => $syllabus->iniciado_en?->toIso8601String(),
-                    'parallels' => [$syllabus->parallel->codigo],
+                    'parallels' => [$syllabus->academicParallelCode()],
                     'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),
                 ])->values(),
             ],

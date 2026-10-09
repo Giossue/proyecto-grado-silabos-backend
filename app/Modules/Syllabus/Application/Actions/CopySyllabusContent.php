@@ -39,7 +39,7 @@ class CopySyllabusContent
             ->whereHas('parallel', fn ($parallel) => $parallel->where('asignatura_id', $subjectId))
             ->whereCurrentTeacher($teacher)
             ->get()
-            ->sortBy(fn (Syllabus $source): string => $source->parallel->codigo)
+            ->sortBy(fn (Syllabus $source): string => $source->academicParallelCode())
             ->values();
     }
 

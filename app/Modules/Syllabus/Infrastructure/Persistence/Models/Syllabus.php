@@ -80,6 +80,20 @@ class Syllabus extends Model
         return is_string($code) ? $code : $this->subject->codigo_asignatura;
     }
 
+    public function academicParallelCode(): string
+    {
+        $code = data_get($this->contexto_academico, 'parallel.code');
+
+        return is_string($code) ? $code : $this->parallel->codigo;
+    }
+
+    public function academicParallelShift(): string
+    {
+        $shift = data_get($this->contexto_academico, 'parallel.shift');
+
+        return is_string($shift) ? $shift : $this->parallel->jornada;
+    }
+
     /** @return BelongsTo<Convocation, $this> */
     public function convocation(): BelongsTo
     {
