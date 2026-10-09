@@ -3,7 +3,6 @@
 namespace App\Modules\Identity\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -22,7 +21,6 @@ class RemoveUserRole
 {
     public function __construct(
         private readonly ActiveRole $roles,
-        private readonly AcademicPeriodPlanning $periodPlanning,
         private readonly RecordAuditEvent $audit,
     ) {}
 
@@ -53,9 +51,6 @@ class RemoveUserRole
                     ->where('activo', true)
                     ->lockForUpdate()
                     ->get();
-                foreach ($parallels as $parallel) {
-                    $this->periodPlanning->assertTeacherAssignmentMayChange($parallel);
-                }
                 foreach ($parallels as $parallel) {
                     $parallel->delete();
                 }

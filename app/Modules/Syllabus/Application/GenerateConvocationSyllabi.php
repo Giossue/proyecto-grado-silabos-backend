@@ -19,9 +19,7 @@ final class GenerateConvocationSyllabi
     /** @param list<string>|null $subjectIds */
     public function execute(Convocation $convocation, ?string $subjectId = null, ?array $subjectIds = null): int
     {
-        $convocation->loadMissing('process');
         $parallels = Parallel::query()
-            ->where('periodo_academico_id', $convocation->process->periodo_academico_id)
             ->whereHas('subject', fn ($query) => $query->where('carrera_id', $convocation->carrera_id)->where('activo', true))
             ->when($subjectId !== null, fn ($query) => $query->where('asignatura_id', $subjectId))
             ->when($subjectIds !== null, fn ($query) => $query->whereIn('asignatura_id', $subjectIds))
@@ -46,7 +44,7 @@ final class GenerateConvocationSyllabi
 
         if ($parallels->isEmpty()) {
             throw ValidationException::withMessages([
-                'convocation' => 'No existen paralelos de la carrera para el período.',
+                'convocation' => 'No existen paralelos de la carrera.',
             ]);
         }
 
@@ -85,10 +83,11 @@ final class GenerateConvocationSyllabi
 
     private function generate(Convocation $convocation, Parallel $parallel): void
     {
+        $convocation->loadMissing('process.academicPeriod');
         $syllabus = Syllabus::query()->create([
             'convocatoria_id' => $convocation->id,
             'paralelo_id' => $parallel->id,
-            'contexto_academico' => $this->academicContext->build($parallel),
+            'contexto_academico' => $this->academicContext->build($parallel, $convocation->process->academicPeriod),
             'estado' => 'sin_iniciar',
         ]);
 

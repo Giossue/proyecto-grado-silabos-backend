@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Application\Actions\CreateAcademicRecord;
 use App\Modules\Academic\Application\Actions\CreateParallels;
-use App\Modules\Academic\Application\Actions\PreparePeriod;
 use App\Modules\Academic\Application\Actions\ReplaceCoordinator;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
@@ -232,23 +231,21 @@ class PrepareTestingEnvironmentCommand extends Command
     /** @param list<User> $teachers */
     private function ensureParallels(Career $career, AcademicPeriod $period, RoleAssignment $coordinator, array $teachers): void
     {
-        $subjects = $this->pickSubjects($career, $period, $teachers);
+        $subjects = $this->pickSubjects($career, $teachers);
         $running = Convocation::query()->where('carrera_id', $career->id)->where('proceso_id', SyllabusProcess::query()
             ->where('periodo_academico_id', $period->id)->value('id'))->exists();
 
         foreach ($teachers as $index => $teacher) {
             $subject = $subjects[$index];
-            if ($this->teacherParallel($teacher, $subject, $period) !== null) {
+            if ($this->teacherParallel($teacher, $subject) !== null) {
                 continue;
             }
             if ($running) {
                 throw new RuntimeException('La convocatoria de la carrera ya existe: asigne el paralelo desde Coordinación.');
             }
-            $hasParallels = Parallel::query()->where('periodo_academico_id', $period->id)
-                ->where('asignatura_id', $subject->id)->exists();
-            $hasParallels
-                ? $this->assignExisting($period, $subject, $coordinator, $teacher)
-                : $this->scheduleSubject($career, $period, $coordinator, $subject, $teacher);
+            Parallel::query()->where('asignatura_id', $subject->id)->exists()
+                ? $this->assignExisting($subject, $coordinator, $teacher)
+                : $this->scheduleSubject($coordinator, $subject, $teacher);
             $this->line("Paralelo {$subject->nombre} asignado a {$teacher->correo_electronico}");
         }
     }
@@ -257,14 +254,14 @@ class PrepareTestingEnvironmentCommand extends Command
      * @param  list<User>  $teachers
      * @return list<Subject>
      */
-    private function pickSubjects(Career $career, AcademicPeriod $period, array $teachers): array
+    private function pickSubjects(Career $career, array $teachers): array
     {
         $active = Subject::query()->where('carrera_id', $career->id)->where('activo', true)
             ->orderBy('ciclo')->orderBy('orden_en_ciclo')->get();
         $picked = [];
         foreach ($teachers as $teacher) {
             $current = $active->first(fn (Subject $subject): bool => ! in_array($subject->id, array_map(fn ($s) => $s->id, $picked), true)
-                && $this->teacherParallel($teacher, $subject, $period) !== null);
+                && $this->teacherParallel($teacher, $subject) !== null);
             $picked[] = $current ?? $active->first(fn (Subject $subject): bool => ! in_array($subject->id, array_map(fn ($s) => $s->id, $picked), true)
                 && ($picked !== [] || Str::contains(Str::lower($subject->nombre), 'calidad de software')))
                 ?? $active->first(fn (Subject $subject): bool => ! in_array($subject->id, array_map(fn ($s) => $s->id, $picked), true))
@@ -274,40 +271,28 @@ class PrepareTestingEnvironmentCommand extends Command
         return $picked;
     }
 
-    private function teacherParallel(User $teacher, Subject $subject, AcademicPeriod $period): ?TeacherAssignment
+    private function teacherParallel(User $teacher, Subject $subject): ?TeacherAssignment
     {
         return TeacherAssignment::query()->where('activo', true)
             ->whereHas('roleAssignment', fn ($q) => $q->where('usuario_id', $teacher->id))
-            ->whereHas('parallel', fn ($q) => $q->where('periodo_academico_id', $period->id)
-                ->where('asignatura_id', $subject->id))
+            ->whereHas('parallel', fn ($q) => $q->where('asignatura_id', $subject->id))
             ->first();
     }
 
-    private function scheduleSubject(Career $career, AcademicPeriod $period, RoleAssignment $coordinator, Subject $subject, User $teacher): void
+    private function scheduleSubject(RoleAssignment $coordinator, Subject $subject, User $teacher): void
     {
-        /** @var list<string> $pending */
-        $pending = Subject::query()->where('carrera_id', $career->id)->where('activo', true)
-            ->whereDoesntHave('parallels', fn ($q) => $q->where('periodo_academico_id', $period->id))
-            ->pluck('id')->push($subject->id)->unique()->values()->all();
-        $settings = [];
-        foreach ($pending as $id) {
-            $settings[] = ['id' => $id, 'parallels' => $id === $subject->id
-                ? [['code' => self::PARALLEL_CODE, 'shift' => 'matutina', 'teacher_user_id' => $teacher->id]]
-                : []];
-        }
-        app(PreparePeriod::class)->execute([
-            'period_id' => $period->id,
-            'subjects' => $settings,
-        ], $coordinator->user, $this->requestAs($coordinator));
+        app(CreateParallels::class)->execute(['subject_id' => $subject->id, 'codes' => [self::PARALLEL_CODE], 'shift' => 'matutina'], $coordinator->user, $this->requestAs($coordinator));
+        $parallel = Parallel::query()->where('asignatura_id', $subject->id)->where('codigo_paralelo', self::PARALLEL_CODE)->firstOrFail();
+        app(CreateAcademicRecord::class)->execute('asignacion_docente', ['parallel_id' => $parallel->id, 'user_id' => $teacher->id], $coordinator->user, $this->requestAs($coordinator));
     }
 
-    private function assignExisting(AcademicPeriod $period, Subject $subject, RoleAssignment $coordinator, User $teacher): void
+    private function assignExisting(Subject $subject, RoleAssignment $coordinator, User $teacher): void
     {
-        $parallels = fn () => Parallel::query()->where('periodo_academico_id', $period->id)->where('asignatura_id', $subject->id);
+        $parallels = fn () => Parallel::query()->where('asignatura_id', $subject->id);
         $free = $parallels()->whereDoesntHave('teacherAssignments', fn ($q) => $q->where('activo', true))->orderBy('codigo')->first();
         if ($free === null) {
             $code = 'P'.($parallels()->count() + 1);
-            app(CreateParallels::class)->execute(['subject_id' => $subject->id, 'period_id' => $period->id, 'codes' => [$code], 'shift' => 'matutina'], $coordinator->user, $this->requestAs($coordinator));
+            app(CreateParallels::class)->execute(['subject_id' => $subject->id, 'codes' => [$code], 'shift' => 'matutina'], $coordinator->user, $this->requestAs($coordinator));
             $free = $parallels()->where('codigo', $code)->firstOrFail();
         }
         app(CreateAcademicRecord::class)->execute('asignacion_docente', ['parallel_id' => $free->id, 'user_id' => $teacher->id], $coordinator->user, $this->requestAs($coordinator));

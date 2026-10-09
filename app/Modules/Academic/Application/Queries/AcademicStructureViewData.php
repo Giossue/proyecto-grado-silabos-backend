@@ -236,47 +236,18 @@ class AcademicStructureViewData
     }
 
     /** @return array<string, mixed> */
-    public function scheduledSubjects(string $careerId, ?string $requestedPeriodId = null): array
+    public function scheduledSubjects(string $careerId): array
     {
         $career = $this->career($careerId);
         $lockReason = $this->locks->careerLockReason($careerId);
-        // A nivel institucional se ofrecen todas las materias de la malla (I-181): el paralelo apunta
-        // directo al período y a la materia, y "materia programada" es ese par con sus paralelos.
         $careerParallels = Parallel::query()
             ->whereHas('subject', fn ($query) => $query->where('carrera_id', $careerId))
             ->orderBy('codigo')
-            ->get(['id', 'periodo_academico_id', 'asignatura_id', 'codigo', 'jornada']);
-        $parallelsBySubjectAndPeriod = $careerParallels
-            ->groupBy(fn (Parallel $parallel): string => $parallel->asignatura_id.'|'.$parallel->periodo_academico_id);
+            ->get(['id', 'asignatura_id', 'codigo', 'jornada']);
+        $parallelsBySubject = $careerParallels->groupBy('asignatura_id');
         $parallelIds = $careerParallels->pluck('id');
         $parallelsWithSyllabus = Syllabus::query()->whereIn('paralelo_id', $parallelIds)->pluck('paralelo_id')->flip();
         $parallelsWithTeacher = TeacherAssignment::query()->whereIn('paralelo_id', $parallelIds)->pluck('paralelo_id')->flip();
-        $periods = AcademicPeriod::query()
-            ->get(['id', 'codigo', 'fecha_inicio', 'fecha_fin'])
-            ->sort(function (AcademicPeriod $left, AcademicPeriod $right): int {
-                $rank = [
-                    AcademicPeriodPlanning::CURRENT => 0,
-                    AcademicPeriodPlanning::UPCOMING => 1,
-                    AcademicPeriodPlanning::FINISHED => 2,
-                ];
-                $leftStatus = $this->periodPlanning->status($left);
-                $rightStatus = $this->periodPlanning->status($right);
-                $byStatus = $rank[$leftStatus] <=> $rank[$rightStatus];
-
-                if ($byStatus !== 0) {
-                    return $byStatus;
-                }
-
-                return $leftStatus === AcademicPeriodPlanning::UPCOMING
-                    ? $left->fecha_inicio <=> $right->fecha_inicio
-                    : $right->fecha_inicio <=> $left->fecha_inicio;
-            })
-            ->values();
-        $selectedPeriodId = $periods->contains('id', $requestedPeriodId)
-            ? $requestedPeriodId
-            : $periods->first(fn (AcademicPeriod $period): bool => $this->periodPlanning->status($period) === AcademicPeriodPlanning::CURRENT)?->id;
-        $selectedPeriodId ??= $periods->first(fn (AcademicPeriod $period): bool => $this->periodPlanning->status($period) === AcademicPeriodPlanning::UPCOMING)?->id;
-        $selectedPeriodId ??= $periods->first()?->id;
 
         $careerSubjects = Subject::query()
             ->where('carrera_id', $careerId)
@@ -286,49 +257,35 @@ class AcademicStructureViewData
             ->orderBy('nombre')
             ->get(['id', 'carrera_id', 'codigo_asignatura', 'nombre', 'ciclo', 'activo', 'modalidad']);
         $profileComplete = $this->profiles->completeBySubject($careerSubjects->map(fn (Subject $subject): string => $subject->id)->all());
-        // Cada período ofrece todas las materias activas de la malla; se listan también las que
-        // ya tienen paralelos aunque la materia se haya desactivado después.
         $rows = [];
-        foreach ($periods as $period) {
-            $planningEnabled = $this->periodPlanning->mayPlan($period);
-            foreach ($careerSubjects as $subject) {
-                $group = $parallelsBySubjectAndPeriod->get($subject->id.'|'.$period->id, new EloquentCollection);
-                if ($group->isEmpty() && ! ($planningEnabled && $subject->activo)) {
-                    continue;
-                }
-                $used = $group->contains(fn (Parallel $parallel): bool => $parallelsWithSyllabus->has($parallel->id));
-
-                $rows[] = [
-                    'subject_id' => $subject->id,
-                    'period_id' => $period->id,
-                    'label' => "{$subject->codigo_asignatura} · {$subject->nombre}",
-                    'subject_code' => $subject->codigo_asignatura,
-                    'subject_name' => $subject->nombre,
-                    'subject_cycle' => $subject->ciclo,
-                    'profile_complete' => $profileComplete[$subject->id] ?? false,
-                    'period_starts_on' => $period->fecha_inicio->toDateString(),
-                    'period_ends_on' => $period->fecha_fin->toDateString(),
-                    'period_status' => $this->periodPlanning->status($period),
-                    'period_status_label' => $this->periodPlanning->label($period),
-                    'period_planning_enabled' => $planningEnabled,
-                    // Derivados de la facultad y la carrera; pueden faltar si la malla se retiró.
-                    'campus_name' => $subject->campusName(),
-                    'modality_name' => $subject->studyModality()?->label(),
-                    'parallels' => $group
-                        ->map(fn (Parallel $parallel): array => [
-                            'id' => $parallel->id,
-                            'code' => $parallel->codigo,
-                            'shift' => $this->parallelShift($parallel),
-                            'editable' => ! $parallelsWithSyllabus->has($parallel->id),
-                            'deletable' => ! $parallelsWithSyllabus->has($parallel->id) && ! $parallelsWithTeacher->has($parallel->id),
-                        ])
-                        ->values()
-                        ->all(),
-                    'editable' => $planningEnabled && $lockReason === null && ! $used,
-                ];
+        foreach ($careerSubjects as $subject) {
+            $group = $parallelsBySubject->get($subject->id, new EloquentCollection);
+            if ($group->isEmpty() && ! $subject->activo) {
+                continue;
             }
+
+            $rows[] = [
+                'subject_id' => $subject->id,
+                'label' => "{$subject->codigo_asignatura} · {$subject->nombre}",
+                'subject_code' => $subject->codigo_asignatura,
+                'subject_name' => $subject->nombre,
+                'subject_cycle' => $subject->ciclo,
+                'profile_complete' => $profileComplete[$subject->id] ?? false,
+                'campus_name' => $subject->campusName(),
+                'modality_name' => $subject->studyModality()?->label(),
+                'parallels' => $group
+                    ->map(fn (Parallel $parallel): array => [
+                        'id' => $parallel->id,
+                        'code' => $parallel->codigo,
+                        'shift' => $this->parallelShift($parallel),
+                        'editable' => true,
+                        'deletable' => ! $parallelsWithSyllabus->has($parallel->id) && ! $parallelsWithTeacher->has($parallel->id),
+                    ])
+                    ->values()
+                    ->all(),
+                'editable' => $lockReason === null,
+            ];
         }
-        $scheduledSubjects = collect($rows);
 
         $activeSubjects = Subject::query()
             ->where('activo', true)
@@ -346,20 +303,9 @@ class AcademicStructureViewData
                 'lock_reason' => $lockReason,
                 'lock' => $lockReason === null ? null : $this->locks->careerLock($careerId),
             ],
-            'selectedPeriodId' => $selectedPeriodId,
-            'scheduledSubjects' => $scheduledSubjects,
+            'scheduledSubjects' => $rows,
             'options' => [
                 ...$this->baseOptions(),
-                'periods' => $periods
-                    ->map(fn (AcademicPeriod $period): array => [
-                        'id' => $period->id,
-                        'code' => $period->codigo,
-                        'starts_on' => $period->fecha_inicio->toDateString(),
-                        'ends_on' => $period->fecha_fin->toDateString(),
-                        'status' => $this->periodPlanning->status($period),
-                        'status_label' => $this->periodPlanning->label($period),
-                        'planning_enabled' => $this->periodPlanning->mayPlan($period),
-                    ]),
                 'activeSubjects' => $activeSubjects
                     ->map(fn (Subject $subject): array => [
                         'id' => $subject->id,
@@ -370,20 +316,6 @@ class AcademicStructureViewData
                         'profile_filled' => $activeProgress[$subject->id]['filled'] ?? 0,
                         'profile_total' => $activeProgress[$subject->id]['total'] ?? 0,
                     ]),
-                'scheduledSubjects' => $periods
-                    ->filter(fn (AcademicPeriod $period): bool => $this->periodPlanning->mayPlan($period))
-                    ->flatMap(fn (AcademicPeriod $period) => Subject::query()
-                        ->where('activo', true)
-                        ->where('carrera_id', $careerId)
-                        ->orderBy('ciclo')
-                        ->orderBy('orden_en_ciclo')
-                        ->get(['id', 'codigo_asignatura', 'nombre'])
-                        ->map(fn (Subject $subject): array => [
-                            'label' => "{$subject->codigo_asignatura} · {$period->codigo}",
-                            'subject_id' => $subject->id,
-                            'period_id' => $period->id,
-                        ]))
-                    ->values(),
             ],
         ];
     }
@@ -401,7 +333,6 @@ class AcademicStructureViewData
             ->with([
                 'roleAssignment.user:id,nombre,correo_electronico',
                 'parallel.subject:id,nombre,codigo_asignatura',
-                'parallel.academicPeriod:id,codigo,fecha_inicio,fecha_fin',
             ])
             ->orderByDesc('asignado_en')
             ->get();
@@ -422,11 +353,8 @@ class AcademicStructureViewData
                     'user_email' => $assignment->roleAssignment->user->correo_electronico,
                     'parallel_code' => $assignment->parallel->codigo,
                     'subject_name' => $assignment->parallel->subject->nombre,
-                    'period_name' => $assignment->parallel->academicPeriod->codigo,
-                    'period_status' => $this->periodPlanning->status($assignment->parallel->academicPeriod),
-                    'period_planning_enabled' => $this->periodPlanning->mayPlan($assignment->parallel->academicPeriod),
                     'active' => $assignment->activo,
-                    'editable' => $this->periodPlanning->mayPlan($assignment->parallel->academicPeriod),
+                    'editable' => true,
                 ]),
             'careerTeachers' => RoleAssignment::query()
                 ->effective()
@@ -468,15 +396,11 @@ class AcademicStructureViewData
                         fn ($query) => $query->where('carrera_id', $careerId),
                     )
                     ->whereDoesntHave('teacherAssignments', fn ($query) => $query->where('activo', true))
-                    ->with([
-                        'subject:id,codigo_asignatura,nombre',
-                        'academicPeriod:id,codigo,fecha_inicio,fecha_fin',
-                    ])
+                    ->with('subject:id,codigo_asignatura,nombre')
                     ->get()
-                    ->filter(fn (Parallel $parallel): bool => $this->periodPlanning->mayPlan($parallel->academicPeriod))
                     ->map(fn (Parallel $parallel) => [
                         'id' => $parallel->id,
-                        'label' => "{$parallel->subject->nombre} · {$parallel->academicPeriod->codigo} · Paralelo {$parallel->codigo}",
+                        'label' => "{$parallel->subject->nombre} · Paralelo {$parallel->codigo}",
                     ]),
                 'teacherUsers' => User::query()
                     ->where('activo', true)

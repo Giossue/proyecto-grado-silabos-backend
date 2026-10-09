@@ -3,7 +3,6 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -18,7 +17,6 @@ class UpdateParallel
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
-        private readonly AcademicPeriodPlanning $periodPlanning,
     ) {}
 
     /** @param array{code: string, shift: string} $data */
@@ -29,12 +27,9 @@ class UpdateParallel
 
         return DB::transaction(function () use ($actor, $careerId, $data, $parallelId, $request): Parallel {
             $parallel = ParallelScope::find($parallelId, $careerId);
-            $this->periodPlanning->assertParallelMayChange($parallel);
-            ParallelScope::assertWithoutSyllabus($parallel, 'El paralelo ya tiene sílabo y no puede modificarse.');
 
             $code = trim($data['code']);
             $duplicate = Parallel::query()
-                ->where('periodo_academico_id', $parallel->periodo_academico_id)
                 ->where('asignatura_id', $parallel->asignatura_id)
                 ->whereKeyNot($parallel->id)
                 ->whereRaw('upper(codigo_paralelo) = ?', [mb_strtoupper($code)])

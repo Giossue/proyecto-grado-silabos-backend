@@ -18,8 +18,8 @@ class RequireParallelShiftMigrationTest extends TestCase
         $migration = require database_path('migrations/2026_09_24_000112_exigir_jornada_paralelo.php');
         $migration->down();
         $scheduled = Parallel::query()->firstOrFail();
-        DB::table('paralelos')->insert(['paralelo_id' => (string) str()->uuid(), 'periodo_academico_id' => $scheduled->periodo_academico_id, 'asignatura_id' => $scheduled->asignatura_id, 'codigo_paralelo' => 'S']);
-        $night = Parallel::query()->create(['periodo_academico_id' => $scheduled->periodo_academico_id, 'asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'N', 'jornada' => 'nocturna']);
+        DB::table('paralelos')->insert(['paralelo_id' => (string) str()->uuid(), 'asignatura_id' => $scheduled->asignatura_id, 'codigo_paralelo' => 'S']);
+        $night = Parallel::query()->create(['asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'N', 'jornada' => 'nocturna']);
 
         $migration->up();
         $migration->up();

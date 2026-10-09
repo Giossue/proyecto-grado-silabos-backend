@@ -3,7 +3,6 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
@@ -35,7 +34,6 @@ class SetAcademicRecordStatus
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
-        private readonly AcademicPeriodPlanning $periodPlanning,
     ) {}
 
     public function execute(
@@ -69,7 +67,6 @@ class SetAcademicRecordStatus
                 : $modelClass::query()->lockForUpdate()->findOrFail($recordId);
 
             if ($record instanceof TeacherAssignment) {
-                $this->periodPlanning->assertTeacherAssignmentMayChange($record);
                 if ($record->activo !== $active && $active) {
                     throw ValidationException::withMessages([
                         'record' => 'Una asignación cerrada no se reactiva. Asigne de nuevo al docente en el paralelo.',

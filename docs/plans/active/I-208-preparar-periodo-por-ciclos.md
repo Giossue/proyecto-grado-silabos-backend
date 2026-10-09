@@ -25,3 +25,5 @@ y asignar un docente a todos los paralelos del ciclo. Los cambios solo modifican
 formulario; se guardan al confirmar la preparación y se pueden corregir uno por uno. Solo
 frontend. Copiar los paralelos y docentes del período anterior queda como idea futura y
 necesita decisión de producto.
+
+> Sin efecto desde I-209: se retiró el modal de preparación del período.

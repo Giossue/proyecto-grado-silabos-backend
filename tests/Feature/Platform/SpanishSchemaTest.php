@@ -210,11 +210,12 @@ it('I-107 guarda ciclos en la carrera y retira códigos de facultad y malla', fu
         ->not->toContain('silabos_carrera_id_foreign');
 });
 
-it('I-181 el paralelo apunta directo al período y a la materia, sin tabla de programación', function () {
+it('I-181 e I-209 el paralelo apunta directo a la materia, sin período ni tabla de programación', function () {
     expect(Schema::hasTable('asignaturas_ofertadas'))->toBeFalse()
         ->and(Schema::hasTable('programaciones_asignatura'))->toBeFalse()
         ->and(Schema::hasTable('ofertas_academicas'))->toBeFalse()
-        ->and(Schema::hasColumns('paralelos', ['periodo_academico_id', 'asignatura_id']))->toBeTrue()
+        ->and(Schema::hasColumn('paralelos', 'asignatura_id'))->toBeTrue()
+        ->and(Schema::hasColumn('paralelos', 'periodo_academico_id'))->toBeFalse()
         ->and(Schema::hasColumn('paralelos', 'asignatura_ofertada_id'))->toBeFalse()
         ->and(Schema::hasColumn('paralelos', 'oferta_academica_id'))->toBeFalse()
         ->and(Schema::hasTable('alcances_silabo'))->toBeFalse()
@@ -228,10 +229,11 @@ it('I-181 el paralelo apunta directo al período y a la materia, sin tabla de pr
     ))->pluck('conname');
 
     expect($restricciones)
-        ->toContain('paralelos_periodo_asignatura_codigo_unique')
-        ->toContain('paralelos_periodo_academico_id_foreign')
+        ->not->toContain('paralelos_periodo_academico_id_foreign')
         ->toContain('paralelos_asignatura_id_foreign')
         ->toContain('paralelos_pkey');
+    expect(collect(DB::select("SELECT indexname FROM pg_indexes WHERE tablename = 'paralelos'"))->pluck('indexname'))
+        ->toContain('paralelos_asignatura_codigo_unique');
 });
 
 it('I-176 nombra con claridad trabajos, notificaciones, auditoría y mensajes de IA', function () {

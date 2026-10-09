@@ -3,12 +3,10 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
@@ -25,7 +23,6 @@ class DeleteAcademicRecord
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
-        private readonly AcademicPeriodPlanning $periodPlanning,
     ) {}
 
     public function execute(string $entity, string $recordId, User $actor, Request $request): void
@@ -61,10 +58,6 @@ class DeleteAcademicRecord
                     ->lockForUpdate()->findOrFail($recordId),
                 default => throw new \LogicException('Entidad de carrera no admitida.'),
             };
-
-            if ($record instanceof TeacherAssignment) {
-                $this->periodPlanning->assertTeacherAssignmentMayChange($record);
-            }
 
             $this->assertDeletable($entity, $record);
             $metadata = $this->delete($entity, $record);
@@ -107,25 +100,8 @@ class DeleteAcademicRecord
     {
         $name = (string) ($record->getAttribute('nombre') ?? $record->getAttribute('codigo') ?? $record->getKey());
         $metadata = ['name' => $name];
-        if ($entity === 'periodo') {
-            $metadata += $this->deletePeriodPlanning((string) $record->getKey());
-        }
         $record->delete();
 
         return $metadata;
-    }
-
-    /**
-     * Borra paralelos y asignaciones docentes del periodo. Sin convocatoria no hay sílabos.
-     *
-     * @return array<string, int>
-     */
-    private function deletePeriodPlanning(string $periodId): array
-    {
-        $parallelIds = Parallel::query()->where('periodo_academico_id', $periodId)->lockForUpdate()->pluck('id');
-        $assignments = TeacherAssignment::query()->whereIn('paralelo_id', $parallelIds)->delete();
-        $parallels = Parallel::query()->whereIn('id', $parallelIds)->delete();
-
-        return ['deleted_parallels' => $parallels, 'deleted_teacher_assignments' => $assignments];
     }
 }

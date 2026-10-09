@@ -4,7 +4,6 @@ namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodLabel;
-use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Application\AcademicPeriodWeeks;
 use App\Modules\Academic\Application\ScheduledSubjectInheritance;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
@@ -37,7 +36,6 @@ class CreateAcademicRecord
         private readonly InProgressWork $work,
         private readonly InstitutionalLogos $logos,
         private readonly ScheduledSubjectInheritance $inheritance,
-        private readonly AcademicPeriodPlanning $periodPlanning,
         private readonly AcademicPeriodLabel $periodLabel,
         private readonly AcademicPeriodWeeks $periodWeeks,
     ) {}
@@ -161,7 +159,6 @@ class CreateAcademicRecord
             )
             ->lockForUpdate()
             ->firstOrFail();
-        $this->periodPlanning->assertParallelMayChange($parallel, 'parallel_id');
         $userId = $this->stringValue($data, 'user_id');
         $roleAssignment = $this->scopedRole($userId, $careerId, RoleCode::Teacher);
 

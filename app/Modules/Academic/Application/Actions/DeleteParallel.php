@@ -3,8 +3,6 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Academic\Application\AcademicPeriodPlanning;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -19,7 +17,6 @@ class DeleteParallel
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
-        private readonly AcademicPeriodPlanning $periodPlanning,
     ) {}
 
     public function execute(string $parallelId, User $actor, Request $request): void
@@ -30,20 +27,10 @@ class DeleteParallel
 
         DB::transaction(function () use ($actor, $careerId, $parallelId, $role): void {
             $parallel = ParallelScope::find($parallelId, $careerId);
-            $this->periodPlanning->assertParallelMayChange($parallel);
             ParallelScope::assertWithoutSyllabus($parallel, 'El paralelo ya tiene sílabo y no puede eliminarse.');
             if (TeacherAssignment::query()->where('paralelo_id', $parallel->id)->exists()) {
                 throw ValidationException::withMessages([
                     'record' => 'El paralelo tiene un docente asignado. Quite primero la asignación docente.',
-                ]);
-            }
-            $siblings = Parallel::query()
-                ->where('periodo_academico_id', $parallel->periodo_academico_id)
-                ->where('asignatura_id', $parallel->asignatura_id)
-                ->count();
-            if ($siblings <= 1) {
-                throw ValidationException::withMessages([
-                    'record' => 'La materia debe conservar al menos un paralelo en el período.',
                 ]);
             }
             $code = $parallel->codigo;

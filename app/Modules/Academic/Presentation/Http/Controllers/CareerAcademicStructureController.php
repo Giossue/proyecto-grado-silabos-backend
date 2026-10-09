@@ -9,12 +9,10 @@ use App\Modules\Academic\Application\Actions\CreateParallels;
 use App\Modules\Academic\Application\Actions\DeleteAcademicRecord;
 use App\Modules\Academic\Application\Actions\DeleteParallel;
 use App\Modules\Academic\Application\Actions\MutateCurriculumBuilder;
-use App\Modules\Academic\Application\Actions\PreparePeriod;
 use App\Modules\Academic\Application\Actions\UpdateCareerAcademicRecord;
 use App\Modules\Academic\Application\Actions\UpdateParallel;
 use App\Modules\Academic\Application\Queries\AcademicStructureViewData;
 use App\Modules\Academic\Presentation\Http\Requests\ManageCareerAcademicStructureRequest;
-use App\Modules\Academic\Presentation\Http\Requests\PreparePeriodRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreAcademicRecordRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreParallelsRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreSubjectRequirementRequest;
@@ -44,10 +42,7 @@ class CareerAcademicStructureController extends Controller
         ActiveRole $roles,
         AcademicStructureViewData $viewData,
     ): JsonResponse {
-        $payload = $viewData->scheduledSubjects(
-            $this->careerId($request, $roles),
-            $request->string('period')->toString() ?: null,
-        );
+        $payload = $viewData->scheduledSubjects($this->careerId($request, $roles));
 
         return response()->json($payload);
     }
@@ -83,7 +78,7 @@ class CareerAcademicStructureController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var array{subject_id: string, period_id: string, codes: list<string>, shift: string} $data */
+        /** @var array{subject_id: string, codes: list<string>, shift: string} $data */
         $data = $request->validated();
         $created = $action->execute($data, $actor, $request);
 
@@ -112,29 +107,6 @@ class CareerAcademicStructureController extends Controller
         $action->execute($parallel, $this->actor($request), $request);
 
         return $this->success($request, 'Paralelo eliminado.');
-    }
-
-    public function preparePeriod(
-        PreparePeriodRequest $request,
-        PreparePeriod $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        /** @var array{period_id: string, subjects: list<array{id: string, parallels: list<array{code: string, shift: string, teacher_user_id?: string|null}>}>} $data */
-        $data = $request->validated();
-        $result = $action->execute($data, $actor, $request);
-
-        $message = sprintf(
-            'Período preparado: %d %s y %d %s para %d %s.',
-            $result['parallels'],
-            $result['parallels'] === 1 ? 'paralelo' : 'paralelos',
-            $result['assignments'],
-            $result['assignments'] === 1 ? 'docente asignado' : 'docentes asignados',
-            $result['subjects'],
-            $result['subjects'] === 1 ? 'materia' : 'materias',
-        );
-
-        return $this->success($request, $message);
     }
 
     public function update(

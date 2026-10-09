@@ -324,13 +324,15 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   el constructor. Sus variables muestran datos de malla, programación, paralelos y docentes;
   no son campos de escritura. Discapacidad y formación son campos que completa el
   docente en su lugar dentro de la tabla. Mapa: `docs/product/identificacion-institucional.md`.
-  COR-14 concentra sus paralelos dentro de **Materias y asignaciones** (I-209). La pestaña **Materias**
-  lista toda la malla activa en el período y se edita en la propia tabla, sin modal: cada
-  paralelo muestra código, jornada y docente editables; un botón **+** con tooltip agrega
-  un paralelo y el icono de papelera lo quita. Cada cambio se guarda al instante y avisa; el
-  servidor rechaza códigos repetidos. Las materias nuevas de la malla aparecen solas. La
-  pantalla no ofrece importación desde Excel y muestra solo el período en curso (o el
-  próximo si aún no empieza), sin selector.
+  COR-14 concentra sus paralelos dentro de **Materias y asignaciones**. La pestaña **Materias**
+  lista toda la malla activa, con o sin paralelos, sin selector de período: materia, ciclo y,
+  por cada paralelo, código, jornada y docente. Un clic en la fila abre **Paralelos y
+  docentes** para crear o corregir paralelos y elegir el docente de cada uno; el servidor
+  rechaza códigos repetidos en la materia. Cada fila tiene una casilla (y otra en el
+  encabezado para las filas visibles): con materias seleccionadas aparece una barra con
+  **Acciones masivas** (I-209): agregar un paralelo con una jornada, asignar una jornada o
+  asignar un docente a las materias elegidas. Se aplican de inmediato, una por una, y se
+  avisa cuántas se aplicaron si alguna falla. La pantalla no ofrece importación desde Excel.
   La pestaña **Docentes** lista los docentes de la carrera con sus paralelos del período,
   estado de activación, **Editar docente** y **Reenviar invitación** (I-171).
 - Indicadores del Panel (UI-01): Administración ve avance del proceso (% aprobados), días
@@ -581,12 +583,11 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   carrera» o una distinta), sin cambiar la modalidad visible de la carrera. COR-14 programa
   materias sin selector de modalidad: hereda la de la materia o, si no hay excepción, la
   de la carrera y la muestra en el listado (I-35).
-- Persistencia entre períodos (I-199): al abrir la convocatoria institucional, el servidor
-  copia a cada carrera los paralelos, jornadas y docentes de su período anterior (el último
-  anterior con paralelos). Solo copia materias activas que aún no tienen paralelos en el
-  período y solo mantiene al docente si sigue activo, verificado y con rol vigente en la
-  carrera; si no, el paralelo queda sin docente. La coordinación solo corrige lo que cambió.
-  Se audita como `academico.periodo_arrastrado`.
+- Paralelos fijos (I-209, reemplaza I-199): los paralelos, sus jornadas y sus docentes
+  pertenecen a la materia, no a un período. Se mantienen hasta que la coordinación los
+  cambie y al abrir una convocatoria se usan tal cual; no se copia nada entre períodos.
+  Cambiar la jornada o el docente de un paralelo no altera los sílabos de convocatorias
+  anteriores, que conservan su fotografía.
 - **Usuarios y roles**: la tabla muestra el primer rol y su carrera, con un «+N» y un tooltip con el resto cuando hay más de uno; un clic en la fila abre una única hoja con
   la ficha de la cuenta (todos los roles vigentes y finalizados) y el botón **Editar**, que cambia la misma hoja al
   formulario de edición. La acción «Ver» ya no está en el menú; la propia cuenta solo se consulta.
@@ -612,17 +613,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   aplicar y solo esas se escriben (reemplazan la ficha actual). Los archivos son temporales: se borran al
   aplicar o descartar. Sin proveedor de IA (`AI_DRIVER` deepseek u openai con clave y modelo) el asistente
   se desactiva con un aviso. Bloqueado mientras la convocatoria de la carrera esté activa.
-- COR-14 no tiene botón **Asignar materias** ni modal de preparación (I-209): toda la malla
-  activa se configura en la tabla de **Materias**. Solo se proponen docentes activos,
-  verificados y con rol vigente en la carrera, y los paralelos sin docente quedan
-  pendientes de asignación. Campus viene de la facultad elegida por la carrera y la
-  modalidad se fija al crear la carrera; la programación conserva el campus heredado para
-  mantener la fotografía histórica del sílabo.
-- COR-14 no ofrece selector de período (I-171). Elige el período en curso; si no existe,
-  el próximo más cercano y, finalmente, el último disponible, con el estado derivado de
-  sus fechas en `America/Guayaquil`. Los períodos finalizados permanecen como historial:
-  sus materias, paralelos, responsables y sílabos se consultan, pero no se preparan, crean,
-  editan, deshabilitan, eliminan ni relevan.
+- COR-14 no tiene selector de período ni botón de preparación (I-209): los paralelos no
+  dependen de un período, así que no hay materias «pendientes de programar».
 - COR-13 usa una única entrada **Malla**. Si existe, la ruta abre directamente la
   vista interactiva de lectura; si no existe, muestra el estado vacío universal y la acción
   para crearla. No presenta pestañas de modo, buscador, filtros, cards, paginación,

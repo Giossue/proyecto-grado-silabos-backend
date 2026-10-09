@@ -493,7 +493,6 @@ class ManagedUserTest extends TestCase
         $assigned = $this->pendingTeacher('asignado@silabos.test');
         $base = Parallel::query()->firstOrFail();
         $parallel = Parallel::query()->create([
-            'periodo_academico_id' => $base->periodo_academico_id,
             'asignatura_id' => $base->asignatura_id,
             'codigo' => 'Z',
             'jornada' => 'matutina',

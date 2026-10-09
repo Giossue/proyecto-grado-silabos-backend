@@ -3,7 +3,6 @@
 namespace App\Modules\Identity\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
@@ -22,7 +21,6 @@ class RemoveCareerTeacher
 {
     public function __construct(
         private readonly ActiveRole $roles,
-        private readonly AcademicPeriodPlanning $periodPlanning,
         private readonly RecordAuditEvent $audit,
         private readonly RevokeUserSessions $sessions,
     ) {}
@@ -49,9 +47,6 @@ class RemoveCareerTeacher
                 ->where('activo', true)
                 ->lockForUpdate()
                 ->get();
-            foreach ($parallelAssignments as $assignment) {
-                $this->periodPlanning->assertTeacherAssignmentMayChange($assignment);
-            }
             foreach ($parallelAssignments as $assignment) {
                 $assignment->delete();
             }

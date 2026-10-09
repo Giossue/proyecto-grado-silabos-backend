@@ -82,37 +82,29 @@ class SyllabusProcessTest extends TestCase
         $this->teacherContext = $this->teacher->roleAssignments()->firstOrFail();
     }
 
-    public function test_opening_the_institutional_process_carries_parallels_and_teachers_from_the_previous_period(): void
+    public function test_opening_the_institutional_process_keeps_fixed_parallels_and_teachers(): void
     {
         $template = $this->publishedTemplate();
-        $period = AcademicPeriod::query()->firstOrFail();
         $existing = Subject::query()->where('carrera_id', $this->coordinatorContext->carrera_id)->firstOrFail();
         $subject = Subject::query()->create([
             'carrera_id' => $existing->carrera_id,
-            'codigo_asignatura' => 'SW-ARRASTRE',
-            'nombre' => 'Materia que se arrastra',
+            'codigo_asignatura' => 'SW-FIJA',
+            'nombre' => 'Materia con paralelo fijo',
             'ciclo' => $existing->ciclo,
             'orden_en_ciclo' => 99,
             'activo' => true,
         ]);
-        $previous = AcademicPeriod::query()->create([
-            'codigo' => 'ANTERIOR',
-            'fecha_inicio' => $period->fecha_inicio->subMonths(8),
-            'fecha_fin' => $period->fecha_inicio->subMonths(3),
-            'semanas_lectivas' => 16,
-        ]);
-        $source = Parallel::query()->create(['periodo_academico_id' => $previous->id, 'asignatura_id' => $subject->id, 'codigo' => 'B', 'jornada' => 'nocturna']);
-        $source->teacherAssignments()->create(['asignacion_rol_id' => $this->teacherContext->id, 'activo' => true]);
+        $parallel = Parallel::query()->create(['asignatura_id' => $subject->id, 'codigo' => 'B', 'jornada' => 'nocturna']);
+        $parallel->teacherAssignments()->create(['asignacion_rol_id' => $this->teacherContext->id, 'activo' => true]);
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.processes.store'), $this->processPayload($template))
             ->assertSuccessful();
 
-        $copy = Parallel::query()->where('periodo_academico_id', $period->id)->where('asignatura_id', $subject->id)->firstOrFail();
-        $this->assertSame('B', $copy->codigo);
-        $this->assertSame('nocturna', $copy->jornada);
-        $this->assertSame($this->teacherContext->id, $copy->teacherAssignments()->where('activo', true)->value('asignacion_rol_id'));
-        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.periodo_arrastrado', 'recurso_id' => $period->id]);
+        $this->assertSame(1, Parallel::query()->where('asignatura_id', $subject->id)->count());
+        $this->assertSame('nocturna', $parallel->fresh()?->jornada);
+        $this->assertSame($this->teacherContext->id, $parallel->teacherAssignments()->where('activo', true)->value('asignacion_rol_id'));
+        $this->assertDatabaseMissing('eventos_auditoria', ['accion' => 'academico.periodo_arrastrado']);
     }
 
     public function test_only_administration_opens_the_institutional_process(): void
@@ -828,7 +820,6 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.parallels.store'), [
                 'subject_id' => $scheduledSubject->asignatura_id,
-                'period_id' => $scheduledSubject->periodo_academico_id,
                 'codes' => ['B'],
                 'shift' => 'matutina',
             ])
@@ -882,7 +873,6 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.parallels.store'), [
                 'subject_id' => $scheduledSubject->asignatura_id,
-                'period_id' => $scheduledSubject->periodo_academico_id,
                 'codes' => ['B'],
                 'shift' => 'matutina',
             ])

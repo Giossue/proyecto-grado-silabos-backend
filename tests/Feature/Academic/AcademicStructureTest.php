@@ -10,7 +10,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
@@ -367,133 +366,6 @@ class AcademicStructureTest extends TestCase
                 ->where('scheduledSubjects.0.subject_code', $scheduledSubject->subject->codigo_asignatura));
     }
 
-    public function test_preparing_a_period_again_does_not_duplicate_existing_records(): void
-    {
-        $source = Subject::query()->firstOrFail();
-        $subject = $source->replicate();
-        $subject->codigo_asignatura = 'SW-602';
-        $subject->nombre = 'Seguridad de Software';
-        $subject->save();
-        $period = AcademicPeriod::query()->firstOrFail();
-
-        $payload = [
-            'period_id' => $period->id,
-            'subjects' => [[
-                'id' => $subject->id,
-                'parallels' => [['code' => 'A', 'shift' => 'matutina']],
-            ]],
-        ];
-
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.academic.period.prepare'), $payload)
-            ->assertSuccessful();
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.academic.period.prepare'), $payload)
-            ->assertSuccessful();
-
-        $this->assertSame(1, Parallel::query()->where('asignatura_id', $subject->id)->count());
-    }
-
-    public function test_preparing_a_period_assigns_a_verified_career_teacher_in_the_same_transaction(): void
-    {
-        $subject = Subject::query()->firstOrFail()->replicate();
-        $subject->codigo_asignatura = 'SW-605';
-        $subject->nombre = 'Ingeniería de Requisitos';
-        $subject->save();
-        $period = AcademicPeriod::query()->firstOrFail();
-        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
-
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
-                'period_id' => $period->id,
-                'subjects' => [[
-                    'id' => $subject->id,
-                    'parallels' => [['code' => 'A', 'shift' => 'matutina', 'teacher_user_id' => $teacher->id]],
-                ]],
-            ])
-            ->assertSuccessful()
-            ->assertJsonPath('message', 'Período preparado: 1 paralelo y 1 docente asignado para 1 materia.');
-
-        $parallel = Parallel::query()->where('asignatura_id', $subject->id)->firstOrFail();
-        $assignment = TeacherAssignment::query()->where('paralelo_id', $parallel->id)->firstOrFail();
-        $this->assertSame($teacher->id, $assignment->roleAssignment->usuario_id);
-    }
-
-    public function test_preparing_a_period_rejects_an_invalid_teacher_without_creating_any_subject(): void
-    {
-        $subject = Subject::query()->firstOrFail()->replicate();
-        $subject->codigo_asignatura = 'SW-606';
-        $subject->nombre = 'Arquitectura';
-        $subject->save();
-        $period = AcademicPeriod::query()->firstOrFail();
-
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
-                'period_id' => $period->id,
-                'subjects' => [[
-                    'id' => $subject->id,
-                    'parallels' => [['code' => 'A', 'shift' => 'matutina', 'teacher_user_id' => $this->administrator->id]],
-                ]],
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('subjects');
-
-        $this->assertDatabaseMissing('paralelos', ['asignatura_id' => $subject->id]);
-    }
-
-    public function test_preparing_a_period_requires_every_pending_active_subject(): void
-    {
-        $first = Subject::query()->firstOrFail()->replicate();
-        $first->codigo_asignatura = 'SW-607';
-        $first->nombre = 'Seguridad';
-        $first->save();
-        $second = Subject::query()->firstOrFail()->replicate();
-        $second->codigo_asignatura = 'SW-608';
-        $second->nombre = 'Redes';
-        $second->save();
-        $period = AcademicPeriod::query()->firstOrFail();
-
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
-                'period_id' => $period->id,
-                'subjects' => [[
-                    'id' => $first->id,
-                    'parallels' => [['code' => 'A', 'shift' => 'matutina']],
-                ]],
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('subjects');
-
-        $this->assertDatabaseMissing('paralelos', ['asignatura_id' => $first->id]);
-        $this->assertDatabaseMissing('paralelos', ['asignatura_id' => $second->id]);
-    }
-
-    public function test_preparing_a_period_rejects_duplicate_parallel_codes_after_normalization(): void
-    {
-        $source = Subject::query()->firstOrFail();
-        $subject = $source->replicate();
-        $subject->codigo_asignatura = 'SW-603';
-        $subject->nombre = 'Pruebas de Software';
-        $subject->save();
-        $period = AcademicPeriod::query()->firstOrFail();
-
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
-                'period_id' => $period->id,
-                'subjects' => [[
-                    'id' => $subject->id,
-                    'parallels' => [
-                        ['code' => 'A', 'shift' => 'matutina'],
-                        ['code' => ' A ', 'shift' => 'matutina'],
-                    ],
-                ]],
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['subjects.0.parallels' => 'Hay paralelos repetidos en la misma materia.']);
-
-        $this->assertDatabaseMissing('paralelos', ['asignatura_id' => $subject->id]);
-    }
-
     public function test_the_same_parallel_code_is_allowed_in_different_subjects(): void
     {
         $first = Subject::query()->firstOrFail()->replicate();
@@ -505,51 +377,61 @@ class AcademicStructureTest extends TestCase
         $second->nombre = 'Gestión de las Tecnologías de la Información';
         $second->save();
 
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
-                'period_id' => AcademicPeriod::query()->firstOrFail()->id,
-                'subjects' => [
-                    ['id' => $first->id, 'parallels' => [['code' => 'A', 'shift' => 'matutina']]],
-                    ['id' => $second->id, 'parallels' => [['code' => 'A', 'shift' => 'matutina']]],
-                ],
-            ])
-            ->assertSuccessful();
+        foreach ([$first, $second] as $subject) {
+            $this->actingAsCoordinator()
+                ->postJson(route('api.v1.coordination.academic.parallels.store'), ['subject_id' => $subject->id, 'codes' => ['A'], 'shift' => 'matutina'])
+                ->assertSuccessful();
+        }
 
         $this->assertDatabaseHas('paralelos', ['asignatura_id' => $first->id]);
         $this->assertDatabaseHas('paralelos', ['asignatura_id' => $second->id]);
     }
 
-    public function test_administration_deletes_a_period_without_convocation_together_with_its_planning(): void
+    public function test_a_subject_rejects_duplicate_parallel_codes_ignoring_case(): void
+    {
+        $scheduled = Parallel::query()->firstOrFail();
+        $code = $scheduled->codigo;
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.parallels.store'), ['subject_id' => $scheduled->asignatura_id, 'codes' => [strtolower($code)], 'shift' => 'matutina'])
+            ->assertJsonValidationErrors('codes');
+        $this->assertSame(1, Parallel::query()->where('asignatura_id', $scheduled->asignatura_id)->count());
+    }
+
+    public function test_the_scheduled_subjects_list_has_no_period_and_includes_subjects_without_parallels(): void
+    {
+        $subject = Subject::query()->firstOrFail()->replicate();
+        $subject->codigo_asignatura = 'SW-620';
+        $subject->nombre = 'Materia nueva de la malla';
+        $subject->save();
+
+        $response = $this->actingAsCoordinator()
+            ->getJson(route('api.v1.coordination.academic.scheduled-subjects.index'))
+            ->assertOk()
+            ->assertJsonMissingPath('selectedPeriodId');
+        $row = collect($response->json('scheduledSubjects'))->firstWhere('subject_id', $subject->id);
+
+        $this->assertNotNull($row);
+        $this->assertSame([], $row['parallels']);
+        $this->assertArrayNotHasKey('period_id', $row);
+    }
+
+    public function test_deleting_a_period_without_convocation_keeps_the_fixed_parallels(): void
     {
         $period = AcademicPeriod::query()->firstOrFail();
-        $scheduled = Parallel::query()->where('periodo_academico_id', $period->id)->firstOrFail();
-        $parallel = Parallel::query()->create(['periodo_academico_id' => $scheduled->periodo_academico_id, 'asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'Z', 'jornada' => 'matutina']);
+        $scheduled = Parallel::query()->firstOrFail();
+        $parallel = Parallel::query()->create(['asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'Z', 'jornada' => 'matutina']);
 
-        // I-172: sin convocatoria no hay sílabos; la programación del periodo se va con él.
         $this->actingAsAdministrator()
             ->deleteJson(route('api.v1.admin.academic.destroy', ['periodo', $period->id]))
             ->assertOk();
 
         $this->assertDatabaseMissing('periodos_academicos', ['periodo_academico_id' => $period->id]);
-        $this->assertDatabaseMissing('paralelos', ['periodo_academico_id' => $period->id]);
-        $this->assertDatabaseMissing('paralelos', ['paralelo_id' => $parallel->id]);
+        $this->assertDatabaseHas('paralelos', ['paralelo_id' => $parallel->id]);
     }
 
-    public function test_every_parallel_requires_a_shift_when_preparing_or_creating(): void
+    public function test_every_parallel_requires_a_shift_when_creating(): void
     {
-        $subject = Subject::query()->firstOrFail()->replicate();
-        $subject->codigo_asignatura = 'SW-610';
-        $subject->nombre = 'Materia sin jornada';
-        $subject->save();
-        $period = AcademicPeriod::query()->firstOrFail();
-
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.academic.period.prepare'), [
-                'period_id' => $period->id,
-                'subjects' => [['id' => $subject->id, 'parallels' => [['code' => 'A', 'shift' => null]]]],
-            ])
-            ->assertJsonValidationErrors('subjects.0.parallels.0.shift');
-
         $scheduled = Parallel::query()->firstOrFail();
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.academic.parallels.store'), [
@@ -559,14 +441,14 @@ class AcademicStructureTest extends TestCase
             ->assertJsonValidationErrors('shift');
 
         $this->expectException(QueryException::class);
-        Parallel::query()->create(['periodo_academico_id' => $scheduled->periodo_academico_id, 'asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'Q']);
+        Parallel::query()->create(['asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'Q']);
     }
 
     public function test_coordinator_edits_code_and_shift_of_a_parallel_with_audit(): void
     {
         $scheduled = Parallel::query()->firstOrFail();
-        $parallel = Parallel::query()->create(['periodo_academico_id' => $scheduled->periodo_academico_id, 'asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'B', 'jornada' => 'matutina']);
-        Parallel::query()->create(['periodo_academico_id' => $scheduled->periodo_academico_id, 'asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'C', 'jornada' => 'matutina']);
+        $parallel = Parallel::query()->create(['asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'B', 'jornada' => 'matutina']);
+        Parallel::query()->create(['asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'C', 'jornada' => 'matutina']);
 
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.parallels.update', $parallel), ['code' => 'c', 'shift' => 'nocturna'])
@@ -588,8 +470,8 @@ class AcademicStructureTest extends TestCase
     public function test_coordinator_deletes_only_a_parallel_without_teacher_or_syllabus(): void
     {
         $scheduled = Parallel::query()->firstOrFail();
-        $withTeacher = Parallel::query()->where('periodo_academico_id', $scheduled->periodo_academico_id)->where('asignatura_id', $scheduled->asignatura_id)->whereHas('teacherAssignments')->firstOrFail();
-        $free = Parallel::query()->create(['periodo_academico_id' => $scheduled->periodo_academico_id, 'asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'B', 'jornada' => 'vespertina']);
+        $withTeacher = Parallel::query()->where('asignatura_id', $scheduled->asignatura_id)->whereHas('teacherAssignments')->firstOrFail();
+        $free = Parallel::query()->create(['asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'B', 'jornada' => 'vespertina']);
 
         $this->actingAsCoordinator()
             ->deleteJson(route('api.v1.coordination.academic.parallels.destroy', $withTeacher))

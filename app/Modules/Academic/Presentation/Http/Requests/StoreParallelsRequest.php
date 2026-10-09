@@ -49,7 +49,6 @@ class StoreParallelsRequest extends FormRequest
                     ->where('asignatura_activa', true)
                     ->where('carrera_id', $careerId)),
             ],
-            'period_id' => ['required', 'uuid', Rule::exists('periodos_academicos', 'periodo_academico_id')],
             'codes' => ['required', 'array', 'min:1', 'max:50'],
             'codes.*' => ['required', 'string', 'max:30', 'distinct'],
             'shift' => ['required', 'string', Rule::in(Parallel::SHIFTS)],

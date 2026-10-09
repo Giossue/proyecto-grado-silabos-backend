@@ -327,7 +327,7 @@ class ConvocationAndDraftTest extends TestCase
     {
         $scheduledSubject = Parallel::query()->firstOrFail();
         $parallel = Parallel::query()->create([
-            'periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id,
+            'asignatura_id' => $scheduledSubject->asignatura_id,
             'codigo' => 'B',
             'jornada' => 'matutina',
         ]);
@@ -355,7 +355,6 @@ class ConvocationAndDraftTest extends TestCase
             ->assertSuccessful();
         $base = Parallel::query()->firstOrFail();
         $parallel = Parallel::query()->create([
-            'periodo_academico_id' => $base->periodo_academico_id,
             'asignatura_id' => $base->asignatura_id,
             'codigo' => 'B',
             'jornada' => 'matutina',
@@ -382,7 +381,7 @@ class ConvocationAndDraftTest extends TestCase
     public function test_opening_is_atomic_when_a_parallel_has_no_current_teacher(): void
     {
         $scheduledSubject = Parallel::query()->firstOrFail();
-        Parallel::query()->create(['periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id, 'codigo' => 'B', 'jornada' => 'matutina']);
+        Parallel::query()->create(['asignatura_id' => $scheduledSubject->asignatura_id, 'codigo' => 'B', 'jornada' => 'matutina']);
         $convocation = $this->createPreparedConvocation();
 
         $this->assertOpeningFails($convocation);
@@ -395,8 +394,8 @@ class ConvocationAndDraftTest extends TestCase
     public function test_opening_reports_how_many_parallels_lack_a_teacher(): void
     {
         $scheduledSubject = Parallel::query()->firstOrFail();
-        Parallel::query()->create(['periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id, 'codigo' => 'B', 'jornada' => 'matutina']);
-        Parallel::query()->create(['periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id, 'codigo' => 'C', 'jornada' => 'matutina']);
+        Parallel::query()->create(['asignatura_id' => $scheduledSubject->asignatura_id, 'codigo' => 'B', 'jornada' => 'matutina']);
+        Parallel::query()->create(['asignatura_id' => $scheduledSubject->asignatura_id, 'codigo' => 'C', 'jornada' => 'matutina']);
         $convocation = $this->createPreparedConvocation();
 
         $this->assertOpeningFails($convocation, 'Faltan 2 paralelos sin docente.');
@@ -754,7 +753,7 @@ class ConvocationAndDraftTest extends TestCase
     {
         $scheduledSubject = Parallel::query()->firstOrFail();
         $parallel = Parallel::query()->create([
-            'periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id,
+            'asignatura_id' => $scheduledSubject->asignatura_id,
             'codigo' => 'Z',
             'jornada' => 'matutina',
         ]);

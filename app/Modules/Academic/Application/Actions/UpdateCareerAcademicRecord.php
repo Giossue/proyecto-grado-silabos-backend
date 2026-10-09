@@ -3,14 +3,11 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Application\ScheduledSubjectInheritance;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CurriculumSystemFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -72,7 +69,6 @@ class UpdateCareerAcademicRecord
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
         private readonly ScheduledSubjectInheritance $inheritance,
-        private readonly AcademicPeriodPlanning $periodPlanning,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -97,7 +93,6 @@ class UpdateCareerAcademicRecord
 
         return $this->work->replace($request, function () use ($actor, $activeRole, $cosmeticSubject, $data, $entity, $recordId): Model {
             $record = $this->scopedRecord($entity, $recordId, $activeRole->carrera_id);
-            $this->assertPeriodMayChange($record);
             $this->ensureMutable($entity, $record);
             if ($record instanceof Subject && isset($data['cycle'])) {
                 $cycleCount = Career::query()
@@ -224,17 +219,6 @@ class UpdateCareerAcademicRecord
         }
 
         return $attributes;
-    }
-
-    private function assertPeriodMayChange(Model $record): void
-    {
-        if ($record instanceof Parallel) {
-            $this->periodPlanning->assertParallelMayChange($record);
-        }
-
-        if ($record instanceof TeacherAssignment) {
-            $this->periodPlanning->assertTeacherAssignmentMayChange($record);
-        }
     }
 
     /**

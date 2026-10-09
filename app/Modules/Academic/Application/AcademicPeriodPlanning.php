@@ -3,8 +3,6 @@
 namespace App\Modules\Academic\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
-use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 
@@ -50,17 +48,5 @@ final class AcademicPeriodPlanning
             ]);
         }
 
-    }
-
-    public function assertParallelMayChange(Parallel $parallel, string $field = 'record'): void
-    {
-        $parallel->loadMissing('academicPeriod');
-        $this->assertMayPlan($parallel->academicPeriod, $field);
-    }
-
-    public function assertTeacherAssignmentMayChange(TeacherAssignment $assignment, string $field = 'record'): void
-    {
-        $assignment->loadMissing('parallel.academicPeriod');
-        $this->assertMayPlan($assignment->parallel->academicPeriod, $field);
     }
 }

@@ -3,6 +3,7 @@
 namespace Tests\Feature\AiAssistance;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\AiAssistance\Application\BuildSyllabusChatContext;
@@ -187,7 +188,7 @@ class AiAssistanceTest extends TestCase
             'clave' => 'contacto', 'etiqueta' => 'Contacto', 'tipo' => 'texto_largo', 'heredado' => false,
             'editable_docente' => true, 'posicion' => 1]);
         $parallel = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail()->parallel;
-        $context = app(AcademicContextSnapshot::class)->build($parallel);
+        $context = app(AcademicContextSnapshot::class)->build($parallel, AcademicPeriod::query()->firstOrFail());
         $context['career']['name'] = 'Software';
         $convocation = Convocation::query()->create(['carrera_id' => $parallel->subject->carrera_id, 'proceso_id' => $this->openSyllabusProcess($template->id)->id, 'estado' => 'abierta']);
         $this->syllabus = Syllabus::query()->create(['convocatoria_id' => $convocation->id, 'paralelo_id' => $parallel->id,

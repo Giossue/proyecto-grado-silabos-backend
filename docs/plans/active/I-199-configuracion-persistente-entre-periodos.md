@@ -19,3 +19,5 @@ que los cambios sean rápidos.
 ## Verificación
 
 `SyllabusProcessTest::test_opening_the_institutional_process_carries_parallels_and_teachers_from_the_previous_period`.
+
+> Reemplazado por I-209: los paralelos y docentes son fijos por materia y ya no se copian entre períodos.

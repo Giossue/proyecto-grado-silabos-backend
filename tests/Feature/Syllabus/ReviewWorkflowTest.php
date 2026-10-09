@@ -476,7 +476,7 @@ class ReviewWorkflowTest extends TestCase
     {
         [$syllabus, $revision] = $this->submitValidDraft();
         $otherParallel = Parallel::query()->create([
-            'periodo_academico_id' => $syllabus->parallel->periodo_academico_id, 'asignatura_id' => $syllabus->parallel->asignatura_id,
+            'asignatura_id' => $syllabus->parallel->asignatura_id,
             'codigo' => 'Z',
             'jornada' => 'matutina',
         ]);

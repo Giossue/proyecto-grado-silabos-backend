@@ -52,15 +52,11 @@ final class CoordinatorConvocationReadiness
             ->when($process === null, fn (Builder $query) => $query->whereRaw('1 = 0'));
         $scheduledTotal = (clone $subjects)->count();
         $scheduledWithParallels = $process === null ? 0 : (clone $subjects)
-            ->whereHas('parallels', fn (Builder $query) => $query->where('periodo_academico_id', $process->periodo_academico_id))
+            ->whereHas('parallels')
             ->count();
 
         $parallels = Parallel::query()
-            ->when(
-                $process !== null,
-                fn (Builder $query) => $query->where('periodo_academico_id', $process->periodo_academico_id),
-                fn (Builder $query) => $query->whereRaw('1 = 0'),
-            )
+            ->when($process === null, fn (Builder $query) => $query->whereRaw('1 = 0'))
             ->whereHas('subject', fn (Builder $subject) => $subject->where('activo', true)->where('carrera_id', $careerId));
         $parallelTotal = (clone $parallels)->count();
         $parallelsWithTeacher = (clone $parallels)->whereHas('teacherAssignments', fn (Builder $assignment) => $assignment
@@ -120,7 +116,7 @@ final class CoordinatorConvocationReadiness
             $missing[] = 'Falta registrar la malla de la carrera con sus materias.';
         }
         if ($readiness['scheduled_total'] === 0) {
-            $missing[] = 'Falta registrar paralelos de las materias en el período.';
+            $missing[] = 'Falta registrar paralelos de las materias de la carrera.';
         }
         $withoutParallel = $readiness['scheduled_total'] - $readiness['scheduled_with_parallels'];
         if ($withoutParallel > 0) {

@@ -85,9 +85,13 @@ servidor a partir del rango de meses y el año. `cantidad_semanas_lectivas` se c
 las semanas de lunes a domingo que toca el rango, incluidas las parciales, y queda entre
 1 y 52. El período no depende de una carrera. Su estado se deriva exclusivamente de sus
 fechas.
-I-181 retiró `asignaturas_ofertadas`: el paralelo apunta directo al período y a la asignatura
-(`paralelos.periodo_academico_id`, `paralelos.asignatura_id`), porque siempre se ofrecen todas
-las materias de la malla. La modalidad no es tabla sino
+I-181 retiró `asignaturas_ofertadas`: el paralelo apunta directo a la asignatura. I-209
+(migración `000218`) quitó además `paralelos.periodo_academico_id`: los paralelos y sus
+docentes son fijos por materia y se usan en cualquier período; el período solo aparece en la
+convocatoria y en el sílabo (`silabos.convocatoria_carrera_id`). La migración fusionó los
+paralelos repetidos entre períodos (misma materia y código sin distinguir mayúsculas),
+conservó el del período más reciente, reapuntó sus sílabos y asignaciones, y descartó las
+asignaciones sobrantes del duplicado. La modalidad no es tabla sino
 columna de texto con valores fijos (`carreras.modalidad_carrera` base,
 `asignaturas.modalidad_asignatura` opcional; migraciones `000034` y `000052`, I-37/I-62).
 Desde I-168 un `CHECK` limita ambas a `presencial`, `semipresencial`, `en_linea`,
@@ -100,8 +104,8 @@ jerarquía que presenta ADM-04 es una proyección de lectura y no una desnormali
 la persistencia.
 
 `paralelos` no tiene estado propio: antes de tener historia se elimina y, una vez que
-participa en un sílabo, se conserva. Su operatividad se deriva del período, sin duplicar un
-booleano individual. Todo paralelo tiene código único por período y materia y `jornada_paralelo` obligatoria (`matutina`, `vespertina` o
+participa en un sílabo, se conserva. Todo paralelo tiene código único por materia (sin distinguir mayúsculas,
+índice `paralelos_asignatura_codigo_unique`) y `jornada_paralelo` obligatoria (`matutina`, `vespertina` o
 `nocturna`); la migración `000112` rellenó los nulos con `matutina` y dejó la columna
 NOT NULL (I-141).
 

@@ -73,7 +73,7 @@ class ResetSyllabus
                 'version_bloqueo' => 0,
                 'iniciado_en' => null,
                 'guardado_en' => null,
-                'contexto_academico' => $this->academicContext->build($parallel),
+                'contexto_academico' => $this->academicContext->build($parallel, $locked->convocation->process->academicPeriod),
             ]);
             $this->inherit->execute(
                 $locked,

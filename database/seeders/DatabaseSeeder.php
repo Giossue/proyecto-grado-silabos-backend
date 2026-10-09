@@ -64,7 +64,7 @@ class DatabaseSeeder extends Seeder
                 ],
             );
             $parallel = Parallel::query()->firstOrCreate(
-                ['periodo_academico_id' => $period->id, 'asignatura_id' => $subject->id, 'codigo' => 'A'],
+                ['asignatura_id' => $subject->id, 'codigo' => 'A'],
                 ['jornada' => 'matutina'],
             );
 

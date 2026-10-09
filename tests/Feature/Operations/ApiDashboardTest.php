@@ -3,6 +3,7 @@
 namespace Tests\Feature\Operations;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -64,13 +65,13 @@ class ApiDashboardTest extends TestCase
         $scheduledSubject = Parallel::query()->firstOrFail();
         $template = app(SyllabusTemplateProvisioner::class)->createWithOfficialFormat();
         $process = SyllabusProcess::query()->create([
-            'periodo_academico_id' => $scheduledSubject->periodo_academico_id,
+            'periodo_academico_id' => AcademicPeriod::query()->firstOrFail()->id,
             'inicia_en' => now()->addDays(2),
             'entrega_en' => now()->addDays(9),
             'estado' => SyllabusProcess::STATE_OPEN,
         ]);
         Parallel::query()->create([
-            'periodo_academico_id' => $scheduledSubject->periodo_academico_id, 'asignatura_id' => $scheduledSubject->asignatura_id,
+            'asignatura_id' => $scheduledSubject->asignatura_id,
             'codigo' => 'B',
             'jornada' => 'matutina',
         ]);

@@ -155,7 +155,6 @@ class ExportOpenApi extends Command
         $isLogoUpload = str_ends_with($name, '.logo.store');
         $isSignaturePdf = $name === 'api.v1.signature.pdf';
         $isSignatureUpload = $name === 'api.v1.signature.store';
-        $isPreparePeriod = $name === 'api.v1.coordination.academic.period.prepare';
         $isSubjectProfile = str_contains($name, '.subjects.profile.');
         $isProcessTransition = $name === 'api.v1.admin.processes.transition';
         $isTemplateRead = in_array($name, ['api.v1.admin.template.index', 'api.v1.admin.template.show'], true);
@@ -221,30 +220,6 @@ class ExportOpenApi extends Command
                         'base_sha256' => ['type' => 'string', 'pattern' => '^[A-Fa-f0-9]{64}$'],
                     ],
                 ]]];
-            } elseif ($isPreparePeriod) {
-                $content = ['application/json' => ['schema' => [
-                    'type' => 'object',
-                    'required' => ['period_id', 'subjects'],
-                    'properties' => [
-                        'period_id' => ['type' => 'string', 'format' => 'uuid'],
-                        'subjects' => ['type' => 'array', 'items' => [
-                            'type' => 'object',
-                            'required' => ['id', 'parallels'],
-                            'properties' => [
-                                'id' => ['type' => 'string', 'format' => 'uuid'],
-                                'parallels' => ['type' => 'array', 'items' => [
-                                    'type' => 'object',
-                                    'required' => ['code'],
-                                    'properties' => [
-                                        'code' => ['type' => 'string'],
-                                        'shift' => ['type' => 'string', 'nullable' => true],
-                                        'teacher_user_id' => ['type' => 'string', 'format' => 'uuid', 'nullable' => true],
-                                    ],
-                                ]],
-                            ],
-                        ]],
-                    ],
-                ]]];
             } elseif ($isSubjectProfile) {
                 $content = ['application/json' => ['schema' => [
                     '$ref' => '#/components/schemas/SubjectProfileInput',
@@ -257,7 +232,7 @@ class ExportOpenApi extends Command
                 ]]];
             }
             $operation['requestBody'] = [
-                'required' => $isPreparePeriod || $isSubjectProfile,
+                'required' => $isSubjectProfile,
                 'content' => $content,
             ];
         }
