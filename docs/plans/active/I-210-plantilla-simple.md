@@ -235,3 +235,9 @@ JSON en el admin. Formato y reglas en `docs/architecture/template-json.md`. Impo
 estructura con las mismas reglas de bloqueo y reinicio que editar a mano. Se corrigió además un fallo
 de datos: el middleware `TrimStrings` recortaba los espacios de los textos del contenido (por ejemplo
 «Hola » antes de una palabra en negrita quedaba pegado); ahora `content` y `value` no se recortan.
+
+### I-215 — Un solo archivo para la plantilla oficial (2026-10-09)
+
+La plantilla oficial pasa de `config/syllabus_template.php` + `FixedContent.php` a un único JSON,
+`resources/templates/silabo-oficial.json`, en el mismo formato que la importación. `OfficialTemplate` lo lee;
+se retira `SectionDesigns`. Los dos archivos PHP anteriores quedan solo porque migraciones antiguas los usan.

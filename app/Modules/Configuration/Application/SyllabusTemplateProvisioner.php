@@ -22,7 +22,7 @@ final class SyllabusTemplateProvisioner
     {
         return DB::transaction(function (): SyllabusTemplate {
             $template = $this->newTemplate();
-            $this->populateOfficialFormat($template);
+            $this->buildStructure($template, OfficialTemplate::sections());
 
             return $template;
         });
@@ -38,7 +38,7 @@ final class SyllabusTemplateProvisioner
 
             $lockedTemplate = $this->retireStructure($lockedTemplate);
 
-            $this->populateOfficialFormat($lockedTemplate);
+            $this->buildStructure($lockedTemplate, OfficialTemplate::sections());
 
             return $lockedTemplate->fresh();
         });
@@ -65,45 +65,7 @@ final class SyllabusTemplateProvisioner
             $locked = SyllabusTemplate::query()->whereKey($template->getKey())->lockForUpdate()->firstOrFail();
             $locked = $this->retireStructure($locked);
 
-            $sections = [];
-            $definitions = [];
-            foreach (array_values($structure) as $sectionIndex => $section) {
-                $blocks = [];
-                foreach (array_values($section['fields'] ?? []) as $fieldIndex => $field) {
-                    $blockId = (string) Str::uuid();
-                    $blocks[] = [
-                        'id' => $blockId,
-                        'clave' => $field['key'],
-                        'titulo' => (string) ($field['label'] ?? ''),
-                        'configuracion' => [],
-                        'posicion' => $fieldIndex + 1,
-                    ];
-                    $definitions[] = [
-                        'plantilla_id' => $locked->id,
-                        'campo_plantilla_id' => $blockId,
-                        'clave' => $field['key'],
-                        'etiqueta' => (string) ($field['label'] ?? ''),
-                        'ayuda' => $field['help'] ?? null,
-                        'quien_llena' => $field['quien_llena'],
-                        'contenido' => FieldDocument::normalize($field['content']),
-                        'posicion' => 1,
-                    ];
-                }
-                $sections[] = [
-                    'id' => (string) Str::uuid(),
-                    'clave' => $section['key'],
-                    'titulo' => $section['title'],
-                    'descripcion' => null,
-                    'posicion' => $sectionIndex + 1,
-                    'bloques' => $blocks,
-                    'orientacion' => $section['orientation'] ?? 'portrait',
-                ];
-            }
-
-            $locked->update(['documento' => ['version_esquema' => 1, 'secciones' => $sections]]);
-            foreach ($definitions as $definition) {
-                FieldDefinition::query()->create($definition);
-            }
+            $this->buildStructure($locked, $structure);
 
             return $locked->fresh();
         });
@@ -148,23 +110,47 @@ final class SyllabusTemplateProvisioner
         ]);
     }
 
-    private function populateOfficialFormat(SyllabusTemplate $template): void
+    /**
+     * @param  list<array<string, mixed>>  $structure
+     */
+    private function buildStructure(SyllabusTemplate $template, array $structure): void
     {
-        $designs = app(SectionDesigns::class);
-
         $sections = [];
         $definitions = [];
-        foreach ($designs->baseline() as $position => $key) {
-            $built = $designs->instantiate($key, $template->id, $position + 1);
-            $sections[] = $built['section'];
-            array_push($definitions, ...$built['definitions']);
+        foreach (array_values($structure) as $sectionIndex => $section) {
+            $blocks = [];
+            foreach (array_values($section['fields'] ?? []) as $fieldIndex => $field) {
+                $blockId = (string) Str::uuid();
+                $blocks[] = [
+                    'id' => $blockId,
+                    'clave' => $field['key'],
+                    'titulo' => (string) ($field['label'] ?? ''),
+                    'configuracion' => [],
+                    'posicion' => $fieldIndex + 1,
+                ];
+                $definitions[] = [
+                    'plantilla_id' => $template->id,
+                    'campo_plantilla_id' => $blockId,
+                    'clave' => $field['key'],
+                    'etiqueta' => (string) ($field['label'] ?? ''),
+                    'ayuda' => $field['help'] ?? null,
+                    'quien_llena' => $field['quien_llena'],
+                    'contenido' => FieldDocument::normalize($field['content']),
+                    'posicion' => 1,
+                ];
+            }
+            $sections[] = [
+                'id' => (string) Str::uuid(),
+                'clave' => $section['key'],
+                'titulo' => $section['title'],
+                'descripcion' => null,
+                'posicion' => $sectionIndex + 1,
+                'bloques' => $blocks,
+                'orientacion' => $section['orientation'] ?? 'portrait',
+            ];
         }
 
-        $template->update(['documento' => [
-            'version_esquema' => 1,
-            'secciones' => $sections,
-        ]]);
-
+        $template->update(['documento' => ['version_esquema' => 1, 'secciones' => $sections]]);
         foreach ($definitions as $definition) {
             FieldDefinition::query()->create($definition);
         }

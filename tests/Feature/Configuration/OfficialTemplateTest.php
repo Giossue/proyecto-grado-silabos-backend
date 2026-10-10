@@ -3,6 +3,7 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -50,11 +51,8 @@ class OfficialTemplateTest extends TestCase
         $this->assertCount(12, $sections);
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get();
         $this->assertSame(['coordinacion' => 6, 'docente' => 10, 'institucional' => 5], $fields->countBy('quien_llena')->sortKeys()->all());
-        $this->assertSame(config('syllabus_template.baseline'), array_keys(config('syllabus_template.designs')));
-        $this->assertSame(
-            collect(config('syllabus_template.baseline'))->values()->map(fn ($key, $index) => ((config("syllabus_template.designs.{$key}.numbered") ?? true) ? ($index + 1).'. ' : '').config("syllabus_template.designs.{$key}.title"))->all(),
-            $sections->sortBy('posicion')->pluck('titulo')->values()->all(),
-        );
+        $this->assertSame(OfficialTemplate::sectionKeys(), $sections->sortBy('posicion')->pluck('clave')->values()->all());
+        $this->assertSame(array_column(OfficialTemplate::sections(), 'title'), $sections->sortBy('posicion')->pluck('titulo')->values()->all());
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.formateada']);
     }
 
@@ -68,6 +66,16 @@ class OfficialTemplateTest extends TestCase
         $this->assertCount(12, $template->sections());
         $this->assertNull($template->sections()->firstWhere('clave', 'libre'));
         $this->assertSame(21, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
+    }
+
+    public function test_the_official_json_file_is_valid_for_the_import_endpoint(): void
+    {
+        $file = json_decode((string) file_get_contents(base_path(OfficialTemplate::PATH)), true, 512, JSON_THROW_ON_ERROR);
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $file)->assertOk();
+
+        $this->assertSame(OfficialTemplate::sectionKeys(), $this->template->fresh()->sections()->sortBy('posicion')->pluck('clave')->values()->all());
+        app(TemplateStructureValidator::class)->assertUsable($this->template->fresh());
     }
 
     public function test_the_template_can_be_cleared_and_loaded_again(): void

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Configuration;
 
+use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
 use App\Modules\Configuration\Domain\FieldDocument;
@@ -73,7 +74,7 @@ class SyllabusTemplateSeederTest extends TestCase
         }
         $this->assertSame('landscape', $template->sections->firstWhere('clave', 'planificacion')->orientacion);
         $this->assertSame('portrait', $template->sections->firstWhere('clave', 'descripcion')->orientacion);
-        $this->assertSame(config('syllabus_template.baseline'), $template->sections->pluck('clave')->all());
+        $this->assertSame(OfficialTemplate::sectionKeys(), $template->sections->pluck('clave')->all());
         $planning = TemplateDocument::nodes($fields['unidades']->contenido, 'table')[1];
         $this->assertSame('table', $planning['type']);
         $this->assertCount(20, $planning['content']);

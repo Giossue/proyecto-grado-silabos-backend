@@ -51,6 +51,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'sections.*.key' => 'clave de la sección',
             'sections.*.title' => 'título de la sección',
             'sections.*.orientation' => 'orientación',
+            'sections.*.fields' => 'campos',
             'sections.*.fields.*.key' => 'clave del campo',
             'sections.*.fields.*.label' => 'nombre del campo',
             'sections.*.fields.*.help' => 'ayuda',

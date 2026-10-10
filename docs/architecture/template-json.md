@@ -97,6 +97,20 @@ El servidor valida todo antes de tocar la plantilla y responde `422` con el **ca
 
 Si hay cualquier error no se cambia nada.
 
+## El archivo de la plantilla oficial
+
+La plantilla oficial de la UEB vive en **un solo archivo JSON**, con este mismo formato:
+
+**`resources/templates/silabo-oficial.json`** (repositorio del backend).
+
+Es el único lugar para cambiar la plantilla oficial de base. El botón **Restablecer a plantilla oficial**
+(y la instalación inicial) cargan ese archivo; las plantillas listas Identificación, Planificación y Firmas
+del constructor salen de los campos `asignatura`, `unidades` y `firmas` de ese archivo. Una prueba verifica
+que el archivo siga siendo válido para la importación.
+
+> `config/syllabus_template.php` y `FixedContent.php` ya no se usan para crear la plantilla; solo los
+> consultan migraciones antiguas. No los edite para cambiar la plantilla.
+
 ## Cómo obtener un ejemplo completo
 
 1. Admin → Plantilla → **Restablecer a plantilla oficial**.

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Documents;
 
 use App\Modules\Configuration\Application\FixedContent;
+use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\FieldDocument;
@@ -28,13 +29,13 @@ class WordRendererTest extends TestCase
     {
         $variables = array_column(TemplateVariables::catalog(), 'sample', 'key');
         $sections = [];
-        foreach (config('syllabus_template.designs') as $key => $design) {
+        foreach (OfficialTemplate::sections() as $section) {
             $fields = [];
-            foreach ($design['fields'] as [$fieldKey, $label, $responsible, $content]) {
-                $document = FieldDocument::normalize($content);
-                $fields[] = ['key' => $fieldKey, 'label' => $label, 'quien_llena' => $responsible, 'document' => $document, 'value' => FieldDocument::resolve($document, $variables)];
+            foreach ($section['fields'] as $field) {
+                $document = FieldDocument::normalize($field['content']);
+                $fields[] = ['key' => $field['key'], 'label' => $field['label'] ?? '', 'quien_llena' => $field['quien_llena'], 'document' => $document, 'value' => FieldDocument::resolve($document, $variables)];
             }
-            $sections[] = ['key' => $key, 'title' => $design['title'], 'orientation' => $design['orientation'] ?? 'portrait', 'fields' => $fields];
+            $sections[] = ['key' => $section['key'], 'title' => $section['title'], 'orientation' => $section['orientation'] ?? 'portrait', 'fields' => $fields];
         }
         $input = new DocumentRenderInput(
             subject: 'Asignatura de prueba', subjectCode: 'SW-TEST', academicPeriod: 'Período de prueba',

@@ -30,7 +30,7 @@ la actualización de borrador acepta únicamente campos docentes. Cada revisión
 ## Persistencia y exportación
 
 Una migración nueva incorpora responsable y contenido documental, carga el formato
-oficial de `config/syllabus_template.php` y retira columnas y compatibilidad de tipos.
+oficial de `resources/templates/silabo-oficial.json` y retira columnas y compatibilidad de tipos.
 Los valores de ficha y borrador son documentos saneados; al enviar se fotografían los documentos
 efectivos con variables resueltas. Word recorre sección y documento de cada campo;
 PDF se obtiene del mismo Word. El render histórico permanece para evidencia aprobada.
