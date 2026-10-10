@@ -277,7 +277,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   el nombre de cada sección y de cada campo son entradas en línea que se guardan al salir
   del campo; el contenido de un campo se escribe en el mismo lugar, con una barra de formato
   que aparece al seleccionarlo, y se guarda solo (autoguardado, con aviso «Guardando» y
-  «Guardado»). El menú de tipo de cada campo ofrece Docente, Coordinación, Fijo (texto igual para todos, antes
+  «Guardado»). El menú de tipo de cada campo ofrece Docente, Carrera, Fijo (texto igual para todos, antes
   «Institucional») y Plantilla, con tres plantillas listas que se insertan en el campo: Identificación
   (tabla con los datos del sistema), Planificación (tabla de unidades y semanas, la llena el docente) y
   Firmas. La ayuda para el docente se escribe en el botón de ayuda del campo y se muestra sobre el editor. Escribir «/» dentro del contenido abre la lista de datos
