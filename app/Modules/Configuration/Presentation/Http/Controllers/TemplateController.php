@@ -11,6 +11,7 @@ use App\Modules\Configuration\Application\Actions\ReplaceTemplateStructure;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -86,7 +87,7 @@ class TemplateController extends Controller
                     'label' => $field->etiqueta,
                     'help' => $field->ayuda,
                     'quien_llena' => $field->quien_llena,
-                    'content' => $field->contenido,
+                    'content' => DocumentHtml::toLines($field->contenido),
                 ])->all())->values()->all(),
             ])->values()->all(),
         ]);

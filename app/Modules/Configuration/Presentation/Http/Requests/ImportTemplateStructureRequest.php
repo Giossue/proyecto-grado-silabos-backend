@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Presentation\Http\Requests;
 
+use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use Closure;
@@ -28,7 +29,14 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'sections.*.fields.*.label' => ['nullable', 'string', 'max:180'],
             'sections.*.fields.*.help' => ['nullable', 'string', 'max:2000'],
             'sections.*.fields.*.quien_llena' => ['required', Rule::in(FieldDefinition::RESPONSIBLES)],
-            'sections.*.fields.*.content' => ['required', 'array', function (string $attribute, mixed $value, Closure $fail): void {
+            'sections.*.fields.*.content' => ['required', function (string $attribute, mixed $value, Closure $fail): void {
+                if (is_string($value) || (is_array($value) && array_is_list($value) && $value !== [] && array_filter($value, 'is_string') === $value)) {
+                    $value = DocumentHtml::fromHtml($value);
+                } elseif (! is_array($value) || array_is_list($value)) {
+                    $fail('El contenido debe ser un documento, un texto HTML o una lista de líneas HTML.');
+
+                    return;
+                }
                 try {
                     FieldDocument::normalize($value, $attribute);
                 } catch (ValidationException $exception) {

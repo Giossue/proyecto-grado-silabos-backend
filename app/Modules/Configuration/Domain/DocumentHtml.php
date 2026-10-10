@@ -1,0 +1,457 @@
+<?php
+
+namespace App\Modules\Configuration\Domain;
+
+use DOMDocument;
+use DOMElement;
+use DOMNode;
+
+final class DocumentHtml
+{
+    private const INLINE_MARKS = ['strong' => 'bold', 'b' => 'bold', 'em' => 'italic', 'i' => 'italic', 'u' => 'underline'];
+
+    /**
+     * @param  array<string, mixed>  $document
+     * @return list<string>
+     */
+    public static function toLines(array $document): array
+    {
+        $lines = [];
+        foreach ($document['content'] ?? [] as $node) {
+            array_push($lines, ...self::block($node));
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param  string|list<string>  $html
+     * @return array<string, mixed>
+     */
+    public static function fromHtml(string|array $html): array
+    {
+        $source = is_array($html) ? implode("\n", $html) : $html;
+        $dom = new DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        $dom->loadHTML('<?xml encoding="UTF-8"><body>'.$source.'</body>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        $body = $dom->getElementsByTagName('body')->item(0);
+        $content = $body instanceof DOMNode ? self::blocks($body) : [];
+
+        return ['type' => 'doc', 'content' => $content === [] ? [['type' => 'paragraph']] : $content];
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return list<string>
+     */
+    private static function block(array $node): array
+    {
+        return match ($node['type']) {
+            'paragraph' => [self::paragraph($node)],
+            'bulletList', 'orderedList' => self::list($node),
+            'table' => self::table($node),
+            default => [],
+        };
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     */
+    private static function paragraph(array $node): string
+    {
+        $align = $node['attrs']['textAlign'] ?? null;
+        $style = $align !== null && $align !== 'left' ? ' style="text-align:'.$align.'"' : '';
+
+        return '<p'.$style.'>'.self::inline($node['content'] ?? []).'</p>';
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $nodes
+     */
+    private static function inline(array $nodes): string
+    {
+        $html = '';
+        foreach ($nodes as $node) {
+            $inner = match ($node['type']) {
+                'text' => htmlspecialchars($node['text'], ENT_QUOTES | ENT_XML1, 'UTF-8'),
+                'hardBreak' => '<br>',
+                'variable' => '<span data-variable="'.htmlspecialchars((string) $node['attrs']['id'], ENT_QUOTES | ENT_XML1).'"'
+                    .(isset($node['attrs']['listStyle']) ? ' data-list="'.$node['attrs']['listStyle'].'"' : '').'></span>',
+                default => '',
+            };
+            foreach (array_reverse($node['marks'] ?? []) as $mark) {
+                $inner = match ($mark['type']) {
+                    'bold' => "<strong>{$inner}</strong>",
+                    'italic' => "<em>{$inner}</em>",
+                    'underline' => "<u>{$inner}</u>",
+                    'textStyle' => self::textStyle($mark['attrs'] ?? [], $inner),
+                    default => $inner,
+                };
+            }
+            $html .= $inner;
+        }
+
+        return $html;
+    }
+
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
+    private static function textStyle(array $attrs, string $inner): string
+    {
+        $style = [];
+        if (isset($attrs['color'])) {
+            $style[] = 'color:'.$attrs['color'];
+        }
+        if (isset($attrs['fontFamily'])) {
+            $style[] = 'font-family:'.$attrs['fontFamily'];
+        }
+
+        return $style === [] ? $inner : '<span style="'.implode(';', $style).'">'.$inner.'</span>';
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return list<string>
+     */
+    private static function list(array $node): array
+    {
+        $tag = $node['type'] === 'orderedList' ? 'ol' : 'ul';
+        $lines = ["<{$tag}>"];
+        foreach ($node['content'] as $item) {
+            $parts = $item['content'] ?? [];
+            $first = $parts[0] ?? null;
+            $simple = is_array($first) && $first['type'] === 'paragraph' && ($first['attrs']['textAlign'] ?? 'left') === 'left';
+            if ($simple) {
+                $line = '<li>'.self::inline($first['content'] ?? []);
+                $rest = array_slice($parts, 1);
+            } else {
+                $line = '<li>';
+                $rest = $parts;
+            }
+            $nested = [];
+            foreach ($rest as $child) {
+                array_push($nested, ...self::block($child));
+            }
+            if ($nested === []) {
+                $lines[] = $line.'</li>';
+            } else {
+                $lines[] = $line;
+                array_push($lines, ...$nested);
+                $lines[] = '</li>';
+            }
+        }
+        $lines[] = "</{$tag}>";
+
+        return $lines;
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return list<string>
+     */
+    private static function table(array $node): array
+    {
+        $lines = ['<table>'];
+        foreach ($node['content'] as $row) {
+            $cells = [];
+            $multiline = false;
+            foreach ($row['content'] as $cell) {
+                $rendered = self::cell($cell);
+                $multiline = $multiline || count($rendered) > 1;
+                $cells[] = $rendered;
+            }
+            if (! $multiline) {
+                $lines[] = '<tr>'.implode('', array_map(fn (array $parts): string => $parts[0], $cells)).'</tr>';
+
+                continue;
+            }
+            $lines[] = '<tr>';
+            foreach ($cells as $parts) {
+                array_push($lines, ...$parts);
+            }
+            $lines[] = '</tr>';
+        }
+        $lines[] = '</table>';
+
+        return $lines;
+    }
+
+    /**
+     * @param  array<string, mixed>  $cell
+     * @return list<string>
+     */
+    private static function cell(array $cell): array
+    {
+        $tag = $cell['type'] === 'tableHeader' ? 'th' : 'td';
+        $attrs = $cell['attrs'] ?? [];
+        $open = "<{$tag}";
+        if (($attrs['colspan'] ?? 1) > 1) {
+            $open .= ' colspan="'.$attrs['colspan'].'"';
+        }
+        if (($attrs['rowspan'] ?? 1) > 1) {
+            $open .= ' rowspan="'.$attrs['rowspan'].'"';
+        }
+        if (! empty($attrs['colwidth'])) {
+            $open .= ' data-width="'.implode(',', $attrs['colwidth']).'"';
+        }
+        if (! empty($attrs['borderStyle'])) {
+            $open .= ' data-border="'.$attrs['borderStyle'].'"';
+        }
+        $style = [];
+        if (! empty($attrs['backgroundColor'])) {
+            $style[] = 'background:'.$attrs['backgroundColor'];
+        }
+        if (! empty($attrs['textColor'])) {
+            $style[] = 'color:'.$attrs['textColor'];
+        }
+        if (! empty($attrs['textAlign'])) {
+            $style[] = 'text-align:'.$attrs['textAlign'];
+        }
+        if (isset($attrs['bold'])) {
+            $style[] = 'font-weight:'.($attrs['bold'] ? 'bold' : 'normal');
+        }
+        if (isset($attrs['italic'])) {
+            $style[] = 'font-style:'.($attrs['italic'] ? 'italic' : 'normal');
+        }
+        if ($style !== []) {
+            $open .= ' style="'.implode(';', $style).'"';
+        }
+        $open .= '>';
+
+        $content = $cell['content'] ?? [];
+        $first = $content[0] ?? null;
+        $plain = count($content) === 1 && is_array($first) && $first['type'] === 'paragraph' && ($first['attrs']['textAlign'] ?? 'left') === 'left';
+        if ($plain) {
+            return [$open.self::inline($first['content'] ?? [])."</{$tag}>"];
+        }
+        $lines = [$open];
+        foreach ($content as $child) {
+            array_push($lines, ...self::block($child));
+        }
+        $lines[] = "</{$tag}>";
+
+        return $lines;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private static function blocks(DOMNode $parent): array
+    {
+        $blocks = [];
+        $buffer = [];
+        $flush = function () use (&$blocks, &$buffer): void {
+            $last = array_key_last($buffer);
+            if ($last !== null && ($buffer[$last]['type'] ?? '') === 'text') {
+                $buffer[$last]['text'] = rtrim($buffer[$last]['text'], "\n");
+                if ($buffer[$last]['text'] === '') {
+                    array_pop($buffer);
+                }
+            }
+            if ($buffer !== []) {
+                $blocks[] = ['type' => 'paragraph', 'content' => $buffer];
+                $buffer = [];
+            }
+        };
+        foreach ($parent->childNodes as $child) {
+            if ($child instanceof DOMElement) {
+                $tag = strtolower($child->tagName);
+                if ($tag === 'p') {
+                    $flush();
+                    $content = self::inlineNodes($child, []);
+                    $paragraph = ['type' => 'paragraph'];
+                    if ($content !== []) {
+                        $paragraph['content'] = $content;
+                    }
+                    $align = self::style($child)['text-align'] ?? null;
+                    if ($align !== null) {
+                        $paragraph['attrs'] = ['textAlign' => $align];
+                    }
+                    $blocks[] = $paragraph;
+                } elseif ($tag === 'ul' || $tag === 'ol') {
+                    $flush();
+                    $blocks[] = self::listNode($child);
+                } elseif ($tag === 'table') {
+                    $flush();
+                    $blocks[] = self::tableNode($child);
+                } else {
+                    array_push($buffer, ...self::inlineNodes($child, [], true));
+                }
+            } elseif ($child->nodeType === XML_TEXT_NODE) {
+                $text = $child->nodeValue ?? '';
+                if ($buffer === []) {
+                    $text = ltrim($text, "\n");
+                }
+                if (trim($text) !== '' || $buffer !== []) {
+                    array_push($buffer, ...self::inlineNodes($text === ($child->nodeValue ?? '') ? $child : $child->ownerDocument->createTextNode($text), []));
+                }
+            }
+        }
+        $flush();
+
+        return $blocks;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $marks
+     * @return list<array<string, mixed>>
+     */
+    private static function inlineNodes(DOMNode $node, array $marks, bool $self = false): array
+    {
+        if ($node->nodeType === XML_TEXT_NODE) {
+            $text = $node->nodeValue ?? '';
+
+            return $text === '' ? [] : [self::withMarks(['type' => 'text', 'text' => $text], $marks)];
+        }
+        if (! $node instanceof DOMElement && ! $node instanceof DOMDocument) {
+            return [];
+        }
+        $out = [];
+        if ($node instanceof DOMElement) {
+            $tag = strtolower($node->tagName);
+            if ($tag === 'br') {
+                return [['type' => 'hardBreak']];
+            }
+            if ($tag === 'span' && $node->hasAttribute('data-variable')) {
+                $variable = ['type' => 'variable', 'attrs' => ['id' => $node->getAttribute('data-variable')]];
+                if ($node->hasAttribute('data-list')) {
+                    $variable['attrs']['listStyle'] = $node->getAttribute('data-list');
+                }
+
+                return [self::withMarks($variable, $marks)];
+            }
+            if (isset(self::INLINE_MARKS[$tag])) {
+                $marks[] = ['type' => self::INLINE_MARKS[$tag]];
+            } elseif ($tag === 'span') {
+                $style = self::style($node);
+                $attrs = array_filter(['color' => $style['color'] ?? null, 'fontFamily' => $style['font-family'] ?? null]);
+                if ($attrs !== []) {
+                    $marks[] = ['type' => 'textStyle', 'attrs' => $attrs];
+                }
+            }
+        }
+        foreach ($node->childNodes as $child) {
+            array_push($out, ...self::inlineNodes($child, $marks));
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @param  list<array<string, mixed>>  $marks
+     * @return array<string, mixed>
+     */
+    private static function withMarks(array $node, array $marks): array
+    {
+        if ($marks !== []) {
+            $node['marks'] = $marks;
+        }
+
+        return $node;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function listNode(DOMElement $list): array
+    {
+        $items = [];
+        foreach ($list->childNodes as $li) {
+            if (! $li instanceof DOMElement || strtolower($li->tagName) !== 'li') {
+                continue;
+            }
+            $content = self::blocks($li);
+            $items[] = ['type' => 'listItem', 'content' => $content === [] ? [['type' => 'paragraph']] : $content];
+        }
+
+        return ['type' => strtolower($list->tagName) === 'ol' ? 'orderedList' : 'bulletList', 'content' => $items];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function tableNode(DOMElement $table): array
+    {
+        $rows = [];
+        $collect = function (DOMNode $parent) use (&$collect, &$rows): void {
+            foreach ($parent->childNodes as $child) {
+                if (! $child instanceof DOMElement) {
+                    continue;
+                }
+                $tag = strtolower($child->tagName);
+                if ($tag === 'tr') {
+                    $rows[] = self::rowNode($child);
+                } elseif (in_array($tag, ['tbody', 'thead', 'tfoot'], true)) {
+                    $collect($child);
+                }
+            }
+        };
+        $collect($table);
+
+        return ['type' => 'table', 'content' => $rows];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function rowNode(DOMElement $row): array
+    {
+        $cells = [];
+        foreach ($row->childNodes as $cell) {
+            if (! $cell instanceof DOMElement || ! in_array(strtolower($cell->tagName), ['td', 'th'], true)) {
+                continue;
+            }
+            $style = self::style($cell);
+            $attrs = [
+                'colspan' => $cell->hasAttribute('colspan') ? (int) $cell->getAttribute('colspan') : 1,
+                'rowspan' => $cell->hasAttribute('rowspan') ? (int) $cell->getAttribute('rowspan') : 1,
+            ];
+            if ($cell->hasAttribute('data-width')) {
+                $attrs['colwidth'] = array_map('intval', explode(',', $cell->getAttribute('data-width')));
+            }
+            if ($cell->hasAttribute('data-border')) {
+                $attrs['borderStyle'] = $cell->getAttribute('data-border');
+            }
+            $map = ['background' => 'backgroundColor', 'color' => 'textColor', 'text-align' => 'textAlign'];
+            foreach ($map as $css => $attribute) {
+                if (isset($style[$css])) {
+                    $attrs[$attribute] = $style[$css];
+                }
+            }
+            if (isset($style['font-weight'])) {
+                $attrs['bold'] = $style['font-weight'] === 'bold';
+            }
+            if (isset($style['font-style'])) {
+                $attrs['italic'] = $style['font-style'] === 'italic';
+            }
+            $content = self::blocks($cell);
+            $cells[] = [
+                'type' => strtolower($cell->tagName) === 'th' ? 'tableHeader' : 'tableCell',
+                'attrs' => $attrs,
+                'content' => $content === [] ? [['type' => 'paragraph']] : $content,
+            ];
+        }
+
+        return ['type' => 'tableRow', 'content' => $cells];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function style(DOMElement $element): array
+    {
+        $style = [];
+        foreach (explode(';', $element->getAttribute('style')) as $declaration) {
+            [$name, $value] = array_pad(explode(':', $declaration, 2), 2, null);
+            if ($name !== null && $value !== null && trim($name) !== '') {
+                $style[strtolower(trim($name))] = trim($value);
+            }
+        }
+
+        return $style;
+    }
+}

@@ -241,3 +241,10 @@ de datos: el middleware `TrimStrings` recortaba los espacios de los textos del c
 La plantilla oficial pasa de `config/syllabus_template.php` + `FixedContent.php` a un único JSON,
 `resources/templates/silabo-oficial.json`, en el mismo formato que la importación. `OfficialTemplate` lo lee;
 se retira `SectionDesigns`. Los dos archivos PHP anteriores quedan solo porque migraciones antiguas los usan.
+
+### I-216 — Contenido en HTML dentro del JSON (2026-10-09)
+
+El `content` de un campo se escribe y se exporta como lista de líneas HTML (también acepta una cadena HTML o el
+documento Tiptap). `DocumentHtml` convierte en ambos sentidos; los 21 campos oficiales dan ida y vuelta idénticos.
+El archivo oficial `resources/templates/silabo-oficial.json` pasó de 9.551 a 403 líneas (358 KB a 23 KB). La base
+de datos sigue guardando el documento Tiptap.

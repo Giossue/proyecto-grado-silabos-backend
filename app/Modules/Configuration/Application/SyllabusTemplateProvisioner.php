@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Application;
 
+use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -135,7 +136,7 @@ final class SyllabusTemplateProvisioner
                     'etiqueta' => (string) ($field['label'] ?? ''),
                     'ayuda' => $field['help'] ?? null,
                     'quien_llena' => $field['quien_llena'],
-                    'contenido' => FieldDocument::normalize($field['content']),
+                    'contenido' => FieldDocument::normalize(is_array($field['content']) && ! array_is_list($field['content']) ? $field['content'] : DocumentHtml::fromHtml($field['content'])),
                     'posicion' => 1,
                 ];
             }

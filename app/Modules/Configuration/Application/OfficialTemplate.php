@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Application;
 
+use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
 use RuntimeException;
 
@@ -22,9 +23,17 @@ final class OfficialTemplate
             throw new RuntimeException('La plantilla oficial ('.self::PATH.') no es un JSON válido.');
         }
 
-        /** @var list<array{key: string, title: string, orientation?: string, fields: list<array{key: string, label?: string|null, help?: string|null, quien_llena: string, content: array<string, mixed>}>}> $sections */
-        $sections = $decoded['sections'];
+        $sections = [];
+        foreach ($decoded['sections'] as $section) {
+            foreach ($section['fields'] ?? [] as $index => $field) {
+                $section['fields'][$index]['content'] = is_array($field['content']) && ! array_is_list($field['content'])
+                    ? $field['content']
+                    : DocumentHtml::fromHtml($field['content']);
+            }
+            $sections[] = $section;
+        }
 
+        /** @var list<array{key: string, title: string, orientation?: string, fields: list<array{key: string, label?: string|null, help?: string|null, quien_llena: string, content: array<string, mixed>}>}> $sections */
         return $sections;
     }
 

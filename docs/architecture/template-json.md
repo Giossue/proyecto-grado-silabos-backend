@@ -69,17 +69,40 @@ al editar a mano (I-188): hay que tener el proceso pausado y, al reanudar, los s
 
 ## Contenido (`content`)
 
-Documento de texto enriquecido en JSON de Tiptap/ProseMirror, con este subconjunto:
+El contenido de un campo se puede escribir de **tres formas**; al importar se convierten al mismo documento:
 
-- Nodos: `doc`, `paragraph`, `text`, `bulletList`, `orderedList`, `listItem`, `table`, `tableRow`,
-  `tableHeader`, `tableCell`, `variable`, `hardBreak`.
-- Marcas de texto: `bold`, `italic`, `underline`.
-- Celdas: `colspan`, `rowspan`, `colwidth` y `backgroundColor` (color `#RRGGBB`).
-- `variable`: dato del sistema (`attrs.id`, p. ej. `carrera`); solo para campos fijos y las plantillas de
-  identificación y firmas. Los identificadores válidos los define `TemplateVariables`.
+1. **Lista de líneas HTML** (la forma que usa la exportación y el archivo oficial; la más legible):
+   ```json
+   "content": [
+     "<p>Texto con <strong>negrita</strong>.</p>",
+     "<table>",
+     "<tr><th colspan=\"2\" style=\"background:#C3D4EA;font-weight:bold\">Título</th></tr>",
+     "<tr><td>Carrera:</td><td><span data-variable=\"nombre_carrera\"></span></td></tr>",
+     "</table>"
+   ]
+   ```
+2. **Un texto HTML** en una sola cadena.
+3. **Un documento JSON de Tiptap** (`{"type":"doc",...}`), el formato interno. Sigue aceptándose.
 
-Los **espacios** de los textos se conservan tal cual (importa: `"Hola "` seguido de una palabra en negrita).
-Una tabla combina celdas con `colspan`/`rowspan`; el documento oficial de identificación es un buen ejemplo.
+### HTML permitido
+
+| Qué | Cómo se escribe |
+|---|---|
+| Párrafo | `<p>`; alineación con `style="text-align:center"` (izquierda es la predeterminada) |
+| Negrita, cursiva, subrayado | `<strong>`, `<em>`, `<u>` |
+| Salto de línea | `<br>` |
+| Listas | `<ul>`/`<ol>` con `<li>`; una lista dentro de un `<li>` es una sublista |
+| Tabla | `<table>`, `<tr>`, `<th>` (encabezado), `<td>` |
+| Celdas combinadas | `colspan="4"`, `rowspan="2"` |
+| Ancho de columnas | `data-width="144,66"` (uno por columna que abarca la celda) |
+| Fondo, color, alineación, negrita, cursiva de celda | `style="background:#C3D4EA;color:#FFFFFF;text-align:center;font-weight:bold;font-style:italic"` |
+| Borde de celda | `data-border="thin"`, `"thick"` o `"none"` |
+| Dato del sistema (variable) | `<span data-variable="nombre_carrera"></span>`; con lista: `data-list="bullet"` o `"number"` |
+| Color o fuente del texto | `<span style="color:#1F3864;font-family:Arial">…</span>` |
+
+Los **espacios** de los textos se conservan tal cual. Cualquier otra etiqueta se ignora (su texto sí se conserva).
+Los identificadores de variable válidos los define `TemplateVariables`. Límites: tablas de hasta 24 columnas y
+100 filas, y un contenido de hasta 2 MB.
 
 ## Validación y errores
 

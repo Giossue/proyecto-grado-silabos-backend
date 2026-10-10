@@ -155,6 +155,44 @@ class OfficialTemplateTest extends TestCase
         $this->assertSame('institucional', $fields['b']->quien_llena);
     }
 
+    public function test_the_content_can_be_written_as_html_or_as_a_list_of_html_lines(): void
+    {
+        $bad = $this->sample();
+        $bad['sections'][0]['fields'][0]['content'] = '<p>Texto con <strong>negrita</strong> y <em>cursiva</em>.</p><ul><li>Uno</li><li>Dos</li></ul>';
+        $bad['sections'][0]['fields'][1]['content'] = ['<table>', '<tr><th colspan="2" style="background:#C3D4EA;font-weight:bold">Título</th></tr>', '<tr><td>A</td><td><span data-variable="nombre_carrera"></span></td></tr>', '</table>'];
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $bad)->assertOk();
+
+        $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get()->keyBy('clave');
+        $paragraph = $fields['a']->contenido['content'][0];
+        $this->assertSame(['Texto con ', 'negrita', ' y ', 'cursiva', '.'], array_column($paragraph['content'], 'text'));
+        $this->assertSame('bold', $paragraph['content'][1]['marks'][0]['type']);
+        $this->assertSame('bulletList', $fields['a']->contenido['content'][1]['type']);
+        $table = $fields['b']->contenido['content'][0];
+        $this->assertSame(2, $table['content'][0]['content'][0]['attrs']['colspan']);
+        $this->assertSame('#C3D4EA', $table['content'][0]['content'][0]['attrs']['backgroundColor']);
+        $this->assertSame('variable', $table['content'][1]['content'][1]['content'][0]['content'][0]['type']);
+    }
+
+    public function test_the_json_export_writes_the_content_as_html_lines(): void
+    {
+        $this->format()->assertOk();
+        $exported = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->assertOk()->json();
+
+        $content = $exported['sections'][0]['fields'][0]['content'];
+        $this->assertIsArray($content);
+        $this->assertSame('<table>', $content[0]);
+        $this->assertSame('</table>', end($content));
+    }
+
+    public function test_an_unknown_variable_or_empty_html_content_is_reported_with_its_path(): void
+    {
+        $bad = $this->sample();
+        $bad['sections'][0]['fields'][0]['content'] = '<p><span data-variable="no_existe"></span></p>';
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $bad)->assertJsonValidationErrors('sections.0.fields.0.content');
+    }
+
     public function test_importing_an_empty_json_leaves_a_blank_template(): void
     {
         $this->format()->assertOk();
