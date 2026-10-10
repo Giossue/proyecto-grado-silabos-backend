@@ -90,6 +90,106 @@ class OfficialTemplateTest extends TestCase
         $this->assertCount(12, $this->template->fresh()->sections());
     }
 
+    private function sample(array $override = []): array
+    {
+        return array_replace_recursive([
+            'version' => 1,
+            'sections' => [[
+                'key' => 'uno', 'title' => '1. Uno', 'orientation' => 'landscape',
+                'fields' => [
+                    ['key' => 'a', 'label' => 'Campo A', 'help' => 'Ayuda A', 'quien_llena' => 'docente', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Hola']]]]]],
+                    ['key' => 'b', 'label' => '', 'help' => null, 'quien_llena' => 'institucional', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]]],
+                ],
+            ]],
+        ], $override);
+    }
+
+    public function test_the_template_exports_as_a_single_json_and_imports_it_back_identically(): void
+    {
+        $this->format()->assertOk();
+        $exported = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->assertOk()->json();
+
+        $this->assertSame(1, $exported['version']);
+        $this->assertCount(12, $exported['sections']);
+        $this->assertSame(['key', 'title', 'orientation', 'fields'], array_keys($exported['sections'][0]));
+        $this->assertSame(['key', 'label', 'help', 'quien_llena', 'content'], array_keys($exported['sections'][0]['fields'][0]));
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $exported)->assertOk();
+        $again = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->assertOk()->json();
+
+        $this->assertEquals($exported, $again);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.importada']);
+    }
+
+    public function test_the_spaces_around_formatted_text_are_kept_when_saving_a_field(): void
+    {
+        $this->format()->assertOk();
+        $field = FieldDefinition::query()->where('plantilla_id', $this->template->id)->where('clave', 'descripcion')->firstOrFail();
+        $document = ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Hola '], ['type' => 'text', 'text' => 'mundo', 'marks' => [['type' => 'bold']]], ['type' => 'text', 'text' => ' fin ']]]]];
+
+        $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$this->template, $field]), ['content' => $document])->assertOk();
+
+        $texts = collect($field->fresh()->contenido['content'][0]['content'])->pluck('text')->all();
+        $this->assertSame(['Hola ', 'mundo', ' fin '], $texts);
+    }
+
+    public function test_importing_a_json_replaces_the_whole_template(): void
+    {
+        $this->format()->assertOk();
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $this->sample())->assertOk();
+
+        $template = $this->template->fresh();
+        $this->assertCount(1, $template->sections());
+        $this->assertSame('landscape', $template->sections()->first()->orientacion);
+        $fields = FieldDefinition::query()->where('plantilla_id', $template->id)->get()->keyBy('clave');
+        $this->assertEqualsCanonicalizing(['a', 'b'], $fields->keys()->all());
+        $this->assertSame('Ayuda A', $fields['a']->ayuda);
+        $this->assertSame('institucional', $fields['b']->quien_llena);
+    }
+
+    public function test_importing_an_empty_json_leaves_a_blank_template(): void
+    {
+        $this->format()->assertOk();
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), ['version' => 1, 'sections' => []])->assertOk();
+
+        $this->assertCount(0, $this->template->fresh()->sections());
+    }
+
+    public function test_the_json_is_validated_with_the_path_of_each_error(): void
+    {
+        $bad = $this->sample();
+        $bad['sections'][0]['fields'][1]['key'] = 'a';
+        $bad['sections'][0]['fields'][0]['quien_llena'] = 'otro';
+        $bad['sections'][0]['orientation'] = 'diagonal';
+        $bad['sections'][0]['fields'][0]['content'] = ['type' => 'texto'];
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $bad)->assertJsonValidationErrors([
+            'sections.0.orientation', 'sections.0.fields.0.quien_llena', 'sections.0.fields.0.content', 'sections.0.fields.1.key',
+        ]);
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), ['sections' => []])->assertJsonValidationErrors('version');
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), ['version' => 1])->assertJsonValidationErrors('sections');
+        $this->assertCount(0, $this->template->fresh()->sections());
+    }
+
+    public function test_the_json_rejects_duplicate_section_keys(): void
+    {
+        $bad = $this->sample();
+        $bad['sections'][] = ['key' => 'uno', 'title' => 'Otra'];
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $bad)->assertJsonValidationErrors(['sections.0.key', 'sections.1.key']);
+    }
+
+    public function test_only_administration_imports_and_an_open_process_blocks_it(): void
+    {
+        $this->actingAsRole('coordinador@silabos.test');
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $this->sample())->assertForbidden();
+        $this->getJson(route('api.v1.admin.template.json.export', $this->template))->assertForbidden();
+
+        $this->actingAsRole('admin@silabos.test');
+        $this->openSyllabusProcess($this->template->id);
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $this->sample())->assertJsonValidationErrors('process');
+    }
+
     public function test_a_blank_section_needs_a_key_and_a_title_and_ignores_designs(): void
     {
         $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), ['design' => 'etica'])->assertJsonValidationErrors(['title', 'key']);

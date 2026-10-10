@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Configuration\Application\Actions\ClearSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\CreateSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\FormatSyllabusTemplate;
+use App\Modules\Configuration\Application\Actions\ReplaceTemplateStructure;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\SectionDesigns;
 use App\Modules\Configuration\Application\TemplateVariables;
@@ -17,6 +18,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Configuration\Presentation\Http\Requests\CreateTemplateRequest;
+use App\Modules\Configuration\Presentation\Http\Requests\ImportTemplateStructureRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ManageTemplatesRequest;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -69,6 +71,36 @@ class TemplateController extends Controller
         $action->execute($template, $actor, $request);
 
         return response()->json(['message' => 'Plantilla vaciada.']);
+    }
+
+    public function exportJson(SyllabusTemplate $template, ManageTemplatesRequest $request): JsonResponse
+    {
+        return response()->json([
+            'version' => ImportTemplateStructureRequest::FORMAT_VERSION,
+            'sections' => $template->sections->map(fn (TemplateSection $section): array => [
+                'key' => $section->clave,
+                'title' => $section->titulo,
+                'orientation' => $section->orientacion,
+                'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(fn (FieldDefinition $field): array => [
+                    'key' => $field->clave,
+                    'label' => $field->etiqueta,
+                    'help' => $field->ayuda,
+                    'quien_llena' => $field->quien_llena,
+                    'content' => $field->contenido,
+                ])->all())->values()->all(),
+            ])->values()->all(),
+        ]);
+    }
+
+    public function importJson(SyllabusTemplate $template, ImportTemplateStructureRequest $request, ReplaceTemplateStructure $action): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        /** @var list<array<string, mixed>> $sections */
+        $sections = $request->validated('sections');
+        $action->execute($template, $sections, $actor, $request);
+
+        return response()->json(['message' => 'Plantilla importada desde el JSON.']);
     }
 
     public function show(SyllabusTemplate $template, ManageTemplatesRequest $request, ProcessLocks $locks, InstitutionalLogos $logos): JsonResponse

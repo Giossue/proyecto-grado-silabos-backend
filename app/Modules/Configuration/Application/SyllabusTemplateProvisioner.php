@@ -2,11 +2,13 @@
 
 namespace App\Modules\Configuration\Application;
 
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class SyllabusTemplateProvisioner
@@ -51,6 +53,59 @@ final class SyllabusTemplateProvisioner
                 ->firstOrFail();
 
             return $this->retireStructure($lockedTemplate)->fresh();
+        });
+    }
+
+    /**
+     * @param  list<array{key: string, title: string, orientation?: string, fields?: list<array{key: string, label?: string|null, help?: string|null, quien_llena: string, content: array<string, mixed>}>}>  $structure
+     */
+    public function replaceStructure(SyllabusTemplate $template, array $structure): SyllabusTemplate
+    {
+        return DB::transaction(function () use ($template, $structure): SyllabusTemplate {
+            $locked = SyllabusTemplate::query()->whereKey($template->getKey())->lockForUpdate()->firstOrFail();
+            $locked = $this->retireStructure($locked);
+
+            $sections = [];
+            $definitions = [];
+            foreach (array_values($structure) as $sectionIndex => $section) {
+                $blocks = [];
+                foreach (array_values($section['fields'] ?? []) as $fieldIndex => $field) {
+                    $blockId = (string) Str::uuid();
+                    $blocks[] = [
+                        'id' => $blockId,
+                        'clave' => $field['key'],
+                        'titulo' => (string) ($field['label'] ?? ''),
+                        'configuracion' => [],
+                        'posicion' => $fieldIndex + 1,
+                    ];
+                    $definitions[] = [
+                        'plantilla_id' => $locked->id,
+                        'campo_plantilla_id' => $blockId,
+                        'clave' => $field['key'],
+                        'etiqueta' => (string) ($field['label'] ?? ''),
+                        'ayuda' => $field['help'] ?? null,
+                        'quien_llena' => $field['quien_llena'],
+                        'contenido' => FieldDocument::normalize($field['content']),
+                        'posicion' => 1,
+                    ];
+                }
+                $sections[] = [
+                    'id' => (string) Str::uuid(),
+                    'clave' => $section['key'],
+                    'titulo' => $section['title'],
+                    'descripcion' => null,
+                    'posicion' => $sectionIndex + 1,
+                    'bloques' => $blocks,
+                    'orientacion' => $section['orientation'] ?? 'portrait',
+                ];
+            }
+
+            $locked->update(['documento' => ['version_esquema' => 1, 'secciones' => $sections]]);
+            foreach ($definitions as $definition) {
+                FieldDefinition::query()->create($definition);
+            }
+
+            return $locked->fresh();
         });
     }
 
