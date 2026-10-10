@@ -273,14 +273,19 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   párrafos con formato, listas, tablas, filas/columnas libres y celdas combinadas;
   Administración inserta variables del catálogo. No hay selector de tipo, ajuste de
   ficha, tablas especiales por sección ni edición de título o logos.
-  La plantilla siempre existe (I-211): al entrar sin plantilla se crea vacía, sin
-  modal de creación. **Nueva sección** pide solo el nombre y la orientación. **Propiedades
-  del campo** cambia nombre, ayuda, responsable y contenido. El campo sin nombre no lleva
-  subtítulo y aparece como «Campo sin nombre» en el constructor. Arriba de la primera hoja,
+  La plantilla siempre existe (I-211) y se edita sobre la propia hoja, sin modales (I-212):
+  el nombre de cada sección y de cada campo son entradas en línea que se guardan al salir
+  del campo; el contenido de un campo se escribe en el mismo lugar, con una barra de formato
+  que aparece al seleccionarlo, y se guarda solo (autoguardado, con aviso «Guardando» y
+  «Guardado»). Una etiqueta en la esquina de cada campo elige quién lo llena (Docente,
+  Coordinación o Institucional). Escribir «/» dentro del contenido abre la lista de datos
+  del sistema para insertarlos como etiquetas. Los botones **+** entre bloques agregan al
+  instante una sección «Nueva sección» o un campo vacío del docente y llevan el cursor ahí.
+  Cada sección y campo tiene controles contextuales para orientación, ayuda, subir, bajar y
+  eliminar (con confirmación). Arriba de la primera hoja,
   dos botones de icono con tooltip: **Restablecer a plantilla oficial** reemplaza todo por el
   formato oficial y **Borrar la plantilla** la deja en blanco; ambos piden confirmación y
-  funcionan también sobre una plantilla ya editada. La hoja vacía ofrece
-  «Nueva sección». Los controles son contextuales; un proceso abierto
+  funcionan también sobre una plantilla ya editada. La hoja vacía ofrece «Nueva sección». Los controles son contextuales; un proceso abierto
   bloquea las mutaciones y mantiene la consulta. La planificación oficial es horizontal.
   La hoja permanece clara en ambos temas, con contorno discontinuo por campo; las
   tablas muestran únicamente sus bordes de celda.

@@ -209,3 +209,12 @@ rehacen los sílabos al reanudar (I-188). Título y logos siguen fijos (decisió
 Los dos controles de la hoja son botones de icono con tooltip: **Restablecer a plantilla oficial**
 y **Borrar la plantilla** (`DELETE admin/template/{id}/structure`, auditado como `plantilla.vaciada`),
 que deja la hoja en blanco y respeta el bloqueo por proceso abierto.
+
+### I-212 — Constructor en la hoja (2026-10-09)
+
+Se rehace el constructor sin cambiar la base de datos ni la API: edición en línea de secciones y
+campos (nombre, quién lo llena, contenido) con autoguardado por campo, menú «/» de datos del
+sistema, alta inmediata de secciones y campos sin modales y barra de formato contextual. Se
+retiran `TemplateSectionDialog`, `TemplateFieldDialog` y `TemplateFieldForm`. Pendiente
+(requiere decisión de producto y cambios de backend): variables de Docente y Carrera dentro del
+contenido, con valores guardados en el JSON del valor del campo.
