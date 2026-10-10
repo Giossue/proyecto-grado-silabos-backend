@@ -34,23 +34,43 @@ final class SyllabusTemplateProvisioner
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($lockedTemplate->hasStructure()) {
-                $lockedTemplate->update(['documento' => ['version_esquema' => 1, 'secciones' => []]]);
-                DB::table('definiciones_campo')
-                    ->where('plantilla_id', $lockedTemplate->id)
-                    ->where('vigente_en_plantilla', false)
-                    ->update(['clave_definicion_campo' => DB::raw("clave_definicion_campo || '-' || substr(definicion_campo_id::text, 1, 8)")]);
-                DB::table('secciones_plantilla')
-                    ->where('plantilla_id', $lockedTemplate->id)
-                    ->where('vigente_en_plantilla', false)
-                    ->update(['clave_seccion_plantilla' => DB::raw("clave_seccion_plantilla || '-' || substr(seccion_plantilla_id::text, 1, 8)")]);
-                $lockedTemplate = $lockedTemplate->fresh();
-            }
+            $lockedTemplate = $this->retireStructure($lockedTemplate);
 
             $this->populateOfficialFormat($lockedTemplate);
 
             return $lockedTemplate->fresh();
         });
+    }
+
+    public function clear(SyllabusTemplate $template): SyllabusTemplate
+    {
+        return DB::transaction(function () use ($template): SyllabusTemplate {
+            $lockedTemplate = SyllabusTemplate::query()
+                ->whereKey($template->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            return $this->retireStructure($lockedTemplate)->fresh();
+        });
+    }
+
+    private function retireStructure(SyllabusTemplate $template): SyllabusTemplate
+    {
+        if (! $template->hasStructure()) {
+            return $template;
+        }
+
+        $template->update(['documento' => ['version_esquema' => 1, 'secciones' => []]]);
+        DB::table('definiciones_campo')
+            ->where('plantilla_id', $template->id)
+            ->where('vigente_en_plantilla', false)
+            ->update(['clave_definicion_campo' => DB::raw("clave_definicion_campo || '-' || substr(definicion_campo_id::text, 1, 8)")]);
+        DB::table('secciones_plantilla')
+            ->where('plantilla_id', $template->id)
+            ->where('vigente_en_plantilla', false)
+            ->update(['clave_seccion_plantilla' => DB::raw("clave_seccion_plantilla || '-' || substr(seccion_plantilla_id::text, 1, 8)")]);
+
+        return $template->fresh();
     }
 
     private function newTemplate(): SyllabusTemplate

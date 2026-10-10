@@ -205,3 +205,7 @@ solo pide nombre y orientación; se retiran los diseños oficiales del modal y d
 ahora funciona también con una plantilla con contenido: retira las secciones y campos actuales
 y carga el formato oficial; con un proceso abierto sigue bloqueado y los cambios durante una pausa
 rehacen los sílabos al reanudar (I-188). Título y logos siguen fijos (decisión del responsable).
+
+Los dos controles de la hoja son botones de icono con tooltip: **Restablecer a plantilla oficial**
+y **Borrar la plantilla** (`DELETE admin/template/{id}/structure`, auditado como `plantilla.vaciada`),
+que deja la hoja en blanco y respeta el bloqueo por proceso abierto.

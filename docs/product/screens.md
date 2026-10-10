@@ -277,8 +277,9 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   modal de creación. **Nueva sección** pide solo el nombre y la orientación. **Propiedades
   del campo** cambia nombre, ayuda, responsable y contenido. El campo sin nombre no lleva
   subtítulo y aparece como «Campo sin nombre» en el constructor. Arriba de la primera hoja,
-  **Restablecer a plantilla oficial** reemplaza todo por el formato oficial, con
-  confirmación, también sobre una plantilla ya editada. La hoja vacía ofrece
+  dos botones de icono con tooltip: **Restablecer a plantilla oficial** reemplaza todo por el
+  formato oficial y **Borrar la plantilla** la deja en blanco; ambos piden confirmación y
+  funcionan también sobre una plantilla ya editada. La hoja vacía ofrece
   «Nueva sección». Los controles son contextuales; un proceso abierto
   bloquea las mutaciones y mantiene la consulta. La planificación oficial es horizontal.
   La hoja permanece clara en ambos temas, con contorno discontinuo por campo; las

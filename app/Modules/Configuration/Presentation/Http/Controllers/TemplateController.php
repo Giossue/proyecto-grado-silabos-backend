@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Configuration\Application\Actions\ClearSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\CreateSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\FormatSyllabusTemplate;
 use App\Modules\Configuration\Application\InstitutionalLogos;
@@ -58,6 +59,15 @@ class TemplateController extends Controller
         $action->execute($template, $actor, $request);
 
         return response()->json(['message' => 'Plantilla restablecida al formato oficial.']);
+    }
+
+    public function clear(SyllabusTemplate $template, ManageTemplatesRequest $request, ClearSyllabusTemplate $action): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless($actor instanceof User, 401);
+        $action->execute($template, $actor, $request);
+
+        return response()->json(['message' => 'Plantilla vaciada.']);
     }
 
     public function show(SyllabusTemplate $template, ManageTemplatesRequest $request, ProcessLocks $locks, InstitutionalLogos $logos): JsonResponse

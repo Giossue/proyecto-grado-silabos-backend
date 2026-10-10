@@ -70,6 +70,26 @@ class OfficialTemplateTest extends TestCase
         $this->assertSame(21, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
     }
 
+    public function test_the_template_can_be_cleared_and_loaded_again(): void
+    {
+        $this->format()->assertOk();
+        $this->deleteJson(route('api.v1.admin.template.clear', $this->template))->assertOk()->assertJsonPath('message', 'Plantilla vaciada.');
+
+        $this->assertCount(0, $this->template->fresh()->sections());
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.vaciada']);
+        $this->deleteJson(route('api.v1.admin.template.clear', $this->template))->assertOk();
+        $this->format()->assertOk();
+        $this->assertCount(12, $this->template->fresh()->sections());
+    }
+
+    public function test_only_administration_clears_the_template(): void
+    {
+        $this->format()->assertOk();
+        $this->actingAsRole('coordinador@silabos.test');
+        $this->deleteJson(route('api.v1.admin.template.clear', $this->template))->assertForbidden();
+        $this->assertCount(12, $this->template->fresh()->sections());
+    }
+
     public function test_a_blank_section_needs_a_key_and_a_title_and_ignores_designs(): void
     {
         $this->postJson(route('api.v1.admin.template.structure.sections.store', $this->template), ['design' => 'etica'])->assertJsonValidationErrors(['title', 'key']);

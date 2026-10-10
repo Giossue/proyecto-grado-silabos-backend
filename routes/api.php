@@ -155,6 +155,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.store');
             Route::post('admin/template/{template}/format', [TemplateController::class, 'format'])
                 ->middleware('active-role')->name('api.v1.admin.template.format');
+            Route::delete('admin/template/{template}/structure', [TemplateController::class, 'clear'])
+                ->middleware('active-role')->name('api.v1.admin.template.clear');
             Route::get('admin/template/{template}', [TemplateController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.admin.template.show');
             Route::post('admin/template/{template}/structure/sections', [TemplateStructureController::class, 'storeSection'])
