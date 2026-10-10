@@ -7,7 +7,7 @@ use PhpOffice\PhpWord\SimpleType\TblWidth;
 
 final class TemplateDocumentWord
 {
-    private const TABLE_BORDER = '000000';
+    private const TABLE_BORDER = '333333';
 
     private const TABLE_MIN_FONT_SIZE = 7;
 

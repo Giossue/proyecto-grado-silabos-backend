@@ -20,7 +20,7 @@ final class WordRenderContext
     /** Azul fino del recuadro de los campos en el formato oficial. */
     public const BOX_BORDER = '0070C0';
 
-    public const TABLE_BORDER = '000000';
+    public const TABLE_BORDER = '333333';
 
     public int $contentWidth = 9406;
 
