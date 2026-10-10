@@ -218,3 +218,12 @@ sistema, alta inmediata de secciones y campos sin modales y barra de formato con
 retiran `TemplateSectionDialog`, `TemplateFieldDialog` y `TemplateFieldForm`. Pendiente
 (requiere decisión de producto y cambios de backend): variables de Docente y Carrera dentro del
 contenido, con valores guardados en el JSON del valor del campo.
+
+### I-213 — Tipos de campo para el admin (2026-10-09)
+
+El menú de cada campo del constructor muestra Docente, Coordinación, Fijo y Plantilla. **Fijo** es el
+antiguo «Institucional» (misma columna `quien_llena = institucional`). **Plantilla** inserta una de tres
+plantillas listas (Identificación, Planificación, Firmas) que el backend entrega en `presets` desde
+`config/syllabus_template.php`; no hay cambio de base de datos. Se oculta la inserción manual de variables
+en el constructor. El docente y Coordinación escriben con el mismo editor y su barra de formato, y ven la
+ayuda del campo sobre el editor.

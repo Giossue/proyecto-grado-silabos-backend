@@ -22,6 +22,20 @@ final class SectionDesigns
     }
 
     /**
+     * @return list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>
+     */
+    public function presets(): array
+    {
+        $presets = [];
+        foreach (['identificacion' => 'identificacion', 'planificacion' => 'planificacion', 'firmas' => 'revision'] as $key => $design) {
+            [, $label, $responsible, $document] = $this->all()[$design]['fields'][0];
+            $presets[] = ['key' => $key, 'label' => $label, 'quien_llena' => $responsible, 'content' => FieldDocument::normalize($document)];
+        }
+
+        return $presets;
+    }
+
+    /**
      * @return array{section: array<string, mixed>, definitions: list<array<string, mixed>>}
      */
     public function instantiate(string $key, string $templateId, int $position, ?string $title = null): array

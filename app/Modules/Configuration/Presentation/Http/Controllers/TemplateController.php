@@ -8,6 +8,7 @@ use App\Modules\Configuration\Application\Actions\ClearSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\CreateSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\FormatSyllabusTemplate;
 use App\Modules\Configuration\Application\InstitutionalLogos;
+use App\Modules\Configuration\Application\SectionDesigns;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -94,6 +95,7 @@ class TemplateController extends Controller
             'processLockDetail' => $locks->templateLock(),
             'templateChangedDuringPause' => $templateChangedDuringPause,
             'variables' => TemplateVariables::catalog(),
+            'presets' => app(SectionDesigns::class)->presets(),
             'logos' => [
                 'institution' => route('logos.institution', ['v' => $logos->version($logos->institutionPath())]),
                 'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$logos->version(public_path('images/silabo/facultad.jpeg')),
