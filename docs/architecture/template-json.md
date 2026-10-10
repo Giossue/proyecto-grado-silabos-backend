@@ -7,7 +7,7 @@ modifican la misma plantilla.
 
 ## Dónde está
 
-- Admin → **Plantilla** → botones de **Exportar JSON** y **Editar JSON**.
+- Admin → **Plantilla** → botones de icono **Exportar JSON** (descarga el archivo) y **Editar JSON** (editor con descarga, carga de archivo y «Aplicar y reemplazar»).
 - API (solo Administración, bloqueada con un proceso abierto):
   - `GET /api/v1/admin/template/{id}/json` descarga la plantilla.
   - `PUT /api/v1/admin/template/{id}/json` **reemplaza toda** la plantilla por el JSON enviado

@@ -227,3 +227,11 @@ plantillas listas (Identificación, Planificación, Firmas) que el backend entre
 `config/syllabus_template.php`; no hay cambio de base de datos. Se oculta la inserción manual de variables
 en el constructor. El docente y Coordinación escriben con el mismo editor y su barra de formato, y ven la
 ayuda del campo sobre el editor.
+
+### I-214 — Plantilla como JSON (2026-10-09)
+
+Exportar e importar la plantilla como un único JSON (`GET/PUT admin/template/{id}/json`), con un editor
+JSON en el admin. Formato y reglas en `docs/architecture/template-json.md`. Importar reemplaza toda la
+estructura con las mismas reglas de bloqueo y reinicio que editar a mano. Se corrigió además un fallo
+de datos: el middleware `TrimStrings` recortaba los espacios de los textos del contenido (por ejemplo
+«Hola » antes de una palabra en negrita quedaba pegado); ahora `content` y `value` no se recortan.
