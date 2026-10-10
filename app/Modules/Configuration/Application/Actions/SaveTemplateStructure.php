@@ -3,7 +3,6 @@
 namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Application\SectionDesigns;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -22,7 +21,6 @@ class SaveTemplateStructure
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
-        private readonly SectionDesigns $designs,
     ) {}
 
     /**
@@ -36,29 +34,17 @@ class SaveTemplateStructure
         return $this->work->replaceTemplate(function () use ($activeRole, $actor, $data, $template): TemplateSection {
             $locked = SyllabusTemplate::query()->whereKey($template->id)->lockForUpdate()->firstOrFail();
             $count = $locked->sections()->count();
-            $design = is_string($data['design'] ?? null) ? $data['design'] : null;
-            $definitions = [];
-            if ($design !== null) {
-                $this->designs->assertAvailable($locked, $design);
-                $built = $this->designs->instantiate($design, $locked->id, $count + 1, is_string($data['title'] ?? null) ? $data['title'] : null);
-                $section = $built['section'];
-                $definitions = $built['definitions'];
-            } else {
-                $section = [
-                    'id' => (string) Str::uuid(),
-                    'clave' => (string) $data['key'],
-                    'titulo' => (string) $data['title'],
-                    'descripcion' => null,
-                    'posicion' => $count + 1,
-                    'bloques' => [],
-                    'orientacion' => $data['orientation'] ?? 'portrait',
-                ];
-            }
+            $section = [
+                'id' => (string) Str::uuid(),
+                'clave' => (string) $data['key'],
+                'titulo' => (string) $data['title'],
+                'descripcion' => null,
+                'posicion' => $count + 1,
+                'bloques' => [],
+                'orientacion' => $data['orientation'] ?? 'portrait',
+            ];
             $sectionId = (string) $section['id'];
             $locked->appendSection($section);
-            foreach ($definitions as $definition) {
-                FieldDefinition::query()->create($definition);
-            }
             $position = min(max(1, (int) ($data['position'] ?? $count + 1)), $count + 1);
             if ($position <= $count) {
                 $ids = $locked->sections()->sortBy('posicion')->pluck('id')->reject(fn ($id) => $id === $sectionId)->values()->all();

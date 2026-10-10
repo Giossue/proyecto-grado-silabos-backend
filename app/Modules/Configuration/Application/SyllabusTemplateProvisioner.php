@@ -35,9 +35,16 @@ final class SyllabusTemplateProvisioner
                 ->firstOrFail();
 
             if ($lockedTemplate->hasStructure()) {
-                throw ValidationException::withMessages([
-                    'template' => 'Solo se puede aplicar el formato oficial a una plantilla vacía.',
-                ]);
+                $lockedTemplate->update(['documento' => ['version_esquema' => 1, 'secciones' => []]]);
+                DB::table('definiciones_campo')
+                    ->where('plantilla_id', $lockedTemplate->id)
+                    ->where('vigente_en_plantilla', false)
+                    ->update(['clave_definicion_campo' => DB::raw("clave_definicion_campo || '-' || substr(definicion_campo_id::text, 1, 8)")]);
+                DB::table('secciones_plantilla')
+                    ->where('plantilla_id', $lockedTemplate->id)
+                    ->where('vigente_en_plantilla', false)
+                    ->update(['clave_seccion_plantilla' => DB::raw("clave_seccion_plantilla || '-' || substr(seccion_plantilla_id::text, 1, 8)")]);
+                $lockedTemplate = $lockedTemplate->fresh();
             }
 
             $this->populateOfficialFormat($lockedTemplate);

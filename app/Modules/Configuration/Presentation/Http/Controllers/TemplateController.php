@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Modules\Configuration\Application\Actions\CreateSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\FormatSyllabusTemplate;
 use App\Modules\Configuration\Application\InstitutionalLogos;
-use App\Modules\Configuration\Application\SectionDesigns;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -58,7 +57,7 @@ class TemplateController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->execute($template, $actor, $request);
 
-        return response()->json(['message' => 'Formato oficial aplicado.']);
+        return response()->json(['message' => 'Plantilla restablecida al formato oficial.']);
     }
 
     public function show(SyllabusTemplate $template, ManageTemplatesRequest $request, ProcessLocks $locks, InstitutionalLogos $logos): JsonResponse
@@ -113,7 +112,6 @@ class TemplateController extends Controller
                     ])->all())->values()->all(),
                 ])->values()->all(),
             ],
-            'sectionDesigns' => app(SectionDesigns::class)->options($template),
         ];
     }
 }

@@ -273,11 +273,13 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   párrafos con formato, listas, tablas, filas/columnas libres y celdas combinadas;
   Administración inserta variables del catálogo. No hay selector de tipo, ajuste de
   ficha, tablas especiales por sección ni edición de título o logos.
-  **Nueva sección** permite usar uno de los doce diseños oficiales o crear una sección
-  en blanco con un primer campo opcional. **Propiedades del campo** cambia nombre,
-  ayuda, responsable y contenido. El campo sin nombre no lleva subtítulo y aparece
-  como «Campo sin nombre» en el constructor. La hoja vacía ofrece «Cargar formato
-  oficial UEB» y «Nueva sección». Los controles son contextuales; un proceso abierto
+  La plantilla siempre existe (I-211): al entrar sin plantilla se crea vacía, sin
+  modal de creación. **Nueva sección** pide solo el nombre y la orientación. **Propiedades
+  del campo** cambia nombre, ayuda, responsable y contenido. El campo sin nombre no lleva
+  subtítulo y aparece como «Campo sin nombre» en el constructor. Arriba de la primera hoja,
+  **Restablecer a plantilla oficial** reemplaza todo por el formato oficial, con
+  confirmación, también sobre una plantilla ya editada. La hoja vacía ofrece
+  «Nueva sección». Los controles son contextuales; un proceso abierto
   bloquea las mutaciones y mantiene la consulta. La planificación oficial es horizontal.
   La hoja permanece clara en ambos temas, con contorno discontinuo por campo; las
   tablas muestran únicamente sus bordes de celda.
@@ -713,7 +715,7 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 
 | Rol           | Interfaces cubiertas                            | Comportamiento                                                                                                                                                                                                                                 |
 | ------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Administrador | ADM-02, ADM-03, ADM-04, ADM-05, ADM-06 y ADM-12 | Cuentas, roles, catálogos, coordinaciones, campos y procesos de sílabos se crean desde una acción que abre un modal. La única plantilla institucional se crea desde un modal con dos opciones (I-201): «En blanco» o «Plantilla oficial UEB» (estructura oficial ya cargada); en blanco, «Formatear» sigue disponible mientras no tenga secciones. En la plantilla oficial, la sección 6 (distribución y planificación) usa hoja horizontal. En Mis sílabos el docente edita por pestañas, una por sección, y la vista de solo lectura se mantiene completa. |
+| Administrador | ADM-02, ADM-03, ADM-04, ADM-05, ADM-06 y ADM-12 | Cuentas, roles, catálogos, coordinaciones, campos y procesos de sílabos se crean desde una acción que abre un modal. La única plantilla institucional siempre existe (I-211): se crea vacía al entrar y **Restablecer a plantilla oficial** carga el formato oficial. En la plantilla oficial, la sección 6 (distribución y planificación) usa hoja horizontal. En Mis sílabos el docente edita por pestañas, una por sección, y la vista de solo lectura se mantiene completa. |
 | Coordinador   | COR-02, COR-06, COR-13, COR-14 y COR-15 | Convocatorias, revisiones, mallas, materias programadas, paralelos y asignaciones docentes usan el mismo patrón. En COR-15, los selectores permiten buscar docentes por nombre o correo y paralelos por materia, período o código. |
 | Docente       | DOC-02 a DOC-10                                 | No administra colecciones maestras. Edición, IA, envío y respuestas son flujos académicos de página completa, no formularios de alta.                                                                                                          |
 | Bibliotecario | BIB-01 a BIB-03 | No administra colecciones. Aprueba, devuelve con motivos o firma desde el detalle de la revisión; no hay formularios de alta. |

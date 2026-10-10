@@ -196,3 +196,12 @@ El despliegue de backend y frontend debe coordinarse. Siguen pendientes la resol
 externa de las puertas preexistentes y la aceptación visual institucional de PV-07/PV-19.
 La excepción de conservación de esta carga se limita a este plan y ADR-0010;
 `domain-model.md` y `syllabus-lifecycle.md` quedan idénticos al inicio de I-210.
+
+### I-211 — Plantilla siempre presente (2026-10-09)
+
+Sin modal de creación: la SPA crea la plantilla vacía al entrar si no existe. **Nueva sección**
+solo pide nombre y orientación; se retiran los diseños oficiales del modal y de la API
+(`design`, `sectionDesigns`). **Restablecer a plantilla oficial** (`POST admin/template/{id}/format`)
+ahora funciona también con una plantilla con contenido: retira las secciones y campos actuales
+y carga el formato oficial; con un proceso abierto sigue bloqueado y los cambios durante una pausa
+rehacen los sílabos al reanudar (I-188). Título y logos siguen fijos (decisión del responsable).
