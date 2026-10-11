@@ -158,3 +158,7 @@ Además de texto, listas y tablas, el contenido puede llevar bloques: en HTML, u
 
 Los bloques solo se aceptan en el nivel del documento. No tienen reglas de negocio todavía.
 
+El bloque `identificacion` no tiene propiedades; su valor es
+`{ "disability": { "answer": "si|no|null", "type": "", "description": "" } }`. Su tabla se define en
+`resources/templates/bloque-identificacion.html` y no se edita desde la plantilla.
+

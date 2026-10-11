@@ -2,8 +2,26 @@
 
 Estado: primera entrega hecha (2026-10-10) con los bloques `si_no` y `repetible`, **sin reglas de negocio**.
 Las reglas (sumas, topes, obligatoriedad de filas) siguen **POR VALIDAR** y no se programan hasta que la
-universidad las confirme (sección «Preguntas»). Los bloques `identificacion` y `unidades` siguen siendo
-las tablas de las plantillas listas.
+universidad las confirme (sección «Preguntas»). El bloque `identificacion` también está hecho (ver abajo);
+`unidades` sigue siendo la tabla de su plantilla lista.
+
+## Bloque `identificacion` (2026-10-10)
+
+Pedido: en el sílabo de ejemplo la identificación es **una sola tabla** que incluye las filas de
+«Estudiantes con discapacidad» y la de «Formación y experiencia». Antes eran tres campos con tres tablas.
+
+- La plantilla oficial pasa de 21 a 19 campos: `asignatura` (docente) contiene el bloque y se eliminan
+  `discapacidad` y `formacion_experiencia`.
+- El diseño de la tabla vive en `resources/templates/bloque-identificacion.html` (HTML con variables); no lo
+  edita la administración.
+- Los datos del sistema se resuelven con las variables de siempre. La **formación sale del perfil del
+  docente** (`usuarios.formacion_experiencia_usuario`) mediante la variable `formacion_docente`.
+- El docente responde solo discapacidad (`value.disability`: Sí/No, tipo y descripción) dentro de la misma
+  tabla; marcar No borra el detalle. Sin responder cuenta como vacío.
+- La API entrega la tabla ya resuelta en `blocks.identificacion.table` (muestras para Administración, datos
+  reales para el docente); las casillas de respuesta quedan como variables `discapacidad_*` que cada pantalla
+  dibuja como control o como texto.
+- Word, PDF y snapshot reciben una sola tabla porque el bloque se expande en `TemplateDocumentResolver`.
 
 ## Lo construido
 
