@@ -133,3 +133,13 @@ Respuestas (responsable del proyecto, a validar con Docencia):
   3.5 (ponderación 1.75, 1.5, 1.75). Cada parcial suma 10 puntos y pesa 50 %. La reforma del 13-03-2024
   (SE007) trae las mismas tablas. Ninguna cubre ACD o AA en 0: la disposición general segunda manda que
   lo no previsto lo resuelva el Vicerrectorado Académico mediante resolución de Comisión Académica.
+
+## Decisión: identificación y unidades quedan fijas en el código
+
+El responsable del proyecto indicó (2026-10-11) que el reglamento no cambia la tabla de identificación ni la de
+unidades: quedan fijas por años. Por eso su diseño (`resources/templates/bloque-identificacion.html`,
+`UnitsTable`) y sus reglas (4 unidades, 16 semanas, suma exacta de horas, tabla de puntos) siguen en el
+código y no se mueven a la base ni se construye un importador de Excel. Lo único que cambió con el tiempo
+fue agregar las habilidades blandas, que es una sección más de la plantilla y se edita desde la pantalla.
+Si aparece una regla nueva de horas, la implementan los siguientes desarrolladores en `DocumentBlock` y
+`ValidateDraft`.
