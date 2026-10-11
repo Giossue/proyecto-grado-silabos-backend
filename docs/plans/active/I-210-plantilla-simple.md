@@ -255,3 +255,12 @@ La plantilla se abre en modo vista. **Editar** crea un borrador local de toda la
 orden, nombres, orientación y contenido); **Guardar** lo envía de una vez al endpoint de importación y
 **Cancelar** lo descarta. Se retira el autoguardado por campo y el cliente `template-structure.ts`
 (los endpoints de estructura siguen en el backend). El editor bloquea arrastrar y soltar.
+
+### I-218 — Campos que son plantilla, bloqueados (2026-10-10)
+
+Un campo es plantilla cuando su clave es la de una plantilla lista (`asignatura`, `unidades`; el payload las
+entrega como `field_key`). En el constructor su nombre y contenido no se editan, no tiene responsable ni ayuda
+y solo se puede mover o eliminar; aplicar la misma plantilla dos veces se rechaza. Además, el nombre de un
+campo viaja junto con su contenido al repartir la hoja en páginas y los textos largos se parten por párrafo,
+verificado en un navegador real con un barrido de posiciones.
+
