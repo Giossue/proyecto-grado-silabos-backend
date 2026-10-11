@@ -15,6 +15,6 @@ class UploadInstitutionLogoRequest extends ManageTemplatesRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['logo' => 'logo'];
+        return ['logo' => 'imagen del logo'];
     }
 }

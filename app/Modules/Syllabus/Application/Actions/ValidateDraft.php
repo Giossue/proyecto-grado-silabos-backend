@@ -3,12 +3,14 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\DraftValidation;
+use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\SyllabusDocumentFields;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\Request;
@@ -30,6 +32,7 @@ class ValidateDraft
             $fields = SyllabusDocumentFields::fields($locked);
             $values = $locked->values()->get()->keyBy('definicion_campo_id');
             $issues = [];
+            $hours = IdentificationCard::fromSyllabus($locked);
             foreach ($fields as $field) {
                 if ($field->quien_llena === FieldDefinition::INSTITUTIONAL) {
                     continue;
@@ -44,6 +47,7 @@ class ValidateDraft
                             : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
                     ];
                 }
+                $issues = [...$issues, ...$this->unitHourIssues($field, $values->get($field->id)?->valor, $hours)];
             }
 
             $activeRole = $this->roles->resolve($request);
@@ -59,6 +63,53 @@ class ValidateDraft
 
             return new DraftValidation($locked->version_bloqueo, $issues);
         });
+    }
+
+    /**
+     * Las horas repartidas en las unidades deben ser exactamente las de la malla en cada componente.
+     *
+     * @param  array<string, mixed>  $identification
+     * @return list<array<string, mixed>>
+     */
+    private function unitHourIssues(FieldDefinition $field, mixed $value, array $identification): array
+    {
+        if (! FreeText::isDocument($value)) {
+            return [];
+        }
+        /** @var array<string, mixed> $value */
+        $issues = [];
+        foreach (is_array($value['content'] ?? null) ? $value['content'] : [] as $node) {
+            if (! is_array($node) || ($node['type'] ?? null) !== 'documentBlock' || ($node['attrs']['kind'] ?? null) !== DocumentBlock::UNIDADES) {
+                continue;
+            }
+            $weeks = DocumentBlock::weekCount($node['attrs']);
+            if ($weeks !== DocumentBlock::WEEKS) {
+                $issues[] = [
+                    'field_id' => $field->id,
+                    'code' => 'semanas_unidades_incompletas',
+                    'severity' => 'error',
+                    'message' => 'Las unidades deben repartir las '.DocumentBlock::WEEKS." semanas del período: tienen {$weeks}.",
+                ];
+            }
+            $planned = DocumentBlock::unitHours($node['attrs']);
+            $mismatches = [];
+            foreach (['acd' => ['ACD', 'hours_ac'], 'ape' => ['APE', 'hours_pae'], 'aa' => ['AA', 'hours_aa']] as $key => [$label, $source]) {
+                $expected = DocumentBlock::hours($identification[$source] ?? null);
+                if (abs($planned[$key] - $expected) > 0.001) {
+                    $mismatches[] = "{$label} {$planned[$key]} de {$expected}";
+                }
+            }
+            if ($mismatches !== []) {
+                $issues[] = [
+                    'field_id' => $field->id,
+                    'code' => 'horas_unidades_no_coinciden',
+                    'severity' => 'error',
+                    'message' => 'Las horas de las unidades deben sumar las de la asignatura: '.implode(', ', $mismatches).'.',
+                ];
+            }
+        }
+
+        return $issues;
     }
 
     public static function filled(mixed $value): bool

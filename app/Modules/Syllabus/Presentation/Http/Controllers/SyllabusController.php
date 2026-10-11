@@ -284,7 +284,11 @@ class SyllabusController extends Controller
                 ],
             ],
             'template_variables' => $variables,
-            'blocks' => ['identificacion' => ['table' => DocumentBlock::identificationLayout($variables)]],
+            'blocks' => [
+                'identificacion' => ['table' => DocumentBlock::identificationLayout($variables)],
+                'unidades' => ['weeks' => DocumentBlock::WEEKS, 'hours' => ['acd' => DocumentBlock::hours($variables['horas_docencia'] ?? null), 'ape' => DocumentBlock::hours($variables['horas_practicas'] ?? null), 'aa' => DocumentBlock::hours($variables['horas_autonomas'] ?? null)]],
+                'evaluacion' => ['with_practice' => ! (isset($variables['horas_practicas']) && trim($variables['horas_practicas']) !== '' && DocumentBlock::hours($variables['horas_practicas']) === 0.0)],
+            ],
             'sections' => $frozen['sections'] ?? $archivedView['sections'] ?? $template->sections
                 ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, ['identification' => $identification]))
                 ->values(),

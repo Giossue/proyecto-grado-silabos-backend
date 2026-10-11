@@ -4,6 +4,7 @@ namespace App\Modules\Documents\Infrastructure\Rendering;
 
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\UnitsTable;
 use App\Modules\Syllabus\Application\IdentificationCard;
 
 final class HistoricalFieldDocument
@@ -37,7 +38,7 @@ final class HistoricalFieldDocument
             $week = 0;
             $content = [];
             foreach ($units as $index => $unit) {
-                $content[] = (new HistoricalUnitsDocument)->table($unit, $index + 1, $week);
+                $content[] = (new UnitsTable)->table($unit, $index + 1, $week);
                 $content[] = ['type' => 'paragraph'];
             }
 

@@ -10,7 +10,19 @@ final class DocumentBlock
 
     public const IDENTIFICACION = 'identificacion';
 
-    public const KINDS = [self::SI_NO, self::REPETIBLE, self::IDENTIFICACION];
+    public const UNIDADES = 'unidades';
+
+    public const EVALUACION = 'evaluacion';
+
+    public const KINDS = [self::SI_NO, self::REPETIBLE, self::IDENTIFICACION, self::UNIDADES, self::EVALUACION];
+
+    public const UNITS = 4;
+
+    public const WEEKS = 16;
+
+    private const WEEK_TEXT = ['contenidos', 'acd', 'ape', 'aa', 'evaluacion'];
+
+    private const WEEK_HOURS = ['acd_h', 'ape_h', 'aa_h'];
 
     public const SLOT_VARIABLES = ['discapacidad_si', 'discapacidad_no', 'discapacidad_tipo', 'discapacidad_descripcion'];
 
@@ -40,9 +52,10 @@ final class DocumentBlock
 
     /**
      * @param  array<string, mixed>  $node
+     * @param  array<string, string>  $variables
      * @return list<array<string, mixed>>
      */
-    public static function expand(array $node): array
+    public static function expand(array $node, array $variables = []): array
     {
         $attrs = is_array($node['attrs'] ?? null) ? $node['attrs'] : [];
         $kind = (string) ($attrs['kind'] ?? '');
@@ -53,6 +66,20 @@ final class DocumentBlock
         $nodes = [];
         if ($kind === self::IDENTIFICACION) {
             return [self::identificationTable()];
+        }
+        if ($kind === self::UNIDADES) {
+            $week = 0;
+            $units = new UnitsTable;
+            $tables = [];
+            foreach (self::unitsOf($value) as $index => $unit) {
+                $tables[] = $units->table($unit, $index + 1, $week);
+                $tables[] = ['type' => 'paragraph'];
+            }
+
+            return $tables;
+        }
+        if ($kind === self::EVALUACION) {
+            return [self::evaluationTable(! self::withoutPractice($variables))];
         }
         if ($kind === self::SI_NO) {
             $answer = $value['answer'] ?? null;
@@ -140,6 +167,20 @@ final class DocumentBlock
         $value = is_array($attrs['value'] ?? null) ? $attrs['value'] : [];
         $kind = (string) ($attrs['kind'] ?? '');
         $lines = [];
+        if ($kind === self::UNIDADES) {
+            $cells = [];
+            foreach (self::unitsOf($value) as $unit) {
+                $cells[] = (string) ($unit['nombre'] ?? '').' '.($unit['resultado'] ?? '');
+                foreach ($unit['semanas'] as $week) {
+                    array_push($cells, ...array_map(fn (mixed $cell): string => is_string($cell) ? $cell : '', array_values($week)));
+                }
+            }
+
+            return trim(implode(' ', array_filter(array_map('trim', $cells), fn (string $cell): bool => $cell !== '')));
+        }
+        if ($kind === self::EVALUACION) {
+            return 'Evaluación de los aprendizajes';
+        }
         if ($kind === self::IDENTIFICACION) {
             $disability = is_array($value['disability'] ?? null) ? $value['disability'] : [];
             $answer = $disability['answer'] ?? null;
@@ -201,7 +242,7 @@ final class DocumentBlock
     private static function props(string $kind, array $props): array
     {
         $clean = [];
-        if ($kind === self::IDENTIFICACION) {
+        if (in_array($kind, [self::IDENTIFICACION, self::UNIDADES, self::EVALUACION], true)) {
             return [];
         }
         if ($kind === self::SI_NO) {
@@ -244,6 +285,12 @@ final class DocumentBlock
     {
         $raw = is_array($raw) ? $raw : [];
         $value = [];
+        if ($kind === self::EVALUACION) {
+            return [];
+        }
+        if ($kind === self::UNIDADES) {
+            return ['units' => self::cleanUnits($raw)];
+        }
         if ($kind === self::IDENTIFICACION) {
             $input = is_array($raw['disability'] ?? null) ? $raw['disability'] : [];
             $answer = $input['answer'] ?? null;
@@ -294,6 +341,141 @@ final class DocumentBlock
         $value['rows'] = $rows;
 
         return $value;
+    }
+
+    /**
+     * Horas repartidas en las unidades: ACD, APE y AA.
+     *
+     * @param  array<string, mixed>  $attrs
+     * @return array{acd: float, ape: float, aa: float}
+     */
+    public static function unitHours(array $attrs): array
+    {
+        $totals = ['acd' => 0.0, 'ape' => 0.0, 'aa' => 0.0];
+        $value = is_array($attrs['value'] ?? null) ? $attrs['value'] : [];
+        foreach (self::unitsOf($value) as $unit) {
+            foreach ($unit['semanas'] as $week) {
+                foreach (['acd', 'ape', 'aa'] as $component) {
+                    $totals[$component] += self::hours($week[$component.'_h'] ?? null);
+                }
+            }
+        }
+
+        return $totals;
+    }
+
+    public static function hours(mixed $text): float
+    {
+        return is_string($text) || is_numeric($text) ? (float) str_replace(',', '.', trim((string) $text)) : 0.0;
+    }
+
+    /**
+     * Sin horas de práctico-experimental el reglamento de evaluación usa otro reparto de puntos.
+     *
+     * @param  array<string, string>  $variables
+     */
+    private static function withoutPractice(array $variables): bool
+    {
+        $hours = trim($variables['horas_practicas'] ?? '');
+
+        return $hours !== '' && self::hours($hours) === 0.0;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function evaluationTable(bool $withPractice): array
+    {
+        $rows = $withPractice
+            ? [['Aprendizaje en contacto con el docente', '2.5', '1.25'], ['Aprendizaje práctico-experimental', '2.0', '1.0'], ['Aprendizaje autónomo', '2.0', '1.0'], ['Evaluación parcial de los aprendizajes', '3.5', '1.75']]
+            : [['Aprendizaje en contacto con el docente', '3.5', '1.75'], ['Aprendizaje autónomo', '3.0', '1.5'], ['Evaluación parcial de los aprendizajes', '3.5', '1.75']];
+        $lines = ['<table>', '<tr><th rowspan="2">INDICADORES</th><th colspan="2">PRIMER PARCIAL</th><th colspan="2">SEGUNDO PARCIAL</th></tr>', '<tr><th>(PUNTOS)</th><th>PONDERACIÓN</th><th>(PUNTOS)</th><th>PONDERACIÓN</th></tr>'];
+        foreach ($rows as [$name, $points, $weight]) {
+            $lines[] = "<tr><th>{$name}</th><td>{$points} PUNTOS</td><td>{$weight}</td><td>{$points} PUNTOS</td><td>{$weight}</td></tr>";
+        }
+        $lines[] = '<tr><th>TOTAL</th><td>10 PUNTOS</td><td>5 PUNTOS</td><td>10 PUNTOS</td><td>5 PUNTOS</td></tr>';
+        $lines[] = '</table>';
+
+        return DocumentHtml::fromHtml($lines)['content'][0];
+    }
+
+    /**
+     * Cuatro unidades que se reparten las 16 semanas del período; sin datos, cuatro semanas por unidad.
+     *
+     * @param  array<string, mixed>  $raw
+     * @return list<array<string, mixed>>
+     */
+    private static function cleanUnits(array $raw): array
+    {
+        $given = is_array($raw['units'] ?? null) && array_is_list($raw['units']);
+        $input = $given ? $raw['units'] : [];
+        if (count($input) > self::UNITS) {
+            TemplateDocument::fail('La planificación admite '.self::UNITS.' unidades.');
+        }
+        $text = function (mixed $cell, string $what): string {
+            if ($cell === null) {
+                return '';
+            }
+            if (! is_string($cell) || mb_strlen($cell) > self::MAX_CELL) {
+                TemplateDocument::fail("{$what} supera los 1000 caracteres.");
+            }
+
+            return $cell;
+        };
+        $total = 0;
+        $units = [];
+        for ($index = 0; $index < self::UNITS; $index++) {
+            $unit = is_array($input[$index] ?? null) ? $input[$index] : [];
+            $weeks = is_array($unit['semanas'] ?? null) && array_is_list($unit['semanas']) ? $unit['semanas'] : [];
+            $count = $given ? count($weeks) : intdiv(self::WEEKS, self::UNITS);
+            $total += $count;
+            if ($total > self::WEEKS) {
+                TemplateDocument::fail('Las unidades suman más de '.self::WEEKS.' semanas.');
+            }
+            $clean = [];
+            for ($number = 0; $number < $count; $number++) {
+                $week = is_array($weeks[$number] ?? null) ? $weeks[$number] : [];
+                $row = [];
+                foreach (self::WEEK_TEXT as $key) {
+                    $row[$key] = $text($week[$key] ?? null, 'Una celda de la semana');
+                }
+                foreach (self::WEEK_HOURS as $key) {
+                    $hours = trim($text($week[$key] ?? null, 'Las horas'));
+                    if ($hours !== '' && preg_match('/^\d{1,3}([.,]\d{1,2})?$/', $hours) !== 1) {
+                        TemplateDocument::fail('Las horas por semana deben ser un número.');
+                    }
+                    $row[$key] = $hours;
+                }
+                $clean[] = $row;
+            }
+            $units[] = ['nombre' => $text($unit['nombre'] ?? null, 'El nombre de la unidad'), 'resultado' => $text($unit['resultado'] ?? null, 'El resultado de aprendizaje'), 'semanas' => $clean];
+        }
+
+        return $units;
+    }
+
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
+    public static function weekCount(array $attrs): int
+    {
+        $value = is_array($attrs['value'] ?? null) ? $attrs['value'] : [];
+
+        return array_sum(array_map(fn (array $unit): int => count($unit['semanas']), self::unitsOf($value)));
+    }
+
+    /**
+     * @param  array<string, mixed>  $value
+     * @return list<array<string, mixed>>
+     */
+    private static function unitsOf(array $value): array
+    {
+        $units = [];
+        foreach (self::cleanUnits(['units' => is_array($value['units'] ?? null) ? $value['units'] : []]) as $unit) {
+            $units[] = $unit;
+        }
+
+        return $units;
     }
 
     /**

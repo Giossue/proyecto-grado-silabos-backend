@@ -275,9 +275,8 @@ class OfficialTemplateTest extends TestCase
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get()->keyBy('clave');
         $text = fn (string $key): string => FreeText::plainText($fields[$key]->contenido);
 
-        foreach (['INDICADORES', 'PRIMER PARCIAL', 'SEGUNDO PARCIAL', 'PONDERACIÓN', '2.5 PUNTOS', '1.25', '3.5 PUNTOS', '1.75', '10 PUNTOS', '5 PUNTOS'] as $expected) {
-            $this->assertStringContainsString($expected, $text('indicadores_evaluacion'));
-        }
+        $this->assertSame('evaluacion', $fields['indicadores_evaluacion']->contenido['content'][0]['attrs']['kind']);
+        $this->assertSame('unidades', $fields['unidades']->contenido['content'][0]['attrs']['kind']);
         foreach (['ESCALA CUALITATIVA', 'Igual a 10 o mayor o igual que 9', 'Menos de 6', 'Recuperación', 'No aprueba'] as $expected) {
             $this->assertStringContainsString($expected, $text('componentes_evaluacion'));
         }

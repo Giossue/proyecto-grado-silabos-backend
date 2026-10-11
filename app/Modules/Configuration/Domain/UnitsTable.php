@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Modules\Documents\Infrastructure\Rendering;
+namespace App\Modules\Configuration\Domain;
 
-final class HistoricalUnitsDocument
+final class UnitsTable
 {
     private const MAX_WEEKS = 16;
 

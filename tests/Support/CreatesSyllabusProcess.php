@@ -3,6 +3,7 @@
 namespace Tests\Support;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -31,12 +32,32 @@ trait CreatesSyllabusProcess
                 $content['content'][$index]['attrs']['value'] = match ($kind) {
                     'identificacion' => ['disability' => ['answer' => 'no', 'type' => '', 'description' => '']],
                     'si_no' => ['answer' => 'no', 'rows' => []],
+                    'unidades' => $this->plannedUnits(),
+                    'evaluacion' => [],
                     default => ['rows' => []],
                 };
             }
         }
 
         return $hasBlock ? FieldDocument::normalize($content) : $this->freeTextValue($text);
+    }
+
+    /**
+     * Las horas de la asignatura de prueba repartidas en la primera semana de la primera unidad.
+     *
+     * @return array<string, mixed>
+     */
+    protected function plannedUnits(): array
+    {
+        $subject = Subject::query()->firstOrFail();
+        $empty = ['contenidos' => 'Tema de prueba', 'acd_h' => '', 'ape_h' => '', 'aa_h' => ''];
+        $first = [...$empty, 'acd_h' => (string) $subject->horas_ac, 'ape_h' => (string) $subject->horas_pae, 'aa_h' => (string) $subject->horas_aa];
+        $units = [];
+        foreach (range(0, 3) as $index) {
+            $units[] = ['nombre' => 'Unidad de prueba', 'resultado' => 'Resultado de prueba', 'semanas' => $index === 0 ? [$first, $empty, $empty, $empty] : [$empty, $empty, $empty, $empty]];
+        }
+
+        return ['units' => $units];
     }
 
     protected function filledTableValue(FieldDefinition $field): array

@@ -140,7 +140,8 @@ class ConvocationAndDraftTest extends TestCase
         $snapshot = app(SyllabusSnapshot::class)->build($syllabus->fresh());
         $field = collect($snapshot['sections'])->flatMap(fn ($section) => $section['fields'])->firstWhere('key', 'indicadores_evaluacion');
         $this->assertSame('institucional', $field['quien_llena']);
-        $this->assertEquals($fixed->contenido, $field['value']);
+        $this->assertSame('documentBlock', $fixed->contenido['content'][0]['type']);
+        $this->assertSame('table', $field['value']['content'][0]['type']);
         app(SyllabusSnapshot::class)->restore($syllabus->fresh(), $snapshot);
         $this->assertNull($syllabus->values()->where('definicion_campo_id', $fixed->id)->first()?->valor);
     }
@@ -684,6 +685,28 @@ class ConvocationAndDraftTest extends TestCase
 
         $last = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful();
         $this->assertSame(0, $last->json('validation.blocking_errors'));
+    }
+
+    public function test_unit_hours_must_add_up_to_the_subject_hours_before_sending(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
+        $field = FieldDefinition::query()->where('clave', 'unidades')->firstOrFail();
+        $block = fn (array $units): array => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'unidades', 'props' => [], 'value' => ['units' => $units]]]]];
+        $codes = fn () => collect($this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful()->json('validation.results'))->where('field_id', $field->id)->pluck('code')->all();
+
+        $wrong = $this->plannedUnits()['units'];
+        $wrong[0]['semanas'][0]['acd_h'] = '10';
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block($wrong)])->assertOk();
+        $this->assertSame(['horas_unidades_no_coinciden'], $codes());
+
+        $short = $this->plannedUnits()['units'];
+        $short[3]['semanas'] = [];
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block($short)])->assertOk();
+        $this->assertSame(['semanas_unidades_incompletas'], $codes());
+
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block($this->plannedUnits()['units'])])->assertOk();
+        $this->assertSame([], $codes());
     }
 
     public function test_every_teacher_field_is_required_only_when_sending(): void

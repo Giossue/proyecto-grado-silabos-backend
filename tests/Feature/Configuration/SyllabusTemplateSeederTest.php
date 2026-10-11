@@ -5,7 +5,6 @@ namespace Tests\Feature\Configuration;
 use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
-use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TemplateDocument;
@@ -76,35 +75,11 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->assertSame('landscape', $template->sections->firstWhere('clave', 'planificacion')->orientacion);
         $this->assertSame('portrait', $template->sections->firstWhere('clave', 'descripcion')->orientacion);
         $this->assertSame(OfficialTemplate::sectionKeys(), $template->sections->pluck('clave')->all());
-        $planning = TemplateDocument::nodes($fields['unidades']->contenido, 'table')[1];
-        $this->assertSame('table', $planning['type']);
-        $this->assertCount(20, $planning['content']);
-        $this->assertSame('TOTAL', FreeText::plainText($planning['content'][19]['content'][0]));
-        $this->assertSame('', FreeText::plainText($planning['content'][19]['content'][2]));
-    }
-
-    public function test_the_official_document_tables_use_the_pdf_layout_and_catalog_variables(): void
-    {
-        $this->seed(DatabaseSeeder::class);
-        $this->seed(SyllabusTemplateSeeder::class);
-        $template = SyllabusTemplate::query()->firstOrFail();
-        $fields = $template->fields()->get()->keyBy('clave');
-        $identification = ['type' => 'doc', 'content' => [DocumentBlock::identificationTable()]];
-        $variables = array_column(array_column(TemplateDocument::nodes($identification, 'variable'), 'attrs'), 'id');
-        $this->assertCount(27, $variables);
-        foreach (['nombre_facultad', 'codigo_paralelo', 'horas_docencia', 'horas_practicas', 'horas_autonomas', 'marca_unidad_basica', 'marca_unidad_profesional', 'marca_unidad_titulacion', 'nombre_docente', 'correo_docente', 'formacion_docente', 'discapacidad_si', 'discapacidad_tipo'] as $key) {
-            $this->assertContains($key, $variables);
-        }
-        $this->assertSame(9, $identification['content'][0]['content'][0]['content'][0]['attrs']['colspan']);
-        $this->assertSame('#4F81BD', $identification['content'][0]['content'][0]['content'][0]['attrs']['backgroundColor']);
-        $planning = TemplateDocument::nodes($fields['unidades']->contenido, 'table')[1];
-        $weekRows = array_slice($planning['content'], 3, 16);
-        $this->assertSame(array_map(strval(...), range(1, 16)), array_map(fn (array $row): string => FreeText::plainText($row['content'][1]), $weekRows));
-        foreach ($weekRows as $row) {
-            foreach ([2, 3, 4] as $column) {
-                $this->assertSame('', FreeText::plainText($row['content'][$column]));
-            }
-        }
+        $planning = FieldDocument::resolve($fields['unidades']->contenido, [])['content'];
+        $tables = array_values(array_filter($planning, fn (array $node): bool => $node['type'] === 'table'));
+        $this->assertCount(4, $tables);
+        $weekRows = array_slice($tables[1]['content'], 5, 4);
+        $this->assertSame(['5', '6', '7', '8'], array_map(fn (array $row): string => FreeText::plainText($row['content'][1]), $weekRows));
         foreach (['bibliografia', 'bibliografia_complementaria'] as $key) {
             $headers = $fields[$key]->contenido['content'][0]['content'][0]['content'];
             $this->assertSame(['Autor', 'Título', 'Año', 'Ciudad', 'Editorial', 'ISBN', 'Código'], array_map(FreeText::plainText(...), $headers));

@@ -27,7 +27,7 @@ final class TemplateDocumentResolver
 
                 return array_merge(...array_map(
                     fn (array $expanded): array => self::resolve(['type' => 'doc', 'content' => [$expanded]], [], $scoped)['content'],
-                    DocumentBlock::expand($node),
+                    DocumentBlock::expand($node, $scoped),
                 ));
             }
             if (in_array($type, ['variable', 'field'], true)) {

@@ -1362,6 +1362,70 @@
                 ]
             }
         },
+        "/api/v1/admin/template/{template}/logo": {
+            "post": {
+                "tags": [
+                    "Administración"
+                ],
+                "operationId": "api_v1_admin_template_logo_store",
+                "summary": "api.v1.admin.template.logo.store",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "template",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "logo"
+                                ],
+                                "properties": {
+                                    "logo": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/template/{template}/structure": {
             "delete": {
                 "tags": [

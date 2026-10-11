@@ -143,4 +143,50 @@ class DocumentBlockTest extends TestCase
         $this->assertStringContainsString('FACULTAD: Ciencias', FreeText::plainText($layout));
         $this->assertStringContainsString('Formación escrita', FreeText::plainText($layout));
     }
+
+    public function test_the_units_block_has_four_units_sharing_sixteen_weeks_and_expands_to_one_table_each(): void
+    {
+        $block = DocumentBlock::normalize(['kind' => 'unidades']);
+        $this->assertCount(4, $block['value']['units']);
+        $this->assertSame([4, 4, 4, 4], array_map(fn (array $unit): int => count($unit['semanas']), $block['value']['units']));
+
+        $tables = array_values(array_filter(DocumentBlock::expand(['attrs' => $block]), fn (array $node): bool => $node['type'] === 'table'));
+        $this->assertCount(4, $tables);
+        $this->assertSame('16', FreeText::plainText($tables[3]['content'][5 + 3]['content'][1]));
+    }
+
+    public function test_the_units_block_rejects_more_than_sixteen_weeks_and_text_as_hours(): void
+    {
+        $week = ['contenidos' => '', 'acd_h' => '', 'ape_h' => '', 'aa_h' => ''];
+        $units = array_fill(0, 4, ['nombre' => '', 'resultado' => '', 'semanas' => array_fill(0, 5, $week)]);
+        $this->expectException(ValidationException::class);
+        DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => $units]]);
+    }
+
+    public function test_the_units_block_rejects_hours_that_are_not_numbers(): void
+    {
+        $this->expectException(ValidationException::class);
+        DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => [['semanas' => [['acd_h' => 'tres']]]]]]);
+    }
+
+    public function test_the_unit_hours_are_added_per_component(): void
+    {
+        $block = DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => [['semanas' => [['acd_h' => '3', 'ape_h' => '1,5', 'aa_h' => ''], ['acd_h' => '2']]], ['semanas' => [['aa_h' => '4']]]]]]);
+
+        $this->assertSame(['acd' => 5.0, 'ape' => 1.5, 'aa' => 4.0], DocumentBlock::unitHours(['value' => $block['value']]));
+    }
+
+    public function test_the_evaluation_points_follow_the_practical_hours_of_the_subject(): void
+    {
+        $text = fn (array $variables): string => FreeText::plainText(['type' => 'doc', 'content' => DocumentBlock::expand(['attrs' => ['kind' => 'evaluacion']], $variables)]);
+
+        $with = $text(['horas_practicas' => '16']);
+        $this->assertStringContainsString('2.5 PUNTOS', $with);
+        $this->assertStringContainsString('práctico-experimental', $with);
+
+        $without = $text(['horas_practicas' => '0']);
+        $this->assertStringContainsString('3.5 PUNTOS', $without);
+        $this->assertStringContainsString('3.0 PUNTOS', $without);
+        $this->assertStringNotContainsString('práctico-experimental', $without);
+    }
 }

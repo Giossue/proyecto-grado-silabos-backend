@@ -156,9 +156,24 @@ Además de texto, listas y tablas, el contenido puede llevar bloques: en HTML, u
 | `si_no` | `question` (obligatoria, 300), `columns` (0 a 8, `{key, label}`) | `answer` (`si`/`no`/`null`), `rows` (solo con `si`) |
 | `repetible` | `label` (120), `columns` (1 a 8) | `rows` (hasta 100, celdas de 1000 caracteres) |
 
-Los bloques solo se aceptan en el nivel del documento. No tienen reglas de negocio todavía.
+Los bloques solo se aceptan en el nivel del documento. `si_no` y `repetible` no tienen reglas de negocio.
 
 El bloque `identificacion` no tiene propiedades; su valor es
 `{ "disability": { "answer": "si|no|null", "type": "", "description": "" } }`. Su tabla se define en
 `resources/templates/bloque-identificacion.html` y no se edita desde la plantilla.
 
+
+### `unidades` y `evaluacion` (reglas de la UEB)
+
+- `unidades` no tiene propiedades. Su valor es `{ "units": [ { "nombre", "resultado", "semanas": [ { "contenidos",
+  "acd_h", "ape_h", "aa_h", "acd", "ape", "aa", "evaluacion" } ] } ] }`: siempre cuatro unidades que se
+  reparten las 16 semanas del período (sin datos, cuatro semanas cada una). Las horas por semana son
+  números. Se dibuja como una tabla por unidad con la numeración corrida de semanas.
+- **Al enviar** (`ValidateDraft`): las unidades deben repartir exactamente 16 semanas
+  (`semanas_unidades_incompletas`) y las horas ACD, APE y AA deben sumar exactamente las de la asignatura
+  según la malla (`horas_unidades_no_coinciden`). Los dos errores impiden el envío.
+- `evaluacion` no tiene propiedades ni valor. Dibuja la tabla de puntos del Reglamento del Sistema de
+  Evaluación Estudiantil (art. 11): con horas de práctico-experimental, 2,5 / 2 / 2 / 3,5 puntos; con 0
+  horas de APE, 3,5 / 3 / 3,5 y sin esa fila. Cada parcial suma 10 puntos y pesa 50 %.
+- El Reglamento no dice qué hacer con ACD o AA en 0 ni si las prácticas (0/0/0) llevan sílabo: sigue POR
+  VALIDAR (I-219).
