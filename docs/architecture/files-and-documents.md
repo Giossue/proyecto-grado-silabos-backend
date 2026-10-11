@@ -112,6 +112,13 @@ campos son del modelo nuevo delega en `FieldType::toWord` (`WordFieldRenderer::r
 alguno tiene clase anterior usa el render viejo. El PDF sigue saliendo de Gotenberg a partir del
 mismo Word. Los snapshots v6 se siguen leyendo; la deuda se retira en la etapa 8.
 
+## Logos dentro del snapshot
+
+Desde que el envío guarda el snapshot, este incluye `logos.institution` y `logos.faculty` en base64,
+tal como estaban en ese momento. `SyllabusWordDocument` los usa primero; si el snapshot no los trae
+(los anteriores a este cambio no se reescriben) toma el logo vigente. Cambiar un logo después no
+altera los documentos de un sílabo ya enviado.
+
 ## Formato oficial del Word (I-195)
 
 El Word imita el sílabo oficial: dos logos arriba, título «PROGRAMA DE ASIGNATURA (SÍLABO)» centrado,

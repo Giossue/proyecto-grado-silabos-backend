@@ -136,6 +136,16 @@ class InstitutionalLogos
         return $this->facultyPath($facultyId === null ? null : Faculty::query()->find($facultyId));
     }
 
+    /**
+     * @return array{institution: string, faculty: string}
+     */
+    public function embedded(?string $facultyId): array
+    {
+        $read = fn (string $path): string => is_file($path) ? base64_encode((string) file_get_contents($path)) : '';
+
+        return ['institution' => $read($this->institutionPath()), 'faculty' => $read($this->facultyPathById($facultyId))];
+    }
+
     public function facultyIsConfigured(?Faculty $faculty): bool
     {
         $logo = $faculty?->logoObject;

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
+use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -14,6 +15,8 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 class SyllabusSnapshot
 {
     public const VERSION = 8;
+
+    public function __construct(private readonly InstitutionalLogos $logos) {}
 
     /**
      * @return array<string, mixed>
@@ -31,6 +34,7 @@ class SyllabusSnapshot
             'template_name' => SyllabusTemplate::INSTITUTIONAL_NAME,
             'document_mapping' => [...($template->mapeo_documento ?? []), 'title_block' => TemplateTitleBlock::defaults()],
             'academic_context' => $syllabus->contexto_academico,
+            'logos' => $this->logos->embedded(data_get($syllabus->contexto_academico, 'career.faculty_id')),
             'identification' => $identification,
             'template_variables' => $variables,
             'sections' => $this->archivedSnapshotSections($syllabus, $variables) ?? $template->sections->map(fn (TemplateSection $section): array => [

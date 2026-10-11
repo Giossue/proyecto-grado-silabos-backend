@@ -189,9 +189,10 @@ class SyllabusWordDocument
     private function logos(Section $section, DocumentRenderInput $input): void
     {
         $facultyId = data_get($input->snapshot, 'academic_context.career.faculty_id');
-        $ueb = $this->logos->institutionPath();
-        $faculty = $this->logos->facultyPathById(is_string($facultyId) ? $facultyId : null);
-        if (! is_file($ueb) && ! is_file($faculty)) {
+        $embedded = is_array($input->snapshot['logos'] ?? null) ? $input->snapshot['logos'] : null;
+        $ueb = $this->logoSource($embedded['institution'] ?? null, $this->logos->institutionPath());
+        $faculty = $this->logoSource($embedded['faculty'] ?? null, $this->logos->facultyPathById(is_string($facultyId) ? $facultyId : null));
+        if ($ueb === null && $faculty === null) {
             return;
         }
 
@@ -199,13 +200,25 @@ class SyllabusWordDocument
         $row = $table->addRow();
         $leftWidth = (int) round($this->context->contentWidth * 0.638);
         $left = $row->addCell($leftWidth, ['valign' => 'center']);
-        if (is_file($ueb)) {
+        if ($ueb !== null) {
             $left->addImage($ueb, ['height' => 28]);
         }
         $right = $row->addCell($this->context->contentWidth - $leftWidth, ['valign' => 'center']);
-        if (is_file($faculty)) {
+        if ($faculty !== null) {
             $right->addImage($faculty, ['height' => 40, 'alignment' => Jc::END]);
         }
+    }
+
+    private function logoSource(mixed $embedded, string $currentPath): ?string
+    {
+        if (is_string($embedded) && $embedded !== '') {
+            $binary = base64_decode($embedded, true);
+            if ($binary !== false) {
+                return $binary;
+            }
+        }
+
+        return is_file($currentPath) ? $currentPath : null;
     }
 
     private function metadata(Section $section, DocumentRenderInput $input): void

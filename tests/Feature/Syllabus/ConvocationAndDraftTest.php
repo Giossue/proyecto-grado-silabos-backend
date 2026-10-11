@@ -173,6 +173,16 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame($valueOf($original), $valueOf($later));
     }
 
+    public function test_snapshot_keeps_the_logos_it_was_taken_with(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $snapshot = app(SyllabusSnapshot::class)->build($syllabus);
+
+        $this->assertNotSame('', $snapshot['logos']['institution']);
+        $this->assertNotSame('', $snapshot['logos']['faculty']);
+        $this->assertNotFalse(base64_decode($snapshot['logos']['institution'], true));
+    }
+
     public function test_snapshot_v8_carries_documents_and_round_trips(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
