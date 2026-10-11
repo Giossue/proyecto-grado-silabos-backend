@@ -159,6 +159,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.json.export');
             Route::put('admin/template/{template}/json', [TemplateController::class, 'importJson'])
                 ->middleware('active-role')->name('api.v1.admin.template.json.import');
+            Route::post('admin/template/{template}/logo', [TemplateController::class, 'uploadInstitutionLogo'])
+                ->middleware('active-role')->name('api.v1.admin.template.logo.store');
             Route::delete('admin/template/{template}/structure', [TemplateController::class, 'clear'])
                 ->middleware('active-role')->name('api.v1.admin.template.clear');
             Route::get('admin/template/{template}', [TemplateController::class, 'show'])

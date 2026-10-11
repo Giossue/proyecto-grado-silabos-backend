@@ -68,6 +68,15 @@ class OfficialTemplateTest extends TestCase
         $this->assertSame(19, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
     }
 
+    public function test_the_document_title_can_be_changed_with_the_template(): void
+    {
+        $file = json_decode((string) file_get_contents(base_path(OfficialTemplate::PATH)), true, 512, JSON_THROW_ON_ERROR);
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), [...$file, 'title' => '  SÍLABO UEB  '])->assertOk();
+
+        $this->assertSame('SÍLABO UEB', $this->getJson(route('api.v1.admin.template.show', $this->template))->json('template.titleBlock.text'));
+    }
+
     public function test_the_official_json_file_is_valid_for_the_import_endpoint(): void
     {
         $file = json_decode((string) file_get_contents(base_path(OfficialTemplate::PATH)), true, 512, JSON_THROW_ON_ERROR);

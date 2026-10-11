@@ -32,7 +32,7 @@ class SyllabusSnapshot
             'schema_version' => self::VERSION,
             'template_id' => $template->id,
             'template_name' => SyllabusTemplate::INSTITUTIONAL_NAME,
-            'document_mapping' => [...($template->mapeo_documento ?? []), 'title_block' => TemplateTitleBlock::defaults()],
+            'document_mapping' => [...($template->mapeo_documento ?? []), 'title_block' => TemplateTitleBlock::fromMapping($template->mapeo_documento)],
             'academic_context' => $syllabus->contexto_academico,
             'logos' => $this->logos->embedded(data_get($syllabus->contexto_academico, 'career.faculty_id')),
             'identification' => $identification,

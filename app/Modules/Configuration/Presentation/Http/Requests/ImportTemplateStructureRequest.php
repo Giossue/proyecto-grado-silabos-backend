@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Presentation\Http\Requests;
 
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use Closure;
 use Illuminate\Validation\Rule;
@@ -20,6 +21,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
     {
         return [
             'version' => ['required', 'integer', Rule::in([self::FORMAT_VERSION])],
+            'title' => ['sometimes', 'nullable', 'string', 'max:'.TemplateTitleBlock::MAX_LENGTH],
             'sections' => ['present', 'array', 'max:60'],
             'sections.*.key' => ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'max:100', 'distinct'],
             'sections.*.title' => ['required', 'string', 'max:180'],
@@ -55,6 +57,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
     {
         return [
             'version' => 'versión',
+            'title' => 'título del documento',
             'sections' => 'secciones',
             'sections.*.key' => 'clave de la sección',
             'sections.*.title' => 'título de la sección',

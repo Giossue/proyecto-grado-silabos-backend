@@ -22,6 +22,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
 use App\Modules\Configuration\Presentation\Http\Requests\CreateTemplateRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ImportTemplateStructureRequest;
 use App\Modules\Configuration\Presentation\Http\Requests\ManageTemplatesRequest;
+use App\Modules\Configuration\Presentation\Http\Requests\UploadInstitutionLogoRequest;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\JsonResponse;
@@ -101,8 +102,19 @@ class TemplateController extends Controller
         /** @var list<array<string, mixed>> $sections */
         $sections = $request->validated('sections');
         $action->execute($template, $sections, $actor, $request);
+        $title = $request->validated('title');
+        if (is_string($title) && trim($title) !== '') {
+            $template->forceFill(['mapeo_documento' => [...($template->mapeo_documento ?? []), 'title_block' => ['text' => trim($title)]]])->save();
+        }
 
         return response()->json(['message' => 'Plantilla importada desde el JSON.']);
+    }
+
+    public function uploadInstitutionLogo(SyllabusTemplate $template, UploadInstitutionLogoRequest $request, InstitutionalLogos $logos): JsonResponse
+    {
+        $logos->storeInstitution($request->file('logo'));
+
+        return response()->json(['message' => 'Logo actualizado.', 'logo' => route('logos.institution', ['v' => $logos->version($logos->institutionPath())])]);
     }
 
     public function show(SyllabusTemplate $template, ManageTemplatesRequest $request, ProcessLocks $locks, InstitutionalLogos $logos): JsonResponse
@@ -142,7 +154,7 @@ class TemplateController extends Controller
                 'name' => SyllabusTemplate::INSTITUTIONAL_NAME,
                 'description' => null,
                 'appearance' => TemplateAppearance::fromMapping($template->mapeo_documento),
-                'titleBlock' => TemplateTitleBlock::defaults(),
+                'titleBlock' => TemplateTitleBlock::fromMapping($template->mapeo_documento),
                 'sections' => $template->sections->map(fn (TemplateSection $section) => [
                     'id' => $section->id,
                     'key' => $section->clave,

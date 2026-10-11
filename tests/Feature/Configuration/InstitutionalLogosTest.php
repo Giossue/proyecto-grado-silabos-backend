@@ -6,10 +6,10 @@ use App\Models\User;
 use App\Modules\Academic\Application\Queries\AcademicStructureViewData;
 use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\MakesTransparentPng;
 use Tests\TestCase;
@@ -38,10 +38,17 @@ class InstitutionalLogosTest extends TestCase
         $this->coordinatorContext = $this->coordinator->roleAssignments()->firstOrFail();
     }
 
-    public function test_the_fixed_institution_logo_is_public_and_has_no_template_upload_route(): void
+    public function test_the_institution_logo_is_public_and_the_administrator_can_replace_it(): void
     {
         $this->get(route('logos.institution'))->assertOk()->assertHeader('Content-Type', 'image/png');
-        $this->assertFalse(Route::has('api.v1.admin.template.logo.store'));
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla'])->assertCreated();
+        $template = SyllabusTemplate::query()->firstOrFail();
+
+        $this->actingAsCoordinator()->postJson(route('api.v1.admin.template.logo.store', $template), ['logo' => $this->transparentPng(300, 100)])->assertForbidden();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.logo.store', $template), ['logo' => $this->opaquePng(300, 100)])->assertUnprocessable();
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.logo.store', $template), ['logo' => $this->transparentPng(300, 100)])->assertOk();
+
+        Storage::disk('private')->assertExists('logos/institucion.png');
     }
 
     public function test_administrator_must_create_a_faculty_with_a_transparent_logo(): void
