@@ -273,11 +273,12 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   párrafos con formato, listas, tablas, filas/columnas libres y celdas combinadas;
   Administración inserta variables del catálogo. No hay selector de tipo, ajuste de
   ficha, tablas especiales por sección ni edición de título o logos.
-  La plantilla siempre existe (I-211) y se edita sobre la propia hoja, sin modales (I-212):
-  el nombre de cada sección y de cada campo son entradas en línea que se guardan al salir
-  del campo; el contenido de un campo se escribe en el mismo lugar, con una barra de formato
-  que aparece al seleccionarlo, y se guarda solo (autoguardado, con aviso «Guardando» y
-  «Guardado»). El menú de tipo de cada campo ofrece Docente, Carrera, Fijo (texto igual para todos, antes
+  La plantilla siempre existe (I-211) y se abre en modo vista; el botón **Editar** habilita la
+  edición sobre la propia hoja, sin modales (I-212, I-217): el nombre de cada sección y de cada
+  campo son entradas en línea, y el contenido de un campo se escribe en el mismo lugar, con una
+  barra de formato que aparece al seleccionarlo. Nada se guarda solo: los cambios viven en un
+  borrador hasta pulsar **Guardar** (que reemplaza la estructura completa con una sola petición);
+  **Cancelar** los descarta. En el editor no se arrastra ni se suelta contenido. El menú de tipo de cada campo ofrece Docente, Carrera, Fijo (texto igual para todos, antes
   «Institucional») y Plantilla, con tres plantillas listas que se insertan en el campo: Identificación
   (tabla con los datos del sistema), Planificación (tabla de unidades y semanas, la llena el docente) y
   Firmas. La ayuda para el docente se escribe en el botón de ayuda del campo y se muestra sobre el editor. Escribir «/» dentro del contenido abre la lista de datos

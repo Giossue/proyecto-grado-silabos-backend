@@ -248,3 +248,10 @@ El `content` de un campo se escribe y se exporta como lista de líneas HTML (tam
 documento Tiptap). `DocumentHtml` convierte en ambos sentidos; los 21 campos oficiales dan ida y vuelta idénticos.
 El archivo oficial `resources/templates/silabo-oficial.json` pasó de 9.551 a 403 líneas (358 KB a 23 KB). La base
 de datos sigue guardando el documento Tiptap.
+
+### I-217 — Modo vista y guardado con botón (2026-10-10)
+
+La plantilla se abre en modo vista. **Editar** crea un borrador local de toda la estructura (alta, baja,
+orden, nombres, orientación y contenido); **Guardar** lo envía de una vez al endpoint de importación y
+**Cancelar** lo descarta. Se retira el autoguardado por campo y el cliente `template-structure.ts`
+(los endpoints de estructura siguen en el backend). El editor bloquea arrastrar y soltar.
