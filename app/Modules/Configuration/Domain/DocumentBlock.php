@@ -107,7 +107,7 @@ final class DocumentBlock
     {
         $blocks = [];
         foreach (is_array($document['content'] ?? null) ? $document['content'] : [] as $node) {
-            if (is_array($node) && ($node['type'] ?? null) === 'block') {
+            if (is_array($node) && ($node['type'] ?? null) === 'documentBlock') {
                 $blocks[] = ['kind' => $node['attrs']['kind'] ?? null, 'props' => $node['attrs']['props'] ?? null];
             }
         }

@@ -52,7 +52,7 @@ final class DocumentHtml
             'paragraph' => [self::paragraph($node)],
             'bulletList', 'orderedList' => self::list($node),
             'table' => self::table($node),
-            'block' => [self::blockElement($node)],
+            'documentBlock' => [self::blockElement($node)],
             default => [],
         };
     }
@@ -293,7 +293,7 @@ final class DocumentHtml
                     $flush();
                     $props = json_decode($child->getAttribute('data-props') ?: '{}', true);
                     $value = json_decode($child->getAttribute('data-value') ?: '{}', true);
-                    $blocks[] = ['type' => 'block', 'attrs' => ['kind' => $child->getAttribute('data-block'), 'props' => is_array($props) ? $props : [], 'value' => is_array($value) ? $value : []]];
+                    $blocks[] = ['type' => 'documentBlock', 'attrs' => ['kind' => $child->getAttribute('data-block'), 'props' => is_array($props) ? $props : [], 'value' => is_array($value) ? $value : []]];
                 } else {
                     array_push($buffer, ...self::inlineNodes($child, [], true));
                 }

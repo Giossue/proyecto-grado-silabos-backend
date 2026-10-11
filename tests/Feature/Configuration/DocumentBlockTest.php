@@ -18,7 +18,7 @@ class DocumentBlockTest extends TestCase
      */
     private function disability(array $value = []): array
     {
-        return ['type' => 'doc', 'content' => [['type' => 'block', 'attrs' => [
+        return ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => [
             'kind' => 'si_no',
             'props' => ['question' => '¿Hay estudiantes con discapacidad?', 'columns' => [['key' => 'tipo', 'label' => 'Tipo'], ['key' => 'detalle', 'label' => 'Breve descripción']]],
             'value' => $value,
@@ -29,7 +29,7 @@ class DocumentBlockTest extends TestCase
     {
         $document = FieldDocument::normalize($this->disability());
 
-        $this->assertSame('block', $document['content'][0]['type']);
+        $this->assertSame('documentBlock', $document['content'][0]['type']);
         $this->assertSame(['answer' => null, 'rows' => []], $document['content'][0]['attrs']['value']);
     }
 
@@ -70,13 +70,13 @@ class DocumentBlockTest extends TestCase
     public function test_a_repeatable_list_needs_columns_and_valid_keys(): void
     {
         $this->expectException(ValidationException::class);
-        FieldDocument::normalize(['type' => 'doc', 'content' => [['type' => 'block', 'attrs' => ['kind' => 'repetible', 'props' => ['columns' => []]]]]]);
+        FieldDocument::normalize(['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'repetible', 'props' => ['columns' => []]]]]]);
     }
 
     public function test_an_unknown_kind_is_rejected(): void
     {
         $this->expectException(ValidationException::class);
-        FieldDocument::normalize(['type' => 'doc', 'content' => [['type' => 'block', 'attrs' => ['kind' => 'otro', 'props' => []]]]]);
+        FieldDocument::normalize(['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'otro', 'props' => []]]]]);
     }
 
     public function test_blocks_survive_the_html_round_trip(): void

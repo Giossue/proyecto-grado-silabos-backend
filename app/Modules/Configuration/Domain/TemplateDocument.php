@@ -30,7 +30,7 @@ final class TemplateDocument
             $type = $raw['type'] ?? '';
             $allowed = match ($parent) {
                 '' => ['doc'],
-                'doc' => ['paragraph', 'table', 'bulletList', 'orderedList', 'block'],
+                'doc' => ['paragraph', 'table', 'bulletList', 'orderedList', 'documentBlock'],
                 'tableCell', 'tableHeader' => ['paragraph', 'table', 'bulletList', 'orderedList'],
                 'paragraph' => ['text', 'hardBreak', 'variable'],
                 'table' => ['tableRow'],
@@ -50,7 +50,7 @@ final class TemplateDocument
                 }
                 $node['text'] = $raw['text'];
             }
-            if ($type === 'block') {
+            if ($type === 'documentBlock') {
                 $node['attrs'] = DocumentBlock::normalize($attrs);
             }
             if ($type === 'variable') {

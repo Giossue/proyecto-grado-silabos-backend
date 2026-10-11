@@ -22,7 +22,7 @@ final class TemplateDocumentResolver
         $visit = function (array $node) use (&$visit, $byKey, $variables): array {
             $type = $node['type'];
             $attrs = $node['attrs'] ?? [];
-            if ($type === 'block') {
+            if ($type === 'documentBlock') {
                 return DocumentBlock::expand($node);
             }
             if (in_array($type, ['variable', 'field'], true)) {

@@ -177,7 +177,7 @@ class ConvocationAndDraftTest extends TestCase
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
         $field = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
-        $block = fn (array $props, array $value = []): array => ['type' => 'doc', 'content' => [['type' => 'block', 'attrs' => ['kind' => 'si_no', 'props' => $props, 'value' => $value]]]];
+        $block = fn (array $props, array $value = []): array => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'si_no', 'props' => $props, 'value' => $value]]]];
         $props = ['question' => '¿Hay estudiantes con discapacidad?', 'columns' => [['key' => 'tipo', 'label' => 'Tipo']]];
         $field->update(['contenido' => $block($props)]);
         $syllabus->values()->where('definicion_campo_id', $field->id)->update(['valor' => $block($props)]);

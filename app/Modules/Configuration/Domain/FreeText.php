@@ -66,7 +66,7 @@ final class FreeText
         if ($type === 'hardBreak') {
             return "\n";
         }
-        if ($type === 'block') {
+        if ($type === 'documentBlock') {
             return DocumentBlock::plainText(is_array($node['attrs'] ?? null) ? $node['attrs'] : []);
         }
         $children = array_map(
