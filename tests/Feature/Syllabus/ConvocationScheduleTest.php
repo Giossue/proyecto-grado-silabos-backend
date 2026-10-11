@@ -246,7 +246,7 @@ class ConvocationScheduleTest extends TestCase
      */
     private function validFieldPayload(FieldDefinition $field, int $lockVersion): array
     {
-        return ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")];
+        return ['version_bloqueo' => $lockVersion, 'value' => $this->answeredValue($field, "Contenido académico {$field->clave}")];
     }
 
     private function publishedConfiguration(): SyllabusTemplate

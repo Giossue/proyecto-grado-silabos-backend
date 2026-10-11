@@ -50,7 +50,7 @@ class OfficialTemplateTest extends TestCase
         $sections = $this->template->fresh()->sections();
         $this->assertCount(12, $sections);
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get();
-        $this->assertSame(['coordinacion' => 6, 'docente' => 10, 'institucional' => 5], $fields->countBy('quien_llena')->sortKeys()->all());
+        $this->assertSame(['coordinacion' => 6, 'docente' => 9, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
         $this->assertSame(OfficialTemplate::sectionKeys(), $sections->sortBy('posicion')->pluck('clave')->values()->all());
         $this->assertSame(array_column(OfficialTemplate::sections(), 'title'), $sections->sortBy('posicion')->pluck('titulo')->values()->all());
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.formateada']);
@@ -65,7 +65,7 @@ class OfficialTemplateTest extends TestCase
         $template = $this->template->fresh();
         $this->assertCount(12, $template->sections());
         $this->assertNull($template->sections()->firstWhere('clave', 'libre'));
-        $this->assertSame(21, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
+        $this->assertSame(19, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
     }
 
     public function test_the_official_json_file_is_valid_for_the_import_endpoint(): void
@@ -181,8 +181,8 @@ class OfficialTemplateTest extends TestCase
 
         $content = $exported['sections'][0]['fields'][0]['content'];
         $this->assertIsArray($content);
-        $this->assertSame('<table>', $content[0]);
-        $this->assertSame('</table>', end($content));
+        $this->assertStringStartsWith('<div data-block="identificacion"', $content[0]);
+        $this->assertStringEndsWith('</div>', end($content));
     }
 
     public function test_an_unknown_variable_or_empty_html_content_is_reported_with_its_path(): void
@@ -250,9 +250,9 @@ class OfficialTemplateTest extends TestCase
 
         $this->assertSame(['identificacion', 'planificacion'], $presets->pluck('key')->all());
         $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares'], $presets->pluck('label')->all());
-        $this->assertSame(['institucional', 'docente'], $presets->pluck('quien_llena')->all());
+        $this->assertSame(['docente', 'docente'], $presets->pluck('quien_llena')->all());
         $this->assertSame(['asignatura', 'unidades'], $presets->pluck('field_key')->all());
-        $this->assertSame('table', $presets->firstWhere('key', 'identificacion')['content']['content'][0]['type']);
+        $this->assertSame('documentBlock', $presets->firstWhere('key', 'identificacion')['content']['content'][0]['type']);
     }
 
     public function test_the_template_payload_no_longer_lists_section_designs(): void

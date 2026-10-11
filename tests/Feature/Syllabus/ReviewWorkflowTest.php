@@ -553,7 +553,7 @@ class ReviewWorkflowTest extends TestCase
      */
     private function validFieldPayload(FieldDefinition $field, int $lockVersion): array
     {
-        return ['version_bloqueo' => $lockVersion, 'value' => $this->freeTextValue("Contenido académico {$field->clave}")];
+        return ['version_bloqueo' => $lockVersion, 'value' => $this->answeredValue($field, "Contenido académico {$field->clave}")];
     }
 
     public function test_coordinator_resets_a_submitted_syllabus_so_the_teacher_starts_over(): void
@@ -741,7 +741,7 @@ class ReviewWorkflowTest extends TestCase
         return FieldDefinition::query()
             ->where('quien_llena', 'docente')
             ->where('quien_llena', 'docente')
-            ->where('clave', 'discapacidad')
+            ->where('clave', 'tecnicas_ensenanza')
             ->firstOrFail();
     }
 

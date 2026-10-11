@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -255,6 +256,7 @@ class SyllabusController extends Controller
             }
         }
         $mapping = $frozen['document_mapping'] ?? $template->mapeo_documento;
+        $variables = $frozen['template_variables'] ?? TemplateVariables::resolve(['identification' => $identification]);
 
         return [
             'id' => $syllabus->id,
@@ -281,7 +283,8 @@ class SyllabusController extends Controller
                     'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
                 ],
             ],
-            'template_variables' => $frozen['template_variables'] ?? TemplateVariables::resolve(['identification' => $identification]),
+            'template_variables' => $variables,
+            'blocks' => ['identificacion' => ['table' => DocumentBlock::identificationLayout($variables)]],
             'sections' => $frozen['sections'] ?? $archivedView['sections'] ?? $template->sections
                 ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, ['identification' => $identification]))
                 ->values(),

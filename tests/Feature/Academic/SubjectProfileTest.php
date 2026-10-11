@@ -38,7 +38,7 @@ class SubjectProfileTest extends TestCase
         $keys = array_column($response->json('fields'), 'key');
         $this->assertContains('descripcion', $keys);
         $this->assertNotContains('bibliografia', $keys);
-        $this->assertNotContains('formacion_experiencia', $keys);
+        $this->assertNotContains('recursos_medios', $keys);
         $this->assertFalse($response->json('complete'));
         $this->assertSame([], $response->json('values'));
     }
@@ -85,7 +85,7 @@ class SubjectProfileTest extends TestCase
     {
         $subject = Subject::query()->firstOrFail();
         $profileField = FieldDefinition::query()->where('quien_llena', 'coordinacion')->firstOrFail();
-        $teacherField = FieldDefinition::query()->where('clave', 'formacion_experiencia')->firstOrFail();
+        $teacherField = FieldDefinition::query()->where('clave', 'recursos_medios')->firstOrFail();
         $this->asRole('coordinador@silabos.test');
 
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$teacherField->id => FreeText::fromText('No')]])
@@ -115,7 +115,7 @@ class SubjectProfileTest extends TestCase
     public function test_the_initial_content_of_a_field_can_be_modified_or_removed(): void
     {
         $template = SyllabusTemplate::query()->firstOrFail();
-        $field = FieldDefinition::query()->where('clave', 'discapacidad')->firstOrFail();
+        $field = FieldDefinition::query()->where('clave', 'tecnicas_ensenanza')->firstOrFail();
         $this->asRole('admin@silabos.test');
         $payload = ['label' => $field->etiqueta, 'quien_llena' => 'docente'];
         $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$template, $field]), [...$payload, 'content' => FreeText::fromText('Texto inicial sugerido')])->assertSuccessful();

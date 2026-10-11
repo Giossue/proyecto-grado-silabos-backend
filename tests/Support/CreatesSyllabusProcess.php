@@ -15,6 +15,30 @@ trait CreatesSyllabusProcess
         return FieldDocument::normalize(['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]]]]);
     }
 
+    /**
+     * Valor completo para un campo del docente: texto, o el bloque de la plantilla ya respondido.
+     *
+     * @return array<string, mixed>
+     */
+    protected function answeredValue(FieldDefinition $field, string $text): array
+    {
+        $content = FieldDocument::normalize($field->contenido);
+        $hasBlock = false;
+        foreach ($content['content'] as $index => $node) {
+            if (($node['type'] ?? null) === 'documentBlock') {
+                $hasBlock = true;
+                $kind = $node['attrs']['kind'];
+                $content['content'][$index]['attrs']['value'] = match ($kind) {
+                    'identificacion' => ['disability' => ['answer' => 'no', 'type' => '', 'description' => '']],
+                    'si_no' => ['answer' => 'no', 'rows' => []],
+                    default => ['rows' => []],
+                };
+            }
+        }
+
+        return $hasBlock ? FieldDocument::normalize($content) : $this->freeTextValue($text);
+    }
+
     protected function filledTableValue(FieldDefinition $field): array
     {
         return $this->freeTextValue('Unidad de prueba. Resultado de prueba. Horas escritas por el docente.');

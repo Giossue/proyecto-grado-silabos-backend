@@ -5,6 +5,7 @@ namespace Tests\Feature\Configuration;
 use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
+use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TemplateDocument;
@@ -33,7 +34,7 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->assertGreaterThan(0, $blockCount);
         $this->assertGreaterThan(0, $fieldCount);
         $this->assertFalse(Schema::hasColumn('definiciones_campo', 'tipo_definicion_campo'));
-        $this->assertSame('table', $template->fields()->where('clave', 'asignatura')->firstOrFail()->contenido['content'][0]['type']);
+        $this->assertSame('documentBlock', $template->fields()->where('clave', 'asignatura')->firstOrFail()->contenido['content'][0]['type']);
 
         $this->seed(SyllabusTemplateSeeder::class);
 
@@ -62,14 +63,14 @@ class SyllabusTemplateSeederTest extends TestCase
         $template = SyllabusTemplate::query()->firstOrFail();
         app(TemplateStructureValidator::class)->assertUsable($template);
         $fields = $template->fields()->get()->keyBy('clave');
-        $this->assertSame(['coordinacion' => 6, 'docente' => 10, 'institucional' => 5], $fields->countBy('quien_llena')->sortKeys()->all());
+        $this->assertSame(['coordinacion' => 6, 'docente' => 9, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
         foreach ($fields as $field) {
             $this->assertEquals($field->contenido, FieldDocument::normalize($field->contenido));
         }
         foreach (['descripcion', 'objetivo_general', 'objetivos_especificos', 'resultados_aprendizaje', 'habilidades_blandas', 'contribucion_perfil'] as $key) {
             $this->assertSame('coordinacion', $fields[$key]->quien_llena);
         }
-        foreach (['bibliografia', 'bibliografia_complementaria', 'formacion_experiencia', 'metodologia', 'unidades'] as $key) {
+        foreach (['bibliografia', 'bibliografia_complementaria', 'asignatura', 'metodologia', 'unidades'] as $key) {
             $this->assertSame('docente', $fields[$key]->quien_llena);
         }
         $this->assertSame('landscape', $template->sections->firstWhere('clave', 'planificacion')->orientacion);
@@ -88,10 +89,10 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->seed(SyllabusTemplateSeeder::class);
         $template = SyllabusTemplate::query()->firstOrFail();
         $fields = $template->fields()->get()->keyBy('clave');
-        $identification = $fields['asignatura']->contenido;
+        $identification = ['type' => 'doc', 'content' => [DocumentBlock::identificationTable()]];
         $variables = array_column(array_column(TemplateDocument::nodes($identification, 'variable'), 'attrs'), 'id');
-        $this->assertCount(22, $variables);
-        foreach (['nombre_facultad', 'codigo_paralelo', 'horas_docencia', 'horas_practicas', 'horas_autonomas', 'marca_unidad_basica', 'marca_unidad_profesional', 'marca_unidad_titulacion', 'nombre_docente', 'correo_docente'] as $key) {
+        $this->assertCount(27, $variables);
+        foreach (['nombre_facultad', 'codigo_paralelo', 'horas_docencia', 'horas_practicas', 'horas_autonomas', 'marca_unidad_basica', 'marca_unidad_profesional', 'marca_unidad_titulacion', 'nombre_docente', 'correo_docente', 'formacion_docente', 'discapacidad_si', 'discapacidad_tipo'] as $key) {
             $this->assertContains($key, $variables);
         }
         $this->assertSame(9, $identification['content'][0]['content'][0]['content'][0]['attrs']['colspan']);

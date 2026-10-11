@@ -23,6 +23,7 @@ return [
     'creditos_asignatura' => ['label' => 'Créditos de la asignatura', 'source' => 'identification.credits'],
     'nombre_docente' => ['label' => 'Nombre del docente', 'source' => 'identification.teacher'],
     'correo_docente' => ['label' => 'Correo institucional del docente', 'source' => 'identification.email'],
+    'formacion_docente' => ['label' => 'Formación y experiencia del docente', 'source' => 'identification.formation'],
     'marca_unidad_basica' => ['label' => 'Marca de unidad básica', 'source' => 'identification.organization_unit', 'equals' => 'Unidad básica'],
     'marca_unidad_profesional' => ['label' => 'Marca de unidad profesional', 'source' => 'identification.organization_unit', 'equals' => 'Unidad profesional'],
     'marca_unidad_titulacion' => ['label' => 'Marca de unidad de integración curricular', 'source' => 'identification.organization_unit', 'equals' => 'Unidad de integración curricular'],

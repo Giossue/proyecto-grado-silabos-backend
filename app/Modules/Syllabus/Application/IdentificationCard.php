@@ -35,6 +35,7 @@ final class IdentificationCard
             self::strings(collect([$syllabus->academicParallelCode()])),
             self::strings($syllabus->teachers->pluck('nombre')),
             self::strings($syllabus->teachers->pluck('correo_electronico')),
+            ['formacion_experiencia' => implode("\n\n", self::strings($syllabus->teachers->pluck('formacion_experiencia')))],
         );
         $data['shift'] = implode(', ', array_map(
             fn (string $shift): string => self::SHIFT_LABELS[$shift] ?? ucfirst($shift),

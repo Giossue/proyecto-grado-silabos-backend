@@ -11,6 +11,7 @@ use App\Modules\Configuration\Application\Actions\ReplaceTemplateStructure;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
@@ -129,6 +130,7 @@ class TemplateController extends Controller
             'templateChangedDuringPause' => $templateChangedDuringPause,
             'variables' => TemplateVariables::catalog(),
             'presets' => OfficialTemplate::presets(),
+            'blocks' => ['identificacion' => ['table' => DocumentBlock::identificationLayout(array_column(TemplateVariables::catalog(), 'sample', 'key'))]],
             'logos' => [
                 'institution' => route('logos.institution', ['v' => $logos->version($logos->institutionPath())]),
                 'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$logos->version(public_path('images/silabo/facultad.jpeg')),

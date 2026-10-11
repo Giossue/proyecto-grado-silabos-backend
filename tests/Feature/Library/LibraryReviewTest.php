@@ -132,7 +132,7 @@ class LibraryReviewTest extends TestCase
         $other = FieldDefinition::query()->where('quien_llena', 'docente')
             ->where('clave', '!=', 'bibliografia')->firstOrFail();
         $this->as('teacher')->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $other]), [
-            'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue('Ajuste general'),
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->answeredValue($other, 'Ajuste general'),
         ])->assertOk();
         $this->as('teacher')->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $this->field('bibliografia')]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue('Martin, R. Arquitectura limpia (2.ª ed.).'),
@@ -229,7 +229,7 @@ class LibraryReviewTest extends TestCase
 
     private function valueFor(FieldDefinition $field): mixed
     {
-        return $this->freeTextValue("Contenido {$field->clave}");
+        return $this->answeredValue($field, "Contenido {$field->clave}");
     }
 
     private function field(string $key): FieldDefinition

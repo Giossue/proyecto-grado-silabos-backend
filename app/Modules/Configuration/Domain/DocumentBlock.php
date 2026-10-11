@@ -8,7 +8,14 @@ final class DocumentBlock
 
     public const REPETIBLE = 'repetible';
 
-    public const KINDS = [self::SI_NO, self::REPETIBLE];
+    public const IDENTIFICACION = 'identificacion';
+
+    public const KINDS = [self::SI_NO, self::REPETIBLE, self::IDENTIFICACION];
+
+    public const SLOT_VARIABLES = ['discapacidad_si', 'discapacidad_no', 'discapacidad_tipo', 'discapacidad_descripcion'];
+
+    /** @var array<string, mixed>|null */
+    private static ?array $identificationTable = null;
 
     private const MAX_COLUMNS = 8;
 
@@ -44,6 +51,9 @@ final class DocumentBlock
         $columns = self::columnsOf($props);
         $rows = self::rowsOf($value);
         $nodes = [];
+        if ($kind === self::IDENTIFICACION) {
+            return [self::identificationTable()];
+        }
         if ($kind === self::SI_NO) {
             $answer = $value['answer'] ?? null;
             $nodes[] = self::paragraph((string) ($props['question'] ?? '').' '.match ($answer) {
@@ -62,6 +72,66 @@ final class DocumentBlock
     }
 
     /**
+     * @param  array<string, mixed>  $node
+     * @return array<string, string>
+     */
+    public static function variables(array $node): array
+    {
+        $attrs = is_array($node['attrs'] ?? null) ? $node['attrs'] : [];
+        if (($attrs['kind'] ?? null) !== self::IDENTIFICACION) {
+            return [];
+        }
+        $disability = is_array($attrs['value']['disability'] ?? null) ? $attrs['value']['disability'] : [];
+        $answer = $disability['answer'] ?? null;
+
+        return [
+            'discapacidad_si' => $answer === 'si' ? 'X' : '',
+            'discapacidad_no' => $answer === 'no' ? 'X' : '',
+            'discapacidad_tipo' => is_string($disability['type'] ?? null) ? $disability['type'] : '',
+            'discapacidad_descripcion' => is_string($disability['description'] ?? null) ? $disability['description'] : '',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function identificationTable(): array
+    {
+        if (self::$identificationTable === null) {
+            $lines = file(resource_path('templates/bloque-identificacion.html'), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+            $document = DocumentHtml::fromHtml(array_values($lines));
+            self::$identificationTable = $document['content'][0];
+        }
+
+        return self::$identificationTable;
+    }
+
+    /**
+     * Tabla de identificación con los datos del sistema ya resueltos; solo quedan como variables las casillas
+     * que responde el docente, para que cada pantalla las dibuje como controles o como texto.
+     *
+     * @param  array<string, string>  $variables
+     * @return array<string, mixed>
+     */
+    public static function identificationLayout(array $variables): array
+    {
+        $visit = function (array $node) use (&$visit, $variables): array {
+            if (($node['type'] ?? null) === 'variable' && ! in_array($node['attrs']['id'] ?? null, self::SLOT_VARIABLES, true)) {
+                $text = $variables[$node['attrs']['id'] ?? ''] ?? '';
+
+                return $text === '' ? ['type' => 'text', 'text' => ' '] : ['type' => 'text', 'text' => $text];
+            }
+            if (is_array($node['content'] ?? null)) {
+                $node['content'] = array_map($visit, $node['content']);
+            }
+
+            return $node;
+        };
+
+        return $visit(self::identificationTable());
+    }
+
+    /**
      * @param  array<string, mixed>  $attrs
      */
     public static function plainText(array $attrs): string
@@ -70,6 +140,15 @@ final class DocumentBlock
         $value = is_array($attrs['value'] ?? null) ? $attrs['value'] : [];
         $kind = (string) ($attrs['kind'] ?? '');
         $lines = [];
+        if ($kind === self::IDENTIFICACION) {
+            $disability = is_array($value['disability'] ?? null) ? $value['disability'] : [];
+            $answer = $disability['answer'] ?? null;
+            if ($answer !== 'si' && $answer !== 'no') {
+                return '';
+            }
+
+            return trim('Estudiantes con discapacidad: '.($answer === 'si' ? 'Sí' : 'No').' '.($disability['type'] ?? '').' '.($disability['description'] ?? ''));
+        }
         if ($kind === self::SI_NO) {
             $answer = $value['answer'] ?? null;
             if ($answer !== 'si' && $answer !== 'no') {
@@ -122,6 +201,9 @@ final class DocumentBlock
     private static function props(string $kind, array $props): array
     {
         $clean = [];
+        if ($kind === self::IDENTIFICACION) {
+            return [];
+        }
         if ($kind === self::SI_NO) {
             $question = trim((string) ($props['question'] ?? ''));
             if ($question === '' || mb_strlen($question) > 300) {
@@ -162,6 +244,25 @@ final class DocumentBlock
     {
         $raw = is_array($raw) ? $raw : [];
         $value = [];
+        if ($kind === self::IDENTIFICACION) {
+            $input = is_array($raw['disability'] ?? null) ? $raw['disability'] : [];
+            $answer = $input['answer'] ?? null;
+            if ($answer !== null && ! in_array($answer, ['si', 'no'], true)) {
+                TemplateDocument::fail('La respuesta sobre estudiantes con discapacidad no es válida.');
+            }
+            $text = function (mixed $text) use ($answer): string {
+                if ($answer !== 'si') {
+                    return '';
+                }
+                if (! is_string($text) || mb_strlen($text) > 500) {
+                    TemplateDocument::fail('El texto sobre discapacidad admite hasta 500 caracteres.');
+                }
+
+                return $text;
+            };
+
+            return ['disability' => ['answer' => $answer, 'type' => $text($input['type'] ?? ''), 'description' => $text($input['description'] ?? '')]];
+        }
         if ($kind === self::SI_NO) {
             $answer = $raw['answer'] ?? null;
             if ($answer !== null && ! in_array($answer, ['si', 'no'], true)) {
