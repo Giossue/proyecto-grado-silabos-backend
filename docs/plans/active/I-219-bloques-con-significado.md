@@ -118,6 +118,14 @@ Fuente: `temp/documentos-carrera/Malla-Software-8-ciclos2 (2).pdf` y el sílabo 
   evaluación parcial 3.5, con ponderación a la mitad (5 puntos por parcial). No está confirmado cómo se
   calculan esos puntos ni qué pasa cuando un componente tiene 0 horas.
 
-Preguntas para la universidad: ¿las horas de las 4 unidades deben sumar exactamente las horas de la
-malla en cada componente?, ¿la validación bloquea o solo avisa?, ¿cómo se reparten los 10 puntos
-según las horas de cada componente y qué se hace con los componentes en 0?
+Respuestas (responsable del proyecto, a validar con Docencia):
+
+- Las horas de las 4 unidades deben sumar exactamente las de la malla en cada componente, y si no
+  coinciden se **prohíbe enviar**.
+- Si las prácticas llevan sílabo está sin confirmar; el Reglamento del Sílabo UEB (reforma 11-10-2023,
+  RCU-130, y versión 08-04-2025 S.O.004) está en rdigital.ueb.edu.ec y falta leerlo.
+- Los puntos de evaluación **sí están en norma**: Reglamento del Sistema de Evaluación Estudiantil UEB,
+  art. 11 (rdigital.ueb.edu.ec). Con horas en APE: contacto 2.5, APE 2, autónomo 2, evaluación parcial
+  3.5 (ponderación 1.25, 1, 1, 1.75). Con 0 horas en APE: contacto 3.5, autónomo 3, evaluación parcial
+  3.5 (ponderación 1.75, 1.5, 1.75). Cada parcial suma 10 puntos y pesa 50 %. La norma no cubre ACD o
+  AA en 0.
