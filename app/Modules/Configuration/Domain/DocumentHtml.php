@@ -52,8 +52,20 @@ final class DocumentHtml
             'paragraph' => [self::paragraph($node)],
             'bulletList', 'orderedList' => self::list($node),
             'table' => self::table($node),
+            'block' => [self::blockElement($node)],
             default => [],
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     */
+    private static function blockElement(array $node): string
+    {
+        $attrs = is_array($node['attrs'] ?? null) ? $node['attrs'] : [];
+        $encode = fn (mixed $value): string => htmlspecialchars(json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), ENT_QUOTES | ENT_XML1, 'UTF-8');
+
+        return '<div data-block="'.htmlspecialchars((string) ($attrs['kind'] ?? ''), ENT_QUOTES | ENT_XML1, 'UTF-8').'" data-props="'.$encode($attrs['props'] ?? new \stdClass).'" data-value="'.$encode($attrs['value'] ?? new \stdClass).'"></div>';
     }
 
     /**
@@ -277,6 +289,11 @@ final class DocumentHtml
                 } elseif ($tag === 'table') {
                     $flush();
                     $blocks[] = self::tableNode($child);
+                } elseif ($tag === 'div' && $child->hasAttribute('data-block')) {
+                    $flush();
+                    $props = json_decode($child->getAttribute('data-props') ?: '{}', true);
+                    $value = json_decode($child->getAttribute('data-value') ?: '{}', true);
+                    $blocks[] = ['type' => 'block', 'attrs' => ['kind' => $child->getAttribute('data-block'), 'props' => is_array($props) ? $props : [], 'value' => is_array($value) ? $value : []]];
                 } else {
                     array_push($buffer, ...self::inlineNodes($child, [], true));
                 }

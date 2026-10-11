@@ -30,7 +30,8 @@ final class TemplateDocument
             $type = $raw['type'] ?? '';
             $allowed = match ($parent) {
                 '' => ['doc'],
-                'doc', 'tableCell', 'tableHeader' => ['paragraph', 'table', 'bulletList', 'orderedList'],
+                'doc' => ['paragraph', 'table', 'bulletList', 'orderedList', 'block'],
+                'tableCell', 'tableHeader' => ['paragraph', 'table', 'bulletList', 'orderedList'],
                 'paragraph' => ['text', 'hardBreak', 'variable'],
                 'table' => ['tableRow'],
                 'tableRow' => ['tableCell', 'tableHeader'],
@@ -48,6 +49,9 @@ final class TemplateDocument
                     self::fail('El texto del diseño no es válido.');
                 }
                 $node['text'] = $raw['text'];
+            }
+            if ($type === 'block') {
+                $node['attrs'] = DocumentBlock::normalize($attrs);
             }
             if ($type === 'variable') {
                 $key = $attrs['id'] ?? null;

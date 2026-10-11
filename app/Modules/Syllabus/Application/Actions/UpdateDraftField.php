@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -42,10 +43,15 @@ class UpdateDraftField
                 throw ValidationException::withMessages(['field' => 'Este campo pertenece a Coordinación o a la institución y el docente no puede cambiarlo.']);
             }
 
+            $document = FieldDocument::normalize($data['value'] ?? FieldDocument::empty(), 'value');
+            if (! DocumentBlock::sameStructure(FieldDocument::normalize($field->contenido), $document)) {
+                throw ValidationException::withMessages(['value' => 'Los bloques de este campo los define la plantilla; el docente solo los responde.']);
+            }
+
             FieldValue::query()->updateOrCreate([
                 'silabo_id' => $locked->id,
                 'definicion_campo_id' => $field->id,
-            ], ['valor' => FieldDocument::normalize($data['value'] ?? FieldDocument::empty(), 'value')]);
+            ], ['valor' => $document]);
 
             $locked->update([
                 'version_bloqueo' => $locked->version_bloqueo + 1,

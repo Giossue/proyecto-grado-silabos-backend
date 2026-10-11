@@ -173,6 +173,30 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame($valueOf($original), $valueOf($later));
     }
 
+    public function test_the_teacher_answers_a_block_but_cannot_change_its_definition(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $field = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
+        $block = fn (array $props, array $value = []): array => ['type' => 'doc', 'content' => [['type' => 'block', 'attrs' => ['kind' => 'si_no', 'props' => $props, 'value' => $value]]]];
+        $props = ['question' => '¿Hay estudiantes con discapacidad?', 'columns' => [['key' => 'tipo', 'label' => 'Tipo']]];
+        $field->update(['contenido' => $block($props)]);
+        $syllabus->values()->where('definicion_campo_id', $field->id)->update(['valor' => $block($props)]);
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $url = route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]);
+
+        $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block([...$props, 'question' => 'Otra'], ['answer' => 'no'])])
+            ->assertUnprocessable()->assertJsonValidationErrors('value');
+        $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue('Texto suelto')])
+            ->assertUnprocessable()->assertJsonValidationErrors('value');
+        $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block($props, ['answer' => 'si', 'rows' => [['tipo' => 'Visual']]])])
+            ->assertOk();
+
+        $snapshot = app(SyllabusSnapshot::class)->build($syllabus->fresh());
+        $value = collect($snapshot['sections'])->flatMap(fn ($section) => $section['fields'])->firstWhere('key', 'bibliografia')['value'];
+        $this->assertStringContainsString('Sí', FreeText::plainText($value));
+        $this->assertStringContainsString('Visual', FreeText::plainText($value));
+    }
+
     public function test_snapshot_keeps_the_logos_it_was_taken_with(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();

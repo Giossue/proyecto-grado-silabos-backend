@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Application;
 
+use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FreeText;
 
 final class TemplateDocumentResolver
@@ -21,6 +22,9 @@ final class TemplateDocumentResolver
         $visit = function (array $node) use (&$visit, $byKey, $variables): array {
             $type = $node['type'];
             $attrs = $node['attrs'] ?? [];
+            if ($type === 'block') {
+                return DocumentBlock::expand($node);
+            }
             if (in_array($type, ['variable', 'field'], true)) {
                 $value = '';
                 if ($type === 'variable') {
