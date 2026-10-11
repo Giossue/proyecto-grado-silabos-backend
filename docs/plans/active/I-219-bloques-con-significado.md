@@ -122,8 +122,11 @@ Respuestas (responsable del proyecto, a validar con Docencia):
 
 - Las horas de las 4 unidades deben sumar exactamente las de la malla en cada componente, y si no
   coinciden se **prohíbe enviar**.
-- Si las prácticas llevan sílabo está sin confirmar; el Reglamento del Sílabo UEB (reforma 11-10-2023,
-  RCU-130, y versión 08-04-2025 S.O.004) está en rdigital.ueb.edu.ec y falta leerlo.
+- Reglamento para la elaboración, implementación, seguimiento y evaluación al sílabo UEB (reformado
+  08-04-2025, S.O.004): el art. 3 lo declara «de uso imperativo en todas las asignaturas del Plan de
+  estudios» y el art. 7 exige programar los temas según las horas de los componentes del Reglamento de
+  Régimen Académico y del proyecto de carrera. No nombra las prácticas; como están en la malla con código
+  de asignatura (SW-P7-037, SW-IC8-040), entran por la letra del art. 3. Falta confirmación de Docencia.
 - Los puntos de evaluación **sí están en norma**: Reglamento del Sistema de Evaluación Estudiantil UEB,
   art. 11 (rdigital.ueb.edu.ec). Con horas en APE: contacto 2.5, APE 2, autónomo 2, evaluación parcial
   3.5 (ponderación 1.25, 1, 1, 1.75). Con 0 horas en APE: contacto 3.5, autónomo 3, evaluación parcial
