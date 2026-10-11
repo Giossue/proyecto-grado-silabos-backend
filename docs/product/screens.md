@@ -279,9 +279,9 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
   barra de formato que aparece al seleccionarlo. Nada se guarda solo: los cambios viven en un
   borrador hasta pulsar **Guardar** (que reemplaza la estructura completa con una sola petición);
   **Cancelar** los descarta. En el editor no se arrastra ni se suelta contenido. El menú de tipo de cada campo ofrece Docente, Carrera, Fijo (texto igual para todos, antes
-  «Institucional») y Plantilla, con tres plantillas listas que se insertan en el campo: Identificación
-  (tabla con los datos del sistema), Planificación (tabla de unidades y semanas, la llena el docente) y
-  Firmas. La ayuda para el docente se escribe en el botón de ayuda del campo y se muestra sobre el editor. Escribir «/» dentro del contenido abre la lista de datos
+  «Institucional») y Plantilla, con dos plantillas listas que se insertan en el campo: Identificación
+  institucional (tabla con los datos del sistema) y Distribución y planificación de las unidades curriculares
+  (tabla de unidades y semanas, la llena el docente); otras se agregarán cuando haga falta. La ayuda para el docente se escribe en el botón de ayuda del campo y se muestra sobre el editor. Escribir «/» dentro del contenido abre la lista de datos
   del sistema para insertarlos como etiquetas. Los botones **+** entre bloques agregan al
   instante una sección «Nueva sección» o un campo vacío del docente y llevan el cursor ahí.
   Cada sección y campo tiene controles contextuales para orientación, ayuda, subir, bajar y

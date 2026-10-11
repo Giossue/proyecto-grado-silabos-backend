@@ -244,14 +244,14 @@ class OfficialTemplateTest extends TestCase
         $this->assertSame(0, FieldDefinition::query()->where('plantilla_id', $this->template->id)->count());
     }
 
-    public function test_the_payload_offers_the_three_ready_made_templates(): void
+    public function test_the_payload_offers_the_two_ready_made_templates(): void
     {
         $presets = collect($this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk()->json('presets'));
 
-        $this->assertSame(['identificacion', 'planificacion', 'firmas'], $presets->pluck('key')->all());
-        $this->assertSame(['institucional', 'docente', 'institucional'], $presets->pluck('quien_llena')->all());
+        $this->assertSame(['identificacion', 'planificacion'], $presets->pluck('key')->all());
+        $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares'], $presets->pluck('label')->all());
+        $this->assertSame(['institucional', 'docente'], $presets->pluck('quien_llena')->all());
         $this->assertSame('table', $presets->firstWhere('key', 'identificacion')['content']['content'][0]['type']);
-        $this->assertNotSame('', $presets->firstWhere('key', 'firmas')['label']);
     }
 
     public function test_the_template_payload_no_longer_lists_section_designs(): void

@@ -127,8 +127,8 @@ La plantilla oficial de la UEB vive en **un solo archivo JSON**, con este mismo 
 **`resources/templates/silabo-oficial.json`** (repositorio del backend).
 
 Es el único lugar para cambiar la plantilla oficial de base. El botón **Restablecer a plantilla oficial**
-(y la instalación inicial) cargan ese archivo; las plantillas listas Identificación, Planificación y Firmas
-del constructor salen de los campos `asignatura`, `unidades` y `firmas` de ese archivo. Una prueba verifica
+(y la instalación inicial) cargan ese archivo; las dos plantillas listas del constructor, «Identificación institucional» y «Distribución y planificación de las
+unidades curriculares», salen de los campos `asignatura` y `unidades` de ese archivo; otras se agregarán cuando haga falta. Una prueba verifica
 que el archivo siga siendo válido para la importación.
 
 > `config/syllabus_template.php` y `FixedContent.php` ya no se usan para crear la plantilla; solo los

@@ -10,7 +10,10 @@ final class OfficialTemplate
 {
     public const PATH = 'resources/templates/silabo-oficial.json';
 
-    private const PRESETS = ['identificacion' => 'asignatura', 'planificacion' => 'unidades', 'firmas' => 'firmas'];
+    private const PRESETS = [
+        'identificacion' => ['field' => 'asignatura', 'label' => 'Identificación institucional'],
+        'planificacion' => ['field' => 'unidades', 'label' => 'Distribución y planificación de las unidades curriculares'],
+    ];
 
     /**
      * @return list<array{key: string, title: string, orientation?: string, fields: list<array{key: string, label?: string|null, help?: string|null, quien_llena: string, content: array<string, mixed>}>}>
@@ -58,9 +61,9 @@ final class OfficialTemplate
         }
 
         $presets = [];
-        foreach (self::PRESETS as $key => $fieldKey) {
+        foreach (self::PRESETS as $key => ['field' => $fieldKey, 'label' => $label]) {
             $field = $fields[$fieldKey] ?? throw new RuntimeException("La plantilla oficial no tiene el campo «{$fieldKey}» que usa la plantilla lista «{$key}».");
-            $presets[] = ['key' => $key, 'label' => (string) ($field['label'] ?? ''), 'quien_llena' => $field['quien_llena'], 'content' => FieldDocument::normalize($field['content'])];
+            $presets[] = ['key' => $key, 'label' => $label, 'quien_llena' => $field['quien_llena'], 'content' => FieldDocument::normalize($field['content'])];
         }
 
         return $presets;
