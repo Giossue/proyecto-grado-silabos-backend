@@ -103,3 +103,21 @@ un nodo más), snapshot v8 y la regla I-188.
 1. Bloques `identificacion` y `unidades` (sin reglas) migrando las plantillas listas actuales.
 2. `si_no` y `repetible`, con el sílabo real como prueba.
 3. Reglas, una por una, con su confirmación.
+
+## Hallazgos sobre horas y evaluación (POR VALIDAR)
+
+Fuente: `temp/documentos-carrera/Malla-Software-8-ciclos2 (2).pdf` y el sílabo de ejemplo.
+
+- Siempre hay 4 unidades y 16 semanas; cada unidad tiene su tabla y el docente reparte horas por semana.
+- La malla da por asignatura las horas ACD, APE y AA (por ejemplo 32/32/32 = 96 y 2 créditos). Los
+  totales por unidad del sílabo de ejemplo (11/10/10, 6/12/7, 4/0/4) no suman esas horas: es el caso
+  que el docente debería ver marcado como mal hecho.
+- Hay asignaturas con 0 horas en algún componente: Prácticas preprofesionales (SW-P7-037: 0/0/0, 5
+  créditos, 240 h) y Prácticas de servicio comunitario (SW-IC8-040: 0/0/0, 2 créditos, 96 h).
+- La evaluación del sílabo de ejemplo reparte 10 puntos por parcial: ACD 2.5, APE 2.0, AA 2.0 y
+  evaluación parcial 3.5, con ponderación a la mitad (5 puntos por parcial). No está confirmado cómo se
+  calculan esos puntos ni qué pasa cuando un componente tiene 0 horas.
+
+Preguntas para la universidad: ¿las horas de las 4 unidades deben sumar exactamente las horas de la
+malla en cada componente?, ¿la validación bloquea o solo avisa?, ¿cómo se reparten los 10 puntos
+según las horas de cada componente y qué se hace con los componentes en 0?
