@@ -130,5 +130,6 @@ Respuestas (responsable del proyecto, a validar con Docencia):
 - Los puntos de evaluación **sí están en norma**: Reglamento del Sistema de Evaluación Estudiantil UEB,
   art. 11 (rdigital.ueb.edu.ec). Con horas en APE: contacto 2.5, APE 2, autónomo 2, evaluación parcial
   3.5 (ponderación 1.25, 1, 1, 1.75). Con 0 horas en APE: contacto 3.5, autónomo 3, evaluación parcial
-  3.5 (ponderación 1.75, 1.5, 1.75). Cada parcial suma 10 puntos y pesa 50 %. La norma no cubre ACD o
-  AA en 0.
+  3.5 (ponderación 1.75, 1.5, 1.75). Cada parcial suma 10 puntos y pesa 50 %. La reforma del 13-03-2024
+  (SE007) trae las mismas tablas. Ninguna cubre ACD o AA en 0: la disposición general segunda manda que
+  lo no previsto lo resuelva el Vicerrectorado Académico mediante resolución de Comisión Académica.
