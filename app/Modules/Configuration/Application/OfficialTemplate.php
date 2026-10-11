@@ -49,7 +49,7 @@ final class OfficialTemplate
     }
 
     /**
-     * @return list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>
+     * @return list<array{key: string, field_key: string, label: string, quien_llena: string, content: array<string, mixed>}>
      */
     public static function presets(): array
     {
@@ -63,7 +63,7 @@ final class OfficialTemplate
         $presets = [];
         foreach (self::PRESETS as $key => ['field' => $fieldKey, 'label' => $label]) {
             $field = $fields[$fieldKey] ?? throw new RuntimeException("La plantilla oficial no tiene el campo «{$fieldKey}» que usa la plantilla lista «{$key}».");
-            $presets[] = ['key' => $key, 'label' => $label, 'quien_llena' => $field['quien_llena'], 'content' => FieldDocument::normalize($field['content'])];
+            $presets[] = ['key' => $key, 'field_key' => $fieldKey, 'label' => $label, 'quien_llena' => $field['quien_llena'], 'content' => FieldDocument::normalize($field['content'])];
         }
 
         return $presets;

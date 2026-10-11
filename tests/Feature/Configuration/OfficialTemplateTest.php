@@ -251,6 +251,7 @@ class OfficialTemplateTest extends TestCase
         $this->assertSame(['identificacion', 'planificacion'], $presets->pluck('key')->all());
         $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares'], $presets->pluck('label')->all());
         $this->assertSame(['institucional', 'docente'], $presets->pluck('quien_llena')->all());
+        $this->assertSame(['asignatura', 'unidades'], $presets->pluck('field_key')->all());
         $this->assertSame('table', $presets->firstWhere('key', 'identificacion')['content']['content'][0]['type']);
     }
 
