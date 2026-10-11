@@ -1,7 +1,21 @@
 # I-219 — Bloques con significado dentro del documento (propuesta)
 
-Estado: **POR VALIDAR**. Es un diseño, sin código. No se implementa hasta que la universidad confirme
-las reglas de negocio de la sección «Preguntas».
+Estado: primera entrega hecha (2026-10-10) con los bloques `si_no` y `repetible`, **sin reglas de negocio**.
+Las reglas (sumas, topes, obligatoriedad de filas) siguen **POR VALIDAR** y no se programan hasta que la
+universidad las confirme (sección «Preguntas»). Los bloques `identificacion` y `unidades` siguen siendo
+las tablas de las plantillas listas.
+
+## Lo construido
+
+- Nodo `documentBlock` (no `block`, que choca con el grupo `block` del editor) con `attrs.kind`,
+  `attrs.props` y `attrs.value`. Backend: `DocumentBlock` valida tipo, columnas, respuesta y filas.
+- El bloque se **expande a párrafos y tabla** en `TemplateDocumentResolver`, así que Word, PDF, snapshot y
+  contexto de IA funcionan sin cambios. Sin responder cuenta como vacío (el docente debe responder).
+- El docente solo puede responder: `UpdateDraftField` rechaza un valor cuyos bloques no coincidan en tipo y
+  propiedades con los de la plantilla.
+- JSON de importación y exportación: `<div data-block="si_no" data-props='…' data-value='…'></div>`.
+- Frontend: menú **Bloque** en la barra del editor (solo Administración), vista del docente con Sí/No y
+  filas, y la misma vista en modo lectura.
 
 ## Pedido, 2026-10-10
 

@@ -144,3 +144,17 @@ que el archivo siga siendo válido para la importación.
 - Edita en un editor con validación de JSON; haz un respaldo del archivo antes de importar.
 - Cambia títulos, ayuda y orden con seguridad. Para tablas, edita primero en el constructor y exporta.
 - Conserva las claves de campos ya usados por sílabos aprobados o por fichas de materias.
+
+## Bloques con significado (I-219)
+
+Además de texto, listas y tablas, el contenido puede llevar bloques: en HTML, un
+`<div data-block="si_no|repetible" data-props='{…}' data-value='{…}'></div>`; en el documento, un nodo
+`documentBlock` con `kind`, `props` y `value`.
+
+| `kind` | `props` | `value` |
+|---|---|---|
+| `si_no` | `question` (obligatoria, 300), `columns` (0 a 8, `{key, label}`) | `answer` (`si`/`no`/`null`), `rows` (solo con `si`) |
+| `repetible` | `label` (120), `columns` (1 a 8) | `rows` (hasta 100, celdas de 1000 caracteres) |
+
+Los bloques solo se aceptan en el nivel del documento. No tienen reglas de negocio todavía.
+
