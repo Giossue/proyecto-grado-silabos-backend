@@ -5,6 +5,7 @@ namespace App\Modules\Academic\Infrastructure\Gateways;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /** Lee un PDF con el OCR de OpenParser (PaddleOCR): sube el archivo, espera el trabajo y devuelve su texto. */
@@ -135,7 +136,16 @@ final class OpenParserPdfReader
     {
         $payload = $response->json();
         if (! $response->successful() || ! is_array($payload) || array_is_list($payload)) {
-            throw new RuntimeException($message);
+            Log::warning('OpenParser respondió con error.', ['status' => $response->status(), 'body' => mb_substr($response->body(), 0, 1000)]);
+            $reason = match (true) {
+                in_array($response->status(), [401, 403], true) => 'la clave del servicio OCR no es válida',
+                in_array($response->status(), [402, 429], true) => 'se agotó la cuota o el límite de uso del servicio OCR',
+                $response->status() === 413 => 'el archivo es demasiado grande para el OCR',
+                $response->status() >= 500 => 'el servicio OCR no está disponible en este momento',
+                default => is_array($payload) ? trim((string) ($payload['detail'] ?? $payload['message'] ?? $payload['error'] ?? '')) : '',
+            };
+
+            throw new RuntimeException(rtrim($message, '.').' (HTTP '.$response->status().($reason !== '' ? ': '.mb_substr($reason, 0, 200) : '').').');
         }
 
         return $payload;
