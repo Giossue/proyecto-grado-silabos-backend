@@ -92,6 +92,8 @@ class AuditEventController extends Controller
             'academico.campus.actualizacion' => 'Campus actualizado',
             'academico.carrera.creacion' => 'Carrera creada',
             'academico.carrera.cambio_estado' => 'Estado de carrera actualizado',
+            'academico.carrera.desactivacion' => 'Carrera desactivada',
+            'academico.carrera.reactivacion' => 'Carrera reactivada',
             'academico.carrera.actualizacion' => 'Carrera actualizada',
             'academico.facultad.creacion' => 'Facultad creada',
             'academico.facultad.cambio_estado' => 'Estado de facultad actualizado',

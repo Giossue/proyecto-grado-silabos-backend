@@ -11,6 +11,8 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
@@ -522,6 +524,43 @@ class AcademicStructureTest extends TestCase
         $this->actingAsCoordinator()
             ->deleteJson(route('api.v1.coordination.academic.parallels.destroy', $foreign))
             ->assertNotFound();
+    }
+
+    public function test_administrator_deactivates_and_reactivates_a_career_with_audit(): void
+    {
+        $career = $this->createCareer('PAUSA');
+        $user = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $role = RoleAssignment::query()->create(['usuario_id' => $user->id, 'rol' => 'docente', 'carrera_id' => $career->id, 'activo' => true]);
+        $status = fn (bool $active) => $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.academic.status', ['carrera', $career->id]), ['active' => $active]);
+
+        $status(false)->assertUnprocessable()->assertJsonPath('errors.record.0', 'Retire primero a los usuarios de la carrera.');
+        $role->update(['activo' => false]);
+
+        $process = SyllabusProcess::query()->create([
+            'periodo_academico_id' => AcademicPeriod::query()->valueOrFail('id'),
+            'inicia_en' => now()->subDay(), 'entrega_en' => now()->addMonth(), 'estado' => SyllabusProcess::STATE_PAUSED,
+        ]);
+        Convocation::query()->create(['carrera_id' => $career->id, 'proceso_id' => $process->id, 'estado' => Convocation::STATE_PREPARATION]);
+        $status(false)->assertUnprocessable();
+        $process->update(['estado' => SyllabusProcess::STATE_CLOSED]);
+
+        $status(false)->assertOk();
+        $this->assertFalse($career->fresh()->activo);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.carrera.desactivacion', 'recurso_id' => $career->id]);
+        $careers = $this->actingAsAdministrator()->getJson(route('api.v1.admin.academic.index'))->assertOk()->json('catalogs.careers');
+        $this->assertContains(['id' => $career->id, 'active' => false], array_map(fn (array $row) => ['id' => $row['id'], 'active' => $row['active']], $careers));
+
+        $status(true)->assertOk();
+        $this->assertTrue($career->fresh()->activo);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.carrera.reactivacion', 'recurso_id' => $career->id]);
+    }
+
+    public function test_coordinator_cannot_change_a_career_status(): void
+    {
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.admin.academic.status', ['carrera', $this->coordinatorContext->carrera_id]), ['active' => false])
+            ->assertForbidden();
     }
 
     private function createCareer(string $code): Career
