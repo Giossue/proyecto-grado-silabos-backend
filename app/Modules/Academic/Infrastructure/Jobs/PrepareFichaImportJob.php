@@ -43,6 +43,10 @@ class PrepareFichaImportJob implements ShouldQueue
         if ($blocks === []) {
             throw new RuntimeException('Los documentos no tienen texto legible.');
         }
+        // Si Coordinación canceló mientras el OCR leía, no se sigue.
+        if ($import->fresh()?->estado_importacion !== FichaImport::RUNNING) {
+            return;
+        }
         $disk->put("importaciones-ficha/{$import->id}/bloques.json", json_encode($blocks, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
 
         $subjects = Subject::query()->where('carrera_id', $import->carrera_id)->where('activo', true)->orderBy('ciclo')->orderBy('orden_en_ciclo')->get();
@@ -57,7 +61,7 @@ class PrepareFichaImportJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        FichaImport::query()->whereKey($this->importId)->update([
+        FichaImport::query()->whereKey($this->importId)->whereIn('estado_importacion', [FichaImport::PENDING, FichaImport::RUNNING])->update([
             'estado_importacion' => FichaImport::FAILED,
             'mensaje_error_importacion' => $exception instanceof RuntimeException ? $exception->getMessage() : 'No se pudieron leer los documentos.',
         ]);
