@@ -312,23 +312,30 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertStringNotContainsString('Dato vivo posterior', $xml);
     }
 
-    public function test_missing_profile_reports_a_coordinator_action(): void
+    public function test_convocation_cannot_open_while_a_subject_profile_is_incomplete(): void
     {
         $convocation = $this->createPreparedConvocation();
         FieldValue::query()->whereNotNull('asignatura_id')->delete();
-        $this->openPrepared($convocation);
-        $syllabus = Syllabus::query()->firstOrFail();
-        $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
-        $this->assertTrue(FieldDocument::isEmpty($syllabus->values()->where('definicion_campo_id', $description->id)->firstOrFail()->valor));
 
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
-        $result = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertOk();
-        $this->assertContains([
-            'field_id' => $description->id,
-            'code' => 'maestro_obligatorio_faltante',
-            'severity' => 'error',
-            'message' => 'La asignatura no tiene ficha: pídala al coordinador.',
-        ], $result->json('validation.results'));
+        $this->assertOpeningFails($convocation, 'Falta completar la ficha de 1 materia en Proyecto de carrera.');
+        $this->assertSame(0, Syllabus::query()->count());
+    }
+
+    public function test_opening_lists_every_blocker_at_once(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        FieldValue::query()->whereNotNull('asignatura_id')->delete();
+        $convocation->process->update(['inicia_en' => now()->subDays(2), 'entrega_en' => now()->subDay()]);
+
+        try {
+            $this->openPrepared($convocation);
+            $this->fail('La apertura debía rechazarse.');
+        } catch (ValidationException $exception) {
+            $this->assertSame([
+                'El plazo de entrega de la convocatoria institucional ya venció. Administración debe prorrogarlo.',
+                'Falta completar la ficha de 1 materia en Proyecto de carrera.',
+            ], $exception->errors()['convocation']);
+        }
     }
 
     public function test_empty_profile_bibliography_is_optional_for_validation(): void

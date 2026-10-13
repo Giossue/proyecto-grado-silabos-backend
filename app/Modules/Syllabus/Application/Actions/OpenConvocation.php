@@ -3,7 +3,6 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
@@ -25,7 +24,6 @@ class OpenConvocation
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly TemplateStructureValidator $templateStructure,
-        private readonly InstitutionalLogos $logos,
         private readonly GenerateConvocationSyllabi $generator,
         private readonly WorkflowNotificationRecipients $recipients,
         private readonly ScheduleInternalNotification $notifications,
@@ -48,11 +46,6 @@ class OpenConvocation
             if ($convocation->estado !== 'preparacion') {
                 throw ValidationException::withMessages(['convocation' => 'Solo una convocatoria en preparación puede abrirse.']);
             }
-            if (! $this->logos->facultyIsConfigured($convocation->career->faculty)) {
-                throw ValidationException::withMessages([
-                    'convocation' => 'Administración debe cargar el logo de la facultad antes de que Coordinación abra la convocatoria.',
-                ]);
-            }
             if ($convocation->process->estado !== SyllabusProcess::STATE_OPEN) {
                 throw ValidationException::withMessages(['convocation' => match ($convocation->process->estado) {
                     SyllabusProcess::STATE_PAUSED => 'El proceso institucional está en pausa. Podrá abrir cuando Administración lo reanude.',
@@ -60,7 +53,7 @@ class OpenConvocation
                     default => 'El proceso institucional todavía no se abre. Podrá abrir cuando Administración lo inicie.',
                 }]);
             }
-            $this->readiness->assertAcademicDataReady($convocation->carrera_id);
+            $this->readiness->assertReadyToOpen($convocation->carrera_id);
             $template = SyllabusTemplate::institutional();
             $this->templateStructure->assertUsable($template, 'convocation');
 

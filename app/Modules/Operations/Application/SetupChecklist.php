@@ -137,6 +137,7 @@ class SetupChecklist
             ! $readiness['deadline_open'] => 'El plazo institucional venció. Administración debe prorrogarlo antes de abrir la convocatoria.',
             ! $readiness['template_ready'] => 'Administración debe completar la plantilla institucional.',
             ! $readiness['faculty_logo_ready'] => 'Administración debe cargar el logo de la facultad.',
+            $readiness['subjects_without_profile'] > 0 => "Complete la ficha de {$readiness['subjects_without_profile']} materia(s) en Proyecto de carrera.",
             $readiness['can_open'] => 'Todo está listo. Puede abrir la convocatoria.',
             default => 'Complete los pasos anteriores para poder abrirla.',
         };

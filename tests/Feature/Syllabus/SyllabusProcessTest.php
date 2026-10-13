@@ -341,6 +341,7 @@ class SyllabusProcessTest extends TestCase
     public function test_dashboards_expose_the_shared_deadline_and_allow_coordination_to_open_its_scope(): void
     {
         $process = $this->openProcess();
+        $this->fillSubjectProfiles();
 
         $this->actingAsCoordinator()
             ->getJson(route('api.v1.dashboard.show'))

@@ -794,3 +794,9 @@ por una con su logo y los paralelos se gestionan desde las acciones de cada mate
 asignarse como docente de un paralelo de su propia carrera (recibe ahí el rol Docente) y
 puede revisar y aprobar ese sílabo con su rol de coordinador, porque cada carrera tiene un
 solo coordinador. La auditoría registra quién aprueba y con qué rol.
+
+13 de octubre de 2026, por instrucción del responsable del producto: Coordinación no puede
+abrir la convocatoria de su carrera si venció el plazo de entrega institucional o si alguna
+materia activa tiene incompleta su ficha del Proyecto de carrera; el rechazo lista de una
+vez todo lo que falta. Administración no puede abrir una convocatoria institucional sobre
+un período académico que ya terminó.

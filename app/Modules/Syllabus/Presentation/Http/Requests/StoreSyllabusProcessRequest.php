@@ -44,6 +44,11 @@ class StoreSyllabusProcessRequest extends FormRequest
                 return;
             }
             $end = $period->fecha_fin->endOfDay();
+            if ($end->isPast()) {
+                $validator->errors()->add('period_id', 'El período académico ya terminó ('.$period->fecha_fin->format('d/m/Y').'). Elija uno vigente.');
+
+                return;
+            }
             foreach (['starts_at', 'due_at'] as $key) {
                 $value = $this->input($key);
                 if (is_string($value) && strtotime($value) !== false && strtotime($value) > $end->getTimestamp()) {

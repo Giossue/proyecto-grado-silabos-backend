@@ -46,6 +46,7 @@ class PrepareTestingEnvironmentCommandTest extends TestCase
         $this->actingAs($admin)->withSession(['active_role_assignment_id' => $admin->roleAssignments()->value('id')]);
         $this->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla']);
         $this->postJson(route('api.v1.admin.template.format', SyllabusTemplate::query()->firstOrFail()))->assertSuccessful();
+        $this->fillSubjectProfiles();
         putenv('PRUEBAS_CONTRASENA='.self::PASSWORD);
     }
 

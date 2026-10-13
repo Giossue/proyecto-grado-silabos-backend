@@ -2,6 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
+use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
@@ -26,6 +27,7 @@ use Illuminate\Validation\ValidationException;
  *   scheduled_with_parallels: int,
  *   parallel_total: int,
  *   parallels_with_teacher: int,
+ *   subjects_without_profile: int,
  *   template_ready: bool,
  *   faculty_logo_ready: bool,
  *   deadline_open: bool,
@@ -34,7 +36,10 @@ use Illuminate\Validation\ValidationException;
  */
 final class CoordinatorConvocationReadiness
 {
-    public function __construct(private readonly InstitutionalLogos $logos) {}
+    public function __construct(
+        private readonly InstitutionalLogos $logos,
+        private readonly SubjectProfileFields $profiles,
+    ) {}
 
     /** @return CoordinatorReadiness */
     public function inspect(string $careerId): array
@@ -70,6 +75,9 @@ final class CoordinatorConvocationReadiness
                     ->whereNotNull('usuarios.correo_verificado_en'))))
             ->count();
 
+        $subjectIds = (clone $subjects)->pluck('id')->all();
+        $subjectsWithoutProfile = count(array_filter($this->profiles->completeBySubject($subjectIds), fn (bool $complete): bool => ! $complete));
+
         $convocation = $process === null ? null : Convocation::query()
             ->where('carrera_id', $careerId)
             ->where('proceso_id', $process->id)
@@ -87,6 +95,7 @@ final class CoordinatorConvocationReadiness
             && $scheduledWithParallels === $scheduledTotal
             && $parallelTotal > 0
             && $parallelsWithTeacher === $parallelTotal
+            && $subjectsWithoutProfile === 0
             && $templateReady
             && $facultyLogoReady;
 
@@ -98,6 +107,7 @@ final class CoordinatorConvocationReadiness
             'scheduled_with_parallels' => $scheduledWithParallels,
             'parallel_total' => $parallelTotal,
             'parallels_with_teacher' => $parallelsWithTeacher,
+            'subjects_without_profile' => $subjectsWithoutProfile,
             'template_ready' => $templateReady,
             'faculty_logo_ready' => $facultyLogoReady,
             'deadline_open' => $deadlineOpen,
@@ -131,12 +141,39 @@ final class CoordinatorConvocationReadiness
                 : "Faltan {$withoutTeacher} paralelos sin docente.";
         }
 
+        $withoutProfile = $readiness['subjects_without_profile'];
+        if ($withoutProfile > 0) {
+            $missing[] = $withoutProfile === 1
+                ? 'Falta completar la ficha de 1 materia en Proyecto de carrera.'
+                : "Falta completar la ficha de {$withoutProfile} materias en Proyecto de carrera.";
+        }
+
         return $missing;
     }
 
-    public function assertAcademicDataReady(string $careerId): void
+    /**
+     * Todo lo que impide abrir la convocatoria, en una sola lista para que Coordinación
+     * vea de una vez qué le falta.
+     *
+     * @param  CoordinatorReadiness  $readiness
+     * @return list<string>
+     */
+    public function blockers(array $readiness): array
     {
-        $missing = $this->missingAcademicData($this->inspect($careerId));
+        $blockers = [];
+        if ($readiness['process'] !== null && ! $readiness['deadline_open']) {
+            $blockers[] = 'El plazo de entrega de la convocatoria institucional ya venció. Administración debe prorrogarlo.';
+        }
+        if (! $readiness['faculty_logo_ready']) {
+            $blockers[] = 'Administración debe cargar el logo de la facultad antes de que Coordinación abra la convocatoria.';
+        }
+
+        return [...$blockers, ...$this->missingAcademicData($readiness)];
+    }
+
+    public function assertReadyToOpen(string $careerId): void
+    {
+        $missing = $this->blockers($this->inspect($careerId));
         if ($missing !== []) {
             throw ValidationException::withMessages(['convocation' => $missing]);
         }
