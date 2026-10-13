@@ -21,11 +21,14 @@ final class FichaDocumentText
 
     public function __construct(private readonly OpenParserPdfReader $ocr) {}
 
-    /** @return list<string> */
-    public function blocks(string $absolutePath, string $name): array
+    /**
+     * @param  (callable(string): void)|null  $onOcrStatus
+     * @return list<string>
+     */
+    public function blocks(string $absolutePath, string $name, ?callable $onOcrStatus = null): array
     {
         $text = match (strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION))) {
-            'pdf' => $this->ocr->available() ? $this->ocr->text($absolutePath, $name) : $this->pdf($absolutePath),
+            'pdf' => $this->ocr->available() ? $this->ocr->text($absolutePath, $name, $onOcrStatus) : $this->pdf($absolutePath),
             'xlsx', 'xls' => $this->workbook($absolutePath),
             default => throw new RuntimeException('Solo se admiten archivos PDF o Excel.'),
         };

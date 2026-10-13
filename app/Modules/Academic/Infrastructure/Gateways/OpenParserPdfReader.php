@@ -19,12 +19,16 @@ final class OpenParserPdfReader
             && str_starts_with((string) config('openparser.base_url'), 'https://');
     }
 
-    public function text(string $path, string $name): string
+    /** @param  (callable(string): void)|null  $onStatus  recibe cada estado del OCR («queued», «running»…) */
+    public function text(string $path, string $name, ?callable $onStatus = null): string
     {
         $jobId = $this->submit($path, $name);
         $deadline = time() + (int) config('openparser.max_wait_seconds');
         while (true) {
             $state = $this->status($jobId);
+            if ($onStatus !== null) {
+                $onStatus($state);
+            }
             if ($state === 'succeeded') {
                 return $this->result($jobId);
             }

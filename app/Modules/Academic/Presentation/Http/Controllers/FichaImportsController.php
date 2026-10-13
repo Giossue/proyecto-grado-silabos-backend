@@ -88,6 +88,7 @@ class FichaImportsController extends Controller
             'state' => $import->estado_importacion,
             'error' => $import->mensaje_error_importacion,
             'documents' => array_map(fn (array $document): array => ['name' => $document['name'], 'size' => $document['size']], $import->documentos_importacion),
+            'reading' => $import->estado_importacion === FichaImport::RUNNING ? ($import->propuesta_importacion['reading'] ?? null) : null,
             'progress' => ['done' => count(array_filter($subjects, fn (array $entry): bool => $entry['state'] !== 'pendiente')), 'total' => count($subjects)],
             'fields' => $fields,
             'subjects' => array_map(fn (array $entry): array => [

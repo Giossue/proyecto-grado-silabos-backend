@@ -37,8 +37,20 @@ class PrepareFichaImportJob implements ShouldQueue
         $import->update(['estado_importacion' => FichaImport::RUNNING]);
         $disk = Storage::disk('private');
         $blocks = [];
-        foreach ($import->documentos_importacion as $document) {
-            $blocks = [...$blocks, ...$reader->blocks($disk->path($document['path']), $document['name'])];
+        $documents = $import->documentos_importacion;
+        foreach ($documents as $index => $document) {
+            // El OCR no informa porcentaje: se publica qué documento se lee y en qué estado está.
+            $reading = ['index' => $index + 1, 'total' => count($documents), 'name' => $document['name'], 'ocr' => null, 'started_at' => now()->toIso8601String()];
+            $publish = function (?string $ocr) use (&$reading): void {
+                if ($reading['ocr'] === $ocr && $ocr !== null) {
+                    return;
+                }
+                $reading['ocr'] = $ocr;
+                FichaImport::query()->whereKey($this->importId)->where('estado_importacion', FichaImport::RUNNING)
+                    ->update(['propuesta_importacion' => ['reading' => $reading]]);
+            };
+            $publish(null);
+            $blocks = [...$blocks, ...$reader->blocks($disk->path($document['path']), $document['name'], $publish)];
         }
         if ($blocks === []) {
             throw new RuntimeException('Los documentos no tienen texto legible.');

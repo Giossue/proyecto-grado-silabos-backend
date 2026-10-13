@@ -75,7 +75,7 @@ class ExtractSubjectFichaJob implements ShouldQueue
             if ($import === null || $import->estado_importacion !== FichaImport::RUNNING) {
                 return;
             }
-            $proposal = $import->propuesta_importacion ?? ['subjects' => []];
+            $proposal = ['subjects' => $import->propuesta_importacion['subjects'] ?? []];
             foreach ($proposal['subjects'] as $index => $entry) {
                 if ($entry['subject_id'] === $this->subjectId) {
                     $proposal['subjects'][$index] = [...$entry, ...$patch];

@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $solicitado_por
  * @property string $estado_importacion
  * @property list<array{name: string, path: string, size: int}> $documentos_importacion
- * @property array{subjects: list<array<string, mixed>>}|null $propuesta_importacion
+ * @property array{subjects?: list<array<string, mixed>>, reading?: array{index: int, total: int, name: string, ocr: string|null, started_at: string}}|null $propuesta_importacion
  * @property string|null $mensaje_error_importacion
  * @property CarbonImmutable $solicitado_en
  * @property CarbonImmutable|null $aplicado_en

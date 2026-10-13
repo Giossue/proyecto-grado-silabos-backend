@@ -26,7 +26,11 @@ class OpenParserPdfReaderTest extends TestCase
         $pdf = tempnam(sys_get_temp_dir(), 'pdf');
         file_put_contents($pdf, '%PDF-1.4');
 
-        $this->assertSame('Hola mundo', (new OpenParserPdfReader)->text($pdf, 'ficha.pdf'));
+        $states = [];
+        $this->assertSame('Hola mundo', (new OpenParserPdfReader)->text($pdf, 'ficha.pdf', function (string $state) use (&$states): void {
+            $states[] = $state;
+        }));
+        $this->assertSame(['succeeded'], $states);
         Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/parse/async') && $request->hasHeader('Idempotency-Key'));
     }
 
