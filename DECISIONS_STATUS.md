@@ -789,3 +789,8 @@ carreras (Administración) y docentes (Coordinación). Cada importación se revi
 confirmar y es todo o nada. Ese mismo día, las importaciones de facultades y de Materias
 y asignaciones se retiraron por instrucción del responsable: las facultades se crean una
 por una con su logo y los paralelos se gestionan desde las acciones de cada materia.
+
+13 de octubre de 2026, por instrucción del responsable del producto: el coordinador puede
+asignarse como docente de un paralelo de su propia carrera (recibe ahí el rol Docente) y
+puede revisar y aprobar ese sílabo con su rol de coordinador, porque cada carrera tiene un
+solo coordinador. La auditoría registra quién aprueba y con qué rol.
