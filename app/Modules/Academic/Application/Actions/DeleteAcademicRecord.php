@@ -81,7 +81,7 @@ class DeleteAcademicRecord
             'carrera' => Subject::query()->where('carrera_id', $record->getKey())->exists()
                 || DB::table('importaciones_ficha')->where('carrera_id', $record->getKey())->exists()
                 || DB::table('convocatorias_carreras')->where('carrera_id', $record->getKey())->exists()
-                || DB::table('asignaciones_rol')->where('carrera_id', $record->getKey())->exists(),
+                || self::careerRoleBlock((string) $record->getKey()) !== null,
             // I-172: un periodo sin convocatoria se elimina con su programación; con convocatoria, se elimina ella primero.
             'periodo' => DB::table('convocatorias_universidad')->where('periodo_academico_id', $record->getKey())->exists(),
             'asignacion_docente' => false,
@@ -100,8 +100,38 @@ class DeleteAcademicRecord
     {
         $name = (string) ($record->getAttribute('nombre') ?? $record->getAttribute('codigo') ?? $record->getKey());
         $metadata = ['name' => $name];
+        if ($entity === 'carrera') {
+            // Quedan solo roles retirados sin historial: se borran con la carrera.
+            DB::table('asignaciones_rol')->where('carrera_id', $record->getKey())->delete();
+        }
         $record->delete();
 
         return $metadata;
+    }
+
+    /**
+     * Los roles retirados de una carrera no impiden borrarla, salvo que hayan dejado
+     * historial (auditoría, asignaciones, revisiones…), que nunca se borra.
+     */
+    public static function careerRoleBlock(string $careerId): ?string
+    {
+        $roles = DB::table('asignaciones_rol')->where('carrera_id', $careerId);
+        if ((clone $roles)->where('asignacion_rol_activa', true)->exists()) {
+            return 'No se puede eliminar: tiene usuarios asignados.';
+        }
+        $roleIds = (clone $roles)->pluck('asignacion_rol_id')->all();
+        if ($roleIds === []) {
+            return null;
+        }
+        $references = DB::select("SELECT c.conrelid::regclass::text AS tabla, a.attname AS columna
+            FROM pg_constraint c JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
+            WHERE c.contype = 'f' AND c.confrelid = 'asignaciones_rol'::regclass");
+        foreach ($references as $reference) {
+            if (DB::table($reference->tabla)->whereIn($reference->columna, $roleIds)->exists()) {
+                return 'No se puede eliminar: sus usuarios ya trabajaron en ella y ese historial se conserva.';
+            }
+        }
+
+        return null;
     }
 }

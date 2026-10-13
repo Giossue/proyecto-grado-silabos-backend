@@ -416,6 +416,25 @@ class AcademicStructureTest extends TestCase
         $this->assertArrayNotHasKey('period_id', $row);
     }
 
+    public function test_a_career_with_only_retired_roles_without_history_can_be_deleted(): void
+    {
+        $career = $this->createCareer('RETIRADA');
+        $user = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $role = RoleAssignment::query()->create(['usuario_id' => $user->id, 'rol' => 'docente', 'carrera_id' => $career->id, 'activo' => true]);
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.academic.destroy', ['carrera', $career->id]))
+            ->assertUnprocessable();
+
+        $role->update(['activo' => false]);
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.academic.destroy', ['carrera', $career->id]))
+            ->assertOk();
+
+        $this->assertDatabaseMissing('carreras', ['carrera_id' => $career->id]);
+        $this->assertDatabaseMissing('asignaciones_rol', ['asignacion_rol_id' => $role->id]);
+    }
+
     public function test_deleting_a_period_without_convocation_keeps_the_fixed_parallels(): void
     {
         $period = AcademicPeriod::query()->firstOrFail();
