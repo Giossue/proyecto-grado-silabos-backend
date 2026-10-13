@@ -409,7 +409,8 @@ class AcademicStructureViewData
                         ->select('usuario_id')
                         ->effective()
                         ->where('carrera_id', $careerId)
-                        ->where('rol', RoleCode::Teacher->value))
+                        // El coordinador puede dictar materias de su propia carrera.
+                        ->whereIn('rol', [RoleCode::Teacher->value, RoleCode::Coordinator->value]))
                     ->orderBy('nombre')
                     ->get(['id', 'nombre', 'correo_electronico'])
                     ->map(fn (User $user): array => [

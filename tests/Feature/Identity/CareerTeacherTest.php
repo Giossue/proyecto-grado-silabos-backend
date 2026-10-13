@@ -109,6 +109,31 @@ class CareerTeacherTest extends TestCase
             ->exists());
     }
 
+    public function test_coordinator_can_assign_itself_as_teacher_of_its_career(): void
+    {
+        $parallel = Parallel::query()->firstOrFail();
+        TeacherAssignment::query()->where('paralelo_id', $parallel->id)->update(['activo' => false]);
+
+        $this->getJson(route('api.v1.coordination.academic.teacher-assignments.index'))
+            ->assertOk()
+            ->assertJsonFragment(['id' => $this->coordinator->id, 'email' => 'coordinador@silabos.test']);
+
+        $this->postJson(route('api.v1.coordination.academic.store', 'asignacion_docente'), [
+            'user_id' => $this->coordinator->id,
+            'parallel_id' => $parallel->id,
+        ])->assertSuccessful();
+
+        $teacherRole = RoleAssignment::query()->where([
+            'usuario_id' => $this->coordinator->id,
+            'carrera_id' => $this->context->carrera_id,
+            'rol' => RoleCode::Teacher->value,
+            'activo' => true,
+        ])->firstOrFail();
+        $this->assertTrue(TeacherAssignment::query()
+            ->where(['asignacion_rol_id' => $teacherRole->id, 'paralelo_id' => $parallel->id, 'activo' => true])
+            ->exists());
+    }
+
     public function test_same_teacher_cannot_be_assigned_twice_to_the_same_parallel(): void
     {
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();

@@ -160,7 +160,7 @@ class CreateAcademicRecord
             ->lockForUpdate()
             ->firstOrFail();
         $userId = $this->stringValue($data, 'user_id');
-        $roleAssignment = $this->scopedRole($userId, $careerId, RoleCode::Teacher);
+        $roleAssignment = $this->teacherRole($userId, $careerId);
 
         $alreadyAssigned = TeacherAssignment::query()
             ->where('paralelo_id', $parallel->id)
@@ -191,6 +191,26 @@ class CreateAcademicRecord
         }
 
         return $activeRole->carrera_id;
+    }
+
+    // El coordinador que se asigna una materia de su carrera recibe ahí su rol docente.
+    private function teacherRole(string $userId, string $careerId): RoleAssignment
+    {
+        $identity = ['usuario_id' => $userId, 'carrera_id' => $careerId, 'rol' => RoleCode::Teacher->value];
+        $isCoordinator = RoleAssignment::query()->effective()
+            ->where(['usuario_id' => $userId, 'carrera_id' => $careerId, 'rol' => RoleCode::Coordinator->value])
+            ->exists();
+
+        if ($isCoordinator) {
+            $assignment = RoleAssignment::query()->where($identity)->orderByDesc('activo')->first();
+            if ($assignment === null) {
+                RoleAssignment::query()->create([...$identity, 'activo' => true]);
+            } elseif (! $assignment->activo) {
+                $assignment->update(['activo' => true]);
+            }
+        }
+
+        return $this->scopedRole($userId, $careerId, RoleCode::Teacher);
     }
 
     private function scopedRole(string $userId, string $careerId, RoleCode $role): RoleAssignment
