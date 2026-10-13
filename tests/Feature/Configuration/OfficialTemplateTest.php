@@ -257,10 +257,10 @@ class OfficialTemplateTest extends TestCase
     {
         $presets = collect($this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk()->json('presets'));
 
-        $this->assertSame(['identificacion', 'planificacion'], $presets->pluck('key')->all());
-        $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares'], $presets->pluck('label')->all());
-        $this->assertSame(['docente', 'docente'], $presets->pluck('quien_llena')->all());
-        $this->assertSame(['asignatura', 'unidades'], $presets->pluck('field_key')->all());
+        $this->assertSame(['identificacion', 'planificacion', 'bibliografia_basica', 'bibliografia_complementaria', 'firmas'], $presets->pluck('key')->all());
+        $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares', 'Bibliografía básica', 'Bibliografía complementaria', 'Firmas de revisión y aprobación'], $presets->pluck('label')->all());
+        $this->assertSame(['docente', 'docente', 'docente', 'docente', 'institucional'], $presets->pluck('quien_llena')->all());
+        $this->assertSame(['asignatura', 'unidades', 'bibliografia', 'bibliografia_complementaria', 'firmas'], $presets->pluck('field_key')->all());
         $this->assertSame('documentBlock', $presets->firstWhere('key', 'identificacion')['content']['content'][0]['type']);
     }
 

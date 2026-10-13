@@ -13,6 +13,9 @@ final class OfficialTemplate
     private const PRESETS = [
         'identificacion' => ['field' => 'asignatura', 'label' => 'Identificación institucional'],
         'planificacion' => ['field' => 'unidades', 'label' => 'Distribución y planificación de las unidades curriculares'],
+        'bibliografia_basica' => ['field' => 'bibliografia', 'label' => 'Bibliografía básica'],
+        'bibliografia_complementaria' => ['field' => 'bibliografia_complementaria', 'label' => 'Bibliografía complementaria'],
+        'firmas' => ['field' => 'firmas', 'label' => 'Firmas de revisión y aprobación'],
     ];
 
     /**
