@@ -51,21 +51,19 @@ firma da fe de la bibliografía que ya aprobó.
 
 ## Relevo del docente responsable
 
-El sílabo pertenece a la asignatura y el periodo, no a quien lo redacta, así que cambiar
-de responsable no crea un expediente nuevo. El relevo cierra la vigencia de quien sale y
-abre la de quien entra sobre los mismos paralelos, en una sola transacción, y exige la
-referencia del acto que lo respalda.
+El sílabo pertenece al paralelo y a la convocatoria, no a quien lo redacta. Cuando un docente se
+retracta (por ejemplo tras el sorteo de materias) Coordinación quita o reemplaza al docente del
+paralelo, también **con la convocatoria abierta**, sin pausarla. El nuevo docente **no hereda nada**:
+el sílabo del paralelo se borra con todo su historial (borrador, revisiones, aprobación, firmas,
+exportaciones e IA) y se crea uno nuevo «Sin iniciar» para quien entra. Vale en cualquier estado,
+incluido el aprobado, y reasignar al mismo docente también empieza de cero.
 
-| Estado al relevar     | Qué ocurre                                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------------------- |
-| Sin iniciar           | Solo cambia el responsable.                                                                       |
-| Borrador              | Se descarta el contenido y el nuevo docente empieza limpio. El avance perdido queda en auditoría. |
-| En revisión           | No se traspasa. Primero se resuelve la revisión.                                                  |
-| Corrección solicitada | Se conserva el contenido: hubo envío, así que es evidencia.                                       |
-| Aprobado              | Se elimina con todo su historial; el nuevo docente empieza desde cero (I-174).                    |
+La pausa de la convocatoria sigue siendo necesaria para agregar, editar o eliminar paralelos y
+jornadas, la malla y las fichas. En Materias y asignaciones, con la convocatoria abierta, esos
+controles quedan bloqueados y solo se puede cambiar de docente.
 
-El descarte del borrador viene de DT-08 y no se deshace. La herencia del trabajo enviado
-viene de A1. Ambas están registradas en `references/entrevista-2026-08-26-hallazgos.md`.
+El descarte no se deshace. La interfaz avisa que cambiar o quitar al docente borra el sílabo del
+paralelo.
 
 ## Plazos
 

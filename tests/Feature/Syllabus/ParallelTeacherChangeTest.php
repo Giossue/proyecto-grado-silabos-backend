@@ -97,6 +97,25 @@ class ParallelTeacherChangeTest extends TestCase
             ->assertOk()->assertJsonPath('syllabi.data.0.id', $fresh->id);
     }
 
+    public function test_with_the_convocation_open_the_parallels_are_locked_but_the_teacher_can_be_replaced(): void
+    {
+        $syllabus = $this->validDraft();
+        $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
+
+        $listing = $this->actingAsCoordinator()
+            ->getJson(route('api.v1.coordination.academic.scheduled-subjects.index'))->assertOk();
+        $parallel = collect($listing->json('scheduledSubjects'))->flatMap(fn (array $row): array => $row['parallels'])->firstWhere('id', $assignment->paralelo_id);
+        $this->assertFalse($parallel['editable']);
+        $this->assertFalse($parallel['deletable']);
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.parallels.update', $assignment->paralelo_id), ['code' => 'Z', 'shift' => 'matutina'])
+            ->assertUnprocessable();
+
+        $this->removeAssignment($assignment)->assertSuccessful();
+        $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertSuccessful();
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
+    }
+
     public function test_reassigning_the_same_teacher_also_starts_from_scratch(): void
     {
         $syllabus = $this->validDraft();

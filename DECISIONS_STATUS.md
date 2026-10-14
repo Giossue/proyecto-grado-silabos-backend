@@ -824,3 +824,8 @@ vacías de funciones aún no estrenadas se revisan aparte.
 columnas vacías de la plantilla: la configuración de los campos, la descripción de las secciones
 y la ayuda de los campos. El editor de plantilla ya no permite escribir ayuda por campo. La ayuda
 de pantallas se conserva. Migración `000222` (irreversible).
+
+14 de octubre de 2026, por instrucción del responsable del producto (I-224): con la convocatoria
+abierta se puede cambiar o quitar al docente de un paralelo sin pausarla, por ejemplo cuando alguien
+se retracta tras el sorteo de materias. El nuevo docente empieza desde cero. Paralelos, jornadas, malla
+y fichas siguen exigiendo pausar la convocatoria.
