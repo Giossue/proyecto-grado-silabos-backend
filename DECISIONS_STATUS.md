@@ -800,3 +800,10 @@ abrir la convocatoria de su carrera si venció el plazo de entrega institucional
 materia activa tiene incompleta su ficha del Proyecto de carrera; el rechazo lista de una
 vez todo lo que falta. Administración no puede abrir una convocatoria institucional sobre
 un período académico que ya terminó.
+
+14 de octubre de 2026, por instrucción del responsable del producto (I-220): el orden de
+revisión pasa a docente → coordinación → biblioteca. Coordinación aprueba o devuelve; al
+aprobar, el sílabo pasa solo a biblioteca, que aprueba la bibliografía y deja el sílabo
+Aprobado (se genera el PDF). Si biblioteca devuelve, el reenvío del docente va directo a
+biblioteca sin pasar de nuevo por coordinación. Las firmas conservan el orden docente →
+coordinación → biblioteca. Reemplaza el orden de I-173 e I-192; no cambia el esquema.

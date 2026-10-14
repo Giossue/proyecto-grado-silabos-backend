@@ -145,15 +145,23 @@ class DeliverInternalNotificationJob implements ShouldQueue
         return match ($this->eventType($execution)) {
             'silabo.enviado', 'silabo.reenviado' => [
                 'Sílabo listo para revisión',
-                "El sílabo {$syllabus->subject->nombre}{$revisionLabel} fue enviado; biblioteca revisa primero su bibliografía.",
+                "El sílabo {$syllabus->subject->nombre}{$revisionLabel} fue enviado; coordinación lo revisa primero.",
+            ],
+            'coordinacion.aprobado' => [
+                'Sílabo listo para revisión',
+                "Coordinación aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Falta que biblioteca apruebe la bibliografía.",
+            ],
+            'silabo.reenviado_biblioteca' => [
+                'Sílabo corregido para revisión',
+                "El docente corrigió el sílabo {$syllabus->subject->nombre}{$revisionLabel} y lo reenvió a biblioteca.",
             ],
             'silabo.correccion_solicitada' => [
                 'Corrección solicitada',
-                "Se solicitó corregir el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Corríjalo y reenvíelo; volverá a biblioteca.",
+                "Se solicitó corregir el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Corríjalo y reenvíelo.",
             ],
             'silabo.aprobado' => [
                 'Sílabo aprobado',
-                "Coordinación aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Se genera el PDF; luego firman docente, coordinación y biblioteca.",
+                "Biblioteca aprobó el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Se genera el PDF; luego firman docente, coordinación y biblioteca.",
             ],
             'silabo.eliminado' => [
                 'Sílabo eliminado',
@@ -166,10 +174,6 @@ class DeliverInternalNotificationJob implements ShouldQueue
             'silabo.firmado_coordinacion' => [
                 'Sílabo listo para su firma',
                 "Docente y coordinación firmaron el sílabo {$syllabus->subject->nombre}{$revisionLabel}. Falta la firma de biblioteca.",
-            ],
-            'biblioteca.verificado' => [
-                'Bibliografía aprobada',
-                "Biblioteca aprobó la bibliografía del sílabo {$syllabus->subject->nombre}{$revisionLabel}. Pasa a revisión de coordinación.",
             ],
             'silabo.reiniciado' => [
                 'Sílabo reiniciado',

@@ -112,7 +112,7 @@ class LibraryReviewController extends Controller
         abort_unless($actor instanceof User, 401);
         $action->execute($revision, $actor, $request);
 
-        return response()->json(['message' => 'Bibliografía aprobada. El sílabo pasa a coordinación.'], 201);
+        return response()->json(['message' => 'Bibliografía aprobada. El sílabo queda aprobado y se genera el PDF para las firmas.'], 201);
     }
 
     /**

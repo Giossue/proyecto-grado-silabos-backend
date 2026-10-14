@@ -3,16 +3,20 @@
 namespace App\Modules\Library\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Documents\Application\Actions\RequestSyllabusExport;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use App\Support\CanonicalHasher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class VerifyBibliography
@@ -22,6 +26,8 @@ class VerifyBibliography
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
+        private readonly CanonicalHasher $hasher,
+        private readonly RequestSyllabusExport $exports,
     ) {}
 
     public function execute(SyllabusRevision $revision, User $actor, Request $request): LibrarySubmission
@@ -39,23 +45,57 @@ class VerifyBibliography
                 throw ValidationException::withMessages(['revision' => 'Este sílabo ya no espera la revisión de biblioteca.']);
             }
 
-            $submission->update(['verificado_por' => $actor->id, 'verificado_en' => now()]);
+            $approvedAt = now();
+            $submission->update(['verificado_por' => $actor->id, 'verificado_en' => $approvedAt]);
+            $idempotencyKey = (string) Str::uuid();
+            $fingerprint = $this->hasher->hash([
+                'revision_id' => $revision->id,
+                'revision_fingerprint' => $revision->huella_sha256,
+                'approved_by' => $actor->id,
+                'approved_at' => $approvedAt->toIso8601String(),
+                'idempotency_key' => $idempotencyKey,
+            ]);
+            $approval = Approval::query()->create([
+                'revision_silabo_id' => $revision->id,
+                'clave_idempotencia' => $idempotencyKey,
+                'huella_sha256' => $fingerprint,
+                'aprobado_por' => $actor->id,
+                'aprobado_en' => $approvedAt,
+            ]);
+            $syllabus->update(['estado' => 'aprobado', 'version_bloqueo' => $syllabus->version_bloqueo + 1]);
+            $roleAssignmentId = $this->roles->resolve($request)?->id;
             $this->audit->execute(
                 actorId: $actor->id,
-                roleAssignmentId: $this->roles->resolve($request)?->id,
+                roleAssignmentId: $roleAssignmentId,
                 action: 'biblioteca.verificado',
                 resourceType: 'envio_biblioteca',
                 resourceId: $submission->id,
                 result: 'exito',
                 metadata: ['revision_number' => $revision->numero_revision],
             );
+            $this->audit->execute(
+                actorId: $actor->id,
+                roleAssignmentId: $roleAssignmentId,
+                action: 'silabo.aprobado',
+                resourceType: 'aprobacion',
+                resourceId: $approval->id,
+                result: 'exito',
+                metadata: [
+                    'revision_number' => $revision->numero_revision,
+                    'from_state' => 'en_revision',
+                    'to_state' => 'aprobado',
+                    'fingerprint' => $fingerprint,
+                    'self_approved' => $revision->enviado_por === $actor->id,
+                ],
+            );
             $this->notifications->execute(
                 syllabus: $syllabus,
-                eventType: 'biblioteca.verificado',
-                deduplicationKey: "biblioteca.verificado:{$submission->id}",
-                recipientIds: array_values(array_unique([...$this->recipients->coordinatorsFor($syllabus), ...$this->recipients->teachersFor($syllabus)])),
+                eventType: 'silabo.aprobado',
+                deduplicationKey: "silabo.aprobado:{$approval->id}",
+                recipientIds: $this->recipients->teachersFor($syllabus),
                 revisionNumber: $revision->numero_revision,
             );
+            $this->exports->execute($revision, $approval->id, $actor, $request);
 
             return $submission;
         });

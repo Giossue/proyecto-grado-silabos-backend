@@ -3,16 +3,15 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
-use App\Modules\Documents\Application\Actions\RequestSyllabusExport;
 use App\Modules\Identity\Application\ActiveRole;
+use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
-use App\Support\CanonicalHasher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -20,28 +19,17 @@ use Illuminate\Validation\ValidationException;
 class ApproveSyllabus
 {
     public function __construct(
-        private readonly CanonicalHasher $hasher,
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
-        private readonly RequestSyllabusExport $exports,
     ) {}
 
-    public function execute(
-        SyllabusRevision $revision,
-        string $idempotencyKey,
-        User $actor,
-        Request $request,
-    ): Approval {
-        $existing = $this->existingApproval($revision->syllabus, $idempotencyKey, $actor);
-        if ($existing !== null) {
-            return $existing;
-        }
-
-        return DB::transaction(function () use ($actor, $idempotencyKey, $request, $revision): Approval {
+    public function execute(SyllabusRevision $revision, User $actor, Request $request): CoordinationReview
+    {
+        return DB::transaction(function () use ($actor, $request, $revision): CoordinationReview {
             $syllabus = Syllabus::query()->lockForUpdate()->findOrFail($revision->silabo_id);
-            $existing = $this->existingApproval($syllabus, $idempotencyKey, $actor);
+            $existing = CoordinationReview::query()->where('revision_silabo_id', $revision->id)->first();
             if ($existing !== null) {
                 return $existing;
             }
@@ -53,63 +41,33 @@ class ApproveSyllabus
                 throw ValidationException::withMessages(['revision' => 'Solo puede aprobarse la revisión vigente.']);
             }
             if (ReviewStage::ofRevision($revision) !== ReviewStage::COORDINATION) {
-                throw ValidationException::withMessages(['revision' => 'La revisión aún no llega a coordinación: falta la verificación de biblioteca.']);
+                throw ValidationException::withMessages(['revision' => 'La revisión ya no espera la decisión de coordinación.']);
             }
 
-            $approvedAt = now();
-            $fingerprint = $this->hasher->hash([
-                'revision_id' => $revision->id,
-                'revision_fingerprint' => $revision->huella_sha256,
-                'approved_by' => $actor->id,
-                'approved_at' => $approvedAt->toIso8601String(),
-                'idempotency_key' => $idempotencyKey,
-            ]);
-            $approval = Approval::query()->create([
+            $review = CoordinationReview::query()->create([
                 'revision_silabo_id' => $revision->id,
-                'clave_idempotencia' => $idempotencyKey,
-                'huella_sha256' => $fingerprint,
-                'aprobado_por' => $actor->id,
-                'aprobado_en' => $approvedAt,
+                'revisado_por' => $actor->id,
+                'revisado_en' => now(),
             ]);
-            $syllabus->update(['estado' => 'aprobado', 'version_bloqueo' => $syllabus->version_bloqueo + 1]);
-            $activeRole = $this->roles->resolve($request);
+            LibrarySubmission::query()->create(['revision_silabo_id' => $revision->id]);
             $this->audit->execute(
                 actorId: $actor->id,
-                roleAssignmentId: $activeRole?->id,
-                action: 'silabo.aprobado',
-                resourceType: 'aprobacion',
-                resourceId: $approval->id,
+                roleAssignmentId: $this->roles->resolve($request)?->id,
+                action: 'silabo.revisado_coordinacion',
+                resourceType: 'revision_coordinacion',
+                resourceId: $review->id,
                 result: 'exito',
-                metadata: [
-                    'revision_number' => $revision->numero_revision,
-                    'from_state' => 'en_revision',
-                    'to_state' => 'aprobado',
-                    'fingerprint' => $fingerprint,
-                    'self_approved' => $revision->enviado_por === $actor->id,
-                ],
+                metadata: ['revision_number' => $revision->numero_revision],
             );
             $this->notifications->execute(
                 syllabus: $syllabus,
-                eventType: 'silabo.aprobado',
-                deduplicationKey: "silabo.aprobado:{$approval->id}",
-                recipientIds: $this->recipients->teachersFor($syllabus),
+                eventType: 'coordinacion.aprobado',
+                deduplicationKey: "coordinacion.aprobado:{$review->id}",
+                recipientIds: $this->recipients->librarians(),
                 revisionNumber: $revision->numero_revision,
             );
-            $this->exports->execute($revision, $approval->id, $actor, $request);
 
-            return $approval;
+            return $review;
         });
-    }
-
-    private function existingApproval(Syllabus $syllabus, string $key, User $actor): ?Approval
-    {
-        $approval = $syllabus->approvals()
-            ->where('aprobaciones.clave_solicitud', $key)
-            ->first();
-        if ($approval !== null && $approval->aprobado_por !== $actor->id) {
-            abort(403);
-        }
-
-        return $approval;
     }
 }

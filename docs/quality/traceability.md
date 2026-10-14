@@ -16,7 +16,7 @@
 
 | Cambio | IDs relacionados | Evidencia | Estado |
 |---|---|---|---|
-| Biblioteca revisa primero; Coordinación aprueba y genera el PDF; firman docente, coordinación y biblioteca | RF-017..045/062..069; RNF integridad y permisos; RN-009..027; CU-04..07; COR-05..10, BIB-01..03, DOC-07/08/10, ADM-02/06; CP-F revisión, aprobación, firmas y roles; PV-07/PV-16 conservan su alcance | Migración `000198`; API de aprobación, políticas, firma, plantilla inicial y SPA sin rol/rutas de decanato; plan activo `I-192-flujo-hasta-coordinacion.md` | Código preparado; tipos, ESLint, Pint y PHPStan pasan; pruebas de ejecución y migración productiva pendientes |
+| Coordinación revisa primero; Biblioteca aprueba la bibliografía, deja el sílabo aprobado y genera el PDF; firman docente, coordinación y biblioteca | RF-017..045/062..069; RNF integridad y permisos; RN-009..027; CU-04..07; COR-05..10, BIB-01..03, DOC-07/08/10, ADM-02/06; CP-F revisión, aprobación, firmas y roles; PV-07/PV-16 conservan su alcance | Migración `000198`; API de aprobación, políticas, firma, plantilla inicial y SPA sin rol/rutas de decanato; plan activo `I-220-flujo-coordinacion-antes-de-biblioteca.md` (reemplaza el orden de I-192) | Código preparado; tipos, ESLint, Pint y PHPStan pasan; pruebas de ejecución y migración productiva pendientes |
 
 ## Ficha de asignatura — I-187
 

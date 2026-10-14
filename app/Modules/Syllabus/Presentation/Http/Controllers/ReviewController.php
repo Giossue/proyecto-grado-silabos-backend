@@ -120,14 +120,9 @@ class ReviewController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $approve->execute(
-            $revision,
-            $request->string('idempotency_key')->toString(),
-            $actor,
-            $request,
-        );
+        $approve->execute($revision, $actor, $request);
 
-        $message = "Revisión {$revision->numero_revision} aprobada y fijada. Se está generando el PDF para las firmas.";
+        $message = "Revisión {$revision->numero_revision} aprobada. Pasa a biblioteca, que aprueba la bibliografía.";
 
         return response()->json(['message' => $message]);
     }
@@ -260,10 +255,7 @@ class ReviewController extends Controller
 
     private static function stageOf(SyllabusRevision $revision): string
     {
-        return match (true) {
-            $revision->librarySubmission?->verificado_en !== null => ReviewStage::COORDINATION,
-            default => ReviewStage::LIBRARY,
-        };
+        return ReviewStage::ofRevision($revision) ?? ReviewStage::LIBRARY;
     }
 
     public function reset(

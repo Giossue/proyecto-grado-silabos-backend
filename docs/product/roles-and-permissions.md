@@ -46,7 +46,7 @@ el permiso, pero no lo sustituyen.
 | Aprobar | No | Sí | No | No |
 | Exportar | Según permiso | Sí en alcance | Sí, propio/autorizado | Consulta del PDF enviado |
 | Consultar auditoría | Sí, permiso explícito | Vista limitada | No por defecto | No |
-| Revisar la bibliografía al enviar: aprobar o comentar (I-165, I-173) | No | No | No; su envío llega primero a biblioteca | Sí, en toda la universidad |
+| Revisar la bibliografía al enviar: aprobar o comentar (I-165, I-173) | No | No | No; su envío llega primero a coordinación | Sí, en toda la universidad |
 | Firmar el PDF aprobado (orden docente → coordinación → biblioteca) | No | Sí, en su carrera | Sí, propio | Sí |
 
 I-146 retira la gestión pública de Fuentes académicas y las operaciones del revisor de
@@ -80,10 +80,11 @@ usan sus operaciones atómicas específicas.
 ## Bibliotecario (I-165, I-173, I-192)
 
 El rol `bibliotecario` no tiene carrera: una cuenta con solo ese rol entra directo. Es la
-**primera etapa** de revisión: cada envío del docente crea un registro en
-`envios_biblioteca` y llega a su bandeja. Si los libros están, **aprueba la bibliografía**
-y el sílabo pasa a coordinación; si no, **comenta** y el sílabo vuelve al docente en
-«Corrección solicitada» (todo el sílabo editable); al reenviar, vuelve a biblioteca.
+**última etapa** de revisión (I-220): cuando Coordinación aprueba, se crea un registro en
+`envios_biblioteca` y el sílabo llega a su bandeja. Si los libros están, **aprueba la
+bibliografía** y el sílabo queda aprobado; si no, **comenta** y el sílabo vuelve al docente en
+«Corrección solicitada» (todo el sílabo editable); al reenviar, va directo a biblioteca
+sin pasar otra vez por coordinación.
 Firma el PDF en tercer lugar, después de docente y coordinación. Administración crea estas
 cuentas sin carrera. El rol se acumula con Coordinador o Docente, pero no con
 Administrador.

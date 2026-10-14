@@ -73,20 +73,21 @@ de asignación. Ninguna operación levanta los bloqueos académicos.
 El bibliotecario no tiene carrera y entra directo, como Administración. El menú lateral
 tiene «Panel» y «Revisiones de biblioteca». BIB-01 muestra «Por verificar», «Por firmar»,
 «Con comentario» y «Firmados», sin plazo ni Puesta en marcha. BIB-02 es la bandeja de todos
-los sílabos enviados (cada envío del docente llega primero aquí), con búsqueda por
-asignatura o código, filtro de estado («Por revisar», «Aprobada por biblioteca», «Por
+los sílabos que Coordinación ya aprobó, con búsqueda por
+asignatura o código, filtro de estado («Por revisar», «Por
 firmar», «Firmado», «Con comentario», «Anulado») y las columnas Asignatura, Carrera,
 Docente y Estado. La fila completa abre la revisión. BIB-03 muestra la Bibliografía de la
 revisión en solo lectura y, en etapa biblioteca, las tarjetas «Aprobar bibliografía» (el
-sílabo pasa a coordinación) y «Devolver al docente» (casillas con motivos predefinidos, sin texto libre; vuelve al docente, que corrige todo el
-sílabo y reenvía; la revisión nueva vuelve a biblioteca). Cuando Coordinación aprueba,
-aparece la tarjeta de firma (tercera firma). El aviso `silabo.enviado` abre BIB-03.
+sílabo queda aprobado y se genera el PDF) y «Devolver al docente» (casillas con motivos predefinidos, sin texto libre; vuelve al docente, que corrige todo el
+sílabo y reenvía; la revisión nueva vuelve directo a biblioteca). Cuando biblioteca aprueba,
+aparece la tarjeta de firma (tercera firma). Los avisos `coordinacion.aprobado` y
+`silabo.reenviado_biblioteca` abren BIB-03.
 
-En COR-06 el coordinador decide solo en etapa coordinación: **Aprobar** fija la revisión y
-genera el PDF; mientras está en otra etapa ve un aviso de «otro revisor la tiene
-ahora». En DOC-07 el envío va «a revisión» (biblioteca primero) y en DOC-08 el docente ve
+En COR-06 el coordinador decide solo en etapa coordinación: **Aprobar** pasa la revisión a
+biblioteca; mientras está en otra etapa ve un aviso de «otro revisor la tiene
+ahora». En DOC-07 el envío va «a revisión» (coordinación primero) y en DOC-08 el docente ve
 la etapa en curso y los comentarios de biblioteca; tras cualquier devolución corrige todo
-el sílabo. En DOC-10 el PDF se genera al aprobar Coordinación y la tarjeta de firma
+el sílabo. En DOC-10 el PDF se genera al aprobar Biblioteca y la tarjeta de firma
 muestra tres firmantes y los estados «Pendiente docente/coordinación/biblioteca».
 En ADM-02, Bibliotecario no pide carrera. En ADM-06, el menú Insertar ofrece el grupo
 «Firma» (docente, coordinación y biblioteca) y la plantilla por defecto trae tres celdas.

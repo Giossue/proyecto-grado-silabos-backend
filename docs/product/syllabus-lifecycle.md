@@ -24,28 +24,29 @@ elimina con todo su historial y el paralelo recibe un sílabo nuevo sin iniciar.
 | Origen | Acción | Actor | Destino | Efecto obligatorio |
 | --- | --- | --- | --- | --- |
 | Sin iniciar | Crear borrador | Docente asignado/sistema | Borrador | Fija plantilla y contexto académico. |
-| Borrador | Enviar | Docente autorizado | En revisión (etapa biblioteca) | Valida, crea revisión inmutable, abre el envío a biblioteca y audita. |
-| En revisión · biblioteca | Aprobar bibliografía | Bibliotecario | En revisión (etapa coordinación) | Marca `verificado_por/en` en `envios_biblioteca`; avisa a coordinación. |
-| En revisión · biblioteca | Devolver con motivos | Bibliotecario | Corrección solicitada | Elige uno o más motivos predefinidos (sin texto libre; ver `LibraryCommentReasons`); se guarda como comentario en las columnas `correccion_*` con `correccion_etapa = 'biblioteca'`; todo el sílabo es editable. |
+| Borrador | Enviar | Docente autorizado | En revisión (etapa coordinación) | Valida, crea revisión inmutable, avisa a coordinación y audita. |
+| En revisión · coordinación | Aprobar | Coordinador de alcance | En revisión (etapa biblioteca) | Registra `revisiones_coordinacion`, crea el envío a biblioteca (`envios_biblioteca`) y avisa a biblioteca. |
 | En revisión · coordinación | Solicitar corrección | Coordinador de alcance | Corrección solicitada | Un comentario general (sin observaciones por campo); `correccion_etapa = 'coordinacion'`. |
-| En revisión · coordinación | Aprobar | Coordinador de alcance | Aprobado | Fija `aprobaciones` sobre la revisión inmutable y solicita el PDF. |
-| Corrección solicitada | Reenviar | Docente autorizado | En revisión (etapa biblioteca) | Crea nueva revisión; la cadena vuelve a empezar por biblioteca. |
+| En revisión · biblioteca | Aprobar bibliografía | Bibliotecario | Aprobado | Marca `verificado_por/en`, fija `aprobaciones` sobre la revisión inmutable, solicita el PDF y avisa al docente. |
+| En revisión · biblioteca | Devolver con motivos | Bibliotecario | Corrección solicitada | Elige uno o más motivos predefinidos (sin texto libre; ver `LibraryCommentReasons`); se guarda como comentario en las columnas `correccion_*` con `correccion_etapa = 'biblioteca'`; todo el sílabo es editable. |
+| Corrección solicitada · devuelta por coordinación | Reenviar | Docente autorizado | En revisión (etapa coordinación) | Crea nueva revisión; vuelve a coordinación. |
+| Corrección solicitada · devuelta por biblioteca | Reenviar | Docente autorizado | En revisión (etapa biblioteca) | Crea nueva revisión y su envío a biblioteca; no pasa de nuevo por coordinación. |
 | Aprobado | Eliminar | Coordinador de alcance | Sin iniciar (sílabo nuevo) | Borra el sílabo con revisiones, aprobación, PDF y firmas, crea otro sin iniciar para el paralelo, audita `silabo.eliminado` y avisa al docente. Solo con la convocatoria abierta o en pausa. |
 
 La **etapa** dentro de «En revisión» no es una columna: se deriva de la revisión vigente
-(`ReviewStage`): sin verificación de biblioteca → biblioteca; verificada y sin
-aprobación → coordinación. Solo el revisor de la etapa vigente decide; los demás consultan.
+(`ReviewStage`): con envío a biblioteca y sin aprobación → biblioteca; sin
+envío a biblioteca → coordinación. Solo el revisor de la etapa vigente decide; los demás consultan.
 
 La reapertura de aprobados se retiró en I-178 (ADR-0005 reemplazado); DT-07 ya no aplica.
 
 ## Firmas (I-139, I-192)
 
-El PDF se genera **al aprobar Coordinación** (exportación automática) y se firma de forma
+El PDF se genera **al aprobar Biblioteca** (exportación automática) y se firma de forma
 incremental en este orden: docente → coordinación → biblioteca
 (`firmas_documento.firmado_como`). Cada revisión tiene su propio PDF y sus propias
 firmas: cualquier cambio de contenido es una revisión nueva (reenvío), la
-anterior queda `anulado` y se vuelve a firmar desde cero. Biblioteca revisa la
-bibliografía al **inicio** de la cadena, no antes de firmar; firma al final porque su
+anterior queda `anulado` y se vuelve a firmar desde cero. Biblioteca aprueba la
+bibliografía al **final** de la revisión, antes de generar el PDF; firma al final porque su
 firma da fe de la bibliografía que ya aprobó.
 
 ## Relevo del docente responsable

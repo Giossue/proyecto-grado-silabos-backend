@@ -21,7 +21,7 @@ use Illuminate\Support\Collection;
  */
 final class NotificationDestination
 {
-    private const COORDINATION_EVENTS = ['biblioteca.verificado', 'silabo.firmado_docente', 'coordinacion.asignada'];
+    private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'silabo.firmado_docente', 'coordinacion.asignada'];
 
     /**
      * Avisos solo informativos (I-163): no piden hacer nada, así que no llevan enlace.
@@ -35,7 +35,7 @@ final class NotificationDestination
         'convocatoria.pausada',
     ];
 
-    private const LIBRARY_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'silabo.firmado_coordinacion'];
+    private const LIBRARY_EVENTS = ['coordinacion.aprobado', 'silabo.reenviado_biblioteca', 'silabo.firmado_coordinacion'];
 
     private const PROCESS_TEACHER_EVENTS = ['proceso.plantilla_rehecho'];
 

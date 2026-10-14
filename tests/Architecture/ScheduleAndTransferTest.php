@@ -35,7 +35,7 @@ it('conserva la fecha anterior al prorrogar', function (): void {
 
 it('marca la aprobacion hecha por quien redacto', function (): void {
     $approve = (string) file_get_contents(
-        dirname(__DIR__, 2).'/app/Modules/Syllabus/Application/Actions/ApproveSyllabus.php',
+        dirname(__DIR__, 2).'/app/Modules/Library/Application/Actions/VerifyBibliography.php',
     );
 
     expect($approve)->toContain("'self_approved'");

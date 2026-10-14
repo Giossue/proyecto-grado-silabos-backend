@@ -169,7 +169,7 @@ class SetupChecklist
             [
                 $this->step('assigned', 'Recibir los sílabos asignados', $total > 0 ? "{$total} asignados." : 'Los asigna Coordinación al abrir la convocatoria.', $total > 0),
                 $this->step('started', 'Abrir cada sílabo', $total > 0 ? "{$started} de {$total} abiertos." : 'Al abrirlo, el borrador parte de la ficha de la materia; también puede copiar el de otro de sus paralelos.', $total > 0 && $started === $total),
-                $this->step('submitted', 'Completar y enviar a revisión', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega. Primero lo revisa Biblioteca y luego Coordinación; el asistente de IA ayuda a redactar.', $total > 0 && $submitted === $total),
+                $this->step('submitted', 'Completar y enviar a revisión', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega. Primero lo revisa Coordinación y luego Biblioteca; el asistente de IA ayuda a redactar.', $total > 0 && $submitted === $total),
                 $this->step('signed', 'Firmar electrónicamente el sílabo aprobado', $approved > 0 ? "{$signed} de {$approved} aprobados firmados." : 'Cuando Coordinación lo apruebe, fírmelo con su certificado (.p12); después firman Coordinación y Biblioteca.', $total > 0 && $approved === $total && $signed === $approved),
             ],
         );

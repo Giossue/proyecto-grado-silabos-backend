@@ -9,6 +9,7 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
+use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -89,8 +90,10 @@ class SubmitSyllabus
                 'enviado_en' => now(),
             ]);
 
-            // I-173: la revisión entra primero a biblioteca; el envío queda registrado con el docente.
-            LibrarySubmission::query()->create(['revision_silabo_id' => $revision->id]);
+            $toLibrary = $previous?->correccion_etapa === ReviewStage::LIBRARY;
+            if ($toLibrary) {
+                LibrarySubmission::query()->create(['revision_silabo_id' => $revision->id]);
+            }
 
             $from = $locked->estado;
             $action = $from === 'borrador' ? 'enviar' : 'reenviar';
@@ -112,12 +115,16 @@ class SubmitSyllabus
                 result: 'exito',
                 metadata: ['revision_number' => $revision->numero_revision, 'from_state' => $from, 'to_state' => 'en_revision', 'fingerprint' => $revision->huella_sha256],
             );
-            $eventType = $action === 'enviar' ? 'silabo.enviado' : 'silabo.reenviado';
+            $eventType = match (true) {
+                $toLibrary => 'silabo.reenviado_biblioteca',
+                $action === 'enviar' => 'silabo.enviado',
+                default => 'silabo.reenviado',
+            };
             $this->notifications->execute(
                 syllabus: $locked,
                 eventType: $eventType,
                 deduplicationKey: "{$eventType}:{$revision->id}",
-                recipientIds: $this->recipients->librarians(),
+                recipientIds: $toLibrary ? $this->recipients->librarians() : $this->recipients->coordinatorsFor($locked),
                 revisionNumber: $revision->numero_revision,
             );
 

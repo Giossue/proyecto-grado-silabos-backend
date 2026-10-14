@@ -14,20 +14,18 @@ final class ReviewStage
 
     public const COORDINATION = 'coordinacion';
 
-    public const ORDER = [self::LIBRARY, self::COORDINATION];
+    public const ORDER = [self::COORDINATION, self::LIBRARY];
 
-    /** Etapa en la que está una revisión; null si ya fue aprobada. */
     public static function ofRevision(SyllabusRevision $revision): ?string
     {
         if (Approval::query()->where('revision_silabo_id', $revision->id)->exists()) {
             return null;
         }
-        $verified = LibrarySubmission::query()
+        $inLibrary = LibrarySubmission::query()
             ->where('revision_silabo_id', $revision->id)
-            ->whereNotNull('verificado_en')
             ->exists();
 
-        return $verified ? self::COORDINATION : self::LIBRARY;
+        return $inLibrary ? self::LIBRARY : self::COORDINATION;
     }
 
     /** Etapa del sílabo mientras está en revisión; null en cualquier otro estado. */

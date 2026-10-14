@@ -190,7 +190,7 @@ class DashboardController extends Controller
                 'label' => 'Por verificar',
                 'value' => $counts[LibraryReviews::STATE_PENDING],
                 'suffix' => null,
-                'hint' => $counts[LibraryReviews::STATE_PENDING] === 0 ? 'Nada pendiente por ahora' : 'Sílabos recién enviados; biblioteca revisa primero',
+                'hint' => $counts[LibraryReviews::STATE_PENDING] === 0 ? 'Nada pendiente por ahora' : 'Aprobados por coordinación; falta la bibliografía',
             ],
             [
                 'key' => 'library_to_sign',

@@ -10,8 +10,6 @@ final class LibraryReviews
 {
     public const STATE_PENDING = 'pendiente';
 
-    public const STATE_VERIFIED = 'aprobado';
-
     public const STATE_TO_SIGN = 'por_firmar';
 
     public const STATE_SIGNED = 'firmado';
@@ -20,7 +18,7 @@ final class LibraryReviews
 
     public const STATE_VOIDED = 'anulado';
 
-    public const STATES = [self::STATE_PENDING, self::STATE_VERIFIED, self::STATE_TO_SIGN, self::STATE_SIGNED, self::STATE_COMMENTED, self::STATE_VOIDED];
+    public const STATES = [self::STATE_PENDING, self::STATE_TO_SIGN, self::STATE_SIGNED, self::STATE_COMMENTED, self::STATE_VOIDED];
 
     private const STATE_SQL = <<<'SQL'
         CASE
@@ -38,7 +36,6 @@ final class LibraryReviews
             WHEN EXISTS (
                 SELECT 1 FROM aprobaciones aprobacion WHERE aprobacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
             ) THEN 'por_firmar'
-            WHEN envios_biblioteca.verificado_en IS NOT NULL THEN 'aprobado'
             ELSE 'pendiente'
         END
         SQL;
