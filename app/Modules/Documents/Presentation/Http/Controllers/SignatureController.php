@@ -51,8 +51,8 @@ class SignatureController extends Controller
             'library' => $submission === null ? null : [
                 'sent_at' => $submission->revision->enviado_en->toIso8601String(),
                 'sent_by' => $submission->revision->submitter->nombre,
-                'verified_at' => $submission->verificado_en?->toIso8601String(),
-                'verified_by' => $submission->verifier?->nombre,
+                'verified_at' => $submission->revision->approval?->aprobado_en->toIso8601String(),
+                'verified_by' => $submission->revision->approval?->approver->nombre,
             ],
             'artifact_id' => $artifact?->id,
             'document' => $current === null ? null : [

@@ -76,8 +76,8 @@ class LibraryReviewController extends Controller
             'state' => $state,
             'can_comment' => $reviewable,
             'can_verify' => $reviewable,
-            'verified_at' => $submission->verificado_en?->toIso8601String(),
-            'verified_by' => $submission->verifier?->nombre,
+            'verified_at' => $revision->approval?->aprobado_en->toIso8601String(),
+            'verified_by' => $revision->approval?->approver->nombre,
             'presentation' => [
                 'appearance' => TemplateAppearance::fromMapping($mapping),
                 'title' => TemplateTitleBlock::fromMapping($mapping)['text'],

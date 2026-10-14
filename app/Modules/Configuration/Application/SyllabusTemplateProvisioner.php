@@ -79,10 +79,6 @@ final class SyllabusTemplateProvisioner
         }
 
         $template->update(['documento' => ['version_esquema' => 1, 'secciones' => []]]);
-        DB::table('definiciones_campo')
-            ->where('plantilla_id', $template->id)
-            ->where('vigente_en_plantilla', false)
-            ->update(['clave_definicion_campo' => DB::raw("clave_definicion_campo || '-' || substr(definicion_campo_id::text, 1, 8)")]);
         DB::table('secciones_plantilla')
             ->where('plantilla_id', $template->id)
             ->where('vigente_en_plantilla', false)
@@ -132,12 +128,9 @@ final class SyllabusTemplateProvisioner
                 $definitions[] = [
                     'plantilla_id' => $template->id,
                     'campo_plantilla_id' => $blockId,
-                    'clave' => $field['key'],
-                    'etiqueta' => (string) ($field['label'] ?? ''),
                     'ayuda' => $field['help'] ?? null,
                     'quien_llena' => $field['quien_llena'],
                     'contenido' => FieldDocument::normalize(is_array($field['content']) && ! array_is_list($field['content']) ? $field['content'] : DocumentHtml::fromHtml($field['content'])),
-                    'posicion' => 1,
                 ];
             }
             $sections[] = [

@@ -49,8 +49,7 @@ final class TemplateBlock implements UrlRoutable
         return FieldDefinition::query()
             ->where('plantilla_id', $this->plantilla_id)
             ->where('campo_plantilla_id', $this->id)
-            ->where('vigente_en_plantilla', true)
-            ->orderBy('posicion');
+            ->where('vigente_en_plantilla', true);
     }
 
     public function __get(string $name): mixed

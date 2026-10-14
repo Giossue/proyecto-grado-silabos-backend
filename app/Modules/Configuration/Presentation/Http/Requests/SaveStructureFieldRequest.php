@@ -29,7 +29,7 @@ class SaveStructureFieldRequest extends ManageTemplatesRequest
         ];
         if ($creating) {
             $rules['position'] = ['sometimes', 'integer', 'min:1'];
-            $rules['key'] = ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'max:100', Rule::unique('definiciones_campo', 'clave_definicion_campo')->where('plantilla_id', $templateId)->where('vigente_en_plantilla', true)];
+            $rules['key'] = ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'max:100', Rule::unique('campos_plantilla', 'clave_campo_plantilla')->where('plantilla_id', $templateId)->where('vigente_en_plantilla', true)];
         }
 
         return $rules;

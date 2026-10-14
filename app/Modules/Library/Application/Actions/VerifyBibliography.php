@@ -37,7 +37,7 @@ class VerifyBibliography
         return DB::transaction(function () use ($actor, $request, $revision): LibrarySubmission {
             $syllabus = Syllabus::query()->lockForUpdate()->findOrFail($revision->silabo_id);
             $submission = LibrarySubmission::query()->where('revision_silabo_id', $revision->id)->lockForUpdate()->firstOrFail();
-            if ($submission->verificado_en !== null) {
+            if (Approval::query()->where('revision_silabo_id', $revision->id)->exists()) {
                 return $submission;
             }
             $latestId = SyllabusRevision::query()->where('silabo_id', $syllabus->id)->orderByDesc('numero_revision')->value('id');
@@ -46,7 +46,6 @@ class VerifyBibliography
             }
 
             $approvedAt = now();
-            $submission->update(['verificado_por' => $actor->id, 'verificado_en' => $approvedAt]);
             $idempotencyKey = (string) Str::uuid();
             $fingerprint = $this->hasher->hash([
                 'revision_id' => $revision->id,

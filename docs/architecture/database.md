@@ -164,7 +164,7 @@ inmutabilidad. La aclaración I-144 excluye expedientes con aprobación conserva
 hayan sido reabiertos, y procesos cerrados.
 Desde I-164 (migración `000161`) las secciones y campos de la plantilla son filas de
 `secciones_plantilla` y `campos_plantilla` (antes, JSON en `documento_plantilla`, I-111);
-`definiciones_campo.campo_plantilla_id` es una llave foránea real. I-166 (migración
+`definiciones_campo.campo_plantilla_id` es una llave foránea real y única: un campo, una definición; la clave y el título del campo viven solo en `campos_plantilla` (I-222). I-166 (migración
 `000165`) renombró `bloques_plantilla` a `campos_plantilla` y dio nombres explícitos a las
 columnas de ambas tablas. Solo el diseño de cada hoja
 (`campos_plantilla.configuracion_campo_plantilla.document`) sigue en JSON, porque es un

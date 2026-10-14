@@ -20,8 +20,8 @@ final class SyllabusDocumentFields
         $archived = FieldDefinition::withoutGlobalScopes()->whereIn('id', $ids)->where('vigente_en_plantilla', false)->exists();
 
         return $archived
-            ? FieldDefinition::withoutGlobalScopes()->whereIn('id', $ids)->orderBy('posicion')->get()
-            : FieldDefinition::query()->orderBy('posicion')->get();
+            ? FieldDefinition::withoutGlobalScopes()->whereIn('id', $ids)->get()
+            : FieldDefinition::query()->get();
     }
 
     /**

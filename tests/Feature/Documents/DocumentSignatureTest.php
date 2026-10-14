@@ -306,16 +306,12 @@ class DocumentSignatureTest extends TestCase
             'enviado_por' => $this->teacher->id,
             'enviado_en' => now()->subMinute(),
         ]);
-        LibrarySubmission::query()->create([
-            'revision_silabo_id' => $revision->id,
-            'verificado_por' => $this->librarian->id,
-            'verificado_en' => now(),
-        ]);
+        LibrarySubmission::query()->create(['revision_silabo_id' => $revision->id]);
         Approval::query()->create([
             'revision_silabo_id' => $revision->id,
             'clave_idempotencia' => (string) Str::uuid(),
             'huella_sha256' => hash('sha256', $revision->huella_sha256),
-            'aprobado_por' => $this->coordinator->id,
+            'aprobado_por' => $this->librarian->id,
             'aprobado_en' => now(),
         ]);
         $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))

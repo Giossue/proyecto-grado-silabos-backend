@@ -185,7 +185,6 @@ class ReviewController extends Controller
             'syllabus.revisions.submitter:id,nombre',
             'syllabus.revisions.correctionRequester:id,nombre',
             'syllabus.revisions.approval.approver:id,nombre',
-            'syllabus.revisions.librarySubmission.verifier:id,nombre',
             'syllabus.revisions.coordinationReview.reviewer:id,nombre',
         ]);
         $syllabus = $revision->syllabus;
@@ -233,8 +232,8 @@ class ReviewController extends Controller
                 'number' => $item->numero_revision,
                 'submitted_at' => $item->enviado_en->toIso8601String(),
                 'submitted_by' => $item->submitter->nombre,
-                'library_verified_at' => $item->librarySubmission?->verificado_en?->toIso8601String(),
-                'library_verified_by' => $item->librarySubmission?->verifier?->nombre,
+                'library_verified_at' => $item->approval?->aprobado_en->toIso8601String(),
+                'library_verified_by' => $item->approval?->approver->nombre,
                 'coordination_reviewed_at' => $item->coordinationReview?->revisado_en->toIso8601String(),
                 'coordination_reviewed_by' => $item->coordinationReview?->reviewer->nombre,
                 'approved_at' => $item->approval?->aprobado_en->toIso8601String(),

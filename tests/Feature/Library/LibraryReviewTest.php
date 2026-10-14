@@ -150,7 +150,7 @@ class LibraryReviewTest extends TestCase
         $corrected = SyllabusRevision::query()->where('silabo_id', $syllabus->id)->orderByDesc('numero_revision')->firstOrFail();
         $this->assertSame(2, $corrected->numero_revision);
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
-        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $corrected->id, 'verificado_en' => null]);
+        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $corrected->id]);
         $this->assertDatabaseMissing('revisiones_coordinacion', ['revision_silabo_id' => $corrected->id]);
         $this->assertNotified($this->people['librarian'][0]->id, 'silabo.reenviado_biblioteca', 'reenvió a biblioteca');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'pendiente']))

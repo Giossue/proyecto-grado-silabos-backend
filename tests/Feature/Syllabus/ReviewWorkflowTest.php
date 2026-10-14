@@ -336,7 +336,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('aprobaciones', 0);
         $this->assertDatabaseHas('revisiones_coordinacion', ['revision_silabo_id' => $revision->id, 'revisado_por' => $this->coordinator->id]);
-        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id, 'verificado_en' => null]);
+        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id]);
         $this->assertWorkflowNotification($syllabus->id, 'coordinacion.aprobado');
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
             'idempotency_key' => $key,

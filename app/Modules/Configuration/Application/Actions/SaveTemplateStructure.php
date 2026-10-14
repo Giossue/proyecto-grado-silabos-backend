@@ -94,12 +94,9 @@ class SaveTemplateStructure
             $field = FieldDefinition::query()->create([
                 'plantilla_id' => $locked->id,
                 'campo_plantilla_id' => $blockId,
-                'clave' => (string) $data['key'],
-                'etiqueta' => $label,
                 'ayuda' => $data['help'] ?? null,
                 'quien_llena' => $data['quien_llena'],
                 'contenido' => $content,
-                'posicion' => 1,
             ]);
             $this->auditField($field, 'plantilla.campo_creado', $actor, $activeRole?->id);
 
@@ -120,12 +117,12 @@ class SaveTemplateStructure
             $label = array_key_exists('label', $data) ? trim((string) $data['label']) : $field->etiqueta;
 
             $field->update([
-                'etiqueta' => $label,
                 'ayuda' => array_key_exists('help', $data) ? $data['help'] : $field->ayuda,
                 'quien_llena' => $data['quien_llena'] ?? $field->quien_llena,
                 'contenido' => array_key_exists('content', $data) ? FieldDocument::normalize($data['content']) : $field->contenido,
             ]);
             $locked->updateBlockDocument($field->campo_plantilla_id, ['titulo' => $label]);
+            $field->unsetRelation('blockRecord');
             $this->auditField($field, 'plantilla.campo_actualizado', $actor, $activeRole?->id);
 
             return $field;

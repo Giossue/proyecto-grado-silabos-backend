@@ -12,13 +12,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string $plantilla_id
  * @property string $campo_plantilla_id
- * @property string $clave
- * @property string $etiqueta
+ * @property-read string $clave
+ * @property-read string $etiqueta
  * @property string|null $ayuda
  * @property string $quien_llena
  * @property array<string, mixed> $contenido
- * @property int $posicion
  * @property-read TemplateBlock|null $block
+ * @property-read TemplateBlockRecord|null $blockRecord
  */
 class FieldDefinition extends Model
 {
@@ -34,12 +34,9 @@ class FieldDefinition extends Model
 
     protected const LEGACY_COLUMN_ALIASES = [
         'id' => 'definicion_campo_id',
-        'clave' => 'clave_definicion_campo',
-        'etiqueta' => 'etiqueta_definicion_campo',
         'ayuda' => 'ayuda_definicion_campo',
         'quien_llena' => 'quien_llena_definicion_campo',
         'contenido' => 'contenido_definicion_campo',
-        'posicion' => 'posicion_definicion_campo',
     ];
 
     public $timestamps = false;
@@ -56,19 +53,43 @@ class FieldDefinition extends Model
     /**
      * @var list<string>
      */
-    protected $fillable = ['plantilla_id', 'campo_plantilla_id', 'clave', 'etiqueta', 'ayuda', 'quien_llena', 'contenido', 'posicion'];
+    protected $fillable = ['plantilla_id', 'campo_plantilla_id', 'ayuda', 'quien_llena', 'contenido'];
 
     /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
-        return ['contenido' => 'array', 'posicion' => 'integer'];
+        return ['contenido' => 'array'];
     }
 
     protected static function booted(): void
     {
         static::addGlobalScope('vigente_en_plantilla', fn (Builder $query) => $query->where('vigente_en_plantilla', true));
+        static::addGlobalScope('bloque', fn (Builder $query) => $query->with('blockRecord'));
+    }
+
+    public function newEloquentBuilder($query): Builder
+    {
+        return new FieldDefinitionBuilder($query);
+    }
+
+    /**
+     * @return BelongsTo<TemplateBlockRecord, $this>
+     */
+    public function blockRecord(): BelongsTo
+    {
+        return $this->belongsTo(TemplateBlockRecord::class, 'campo_plantilla_id');
+    }
+
+    public function getClaveAttribute(): string
+    {
+        return (string) $this->blockRecord?->clave_campo_plantilla;
+    }
+
+    public function getEtiquetaAttribute(): string
+    {
+        return (string) $this->blockRecord?->titulo_campo_plantilla;
     }
 
     public function resolveRouteBindingQuery($query, $value, $field = null)
