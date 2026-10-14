@@ -591,8 +591,8 @@ En la lista de ADM-02, la columna Carrera muestra «-» para Administrador y
 - **Usuarios y roles**: la tabla muestra el primer rol y su carrera, con un «+N» y un tooltip con el resto cuando hay más de uno; un clic en la fila abre una única hoja con
   la ficha de la cuenta (todos los roles vigentes y finalizados) y el botón **Editar**, que cambia la misma hoja al
   formulario de edición. La acción «Ver» ya no está en el menú; la propia cuenta solo se consulta.
-- **Aviso de edición bloqueada**: una sola franja compacta (`ProcessLockAlert`) en la plantilla, la malla, Materias y
-  asignaciones y Proyecto de carrera. Dice «Edición bloqueada · Convocatoria {período}», una línea de acción según el
+- **Aviso de edición bloqueada**: una sola franja compacta (`ProcessLockAlert`) en la plantilla, la malla y Proyecto de carrera
+  (Materias y asignaciones ya no se bloquea, I-224). Dice «Edición bloqueada · Convocatoria {período}», una línea de acción según el
   rol (Administración pausa el proceso; Coordinación pausa la convocatoria de su carrera), el enlace «¿Por qué?» con
   la entrega y el efecto de corregir, y el botón «Ir a Convocatorias». El servidor envía `lock` junto a `lock_reason`.
   El mismo componente da forma a «Convocatoria en curso» y a «Edición no disponible» del docente.
