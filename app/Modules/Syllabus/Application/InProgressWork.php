@@ -274,6 +274,22 @@ final class InProgressWork
         return $syllabi->count();
     }
 
+    public function restartSentForParallel(string $parallelId): int
+    {
+        $syllabi = $this->inProgress(null)->where('paralelo_id', $parallelId)->whereIn('estado', ['en_revision', 'aprobado'])
+            ->with(['convocation.process', 'parallel'])->lockForUpdate()->get();
+        if ($syllabi->isEmpty()) {
+            return 0;
+        }
+
+        $this->deleteAggregates(array_values(array_map('strval', $syllabi->pluck('id')->all())));
+        foreach ($syllabi as $syllabus) {
+            $this->generator->generateForParallel($syllabus->convocation, $syllabus->parallel);
+        }
+
+        return $syllabi->count();
+    }
+
     public function parallelHasSentSyllabus(string $parallelId): bool
     {
         return $this->inProgress(null)->where('paralelo_id', $parallelId)->whereIn('estado', ['en_revision', 'aprobado'])->exists();

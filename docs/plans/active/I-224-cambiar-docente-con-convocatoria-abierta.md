@@ -16,7 +16,8 @@ por el bloqueo de carrera; lo prueban `ParallelTeacherChangeTest`). Lo que imped
 
 - Backend: `CreateParallels`, `UpdateParallel` y `DeleteParallel` ya no exigen la convocatoria pausada.
   `UpdateParallel` actualiza la identificación del sílabo del paralelo (`InProgressWork::refreshParallel`)
-  y rechaza el cambio de código o jornada si el sílabo está en revisión o aprobado.
+  y, si el sílabo está en revisión o aprobado, pide confirmación (`purge_required`) y lo rehace desde cero
+  (`InProgressWork::restartSentForParallel`); el frontend usa el diálogo de confirmación existente.
 - Frontend: Materias y asignaciones ya no se bloquea ni muestra el aviso de edición bloqueada.
   La malla y las fichas (Proyecto de carrera) siguen exigiendo pausa.
 - Documentación: se corrige «Relevo del docente responsable».

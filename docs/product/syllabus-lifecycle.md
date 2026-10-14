@@ -61,9 +61,10 @@ incluido el aprobado, y reasignar al mismo docente también empieza de cero.
 Crear, editar y eliminar paralelos también se puede con la convocatoria abierta: pausarla frenaría a
 todos los docentes de la carrera por el cambio de unos pocos. Un paralelo nuevo no tiene sílabo hasta
 que se le asigna docente. Cambiar el código o la jornada de un paralelo actualiza la identificación de su
-sílabo sin perder lo escrito; si el sílabo ya está en revisión o aprobado se rechaza, porque la revisión
-enviada es inmutable (hay que quitar y volver a asignar al docente para rehacerlo). La pausa solo sigue
-siendo necesaria para la malla y las fichas.
+sílabo sin perder lo escrito. Si el sílabo ya está en revisión o aprobado, la revisión enviada es
+inmutable y su PDF diría lo anterior: el cambio pide confirmación y, al confirmar, elimina ese sílabo con
+todo su historial y crea uno nuevo «Sin iniciar» para el mismo docente. La pausa solo sigue siendo necesaria
+para la malla y las fichas.
 
 El descarte no se deshace. La interfaz avisa que cambiar o quitar al docente borra el sílabo del
 paralelo.

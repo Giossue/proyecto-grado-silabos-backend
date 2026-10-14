@@ -44,12 +44,17 @@ class UpdateParallel
             if (! $parallel->isDirty()) {
                 return $parallel;
             }
-            if ($this->work->parallelHasSentSyllabus($parallel->id)) {
+            $sent = $this->work->parallelHasSentSyllabus($parallel->id);
+            if ($sent && ! $request->boolean(InProgressWork::CONFIRMATION_FIELD)) {
                 throw ValidationException::withMessages([
-                    'code' => 'El sílabo de este paralelo ya está en revisión o aprobado y quedaría con el código o la jornada anteriores. Quite y vuelva a asignar al docente para rehacerlo desde cero.',
+                    'purge_required' => 'El sílabo de este paralelo ya está en revisión o aprobado. Cambiar el código o la jornada lo elimina con todo su contenido (revisiones, aprobación, firmas y análisis de IA) y el docente lo empieza de nuevo.',
+                    'purge_count' => '1',
                 ]);
             }
             $parallel->save();
+            if ($sent) {
+                $this->work->restartSentForParallel($parallel->id);
+            }
             $this->work->refreshParallel($parallel->id);
 
             $this->audit->execute(

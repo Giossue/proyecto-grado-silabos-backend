@@ -118,15 +118,25 @@ class ParallelTeacherChangeTest extends TestCase
         $this->assertSame('borrador', $syllabus->fresh()->estado);
     }
 
-    public function test_a_submitted_syllabus_blocks_changing_its_parallel_code_or_shift(): void
+    public function test_changing_the_shift_of_a_submitted_syllabus_asks_for_confirmation_and_restarts_it(): void
     {
         $syllabus = $this->submittedSyllabus();
         $parallel = $syllabus->parallel;
+        $url = route('api.v1.coordination.academic.parallels.update', $parallel->id);
 
-        $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.academic.parallels.update', $parallel->id), ['code' => $parallel->codigo, 'shift' => 'nocturna'])
-            ->assertUnprocessable()->assertJsonValidationErrors('code');
+        $this->actingAsCoordinator()->patchJson($url, ['code' => $parallel->codigo, 'shift' => 'nocturna'])
+            ->assertUnprocessable()->assertJsonValidationErrors('purge_required');
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertNotSame('nocturna', $parallel->fresh()->jornada);
+
+        $this->actingAsCoordinator()->patchJson($url, ['code' => $parallel->codigo, 'shift' => 'nocturna', 'confirm_purge' => true])
+            ->assertSuccessful();
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
+        $this->assertDatabaseMissing('revisiones_silabo', ['silabo_id' => $syllabus->id]);
+        $fresh = Syllabus::query()->where('paralelo_id', $parallel->id)->sole();
+        $this->assertSame('sin_iniciar', $fresh->estado);
+        $this->assertSame('nocturna', $fresh->academicParallelShift());
+        $this->assertSame([$this->teacher->id], $fresh->teachers()->pluck('usuarios.id')->all());
     }
 
     public function test_reassigning_the_same_teacher_also_starts_from_scratch(): void

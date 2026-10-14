@@ -31,6 +31,7 @@ class UpdateParallelRequest extends FormRequest
         return [
             'code' => ['required', 'string', 'max:30'],
             'shift' => ['required', 'string', Rule::in(Parallel::SHIFTS)],
+            'confirm_purge' => ['nullable', 'boolean'],
         ];
     }
 

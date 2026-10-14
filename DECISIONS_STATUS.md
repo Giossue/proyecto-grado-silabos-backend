@@ -828,5 +828,5 @@ de pantallas se conserva. Migración `000222` (irreversible).
 14 de octubre de 2026, por instrucción del responsable del producto (I-224): con la convocatoria
 abierta se puede cambiar o quitar al docente de un paralelo y crear, editar o eliminar paralelos, sin
 pausarla: pausar interrumpe a todos los docentes de la carrera por unos pocos (por ejemplo cuando alguien
-se retracta tras el sorteo de materias). El nuevo docente empieza desde cero. Cambiar código o jornada se
-rechaza si el sílabo del paralelo está en revisión o aprobado. La malla y las fichas siguen exigiendo pausa.
+se retracta tras el sorteo de materias). El nuevo docente empieza desde cero. Cambiar código o jornada con el
+sílabo ya enviado o aprobado pide confirmación y lo rehace desde cero. La malla y las fichas siguen exigiendo pausa.
