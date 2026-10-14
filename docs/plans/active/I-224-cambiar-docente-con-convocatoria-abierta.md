@@ -1,24 +1,26 @@
-# I-224 — Cambiar de docente sin pausar la convocatoria
+# I-224 — Paralelos y docentes sin pausar la convocatoria
 
 ## Pedido del responsable, 2026-10-14
 
-Tras el sorteo de materias un docente puede retractarse. Cambiar o quitar al docente de un paralelo
-debe poder hacerse con la convocatoria abierta; el nuevo docente empieza desde cero.
+Tras el sorteo de materias un docente puede retractarse. Cambiar o quitar al docente, y también crear,
+editar o eliminar paralelos, debe poder hacerse con la convocatoria abierta: pausarla interrumpe a todos
+los docentes de la carrera por el cambio de unos pocos. El nuevo docente empieza desde cero.
 
 ## Hallazgo
 
-El backend ya lo permitía (`asignacion_docente` no pasa por el bloqueo de carrera y reemplazar al
-docente rehace el sílabo desde cero; lo prueban `ParallelTeacherChangeTest`). Lo que lo impedía era
-la pantalla Materias y asignaciones, que se bloqueaba entera.
+El backend ya permitía reemplazar al docente con la convocatoria abierta (`asignacion_docente` no pasa
+por el bloqueo de carrera; lo prueban `ParallelTeacherChangeTest`). Lo que impedía el resto era
+`assertCareerEditable` en crear, editar y eliminar paralelos, y la pantalla que se bloqueaba entera.
 
 ## Cambios
 
-- Backend: con la convocatoria abierta `scheduled-subjects` marca los paralelos `editable: false` y
-  `deletable: false` (antes `editable: true` aunque editarlos fallara).
-- Frontend: con el bloqueo, la fila se abre para cambiar el docente; se ocultan crear paralelo, jornada
-  y las acciones masivas de agregar paralelo y asignar jornada. El aviso lo explica.
-- Documentación: se corrige «Relevo del docente responsable», que describía reglas anteriores.
+- Backend: `CreateParallels`, `UpdateParallel` y `DeleteParallel` ya no exigen la convocatoria pausada.
+  `UpdateParallel` actualiza la identificación del sílabo del paralelo (`InProgressWork::refreshParallel`)
+  y rechaza el cambio de código o jornada si el sílabo está en revisión o aprobado.
+- Frontend: Materias y asignaciones ya no se bloquea ni muestra el aviso de edición bloqueada.
+  La malla y las fichas (Proyecto de carrera) siguen exigiendo pausa.
+- Documentación: se corrige «Relevo del docente responsable».
 
 ## Verificación
 
-Prueba de backend nueva, prueba de la pestaña actualizada; suite completa, Pint, tipos, ESLint y Vitest.
+Pruebas de backend nuevas y actualizadas; suite completa, Pint, tipos, ESLint y Vitest.

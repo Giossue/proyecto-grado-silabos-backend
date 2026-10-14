@@ -258,24 +258,44 @@ final class InProgressWork
 
         $syllabi = $this->inProgress($careerIds)->with('career.faculty')->lockForUpdate()->get();
         foreach ($syllabi as $syllabus) {
-            $context = $syllabus->contexto_academico;
-            $career = $syllabus->career;
-            data_set($context, 'career.name', $career->nombre);
-            data_set($context, 'career.code', $career->codigo_carrera);
-            data_set($context, 'career.faculty', $career->faculty?->nombre);
-            data_set($context, 'career.faculty_id', $career->facultad_id);
-
-            $scheduled = $syllabus->parallel;
-            data_set($context, 'parallel.id', $scheduled->id);
-            data_set($context, 'parallel.code', $scheduled->codigo);
-            data_set($context, 'parallel.shift', $scheduled->jornada);
-            data_set($context, 'scheduled_subject.campus', $scheduled->campus_programacion);
-            data_set($context, 'scheduled_subject.modality', $scheduled->modalidad->label());
-            $syllabus->contexto_academico = $context;
-            $syllabus->save();
+            $this->applyIdentification($syllabus);
         }
 
         return $syllabi->count();
+    }
+
+    public function refreshParallel(string $parallelId): int
+    {
+        $syllabi = $this->inProgress(null)->where('paralelo_id', $parallelId)->with('career.faculty')->lockForUpdate()->get();
+        foreach ($syllabi as $syllabus) {
+            $this->applyIdentification($syllabus);
+        }
+
+        return $syllabi->count();
+    }
+
+    public function parallelHasSentSyllabus(string $parallelId): bool
+    {
+        return $this->inProgress(null)->where('paralelo_id', $parallelId)->whereIn('estado', ['en_revision', 'aprobado'])->exists();
+    }
+
+    private function applyIdentification(Syllabus $syllabus): void
+    {
+        $context = $syllabus->contexto_academico;
+        $career = $syllabus->career;
+        data_set($context, 'career.name', $career->nombre);
+        data_set($context, 'career.code', $career->codigo_carrera);
+        data_set($context, 'career.faculty', $career->faculty?->nombre);
+        data_set($context, 'career.faculty_id', $career->facultad_id);
+
+        $scheduled = $syllabus->parallel;
+        data_set($context, 'parallel.id', $scheduled->id);
+        data_set($context, 'parallel.code', $scheduled->codigo);
+        data_set($context, 'parallel.shift', $scheduled->jornada);
+        data_set($context, 'scheduled_subject.campus', $scheduled->campus_programacion);
+        data_set($context, 'scheduled_subject.modality', $scheduled->modalidad->label());
+        $syllabus->contexto_academico = $context;
+        $syllabus->save();
     }
 
     public function refreshSubjects(string $careerId): int

@@ -807,7 +807,7 @@ class SyllabusProcessTest extends TestCase
         }
     }
 
-    public function test_an_open_cycle_only_freezes_the_template_and_the_active_careers_structure(): void
+    public function test_an_open_cycle_freezes_the_template_and_the_institutional_data_but_not_the_parallels(): void
     {
         $convocation = $this->openedConvocation();
         $scheduledSubject = Parallel::query()->firstOrFail();
@@ -818,14 +818,14 @@ class SyllabusProcessTest extends TestCase
                 'codes' => ['B'],
                 'shift' => 'matutina',
             ])
-            ->assertJsonValidationErrors('process');
-        $parallel = $scheduledSubject;
+            ->assertSuccessful();
+        $created = Parallel::query()->where('asignatura_id', $scheduledSubject->asignatura_id)->where('codigo_paralelo', 'B')->firstOrFail();
         $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.academic.parallels.update', $parallel), ['code' => 'Z', 'shift' => 'nocturna'])
-            ->assertJsonValidationErrors('process');
+            ->patchJson(route('api.v1.coordination.academic.parallels.update', $created), ['code' => 'C', 'shift' => 'nocturna'])
+            ->assertSuccessful();
         $this->actingAsCoordinator()
-            ->deleteJson(route('api.v1.coordination.academic.parallels.destroy', $parallel))
-            ->assertJsonValidationErrors('process');
+            ->deleteJson(route('api.v1.coordination.academic.parallels.destroy', $created))
+            ->assertSuccessful();
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), [

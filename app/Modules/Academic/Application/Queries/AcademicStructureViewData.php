@@ -279,12 +279,12 @@ class AcademicStructureViewData
                         'id' => $parallel->id,
                         'code' => $parallel->codigo,
                         'shift' => $this->parallelShift($parallel),
-                        'editable' => $lockReason === null,
-                        'deletable' => $lockReason === null && ! $parallelsWithSyllabus->has($parallel->id) && ! $parallelsWithTeacher->has($parallel->id),
+                        'editable' => true,
+                        'deletable' => ! $parallelsWithSyllabus->has($parallel->id) && ! $parallelsWithTeacher->has($parallel->id),
                     ])
                     ->values()
                     ->all(),
-                'editable' => $lockReason === null,
+                'editable' => true,
             ];
         }
 

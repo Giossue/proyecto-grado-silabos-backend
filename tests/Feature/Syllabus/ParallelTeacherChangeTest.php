@@ -4,6 +4,7 @@ namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -97,23 +98,35 @@ class ParallelTeacherChangeTest extends TestCase
             ->assertOk()->assertJsonPath('syllabi.data.0.id', $fresh->id);
     }
 
-    public function test_with_the_convocation_open_the_parallels_are_locked_but_the_teacher_can_be_replaced(): void
+    public function test_with_the_convocation_open_parallels_can_be_created_edited_and_removed_without_pausing(): void
     {
         $syllabus = $this->validDraft();
         $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
+        $parallel = $assignment->parallel;
 
-        $listing = $this->actingAsCoordinator()
-            ->getJson(route('api.v1.coordination.academic.scheduled-subjects.index'))->assertOk();
-        $parallel = collect($listing->json('scheduledSubjects'))->flatMap(fn (array $row): array => $row['parallels'])->firstWhere('id', $assignment->paralelo_id);
-        $this->assertFalse($parallel['editable']);
-        $this->assertFalse($parallel['deletable']);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.academic.parallels.store'), [
+            'subject_id' => $parallel->asignatura_id, 'codes' => ['Z'], 'shift' => 'matutina',
+        ])->assertSuccessful();
+        $created = Parallel::query()->where('asignatura_id', $parallel->asignatura_id)->where('codigo_paralelo', 'Z')->firstOrFail();
         $this->actingAsCoordinator()
-            ->patchJson(route('api.v1.coordination.academic.parallels.update', $assignment->paralelo_id), ['code' => 'Z', 'shift' => 'matutina'])
-            ->assertUnprocessable();
+            ->deleteJson(route('api.v1.coordination.academic.parallels.destroy', $created->id))->assertSuccessful();
 
-        $this->removeAssignment($assignment)->assertSuccessful();
-        $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertSuccessful();
-        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.parallels.update', $parallel->id), ['code' => $parallel->codigo, 'shift' => 'nocturna'])
+            ->assertSuccessful();
+        $this->assertSame('nocturna', $syllabus->fresh()->academicParallelShift());
+        $this->assertSame('borrador', $syllabus->fresh()->estado);
+    }
+
+    public function test_a_submitted_syllabus_blocks_changing_its_parallel_code_or_shift(): void
+    {
+        $syllabus = $this->submittedSyllabus();
+        $parallel = $syllabus->parallel;
+
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.parallels.update', $parallel->id), ['code' => $parallel->codigo, 'shift' => 'nocturna'])
+            ->assertUnprocessable()->assertJsonValidationErrors('code');
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
     }
 
     public function test_reassigning_the_same_teacher_also_starts_from_scratch(): void

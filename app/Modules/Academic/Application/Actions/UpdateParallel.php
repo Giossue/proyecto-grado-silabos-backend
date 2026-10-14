@@ -6,7 +6,7 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Syllabus\Application\ProcessLocks;
+use App\Modules\Syllabus\Application\InProgressWork;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,14 +16,13 @@ class UpdateParallel
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
-        private readonly ProcessLocks $locks,
+        private readonly InProgressWork $work,
     ) {}
 
     /** @param array{code: string, shift: string} $data */
     public function execute(string $parallelId, array $data, User $actor, Request $request): Parallel
     {
         $careerId = ParallelScope::careerId($this->roles->resolve($request));
-        $this->locks->assertCareerEditable($careerId);
 
         return DB::transaction(function () use ($actor, $careerId, $data, $parallelId, $request): Parallel {
             $parallel = ParallelScope::find($parallelId, $careerId);
@@ -45,7 +44,13 @@ class UpdateParallel
             if (! $parallel->isDirty()) {
                 return $parallel;
             }
+            if ($this->work->parallelHasSentSyllabus($parallel->id)) {
+                throw ValidationException::withMessages([
+                    'code' => 'El sílabo de este paralelo ya está en revisión o aprobado y quedaría con el código o la jornada anteriores. Quite y vuelva a asignar al docente para rehacerlo desde cero.',
+                ]);
+            }
             $parallel->save();
+            $this->work->refreshParallel($parallel->id);
 
             $this->audit->execute(
                 actorId: $actor->id,
