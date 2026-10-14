@@ -12,7 +12,7 @@ interface FichaExtractionGateway
 
     /**
      * @param  array{code: string, name: string, cycle: int|null}  $subject
-     * @param  list<array{key: string, label: string, help: string|null}>  $fields  campos de la ficha que define la plantilla
+     * @param  list<array{key: string, label: string}>  $fields  campos de la ficha que define la plantilla
      * @param  list<string>  $evidence  fragmentos de los documentos
      * @return array<string, string|list<string>> valor por clave de campo; cadena vacía o lista vacía si no hay sustento
      */

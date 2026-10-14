@@ -52,7 +52,6 @@ final class SyllabusDocumentFields
                     'definition_id' => $field->id,
                     'key' => $field->clave,
                     'label' => $field->etiqueta,
-                    'help' => $field->ayuda,
                     'quien_llena' => $field->quien_llena,
                     'document' => FieldDocument::normalize($stored instanceof FieldValue ? $stored->valor : $field->contenido),
                 ];

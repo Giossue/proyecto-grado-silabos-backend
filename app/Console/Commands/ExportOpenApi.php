@@ -94,7 +94,6 @@ class ExportOpenApi extends Command
                             'id' => ['type' => 'string', 'format' => 'uuid'],
                             'key' => ['type' => 'string'],
                             'label' => ['type' => 'string'],
-                            'help' => ['type' => ['string', 'null']],
                             'quien_llena' => ['enum' => ['docente', 'coordinacion', 'institucional']],
                             'content' => ['$ref' => '#/components/schemas/FieldDocument'],
                         ],
@@ -118,7 +117,6 @@ class ExportOpenApi extends Command
                         'properties' => [
                             'key' => ['type' => 'string', 'pattern' => '^[a-z][a-z0-9_]*$'],
                             'label' => ['type' => ['string', 'null'], 'maxLength' => 180],
-                            'help' => ['type' => ['string', 'null'], 'maxLength' => 2000],
                             'quien_llena' => ['enum' => ['docente', 'coordinacion', 'institucional']],
                             'content' => ['$ref' => '#/components/schemas/FieldDocument'],
                             'position' => ['type' => 'integer', 'minimum' => 1],
@@ -145,7 +143,6 @@ class ExportOpenApi extends Command
                                     'id' => ['type' => 'string', 'format' => 'uuid'],
                                     'key' => ['type' => 'string'],
                                     'label' => ['type' => 'string'],
-                                    'help' => ['type' => ['string', 'null']],
                                     'section' => ['type' => ['string', 'null']],
                                     'quien_llena' => ['const' => 'coordinacion'],
                                     'content' => ['$ref' => '#/components/schemas/FieldDocument'],

@@ -18,7 +18,7 @@ final class HostedFichaExtractionGateway implements FichaExtractionGateway
 
     public function propose(array $subject, array $fields, array $evidence): array
     {
-        $schema = collect($fields)->map(fn (array $field): string => '- "'.$field['key'].'": '.$field['label'].($field['help'] ? ' ('.$field['help'].')' : ''))->implode("\n");
+        $schema = collect($fields)->map(fn (array $field): string => '- "'.$field['key'].'": '.$field['label'])->implode("\n");
         $system = <<<'TXT'
 Eres un asistente académico de la Universidad Estatal de Bolívar. Llenas la ficha de una asignatura COPIANDO el texto de la evidencia que se te entrega.
 Reglas: copia el contenido tal como aparece en el documento y colócalo en el campo que corresponde; no lo resumas, no lo parafrasees ni cambies su sentido.

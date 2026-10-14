@@ -19,7 +19,7 @@ final class OfficialTemplate
     ];
 
     /**
-     * @return list<array{key: string, title: string, orientation?: string, fields: list<array{key: string, label?: string|null, help?: string|null, quien_llena: string, content: array<string, mixed>}>}>
+     * @return list<array{key: string, title: string, orientation?: string, fields: list<array{key: string, label?: string|null, quien_llena: string, content: array<string, mixed>}>}>
      */
     public static function sections(): array
     {
@@ -39,7 +39,7 @@ final class OfficialTemplate
             $sections[] = $section;
         }
 
-        /** @var list<array{key: string, title: string, orientation?: string, fields: list<array{key: string, label?: string|null, help?: string|null, quien_llena: string, content: array<string, mixed>}>}> $sections */
+        /** @var list<array{key: string, title: string, orientation?: string, fields: list<array{key: string, label?: string|null, quien_llena: string, content: array<string, mixed>}>}> $sections */
         return $sections;
     }
 

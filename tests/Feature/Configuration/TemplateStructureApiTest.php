@@ -43,7 +43,7 @@ class TemplateStructureApiTest extends TestCase
         $section = $this->section();
         foreach (FieldDefinition::RESPONSIBLES as $responsible) {
             $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $section]), [
-                'key' => $responsible, 'label' => 'Contenido', 'help' => 'Ayuda', 'quien_llena' => $responsible, 'content' => FreeText::fromText('Contenido inicial'),
+                'key' => $responsible, 'label' => 'Contenido', 'quien_llena' => $responsible, 'content' => FreeText::fromText('Contenido inicial'),
             ])->assertCreated()->assertJsonPath('field.quien_llena', $responsible)->assertJsonMissingPath('field.type');
         }
         $this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk()
@@ -63,14 +63,14 @@ class TemplateStructureApiTest extends TestCase
         $this->assertSame(0, $this->template->fields()->count());
     }
 
-    public function test_edits_content_responsible_help_and_orientation(): void
+    public function test_edits_content_responsible_and_orientation(): void
     {
         $section = $this->section();
         $field = $this->postJson(route('api.v1.admin.template.structure.fields.store', [$this->template, $section]), [
             'key' => 'dato', 'label' => '', 'quien_llena' => 'docente', 'content' => FieldDocument::empty(),
         ])->assertCreated()->json('field.id');
         $this->patchJson(route('api.v1.admin.template.structure.fields.update', [$this->template, $field]), [
-            'quien_llena' => 'coordinacion', 'content' => FreeText::fromText('Desde la ficha'), 'help' => 'Ayuda actualizada',
+            'quien_llena' => 'coordinacion', 'content' => FreeText::fromText('Desde la ficha'),
         ])->assertOk()->assertJsonPath('field.quien_llena', 'coordinacion');
         $this->patchJson(route('api.v1.admin.template.structure.sections.update', [$this->template, $section]), [
             'title' => 'Planificación', 'orientation' => 'landscape',

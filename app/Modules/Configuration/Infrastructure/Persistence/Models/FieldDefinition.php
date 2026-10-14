@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $campo_plantilla_id
  * @property-read string $clave
  * @property-read string $etiqueta
- * @property string|null $ayuda
  * @property string $quien_llena
  * @property array<string, mixed> $contenido
  * @property-read TemplateBlock|null $block
@@ -34,7 +33,6 @@ class FieldDefinition extends Model
 
     protected const LEGACY_COLUMN_ALIASES = [
         'id' => 'definicion_campo_id',
-        'ayuda' => 'ayuda_definicion_campo',
         'quien_llena' => 'quien_llena_definicion_campo',
         'contenido' => 'contenido_definicion_campo',
     ];
@@ -53,7 +51,7 @@ class FieldDefinition extends Model
     /**
      * @var list<string>
      */
-    protected $fillable = ['plantilla_id', 'campo_plantilla_id', 'ayuda', 'quien_llena', 'contenido'];
+    protected $fillable = ['plantilla_id', 'campo_plantilla_id', 'quien_llena', 'contenido'];
 
     /**
      * @return array<string, string>

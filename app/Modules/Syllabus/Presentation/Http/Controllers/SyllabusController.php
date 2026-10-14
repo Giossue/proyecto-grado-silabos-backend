@@ -367,7 +367,6 @@ class SyllabusController extends Controller
                     'id' => $field->id,
                     'key' => $field->clave,
                     'label' => $field->etiqueta,
-                    'help' => $field->ayuda,
                     'quien_llena' => $field->quien_llena,
                     'teacher_editable' => $field->teacherEditable(),
                     'required' => $field->quien_llena !== FieldDefinition::INSTITUTIONAL,

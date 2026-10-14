@@ -336,11 +336,10 @@ class SyllabusTemplate extends Model
             ->orderBy('posicion_seccion_plantilla')->orderBy('clave_seccion_plantilla')->get()
             ->map(fn (object $section): array => [
                 'id' => $section->seccion_plantilla_id, 'clave' => $section->clave_seccion_plantilla, 'titulo' => $section->titulo_seccion_plantilla,
-                'descripcion' => $section->descripcion_seccion_plantilla, 'orientacion' => $section->orientacion_seccion_plantilla, 'posicion' => (int) $section->posicion_seccion_plantilla,
+                'orientacion' => $section->orientacion_seccion_plantilla, 'posicion' => (int) $section->posicion_seccion_plantilla,
                 'bloques' => ($blocks->get($section->seccion_plantilla_id) ?? collect())->map(fn (object $block): array => [
                     'id' => $block->campo_plantilla_id, 'clave' => $block->clave_campo_plantilla, 'titulo' => $block->titulo_campo_plantilla,
                     'posicion' => (int) $block->posicion_campo_plantilla,
-                    'configuracion' => is_string($block->configuracion_campo_plantilla) ? json_decode($block->configuracion_campo_plantilla, true, 512, JSON_THROW_ON_ERROR) : [],
                 ])->values()->all(),
             ])->all());
     }
@@ -394,7 +393,6 @@ class SyllabusTemplate extends Model
                     'plantilla_id' => $this->id,
                     'clave_seccion_plantilla' => (string) $section['clave'],
                     'titulo_seccion_plantilla' => (string) ($section['titulo'] ?? ''),
-                    'descripcion_seccion_plantilla' => is_string($section['descripcion'] ?? null) ? $section['descripcion'] : null,
                     'orientacion_seccion_plantilla' => $section['orientacion'] ?? 'portrait',
                     'posicion_seccion_plantilla' => (int) ($section['posicion'] ?? $sectionIndex + 1),
                 ]);
@@ -405,7 +403,6 @@ class SyllabusTemplate extends Model
                         'clave_campo_plantilla' => (string) $block['clave'],
                         'titulo_campo_plantilla' => (string) ($block['titulo'] ?? ''),
                         'posicion_campo_plantilla' => (int) ($block['posicion'] ?? $blockIndex + 1),
-                        'configuracion_campo_plantilla' => json_encode(is_array($block['configuracion'] ?? null) ? $block['configuracion'] : [], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                     ]);
                 }
             }

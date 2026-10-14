@@ -44,7 +44,7 @@ class TemplateStructureValidator
             }
 
             foreach ($section->blocks as $block) {
-                if ($block->fields->isEmpty() && ! is_array($block->configuracion['document'] ?? null)) {
+                if ($block->fields->isEmpty()) {
                     throw ValidationException::withMessages([$errorKey => "La sección «{$block->titulo}» de la plantilla no tiene campos."]);
                 }
 

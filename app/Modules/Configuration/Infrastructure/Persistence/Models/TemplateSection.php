@@ -17,8 +17,6 @@ final class TemplateSection implements UrlRoutable
 
     public string $titulo;
 
-    public ?string $descripcion;
-
     public int $posicion;
 
     public string $orientacion;
@@ -113,7 +111,6 @@ final class TemplateSection implements UrlRoutable
         $this->plantilla_id = $this->template->id;
         $this->clave = (string) $data['clave'];
         $this->titulo = (string) $data['titulo'];
-        $this->descripcion = is_string($data['descripcion'] ?? null) ? $data['descripcion'] : null;
         $this->orientacion = (string) ($data['orientacion'] ?? 'portrait');
         $this->posicion = (int) ($data['posicion'] ?? 1);
     }

@@ -47,7 +47,7 @@ class ExtractSubjectFichaJob implements ShouldQueue
 
             return;
         }
-        $fields = $profile->fields()->map(fn ($field): array => ['key' => $field->clave, 'label' => $field->etiqueta !== '' ? $field->etiqueta : $field->clave, 'help' => $field->ayuda])->values()->all();
+        $fields = $profile->fields()->map(fn ($field): array => ['key' => $field->clave, 'label' => $field->etiqueta !== '' ? $field->etiqueta : $field->clave])->values()->all();
         $proposal = $gateway->propose(['code' => $subject['code'], 'name' => $subject['name'], 'cycle' => $subject['cycle']], $fields, $fragments);
         $values = [];
         foreach ($fields as $field) {

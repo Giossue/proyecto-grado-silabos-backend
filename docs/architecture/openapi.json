@@ -6765,12 +6765,6 @@
                     "label": {
                         "type": "string"
                     },
-                    "help": {
-                        "type": [
-                            "string",
-                            "null"
-                        ]
-                    },
                     "quien_llena": {
                         "enum": [
                             "docente",
@@ -6838,13 +6832,6 @@
                             "null"
                         ],
                         "maxLength": 180
-                    },
-                    "help": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 2000
                     },
                     "quien_llena": {
                         "enum": [
@@ -6914,12 +6901,6 @@
                                 },
                                 "label": {
                                     "type": "string"
-                                },
-                                "help": {
-                                    "type": [
-                                        "string",
-                                        "null"
-                                    ]
                                 },
                                 "section": {
                                     "type": [

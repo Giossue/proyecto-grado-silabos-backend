@@ -43,7 +43,6 @@ class SubjectProfileController extends Controller
                 'id' => $field->id,
                 'key' => $field->clave,
                 'label' => $field->etiqueta,
-                'help' => $field->ayuda,
                 'quien_llena' => $field->quien_llena,
                 'content' => $field->contenido,
                 'section' => $field->block?->section?->titulo,

@@ -819,3 +819,8 @@ repetidas. `definiciones_campo` ya no guarda clave, título ni posición (viven 
 `campos_plantilla`; cada campo tiene una sola definición) y `envios_biblioteca` ya no guarda
 quién y cuándo verificó (lo guarda `aprobaciones`). Migración `000221` (irreversible). Las columnas
 vacías de funciones aún no estrenadas se revisan aparte.
+
+14 de octubre de 2026, por instrucción del responsable del producto (I-223): se eliminan tres
+columnas vacías de la plantilla: la configuración de los campos, la descripción de las secciones
+y la ayuda de los campos. El editor de plantilla ya no permite escribir ayuda por campo. La ayuda
+de pantallas se conserva. Migración `000222` (irreversible).

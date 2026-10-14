@@ -19,7 +19,6 @@ class SaveStructureFieldRequest extends ManageTemplatesRequest
         $creating = ! $this->route('field') instanceof FieldDefinition;
         $rules = [
             'label' => ['nullable', 'string', 'max:180'],
-            'help' => ['nullable', 'string', 'max:2000'],
             'quien_llena' => [$creating ? 'required' : 'sometimes', Rule::in(FieldDefinition::RESPONSIBLES)],
             'content' => [$creating ? 'required' : 'sometimes', 'array', function (string $attribute, mixed $value): void {
                 FieldDocument::normalize($value, $attribute);
@@ -40,6 +39,6 @@ class SaveStructureFieldRequest extends ManageTemplatesRequest
      */
     public function attributes(): array
     {
-        return ['quien_llena' => 'quién lo llena', 'content' => 'contenido', 'label' => 'título', 'help' => 'ayuda', 'key' => 'clave', 'type' => 'tipo retirado', 'config' => 'configuración retirada'];
+        return ['quien_llena' => 'quién lo llena', 'content' => 'contenido', 'label' => 'título', 'key' => 'clave', 'type' => 'tipo retirado', 'config' => 'configuración retirada'];
     }
 }

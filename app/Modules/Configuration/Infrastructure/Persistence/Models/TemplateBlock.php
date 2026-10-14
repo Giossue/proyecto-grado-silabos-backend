@@ -23,11 +23,6 @@ final class TemplateBlock implements UrlRoutable
 
     public string $titulo;
 
-    /**
-     * @var array<string, mixed>
-     */
-    public array $configuracion;
-
     public int $posicion;
 
     /**
@@ -120,7 +115,6 @@ final class TemplateBlock implements UrlRoutable
             'clave' => $this->clave,
             'tipo' => $this->tipo,
             'titulo' => $this->titulo,
-            'configuracion' => $this->configuracion,
             'posicion' => $this->posicion,
         ];
     }
@@ -169,7 +163,6 @@ final class TemplateBlock implements UrlRoutable
         $this->seccion_plantilla_id = $this->section->id;
         $this->clave = (string) $data['clave'];
         $this->titulo = (string) $data['titulo'];
-        $this->configuracion = is_array($data['configuracion'] ?? null) ? $data['configuracion'] : [];
         $this->tipo = 'narrativa';
         $this->posicion = (int) ($data['posicion'] ?? 1);
     }

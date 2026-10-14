@@ -29,7 +29,6 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'sections.*.fields' => ['sometimes', 'array', 'max:60'],
             'sections.*.fields.*.key' => ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'max:100', $this->uniqueFieldKey()],
             'sections.*.fields.*.label' => ['nullable', 'string', 'max:180'],
-            'sections.*.fields.*.help' => ['nullable', 'string', 'max:2000'],
             'sections.*.fields.*.quien_llena' => ['required', Rule::in(FieldDefinition::RESPONSIBLES)],
             'sections.*.fields.*.content' => ['required', function (string $attribute, mixed $value, Closure $fail): void {
                 if (is_string($value) || (is_array($value) && array_is_list($value) && $value !== [] && array_filter($value, 'is_string') === $value)) {
@@ -65,7 +64,6 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'sections.*.fields' => 'campos',
             'sections.*.fields.*.key' => 'clave del campo',
             'sections.*.fields.*.label' => 'nombre del campo',
-            'sections.*.fields.*.help' => 'ayuda',
             'sections.*.fields.*.quien_llena' => 'quién lo llena',
             'sections.*.fields.*.content' => 'contenido',
         ];

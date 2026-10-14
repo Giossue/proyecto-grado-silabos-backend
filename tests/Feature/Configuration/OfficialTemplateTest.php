@@ -114,8 +114,8 @@ class OfficialTemplateTest extends TestCase
             'sections' => [[
                 'key' => 'uno', 'title' => '1. Uno', 'orientation' => 'landscape',
                 'fields' => [
-                    ['key' => 'a', 'label' => 'Campo A', 'help' => 'Ayuda A', 'quien_llena' => 'docente', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Hola']]]]]],
-                    ['key' => 'b', 'label' => '', 'help' => null, 'quien_llena' => 'institucional', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]]],
+                    ['key' => 'a', 'label' => 'Campo A', 'quien_llena' => 'docente', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Hola']]]]]],
+                    ['key' => 'b', 'label' => '', 'quien_llena' => 'institucional', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]]],
                 ],
             ]],
         ], $override);
@@ -129,7 +129,7 @@ class OfficialTemplateTest extends TestCase
         $this->assertSame(1, $exported['version']);
         $this->assertCount(12, $exported['sections']);
         $this->assertSame(['key', 'title', 'orientation', 'fields'], array_keys($exported['sections'][0]));
-        $this->assertSame(['key', 'label', 'help', 'quien_llena', 'content'], array_keys($exported['sections'][0]['fields'][0]));
+        $this->assertSame(['key', 'label', 'quien_llena', 'content'], array_keys($exported['sections'][0]['fields'][0]));
 
         $this->putJson(route('api.v1.admin.template.json.import', $this->template), $exported)->assertOk();
         $again = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->assertOk()->json();
@@ -160,7 +160,6 @@ class OfficialTemplateTest extends TestCase
         $this->assertSame('landscape', $template->sections()->first()->orientacion);
         $fields = FieldDefinition::query()->where('plantilla_id', $template->id)->get()->keyBy('clave');
         $this->assertEqualsCanonicalizing(['a', 'b'], $fields->keys()->all());
-        $this->assertSame('Ayuda A', $fields['a']->ayuda);
         $this->assertSame('institucional', $fields['b']->quien_llena);
     }
 

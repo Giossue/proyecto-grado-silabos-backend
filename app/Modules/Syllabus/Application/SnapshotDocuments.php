@@ -26,7 +26,6 @@ final class SnapshotDocuments
                     'definition_id' => $field['definition_id'] ?? null,
                     'key' => $field['key'],
                     'label' => $field['label'] ?? '',
-                    'help' => null,
                     'quien_llena' => $field['quien_llena'] ?? match ($field['type'] ?? null) {
                         'automatico', 'fijo' => 'institucional',
                         'ficha' => 'coordinacion',

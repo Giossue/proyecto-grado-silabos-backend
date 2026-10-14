@@ -38,7 +38,6 @@ class SaveTemplateStructure
                 'id' => (string) Str::uuid(),
                 'clave' => (string) $data['key'],
                 'titulo' => (string) $data['title'],
-                'descripcion' => null,
                 'posicion' => $count + 1,
                 'bloques' => [],
                 'orientacion' => $data['orientation'] ?? 'portrait',
@@ -81,7 +80,6 @@ class SaveTemplateStructure
                 'id' => $blockId,
                 'clave' => (string) $data['key'],
                 'titulo' => $label,
-                'configuracion' => [],
                 'posicion' => $count + 1,
             ]);
             $position = min(max(1, (int) ($data['position'] ?? $count + 1)), $count + 1);
@@ -94,7 +92,6 @@ class SaveTemplateStructure
             $field = FieldDefinition::query()->create([
                 'plantilla_id' => $locked->id,
                 'campo_plantilla_id' => $blockId,
-                'ayuda' => $data['help'] ?? null,
                 'quien_llena' => $data['quien_llena'],
                 'contenido' => $content,
             ]);
@@ -117,7 +114,6 @@ class SaveTemplateStructure
             $label = array_key_exists('label', $data) ? trim((string) $data['label']) : $field->etiqueta;
 
             $field->update([
-                'ayuda' => array_key_exists('help', $data) ? $data['help'] : $field->ayuda,
                 'quien_llena' => $data['quien_llena'] ?? $field->quien_llena,
                 'contenido' => array_key_exists('content', $data) ? FieldDocument::normalize($data['content']) : $field->contenido,
             ]);

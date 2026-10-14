@@ -58,7 +58,7 @@ final class SyllabusTemplateProvisioner
     }
 
     /**
-     * @param  list<array{key: string, title: string, orientation?: string, fields?: list<array{key: string, label?: string|null, help?: string|null, quien_llena: string, content: array<string, mixed>}>}>  $structure
+     * @param  list<array{key: string, title: string, orientation?: string, fields?: list<array{key: string, label?: string|null, quien_llena: string, content: array<string, mixed>}>}>  $structure
      */
     public function replaceStructure(SyllabusTemplate $template, array $structure): SyllabusTemplate
     {
@@ -122,13 +122,11 @@ final class SyllabusTemplateProvisioner
                     'id' => $blockId,
                     'clave' => $field['key'],
                     'titulo' => (string) ($field['label'] ?? ''),
-                    'configuracion' => [],
                     'posicion' => $fieldIndex + 1,
                 ];
                 $definitions[] = [
                     'plantilla_id' => $template->id,
                     'campo_plantilla_id' => $blockId,
-                    'ayuda' => $field['help'] ?? null,
                     'quien_llena' => $field['quien_llena'],
                     'contenido' => FieldDocument::normalize(is_array($field['content']) && ! array_is_list($field['content']) ? $field['content'] : DocumentHtml::fromHtml($field['content'])),
                 ];
@@ -137,7 +135,6 @@ final class SyllabusTemplateProvisioner
                 'id' => (string) Str::uuid(),
                 'clave' => $section['key'],
                 'titulo' => $section['title'],
-                'descripcion' => null,
                 'posicion' => $sectionIndex + 1,
                 'bloques' => $blocks,
                 'orientacion' => $section['orientation'] ?? 'portrait',

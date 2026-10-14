@@ -87,7 +87,6 @@ class TemplateController extends Controller
                 'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(fn (FieldDefinition $field): array => [
                     'key' => $field->clave,
                     'label' => $field->etiqueta,
-                    'help' => $field->ayuda,
                     'quien_llena' => $field->quien_llena,
                     'content' => DocumentHtml::toLines($field->contenido),
                 ])->all())->values()->all(),
@@ -152,20 +151,17 @@ class TemplateController extends Controller
             'template' => [
                 'id' => $template->id,
                 'name' => SyllabusTemplate::INSTITUTIONAL_NAME,
-                'description' => null,
                 'appearance' => TemplateAppearance::fromMapping($template->mapeo_documento),
                 'titleBlock' => TemplateTitleBlock::fromMapping($template->mapeo_documento),
                 'sections' => $template->sections->map(fn (TemplateSection $section) => [
                     'id' => $section->id,
                     'key' => $section->clave,
                     'title' => $section->titulo,
-                    'description' => $section->descripcion,
                     'orientation' => $section->orientacion,
                     'fields' => $section->blocks->flatMap(fn (TemplateBlock $block) => $block->fields->map(fn (FieldDefinition $field): array => [
                         'id' => $field->id,
                         'key' => $field->clave,
                         'label' => $field->etiqueta,
-                        'help' => $field->ayuda,
                         'quien_llena' => $field->quien_llena,
                         'content' => $field->contenido,
                     ])->all())->values()->all(),
