@@ -17,7 +17,6 @@ use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
-use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Application\AcademicContextSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -119,7 +118,7 @@ class AiAssistanceTest extends TestCase
             'contenido_mensaje' => ['tipo' => 'mensaje', 'rol' => 'usuario', 'estado' => 'completado', 'entrada' => ['contenido' => 'Historial RAG que no debe enviarse.']]]);
         $old = AiHistoryEntry::query()->create([...AiHistoryEntry::chatSession($this->syllabus->id, $this->teacher->id), 'contenido_mensaje' => [
             'tipo' => 'mensaje', 'rol' => 'asistente', 'estado' => 'pendiente', 'entrada' => [
-                'respuesta_a_id' => $question->id, 'ejecucion_trabajo_id' => $this->job('ia.chat')->id,
+                'respuesta_a_id' => $question->id,
                 'evidencia' => [['id' => 'legacy', 'tipo' => 'fuente_academica', 'etiqueta' => 'Fuente', 'extracto' => 'NO ENVIAR']],
             ]]]);
         $never = $this->mock(AiChatGateway::class);
@@ -197,13 +196,6 @@ class AiAssistanceTest extends TestCase
             'valor' => ['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => 'Tema de unidad existente']]]]]]);
         FieldValue::query()->create(['silabo_id' => $this->syllabus->id, 'definicion_campo_id' => $private->id,
             'valor' => 'NO ENVIAR: '.$this->teacher->correo_electronico]);
-    }
-
-    private function job(string $type): JobExecution
-    {
-        return JobExecution::query()->create(['tipo' => $type, 'cola' => 'ia', 'estado' => 'pendiente', 'clave_idempotencia' => (string) Str::uuid(),
-            'tipo_recurso' => 'mensaje_ia', 'recurso_id' => (string) Str::uuid(),
-            'intentos' => 0]);
     }
 
     public function test_each_syllabus_allows_twenty_questions_and_three_chats(): void

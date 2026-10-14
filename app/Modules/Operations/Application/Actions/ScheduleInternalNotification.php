@@ -2,16 +2,12 @@
 
 namespace App\Modules\Operations\Application\Actions;
 
-use App\Modules\Operations\Infrastructure\Jobs\DeliverInternalNotificationJob;
-use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
-use App\Support\CanonicalHasher;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
-use RuntimeException;
 
 class ScheduleInternalNotification
 {
-    public function __construct(private readonly CanonicalHasher $hasher) {}
+    public function __construct(private readonly StoreInternalNotifications $store) {}
 
     /** @param  list<string>  $recipientIds */
     public function execute(
@@ -22,42 +18,8 @@ class ScheduleInternalNotification
         string $message,
         string $resourceType,
         string $resourceId,
-    ): ?JobExecution {
-        $recipientIds = array_values(array_unique($recipientIds));
-        if ($recipientIds === []) {
-            return null;
-        }
-
-        $entrada = [
-            'tipo_evento' => $eventType,
-            'destinatarios_ids' => $recipientIds,
-            'titulo' => $title,
-            'mensaje' => $message,
-        ];
-        $execution = JobExecution::query()->firstOrCreate(
-            ['clave_idempotencia' => $deduplicationKey],
-            [
-                'tipo' => 'notificacion.interna',
-                'cola' => 'notificaciones',
-                'estado' => 'pendiente',
-                'tipo_recurso' => $resourceType,
-                'recurso_id' => $resourceId,
-                'entrada' => $entrada,
-                'intentos' => 0,
-            ],
-        );
-        if ($execution->tipo !== 'notificacion.interna'
-            || $execution->tipo_recurso !== $resourceType
-            || $execution->recurso_id !== $resourceId
-            || $this->hasher->hash(array_intersect_key($execution->entrada ?? [], $entrada))
-                !== $this->hasher->hash($entrada)) {
-            throw new RuntimeException('La clave del trabajo ya identifica otro aviso.');
-        }
-        if ($execution->wasRecentlyCreated) {
-            DeliverInternalNotificationJob::dispatch($execution->id)->afterCommit();
-        }
-
-        return $execution;
+    ): void {
+        $this->store->execute($eventType, $deduplicationKey, $recipientIds, $title, $message, $resourceType, $resourceId);
     }
 
     public function date(CarbonInterface $at): string

@@ -13,10 +13,8 @@ use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
-use App\Modules\Operations\Infrastructure\Jobs\DeliverInternalNotificationJob;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
-use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -602,16 +600,10 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame(1, $auditEvent->metadatos['estado_borrador']);
         $this->assertSame(1, $auditEvent->metadatos['estado_aprobado']);
 
-        $notice = JobExecution::query()
-            ->where('tipo', 'notificacion.interna')
-            ->whereJsonContains('datos_entrada', ['tipo_evento' => 'proceso.plantilla_rehecho'])
-            ->sole();
-        $this->assertSame('proceso_silabos', $notice->tipo_recurso);
-        $this->assertSame($process->id, $notice->recurso_id);
-        $this->assertNotEmpty($notice->entrada['destinatarios_ids']);
-        (new DeliverInternalNotificationJob($notice->id))->handle();
         $deliveredNotice = InternalNotification::query()
             ->where('tipo', 'proceso.plantilla_rehecho')->sole();
+        $this->assertSame('proceso_silabos', $deliveredNotice->tipo_recurso);
+        $this->assertSame($process->id, $deliveredNotice->recurso_id);
         $this->assertStringContainsString('se rehízo desde cero', $deliveredNotice->mensaje);
     }
 
@@ -654,8 +646,7 @@ class SyllabusProcessTest extends TestCase
                 'type' => 'prerrequisito',
             ])
             ->assertJsonValidationErrors('requirement_id');
-        $this->assertFalse(JobExecution::query()
-            ->whereJsonContains('datos_entrada', ['tipo_evento' => 'silabo.regenerado'])->exists());
+        $this->assertFalse(InternalNotification::query()->where('tipo', 'silabo.regenerado')->exists());
     }
 
     public function test_cosmetic_curriculum_changes_refresh_the_card_without_purging(): void

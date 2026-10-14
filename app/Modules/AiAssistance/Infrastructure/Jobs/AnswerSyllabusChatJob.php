@@ -8,7 +8,6 @@ use App\Modules\AiAssistance\Domain\Data\AiChatInput;
 use App\Modules\AiAssistance\Domain\Exceptions\AiContractException;
 use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
-use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,11 +40,6 @@ class AnswerSyllabusChatJob implements ShouldQueue
                 return null;
             }
             $message->amend(['estado' => 'en_ejecucion']);
-            $job = JobExecution::query()->lockForUpdate()->find($message->inputString('ejecucion_trabajo_id'));
-            $job?->update([
-                'estado' => 'en_ejecucion',
-                'intentos' => $job->intentos + 1, 'iniciado_en' => now(),
-            ]);
 
             return $message;
         });
@@ -103,11 +97,6 @@ class AnswerSyllabusChatJob implements ShouldQueue
                     'version_pasarela_ejecutada' => $result->gatewayVersion,
                     'completado_en' => now()->toIso8601String(),
                 ]);
-                JobExecution::query()->find($locked->inputString('ejecucion_trabajo_id'))?->update([
-                    'estado' => 'completada',
-                    'resultado' => ['message_id' => $locked->id, 'citation_count' => count($result->citationIds)],
-                    'finalizado_en' => now(),
-                ]);
             });
         } catch (AiContractException) {
             $this->finishFailed('contrato_ia_invalido', 'La respuesta de IA no pudo verificarse.');
@@ -132,10 +121,6 @@ class AnswerSyllabusChatJob implements ShouldQueue
             $chatMessage->amend([
                 'estado' => 'fallido', 'codigo_error' => $code,
                 'mensaje_error' => $message, 'completado_en' => now()->toIso8601String(),
-            ]);
-            JobExecution::query()->find($chatMessage->inputString('ejecucion_trabajo_id'))?->update([
-                'estado' => 'fallida',
-                'mensaje_error' => $message, 'finalizado_en' => now(),
             ]);
         });
     }

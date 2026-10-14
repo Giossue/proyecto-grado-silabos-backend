@@ -807,3 +807,9 @@ aprobar, el sílabo pasa solo a biblioteca, que aprueba la bibliografía y deja 
 Aprobado (se genera el PDF). Si biblioteca devuelve, el reenvío del docente va directo a
 biblioteca sin pasar de nuevo por coordinación. Las firmas conservan el orden docente →
 coordinación → biblioteca. Reemplaza el orden de I-173 e I-192; no cambia el esquema.
+
+14 de octubre de 2026, por instrucción del responsable del producto (I-221): se elimina la tabla
+`trabajos_en_cola`. Cada cosa guarda su propio estado: la exportación en `exportaciones_silabo`,
+el chat de IA en `mensajes_ia` y los avisos se escriben directo en `notificaciones` (sin job). La
+protección contra doble clic sigue en el backend con las claves únicas de esas tablas. La
+verificación de plataforma pasa a ser un job sin tabla. Migración `000220` (irreversible).

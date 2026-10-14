@@ -158,7 +158,7 @@ it('I-175 usa nombres claros para archivos, exportaciones y firmas', function ()
     }
 
     expect(Schema::hasColumns('archivos', ['nombre_archivo', 'tipo_archivo', 'categoria', 'subido_por', 'ruta_archivo', 'hash_archivo']))->toBeTrue()
-        ->and(Schema::hasColumns('exportaciones_silabo', ['archivo_word_id', 'archivo_pdf_id', 'estado_exportacion', 'trabajo_id', 'clave_solicitud']))->toBeTrue()
+        ->and(Schema::hasColumns('exportaciones_silabo', ['archivo_word_id', 'archivo_pdf_id', 'estado_exportacion', 'clave_solicitud']))->toBeTrue()
         ->and(Schema::hasColumns('firmas_documento', [
             'exportacion_silabo_id', 'firmado_como', 'archivo_firmado_id', 'nombre_en_certificado',
             'numero_certificado', 'entidad_emisora', 'certificado_valido_hasta',
@@ -168,7 +168,7 @@ it('I-175 usa nombres claros para archivos, exportaciones y firmas', function ()
         "SELECT conname FROM pg_constraint WHERE conrelid IN ('archivos'::regclass, 'exportaciones_silabo'::regclass, 'firmas_documento'::regclass)",
     ))->pluck('conname');
 
-    expect($restricciones)->toContain('archivos_pkey', 'exportaciones_silabo_trabajo_id_foreign', 'firmas_documento_exportacion_silabo_id_foreign')
+    expect($restricciones)->toContain('archivos_pkey', 'firmas_documento_exportacion_silabo_id_foreign')
         ->and($restricciones->filter(fn (string $nombre): bool => str_contains($nombre, 'objeto') || str_contains($nombre, 'artefacto') || str_contains($nombre, 'fuente')))->toBeEmpty();
 });
 
@@ -236,26 +236,23 @@ it('I-181 e I-209 el paralelo apunta directo a la materia, sin período ni tabla
         ->toContain('paralelos_asignatura_codigo_unique');
 });
 
-it('I-176 nombra con claridad trabajos, notificaciones, auditoría y mensajes de IA', function () {
-    expect(Schema::hasTable('trabajos_en_cola'))->toBeTrue()
+it('I-176 nombra con claridad notificaciones, auditoría y mensajes de IA; I-221 retira la tabla de trabajos', function () {
+    expect(Schema::hasTable('trabajos_en_cola'))->toBeFalse()
         ->and(Schema::hasTable('ejecuciones_trabajo'))->toBeFalse()
         ->and(Schema::hasTable('notificaciones'))->toBeTrue()
         ->and(Schema::hasTable('notificaciones_internas'))->toBeFalse()
         ->and(Schema::hasTable('mensajes_ia'))->toBeTrue()
         ->and(Schema::hasTable('historial_ia'))->toBeFalse()
-        ->and(Schema::hasColumns('trabajos_en_cola', ['tipo_trabajo', 'estado_trabajo', 'resultado_trabajo', 'datos_entrada', 'clave_solicitud']))->toBeTrue()
         ->and(Schema::hasColumns('notificaciones', ['tipo_notificacion', 'titulo_notificacion', 'mensaje_notificacion', 'clave_unica']))->toBeTrue()
         ->and(Schema::hasColumns('eventos_auditoria', ['usuario_id', 'actor_nombre', 'actor_rol', 'actor_carrera', 'accion', 'resultado', 'detalles']))->toBeTrue()
         ->and(Schema::hasColumns('mensajes_ia', ['silabo_id', 'usuario_id', 'contenido_mensaje']))->toBeTrue();
 
     $restricciones = collect(DB::select(
         "SELECT conname FROM pg_constraint
-         WHERE conrelid IN ('trabajos_en_cola'::regclass, 'notificaciones'::regclass, 'eventos_auditoria'::regclass, 'mensajes_ia'::regclass)",
+         WHERE conrelid IN ('notificaciones'::regclass, 'eventos_auditoria'::regclass, 'mensajes_ia'::regclass)",
     ))->pluck('conname');
 
     expect($restricciones)
-        ->toContain('trabajos_en_cola_pkey')
-        ->toContain('trabajos_en_cola_clave_solicitud_unique')
         ->toContain('notificaciones_usuario_id_foreign')
         ->not->toContain('eventos_auditoria_usuario_id_foreign')
         ->not->toContain('eventos_auditoria_asignacion_rol_id_foreign')

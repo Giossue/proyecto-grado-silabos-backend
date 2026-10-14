@@ -465,6 +465,8 @@ silabos N:M definiciones_campo mediante valores_campo
 
 ## ejecuciones_trabajo
 
+> I-221 eliminó esta tabla (`trabajos_en_cola`). Cada cosa guarda su estado: exportaciones, mensajes de IA y avisos. Lo que sigue es histórico.
+
 **Contexto:** única tabla funcional para trabajos asíncronos y notificaciones; conserva
 la entrada, idempotencia, estado, progreso, intentos, resultado y error.
 
@@ -744,7 +746,7 @@ ocurrido_en TIMESTAMPTZ NOT NULL
 ## Trabajos fallidos (retirada)
 
 I-183 elimina `trabajos_fallidos`: el driver de fallos de la cola es `null` y cada trabajo
-fallido queda en `trabajos_en_cola` con su estado y su error.
+fallido queda en el estado de su propia tabla.
 
 ## migraciones
 

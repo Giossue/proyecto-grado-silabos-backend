@@ -3,7 +3,6 @@
 namespace App\Modules\Documents\Infrastructure\Persistence\Models;
 
 use App\Models\User;
-use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\Database\MapsLegacyColumnNames;
@@ -17,7 +16,6 @@ use LogicException;
 /**
  * @property string $id
  * @property string $revision_silabo_id
- * @property string|null $ejecucion_trabajo_id
  * @property string|null $objeto_docx_id
  * @property string|null $objeto_pdf_id
  * @property string $clave_idempotencia
@@ -37,7 +35,6 @@ class ExportArtifact extends Model
         'estado' => 'estado_exportacion',
         'objeto_docx_id' => 'archivo_word_id',
         'objeto_pdf_id' => 'archivo_pdf_id',
-        'ejecucion_trabajo_id' => 'trabajo_id',
         'clave_idempotencia' => 'clave_solicitud',
     ];
 
@@ -49,7 +46,7 @@ class ExportArtifact extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'revision_silabo_id', 'ejecucion_trabajo_id',
+        'revision_silabo_id',
         'objeto_docx_id', 'objeto_pdf_id',
         'clave_idempotencia', 'estado', 'solicitado_por',
         'solicitado_en', 'completado_en',
@@ -71,12 +68,6 @@ class ExportArtifact extends Model
     public function syllabus(): HasOneThrough
     {
         return $this->hasOneThrough(Syllabus::class, SyllabusRevision::class, 'revision_silabo_id', 'silabo_id', 'revision_silabo_id', 'silabo_id');
-    }
-
-    /** @return BelongsTo<JobExecution, $this> */
-    public function execution(): BelongsTo
-    {
-        return $this->belongsTo(JobExecution::class, 'trabajo_id');
     }
 
     /** @return BelongsTo<StoredObject, $this> */

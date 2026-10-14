@@ -8,7 +8,6 @@ use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
@@ -62,16 +61,6 @@ class RequestSyllabusExport
                 'solicitado_por' => $actor->id,
                 'solicitado_en' => now(),
             ]);
-            $execution = JobExecution::query()->create([
-                'tipo' => 'documento.exportacion',
-                'cola' => 'documentos',
-                'estado' => 'pendiente',
-                'clave_idempotencia' => "documento.exportacion:{$lockedRevision->id}:{$idempotencyKey}",
-                'tipo_recurso' => 'artefacto_exportacion',
-                'recurso_id' => $artifact->id,
-                'intentos' => 0,
-            ]);
-            $artifact->update(['ejecucion_trabajo_id' => $execution->id]);
             GenerateSyllabusExportJob::dispatch($artifact->id)->afterCommit();
             $this->audit->execute(
                 actorId: $actor->id,

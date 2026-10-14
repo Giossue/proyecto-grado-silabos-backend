@@ -11,7 +11,6 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
-use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Bus\Queueable;
@@ -50,15 +49,7 @@ class GenerateSyllabusExportJob implements ShouldQueue
             if ($artifact === null || $artifact->estado === 'completado') {
                 return false;
             }
-            $execution = JobExecution::query()->lockForUpdate()->findOrFail($artifact->ejecucion_trabajo_id);
             $artifact->update(['estado' => 'en_ejecucion']);
-            $execution->update([
-                'estado' => 'en_ejecucion',
-                'intentos' => $execution->intentos + 1,
-                'iniciado_en' => $execution->iniciado_en ?? now(),
-                'finalizado_en' => null,
-                'mensaje_error' => null,
-            ]);
 
             return true;
         });
@@ -96,7 +87,6 @@ class GenerateSyllabusExportJob implements ShouldQueue
 
         DB::transaction(function () use ($artifact, $audit, $docx, $pdf, $revision, $syllabus): void {
             $locked = ExportArtifact::query()->lockForUpdate()->findOrFail($artifact->id);
-            $execution = JobExecution::query()->lockForUpdate()->findOrFail($locked->ejecucion_trabajo_id);
             if ($locked->estado === 'completado') {
                 return;
             }
@@ -106,16 +96,6 @@ class GenerateSyllabusExportJob implements ShouldQueue
                 'objeto_pdf_id' => $pdf->id,
                 'estado' => 'completado',
                 'completado_en' => now(),
-            ]);
-            $execution->update([
-                'estado' => 'completada',
-                'resultado' => [
-                    'artifact_id' => $locked->id,
-                    'docx_object_id' => $docx->id,
-                    'pdf_object_id' => $pdf->id,
-                ],
-                'finalizado_en' => now(),
-                'mensaje_error' => null,
             ]);
             InternalNotification::query()->firstOrCreate(
                 [
@@ -154,25 +134,16 @@ class GenerateSyllabusExportJob implements ShouldQueue
             if ($artifact === null || $artifact->estado === 'completado') {
                 return;
             }
-            $execution = JobExecution::query()->lockForUpdate()->find($artifact->ejecucion_trabajo_id);
             $artifact->update(['estado' => 'fallido']);
-            if ($execution !== null) {
-                $execution->update([
-                    'estado' => 'fallida',
-                    'resultado' => null,
-                    'mensaje_error' => 'No fue posible generar los documentos. Puede solicitar un reintento.',
-                    'finalizado_en' => now(),
-                ]);
-                app(RecordAuditEvent::class)->execute(
-                    actorId: null,
-                    roleAssignmentId: null,
-                    action: 'documento.exportacion_fallida',
-                    resourceType: 'artefacto_exportacion',
-                    resourceId: $artifact->id,
-                    result: 'fallido',
-                    metadata: ['error_code' => 'exportacion_documento_fallida'],
-                );
-            }
+            app(RecordAuditEvent::class)->execute(
+                actorId: null,
+                roleAssignmentId: null,
+                action: 'documento.exportacion_fallida',
+                resourceType: 'artefacto_exportacion',
+                resourceId: $artifact->id,
+                result: 'fallido',
+                metadata: ['error_code' => 'exportacion_documento_fallida'],
+            );
         });
     }
 

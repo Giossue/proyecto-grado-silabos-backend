@@ -2,17 +2,16 @@
 
 namespace App\Modules\Operations\Infrastructure\Jobs;
 
-use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PlatformSmokeJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public int $tries = 3;
 
@@ -21,39 +20,19 @@ class PlatformSmokeJob implements ShouldQueue
     /** @var list<int> */
     public array $backoff = [1, 5, 15];
 
-    public function __construct(public readonly string $executionId)
+    public function __construct(public readonly string $key)
     {
         $this->onQueue('critica');
     }
 
     public function handle(): void
     {
-        DB::transaction(function (): void {
-            $execution = JobExecution::query()->lockForUpdate()->find($this->executionId);
-
-            if ($execution === null || $execution->estado === 'completada') {
-                return;
-            }
-
-            $execution->update([
-                'estado' => 'completada',
-                'intentos' => max(1, $this->attempts()),
-                'resultado' => ['message' => 'platform-smoke-ok'],
-                'iniciado_en' => $execution->iniciado_en ?? now(),
-                'finalizado_en' => now(),
-                'mensaje_error' => null,
-            ]);
-        });
+        DB::selectOne('select 1');
+        Log::info('platform-smoke-ok', ['key' => $this->key]);
     }
 
     public function failed(\Throwable $exception): void
     {
         report($exception);
-        JobExecution::query()->whereKey($this->executionId)->update([
-            'estado' => 'fallida',
-            'intentos' => max(1, $this->attempts()),
-            'mensaje_error' => 'La verificación de la plataforma falló.',
-            'finalizado_en' => now(),
-        ]);
     }
 }

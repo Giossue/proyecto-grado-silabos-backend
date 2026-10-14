@@ -11,7 +11,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
-use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
+use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Application\RevisionDiff;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
@@ -707,11 +707,10 @@ class ReviewWorkflowTest extends TestCase
 
     private function assertWorkflowNotification(string $syllabusId, string $eventType): void
     {
-        $this->assertTrue(JobExecution::query()
-            ->where('tipo', 'notificacion.interna')
+        $this->assertTrue(InternalNotification::query()
+            ->where('tipo', $eventType)
             ->where('tipo_recurso', 'silabo')
             ->where('recurso_id', $syllabusId)
-            ->whereJsonContains('datos_entrada', ['tipo_evento' => $eventType])
             ->exists());
     }
 

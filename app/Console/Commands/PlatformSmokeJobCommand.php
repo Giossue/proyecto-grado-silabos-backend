@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Modules\Operations\Application\Actions\DispatchPlatformSmoke;
+use App\Modules\Operations\Infrastructure\Jobs\PlatformSmokeJob;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -12,13 +12,13 @@ class PlatformSmokeJobCommand extends Command
 
     protected $description = 'Despacha un trabajo mínimo para comprobar PostgreSQL y la cola';
 
-    public function handle(DispatchPlatformSmoke $action): int
+    public function handle(): int
     {
         $key = $this->option('key');
         $idempotencyKey = is_string($key) && $key !== '' ? $key : 'smoke:'.Str::uuid();
-        $execution = $action->execute($idempotencyKey);
+        PlatformSmokeJob::dispatch($idempotencyKey);
 
-        $this->components->info("Trabajo {$execution->id} en estado {$execution->estado}.");
+        $this->components->info("Trabajo de verificación {$idempotencyKey} despachado.");
 
         return self::SUCCESS;
     }

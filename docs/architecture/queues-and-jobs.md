@@ -30,9 +30,10 @@ El payload contiene IDs y versiones, no objetos enormes ni secretos.
 ## Consistencia
 
 - Despacha después del commit (`after_commit` o equivalente explícito).
-- Para efectos que no se pueden perder, inserta la `ejecuciones_trabajo` pendiente y su
-  entrada dentro de la misma transacción.
-- El consumidor marca la ejecución de forma idempotente.
+- Para efectos que no se pueden perder, guarda el registro de dominio con su estado
+  `pendiente` dentro de la misma transacción (exportación, mensaje de IA); los avisos se
+  guardan directo en `notificaciones`, sin trabajo (I-221).
+- El consumidor cambia el estado de ese registro de forma idempotente.
 - Reintentar no crea otra revisión, aprobación, notificación o artefacto lógico.
 - PostgreSQL conserva el estado funcional; Redis puede vaciarse/reconstruirse.
 - Colas y caché usan Redis por defecto; I-168 quitó las conexiones `database`, que

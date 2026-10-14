@@ -17,7 +17,6 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
-use App\Modules\Operations\Infrastructure\Jobs\DeliverInternalNotificationJob;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
@@ -95,7 +94,6 @@ class DocumentOperationsTest extends TestCase
         ])->assertSuccessful();
 
         $this->assertDatabaseCount('exportaciones_silabo', 1);
-        $this->assertDatabaseCount('trabajos_en_cola', 1);
         Queue::assertPushed(GenerateSyllabusExportJob::class, 1);
         $artifact = ExportArtifact::query()->firstOrFail();
         $this->assertSame($revision->id, $artifact->revision_silabo_id);
@@ -146,10 +144,8 @@ class DocumentOperationsTest extends TestCase
             app(DocumentBundleValidator::class),
         );
 
-        $artifact->refresh()->load(['docxObject', 'pdfObject', 'execution']);
+        $artifact->refresh()->load(['docxObject', 'pdfObject']);
         $this->assertSame('completado', $artifact->estado);
-        $this->assertSame('completada', $artifact->execution->estado);
-        $this->assertSame('completada', $artifact->execution->estado);
         $this->assertDatabaseCount('archivos', 2);
         $docx = $artifact->docxObject;
         $pdf = $artifact->pdfObject;
@@ -250,7 +246,7 @@ class DocumentOperationsTest extends TestCase
         }
     }
 
-    public function test_cp_f_failed_export_has_safe_cause_and_admin_retry_preserves_attempt_count(): void
+    public function test_cp_f_failed_export_has_a_safe_cause(): void
     {
         Queue::fake();
         [, $revision] = $this->approvedRevision();
@@ -258,24 +254,20 @@ class DocumentOperationsTest extends TestCase
             'idempotency_key' => (string) Str::uuid(),
         ]);
         $artifact = ExportArtifact::query()->firstOrFail();
-        $execution = $artifact->execution()->firstOrFail();
         $artifact->update(['estado' => 'en_ejecucion']);
-        $execution->update(['estado' => 'en_ejecucion', 'intentos' => 3]);
         $secret = 'SECRET=/srv/private/documento.docx';
         (new GenerateSyllabusExportJob($artifact->id))->failed(new RuntimeException($secret));
 
-        $execution->refresh();
         $this->assertSame('fallido', $artifact->fresh()->estado);
-        $this->assertSame('fallida', $execution->estado);
-        $this->assertSame(3, $execution->intentos);
-        $this->assertStringNotContainsString('SECRET', (string) $execution->mensaje_error);
+        $this->actingAsTeacher()->getJson(route('api.v1.documents.show', $revision))
+            ->assertJsonPath('artifacts.0.error', 'No fue posible generar los documentos. Puede solicitar un reintento.');
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion' => 'documento.exportacion_fallida',
             'resultado' => 'fallido',
         ]);
     }
 
-    public function test_cp_f_workflow_job_delivers_one_internal_notification_and_enforces_ownership(): void
+    public function test_cp_f_workflow_notification_is_stored_once_and_enforces_ownership(): void
     {
         Queue::fake();
         Mail::fake();
@@ -283,32 +275,12 @@ class DocumentOperationsTest extends TestCase
         $recorder = app(ScheduleWorkflowNotification::class);
         $key = "syllabus.approved:{$syllabus->id}";
 
-        $first = $recorder->execute(
-            $syllabus,
-            'silabo.aprobado',
-            $key,
-            [$this->coordinator->id],
-            1,
-            (string) Str::uuid(),
-        );
-        $second = $recorder->execute(
-            $syllabus,
-            'silabo.aprobado',
-            $key,
-            [$this->coordinator->id],
-            1,
-            (string) Str::uuid(),
-        );
-        $this->assertSame($first->id, $second->id);
-        Queue::assertPushed(DeliverInternalNotificationJob::class, 1);
-        $job = new DeliverInternalNotificationJob($first->id);
-        $job->handle();
-        $job->handle();
+        $recorder->execute($syllabus, 'silabo.aprobado', $key, [$this->coordinator->id], 1);
+        $recorder->execute($syllabus, 'silabo.aprobado', $key, [$this->coordinator->id], 1);
 
         $this->assertDatabaseCount('notificaciones', 1);
         $notification = InternalNotification::query()->firstOrFail();
         $this->assertSame($this->coordinator->id, $notification->usuario_id);
-        $this->assertSame('completada', $first->fresh()->estado);
         $this->actingAsCoordinator()
 
             ->getJson(route('api.v1.notifications.index'))
@@ -334,14 +306,6 @@ class DocumentOperationsTest extends TestCase
             $this->fail('PostgreSQL permitió alterar una notificación entregada.');
         } catch (QueryException) {
             $this->assertSame('Sílabo aprobado', $notification->fresh()->titulo);
-        }
-        try {
-            DB::transaction(fn () => DB::table('trabajos_en_cola')
-                ->where('trabajo_id', $first->id)
-                ->update(['datos_entrada' => json_encode(['destinatarios_ids' => []])]));
-            $this->fail('PostgreSQL permitió alterar la entrada del trabajo.');
-        } catch (QueryException) {
-            $this->assertSame([$this->coordinator->id], $first->fresh()->entrada['destinatarios_ids']);
         }
     }
 

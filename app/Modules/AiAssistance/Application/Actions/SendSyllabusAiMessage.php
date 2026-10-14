@@ -8,7 +8,6 @@ use App\Modules\AiAssistance\Application\SyllabusAiLimits;
 use App\Modules\AiAssistance\Infrastructure\Jobs\AnswerSyllabusChatJob;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Infrastructure\Persistence\Models\JobExecution;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,15 +69,6 @@ class SendSyllabusAiMessage
             ], $this->context->build($locked));
 
             $answerId = (string) Str::uuid();
-            $job = JobExecution::query()->create([
-                'tipo' => 'ia.chat',
-                'cola' => 'ia',
-                'estado' => 'pendiente',
-                'clave_idempotencia' => "ia.chat:{$answerId}",
-                'tipo_recurso' => 'mensaje_ia',
-                'recurso_id' => $answerId,
-                'intentos' => 0,
-            ]);
             $answer = AiHistoryEntry::query()->create([
                 'id' => $answerId,
                 ...$session,
@@ -89,7 +79,6 @@ class SendSyllabusAiMessage
                     'entrada' => [
                         'respuesta_a_id' => $question->id,
                         'version_bloqueo_origen' => $locked->version_bloqueo,
-                        'ejecucion_trabajo_id' => $job->id,
                         'evidencia' => $evidence,
                         'context_version' => BuildSyllabusChatContext::VERSION,
                     ],

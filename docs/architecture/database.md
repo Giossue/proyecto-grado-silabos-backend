@@ -287,16 +287,16 @@ no tenían datos.
 cambiarla y congela todo mensaje que salió de `pendiente`/`en_ejecucion`; solo el
 reinicio institucional confirmado (I-118) puede borrar. El índice único parcial
 `historial_ia_mensaje_idempotencia_unica` evita repetir una pregunta con la misma clave.
-El progreso técnico vive en `ejecuciones_trabajo` (`ia.chat`), cuyo `recurso_id` es el id
-del mensaje. Al eliminar un sílabo, el trigger `eliminar_historial_ia_de_silabo` borra sus
+El estado del chat vive en el propio mensaje (`estado`); no hay tabla aparte de trabajos (I-221). Al eliminar un sílabo, el trigger `eliminar_historial_ia_de_silabo` borra sus
 sesiones. La evidencia sigue siendo una fotografía (etiqueta, extracto y huella)
 inmutable aunque cambien luego el documento o el borrador.
 
 ### Operación e integración
 
 `objetos_almacenados`, `artefactos_exportacion`, `notificaciones_internas`,
-`eventos_auditoria` y `ejecuciones_trabajo`. La entrada del trabajo se guarda en la
-misma transacción que el cambio funcional; después del commit se despacha el job.
+`eventos_auditoria`. Cada tabla guarda su propio estado (`exportaciones_silabo.estado_exportacion`,
+`mensajes_ia`, `notificaciones`); el trabajo en segundo plano se despacha después del commit y
+no hay tabla de trabajos (I-221).
 Los archivos persistentes se describen mediante `objetos_almacenados`: por ejemplo,
 `facultades.logo_objeto_id` referencia el objeto privado de su logo. La tabla de
 dominio nunca almacena una ruta del disco como dato de negocio.

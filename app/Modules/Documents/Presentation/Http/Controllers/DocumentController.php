@@ -30,7 +30,7 @@ class DocumentController extends Controller
         abort_unless($revision->approval !== null, 404);
         $artifacts = ExportArtifact::query()
             ->where('revision_silabo_id', $revision->id)
-            ->with(['execution', 'docxObject', 'pdfObject'])
+            ->with(['docxObject', 'pdfObject'])
             ->latest('solicitado_en')
             ->get();
 
@@ -53,10 +53,7 @@ class DocumentController extends Controller
                 'requested_at' => $artifact->solicitado_en->toIso8601String(),
                 'completed_at' => $artifact->completado_en?->toIso8601String(),
                 'renderer_label' => 'Formato institucional en revisión',
-                'execution' => $artifact->execution === null ? null : [
-                    'estado' => $artifact->execution->estado,
-                    'mensaje_error' => $artifact->execution->mensaje_error,
-                ],
+                'error' => $artifact->estado === 'fallido' ? 'No fue posible generar los documentos. Puede solicitar un reintento.' : null,
                 'files' => $artifact->estado !== 'completado' ? null : [
                     'docx_size' => $artifact->docxObject?->tamano_bytes,
                     'pdf_size' => $artifact->pdfObject?->tamano_bytes,
