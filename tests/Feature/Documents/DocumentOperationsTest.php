@@ -275,8 +275,8 @@ class DocumentOperationsTest extends TestCase
         $recorder = app(ScheduleWorkflowNotification::class);
         $key = "syllabus.approved:{$syllabus->id}";
 
-        $recorder->execute($syllabus, 'silabo.aprobado', $key, [$this->coordinator->id], 1);
-        $recorder->execute($syllabus, 'silabo.aprobado', $key, [$this->coordinator->id], 1);
+        $recorder->execute($syllabus, 'silabo.enviado', $key, [$this->coordinator->id], 1);
+        $recorder->execute($syllabus, 'silabo.enviado', $key, [$this->coordinator->id], 1);
 
         $this->assertDatabaseCount('notificaciones', 1);
         $notification = InternalNotification::query()->firstOrFail();

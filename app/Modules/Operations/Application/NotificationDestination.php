@@ -39,6 +39,19 @@ final class NotificationDestination
 
     private const PROCESS_TEACHER_EVENTS = ['proceso.plantilla_rehecho'];
 
+    /**
+     * Avisos que solo reciben docentes: el destino es siempre Docencia, aunque la persona
+     * tenga activo su rol de coordinación sobre la misma carrera.
+     */
+    private const TEACHER_EVENTS = [
+        'convocatoria.abierta',
+        'silabo.correccion_solicitada',
+        'silabo.reiniciado',
+        'silabo.eliminado',
+        'silabo.regenerado',
+        'silabo.aprobado',
+    ];
+
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly SyllabusNavigationLookup $syllabi,
@@ -70,6 +83,12 @@ final class NotificationDestination
         }
 
         $options = $this->options($notification, $user, $eligible ?? $this->roles->eligible($user));
+        if (in_array($notification->tipo, self::TEACHER_EVENTS, true)) {
+            $options = array_values(array_filter(
+                $options,
+                fn (array $option): bool => $option['assignment']?->role->codigo_rol === RoleCode::Teacher->value,
+            ));
+        }
         foreach ($options as $option) {
             if ($active !== null && $option['assignment']?->id === $active->id) {
                 return $option;
