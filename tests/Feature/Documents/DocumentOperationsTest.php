@@ -305,7 +305,7 @@ class DocumentOperationsTest extends TestCase
                 ->where('notificacion_id', $notification->id)->update(['titulo_notificacion' => 'Alterado']));
             $this->fail('PostgreSQL permitió alterar una notificación entregada.');
         } catch (QueryException) {
-            $this->assertSame('Sílabo aprobado', $notification->fresh()->titulo);
+            $this->assertSame('Sílabo listo para revisión', $notification->fresh()->titulo);
         }
     }
 
