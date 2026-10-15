@@ -27,8 +27,8 @@ class NotificationLinksTest extends TestCase
             'titulo' => $title, 'mensaje' => 'Mensaje de prueba.', 'tipo_recurso' => $resourceType, 'recurso_id' => $resourceId,
             'notificado_en' => now(),
         ]);
-        // Antes llevaba a la lista de usuarios; es solo informativo.
-        $informational = $create('usuario.activado', 'usuario', $admin->id, 'Cuenta activada');
+        // Solo informativo: no lleva a ninguna pantalla.
+        $informational = $create('proceso.plazo_extendido', 'proceso_silabos', $admin->id, 'Plazo extendido');
         $actionable = $create('usuario.rol_asignado', 'asignacion_rol', $admin->id, 'Nuevo rol disponible');
 
         $response = $this->actingAs($admin)

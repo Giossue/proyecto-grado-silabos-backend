@@ -21,18 +21,14 @@ use Illuminate\Support\Collection;
  */
 final class NotificationDestination
 {
-    private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'silabo.firmado_docente', 'coordinacion.asignada'];
+    private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'silabo.firmado_docente'];
 
     /**
      * Avisos solo informativos (I-163): no piden hacer nada, así que no llevan enlace.
      * Los demás llevan a la pantalla donde se actúa (revisar, corregir, firmar, continuar).
      */
     public const INFORMATIONAL_EVENTS = [
-        'usuario.activado',
         'proceso.plazo_extendido',
-        'proceso.pausado',
-        'proceso.cerrado',
-        'convocatoria.pausada',
     ];
 
     private const LIBRARY_EVENTS = ['coordinacion.aprobado', 'silabo.reenviado_biblioteca', 'silabo.firmado_coordinacion'];
@@ -138,9 +134,7 @@ final class NotificationDestination
                 $eligible,
                 teacherFirst: true,
             ),
-            'carrera' => $notification->tipo === 'coordinacion.asignada'
-                ? $this->withRole($eligible, RoleCode::Coordinator, [$id], '/coordinacion/revisiones')
-                : $this->withRole($eligible, RoleCode::Teacher, [$id], '/docente/mis-silabos'),
+            'carrera' => $this->withRole($eligible, RoleCode::Teacher, [$id], '/docente/mis-silabos'),
             'usuario' => [
                 ...$this->withRole($eligible, RoleCode::Administrator, null, '/admin/usuarios?'.http_build_query(['q' => User::query()->whereKey($id)->value('correo_electronico') ?? ''])),
                 ...$this->withRole($eligible, RoleCode::Coordinator, null, '/coordinacion/asignaciones-docentes'),
