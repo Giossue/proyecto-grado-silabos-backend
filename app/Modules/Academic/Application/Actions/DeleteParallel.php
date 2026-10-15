@@ -24,12 +24,12 @@ class DeleteParallel
 
         DB::transaction(function () use ($actor, $careerId, $parallelId, $role): void {
             $parallel = ParallelScope::find($parallelId, $careerId);
-            ParallelScope::assertWithoutSyllabus($parallel, 'El paralelo ya tiene sílabo y no puede eliminarse.');
             if (TeacherAssignment::query()->where('paralelo_id', $parallel->id)->exists()) {
                 throw ValidationException::withMessages([
                     'record' => 'El paralelo tiene un docente asignado. Quite primero la asignación docente.',
                 ]);
             }
+            ParallelScope::deleteUntouchedSyllabi($parallel, 'El paralelo ya tiene sílabo y no puede eliminarse.');
             $code = $parallel->codigo;
             $parallel->delete();
 

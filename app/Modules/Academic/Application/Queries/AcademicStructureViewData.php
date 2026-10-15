@@ -23,6 +23,7 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
 
@@ -247,7 +248,7 @@ class AcademicStructureViewData
             ->get(['id', 'asignatura_id', 'codigo', 'jornada']);
         $parallelsBySubject = $careerParallels->groupBy('asignatura_id');
         $parallelIds = $careerParallels->pluck('id');
-        $parallelsWithSyllabus = Syllabus::query()->whereIn('paralelo_id', $parallelIds)->pluck('paralelo_id')->flip();
+        $parallelsWithSyllabus = Syllabus::query()->whereIn('paralelo_id', $parallelIds)->where(fn (Builder $query) => $query->where('estado', '!=', 'sin_iniciar')->orWhereNotNull('iniciado_en'))->pluck('paralelo_id')->flip();
         $parallelsWithTeacher = TeacherAssignment::query()->whereIn('paralelo_id', $parallelIds)->pluck('paralelo_id')->flip();
 
         $careerSubjects = Subject::query()

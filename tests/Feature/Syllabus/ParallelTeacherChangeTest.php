@@ -118,6 +118,24 @@ class ParallelTeacherChangeTest extends TestCase
         $this->assertSame('borrador', $syllabus->fresh()->estado);
     }
 
+    public function test_a_parallel_without_teacher_is_deleted_with_its_untouched_syllabus_but_not_with_a_started_one(): void
+    {
+        $syllabus = $this->openedSyllabus();
+        $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
+        $parallelId = $assignment->paralelo_id;
+        $url = route('api.v1.coordination.academic.parallels.destroy', $parallelId);
+        $this->removeAssignment($assignment)->assertSuccessful();
+
+        $syllabus->forceFill(['estado' => 'borrador', 'iniciado_en' => now()])->save();
+        $this->actingAsCoordinator()->deleteJson($url)->assertJsonValidationErrors('record');
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
+
+        $syllabus->forceFill(['estado' => 'sin_iniciar', 'iniciado_en' => null])->save();
+        $this->actingAsCoordinator()->deleteJson($url)->assertSuccessful();
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
+        $this->assertDatabaseMissing('paralelos', ['paralelo_id' => $parallelId]);
+    }
+
     public function test_changing_the_shift_of_a_submitted_syllabus_asks_for_confirmation_and_restarts_it(): void
     {
         $syllabus = $this->submittedSyllabus();
