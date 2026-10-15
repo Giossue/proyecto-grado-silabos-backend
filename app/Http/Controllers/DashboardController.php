@@ -239,6 +239,13 @@ class DashboardController extends Controller
                 'suffix' => null,
                 'hint' => 'Devueltos por Biblioteca o Coordinación',
             ],
+            [
+                'key' => 'in_review',
+                'label' => 'En revisión',
+                'value' => $own()->where('estado', 'en_revision')->count(),
+                'suffix' => null,
+                'hint' => 'Enviados y a la espera de revisión',
+            ],
         ];
     }
 

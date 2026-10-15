@@ -32,9 +32,10 @@ class ApiDashboardTest extends TestCase
             ->withHeader('Origin', 'http://localhost:5173')
             ->getJson(route('api.v1.dashboard.show'))
             ->assertOk()
-            ->assertJsonCount(2, 'metrics')
+            ->assertJsonCount(3, 'metrics')
             ->assertJsonPath('metrics.0.key', 'pending')
             ->assertJsonPath('metrics.1.key', 'correction_requested')
+            ->assertJsonPath('metrics.2.key', 'in_review')
             ->assertJsonPath('setup', null)
             ->assertJsonPath('deadline', null);
     }

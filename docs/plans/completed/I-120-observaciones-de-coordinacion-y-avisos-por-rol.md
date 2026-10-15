@@ -71,4 +71,4 @@ El destino de cada aviso según el rol (`NotificationDestination`) se trabaja po
   `TeacherReliefTest`, `CoordinatorReplacementTest` y `ManagedUserTest` (helper
   `AssertsInternalNotifications`); Pint y PHPStan sobre los archivos tocados.
 - Frontend: pruebas de `TeacherSyllabusDetailPage`, `CoordinationReviewDetailPage`,
-  iconos por tipo en `NotificationsPopover`; typecheck y lint.
+  iconos por tipo en `NotificationsSheet`; typecheck y lint.

@@ -44,4 +44,4 @@ cada recurso se siguen aplicando con el rol activado.
   pruebas de sesión y de avisos adaptadas al ámbito explícito y a `open`. PHPStan limpio
   en `Operations` y `ActiveRole`.
 - SPA: typecheck, 122 pruebas (nuevas en `WorkspacePage.test.ts` y
-  `NotificationsPopover.test.ts`), lint y `contract:check`.
+  `NotificationsSheet.test.ts`), lint y `contract:check`.
