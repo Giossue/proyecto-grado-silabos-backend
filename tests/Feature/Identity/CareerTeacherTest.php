@@ -38,7 +38,7 @@ class CareerTeacherTest extends TestCase
 
     private function payload(): array
     {
-        return ['nombre' => 'Nuevo Docente', 'correo_electronico' => 'nuevo@silabos.test'];
+        return ['primer_nombre' => 'Nuevo', 'segundo_nombre' => 'Luis', 'primer_apellido' => 'Docente', 'segundo_apellido' => 'Prueba', 'correo_electronico' => 'nuevo@silabos.test'];
     }
 
     public function test_creates_only_a_teacher_in_current_career_and_is_idempotent(): void
@@ -56,7 +56,7 @@ class CareerTeacherTest extends TestCase
                 ->where('career.id', $this->context->carrera_id)
                 ->where('options.teacherUsers', fn ($users) => collect($users)->doesntContain('id', $user->id)
                     && collect($users)->contains('id', User::query()->where('correo_electronico', 'docente@silabos.test')->value('id'))));
-        $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => ' NUEVO@silabos.test ', 'nombre' => 'Otro nombre'])->assertSuccessful();
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => ' NUEVO@silabos.test ', 'primer_nombre' => 'Otro'])->assertSuccessful();
         $this->assertSame($user->nombre, $user->fresh()->nombre);
         $this->assertSame(1, $user->roleAssignments()->count());
         Mail::assertQueued(ManagedUserActivationMail::class, 1);
@@ -340,10 +340,22 @@ class CareerTeacherTest extends TestCase
         $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'nuevo@silabos.test']);
     }
 
+    public function test_the_full_name_is_composed_from_the_four_parts_and_a_single_field_is_rejected(): void
+    {
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful();
+        $this->assertSame('NUEVO LUIS DOCENTE PRUEBA', User::query()->where('correo_electronico', 'nuevo@silabos.test')->value('nombre'));
+
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), ['nombre' => 'Un Nombre Completo', 'correo_electronico' => 'otro@silabos.test'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['nombre', 'primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido']);
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), [...$this->payload(), 'correo_electronico' => 'otro@silabos.test', 'segundo_apellido' => ''])
+            ->assertUnprocessable()->assertJsonValidationErrors('segundo_apellido');
+        $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'otro@silabos.test']);
+    }
+
     public function test_invalid_identity_and_client_password_are_rejected(): void
     {
-        $this->postJson(route('api.v1.coordination.academic.teachers.store'), ['nombre' => '', 'correo_electronico' => 'invalid', 'password' => '123'])
-            ->assertUnprocessable()->assertJsonValidationErrors(['nombre', 'correo_electronico', 'password']);
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), ['primer_nombre' => '', 'segundo_nombre' => '', 'primer_apellido' => '', 'segundo_apellido' => '', 'correo_electronico' => 'invalid', 'password' => '123'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'correo_electronico', 'password']);
         Mail::assertNothingQueued();
     }
 

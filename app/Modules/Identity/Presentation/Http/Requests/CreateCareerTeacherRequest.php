@@ -3,6 +3,8 @@
 namespace App\Modules\Identity\Presentation\Http\Requests;
 
 use App\Models\User;
+use App\Modules\Identity\Domain\PersonName;
+use App\Modules\Identity\Domain\PersonNameColumns;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 
@@ -24,7 +26,11 @@ class CreateCareerTeacherRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nombre' => ['required', 'string', 'max:180'],
+            'primer_nombre' => ['required', 'string', 'max:45'],
+            'segundo_nombre' => ['required', 'string', 'max:45'],
+            'primer_apellido' => ['required', 'string', 'max:45'],
+            'segundo_apellido' => ['required', 'string', 'max:45'],
+            'nombre' => ['prohibited'],
             'correo_electronico' => ['required', 'string', 'email', 'max:255'],
             'password' => ['prohibited'],
             'role_code' => ['prohibited'],
@@ -35,11 +41,25 @@ class CreateCareerTeacherRequest extends FormRequest
         ];
     }
 
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        $messages = [];
+        foreach (PersonNameColumns::COLUMNS as $key => $label) {
+            $messages["{$key}.required"] = 'El '.mb_strtolower($label).' es obligatorio.';
+        }
+
+        return $messages;
+    }
+
     /** @return array{nombre: string, correo_electronico: string} */
     public function teacherData(): array
     {
         return [
-            'nombre' => $this->string('nombre')->toString(),
+            'nombre' => PersonName::normalize(implode(' ', array_map(
+                fn (string $key): string => $this->string($key)->toString(),
+                array_keys(PersonNameColumns::COLUMNS),
+            ))),
             'correo_electronico' => $this->string('correo_electronico')->toString(),
         ];
     }

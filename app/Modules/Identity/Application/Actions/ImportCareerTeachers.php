@@ -32,7 +32,10 @@ class ImportCareerTeachers
             $row['values'] = $values;
             $email = mb_strtolower($values['correo']);
             $payload = ['nombre' => $values['nombre'], 'correo_electronico' => $email];
-            $rules = array_intersect_key((new CreateCareerTeacherRequest)->rules(), $payload);
+            $rules = [
+                'nombre' => ['required', 'string', 'max:180'],
+                ...array_intersect_key((new CreateCareerTeacherRequest)->rules(), ['correo_electronico' => true]),
+            ];
             $errors = [...$nameErrors, ...Validator::make($payload, $rules)->errors()->all()];
             if (isset($seen[$email])) {
                 $errors[] = "El correo se repite en la fila {$seen[$email]}.";
