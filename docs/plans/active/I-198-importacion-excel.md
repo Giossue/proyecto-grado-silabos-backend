@@ -25,7 +25,9 @@ Crear muchas cuentas o registros uno por uno es lento. Tres pantallas aceptan un
   archivo es error.
 - Plantilla descargable por pantalla (PhpSpreadsheet): listas desplegables con validación
   para Rol y Carrera, e indicaciones a la
-  derecha que la importación ignora. El segundo nombre y el segundo apellido son opcionales.
+  derecha que la importación ignora. En usuarios y roles el segundo nombre y el segundo apellido son
+  opcionales; en la importación de docentes de Coordinación todas las columnas son obligatorias
+  (dos nombres, dos apellidos y correo).
 -  Los permisos son los del alta individual.
 
 ## Retiro de la importación de facultades (2026-10-07)

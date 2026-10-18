@@ -17,13 +17,26 @@ final class PersonNameColumns
         'Escriba cada nombre o apellido en su propia columna, sin abreviaturas.',
     ];
 
+    public const TEACHER_NOTES = [
+        'Una fila por docente; no deje filas vacías entre registros.',
+        'Todas las columnas son obligatorias: primer nombre, segundo nombre, primer apellido, segundo apellido y correo.',
+        'Escriba cada nombre o apellido en su propia columna, sin abreviaturas.',
+    ];
+
     /**
      * @param  array<string, string>  $values
+     * @param  bool  $requireAll  exige también el segundo nombre y el segundo apellido
      * @return array{0: array<string, string>, 1: list<string>} valores con `nombre` compuesto y errores
      */
-    public static function compose(array $values): array
+    public static function compose(array $values, bool $requireAll = false): array
     {
         $errors = [];
+        if ($requireAll && $values['segundo_nombre'] === '') {
+            $errors[] = 'El segundo nombre es obligatorio.';
+        }
+        if ($requireAll && $values['segundo_apellido'] === '') {
+            $errors[] = 'El segundo apellido es obligatorio.';
+        }
         if ($values['primer_nombre'] === '') {
             $errors[] = 'El primer nombre es obligatorio.';
         }

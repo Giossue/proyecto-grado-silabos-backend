@@ -41,7 +41,7 @@ class CareerTeacherController extends Controller
         Gate::authorize('createCareerTeacher', User::class);
 
         return $template->download('plantilla-docentes.xlsx', array_values(ImportCareerTeachers::COLUMNS), [], [
-            ...PersonNameColumns::NOTES,
+            ...PersonNameColumns::TEACHER_NOTES,
             'Correo: use el correo institucional; si la cuenta ya existe, se incorpora a su carrera sin cambiar su nombre.',
         ]);
     }
