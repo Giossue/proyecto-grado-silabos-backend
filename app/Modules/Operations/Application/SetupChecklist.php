@@ -3,7 +3,6 @@
 namespace App\Modules\Operations\Application;
 
 use App\Models\User;
-use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
@@ -63,13 +62,12 @@ class SetupChecklist
             'Puesta en marcha de la institución',
             'En este orden. Cada paso habilita el siguiente; las coordinaciones no pueden empezar hasta que termine.',
             [
-                $this->step('faculties', 'Registrar las facultades', 'Elija el campus y cargue el logo de cada facultad (PNG sin fondo); sin logo no se abren convocatorias.', Faculty::query()->where('activo', true)->exists()),
+                $this->step('faculties', 'Registrar las facultades', 'Elija el campus de cada facultad. El logo puede cargarse ahora o después, pero Coordinación lo necesita para abrir su convocatoria.', Faculty::query()->where('activo', true)->exists()),
                 $this->step('careers', 'Registrar las carreras', 'Cada carrera hereda el campus de su facultad y registra su modalidad aprobada. Puede importarlas desde Excel.', $careerCount > 0),
-                $this->step('periods', 'Registrar el periodo académico', 'Desde Convocatorias, con las fechas del periodo; es el que abrirá el primer proceso de sílabos.', AcademicPeriod::query()->exists()),
                 $this->step('accounts', 'Crear las cuentas de coordinación y de biblioteca', 'Al menos una de cada una, también por importación desde Excel. Los docentes los crea cada Coordinación.', $accountsReady),
                 $this->step('coordinators', 'Asignar un coordinador a cada carrera', $careerCount > 0 && $careersWithoutCoordinator > 0 ? "Faltan {$careersWithoutCoordinator} de {$careerCount} carreras." : 'Coordinación actualmente activa.', $careerCount > 0 && $careersWithoutCoordinator === 0),
                 $this->step('template', 'Armar la plantilla del sílabo', 'Secciones y campos con un responsable: Docente, Coordinación o Institucional. El mismo editor permite texto, listas y tablas.', $templateReady),
-                $this->step('process', 'Abrir la convocatoria institucional', 'Desde Convocatorias, confirme las fechas de elaboración y entrega; cada Coordinación abrirá después la de su carrera.', SyllabusProcess::query()->exists()),
+                $this->step('process', 'Abrir la convocatoria institucional', 'Desde Convocatorias, indique las fechas del periodo lectivo y de elaboración y entrega; cada Coordinación abrirá después la de su carrera.', SyllabusProcess::query()->exists()),
             ],
         );
     }
