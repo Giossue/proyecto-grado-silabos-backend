@@ -51,12 +51,12 @@ class InstitutionalLogosTest extends TestCase
         Storage::disk('private')->assertExists('logos/institucion.png');
     }
 
-    public function test_administrator_must_create_a_faculty_with_a_transparent_logo(): void
+    public function test_administrator_can_create_a_faculty_without_logo_but_it_must_be_transparent(): void
     {
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), ['nombre' => 'Sin logo', 'campus' => CampusLocation::Matriz->value])
-            ->assertJsonValidationErrors('logo');
-        $this->assertDatabaseMissing('facultades', ['nombre_facultad' => 'Sin logo']);
+            ->assertSuccessful();
+        $this->assertDatabaseHas('facultades', ['nombre_facultad' => 'Sin logo']);
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.academic.store', 'facultad'), [
@@ -114,7 +114,7 @@ class InstitutionalLogosTest extends TestCase
                 'nombre' => $faculty->nombre,
                 'campus' => $faculty->campus->value,
             ])
-            ->assertJsonValidationErrors('logo');
+            ->assertSuccessful();
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.academic.update', ['entity' => 'facultad', 'record' => $faculty]), [

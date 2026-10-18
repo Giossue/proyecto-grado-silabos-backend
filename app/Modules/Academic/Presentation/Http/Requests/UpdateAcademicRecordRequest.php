@@ -6,7 +6,6 @@ use App\Modules\Academic\Application\AcademicPeriodWeeks;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\StudyModality;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
 use Illuminate\Foundation\Http\FormRequest;
@@ -35,7 +34,7 @@ class UpdateAcademicRecordRequest extends FormRequest
                 'nombre' => ['required', 'string', 'max:180'],
                 'campus' => ['required', Rule::enum(CampusLocation::class)],
                 'logo' => [
-                    $this->facultyRequiresLogo() ? 'required' : 'nullable',
+                    'nullable',
                     ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY),
                 ],
             ],
@@ -85,13 +84,5 @@ class UpdateAcademicRecordRequest extends FormRequest
         $record = $this->route('record');
 
         return is_string($record) ? $record : '';
-    }
-
-    private function facultyRequiresLogo(): bool
-    {
-        $faculty = Faculty::query()->with('logoObject')->find($this->recordId());
-
-        return $faculty instanceof Faculty
-            && ! app(InstitutionalLogos::class)->facultyIsConfigured($faculty);
     }
 }
