@@ -96,7 +96,7 @@ class ManagedUserTest extends TestCase
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.store'), [
-                'nombre' => 'Docente Sin Estrenar',
+                'primer_nombre' => 'Docente', 'segundo_nombre' => 'Luz', 'primer_apellido' => 'Estrenar', 'segundo_apellido' => 'Prueba',
                 'correo_electronico' => 'sin.estrenar@silabos.test',
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
@@ -161,7 +161,7 @@ class ManagedUserTest extends TestCase
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.store'), [
-                'nombre' => 'Nueva Docente',
+                'primer_nombre' => 'Nueva', 'segundo_nombre' => 'Luz', 'primer_apellido' => 'Docente', 'segundo_apellido' => 'Prueba',
                 'correo_electronico' => 'nueva.docente@silabos.test',
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,
@@ -189,7 +189,7 @@ class ManagedUserTest extends TestCase
     {
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.store'), [
-                'nombre' => 'Docente sin carrera',
+                'primer_nombre' => 'Docente', 'segundo_nombre' => 'Luz', 'primer_apellido' => 'Carrera', 'segundo_apellido' => 'Prueba',
                 'correo_electronico' => 'sin.carrera@silabos.test',
                 'role_code' => RoleCode::Teacher->value,
             ])
@@ -513,7 +513,7 @@ class ManagedUserTest extends TestCase
         $career = Career::query()->where('codigo_carrera', 'SOFTWARE')->firstOrFail();
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.users.store'), [
-                'nombre' => 'Docente Pendiente',
+                'primer_nombre' => 'Docente', 'segundo_nombre' => 'Luz', 'primer_apellido' => 'Pendiente', 'segundo_apellido' => 'Prueba',
                 'correo_electronico' => $email,
                 'role_code' => RoleCode::Teacher->value,
                 'career_id' => $career->id,

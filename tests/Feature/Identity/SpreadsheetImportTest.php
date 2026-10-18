@@ -54,7 +54,7 @@ class SpreadsheetImportTest extends TestCase
         $career = Career::query()->where('activo', true)->firstOrFail();
         $file = fn () => $this->workbook([
             ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo', 'Rol', 'Carrera'],
-            ['Ana', '', 'Uno', '', 'ana.uno@silabos.test', 'Docente', $career->nombre],
+            ['Ana', 'Luz', 'Uno', 'Cinco', 'ana.uno@silabos.test', 'Docente', $career->nombre],
             ['Luis', 'Pedro', 'Dos', 'Tres', 'luis.dos@silabos.test', 'Bibliotecario', ''],
         ]);
 
@@ -75,11 +75,13 @@ class SpreadsheetImportTest extends TestCase
             ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo', 'Rol', 'Carrera'],
             ['Ana', '', 'Uno', '', 'ana.uno@silabos.test', 'Docente', 'Carrera inexistente'],
             ['Luis', 'Pedro', 'Dos', 'Tres', 'luis.dos@silabos.test', 'Bibliotecario', ''],
+            ['Eva', 'Pedro', 'Dos', '', 'eva.dos@silabos.test', 'Bibliotecario', ''],
         ]);
 
         $this->postJson(route('api.v1.admin.users.import'), ['file' => $file, 'confirm' => true])
             ->assertOk()->assertJsonPath('valid', false)->assertJsonPath('created', 0)
-            ->assertJsonPath('rows.1.errors', []);
+            ->assertJsonPath('rows.1.errors', [])
+            ->assertJsonPath('rows.2.errors', ['El segundo apellido es obligatorio.']);
         $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'luis.dos@silabos.test']);
     }
 

@@ -47,7 +47,12 @@ class ImportManagedUsers
                 'role_code' => $roles->get($this->key($values['rol'])) ?? $values['rol'],
                 'career_id' => $values['carrera'] === '' ? null : ($careers->get($this->key($values['carrera'])) ?? $values['carrera']),
             ];
-            $validator = Validator::make($payload, (new CreateManagedUserRequest)->rules(), (new CreateManagedUserRequest)->messages());
+            // Las partes del nombre ya las valida `compose`; aquí solo se comprueba el nombre unido.
+            $rules = [
+                'nombre' => ['required', 'string', 'max:180'],
+                ...array_diff_key((new CreateManagedUserRequest)->rules(), ['nombre' => true, ...PersonNameColumns::COLUMNS]),
+            ];
+            $validator = Validator::make($payload, $rules, (new CreateManagedUserRequest)->messages());
             $errors = [...$nameErrors, ...$validator->errors()->all()];
             if (isset($seen[$email])) {
                 $errors[] = "El correo se repite en la fila {$seen[$email]}.";

@@ -61,7 +61,7 @@ class LibraryReviewTest extends TestCase
         $this->assertNull($assignment->carrera_id);
 
         $this->as('admin')->postJson(route('api.v1.admin.users.store'), [
-            'nombre' => 'Bibliotecaria Nueva',
+            'primer_nombre' => 'Bibliotecaria', 'segundo_nombre' => 'Luz', 'primer_apellido' => 'Nueva', 'segundo_apellido' => 'Prueba',
             'correo_electronico' => 'biblioteca.nueva@silabos.test',
             'role_code' => RoleCode::Librarian->value,
         ])->assertSuccessful();

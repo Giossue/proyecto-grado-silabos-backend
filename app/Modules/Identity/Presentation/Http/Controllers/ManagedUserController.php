@@ -132,7 +132,7 @@ class ManagedUserController extends Controller
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $created = $action->execute([
-            'nombre' => $request->string('nombre')->toString(),
+            'nombre' => $request->fullName(),
             'correo_electronico' => $request->string('correo_electronico')->toString(),
             'role_code' => $request->string('role_code')->toString(),
             'career_id' => $request->filled('career_id') ? $request->string('career_id')->toString() : null,
@@ -156,6 +156,7 @@ class ManagedUserController extends Controller
         ], [
             ...PersonNameColumns::NOTES,
             'Correo: use el correo institucional; no puede repetirse.',
+            'Todas las columnas son obligatorias, salvo Carrera para Administrador y Bibliotecario.',
             'Rol: elija una opción de la lista.',
             'Carrera: elija una de la lista para Coordinador y Docente; déjela vacía para Administrador y Bibliotecario.',
         ]);

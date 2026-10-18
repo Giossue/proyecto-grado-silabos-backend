@@ -6,7 +6,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
-const ATRIBUTOS_YA_EN_ESPANOL = ['nombre', 'activo', 'estado', 'carrera', 'periodo', 'fecha', 'numero', 'campus', 'facultad', 'creditos'];
+const ATRIBUTOS_YA_EN_ESPANOL = ['nombre', 'activo', 'estado', 'carrera', 'periodo', 'fecha', 'numero', 'campus', 'facultad', 'creditos', 'primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido'];
 
 /** @return list<class-string<FormRequest>> */
 function formRequestsDelSistema(): array

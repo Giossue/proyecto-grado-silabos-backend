@@ -28,7 +28,7 @@ class ImportCareerTeachers
         $checked = [];
         $payloads = [];
         foreach ($rows as $row) {
-            [$values, $nameErrors] = PersonNameColumns::compose($row['values'], requireAll: true);
+            [$values, $nameErrors] = PersonNameColumns::compose($row['values']);
             $row['values'] = $values;
             $email = mb_strtolower($values['correo']);
             $payload = ['nombre' => $values['nombre'], 'correo_electronico' => $email];
