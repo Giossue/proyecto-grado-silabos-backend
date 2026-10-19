@@ -19,7 +19,7 @@ ARCOTEL no publica los certificados: cada entidad los publica en su sitio.
 
 ## Archivo ya preparado (2026-10-19)
 
-`resources/trust/ca-ecuador.pem` reúne 35 certificados (raíces e intermedios vigentes) de las
+`resources/trust/ca-ecuador.pem` reúne 38 certificados (raíces e intermedios vigentes) de las
 entidades de abajo; los originales están en `resources/trust/ec/<entidad>/`. Para usarlo:
 
 1. En las variables del servidor: `SIGNATURE_TRUSTED_CA_BUNDLE=/var/www/html/resources/trust/ca-ecuador.pem`
