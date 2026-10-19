@@ -17,6 +17,8 @@ final class TemplateDocumentWord
 
     private int $listDepth = 0;
 
+    private bool $keepWithNext = false;
+
     public function __construct(
         private readonly ?string $paragraphAlignment = null,
         private readonly ?string $tableHeaderBackground = null,
@@ -45,6 +47,9 @@ final class TemplateDocumentWord
                 ?? $this->paragraphAlignment
                 ?? (is_string($own) ? $own : 'left');
             $style = ['spaceAfter' => $insideTable ? 0 : 80, 'alignment' => $alignment === 'justify' ? 'both' : $alignment];
+            if ($insideTable && $this->keepWithNext) {
+                $style['keepNext'] = true;
+            }
             if ($list !== null) {
                 $style['numStyle'] = $list;
                 $style['numLevel'] = max(0, min(2, $this->listDepth - 1));
@@ -121,6 +126,9 @@ final class TemplateDocumentWord
         }
         $widths = array_values(array_map(fn ($weight) => (int) round($width * $weight / array_sum($weights)), $weights));
         $outerFontSize = $this->tableFontSize;
+        $outerKeepWithNext = $this->keepWithNext;
+        $leadingHeader = true;
+        $leadingHeading = true;
         $cellTexts = $this->cellTexts($rows, $widths);
         $tableFontSize = $this->fontSizeThatFits($cellTexts);
         $rowHeights = [];
@@ -135,21 +143,25 @@ final class TemplateDocumentWord
         $table = $target->addTable(['borderSize' => 4, 'borderColor' => self::TABLE_BORDER, 'cellMargin' => 50, 'width' => 5000, 'unit' => TblWidth::PERCENT]);
         $merged = [];
         foreach ($rows as $rowIndex => $source) {
-            $isRepeatingHeader = array_reduce(
+            $leadingHeader = $leadingHeader && array_reduce(
                 $source['content'],
                 fn (bool $carry, array $cell): bool => $carry && $cell['type'] === 'tableHeader',
                 true,
             );
-            $row = $table->addRow($rowHeights[$rowIndex] ?? null, $isRepeatingHeader ? ['tblHeader' => true] : []);
+            $leadingHeading = $leadingHeading && ($source['content'][0]['type'] ?? null) === 'tableHeader';
+            $row = $table->addRow($rowHeights[$rowIndex] ?? null, [...($leadingHeading ? ['cantSplit' => true] : []), ...($leadingHeader ? ['tblHeader' => true] : [])]);
             $cells = $source['content'];
             $column = 0;
             while ($column < $count) {
                 if (isset($merged[$column])) {
                     $merge = $merged[$column];
-                    $row->addCell(
+                    $continued = $row->addCell(
                         (int) array_sum(array_slice($widths, $column, $merge['span'])),
                         $merge['options'],
                     );
+                    if ($leadingHeading) {
+                        $continued->addTextRun(['spaceAfter' => 0, 'keepNext' => true]);
+                    }
                     if (--$merged[$column]['rows'] === 0) {
                         unset($merged[$column]);
                     }
@@ -194,6 +206,7 @@ final class TemplateDocumentWord
                     $this->tableFontSize = self::TABLE_MIN_FONT_SIZE - 1;
                 }
                 $destination = $row->addCell($cellWidth, $options);
+                $this->keepWithNext = $leadingHeading;
                 foreach ($cell['content'] as $child) {
                     $styled = $isHeader && $this->tableHeaderColor !== null
                         ? $this->withTextColor($child, $this->tableHeaderColor)
@@ -211,6 +224,7 @@ final class TemplateDocumentWord
             }
         }
         $this->tableFontSize = $outerFontSize;
+        $this->keepWithNext = $outerKeepWithNext;
     }
 
     /**

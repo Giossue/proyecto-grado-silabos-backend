@@ -34,6 +34,16 @@ cambien según dónde haga clic.
   párrafo vacío al final de las tablas.
 - En la vista previa, un párrafo vacío ocupa una línea, como en Word.
 
+## Cambios (Word y PDF)
+
+- `TemplateDocumentWord`: las filas iniciales que empiezan con una celda de encabezado (por ejemplo,
+  el encabezado de cada unidad) no se parten y llevan «mantener con la siguiente» en todos sus
+  párrafos, también en las celdas combinadas. Sin eso último, LibreOffice (PDF) no lo respeta.
+- Las filas de contenido se siguen pudiendo cortar entre páginas: impedirlo en todas sumaba 5 páginas
+  con semanas largas.
+- Se descartó repetir esos encabezados en cada página: LibreOffice recorta las celdas combinadas de
+  la copia repetida y, al darles altura, pagina de forma errática.
+
 ## Verificación
 
 - Pruebas de `TemplateVisualBuilder`, `AdminTemplatePage` y `documentPagination` (dos nuevas que
@@ -42,3 +52,7 @@ cambien según dónde haga clic.
   secciones y las 3 hojas miden igual en vista y en edición; la hoja no se mueve al entrar a editar
   ni al seleccionar un campo, una celda o una sección; ninguna fila cruza un corte de página.
 - A 1100 px la cinta pasa a dos filas sin ocultar Guardar.
+- `WordRendererTest::test_unit_headings_stay_together_with_their_first_week` (falla sin el cambio).
+- PDF con Gotenberg local (LibreOffice 26.8) y semanas de 1, 3 y 5 líneas: ningún encabezado de
+  unidad queda solo al final de una página (antes pasaba con 1 y 3 líneas); 9, 13 y 17 páginas
+  frente a 9, 13 y 16.

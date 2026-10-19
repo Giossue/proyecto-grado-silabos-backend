@@ -27,33 +27,10 @@ class WordRendererTest extends TestCase
 
     public function test_v8_official_documents_render_generic_tables_variables_and_landscape(): void
     {
-        $variables = array_column(TemplateVariables::catalog(), 'sample', 'key');
-        $sections = [];
-        foreach (OfficialTemplate::sections() as $section) {
-            $fields = [];
-            foreach ($section['fields'] as $field) {
-                $document = FieldDocument::normalize($field['content']);
-                $fields[] = ['key' => $field['key'], 'label' => $field['label'] ?? '', 'quien_llena' => $field['quien_llena'], 'document' => $document, 'value' => FieldDocument::resolve($document, $variables)];
-            }
-            $sections[] = ['key' => $section['key'], 'title' => $section['title'], 'orientation' => $section['orientation'] ?? 'portrait', 'fields' => $fields];
-        }
-        $input = new DocumentRenderInput(
-            subject: 'Asignatura de prueba', subjectCode: 'SW-TEST', academicPeriod: 'Período de prueba',
-            revisionNumber: 1, revisionFingerprint: str_repeat('ab', 32), generatedAt: '2026-10-09T15:00:00Z',
-            locale: 'es-EC', snapshot: ['schema_version' => 8, 'template_variables' => $variables, 'sections' => $sections],
-        );
+        $input = $this->officialInput();
+        $variables = $input->snapshot['template_variables'];
         $bundle = app(DocumentRenderer::class)->render($input);
-        $temporary = tempnam(sys_get_temp_dir(), 'silabos-document-test-');
-        file_put_contents($temporary, $bundle->docx->bytes);
-        $zip = new ZipArchive;
-        $this->assertTrue($zip->open($temporary) === true);
-        $xml = (string) $zip->getFromName('word/document.xml');
-        $zip->close();
-        unlink($temporary);
-        $dom = new DOMDocument;
-        $dom->loadXML($xml);
-        $xpath = new DOMXPath($dom);
-        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+        [$xml, $dom, $xpath] = $this->documentXml($bundle->docx->bytes);
         $this->assertSame(11, $xpath->query('//w:tbl[.//w:t]')->length);
         $this->assertSame(4, $xpath->query('//w:tbl[.//w:t[contains(., "Contenidos temáticos")]]')->length);
         $this->assertSame(1, $xpath->query('//w:tbl[.//w:t[contains(., "Contenidos temáticos")]]/w:tr[.//w:t[text()="16"]]')->length);
@@ -67,6 +44,25 @@ class WordRendererTest extends TestCase
         $lines = implode(' ', app(SyllabusDocumentContent::class)->lines($input));
         $this->assertStringContainsString($variables['nombre_docente'], $lines);
         $this->assertStringContainsString('Aprendizaje autónomo', $lines);
+    }
+
+    public function test_unit_headings_stay_together_with_their_first_week(): void
+    {
+        [, , $xpath] = $this->documentXml(app(DocumentRenderer::class)->render($this->officialInput())->docx->bytes);
+        $unit = $xpath->query('//w:tbl[.//w:t[contains(., "Unidad No.")]]')->item(0);
+        $this->assertInstanceOf(DOMElement::class, $unit);
+        $rows = iterator_to_array($xpath->query('w:tr', $unit) ?: []);
+
+        foreach (array_slice($rows, 0, 5) as $row) {
+            $this->assertSame(1, $xpath->query('w:trPr/w:cantSplit', $row)->length);
+            $paragraphs = $xpath->query('.//w:p', $row)->length;
+            $this->assertGreaterThan(0, $paragraphs);
+            $this->assertSame($paragraphs, $xpath->query('.//w:p[w:pPr/w:keepNext]', $row)->length);
+        }
+        $this->assertStringContainsString('Unidad No.', $rows[0]->textContent);
+        $this->assertSame(0, $xpath->query('.//w:keepNext', $rows[5])->length);
+        $this->assertSame(0, $xpath->query('w:trPr/w:cantSplit', $rows[5])->length);
+        $this->assertSame(0, $xpath->query('w:tr/w:trPr/w:tblHeader', $unit)->length);
     }
 
     public function test_v7_snapshot_paints_each_field_with_its_type(): void
@@ -511,6 +507,44 @@ class WordRendererTest extends TestCase
         $snapshot['sections'][0]['blocks'][0]['document'] = IdentificationCard::document($snapshot['identification']);
 
         return $snapshot;
+    }
+
+    private function officialInput(): DocumentRenderInput
+    {
+        $variables = array_column(TemplateVariables::catalog(), 'sample', 'key');
+        $sections = [];
+        foreach (OfficialTemplate::sections() as $section) {
+            $fields = [];
+            foreach ($section['fields'] as $field) {
+                $document = FieldDocument::normalize($field['content']);
+                $fields[] = ['key' => $field['key'], 'label' => $field['label'] ?? '', 'quien_llena' => $field['quien_llena'], 'document' => $document, 'value' => FieldDocument::resolve($document, $variables)];
+            }
+            $sections[] = ['key' => $section['key'], 'title' => $section['title'], 'orientation' => $section['orientation'] ?? 'portrait', 'fields' => $fields];
+        }
+
+        return new DocumentRenderInput(
+            subject: 'Asignatura de prueba', subjectCode: 'SW-TEST', academicPeriod: 'Período de prueba',
+            revisionNumber: 1, revisionFingerprint: str_repeat('ab', 32), generatedAt: '2026-10-09T15:00:00Z',
+            locale: 'es-EC', snapshot: ['schema_version' => 8, 'template_variables' => $variables, 'sections' => $sections],
+        );
+    }
+
+    /** @return array{0: string, 1: DOMDocument, 2: DOMXPath} */
+    private function documentXml(string $docx): array
+    {
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-document-test-');
+        file_put_contents($temporary, $docx);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        unlink($temporary);
+        $dom = new DOMDocument;
+        $dom->loadXML($xml);
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+
+        return [$xml, $dom, $xpath];
     }
 
     private function legacySheet(string $key, string $label = ''): array
