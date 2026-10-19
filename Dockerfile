@@ -1,13 +1,3 @@
-# Imagen de producción de Sílabos UEB.
-#
-# Resuelve dependencias PHP sin las de desarrollo y sirve la API con Nginx y PHP-FPM.
-# PostgreSQL y Redis viven fuera: la imagen se conecta mediante variables de entorno.
-
-# --- Etapa 1: dependencias PHP --------------------------------------------------------
-# Se instalan sin scripts y se genera el autoload aparte: `package:discover` arrancaría
-# la aplicación, y aquí todavía no hay entorno que la sostenga. La imagen de Composer no
-# trae `gd`, que PhpWord declara como requisito: aquí solo se resuelven archivos, y la
-# extensión sí está en la imagen final, así que se ignora únicamente en esta etapa.
 FROM docker.io/library/composer:2 AS php-deps
 WORKDIR /app
 COPY composer.json composer.lock ./
@@ -20,14 +10,8 @@ RUN composer install \
         --ignore-platform-req=ext-gd \
     && composer dump-autoload --optimize --classmap-authoritative --no-dev
 
-# --- Etapa 2: imagen final ----------------------------------------------------------
-# Se fija la rama de Alpine para que la etiqueta móvil de PHP no cambie de distribución
-# silenciosamente entre despliegues. Los parches de PHP 8.4 siguen llegando dentro de ella.
 FROM docker.io/library/php:8.4-fpm-alpine3.23 AS runtime
 
-# `pdo_pgsql` habla con PostgreSQL; `intl` sostiene el formato de fechas en español;
-# `zip` y `gd` los necesita la exportación de documentos. `opcache` no es opcional en
-# producción: sin él cada petición recompila el código.
 RUN apk add --no-cache \
         nginx \
         supervisor \
@@ -61,9 +45,6 @@ COPY docker/app/supervisord.conf /etc/supervisord.conf
 COPY docker/app/entrypoint.sh /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint
 
-# Laravel escribe en `storage` y en la caché de vistas. El resto del árbol permanece de
-# solo lectura para el proceso web.
-# Sin llaves: el `sh` de Alpine no expande `{a,b}` y crearía un directorio con ese nombre.
 RUN mkdir -p \
         storage/framework/cache/data \
         storage/framework/sessions \
@@ -76,9 +57,6 @@ RUN mkdir -p \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# nginx.conf corre los workers como www-data, pero el paquete de Alpine deja
-# /var/lib/nginx/tmp (cuerpos de petición y respuestas que exceden los búferes) solo para
-# el usuario nginx. Sin esto, toda subida mayor a 8 KB termina en un 500 de nginx.
 RUN chown -R www-data:www-data /var/lib/nginx
 
 EXPOSE 8080

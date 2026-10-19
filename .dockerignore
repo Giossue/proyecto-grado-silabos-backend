@@ -8,8 +8,6 @@ storage/logs/*.log
 storage/framework/cache/data
 storage/framework/sessions
 storage/framework/views
-# El descubrimiento de paquetes cacheado en local incluye proveedores de desarrollo, que
-# no existen en la imagen. Se regenera dentro del contenedor.
 bootstrap/cache/*.php
 vendor
 tests

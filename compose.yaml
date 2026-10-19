@@ -11,8 +11,6 @@ services:
     ports:
       - '127.0.0.1:55432:5432'
     volumes:
-      # postgres:18 coloca los datos en un subdirectorio de /var/lib/postgresql y aborta
-      # si el volumen se monta en /var/lib/postgresql/data.
       - postgres-data:/var/lib/postgresql
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
