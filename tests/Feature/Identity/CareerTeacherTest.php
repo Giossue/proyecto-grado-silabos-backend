@@ -447,7 +447,7 @@ class CareerTeacherTest extends TestCase
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.perfil_actualizado', 'usuario_id' => $this->coordinator->id, 'recurso_id' => $user->id]);
     }
 
-    public function test_coordinator_cannot_change_the_email_of_an_activated_teacher_but_can_fix_the_name(): void
+    public function test_coordinator_cannot_change_the_name_or_the_email_of_an_activated_teacher(): void
     {
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
 
@@ -459,9 +459,14 @@ class CareerTeacherTest extends TestCase
         $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
             'nombre' => 'Docente Demo Cuarto Nombre',
             'correo_electronico' => 'docente@silabos.test',
-        ])->assertOk()->assertJsonPath('message', 'Docente actualizado.');
+        ])->assertUnprocessable()->assertJsonValidationErrors('nombre');
 
-        $this->assertSame('DOCENTE DEMO CUARTO NOMBRE', $teacher->fresh()->nombre);
+        $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
+            'nombre' => $teacher->nombre,
+            'correo_electronico' => 'docente@silabos.test',
+        ])->assertOk();
+
+        $this->assertNotSame('DOCENTE DEMO CUARTO NOMBRE', $teacher->fresh()->nombre);
         $this->assertSame('docente@silabos.test', $teacher->fresh()->correo_electronico);
         Mail::assertNothingQueued();
     }

@@ -32,6 +32,11 @@ class UpdateCareerTeacherRequest extends FormRequest
 
         return [
             'nombre' => ['required', 'string', 'max:180', fn (string $attribute, mixed $value, Closure $fail) => ! is_string($value)
+                || ! $target instanceof User
+                || ! $target->hasVerifiedEmail()
+                || PersonName::normalize($value) === PersonName::normalize($target->nombre)
+                ? null
+                : $fail('La cuenta ya fue activada y su nombre no se puede cambiar.'), fn (string $attribute, mixed $value, Closure $fail) => ! is_string($value)
                 || PersonName::hasFourParts($value)
                 || ($target instanceof User && PersonName::normalize($value) === PersonName::normalize($target->nombre))
                 ? null
