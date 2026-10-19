@@ -5,18 +5,22 @@ namespace App\Modules\Academic\Infrastructure\Jobs;
 use App\Modules\Academic\Application\FichaDocumentText;
 use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Support\Queue\RunsOnce;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\UniqueFor;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
 
-class PrepareFichaImportJob implements ShouldQueue
+#[UniqueFor(1800)]
+class PrepareFichaImportJob implements ShouldBeUnique, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, RunsOnce, SerializesModels;
 
     public int $tries = 1;
 
@@ -25,6 +29,11 @@ class PrepareFichaImportJob implements ShouldQueue
     public function __construct(public readonly string $importId)
     {
         $this->onQueue('ia');
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->importId;
     }
 
     public function handle(FichaDocumentText $reader): void

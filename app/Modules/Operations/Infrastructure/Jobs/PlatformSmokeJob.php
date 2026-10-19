@@ -2,16 +2,20 @@
 
 namespace App\Modules\Operations\Infrastructure\Jobs;
 
+use App\Support\Queue\RunsOnce;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\UniqueFor;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class PlatformSmokeJob implements ShouldQueue
+#[UniqueFor(300)]
+class PlatformSmokeJob implements ShouldBeUnique, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, RunsOnce;
 
     public int $tries = 3;
 
@@ -23,6 +27,11 @@ class PlatformSmokeJob implements ShouldQueue
     public function __construct(public readonly string $key)
     {
         $this->onQueue('critica');
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->key;
     }
 
     public function handle(): void

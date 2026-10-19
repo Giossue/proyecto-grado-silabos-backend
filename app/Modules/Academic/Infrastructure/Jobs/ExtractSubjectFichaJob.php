@@ -6,9 +6,12 @@ use App\Modules\Academic\Application\FichaEvidence;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\Contracts\FichaExtractionGateway;
 use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
+use App\Support\Queue\RunsOnce;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\UniqueFor;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +19,10 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
-class ExtractSubjectFichaJob implements ShouldQueue
+#[UniqueFor(600)]
+class ExtractSubjectFichaJob implements ShouldBeUnique, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, RunsOnce, SerializesModels;
 
     public int $tries = 2;
 
@@ -27,6 +31,11 @@ class ExtractSubjectFichaJob implements ShouldQueue
     public function __construct(public readonly string $importId, public readonly string $subjectId)
     {
         $this->onQueue('ia');
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->importId.':'.$this->subjectId;
     }
 
     public function handle(FichaExtractionGateway $gateway, FichaEvidence $evidence, SubjectProfileFields $profile): void

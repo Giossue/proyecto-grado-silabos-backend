@@ -13,9 +13,12 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use App\Support\Queue\RunsOnce;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\UniqueFor;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
@@ -23,9 +26,10 @@ use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
 
-class GenerateSyllabusExportJob implements ShouldQueue
+#[UniqueFor(900)]
+class GenerateSyllabusExportJob implements ShouldBeUnique, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, RunsOnce, SerializesModels;
 
     public int $tries = 3;
 
@@ -37,6 +41,11 @@ class GenerateSyllabusExportJob implements ShouldQueue
     public function __construct(public readonly string $artifactId)
     {
         $this->onQueue('documentos');
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->artifactId;
     }
 
     public function handle(

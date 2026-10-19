@@ -8,17 +8,21 @@ use App\Modules\AiAssistance\Domain\Data\AiChatInput;
 use App\Modules\AiAssistance\Domain\Exceptions\AiContractException;
 use App\Modules\AiAssistance\Domain\Exceptions\AiGatewayUnavailable;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
+use App\Support\Queue\RunsOnce;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\Attributes\UniqueFor;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class AnswerSyllabusChatJob implements ShouldQueue
+#[UniqueFor(600)]
+class AnswerSyllabusChatJob implements ShouldBeUnique, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, RunsOnce, SerializesModels;
 
     public int $tries = 3;
 
@@ -30,6 +34,11 @@ class AnswerSyllabusChatJob implements ShouldQueue
     public function __construct(public readonly string $messageId)
     {
         $this->onQueue('ia');
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->messageId;
     }
 
     public function handle(AiChatGateway $gateway): void

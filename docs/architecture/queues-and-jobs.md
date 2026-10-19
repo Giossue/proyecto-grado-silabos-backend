@@ -39,6 +39,28 @@ El payload contiene IDs y versiones, no objetos enormes ni secretos.
 - Colas y caché usan Redis por defecto; I-168 quitó las conexiones `database`, que
   apuntaban a tablas inexistentes.
 
+### Patrón de idempotencia (I-226)
+
+Laravel no trae un middleware HTTP de `Idempotency-Key`; la documentación oficial reparte la
+idea entre trabajos únicos, bloqueos y transacciones. El sistema aplica cada pieza donde toca:
+
+| Capa | Mecanismo | Dónde |
+|---|---|---|
+| Petición HTTP | `idempotency_key` (UUID) + restricción única `(recurso, clave_idempotencia)` + `lockForUpdate` dentro de `DB::transaction` | Enviar, aprobar, comentar en biblioteca, exportar y mensajes de IA |
+| Cliente | Una clave por intento (`attemptKey`): se reutiliza al reintentar el mismo envío y se renueva tras un éxito o si cambia lo enviado | Frontend |
+| Despacho | `->afterCommit()`: un rollback descarta el trabajo | Todas las acciones que despachan |
+| Trabajo en cola | `ShouldBeUnique` con `uniqueId()` y `#[UniqueFor]`: un duplicado se descarta mientras el primero espera o corre | Los cinco trabajos |
+| Ejecución | `WithoutOverlapping($uniqueId)->dontRelease()->expireAfter(timeout + 30)` (`App\Support\Queue\RunsOnce`): si Redis reentrega un trabajo que sigue corriendo, la copia se elimina | Los cinco trabajos |
+| Consumidor | Cambia el estado del registro de dominio solo si sigue en el estado esperado | Todos |
+
+Claves de unicidad: exportación `artefacto`, respuesta de chat `mensaje`, lectura de fichas
+`importación`, extracción de ficha `importación:asignatura`, verificación `clave`.
+
+`retry_after` de la conexión debe ser mayor que el `timeout` de cada trabajo (la documentación
+avisa de que, si no, se procesa dos veces); la lectura de fichas con OCR dura hasta 900 s, así que
+con OCR activo `REDIS_QUEUE_RETRY_AFTER` debe superar 900. `WithoutOverlapping` es la red de
+seguridad si no se cumple.
+
 ### Idempotencia de ingesta PDF
 
 La ingesta de fuentes usa dos niveles de idempotencia. La ejecución de PostgreSQL se
