@@ -47,6 +47,7 @@ Estas no reemplazan los PV de la SRS:
 | DT-13 | Ingesta PDF interna para importación curricular | OpenParser con `paddleocr-vl-1.6` y `openparser@1` como adaptador PDF → documento JSON; `deepseek-flash` puede normalizar la salida por lotes cuando `AI_SOURCE_NORMALIZATION_ENABLED=true`, sin fallback silencioso; ejecución asíncrona y PDF privado | Implementaciones I-95/I-96/I-99; requiere PV-12/PV-14 |
 | DT-14 | Más de un docente activo en el mismo paralelo | No permitido: cada paralelo tiene como máximo una asignación docente activa; el relevo conserva la historia en filas inactivas | Cerrada el 2026-09-20 |
 | DT-15 | Fuente y alcance de la unidad de organización curricular por materia y ciclo | Una unidad obligatoria por materia, sin unidad ni restricciones por ciclo; se retira la franja visual que infería una unidad predominante. | Cerrada el 2026-09-24 por decisión del responsable del producto |
+| DT-16 | Entidades certificadoras que la UEB acepta para la firma electrónica y sello de tiempo externo | La firma ya valida la cadena contra el archivo PEM de `SIGNATURE_TRUSTED_CA_BUNDLE`; mientras esté vacío solo verifica integridad. Falta que la UEB indique las entidades reconocidas (por ejemplo, las acreditadas en Ecuador) para cargar sus certificados raíz e intermedios, y si exige sello de tiempo de una entidad externa (no implementado: hoy la hora es la del servidor). | Antes de usar las firmas con valor institucional |
 
 ### DT-15 — Conflicto de procedencia normativa (2026-09-24)
 

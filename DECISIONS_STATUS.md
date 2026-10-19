@@ -11,6 +11,7 @@ Fecha de corte: **9 de octubre de 2026**.
 
 ## Confirmado
 
+- Firma electrónica (I-227, 2026-10-19): el titular del certificado debe coincidir con la cuenta que firma y, cuando se cargue el archivo de entidades certificadoras (DT-16), la cadena debe llegar a una de ellas. Un documento ya firmado que cambia no se vuelve a firmar ni se ofrece una verificación pública de alteración: por petición de la UEB se evita esa fricción; el cambio de contenido sigue siendo una revisión nueva.
 - Producto centralizado, configurable y trazable para el ciclo de vida del sílabo.
 - Alcance inicial: Carrera de Software UEB.
 - Roles: Administrador, Coordinador, Docente y, desde I-165 (29 de septiembre de 2026), por instrucción del responsable: nuevo rol

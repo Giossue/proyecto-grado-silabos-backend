@@ -88,6 +88,16 @@ estas variables. La firma es incremental (PAdES) en orden docente → coordinaci
 biblioteca y solo empieza cuando biblioteca aprobó la bibliografía; el PDF no cambia
 entre firmas.
 
+I-227, validación de la firma recibida: el navegador firma con el `.p12` del usuario y solo
+sube el PDF firmado; el archivo y su clave no salen del equipo. El servidor comprueba que la
+firma cubre el documento vigente, que el certificado está vigente y que su titular coincide
+con la cuenta (`SignerHolderMatcher`: mismas palabras del nombre sin importar orden, tildes
+ni mayúsculas; `SIGNATURE_REQUIRE_HOLDER_MATCH`, activo por defecto). Si
+`SIGNATURE_TRUSTED_CA_BUNDLE` apunta a un archivo PEM con las entidades certificadoras
+reconocidas, también exige que la cadena del certificado llegue a una de ellas; vacío, solo
+verifica integridad (DT-16). No hay sello de tiempo externo. Cargar el archivo PEM con las
+raíces e intermedias reconocidas por la UEB es un paso de despliegue, no de código.
+
 El PDF continúa como respaldo de texto (ahora incluye texto fijo y variables del diseño);
 no se promete maquetación de tablas, colores ni cortes iguales al DOCX. La fidelidad
 institucional y el motor PDF siguen sujetos a PV-07.

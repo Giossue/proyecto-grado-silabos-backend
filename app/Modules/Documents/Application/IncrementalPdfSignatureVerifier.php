@@ -97,13 +97,41 @@ class IncrementalPdfSignatureVerifier
             if ($valid !== true || ! is_file($signerFile)) {
                 $this->fail('La firma no corresponde al documento: el PDF fue alterado o la firma es inválida.');
             }
+            $this->assertTrustedChain($contentFile, $signatureFile, "{$directory}/cadena.pem");
 
             return $this->certificate((string) file_get_contents($signerFile));
         } finally {
-            foreach ([$contentFile, $signatureFile, $signerFile] as $file) {
+            foreach ([$contentFile, $signatureFile, $signerFile, "{$directory}/cadena.pem"] as $file) {
                 @unlink($file);
             }
             @rmdir($directory);
+        }
+    }
+
+    private function assertTrustedChain(string $contentFile, string $signatureFile, string $signerFile): void
+    {
+        $bundle = config('signatures.trusted_ca_bundle');
+        if (! is_string($bundle) || $bundle === '') {
+            return;
+        }
+        if (! is_file($bundle)) {
+            throw new RuntimeException('No se encontró el archivo de entidades certificadoras de confianza.');
+        }
+        while (openssl_error_string() !== false) {
+        }
+        $trusted = openssl_cms_verify(
+            $contentFile,
+            OPENSSL_CMS_BINARY | OPENSSL_CMS_DETACHED,
+            $signerFile,
+            [$bundle],
+            null,
+            null,
+            null,
+            $signatureFile,
+            OPENSSL_ENCODING_DER,
+        );
+        if ($trusted !== true) {
+            $this->fail('El certificado de firma no fue emitido por una entidad certificadora reconocida.');
         }
     }
 

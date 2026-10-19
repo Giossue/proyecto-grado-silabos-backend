@@ -5,6 +5,7 @@ namespace App\Modules\Documents\Application\Actions;
 use App\Models\User;
 use App\Modules\Documents\Application\IncrementalPdfSignatureVerifier;
 use App\Modules\Documents\Application\SignatureWorkflow;
+use App\Modules\Documents\Application\SignerHolderMatcher;
 use App\Modules\Documents\Infrastructure\Persistence\Models\DocumentSignature;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
@@ -23,6 +24,7 @@ class AcceptDocumentSignature
     public function __construct(
         private readonly SignatureWorkflow $workflow,
         private readonly IncrementalPdfSignatureVerifier $verifier,
+        private readonly SignerHolderMatcher $holders,
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
@@ -71,6 +73,9 @@ class AcceptDocumentSignature
                 }
                 $previous = (string) Storage::disk($current->disco)->get($current->ruta_interna);
                 $certificate = $this->verifier->verify($previous, $signedPdf);
+                if (config('signatures.require_holder_match') && ! $this->holders->matches($certificate->holder, $actor->nombre)) {
+                    $this->fail("El certificado pertenece a «{$certificate->holder}», que no coincide con su cuenta ({$actor->nombre}). Firme con su propia firma electrónica.");
+                }
 
                 $revision->loadMissing('syllabus.convocation');
                 $syllabus = $revision->syllabus;

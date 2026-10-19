@@ -27,6 +27,46 @@ trait SignsPdfIncrementally
         return ['certificate' => $certificate, 'key' => $key];
     }
 
+    /** @return array{certificate: OpenSSLCertificate, key: OpenSSLAsymmetricKey, pem: string} */
+    private function makeCertificateAuthority(string $name = 'ENTIDAD CERTIFICADORA DE PRUEBA'): array
+    {
+        $config = $this->opensslConfig('[req]'."\n".'distinguished_name=dn'."\n".'[dn]'."\n".'[v3_ca]'."\n".'basicConstraints=critical,CA:TRUE'."\n".'keyUsage=critical,keyCertSign,cRLSign'."\n");
+        $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA, 'config' => $config]);
+        $request = openssl_csr_new(['countryName' => 'EC', 'commonName' => $name], $key, ['digest_alg' => 'sha256', 'config' => $config]);
+        $certificate = openssl_csr_sign($request, null, $key, 365, ['digest_alg' => 'sha256', 'config' => $config, 'x509_extensions' => 'v3_ca'], random_int(1000, 999999));
+        if (! $certificate instanceof OpenSSLCertificate) {
+            throw new RuntimeException('No se pudo crear la entidad certificadora de prueba.');
+        }
+        openssl_x509_export($certificate, $pem);
+
+        return ['certificate' => $certificate, 'key' => $key, 'pem' => $pem];
+    }
+
+    /**
+     * @param  array{certificate: OpenSSLCertificate, key: OpenSSLAsymmetricKey, pem: string}  $authority
+     * @return array{certificate: OpenSSLCertificate, key: OpenSSLAsymmetricKey}
+     */
+    private function makeSigningCertificateIssuedBy(array $authority, string $holder): array
+    {
+        $config = $this->opensslConfig('[req]'."\n".'distinguished_name=dn'."\n".'[dn]'."\n".'[v3_leaf]'."\n".'basicConstraints=CA:FALSE'."\n".'keyUsage=digitalSignature,nonRepudiation'."\n".'extendedKeyUsage=emailProtection'."\n");
+        $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA, 'config' => $config]);
+        $request = openssl_csr_new(['countryName' => 'EC', 'commonName' => $holder], $key, ['digest_alg' => 'sha256', 'config' => $config]);
+        $certificate = openssl_csr_sign($request, $authority['certificate'], $authority['key'], 30, ['digest_alg' => 'sha256', 'config' => $config, 'x509_extensions' => 'v3_leaf'], random_int(1000, 999999));
+        if (! $certificate instanceof OpenSSLCertificate) {
+            throw new RuntimeException('No se pudo emitir el certificado de prueba.');
+        }
+
+        return ['certificate' => $certificate, 'key' => $key];
+    }
+
+    private function opensslConfig(string $contents): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'silabos-openssl-');
+        file_put_contents($path, $contents);
+
+        return $path;
+    }
+
     /** @param array{certificate: OpenSSLCertificate, key: OpenSSLAsymmetricKey} $credentials */
     private function signPdfIncrementally(string $pdf, array $credentials, string $contentsHexLength = '32768'): string
     {

@@ -63,6 +63,7 @@ class DocumentSignatureTest extends TestCase
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
         Storage::fake('private');
+        config(['signatures.require_holder_match' => false]);
 
         $this->coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
         $this->coordinatorContext = $this->coordinator->roleAssignments()->firstOrFail();
@@ -176,6 +177,22 @@ class DocumentSignatureTest extends TestCase
             Storage::disk('private')->allFiles("exports/{$revision->id}"),
             fn (string $path): bool => str_contains($path, 'firmado'),
         )));
+    }
+
+    public function test_exige_que_el_titular_del_certificado_sea_quien_firma(): void
+    {
+        config(['signatures.require_holder_match' => true]);
+        [, $revision] = $this->exportedRevision();
+        $original = $this->currentPdf($revision, 'teacher');
+        $base = hash('sha256', $original);
+
+        $this->upload($revision, $this->signPdfIncrementally($original, $this->makeSigningCertificate('MARIA LUISA GOMEZ TORRES')), $base, 'teacher')
+            ->assertJsonValidationErrors('signed_pdf');
+        $this->assertSame(0, DocumentSignature::query()->count());
+
+        $this->upload($revision, $this->signPdfIncrementally($original, $this->makeSigningCertificate(mb_strtoupper($this->teacher->nombre))), $base, 'teacher')
+            ->assertCreated();
+        $this->assertSame(1, DocumentSignature::query()->count());
     }
 
     public function test_reabrir_anula_el_proceso_y_personas_ajenas_no_firman(): void
