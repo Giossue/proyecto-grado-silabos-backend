@@ -41,7 +41,7 @@ class ManagedUserUpdateTest extends TestCase
     {
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
-                'nombre' => 'Docente Corregida',
+                'nombre' => 'Ana María Pérez Gómez',
                 'correo_electronico' => 'docente@silabos.test',
                 'active' => false,
             ])
@@ -49,7 +49,7 @@ class ManagedUserUpdateTest extends TestCase
             ->assertSuccessful();
 
         $this->teacher->refresh();
-        $this->assertSame('DOCENTE CORREGIDA', $this->teacher->nombre);
+        $this->assertSame('ANA MARÍA PÉREZ GÓMEZ', $this->teacher->nombre);
         $this->assertSame('docente@silabos.test', $this->teacher->correo_electronico);
         $this->assertFalse($this->teacher->activo);
         $this->assertDatabaseHas('eventos_auditoria', [
@@ -66,7 +66,7 @@ class ManagedUserUpdateTest extends TestCase
     {
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
-                'nombre' => 'Docente',
+                'nombre' => 'Ana María Pérez Gómez',
                 'correo_electronico' => 'otra.persona@silabos.test',
                 'active' => true,
             ])
@@ -159,14 +159,14 @@ class ManagedUserUpdateTest extends TestCase
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->teacher), [
-                'nombre' => 'Docente Renombrada',
+                'nombre' => 'Luisa Fernanda Mora Díaz',
                 'correo_electronico' => $this->teacher->correo_electronico,
                 'active' => true,
             ])
             ->assertSuccessful();
 
         $this->teacher->refresh();
-        $this->assertSame('DOCENTE RENOMBRADA', $this->teacher->nombre);
+        $this->assertSame('LUISA FERNANDA MORA DÍAZ', $this->teacher->nombre);
         $this->assertTrue($this->teacher->activo);
         $this->assertSame($assignmentsBefore, $this->teacher->roleAssignments()->count());
         $this->assertDatabaseMissing('eventos_auditoria', [
@@ -179,16 +179,16 @@ class ManagedUserUpdateTest extends TestCase
     {
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->administrator), [
-                'nombre' => 'Administración Renombrada',
+                'nombre' => 'Carlos Andrés Ruiz Vega',
                 'correo_electronico' => 'admin@silabos.test',
             ])
             ->assertSuccessful();
 
-        $this->assertSame('ADMINISTRACIÓN RENOMBRADA', $this->administrator->fresh()->nombre);
+        $this->assertSame('CARLOS ANDRÉS RUIZ VEGA', $this->administrator->fresh()->nombre);
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->administrator), [
-                'nombre' => 'Administración Renombrada',
+                'nombre' => 'Carlos Andrés Ruiz Vega',
                 'correo_electronico' => 'admin@silabos.test',
                 'active' => false,
             ])
@@ -196,7 +196,7 @@ class ManagedUserUpdateTest extends TestCase
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->administrator), [
-                'nombre' => 'Administración Renombrada',
+                'nombre' => 'Carlos Andrés Ruiz Vega',
                 'correo_electronico' => 'admin@silabos.test',
                 'role_code' => RoleCode::Administrator->value,
             ])

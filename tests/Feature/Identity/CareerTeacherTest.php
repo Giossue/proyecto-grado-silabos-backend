@@ -433,14 +433,14 @@ class CareerTeacherTest extends TestCase
         $first = ActivationInvitation::query()->where('usuario_id', $user->id)->firstOrFail();
 
         $this->patchJson(route('api.v1.coordination.academic.teachers.update', $user), [
-            'nombre' => 'docente corregido',
+            'nombre' => 'ana maría pérez gómez',
             'correo_electronico' => ' Corregido@silabos.test ',
         ])->assertOk()->assertJsonPath('message', 'Docente actualizado. La invitación anterior se invalidó y se envió una nueva al correo corregido.');
 
         $user->refresh();
         $this->assertSame('corregido@silabos.test', $user->correo_electronico);
-        $this->assertNotSame('docente corregido', $user->nombre);
-        $this->assertStringContainsStringIgnoringCase('docente corregido', $user->nombre);
+        $this->assertNotSame('ana maría pérez gómez', $user->nombre);
+        $this->assertStringContainsStringIgnoringCase('ana maría pérez gómez', $user->nombre);
         $this->assertNotNull($first->fresh()->invalidada_en);
         $this->assertDatabaseCount('invitaciones_activacion', 2);
         Mail::assertQueued(ManagedUserActivationMail::class, 2);
@@ -457,11 +457,11 @@ class CareerTeacherTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('correo_electronico');
 
         $this->patchJson(route('api.v1.coordination.academic.teachers.update', $teacher), [
-            'nombre' => 'Docente Demo Corregido',
+            'nombre' => 'Docente Demo Cuarto Nombre',
             'correo_electronico' => 'docente@silabos.test',
         ])->assertOk()->assertJsonPath('message', 'Docente actualizado.');
 
-        $this->assertSame('DOCENTE DEMO CORREGIDO', $teacher->fresh()->nombre);
+        $this->assertSame('DOCENTE DEMO CUARTO NOMBRE', $teacher->fresh()->nombre);
         $this->assertSame('docente@silabos.test', $teacher->fresh()->correo_electronico);
         Mail::assertNothingQueued();
     }

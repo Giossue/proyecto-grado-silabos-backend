@@ -10,4 +10,9 @@ final class PersonName
 
         return mb_strtoupper($collapsed, 'UTF-8');
     }
+
+    public static function hasFourParts(string $value): bool
+    {
+        return count(array_filter(preg_split('/\s+/u', trim($value)) ?: [])) >= 4;
+    }
 }

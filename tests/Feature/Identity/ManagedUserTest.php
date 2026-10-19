@@ -466,7 +466,7 @@ class ManagedUserTest extends TestCase
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $pending), [
-                'nombre' => 'Nombre Corregido',
+                'nombre' => 'Pedro José Salas Vera',
                 'correo_electronico' => 'corregido@silabos.test',
             ])
             ->assertSuccessful();

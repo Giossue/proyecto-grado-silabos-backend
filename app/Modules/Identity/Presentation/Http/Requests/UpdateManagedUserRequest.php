@@ -4,6 +4,8 @@ namespace App\Modules\Identity\Presentation\Http\Requests;
 
 use App\Models\User;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Identity\Domain\PersonName;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,7 +30,11 @@ class UpdateManagedUserRequest extends FormRequest
         $target = $this->route('user');
 
         return [
-            'nombre' => ['required', 'string', 'max:180'],
+            'nombre' => ['required', 'string', 'max:180', fn (string $attribute, mixed $value, Closure $fail) => ! is_string($value)
+                || PersonName::hasFourParts($value)
+                || ($target instanceof User && PersonName::normalize($value) === PersonName::normalize($target->nombre))
+                ? null
+                : $fail('Escriba el primer y segundo nombre y el primer y segundo apellido.')],
             'correo_electronico' => [
                 'required',
                 'string',
