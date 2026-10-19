@@ -99,4 +99,17 @@ class SignatureTrustTest extends TestCase
         array_map('unlink', glob("{$directory}/*") ?: []);
         rmdir($directory);
     }
+
+    public function test_el_archivo_de_entidades_incluido_solo_tiene_entidades_certificadoras(): void
+    {
+        $contents = (string) file_get_contents(base_path('resources/trust/ca-ecuador.pem'));
+        preg_match_all('/-----BEGIN CERTIFICATE-----.+?-----END CERTIFICATE-----/s', $contents, $matches);
+
+        $this->assertGreaterThanOrEqual(30, count($matches[0]));
+        foreach ($matches[0] as $pem) {
+            $parsed = openssl_x509_parse($pem);
+            $this->assertIsArray($parsed);
+            $this->assertGreaterThan(time(), (int) $parsed['validTo_time_t'], 'Certificado vencido: '.($parsed['name'] ?? ''));
+        }
+    }
 }

@@ -27,7 +27,8 @@ class BuildSignatureTrustBundle extends Command
             }
             $extensions = is_array($parsed['extensions'] ?? null) ? $parsed['extensions'] : [];
             $basic = is_string($extensions['basicConstraints'] ?? null) ? $extensions['basicConstraints'] : '';
-            if (! str_contains($basic, 'CA:TRUE')) {
+            $selfSignedV1 = $basic === '' && ($parsed['version'] ?? null) === 0 && ($parsed['subject'] ?? null) === ($parsed['issuer'] ?? false);
+            if (! str_contains($basic, 'CA:TRUE') && ! $selfSignedV1) {
                 $this->error("{$file}: no es de una entidad certificadora (no es CA).");
                 $failed = true;
 

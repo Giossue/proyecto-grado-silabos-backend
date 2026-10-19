@@ -21,6 +21,8 @@ documentos alterados y obligue a volver a firmar: genera fricción con su trabaj
   ARCOTEL en `docs/runbooks/firma-electronica-entidades.md`.
 - Borrador de aviso de privacidad en `docs/security/aviso-de-privacidad.md` (PV-12 sigue abierta).
 
+- Certificados de 13 de las 17 entidades acreditadas en `resources/trust/` (sin activar: `SIGNATURE_TRUSTED_CA_BUNDLE`).
+
 ## Pendiente
 
 DT-16: la UEB indica las entidades certificadoras reconocidas y si exige sello de tiempo externo.
