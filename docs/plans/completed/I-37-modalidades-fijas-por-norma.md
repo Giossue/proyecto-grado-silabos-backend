@@ -10,7 +10,7 @@ Implementado el 2026-09-03 y ajustado el 2026-09-05. Verificación al pie.
 
 ## Objetivo
 
-Quitar el catálogo de modalidades: el Reglamento de Régimen Académico (arts. 70-74A)
+Quitar el catálogo de modalidades: el Reglamento de Régimen Académico (arts. 55-59, con el uso complementario de otras modalidades en el art. 60)
 define las únicas que existen (presencial, semipresencial, en línea, a distancia e
 híbrida), así
 que no hay nada que Administración deba registrar. La modalidad aprobada

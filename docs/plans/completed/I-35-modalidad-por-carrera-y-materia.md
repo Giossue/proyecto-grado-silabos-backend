@@ -14,8 +14,9 @@ cualquier materia puede apartarse y la carrera pasa a híbrida sola.
 
 Que la modalidad de estudio deje de elegirse a mano en cada oferta y salga de donde la
 fija la norma: el CES aprueba cada carrera en una modalidad (Reglamento de Régimen
-Académico, arts. 70-74) y una carrera híbrida combina modalidades materia por materia
-(art. 74A, hasta el 49 % en otra modalidad según art. 60). La malla oficial de
+Académico, arts. 55-59) y una carrera híbrida combina modalidades materia por materia
+(art. 59; el art. 60 permite hasta el 49 % de las asignaturas en otra modalidad sin
+afectar la modalidad de la titulación, y el art. 55 exige al menos 51 % presencial). La malla oficial de
 Administración de Empresas (junio 2024) trae la columna «MODA» en cada materia.
 
 ## Trazabilidad
