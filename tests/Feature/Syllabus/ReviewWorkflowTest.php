@@ -680,7 +680,9 @@ class ReviewWorkflowTest extends TestCase
     {
         $definitions = FieldDefinition::query()->get();
         DB::unprepared(<<<'SQL'
+            ALTER TABLE campos_plantilla ADD COLUMN configuracion_campo_plantilla jsonb NOT NULL DEFAULT '{}'::jsonb;
             ALTER TABLE definiciones_campo
+                ADD COLUMN clave_definicion_campo varchar(100),
                 ADD COLUMN tipo_definicion_campo varchar(40) DEFAULT 'texto',
                 ADD COLUMN clase_anterior_definicion_campo varchar(40),
                 ADD COLUMN heredado_definicion_campo boolean DEFAULT false,
@@ -691,6 +693,7 @@ class ReviewWorkflowTest extends TestCase
             SQL);
         foreach ($definitions as $field) {
             DB::table('definiciones_campo')->where('definicion_campo_id', $field->id)->update([
+                'clave_definicion_campo' => $field->clave,
                 'tipo_definicion_campo' => match ($field->quien_llena) {
                     'institucional' => 'fijo', 'coordinacion' => 'ficha', default => 'texto'
                 },

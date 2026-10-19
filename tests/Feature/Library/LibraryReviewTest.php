@@ -47,6 +47,7 @@ class LibraryReviewTest extends TestCase
     {
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
+        config(['signatures.require_holder_match' => false]);
         $this->configureFacultyLogos();
         foreach (['admin' => 'admin', 'coordinator' => 'coordinador', 'teacher' => 'docente', 'librarian' => 'bibliotecario'] as $key => $mail) {
             $user = User::query()->where('correo_electronico', "{$mail}@silabos.test")->firstOrFail();

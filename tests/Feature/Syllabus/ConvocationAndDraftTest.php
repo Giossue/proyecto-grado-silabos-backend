@@ -341,7 +341,7 @@ class ConvocationAndDraftTest extends TestCase
     public function test_empty_profile_bibliography_is_optional_for_validation(): void
     {
         $convocation = $this->createPreparedConvocation();
-        $bibliographyIds = FieldDefinition::query()->whereIn('clave', ['bibliografia', 'bibliografia_complementaria'])->pluck('id')->all();
+        $bibliographyIds = FieldDefinition::query()->whereIn('campo_plantilla_id', DB::table('campos_plantilla')->whereIn('clave_campo_plantilla', ['bibliografia', 'bibliografia_complementaria'])->select('campo_plantilla_id'))->pluck('id')->all();
         FieldValue::query()->whereNotNull('asignatura_id')->whereIn('definicion_campo_id', $bibliographyIds)->delete();
         $this->openPrepared($convocation);
         $syllabus = Syllabus::query()->firstOrFail();
