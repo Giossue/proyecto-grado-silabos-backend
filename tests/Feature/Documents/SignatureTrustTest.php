@@ -68,6 +68,21 @@ class SignatureTrustTest extends TestCase
         }
     }
 
+    public function test_acepta_certificados_firmados_directamente_por_una_entidad_de_la_lista_aunque_falte_su_raiz(): void
+    {
+        $root = $this->makeCertificateAuthority('RAIZ AUSENTE');
+        $intermediate = $this->makeCertificateAuthority('ENTIDAD INTERMEDIA', $root);
+        file_put_contents($this->bundle, $intermediate['pem']);
+        config(['signatures.trusted_ca_bundle' => $this->bundle]);
+        $verifier = app(IncrementalPdfSignatureVerifier::class);
+
+        $signed = $this->signPdfIncrementally(self::PDF, $this->makeSigningCertificateIssuedBy($intermediate, 'JUAN CARLOS PEREZ GOMEZ'));
+        $this->assertSame('JUAN CARLOS PEREZ GOMEZ', $verifier->verify(self::PDF, $signed)->holder);
+
+        $this->expectException(ValidationException::class);
+        $verifier->verify(self::PDF, $this->signPdfIncrementally(self::PDF, $this->makeSigningCertificateIssuedBy($this->makeCertificateAuthority('OTRA'), 'INTRUSO')));
+    }
+
     public function test_la_coincidencia_del_titular_ignora_orden_tildes_y_mayusculas(): void
     {
         $matcher = new SignerHolderMatcher;

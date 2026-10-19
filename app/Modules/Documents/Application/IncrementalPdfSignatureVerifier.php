@@ -97,9 +97,10 @@ class IncrementalPdfSignatureVerifier
             if ($valid !== true || ! is_file($signerFile)) {
                 $this->fail('La firma no corresponde al documento: el PDF fue alterado o la firma es inválida.');
             }
-            $this->assertTrustedChain($contentFile, $signatureFile, "{$directory}/cadena.pem");
+            $signerPem = (string) file_get_contents($signerFile);
+            $this->assertTrustedChain($contentFile, $signatureFile, "{$directory}/cadena.pem", $signerPem);
 
-            return $this->certificate((string) file_get_contents($signerFile));
+            return $this->certificate($signerPem);
         } finally {
             foreach ([$contentFile, $signatureFile, $signerFile, "{$directory}/cadena.pem"] as $file) {
                 @unlink($file);
@@ -108,7 +109,7 @@ class IncrementalPdfSignatureVerifier
         }
     }
 
-    private function assertTrustedChain(string $contentFile, string $signatureFile, string $signerFile): void
+    private function assertTrustedChain(string $contentFile, string $signatureFile, string $signerFile, string $signerPem): void
     {
         $bundle = config('signatures.trusted_ca_bundle');
         if (! is_string($bundle) || $bundle === '') {
@@ -130,9 +131,32 @@ class IncrementalPdfSignatureVerifier
             $signatureFile,
             OPENSSL_ENCODING_DER,
         );
-        if ($trusted !== true) {
+        if ($trusted !== true && ! $this->issuedByListedAuthority($signerPem, $bundle)) {
             $this->fail('El certificado de firma no fue emitido por una entidad certificadora reconocida.');
         }
+    }
+
+    private function issuedByListedAuthority(string $signerPem, string $bundle): bool
+    {
+        $signer = openssl_x509_parse($signerPem);
+        if (! is_array($signer)) {
+            return false;
+        }
+        preg_match_all('/-----BEGIN CERTIFICATE-----.+?-----END CERTIFICATE-----/s', (string) file_get_contents($bundle), $matches);
+        foreach ($matches[0] as $authorityPem) {
+            $authority = openssl_x509_parse($authorityPem);
+            $key = openssl_pkey_get_public($authorityPem);
+            if (! is_array($authority) || $key === false) {
+                continue;
+            }
+            if (($authority['subject'] ?? null) === ($signer['issuer'] ?? false)
+                && (int) ($authority['validTo_time_t'] ?? 0) > time()
+                && openssl_x509_verify($signerPem, $key) === 1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function certificate(string $pem): SignerCertificate
