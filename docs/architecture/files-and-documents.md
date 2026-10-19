@@ -131,6 +131,11 @@ hacía con colores y negritas; las columnas y valores guardados siguen en la bas
 sigue siendo Carta (el oficial es A4: pendiente). Gotenberg convierte este mismo Word a PDF; el parecido
 visual no se ha comprobado a mano.
 
+I-225 (19 de octubre de 2026) vuelve editables solo los márgenes y los tamaños de título, sección y
+contenido: `TemplateAppearance::LAYOUT`, guardados en `mapeo_documento.layout` (la clave `appearance`
+sigue ignorada). Un párrafo con alineación propia distinta de «izquierda» prevalece sobre la del cuerpo.
+Cada sección del Word lleva en el pie «Página X de Y» (campos `PAGE` y `NUMPAGES`).
+
 Contenido fijo oficial (I-195, 2026-10-07): las tablas de evaluación (indicadores y escala) y de firmas usan celdas de
 encabezado (`tableHeader`, con sombreado) y el texto de conducta ética lleva listas anidadas; el Word las escribe con
 sangría por nivel (hasta tres niveles de viñeta o numeración). Los textos del docente marcados `inside` no se repiten

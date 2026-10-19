@@ -20,6 +20,8 @@ final class TemplateAppearance
 
     public const ORIENTATIONS = ['portrait', 'landscape'];
 
+    public const LAYOUT = ['margin_cm', 'title_font_size', 'section_font_size', 'body_font_size'];
+
     /** @var array<string, mixed> */
     private const INSTITUTIONAL_STYLE = [
         'font_family' => 'Arial',
@@ -71,11 +73,27 @@ final class TemplateAppearance
      */
     public static function fromMapping(?array $mapping): array
     {
-        $raw = is_array($mapping['appearance'] ?? null)
-            ? $mapping['appearance']
+        $raw = is_array($mapping['layout'] ?? null)
+            ? $mapping['layout']
             : [];
 
         return self::normalize($raw);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $raw
+     * @return array{margin_cm: float, title_font_size: int, section_font_size: int, body_font_size: int}
+     */
+    public static function layout(?array $raw): array
+    {
+        $value = self::normalize($raw ?? []);
+
+        return [
+            'margin_cm' => (float) $value['margin_cm'],
+            'title_font_size' => (int) $value['title_font_size'],
+            'section_font_size' => (int) $value['section_font_size'],
+            'body_font_size' => (int) $value['body_font_size'],
+        ];
     }
 
     /**
@@ -87,8 +105,7 @@ final class TemplateAppearance
         $defaults = self::defaults();
         $value = [
             ...$defaults,
-            ...array_intersect_key($raw, $defaults),
-            ...self::INSTITUTIONAL_STYLE,
+            ...array_intersect_key($raw, array_flip(self::LAYOUT)),
         ];
 
         $value['font_family'] = self::allowed($value['font_family'], self::FONTS, $defaults['font_family']);
@@ -118,31 +135,14 @@ final class TemplateAppearance
         return $value;
     }
 
-    /** @return array<string, mixed> */
+    /** @return array<string, list<array{value: int|float, label: string}>> */
     public static function catalog(): array
     {
         return [
-            'fonts' => array_map(fn (string $font): array => ['value' => $font, 'label' => $font], self::FONTS),
             'body_sizes' => self::numberOptions(self::BODY_SIZES, 'pt'),
             'title_sizes' => self::numberOptions(self::TITLE_SIZES, 'pt'),
             'section_sizes' => self::numberOptions(self::SECTION_SIZES, 'pt'),
-            'field_sizes' => self::numberOptions(self::FIELD_SIZES, 'pt'),
             'margins' => array_map(fn (float $margin): array => ['value' => $margin, 'label' => number_format($margin, 1, ',', '').' cm'], self::MARGINS),
-            'colors' => array_map(
-                fn (string $label, string $value): array => ['value' => $value, 'label' => $label],
-                self::COLORS,
-                array_keys(self::COLORS),
-            ),
-            'alignments' => [
-                ['value' => 'left', 'label' => 'Izquierda'],
-                ['value' => 'center', 'label' => 'Centro'],
-                ['value' => 'right', 'label' => 'Derecha'],
-                ['value' => 'justify', 'label' => 'Justificado'],
-            ],
-            'orientations' => [
-                ['value' => 'portrait', 'label' => 'Vertical'],
-                ['value' => 'landscape', 'label' => 'Horizontal'],
-            ],
         ];
     }
 

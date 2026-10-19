@@ -77,6 +77,29 @@ class OfficialTemplateTest extends TestCase
         $this->assertSame('SÍLABO UEB', $this->getJson(route('api.v1.admin.template.show', $this->template))->json('template.titleBlock.text'));
     }
 
+    public function test_margins_and_sizes_travel_in_the_json_and_the_rest_of_the_design_stays_institutional(): void
+    {
+        $file = json_decode((string) file_get_contents(base_path(OfficialTemplate::PATH)), true, 512, JSON_THROW_ON_ERROR);
+        $layout = ['margin_cm' => 2.5, 'title_font_size' => 16, 'section_font_size' => 12, 'body_font_size' => 10];
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), [...$file, 'layout' => $layout])->assertOk();
+
+        $show = $this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk();
+        $show->assertJsonPath('template.layout', $layout)
+            ->assertJsonPath('template.appearance.margin_cm', 2.5)
+            ->assertJsonPath('template.appearance.font_family', 'Arial')
+            ->assertJsonPath('template.layoutOptions.margins.0.label', '1,5 cm');
+        $this->assertSame($layout, $this->getJson(route('api.v1.admin.template.json.export', $this->template))->json('layout'));
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), [...$file, 'layout' => ['margin_cm' => 9, 'body_font_size' => 30]])
+            ->assertUnprocessable()->assertJsonValidationErrors(['layout.margin_cm', 'layout.body_font_size']);
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), [...$file, 'layout' => ['font_family' => 'Georgia', 'body_font_size' => 12]])->assertOk();
+        $this->getJson(route('api.v1.admin.template.show', $this->template))
+            ->assertJsonPath('template.layout.body_font_size', 12)
+            ->assertJsonPath('template.layout.margin_cm', 2.5)
+            ->assertJsonPath('template.appearance.font_family', 'Arial');
+    }
+
     public function test_the_official_json_file_is_valid_for_the_import_endpoint(): void
     {
         $file = json_decode((string) file_get_contents(base_path(OfficialTemplate::PATH)), true, 512, JSON_THROW_ON_ERROR);
@@ -127,6 +150,7 @@ class OfficialTemplateTest extends TestCase
         $exported = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->assertOk()->json();
 
         $this->assertSame(1, $exported['version']);
+        $this->assertSame(['version', 'title', 'layout', 'sections'], array_keys($exported));
         $this->assertCount(12, $exported['sections']);
         $this->assertSame(['key', 'title', 'orientation', 'fields'], array_keys($exported['sections'][0]));
         $this->assertSame(['key', 'label', 'quien_llena', 'content'], array_keys($exported['sections'][0]['fields'][0]));

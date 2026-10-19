@@ -207,6 +207,53 @@ class WordRendererTest extends TestCase
         $this->assertSame(0, $xpath->query('./w:tblPr/w:tblBorders/w:top[@w:color="0070C0"]', $identification)->length);
     }
 
+    public function test_docx_honors_paragraph_alignment_layout_and_page_numbers(): void
+    {
+        $snapshot = $this->typedSnapshot();
+        $snapshot['document_mapping'] = [
+            'appearance' => TemplateAppearance::defaults(),
+            'layout' => ['margin_cm' => 2.0, 'title_font_size' => 18, 'section_font_size' => 14, 'body_font_size' => 12],
+        ];
+        $snapshot['sections'][1]['fields'][0]['value'] = ['type' => 'doc', 'content' => [
+            ['type' => 'paragraph', 'attrs' => ['textAlign' => 'center'], 'content' => [['type' => 'text', 'text' => 'Párrafo centrado']]],
+            ['type' => 'paragraph', 'attrs' => ['textAlign' => 'justify'], 'content' => [['type' => 'text', 'text' => 'Párrafo justificado']]],
+        ]];
+        $input = new DocumentRenderInput(
+            subject: 'IA', subjectCode: 'SW-P7-037', academicPeriod: '2026', revisionNumber: 1,
+            revisionFingerprint: str_repeat('ab', 32), generatedAt: '2026-09-07T20:00:00-05:00', locale: 'es-EC', snapshot: $snapshot,
+        );
+        $temporary = tempnam(sys_get_temp_dir(), 'silabos-layout-test-');
+        file_put_contents($temporary, app(DocumentRenderer::class)->render($input)->docx->bytes);
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($temporary) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $stylesXml = (string) $zip->getFromName('word/styles.xml');
+        $footers = '';
+        for ($index = 0; $index < $zip->numFiles; $index++) {
+            $name = (string) $zip->getNameIndex($index);
+            if (str_starts_with($name, 'word/footer')) {
+                $footers .= (string) $zip->getFromName($name);
+            }
+        }
+        $zip->close();
+        unlink($temporary);
+
+        $dom = new DOMDocument;
+        $dom->loadXML($documentXml);
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+        $this->assertSame(1, $xpath->query('//w:p[.//w:t[contains(., "Párrafo centrado")]]/w:pPr/w:jc[@w:val="center"]')->length);
+        $this->assertSame(1, $xpath->query('//w:p[.//w:t[contains(., "Párrafo justificado")]]/w:pPr/w:jc[@w:val="both"]')->length);
+        $this->assertMatchesRegularExpression('/w:top="113[34]"/', $documentXml, 'El margen de 2 cm del diseño se aplica.');
+        $this->assertStringContainsString('w:sz w:val="24"', $stylesXml, 'El contenido va a 12 pt.');
+        $title = $xpath->query('//w:p[.//w:t[contains(., "'.TemplateTitleBlock::DEFAULT_TEXT.'")]]')->item(0);
+        $this->assertNotNull($title);
+        $this->assertSame(1, $xpath->query('.//w:rPr/w:sz[@w:val="36"]', $title)->length, 'El título va a 18 pt.');
+        $this->assertStringContainsString('Página', $footers);
+        $this->assertStringContainsString('PAGE', $footers);
+        $this->assertStringContainsString('NUMPAGES', $footers);
+    }
+
     public function test_identification_inputs_print_inside_the_table_and_not_again_below_it(): void
     {
         $snapshot = $this->typedSnapshot();

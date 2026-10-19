@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Presentation\Http\Requests;
 
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\TemplateAppearance;
 use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use Closure;
@@ -22,6 +23,11 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
         return [
             'version' => ['required', 'integer', Rule::in([self::FORMAT_VERSION])],
             'title' => ['sometimes', 'nullable', 'string', 'max:'.TemplateTitleBlock::MAX_LENGTH],
+            'layout' => ['sometimes', 'array'],
+            'layout.margin_cm' => ['sometimes', 'numeric', Rule::in(TemplateAppearance::MARGINS)],
+            'layout.title_font_size' => ['sometimes', 'integer', Rule::in(TemplateAppearance::TITLE_SIZES)],
+            'layout.section_font_size' => ['sometimes', 'integer', Rule::in(TemplateAppearance::SECTION_SIZES)],
+            'layout.body_font_size' => ['sometimes', 'integer', Rule::in(TemplateAppearance::BODY_SIZES)],
             'sections' => ['present', 'array', 'max:60'],
             'sections.*.key' => ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'max:100', 'distinct'],
             'sections.*.title' => ['required', 'string', 'max:180'],
@@ -57,6 +63,11 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
         return [
             'version' => 'versión',
             'title' => 'título del documento',
+            'layout' => 'diseño',
+            'layout.margin_cm' => 'margen',
+            'layout.title_font_size' => 'tamaño del título',
+            'layout.section_font_size' => 'tamaño de las secciones',
+            'layout.body_font_size' => 'tamaño del contenido',
             'sections' => 'secciones',
             'sections.*.key' => 'clave de la sección',
             'sections.*.title' => 'título de la sección',

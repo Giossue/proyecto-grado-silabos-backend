@@ -80,6 +80,8 @@ class TemplateController extends Controller
     {
         return response()->json([
             'version' => ImportTemplateStructureRequest::FORMAT_VERSION,
+            'title' => TemplateTitleBlock::fromMapping($template->mapeo_documento)['text'],
+            'layout' => TemplateAppearance::layout($template->mapeo_documento['layout'] ?? null),
             'sections' => $template->sections->map(fn (TemplateSection $section): array => [
                 'key' => $section->clave,
                 'title' => $section->titulo,
@@ -101,10 +103,16 @@ class TemplateController extends Controller
         /** @var list<array<string, mixed>> $sections */
         $sections = $request->validated('sections');
         $action->execute($template, $sections, $actor, $request);
+        $mapping = $template->refresh()->mapeo_documento ?? [];
         $title = $request->validated('title');
         if (is_string($title) && trim($title) !== '') {
-            $template->forceFill(['mapeo_documento' => [...($template->mapeo_documento ?? []), 'title_block' => ['text' => trim($title)]]])->save();
+            $mapping['title_block'] = ['text' => trim($title)];
         }
+        $layout = $request->validated('layout');
+        if (is_array($layout)) {
+            $mapping['layout'] = TemplateAppearance::layout([...TemplateAppearance::layout($mapping['layout'] ?? null), ...$layout]);
+        }
+        $template->forceFill(['mapeo_documento' => $mapping])->save();
 
         return response()->json(['message' => 'Plantilla importada desde el JSON.']);
     }
@@ -152,6 +160,8 @@ class TemplateController extends Controller
                 'id' => $template->id,
                 'name' => SyllabusTemplate::INSTITUTIONAL_NAME,
                 'appearance' => TemplateAppearance::fromMapping($template->mapeo_documento),
+                'layout' => TemplateAppearance::layout($template->mapeo_documento['layout'] ?? null),
+                'layoutOptions' => TemplateAppearance::catalog(),
                 'titleBlock' => TemplateTitleBlock::fromMapping($template->mapeo_documento),
                 'sections' => $template->sections->map(fn (TemplateSection $section) => [
                     'id' => $section->id,

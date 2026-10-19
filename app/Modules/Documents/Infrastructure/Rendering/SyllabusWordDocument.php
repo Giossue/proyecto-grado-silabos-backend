@@ -144,7 +144,7 @@ class SyllabusWordDocument
         $pageWidth = $orientation === 'landscape' ? 15840 : 12240;
         $this->context->contentWidth = $pageWidth - (2 * $margin);
 
-        return $word->addSection([
+        $section = $word->addSection([
             'paperSize' => 'Letter',
             'orientation' => $orientation,
             'marginTop' => $margin,
@@ -152,6 +152,13 @@ class SyllabusWordDocument
             'marginLeft' => $margin,
             'marginRight' => $margin,
         ]);
+        $section->addFooter()->addPreserveText(
+            'Página {PAGE} de {NUMPAGES}',
+            ['size' => 8, 'color' => '7F7F7F'],
+            ['alignment' => Jc::CENTER, 'spaceBefore' => 0, 'spaceAfter' => 0],
+        );
+
+        return $section;
     }
 
     /**

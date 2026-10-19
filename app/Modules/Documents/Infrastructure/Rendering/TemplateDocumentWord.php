@@ -39,7 +39,11 @@ final class TemplateDocumentWord
             return;
         }
         if ($node['type'] === 'paragraph') {
-            $alignment = $alignmentOverride ?? $this->paragraphAlignment ?? ($node['attrs']['textAlign'] ?? 'left');
+            $own = $node['attrs']['textAlign'] ?? null;
+            $alignment = $alignmentOverride
+                ?? (is_string($own) && $own !== 'left' ? $own : null)
+                ?? $this->paragraphAlignment
+                ?? (is_string($own) ? $own : 'left');
             $style = ['spaceAfter' => $insideTable ? 0 : 80, 'alignment' => $alignment === 'justify' ? 'both' : $alignment];
             if ($list !== null) {
                 $style['numStyle'] = $list;

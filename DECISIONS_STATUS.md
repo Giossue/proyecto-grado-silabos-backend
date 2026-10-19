@@ -830,3 +830,10 @@ abierta se puede cambiar o quitar al docente de un paralelo y crear, editar o el
 pausarla: pausar interrumpe a todos los docentes de la carrera por unos pocos (por ejemplo cuando alguien
 se retracta tras el sorteo de materias). El nuevo docente empieza desde cero. Cambiar código o jornada con el
 sílabo ya enviado o aprobado pide confirmación y lo rehace desde cero. La malla y las fichas siguen exigiendo pausa.
+
+19 de octubre de 2026, por instrucción del responsable del producto (I-225): Administración puede
+ajustar márgenes y tamaños de título, sección y contenido del documento; la letra (Arial), los colores,
+las alineaciones globales y la negrita siguen fijos (I-195). El diseño se guarda en
+`mapeo_documento.layout` y viaja en el JSON de la plantilla; la clave antigua `appearance` se sigue
+ignorando. El editor alinea cada párrafo (izquierda, centro, derecha, justificado) y el Word lo respeta;
+el Word numera las páginas en el pie. El docente ve una vista previa del documento con lo que lleva escrito.

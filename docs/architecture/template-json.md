@@ -46,6 +46,8 @@ al editar a mano (I-188): hay que tener el proceso pausado y, al reanudar, los s
 | Campo | Regla |
 |---|---|
 | `version` | Obligatorio. Hoy solo `1`. |
+| `title` | Opcional. Título del documento (máx. 180). Vacío o ausente conserva el actual. |
+| `layout` | Opcional. Diseño acotado (I-225): `margin_cm` (1.5, 2, 2.5 o 3), `title_font_size` (10, 14, 16 o 18), `section_font_size` (10, 11, 12 o 14) y `body_font_size` (10, 11 o 12). Las claves ausentes conservan su valor. La letra (Arial), los colores, las alineaciones y la negrita son institucionales y no se aceptan aquí. |
 | `sections` | Obligatorio (puede ser `[]`). Máximo 60. El orden del arreglo es el orden de la hoja. |
 
 ### Sección
