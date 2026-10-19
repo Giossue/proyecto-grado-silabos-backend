@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-202: tipo de campo `unidades` para la sección 6 (una tabla por unidad, como el PDF oficial).
- * La plantilla existente cuya planificación era una tabla fija pasa al tipo nuevo; si ya tenía
- * valores de docentes con la forma anterior, se vacían porque no son equivalentes.
- */
 return new class extends Migration
 {
     public function up(): void

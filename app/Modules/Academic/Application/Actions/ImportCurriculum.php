@@ -16,7 +16,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-/** Crea las materias de la malla de la carrera activa (y sus prerrequisitos y correquisitos) desde un Excel. */
 class ImportCurriculum
 {
     public const COLUMNS = [

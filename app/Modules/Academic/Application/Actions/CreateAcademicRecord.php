@@ -178,7 +178,6 @@ class CreateAcademicRecord
             'paralelo_id' => $parallel->id,
             'activo' => true,
         ]);
-        // El docente nuevo no hereda nada del anterior: el sílabo del paralelo vuelve a cero.
         $this->work->restartForParallel($parallel->id);
 
         return $assignment;
@@ -193,7 +192,6 @@ class CreateAcademicRecord
         return $activeRole->carrera_id;
     }
 
-    // El coordinador que se asigna una materia de su carrera recibe ahí su rol docente.
     private function teacherRole(string $userId, string $careerId): RoleAssignment
     {
         $identity = ['usuario_id' => $userId, 'carrera_id' => $careerId, 'rol' => RoleCode::Teacher->value];

@@ -1,6 +1,4 @@
 #!/bin/sh
-# Arranque del contenedor. Todo lo que hay aquí es idempotente: Dokploy reinicia y
-# redespliega, así que ejecutarlo dos veces no puede romper nada.
 set -e
 
 cd /var/www/html
@@ -11,15 +9,11 @@ if [ -z "${APP_KEY}" ]; then
     exit 1
 fi
 
-# La caché de configuración congela las variables de entorno, así que se reconstruye en
-# cada arranque: si no, un cambio en Dokploy no tendría efecto hasta reconstruir la imagen.
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 php artisan event:cache
 
-# Se espera a la base antes de migrar. Postgres vive fuera del contenedor y puede tardar
-# en aceptar conexiones tras un reinicio del servidor.
 attempt=1
 until php artisan db:monitor --max=1 >/dev/null 2>&1 || [ "${attempt}" -ge 30 ]; do
     echo "Esperando a PostgreSQL (intento ${attempt}/30)…"
@@ -28,22 +22,15 @@ until php artisan db:monitor --max=1 >/dev/null 2>&1 || [ "${attempt}" -ge 30 ];
 done
 
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
-    # La tabla de control del migrador se llama `migraciones` desde I-28. El comando es
-    # idempotente: renombra la tabla antigua solo si existe y la nueva no, para que el
-    # migrador no crea que ninguna migración se ha ejecutado.
     php artisan db:rename-migrations-table --force
 
-    # `--isolated` usa un bloqueo para que dos réplicas no migren a la vez.
     php artisan migrate --force --isolated
 fi
 
-# El volumen montado en storage/app llega con el dueño del servidor (root), no con el de
-# la imagen: sin esto PHP-FPM (www-data) no puede guardar logos ni exportaciones.
 mkdir -p storage/app/private storage/app/public
 chown -R www-data:www-data storage/app
 chmod -R u+rwX,g+rwX storage/app
 
-# El enlace de almacenamiento público es idempotente y sobrevive a redespliegues.
 php artisan storage:link || true
 
 exec "$@"

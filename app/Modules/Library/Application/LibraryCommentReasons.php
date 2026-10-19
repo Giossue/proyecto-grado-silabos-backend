@@ -2,10 +2,6 @@
 
 namespace App\Modules\Library\Application;
 
-/**
- * Motivos predefinidos con que biblioteca devuelve un sílabo (I-177). No hay texto libre.
- * Lista inicial POR VALIDAR con Biblioteca.
- */
 final class LibraryCommentReasons
 {
     /** @var array<string, string> */
@@ -27,11 +23,7 @@ final class LibraryCommentReasons
         );
     }
 
-    /**
-     * Comentario legible para el docente a partir de los motivos elegidos.
-     *
-     * @param  list<string>  $codes
-     */
+    /** @param  list<string>  $codes */
     public static function text(array $codes): string
     {
         return implode('; ', array_map(fn (string $code): string => self::REASONS[$code], $codes)).'.';

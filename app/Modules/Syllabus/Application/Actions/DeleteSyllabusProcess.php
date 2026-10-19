@@ -45,7 +45,6 @@ final class DeleteSyllabusProcess
                 $convocationCount = $convocations->count();
                 $syllabusCount = $syllabi->count();
 
-                // I-172: se borra todo el historial, incluidos sílabos iniciados, aprobados y firmados.
                 $this->work->purge(array_values(array_map('strval', $syllabi->modelKeys())));
                 $convocations->each->delete();
                 $locked->delete();

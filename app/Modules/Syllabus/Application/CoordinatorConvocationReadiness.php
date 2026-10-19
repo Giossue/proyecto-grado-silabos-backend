@@ -15,10 +15,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Calcula si una carrera puede abrir su alcance del proceso institucional vigente.
- * No persiste un estado derivado: cada consulta vuelve a comprobar las fuentes maestras
- * que OpenConvocation usará dentro de su transacción.
- *
  * @phpstan-type CoordinatorReadiness array{
  *   process: SyllabusProcess|null,
  *   convocation: Convocation|null,
@@ -50,7 +46,6 @@ final class CoordinatorConvocationReadiness
             ->with('academicPeriod')
             ->first();
 
-        // A nivel institucional se ofrecen todas las materias activas de la malla (I-181).
         $subjects = Subject::query()
             ->where('activo', true)
             ->where('carrera_id', $careerId)
@@ -152,9 +147,6 @@ final class CoordinatorConvocationReadiness
     }
 
     /**
-     * Todo lo que impide abrir la convocatoria, en una sola lista para que Coordinación
-     * vea de una vez qué le falta.
-     *
      * @param  CoordinatorReadiness  $readiness
      * @return list<string>
      */

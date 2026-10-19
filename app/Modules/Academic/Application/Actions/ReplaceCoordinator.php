@@ -13,14 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Cambia quién coordina una carrera en un solo paso (I-39): cierra el nombramiento y el
- * rol de quien sale y abre los de quien entra (concediéndole el rol si no lo tiene). La
- * cuenta saliente no se toca: desactivarla es una decisión aparte en Usuarios. Sirve
- * también para nombrar a la primera persona cuando la carrera no tiene coordinación.
- *
- * @phpstan-type Result array{previous_user_id: string|null, role_removed: bool}
- */
+/** @phpstan-type Result array{previous_user_id: string|null, role_removed: bool} */
 class ReplaceCoordinator
 {
     public function __construct(

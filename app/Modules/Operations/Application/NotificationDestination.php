@@ -12,21 +12,11 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotificatio
 use App\Modules\Syllabus\Application\Queries\SyllabusNavigationLookup;
 use Illuminate\Support\Collection;
 
-/**
- * Decide a qué pantalla lleva un aviso y con cuál de los roles vigentes de la persona
- * (I-121). Lee los otros módulos solo mediante sus consultas públicas. Solo elige entre asignaciones que ella ya puede activar: no concede acceso,
- * y cada pantalla sigue aplicando sus propias políticas después del cambio de rol.
- *
- * @phpstan-type Destination array{assignment: RoleAssignment|null, path: string}
- */
+/** @phpstan-type Destination array{assignment: RoleAssignment|null, path: string} */
 final class NotificationDestination
 {
     private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'silabo.firmado_docente'];
 
-    /**
-     * Avisos solo informativos (I-163): no piden hacer nada, así que no llevan enlace.
-     * Los demás llevan a la pantalla donde se actúa (revisar, corregir, firmar, continuar).
-     */
     public const INFORMATIONAL_EVENTS = [
         'proceso.plazo_extendido',
     ];
@@ -35,10 +25,6 @@ final class NotificationDestination
 
     private const PROCESS_TEACHER_EVENTS = ['proceso.plantilla_rehecho'];
 
-    /**
-     * Avisos que solo reciben docentes: el destino es siempre Docencia, aunque la persona
-     * tenga activo su rol de coordinación sobre la misma carrera.
-     */
     private const TEACHER_EVENTS = [
         'convocatoria.abierta',
         'silabo.correccion_solicitada',
@@ -56,7 +42,7 @@ final class NotificationDestination
     ) {}
 
     /**
-     * @param  Collection<int, RoleAssignment>|null  $eligible  Asignaciones vigentes ya cargadas.
+     * @param  Collection<int, RoleAssignment>|null  $eligible
      * @return Destination|null
      */
     public function resolve(InternalNotification $notification, User $user, ?RoleAssignment $active, ?Collection $eligible = null): ?array

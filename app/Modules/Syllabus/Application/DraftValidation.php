@@ -2,11 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
-/**
- * Resultado de validar el borrador de un sílabo. Se calcula en el momento y no se guarda.
- *
- * @phpstan-type Issue array{field_id: string, code: string, severity: string, message: string}
- */
+/** @phpstan-type Issue array{field_id: string, code: string, severity: string, message: string} */
 final readonly class DraftValidation
 {
     /** @param list<Issue> $results */

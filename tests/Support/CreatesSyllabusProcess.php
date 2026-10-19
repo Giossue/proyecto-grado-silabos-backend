@@ -16,11 +16,7 @@ trait CreatesSyllabusProcess
         return FieldDocument::normalize(['type' => 'doc', 'content' => [['type' => 'paragraph', 'content' => [['type' => 'text', 'text' => $text]]]]]);
     }
 
-    /**
-     * Valor completo para un campo del docente: texto, o el bloque de la plantilla ya respondido.
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     protected function answeredValue(FieldDefinition $field, string $text): array
     {
         $content = FieldDocument::normalize($field->contenido);
@@ -42,11 +38,7 @@ trait CreatesSyllabusProcess
         return $hasBlock ? FieldDocument::normalize($content) : $this->freeTextValue($text);
     }
 
-    /**
-     * Las horas de la asignatura de prueba repartidas en la primera semana de la primera unidad.
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     protected function plannedUnits(): array
     {
         $subject = Subject::query()->firstOrFail();

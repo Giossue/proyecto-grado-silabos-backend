@@ -57,11 +57,7 @@ class SyllabusRevision extends Model
         'correccion_justificacion', 'correccion_etapa', 'correccion_solicitada_por', 'correccion_solicitada_en',
     ];
 
-    /**
-     * Solicitud de corrección: se registra una sola vez sobre la revisión; lo demás es inmutable.
-     *
-     * @return list<string>
-     */
+    /** @return list<string> */
     public function writeOnceColumns(): array
     {
         return ['correccion_justificacion', 'correccion_etapa', 'correccion_solicitada_por', 'correccion_solicitada_en'];

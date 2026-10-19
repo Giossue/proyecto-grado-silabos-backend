@@ -7,7 +7,6 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
-/** Proveedor compatible con «chat/completions» (DeepSeek u OpenAI) con la configuración `ai.hosted`. */
 final class HostedFichaExtractionGateway implements FichaExtractionGateway
 {
     public function available(): bool

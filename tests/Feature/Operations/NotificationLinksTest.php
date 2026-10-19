@@ -12,7 +12,6 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-/** I-163: los avisos solo informativos no llevan enlace; los que piden actuar, sí. */
 class NotificationLinksTest extends TestCase
 {
     use RefreshDatabase;
@@ -27,7 +26,6 @@ class NotificationLinksTest extends TestCase
             'titulo' => $title, 'mensaje' => 'Mensaje de prueba.', 'tipo_recurso' => $resourceType, 'recurso_id' => $resourceId,
             'notificado_en' => now(),
         ]);
-        // Solo informativo: no lleva a ninguna pantalla.
         $informational = $create('proceso.plazo_extendido', 'proceso_silabos', $admin->id, 'Plazo extendido');
         $actionable = $create('usuario.rol_asignado', 'asignacion_rol', $admin->id, 'Nuevo rol disponible');
 

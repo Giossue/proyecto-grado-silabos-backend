@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CurricularUnit|null $unidad_organizacion_curricular
  * @property StudyModality|null $modalidad
  * @property string|null $creditos
- * @property-read int|null $horas_totales Columna generada: ACD + APE + AA (I-132).
+ * @property-read int|null $horas_totales
  * @property string|null $horas_ac
  * @property string|null $horas_pae
  * @property string|null $horas_aa
@@ -92,17 +92,14 @@ class Subject extends Model
         return parent::replicate([...($except ?? []), 'total_horas_asignatura']);
     }
 
-    // Campus y modalidad no se guardan: salen de la materia, su carrera y su facultad (I-164).
     public function campusName(): ?string
     {
         $this->loadMissing('career.faculty');
-        // La carrera o la facultad pueden faltar en datos incompletos: entonces no hay campus.
         $campus = data_get($this, 'career.faculty.campus');
 
         return $campus instanceof CampusLocation ? $campus->value : null;
     }
 
-    /** Modalidad de la materia o, si no tiene, la de la carrera. */
     public function studyModality(): ?StudyModality
     {
         $this->loadMissing('career');

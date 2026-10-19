@@ -128,11 +128,9 @@ final class FreeText
     }
 
     /**
-     * Tabla de filas y columnas fijas: encabezado con las columnas y la etiqueta de cada fila.
-     *
      * @param  list<array{key: string, label: string}>  $columns
      * @param  list<array{key: string, label: string}>  $rows
-     * @param  array<string, mixed>  $values  mapa fila → columna → texto
+     * @param  array<string, mixed>  $values
      * @return array<string, mixed>
      */
     public static function fixedTable(array $columns, array $rows, array $values): array

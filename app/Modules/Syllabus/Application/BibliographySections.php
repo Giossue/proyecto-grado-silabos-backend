@@ -2,7 +2,6 @@
 
 namespace App\Modules\Syllabus\Application;
 
-/** Secciones de bibliografía de una fotografía; es lo que revisa biblioteca (I-165, I-173). */
 final class BibliographySections
 {
     public const SECTION_KEY = 'bibliografia';

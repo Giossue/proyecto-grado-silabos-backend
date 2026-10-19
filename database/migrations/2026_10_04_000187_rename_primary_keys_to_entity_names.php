@@ -3,13 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-179: cada tabla del dominio tiene una sola llave, con el nombre de la entidad
- * (`paralelos.paralelo_id`) en lugar del `id` genérico de Laravel. Las llaves foráneas ya se
- * llaman igual, así que la columna se lee igual donde nace y donde se referencia. Quedan con
- * `id` solo las tablas del framework (`migraciones`, `sesiones`, `trabajos_fallidos`), cuyas
- * columnas fijas exige Laravel. No se revierte: la reversa exige restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     private const KEYS = [
@@ -51,7 +44,6 @@ return new class extends Migration
             DB::statement("ALTER TABLE {$table} RENAME COLUMN id TO {$key}");
         }
 
-        // Las funciones de los triggers guardan su texto: se reescriben con los nombres nuevos.
         DB::statement(<<<'SQL'
             CREATE OR REPLACE FUNCTION comprobar_administrador_exclusivo() RETURNS trigger AS $$
             BEGIN

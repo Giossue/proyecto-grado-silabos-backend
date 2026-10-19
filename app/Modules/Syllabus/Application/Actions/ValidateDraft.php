@@ -66,8 +66,6 @@ class ValidateDraft
     }
 
     /**
-     * Las horas repartidas en las unidades deben ser exactamente las de la malla en cada componente.
-     *
      * @param  array<string, mixed>  $identification
      * @return list<array<string, mixed>>
      */

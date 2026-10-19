@@ -10,16 +10,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Paralelo de una materia en un período académico. A nivel institucional siempre se ofrecen
- * todas las materias de la malla, así que no hay una "materia programada" aparte (I-181).
- *
  * @property string $id
  * @property string $asignatura_id
  * @property string $codigo
  * @property string $jornada
  * @property-read Subject $subject
- * @property-read string|null $campus_programacion Campus de la facultad de la carrera (derivado, I-164).
- * @property-read StudyModality|null $modalidad Modalidad de la materia o, si no tiene, de la carrera (derivada).
+ * @property-read string|null $campus_programacion
+ * @property-read StudyModality|null $modalidad
  */
 class Parallel extends Model
 {
@@ -49,7 +46,6 @@ class Parallel extends Model
     /** @var list<string> */
     protected $fillable = ['asignatura_id', 'codigo', 'jornada'];
 
-    // Campus y modalidad no se guardan: salen de la materia, su carrera y su facultad.
     public function getCampusProgramacionAttribute(): ?string
     {
         $this->loadMissing('subject');

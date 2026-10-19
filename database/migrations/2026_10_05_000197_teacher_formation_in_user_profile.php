@@ -13,7 +13,6 @@ return new class extends Migration
             $table->text('formacion_experiencia_usuario')->nullable();
         });
 
-        // La formación y experiencia la escribe el docente una vez en su perfil y el sílabo la hereda.
         DB::table('definiciones_campo')
             ->where('clave_definicion_campo', 'formacion_experiencia')
             ->update([

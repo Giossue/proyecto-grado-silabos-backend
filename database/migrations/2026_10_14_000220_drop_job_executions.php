@@ -3,10 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-221: `trabajos_en_cola` repetía lo que ya guardan `exportaciones_silabo`, `historial_ia` y
- * `notificaciones`. No se revierte: la reversa exige restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void

@@ -17,10 +17,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
-/** Coordinación confirma qué materias reciben la ficha propuesta; lo no marcado no se toca. */
 final class ApplyFichaImport
 {
-    /** Columnas de la tabla de bibliografía, en el mismo orden que la ficha. */
     private const BIBLIOGRAPHY_COLUMNS = ['Autor', 'Título', 'Año', 'Ciudad', 'Editorial', 'ISBN', 'Código'];
 
     public function __construct(
@@ -33,7 +31,7 @@ final class ApplyFichaImport
 
     /**
      * @param  list<string>  $subjectIds
-     * @param  array<string, list<string>>|null  $fieldsBySubject  campos elegidos por materia; sin elegir se aplican todos
+     * @param  array<string, list<string>>|null  $fieldsBySubject
      */
     public function execute(FichaImport $import, array $subjectIds, User $actor, Request $request, ?array $fieldsBySubject = null): FichaImport
     {
@@ -41,7 +39,6 @@ final class ApplyFichaImport
         abort_unless($actor->activo && AcademicStructurePermissions::isCareerContext($role) && $role?->carrera_id === $import->carrera_id, 403);
         $this->locks->assertCareerEditable($import->carrera_id);
 
-        // Aplicar fichas rehace desde cero los sílabos en curso de esas materias (previa confirmación).
         return $this->work->replace($request, fn (): FichaImport => DB::transaction(function () use ($import, $subjectIds, $actor, $role, $fieldsBySubject): FichaImport {
             $locked = FichaImport::query()->lockForUpdate()->findOrFail($import->id);
             if ($locked->estado_importacion !== FichaImport::READY) {
@@ -70,7 +67,6 @@ final class ApplyFichaImport
                         is_array($value) => FreeText::fromRows([['key' => 't', 'label' => '']], array_map(fn (string $item): array => ['t' => $item], $value)),
                         default => FreeText::fromText((string) $value),
                     };
-                    // Lo que el documento no trae no borra lo que la ficha ya tenía.
                     if (FreeText::isEmpty(FreeText::normalize($document))) {
                         continue;
                     }

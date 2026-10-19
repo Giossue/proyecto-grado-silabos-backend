@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
  * @property CarbonImmutable|null $iniciado_en
  * @property CarbonImmutable|null $guardado_en
  * @property-read Convocation $convocation
- * @property-read Subject $subject Materia del paralelo (derivada, I-164).
+ * @property-read Subject $subject
  * @property-read Career $career
  * @property-read Parallel $parallel
  * @property string $paralelo_id
@@ -100,7 +100,6 @@ class Syllabus extends Model
         return $this->belongsTo(Convocation::class, 'convocatoria_carrera_id');
     }
 
-    // La materia sale del paralelo (I-164): ya no se guarda en el sílabo.
     public function getSubjectAttribute(): Subject
     {
         $this->loadMissing('parallel.subject');
@@ -109,8 +108,6 @@ class Syllabus extends Model
     }
 
     /**
-     * Sílabos de estas materias, a través de su paralelo.
-     *
      * @param  Builder<Syllabus>  $query
      * @param  list<string>  $subjectIds
      * @return Builder<Syllabus>
@@ -120,22 +117,14 @@ class Syllabus extends Model
         return $query->whereHas('parallel', fn (Builder $parallel) => $parallel->whereIn('asignatura_id', $subjectIds));
     }
 
-    /**
-     * Sílabos cuyo período académico sigue vigente (no ha llegado su fecha de fin).
-     *
-     * @param  Builder<Syllabus>  $query
-     */
+    /** @param  Builder<Syllabus>  $query */
     public function scopeInCurrentPeriod(Builder $query): void
     {
         $query->whereHas('convocation.process.academicPeriod', fn (Builder $period): Builder => $period
             ->whereDate('fecha_fin_periodo', '>=', now()->toDateString()));
     }
 
-    /**
-     * Sílabos de períodos académicos ya terminados.
-     *
-     * @param  Builder<Syllabus>  $query
-     */
+    /** @param  Builder<Syllabus>  $query */
     public function scopeInPastPeriod(Builder $query): void
     {
         $query->whereHas('convocation.process.academicPeriod', fn (Builder $period): Builder => $period

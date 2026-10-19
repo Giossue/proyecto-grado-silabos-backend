@@ -30,7 +30,6 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
-    /** Llena la ficha de todas las asignaturas y la formación de los docentes, que los sílabos nuevos heredan. */
     protected function fillSubjectProfiles(): void
     {
         User::query()->update(['formacion_experiencia_usuario' => 'Formación de prueba del docente.']);

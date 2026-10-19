@@ -5,7 +5,6 @@ namespace App\Modules\Syllabus\Application;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 
-/** Comentarios generales con que un revisor devolvió una revisión al docente (I-177). */
 final class ReviewComments
 {
     /**

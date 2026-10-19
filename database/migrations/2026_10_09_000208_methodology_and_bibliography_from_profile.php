@@ -3,10 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-205: el docente solo escribe la planificación (sección 6), su formación (desde su perfil) y la
- * discapacidad. La metodología (7.1 a 7.5) y la bibliografía salen de la ficha de la asignatura.
- */
 return new class extends Migration
 {
     private const KEYS = ['metodologia', 'tecnicas_ensenanza', 'recursos_medios', 'herramientas_tic', 'ambientes_aprendizaje'];

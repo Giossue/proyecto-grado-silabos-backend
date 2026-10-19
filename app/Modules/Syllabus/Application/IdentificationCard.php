@@ -50,7 +50,7 @@ final class IdentificationCard
      * @param  list<string>  $parallels
      * @param  list<string>  $teachers
      * @param  list<string>  $emails
-     * @param  array<string, mixed>  $inputs  Valores escritos por el docente, por clave de campo.
+     * @param  array<string, mixed>  $inputs
      * @return Data
      */
     public static function build(array $context, array $parallels, array $teachers, array $emails, array $inputs = []): array

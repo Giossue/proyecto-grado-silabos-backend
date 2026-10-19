@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Las secciones de identificación institucional ya creadas pasan a ser compactas (letra de 9 pt y
- * margen de 1.5 cm en esa hoja) y sin el nombre del campo (el
- * subtítulo «1.1»), igual que las nuevas.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -30,8 +25,5 @@ return new class extends Migration
             ->update(['etiqueta_definicion_campo' => '']);
     }
 
-    public function down(): void
-    {
-        // El nombre y los anchos anteriores no se recuperan: son ajustes de formato.
-    }
+    public function down(): void {}
 };

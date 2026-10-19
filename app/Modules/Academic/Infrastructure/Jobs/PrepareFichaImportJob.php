@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
 
-/** Lee los documentos una sola vez y encola una extracción por materia. */
 class PrepareFichaImportJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -39,7 +38,6 @@ class PrepareFichaImportJob implements ShouldQueue
         $blocks = [];
         $documents = $import->documentos_importacion;
         foreach ($documents as $index => $document) {
-            // El OCR no informa porcentaje: se publica qué documento se lee y en qué estado está.
             $reading = ['index' => $index + 1, 'total' => count($documents), 'name' => $document['name'], 'ocr' => null, 'started_at' => now()->toIso8601String()];
             $publish = function (?string $ocr) use (&$reading): void {
                 if ($reading['ocr'] === $ocr && $ocr !== null) {
@@ -55,7 +53,6 @@ class PrepareFichaImportJob implements ShouldQueue
         if ($blocks === []) {
             throw new RuntimeException('Los documentos no tienen texto legible.');
         }
-        // Si Coordinación canceló mientras el OCR leía, no se sigue.
         if ($import->fresh()?->estado_importacion !== FichaImport::RUNNING) {
             return;
         }

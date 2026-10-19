@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-223: `campos_plantilla.configuracion_campo_plantilla`, `secciones_plantilla.descripcion_seccion_plantilla`
- * y `definiciones_campo.ayuda_definicion_campo` no tenían datos ni función. No se revierte: la
- * reversa exige restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void

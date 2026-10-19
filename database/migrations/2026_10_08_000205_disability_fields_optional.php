@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/** I-203: los datos de discapacidad son condicionales: solo se llenan si hay estudiantes con discapacidad. */
 return new class extends Migration
 {
     public function up(): void

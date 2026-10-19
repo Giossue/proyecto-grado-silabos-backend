@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
-/** Lee un PDF con el OCR de OpenParser (PaddleOCR): sube el archivo, espera el trabajo y devuelve su texto. */
 final class OpenParserPdfReader
 {
     public function available(): bool
@@ -19,7 +18,7 @@ final class OpenParserPdfReader
             && str_starts_with((string) config('openparser.base_url'), 'https://');
     }
 
-    /** @param  (callable(string): void)|null  $onStatus  recibe cada estado del OCR («queued», «running»…) */
+    /** @param  (callable(string): void)|null  $onStatus */
     public function text(string $path, string $name, ?callable $onStatus = null): string
     {
         $jobId = $this->submit($path, $name);
@@ -49,7 +48,6 @@ final class OpenParserPdfReader
             throw new RuntimeException("No se pudo abrir «{$name}».");
         }
         try {
-            // OpenParser exige una clave de idempotencia por envío; sin ella responde 400.
             $response = $this->request()
                 ->withHeaders(['Idempotency-Key' => (string) Str::uuid()])
                 ->attach('request', json_encode([

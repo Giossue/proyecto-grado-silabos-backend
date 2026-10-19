@@ -4,16 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-195 etapa 2: `definiciones_campo.tipo_definicion_campo` queda en cuatro tipos
- * (texto, ficha, tabla, automatico). La configuración de cada tipo vive en
- * `opciones_definicion_campo` (JSON).
- *
- * Filas antiguas: se convierten de forma explícita, sin borrar nada. Todo tipo antiguo pasa a
- * `texto`, salvo `texto_libre` heredado de la ficha (`ficha`) y `referencia_maestra`
- * (`automatico`). El tipo antiguo se conserva en `clase_anterior_definicion_campo`, capa de
- * compatibilidad temporal que se elimina en la etapa 8 del plan I-195.
- */
 return new class extends Migration
 {
     public function up(): void

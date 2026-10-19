@@ -1,4 +1,3 @@
-{{-- El encabezado enlaza a la SPA: APP_URL es el dominio de la API. --}}
 <x-mail::layout>
 <x-slot:header>
 <x-mail::header :url="config('app.frontend_url')">

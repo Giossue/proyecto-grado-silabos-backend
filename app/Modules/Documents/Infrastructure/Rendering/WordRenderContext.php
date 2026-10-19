@@ -17,7 +17,6 @@ final class WordRenderContext
 
     public const HEADER_TEXT = '365F91';
 
-    /** Azul fino del recuadro de los campos en el formato oficial. */
     public const BOX_BORDER = '0070C0';
 
     public const TABLE_BORDER = '333333';
@@ -26,7 +25,6 @@ final class WordRenderContext
 
     /**
      * @param  array<string, mixed>  $appearance
-     * @param  bool  $hasAppearance  Los snapshots anteriores a la personalización conservan su formato local.
      * @param  array<string, string>  $templateVariables
      * @param  array<string, mixed>  $academicContext
      */
@@ -41,7 +39,6 @@ final class WordRenderContext
 
     public const COMPACT_MARGIN_CM = 1.5;
 
-    /** Copia para una sección compacta: letra de 9 pt y margen de 1.5 cm. */
     public function compact(int $pageWidth): self
     {
         $copy = new self(
@@ -55,7 +52,6 @@ final class WordRenderContext
         return $copy;
     }
 
-    /** Escritor de documentos con el aspecto congelado en la revisión. */
     public function documentWriter(): TemplateDocumentWord
     {
         return new TemplateDocumentWord(
@@ -66,11 +62,7 @@ final class WordRenderContext
         );
     }
 
-    /**
-     * Pinta un documento de texto enriquecido; sin contenido deja la marca «Sin contenido».
-     *
-     * @param  array<string, mixed>|null  $document
-     */
+    /** @param  array<string, mixed>|null  $document */
     public function writeDocument(AbstractContainer $target, ?array $document, bool $emptyMark = true): void
     {
         if ($document === null) {
@@ -83,11 +75,7 @@ final class WordRenderContext
         $this->documentWriter()->append($target, $document, $this->contentWidth);
     }
 
-    /**
-     * Pinta el contenido de un campo dentro de un recuadro de borde azul fino, como el formato oficial.
-     *
-     * @param  array<string, mixed>|null  $document
-     */
+    /** @param  array<string, mixed>|null  $document */
     public function writeBoxed(AbstractContainer $target, ?array $document): void
     {
         $table = $target->addTable([

@@ -19,7 +19,6 @@ class CreateSyllabusTemplate
         private readonly SyllabusTemplateProvisioner $provisioner,
     ) {}
 
-    /** Con `$official` la plantilla nace con el formato oficial; si no, nace en blanco. */
     public function execute(User $actor, Request $request, bool $official = false): SyllabusTemplate
     {
         $activeRole = $this->roles->resolve($request);

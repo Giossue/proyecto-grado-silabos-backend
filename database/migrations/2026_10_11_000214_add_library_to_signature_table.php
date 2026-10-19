@@ -5,7 +5,6 @@ use App\Modules\Configuration\Domain\FreeText;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/** El cuadro de firmas del formato oficial suma una tercera columna para Biblioteca. */
 return new class extends Migration
 {
     public function up(): void

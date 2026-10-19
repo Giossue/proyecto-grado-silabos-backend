@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-177: se retiran las observaciones por campo. Cada revisor devuelve el sílabo con un
- * comentario general (en `revisiones_silabo.correccion_justificacion`); biblioteca elige
- * motivos predefinidos. No se revierte: la reversa exige restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void

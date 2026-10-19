@@ -44,7 +44,6 @@ final class RequestFichaImport
             if ($running) {
                 throw ValidationException::withMessages(['files' => 'Ya hay una importación en curso. Espere a que termine.']);
             }
-            // Una propuesta anterior sin aplicar se reemplaza.
             FichaImport::query()->where('carrera_id', $careerId)->whereIn('estado_importacion', [FichaImport::READY, FichaImport::FAILED])
                 ->get()->each(fn (FichaImport $old) => $this->forget($old));
 

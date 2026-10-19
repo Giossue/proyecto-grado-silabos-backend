@@ -15,11 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * I-178: un sílabo aprobado no se reabre ni se modifica; Coordinación puede eliminarlo. Se borra
- * con todo su historial (revisiones, aprobación, PDF y firmas) y el paralelo recibe un sílabo
- * nuevo sin iniciar, de modo que el docente empieza desde cero.
- */
 class DeleteSyllabus
 {
     public function __construct(

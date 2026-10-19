@@ -5,11 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-164: las secciones y partes de la plantilla pasan del JSON `documento_plantilla` a las
- * tablas `secciones_plantilla` y `bloques_plantilla`, y `definiciones_campo.bloque_plantilla_id`
- * gana su llave foránea. El diseño de cada hoja sigue siendo JSON dentro de `configuracion`.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -57,7 +52,6 @@ return new class extends Migration
                 }
             }
 
-            // Preguntas sin parte: solo se retiran si nadie las referencia; si tienen datos, se detiene.
             $orphans = DB::table('definiciones_campo')->whereNotIn('bloque_plantilla_id', DB::table('bloques_plantilla')->select('id'));
             $referenced = (clone $orphans)->where(fn ($query) => $query
                 ->whereExists(fn ($values) => $values->from('valores_campo')->whereColumn('valores_campo.definicion_campo_id', 'definiciones_campo.id'))

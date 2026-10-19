@@ -3,10 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Borra de la plantilla lo retirado que ningún valor guardado usa. Lo retirado que aún tiene valores
- * (sílabos de periodos anteriores) se conserva. No cambia la fecha de última modificación de la plantilla.
- */
 return new class extends Migration
 {
     public function up(): void
@@ -30,8 +26,5 @@ return new class extends Migration
         }
     }
 
-    public function down(): void
-    {
-        // Lo borrado no se recupera: eran filas retiradas sin ningún valor asociado.
-    }
+    public function down(): void {}
 };

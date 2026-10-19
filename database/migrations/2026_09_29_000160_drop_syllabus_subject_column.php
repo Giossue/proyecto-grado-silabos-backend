@@ -5,10 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-164: la materia de un sílabo se deduce de su paralelo (paralelo → programación →
- * materia); la copia en `silabos.asignatura_id` podía contradecirla.
- */
 return new class extends Migration
 {
     public function up(): void

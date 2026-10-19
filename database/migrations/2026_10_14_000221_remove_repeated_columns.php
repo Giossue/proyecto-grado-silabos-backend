@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-222: la clave, el título y la posición de `definiciones_campo` repetían a `campos_plantilla`, y
- * `envios_biblioteca.verificado_*` repetía a `aprobaciones`. No se revierte: la reversa exige
- * restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void

@@ -16,10 +16,6 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * «Puesta en marcha» del panel: qué debe hacer cada rol, en orden, y qué le falta.
- * Cada paso se calcula con datos reales; no se marca a mano ni se guarda. Cuando
- * todo está hecho, el panel deja de mostrarlo.
- *
  * @phpstan-type Step array{key: string, label: string, hint: string, done: bool, action: string|null}
  * @phpstan-type Checklist array{title: string, intro: string, done: int, total: int, steps: list<Step>}
  *

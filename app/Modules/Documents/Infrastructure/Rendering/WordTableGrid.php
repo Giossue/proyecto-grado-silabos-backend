@@ -29,7 +29,7 @@ final class WordTableGrid
     /** @return list<int> anchos de la rejilla en twips */
     public static function columns(DOMXPath $xpath, DOMElement $table): array
     {
-        /** @var array<int, int> $edges columna => posición de su borde derecho */
+        /** @var array<int, int> $edges */
         $edges = [];
         foreach (self::rows($xpath, $table) as $cells) {
             $column = 0;

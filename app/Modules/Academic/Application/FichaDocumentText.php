@@ -8,7 +8,6 @@ use RuntimeException;
 use Symfony\Component\Process\Process;
 use ZipArchive;
 
-/** Convierte un PDF (con el OCR de OpenParser si está configurado) o un Excel de la carrera en fragmentos de texto para buscar evidencia por materia. */
 final class FichaDocumentText
 {
     private const BLOCK = 1800;

@@ -35,7 +35,7 @@ class SaveSubjectProfile
     }
 
     /**
-     * @param  array<string, mixed>  $values  valor de texto libre por definición de campo; null o vacío lo quita
+     * @param  array<string, mixed>  $values
      * @return array<string, array<string, mixed>>
      */
     public function execute(Subject $subject, array $values, User $actor, Request $request): array

@@ -3,10 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-182: `envios_biblioteca.enviado_por` y `enviado_en` repetían los de `revisiones_silabo`.
- * No se revierte: la reversa exige restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void

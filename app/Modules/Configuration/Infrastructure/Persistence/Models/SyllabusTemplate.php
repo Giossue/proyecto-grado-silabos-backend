@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * @property string $id
  * @property CarbonImmutable|null $plantilla_modificada_en
- * @property array{version_esquema: int, secciones: list<array<string, mixed>>} $documento Armado desde las tablas (I-164).
+ * @property array{version_esquema: int, secciones: list<array<string, mixed>>} $documento
  * @property array<string, mixed>|null $mapeo_documento
  * @property-read EmbeddedTemplateCollection<int, TemplateSection> $sections
  * @property-read EmbeddedTemplateCollection<int, TemplateBlock> $blocks

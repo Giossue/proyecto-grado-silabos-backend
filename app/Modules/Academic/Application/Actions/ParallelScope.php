@@ -43,7 +43,6 @@ final class ParallelScope
         }
     }
 
-    /** Un sílabo sin docente que nadie inició no guarda trabajo: puede irse con el paralelo. */
     public static function deleteUntouchedSyllabi(Parallel $parallel, string $message): void
     {
         $syllabi = Syllabus::query()->where('paralelo_id', $parallel->id);

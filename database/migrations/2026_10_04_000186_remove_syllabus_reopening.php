@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-178: un sílabo aprobado no se reabre; Coordinación lo elimina. Se retiran las columnas de
- * reapertura de `aprobaciones`, que vuelve a ser totalmente inmutable (ADR 0002).
- * No se revierte: la reversa exige restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void

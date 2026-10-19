@@ -152,7 +152,6 @@ class AcceptDocumentSignature
             DocumentSignature::ROLE_LIBRARY => 'biblioteca',
         ];
 
-        // Quien llega antes de su turno espera; quien ya firmó ve a quién le toca ahora.
         return $roleIndex > $expectedIndex
             ? "Primero debe firmar {$names[$expected]}."
             : "Su firma ya está registrada; ahora firma {$names[$expected]}.";

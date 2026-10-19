@@ -82,7 +82,6 @@ class DeleteAcademicRecord
                 || DB::table('importaciones_ficha')->where('carrera_id', $record->getKey())->exists()
                 || DB::table('convocatorias_carreras')->where('carrera_id', $record->getKey())->exists()
                 || self::careerRoleBlock((string) $record->getKey()) !== null,
-            // I-172: un periodo sin convocatoria se elimina con su programación; con convocatoria, se elimina ella primero.
             'periodo' => DB::table('convocatorias_universidad')->where('periodo_academico_id', $record->getKey())->exists(),
             'asignacion_docente' => false,
             default => true,
@@ -101,7 +100,6 @@ class DeleteAcademicRecord
         $name = (string) ($record->getAttribute('nombre') ?? $record->getAttribute('codigo') ?? $record->getKey());
         $metadata = ['name' => $name];
         if ($entity === 'carrera') {
-            // Quedan solo roles retirados sin historial: se borran con la carrera.
             DB::table('asignaciones_rol')->where('carrera_id', $record->getKey())->delete();
         }
         $record->delete();
@@ -109,10 +107,6 @@ class DeleteAcademicRecord
         return $metadata;
     }
 
-    /**
-     * Los roles retirados de una carrera no impiden borrarla, salvo que hayan dejado
-     * historial (auditoría, asignaciones, revisiones…), que nunca se borra.
-     */
     public static function careerRoleBlock(string $careerId): ?string
     {
         $roles = DB::table('asignaciones_rol')->where('carrera_id', $careerId);

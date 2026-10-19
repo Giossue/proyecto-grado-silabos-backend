@@ -28,7 +28,6 @@ final class ReviewStage
         return $inLibrary ? self::LIBRARY : self::COORDINATION;
     }
 
-    /** Etapa del sílabo mientras está en revisión; null en cualquier otro estado. */
     public static function of(Syllabus $syllabus): ?string
     {
         if ($syllabus->estado !== 'en_revision') {
@@ -42,7 +41,6 @@ final class ReviewStage
         return $latest === null ? null : self::ofRevision($latest);
     }
 
-    /** Etapa que decide cada rol revisor. */
     public static function forRole(string $roleCode): ?string
     {
         return match ($roleCode) {

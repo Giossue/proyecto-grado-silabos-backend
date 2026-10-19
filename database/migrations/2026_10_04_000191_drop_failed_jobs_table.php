@@ -3,10 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-183: `trabajos_fallidos` sobra; los fallos quedan en `trabajos_en_cola`.
- * No se revierte: la reversa exige restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void

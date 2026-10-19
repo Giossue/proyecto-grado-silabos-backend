@@ -57,7 +57,6 @@ return [
 
     ],
 
-    // I-183: los trabajos fallidos quedan en `trabajos_en_cola` (estado y error); no hay tabla de Laravel.
     'failed' => [
         'driver' => 'null',
     ],

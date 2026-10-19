@@ -26,7 +26,6 @@ class AiChatController extends Controller
             ->whereIn('contenido_mensaje->tipo', ['mensaje', 'ocultamiento'])
             ->orderBy('enviado_en')
             ->get();
-        // Cada «Nuevo chat» deja una marca de ocultamiento: solo se muestra la conversación actual.
         $messages = [];
         foreach ($chat as $message) {
             if ($message->type() === 'ocultamiento') {

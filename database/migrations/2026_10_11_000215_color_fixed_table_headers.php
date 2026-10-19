@@ -4,7 +4,6 @@ use App\Modules\Configuration\Application\FixedContent;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/** Los encabezados de las tablas fijas del formato oficial llevan el azul de la paleta. */
 return new class extends Migration
 {
     private const CONTENT = ['indicadores_evaluacion' => 'indicadores', 'componentes_evaluacion' => 'escala', 'firmas' => 'firmas'];

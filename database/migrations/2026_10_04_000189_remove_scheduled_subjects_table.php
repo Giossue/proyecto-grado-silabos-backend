@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-181: `asignaturas_ofertadas` sobra. A nivel institucional siempre se ofrecen todas las
- * materias de la malla, así que el paralelo apunta directo al período y a la materia.
- * No se revierte: la reversa exige restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void

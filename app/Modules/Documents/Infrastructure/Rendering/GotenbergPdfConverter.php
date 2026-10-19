@@ -13,7 +13,6 @@ class GotenbergPdfConverter
         return $this->url() !== '';
     }
 
-    /** @param string $generatedAt fecha ISO-8601 de la solicitud, fija para la exportación */
     public function convert(string $docx, string $generatedAt): string
     {
         try {

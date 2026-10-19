@@ -75,7 +75,6 @@ class CreateCareerTeacher
             ];
             $assignment = RoleAssignment::query()->where($identity)->orderByDesc('activo')->first();
 
-            // Un docente retirado de la carrera por Coordinación vuelve a incorporarse con la misma fila.
             $reactivated = $assignment !== null && ! $assignment->activo;
             if ($reactivated) {
                 $assignment->update(['activo' => true]);

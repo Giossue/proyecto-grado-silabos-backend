@@ -3,11 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * La auditoría deja de depender de la cuenta: sin llaves hacia usuarios ni asignaciones de rol, y cada evento
- * nuevo guarda quién actuó (nombre, rol y carrera) tal como era en ese momento. Los eventos anteriores no se
- * tocan (la tabla es append-only); se siguen resolviendo por id mientras la cuenta exista.
- */
 return new class extends Migration
 {
     public function up(): void

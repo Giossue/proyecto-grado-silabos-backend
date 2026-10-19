@@ -3,10 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-203: la formación y experiencia no se escribe en cada sílabo: sale del perfil del docente
- * (Configuración → Perfil), que la escribe una sola vez.
- */
 return new class extends Migration
 {
     public function up(): void

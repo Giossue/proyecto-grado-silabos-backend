@@ -5,11 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-204: asistente del Proyecto de carrera. Coordinación sube los documentos de su carrera (PDF o
- * Excel); un trabajo propone la ficha de cada materia y Coordinación confirma qué aplicar.
- * Los archivos son temporales: se borran al aplicar o descartar.
- */
 return new class extends Migration
 {
     public function up(): void

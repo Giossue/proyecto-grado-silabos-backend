@@ -4,10 +4,6 @@ namespace App\Modules\Syllabus\Infrastructure\Persistence\Models\Concerns;
 
 use LogicException;
 
-/**
- * Registro histórico: no se actualiza ni se borra. Cada modelo declara sus columnas de
- * escritura única (puede ser ninguna), que pasan de NULL a un valor una sola vez (la base lo refuerza con un trigger).
- */
 trait ImmutableRecord
 {
     protected static function bootImmutableRecord(): void

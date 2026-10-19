@@ -5,7 +5,6 @@ namespace App\Modules\AiAssistance\Application;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\AiHistoryEntry;
 use Illuminate\Support\Collection;
 
-/** Límite de uso del asistente por sílabo y docente: 20 preguntas y 3 chats en total. */
 final class SyllabusAiLimits
 {
     public const MAX_MESSAGES = 20;
@@ -13,7 +12,7 @@ final class SyllabusAiLimits
     public const MAX_SESSIONS = 3;
 
     /**
-     * @param  Collection<int, AiHistoryEntry>  $history  mensajes y marcas de «Nuevo chat», en orden
+     * @param  Collection<int, AiHistoryEntry>  $history
      * @return array{messages_used: int, messages_max: int, sessions_used: int, sessions_max: int}
      */
     public static function usage(Collection $history): array

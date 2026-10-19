@@ -4,7 +4,6 @@ namespace App\Modules\Academic\Application;
 
 use Illuminate\Support\Str;
 
-/** Elige, de los fragmentos de los documentos, los que hablan de una materia. */
 final class FichaEvidence
 {
     private const LIMIT = 16000;
@@ -24,7 +23,6 @@ final class FichaEvidence
             if (! str_contains($haystack, $needle) && ($code === '' || ! str_contains($haystack, $code))) {
                 continue;
             }
-            // El fragmento siguiente suele continuar la tabla de la misma materia.
             foreach ([$block, $blocks[$index + 1] ?? null] as $piece) {
                 if ($piece === null || in_array($piece, $picked, true) || $total + mb_strlen($piece) > self::LIMIT) {
                     continue;

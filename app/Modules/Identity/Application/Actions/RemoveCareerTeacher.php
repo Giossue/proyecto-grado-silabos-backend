@@ -12,11 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
-/**
- * Coordinación quita a un docente de su carrera: cierra su rol docente en la carrera y
- * borra sus asignaciones de paralelo vigentes. La cuenta y sus otros roles no cambian;
- * los sílabos de esos paralelos se conservan sin docente hasta que se asigne otro.
- */
 class RemoveCareerTeacher
 {
     public function __construct(

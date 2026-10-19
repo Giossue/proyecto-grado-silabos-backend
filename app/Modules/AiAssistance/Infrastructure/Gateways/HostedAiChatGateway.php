@@ -52,14 +52,12 @@ class HostedAiChatGateway implements AiChatGateway
         }
         $content = $this->extractContent($provider, $envelope);
         $payload = $this->decode($content);
-        // Si el modelo respondió en texto en vez de JSON, el texto es la respuesta y no cita evidencia.
         $answer = is_array($payload) ? ($payload['answer'] ?? null) : $content;
         if (! is_string($answer) || trim($answer) === '') {
             throw new AiContractException('La respuesta conversacional no cumple el contrato esperado.');
         }
         $answer = mb_substr(trim($answer), 0, (int) config('ai.limits.chat_answer_characters'));
         $cited = is_array($payload) && is_array($payload['citation_ids'] ?? null) ? $payload['citation_ids'] : [];
-        // Solo se conservan las citas a evidencia realmente entregada; las demás se descartan.
         $allowed = array_column($input->evidence, 'id');
         $citations = array_values(array_unique(array_filter($cited, fn (mixed $id): bool => is_string($id) && in_array($id, $allowed, true))));
 
@@ -180,11 +178,7 @@ PROMPT;
         };
     }
 
-    /**
-     * Lee el objeto JSON de la salida aunque venga entre cercas de código o con texto alrededor.
-     *
-     * @return array<string, mixed>|null
-     */
+    /** @return array<string, mixed>|null */
     private function decode(string $content): ?array
     {
         $candidates = [$content];

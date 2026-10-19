@@ -3,19 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-176: simplificación de cuatro tablas.
- *
- * - `validaciones_silabo` y `resultados_validacion` se eliminan: la validación es una
- *   función del contenido y se calcula al enviar o validar, sin guardar corridas.
- * - `solicitudes_correccion` pasa a columnas de `revisiones_silabo` (relación 1 a 1).
- * - `reaperturas` pasa a columnas de `aprobaciones` (relación 1 a 1) y se retira
- *   `revisiones_silabo.reapertura_id`, que se deduce de `revision_anterior_id`.
- *
- * Las columnas nuevas son de escritura única: pasan de NULL a un valor una sola vez y el
- * resto de la fila sigue siendo inmutable (ADR 0002). No se revierte: la reversa exige
- * restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     private const CORRECTION_COLUMNS = [
@@ -28,7 +15,6 @@ return new class extends Migration
 
     public function up(): void
     {
-        // Columnas nuevas, aún sin restricciones para poder copiar los datos existentes.
         DB::statement(<<<'SQL'
             ALTER TABLE revisiones_silabo
             ADD COLUMN correccion_justificacion text NULL,
@@ -45,7 +31,6 @@ return new class extends Migration
             ADD COLUMN clave_reapertura uuid NULL
         SQL);
 
-        // Copia de datos; las tablas protegidas exigen la señal de reinicio institucional.
         DB::statement("SET LOCAL app.reinicio_institucional = 'on'");
         DB::statement(<<<'SQL'
             UPDATE revisiones_silabo revision
@@ -67,7 +52,6 @@ return new class extends Migration
             WHERE reapertura.aprobacion_id = aprobacion.id
         SQL);
 
-        // Restricciones: o la fila no tiene el hecho, o lo tiene completo.
         DB::statement(<<<'SQL'
             ALTER TABLE revisiones_silabo
             ADD CONSTRAINT revisiones_silabo_correccion_solicitada_por_foreign
@@ -99,7 +83,6 @@ return new class extends Migration
         SQL);
         DB::statement('CREATE INDEX aprobaciones_reabierta_por_index ON aprobaciones (reabierta_por)');
 
-        // Reglas de relación: sin la tabla de reaperturas ni su vínculo desde la revisión.
         DB::statement(<<<'SQL'
             CREATE OR REPLACE FUNCTION validar_relaciones_revision() RETURNS trigger AS $$
             DECLARE
@@ -153,7 +136,6 @@ return new class extends Migration
             $$ LANGUAGE plpgsql
         SQL);
 
-        // Protección: filas históricas inmutables salvo las columnas de escritura única.
         DB::statement(<<<'SQL'
             CREATE OR REPLACE FUNCTION proteger_registro_con_campos_unicos() RETURNS trigger AS $$
             DECLARE
@@ -192,7 +174,6 @@ return new class extends Migration
             implode("', '", self::REOPENING_COLUMNS),
         ));
 
-        // Se retira el vínculo de la revisión con la reapertura y las cuatro tablas.
         DB::statement('ALTER TABLE revisiones_silabo DROP COLUMN reapertura_id');
         DB::statement('DROP TABLE reaperturas');
         DB::statement('DROP TABLE solicitudes_correccion');

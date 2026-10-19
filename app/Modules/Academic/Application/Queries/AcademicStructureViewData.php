@@ -411,7 +411,6 @@ class AcademicStructureViewData
                         ->select('usuario_id')
                         ->effective()
                         ->where('carrera_id', $careerId)
-                        // El coordinador puede dictar materias de su propia carrera.
                         ->whereIn('rol', [RoleCode::Teacher->value, RoleCode::Coordinator->value]))
                     ->orderBy('nombre')
                     ->get(['id', 'nombre', 'correo_electronico'])
@@ -458,7 +457,6 @@ class AcademicStructureViewData
     /** @var array<string, array<string, int>>|null */
     private ?array $careerDependencies = null;
 
-    /** Motivo por el que una carrera no se puede eliminar (las mismas reglas que al borrarla), o null. */
     private function careerDeleteBlock(string $careerId): ?string
     {
         $this->careerDependencies ??= [

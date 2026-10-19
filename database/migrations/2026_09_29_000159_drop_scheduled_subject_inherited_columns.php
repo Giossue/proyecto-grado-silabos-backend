@@ -4,10 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * I-164: campus y modalidad de una programación se derivan de la materia, su carrera y su
- * facultad; la copia guardada solo podía quedar desactualizada.
- */
 return new class extends Migration
 {
     public function up(): void

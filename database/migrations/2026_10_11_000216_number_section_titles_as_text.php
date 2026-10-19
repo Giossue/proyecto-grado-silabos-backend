@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/** La numeración de las secciones deja de ser automática: pasa a ser parte del texto del título. */
 return new class extends Migration
 {
     public function up(): void

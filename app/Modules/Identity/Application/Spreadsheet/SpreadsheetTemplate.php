@@ -16,8 +16,8 @@ class SpreadsheetTemplate
 {
     /**
      * @param  list<string>  $headers
-     * @param  array<int, array<int, string>>  $selects  posición de columna (desde 0) => opciones permitidas
-     * @param  list<string>  $notes  indicaciones a la derecha, que la importación ignora
+     * @param  array<int, array<int, string>>  $selects
+     * @param  list<string>  $notes
      */
     public function download(string $filename, array $headers, array $selects, array $notes): StreamedResponse
     {

@@ -3,15 +3,10 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/**
- * I-173: revisión en cadena (biblioteca → coordinación → decanato) y rol Decano por facultad.
- * No se revierte: la reversa exige restaurar el respaldo previo.
- */
 return new class extends Migration
 {
     public function up(): void
     {
-        // Rol decano con alcance por facultad.
         DB::statement('ALTER TABLE asignaciones_rol ADD COLUMN facultad_id uuid NULL REFERENCES facultades (id) ON DELETE RESTRICT');
         DB::statement('CREATE INDEX asignaciones_rol_facultad_id_index ON asignaciones_rol (facultad_id)');
         DB::statement('ALTER TABLE asignaciones_rol DROP CONSTRAINT asignaciones_rol_rol_valido_check');
@@ -36,7 +31,6 @@ return new class extends Migration
             WHERE rol = 'decano' AND asignacion_rol_activa
         SQL);
 
-        // Cuarta firma y cuarta fuente de reapertura.
         DB::statement('ALTER TABLE firmas_documento DROP CONSTRAINT firmas_documento_firmado_como_check');
         DB::statement(<<<'SQL'
             ALTER TABLE firmas_documento
@@ -50,7 +44,6 @@ return new class extends Migration
             CHECK (origen_reapertura IN ('coordinacion', 'biblioteca', 'decanato'))
         SQL);
 
-        // Cada devolución registra desde qué etapa se pidió.
         DB::statement("ALTER TABLE solicitudes_correccion ADD COLUMN etapa_solicitud varchar(16) NOT NULL DEFAULT 'coordinacion'");
         DB::statement(<<<'SQL'
             ALTER TABLE solicitudes_correccion
@@ -58,7 +51,6 @@ return new class extends Migration
             CHECK (etapa_solicitud IN ('biblioteca', 'coordinacion', 'decanato'))
         SQL);
 
-        // Aprobación de coordinación: una por revisión, inmutable, entre biblioteca y decanato.
         DB::statement(<<<'SQL'
             CREATE TABLE revisiones_coordinacion (
                 id uuid PRIMARY KEY,
@@ -75,8 +67,6 @@ return new class extends Migration
             FOR EACH ROW EXECUTE FUNCTION proteger_registro_append_only()
             SQL);
 
-        // Datos en curso: lo que estaba en revisión vuelve a empezar por biblioteca; los envíos
-        // pendientes de sílabos ya aprobados (flujo anterior) se retiran.
         DB::statement("SET LOCAL app.reinicio_institucional = 'on'");
         DB::statement(<<<'SQL'
             DELETE FROM envios_biblioteca

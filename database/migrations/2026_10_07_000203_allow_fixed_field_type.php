@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/** I-195: se agrega el quinto tipo de campo, `fijo` (texto fijo institucional). */
 return new class extends Migration
 {
     public function up(): void

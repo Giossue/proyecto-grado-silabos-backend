@@ -13,7 +13,7 @@ class SpreadsheetReader
     public const MAX_ROWS = 500;
 
     /**
-     * @param  array<string, string>  $columns  clave interna => encabezado esperado
+     * @param  array<string, string>  $columns
      * @return list<array{line: int, values: array<string, string>}>
      */
     public function read(UploadedFile $file, array $columns): array

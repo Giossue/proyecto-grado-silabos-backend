@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
 
-/** Propone la ficha de una materia y, si fue la última, deja la importación lista para revisar. */
 class ExtractSubjectFichaJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;

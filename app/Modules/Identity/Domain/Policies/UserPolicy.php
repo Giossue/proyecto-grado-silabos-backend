@@ -34,7 +34,6 @@ class UserPolicy
         return $this->viewAny($actor);
     }
 
-    /** I-170: el Coordinador corrige nombre y correo solo de docentes vigentes de su carrera activa. */
     public function updateCareerTeacher(User $actor, User $target): bool
     {
         if (! $this->createCareerTeacher($actor) || ! $target->activo) {

@@ -15,7 +15,7 @@ use LogicException;
  * @property string $id
  * @property string|null $actor_usuario_id
  * @property string|null $asignacion_rol_id
- * @property string|null $actor_nombre Copia del nombre al registrar; sobrevive a la cuenta.
+ * @property string|null $actor_nombre
  * @property string|null $actor_rol
  * @property string|null $actor_carrera
  * @property string $accion

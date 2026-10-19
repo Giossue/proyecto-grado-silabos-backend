@@ -12,11 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-/**
- * Administración retira un rol de una cuenta. La asignación queda finalizada como historial;
- * la cuenta y sus otros roles no cambian. Nunca deja la cuenta sin rol (para eso se
- * deshabilita el acceso) y un docente con trabajo en curso no puede perder su rol.
- */
 class RemoveUserRole
 {
     public function __construct(

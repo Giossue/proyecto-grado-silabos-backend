@@ -134,9 +134,6 @@ final class DocumentBlock
     }
 
     /**
-     * Tabla de identificación con los datos del sistema ya resueltos; solo quedan como variables las casillas
-     * que responde el docente, para que cada pantalla las dibuje como controles o como texto.
-     *
      * @param  array<string, string>  $variables
      * @return array<string, mixed>
      */
@@ -344,8 +341,6 @@ final class DocumentBlock
     }
 
     /**
-     * Horas repartidas en las unidades: ACD, APE y AA.
-     *
      * @param  array<string, mixed>  $attrs
      * @return array{acd: float, ape: float, aa: float}
      */
@@ -369,11 +364,7 @@ final class DocumentBlock
         return is_string($text) || is_numeric($text) ? (float) str_replace(',', '.', trim((string) $text)) : 0.0;
     }
 
-    /**
-     * Sin horas de práctico-experimental el reglamento de evaluación usa otro reparto de puntos.
-     *
-     * @param  array<string, string>  $variables
-     */
+    /** @param  array<string, string>  $variables */
     private static function withoutPractice(array $variables): bool
     {
         $hours = trim($variables['horas_practicas'] ?? '');
@@ -400,8 +391,6 @@ final class DocumentBlock
     }
 
     /**
-     * Cuatro unidades que se reparten las 16 semanas del período; sin datos, cuatro semanas por unidad.
-     *
      * @param  array<string, mixed>  $raw
      * @return list<array<string, mixed>>
      */

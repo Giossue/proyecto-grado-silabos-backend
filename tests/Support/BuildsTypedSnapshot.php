@@ -6,7 +6,6 @@ use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use Illuminate\Support\Str;
 
-/** Snapshot v7 de ejemplo con los cuatro tipos de campo (I-195, etapa 4). */
 trait BuildsTypedSnapshot
 {
     /** @return array<string, mixed> */
