@@ -204,12 +204,10 @@ class DocumentOperationsTest extends TestCase
 
         $this->actingAsTeacher()
             ->getJson(route('api.v1.documents.download', [$artifact, 'docx']))
-            ->assertOk()
-            ->assertDownload('silabo-sw-601-revision-1.docx');
+            ->assertForbidden();
         $this->actingAsCoordinator()
             ->getJson(route('api.v1.documents.download', [$artifact, 'pdf']))
-            ->assertOk()
-            ->assertDownload('silabo-sw-601-revision-1.pdf');
+            ->assertForbidden();
         $this->actingAsAdministrator()->getJson(route('api.v1.documents.download', [$artifact, 'pdf']))->assertForbidden();
 
         try {

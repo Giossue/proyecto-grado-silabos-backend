@@ -83,6 +83,11 @@ class SignatureWorkflow
         return null;
     }
 
+    public function isFullySigned(ExportArtifact $artifact): bool
+    {
+        return $this->nextRole($this->signatures($artifact)) === null;
+    }
+
     public function submission(SyllabusRevision $revision): ?LibrarySubmission
     {
         return LibrarySubmission::query()

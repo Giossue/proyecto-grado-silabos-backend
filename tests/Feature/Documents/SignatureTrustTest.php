@@ -78,4 +78,25 @@ class SignatureTrustTest extends TestCase
         $this->assertFalse($matcher->matches('JUAN', 'Juan Carlos Pérez Gómez'));
         $this->assertFalse($matcher->matches('', 'Juan Carlos Pérez Gómez'));
     }
+
+    public function test_el_comando_arma_el_archivo_solo_con_entidades_certificadoras_vigentes(): void
+    {
+        $authority = $this->makeCertificateAuthority();
+        $leaf = $this->makeSigningCertificateIssuedBy($authority, 'PERSONA');
+        $directory = sys_get_temp_dir().'/silabos-ca-'.bin2hex(random_bytes(4));
+        mkdir($directory);
+        file_put_contents("{$directory}/raiz.pem", $authority['pem']);
+        openssl_x509_export($leaf['certificate'], $leafPem);
+        file_put_contents("{$directory}/persona.pem", $leafPem);
+        $output = "{$directory}/salida.pem";
+
+        $this->artisan('signatures:build-trust-bundle', ['files' => ["{$directory}/persona.pem"], '--output' => $output])->assertFailed();
+        $this->assertFileDoesNotExist($output);
+
+        $this->artisan('signatures:build-trust-bundle', ['files' => ["{$directory}/raiz.pem"], '--output' => $output])->assertSuccessful();
+        $this->assertStringContainsString('BEGIN CERTIFICATE', (string) file_get_contents($output));
+
+        array_map('unlink', glob("{$directory}/*") ?: []);
+        rmdir($directory);
+    }
 }

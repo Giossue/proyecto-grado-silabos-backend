@@ -5,6 +5,7 @@ namespace App\Modules\Documents\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Documents\Application\Actions\RequestSyllabusExport;
+use App\Modules\Documents\Application\SignatureWorkflow;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Documents\Presentation\Http\Requests\DownloadExportRequest;
@@ -20,7 +21,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
-    public function show(SyllabusRevision $revision, ViewRevisionDocumentsRequest $request): JsonResponse
+    public function show(SyllabusRevision $revision, ViewRevisionDocumentsRequest $request, SignatureWorkflow $workflow): JsonResponse
     {
         $revision->load([
             'approval.approver:id,nombre',
@@ -48,15 +49,16 @@ class DocumentController extends Controller
                 'approved_by' => $revision->approval->approver->nombre,
             ],
             'artifacts' => $artifacts->map(fn (ExportArtifact $artifact): array => [
+                'signed' => $artifact->estado === 'completado' && $workflow->isFullySigned($artifact),
                 'id' => $artifact->id,
                 'estado' => $artifact->estado,
                 'requested_at' => $artifact->solicitado_en->toIso8601String(),
                 'completed_at' => $artifact->completado_en?->toIso8601String(),
                 'renderer_label' => 'Formato institucional en revisión',
                 'error' => $artifact->estado === 'fallido' ? 'No fue posible generar los documentos. Puede solicitar un reintento.' : null,
-                'files' => $artifact->estado !== 'completado' ? null : [
+                'files' => $artifact->estado !== 'completado' || ! $workflow->isFullySigned($artifact) ? null : [
                     'docx_size' => $artifact->docxObject?->tamano_bytes,
-                    'pdf_size' => $artifact->pdfObject?->tamano_bytes,
+                    'pdf_size' => $workflow->currentPdf($artifact, $workflow->signatures($artifact))?->tamano_bytes,
                 ],
             ])->values(),
         ];
@@ -91,8 +93,9 @@ class DocumentController extends Controller
         DownloadExportRequest $request,
         ActiveRole $roles,
         RecordAuditEvent $audit,
+        SignatureWorkflow $workflow,
     ): StreamedResponse {
-        $object = $this->objectFor($artifact, $format);
+        $object = $this->objectFor($artifact, $format, $workflow);
         abort_unless($object->disco === 'private' && Storage::disk('private')->exists($object->ruta_interna), 404);
         $artifact->loadMissing('revision.syllabus.parallel.subject');
         $actor = $request->user();
@@ -112,7 +115,8 @@ class DocumentController extends Controller
             ],
         );
         $code = Str::slug($artifact->revision->syllabus->academicSubjectCode()) ?: 'asignatura';
-        $filename = "silabo-{$code}-revision-{$artifact->revision->numero_revision}.{$format}";
+        $suffix = $format === 'pdf' ? '-firmado' : '';
+        $filename = "silabo-{$code}-revision-{$artifact->revision->numero_revision}{$suffix}.{$format}";
 
         return Storage::disk('private')->download($object->ruta_interna, $filename, [
             'Content-Type' => $object->mime,
@@ -120,12 +124,12 @@ class DocumentController extends Controller
         ]);
     }
 
-    private function objectFor(ExportArtifact $artifact, string $format): StoredObject
+    private function objectFor(ExportArtifact $artifact, string $format, SignatureWorkflow $workflow): StoredObject
     {
         $artifact->loadMissing(['docxObject', 'pdfObject']);
         $object = match ($format) {
             'docx' => $artifact->docxObject,
-            'pdf' => $artifact->pdfObject,
+            'pdf' => $workflow->currentPdf($artifact, $workflow->signatures($artifact)),
             default => null,
         };
         abort_unless($artifact->estado === 'completado' && $object instanceof StoredObject, 404);

@@ -89,6 +89,10 @@ class DocumentSignatureTest extends TestCase
         $this->assertIsArray($status->json('stamp'));
         $original = $this->currentPdf($revision, 'teacher');
         $this->assertSame(hash('sha256', $original), $status->json('document.sha256'));
+        $earlyArtifactId = ExportArtifact::query()->where('revision_silabo_id', $revision->id)->firstOrFail()->id;
+        $this->actingAsTeacher()->getJson(route('api.v1.documents.download', [$earlyArtifactId, 'pdf']))->assertForbidden();
+        $this->actingAsTeacher()->getJson(route('api.v1.documents.show', $revision))
+            ->assertOk()->assertJsonPath('artifacts.0.signed', false)->assertJsonPath('artifacts.0.files', null);
 
         $this->actingAsCoordinator()->getJson(route('api.v1.signature.show', $revision))
             ->assertOk()->assertJsonPath('can_sign', false)->assertJsonPath('my_role', 'coordinacion');
@@ -141,6 +145,11 @@ class DocumentSignatureTest extends TestCase
             ->assertJsonPath('signatures.1.role', 'coordinacion')
             ->assertJsonPath('signatures.2.role', 'biblioteca');
         $this->assertSame($finalPdf, $this->currentPdf($revision, 'teacher'));
+        $artifactId = ExportArtifact::query()->where('revision_silabo_id', $revision->id)->firstOrFail()->id;
+        $this->actingAsTeacher()->getJson(route('api.v1.documents.download', [$artifactId, 'docx']))->assertOk();
+        $this->assertSame($finalPdf, $this->actingAsCoordinator()->get(route('api.v1.documents.download', [$artifactId, 'pdf']))->streamedContent());
+        $this->actingAsTeacher()->getJson(route('api.v1.documents.show', $revision))
+            ->assertOk()->assertJsonPath('artifacts.0.signed', true)->assertJsonPath('artifacts.0.files.pdf_size', strlen($finalPdf));
         $this->assertSame(3, DocumentSignature::query()->count());
         $this->assertSame(3, AuditEvent::query()->where('accion', 'documento.firmado')->count());
         $this->upload($revision, $this->signPdfIncrementally($finalPdf, $teacherCredentials), hash('sha256', $finalPdf), 'teacher')

@@ -15,6 +15,12 @@ documentos alterados y obligue a volver a firmar: genera fricción con su trabaj
 - `SignerHolderMatcher` y `AcceptDocumentSignature`: el titular debe coincidir con el nombre de la
   cuenta (mismas palabras, sin importar orden, tildes ni mayúsculas; al menos dos).
 
+- Descarga: DOCX y PDF solo con las tres firmas; el PDF es el firmado. Frontend: tarjeta y página de
+  Documentos.
+- `php artisan signatures:build-trust-bundle`: arma el archivo de entidades de confianza; pasos y lista de
+  ARCOTEL en `docs/runbooks/firma-electronica-entidades.md`.
+- Borrador de aviso de privacidad en `docs/security/aviso-de-privacidad.md` (PV-12 sigue abierta).
+
 ## Pendiente
 
 DT-16: la UEB indica las entidades certificadoras reconocidas y si exige sello de tiempo externo.

@@ -18,6 +18,7 @@
 |---|---|---|---|
 | Coordinación revisa primero; Biblioteca aprueba la bibliografía, deja el sílabo aprobado y genera el PDF; firman docente, coordinación y biblioteca | RF-017..045/062..069; RNF integridad y permisos; RN-009..027; CU-04..07; COR-05..10, BIB-01..03, DOC-07/08/10, ADM-02/06; CP-F revisión, aprobación, firmas y roles; PV-07/PV-16 conservan su alcance | Migración `000198`; API de aprobación, políticas, firma, plantilla inicial y SPA sin rol/rutas de decanato; plan activo `I-220-flujo-coordinacion-antes-de-biblioteca.md` (reemplaza el orden de I-192) | Código preparado; tipos, ESLint, Pint y PHPStan pasan; pruebas de ejecución y migración productiva pendientes |
 | La firma exige que el titular del certificado sea quien firma y, con entidades configuradas, una cadena de confianza | RNF integridad y permisos; PV-07; DT-16; I-227 | `DocumentSignatureTest` (titular distinto rechazado), `SignatureTrustTest` (cadena reconocida, autofirmado y entidad ajena, coincidencia de nombres) | Verificado en pruebas; falta cargar el archivo de entidades certificadoras de la UEB (DT-16) |
+| El Word y el PDF se descargan solo con las tres firmas, y el PDF es el firmado | RNF integridad; I-227 | `DocumentSignatureTest` (403 antes de firmar, descarga del firmado al final), `DocumentOperationsTest`, `DocumentSignatureCard.test.ts` | Verificado en pruebas |
 
 ## Ficha de asignatura — I-187
 

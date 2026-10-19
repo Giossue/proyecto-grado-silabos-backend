@@ -95,7 +95,9 @@ con la cuenta (`SignerHolderMatcher`: mismas palabras del nombre sin importar or
 ni mayúsculas; `SIGNATURE_REQUIRE_HOLDER_MATCH`, activo por defecto). Si
 `SIGNATURE_TRUSTED_CA_BUNDLE` apunta a un archivo PEM con las entidades certificadoras
 reconocidas, también exige que la cadena del certificado llegue a una de ellas; vacío, solo
-verifica integridad (DT-16). No hay sello de tiempo externo. Cargar el archivo PEM con las
+verifica integridad (DT-16). No hay sello de tiempo externo.
+
+Descarga: el DOCX y el PDF solo se descargan cuando están las tres firmas, y el PDF que se entrega es el firmado (`ExportArtifactPolicy::download`). La tarjeta de firmas ofrece «Descargar PDF firmado» solo en estado `firmado`. Quien firma obtiene el PDF vigente por `signature/pdf`, que usa la propia firma en el navegador. Cargar el archivo PEM con las
 raíces e intermedias reconocidas por la UEB es un paso de despliegue, no de código.
 
 El PDF continúa como respaldo de texto (ahora incluye texto fijo y variables del diseño);
