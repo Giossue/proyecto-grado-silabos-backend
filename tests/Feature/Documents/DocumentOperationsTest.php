@@ -21,6 +21,7 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\CanonicalHasher;
@@ -127,6 +128,50 @@ class DocumentOperationsTest extends TestCase
             'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('revision');
         $this->assertDatabaseCount('exportaciones_silabo', 1);
+    }
+
+    public function test_the_word_signs_coordination_with_the_coordinator_even_when_the_library_approves_a_resubmission(): void
+    {
+        Queue::fake();
+        [$syllabus, $first] = $this->approvedRevision();
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
+        CoordinationReview::query()->create([
+            'revision_silabo_id' => $first->id,
+            'revisado_por' => $this->coordinator->id,
+            'revisado_en' => now()->subDays(3),
+        ]);
+        $resubmitted = SyllabusRevision::query()->create([
+            'silabo_id' => $syllabus->id,
+            'revision_anterior_id' => $first->id,
+            'numero_revision' => 2,
+            'clave_idempotencia' => (string) Str::uuid(),
+            'version_bloqueo_origen' => 2,
+            'fotografia' => $first->fotografia,
+            'huella_sha256' => $first->huella_sha256,
+            'enviado_por' => $this->teacher->id,
+            'enviado_en' => now()->subMinute(),
+        ]);
+        Approval::query()->create([
+            'revision_silabo_id' => $resubmitted->id,
+            'clave_idempotencia' => (string) Str::uuid(),
+            'huella_sha256' => hash('sha256', $resubmitted->huella_sha256),
+            'aprobado_por' => $librarian->id,
+            'aprobado_en' => now(),
+        ]);
+        $this->actingAsTeacher()->postJson(route('api.v1.documents.store', $resubmitted), [
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertSuccessful();
+        $artifact = ExportArtifact::query()->where('revision_silabo_id', $resubmitted->id)->firstOrFail();
+
+        (new GenerateSyllabusExportJob($artifact->id))->handle(app(DocumentRenderer::class), app(RecordAuditEvent::class), app(DocumentBundleValidator::class));
+
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open(Storage::disk('private')->path($artifact->refresh()->docxObject->ruta_interna)) === true);
+        $documentXml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        $this->assertStringContainsString($this->coordinator->nombre, $documentXml);
+        $this->assertStringNotContainsString($librarian->nombre, $documentXml);
+        $this->assertStringContainsString(now()->subDays(3)->setTimezone('America/Guayaquil')->format('d-m-Y'), $documentXml);
     }
 
     public function test_cp_f_job_generates_consistent_private_documents_and_reauthorizes_download(): void

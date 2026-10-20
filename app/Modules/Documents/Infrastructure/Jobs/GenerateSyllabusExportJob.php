@@ -12,6 +12,7 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\Queue\RunsOnce;
 use Illuminate\Bus\Queueable;
@@ -202,10 +203,15 @@ class GenerateSyllabusExportJob implements ShouldBeUnique, ShouldQueue
     {
         $snapshot = $revision->fotografia;
         $variables = is_array($snapshot['template_variables'] ?? null) ? $snapshot['template_variables'] : [];
+        $review = CoordinationReview::query()
+            ->with('reviewer:id,nombre')
+            ->whereHas('revision', fn ($query) => $query->where('silabo_id', $revision->silabo_id)->where('numero_revision', '<=', $revision->numero_revision))
+            ->latest('revisado_en')
+            ->first();
         $snapshot['template_variables'] = [...$variables, ...TemplateVariables::approval([
             'submitted_on' => $revision->enviado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
-            'coordinator' => $approval->approver->nombre,
-            'approved_on' => $approval->aprobado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
+            'coordinator' => $review?->reviewer->nombre ?? $approval->approver->nombre,
+            'approved_on' => ($review->revisado_en ?? $approval->aprobado_en)->setTimezone('America/Guayaquil')->format('d-m-Y'),
         ])];
 
         return $snapshot;
