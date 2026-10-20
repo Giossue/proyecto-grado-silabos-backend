@@ -14,7 +14,10 @@ leen la misma definición.
 
 - **Plantilla oficial de la UEB:** `resources/templates/silabo-oficial.json` (backend). La cargan la instalación y
   «Restablecer a plantilla oficial».
-- **Plantilla en uso:** Admin → Plantilla → **Exportar JSON** / **Editar JSON**.
+- **Plantilla en uso:** Admin → Plantilla → **Editar JSON** (junto a «Editar», con la plantilla sin cambios
+  pendientes). Abre el JSON actual; permite **Descargar**, **Cargar archivo** y **Aplicar y reemplazar**. Si hay
+  errores no se cambia nada y se muestra la ruta de cada uno. El editor visual sigue siendo la forma normal de
+  cambiar secciones y campos, sin escribir JSON.
 - **API** (solo Administración, bloqueada con un proceso abierto):
   - `GET /api/v1/admin/template/{id}/json` exporta.
   - `PUT /api/v1/admin/template/{id}/json` **reemplaza toda** la plantilla (auditado como `plantilla.importada`).
@@ -326,7 +329,7 @@ Los errores de campos llevan su camino (`sections.0.fields.1.content`).
 
 ## Consejos
 
-- Parta de **Exportar JSON** de la plantilla en uso o de `silabo-oficial.json`.
+- Parta de **Descargar** en «Editar JSON» (plantilla en uso) o de `silabo-oficial.json`.
 - Edite con un editor que valide JSON y guarde un respaldo antes de importar.
 - Para un bloque nuevo, empiece por `value` y `layout`, pruebe la importación y agregue después `rules`.
 - Las comillas dentro de los atributos `data-*` se escriben con comillas simples afuera: `data-slot='{"value":"x"}'`.
