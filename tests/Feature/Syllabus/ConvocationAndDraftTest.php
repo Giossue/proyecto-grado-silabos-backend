@@ -232,7 +232,7 @@ class ConvocationAndDraftTest extends TestCase
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
         $snapshot = app(SyllabusSnapshot::class)->build($syllabus);
-        $this->assertSame(8, $snapshot['schema_version']);
+        $this->assertSame(9, $snapshot['schema_version']);
         $fields = collect($snapshot['sections'])->flatMap(fn ($section) => $section['fields']);
         $this->assertNotEmpty($fields);
         $this->assertSame([], $fields->filter(fn ($field) => ! in_array($field['quien_llena'], ['docente', 'coordinacion', 'institucional'], true))->all());

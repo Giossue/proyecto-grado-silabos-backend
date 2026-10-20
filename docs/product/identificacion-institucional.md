@@ -126,11 +126,10 @@ para reemplazar las variables de una revisión histórica.
 - **Condición Sí/No u otra selección**: crear o reutilizar un campo de selección y usar
   **Insertar → Marca condicional** en la celda que debe mostrar `X`. La condición solo
   compara una opción; no acepta fórmulas ni código.
-- **Nueva variable disponible**: editar únicamente `config/syllabus_variables.php` si
-  la fuente ya está en la identificación o en el contexto académico. Cada entrada
-  define clave descriptiva, etiqueta y `source`, por ejemplo `identification.career`.
-  `equals` permite marcas X de opciones ya existentes. Reconstruir la caché de
-  configuración en despliegue si está habilitada. No se cambia código Vue.
+- **Nueva variable disponible**: agregarla en `variables` del JSON de la plantilla (I-229)
+  si la fuente ya la entrega el sistema. Cada entrada define clave descriptiva, `label` y
+  `source`, por ejemplo `identification.career`; `equals` permite marcas X y `sample` el
+  valor de muestra. No se cambia código. Ver `docs/architecture/template-json.md`.
 - **Nuevo dato aún inexistente**: primero incorporarlo a la fuente y a su snapshot;
   agregarlo al catálogo no inventa información ni autoriza consultas arbitrarias.
 - **Verificar**: `TemplateDocumentTest`, `IdentificationCardTest` y `ReviewWorkflowTest`

@@ -23,11 +23,9 @@ final class TemplateDocumentResolver
             $type = $node['type'];
             $attrs = $node['attrs'] ?? [];
             if ($type === 'documentBlock') {
-                $scoped = [...$variables, ...DocumentBlock::variables($node)];
-
-                return array_merge(...array_map(
-                    fn (array $expanded): array => self::resolve(['type' => 'doc', 'content' => [$expanded]], [], $scoped)['content'],
-                    DocumentBlock::expand($node, $scoped),
+                return array_merge([], ...array_map(
+                    fn (array $expanded): array => self::resolve(['type' => 'doc', 'content' => [$expanded]], [], $variables)['content'],
+                    DocumentBlock::expand($node, $variables),
                 ));
             }
             if (in_array($type, ['variable', 'field'], true)) {

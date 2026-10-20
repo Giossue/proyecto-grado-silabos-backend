@@ -2,25 +2,36 @@
 
 namespace App\Modules\Documents\Application;
 
+use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TemplateDocument;
-use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use App\Modules\Documents\Infrastructure\Rendering\HistoricalFieldDocument;
 
 class SyllabusDocumentContent
 {
+    private string $emptyText = '';
+
     /**
      * @return list<string>
      */
     public function lines(DocumentRenderInput $input): array
     {
-        $mapping = is_array($input->snapshot['document_mapping'] ?? null)
-            ? $input->snapshot['document_mapping']
-            : null;
+        $definition = TemplateContext::fromSnapshot($input->snapshot);
+
+        return app(TemplateContext::class)->using($definition, fn (): array => $this->build($input, $definition->document()));
+    }
+
+    /**
+     * @param  array<string, mixed>  $document
+     * @return list<string>
+     */
+    private function build(DocumentRenderInput $input, array $document): array
+    {
+        $this->emptyText = (string) $document['empty_text'];
         $lines = [
-            TemplateTitleBlock::fromMapping($mapping)['text'],
+            (string) $document['title']['text'],
             $input->subject.' ('.$input->subjectCode.')',
             'Periodo: '.$input->academicPeriod,
             'Revisión: '.$input->revisionNumber,
@@ -60,7 +71,7 @@ class SyllabusDocumentContent
     private function display(mixed $value): string
     {
         if ($value === null || $value === '') {
-            return 'Sin contenido';
+            return $this->emptyText;
         }
         if (FreeText::isDocument($value)) {
             /**

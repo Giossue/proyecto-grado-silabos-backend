@@ -12,6 +12,7 @@ use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiChatGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiChatGateway;
+use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Policies\ExportArtifactPolicy;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
@@ -43,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
 
+        $this->app->scoped(TemplateContext::class);
         $this->app->bind(RoleEligibility::class, AcademicRoleEligibility::class);
         $this->app->bind(DocumentRenderer::class, PhpWordDocumentRenderer::class);
         $this->app->bind(FichaExtractionGateway::class, function (): FichaExtractionGateway {

@@ -8,8 +8,6 @@ use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
-use App\Modules\Configuration\Domain\TemplateAppearance;
-use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Documents\Application\SyllabusDocumentContent;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
@@ -23,6 +21,8 @@ use ZipArchive;
 
 class WordRendererTest extends TestCase
 {
+    private const OFFICIAL_TITLE = 'PROGRAMA DE ASIGNATURA (SÍLABO)';
+
     use BuildsTypedSnapshot;
 
     public function test_v8_official_documents_render_generic_tables_variables_and_landscape(): void
@@ -106,7 +106,7 @@ class WordRendererTest extends TestCase
         $snapshot = $this->snapshot();
         $snapshot['document_mapping'] = [
             'appearance' => [
-                ...TemplateAppearance::defaults(),
+                ...['margin_cm' => 1.5, 'text_color' => '#000000', 'title_bold' => true, 'font_family' => 'Arial', 'orientation' => 'portrait', 'accent_color' => '#2F5496', 'section_bold' => true, 'title_italic' => false, 'body_alignment' => 'left', 'body_font_size' => 11, 'section_italic' => false, 'field_font_size' => 11, 'title_alignment' => 'center', 'title_font_size' => 14, 'section_alignment' => 'left', 'section_font_size' => 11, 'table_header_color' => '#FFFFFF', 'table_header_background' => '#4F81BD'],
                 'font_family' => 'Georgia',
                 'body_font_size' => 12,
                 'title_font_size' => 18,
@@ -160,12 +160,29 @@ class WordRendererTest extends TestCase
         $this->assertStringContainsString('w:color w:val="2F5496"', $documentXml);
         $this->assertStringContainsString('w:sz w:val="22"', $documentXml);
         $this->assertStringContainsString('PLAN ACADÉMICO INSTITUCIONAL', $documentXml);
-        $this->assertStringNotContainsString(TemplateTitleBlock::DEFAULT_TEXT, $documentXml);
+        $this->assertStringNotContainsString(self::OFFICIAL_TITLE, $documentXml);
         $this->assertStringNotContainsString('<w:i w:val="1"/>', $documentXml);
         $this->assertStringContainsString('Arial', $stylesXml);
         $this->assertStringNotContainsString('Georgia', $stylesXml);
         $this->assertStringContainsString('w:color w:val="000000"', $stylesXml);
         $this->assertStringContainsString('w:sz w:val="22"', $stylesXml);
+    }
+
+    public function test_the_frozen_template_definition_sets_paper_title_and_footer(): void
+    {
+        $definition = OfficialTemplate::definition()->toArray();
+        $definition['document'] = [...$definition['document'], 'paper' => 'a4', 'footer' => null, 'metadata' => null, 'title' => [...$definition['document']['title'], 'text' => 'SÍLABO DE PRUEBA']];
+        $input = new DocumentRenderInput(
+            subject: 'IA', subjectCode: 'SW-P7-037', academicPeriod: '2026', revisionNumber: 1,
+            revisionFingerprint: str_repeat('ab', 32), generatedAt: '2026-09-07T20:00:00-05:00', locale: 'es-EC',
+            snapshot: [...$this->typedSnapshot(), 'template_definition' => $definition],
+        );
+        [$xml] = $this->documentXml(app(DocumentRenderer::class)->render($input)->docx->bytes);
+
+        $this->assertMatchesRegularExpression('/<w:pgSz [^>]*w:w="1190[56]/', $xml, 'La hoja es A4.');
+        $this->assertStringContainsString('SÍLABO DE PRUEBA', $xml);
+        $this->assertStringNotContainsString('Revisión 1 ·', $xml);
+        $this->assertStringNotContainsString('footerReference', $xml);
     }
 
     public function test_docx_follows_the_official_format(): void
@@ -190,7 +207,7 @@ class WordRendererTest extends TestCase
         $dom->loadXML($documentXml);
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
-        $title = $xpath->query('//w:p[.//w:t[contains(., "'.TemplateTitleBlock::DEFAULT_TEXT.'")]]')->item(0);
+        $title = $xpath->query('//w:p[.//w:t[contains(., "'.self::OFFICIAL_TITLE.'")]]')->item(0);
         $this->assertNotNull($title);
         $this->assertSame(1, $xpath->query('.//w:rPr/w:b', $title)->length);
         $this->assertSame(1, $xpath->query('.//w:rPr/w:color[@w:val="2F5496"]', $title)->length);
@@ -207,7 +224,7 @@ class WordRendererTest extends TestCase
     {
         $snapshot = $this->typedSnapshot();
         $snapshot['document_mapping'] = [
-            'appearance' => TemplateAppearance::defaults(),
+            'appearance' => ['margin_cm' => 1.5, 'text_color' => '#000000', 'title_bold' => true, 'font_family' => 'Arial', 'orientation' => 'portrait', 'accent_color' => '#2F5496', 'section_bold' => true, 'title_italic' => false, 'body_alignment' => 'left', 'body_font_size' => 11, 'section_italic' => false, 'field_font_size' => 11, 'title_alignment' => 'center', 'title_font_size' => 14, 'section_alignment' => 'left', 'section_font_size' => 11, 'table_header_color' => '#FFFFFF', 'table_header_background' => '#4F81BD'],
             'layout' => ['margin_cm' => 2.0, 'title_font_size' => 18, 'section_font_size' => 14, 'body_font_size' => 12],
         ];
         $snapshot['sections'][1]['fields'][0]['value'] = ['type' => 'doc', 'content' => [
@@ -242,7 +259,7 @@ class WordRendererTest extends TestCase
         $this->assertSame(1, $xpath->query('//w:p[.//w:t[contains(., "Párrafo justificado")]]/w:pPr/w:jc[@w:val="both"]')->length);
         $this->assertMatchesRegularExpression('/w:top="113[34]"/', $documentXml, 'El margen de 2 cm del diseño se aplica.');
         $this->assertStringContainsString('w:sz w:val="24"', $stylesXml, 'El contenido va a 12 pt.');
-        $title = $xpath->query('//w:p[.//w:t[contains(., "'.TemplateTitleBlock::DEFAULT_TEXT.'")]]')->item(0);
+        $title = $xpath->query('//w:p[.//w:t[contains(., "'.self::OFFICIAL_TITLE.'")]]')->item(0);
         $this->assertNotNull($title);
         $this->assertSame(1, $xpath->query('.//w:rPr/w:sz[@w:val="36"]', $title)->length, 'El título va a 18 pt.');
         $this->assertStringContainsString('Página', $footers);

@@ -2,6 +2,9 @@
 
 namespace App\Modules\Configuration\Infrastructure\Persistence\Models;
 
+use App\Modules\Configuration\Application\OfficialTemplate;
+use App\Modules\Configuration\Application\TemplateContext;
+use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -14,7 +17,7 @@ use Illuminate\Support\Facades\DB;
  * @property string $id
  * @property CarbonImmutable|null $plantilla_modificada_en
  * @property array{version_esquema: int, secciones: list<array<string, mixed>>} $documento
- * @property array<string, mixed>|null $mapeo_documento
+ * @property array<string, mixed>|null $definicion
  * @property-read EmbeddedTemplateCollection<int, TemplateSection> $sections
  * @property-read EmbeddedTemplateCollection<int, TemplateBlock> $blocks
  */
@@ -24,7 +27,7 @@ class SyllabusTemplate extends Model
 
     protected const LEGACY_COLUMN_ALIASES = [
         'id' => 'plantilla_id',
-        'mapeo_documento' => 'mapeo_documento_plantilla',
+        'definicion' => 'definicion_plantilla',
     ];
 
     /**
@@ -48,7 +51,7 @@ class SyllabusTemplate extends Model
     /**
      * @var list<string>
      */
-    protected $fillable = ['documento', 'mapeo_documento'];
+    protected $fillable = ['documento', 'definicion'];
 
     protected $casts = [
         'plantilla_modificada_en' => 'immutable_datetime',
@@ -60,7 +63,7 @@ class SyllabusTemplate extends Model
     protected function casts(): array
     {
         return [
-            'mapeo_documento' => 'array',
+            'definicion' => 'array',
         ];
     }
 
@@ -104,6 +107,19 @@ class SyllabusTemplate extends Model
     public static function institutional(): self
     {
         return self::query()->firstOrFail();
+    }
+
+    public function definition(): TemplateDefinition
+    {
+        $stored = $this->definicion;
+
+        return is_array($stored) && $stored !== [] ? TemplateDefinition::trusted($stored) : OfficialTemplate::definition();
+    }
+
+    public function saveDefinition(TemplateDefinition $definition): void
+    {
+        $this->forceFill(['definicion' => $definition->toArray()])->save();
+        app(TemplateContext::class)->forget();
     }
 
     /**

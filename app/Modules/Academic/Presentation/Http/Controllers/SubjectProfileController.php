@@ -8,6 +8,9 @@ use App\Modules\Academic\Application\Actions\SaveSubjectProfile;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Presentation\Http\Requests\SaveSubjectProfileRequest;
+use App\Modules\Configuration\Application\TemplateContext;
+use App\Modules\Configuration\Application\TemplatePresentation;
+use App\Modules\Configuration\Application\TemplateVariables;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -49,6 +52,8 @@ class SubjectProfileController extends Controller
             ])->all(),
             'values' => (object) $values,
             'complete' => $profile->completeBySubject([$subjectId])[$subjectId] ?? false,
+            'definition' => TemplatePresentation::definition(TemplateContext::active()),
+            'variables' => (object) array_column(TemplateVariables::catalog(), 'sample', 'key'),
         ];
     }
 }

@@ -234,13 +234,17 @@ asignaturas 1:N paralelos
 ## plantilla_silabo
 
 **Contexto:** plantilla institucional que define el documento de sílabo. Desde I-164
-(migración `000161`) las secciones y campos viven en tablas propias; aquí quedan solo la
-apariencia (`mapeo_documento_plantilla`). I-168 retiró el contador
-`revision_configuracion` y sus triggers `tocar_revision_*`.
+(migración `000161`) las secciones y campos viven en tablas propias. Desde I-229 (migración `000223`)
+`definicion_plantilla` guarda el resto de la plantilla como dato: papel y apariencia, catálogo de variables,
+definiciones de bloques (valor, propiedades, reglas y diseño), secciones obligatorias, secciones de biblioteca y
+plantillas listas; reemplaza a `mapeo_documento_plantilla`. Es `json` (no `jsonb`) para conservar el orden en que
+se escribió. El trigger `marcar_definicion_plantilla_modificada` actualiza `plantilla_modificada_en`. I-168 retiró
+el contador `revision_configuracion` y sus triggers `tocar_revision_*`. Formato: `docs/architecture/template-json.md`.
 
 ~~~text
 plantilla_id UUID (PK)
-mapeo_documento_plantilla JSONB NULL
+definicion_plantilla JSON NOT NULL DEFAULT '{}' CHECK (objeto)
+plantilla_modificada_en TIMESTAMPTZ NULL
 
 UNIQUE constante: existe solo una plantilla
 ~~~

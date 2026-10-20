@@ -28,7 +28,7 @@ final class DocumentHtml
      * @param  string|list<string>  $html
      * @return array<string, mixed>
      */
-    public static function fromHtml(string|array $html): array
+    public static function fromHtml(string|array $html, bool $layout = false): array
     {
         $source = is_array($html) ? implode("\n", $html) : $html;
         $dom = new DOMDocument;
@@ -37,7 +37,7 @@ final class DocumentHtml
         libxml_clear_errors();
         libxml_use_internal_errors($previous);
         $body = $dom->getElementsByTagName('body')->item(0);
-        $content = $body instanceof DOMNode ? self::blocks($body) : [];
+        $content = $body instanceof DOMNode ? self::blocks($body, $layout) : [];
 
         return ['type' => 'doc', 'content' => $content === [] ? [['type' => 'paragraph']] : $content];
     }
@@ -53,8 +53,42 @@ final class DocumentHtml
             'bulletList', 'orderedList' => self::list($node),
             'table' => self::table($node),
             'documentBlock' => [self::blockElement($node)],
+            'group' => self::group($node),
             default => [],
         };
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return list<string>
+     */
+    private static function group(array $node): array
+    {
+        $lines = ['<section'.self::directives($node['attrs'] ?? []).'>'];
+        foreach ($node['content'] ?? [] as $child) {
+            array_push($lines, ...self::block($child));
+        }
+        $lines[] = '</section>';
+
+        return $lines;
+    }
+
+    /**
+     * @param  array<string, mixed>  $attrs
+     */
+    private static function directives(array $attrs): string
+    {
+        $html = '';
+        foreach (['repeat', 'when'] as $directive) {
+            if (isset($attrs[$directive])) {
+                $html .= ' data-'.$directive."='".htmlspecialchars(json_encode($attrs[$directive], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), ENT_NOQUOTES | ENT_XML1, 'UTF-8')."'";
+            }
+        }
+        if (isset($attrs['band'])) {
+            $html .= ' data-band="'.$attrs['band'].'"';
+        }
+
+        return $html;
     }
 
     /**
@@ -76,7 +110,7 @@ final class DocumentHtml
         $align = $node['attrs']['textAlign'] ?? null;
         $style = $align !== null && $align !== 'left' ? ' style="text-align:'.$align.'"' : '';
 
-        return '<p'.$style.'>'.self::inline($node['content'] ?? []).'</p>';
+        return '<p'.$style.self::directives($node['attrs'] ?? []).'>'.self::inline($node['content'] ?? []).'</p>';
     }
 
     /**
@@ -91,6 +125,7 @@ final class DocumentHtml
                 'hardBreak' => '<br>',
                 'variable' => '<span data-variable="'.htmlspecialchars((string) $node['attrs']['id'], ENT_QUOTES | ENT_XML1).'"'
                     .(isset($node['attrs']['listStyle']) ? ' data-list="'.$node['attrs']['listStyle'].'"' : '').'></span>',
+                'slot' => "<span data-slot='".htmlspecialchars(json_encode($node['attrs'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), ENT_NOQUOTES | ENT_XML1, 'UTF-8')."'></span>",
                 default => '',
             };
             foreach (array_reverse($node['marks'] ?? []) as $mark) {
@@ -131,7 +166,7 @@ final class DocumentHtml
     private static function list(array $node): array
     {
         $tag = $node['type'] === 'orderedList' ? 'ol' : 'ul';
-        $lines = ["<{$tag}>"];
+        $lines = ["<{$tag}".self::directives($node['attrs'] ?? []).'>'];
         foreach ($node['content'] as $item) {
             $parts = $item['content'] ?? [];
             $first = $parts[0] ?? null;
@@ -166,8 +201,9 @@ final class DocumentHtml
      */
     private static function table(array $node): array
     {
-        $lines = ['<table>'];
+        $lines = ['<table'.self::directives($node['attrs'] ?? []).'>'];
         foreach ($node['content'] as $row) {
+            $open = '<tr'.self::directives($row['attrs'] ?? []).'>';
             $cells = [];
             $multiline = false;
             foreach ($row['content'] as $cell) {
@@ -176,11 +212,11 @@ final class DocumentHtml
                 $cells[] = $rendered;
             }
             if (! $multiline) {
-                $lines[] = '<tr>'.implode('', array_map(fn (array $parts): string => $parts[0], $cells)).'</tr>';
+                $lines[] = $open.implode('', array_map(fn (array $parts): string => $parts[0], $cells)).'</tr>';
 
                 continue;
             }
-            $lines[] = '<tr>';
+            $lines[] = $open;
             foreach ($cells as $parts) {
                 array_push($lines, ...$parts);
             }
@@ -231,7 +267,7 @@ final class DocumentHtml
         if ($style !== []) {
             $open .= ' style="'.implode(';', $style).'"';
         }
-        $open .= '>';
+        $open .= self::directives($attrs).'>';
 
         $content = $cell['content'] ?? [];
         $first = $content[0] ?? null;
@@ -251,7 +287,7 @@ final class DocumentHtml
     /**
      * @return list<array<string, mixed>>
      */
-    private static function blocks(DOMNode $parent): array
+    private static function blocks(DOMNode $parent, bool $layout = false): array
     {
         $blocks = [];
         $buffer = [];
@@ -279,16 +315,25 @@ final class DocumentHtml
                         $paragraph['content'] = $content;
                     }
                     $align = self::style($child)['text-align'] ?? null;
-                    if ($align !== null) {
-                        $paragraph['attrs'] = ['textAlign' => $align];
+                    $attrs = [...($align !== null ? ['textAlign' => $align] : []), ...self::directiveAttrs($child)];
+                    if ($attrs !== []) {
+                        $paragraph['attrs'] = $attrs;
                     }
                     $blocks[] = $paragraph;
+                } elseif ($tag === 'section' && $layout) {
+                    $flush();
+                    $group = ['type' => 'group', 'content' => self::blocks($child, true)];
+                    $attrs = self::directiveAttrs($child);
+                    if ($attrs !== []) {
+                        $group['attrs'] = $attrs;
+                    }
+                    $blocks[] = $group;
                 } elseif ($tag === 'ul' || $tag === 'ol') {
                     $flush();
-                    $blocks[] = self::listNode($child);
+                    $blocks[] = self::withDirectives(self::listNode($child), $child);
                 } elseif ($tag === 'table') {
                     $flush();
-                    $blocks[] = self::tableNode($child);
+                    $blocks[] = self::withDirectives(self::tableNode($child), $child);
                 } elseif ($tag === 'div' && $child->hasAttribute('data-block')) {
                     $flush();
                     $props = json_decode($child->getAttribute('data-props') ?: '{}', true);
@@ -331,6 +376,11 @@ final class DocumentHtml
             $tag = strtolower($node->tagName);
             if ($tag === 'br') {
                 return [['type' => 'hardBreak']];
+            }
+            if ($tag === 'span' && $node->hasAttribute('data-slot')) {
+                $attrs = json_decode($node->getAttribute('data-slot'), true);
+
+                return [self::withMarks(['type' => 'slot', 'attrs' => is_array($attrs) ? $attrs : []], $marks)];
             }
             if ($tag === 'span' && $node->hasAttribute('data-variable')) {
                 $variable = ['type' => 'variable', 'attrs' => ['id' => $node->getAttribute('data-variable')]];
@@ -401,7 +451,7 @@ final class DocumentHtml
                 }
                 $tag = strtolower($child->tagName);
                 if ($tag === 'tr') {
-                    $rows[] = self::rowNode($child);
+                    $rows[] = self::withDirectives(self::rowNode($child), $child);
                 } elseif (in_array($tag, ['tbody', 'thead', 'tfoot'], true)) {
                     $collect($child);
                 }
@@ -448,12 +498,45 @@ final class DocumentHtml
             $content = self::blocks($cell);
             $cells[] = [
                 'type' => strtolower($cell->tagName) === 'th' ? 'tableHeader' : 'tableCell',
-                'attrs' => $attrs,
+                'attrs' => [...$attrs, ...self::directiveAttrs($cell)],
                 'content' => $content === [] ? [['type' => 'paragraph']] : $content,
             ];
         }
 
         return ['type' => 'tableRow', 'content' => $cells];
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return array<string, mixed>
+     */
+    private static function withDirectives(array $node, DOMElement $element): array
+    {
+        $attrs = self::directiveAttrs($element);
+        if ($attrs !== []) {
+            $node['attrs'] = [...($node['attrs'] ?? []), ...$attrs];
+        }
+
+        return $node;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function directiveAttrs(DOMElement $element): array
+    {
+        $attrs = [];
+        foreach (['repeat', 'when'] as $directive) {
+            if ($element->hasAttribute('data-'.$directive)) {
+                $decoded = json_decode($element->getAttribute('data-'.$directive), true);
+                $attrs[$directive] = is_array($decoded) ? $decoded : $element->getAttribute('data-'.$directive);
+            }
+        }
+        if ($element->hasAttribute('data-band')) {
+            $attrs['band'] = $element->getAttribute('data-band');
+        }
+
+        return $attrs;
     }
 
     /**

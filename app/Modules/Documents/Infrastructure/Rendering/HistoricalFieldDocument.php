@@ -4,7 +4,6 @@ namespace App\Modules\Documents\Infrastructure\Rendering;
 
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FreeText;
-use App\Modules\Configuration\Domain\UnitsTable;
 use App\Modules\Syllabus\Application\IdentificationCard;
 
 final class HistoricalFieldDocument
@@ -35,14 +34,8 @@ final class HistoricalFieldDocument
         if (($field['type'] ?? null) === 'unidades') {
             $units = is_array($value) ? array_values(array_filter($value, is_array(...))) : [];
             $units = $units === [] ? [['nombre' => '', 'resultado' => '', 'semanas' => array_fill(0, 16, [])]] : $units;
-            $week = 0;
-            $content = [];
-            foreach ($units as $index => $unit) {
-                $content[] = (new UnitsTable)->table($unit, $index + 1, $week);
-                $content[] = ['type' => 'paragraph'];
-            }
 
-            return ['type' => 'doc', 'content' => $content];
+            return ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'unidades', 'props' => [], 'value' => ['units' => $units]]]]];
         }
 
         return $value === null ? FieldDocument::empty() : FreeText::fromText(WordValues::display($value));

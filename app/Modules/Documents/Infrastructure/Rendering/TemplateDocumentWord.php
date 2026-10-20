@@ -7,8 +7,6 @@ use PhpOffice\PhpWord\SimpleType\TblWidth;
 
 final class TemplateDocumentWord
 {
-    private const TABLE_BORDER = '333333';
-
     private const TABLE_MIN_FONT_SIZE = 7;
 
     private const CELL_MARGINS = 100;
@@ -24,6 +22,7 @@ final class TemplateDocumentWord
         private readonly ?string $tableHeaderBackground = null,
         private readonly ?string $tableHeaderColor = null,
         private readonly int $bodyFontSize = 11,
+        private readonly string $tableBorder = '333333',
     ) {}
 
     /** @param array<string, mixed> $node */
@@ -140,7 +139,7 @@ final class TemplateDocumentWord
                 }
             }
         }
-        $table = $target->addTable(['borderSize' => 4, 'borderColor' => self::TABLE_BORDER, 'cellMargin' => 50, 'width' => 5000, 'unit' => TblWidth::PERCENT]);
+        $table = $target->addTable(['borderSize' => 4, 'borderColor' => $this->tableBorder, 'cellMargin' => 50, 'width' => 5000, 'unit' => TblWidth::PERCENT]);
         $merged = [];
         foreach ($rows as $rowIndex => $source) {
             $leadingHeader = $leadingHeader && array_reduce(
@@ -208,7 +207,7 @@ final class TemplateDocumentWord
                 $destination = $row->addCell($cellWidth, $options);
                 $this->keepWithNext = $leadingHeading;
                 foreach ($cell['content'] as $child) {
-                    $styled = $isHeader && $this->tableHeaderColor !== null
+                    $styled = $isHeader && $this->tableHeaderColor !== null && ($attrs['backgroundColor'] ?? null) === null
                         ? $this->withTextColor($child, $this->tableHeaderColor)
                         : $child;
                     $this->append(
@@ -344,8 +343,8 @@ final class TemplateDocumentWord
     {
         return match ($attrs['borderStyle'] ?? null) {
             'none' => ['borderSize' => 0, 'borderStyle' => 'none'],
-            'thick' => ['borderSize' => 12, 'borderStyle' => 'single', 'borderColor' => self::TABLE_BORDER],
-            'thin' => ['borderSize' => 4, 'borderStyle' => 'single', 'borderColor' => self::TABLE_BORDER],
+            'thick' => ['borderSize' => 12, 'borderStyle' => 'single', 'borderColor' => $this->tableBorder],
+            'thin' => ['borderSize' => 4, 'borderStyle' => 'single', 'borderColor' => $this->tableBorder],
             default => [],
         };
     }

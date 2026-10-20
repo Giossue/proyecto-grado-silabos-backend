@@ -82,7 +82,9 @@ final class WordFieldRenderer
     {
         $display = WordValues::display($value);
         if ($display === '') {
-            $section->addText('Sin contenido', ['italic' => true, 'color' => '595959']);
+            if ($this->context->emptyText !== '') {
+                $section->addText($this->context->emptyText, ['italic' => true, 'color' => $this->context->emptyColor]);
+            }
 
             return;
         }

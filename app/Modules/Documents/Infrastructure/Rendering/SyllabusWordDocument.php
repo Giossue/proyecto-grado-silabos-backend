@@ -3,8 +3,8 @@
 namespace App\Modules\Documents\Infrastructure\Rendering;
 
 use App\Modules\Configuration\Application\InstitutionalLogos;
-use App\Modules\Configuration\Domain\TemplateAppearance;
-use App\Modules\Configuration\Domain\TemplateTitleBlock;
+use App\Modules\Configuration\Application\TemplateContext;
+use App\Modules\Configuration\Domain\TemplateStyle;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use PhpOffice\PhpWord\Element\Section;
 use PhpOffice\PhpWord\PhpWord;
@@ -17,29 +17,42 @@ class SyllabusWordDocument
 {
     private WordRenderContext $context;
 
+    /** @var array<string, mixed> */
+    private array $document = [];
+
     public function build(DocumentRenderInput $input): PhpWord
     {
+        $definition = TemplateContext::fromSnapshot($input->snapshot);
+
+        return app(TemplateContext::class)->using($definition, fn (): PhpWord => $this->render($input, $definition->document()));
+    }
+
+    /**
+     * @param  array<string, mixed>  $document
+     */
+    private function render(DocumentRenderInput $input, array $document): PhpWord
+    {
         Settings::setOutputEscapingEnabled(true);
-        $mapping = is_array($input->snapshot['document_mapping'] ?? null)
-            ? $input->snapshot['document_mapping']
-            : null;
+        $this->document = $document;
         $this->context = new WordRenderContext(
-            appearance: TemplateAppearance::fromMapping($mapping),
-            hasAppearance: is_array($mapping['appearance'] ?? null),
+            appearance: TemplateStyle::appearance($document),
+            hasAppearance: $document['colors']['table_header_background'] !== null,
             templateVariables: $input->snapshot['template_variables'] ?? [],
             academicContext: is_array($input->snapshot['academic_context'] ?? null)
                 ? $input->snapshot['academic_context']
                 : [],
+            emptyText: (string) $document['empty_text'],
+            emptyColor: ltrim((string) $document['colors']['empty_text'], '#'),
         );
         $fields = new WordFieldRenderer($this->context);
-        $title = TemplateTitleBlock::fromMapping($mapping)['text'];
+        $title = (string) $document['title']['text'];
         $margin = (int) round(Converter::cmToTwip((float) $this->context->appearance['margin_cm']));
-        $pageWidth = $this->context->appearance['orientation'] === 'landscape' ? 15840 : 12240;
+        $pageWidth = $this->pageWidth((string) $this->context->appearance['orientation']);
         $this->context->contentWidth = $pageWidth - (2 * $margin);
         $paragraph = [
-            'spaceAfter' => 120,
+            'spaceAfter' => (int) round($document['paragraph_spacing_pt'] * 20),
             'spaceBefore' => 0,
-            'lineHeight' => 1.15,
+            'lineHeight' => (float) $document['line_height'],
             'alignment' => $this->context->alignment($this->context->appearance['body_alignment']),
         ];
 
@@ -103,7 +116,7 @@ class SyllabusWordDocument
                 $section = $this->addSection($word, $desiredOrientation, $sectionMargin);
                 $currentOrientation = $desiredOrientation;
                 $currentCompact = $desiredCompact;
-                $pageWidth = $desiredOrientation === 'landscape' ? 15840 : 12240;
+                $pageWidth = $this->pageWidth($desiredOrientation);
                 $activeFields = $desiredCompact ? new WordFieldRenderer($this->context->compact($pageWidth)) : $fields;
             }
             $section->addText(
@@ -141,24 +154,37 @@ class SyllabusWordDocument
 
     private function addSection(PhpWord $word, string $orientation, int $margin): Section
     {
-        $pageWidth = $orientation === 'landscape' ? 15840 : 12240;
-        $this->context->contentWidth = $pageWidth - (2 * $margin);
+        $this->context->contentWidth = $this->pageWidth($orientation) - (2 * $margin);
 
         $section = $word->addSection([
-            'paperSize' => 'Letter',
+            'paperSize' => match ($this->document['paper']) {
+                'a4' => 'A4',
+                'legal' => 'Legal',
+                default => 'Letter',
+            },
             'orientation' => $orientation,
             'marginTop' => $margin,
             'marginBottom' => $margin,
             'marginLeft' => $margin,
             'marginRight' => $margin,
         ]);
-        $section->addFooter()->addPreserveText(
-            'Página {PAGE} de {NUMPAGES}',
-            ['size' => 8, 'color' => '7F7F7F'],
-            ['alignment' => Jc::CENTER, 'spaceBefore' => 0, 'spaceAfter' => 0],
-        );
+        $footer = $this->document['footer'];
+        if ($footer !== null) {
+            $section->addFooter()->addPreserveText(
+                strtr($footer['text'], ['{page}' => '{PAGE}', '{pages}' => '{NUMPAGES}']),
+                ['size' => $footer['size'], 'color' => ltrim($footer['color'], '#')],
+                ['alignment' => Jc::CENTER, 'spaceBefore' => 0, 'spaceAfter' => 0],
+            );
+        }
 
         return $section;
+    }
+
+    private function pageWidth(string $orientation): int
+    {
+        [$width, $height] = TemplateStyle::PAPERS[$this->document['paper']];
+
+        return $orientation === 'landscape' ? $height : $width;
     }
 
     /**
@@ -197,22 +223,26 @@ class SyllabusWordDocument
     {
         $facultyId = data_get($input->snapshot, 'academic_context.career.faculty_id');
         $embedded = is_array($input->snapshot['logos'] ?? null) ? $input->snapshot['logos'] : null;
-        $ueb = $this->logoSource($embedded['institution'] ?? null, $this->logos->institutionPath());
-        $faculty = $this->logoSource($embedded['faculty'] ?? null, $this->logos->facultyPathById(is_string($facultyId) ? $facultyId : null));
-        if ($ueb === null && $faculty === null) {
+        $sources = [
+            'institution' => fn (): ?string => $this->logoSource($embedded['institution'] ?? null, $this->logos->institutionPath()),
+            'faculty' => fn (): ?string => $this->logoSource($embedded['faculty'] ?? null, $this->logos->facultyPathById(is_string($facultyId) ? $facultyId : null)),
+        ];
+        $header = $this->document['header'];
+        $images = array_map(fn (array $logo): array => [...$logo, 'image' => $sources[$logo['source']]()], $header['logos']);
+        if (array_filter(array_column($images, 'image')) === []) {
             return;
         }
 
         $table = $section->addTable(['width' => 100 * 50, 'unit' => TblWidth::PERCENT]);
         $row = $table->addRow();
-        $leftWidth = (int) round($this->context->contentWidth * 0.638);
+        $leftWidth = (int) round($this->context->contentWidth * $header['left_share']);
         $left = $row->addCell($leftWidth, ['valign' => 'center']);
-        if ($ueb !== null) {
-            $left->addImage($ueb, ['height' => 28]);
+        if (($images[0]['image'] ?? null) !== null) {
+            $left->addImage($images[0]['image'], ['height' => $images[0]['height_pt']]);
         }
         $right = $row->addCell($this->context->contentWidth - $leftWidth, ['valign' => 'center']);
-        if ($faculty !== null) {
-            $right->addImage($faculty, ['height' => 40, 'alignment' => Jc::END]);
+        if (($images[1]['image'] ?? null) !== null) {
+            $right->addImage($images[1]['image'], ['height' => $images[1]['height_pt'], 'alignment' => Jc::END]);
         }
     }
 
@@ -230,15 +260,20 @@ class SyllabusWordDocument
 
     private function metadata(Section $section, DocumentRenderInput $input): void
     {
+        $metadata = $this->document['metadata'];
+        if ($metadata === null) {
+            return;
+        }
         $section->addText(
-            sprintf(
-                'Revisión %d · %s · hash %s · generado %s',
-                $input->revisionNumber,
-                $input->subject.' ('.$input->subjectCode.')',
-                $input->revisionFingerprint,
-                $input->generatedAt,
-            ),
-            ['size' => 7, 'color' => '7F7F7F'],
+            strtr($metadata['text'], [
+                '{revision}' => (string) $input->revisionNumber,
+                '{subject}' => $input->subject,
+                '{code}' => $input->subjectCode,
+                '{fingerprint}' => $input->revisionFingerprint,
+                '{generated}' => $input->generatedAt,
+                '{period}' => $input->academicPeriod,
+            ]),
+            ['size' => $metadata['size'], 'color' => ltrim($metadata['color'], '#')],
             ['spaceBefore' => 360, 'spaceAfter' => 0],
         );
     }

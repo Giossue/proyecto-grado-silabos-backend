@@ -2,6 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
+use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Documents\Infrastructure\Rendering\HistoricalFieldDocument;
@@ -13,6 +14,15 @@ final class SnapshotDocuments
      * @return array<string, mixed>
      */
     public static function present(array $snapshot): array
+    {
+        return app(TemplateContext::class)->forSnapshot($snapshot, fn (): array => self::documents($snapshot));
+    }
+
+    /**
+     * @param  array<string, mixed>  $snapshot
+     * @return array<string, mixed>
+     */
+    private static function documents(array $snapshot): array
     {
         $variables = TemplateVariables::resolve($snapshot);
         foreach ($snapshot['sections'] ?? [] as $index => $section) {

@@ -33,6 +33,8 @@ final class WordRenderContext
         public readonly bool $hasAppearance = false,
         public readonly array $templateVariables = [],
         public readonly array $academicContext = [],
+        public readonly string $emptyText = '',
+        public readonly string $emptyColor = '595959',
     ) {}
 
     public const COMPACT_FONT_SIZE = 9;
@@ -46,6 +48,8 @@ final class WordRenderContext
             $this->hasAppearance,
             $this->templateVariables,
             $this->academicContext,
+            $this->emptyText,
+            $this->emptyColor,
         );
         $copy->contentWidth = $pageWidth - (2 * (int) round(Converter::cmToTwip(self::COMPACT_MARGIN_CM)));
 
@@ -59,6 +63,7 @@ final class WordRenderContext
             $this->hasAppearance ? $this->color('table_header_background') : null,
             $this->hasAppearance ? $this->color('table_header_color') : null,
             (int) $this->appearance['body_font_size'],
+            ltrim((string) ($this->appearance['table_border'] ?? self::TABLE_BORDER), '#'),
         );
     }
 
@@ -66,8 +71,8 @@ final class WordRenderContext
     public function writeDocument(AbstractContainer $target, ?array $document, bool $emptyMark = true): void
     {
         if ($document === null) {
-            if ($emptyMark) {
-                $target->addText('Sin contenido', ['italic' => true, 'color' => '595959']);
+            if ($emptyMark && $this->emptyText !== '') {
+                $target->addText($this->emptyText, ['italic' => true, 'color' => $this->emptyColor]);
             }
 
             return;

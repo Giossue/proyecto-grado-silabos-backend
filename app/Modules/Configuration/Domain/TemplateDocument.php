@@ -2,6 +2,7 @@
 
 namespace App\Modules\Configuration\Domain;
 
+use App\Modules\Configuration\Domain\Blocks\LayoutRules;
 use Illuminate\Validation\ValidationException;
 
 final class TemplateDocument
@@ -15,24 +16,26 @@ final class TemplateDocument
     /**
      * @param  array<string, mixed>  $document
      * @param  list<string>  $variables
+     * @param  array<string, array<string, mixed>>|null  $blocks
      * @return array<string, mixed>
      */
-    public static function normalize(array $document, array $variables): array
+    public static function normalize(array $document, array $variables, ?LayoutRules $layout = null, ?array $blocks = null): array
     {
         if (strlen(json_encode($document, JSON_THROW_ON_ERROR)) > 2000000) {
             self::fail('El diseño pasa el límite de 2 MB. Divida el contenido en varias secciones.');
         }
         $count = 0;
-        $visit = function (mixed $raw, string $parent, int $depth, bool $insideTable = false) use (&$visit, &$count, $variables): array {
+        $visit = function (mixed $raw, string $parent, int $depth, bool $insideTable = false) use (&$visit, &$count, $variables, $layout, $blocks): array {
             if (++$count > 6000 || $depth > 12 || ! is_array($raw)) {
                 self::fail('El diseño es demasiado grande o está mal formado.');
             }
             $type = $raw['type'] ?? '';
             $allowed = match ($parent) {
                 '' => ['doc'],
-                'doc' => ['paragraph', 'table', 'bulletList', 'orderedList', 'documentBlock'],
+                'doc' => $layout === null ? ['paragraph', 'table', 'bulletList', 'orderedList', 'documentBlock'] : ['paragraph', 'table', 'bulletList', 'orderedList', 'group'],
+                'group' => ['paragraph', 'table', 'bulletList', 'orderedList', 'group'],
                 'tableCell', 'tableHeader' => ['paragraph', 'table', 'bulletList', 'orderedList'],
-                'paragraph' => ['text', 'hardBreak', 'variable'],
+                'paragraph' => $layout === null ? ['text', 'hardBreak', 'variable'] : ['text', 'hardBreak', 'variable', 'slot'],
                 'table' => ['tableRow'],
                 'tableRow' => ['tableCell', 'tableHeader'],
                 'bulletList', 'orderedList' => ['listItem'],
@@ -51,7 +54,10 @@ final class TemplateDocument
                 $node['text'] = $raw['text'];
             }
             if ($type === 'documentBlock') {
-                $node['attrs'] = DocumentBlock::normalize($attrs);
+                $node['attrs'] = DocumentBlock::normalize($attrs, $blocks);
+            }
+            if ($type === 'slot') {
+                $node['attrs'] = $layout?->slot($attrs) ?? [];
             }
             if ($type === 'variable') {
                 $key = $attrs['id'] ?? null;
@@ -129,8 +135,11 @@ final class TemplateDocument
                     'borderStyle' => $borderStyle,
                 ];
             }
+            if ($layout !== null && array_intersect(LayoutRules::DIRECTIVES, array_keys($attrs)) !== []) {
+                $node['attrs'] = [...($node['attrs'] ?? []), ...$layout->directives($attrs, $type)];
+            }
             if (isset($raw['marks'])) {
-                if (! in_array($type, ['text', 'variable'], true) || ! is_array($raw['marks']) || count($raw['marks']) > 4) {
+                if (! in_array($type, ['text', 'variable', 'slot'], true) || ! is_array($raw['marks']) || count($raw['marks']) > 4) {
                     self::fail('Formato de texto no válido.');
                 }
                 $marks = [];
@@ -174,10 +183,10 @@ final class TemplateDocument
             if ($type === 'tableRow') {
                 $node['content'] ??= [];
             }
-            if (in_array($type, ['doc', 'table', 'tableCell', 'tableHeader', 'bulletList', 'orderedList', 'listItem'], true) && empty($node['content'])) {
+            if (in_array($type, ['doc', 'table', 'tableCell', 'tableHeader', 'bulletList', 'orderedList', 'listItem', 'group'], true) && empty($node['content'])) {
                 self::fail('El diseño tiene una estructura vacía.');
             }
-            if ($type === 'table') {
+            if ($type === 'table' && ($layout === null || ! self::repeatsCells($node))) {
                 self::assertGrid($node);
             }
 
@@ -185,6 +194,22 @@ final class TemplateDocument
         };
 
         return $visit($document, '', 0);
+    }
+
+    /**
+     * @param  array<string, mixed>  $table
+     */
+    private static function repeatsCells(array $table): bool
+    {
+        foreach ($table['content'] as $row) {
+            foreach ($row['content'] as $cell) {
+                if (isset($cell['attrs']['repeat'])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

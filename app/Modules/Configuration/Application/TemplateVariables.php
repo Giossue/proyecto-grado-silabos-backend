@@ -2,14 +2,15 @@
 
 namespace App\Modules\Configuration\Application;
 
+use App\Modules\Documents\Domain\SignatureAnchor;
 use App\Modules\Syllabus\Application\IdentificationCard;
 
 final class TemplateVariables
 {
-    /** @return array<string, array{label: string, source: string, text?: string, equals?: string}> */
+    /** @return array<string, array<string, mixed>> */
     public static function definitions(): array
     {
-        return config('syllabus_variables');
+        return TemplateContext::active()->variables();
     }
 
     /**
@@ -20,12 +21,7 @@ final class TemplateVariables
     {
         $values = [];
         foreach (self::definitions() as $key => $definition) {
-            $value = data_get($snapshot, $definition['source']);
-            $text = $definition['text'] ?? (is_scalar($value) ? (string) $value : '');
-            if (preg_match('/^identification\.(hours_|total_hours|credits)/', $definition['source']) === 1) {
-                $text = IdentificationCard::number($text);
-            }
-            $values[$key] = isset($definition['equals']) ? ($text === $definition['equals'] ? 'X' : '') : $text;
+            $values[$key] = self::value($definition, data_get($snapshot, $definition['source']));
         }
 
         return $values;
@@ -48,15 +44,30 @@ final class TemplateVariables
     /** @return list<array{key: string, label: string, sample: string}> */
     public static function catalog(): array
     {
-        $samples = self::resolve([
-            'identification' => IdentificationCard::sample(),
-            'approval' => ['submitted_on' => '14-08-2026', 'coordinator' => 'Ing. Galuth García', 'approved_on' => '14-08-2026'],
-        ]);
         $catalog = [];
         foreach (self::definitions() as $key => $definition) {
-            $catalog[] = ['key' => $key, 'label' => $definition['label'], 'sample' => $samples[$key] ?? $definition['label']];
+            $sample = str_starts_with($definition['source'], 'signature.')
+                ? self::value($definition, null)
+                : self::value($definition, $definition['sample'] ?? $definition['label']);
+            $catalog[] = ['key' => $key, 'label' => $definition['label'], 'sample' => isset($definition['equals']) ? ($definition['sample'] ?? '') : $sample];
         }
 
         return $catalog;
+    }
+
+    /**
+     * @param  array<string, mixed>  $definition
+     */
+    private static function value(array $definition, mixed $raw): string
+    {
+        if (str_starts_with($definition['source'], 'signature.')) {
+            return SignatureAnchor::text(substr($definition['source'], strlen('signature.')));
+        }
+        $text = is_scalar($raw) ? (string) $raw : '';
+        if (($definition['format'] ?? null) === 'number') {
+            $text = IdentificationCard::number($text);
+        }
+
+        return isset($definition['equals']) ? ($text === $definition['equals'] ? 'X' : '') : $text;
     }
 }

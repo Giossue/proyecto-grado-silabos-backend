@@ -289,7 +289,6 @@ class DocumentSignatureTest extends TestCase
         $template = SyllabusTemplate::query()->create([
             'nombre' => 'Plantilla de firma I-139',
             'activo' => true,
-            'mapeo_documento' => ['renderer' => 'baseline'],
         ]);
         $convocation = Convocation::query()->create([
             'carrera_id' => $career->id,

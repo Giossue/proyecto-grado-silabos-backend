@@ -5,8 +5,8 @@ namespace App\Modules\Library\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Application\InstitutionalLogos;
-use App\Modules\Configuration\Domain\TemplateAppearance;
-use App\Modules\Configuration\Domain\TemplateTitleBlock;
+use App\Modules\Configuration\Application\TemplateContext;
+use App\Modules\Configuration\Application\TemplatePresentation;
 use App\Modules\Documents\Application\SignatureWorkflow;
 use App\Modules\Library\Application\Actions\VerifyBibliography;
 use App\Modules\Library\Application\LibraryCommentReasons;
@@ -66,7 +66,7 @@ class LibraryReviewController extends Controller
             && $syllabus->estado === 'en_revision'
             && ReviewStage::ofRevision($revision) === ReviewStage::LIBRARY;
         $snapshot = SnapshotDocuments::present($revision->fotografia);
-        $mapping = is_array($snapshot['document_mapping'] ?? null) ? $snapshot['document_mapping'] : [];
+        $definition = TemplateContext::fromSnapshot($snapshot);
 
         return response()->json(['review' => [
             ...$this->summary($syllabus, $revision->numero_revision),
@@ -78,14 +78,10 @@ class LibraryReviewController extends Controller
             'can_verify' => $reviewable,
             'verified_at' => $revision->approval?->aprobado_en->toIso8601String(),
             'verified_by' => $revision->approval?->approver->nombre,
-            'presentation' => [
-                'appearance' => TemplateAppearance::fromMapping($mapping),
-                'title' => TemplateTitleBlock::fromMapping($mapping)['text'],
-                'logos' => [
-                    'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
-                    'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
-                ],
-            ],
+            'presentation' => TemplatePresentation::presentation($definition, [
+                'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
+                'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
+            ]),
             'template_variables' => is_array($snapshot['template_variables'] ?? null) ? $snapshot['template_variables'] : [],
             'sections' => BibliographySections::of($snapshot),
             'comments' => self::comments($syllabus),

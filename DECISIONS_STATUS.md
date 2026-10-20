@@ -838,3 +838,14 @@ las alineaciones globales y la negrita siguen fijos (I-195). El diseño se guard
 `mapeo_documento.layout` y viaja en el JSON de la plantilla; la clave antigua `appearance` se sigue
 ignorando. El editor alinea cada párrafo (izquierda, centro, derecha, justificado) y el Word lo respeta;
 el Word numera las páginas en el pie. El docente ve una vista previa del documento con lo que lleva escrito.
+
+19 de octubre de 2026, por instrucción del responsable del producto (I-229, ADR-0011): la plantilla del sílabo
+se define solo con datos. `plantilla_silabo.definicion_plantilla` (migración `000223`, reemplaza
+`mapeo_documento_plantilla`) guarda papel y apariencia, variables, bloques con valor, reglas y diseño, secciones
+obligatorias, secciones de biblioteca y plantillas listas; el manual técnico es `docs/architecture/template-json.md`.
+La letra, los colores y la alineación dejan de estar fijos en código (cambia lo dicho en I-225): los fija la
+plantilla oficial. El Word oficial no cambia salvo que los encabezados con fondo propio conservan su color de texto
+(antes salían en blanco). La pantalla adopta la tabla de Unidades del Word y el papel carta. Cada revisión congela la
+definición usada. Las reglas de unidades (4 unidades, 16 semanas, horas de la asignatura) no cambian; solo se mudan
+al JSON.
+

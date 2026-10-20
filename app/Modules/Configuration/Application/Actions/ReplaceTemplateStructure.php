@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
+use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -22,11 +23,11 @@ final class ReplaceTemplateStructure
     /**
      * @param  list<array<string, mixed>>  $sections
      */
-    public function execute(SyllabusTemplate $template, array $sections, User $actor, Request $request): SyllabusTemplate
+    public function execute(SyllabusTemplate $template, array $sections, User $actor, Request $request, ?TemplateDefinition $definition = null): SyllabusTemplate
     {
         $activeRole = $this->roles->resolve($request);
         $this->locks->assertTemplateEditable();
-        $replaced = $this->provisioner->replaceStructure($template, $sections);
+        $replaced = $this->provisioner->replaceStructure($template, $sections, $definition);
         $this->audit->execute(
             actorId: $actor->id,
             roleAssignmentId: $activeRole?->id,

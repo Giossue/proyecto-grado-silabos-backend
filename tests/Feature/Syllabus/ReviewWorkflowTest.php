@@ -673,7 +673,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame($snapshot, $revision->fresh()->fotografia);
         $detail = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
         $this->assertStringContainsString('Contenido conservado tras reapertura', json_encode($detail->json('syllabus.sections'), JSON_THROW_ON_ERROR));
-        $this->assertSame(8, app(SyllabusSnapshot::class)->build($syllabus->fresh())['schema_version']);
+        $this->assertSame(9, app(SyllabusSnapshot::class)->build($syllabus->fresh())['schema_version']);
     }
 
     private function restorePreviousFieldColumns(): void

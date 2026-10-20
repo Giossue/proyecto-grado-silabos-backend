@@ -4,8 +4,7 @@ namespace App\Modules\Configuration\Application;
 
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
-use App\Modules\Configuration\Domain\TemplateAppearance;
-use App\Modules\Configuration\Domain\TemplateTitleBlock;
+use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +39,7 @@ final class SyllabusTemplateProvisioner
             $lockedTemplate = $this->retireStructure($lockedTemplate);
 
             $this->buildStructure($lockedTemplate, OfficialTemplate::sections());
+            $lockedTemplate->saveDefinition(OfficialTemplate::definition());
 
             return $lockedTemplate->fresh();
         });
@@ -60,11 +60,14 @@ final class SyllabusTemplateProvisioner
     /**
      * @param  list<array{key: string, title: string, orientation?: string, fields?: list<array{key: string, label?: string|null, quien_llena: string, content: array<string, mixed>}>}>  $structure
      */
-    public function replaceStructure(SyllabusTemplate $template, array $structure): SyllabusTemplate
+    public function replaceStructure(SyllabusTemplate $template, array $structure, ?TemplateDefinition $definition = null): SyllabusTemplate
     {
-        return DB::transaction(function () use ($template, $structure): SyllabusTemplate {
+        return DB::transaction(function () use ($template, $structure, $definition): SyllabusTemplate {
             $locked = SyllabusTemplate::query()->whereKey($template->getKey())->lockForUpdate()->firstOrFail();
             $locked = $this->retireStructure($locked);
+            if ($definition !== null) {
+                $locked->saveDefinition($definition);
+            }
 
             $this->buildStructure($locked, $structure);
 
@@ -100,10 +103,7 @@ final class SyllabusTemplateProvisioner
                 'version_esquema' => 1,
                 'secciones' => [],
             ],
-            'mapeo_documento' => [
-                'appearance' => TemplateAppearance::defaults(),
-                'title_block' => TemplateTitleBlock::defaults(),
-            ],
+            'definicion' => OfficialTemplate::definition()->toArray(),
         ]);
     }
 

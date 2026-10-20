@@ -9,29 +9,11 @@ use Illuminate\Validation\ValidationException;
 class TemplateStructureValidator
 {
     /**
-     * @var list<string>
-     */
-    public const REQUIRED_SECTIONS = [
-        'identificacion',
-        'descripcion',
-        'objetivos',
-        'resultados',
-        'habilidades',
-        'planificacion',
-        'metodologia',
-        'evaluacion',
-        'perfil_egreso',
-        'etica',
-        'bibliografia',
-        'revision',
-    ];
-
-    /**
      * @throws ValidationException
      */
     public function assertUsable(SyllabusTemplate $template, string $errorKey = 'template'): void
     {
-        $missing = array_values(array_diff(self::REQUIRED_SECTIONS, $template->sections->pluck('clave')->all()));
+        $missing = array_values(array_diff($template->definition()->requiredSections(), $template->sections->pluck('clave')->all()));
         if ($missing !== []) {
             throw ValidationException::withMessages([
                 $errorKey => 'La plantilla no tiene las áreas obligatorias: '.implode(', ', $missing).'.',

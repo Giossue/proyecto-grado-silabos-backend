@@ -11,6 +11,7 @@
 | Crear una pantalla | `frontend.md`, `../product/screens.md` y checklist frontend |
 | Crear un trabajo | `queues-and-jobs.md`, `observability.md` |
 | Generar Word/PDF | `files-and-documents.md` |
+| Crear o cambiar la plantilla del sílabo | `template-json.md` (manual técnico) y `adr/0011-template-as-data.md` |
 | Trabajar con IA | `ai-service.md`, especificación de IA y threat model |
 | Leer PDF internos para importación curricular | `academic-source-ingestion.md`, `files-and-documents.md`, `queues-and-jobs.md` |
 | Importar contenido curricular PDF/XLSX | `academic-source-ingestion.md`, `database.md`, planes activos I-145/I-146 y `openapi.json` |

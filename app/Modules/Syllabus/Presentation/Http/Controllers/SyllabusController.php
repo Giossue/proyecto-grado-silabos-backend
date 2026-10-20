@@ -5,11 +5,10 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Application\InstitutionalLogos;
+use App\Modules\Configuration\Application\TemplateContext;
+use App\Modules\Configuration\Application\TemplatePresentation;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldDocument;
-use App\Modules\Configuration\Domain\TemplateAppearance;
-use App\Modules\Configuration\Domain\TemplateTitleBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
@@ -246,7 +245,7 @@ class SyllabusController extends Controller
         $frozen = $revision instanceof SyllabusRevision && in_array($syllabus->estado, ['en_revision', 'aprobado'], true)
             ? SnapshotDocuments::present($revision->fotografia) : null;
         $archived = $frozen === null ? SyllabusDocumentFields::archivedSections($syllabus) : null;
-        $archivedView = $archived === null ? null : SnapshotDocuments::present(['sections' => $archived, 'identification' => $identification]);
+        $archivedView = $archived === null ? null : SnapshotDocuments::present(['sections' => $archived, 'identification' => $identification, 'template_definition' => $template->definition()->toArray()]);
         if ($archivedView !== null) {
             foreach ($archivedView['sections'] as &$section) {
                 foreach ($section['fields'] as &$field) {
@@ -255,7 +254,7 @@ class SyllabusController extends Controller
                 }
             }
         }
-        $mapping = $frozen['document_mapping'] ?? $template->mapeo_documento;
+        $definition = $frozen !== null ? TemplateContext::fromSnapshot($revision->fotografia) : $template->definition();
         $variables = $frozen['template_variables'] ?? TemplateVariables::resolve(['identification' => $identification]);
 
         return [
@@ -275,20 +274,12 @@ class SyllabusController extends Controller
             'approved_revision_id' => $syllabus->estado === 'aprobado'
                 ? $syllabus->revisions()->whereHas('approval')->latest('numero_revision')->value('id')
                 : null,
-            'presentation' => [
-                'appearance' => TemplateAppearance::fromMapping($mapping),
-                'title' => TemplateTitleBlock::fromMapping($mapping)['text'],
-                'logos' => [
-                    'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
-                    'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
-                ],
-            ],
+            'presentation' => TemplatePresentation::presentation($definition, [
+                'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
+                'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
+            ]),
             'template_variables' => $variables,
-            'blocks' => [
-                'identificacion' => ['table' => DocumentBlock::identificationLayout($variables)],
-                'unidades' => ['weeks' => DocumentBlock::WEEKS, 'hours' => ['acd' => DocumentBlock::hours($variables['horas_docencia'] ?? null), 'ape' => DocumentBlock::hours($variables['horas_practicas'] ?? null), 'aa' => DocumentBlock::hours($variables['horas_autonomas'] ?? null)]],
-                'evaluacion' => ['with_practice' => ! (isset($variables['horas_practicas']) && trim($variables['horas_practicas']) !== '' && DocumentBlock::hours($variables['horas_practicas']) === 0.0)],
-            ],
+            'definition' => TemplatePresentation::definition($definition),
             'sections' => $frozen['sections'] ?? $archivedView['sections'] ?? $template->sections
                 ->map(fn (TemplateSection $section): array => $this->sectionPayload($section, $values, ['identification' => $identification]))
                 ->values(),

@@ -89,11 +89,12 @@ class OfficialTemplateTest extends TestCase
             ->assertJsonPath('template.appearance.margin_cm', 2.5)
             ->assertJsonPath('template.appearance.font_family', 'Arial')
             ->assertJsonPath('template.layoutOptions.margins.0.label', '1,5 cm');
-        $this->assertSame($layout, $this->getJson(route('api.v1.admin.template.json.export', $this->template))->json('layout'));
+        $exported = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->json('document');
+        $this->assertSame([2.5, ['title' => 16, 'section' => 12, 'body' => 10]], [$exported['margin_cm'], $exported['sizes']]);
 
         $this->putJson(route('api.v1.admin.template.json.import', $this->template), [...$file, 'layout' => ['margin_cm' => 9, 'body_font_size' => 30]])
             ->assertUnprocessable()->assertJsonValidationErrors(['layout.margin_cm', 'layout.body_font_size']);
-        $this->putJson(route('api.v1.admin.template.json.import', $this->template), [...$file, 'layout' => ['font_family' => 'Georgia', 'body_font_size' => 12]])->assertOk();
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), [...$file, 'version' => 1, 'layout' => ['font_family' => 'Georgia', 'body_font_size' => 12]])->assertOk();
         $this->getJson(route('api.v1.admin.template.show', $this->template))
             ->assertJsonPath('template.layout.body_font_size', 12)
             ->assertJsonPath('template.layout.margin_cm', 2.5)
@@ -149,8 +150,9 @@ class OfficialTemplateTest extends TestCase
         $this->format()->assertOk();
         $exported = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->assertOk()->json();
 
-        $this->assertSame(1, $exported['version']);
-        $this->assertSame(['version', 'title', 'layout', 'sections'], array_keys($exported));
+        $this->assertSame(2, $exported['version']);
+        $this->assertSame(['version', 'document', 'variables', 'blocks', 'required_sections', 'library_sections', 'presets', 'sections'], array_keys($exported));
+        $this->assertSame(['identificacion', 'unidades', 'evaluacion', 'si_no', 'repetible'], array_keys($exported['blocks']));
         $this->assertCount(12, $exported['sections']);
         $this->assertSame(['key', 'title', 'orientation', 'fields'], array_keys($exported['sections'][0]));
         $this->assertSame(['key', 'label', 'quien_llena', 'content'], array_keys($exported['sections'][0]['fields'][0]));

@@ -488,7 +488,6 @@ class DocumentOperationsTest extends TestCase
         $version = SyllabusTemplate::query()->create([
             'nombre' => 'Plantilla documental CP-F',
             'activo' => true,
-            'mapeo_documento' => ['renderer' => 'baseline'],
         ]);
         $convocation = Convocation::query()->create([
             'carrera_id' => $career->id,

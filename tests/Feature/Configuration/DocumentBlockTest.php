@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Configuration;
 
+use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\DocumentBlock;
@@ -129,19 +130,24 @@ class DocumentBlockTest extends TestCase
     {
         $no = FieldDocument::normalize($this->identification(['disability' => ['answer' => 'no', 'type' => 'Visual', 'description' => 'x']]));
         $this->assertSame(['answer' => 'no', 'type' => '', 'description' => ''], $no['content'][0]['attrs']['value']['disability']);
-        $this->assertSame(['discapacidad_si' => '', 'discapacidad_no' => 'X', 'discapacidad_tipo' => '', 'discapacidad_descripcion' => ''], DocumentBlock::variables($no['content'][0]));
+        $text = FreeText::plainText(TemplateDocumentResolver::resolve($no, [], []));
+        $this->assertMatchesRegularExpression('/No \| X/', $text);
+        $this->assertStringNotContainsString('Visual', $text);
         $this->assertTrue(FieldDocument::isEmpty(FieldDocument::normalize($this->identification())));
         $this->assertFalse(FieldDocument::isEmpty($no));
     }
 
-    public function test_the_identification_layout_keeps_only_the_answer_slots_as_variables(): void
+    public function test_the_identification_layout_comes_from_the_template_with_catalog_data_and_the_teacher_answer(): void
     {
-        $layout = DocumentBlock::identificationLayout(['nombre_facultad' => 'Ciencias', 'formacion_docente' => 'Formación escrita']);
-        $ids = array_column(array_column(TemplateDocument::nodes(['type' => 'doc', 'content' => [$layout]], 'variable'), 'attrs'), 'id');
+        $layout = ['type' => 'doc', 'content' => OfficialTemplate::definition()->block('identificacion')['layout']];
+        $variables = array_column(array_column(TemplateDocument::nodes($layout, 'variable'), 'attrs'), 'id');
+        $slots = array_column(array_column(TemplateDocument::nodes($layout, 'slot'), 'attrs'), 'value');
 
-        $this->assertEqualsCanonicalizing(DocumentBlock::SLOT_VARIABLES, $ids);
-        $this->assertStringContainsString('FACULTAD: Ciencias', FreeText::plainText($layout));
-        $this->assertStringContainsString('Formación escrita', FreeText::plainText($layout));
+        $this->assertSame([], array_diff($variables, array_keys(TemplateVariables::definitions())));
+        $this->assertEqualsCanonicalizing(['disability.answer', 'disability.answer', 'disability.type', 'disability.description'], $slots);
+        $resolved = TemplateDocumentResolver::resolve(FieldDocument::normalize($this->identification()), [], ['nombre_facultad' => 'Ciencias', 'formacion_docente' => 'Formación escrita']);
+        $this->assertStringContainsString('FACULTAD: Ciencias', FreeText::plainText($resolved));
+        $this->assertStringContainsString('Formación escrita', FreeText::plainText($resolved));
     }
 
     public function test_the_units_block_has_four_units_sharing_sixteen_weeks_and_expands_to_one_table_each(): void
@@ -169,11 +175,14 @@ class DocumentBlockTest extends TestCase
         DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => [['semanas' => [['acd_h' => 'tres']]]]]]);
     }
 
-    public function test_the_unit_hours_are_added_per_component(): void
+    public function test_the_unit_hours_are_added_per_component_and_compared_with_the_subject(): void
     {
         $block = DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => [['semanas' => [['acd_h' => '3', 'ape_h' => '1,5', 'aa_h' => ''], ['acd_h' => '2']]], ['semanas' => [['aa_h' => '4']]]]]]);
+        $failures = DocumentBlock::failures(['attrs' => $block], ['horas_docencia' => '5', 'horas_practicas' => '2', 'horas_autonomas' => '4']);
 
-        $this->assertSame(['acd' => 5.0, 'ape' => 1.5, 'aa' => 4.0], DocumentBlock::unitHours(['value' => $block['value']]));
+        $this->assertSame(['semanas_unidades_incompletas', 'horas_unidades_no_coinciden'], array_column($failures, 'code'));
+        $this->assertSame('Las horas de las unidades deben sumar las de la asignatura: APE 1.5 de 2.', $failures[1]['message']);
+        $this->assertSame('Las unidades deben repartir las 16 semanas del período: tienen 3.', $failures[0]['message']);
     }
 
     public function test_the_evaluation_points_follow_the_practical_hours_of_the_subject(): void

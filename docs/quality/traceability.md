@@ -1,5 +1,14 @@
 # Trazabilidad
 
+## Plantilla solo con datos — I-229 e I-228
+
+| Cambio | IDs relacionados | Evidencia | Estado |
+|---|---|---|---|
+| La plantilla completa (papel, apariencia, variables, bloques con diseño y reglas, secciones obligatorias y de biblioteca) se define con JSON y vive en `definicion_plantilla`; un bloque nuevo no requiere código | RF-017..026; RN-009..012; CU-02, CU-04; ADR-0011 | `TemplateDefinitionTest` (bloque nuevo solo con JSON, errores con ruta, ida y vuelta HTML, fotografía congelada), `OfficialTemplateTest`, `DocumentBlockTest`, `blocks.test.ts` (conformidad con el backend) | Verificado en pruebas |
+| El Word de la plantilla oficial no cambia al mudar el formato a datos; los encabezados con fondo propio ya no salen en blanco | RNF integridad; PV-07 | `TemplateGoldenWordTest` (referencias en `tests/Fixtures/golden`), PDF con Gotenberg local | Verificado en pruebas y PDF local |
+| Pantalla, vista previa y Word usan el mismo diseño de bloques y el mismo papel | UI-01..04; PV-19 | `DocumentBlock.test.ts`, `TemplateVisualBuilder.test.ts`, medición en el navegador (vista contra edición) | Verificado en pruebas y navegador local |
+| Las reglas de unidades (16 semanas y horas) salen de la plantilla y se evalúan igual al guardar, en vivo y al enviar | RN-009..012; CU-04 | `ConvocationAndDraftTest::test_unit_hours_must_add_up_to_the_subject_hours_before_sending`, `DocumentBlockTest`, `blocks.test.ts`, `TeacherSyllabusDetailPage.test.ts` | Verificado en pruebas |
+
 ## Normalización cromática de temas — I-197
 
 | Cambio | IDs relacionados | Evidencia | Estado |
@@ -415,8 +424,8 @@ bloques y tablas vive en `plantilla_silabo.documento_plantilla`, mientras
 `definiciones_campo` representa cada campo tipado. `TemplateAndSourceTest`
 verifica alta atómica de varios campos, tabla mínima, obligatoriedad en validación,
 autorización y rechazo de claves repetidas.
-`TemplateAppearance` limita los valores que acepta el servidor y fija la identidad
-institucional; `TemplateAppearanceSheet` previsualiza orientación, márgenes y las tres
+`TemplateStyle` (I-229) limita los valores que acepta el servidor; la identidad
+institucional vive en la plantilla oficial; `TemplateAppearanceSheet` previsualiza orientación, márgenes y las tres
 escalas editables. `TemplateDocumentTest` verifica que las tablas descarten tamaños
 inline y `WordRendererTest` comprueba el resultado en OOXML desde el mapa congelado. Los párrafos
 siguientes describen la implementación documental anterior y se conservan únicamente

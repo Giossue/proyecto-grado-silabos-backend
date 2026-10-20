@@ -144,8 +144,10 @@ sigue siendo Carta (el oficial es A4: pendiente). Gotenberg convierte este mismo
 visual no se ha comprobado a mano.
 
 I-225 (19 de octubre de 2026) vuelve editables solo los márgenes y los tamaños de título, sección y
-contenido: `TemplateAppearance::LAYOUT`, guardados en `mapeo_documento.layout` (la clave `appearance`
-sigue ignorada). Un párrafo con alineación propia distinta de «izquierda» prevalece sobre la del cuerpo.
+contenido. Desde I-229 todo el formato (papel, letra, colores, título, logos, pie y metadatos) sale de
+`definicion_plantilla.document` congelado en la fotografía; `TemplateAppearance` ya no existe y los valores de la
+UEB viven en `resources/templates/silabo-oficial.json`. Los encabezados de tabla con fondo propio conservan su color
+de texto; el color de encabezado de la plantilla solo se aplica a los que no tienen fondo. Un párrafo con alineación propia distinta de «izquierda» prevalece sobre la del cuerpo.
 Cada sección del Word lleva en el pie «Página X de Y» (campos `PAGE` y `NUMPAGES`).
 
 Contenido fijo oficial (I-195, 2026-10-07): las tablas de evaluación (indicadores y escala) y de firmas usan celdas de

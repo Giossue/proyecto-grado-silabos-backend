@@ -10,11 +10,10 @@ use App\Modules\Configuration\Application\Actions\FormatSyllabusTemplate;
 use App\Modules\Configuration\Application\Actions\ReplaceTemplateStructure;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\OfficialTemplate;
+use App\Modules\Configuration\Application\TemplatePresentation;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\DocumentHtml;
-use App\Modules\Configuration\Domain\TemplateAppearance;
-use App\Modules\Configuration\Domain\TemplateTitleBlock;
+use App\Modules\Configuration\Domain\TemplateStyle;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
@@ -78,10 +77,22 @@ class TemplateController extends Controller
 
     public function exportJson(SyllabusTemplate $template, ManageTemplatesRequest $request): JsonResponse
     {
+        $definition = $template->definition();
+
         return response()->json([
             'version' => ImportTemplateStructureRequest::FORMAT_VERSION,
-            'title' => TemplateTitleBlock::fromMapping($template->mapeo_documento)['text'],
-            'layout' => TemplateAppearance::layout($template->mapeo_documento['layout'] ?? null),
+            'document' => $definition->document(),
+            'variables' => $definition->variables(),
+            'blocks' => array_map(fn (array $block): array => [
+                'label' => $block['label'],
+                ...($block['props'] !== [] ? ['props' => $block['props']] : []),
+                ...($block['value'] !== [] ? ['value' => $block['value']] : []),
+                ...($block['rules'] !== [] ? ['rules' => $block['rules']] : []),
+                'layout' => DocumentHtml::toLines(['type' => 'doc', 'content' => $block['layout']]),
+            ], $definition->blocks()),
+            'required_sections' => $definition->requiredSections(),
+            'library_sections' => $definition->librarySections(),
+            'presets' => array_map(fn (array $preset): array => ['key' => $preset['key'], 'label' => $preset['label'], 'field' => $preset['field']], $definition->presets()),
             'sections' => $template->sections->map(fn (TemplateSection $section): array => [
                 'key' => $section->clave,
                 'title' => $section->titulo,
@@ -102,17 +113,7 @@ class TemplateController extends Controller
         abort_unless($actor instanceof User, 401);
         /** @var list<array<string, mixed>> $sections */
         $sections = $request->validated('sections');
-        $action->execute($template, $sections, $actor, $request);
-        $mapping = $template->refresh()->mapeo_documento ?? [];
-        $title = $request->validated('title');
-        if (is_string($title) && trim($title) !== '') {
-            $mapping['title_block'] = ['text' => trim($title)];
-        }
-        $layout = $request->validated('layout');
-        if (is_array($layout)) {
-            $mapping['layout'] = TemplateAppearance::layout([...TemplateAppearance::layout($mapping['layout'] ?? null), ...$layout]);
-        }
-        $template->forceFill(['mapeo_documento' => $mapping])->save();
+        $action->execute($template, $sections, $actor, $request, $request->definition());
 
         return response()->json(['message' => 'Plantilla importada desde el JSON.']);
     }
@@ -136,6 +137,7 @@ class TemplateController extends Controller
      */
     private function builderProps(SyllabusTemplate $template, ProcessLocks $locks, InstitutionalLogos $logos): array
     {
+        $definition = $template->definition();
         $pausedProcess = SyllabusProcess::query()
             ->where('estado', SyllabusProcess::STATE_PAUSED)
             ->first(['id', 'pausado_en']);
@@ -148,8 +150,8 @@ class TemplateController extends Controller
             'processLockDetail' => $locks->templateLock(),
             'templateChangedDuringPause' => $templateChangedDuringPause,
             'variables' => TemplateVariables::catalog(),
-            'presets' => OfficialTemplate::presets(),
-            'blocks' => ['identificacion' => ['table' => DocumentBlock::identificationLayout(array_column(TemplateVariables::catalog(), 'sample', 'key'))]],
+            'presets' => OfficialTemplate::presets($definition),
+            'definition' => TemplatePresentation::definition($definition),
             'logos' => [
                 'institution' => route('logos.institution', ['v' => $logos->version($logos->institutionPath())]),
                 'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$logos->version(public_path('images/silabo/facultad.jpeg')),
@@ -159,10 +161,10 @@ class TemplateController extends Controller
             'template' => [
                 'id' => $template->id,
                 'name' => SyllabusTemplate::INSTITUTIONAL_NAME,
-                'appearance' => TemplateAppearance::fromMapping($template->mapeo_documento),
-                'layout' => TemplateAppearance::layout($template->mapeo_documento['layout'] ?? null),
-                'layoutOptions' => TemplateAppearance::catalog(),
-                'titleBlock' => TemplateTitleBlock::fromMapping($template->mapeo_documento),
+                'appearance' => TemplateStyle::appearance($definition->document()),
+                'layout' => TemplateStyle::layout($definition->document()),
+                'layoutOptions' => TemplatePresentation::layoutOptions($definition->document()),
+                'titleBlock' => ['text' => $definition->document()['title']['text']],
                 'sections' => $template->sections->map(fn (TemplateSection $section) => [
                     'id' => $section->id,
                     'key' => $section->clave,

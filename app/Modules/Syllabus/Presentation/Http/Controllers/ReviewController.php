@@ -5,8 +5,8 @@ namespace App\Modules\Syllabus\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Configuration\Application\InstitutionalLogos;
-use App\Modules\Configuration\Domain\TemplateAppearance;
-use App\Modules\Configuration\Domain\TemplateTitleBlock;
+use App\Modules\Configuration\Application\TemplateContext;
+use App\Modules\Configuration\Application\TemplatePresentation;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\Actions\ApproveSyllabus;
 use App\Modules\Syllabus\Application\Actions\DeleteSyllabus;
@@ -193,9 +193,7 @@ class ReviewController extends Controller
         $activeRole = app(ActiveRole::class)->resolve(request());
         $myStage = $activeRole === null ? null : ReviewStage::forRole($activeRole->role->codigo_rol);
         $stage = $syllabus->estado === 'en_revision' && $latest?->id === $revision->id ? self::stageOf($revision) : null;
-        $documentMapping = is_array($revision->fotografia['document_mapping'] ?? null)
-            ? $revision->fotografia['document_mapping']
-            : [];
+        $definition = TemplateContext::fromSnapshot($revision->fotografia);
 
         return [
             'syllabus' => [
@@ -211,14 +209,10 @@ class ReviewController extends Controller
 
             'can_decide' => $decisionsAllowed && $stage !== null && $stage === $myStage,
             'can_delete' => $decisionsAllowed && $syllabus->estado === 'aprobado' && $myStage === ReviewStage::COORDINATION,
-            'presentation' => [
-                'appearance' => TemplateAppearance::fromMapping($documentMapping),
-                'title' => TemplateTitleBlock::fromMapping($documentMapping)['text'],
-                'logos' => [
-                    'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
-                    'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
-                ],
-            ],
+            'presentation' => TemplatePresentation::presentation($definition, [
+                'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
+                'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
+            ]),
             'revision' => [
                 'id' => $revision->id,
                 'number' => $revision->numero_revision,

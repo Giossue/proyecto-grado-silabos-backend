@@ -92,7 +92,7 @@ it('I-78 usa nombres explícitos para todos los atributos genéricos de dominio'
         'contenido', 'valor', 'origen', 'clave', 'etiqueta', 'ayuda', 'reglas',
         'opciones', 'posicion', 'modalidad', 'fecha_inicio', 'fecha_fin',
         'semanas_lectivas', 'creditos', 'horas_totales',
-        'orden_en_ciclo', 'unidad_organizacion_curricular', 'mapeo_documento',
+        'orden_en_ciclo', 'unidad_organizacion_curricular', 'mapeo_documento', 'definicion',
         'configuracion', 'datos', 'advertencias', 'extracto', 'decision',
         'fotografia', 'justificacion', 'metadatos', 'mensaje',
     ];
