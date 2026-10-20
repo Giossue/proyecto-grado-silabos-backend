@@ -427,6 +427,21 @@ class SyllabusProcessTest extends TestCase
         ]);
     }
 
+    public function test_closing_the_process_closes_its_career_convocations_and_only_admin_can(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+
+        $this->actingAsCoordinator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertForbidden();
+        $this->transition($process, 'cerrar')->assertSuccessful();
+
+        $this->assertSame(SyllabusProcess::STATE_CLOSED, $process->fresh()->estado);
+        $this->assertSame(Convocation::STATE_CLOSED, $convocation->fresh()->estado);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'proceso_silabos.cerrado', 'recurso_id' => $process->id]);
+        $this->transition($process, 'cerrar')->assertForbidden();
+        $this->transition($process, 'reanudar')->assertForbidden();
+    }
+
     public function test_coordinator_starts_the_institutional_convocation_and_inherits_its_configuration(): void
     {
         $template = $this->publishedTemplate();
@@ -932,9 +947,8 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame($convocation->career->nombre.' · '.$convocation->process->academicPeriod->codigo, $convocation->fresh()->nombre);
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'cerrar']))->assertNotFound();
-        $this->actingAsAdministrator()->postJson('/api/v1/admin/processes/'.$convocation->process()->firstOrFail()->id.'/cerrar')->assertNotFound();
         $syllabus = Syllabus::query()->firstOrFail();
-        $this->closeProcess($convocation->process()->firstOrFail());
+        $this->actingAsAdministrator()->postJson('/api/v1/admin/processes/'.$convocation->process()->firstOrFail()->id.'/cerrar')->assertSuccessful();
         $this->assertSame('cerrada', $convocation->fresh()->estado);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertForbidden();
     }

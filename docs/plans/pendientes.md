@@ -79,30 +79,27 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
 
 Hallazgos de la revisión de documentación del 2026-10-20, todavía sin corregir.
 
-1. **Relevo de docente:** `InProgressWork::restartForParallel` borra todos los sílabos del paralelo, no solo los del
-   período en curso. Falta una prueba que lo confirme.
-2. **Cerrar convocatoria:** no existe la acción. Para abrir otra hay que eliminar la actual.
-3. **Textos que contradicen al servidor:**
+1. **Textos que contradicen al servidor:**
    - `ResetSyllabus` pide «reábralo»;
    - el diálogo de Biblioteca dice que el reenvío vuelve a Coordinación;
    - la guía de Coordinación pide «Programar las materias del período» y menciona una importación de paralelos que
      no existe;
    - el aviso «exportación completada» ofrece descargar antes de las tres firmas.
-4. **Permisos que solo controla la pantalla:**
+2. **Permisos que solo controla la pantalla:**
    - «Quitar de la carrera» con la convocatoria abierta;
    - «Devolver al docente» de Biblioteca no revisa el estado de la convocatoria, a diferencia de «Aprobar
      bibliografía».
-5. **Restos sin uso:**
+3. **Restos sin uso:**
    - `idempotency_key` se exige al aprobar en Coordinación y al comentar en Biblioteca, pero no se usa;
    - la función `proteger_datos_entrada_trabajo()` no tiene trigger;
    - el worker escucha `notificaciones` e `integraciones`, que no usa ningún trabajo.
-6. **Configuración:**
+4. **Configuración:**
    - Nginx acepta 32 MB y el PDF firmado admite 40 MB;
    - faltan índices en `definiciones_campo.plantilla_id`, `importaciones_ficha.solicitado_por` y
      `ayudas_pantalla.actualizado_por`;
    - `composer dev` no procesa las colas `documentos` e `ia`;
    - `GOTENBERG_URL` no está en `.env.example`.
-7. **Prueba e2e desactualizada:** `tests/e2e/accessibility.spec.ts` (frontend) busca el botón «Nueva plantilla», que
+5. **Prueba e2e desactualizada:** `tests/e2e/accessibility.spec.ts` (frontend) busca el botón «Nueva plantilla», que
    ya no existe.
 
 ## Deuda técnica

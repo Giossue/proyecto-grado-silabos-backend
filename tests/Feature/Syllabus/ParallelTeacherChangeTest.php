@@ -82,6 +82,32 @@ class ParallelTeacherChangeTest extends TestCase
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $fresh))->assertForbidden();
     }
 
+    public function test_a_new_teacher_never_erases_the_syllabi_of_a_closed_process_and_history_keeps_its_author(): void
+    {
+        $syllabus = $this->submittedSyllabus();
+        $process = $syllabus->convocation->process()->firstOrFail();
+        $assignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
+            ->assertOk()->assertJsonPath('syllabus.editable', false);
+
+        $this->removeAssignment($assignment)->assertSuccessful();
+        $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertSuccessful();
+
+        $this->assertSame('en_revision', $syllabus->fresh()?->estado);
+        $this->assertDatabaseHas('revisiones_silabo', ['silabo_id' => $syllabus->id]);
+        $this->assertSame(1, Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->count());
+
+        $period = $process->academicPeriod()->firstOrFail();
+        $period->update(['fecha_inicio' => now()->subMonths(5)->toDateString(), 'fecha_fin' => now()->subDay()->toDateString()]);
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.history.index'))
+            ->assertOk()->assertJsonCount(1, 'careers');
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
+        $this->actingAsReplacement()->getJson(route('api.v1.teacher.history.index'))
+            ->assertOk()->assertJsonCount(0, 'careers');
+    }
+
     public function test_a_submitted_syllabus_is_also_discarded_when_the_teacher_changes(): void
     {
         $syllabus = $this->submittedSyllabus();

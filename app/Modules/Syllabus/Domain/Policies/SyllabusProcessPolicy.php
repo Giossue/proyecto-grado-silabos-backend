@@ -45,4 +45,10 @@ class SyllabusProcessPolicy
     {
         return $this->viewAny($user) && $process->estado !== SyllabusProcess::STATE_CLOSED;
     }
+
+    public function close(User $user, SyllabusProcess $process): bool
+    {
+        return $this->viewAny($user)
+            && in_array($process->estado, [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED], true);
+    }
 }

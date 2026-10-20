@@ -165,6 +165,16 @@ class Syllabus extends Model
             ->whereHas('user', fn (Builder $account): Builder => $account->where('activo', true)));
     }
 
+    /** @param  Builder<Syllabus>  $query */
+    public function scopeWrittenBy(Builder $query, User|string $user): void
+    {
+        $userId = $user instanceof User ? $user->id : $user;
+
+        $query->where(fn (Builder $owned): Builder => $owned
+            ->whereHas('revisions', fn (Builder $revision): Builder => $revision->where('enviado_por', $userId))
+            ->orWhere(fn (Builder $unsent): Builder => $unsent->whereDoesntHave('revisions')->whereCurrentTeacher($user)));
+    }
+
     /** @return HasMany<FieldValue, $this> */
     public function values(): HasMany
     {

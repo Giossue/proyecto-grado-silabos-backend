@@ -12,6 +12,7 @@ class TransitionSyllabusProcessRequest extends FormRequest
     private const ABILITIES = [
         TransitionSyllabusProcess::PAUSE => 'pause',
         TransitionSyllabusProcess::RESUME => 'resume',
+        TransitionSyllabusProcess::CLOSE => 'close',
     ];
 
     public function authorize(): bool

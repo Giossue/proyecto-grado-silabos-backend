@@ -92,7 +92,7 @@ class SyllabusController extends Controller
         abort_unless($user instanceof User, 401);
 
         $careers = Syllabus::query()
-            ->whereCurrentTeacher($user)
+            ->writtenBy($user)
             ->inPastPeriod()
             ->with(['convocation:id,carrera_id', 'convocation.career:id,nombre'])
             ->get()
@@ -114,7 +114,7 @@ class SyllabusController extends Controller
         abort_unless($user instanceof User, 401);
 
         $syllabi = Syllabus::query()
-            ->whereCurrentTeacher($user)
+            ->writtenBy($user)
             ->inPastPeriod()
             ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $career))
             ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo,fecha_fin', 'parallel.subject'])

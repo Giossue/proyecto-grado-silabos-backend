@@ -117,8 +117,11 @@ pida.
 - Cambiar la plantilla, la malla o una ficha con sílabos existentes exige pausar y
   confirmar. Los sílabos afectados se rehacen desde cero, incluso los aprobados. Los
   procesos cerrados no se tocan.
-- Cambiar el docente o los paralelos no exige pausa. Un docente nuevo empieza el sílabo
-  desde cero.
+- Cambiar el docente o los paralelos no exige pausa. Un docente nuevo empieza desde cero
+  el sílabo de la convocatoria en curso; nada de una convocatoria cerrada se borra salvo
+  al eliminarla.
+- Administración cierra la convocatoria al terminar el período; lo cerrado queda solo para
+  consulta.
 - Las validaciones al enviar y las sugerencias de IA son cosas separadas. La IA propone;
   nunca aprueba, bloquea ni escribe sin que una persona lo confirme. Si falla, solo se
   pierde la ayuda de IA.

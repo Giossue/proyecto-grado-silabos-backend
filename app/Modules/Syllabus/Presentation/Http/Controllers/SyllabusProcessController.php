@@ -124,7 +124,7 @@ class SyllabusProcessController extends Controller
         $message = match ($transition) {
             TransitionSyllabusProcess::PAUSE => 'Proceso en pausa. Los envíos se detienen y la plantilla queda editable.',
             TransitionSyllabusProcess::RESUME => 'Proceso reanudado. Los envíos vuelven a admitirse.',
-            default => 'Proceso cerrado.',
+            default => 'Convocatoria cerrada. Sus sílabos quedan solo para consulta.',
         };
 
         return response()->json(['message' => $message]);

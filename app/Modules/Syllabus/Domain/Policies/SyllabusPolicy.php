@@ -40,7 +40,8 @@ class SyllabusPolicy
             return false;
         }
 
-        return $this->hasCurrentCollaboration($user, $syllabus);
+        return $this->hasCurrentCollaboration($user, $syllabus)
+            || Syllabus::query()->whereKey($syllabus->getKey())->writtenBy($user)->exists();
     }
 
     public function start(User $user, Syllabus $syllabus): bool

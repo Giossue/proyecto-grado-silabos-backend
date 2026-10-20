@@ -34,7 +34,7 @@ El menú y los botones reflejan el permiso, pero no lo reemplazan.
 | Ficha de la asignatura (Proyecto de carrera) e importación | Solo la ficha, por API; no tiene pantalla | Sí, en su carrera, con la convocatoria de la carrera pausada o sin abrir | No | No |
 | Marcar un campo de la ficha como editable por el docente | No | Sí | Edita ese campo en su sílabo | No |
 | Plantilla | Sí, con la convocatoria pausada o sin convocatoria | No | No | No |
-| Convocatoria: crear, pausar, reanudar, prorrogar, eliminar | Sí | No | No | No |
+| Convocatoria: crear, pausar, reanudar, prorrogar, cerrar, eliminar | Sí | No | No | No |
 | Convocatoria de la carrera: iniciar, pausar, reanudar | No | Sí | No | No |
 | Elaborar, validar y enviar el sílabo | No | No | Sí, en sus paralelos, con la convocatoria en curso | No |
 | Copiar el sílabo de otro paralelo propio | No | No | Sí | No |

@@ -52,7 +52,14 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   y fecha de entrega. Solo puede haber una abierta o pausada a la vez (I-31, I-121).
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener
   coordinación y el período no debe haber terminado.
-- Estados: abierto ⇄ pausado. Una convocatoria cerrada queda solo para consulta.
+- Estados: abierto ⇄ pausado → cerrado. Administración cierra la convocatoria y con ella
+  las de cada carrera (I-231). Una convocatoria cerrada queda solo para consulta: sus
+  sílabos ya no se editan, envían ni revisan, pero los aprobados todavía se firman, y
+  después se puede abrir la del período siguiente.
+- Un cambio de docente solo rehace el sílabo del paralelo en la convocatoria en curso;
+  los de convocatorias cerradas se conservan (I-231).
+- En el historial, un sílabo de un período terminado pertenece a quien lo envió; si
+  nunca se envió, al docente actual del paralelo (I-231).
 - Administración solo prorroga la fecha de entrega (I-114). Puede eliminar la
   convocatoria en cualquier estado; se borra todo lo que contiene (I-172).
 - Cada carrera abre su propia convocatoria dentro de la institucional. Coordinación

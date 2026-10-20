@@ -170,7 +170,7 @@ final class InProgressWork
 
     public function restartForParallel(string $parallelId): int
     {
-        $syllabi = Syllabus::query()
+        $syllabi = $this->inProgress(null)
             ->where('paralelo_id', $parallelId)
             ->with(['convocation.process', 'parallel'])
             ->lockForUpdate()

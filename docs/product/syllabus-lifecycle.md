@@ -98,8 +98,10 @@ el estado: el sílabo sigue «En revisión».
   actual. Se avisa a los docentes con sílabos sin aprobar.
 - Administración puede eliminar la convocatoria en cualquier estado. Se borran sus
   convocatorias de carrera y todos sus sílabos con su historial.
-- No hay acción para finalizar una convocatoria. Mientras siga abierta o pausada no se
-  puede crear otra.
+- Administración cierra la convocatoria cuando termina el período. Se cierran también
+  las de cada carrera. Sus sílabos quedan solo para consulta (no se editan, envían ni
+  revisan) y los aprobados todavía se pueden firmar. Cerrar no se deshace. Mientras
+  siga abierta o pausada no se puede crear otra.
 
 ## Pausas y cambios con sílabos en curso
 
@@ -109,7 +111,7 @@ el estado: el sílabo sigue «En revisión».
 | Malla: horas, créditos o modalidad | Convocatoria de la carrera pausada o sin abrir (Coordinación) | Pide confirmación y rehace los sílabos de la carrera, en cualquier estado, incluidos los aprobados. |
 | Malla: nombre, código, ciclo, orden, unidad o requisitos | Convocatoria de la carrera pausada o sin abrir | Actualiza los datos académicos de los sílabos sin rehacerlos. |
 | Ficha de una asignatura | Convocatoria de la carrera pausada o sin abrir | Pide confirmación y rehace los sílabos de esa asignatura, en cualquier estado. |
-| Docente de un paralelo | Ninguno; se puede con la convocatoria abierta | El sílabo del paralelo se borra con todo su historial y empieza de cero para el docente nuevo. |
+| Docente de un paralelo | Ninguno; se puede con la convocatoria abierta | El sílabo del paralelo en la convocatoria en curso se borra con todo su historial y empieza de cero para el docente nuevo. Los sílabos de convocatorias cerradas no se tocan. |
 | Código o jornada de un paralelo | Ninguno | Sin enviar: se actualiza la identificación. Enviado o aprobado: pide confirmación y lo rehace. |
 
 Rehacer un sílabo borra su contenido, revisiones, aprobación, firmas y chat, y avisa al
@@ -120,7 +122,8 @@ Prorrogar o reanudar sin cambios no rehace nada.
 
 - «Mis sílabos» muestra solo los sílabos de la carrera activa cuyo período aún no
   termina.
-- Los períodos terminados se consultan en Historial, en solo lectura.
+- Los períodos terminados se consultan en Historial, en solo lectura. Cada sílabo aparece
+  a quien lo envió; si nunca se envió, al docente actual del paralelo.
 - Copiar entre paralelos: el destino debe estar sin iniciar o en borrador; el origen,
   ser suyo, de la misma asignatura y convocatoria, y estar iniciado.
 - «Quitar de la carrera» deja sus paralelos sin docente y retira su rol en esa carrera.
