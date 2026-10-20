@@ -15,7 +15,8 @@ class ExportTemplateConformance extends Command
 
     public function handle(): int
     {
-        $output = rtrim((string) $this->argument('output'), '/');
+        $argument = $this->argument('output');
+        $output = rtrim(is_string($argument) ? $argument : '', '/');
         if (! is_dir($output)) {
             $this->error("No existe la carpeta {$output}.");
 

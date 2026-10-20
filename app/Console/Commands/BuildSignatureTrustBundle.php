@@ -53,7 +53,8 @@ class BuildSignatureTrustBundle extends Command
         if ($failed || $bundle === []) {
             return self::FAILURE;
         }
-        $requested = (string) $this->option('output');
+        $option = $this->option('output');
+        $requested = is_string($option) ? $option : '';
         $output = str_starts_with($requested, '/') ? $requested : base_path($requested);
         if (! is_dir(dirname($output))) {
             mkdir(dirname($output), 0775, true);

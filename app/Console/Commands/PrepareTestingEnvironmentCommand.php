@@ -86,8 +86,10 @@ class PrepareTestingEnvironmentCommand extends Command
 
     private function run_(string $password): void
     {
-        $career = Career::query()->where('codigo_carrera', $this->option('carrera'))->first()
-            ?? throw new RuntimeException("No existe la carrera {$this->option('carrera')}.");
+        $option = $this->option('carrera');
+        $code = is_string($option) ? $option : '';
+        $career = Career::query()->where('codigo_carrera', $code)->first()
+            ?? throw new RuntimeException("No existe la carrera {$code}.");
 
         $this->inspect($career);
 

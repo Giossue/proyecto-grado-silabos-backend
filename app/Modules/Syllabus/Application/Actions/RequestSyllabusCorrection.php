@@ -66,7 +66,7 @@ class RequestSyllabusCorrection
             ]);
             $this->audit->execute(
                 actorId: $actor->id,
-                roleAssignmentId: $activeRole?->id,
+                roleAssignmentId: $activeRole->id,
                 action: 'silabo.correccion_solicitada',
                 resourceType: 'revision_silabo',
                 resourceId: $revision->id,

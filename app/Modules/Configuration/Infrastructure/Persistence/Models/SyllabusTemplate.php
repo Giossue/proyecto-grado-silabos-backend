@@ -11,7 +11,9 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use stdClass;
 
 /**
  * @property string $id
@@ -350,10 +352,10 @@ class SyllabusTemplate extends Model
 
         return array_values(DB::table('secciones_plantilla')->where('plantilla_id', $this->id)->where('vigente_en_plantilla', true)
             ->orderBy('posicion_seccion_plantilla')->orderBy('clave_seccion_plantilla')->get()
-            ->map(fn (object $section): array => [
+            ->map(fn (stdClass $section): array => [
                 'id' => $section->seccion_plantilla_id, 'clave' => $section->clave_seccion_plantilla, 'titulo' => $section->titulo_seccion_plantilla,
                 'orientacion' => $section->orientacion_seccion_plantilla, 'posicion' => (int) $section->posicion_seccion_plantilla,
-                'bloques' => ($blocks->get($section->seccion_plantilla_id) ?? collect())->map(fn (object $block): array => [
+                'bloques' => $blocks->get($section->seccion_plantilla_id, new Collection)->map(fn (stdClass $block): array => [
                     'id' => $block->campo_plantilla_id, 'clave' => $block->clave_campo_plantilla, 'titulo' => $block->titulo_campo_plantilla,
                     'posicion' => (int) $block->posicion_campo_plantilla,
                 ])->values()->all(),

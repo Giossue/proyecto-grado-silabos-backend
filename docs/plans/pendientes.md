@@ -53,7 +53,12 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
   `REDIS_QUEUE_RETRY_AFTER` vale 180 (`.env.example` y `config/queue.php`). Con más de un worker, una importación
   que tarde más de 180 s se entrega otra vez y queda marcada como fallida. Hay que fijar un valor mayor que 900
   (por ejemplo 960) en el servidor y en `.env.example`.
-- **Dependencias:** volver a correr `npm audit` en el frontend por `node-forge`.
+- **Dependencias:** `npm audit` marca `node-forge` (GHSA-86w9-cpqp-85rv) como alta y sin versión corregida (≤ 1.4.0).
+  - **Dónde se usa:** el frontend la usa, directamente y a través de `@signpdf`, para abrir el `.p12` y firmar
+    en el navegador.
+  - **Por qué el riesgo es bajo:** el fallo está en la verificación de firmas RSA, que la app no usa; las firmas
+    las verifica el backend.
+  - **Acción:** actualizar cuando salga una versión corregida.
 - **Cuenta de demostración:** rotar su clave si se usa en un servidor real.
 - **Servidor:** confirmar que la base remota está en la migración más reciente y que hay un worker para la cola `ia`.
 
