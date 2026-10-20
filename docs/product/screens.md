@@ -106,7 +106,9 @@ y el botón «Documentos» (DOC-10).
   pausada.
 - Al pulsar una fila se abre un diálogo: sin convocatoria, «Abrir convocatoria» o
   «Eliminar periodo»; con convocatoria, «Pausar», «Reanudar», «Prorrogar plazo»,
-  «Cerrar» y «Eliminar». «Cerrar» pide confirmación y deja el estado «Cerrado».
+  «Cerrar» y «Eliminar». «Cerrar» pide confirmación y deja el estado «Cerrado». Una
+  cerrada ya no ofrece «Cerrar» ni «Eliminar». «Eliminar» explica que se oculta y no se
+  borra nada.
 - Si la plantilla cambió durante la pausa, «Reanudar» muestra el conteo por estado y
   pide «Reanudar y rehacer sílabos».
 

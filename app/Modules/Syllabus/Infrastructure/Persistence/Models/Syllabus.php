@@ -43,6 +43,11 @@ class Syllabus extends Model
         'version_bloqueo' => 'version_borrador',
     ];
 
+    protected static function booted(): void
+    {
+        static::addGlobalScope('convocatoria_no_eliminada', fn (Builder $query) => $query->whereHas('convocation'));
+    }
+
     public $timestamps = false;
 
     protected $table = 'silabos';

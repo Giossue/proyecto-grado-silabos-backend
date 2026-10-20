@@ -3,7 +3,7 @@
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
 - Fecha: 2026-10-20.
-- Última migración aplicada: `2026_10_20_000224_teacher_editable_profile_values`.
+- Última migración aplicada: `2026_10_20_000225_soft_delete_institutional_convocations`.
 - Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 33 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql "postgresql://silabos_ueb:silabos_ueb@127.0.0.1:55432/silabos_ueb" -X -At -f <consulta>.sql`.
@@ -269,15 +269,19 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 | `estado_convocatoria_universidad` | character varying(20) | no | `'abierto'::character varying` |
 | `periodo_academico_id` | uuid | no |  |
 | `pausado_en` | timestamp(6) with time zone | sí |  |
+| `eliminado_en` | timestamp(0) with time zone | sí |  |
+| `eliminado_por` | uuid | sí |  |
 
 - PK: `PRIMARY KEY (convocatoria_universidad_id)`
 - FK:
   - `convocatorias_universidad_periodo_academico_id_foreign`: `FOREIGN KEY (periodo_academico_id) REFERENCES periodos_academicos(periodo_academico_id) ON DELETE RESTRICT`
+  - `convocatorias_universidad_eliminado_por_foreign`: `FOREIGN KEY (eliminado_por) REFERENCES usuarios(usuario_id) ON DELETE SET NULL`
 - Únicos:
   - `convocatorias_universidad_en_curso_unico`: `((1)) WHERE ((estado_convocatoria_universidad)::text = ANY ((ARRAY['abierto'::character varying, 'pausado'::character varying])::text[]))`
-  - `convocatorias_universidad_periodo_unico`: `(periodo_academico_id)`
+  - `convocatorias_universidad_periodo_unico`: `(periodo_academico_id) WHERE ((estado_convocatoria_universidad)::text <> 'eliminado'::text)`
 - CHECK:
-  - `convocatorias_universidad_estado_check`: `CHECK (((estado_convocatoria_universidad)::text = ANY ((ARRAY['abierto'::character varying, 'pausado'::character varying, 'cerrado'::character varying])::text[])))`
+  - `convocatorias_universidad_estado_check`: `CHECK (((estado_convocatoria_universidad)::text = ANY ((ARRAY['abierto'::character varying, 'pausado'::character varying, 'cerrado'::character varying, 'eliminado'::character varying])::text[])))`
+  - `convocatorias_universidad_eliminado_check`: `CHECK ((((estado_convocatoria_universidad)::text = 'eliminado'::text) = (eliminado_en IS NOT NULL)))`
   - `convocatorias_universidad_fechas_check`: `CHECK ((fecha_entrega > fecha_inicio))`
 - Triggers:
   - `convocatorias_universidad_periodo_protegido`: BEFORE UPDATE OF periodo_academico_id FOR EACH ROW EXECUTE FUNCTION impedir_cambio_periodo_proceso_con_convocatorias()

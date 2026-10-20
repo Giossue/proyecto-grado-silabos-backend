@@ -80,6 +80,21 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.teacher.syllabi.index'))->assertForbidden();
     }
 
+    public function test_lo_de_una_convocatoria_eliminada_no_aparece_en_biblioteca_ni_en_coordinacion(): void
+    {
+        [$syllabus, $revision] = $this->submittedRevision();
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 1);
+
+        $process = $syllabus->convocation->process()->firstOrFail();
+        $this->as('admin')->deleteJson(route('api.v1.admin.processes.destroy', $process))->assertOk();
+
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 0);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertNotFound();
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 0);
+        $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id]);
+    }
+
     public function test_biblioteca_revisa_tras_coordinacion_y_devuelve_al_docente_que_reenvia_directo(): void
     {
         [$syllabus, $revision] = $this->submittedRevision();

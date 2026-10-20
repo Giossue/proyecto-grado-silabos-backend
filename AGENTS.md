@@ -118,10 +118,11 @@ pida.
   confirmar. Los sílabos afectados se rehacen desde cero, incluso los aprobados. Los
   procesos cerrados no se tocan.
 - Cambiar el docente o los paralelos no exige pausa. Un docente nuevo empieza desde cero
-  el sílabo de la convocatoria en curso; nada de una convocatoria cerrada se borra salvo
-  al eliminarla.
+  el sílabo de la convocatoria en curso; nada de una convocatoria cerrada se borra.
 - Administración cierra la convocatoria al terminar el período; lo cerrado queda solo para
-  consulta.
+  consulta. Eliminar una convocatoria no borra: la oculta (estado `eliminado`) y solo se
+  permite si está abierta o pausada. Toda consulta nueva sobre convocatorias, sílabos o
+  revisiones debe excluir lo eliminado (los modelos ya lo hacen; el SQL directo no).
 - Las validaciones al enviar y las sugerencias de IA son cosas separadas. La IA propone;
   nunca aprueba, bloquea ni escribe sin que una persona lo confirme. Si falla, solo se
   pierde la ayuda de IA.

@@ -28,7 +28,8 @@ class SyllabusProcessPolicy
 
     public function delete(User $user, SyllabusProcess $process): bool
     {
-        return $this->viewAny($user);
+        return $this->viewAny($user)
+            && in_array($process->estado, [SyllabusProcess::STATE_OPEN, SyllabusProcess::STATE_PAUSED], true);
     }
 
     public function pause(User $user, SyllabusProcess $process): bool

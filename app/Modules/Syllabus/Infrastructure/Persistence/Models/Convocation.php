@@ -30,6 +30,11 @@ class Convocation extends Model
         'proceso_id' => 'convocatoria_universidad_id',
     ];
 
+    protected static function booted(): void
+    {
+        static::addGlobalScope('proceso_no_eliminado', fn (Builder $query) => $query->whereHas('process'));
+    }
+
     public $timestamps = false;
 
     public const STATE_PREPARATION = 'preparacion';

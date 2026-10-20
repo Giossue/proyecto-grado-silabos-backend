@@ -7,6 +7,7 @@ use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Concerns\ImmutableRecord;
 use App\Support\Database\MapsLegacyColumnNames;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -42,6 +43,11 @@ class SyllabusRevision extends Model
     ];
 
     use ImmutableRecord;
+
+    protected static function booted(): void
+    {
+        static::addGlobalScope('silabo_no_eliminado', fn (Builder $query) => $query->whereHas('syllabus'));
+    }
 
     public $timestamps = false;
 
