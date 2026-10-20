@@ -1,77 +1,69 @@
 # Despliegue en Dokploy
 
-> I-84 divide el producto en dos aplicaciones y repositorios. Este documento describe
-> ambos despliegues; Laravel no compila ni sirve la SPA.
+El sistema se despliega como dos aplicaciones de Dokploy y un servicio auxiliar:
 
-El backend se despliega como **una imagen** construida desde
-`Giossue/proyecto-grado-silabos-backend`.
-PostgreSQL y Redis no viajan en ella: la imagen se conecta a los que ya existen en el
-servidor mediante variables de entorno.
+- **Backend** (`Giossue/proyecto-grado-silabos-backend`): una imagen con cuatro procesos
+  bajo `supervisord`: Nginx, PHP-FPM, el worker de colas y el planificador. Escalar la
+  aplicación escala los cuatro.
+- **Frontend** (`Giossue/proyecto-grado-silabos-frontend`): la SPA servida por Nginx.
+- **Gotenberg**: convierte el Word del sílabo en PDF con el mismo formato.
 
-Dentro del contenedor conviven cuatro procesos bajo `supervisord`: Nginx, PHP-FPM, el
-worker de colas y el planificador. Escalar la aplicación escala el conjunto; separar el
-worker exigiría otra aplicación en Dokploy apuntando a la misma imagen con otro comando.
-
-La segunda aplicación se construye desde `Giossue/proyecto-grado-silabos-frontend`. La
-SPA expone el puerto `8080`, `GET /health/live` y recibe
-`PUBLIC_API_URL=https://<dominio-api>` en tiempo de ejecución. Laravel debe recibir el
-origen completo de la SPA en `FRONTEND_URL`, su host sin esquema en
-`SANCTUM_STATEFUL_DOMAINS` y el dominio compartido en `SESSION_DOMAIN`. No se usa token
-personal: Sanctum autentica con cookie `HttpOnly`, credenciales CORS y CSRF.
+PostgreSQL y Redis no van en la imagen: el backend se conecta a los del servidor con
+variables de entorno. Un push a `main` despliega y el arranque aplica las migraciones.
 
 ## 1. Crear las aplicaciones
 
-En Dokploy crea dos recursos **Application** con origen **GitHub** y rama `main`:
+Cree dos recursos **Application** con origen **GitHub**, rama `main`, **Dockerfile**
+(`./Dockerfile`) y puerto `8080`. Como los repositorios son privados, autorice antes la
+cuenta de GitHub en Dokploy. Cada aplicación tiene su propio dominio HTTPS.
 
-1. `Giossue/proyecto-grado-silabos-backend` para API, worker y scheduler;
-2. `Giossue/proyecto-grado-silabos-frontend` para la SPA.
+En el frontend configure solo `PUBLIC_API_URL=https://<dominio-api>` (origen sin ruta).
+No copie secretos del backend a esa aplicación. La SPA responde `GET /health/live`.
 
-Como son privados, autoriza la cuenta de GitHub desde Dokploy antes de crearlos.
+Sanctum autentica con cookie `HttpOnly`, CORS con credenciales y CSRF; no hay tokens
+personales. Por eso el backend necesita el origen completo de la SPA en `FRONTEND_URL`,
+su host sin esquema en `SANCTUM_STATEFUL_DOMAINS` y el dominio compartido en
+`SESSION_DOMAIN`.
 
-En ambos casos usa **Dockerfile**, ruta `./Dockerfile`, y puerto `8080`. Cada aplicación
-debe tener su propio dominio HTTPS. En el frontend configura únicamente
-`PUBLIC_API_URL=https://<dominio-api>`; no copies secretos del backend a esa aplicación.
+La imagen compila `pdo_pgsql` contra `libpq-dev` y luego lo quita. No use el paquete
+`postgresql-dev`: arrastra herramientas del servidor PostgreSQL que la aplicación no usa.
 
-La imagen final fija la rama de Alpine y compila `pdo_pgsql` contra `libpq-dev`. No debe
-usarse el paquete virtual `postgresql-dev`: incluye herramientas de desarrollo del
-servidor PostgreSQL y puede incorporar toolchains grandes como LLVM sin que la aplicación
-los necesite.
+## 2. Variables del backend
 
-## 2. Variables de entorno
+`APP_KEY` es obligatoria; sin ella el contenedor no arranca. Genérela con
+`php artisan key:generate --show` y copie el valor completo, con el prefijo `base64:`.
 
-`APP_KEY` es obligatoria y el contenedor se niega a arrancar sin ella. Genera una con:
-
-```
-php artisan key:generate --show
-```
-
-Copia el valor completo, incluido el prefijo `base64:`.
-
-```
+```text
 APP_NAME="Sílabos UEB"
 APP_ENV=production
 APP_KEY=base64:...
 APP_DEBUG=false
-APP_URL=https://tu-dominio
+APP_URL=https://<dominio-api>
 APP_TIMEZONE=UTC
 DISPLAY_TIMEZONE=America/Guayaquil
 APP_LOCALE=es
 
+FRONTEND_URL=https://<dominio-spa>
+SANCTUM_STATEFUL_DOMAINS=<dominio-spa>
+SESSION_DOMAIN=<dominio compartido>
+TRUSTED_PROXIES=<IP del proxy de Dokploy>
+
 DB_CONNECTION=pgsql
-DB_HOST=...        # host del PostgreSQL del servidor
+DB_HOST=<host de PostgreSQL>
 DB_PORT=5432
-DB_DATABASE=silabos_ueb
-DB_USERNAME=...
-DB_PASSWORD=...
+DB_DATABASE=<base>
+DB_USERNAME=<usuario>
+DB_PASSWORD=<secreto>
 DB_TIMEZONE=UTC
 
 REDIS_CLIENT=predis
-REDIS_HOST=...
+REDIS_HOST=<host de Redis>
 REDIS_PORT=6379
-REDIS_PASSWORD=...
+REDIS_PASSWORD=<secreto>
 
 CACHE_STORE=redis
 QUEUE_CONNECTION=redis
+REDIS_QUEUE_RETRY_AFTER=960
 SESSION_DRIVER=database
 SESSION_SECURE_COOKIE=true
 
@@ -79,172 +71,168 @@ FILESYSTEM_DISK=private
 LOG_CHANNEL=stderr
 LOG_LEVEL=warning
 
+GOTENBERG_URL=http://<nombre-interno-gotenberg>:3000
+GOTENBERG_TIMEOUT=90
+
 AI_DRIVER=disabled
 AI_BASE_URL=
 AI_MODEL=
 AI_API_KEY=
-```
 
-### Proveedor de IA
+OPENPARSER_ENABLED=false
+OPENPARSER_API_KEY=
 
-La asistencia parte desactivada. Para habilitarla se conservan cuatro variables: el
-driver y la URL base, modelo y clave elegidos. No se configuran niveles de razonamiento.
-La URL debe usar HTTPS y puede ser la base o el endpoint completo; Laravel añade la ruta
-propia del protocolo cuando haga falta.
+SIGNATURE_TRUSTED_CA_BUNDLE=
+SIGNATURE_REQUIRE_HOLDER_MATCH=true
 
-OpenAI:
-
-```text
-AI_DRIVER=openai
-AI_BASE_URL=https://api.openai.com/v1
-AI_MODEL=<modelo elegido>
-AI_API_KEY=<secreto de OpenAI>
-```
-
-Claude:
-
-```text
-AI_DRIVER=claude
-AI_BASE_URL=https://api.anthropic.com/v1
-AI_MODEL=<modelo elegido>
-AI_API_KEY=<secreto de Anthropic>
-```
-
-DeepSeek:
-
-```text
-AI_DRIVER=deepseek
-AI_BASE_URL=https://api.deepseek.com
-AI_MODEL=deepseek-flash
-AI_API_KEY=<secreto de DeepSeek>
-```
-
-Con `AI_SOURCE_NORMALIZATION_ENABLED=true`, la ingesta PDF usa DeepSeek de forma
-independiente del proveedor configurado en `AI_DRIVER` para normalizar por lotes el
-resultado de OpenParser. Puede ajustar sus límites sin cambiar el contrato:
-
-```text
-AI_SOURCE_NORMALIZATION_ENABLED=true
-AI_SOURCE_NORMALIZATION_DRIVER=deepseek
-AI_SOURCE_NORMALIZATION_BASE_URL=https://api.deepseek.com
-AI_SOURCE_NORMALIZATION_MODEL=deepseek-flash
-AI_SOURCE_NORMALIZATION_API_KEY=<secreto de DeepSeek>
-AI_SOURCE_NORMALIZATION_BATCH_INPUT_CHARACTERS=100000
-AI_SOURCE_NORMALIZATION_MAX_OUTPUT_TOKENS=20000
-AI_SOURCE_NORMALIZATION_TIMEOUT=120
-```
-
-`AI_API_KEY` y `AI_SOURCE_NORMALIZATION_API_KEY` se configuran como secretos en Dokploy:
-no se escriben en el repositorio, la base, logs ni comandos de diagnóstico. Tras cambiar
-estas variables hay que redesplegar o reiniciar el contenedor completo para reconstruir
-la caché de configuración y para que los workers usen el proveedor nuevo. Cada URL y
-modelo debe corresponder al proveedor de su bloque de configuración.
-
-Activar un proveedor alojado envía la pregunta del chat y el contexto autorizado del
-sílabo a ese tercero. Antes de hacerlo con información institucional deben estar
-acordados el proveedor, región, retención y tratamiento de datos. Un error del proveedor
-solo deshabilita temporalmente el chat; no bloquea el flujo del sílabo.
-
-### Embeddings y extensión vector (retirados)
-
-I-168 eliminó los embeddings, la tabla `documentos_ia` y sus variables `EMBEDDINGS_*`.
-La migración `000166` borra la extensión `vector`; la aplicación ya no la usa. Aviso: en
-una base nueva la migración histórica `000087` todavía ejecuta
-`CREATE EXTENSION IF NOT EXISTS vector`, así que la instalación desde cero sigue
-necesitando pgvector disponible en el servidor (la imagen local
-`docker.io/pgvector/pgvector:0.8.6-pg18-trixie` ya lo trae). Una base ya migrada no lo
-necesita después de `000166`.
-
-OpenParser es el paso anterior para convertir cada PDF en un documento JSON estructurado;
-se usa `paddleocr-vl-1.6` y la salida `openparser@1`. El documento ordenado permanece en
-`fuentes_academicas`. Configura `OPENPARSER_ENABLED=true` y
-`OPENPARSER_API_KEY` solo después de resolver PV-12/PV-14. La imagen necesita
-`poppler-utils` para recortar del PDF privado las figuras que solo traigan coordenadas.
-
-### Correo
-
-El envío de invitaciones de activación usa el sistema de correo de Laravel, así que el
-proveedor se cambia con variables y no tocando código. El enlace usa `FRONTEND_URL` y
-caduca en 24 horas.
-
-Mientras `PV-15` —correo institucional y contenido de avisos— siga abierta, se deja en
-`log`: los mensajes se escriben en los registros de Dokploy tal como se enviarían, sin
-salir del sistema.
-
-```
 MAIL_MAILER=log
 ```
 
-Para enviar de verdad con Resend, cuyo transporte ya está instalado:
+- `TRUSTED_PROXIES` vale `*` si no se define; fije la IP real del proxy.
+- `SESSION_SECURE_COOKIE=true` exige HTTPS. Sin certificado nadie puede iniciar sesión.
+- `REDIS_QUEUE_RETRY_AFTER` debe ser mayor que el `timeout` del trabajo más largo:
+  `PrepareFichaImportJob`, con 900 s. `.env.example` trae 180, que solo cubre los demás
+  trabajos (el mayor es `ExtractSubjectFichaJob`, con 150 s). Con un valor menor y más de
+  un worker, Redis entrega de nuevo una importación en curso y esta termina marcada como
+  fallida.
+- Las claves (`APP_KEY`, `DB_PASSWORD`, `REDIS_PASSWORD`, `AI_API_KEY`,
+  `OPENPARSER_API_KEY`, `RESEND_API_KEY`) se cargan como secretos de Dokploy. No van al
+  repositorio, a la base, a los logs ni a comandos de diagnóstico.
+- Tras cambiar variables, redespliegue o reinicie el contenedor: el arranque rehace la
+  caché de configuración y reinicia el worker.
 
-```
+La base debe existir antes del primer despliegue: el contenedor migra, pero no la crea.
+Una instalación desde cero necesita las extensiones `btree_gist` y `vector` disponibles
+en PostgreSQL: las migraciones las crean, aunque una posterior quita `vector`. La imagen
+local `pgvector/pgvector:0.8.6-pg18-trixie` ya trae ambas.
+
+### Proveedor de IA
+
+La IA parte apagada (`AI_DRIVER=disabled`) y su ausencia no bloquea el flujo del sílabo.
+Se usa en dos lugares:
+
+- **Asistente de unidades** del docente: admite `openai`, `claude` y `deepseek`.
+- **Importación de la ficha** en Proyecto de carrera: admite solo `openai` y `deepseek`.
+
+Se configuran cuatro variables. La URL debe ser HTTPS y puede ser la base o el endpoint
+completo.
+
+| Proveedor | `AI_DRIVER` | `AI_BASE_URL`                  |
+| --------- | ----------- | ------------------------------ |
+| OpenAI    | `openai`    | `https://api.openai.com/v1`    |
+| Claude    | `claude`    | `https://api.anthropic.com/v1` |
+| DeepSeek  | `deepseek`  | `https://api.deepseek.com`     |
+
+`AI_MODEL` es el modelo elegido y `AI_API_KEY` su clave. `AI_CONNECT_TIMEOUT` (2 s) y
+`AI_TIMEOUT` (20 s) tienen valores por defecto.
+
+Activar un proveedor envía datos a un tercero: la pregunta del chat con el contexto
+autorizado del sílabo y el texto de los documentos de la ficha. Antes de usarlo con
+información institucional deben acordarse proveedor, región, retención y tratamiento de
+datos (`PV-12`, `PV-14`).
+
+### Lectura de documentos de la ficha
+
+La importación acepta PDF y Excel. El Excel se lee en el servidor. El PDF:
+
+- con `OPENPARSER_ENABLED=true` y `OPENPARSER_API_KEY`, se envía al OCR de OpenParser
+  (modelo `paddleocr-vl-1.6`, espera hasta `OPENPARSER_MAX_WAIT=780` s);
+- si no, se lee en el servidor con `pdftotext`.
+
+`pdftotext` viene de `poppler-utils`, instalado en la imagen. También se usa para ubicar
+el sello de cada firma en el PDF. OpenParser es otro tercero: aplica la misma condición
+de `PV-12`.
+
+### Gotenberg
+
+Sin `GOTENBERG_URL` el sistema genera un PDF de texto simple. Como las firmas se hacen
+sobre el PDF, conviene tenerlo.
+
+1. En el proyecto de Dokploy cree un servicio **Aplicación → Docker** con imagen
+   `gotenberg/gotenberg:8` y puerto interno `3000`. No le ponga dominio ni lo publique.
+2. Despliéguelo y copie el nombre interno que Dokploy le asigna.
+3. En el backend defina `GOTENBERG_URL=http://<nombre-interno>:3000` y
+   `GOTENBERG_TIMEOUT=90`. El worker corre en el mismo contenedor y toma la misma
+   variable.
+4. Redespliegue el backend.
+
+Para comprobarlo, apruebe un sílabo de prueba y revise su PDF. Si sale con tablas y logos
+igual al Word, funciona. Si sale como texto simple, revise la URL, el puerto y los logs
+del servicio `gotenberg`.
+
+### Firma electrónica
+
+`SIGNATURE_REQUIRE_HOLDER_MATCH=true` exige que el titular del certificado coincida con
+el nombre de la cuenta. `SIGNATURE_TRUSTED_CA_BUNDLE` vacío acepta cualquier emisor; para
+aceptar solo entidades acreditadas en Ecuador siga
+`docs/runbooks/firma-electronica-entidades.md`.
+
+### Correo
+
+Las invitaciones de activación usan el correo de Laravel; el enlace usa `FRONTEND_URL` y
+caduca en 24 horas. Mientras `PV-15` siga abierta se deja `MAIL_MAILER=log`: los mensajes
+se escriben en los logs de Dokploy sin salir del sistema.
+
+Para enviar con Resend, cuyo transporte ya está instalado:
+
+```text
 MAIL_MAILER=resend
 RESEND_API_KEY=re_...
 MAIL_FROM_ADDRESS="no-responder@devs-ueb.tech"
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
-Antes hay que verificar el dominio en el panel de Resend añadiendo los registros DNS que
-indique. Sin eso los mensajes se rechazan o acaban en spam, y el fallo no se ve desde la
-aplicación: hay que mirarlo en el panel del proveedor.
-
-Enviar desde un dominio propio hacia buzones `@ueb.edu.ec` puede resultar sospechoso para
-el servidor institucional. El destino a largo plazo es su propio SMTP, que es lo que
-`PV-15` debe resolver; para eso basta con cambiar `MAIL_MAILER=smtp` y sus credenciales.
-
-`SESSION_SECURE_COOKIE=true` requiere HTTPS. Actívalo solo cuando el dominio tenga
-certificado, o nadie podrá iniciar sesión.
-
-La base de datos debe existir antes del primer despliegue; el contenedor migra, pero no
-crea la base.
+Antes hay que verificar el dominio en el panel de Resend con los registros DNS que pida.
+Sin eso los mensajes se rechazan o llegan a spam, y el fallo solo se ve en el panel del
+proveedor. El destino a largo plazo es el SMTP institucional (`MAIL_MAILER=smtp` y sus
+credenciales), que es lo que `PV-15` debe resolver.
 
 ## 3. Qué hace el arranque
 
-`docker/app/entrypoint.sh`, en cada arranque y de forma idempotente:
+`docker/app/entrypoint.sh`, en cada arranque:
 
-1. verifica `APP_KEY` y aborta con un mensaje claro si falta;
-2. borra `public/hot` por si el marcador del servidor de desarrollo llegara por otra vía;
-3. reconstruye las cachés de configuración, rutas, vistas y eventos —se rehacen siempre,
-   porque congelan las variables de entorno y un cambio en Dokploy no tendría efecto de
-   otro modo—;
-4. espera hasta 60 segundos a que PostgreSQL acepte conexiones;
-5. ejecuta `db:rename-migrations-table --force` (idempotente: renombra la tabla de
-   control `migrations` → `migraciones` de I-28 solo si aún conserva el nombre viejo) y
-   después `migrate --force --isolated`, con bloqueo para que dos réplicas no migren a
-   la vez. Ambos pasos se desactivan con `RUN_MIGRATIONS=false`; en ese caso las
-   migraciones se aplican a mano con el procedimiento de `docs/security/hardening.md`;
-6. crea el enlace de almacenamiento público.
+1. aborta con un mensaje claro si falta `APP_KEY`;
+2. rehace las cachés de configuración, rutas, vistas y eventos, para que tomen las
+   variables actuales;
+3. espera hasta 60 segundos a que PostgreSQL responda;
+4. ejecuta `db:rename-migrations-table --force` (renombra la tabla de control a
+   `migraciones` si hace falta) y `migrate --force --isolated`, con bloqueo para que dos
+   réplicas no migren a la vez. Con `RUN_MIGRATIONS=false` se omiten ambos pasos y las
+   migraciones se aplican a mano según `docs/security/hardening.md`;
+5. prepara `storage/app` y crea el enlace de almacenamiento público.
 
-En una instalación nueva, instala además la única plantilla institucional una sola vez
-con `php artisan db:seed --class=SyllabusTemplateSeeder --force`. El seed es idempotente
-y no sobrescribe una plantilla ya editada; no se ejecuta automáticamente en cada release.
+El worker escucha `critica,notificaciones,documentos,ia,integraciones,general` con
+`--tries=3`. Hoy se usan `critica` (trabajo de prueba), `documentos` (Word y PDF), `ia`
+(asistente e importación de la ficha) y `general` (correo de activación).
 
-Desde I-28 los nombres de cola son `critica`, `notificaciones`, `documentos`, `ia`,
-`integraciones` y `general`; el worker de `supervisord` ya los escucha y tras aplicar
-las migraciones en remoto hay que redesplegar (o reiniciar el contenedor) para que el
-worker viejo no quede escuchando las colas anteriores.
+En una instalación nueva, cargue la plantilla oficial una vez:
+
+```bash
+php artisan db:seed --class=SyllabusTemplateSeeder --force
+```
+
+El seeder no sobrescribe una plantilla con contenido. También puede cargarse desde
+Administración → Plantilla → **Editar JSON** con `resources/templates/silabo-oficial.json`.
 
 ## 4. Comprobación
 
-`GET /health/live` responde sin tocar la base: sirve para el chequeo de vida del
-orquestador. `GET /health/ready` verifica base y Redis, y responde `{"status":"ready"}`.
+- `GET /health/live` responde sin tocar la base; sirve al chequeo de vida.
+- `GET /health/ready` consulta la base y responde `{"status":"ready"}`, o `503` con
+  `{"status":"unavailable"}`.
 
 ## 5. Primer administrador
 
-El seeder de demostración **no** se ejecuta en producción. Crea la primera cuenta desde la
-consola del contenedor con `php artisan tinker`, o ejecuta el seeder solo si el entorno es
-de prueba. Las cuentas creadas desde el panel nacen pendientes de activación y reciben un
-enlace de un solo uso para definir su contraseña
-y su titular debe cambiarla antes de operar.
+El seeder de demostración no se ejecuta en producción: crea cuentas con una contraseña
+conocida. Cree la primera cuenta desde la consola del contenedor con `php artisan tinker`
+(usuario más asignación de rol `administrador`). Las cuentas creadas desde el panel nacen
+pendientes y reciben un enlace de activación de un solo uso.
+
+En un servidor de pruebas, `php artisan pruebas:preparar --carrera=<código>` crea una
+coordinación, dos docentes, paralelos y la convocatoria. Lee la contraseña de la variable
+`PRUEBAS_CONTRASENA` y necesita una cuenta de Administración activa.
 
 ## 6. Almacenamiento persistente
 
-`storage/app` guarda los documentos exportados. Sin un volumen montado ahí, cada
-redespliegue los pierde. En Dokploy, añade un **volume mount** hacia
-`/var/www/html/storage/app`.
-
-## Fuera de alcance
-
-El despliegue no elige automáticamente un modelo ni valida su calidad académica. `PV-13`,
-`PV-14` y `PV-18` siguen abiertas; hasta que se resuelvan, `AI_DRIVER=disabled` continúa
-siendo el valor seguro por defecto.
+`storage/app` guarda los archivos privados: Word y PDF, PDF firmados, logos y documentos
+de importación de la ficha. Sin un volumen, cada redespliegue los pierde. En Dokploy
+añada un **volume mount** hacia `/var/www/html/storage/app`.

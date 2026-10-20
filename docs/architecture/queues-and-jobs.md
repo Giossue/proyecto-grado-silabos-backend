@@ -1,97 +1,111 @@
 # Colas y trabajos
 
-## Usos
+## Qué va a una cola
 
-- respuestas del chat de IA;
-- generación DOCX/PDF;
-- notificaciones externas;
-- tareas de mantenimiento y reportes pesados.
+Solo lo lento o externo:
 
-Guardar, validar determinísticamente, enviar, observar, aprobar y reabrir mantienen su
-verdad en la transacción web; los efectos secundarios se ejecutan después.
+- generar Word y PDF de una revisión aprobada;
+- responder una pregunta del chat de IA;
+- leer los documentos de una importación de fichas y proponer cada ficha;
+- enviar el correo de activación de cuenta;
+- el trabajo de humo de la plataforma.
 
-## Reglas de un job
+Guardar, validar, enviar, revisar, aprobar, firmar y regenerar ocurren en la petición
+web, dentro de una transacción. Las notificaciones internas y la auditoría también se
+guardan ahí; no usan cola.
 
-Cada trabajo define:
+## Trabajos
 
-- identificador y tipo;
-- recurso/versión de entrada;
-- clave de idempotencia;
-- cola y prioridad;
-- tiempo máximo;
-- máximo de intentos y backoff;
-- condiciones de reintento/no reintento;
-- estado y progreso persistidos en PostgreSQL;
-- `correlacion_id` y métricas;
-- resultado o causa segura de fallo.
+| Trabajo | Módulo | Cola | `timeout` | Intentos | Espera entre intentos | Clave única |
+|---|---|---|---:|---:|---|---|
+| `PlatformSmokeJob` | Operations | `critica` | 30 s | 3 | 1, 5, 15 s | clave del comando |
+| `GenerateSyllabusExportJob` | Documents | `documentos` | 120 s | 3 | 5, 30, 120 s | exportación |
+| `AnswerSyllabusChatJob` | AiAssistance | `ia` | 60 s | 3 | 5, 30, 120 s | mensaje |
+| `PrepareFichaImportJob` | Academic | `ia` | 900 s | 1 | — | importación |
+| `ExtractSubjectFichaJob` | Academic | `ia` | 150 s | 2 | — | importación:asignatura |
+| `ManagedUserActivationMail` | Identity | `general` | por defecto | por defecto | — | — |
 
-El payload contiene IDs y versiones, no objetos enormes ni secretos.
+El estado de cada trabajo vive en su registro de dominio, no en una tabla de trabajos
+(I-221):
 
-## Consistencia
+| Registro | Estados |
+|---|---|
+| `exportaciones_silabo.estado_exportacion` | `pendiente`, `en_ejecucion`, `completado`, `fallido` |
+| `mensajes_ia.contenido_mensaje->estado` | `pendiente`, `en_ejecucion`, `completado`, `fallido` |
+| `importaciones_ficha.estado_importacion` | `pendiente`, `en_ejecucion`, `lista`, `fallida`, `aplicada`, `descartada` |
 
-- Despacha después del commit (`after_commit` o equivalente explícito).
-- Para efectos que no se pueden perder, guarda el registro de dominio con su estado
-  `pendiente` dentro de la misma transacción (exportación, mensaje de IA); los avisos se
-  guardan directo en `notificaciones`, sin trabajo (I-221).
-- El consumidor cambia el estado de ese registro de forma idempotente.
-- Reintentar no crea otra revisión, aprobación, notificación o artefacto lógico.
-- PostgreSQL conserva el estado funcional; Redis puede vaciarse/reconstruirse.
-- Colas y caché usan Redis por defecto; I-168 quitó las conexiones `database`, que
-  apuntaban a tablas inexistentes.
+Los trabajos fallidos no se guardan en otra tabla (`queue.failed.driver = null`). El
+método `failed()` de cada trabajo deja el registro de dominio en `fallido`/`fallida`.
 
-### Patrón de idempotencia (I-226)
-
-Laravel no trae un middleware HTTP de `Idempotency-Key`; la documentación oficial reparte la
-idea entre trabajos únicos, bloqueos y transacciones. El sistema aplica cada pieza donde toca:
+## Idempotencia (I-226)
 
 | Capa | Mecanismo | Dónde |
 |---|---|---|
-| Petición HTTP | `idempotency_key` (UUID) + restricción única `(recurso, clave_idempotencia)` + `lockForUpdate` dentro de `DB::transaction` | Enviar, aprobar, comentar en biblioteca, exportar y mensajes de IA |
-| Cliente | Una clave por intento (`attemptKey`): se reutiliza al reintentar el mismo envío y se renueva tras un éxito o si cambia lo enviado | Frontend |
-| Despacho | `->afterCommit()`: un rollback descarta el trabajo | Todas las acciones que despachan |
-| Trabajo en cola | `ShouldBeUnique` con `uniqueId()` y `#[UniqueFor]`: un duplicado se descarta mientras el primero espera o corre | Los cinco trabajos |
-| Ejecución | `WithoutOverlapping($uniqueId)->dontRelease()->expireAfter(timeout + 30)` (`App\Support\Queue\RunsOnce`): si Redis reentrega un trabajo que sigue corriendo, la copia se elimina | Los cinco trabajos |
-| Consumidor | Cambia el estado del registro de dominio solo si sigue en el estado esperado | Todos |
+| Petición | `idempotency_key` (UUID) + índice único + `lockForUpdate` en la transacción | Enviar, exportar y preguntar a la IA |
+| Petición | Un solo registro por revisión (índice único) + `lockForUpdate`; si ya existe, se devuelve | Aprobar en Coordinación y verificar en Biblioteca |
+| Cliente | `attemptKey`: misma clave al reintentar lo mismo; clave nueva si cambia lo enviado | SPA |
+| Despacho | `->afterCommit()`: si la transacción se revierte, el trabajo no se envía | Exportación, chat e importación de fichas |
+| Cola | `ShouldBeUnique` con `uniqueId()` y `#[UniqueFor]`: se descarta un duplicado mientras el primero espera o corre | Los cinco trabajos de la tabla |
+| Ejecución | `RunsOnce`: `WithoutOverlapping(uniqueId)->dontRelease()->expireAfter(timeout + 30)`. Si Redis entrega una copia de un trabajo que sigue corriendo, la copia se descarta | Los cinco trabajos de la tabla |
+| Consumidor | Solo cambia el registro si sigue en el estado esperado | Todos |
 
-Claves de unicidad: exportación `artefacto`, respuesta de chat `mensaje`, lectura de fichas
-`importación`, extracción de ficha `importación:asignatura`, verificación `clave`.
+La verificación de Biblioteca pide la exportación con la clave de la aprobación, así
+que repetirla no crea otra exportación.
 
-`retry_after` de la conexión debe ser mayor que el `timeout` de cada trabajo (la documentación
-avisa de que, si no, se procesa dos veces); la lectura de fichas con OCR dura hasta 900 s, así que
-con OCR activo `REDIS_QUEUE_RETRY_AFTER` debe superar 900. `WithoutOverlapping` es la red de
-seguridad si no se cumple.
+## Reglas para un trabajo nuevo
 
-### Idempotencia de ingesta PDF
+- El payload lleva solo identificadores, nunca objetos grandes ni secretos.
+- Define `$timeout`, `$tries` y, si reintenta, `$backoff`.
+- Usa `ShouldBeUnique`, `uniqueId()`, `#[UniqueFor]` y `RunsOnce`.
+- Guarda el estado en el registro de dominio y cámbialo solo desde el estado esperado.
+- Despacha con `->afterCommit()` cuando se crea dentro de una transacción.
+- Implementa `failed()` para dejar un estado final y un mensaje seguro.
+- Si su `timeout` supera `retry_after`, sube `REDIS_QUEUE_RETRY_AFTER` (ver abajo).
 
-La ingesta de fuentes usa dos niveles de idempotencia. La ejecución de PostgreSQL se
-deduplica por fuente, huella SHA-256 del PDF, modelo OCR y versiones de adaptadores. El
-envío a OpenParser usa un `Idempotency-Key` derivado de la huella y del adaptador OCR;
-reintentar o volver a subir los mismos bytes devuelve el mismo job externo en vez de
-crear otro Parse. Una nueva ejecución interna puede reutilizar ese resultado y ejecutar
-otra vez la normalización DeepSeek, que es una etapa posterior e independiente del job
-de OpenParser.
+## Configuración de Redis
 
-## Colas sugeridas
+- Conexión `redis`, cola por defecto `general` (`REDIS_QUEUE`).
+- `retry_after` = `REDIS_QUEUE_RETRY_AFTER`, 180 s por defecto.
+- El estado funcional está en PostgreSQL. Si Redis se vacía, se pierden los trabajos en
+  espera y sus registros quedan `pendiente`.
 
-`critica`, `documentos`, `integraciones`, `ia` y `notificaciones`. La prioridad y cantidad
-de workers se miden; no se supone capacidad antes de `PV-05` y `PV-13`.
+**Requisito:** `retry_after` debe ser mayor que el `timeout` del trabajo más largo.
+Hoy ese trabajo es `PrepareFichaImportJob` (900 s), así que en todo entorno que use la
+importación de fichas `REDIS_QUEUE_RETRY_AFTER` debe superar 900 (por ejemplo 960).
+Con el valor actual (180 s), si otro worker toma la copia entregada de nuevo, el trabajo
+cuenta un segundo intento; con `tries = 1` se marca la importación como `fallida`.
+`RunsOnce` evita la doble ejecución, pero no ese fallo. Ver [deployment.md](deployment.md#colas-y-worker).
 
-## Operación
+## Worker
 
-Horizon puede supervisar Redis. La pantalla ADM-09 muestra estado de negocio sin exponer
-payload sensible. Alertas mínimas:
+Un solo `queue:work` en el contenedor del backend:
 
-- crecimiento sostenido de espera;
-- fallos definitivos;
-- trabajos atascados;
-- tasa de reintentos;
-- latencia por tipo;
-- servicio dependiente no disponible.
+```bash
+php artisan queue:work \
+  --queue=critica,notificaciones,documentos,ia,integraciones,general \
+  --sleep=1 --tries=3 --max-time=3600
+```
 
-Reprocesar desde interfaz requiere permiso, confirma impacto y conserva todos los intentos.
+- El orden de `--queue` es la prioridad.
+- El `timeout` y los intentos de cada trabajo mandan sobre los del worker.
+- Un trabajo largo ocupa el único worker: mientras se leen fichas, lo demás espera.
 
-## Trabajo del chat de IA
+Para probar en local:
 
-`AnswerSyllabusChatJob` responde en la cola `ia` a una pregunta ya registrada en
-`historial_ia`. I-168 borró `AnalyzeSyllabusFieldJob` y `EmbedAcademicSourceJob` junto con
-el revisor y los embeddings retirados en I-146.
+```bash
+php artisan platform:smoke-job
+```
+
+## Detalle por trabajo
+
+- `GenerateSyllabusExportJob`: arma Word y PDF desde la fotografía de la revisión,
+  los guarda en `archivos` y marca la exportación `completado`. Avisa a quien la pidió.
+  Ver [files-and-documents.md](files-and-documents.md).
+- `AnswerSyllabusChatJob`: llama al `AiChatGateway` con la pregunta, el historial y la
+  evidencia fijada. Rechaza respuestas que citan evidencia ajena. Ver
+  [ai-service.md](ai-service.md).
+- `PrepareFichaImportJob`: extrae texto de cada PDF o Excel, lo guarda en bloques y
+  despacha un `ExtractSubjectFichaJob` por asignatura activa de la carrera.
+- `ExtractSubjectFichaJob`: busca los fragmentos de una asignatura y pide a la IA una
+  propuesta de ficha. Cuando no quedan asignaturas pendientes, la importación pasa a
+  `lista`.

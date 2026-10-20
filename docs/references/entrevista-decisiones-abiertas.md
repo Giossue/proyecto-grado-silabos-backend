@@ -1,9 +1,12 @@
 # Guion de entrevista — decisiones abiertas del ciclo del sílabo
 
+> Documento de evidencia de la entrevista. Algunas decisiones cambiaron después; el estado
+> vigente está en [`DECISIONS_STATUS.md`](../../DECISIONS_STATUS.md).
+
 Instrumento para una sesión de consulta. Cada pregunta ofrece opciones cerradas para que
 quien responde marque una y, si quiere, anote el matiz. Nada de lo que se marque aquí es
 todavía una regla de producción: pasa a serlo cuando se registre en
-`plans/decisions-pending.md` o en un ADR, con actor y fecha.
+`plans/pendientes.md` o en un ADR, con actor y fecha.
 
 Las preguntas están ordenadas por impacto. Si la sesión se acorta, la sección A y la C
 son las que bloquean más trabajo.
@@ -209,7 +212,7 @@ Número y fecha del documento, si existe: _________________________________
 
 Notas: ___________________________________________________________________
 
-> Hay dieciocho puertas de este tipo documentadas en `plans/decisions-pending.md`. La
+> Hay dieciocho puertas de este tipo documentadas en `plans/pendientes.md`. La
 > pregunta busca validar la forma de trabajo, no cada puerta.
 
 ---
@@ -260,7 +263,7 @@ tipifica `NOMBRAMIENTO`, `ASCENSO`, `LICENCIA`, `PERMISO`, `VACACIONES`, `RENUNC
 ## Después de la entrevista
 
 1. Guardar la evidencia firmada en el repositorio académico autorizado, no aquí.
-2. Registrar cada respuesta en `plans/decisions-pending.md` con actor y fecha, o abrir un
+2. Registrar cada respuesta en `plans/pendientes.md` con actor y fecha, o abrir un
    ADR si la decisión es duradera.
 3. Ejecutar el análisis de impacto sobre casos de uso, dominio, datos, interfaz y pruebas.
 4. Actualizar la matriz de trazabilidad solo si cambia comportamiento observable.

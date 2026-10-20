@@ -1,176 +1,148 @@
 # Ciclo de vida del sílabo
 
-## Máquina de estados
+## Estados
 
 ```text
-Sin iniciar
-    │ crear borrador
-    ▼
-Borrador ── enviar revisión ──► En revisión
-   ▲                              │
-   │                              ├─ aprobar ──► Aprobado ── eliminar (Coordinación) ──► Sin iniciar
-   │                              │
-   │ solicitar corrección         │
-   └──── Corrección solicitada ◄──┘
-              │
-              └─ reenviar nueva revisión ─► En revisión
+                 reiniciar (Coordinación)
+        ┌──────────────────────────────────────────────┐
+        ▼                                              │
+Sin iniciar ── abrir o copiar ──► Borrador ── enviar ──► En revisión
+    ▲                                ▲          ┌── etapa coordinación
+    │                                │          └── etapa biblioteca
+    │                                │                 │
+    │                                └── reenviar ── Corrección solicitada
+    │                                                  │
+    │                         Biblioteca aprueba ──► Aprobado
+    │                                                  │
+    └──────────── eliminar (Coordinación) ─────────────┘
 ```
 
-Un sílabo aprobado no se reabre ni se modifica (I-178). Si tiene un error, Coordinación lo
-elimina con todo su historial y el paralelo recibe un sílabo nuevo sin iniciar.
+Estados guardados (`silabos.estado_silabo`): `sin_iniciar`, `borrador`, `en_revision`,
+`correccion_solicitada`, `aprobado`. Un aprobado no se reabre.
 
-## Transiciones permitidas
+## Transiciones
 
-| Origen | Acción | Actor | Destino | Efecto obligatorio |
-| --- | --- | --- | --- | --- |
-| Sin iniciar | Crear borrador | Docente asignado/sistema | Borrador | Fija plantilla y contexto académico. |
-| Borrador | Enviar | Docente autorizado | En revisión (etapa coordinación) | Valida, crea revisión inmutable, avisa a coordinación y audita. |
-| En revisión · coordinación | Aprobar | Coordinador de alcance | En revisión (etapa biblioteca) | Registra `revisiones_coordinacion`, crea el envío a biblioteca (`envios_biblioteca`) y avisa a biblioteca. |
-| En revisión · coordinación | Solicitar corrección | Coordinador de alcance | Corrección solicitada | Un comentario general (sin observaciones por campo); `correccion_etapa = 'coordinacion'`. |
-| En revisión · biblioteca | Aprobar bibliografía | Bibliotecario | Aprobado | Marca `verificado_por/en`, fija `aprobaciones` sobre la revisión inmutable, solicita el PDF y avisa al docente. |
-| En revisión · biblioteca | Devolver con motivos | Bibliotecario | Corrección solicitada | Elige uno o más motivos predefinidos (sin texto libre; ver `LibraryCommentReasons`); se guarda como comentario en las columnas `correccion_*` con `correccion_etapa = 'biblioteca'`; todo el sílabo es editable. |
-| Corrección solicitada · devuelta por coordinación | Reenviar | Docente autorizado | En revisión (etapa coordinación) | Crea nueva revisión; vuelve a coordinación. |
-| Corrección solicitada · devuelta por biblioteca | Reenviar | Docente autorizado | En revisión (etapa biblioteca) | Crea nueva revisión y su envío a biblioteca; no pasa de nuevo por coordinación. |
-| Aprobado | Eliminar | Coordinador de alcance | Sin iniciar (sílabo nuevo) | Borra el sílabo con revisiones, aprobación, PDF y firmas, crea otro sin iniciar para el paralelo, audita `silabo.eliminado` y avisa al docente. Solo con la convocatoria abierta o en pausa. |
+| Desde | Acción | Quién | Hacia | Efecto |
+|---|---|---|---|---|
+| — | Abrir la convocatoria de la carrera | Coordinación | Sin iniciar | Un sílabo por paralelo; copia la ficha y el contexto académico; avisa a los docentes. |
+| Sin iniciar | Abrir el sílabo | Docente | Borrador | El borrador se inicia solo al abrirlo. |
+| Sin iniciar o Borrador | Copiar desde otro paralelo propio | Docente | Borrador | Copia los campos del docente y los de la ficha marcados como editables. |
+| Borrador o Corrección solicitada | Enviar | Docente | En revisión | Valida, crea una revisión inmutable con huella y avisa. |
+| En revisión · coordinación | Aprobar | Coordinación | En revisión · biblioteca | Registra la revisión de coordinación y el envío a biblioteca; avisa a Biblioteca. |
+| En revisión · coordinación | Solicitar corrección | Coordinación | Corrección solicitada | Comentario general de 10 a 10 000 caracteres. |
+| En revisión · biblioteca | Aprobar bibliografía | Biblioteca | Aprobado | Crea la aprobación con huella, genera Word y PDF y avisa al docente. |
+| En revisión · biblioteca | Devolver al docente | Biblioteca | Corrección solicitada | Uno o más motivos predefinidos, sin texto libre. |
+| Borrador, En revisión o Corrección solicitada | Reiniciar | Coordinación | Sin iniciar | Borra lo escrito, vuelve a copiar la ficha y la plantilla y conserva las revisiones. |
+| Aprobado | Eliminar | Coordinación | Sin iniciar (sílabo nuevo) | Borra el sílabo con revisiones, aprobación, documentos, firmas y chat; crea uno nuevo para el paralelo. |
 
-La **etapa** dentro de «En revisión» no es una columna: se deriva de la revisión vigente
-(`ReviewStage`): con envío a biblioteca y sin aprobación → biblioteca; sin
-envío a biblioteca → coordinación. Solo el revisor de la etapa vigente decide; los demás consultan.
+Reiniciar y eliminar exigen la convocatoria de la carrera abierta o pausada. Lo mismo
+vale para aprobar y pedir corrección.
 
-La reapertura de aprobados se retiró en I-178 (ADR-0005 reemplazado); DT-07 ya no aplica.
+## Etapas de revisión
 
-## Firmas (I-139, I-192)
+La etapa no es una columna. Se deduce de la última revisión (`ReviewStage`):
 
-El PDF se genera **al aprobar Biblioteca** (exportación automática) y se firma de forma
-incremental en este orden: docente → coordinación → biblioteca
-(`firmas_documento.firmado_como`). Cada revisión tiene su propio PDF y sus propias
-firmas: cualquier cambio de contenido es una revisión nueva (reenvío), la
-anterior queda `anulado` y se vuelve a firmar desde cero. Biblioteca aprueba la
-bibliografía al **final** de la revisión, antes de generar el PDF; firma al final porque su
-firma da fe de la bibliografía que ya aprobó.
+- con aprobación: ya no hay etapa;
+- con envío a biblioteca: etapa biblioteca;
+- sin envío a biblioteca: etapa coordinación.
 
-## Relevo del docente responsable
+Solo decide quien tiene la etapa. Los demás consultan. Aprobar en coordinación no cambia
+el estado: el sílabo sigue «En revisión».
 
-El sílabo pertenece al paralelo y a la convocatoria, no a quien lo redacta. Cuando un docente se
-retracta (por ejemplo tras el sorteo de materias) Coordinación quita o reemplaza al docente del
-paralelo, también **con la convocatoria abierta**, sin pausarla. El nuevo docente **no hereda nada**:
-el sílabo del paralelo se borra con todo su historial (borrador, revisiones, aprobación, firmas,
-exportaciones e IA) y se crea uno nuevo «Sin iniciar» para quien entra. Vale en cualquier estado,
-incluido el aprobado, y reasignar al mismo docente también empieza de cero.
+## Corrección y reenvío
 
-Crear, editar y eliminar paralelos también se puede con la convocatoria abierta: pausarla frenaría a
-todos los docentes de la carrera por el cambio de unos pocos. Un paralelo nuevo no tiene sílabo hasta
-que se le asigna docente. Cambiar el código o la jornada de un paralelo actualiza la identificación de su
-sílabo sin perder lo escrito. Si el sílabo ya está en revisión o aprobado, la revisión enviada es
-inmutable y su PDF diría lo anterior: el cambio pide confirmación y, al confirmar, elimina ese sílabo con
-todo su historial y crea uno nuevo «Sin iniciar» para el mismo docente. La pausa solo sigue siendo necesaria
-para la malla y las fichas.
+- La devolución queda en la revisión devuelta: comentario, etapa, quién y cuándo.
+- Motivos de Biblioteca: libro no disponible, código incorrecto, ISBN incorrecto, edición
+  desactualizada y datos incompletos.
+- El docente corrige todo el sílabo y lo reenvía. No responde comentarios.
+- Si devolvió Coordinación, la revisión nueva vuelve a Coordinación.
+- Si devolvió Biblioteca, la revisión nueva va directo a Biblioteca.
 
-El descarte no se deshace. La interfaz avisa que cambiar o quitar al docente borra el sílabo del
-paralelo.
+## Validación al enviar
 
-## Plazos
+- Todo campo del docente y de la ficha debe tener contenido. Si falta la ficha, el aviso
+  es «La asignatura no tiene ficha: pídala al coordinador».
+- Las reglas de los bloques deben cumplirse; por ejemplo, el bloque `unidades` exige
+  16 semanas y horas iguales a las de la asignatura.
+- La fecha actual debe estar entre el inicio y la entrega de la convocatoria, y ni la
+  convocatoria ni la de la carrera pueden estar en pausa.
+- «Enviar sílabo» queda deshabilitado mientras falten campos o falle una regla. El
+  servidor vuelve a validar al recibir el envío.
 
-El proceso institucional fija dos fechas —inicio de la elaboración y entrega del
-borrador— y cada convocatoria las hereda como sus dos etapas con vencimiento. Antes del
-inicio y después de la entrega, el envío se rechaza. Solo Administración prorroga la
-fecha límite de entrega, sobre el proceso y sin pedir motivo; la prórroga alcanza a
-todas las convocatorias del proceso y únicamente hacia adelante: adelantar la fecha
-dejaría fuera de plazo a quien ya estaba dentro. La fecha anterior se conserva en el
-evento de auditoría. El inicio se corrige mediante la edición del proceso cuando este se
-encuentra en pausa; no forma parte de la acción de prórroga.
+## Documentos y firmas
 
-Administración puede eliminar una convocatoria institucional completa mientras ningún
-docente haya iniciado un sílabo. La regla consulta tanto el estado actual como el evento
-inmutable de inicio, de modo que un reinicio posterior no borra esa huella. La operación
-elimina los alcances y expedientes todavía sin actividad y registra la eliminación en
-auditoría; desde el primer inicio docente, el proceso se conserva como historial.
+- Al aprobar Biblioteca, el sistema genera el Word y el PDF desde la copia guardada en la
+  revisión. También se pueden generar a mano desde Documentos.
+- El PDF se firma en tres pasos y en orden: docente, coordinación, biblioteca.
+- La firma ocurre en el navegador con un certificado `.p12` o `.pfx` y su clave. El
+  certificado no sale del equipo; solo se sube el PDF firmado.
+- El servidor comprueba que el PDF base no cambió, que se agregó una sola firma sobre
+  todo el documento, que el certificado está vigente y que su titular coincide con la
+  cuenta. La cadena de confianza se comprueba si está configurada
+  (`docs/runbooks/firma-electronica-entidades.md`).
+- Cada firma avisa al siguiente firmante.
+- Word y PDF firmado se descargan solo cuando están las tres firmas.
+- Cada revisión tiene su propio PDF y sus propias firmas.
 
-## Inicio institucional y alcance de carrera
+## Convocatoria y plazos
 
-Administración abre una sola convocatoria institucional vigente para toda la universidad.
-La creación se inicia desde la fila del período académico y queda abierta en la misma
-transacción: el período queda fijo, el nombre y la plantilla son automáticos y
-Administración solo confirma las fechas de elaboración. Cada coordinador la ve en su área y solo puede iniciar el
-alcance de su carrera: no define nombre, plantilla, período ni modo de agrupación.
-El inicio comprueba logo propio de la facultad, malla activa, materias programadas con
-paralelos y docente vigente en cada paralelo. Si todo pasa, crea la convocatoria de
-carrera y exactamente un sílabo por paralelo en una transacción. I-146 retira la
-selección y el requisito de Fuentes académicas, también al reanudar. La base impide
-repetir proceso por período o alcance por carrera/período.
+- Administración crea la convocatoria de un período con dos fechas: inicio de la
+  elaboración y entrega. Nace abierta. Hay una por período y solo una abierta o pausada
+  a la vez.
+- Para crearla, la plantilla debe estar completa y cada carrera activa debe tener
+  coordinador.
+- Coordinación abre la de su carrera cuando la convocatoria está abierta, el plazo no
+  venció, la malla tiene materias, cada materia tiene paralelos, cada paralelo tiene un
+  docente activo, las fichas están completas y la facultad tiene logo.
+- Solo Administración prorroga la entrega. La fecha nueva debe ser posterior a la
+  actual. Se avisa a los docentes con sílabos sin aprobar.
+- Administración puede eliminar la convocatoria en cualquier estado. Se borran sus
+  convocatorias de carrera y todos sus sílabos con su historial.
+- No hay acción para finalizar una convocatoria. Mientras siga abierta o pausada no se
+  puede crear otra.
 
-## Pausas
+## Pausas y cambios con sílabos en curso
 
-Una pausa detiene el reloj para el alcance que la decide. Administración pausa el
-proceso y ningún docente de la universidad edita ni envía hasta que lo reanude; entre
-tanto la plantilla vuelve a ser editable. Cada cambio de plantilla queda asociado a esa
-pausa. Si la plantilla cambió, antes de reanudar Administración consulta el conteo por
-estado y confirma **Reanudar y rehacer sílabos**. La confirmación elimina todo el
-historial de los sílabos de ese proceso, incluidos borradores, revisiones, aprobaciones,
-firmas y exportaciones, y crea expedientes sin iniciar con la plantilla vigente. Sin
-confirmación el proceso permanece pausado. Si no hubo cambios, reanudar no reinicia
-expedientes. Cambiar las fechas de entrega tampoco reinicia sílabos. Coordinación pausa su convocatoria y solo los
-docentes de esa carrera se detienen; entre tanto la malla y los datos curriculares de
-la carrera vuelven a ser editables según sus permisos y confirmaciones de regeneración.
-Los borradores se conservan tal cual durante pausas sin cambio de plantilla. Ambas pausas exigen
-motivo y quedan en auditoría; reanudar una convocatoria requiere que el proceso esté
-abierto. Cerrar el proceso es definitivo: los expedientes se conservan y ya no admiten
-envíos.
+| Qué cambia | Requisito | Efecto |
+|---|---|---|
+| Plantilla | Convocatoria pausada o inexistente (Administración) | Al reanudar, si la plantilla cambió, se muestra el conteo por estado y se pide «Reanudar y rehacer sílabos». Se rehacen desde cero todos los sílabos de la convocatoria, incluidos los aprobados y firmados. Sin confirmación, sigue en pausa. |
+| Malla: horas, créditos o modalidad | Convocatoria de la carrera pausada o sin abrir (Coordinación) | Pide confirmación y rehace los sílabos de la carrera, en cualquier estado, incluidos los aprobados. |
+| Malla: nombre, código, ciclo, orden, unidad o requisitos | Convocatoria de la carrera pausada o sin abrir | Actualiza los datos académicos de los sílabos sin rehacerlos. |
+| Ficha de una asignatura | Convocatoria de la carrera pausada o sin abrir | Pide confirmación y rehace los sílabos de esa asignatura, en cualquier estado. |
+| Docente de un paralelo | Ninguno; se puede con la convocatoria abierta | El sílabo del paralelo se borra con todo su historial y empieza de cero para el docente nuevo. |
+| Código o jornada de un paralelo | Ninguno | Sin enviar: se actualiza la identificación. Enviado o aprobado: pide confirmación y lo rehace. |
 
-El respaldo normativo está en `references/normativa-silabo.md`: el reglamento vigente de
-la UEB exige que la planificación microcurricular esté programada antes de iniciar el
-periodo académico.
+Rehacer un sílabo borra su contenido, revisiones, aprobación, firmas y chat, y avisa al
+docente. Con la pausa, los docentes no editan ni envían; los borradores se conservan.
+Prorrogar o reanudar sin cambios no rehace nada.
 
-## Precondiciones comunes
+## Docente
 
-- usuario activo, rol, alcance y asignación vigentes;
-- convocatoria y periodo compatibles;
-- al iniciar el alcance: logo propio de la facultad, malla activa, materias programadas,
-  paralelos y docentes vigentes; I-146 retira la existencia de fuentes como requisito;
-- malla actual activa al programar materias y abrir un proceso nuevo;
-- control de concurrencia superado;
-- plantilla institucional completa al abrir el proceso; la revisión enviada se renderiza desde su propia copia;
-- validaciones determinísticas obligatorias ejecutadas antes del envío;
-- transacción atómica y evento de auditoría.
+- «Mis sílabos» muestra solo los sílabos de la carrera activa cuyo período aún no
+  termina.
+- Los períodos terminados se consultan en Historial, en solo lectura.
+- Copiar entre paralelos: el destino debe estar sin iniciar o en borrador; el origen,
+  ser suyo, de la misma asignatura y convocatoria, y estar iniciado.
+- «Quitar de la carrera» deja sus paralelos sin docente y retira su rol en esa carrera.
+  La cuenta y los sílabos se conservan.
 
-## Revisión frente a borrador
+## IA
 
-- El borrador representa trabajo editable y puede autoguardarse.
-- La revisión representa evidencia enviada y no se edita.
-- El comentario de devolución (biblioteca o coordinación) queda en la revisión devuelta.
-- La corrección parte de una copia controlada y produce otra revisión al reenviar.
-- Un coordinador siempre revisa el contenido exacto enviado, no el borrador posterior.
-- Copiar entre paralelos (I-167): si el docente tiene la misma asignatura en más de un
-  paralelo, puede copiar a un sílabo «Sin iniciar» o «Borrador» lo que escribió en otro
-  paralelo suyo ya iniciado. Solo se copian los campos que llena el docente; cada sílabo
-  conserva su envío, revisión y firmas. Un sílabo ya enviado no se sobrescribe.
+- **Chat del docente** («Asistente de unidades»): disponible mientras el docente puede
+  editar. Usa los datos académicos del sílabo y el texto de sus campos. Responde sobre
+  unidades y planificación. No escribe en el sílabo, no aprueba ni bloquea. Límites: 20
+  preguntas por sílabo, 3 conversaciones, 6 por minuto y 4000 caracteres por mensaje.
+- **Importación de ficha**: la IA propone valores de la ficha desde los documentos de la
+  carrera. Coordinación elige qué aplicar.
+- Se configura con `AI_DRIVER`. Sin proveedor, el chat y la importación se desactivan
+  con un aviso; todo lo demás funciona igual.
 
-## IA en el ciclo
+## Casos de borde
 
-I-146 conserva el chat para proponer contenido y unidades desde el contexto académico
-y curricular fotografiado y las tablas de planificación. La respuesta no modifica el
-sílabo ni bloquea el envío. El usuario puede continuar si falla. El revisor automático,
-sus recomendaciones aplicables y la consulta vectorial están retirados; su historia se
-conserva.
+- Doble clic o reintento de envío: una sola revisión (clave de idempotencia).
+- Edición concurrente: el autoguardado detecta el conflicto y pide recargar; no
+  sobrescribe en silencio.
+- Reintento de exportación: no duplica la aprobación ni cambia la revisión.
+- Sesión cerrada durante la edición: el cambio no se guarda y se muestra un aviso.
 
-## Casos de carrera
-
-- Doble clic/reintento de envío: una sola revisión mediante idempotencia.
-- Edición concurrente: conflicto visible; no sobrescritura silenciosa.
-- Cambio de plantilla institucional: editar requiere el proceso pausado; el cambio se
-  registra durante la pausa y reanudar exige confirmación con conteos por estado para
-  regenerar todos los sílabos del proceso en una transacción. Se borra el historial,
-  incluso de aprobados y firmados; los procesos cerrados se conservan (I-188).
-- Corrección de base académica (malla o ficha de la asignatura) con el alcance pausado:
-  previa confirmación, regenera desde cero los expedientes afectados del período en curso,
-  en cualquier estado, incluidos los enviados y los aprobados con sus revisiones,
-  aprobaciones, firmas, IA y exportaciones, en una sola transacción (I-118, aclarada en
-  I-144 y ampliada el 2026-10-08 a los aprobados, igual que el cambio de plantilla). Los
-  procesos cerrados se conservan. Cambiar la ficha de una asignatura rehace solo los
-  sílabos de esa asignatura.
-- Confirmación de datos curriculares: afecta las nuevas fotografías y los expedientes
-  regenerados según el alcance permitido; no reescribe historia protegida.
-- Edición o desactivación de la malla: bloquea trabajo nuevo cuando queda inactiva, pero
-  no cambia el contexto académico fijado en sílabos y revisiones existentes.
-- Reintento de exportación: no duplica aprobación ni cambia revisión.
-- Sesión revocada durante edición: se detiene la mutación y se conserva un mensaje claro.
+El respaldo normativo está en `docs/references/normativa-silabo.md`.

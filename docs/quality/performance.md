@@ -39,7 +39,7 @@ Son metas propuestas hasta la validación de volumen/infraestructura.
 - Redis no corrige una consulta sin índice ni una arquitectura defectuosa.
 - Mide PostgreSQL con datos representativos antes de agregar índices.
 
-## Baseline técnico I-08
+## Línea base técnica
 
 `composer benchmark:readiness` ejecuta por defecto 500 peticiones con concurrencia 50 y
 solo admite URLs HTTP de loopback. El 2026-08-14, sobre el servidor PHP integrado local,

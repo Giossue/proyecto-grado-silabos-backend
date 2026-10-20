@@ -1,857 +1,165 @@
-# Estado de decisiones
-
-Fecha de corte: **9 de octubre de 2026**.
-
-## Etiquetas
-
-- `CONFIRMADO`: acordado por los autores o establecido en la línea base.
-- `PROPUESTO`: decisión técnica razonada que puede ajustarse mediante ADR.
-- `POR VALIDAR`: requiere entrevistas, autoridad institucional o evidencia técnica.
-- `DERIVADO`: conclusión coherente con fuentes confirmadas; debe conservar trazabilidad.
-
-## Confirmado
-
-- Firma electrónica (I-227, 2026-10-19): el titular del certificado debe coincidir con la cuenta que firma y, cuando se cargue el archivo de entidades certificadoras (DT-16), la cadena debe llegar a una de ellas. Un documento ya firmado que cambia no se vuelve a firmar ni se ofrece una verificación pública de alteración: por petición de la UEB se evita esa fricción; el cambio de contenido sigue siendo una revisión nueva.
-- Producto centralizado, configurable y trazable para el ciclo de vida del sílabo.
-- Alcance inicial: Carrera de Software UEB.
-- Roles: Administrador, Coordinador, Docente y, desde I-165 (29 de septiembre de 2026), por instrucción del responsable: nuevo rol
-**Bibliotecario**, sin carrera y para toda la universidad. Tras la aprobación, el docente
-envía el sílabo a biblioteca, que revisa la bibliografía **antes** de las firmas (así un
-comentario no anula firmas): la aprueba o comenta. Si comenta, el sílabo se reabre solo
-para la bibliografía; el docente la reenvía sin nueva revisión de coordinación (revisión
-nueva = copia de la aprobada con la bibliografía cambiada y aprobación heredada,
-`aprobacion_base_id`) y vuelve a biblioteca. Aprobada la bibliografía, el PDF se firma en
-orden docente → coordinación → biblioteca. La bibliografía la propone el docente (campos
-de Texto libre). La plantilla gana `firma_docente`, `firma_coordinador` y
-`firma_bibliotecario`, que marcan dónde va cada sello. Migraciones `000162` (corrige el
-trigger `validar_bloque_definicion_campo` que dejó I-164), `000163` y `000164`, aplicadas
-en la base remota con respaldo previo. Pendiente en la remota: cambiar la sección
-Bibliografía a Texto libre y crear la cuenta de biblioteca.
-
-I-173 (4 de octubre de 2026), por instrucción del responsable del producto, cambia el
-orden de revisión y agrega el rol **Decano** (uno por facultad, `asignaciones_rol.facultad_id`).
-El envío del docente llega primero a **biblioteca**; si aprueba la bibliografía pasa
-automáticamente a **coordinación**; si coordinación aprueba pasa al **decanato**, que
-fija la aprobación. Solo entonces se genera el PDF (automático) y firman los cuatro en
-orden docente → coordinación → biblioteca → decanato. Cualquier revisor devuelve al
-docente; al reenviar la cadena empieza de nuevo y las firmas anteriores quedan anuladas.
-La etapa se deriva de `envios_biblioteca`, `revisiones_coordinacion` (nueva) y
-`aprobaciones`; `solicitudes_correccion.etapa_solicitud` registra desde dónde se devolvió.
-Reemplaza el orden de I-165 (biblioteca después de coordinación) y retira la corrección
-«solo bibliografía» y la aprobación heredada. Migración `000183` (irreversible).
-
-I-192 (5 de octubre de 2026), confirmado por el responsable del producto, retira al
-Decano del sistema. Biblioteca sigue revisando primero; Coordinación da la aprobación
-final y solicita la exportación. El PDF se firma en orden docente → coordinación →
-biblioteca. I-192 sustituye la etapa de decanato, el rol y la cuarta firma de I-173,
-conservando el orden Biblioteca → Coordinación. Migración nueva `000198`; el plan activo
-registra las condiciones de migración para datos históricos y plantilla existente.
-
-I-196 (7 de octubre de 2026), por instrucción explícita del responsable del producto,
-denomina **Facultades y carreras** al acceso de Administración para ADM-04. El enlace del
-menú lateral, el breadcrumb y los accesos de puesta en marcha usan la ruta canónica
-`/admin/estructura-academica`; sus pestañas seleccionan Facultades o Carreras dentro de
-esa pantalla. Las rutas con segmento se conservan únicamente como compatibilidad de
-entrada y no se generan desde la navegación vigente. La acción principal es un botón
-específico para la pestaña activa: **Crear facultad** en Facultades y **Crear carrera**
-en Carreras. Este ajuste fue confirmado por el responsable del producto el 7 de octubre
-de 2026 y reemplaza el menú compartido definido inicialmente en I-196.
-
-I-197 (7 de octubre de 2026), por instrucción explícita del responsable del producto,
-normaliza los colores de toda la interfaz operativa en claro y oscuro. Los componentes
-compartidos consumen los mismos roles semánticos para texto, superficies, acciones,
-campos, estados y foco; el tema oscuro usa variantes claras cuando un color funciona
-como texto o borde. Las pestañas no tienen una superficie propia. Las paletas de papel,
-documentos, gráficos y unidades curriculares conservan su significado independiente.
-La aceptación en navegadores y dispositivos reales permanece en PV-19.
-
-I-205 (7 de octubre de 2026), por instrucción explícita del responsable del producto,
-restaura el Panel docente (DOC-01) con el mismo patrón de Panel de Coordinación. Docencia
-inicia en `/docente/panel`, dispone del acceso **Panel** en su menú lateral y consulta
-indicadores, plazo y avance limitados a sus sílabos en la carrera activa. I-205 sustituye
-I-200, que había retirado esta pantalla.
-
-I-172 (4 de octubre de 2026), por instrucción del responsable del producto, funde la
-pantalla de Periodos académicos en **Convocatorias** (ADM-12): una fila por periodo con
-sus fechas de clases, las de elaboración de sílabos y el estado de la convocatoria, y un
-solo formulario de cuatro fechas obligatorias que crea el periodo y abre la convocatoria
-a continuación (dos llamadas; si la segunda falla, el periodo queda y se reintenta solo
-la apertura), previa confirmación de que el periodo no se edita después. Estados visibles:
-Sin iniciar, Abierto, Pausado y Finalizado. Administración no edita periodos: los
-documentos firmados fijan sus bytes, así que cualquier cambio exige eliminar la
-convocatoria y abrir otra. Por eso **Eliminar** se admite en cualquier estado y borra todo
-el historial, incluidos sílabos iniciados, aprobados y firmados (reemplaza I-117). Las
-tablas, reglas de unicidad y las fechas vacías por defecto (I-110, I-113) no cambian; el
-alta de periodo devuelve el `id` creado. La columna de semanas lectivas deja de mostrarse;
-el valor se sigue calculando para el sílabo. Periodos sale del acceso **Facultades y
-carreras** y su ruta antigua redirige a Convocatorias.
-
-I-171 (4 de octubre de 2026), por instrucción del responsable del producto, funde COR-15
-en COR-14: una sola pantalla **Materias y paralelos** del período en curso (sin selector
-de período ni historial de períodos anteriores) con dos pestañas, **Materias** y
-**Docentes**. Cada paralelo muestra jornada y docente; desde la materia se agregan o
-corrigen paralelos y se asigna o retira el docente. El botón principal es **Preparar
-período** mientras falte programar materias de la malla y, después, **Gestionar docente**
-(crear, asignar). La ruta de asignaciones docentes redirige a la pantalla unificada.
-
-I-170 (4 de octubre de 2026), por instrucción del responsable del producto, amplía I-54:
-el Coordinador corrige **nombre y correo** de los docentes vigentes de su carrera activa
-desde COR-15 (acción **Editar docente**), nada más. Reutiliza las reglas administrativas:
-el correo solo cambia mientras la cuenta esté pendiente de activación, y al cambiarlo se
-invalida la invitación anterior y se emite otra al correo corregido; una cuenta activada
-conserva su correo. No alcanza a administradores ni a cuentas ajenas a la carrera, no
-toca estado, roles ni paralelos, y queda en auditoría con los valores anteriores.
-
-I-166 (29 de septiembre de 2026), por pedido de los docentes vía el responsable: lo que va
-dentro de cada sección de la plantilla se llama **campo**, no «parte», en la interfaz, los
-mensajes y la base de datos. La migración `000165` renombra `bloques_plantilla` a
-`campos_plantilla` y `definiciones_campo.bloque_plantilla_id` a `campo_plantilla_id`, y da
-nombres explícitos a las columnas de `campos_plantilla` y `secciones_plantilla`.
-
-I-163 (29 de septiembre de 2026), por instrucción del responsable: los avisos solo
-informativos (cuenta activada, plazo extendido, proceso o convocatoria en pausa, proceso
-cerrado) no llevan enlace; los que piden actuar conservan su destino. Los pasos de
-«Puesta en marcha» se actualizan al sistema vigente: logo obligatorio, plantilla con Texto
-libre y Contenido de la plantilla, datos del Proyecto de carrera, borrador que se inicia
-solo y un paso nuevo para firmar el sílabo aprobado. Sin cambios de esquema ni de API.
-El mismo día, el responsable decide que Texto libre no lleva hoja ni marcas (solo lo
-escribe el docente) y que la otra forma de campo se llama «Personalizado» (antes
-«Contenido de la plantilla»): ahí van tablas, datos automáticos, huecos Docente y
-Proyecto de carrera.
-
-I-158 (29 de septiembre de 2026), por instrucción del responsable: «Propiedades del
-campo» solo cambia nombre y orientación. La condición «pedir solo si…» se define en la
-ficha de la hoja (atributo `showWhen`) y sustituye la configuración de condiciones y
-nombres de preguntas de I-153 en Propiedades. Sin cambios de esquema.
-
-I-157 (29 de septiembre de 2026), por instrucción del responsable, simplifica COR-16:
-una sola vista con el Proyecto de carrera como tabla (por asignatura y de toda la
-carrera), sin pestañas, historial ni etiquetas. «Importar documentos» abre el paso a
-paso en un modal que retoma la importación en curso y permite descartarla. Sin
-cambios de API.
-
-I-156 (29 de septiembre de 2026), por instrucción del responsable y su tutor, deja dos
-formas de campo: **Texto libre** (el docente escribe con párrafos, negrita, cursiva,
-viñetas, numeración y tablas simples; se guarda como documento JSON validado) y
-**Contenido de la plantilla** (hoja vacía que Administración arma con texto, tablas,
-listas y las marcas de I-155). Se retira «Filas que agrega el docente». La planificación
-de unidades se va: cada docente la escribe a mano, sin sumas ni revisiones automáticas
-(sustituye I-57, I-58, I-63, I-66 e I-143; I-109 se conserva para las pantallas
-académicas). Segunda etapa aplicada: el formato oficial usa Texto libre en todas las
-campos del docente, se retiran las filas repetibles (tabla `filas_repetibles`, tipo
-`repetible`, tablas con `repeatKey`), las reglas de planificación y los atajos de
-teclado. La migración `000157` convirtió lo ya escrito (una columna → lista, varias →
-tabla) y se aplicó en la base remota el 29 de septiembre de 2026, con respaldo previo.
-Las fotografías de revisiones anteriores no se modifican.
-
-I-155 (29 de septiembre de 2026), por instrucción del responsable, sustituye «¿Quién
-llena este campo?» (I-151, I-154) por marcas en la hoja. Un campo nuevo solo elige su
-forma: párrafo, lista o tabla. En la hoja se mezclan texto fijo, **dato automático**
-(definido en el código), **!Docente** (lo escribe el docente), **?Docente** (responde Sí
-o No y puede condicionar otros campos) y **@ProyectoCarrera** (lo llena Coordinación al
-importar). Las marcas se ponen sin preguntas: su nombre interno sale del contexto y todo
-@ProyectoCarrera es por asignatura. La importación busca solo los @ProyectoCarrera que
-usa la plantilla, con sus secciones como contexto. Esos datos son obligatorios como la
-malla: sin su valor confirmado para la carrera o para cada materia programada no se
-abre la convocatoria. Por ahora no se crean preguntas en las que el docente elige de una
-lista (habilidades se tratan como @ProyectoCarrera). Sin cambios de esquema.
-
-I-152 (28 de septiembre de 2026), por instrucción del responsable, vuelve temporales los
-documentos de importación curricular. La lectura (`fuentes_academicas`), el original y
-las imágenes de OCR viven mientras la importación está abierta; al guardar o descartar se
-eliminan, salvo que otra importación abierta los use. `objetos_almacenados` sigue siendo
-de solo agregar por regla de la base: su ficha (nombre, tamaño y huella, sin contenido)
-permanece como constancia. Se agrega «Descartar importación» y se retira «Reutilizar
-documentos». Sustituye la conservación de documentos de ingesta de I-145 y la descarga
-permanente de originales de I-146; los datos confirmados conservan extracto, ubicación y
-nombre del documento.
-
-I-151 (28 de septiembre de 2026), por instrucción del responsable, adopta «la plantilla
-manda»: Administración declara en ADM-06 qué datos salen de los documentos de carrera
-(campo **Sale sola de los documentos de la carrera**) y la importación de COR-16 solo
-extrae esos datos. ADM-06 pregunta «¿Quién llena este campo?» en lenguaje simple y deja
-de ofrecer Sí/No para campos nuevos. Sin cambios de esquema.
-
-I-149 (28 de septiembre de 2026), por instrucción del responsable, saca de la malla el
-asistente curricular y crea **Coordinación → Proyecto de carrera** (COR-16), una pantalla
-propia con Datos confirmados, Importar e Historial. La revisión relaciona una sola vez
-cada materia nombrada de otra forma en el documento. API, permisos y alcance por carrera
-no cambian. Sustituye el ajuste de I-145 que situaba el botón en Malla.
-
-I-148 (28 de septiembre de 2026), por instrucción del responsable, dibuja la ficha de
-identificación solo desde el diseño de la plantilla; se retiran la cuadrícula fija del
-Word y de las respuestas de docente y revisión.
-
-I-147 (27 de septiembre de 2026), por instrucción del responsable, retira de la malla
-el editor manual de «Resultados de aprendizaje». El asistente curricular de Malla
-presenta los datos confirmados que usará un sílabo nuevo, incluida su procedencia.
-Para resultados de una asignatura, el valor documental I-145 prevalece; cuando no
-existe, se muestra la base I-144 como «Registro anterior». La base, los expedientes y
-revisiones históricos se conservan. Las antiguas rutas GET/PUT de edición manual se
-retiran; la confirmación documental queda como único recorrido de actualización.
-
-Ajuste de I-145 (27 de septiembre de 2026), por instrucción del responsable, sitúa el único
-acceso al asistente curricular de I-145 en **Coordinación → Malla**. El botón deja de
-ser global en las pantallas de Coordinación; permisos y alcance por carrera no cambian.
-
-I-146 (27 de septiembre de 2026) sustituye el alcance activo de I-46/I-92/I-95/I-98/I-116/I-119/I-124
-relativo al CRUD de fuentes, su requisito para convocar y el revisor con RAG. Se retiran
-sus pantallas, rutas de gestión, análisis por campo, revisión global, aplicación y
-feedback del revisor. Los párrafos históricos que describen esas funciones no son
-requisitos vigentes. La orden procede del responsable del producto, sin atribuirla al
-tutor ni a la institución.
-
-I-145 continúa recibiendo PDF/XLSX. I-152 retira la reutilización de documentos y los vuelve temporales.
-Los nombres de contrato `sources`/`source_ids` se conservan por compatibilidad; ya no
-representan un CRUD de Fuentes académicas. Los originales tienen descarga privada por
-importación. I-146 no eliminó evidencia; I-168 borró después la tabla `documentos_ia`, la
-extensión `vector` y el código del revisor. El contenido curricular confirmado se conserva.
-
-El chat conservado ayuda a elaborar contenido y unidades desde carrera, asignatura,
-horas, semanas, datos curriculares confirmados y tablas de unidades/planificación del
-sílabo. I-168 eliminó la casilla `ia_habilitada`; las preguntas nuevas
-usan `curricular-units-v1` y no envían al proveedor el historial anterior. No consulta el índice
-vectorial ni ejecuta revisión académica. La configuración del proveedor sigue disponible;
-no se cambian permisos de aprobación ni validaciones determinísticas. La verificación
-operativa y el estado de entrega se registran en el plan I-146.
-
-
-I-145 (27 de septiembre de 2026), autorizado con «ok veamos», corrige el recorrido
-principal de I-144: Coordinación entrega PDF/XLSX o reutiliza documentos de ingesta ya cargados;
-el asistente extrae una propuesta de datos para su carrera y asignaturas. La revisión
-por lote muestra procedencia y excepciones, sin exigir transcribir cada resultado.
-La extracción no modifica datos vigentes antes de la confirmación humana.
-
-El contenido documental admite conceptos configurables de texto, lista o tabla y
-valores relacionados con carrera/asignatura. Esto aclara la frontera de I-75: los
-atributos académicos estructurales siguen tipados; los conceptos documentales no crean
-columnas en asignaturas ni una entidad específica por campo. La clave, tipo, ámbito y
-columnas de un concepto compartido permanecen estables. Administración vincula los
-conceptos en la plantilla única como datos automáticos o como opciones de selección
-docente; una selección puede combinar listas de asignatura y carrera.
-
-La aplicación comprueba pertenencia, tipos, evidencia, huellas y pausa del proceso.
-Una materia sin coincidencia se resuelve mediante elección explícita. Ante datos
-distintos entre fuentes, Coordinación selecciona un candidato y confirma la
-discrepancia de esa fila; esto no establece una jerarquía institucional de fuentes
-ni cierra PV-02. Evidencia inválida y conflictos estructurales impiden aplicar esa
-fila. La fotografía del sílabo conserva definición, valor y procedencia; la
-regeneración mantiene la protección de aprobaciones de I-144 y se limita al ámbito
-afectado. Cantidad de unidades, cardinalidad de habilidades, APE cero y generación
-de planificación siguen pendientes de decisión académica; no se deducen del número
-de filas extraídas. La autorización cubre esta implementación local, sin afirmar
-despliegue ni validación institucional de los documentos de ejemplo.
-
-I-144 (27 de septiembre de 2026), autorizado por el responsable del producto, inicia
-datos curriculares estructurados con resultados de aprendizaje por asignatura.
-Coordinación registra lista ordenada, documento/página de procedencia y confirma la
-revisión de los datos. Administración puede incorporar esos resultados como dato
-automático en la plantilla única. Cada sílabo conserva una fotografía independiente
-del origen vivo; la ausencia bloquea el envío solo si el formato utiliza ese dato.
-La implementación local agrega cabecera y filas relacionadas, no atributos arbitrarios
-de malla ni versiones de fuentes. No confirma cantidad de unidades, límite de habilidades,
-reglas APE ni generación de unidades mediante IA. I-145 incorpora el recorrido
-documental general; el registro manual de I-144 y sus rutas fueron retirados por I-147.
-La base histórica permanece como respaldo de lectura.
-Los aliases anteriores de resultados/fuente/ubicación priorizan el concepto genérico
-`resultados_aprendizaje` (lista/asignatura) confirmado en la fotografía y conservan
-el origen I-144 cuando aquel no existe; no se duplican datos vigentes.
-
-El 2026-09-27, ante la instrucción del responsable del producto de resolver las
-decisiones de implementación, se concilia I-118 preservando la evidencia aprobada:
-una corrección confirmada solo regenera expedientes en curso que no conservan una
-aprobación; los enviados sin aprobación siguen dentro del alcance. La reapertura
-conserva la revisión aprobada y sus vínculos, por lo que no habilita el borrado de ese
-expediente mediante un reinicio. Corregir resultados de aprendizaje afecta únicamente
-a la asignatura modificada; las otras materias y los procesos cerrados se conservan.
-Esta resolución delegada de producto reemplaza las frases que incluían aprobados en
-la purga; no se atribuye al tutor ni a una autoridad académica y no resuelve las reglas
-pendientes de habilidades, APE o unidades.
-
-I-54 (2026-09-06), por solicitud explícita del responsable del producto, permite al
-Coordinador crear o incorporar cuentas como Docente exclusivamente en su carrera activa.
-Administración conserva todas sus capacidades. No delega otros roles, reactivaciones ni
-gestión global de cuentas; la corrección de nombre/correo de docentes de la carrera se
-delegó después en I-170. La incorporación reutiliza
-cuentas activas por correo, sin sobrescribir identidad o acceso; asignar paralelos sigue
-siendo otra operación con sus bloqueos académicos.
-
-I-84 (16 de septiembre de 2026) reemplaza la entrega conjunta basada en Inertia: Laravel
-expone JSON versionado y conserva dominio, políticas, colas y persistencia; la interfaz
-es una SPA Vue independiente que usa Sanctum con cookie y CSRF. Las decisiones del
-starter Inertia se conservan únicamente como historial en ADR-0001 y ADR-0004.
-
-I-06 implementa el contrato, persistencia, cola y control humano de IA con un simulador
-técnico determinista y un cliente HTTP exclusivamente local. Esto demuestra integración
-y degradación segura, pero no confirma motor, modelo, hardware, corpus, precedencia ni
-umbrales: `PV-02`, `PV-13`, `PV-14` y `PV-18` permanecen `POR VALIDAR`.
-
-I-72 (14 de septiembre de 2026) fija por decisión explícita del responsable del producto
-la configuración de alcance de IA: Administración define en cada campo el valor
-predeterminado; la Coordinación de cada carrera puede sobrescribirlo y conserva esa
-preferencia hasta que cualquier configuración de la plantilla cambie, momento en que
-vuelve a heredarse el valor administrativo. Coordinación también elige antes de iniciar
-su alcance qué fuentes activas de su carrera alimentarán la IA. Esta última decisión
-reemplaza únicamente la selección automática de todas las fuentes establecida en I-46;
-no modifica su congelación durante un alcance abierto ni la evidencia histórica. Chat y
-revisión integral usarán el mismo contexto autorizado, con citas a fuentes y secciones,
-y continuarán siendo asistencia opcional que no bloquea el envío. La implementación está
-planificada en `docs/plans/completed/I-72-asistente-ia-contextual.md`; no cierra `PV-02`,
-`PV-13`, `PV-14` ni `PV-18`.
-
-I-73 (14 de septiembre de 2026) incorpora, por decisión explícita del responsable del
-producto, adaptadores de inferencia para OpenAI, Claude y DeepSeek. El operador elige el
-protocolo con `AI_DRIVER` y configura únicamente URL base, modelo y API key; no existen
-controles de razonamiento y DeepSeek se fuerza al modo sin pensamiento. El soporte
-técnico no selecciona ni valida un modelo definitivo, no habilita un proveedor por
-defecto y no cambia el control humano, por lo que `PV-13`, `PV-14` y `PV-18` conservan su
-estado `POR VALIDAR`. La activación con datos institucionales requiere además resolver
-el tratamiento externo aplicable bajo `PV-12`.
-
-I-95 (19 de septiembre de 2026) reemplaza I-26, I-49, I-91 e I-94 en el formato de las
-fuentes: PDF privado → OpenParser (`paddleocr-vl-1.6`, `openparser@1`) → documento JSON ProseMirror/Tiptap →
-fragmentos y embeddings. Las tablas conservan combinaciones y las imágenes se insertan
-en su orden como objetos privados. `ejecuciones_trabajo` sustituye la tabla especializada
-de extracciones. La etapa OCR no usa Mistral; la normalización posterior opcional de
-DeepSeek queda definida por I-99. La activación real continúa condicionada a PV-12 y
-PV-14; la migración es `000089`.
-
-I-97 (20 de septiembre de 2026) presenta COR-11 como documento editable continuo, sin
-simular hojas A4 ni saltos físicos. El JSON ProseMirror/Tiptap sigue siendo canónico;
-las celdas estructuradas de OpenParser tienen prioridad sobre sus proyecciones HTML y
-Markdown, y el PDF original se conserva como vista privada de contraste. La paginación
-queda reservada para el archivo original, las plantillas y las exportaciones.
-
-I-98 (20 de septiembre de 2026) concentra la ingesta PDF en la creación de la fuente.
-COR-11 ya no permite cargar ni reprocesar archivos: después de crear los metadatos, un
-diálogo bloqueante muestra el progreso real de `ejecuciones_trabajo` y abre el documento
-automáticamente únicamente cuando OpenParser termina. Un fallo conserva reintento y
-salida explícitos. El documento conserva un separador horizontal entre páginas del PDF;
-PV-12 y PV-14 siguen condicionando la activación externa.
-
-I-99 (20 de septiembre de 2026) añade una normalización editorial posterior a OpenParser.
-Cuando `AI_SOURCE_NORMALIZATION_ENABLED=true` con driver `deepseek`, `deepseek-flash` recibe
-las páginas OCR en lotes y devuelve Markdown por página mediante JSON. Tablas HTML e imágenes se envían como marcadores
-protegidos y se restauran en el mismo lugar; una respuesta incompleta o que altere esos
-marcadores hace fallar la ingesta, sin fallback silencioso. El normalizador no reemplaza
-al OCR ni cambia el contrato de persistencia o embeddings.
-
-I-74 (14 de septiembre de 2026) normaliza roles y responsabilidades académicas: la
-única relación RBAC es `asignaciones_rol(usuario_id, rol, carrera_id)`. Se elimina
-`asignaciones_coordinador`, porque duplicaba el rol `coordinador` con alcance de carrera.
-La responsabilidad operativa de un paralelo no es un rol: `docentes_paralelo` referencia
-la asignación RBAC `docente` que la respalda. PostgreSQL impide más de una coordinación
-ejercible por carrera mediante trigger; una cuenta inactiva conserva el historial de sus
-roles, pero no bloquea un reemplazo. La entrega requiere las migraciones `000056` a
-`000059` junto con el despliegue de aplicación; hasta entonces la fotografía remota
-continúa en el esquema anterior.
-
-I-75 (14 de septiembre de 2026) fija la estructura académica de la malla: ninguna
-carrera puede inventar campos para sus materias. Código, nombre, ciclo, unidad de
-organización curricular, modalidad, créditos y componentes horarios son atributos
-tipados de `asignaturas`; ACD, APE, AA, créditos y total se muestran como conjunto
-fijo. Se retiran `definiciones_campo_malla` y `valores_campo_asignatura`; requisitos,
-programaciones, paralelos y responsabilidades docentes se mantienen como relaciones.
-
-I-78 (14 y 15 de septiembre de 2026) reemplaza los atributos físicos genéricos por
-nombres que expresan su concepto y entidad: entre ellos, `codigo_facultad`,
-`codigo_campus`, `codigo_carrera`, `codigo_asignatura`, `nombre_usuario` y
-`usuario_activo`. Los campos transversales, claves técnicas y códigos ya inequívocos
-por su tabla se conservan; no se prefijan artificialmente.
-
-I-79 (15 de septiembre de 2026) renombra la tabla física de responsabilidad docente
-`docentes_paralelo` a `asignaciones_paralelo`. La relación sigue vinculando un paralelo
-con la asignación RBAC docente que la respalda; conserva datos, restricciones y claves
-foráneas, sin modificar los nombres funcionales de la interfaz o las rutas.
-
-I-80 (15 de septiembre de 2026) simplifica los roles fijos del dominio: Administrador,
-Coordinador y Docente son valores cerrados de `asignaciones_rol.rol`, protegidos por
-`CHECK`; se elimina la tabla `roles`, su clave foránea y las consultas al catálogo. La
-asignación conserva usuario, carrera, estado e historial; el trigger de coordinación
-consulta el valor de la propia fila y sigue permitiendo una sola coordinación ejercible
-por carrera.
-
-I-81 (15 de septiembre de 2026) retira `facultades.ruta_logo_facultad`. Un logo de
-facultad es un archivo privado y se referencia mediante `facultades.logo_objeto_id` a
-`objetos_almacenados`; el objeto conserva disco, ruta interna, MIME, tamaño, huella y
-clasificación. Cada reemplazo genera un objeto inmutable nuevo, sin perder la referencia
-histórica del archivo anterior.
-
-I-82 (15 de septiembre de 2026) elimina la entidad `mallas`: el producto no admite
-versiones, activación, desactivación ni agrupación de varias mallas por carrera.
-`carreras.codigo_malla` y `carreras.cantidad_ciclos_malla` guardan la única estructura
-curricular; `asignaturas.carrera_id` y `silabos.carrera_id` sustituyen sus antiguas
-claves foráneas. El nombre visible **Malla** se conserva solo para el editor curricular.
-
-I-107 (22 de septiembre de 2026), por instrucción explícita del responsable del
-producto, reemplaza los códigos opcionales de facultad y el código obligatorio de malla:
-se elimina `facultades.codigo_facultad` y `carreras.codigo_malla`; `carreras.codigo_carrera`
-es obligatorio y único. La estructura curricular conserva su cantidad de ciclos además
-de las materias y relaciones asociadas. Los sílabos existentes conservan su contexto
-inmutable; los nuevos ya no incluyen código de malla.
-
-I-108 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, retira el código manual del formulario de período. El servidor genera la única
-etiqueta visible con el rango de meses y el año, por ejemplo `Agosto-Diciembre 2026`;
-el código técnico se conserva para referencias e historial.
-
-I-109 (23 de septiembre de 2026) aclara que `semanas_lectivas` no se captura en el
-formulario. El servidor cuenta las semanas de lunes a domingo que toca el rango de
-fechas, aunque la primera o la última sea parcial, y guarda ese resultado entre 1 y 52.
-
-I-110 (23 de septiembre de 2026) simplifica la configuración inicial de convocatorias:
-Administración las abre desde la fila del período académico, con el período fijado y
-nombre/plantilla automáticos; solo ajusta las fechas de elaboración. La creación y
-apertura son atómicas. Coordinación conserva su convocatoria propia dentro
-del proceso abierto, hereda período, plantilla y fechas, y elige sus fuentes activas según
-I-72. Las tablas y las reglas de unicidad permanecen separadas.
-
-I-113 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, precisa que las fechas de la convocatoria institucional no se copian del
-período académico. Al abrir una convocatoria nueva, Administración debe elegir el
-inicio de elaboración y la fecha límite de entrega; Coordinación hereda esos valores
-elegidos. La edición conserva las fechas ya guardadas.
-
-I-114 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, limita la prórroga institucional a la fecha límite de entrega. El inicio no
-es una etapa prorrogable: Administración solo puede corregirlo mediante la edición del
-proceso en pausa. `fechas_limite_convocatoria` conserva `inicio` y
-`borrador` para validar la ventana de envío, sin cambio de esquema.
-
-Antecedente sustituido por I-146 en el alcance de lectura y revisión de IA:
-I-116 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, deja en Administración la decisión de qué campos usan IA. Coordinación ya no
-guarda excepciones por carrera: la IA solo sugiere y el docente decide si aplica cada
-sugerencia. Se eliminan `preferencias_ia_carrera`,
-`definiciones_campo.ia_coordinacion_configurable` y las rutas
-`/coordination/ai-configuration`; sustituye las decisiones 1 a 3 de I-72.
-
-Antecedente sustituido por I-146 en el alcance de lectura de IA; el comportamiento de
-listas y totales se conserva:
-I-119 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, precisa que la casilla de IA de un campo decide si el agente lo lee como
-referencia para sus sugerencias. Administración la decide en todo campo salvo el estado
-de revisión, incluidos la ficha institucional y los datos heredados; la ficha se lee sin
-datos personales del docente. Las listas se completan como filas de una columna, la
-fila de totales solo admite datos numéricos y se retira el formulario separado de
-estructura de tablas.
-
-I-121 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, hace que Coordinación y Docencia elijan siempre su ámbito al iniciar sesión,
-aunque tengan uno solo, en una pantalla sin menú lateral; sustituye para Docencia la
-activación automática de I-13. Desde esa pantalla se leen los avisos. Abrir uno ya no
-navega a una ruta calculada para otro rol: `POST /notifications/{id}/open` elige en el
-servidor la asignación vigente de la persona que corresponde al aviso, la activa con
-auditoría y devuelve el destino. No concede acceso nuevo.
-
-I-117 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, permite a Administración eliminar una convocatoria institucional solo cuando
-ningún docente inició uno de sus sílabos. La comprobación incluye el evento inmutable
-`silabo.borrador_iniciado`, incluso si el expediente volvió después a «Sin iniciar».
-El borrado transaccional retira los sílabos sin actividad y los alcances asociados, y
-conserva su propio evento de auditoría; no requiere migración.
-
-I-07 implementa un puerto de lectura, fixture sintético versionado, staging inmutable,
-simulación y exclusión humana. Demuestra idempotencia, conflicto y cero mutación del
-catálogo, pero no incorpora esquema, credenciales, red, reglas de identidad ni aplicador:
-`PV-09`, `PV-10` y `PV-12` permanecen `POR VALIDAR`.
-
-I-08 completa el carril técnico de candidato: CI y audits, reglas estáticas de
-accesibilidad, cabeceras/readiness sin sesión, smoke de colas nombradas, restore
-PostgreSQL efímero y baseline local reproducible. Esto no cierra los CP funcionales/no
-funcionales por número —sus enunciados no constan en el repositorio— ni las pruebas con
-participantes, documentos oficiales, infraestructura o datos reales. Todas las puertas PV
-conservan su autoridad y estado `POR VALIDAR`.
-
-I-09 redistribuye y verifica la gestión de estructura por decisión explícita del
-responsable del producto: las entidades institucionales y las cuentas permanecen bajo
-Administración, mientras la operación académica pertenece a la Coordinación vigente de
-cada carrera. ADM-04 refleja la jerarquía Facultad → Carreras y separa campus,
-modalidades y periodos en vistas propias, sin modificar el esquema normalizado. Sus filas
-permiten editar y eliminar registros sin dependencias, con autorización y auditoría en
-servidor. Este cambio
-no resuelve ni modifica `PV-16`, que trata la edición excepcional de contenido docente.
-
-I-10 unifica la presentación de listados por decisión explícita del responsable del
-producto: el fondo se conserva y las superficies usan tokens diferenciados; desde I-196,
-ADM-04 se navega mediante **Facultades y carreras** en una ruta canónica; toda barra de
-consulta ordena búsqueda, filtros y acción; y las 24 superficies tabulares comparten el mismo pie
-de paginación. Las acciones operativas de Administrador y Coordinador se agrupan detrás
-de un botón accesible de tres puntos sin cambiar autorización ni ciclo de vida. Las 29
-páginas operativas y el layout compartido de Configuración usan el mismo encabezado con
-icono, título, descripción y espaciado responsive. No cambia el esquema normalizado, el
-alcance por rol ni una puerta `PV`.
-
-I-11 alinea el esquema académico con la fuente institucional SIANET a partir del acceso
-concedido al respaldo del 23 de junio de 2025. El análisis se hizo sobre datos y no sobre
-el DDL. Agrega el nivel `escuelas`, inicialmente volvió el periodo dependiente de la carrera,
-separa la
-identidad oculta de la asignatura de su código visible, renombra `nivel` a `ciclo`,
-incorpora el desglose de horas y traduce el texto libre de campus y modalidad mediante
-`alias_institucionales`, sin copiar los defectos de la fuente. `PV-09` y `PV-10` quedan
-`CONFIRMADO` por decisión explícita del responsable del producto; con la identidad
-institucional confirmada, la importación ya propone alta, cambio o sin cambio en lugar de
-declarar todo conflicto. La importación permanece en modo simulación y `PV-12`
-conserva su autoridad y estado `POR VALIDAR`; `PV-08` se cerró después en I-57.
-I-41 reemplaza específicamente esa pertenencia por carrera: en el producto el período es
-institucional, de código único, y un proceso de sílabos lo fija para todas las convocatorias
-que cuelgan de él.
-
-I-44 (3 de septiembre de 2026) congela la estructura que sostiene el trabajo docente:
-proceso y convocatoria abiertos bloquean cambios institucionales y de carrera,
-respectivamente. Administración pausa el proceso y Coordinación pausa su convocatoria
-para corregir. El cambio estructural muestra sus consecuencias y, tras confirmación,
-elimina únicamente sílabos sin envío ni evidencia de IA. No existe «Archivar» para
-catálogos académicos: se elimina lo que no tiene dependencias y se protege la historia.
-
-I-45 (3 de septiembre de 2026) concentra la preparación inicial de materias en una
-hoja lateral amplia. Para el período elegido, Coordinación solo ve materias activas de
-su malla que aún no están programadas y define uno o más paralelos, cada uno con su propia
-jornada. La acción de cada materia queda para agregar paralelos más tarde. El envío no
-elimina por omisión ni altera la historia.
-
-I-12 renombra «contexto» a rol en todo el sistema —clases, props, rutas, vistas, columna
-de auditoría, documentación y pruebas— por decisión explícita del responsable del
-producto, que reserva la palabra «contexto» para las fuentes académicas que alimentan al
-asistente. No cambia autorización, alcance ni ciclo de vida.
-
-I-13 ajusta la experiencia de uso sin tocar autorización ni ciclo de vida: el rol único
-se activa solo y el selector queda para quien acumula roles; el panel sustituye los
-accesos duplicados por indicadores calculados con el alcance del rol activo; el menú
-lateral se vuelve reactivo, despliega sus subopciones y las ofrece en un menú flotante
-cuando está reducido; y la superficie visual pasa a tokens de elevación, anillo y sombra
-definidos por tema. Corrige tres defectos con prueba de regresión propia.
-
-El trabajo pendiente del proyecto está consolidado en `docs/plans/pending-work.md`, que
-separa lo que depende de una revisión manual de lo que espera decisión de la UEB.
-
-I-14 renombra «campaña» a «convocatoria» en todo el sistema —base de datos, clases,
-rutas, vistas, auditoría y documentación— por decisión explícita del responsable del
-producto. No altera comportamiento.
-
-I-16 completa la edición de mallas, materias programadas, paralelos y asignaciones docentes
-por decisión explícita del responsable del producto. Coordinación solo modifica registros
-de su carrera y cada cambio queda auditado; I-20 reemplaza la inmutabilidad de la malla,
-mientras que el historial de sílabos se conserva. Nombre y correo permanecen exclusivamente bajo
-Administración: Coordinadores y Docentes no pueden corregirlos, ni siquiera en la cuenta
-propia. Este cambio no amplía `PV-16`, que sigue referido al contenido del sílabo.
-
-I-18 incorpora Vue Flow como motor de presentación del constructor de mallas. La
-configuración pertenece a la malla actual y admite ciclos, campos tipados, totales,
-reubicación y relaciones explícitas; PostgreSQL y los casos de uso Laravel permanecen
-como fuente de verdad. La alternativa de formulario mantiene las mismas operaciones y
-I-20 permite editarlas sobre el mismo agregado. I-57 cerró después `PV-08` sin deducir
-fórmulas ni siglas del color o del aspecto del PDF.
-
-I-19 confirma que una persona puede coordinar varias carreras y vuelve explícita la
-selección de carrera al iniciar como Coordinador, incluso si solo existe una opción. El
-ámbito activo puede cambiarse desde el menú de usuario mediante el mismo caso de uso
-auditado. Materias deja de ser una colección independiente en navegación: I-20 abre una
-sola Malla directamente y reúne allí el desglose académico y el constructor visual; la
-URL anterior de Materias redirige a Malla. No cambia permisos ni elimina historia.
-
-I-20 reemplaza el versionado visible de mallas definido en I-16, I-18 e I-19: la
-navegación muestra una sola **Malla** por carrera, sin buscador, filtros, cards,
-paginación, publicación ni número de versión. La fila técnica histórica se conserva
-solo para mantener referencias existentes; una restricción parcial garantiza una única
-malla actual. Coordinación edita la actual activa o inactiva, la deshabilita para
-bloquear procesos nuevos y solo puede eliminarla sin dependencias. Cada sílabo fija su
-contexto académico y lo incorpora a sus revisiones inmutables.
-
-I-28 (1 de septiembre de 2026) deja el esquema físico y los valores almacenados 100 %
-en español por decisión explícita del responsable del producto, en la línea de I-12 e
-I-14: los timestamps se tradujeron inicialmente a `creado_en`/`actualizado_en` (convención
-reemplazada después por I-52), columnas de `usuarios`
-(`correo_electronico`, `contrasena`…), `ejecuciones_trabajo` completa,
-`eventos_salientes` (antes `eventos_outbox`), familia `version_bloqueo`, estados y
-discriminadores (`pendiente`, `borrador`, `administrador`…), colas Redis y CHECK
-constraints; las tablas de framework vivas se renombraron por configuración
-(`sesiones`, `trabajos_fallidos`, `restablecimientos_contrasena`, `migraciones`) y las
-muertas (`jobs`, `job_batches`, `cache`, `cache_locks`) se eliminaron. Los límites que
-quedan (columnas internas de drivers de Laravel, claves internas de JSONB sellados,
-contrato del gateway de IA) están registrados en `docs/plans/technical-debt.md`. No
-altera autorización ni ciclo de vida; corrige de paso el worker de producción, que no
-escuchaba las colas nombradas.
-
-I-29 (2 de septiembre de 2026) elimina la vigencia programada de los roles de cuenta:
-`asignaciones_rol` queda efectiva únicamente mientras `activo` sea verdadero y su retiro
-es manual. I-52 extendió después esa misma regla a las asignaciones docentes y de
-coordinación, conservando por separado su evidencia funcional.
-
-I-31 (2 de septiembre de 2026) traslada el calendario a Administración por decisión
-explícita del responsable del producto: `procesos_silabos` fija plantilla, inicio y
-entrega para toda la universidad y solo puede haber uno en curso. `convocatorias`
-cuelga de un proceso obligatorio, hereda su plantilla y sus fechas y gana el estado
-`pausada`. Una convocatoria está en curso solo si ella está abierta y el proceso
-también; esa condición habilita el trabajo docente y congela plantilla (proceso),
-malla y fuentes (carrera). I-114 reemplaza la prórroga por carrera de I-15 con una
-prórroga institucional limitada a la entrega. No resuelve `PV-01`: decide cuándo puede
-cambiarse la plantilla, no quién la aprueba.
-
-I-32 (2 de septiembre de 2026) retira las versiones por decisión explícita del
-responsable del producto: `versiones_plantilla` desaparece —secciones, bloques y campos
-cuelgan de `plantillas_silabo`, que gana `mapeo_documento`— y `versiones_malla` pasa a
-`mallas`, una por carrera, sin `numero_version` ni `es_actual`. Ya no hay «publicar» ni
-«crear versión»: la estructura se comprueba al abrir o reanudar el proceso. Regla de
-borrado, sustituida después por I-118: con la convocatoria pausada, un cambio estructural
-en la plantilla o en la malla exige confirmación con la cifra afectada. Los sílabos de
-procesos cerrados no se tocan.
-
-I-118 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, corrige el alcance de I-32. Su alcance vigente incorpora la resolución
-delegada de I-144 del 27 de septiembre de 2026: la plantilla es única para todas las
-carreras y una corrección de plantilla o base académica exige pausar el ámbito
-correspondiente y confirmar la consecuencia. El sistema guarda la corrección, elimina
-el expediente elegible completo —borrador, revisiones, observaciones, IA y
-exportaciones— y lo genera desde las fuentes vigentes en una sola transacción.
-Son elegibles los expedientes afectados en curso sin aprobación conservada, incluidos
-los enviados. Se preservan los aprobados, la evidencia aprobada tras reapertura y los
-procesos cerrados. Sus fotografías pueden conservar el formato anterior; la plantilla
-vigente continúa siendo una sola. El reinicio de resultados de aprendizaje se limita
-a la materia corregida.
-
-I-121 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, retira el estado institucional `preparacion`. La convocatoria institucional
-nace `abierto` en la misma transacción que valida la plantilla, la estructura académica
-y la unicidad del proceso vigente; después solo transita `abierto ⇄ pausado → cerrado`.
-PostgreSQL admite como máximo una convocatoria abierta o pausada, mientras las cerradas
-se conservan como historial. Si ya hubo actividad docente, una equivocación se corrige
-pausando y regenerando los sílabos afectados; no se elimina el proceso.
-
-I-46 (4 de septiembre de 2026) precisa dos alcances del mismo ciclo: Administración
-abre un único proceso institucional por período académico; Coordinación no
-prepara ni configura otra convocatoria, sino que inicia o pausa el alcance de su carrera
-desde ese proceso visible. Iniciar exige malla activa, materias programadas con paralelos y docentes
-vigentes, y fuentes académicas activas; genera atómicamente un sílabo por paralelo. Las
-fuentes activas de toda la carrera se fijan de forma automática y se sincronizan al
-reanudar. PostgreSQL impide más de un proceso por período y más de un alcance por
-carrera/período.
-
-I-47 (5 de septiembre de 2026) retira la procedencia SIANET que no interviene en los
-casos de uso actuales: código externo de escuela, período, malla y asignación docente;
-año del período, descripción externa de malla y código oculto de asignatura. Se conservan
-los códigos visibles que usa el producto. La migración es irreversible y exige un
-respaldo lógico previo.
-
-I-48 (5 de septiembre de 2026) retira el nivel `escuelas` que provenía de SIANET: no
-representa una extensión ni una entidad operativa de sílabos. El producto queda como
-Facultad → Carrera; `campus` conserva la ubicación física de las materias programadas. La migración
-es irreversible y exige un respaldo lógico previo.
-
-I-50 (5 de septiembre de 2026) simplifica la cuenta gestionada: `activo` conserva el
-estado presente, mientras activaciones y desactivaciones se preservan como eventos de
-auditoría. Se retiran `desactivado_en`, `actualizado_en` y la cédula de la integración
-SIANET ya eliminada. La migración es irreversible y exige un respaldo lógico previo.
-
-I-51 (5 de septiembre de 2026) retira `vigente_desde` y `vigente_hasta` de las cuentas:
-esas fechas no se conocen de forma estable al administrarlas. La disponibilidad depende
-de la cuenta activa y de sus roles/asignaciones. I-52 aplicó después el mismo criterio a
-la coordinación. La migración es irreversible y exige un respaldo lógico previo.
-
-I-52 (5 de septiembre de 2026) retira de todas las tablas propias las marcas genéricas
-`creado_en`, `actualizado_en` y `registrado_en` cuando solo duplican auditoría técnica.
-Las fechas funcionales permanecen con nombres de dominio: `asignado_en`, `encolado_en`,
-`notificado_en`, `almacenado_en` y `observado_en`, además de las ya explícitas como
-`guardado_en`, `ocurrido_en` o `aprobado_en`. No crea triggers de auditoría todavía; esa
-decisión queda para una revisión posterior. La migración `000046` es irreversible, tuvo
-respaldos lógicos verificados y fue aplicada local y remotamente.
-
-La misma revisión I-52 retira `plantillas_silabo.es_institucional`: el producto admite
-una única plantilla, por lo que el campo no distinguía estados posibles. El índice
-`plantillas_silabo_unica` garantiza directamente como máximo una fila. La migración
-`000047` es irreversible, tuvo respaldos verificados y fue aplicada local y remotamente.
-I-52 también retira
-`asignaciones_coordinador.vigente_desde` y `vigente_hasta`: `activo` expresa quién
-coordina actualmente y un índice parcial garantiza una sola coordinación activa por
-carrera. `calidad` distingue si la designación administrativa es titular o encargada.
-La migración `000048` fue aplicada local y remotamente después de respaldos verificados.
-El 6 de septiembre I-52 retira además `sustento_tipo`, `sustento_numero` y
-`sustento_fecha` de esa asignación: la coordinación no conserva información documental y
-solo Administración designa y define la calidad. La migración `000049` fue respaldada y
-aplicada local y remotamente.
-
-I-62 (9 de septiembre de 2026) reserva **oferta académica** para el conjunto de carreras
-y programas aprobados por el CES y registrados en el SNIESE. La operación de una materia
-en un período se denomina **programación de asignatura**; contiene uno o más paralelos y
-cada paralelo conserva su asignación docente y genera su propio sílabo. Coordinación la
-presenta como **Materias y paralelos**. El esquema usa `programaciones_asignatura` y
-`programacion_asignatura_id`; las fotografías nuevas usan `scheduled_subject` y los
-lectores mantienen compatibilidad con la clave histórica `offering`. No cambian permisos,
-estados ni cardinalidades.
-
-I-64 (9 de septiembre de 2026) confirma que **Materias y paralelos** muestra un período
-a la vez y conserva los anteriores como historial. El estado Próximo/En curso/Finalizado
-se deriva de las fechas en `America/Guayaquil`; un período finalizado es de solo consulta
-y el servidor bloquea cambios en sus programaciones, paralelos y asignaciones docentes.
-
-I-76 (14 de septiembre de 2026) simplifica el relevo docente: `docentes_paralelo` no
-conserva el tipo, número ni fecha de un documento de sustento. La responsabilidad se
-expresa mediante la asignación RBAC docente, el paralelo, su estado activo y
-`asignado_en`; el relevo conserva su trazabilidad operativa en auditoría.
-
-I-77 (14 de septiembre de 2026) simplifica `periodos_academicos`: el código único es la
-única etiqueta visible y se retiran `nombre` y `activo`. Próximo, En curso y Finalizado
-se derivan exclusivamente de las fechas. `semanas_lectivas` se conserva porque expresa
-las semanas que distribuye el sílabo y se calcula desde el rango calendario conforme a
-I-109.
-
-I-106 (22 de septiembre de 2026) retira `campus` como entidad y catálogo independiente.
-La facultad conserva obligatoriamente una sola opción de campus, elegida de una lista fija: Campus Matriz
-Dr. Gabriel Galarza López, Campus Laguacoto, Campus CENI (Centro de Eventos Nacionales
-e Internacionales), Extensión San Miguel y Sede Chimbo. Las carreras heredan esa opción
-de su facultad y cada programación conserva el nombre elegido como fotografía textual;
-el sílabo conserva su propia fotografía inmutable. No existe código de campus. La
-migración mapea el catálogo existente y falla de forma íntegra si una facultad combina
-campus distintos o una referencia no puede mapearse, para permitir su conciliación antes
-de retirar los datos originales.
-
-I-111 (23 de septiembre de 2026) confirma que la plantilla institucional es siempre un
-único recurso y simplifica su persistencia. La tabla física pasa a llamarse
-`plantilla_silabo`; `documento_plantilla` JSONB guarda la composición visual completa
-de secciones, bloques y tablas. `componentes_plantilla` se retira. Las
-`definiciones_campo` permanecen relacionales porque valores, validaciones, IA y
-evidencia histórica las referencian; `bloque_plantilla_id` conserva el UUID del bloque
-embebido y PostgreSQL verifica su pertenencia al documento. Cada revisión enviada
-continúa guardando su fotografía completa e inmutable. Esta decisión reemplaza la
-persistencia de componentes de I-85, sin cambiar la plantilla única definida en I-32.
-
-I-112 (23 de septiembre de 2026), por instrucción explícita del responsable del
-producto, exige que un período académico nuevo empiece hoy o en una fecha posterior,
-tomando `America/Guayaquil` como día visible. La fecha final permanece igual o posterior
-a la inicial. La regla se aplica al alta y conserva la edición de períodos históricos.
-
-I-123 (23 de septiembre de 2026), por corrección explícita del responsable del producto,
-establece que el logo de una facultad es un dato de administración institucional. Solo el
-Administrador puede cargarlo o reemplazarlo al crear o editar la facultad en ADM-04.
-Coordinación deja de tener el paso, diálogo, dato de Panel y endpoint de carga que había
-introducido I-68. La existencia del logo continúa siendo requisito para iniciar el alcance
-de la carrera; si falta, Coordinación recibe una validación que remite a Administración.
-
-I-125 (23 de septiembre de 2026), por instrucción explícita y corrección inmediata del
-responsable del producto, vuelve obligatorio el logo al crear una facultad en ADM-04. El
-formulario indica como medida recomendada 600 × 180 px y exige un PNG sin fondo, con
-transparencia; el servidor conserva la proporción y lo centra sobre un lienzo transparente
-a esa medida. Al editar una
-facultad que ya tiene logo, reemplazarlo sigue siendo opcional; un registro anterior sin
-logo exige cargarlo antes de guardar cualquier edición. El logo institucional mantiene
-el mismo requisito de PNG con transparencia.
-
-## Propuesto
-
-I-52, actualización del 6 de septiembre: se retira `calidad` de las asignaciones de
-coordinación mediante `000050`, sustituyendo la decisión anterior de conservarla.
-Administración asigna a la persona sin distinguir titular de encargado.
-
-- PHP 8.3 o superior como mínimo del proyecto.
-- UUID generados por la aplicación para claves primarias internas.
-- PostgreSQL con `timestamptz` en UTC; presentación en `America/Guayaquil`.
-- Laravel Fortify mediante el starter oficial; registro público desactivado si la
-  institución administra las cuentas.
-- Horizon para observar colas Redis cuando sea útil en el despliegue.
-- Estructura `app/Modules/*` con capas ligeras por módulo.
-- Outbox transaccional para eventos que deben llegar a trabajos/integraciones.
-- Pruebas de arquitectura para evitar dependencias entre módulos no permitidas.
-
-Estas propuestas pueden confirmarse al crear el repositorio. Si cambian, crea un ADR.
-
-## Por validar antes de codificar la parte afectada
-
-Consulta los códigos y puertas en `docs/plans/decisions-pending.md`. Incluyen:
-
-- autoridad institucional que aprueba y firma;
-- formato oficial Word/PDF y firmas/sellos;
-- matriz final de permisos y edición excepcional del coordinador (`PV-16`);
-- frecuencia de actualización de datos institucionales; el origen, el esquema y la
-  calidad quedaron confirmados en I-11;
-- SSO, registro público y ciclo de vida de cuentas;
-- infraestructura, almacenamiento, copias, retención y recuperación;
-- motor/modelo local de IA, umbrales y hardware;
-- corpus autorizado, tratamiento de datos y criterios de aceptación;
-- resultados de entrevistas a docentes, coordinación y personal técnico.
-
-## Trabajo permitido mientras se valida
-
-- bootstrap reproducible y CI;
-- estructura modular y convenciones;
-- autenticación base sin fijar SSO;
-- modelo de roles configurable;
-- prototipos y componentes compartidos;
-- migraciones de entidades ya confirmadas;
-- estados y revisión inmutable confirmados;
-- pruebas unitarias de invariantes confirmadas;
-- adaptadores con interfaces y dobles de prueba;
-- documentación, trazabilidad y planes.
-
-No programes como irreversible una decisión institucional que sigue abierta.
-
-I-198 (7 de octubre de 2026), por instrucción explícita del responsable del producto,
-agrega importación con Excel (`.xlsx`) para crear en bloque cuentas (Administración),
-carreras (Administración) y docentes (Coordinación). Cada importación se revisa antes de
-confirmar y es todo o nada. Ese mismo día, las importaciones de facultades y de Materias
-y asignaciones se retiraron por instrucción del responsable: las facultades se crean una
-por una con su logo y los paralelos se gestionan desde las acciones de cada materia.
-
-13 de octubre de 2026, por instrucción del responsable del producto: el coordinador puede
-asignarse como docente de un paralelo de su propia carrera (recibe ahí el rol Docente) y
-puede revisar y aprobar ese sílabo con su rol de coordinador, porque cada carrera tiene un
-solo coordinador. La auditoría registra quién aprueba y con qué rol.
-
-13 de octubre de 2026, por instrucción del responsable del producto: Coordinación no puede
-abrir la convocatoria de su carrera si venció el plazo de entrega institucional o si alguna
-materia activa tiene incompleta su ficha del Proyecto de carrera; el rechazo lista de una
-vez todo lo que falta. Administración no puede abrir una convocatoria institucional sobre
-un período académico que ya terminó.
-
-14 de octubre de 2026, por instrucción del responsable del producto (I-220): el orden de
-revisión pasa a docente → coordinación → biblioteca. Coordinación aprueba o devuelve; al
-aprobar, el sílabo pasa solo a biblioteca, que aprueba la bibliografía y deja el sílabo
-Aprobado (se genera el PDF). Si biblioteca devuelve, el reenvío del docente va directo a
-biblioteca sin pasar de nuevo por coordinación. Las firmas conservan el orden docente →
-coordinación → biblioteca. Reemplaza el orden de I-173 e I-192; no cambia el esquema.
-
-14 de octubre de 2026, por instrucción del responsable del producto (I-221): se elimina la tabla
-`trabajos_en_cola`. Cada cosa guarda su propio estado: la exportación en `exportaciones_silabo`,
-el chat de IA en `mensajes_ia` y los avisos se escriben directo en `notificaciones` (sin job). La
-protección contra doble clic sigue en el backend con las claves únicas de esas tablas. La
-verificación de plataforma pasa a ser un job sin tabla. Migración `000220` (irreversible).
-
-14 de octubre de 2026, por instrucción del responsable del producto (I-222): se quitan columnas
-repetidas. `definiciones_campo` ya no guarda clave, título ni posición (viven en
-`campos_plantilla`; cada campo tiene una sola definición) y `envios_biblioteca` ya no guarda
-quién y cuándo verificó (lo guarda `aprobaciones`). Migración `000221` (irreversible). Las columnas
-vacías de funciones aún no estrenadas se revisan aparte.
-
-14 de octubre de 2026, por instrucción del responsable del producto (I-223): se eliminan tres
-columnas vacías de la plantilla: la configuración de los campos, la descripción de las secciones
-y la ayuda de los campos. El editor de plantilla ya no permite escribir ayuda por campo. La ayuda
-de pantallas se conserva. Migración `000222` (irreversible).
-
-14 de octubre de 2026, por instrucción del responsable del producto (I-224): con la convocatoria
-abierta se puede cambiar o quitar al docente de un paralelo y crear, editar o eliminar paralelos, sin
-pausarla: pausar interrumpe a todos los docentes de la carrera por unos pocos (por ejemplo cuando alguien
-se retracta tras el sorteo de materias). El nuevo docente empieza desde cero. Cambiar código o jornada con el
-sílabo ya enviado o aprobado pide confirmación y lo rehace desde cero. La malla y las fichas siguen exigiendo pausa.
-
-19 de octubre de 2026, por instrucción del responsable del producto (I-225): Administración puede
-ajustar márgenes y tamaños de título, sección y contenido del documento; la letra (Arial), los colores,
-las alineaciones globales y la negrita siguen fijos (I-195). El diseño se guarda en
-`mapeo_documento.layout` y viaja en el JSON de la plantilla; la clave antigua `appearance` se sigue
-ignorando. El editor alinea cada párrafo (izquierda, centro, derecha, justificado) y el Word lo respeta;
-el Word numera las páginas en el pie. El docente ve una vista previa del documento con lo que lleva escrito.
-
-19 de octubre de 2026, por instrucción del responsable del producto (I-229, ADR-0011): la plantilla del sílabo
-se define solo con datos. `plantilla_silabo.definicion_plantilla` (migración `000223`, reemplaza
-`mapeo_documento_plantilla`) guarda papel y apariencia, variables, bloques con valor, reglas y diseño, secciones
-obligatorias, secciones de biblioteca y plantillas listas; el manual técnico es `docs/architecture/template-json.md`.
-La letra, los colores y la alineación dejan de estar fijos en código (cambia lo dicho en I-225): los fija la
-plantilla oficial. El Word oficial no cambia salvo que los encabezados con fondo propio conservan su color de texto
-(antes salían en blanco). La pantalla adopta la tabla de Unidades del Word y el papel carta. Cada revisión congela la
-definición usada. Las reglas de unidades (4 unidades, 16 semanas, horas de la asignatura) no cambian; solo se mudan
-al JSON.
-
-20 de octubre de 2026, por instrucción del responsable del producto (I-230): en «Proyecto de carrera», cada campo de
-la ficha de una materia tiene el interruptor «El docente puede editarlo» (`valores_campo.editable_docente_valor_campo`,
-migración `000224`). El sílabo hereda el texto y el permiso al crearse; el docente lo ajusta como un campo propio, se
-le pide completarlo al enviar y se copia entre paralelos. Un campo vacío con el interruptor encendido no deja la ficha
-incompleta. Cambiar la ficha después sigue rehaciendo, con confirmación, los sílabos de esa materia. Sin el
-interruptor nada cambia: el docente solo lo consulta.
+# Decisiones vigentes
+
+Lista de lo que está decidido hoy. Todo lo que aparece aquí está `CONFIRMADO`. Lo que
+falta decidir está `POR VALIDAR` y vive solo en `docs/plans/pendientes.md`. El historial
+de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión larga).
+
+## Alcance
+
+- El sistema cubre el ciclo del sílabo: elaboración, revisión, aprobación, firma y
+  descarga. Admite varias facultades y carreras.
+- Fuera de alcance: EVEA, matrículas, notas, horarios, integración con sistemas
+  institucionales y decisiones académicas automáticas.
+
+## Roles y cuentas
+
+- Hay cuatro roles: Administrador, Coordinador, Docente y Bibliotecario. No existe
+  Decanato (I-192).
+- Coordinador y Docente tienen carrera; Administrador y Bibliotecario son globales
+  (I-165).
+- Cada carrera tiene una sola coordinación activa. El coordinador elige su carrera al
+  entrar, aunque tenga una sola. Quien tiene un único rol de otro tipo entra directo.
+- Un rol vale mientras esté activo; no tiene fechas de vigencia (I-29, I-51).
+- No hay registro público. Administración crea las cuentas y la persona la activa con
+  una invitación por correo.
+- Administración puede quitar un rol a una cuenta, salvo el único que le queda (I-197).
+- Coordinación crea o incorpora docentes en su carrera, corrige su nombre y su correo
+  (el correo solo antes de activar la cuenta) y puede quitarlos de la carrera sin tocar
+  la cuenta (I-54, I-170, I-175).
+- El coordinador puede ser docente de un paralelo de su carrera y aprobar ese sílabo.
+- Una cuenta puede borrarse aunque tenga auditoría (I-194).
+- Cada persona guarda en su cuenta sus preferencias de accesibilidad.
+
+## Estructura académica
+
+- La jerarquía es Facultad → Carrera (I-48).
+- Cada facultad elige un campus de una lista fija y tiene un logo PNG con transparencia
+  obligatorio. Solo Administración lo carga (I-106, I-123, I-125).
+- El código de carrera es obligatorio y único (I-107).
+- Cada carrera tiene una sola malla, sin versiones (I-82). Las asignaturas tienen campos
+  fijos: código, nombre, ciclo, unidad de organización, modalidad, créditos y horas ACD,
+  APE y AA (I-75).
+- Los paralelos son fijos por asignatura y no dependen del período. Cada uno tiene
+  código, jornada y como máximo un docente activo (I-209).
+- El período recibe su nombre automático (por ejemplo, `Agosto-Diciembre 2026`) y sus
+  semanas se calculan desde las fechas. Empieza hoy o después (I-108, I-109, I-112).
+- Administración carga cuentas y carreras por Excel; Coordinación carga docentes y la
+  malla. Cada carga muestra una vista previa y se aplica todo o nada (I-198).
+
+## Convocatorias y períodos
+
+- Administración abre una convocatoria institucional por período, con fecha de inicio
+  y fecha de entrega. Solo puede haber una abierta o pausada a la vez (I-31, I-121).
+- Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener
+  coordinación y el período no debe haber terminado.
+- Estados: abierto ⇄ pausado. Una convocatoria cerrada queda solo para consulta.
+- Administración solo prorroga la fecha de entrega (I-114). Puede eliminar la
+  convocatoria en cualquier estado; se borra todo lo que contiene (I-172).
+- Cada carrera abre su propia convocatoria dentro de la institucional. Coordinación
+  solo puede abrirla si hay asignaturas, cada una con paralelo, cada paralelo con
+  docente, la ficha completa, el logo de la facultad y el plazo vigente. El rechazo
+  lista todo lo que falta.
+- Al abrirla se crea un sílabo por paralelo. Coordinación puede pausarla y reanudarla.
+- Con la convocatoria institucional abierta no se cambia la plantilla. Con la de una
+  carrera abierta no se cambian su malla ni sus fichas.
+
+## Plantilla
+
+- Hay una sola plantilla. Se edita en el sitio, sin versiones ni publicación (I-32).
+- La plantilla es solo datos (ADR-0011, I-229). `plantilla_silabo.definicion_plantilla`
+  guarda el estilo del documento, las variables, los bloques (valor, reglas y diseño),
+  las secciones obligatorias, las de biblioteca y las plantillas listas. Las secciones y
+  los campos van en sus tablas. Manual: `docs/architecture/template-json.md`.
+- Cada campo dice quién lo llena: `docente`, `coordinacion` o `institucional`. Su
+  contenido es un documento TipTap (I-210).
+- Administración la crea en blanco o con el formato oficial. La edita en un editor
+  visual tipo Word o con el diálogo «Editar JSON».
+- La letra, los colores, los márgenes y la alineación los fija la plantilla. El Word
+  numera las páginas.
+- Todo campo del docente es obligatorio. No hay límites de caracteres ni opción
+  «Obligatorio» por campo.
+- Cada revisión enviada congela la definición de la plantilla que usó.
+- Para cambiar la plantilla con sílabos existentes, Administración pausa la convocatoria
+  institucional. Al reanudar confirma, y los sílabos afectados se rehacen desde cero,
+  incluso los aprobados. Las convocatorias cerradas no se tocan (I-118).
+
+## Proyecto de carrera (ficha)
+
+- La ficha de cada asignatura reúne los campos que llena Coordinación. Sus valores se
+  guardan en `valores_campo` con `asignatura_id` (I-204).
+- Coordinación puede importar la ficha desde documentos de la carrera (PDF o Excel). La
+  IA propone valores solo para los campos de ficha de la plantilla; OpenParser lee los
+  PDF si está activo y, si no, `pdftotext`. Coordinación revisa y aplica. Los archivos se
+  borran al aplicar o descartar. Hay una importación por carrera a la vez.
+- Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
+  copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
+  encendido no deja la ficha incompleta (I-230).
+- Cambiar la malla o una ficha con sílabos existentes exige pausar la convocatoria de la
+  carrera y confirmar. Los sílabos afectados se rehacen desde cero, incluso los
+  aprobados.
+
+## Elaboración del sílabo
+
+- Cada paralelo tiene su sílabo. Su docente es quien tiene la asignación vigente.
+- Estados: Sin iniciar, Borrador, En revisión, Corrección solicitada y Aprobado.
+- El docente edita en Borrador y en Corrección solicitada: sus campos y los de la ficha
+  con el interruptor encendido. Ve una vista previa del documento.
+- Solo puede enviar entre la fecha de inicio y la de entrega, con la convocatoria sin
+  pausa.
+- Puede copiar el contenido desde otro paralelo suyo de la misma asignatura, si el
+  destino no se ha enviado (I-167).
+- Cambiar el docente o crear, editar o quitar paralelos no exige pausa. Un docente
+  nuevo empieza el sílabo desde cero (I-174, I-224).
+- Cambiar código o jornada de un paralelo con el sílabo enviado o aprobado pide
+  confirmación y lo rehace desde cero (I-224).
+- Coordinación puede reiniciar un sílabo en Borrador, En revisión o Corrección
+  solicitada. No hay reapertura: un sílabo aprobado solo se elimina y el docente empieza
+  de nuevo (I-178).
+
+## Revisión
+
+- El orden es Docente → Coordinación → Biblioteca → Aprobado (I-220).
+- Coordinación aprueba o pide corrección con un comentario general (I-177).
+- Biblioteca revisa la bibliografía: la aprueba o devuelve el sílabo marcando motivos
+  predefinidos (I-177).
+- Si Biblioteca devuelve, el reenvío del docente va directo a Biblioteca (I-220).
+- Una revisión enviada o aprobada no se modifica (ADR-0002).
+- Con la convocatoria cerrada, la revisión queda solo para consulta.
+
+## Firmas y documentos
+
+- Cuando Biblioteca aprueba, el sistema genera el Word y el PDF en cola. Gotenberg
+  convierte el Word en PDF; sin Gotenberg el PDF sale como texto simple.
+- El PDF se firma en el navegador con un archivo `.p12`, en orden docente →
+  coordinación → biblioteca (I-227).
+- El titular del certificado debe coincidir con el nombre de la cuenta. Si se configura
+  la lista de entidades certificadoras (DT-16), la cadena debe llegar a una de ellas.
+- Un documento firmado que cambia no se vuelve a firmar ni tiene verificación pública de
+  alteración, por pedido de la UEB.
+- Word y PDF se descargan solo con las tres firmas; el PDF es el firmado. Cada descarga
+  queda en auditoría.
+
+## IA
+
+- El proveedor se elige con `AI_DRIVER` (`openai`, `claude` o `deepseek`) y está apagado
+  por defecto (I-73).
+- El docente tiene un chat que usa los datos de la carrera, de la asignatura y lo que ya
+  escribió en el sílabo (contexto `free-text-v3`).
+- La IA también propone valores de ficha al importar documentos (solo `openai` o
+  `deepseek`).
+- La IA nunca aprueba, bloquea ni escribe sola. Si falla, solo se pierde la ayuda de IA
+  (ADR-0003).
+
+## Operación y datos
+
+- La API JSON y la SPA son proyectos separados (ADR-0008).
+- El esquema está en español. La llave primaria se llama como la entidad
+  (`valor_campo_id`) (I-28, I-179).
+- La auditoría no depende de las cuentas: guarda una copia del nombre, rol y carrera del
+  actor y no se modifica (I-194).
+- No hay tabla de trabajos. Cada recurso guarda su estado; los trabajos de cola son
+  únicos e idempotentes (`RunsOnce`) (I-221, I-226).
+- Solo se avisa a quien debe actuar o cuyo trabajo cambió (I-186).
+- Administración edita la ayuda de cada pantalla.
+- Los archivos son privados y registran quién los subió (I-180).
+- Un push a `main` despliega en Dokploy y ejecuta las migraciones.

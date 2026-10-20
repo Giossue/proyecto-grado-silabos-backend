@@ -16,6 +16,8 @@ Universidad Estatal de Bolívar, [dirección], [correo del delegado de protecci�
 | Contraseña (cifrada) y datos de verificación en dos pasos | Proteger el acceso a la cuenta. |
 | Formación y experiencia del docente | Completar el sílabo que elabora. |
 | Contenido de sílabos, revisiones, comentarios y documentos generados | Elaborar, revisar, aprobar y conservar el sílabo. |
+| Documentos de la asignatura que sube la Coordinación (PDF o Excel) | Llenar la ficha de la asignatura. Se borran al aplicar o descartar la importación. |
+| Preguntas al asistente de IA y sus respuestas | Ayudar al docente a redactar su sílabo. |
 | Nombre del titular, serie, emisor y vigencia del certificado de firma, y hora de la firma | Dejar constancia de quién firmó cada documento. El archivo de firma y su clave nunca llegan al sistema. |
 | Dirección IP, navegador, fecha y acción realizada | Seguridad y trazabilidad de lo que ocurre en el sistema. |
 | Avisos enviados al usuario | Informar del avance de sus sílabos. |
@@ -25,10 +27,13 @@ No se tratan datos sensibles ni se usan los datos para publicidad.
 ## Quién más recibe datos
 
 - **Correo electrónico (Resend):** envía invitaciones, recuperación de contraseña y avisos.
-- **Asistente de redacción (DeepSeek):** recibe el contexto académico del sílabo y lo que el
-  usuario escriba al pedir una propuesta. Es opcional y puede desactivarse.
-- **Lectura de documentos curriculares (OpenParser):** procesa los PDF de la malla y de las
-  fichas que sube el coordinador.
+- **Proveedor de IA (OpenAI, Anthropic o DeepSeek, según configure la UEB):** en el chat
+  del docente recibe los datos de la carrera y la asignatura, lo que el docente ya escribió
+  en el sílabo y su pregunta. En la importación de fichas recibe el texto de los documentos
+  que sube la Coordinación. Está desactivado por defecto.
+- **Lectura de PDF (OpenParser):** extrae el texto de los PDF de fichas que sube la
+  Coordinación. Está desactivado por defecto; sin él, el texto se extrae dentro del
+  servidor.
 
 Estos proveedores están fuera de Ecuador: la UEB debe confirmar la base legal de esa
 transferencia internacional.

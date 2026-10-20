@@ -1,6 +1,7 @@
 # ADR-0006: Usar Vue Flow como motor visual de mallas
 
-- Estado: Aceptado
+- Estado: Aceptado. Vigente: Vue Flow dibuja la malla en el frontend (pantalla Malla de
+  Coordinación, `/coordinacion/malla`).
 - Fecha: 2026-08-30
 - Responsables: responsable del producto y equipo de implementación
 - Reemplaza / reemplazado por: —
@@ -29,12 +30,16 @@ fuente de verdad y el editor debe contar con una alternativa de formulario.
 
 ## Decisión
 
-Adoptar `@vue-flow/core` y sus componentes de controles, minimapa y barra contextual.
-Encapsularlos en `resources/js/components/domain/academic/curriculum`.
+Adoptar `@vue-flow/core` y `@vue-flow/node-toolbar`. Los controles de navegación son
+propios (`CurriculumNavigationControls.vue`). Todo se encapsula en
+`src/components/domain/academic/curriculum` del repositorio frontend
+(`CurriculumCanvas.vue`), usado por `CoordinationAcademicStructurePage` en modo
+`curriculum`.
 
 Vue Flow es únicamente una proyección interactiva. Los nodos se reconstruyen desde ciclo
-y orden; las aristas desde relaciones académicas. Las mutaciones usan Inertia y casos de
-uso Laravel, y la vista formulario permanece disponible sobre el mismo contrato.
+y orden; las aristas desde los requisitos entre asignaturas. Las mutaciones van a la API
+JSON (`/api/v1/coordination/academic/…`), que ejecuta los casos de uso de
+Laravel. Los datos de cada asignatura se editan en formularios sobre el mismo contrato.
 
 ## Consecuencias
 

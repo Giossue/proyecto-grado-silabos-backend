@@ -1,17 +1,16 @@
-# Demostración funcional de los tres roles
+# Demostración del sistema
 
-## Propósito y límites
+Recorrido completo con las cuatro cuentas del seeder: Administración prepara plantilla y
+convocatoria, Coordinación prepara la carrera y revisa, Docente elabora y envía,
+Biblioteca aprueba la bibliografía y los tres firman. Usa solo datos sintéticos y la base
+local.
 
-Este recorrido demuestra `CU-01` a `CU-18` con datos sintéticos. No valida decisiones
-institucionales abiertas, no usa el formato DOCX oficial, no conecta una base UEB y no
-evalúa la calidad de un modelo de IA. Los adaptadores `baseline` y `fixture` existen solo
-para comprobar los contratos y la degradación segura.
+## 1. Preparación
 
-## Preparación reproducible
+`migrate:fresh` borra toda la base. Antes de ejecutarlo, compruebe que `.env` apunta a la
+base local (`127.0.0.1:55432`, base `silabos_ueb`).
 
-Use únicamente la base local de demostración. `migrate:fresh` elimina todo su contenido;
-antes de ejecutarlo compruebe que `.env` apunta a `silabos_ueb` en `127.0.0.1:55432` y
-que no contiene datos reales.
+Backend:
 
 ```bash
 cp .env.example .env
@@ -19,163 +18,150 @@ composer install
 docker compose up -d
 php artisan key:generate
 php artisan migrate:fresh --seed --force
+php artisan db:seed --class=SyllabusTemplateSeeder --force
 ```
 
-Prepare la SPA desde el repositorio `proyecto-grado-silabos-frontend`:
+El segundo seeder carga la plantilla oficial (`resources/templates/silabo-oficial.json`).
+
+Opcional en `.env`, antes de levantar los procesos:
+
+- `AI_DRIVER=baseline`: el asistente de unidades usa un simulador que responde con texto
+  fijo, sin proveedor externo.
+- Importar la ficha con IA necesita `AI_DRIVER=openai` o `AI_DRIVER=deepseek`, con
+  `AI_BASE_URL`, `AI_MODEL` y `AI_API_KEY`. Sin eso, Coordinación llena la ficha a mano.
+- `GOTENBERG_URL=http://127.0.0.1:3000` con `docker run --rm -p 3000:3000 gotenberg/gotenberg:8`:
+  el PDF sale igual al Word. Sin Gotenberg el PDF es de texto simple.
+- `REDIS_QUEUE_RETRY_AFTER=960` si va a probar la importación de la ficha (ver
+  `docs/plans/pendientes.md`).
+
+Levante dos procesos en terminales separadas:
 
 ```bash
-cp .env.example .env
-npm ci
-npm run build
-```
-
-Para demostrar la IA contractual, cambie solo en el ambiente local:
-
-```text
-AI_DRIVER=baseline
-```
-
-Después limpie la configuración y levante los procesos en terminales separadas:
-
-```bash
-php artisan config:clear
 php artisan serve
 ```
 
 ```bash
 php artisan queue:work redis \
-  --queue=critica,notificaciones,documentos,ia,integraciones,general \
-  --timeout=130 --tries=3
+  --queue=critica,notificaciones,documentos,ia,integraciones,general --tries=3
 ```
 
-El valor `REDIS_QUEUE_RETRY_AFTER=180` debe permanecer por encima del timeout máximo de
-120 segundos de los jobs. En una instalación supervisada se prefieren procesos separados
-por cola; el comando combinado es suficiente para la demostración.
+No use `composer dev` para la demostración: su `queue:listen` solo escucha la cola por
+defecto y no procesa `documentos` ni `ia`.
 
-Las cuentas creadas por el seeder usan exclusivamente datos sintéticos:
+Frontend, en el repositorio `proyecto-grado-silabos-frontend`:
 
-| Rol           | Correo                     | Contraseña   |
-| ------------- | -------------------------- | ------------ |
-| Administrador | `admin@silabos.test`       | `Demo-2026!` |
-| Coordinador   | `coordinador@silabos.test` | `Demo-2026!` |
-| Docente       | `docente@silabos.test`     | `Demo-2026!` |
+```bash
+cp .env.example .env    # VITE_API_URL=http://localhost:8000
+npm ci
+npm run dev
+```
 
-## Recorrido
+Abra `http://localhost:5173`.
 
-### 1. Administrador: gobierno institucional, cuentas y plantilla
+## 2. Cuentas y datos sembrados
 
-1. Inicie sesión como Administrador y seleccione el rol **Administrador**. Esto
-   demuestra `CU-01` y que el rol efectivo no se infiere del último rol usado.
-2. En **Estructura académica → Facultades**, cree `Facultad de demostración` con código
-   `FAC-DEMO` y elija un campus obligatorio. Entre a **Carreras**, cree `Carrera de
-   demostración` con código `CARR-DEMO` y seleccione esa facultad. Compruebe la facultad,
-   su campus y la carrera en las tablas; el campus se administra desde la facultad y no
-   tiene submenú propio. Use **Editar** para corregir el nombre de la carrera y compruebe el cambio en
-   **Auditoría**.
-3. En **Usuarios y roles**, cree una cuenta temporal con nombre `Docente Piloto`, correo
-   `docente.piloto@silabos.test`, contraseña `Pilot-2026!Secure`, rol **Docente** y carrera
-   **Software**. Abra su detalle, revise la vigencia, desactívela y vuelva a activarla.
-   Esto demuestra el ciclo administrado y la revocación de sesiones de `CU-02` sin alterar
-   la cuenta docente principal.
-4. Cree también `Coordinador Piloto`, correo `coordinador.piloto@silabos.test`, contraseña
-   `Pilot-2026!Secure`, rol **Coordinador** y carrera **Carrera de demostración**. En
-   **Coordinaciones**, vincúlelo a esa carrera con vigencia actual. Esto demuestra que una
-   coordinación es una asignación de una cuenta y no otro catálogo de personas.
-5. Vuelva a **Estructura académica → Modalidades**, cree la modalidad
-   `Demostración` con código `demo`, archívela, reactívela y confirme que el historial
-   permanece. Administración no debe mostrar formularios para crear materias ni asignar
-   docencia.
-6. En **Plantillas**, cree `Plantilla de demostración`, limitada a la carrera Software.
-   En el constructor seleccione el primer bloque y agregue un campo con:
+Todas usan la contraseña `Demo-2026!` (`database/seeders/DatabaseSeeder.php`).
 
-    - clave `objetivo.general`;
-    - etiqueta `Objetivo general`;
-    - tipo **Texto largo**;
-    - ayuda `Describa el propósito formativo de la asignatura`;
-    - **Editable por docente** y **Permite asistencia de IA** activos (todo campo del
-      docente es obligatorio al enviar; no hay casilla «Obligatorio»);
-    - **Heredado de maestro** inactivo.
+| Rol           | Nombre             | Correo                       | Alcance           |
+| ------------- | ------------------ | ---------------------------- | ----------------- |
+| Administrador | Administrador Demo | `admin@silabos.test`         | Toda la institución |
+| Coordinador   | Coordinadora Demo  | `coordinador@silabos.test`   | Carrera Software  |
+| Docente       | Docente Demo       | `docente@silabos.test`       | Carrera Software  |
+| Bibliotecario | Bibliotecaria Demo | `bibliotecario@silabos.test` | Todas las carreras |
 
-    Publique y congele la versión. Intente editarla y confirme que la interfaz solo ofrece
-    crear una versión nueva. Esto demuestra `CU-04` y la inmutabilidad de publicación.
+El seeder crea además: Facultad de Ciencias de la Ingeniería (campus Matriz), carrera
+Software (`SOFTWARE`, 8 ciclos), período `2026-2027` (1 de mayo de 2026 a 31 de marzo de
+2027), la materia `SW-601` Arquitectura de Software (ciclo 6) y su paralelo `A` matutino
+con Docente Demo asignado.
 
-### 2. Coordinador: estructura de carrera, fuente y convocatoria
+## 3. Recorrido
 
-1. Cierre sesión, ingrese como Coordinador y elija la card **Software**. Abra el menú de
-   usuario y confirme que la carrera activa aparece bajo su nombre; si dispone de otra,
-   use **Cambiar carrera o rol** y vuelva a Software.
-2. En **Malla**, abra la estructura curricular de la carrera y, si corresponde, ajuste
-   su código a `MALLA-SW-DEMO`. En **Desglose académico**, agregue `SW-701`, denominada
-   `Sistemas Distribuidos`, ciclo 7, cuatro créditos y 160 horas. Revise y edite la misma
-   materia en **Constructor visual**; confirme que ambas vistas trabajan sobre la misma
-   malla.
-3. En **Materias y asignaciones**, prepare `SW-701` para el periodo académico. El campus se
-   hereda de la facultad y la modalidad de la carrera; desde **Paralelos**, cree el
-   paralelo `A`. En
-   **Asignación docente**, asigne
-   `Docente Demo` a ese paralelo con vigencia actual. Ninguna opción de otra carrera debe
-   aparecer. Esto completa el reparto de `CU-03`.
-4. En **Fuentes académicas**, cree `Guía académica de demostración` con la descripción
-   `Documento de apoyo para la elaboración de sílabos` y una nota interna a su criterio.
-   En la página de la fuente, redacte el contenido con la cinta de opciones: un título
-   `## Orientación del objetivo` y el texto `El objetivo debe expresar propósito, alcance
-   y resultado formativo verificable.`; use **Vista previa** para comprobar el formato y
-   pulse **Guardar contenido**. Esto demuestra `CU-05`.
-5. En **Convocatorias**, prepare `Convocatoria de demostración`, periodo `2026-2027`, la plantilla
-   publicada, agrupación **Un sílabo por oferta**, la fuente activa y una fecha límite
-   posterior al momento actual. Abra el detalle, revise el resumen y pulse **Abrir y
-   generar expedientes**. Deben aparecer los expedientes de `SW-601` y `SW-701`, sin
-   duplicarse al repetir la acción. Esto demuestra `CU-06`.
+### Administración: logo, plantilla y convocatoria
 
-### 3. Docente: borrador, IA y primer envío
+1. Ingrese con `admin@silabos.test`.
+2. En **Facultades y carreras**, edite la facultad y cargue su logo (PNG sin fondo). Sin
+   logo, Coordinación no puede abrir su convocatoria.
+3. En **Plantilla**, revise las secciones y campos. Cada campo indica **Quién llena**:
+   Docente, Carrera (ficha) o Fijo. Abra **Editar JSON** para ver la plantilla como dato:
+   permite **Descargar**, **Cargar archivo** y **Aplicar y reemplazar**. Si la plantilla
+   aparece vacía, cargue ahí `resources/templates/silabo-oficial.json`.
+4. En **Convocatorias**, el período `2026-2027` aparece sin convocatoria. En sus acciones
+   elija **Abrir convocatoria**, ponga **Inicio de la elaboración** (hoy) y una **Fecha
+   límite de entrega** futura, y confirme.
+5. Opcional: **Usuarios y roles** (alta manual o importación Excel), **Auditoría** y
+   **Ayuda de pantallas**.
 
-1. Ingrese como Docente. Si aparece `/rol`, seleccione **Docencia · Software**; el sistema
-   abrirá directamente **Mis sílabos**. Confirme que aparecen únicamente las materias asignadas e inicie el expediente de Arquitectura
-   de Software (`CU-07`).
-2. Abra el editor, escriba en **Objetivo general** y espere la confirmación **Guardado**.
-   Ejecute **Validar**; las validaciones determinísticas deben aparecer separadas de la
-   ayuda de IA.
-3. Abra **Asistencia de IA**, solicite análisis y espere al worker. La recomendación debe
-   mostrar la fuente citada y su extracto. Registre aceptación o rechazo y, si corresponde,
-   aplique el texto de forma explícita. Compruebe que el campo solo cambia después de esa
-   acción humana (`CU-08`).
-4. Regrese al editor, valide y pulse **Revisar y enviar**. En la confirmación cree la
-   revisión 1. La pantalla debe explicar que la fotografía queda inmutable (`CU-09`).
+### Coordinación: carrera lista y apertura
 
-### 4. Coordinador y docente: corrección, comparación y aprobación
+1. Ingrese con `coordinador@silabos.test`. El **Panel** muestra lo que falta para abrir la
+   convocatoria de la carrera.
+2. En **Malla** y **Materias y asignaciones**, compruebe `SW-601`, su paralelo `A` y el
+   docente asignado. Para probar la copia entre paralelos, cree el paralelo `B` y asígnele
+   también a Docente Demo.
+3. En **Proyecto de carrera**, abra la **Ficha** de `SW-601` y llene todos sus campos. En
+   un campo active **El docente puede editarlo**. Con IA configurada, pruebe también
+   **Importar documentos** (PDF o Excel, hasta 6) y aplique la propuesta.
+4. En el **Panel**, pulse **Abrir convocatoria de la carrera**. Se crea un sílabo por
+   paralelo y el docente recibe un aviso.
 
-1. Como Coordinador, abra **Revisiones** y entre a la revisión 1 (`CU-10`).
-2. Escriba el comentario `Precise el resultado formativo esperado en el objetivo general` y
-   solicite corrección. El estado debe ser **Corrección solicitada**.
-3. Como Docente, abra el expediente, lea el comentario, ajuste el objetivo, espere
-   el autoguardado, valide y reenvíe. Debe crearse la revisión 2 sin cambiar la revisión 1
-   (`CU-11`).
-4. Como Coordinador, abra **Comparar revisiones** y compruebe el antes/después (`CU-12`).
-   Apruebe la revisión 2 (`CU-13`).
-5. Compruebe que el aprobado no admite edición. No lo elimine todavía: conserve ese estado
-   para generar los documentos en el paso siguiente.
+### Docente: elaborar y enviar
 
-### 5. Documentos, informes y operación
+1. Ingrese con `docente@silabos.test` y abra **Mis sílabos** → `SW-601` paralelo `A`.
+2. Llene los campos; se guardan solos. Los campos de la ficha llegan llenos y solo se
+   editan los marcados por Coordinación. Revise la **Vista previa**.
+3. Opcional: **Asistente de unidades** (requiere `AI_DRIVER`) y, en el paralelo `B`,
+   **Copiar desde paralelo**.
+4. Pulse **Enviar a revisión** y confirme. Si falta algún campo, el sistema lo señala y
+   no envía.
 
-1. Desde la revisión aprobada abra **Documentos** y
-   solicite DOCX/PDF. El worker de `documentos` debe dejar ambos disponibles como archivos
-   privados; la pantalla identifica el renderer como técnico provisional (`CU-15`).
-2. Opcional y destructivo: como Coordinador, pulse **Eliminar sílabo** en la revisión
-   aprobada y confirme que el paralelo queda con un sílabo nuevo **Sin iniciar** (`CU-14`).
-3. Como Coordinador, abra **Informes**, filtre la convocatoria y contraste totales con su
-   detalle. Ningún registro de otra carrera debe ser visible (`CU-16`).
-4. Como Administrador, abra **Procesos** y **Auditoría**. Compruebe progreso, intentos,
-   correlación y eventos del recorrido, sin contenido académico completo (`CU-17`).
-5. Cierre sesión para completar `CU-01`.
+### Coordinación: revisión
 
-## Resultado esperado y registro
+1. En **Revisión**, abra la revisión 1.
+2. Pulse **Solicitar corrección** con un comentario. Como Docente, corrija y reenvíe: se
+   crea la revisión 2. Como Coordinación, use **Comparar con la anterior**.
+3. Pulse **Aprobar revisión**. El sílabo pasa a Biblioteca.
 
-Conserve fecha, ambiente, versión del código, rol que ejecutó cada etapa y resultado. No
-registre contraseñas, cookies, UUID, contenido completo ni capturas con datos personales.
-La demostración es satisfactoria técnicamente cuando:
+### Biblioteca: bibliografía
 
-- los tres roles solo ven su rol y alcance;
-- el envío, corrección y aprobación conservan todas las revisiones;
-- IA, exportación y notificaciones terminan en sus colas observables;
-- apagar `AI_DRIVER` no impide guardar, validar, enviar, revisar ni aprobar;
-- cualquier hallazgo manual se registra en la matriz de aceptación, sin cambiar un `PV`.
+1. Ingrese con `bibliotecario@silabos.test` y abra **Revisiones de biblioteca**.
+2. Pruebe **Devolver al docente** marcando motivos. El docente corrige y reenvía; el
+   sílabo vuelve directo a Biblioteca.
+3. Pulse **Aprobar bibliografía**. El sílabo queda aprobado y el worker genera el Word y
+   el PDF en la cola `documentos`.
+
+### Firmas
+
+El orden es Docente → Coordinación → Biblioteca. Cada uno firma desde su pantalla del
+sílabo con **Firmar electrónicamente**: elige su archivo `.p12` y escribe la clave. La
+firma se hace en el navegador; al servidor solo llega el PDF firmado. El servidor
+comprueba que la firma sea íntegra y que el titular del certificado coincida con el
+nombre de la cuenta.
+
+Para la demostración, cree certificados de prueba cuyo titular coincida con cada cuenta:
+
+```bash
+openssl req -x509 -newkey rsa:2048 -sha256 -days 30 -nodes \
+  -subj "/C=EC/O=ENTIDAD DE PRUEBA/CN=DOCENTE DEMO" \
+  -keyout docente.key -out docente.crt
+openssl pkcs12 -export -inkey docente.key -in docente.crt \
+  -passout pass:clave-docente -out docente.p12
+```
+
+Repita con `COORDINADORA DEMO` y `BIBLIOTECARIA DEMO`. Deje
+`SIGNATURE_TRUSTED_CA_BUNDLE` vacío: con el archivo de entidades de Ecuador, un
+certificado hecho en casa se rechaza.
+
+Con las tres firmas, **Documentos** permite descargar el Word y el PDF firmado. Antes no
+se descarga nada.
+
+## 4. Qué comprobar
+
+- Cada rol ve solo su menú y su alcance.
+- Cada envío crea una revisión nueva y las anteriores no cambian.
+- Un sílabo aprobado no se edita.
+- Word y PDF se generan sin acción manual; la descarga exige las tres firmas.
+- Con `AI_DRIVER=disabled` todo funciona salvo el asistente y la importación de la ficha.
+- **Auditoría** registra los pasos del recorrido.
+
+Anote fecha, versión del código, rol de cada paso y resultado. No registre contraseñas,
+cookies, claves de certificados ni capturas con datos personales.

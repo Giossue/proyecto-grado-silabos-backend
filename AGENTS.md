@@ -2,182 +2,182 @@
 
 ## Proyecto
 
-Sistema web para centralizar, configurar y auditar el ciclo completo de los sílabos de
-la Carrera de Software de la Universidad Estatal de Bolívar.
+Sistema web para elaborar, revisar, aprobar y firmar los sílabos de la Universidad
+Estatal de Bolívar. Admite varias facultades y carreras.
 
-Stack base:
+Stack:
 
-- Laravel 13 y PHP 8.3 o superior.
-- API JSON versionada bajo `/api/v1`; este repositorio no contiene interfaz web.
+- Laravel 13 con PHP 8.4 o superior (`composer.json`).
+- API JSON bajo `/api/v1`; este repositorio no tiene pantallas (ADR-0008).
 - SPA Vue 3 + TypeScript en el repositorio hermano `proyecto-grado-silabos-frontend`.
-- PostgreSQL como fuente transaccional.
-- Redis para colas, caché y coordinación; nunca como fuente de verdad.
-- Almacenamiento privado local o compatible con S3, según entorno.
-- Servicio local de IA detrás de una interfaz HTTP y trabajos asíncronos.
-- Linux y contenedores para despliegue.
+- PostgreSQL como única fuente de verdad.
+- Redis para colas (`critica`, `documentos`, `ia`) y caché; nunca como fuente de verdad.
+- Archivos en un disco privado.
+- Gotenberg convierte el Word del sílabo en PDF.
+- IA con un proveedor externo configurable (`AI_DRIVER`, apagado por defecto) y
+  OpenParser para leer PDF de la carrera.
+- Despliegue en Dokploy: un push a `main` despliega y ejecuta las migraciones.
 
 ## Lee antes de trabajar
 
-- Estado de decisiones: `DECISIONS_STATUS.md`.
-- Producto y alcance: `docs/product/overview.md`.
-- Mapa técnico: `ARCHITECTURE.md`.
-- Índice de arquitectura: `docs/architecture/index.md`.
-- Reglas y ciclo de vida: `docs/product/domain-model.md` y
-  `docs/product/syllabus-lifecycle.md`.
-- Roles: `docs/product/roles-and-permissions.md`.
-- Interfaz y patrones visuales: `docs/product/screens.md`,
-  `docs/architecture/frontend.md` y `docs/quality/frontend-checklist.md`.
-- Plan activo: `docs/plans/active/`.
-- Pendientes: `docs/plans/decisions-pending.md`.
-- Trabajo pendiente y de quién depende: `docs/plans/pending-work.md`.
-- Definition of Done: `docs/quality/definition-of-done.md`.
-- Pruebas y trazabilidad: `docs/quality/testing.md` y
-  `docs/quality/traceability.md`.
-- Seguridad: `docs/security/principles.md`.
+Siempre:
 
-Abre además la documentación del módulo afectado. No cargues todo el repositorio sin
-necesidad.
+- Decisiones vigentes: `DECISIONS_STATUS.md`.
+- Lo que falta decidir o hacer: `docs/plans/pendientes.md`.
+- Mapa técnico: `ARCHITECTURE.md` y `docs/architecture/index.md`.
+- Índice completo: `docs/README.md`.
+
+Según la tarea:
+
+| Tarea | Lee |
+|---|---|
+| Reglas del producto | `docs/product/overview.md`, `domain-model.md`, `syllabus-lifecycle.md`, `roles-and-permissions.md` |
+| Plantilla del sílabo | `docs/architecture/template-json.md`, `docs/architecture/adr/0011-template-as-data.md`, `docs/product/syllabus-sections.md` |
+| Base de datos | `docs/architecture/database.md`, `docs/generated/database-schema.md` |
+| Interfaz | `docs/product/screens.md`, `docs/architecture/frontend.md`, `docs/quality/frontend-checklist.md` |
+| IA y ficha | `docs/architecture/ai-service.md` |
+| Word, PDF y firmas | `docs/architecture/files-and-documents.md`, `docs/runbooks/firma-electronica-entidades.md` |
+| Colas | `docs/architecture/queues-and-jobs.md` |
+| Despliegue | `docs/architecture/deployment.md`, `docs/runbooks/deploy-dokploy.md`, `docs/runbooks/release-verification.md`, `docs/security/hardening.md` |
+| Calidad | `docs/quality/definition-of-done.md`, `testing.md`, `traceability.md` |
+| Seguridad | `docs/security/principles.md` |
+
+Abre solo lo que la tarea necesita.
 
 ## Precedencia
 
 1. Seguridad, privacidad e invariantes de dominio.
-2. Decisiones `CONFIRMADO` y ADR aceptados.
+2. Decisiones vigentes de `DECISIONS_STATUS.md` y ADR aceptados.
 3. Especificación del producto y criterios de aceptación.
-4. Instrucciones `AGENTS.md` más cercanas al archivo modificado.
+4. El `AGENTS.md` más cercano al archivo modificado.
 5. Plan activo.
 6. Convenciones generales.
 
-Si dos fuentes durables se contradicen, detén la decisión afectada, registra el
-conflicto y solicita resolución. No elijas silenciosamente.
+Si dos fuentes se contradicen, detén esa parte, anota el conflicto y pide resolución.
+No elijas en silencio.
 
 ## Flujo obligatorio
 
-1. Identifica los IDs `RF`, `RNF`, `RN`, `CU`, `UI`, `CP` y `PV` relacionados.
-2. Comprueba si la tarea depende de una decisión `POR VALIDAR`.
-3. Para trabajo no trivial, crea o actualiza un plan en `docs/plans/active/`.
+1. Identifica los IDs `RF`, `RNF`, `RN`, `CU`, `UI` y `CP` relacionados.
+2. Revisa si la tarea depende de un punto de `docs/plans/pendientes.md`. Esos puntos
+   están `POR VALIDAR`: usa el valor de «Mientras tanto» o detén esa parte.
+3. Para trabajo no trivial, crea un plan en `docs/plans/active/`.
 4. Implementa la unidad vertical más pequeña: política, caso de uso, persistencia,
    interfaz, pruebas y documentación.
-5. Ejecuta las verificaciones aplicables.
-6. Actualiza la matriz de trazabilidad si cambia comportamiento observable.
-7. No declares terminado mientras código, migraciones, pruebas y documentación difieran.
+5. Ejecuta las verificaciones que correspondan.
+6. Si cambia el comportamiento visible, actualiza `docs/quality/traceability.md`.
+7. Al terminar, borra el plan (git lo guarda), anota la decisión en
+   `DECISIONS_STATUS.md` y quita de `pendientes.md` lo que quedó resuelto.
+8. No declares terminado mientras código, migraciones, pruebas y documentación difieran.
 
 Un pendiente no relacionado no impide avanzar. Un pendiente que cambie permisos,
-estados, datos, infraestructura o aceptación sí bloquea esa parte del código.
+estados, datos, infraestructura o aceptación sí bloquea esa parte.
 
 ## Verificación
 
-Antes de programar, inspecciona `composer.json`, `package.json` y el lockfile. En el
-starter previsto, los comandos base son:
+Backend, con PostgreSQL y Redis activos (`docker compose up -d`):
 
 ```bash
-composer install
-./vendor/bin/pint --test
-php artisan test
+composer verify
 ```
 
-Ejecuta también `lint`, `typecheck`, pruebas frontend y análisis estático cuando esos
-scripts existan. Usa npm salvo que un ADR y el lockfile del repositorio establezcan otro
-gestor; nunca mezcles gestores o lockfiles. El comando canónico es `composer verify`;
-PostgreSQL y Redis deben estar activos. Los comandos individuales sirven para diagnóstico,
-pero no sustituyen la puerta completa.
+Revisa secretos en el repositorio, Pint, PHPStan nivel 7 y las pruebas Pest. Los
+comandos sueltos (`composer lint:check`, `composer types:check`, `php artisan test`)
+sirven para diagnosticar.
 
-La verificación debe ser proporcional al cambio. Para ajustes pequeños y mecánicos,
-analiza, edita y ejecuta solo la comprobación puntual aplicable; no lances builds ni la
-puerta completa. Tampoco crees scripts, auditorías o artefactos temporales para una
-búsqueda y reemplazo breve: usa búsqueda directa y edición puntual. Reserva esas ayudas
-y `composer verify` para cambios amplios, riesgosos o cuando se soliciten expresamente.
+Frontend, en su repositorio: `npm run typecheck`, `npm run lint`, `npm test` y
+`npm run contract:check`. Usa npm; no mezcles gestores ni lockfiles.
+
+La verificación debe ser proporcional al cambio. En ajustes pequeños y mecánicos, edita
+y ejecuta solo la comprobación puntual; no lances builds ni la puerta completa ni crees
+scripts temporales. Deja `composer verify` para cambios amplios o riesgosos, o cuando se
+pida.
 
 ## Restricciones de producto
 
-- Alcance actual: Carrera de Software UEB.
-- Roles: Administrador, Coordinador, Docente y Bibliotecario (I-165).
-- Estados: Sin iniciar, Borrador, En revisión, Corrección solicitada y Aprobado.
-- Una revisión enviada es inmutable durante el flujo normal.
-- Una revisión aprobada es inmutable durante el flujo normal.
-- Reabrir conserva la aprobada y crea otra revisión enlazada.
-- La plantilla institucional es una sola y se edita en el sitio, sin versiones ni
-  publicación (I-32); cada revisión enviada conserva su copia completa. Corregir la
-  plantilla o una base académica con el proceso o la convocatoria pausados reemplaza,
-  previa confirmación, los expedientes afectados en curso que no conservan una
-  aprobación, incluidos los enviados, junto con sus revisiones, IA y exportaciones.
-  Los aprobados, sus revisiones enlazadas tras reapertura y los procesos cerrados se
-  conservan; el cambio y la regeneración son una sola transacción (I-118, aclarada
-  en I-144). Corregir resultados de aprendizaje limita el reinicio a su asignatura.
-  I-146 retira el CRUD de Fuentes académicas y el revisor de IA con recuperación
-  vectorial. I-152 vuelve temporales los documentos de importación: su lectura y sus
-  archivos se eliminan al guardar o descartar; los datos confirmados conservan extracto y
-  procedencia. El chat de elaboración usa el contexto académico y curricular fotografiado del sílabo.
-- Las validaciones determinísticas y las recomendaciones de IA son conceptos separados.
-- La extracción curricular conserva fuente y extracto; una persona confirma los datos.
-- El chat de IA propone contenido y unidades desde el contexto autorizado del sílabo;
-  no analiza ni revisa el sílabo mediante fuentes o una base vectorizada (I-146).
-- La indisponibilidad de IA degrada solo la ayuda de IA.
-- Edición directa excepcional del coordinador depende de `PV-16`; no asumirla.
-- No escribir en la base institucional; la integración es un adaptador de lectura/importación.
-- No implementar EVEA, matrículas, notas, horarios, firma electrónica ni decisiones
-  académicas automáticas.
+- Roles: Administrador, Coordinador (uno por carrera), Docente y Bibliotecario
+  (global). No existe Decanato.
+- Estados del sílabo: Sin iniciar, Borrador, En revisión, Corrección solicitada y
+  Aprobado. No hay reapertura: un sílabo aprobado solo se elimina y vuelve a empezar.
+- Revisión: el docente envía, Coordinación aprueba o pide corrección con un comentario
+  general, y Biblioteca revisa la bibliografía (aprueba o devuelve con motivos
+  predefinidos). Si Biblioteca devuelve, el reenvío vuelve a Biblioteca.
+- Al aprobar Biblioteca se generan el Word y el PDF. El PDF se firma en el navegador
+  con un `.p12`, en orden docente → coordinación → biblioteca, y el titular del
+  certificado debe coincidir con la cuenta. Word y PDF se descargan solo con las tres
+  firmas.
+- Una revisión enviada o aprobada no se modifica; congela la definición de la
+  plantilla.
+- La plantilla es una sola, se edita en el sitio y no tiene versiones. Es solo datos
+  (ADR-0011): `plantilla_silabo.definicion_plantilla` más secciones y campos. Cada campo
+  dice quién lo llena (`docente`, `coordinacion` o `institucional`).
+- La ficha de cada asignatura («Proyecto de carrera») guarda los campos de
+  Coordinación en `valores_campo`. Cada valor tiene el interruptor «El docente puede
+  editarlo»; el sílabo copia valor e interruptor al crearse.
+- Cambiar la plantilla, la malla o una ficha con sílabos existentes exige pausar y
+  confirmar. Los sílabos afectados se rehacen desde cero, incluso los aprobados. Los
+  procesos cerrados no se tocan.
+- Cambiar el docente o los paralelos no exige pausa. Un docente nuevo empieza el sílabo
+  desde cero.
+- Las validaciones al enviar y las sugerencias de IA son cosas separadas. La IA propone;
+  nunca aprueba, bloquea ni escribe sin que una persona lo confirme. Si falla, solo se
+  pierde la ayuda de IA.
+- La edición directa del contenido por Coordinación depende de `PV-16`; hoy no existe.
+- No hay integración con sistemas institucionales: los datos se cargan a mano o por
+  Excel.
+- No implementar EVEA, matrículas, notas, horarios ni decisiones académicas
+  automáticas.
 
 ## Reglas de implementación
 
-- Organiza el backend por módulos y casos de uso; evita controladores con lógica de negocio.
-- Usa Form Requests para validar entradas y Policies/Gates para autorización en servidor.
-- Aplica alcance por registro; ocultar un botón no concede ni revoca permisos.
-- Encapsula transiciones de estado y operaciones críticas en servicios/acciones de aplicación.
-- Ejecuta las mutaciones críticas dentro de transacciones PostgreSQL.
-- Usa UUID generados por la aplicación, `snake_case`, fechas `timestamptz` en UTC y
-  restricciones de base para invariantes estructurales.
-- Nunca edites migraciones ya aplicadas en entornos compartidos; agrega una nueva.
-- Despacha trabajos dependientes de una transacción después del commit.
-- Los trabajos de exportación, importación e IA deben ser idempotentes, observables y
-  tolerantes a reintentos.
-- Los archivos son privados; entrega descargas autorizadas y temporales.
+- Backend por módulos (`app/Modules/*`) y casos de uso; los controladores no llevan
+  lógica de negocio.
+- Form Requests para validar y Policies/Gates para autorizar en el servidor.
+- Alcance por registro: ocultar un botón no concede ni quita permisos.
+- Transiciones de estado y operaciones críticas en acciones de aplicación, dentro de
+  transacciones PostgreSQL.
+- Esquema en español; la llave primaria se llama como la entidad (`valor_campo_id`).
+  UUID generados por la aplicación, fechas `timestamptz` en UTC y restricciones en la
+  base para invariantes estructurales. Detalle en `docs/architecture/database.md`.
+- No edites migraciones ya aplicadas en un entorno compartido; agrega una nueva.
+- Despacha trabajos que dependen de una transacción después del commit.
+- Los trabajos de cola son idempotentes (`App\Support\Queue\RunsOnce`) y no existe una
+  tabla de trabajos: cada recurso guarda su propio estado.
+- Los archivos son privados; las descargas pasan por autorización.
 - No registres secretos, documentos completos, prompts sensibles ni datos personales
   innecesarios en logs.
-- No modifiques archivos generados manualmente.
+- No edites a mano archivos generados. `docs/architecture/openapi.json` se regenera con
+  `php artisan openapi:export` y una prueba exige que coincida con las rutas.
 - No escribas comentarios en el código, ni en backend ni en frontend: ni `//`, `#`,
-  `/* */`, `<!-- -->` ni docblocks de prosa. Lo que haga falta explicar va en `docs/` o
-  en el plan. Solo se admiten anotaciones que una herramienta lee: etiquetas de tipo
-  (`@var`, `@param`, `@return`, `@property`) y directivas (`@ts-expect-error`,
-  `eslint-disable`, `@phpstan-ignore`). `python3 temp/scripts/comentarios.py` lista los
-  comentarios que existan y con `--delete` los quita.
+  `/* */`, `<!-- -->` ni docblocks de prosa. Lo que haya que explicar va en `docs/` o en
+  el plan. Solo se admiten anotaciones que lee una herramienta: tipos (`@var`, `@param`,
+  `@return`, `@property`) y directivas (`@ts-expect-error`, `eslint-disable`,
+  `@phpstan-ignore`).
 
 ## Trabajo de interfaz
 
-Antes de modificar una pantalla, lee `docs/product/screens.md`,
-`docs/architecture/frontend.md` y `docs/quality/frontend-checklist.md`, además de la
-documentación del módulo afectado. Esas fuentes definen los patrones visuales,
-composición, estados y criterios de revisión; este archivo solo indica dónde encontrarlos.
-
-Este repositorio no contiene pantallas. Cualquier cambio de interfaz se realiza en
-`proyecto-grado-silabos-frontend`; el backend debe exponer primero un contrato JSON
-estable y mantener sincronizado `docs/architecture/openapi.json`.
+Este repositorio no tiene pantallas. Los cambios de interfaz se hacen en
+`proyecto-grado-silabos-frontend`; el backend expone primero un contrato JSON estable y
+mantiene `openapi.json` al día. Antes de tocar una pantalla, lee `docs/product/screens.md`,
+`docs/architecture/frontend.md` y `docs/quality/frontend-checklist.md`.
 
 ## Trabajo con bases de datos
 
-Antes de cambiar el esquema o ejecutar operaciones sobre una base, consulta las fuentes
-durables correspondientes:
-
-- modelo, invariantes y criterio de migraciones: `docs/architecture/database.md`;
-- autenticación segura y procedimiento de migración remota:
-  `docs/security/hardening.md`;
-- secuencia de release, comprobación y recuperación:
-  `docs/runbooks/release-verification.md` y `docs/architecture/deployment.md`;
-- configuración local y variables no secretas: `docs/architecture/bootstrap.md`;
-- despliegue administrado por Dokploy: `docs/runbooks/deploy-dokploy.md`.
-
-Si falta información, documéntala en una de esas fuentes según su naturaleza; no copies
-hosts, credenciales ni comandos específicos de un entorno dentro de `AGENTS.md`. Este
-archivo funciona únicamente como orquestador para saber dónde leer.
+Antes de cambiar el esquema o tocar una base, lee `docs/architecture/database.md`. La
+puesta en marcha local está en `README.md`; el despliegue y las migraciones remotas, en
+`docs/runbooks/deploy-dokploy.md` y `docs/runbooks/release-verification.md`. No copies
+hosts, credenciales ni comandos de un entorno dentro de este archivo.
 
 ## Control de versiones
 
-- Haz cambios pequeños y coherentes.
+- Cambios pequeños y coherentes.
 - Formato de commit: `tipo(alcance): asunto imperativo`, máximo 72 caracteres.
-- No hagas commit, push, rebase ni reescribas historia sin petición explícita.
-- Nunca confirmes secretos, `.env`, documentos sensibles o datos de entrevistas sin
+- Al terminar un cambio verificado, haz commit y push a `main` sin preguntar; recuerda que el push
+  despliega. No hagas rebase ni reescribas historia sin petición explícita.
+- Nunca confirmes secretos, `.env`, documentos sensibles ni datos de entrevistas sin
   tratamiento y autorización.
 
 ## Regla final
 
-Si una decisión no está documentada, no la presentes como requisito confirmado. Registra
-el supuesto, su impacto y la forma de validarlo.
+Si una decisión no está documentada, no la presentes como requisito confirmado. Anota
+el supuesto, su impacto y cómo validarlo.

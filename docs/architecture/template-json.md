@@ -302,6 +302,30 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 
 Límites: 60 secciones, 60 campos por sección, tablas de hasta 24 columnas y 100 filas, documentos de hasta 2 MB.
 
+### Quién llena cada campo
+
+Los campos no tienen tipo: todos guardan un documento Tiptap con texto, listas, tablas,
+variables y bloques. Lo que cambia es el responsable (`quien_llena`):
+
+| `quien_llena` | Contenido que ve el sílabo | ¿El docente lo edita? |
+|---|---|---|
+| `docente` | Empieza con el `content` de la plantilla; luego lo escribe el docente. | Sí |
+| `coordinacion` | La ficha de la asignatura, que Coordinación llena una vez por materia. Se copia al crear el sílabo. Si la ficha está vacía, se usa el `content` de la plantilla. | Solo si Coordinación activó «el docente puede editar» en la ficha de esa materia (I-230) |
+| `institucional` | El `content` de la plantilla con las variables resueltas. No se guarda por sílabo. | No |
+
+- La ficha (`PUT academic/asignaturas/{id}/ficha`) acepta solo campos `coordinacion`.
+  La petición trae `values` y `editable` (por campo, verdadero o falso). El interruptor
+  se guarda en `valores_campo.editable_docente_valor_campo` y se copia al sílabo al
+  crearlo. Un campo
+  con el interruptor activo cuenta como completo en la ficha aunque esté vacío.
+- El guardado del borrador acepta campos `docente` y los `coordinacion` con el
+  interruptor activo. Rechaza los demás con `422`.
+- Al enviar, todo campo que no sea `institucional` debe tener contenido.
+- Cambiar la ficha con sílabos en curso pide confirmación y regenera esos sílabos.
+- Título y logos van en el encabezado fijo (`document.title`, `document.header`); no
+  son campos.
+- En la plantilla oficial la bibliografía es `docente`.
+
 ### HTML permitido en el contenido
 
 | Qué | Cómo |
@@ -346,4 +370,3 @@ Los errores de campos llevan su camino (`sections.0.fields.1.content`).
 - **Word sin cambios:** `TemplateGoldenWordTest` compara el `document.xml` del Word con referencias en
   `tests/Fixtures/golden` (`UPDATE_GOLDEN=1` las regenera tras revisar el cambio).
 - `FixedContent` y `TemplateDocumentDefaults` solo los usan migraciones antiguas; no definen la plantilla.
-  `config/syllabus_template.php` se eliminó.

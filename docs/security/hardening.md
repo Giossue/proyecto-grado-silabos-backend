@@ -2,148 +2,156 @@
 
 ## Identidad y sesión
 
-- Usa Fortify/starter; no implementes hash, reset o 2FA manualmente.
-- Desactiva registro público hasta autorización.
-- Cookies `Secure`, `HttpOnly`, `SameSite`; CSRF y rotación al autenticar.
-- Rate limit en login, recuperación y acciones sensibles.
-- Revocación de sesiones y desactivación efectiva en la siguiente petición.
-- En ambientes expuestos, `SESSION_ENCRYPT=true`; el host permitido se deriva de
-  `APP_URL` para que los enlaces de recuperación no acepten un `Host` manipulado. Se
-  permiten exclusivamente `127.0.0.1` y `localhost` para el health check interno de
-  Dokploy; no amplían los hosts públicos aceptados.
-- El scheduler ejecuta `auth:clear-resets` cada quince minutos; el proceso de
-  scheduler debe estar activo en el despliegue.
-- Cuentas gestionadas no se autoeliminan; la baja administrativa conserva referencias
-  históricas protegidas por claves foráneas restrictivas.
-- Mensajes de recuperación no confirman existencia de cuenta.
+- Fortify maneja contraseñas, recuperación y verificación en dos pasos; no hay hash, reset
+  ni 2FA hechos a mano.
+- No hay registro público: las cuentas las crea el Administrador o la Coordinación y la
+  persona las activa desde su correo.
+- Cookies `HttpOnly`, `SameSite=lax` y `Secure` en producción; CSRF y rotación de sesión
+  al autenticar, al pasar los dos pasos y al cambiar de rol.
+- Límites por minuto: inicio de sesión (5), dos pasos (10), recuperación (3), importaciones
+  de Excel (10), importación de fichas (20), firmas (20) y chat de IA (6 por persona y
+  sílabo).
+- Una cuenta desactivada pierde la sesión en su siguiente petición (`EnsureActiveUser`).
+  Cada persona puede cerrar sus otras sesiones.
+- En ambientes expuestos, `SESSION_ENCRYPT=true`. Los hosts aceptados son el de `APP_URL`
+  y sus subdominios, más `127.0.0.1` y `localhost` para el health check interno de
+  Dokploy; así los enlaces de recuperación no aceptan un `Host` manipulado.
+- El scheduler ejecuta `auth:clear-resets` cada quince minutos; debe estar activo en el
+  despliegue (el contenedor lo levanta con `supervisord`).
+- Nadie elimina su propia cuenta. El Administrador solo elimina cuentas sin activar y sin
+  actividad; las demás se desactivan y conservan su historial.
+- Los mensajes de recuperación no confirman si la cuenta existe.
 
 ## Autorización
 
-- Policies/Gates + filtros de consulta.
-- No confíes en rol enviado por el cliente o almacenado sin validación.
-- IDs no secuenciales ayudan contra enumeración, pero no sustituyen permiso.
-- Exportaciones, reportes, conteos y auditoría aplican el mismo alcance.
+- Policies, Gates y filtros de consulta por rol activo y carrera.
+- El rol que envía el cliente no se cree: el servidor resuelve el rol activo y su alcance.
+- Los identificadores son UUID, pero cada lectura sigue pasando por permiso.
+- Descargas, reportes, conteos y auditoría aplican el mismo alcance.
 
 ## Entrada, salida y formularios
 
-- Form Requests, límites de tamaño/profundidad y allowlists.
-- Salida escapada; Markdown con sanitizador probado.
-- Orden/filtros solo en columnas declaradas.
-- Protección contra overposting; estados se cambian por acciones específicas.
-- Errores públicos sin SQL, rutas, stack o secretos.
+- Form Requests con límites de tamaño y listas permitidas.
+- El texto enriquecido del sílabo se guarda como documento estructurado, no como HTML
+  libre. La SPA no inserta HTML crudo y pinta las respuestas de la IA como nodos de texto.
+- Orden y filtros solo sobre columnas declaradas.
+- Sin overposting: los estados cambian solo por acciones específicas.
+- Los errores públicos no muestran SQL, rutas, trazas ni secretos.
 
 ## Base de datos
 
-- Usuario de runtime sin permisos DDL; migrador separado cuando sea posible.
-- TLS/red restringida según infraestructura.
-- Constraints para invariantes y queries parametrizadas.
-- Backups cifrados, acceso auditado y restauración probada tras PV-11.
+- Consultas parametrizadas y restricciones en la base para los invariantes.
+- La auditoría y las aprobaciones son de solo inserción (triggers en PostgreSQL).
+- Red restringida y TLS según la infraestructura.
+- El contenedor migra al arrancar con la misma cuenta de la aplicación. Separar un usuario
+  sin permisos DDL exige poner `RUN_MIGRATIONS=false` y migrar con otra cuenta.
+- Respaldos cifrados, acceso auditado y restauración probada: pendiente de PV-11
+  (`composer verify:restore` prueba la restauración en local).
 
-### Migraciones en la base remota
+### Migrar a mano una base remota
 
-Desde la estación autorizada, la autenticación de PostgreSQL se obtiene exclusivamente de
-`~/.pgpass`; no se usa SSH, Tailscale ni se copia la contraseña al repositorio o al
-historial del shell. El archivo debe pertenecer al usuario y tener permisos `0600`. La
-entrada de este proyecto identifica el perfil
-`187.127.6.234:8004:silabos_ueb_db:silabos_ueb_app`.
+El despliegue normal no lo necesita: `docker/app/entrypoint.sh` ejecuta
+`db:rename-migrations-table` y `migrate --force --isolated` en cada arranque. Si hay que
+hacerlo desde una estación autorizada:
 
-Laravel debe recibir `DB_PASSWORD='(null)'` para que la contraseña local de `.env` no
-reemplace la resolución de libpq mediante `.pgpass`.
-
-Desde I-28 la tabla de control del migrador se llama `migraciones`, y ese renombrado no
-puede vivir dentro de una migración: si la tabla configurada no existe, el migrador la
-crearía vacía y consideraría pendiente todo el historial. Por eso la secuencia remota es
-estado → renombrado idempotente → migrador con bloqueo → estado:
+1. Guarda la credencial en `~/.pgpass` (dueño el usuario, permisos `0600`), con una línea
+   `<host>:<puerto>:<base>:<usuario>:<contraseña>`. No la copies al repositorio ni al
+   historial del shell.
+2. Pasa `DB_PASSWORD='(null)'` para que libpq tome la contraseña de `.pgpass` y no la del
+   `.env` local.
+3. Ejecuta, en este orden:
 
 ```bash
-DB_CONNECTION=pgsql DB_HOST=187.127.6.234 DB_PORT=8004 \
-DB_DATABASE=silabos_ueb_db DB_USERNAME=silabos_ueb_app DB_PASSWORD='(null)' \
+export DB_CONNECTION=pgsql DB_HOST=<host> DB_PORT=<puerto> \
+  DB_DATABASE=<base> DB_USERNAME=<usuario> DB_PASSWORD='(null)'
+
 php artisan migrate:status
-
-DB_CONNECTION=pgsql DB_HOST=187.127.6.234 DB_PORT=8004 \
-DB_DATABASE=silabos_ueb_db DB_USERNAME=silabos_ueb_app DB_PASSWORD='(null)' \
 php artisan db:rename-migrations-table --force
-
-DB_CONNECTION=pgsql DB_HOST=187.127.6.234 DB_PORT=8004 \
-DB_DATABASE=silabos_ueb_db DB_USERNAME=silabos_ueb_app DB_PASSWORD='(null)' \
 php artisan migrate --force --isolated
+php artisan migrate:status
 ```
 
-Después se repite `migrate:status`. Nunca se imprime, registra ni pasa como argumento la
-contraseña almacenada en `.pgpass`.
-
-Antes de aplicar la migración `000025` (traducción de valores) sobre una base con datos,
-toma un respaldo (`pg_dump`) y verifica con `SELECT DISTINCT` que las columnas de estado
-y discriminadores no contengan valores fuera del vocabulario mapeado: la migración
-conserva sin traducir cualquier valor desconocido (decisión conservadora) y conviene
-saberlo antes, no después. Tras migrar, reinicia el worker de colas: los nombres de
-cola también cambiaron (`critica`, `notificaciones`, `documentos`, `ia`,
-`integraciones`, `general`) y un worker viejo escucharía colas que ya no reciben
-trabajos.
+`db:rename-migrations-table` va antes del migrador porque la tabla de control se llama
+`migraciones`: si no existiera, Laravel la crearía vacía y daría por pendiente todo el
+historial. Toma un respaldo (`pg_dump`) antes de migrar una base con datos y reinicia el
+worker de colas después.
 
 ## Volumen de almacenamiento en el contenedor
 
-`storage/app` se monta como volumen en Dokploy para conservar logos y exportaciones entre
-despliegues. El volumen llega con el dueño del servidor, no con el de la imagen, así que
-el `entrypoint` crea `private/` y `public/` y los entrega a `www-data` en cada arranque;
-sin eso PHP-FPM no puede escribir y las subidas fallan. Tras cambiar un volumen en
-Dokploy hay que redesplegar.
+`storage/app` se monta como volumen en Dokploy para conservar logos, documentos y firmas
+entre despliegues. El volumen llega con el dueño del servidor, así que el `entrypoint` crea
+`private/` y `public/` y los entrega a `www-data` en cada arranque; sin eso PHP-FPM no
+puede escribir. Tras cambiar un volumen en Dokploy hay que redesplegar.
 
-Los cuerpos de petición mayores a 8 KB y las respuestas que exceden los búferes de
-FastCGI pasan por `/var/lib/nginx/tmp`, que el paquete de Alpine deja solo para el
-usuario `nginx` mientras los workers corren como `www-data`. La imagen entrega ese
-directorio a `www-data` en el `Dockerfile`; sin eso nginx responde 500 (sin llegar a PHP)
-a cualquier subida de logo y el navegador se queda esperando. Prueba rápida tras
-desplegar: un `POST /login` con un cuerpo de 16 KB debe devolver 419, no 500.
+Los cuerpos de petición grandes pasan por `/var/lib/nginx/tmp`. El `Dockerfile` entrega
+`/var/lib/nginx` a `www-data`, porque los workers de nginx corren con ese usuario; sin eso
+nginx responde 500 a cualquier subida antes de llegar a PHP. Prueba rápida tras desplegar:
+un `POST` a la API con un cuerpo de 16 KB no debe devolver 500.
 
-## Redis y jobs
+## Redis y trabajos
 
-- Redis no expuesto públicamente; autenticación/red privada.
-- Payload mínimo, sin secretos/documentos completos.
-- Timeout, intentos, backoff, idempotencia y separación de colas.
-- Dashboard Horizon protegido por autorización administrativa.
+- Redis sin exposición pública; autenticación o red privada.
+- Los trabajos llevan solo identificadores, nunca secretos ni documentos completos.
+- Cada trabajo tiene timeout, intentos e idempotencia (`RunsOnce`, `ShouldBeUnique`).
+- Colas separadas: `critica`, `documentos` e `ia`.
 
 ## Archivos
 
-- Disco privado, nombres generados, MIME real, tamaño y huella.
-- URLs temporales cortas y reautorización.
-- Plantillas/fuentes no se ejecutan como código.
-- Conversión documental aislada con recursos limitados si el motor lo permite.
+- Disco privado, nombres generados, tipo real, tamaño máximo y huella SHA-256.
+- Tipos aceptados: Excel para importaciones, PDF o Excel para fichas (hasta 6 de 20 MB),
+  PNG para logos y PDF para firmas.
+- Las descargas de sílabos pasan por la API autenticada: cada una se autoriza y se
+  audita. No hay enlaces públicos; solo los logos institucionales se sirven sin sesión.
+- Los documentos subidos para la ficha se borran al aplicar o descartar la importación.
+- La plantilla es solo datos (JSON); no se ejecuta como código.
+- La conversión a PDF corre en un servicio Gotenberg aparte.
+
+## Firma electrónica
+
+- El archivo `.p12` y su clave se usan solo en el navegador; nunca llegan al servidor.
+- El servidor acepta el PDF firmado solo si parte exacto del PDF vigente, agrega una sola
+  firma que cubre todo el documento, la firma CMS es válida y el certificado está vigente.
+- El titular del certificado debe coincidir con la cuenta que firma
+  (`SIGNATURE_REQUIRE_HOLDER_MATCH`).
+- Con `SIGNATURE_TRUSTED_CA_BUNDLE` cargado, la cadena debe llegar a una entidad
+  certificadora de la lista. Sin ese archivo no se verifica la cadena (DT-16).
+- Ver `docs/runbooks/firma-electronica-entidades.md`.
 
 ## IA
 
-- Servicio en red privada y autenticación entre servicios.
-- Modelos sin salida a Internet salvo autorización explícita.
-- Fuentes delimitadas como datos; sin herramientas peligrosas.
-- Esquema de salida estricto y referencias verificadas.
-- Límites de tokens/tamaño/tiempo/concurrencia.
-- Redacción/minimización de prompts y logs.
+- Desactivada por defecto (`AI_DRIVER=disabled`). El proveedor alojado se elige con
+  `AI_DRIVER` (`openai`, `claude` o `deepseek`; la lectura de fichas solo funciona con
+  `openai` o `deepseek`) y la clave vive en un secreto del despliegue.
+- La URL del proveedor debe ser HTTPS, sin credenciales embebidas y sin redirecciones.
+- Los documentos y el contenido del sílabo se envían como datos delimitados; el modelo no
+  tiene herramientas ni acciones.
+- La salida se valida: el chat solo cita evidencias autorizadas y la ficha propuesta la
+  aplica una persona.
+- Límites de tokens, tamaño, tiempo, frecuencia y mensajes por sílabo (`config/ai.php`).
+- OpenParser (OCR de PDF de fichas) está desactivado por defecto y solo usa HTTPS.
 
 ## Cabeceras y transporte
 
 - HTTPS y redirección segura en ambientes expuestos.
-- HSTS cuando el dominio/operación lo permitan.
-- CSP, `frame-ancestors`, `nosniff`, referrer policy y permisos evaluados/probados.
-- CORS limitado al origen configurado de la SPA; Sanctum sólo considera stateful los
-  dominios explícitos del frontend.
+- `AddSecurityHeaders` aplica `nosniff`, `X-Frame-Options: DENY`, CSP con
+  `frame-ancestors`, `base-uri`, `form-action` y `object-src`, política de referencia,
+  permisos y `Cross-Origin-Resource-Policy`. HSTS se emite solo bajo HTTPS en producción.
+- CORS limitado a `FRONTEND_URL`; Sanctum solo trata como stateful los dominios de
+  `SANCTUM_STATEFUL_DOMAINS`.
+- `/health/ready` no inicia sesión ni emite cookies.
 
 ## Verificación de release
 
-- dependencias/auditoría de paquetes;
+- auditoría de dependencias (`composer audit` y `npm audit` en el frontend);
 - secretos y configuración;
-- pruebas de autorización/abuso;
-- uploads y descargas;
-- políticas de logs;
-- backup/restauración;
-- escaneo dinámico/manual proporcional;
-- revisión de cambios de migración e infraestructura.
+- pruebas de autorización y abuso;
+- subidas y descargas;
+- política de logs;
+- respaldo y restauración;
+- revisión de migraciones e infraestructura.
 
-La puerta local ejecuta `composer security:scan`, y la CI audita ambos lockfiles en cada
-cambio y semanalmente. El scanner informa solo archivos afectados, excluye dependencias y
-artefactos generados y rechaza claves privadas, patrones de credenciales y dumps no
-autorizados. No sustituye secret scanning del proveedor, DAST ni revisión humana.
-
-`AddSecurityHeaders` aplica `nosniff`, denegación de frames, CSP restrictiva para
-`frame-ancestors`, `base-uri`, `form-action` y `object-src`, políticas de referencia,
-permisos y recursos cross-origin. HSTS se emite solo bajo HTTPS en producción. Readiness
-no inicia sesión ni emite cookies.
+`composer verify` ejecuta `composer security:scan` antes de las pruebas. El scanner busca
+claves privadas, patrones de credenciales, dumps de base y un `.env` versionado; muestra
+solo los archivos afectados y excluye dependencias y artefactos generados. No hay CI que
+lo ejecute: se corre en local. No sustituye el secret scanning del proveedor, un escaneo
+dinámico ni la revisión humana.

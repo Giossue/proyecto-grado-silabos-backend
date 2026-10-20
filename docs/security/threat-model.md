@@ -2,14 +2,18 @@
 
 ## Activos
 
-- credenciales, sesiones y asignaciones de rol;
-- datos personales de usuarios;
-- estructura académica, documentos privados de ingesta y datos curriculares confirmados;
-- borradores, revisiones, observaciones y aprobaciones;
-- plantillas oficiales, DOCX/PDF y huellas;
-- auditoría y evidencias de IA;
-- secretos de base, almacenamiento, correo e integraciones;
-- disponibilidad del proceso durante plazos académicos.
+- credenciales, sesiones, 2FA y asignaciones de rol;
+- datos personales de usuarios, incluida la formación del docente;
+- estructura académica, malla, fichas de asignatura y los documentos subidos para
+  importarlas;
+- borradores, revisiones de Coordinación y Biblioteca, comentarios y aprobaciones;
+- plantilla del sílabo, DOCX y PDF generados y sus huellas;
+- PDF firmados, datos del certificado de cada firmante y la lista de entidades
+  certificadoras de confianza;
+- archivo `.p12` y su clave, que solo existen en el navegador del firmante;
+- auditoría, conversaciones con la IA y avisos;
+- secretos de base, almacenamiento, correo, IA y OpenParser;
+- disponibilidad del sistema durante los plazos académicos.
 
 ## Fronteras
 
@@ -17,43 +21,49 @@
 2. Laravel ↔ PostgreSQL;
 3. Laravel/worker ↔ Redis;
 4. aplicación ↔ almacenamiento privado;
-5. worker ↔ servicio local o proveedor alojado de IA;
-6. operadores ↔ despliegue/backups.
+5. worker ↔ proveedor de IA alojado (chat y lectura de fichas);
+6. worker ↔ OpenParser (OCR de PDF de fichas);
+7. worker ↔ Gotenberg (DOCX a PDF);
+8. operadores ↔ despliegue y respaldos.
 
 ## Amenazas prioritarias
 
 | Amenaza | Escenario | Controles principales |
 |---|---|---|
-| Acceso horizontal | Docente cambia UUID/URL y ve otro sílabo | Policy por registro, scope SQL, pruebas de fuga |
-| Elevación de rol | El frontend concede capacidad | permiso servidor, vigencia, auditoría |
-| CSRF/session fixation | Mutación con sesión robada/fijada | Fortify, CSRF, cookies seguras, rotación, revocación |
-| XSS/Markdown | Documento importado o sílabo ejecuta script | escape, sanitización allowlist, CSP evaluada |
-| Inyección | los filtros alteran la consulta | Query Builder, allowlists, validación |
-| Mass assignment | petición cambia estado/rol no permitido | DTO/validated, fillable estricto, casos de uso |
-| Upload malicioso | DOCX/archivo activo o enorme | tipo real, límites, privado, cuarentena/escaneo |
-| URL de descarga filtrada | enlace entrega documento después | expiración corta y reautorización |
-| Revisión manipulada | aprobado se sobrescribe | append-only, constraints, huella, auditoría |
-| Carrera/reintento | dos envíos/aprobaciones | lock/versión, idempotencia, transacción |
-| Job replay | trabajo duplica efectos | clave única, entrada y estado persistidos, idempotencia |
-| Prompt injection | documento o mensaje ordena exfiltrar/ignorar reglas | datos delimitados, sin tools/red, simulador independiente del contenido y salida validada |
-| Referencia inventada | IA cita evidencia inexistente | snapshot de IDs autorizados, contrato y vínculo PostgreSQL |
-| SSRF/proveedor externo | una URL manipulada desvía contenido o la clave de IA | URL definida solo por operación, HTTPS obligatorio, sin credenciales embebidas ni redirecciones; clave en secreto de despliegue |
-| Decisión encubierta de IA | respuesta intenta aprobar, calificar o cambiar estado | claves prohibidas, tipos allowlist y aplicación humana separada |
-| Exfiltración por logs | prompts/documentos aparecen en logs | minimización, redacción, acceso/retención |
-| Tratamiento por tercero | borrador y extractos salen hacia un proveedor alojado | activación explícita, minimización previa, contrato/retención/región acordados y `disabled` por defecto |
-| Ransomware/pérdida | base/archivos destruidos | backups aislados, restore probado, mínimo privilegio |
-| DoS | IA y exportación agotan los workers | colas separadas, rate limit por actor/recurso, límites de entrada y timeout |
+| Acceso horizontal | Un docente cambia el UUID de la URL y ve otro sílabo | Policy por registro, alcance en la consulta, pruebas de fuga |
+| Elevación de rol | El frontend concede una capacidad | permiso en el servidor, rol activo resuelto por el servidor, auditoría |
+| CSRF / fijación de sesión | Mutación con sesión robada o fijada | Sanctum + Fortify, CSRF, cookies seguras, rotación, revocación |
+| XSS | Un documento importado, una respuesta de IA o un campo ejecuta script | texto enriquecido como documento estructurado, sin `v-html`, CSP |
+| Inyección | Los filtros alteran la consulta | Query Builder, listas permitidas, validación |
+| Mass assignment | La petición cambia un estado o rol no permitido | datos validados, casos de uso, estados por acción específica |
+| Subida maliciosa | Archivo con extensión permitida y contenido distinto, o enorme | tipo real, tamaño máximo, disco privado, límite de descompresión en Excel |
+| Descarga indebida | Alguien descarga un documento ajeno o sin las tres firmas | descarga por API autenticada, autorización por petición, auditoría |
+| Firma suplantada | Alguien sube un PDF firmado con un certificado ajeno | titular del certificado igual a la cuenta, certificado vigente, firma CMS válida, cadena hacia la lista de confianza (DT-16) |
+| Firma fuera de turno o sobre otro documento | El PDF firmado no parte del vigente o salta un firmante | orden docente → coordinación → biblioteca, huella del PDF base, el PDF firmado debe empezar con el vigente y agregar una sola firma |
+| Robo de la firma | El `.p12` o su clave salen del equipo del firmante | la firma ocurre en el navegador; el archivo y la clave nunca se envían |
+| Revisión manipulada | Un sílabo aprobado se cambia fuera del flujo | aprobaciones y auditoría de solo inserción, huella, regeneración solo por cambios de plantilla, malla o ficha |
+| Carrera / reintento | Dos envíos o aprobaciones a la vez | bloqueo de fila, versión, idempotencia, transacción |
+| Trabajo repetido | Un job duplica efectos | `ShouldBeUnique`, `RunsOnce`, estado persistido |
+| Prompt injection | Un documento de ficha o un mensaje ordena ignorar reglas | evidencia delimitada como datos no confiables, sin herramientas, salida JSON validada |
+| Referencia inventada | La IA cita evidencia inexistente | solo se aceptan citas de evidencias enviadas |
+| Decisión encubierta de IA | La IA intenta aprobar o cambiar estados | la IA solo devuelve texto o una propuesta; aplicar la ficha es una acción humana aparte |
+| SSRF / proveedor externo | Una URL manipulada desvía contenido o la clave | URL definida solo por operación, HTTPS, sin credenciales embebidas ni redirecciones; clave en secreto de despliegue |
+| Tratamiento por terceros | Borradores, preguntas y documentos de ficha salen hacia la IA u OpenParser | ambos desactivados por defecto, activación explícita, contexto mínimo; base legal pendiente (PV-12) |
+| Exfiltración por logs | Prompts o documentos aparecen en logs | minimización, acceso y retención controlados |
+| Pérdida de datos | Base o archivos destruidos | respaldos aislados, restauración probada (PV-11), mínimo privilegio |
+| Denegación de servicio | IA, OCR y exportación agotan los workers | colas separadas, límites por actor, tamaño y tiempo, timeouts |
 
 ## Casos de abuso obligatorios
 
-- usuario inactivo mantiene una pestaña abierta;
+- usuario desactivado mantiene una pestaña abierta;
 - coordinador accede a otra carrera;
-- docente manipula estado o `revision_id`;
-- descarga con enlace vencido/sesión revocada;
-- fuente contiene HTML/script e instrucciones hostiles;
+- docente manipula el estado o el identificador de la revisión;
+- descarga con sesión revocada o sin permiso;
+- documento de ficha con texto que da instrucciones a la IA;
 - archivo con extensión permitida y contenido distinto;
-- misma petición se envía en paralelo;
-- worker procesa después de que cambió la versión esperada;
-- auditor intenta modificar evento desde interfaz/API.
+- PDF firmado por otra persona, vencido o que no parte del documento vigente;
+- misma petición enviada en paralelo;
+- worker que procesa después de que cambió la versión esperada;
+- alguien intenta modificar un evento de auditoría.
 
-Actualiza este documento al agregar una frontera o dato sensible.
+Actualiza este documento al agregar una frontera o un dato sensible.

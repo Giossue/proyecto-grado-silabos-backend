@@ -1,174 +1,211 @@
-# Secuencias canónicas
+# Secuencias
 
-Estos diagramas fijan responsabilidades e invariantes. Los nombres concretos de clases
-pueden variar, pero no se omiten autorización, transacción, inmutabilidad, auditoría ni
-efectos posteriores al commit.
+Flujos principales tal como los implementa el código. En todos, la acción autoriza,
+abre una transacción, bloquea las filas que cambia, audita y guarda las notificaciones
+antes del commit. Los trabajos en cola salen después del commit.
 
-## Enviar un sílabo
-
-```mermaid
-sequenceDiagram
-    actor D as Docente
-    participant UI as SPA Vue
-    participant C as SubmitSyllabusController
-    participant A as SubmitSyllabus Action
-    participant P as SyllabusPolicy
-    participant V as Validador determinístico
-    participant DB as PostgreSQL
-    participant O as Outbox
-    participant W as Worker
-
-    D->>UI: Confirma enviar
-    UI->>C: POST con version_bloqueo e idempotency_key
-    C->>P: authorize(submit, syllabus)
-    P-->>C: permitido por rol, alcance, asignación y estado
-    C->>A: ejecutar DTO validado
-    A->>V: validar borrador y versión de reglas
-    V-->>A: resultados bloqueantes/advertencias
-    alt Existen errores bloqueantes
-        A-->>C: rechazo sin transición
-        C-->>UI: errores por sección/campo
-    else Borrador válido
-        A->>DB: begin transaction + comprobar concurrencia/idempotencia
-        A->>DB: insertar RevisionSilabo inmutable
-        A->>DB: cambiar estado a En revisión
-        A->>DB: insertar transición y auditoría
-        A->>O: insertar evento silabo.enviado
-        A->>DB: commit
-        C-->>UI: JSON con número de revisión
-        O-->>W: entregar después del commit
-        W->>W: notificar de forma idempotente
-    end
-```
-
-## Solicitar corrección y reenviar
-
-```mermaid
-sequenceDiagram
-    actor Coo as Coordinador
-    actor D as Docente
-    participant UI as Aplicación
-    participant R as Review Actions
-    participant DB as PostgreSQL
-
-    Coo->>UI: Escribe el comentario general sobre la revisión N
-    UI->>R: Solicitar corrección con el comentario
-    R->>DB: autorizar alcance y comprobar En revisión
-    R->>DB: transacción: comentario en la revisión + estado Corrección solicitada + auditoría
-    R-->>D: notificación posterior al commit
-    D->>UI: Edita nueva versión de trabajo
-    D->>R: Reenviar con version_bloqueo e idempotency_key
-    R->>DB: validar + insertar revisión N+1 inmutable
-    R->>DB: estado En revisión + transición + auditoría
-    R-->>Coo: notificación posterior al commit
-    Coo->>UI: Ver diff N ↔ N+1
-```
-
-## Aprobar y eliminar
-
-```mermaid
-sequenceDiagram
-    actor Coo as Coordinador
-    participant UI as SPA Vue
-    participant A as Approval Actions
-    participant DB as PostgreSQL
-    participant O as Outbox
-
-    Coo->>UI: Confirma aprobación de revisión N
-    UI->>A: approve(revision N, idempotency_key)
-    A->>DB: autorizar + validar estado/reglas
-    A->>DB: transacción: Aprobacion(N) + estado Aprobado + auditoría + ejecución pendiente
-    A-->>UI: Aprobado; revisión N bloqueada
-    O-->>O: habilita notificación/exportación después del commit
-
-    opt Eliminación autorizada (I-178)
-        Coo->>UI: Confirma eliminar el sílabo aprobado
-        UI->>A: DELETE sílabo
-        A->>DB: autorizar + transacción
-        A->>DB: borrar sílabo con revisiones, aprobación, PDF y firmas
-        A->>DB: crear sílabo nuevo sin iniciar + auditoría + aviso al docente
-        A-->>UI: sílabo nuevo sin iniciar
-    end
-```
-
-## Solicitar contenido y unidades al chat (I-146)
-
-```mermaid
-sequenceDiagram
-    actor D as Docente
-    participant UI as SPA Vue
-    participant A as SendSyllabusAiMessage
-    participant DB as PostgreSQL
-    participant Q as Redis/Worker
-    participant AI as AiChatGateway
-
-    D->>UI: Pregunta sobre contenido o unidades
-    UI->>A: mensaje y clave idempotente
-    A->>DB: autorizar sílabo y fijar contexto curricular-units-v1
-    A->>DB: crear/reusar mensaje y contexto académico/curricular
-    A-->>UI: estado Pendiente
-    A-->>Q: job después del commit
-    Q->>AI: contexto fotografiado, tablas de planificación y conversación compatible
-    alt Respuesta válida
-        AI-->>Q: propuesta y referencias al contexto recibido
-        Q->>DB: validar referencias y persistir respuesta/evidencia
-        Q-->>UI: respuesta disponible
-        D->>UI: decide el contenido que incorpora mediante la edición normal
-    else Timeout, fallo o cita inválida
-        AI-->>Q: error
-        Q->>DB: estado Fallido y diagnóstico seguro
-        Q-->>UI: ayuda no disponible; flujo principal continúa
-    end
-```
-
-No se consultan fuentes vivas ni vectores. El historial anterior permanece visible,
-pero no se envía al proveedor bajo el contrato nuevo.
-
-## Generar y descargar documentos
-
-```mermaid
-sequenceDiagram
-    actor U as Usuario autorizado
-    participant UI as Aplicación
-    participant E as Export Actions
-    participant DB as PostgreSQL
-    participant Q as Worker
-    participant R as DocumentRenderer
-    participant S as Almacenamiento privado
-
-    U->>UI: Solicita DOCX/PDF de revisión N
-    UI->>E: create export(revision N)
-    E->>DB: autorizar + fijar revisión/plantilla + crear trabajo idempotente
-    E-->>Q: dispatch después del commit
-    Q->>R: render fotografía inmutable
-    R-->>Q: DOCX y PDF desde la misma entrada
-    Q->>S: guardar privados y calcular huellas
-    Q->>DB: registrar artefactos y estado Completado
-    U->>UI: Descargar artefacto
-    UI->>DB: reautorizar recurso/revisión
-    UI->>S: stream o URL temporal corta
-    S-->>U: archivo
-```
-
-## Importar datos institucionales
+## 1. Elaboración
 
 ```mermaid
 sequenceDiagram
     actor A as Administrador
-    participant UI as Aplicación
-    participant I as Import Application
-    participant X as Fuente institucional
+    actor C as Coordinador
+    actor D as Docente
+    participant API as API Laravel
     participant DB as PostgreSQL
 
-    A->>UI: Inicia simulación
-    UI->>I: create import run
-    I->>X: leer lote con credencial de solo lectura
-    X-->>I: registros externos
-    I->>DB: stage + validar + clasificar altas/cambios/conflictos
-    I-->>UI: resumen y conflictos, sin aplicar
-    A->>UI: Confirma lote autorizado
-    UI->>I: apply(run, idempotency_key)
-    I->>DB: transacciones por lotes + items + auditoría
-    I-->>UI: altas, cambios, rechazos y conflictos finales
-    Note over I,X: Nunca escribe en la fuente institucional
+    A->>API: POST admin/processes (período, inicio, entrega)
+    API->>DB: convocatorias_universidad = abierto
+    C->>API: POST coordination/convocations
+    API->>DB: convocatorias_carreras (preparacion → abierta)
+    API->>DB: un sílabo sin_iniciar por paralelo + valores_campo heredados
+    Note over API,DB: campos de Coordinación ← ficha de la asignatura<br/>campos docentes ← contenido inicial de la plantilla
+    D->>API: POST teacher/syllabi/{id}/start
+    API->>DB: estado borrador, version_bloqueo = 1
+    loop Autoguardado por campo
+        D->>API: PATCH teacher/syllabi/{id}/fields/{campo} (valor, version_bloqueo)
+        alt versión distinta
+            API-->>D: 409 conflicto_version_borrador
+        else campo no editable por el docente
+            API-->>D: 422
+        else
+            API->>DB: valores_campo + version_bloqueo + 1
+        end
+    end
 ```
+
+- Abrir la convocatoria exige el proceso abierto, la carrera lista
+  (`CoordinatorConvocationReadiness`) y una plantilla usable.
+- El docente puede copiar el contenido de otro paralelo suyo de la misma asignatura
+  hacia un sílabo que aún no envió (`POST …/copy-from/{source}`).
+- El docente edita campos `docente` y los de Coordinación con el permiso de la ficha
+  activado.
+
+## 2. Validar y enviar
+
+```mermaid
+sequenceDiagram
+    actor D as Docente
+    participant API as SubmitSyllabus
+    participant DB as PostgreSQL
+
+    D->>API: POST teacher/syllabi/{id}/submit (version_bloqueo, idempotency_key)
+    API->>DB: ¿ya existe una revisión con esa clave? → la devuelve
+    API->>API: estado borrador o correccion_solicitada; dentro del plazo; versión igual
+    API->>API: ValidateDraft (campos obligatorios y reglas de bloque)
+    alt errores
+        API-->>D: 422 con errores por campo
+    else válido
+        API->>DB: lock sílabo; revisión N con fotografía y hash SHA-256
+        alt la corrección anterior la pidió Biblioteca
+            API->>DB: envios_biblioteca(N) → vuelve directo a Biblioteca
+        end
+        API->>DB: estado en_revision; auditoría; notificación
+        API-->>D: revisión N
+    end
+```
+
+`POST …/validate` ejecuta solo la validación; no cambia el sílabo.
+
+## 3. Revisión de Coordinación
+
+```mermaid
+sequenceDiagram
+    actor C as Coordinador
+    participant API as API
+    participant DB as PostgreSQL
+
+    C->>API: GET coordination/reviews/{revision}
+    alt aprueba
+        C->>API: POST …/approve
+        API->>DB: revisiones_coordinacion(N) + envios_biblioteca(N)
+        API->>DB: notificación a Biblioteca
+    else pide corrección
+        C->>API: POST …/request-correction (comentario)
+        API->>DB: revisión N: correccion_* con etapa coordinacion
+        API->>DB: estado correccion_solicitada; notificación al docente
+    end
+```
+
+Solo se decide sobre la revisión más reciente. `GET …/compare/{after}` muestra la
+diferencia entre dos revisiones.
+
+## 4. Verificación de Biblioteca y exportación automática
+
+```mermaid
+sequenceDiagram
+    actor B as Bibliotecario
+    participant API as VerifyBibliography
+    participant DB as PostgreSQL
+    participant Q as Cola documentos
+    participant G as Gotenberg
+
+    alt aprueba la bibliografía
+        B->>API: POST library/reviews/{revision}/verify
+        API->>DB: aprobaciones(N); estado aprobado; auditoría; aviso al docente
+        API->>DB: exportaciones_silabo pendiente (clave = id de la aprobación)
+        API-->>Q: GenerateSyllabusExportJob (afterCommit)
+        Q->>Q: Word con PHPWord desde la fotografía
+        Q->>G: Word → PDF
+        Q->>DB: archivos Word y PDF; exportación completado
+    else comenta
+        B->>API: POST …/comments (motivos)
+        API->>DB: correccion_* con etapa biblioteca; estado correccion_solicitada
+    end
+```
+
+## 5. Firma electrónica (I-227)
+
+```mermaid
+sequenceDiagram
+    actor U as Firmante
+    participant SPA as SPA
+    participant API as API
+    participant DB as PostgreSQL
+
+    U->>SPA: Abre la tarjeta de firmas
+    SPA->>API: GET revisions/{id}/signature (estado, turno, posición del sello)
+    SPA->>API: GET revisions/{id}/signature/pdf (PDF vigente)
+    U->>SPA: Elige su .p12 y escribe la clave
+    SPA->>SPA: agrega una firma incremental (la clave no sale del equipo)
+    SPA->>API: POST revisions/{id}/signature (PDF firmado, huella del PDF base)
+    API->>DB: lock exportación; ¿es su turno?; ¿el PDF base sigue igual?
+    API->>API: la firma nueva extiende el PDF vigente y cubre todo el archivo
+    API->>API: certificado válido; titular = cuenta; cadena reconocida (si hay PEM)
+    API->>DB: archivos + firmas_documento; auditoría; aviso al siguiente firmante
+```
+
+- Orden fijo: docente → coordinación → biblioteca.
+- Word y PDF se descargan (`GET exports/{id}/{docx|pdf}`) solo con las tres firmas. El
+  PDF que se entrega es el último firmado.
+
+## 6. Importación de fichas con IA
+
+```mermaid
+sequenceDiagram
+    actor C as Coordinador
+    participant API as API
+    participant DB as PostgreSQL
+    participant Q as Cola ia
+    participant OCR as OpenParser
+    participant IA as Proveedor de IA
+
+    C->>API: POST coordination/ficha-imports (PDF o Excel)
+    API->>API: carrera editable; IA configurada; sin otra importación en curso
+    API->>DB: importaciones_ficha pendiente; archivos en importaciones-ficha/{id}/
+    API-->>Q: PrepareFichaImportJob (afterCommit)
+    Q->>OCR: PDF (si OPENPARSER está activo; si no, pdftotext)
+    Q->>DB: bloques de texto; una entrada por asignatura activa
+    loop por asignatura
+        Q->>IA: fragmentos de esa asignatura + campos de la ficha
+        Q->>DB: propuesta lista / sin_evidencia / fallida
+    end
+    Q->>DB: importación lista
+    C->>API: POST …/{import}/apply (asignaturas y campos elegidos)
+    API->>DB: valores_campo de la asignatura; archivos borrados; aplicada
+    API->>DB: si hay sílabos en curso: pide confirmación y los regenera
+```
+
+`DELETE …/{import}` descarta la propuesta y borra los archivos.
+
+## 7. Cambios con sílabos en curso y regeneración
+
+### Plantilla
+
+```mermaid
+sequenceDiagram
+    actor A as Administrador
+    participant API as API
+    participant DB as PostgreSQL
+
+    A->>API: POST admin/processes/{id}/pausar
+    API->>DB: proceso pausado; pausado_en = ahora
+    A->>API: cambia secciones, campos o JSON de la plantilla
+    API->>DB: triggers actualizan plantilla_modificada_en
+    A->>API: POST admin/processes/{id}/reanudar
+    API-->>A: confirmation_required + conteo por estado
+    A->>API: POST …/reanudar con confirmar_rehacer
+    API->>DB: borra y vuelve a crear cada sílabo del proceso, incluso aprobados y firmados
+    API->>DB: notificación a los docentes; auditoría proceso.plantilla_rehecho
+    API->>DB: proceso abierto
+```
+
+La plantilla no se puede cambiar con un proceso `abierto`.
+
+### Malla, paralelos y ficha
+
+- Con la convocatoria de la carrera `abierta`, la malla y la ficha están bloqueadas.
+  Coordinación pausa la convocatoria para cambiarlas.
+- Si el cambio afecta sílabos de una convocatoria `abierta` o `pausada`, la API responde
+  `422` con `purge_required` y la cantidad. Con `confirm_purge` aplica el cambio y
+  regenera esos sílabos en la misma transacción, incluidos los aprobados.
+- Regenerar borra borrador, revisiones, aprobación, exportaciones, firmas, archivos y
+  mensajes de IA, y crea un sílabo nuevo desde la base corregida. El docente recibe un
+  aviso. No existe la reapertura de un sílabo aprobado.
+
+### Coordinación sobre un sílabo
+
+- `POST coordination/syllabi/{id}/reset`: devuelve a `sin_iniciar` un sílabo en
+  `borrador`, `en_revision` o `correccion_solicitada`.
+- `DELETE coordination/syllabi/{id}`: elimina un sílabo `aprobado` y crea uno nuevo
+  para el mismo paralelo.

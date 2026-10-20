@@ -1,5 +1,8 @@
 # Hallazgos de la consulta del 26 de agosto de 2026
 
+> Documento de evidencia de la entrevista. Algunas decisiones cambiaron después; el estado
+> vigente está en [`DECISIONS_STATUS.md`](../../DECISIONS_STATUS.md).
+
 Síntesis de las respuestas al guion `entrevista-decisiones-abiertas.md`. Cada fila indica
 qué se decidió, con qué alcance y qué cambia en el sistema.
 

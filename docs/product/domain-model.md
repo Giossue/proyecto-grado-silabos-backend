@@ -1,257 +1,133 @@
 # Modelo de dominio
 
-## Ámbitos y agregados
+Entidades reales del sistema, agrupadas por módulo. Entre paréntesis va la tabla. El
+esquema completo está en `docs/generated/database-schema.md`; las reglas de estado, en
+`syllabus-lifecycle.md`.
 
-### Identidad y alcance
+## Identidad y acceso (`Identity`)
 
-- `Usuario`: persona autenticable, activa o inactiva. Su nombre se guarda normalizado
-  (I-32): mayúsculas con tildes, primero nombres y luego apellidos, sin espacios
-  sobrantes; `PersonName::normalize` lo aplica en toda escritura.
-- `Rol`: valor fijo: Administrador, Coordinador o Docente; no es una entidad ni catálogo.
-- `AsignacionRol`: relación RBAC de rol y alcance; una persona puede tener varias. Una
-  asignación `coordinador` activa de carrera es coordinación efectiva.
-- `DocenteParalelo`: vincula una `AsignacionRol` de docente con un paralelo. No hay tabla de
-  coordinación separada ni tabla por rol. Ninguna relación programa inicio o fin:
-  `activo` expresa estado actual.
+- **Usuario** (`usuarios`): nombre en mayúsculas con tildes, correo único, activo,
+  segundo factor, formación y experiencia (la usa la identificación del sílabo) y
+  preferencias de accesibilidad.
+- **Asignación de rol** (`asignaciones_rol`): usuario, rol, carrera y activa. Roles:
+  `administrador`, `coordinador`, `docente`, `bibliotecario`. Coordinador y docente
+  exigen carrera; administrador y bibliotecario no la tienen. No se repite una asignación
+  activa con el mismo usuario, rol y carrera.
+- **Invitación de activación** (`invitaciones_activacion`): enlace de un solo uso para
+  verificar el correo y crear la contraseña. Vence y se invalida al emitir otra.
 
-Una persona puede coordinar más de una carrera mediante asignaciones independientes. La
-sesión conserva una sola `AsignacionRol` activa: Coordinación siempre confirma la carrera
-al entrar y puede sustituirla desde el menú, sin sumar alcances ni privilegios.
+## Estructura académica (`Academic`)
 
-### Estructura académica
+- **Facultad** (`facultades`): nombre, campus (lista fija de cinco), logo (archivo) y
+  activa.
+- **Carrera** (`carreras`): facultad, código único, nombre, modalidad, número de ciclos
+  (1 a 30) y activa. La malla es la propia carrera: no hay tabla de mallas ni versiones.
+- **Asignatura** (`asignaturas`): carrera, código único en la carrera, nombre, ciclo,
+  orden en el ciclo, unidad curricular (`basica`, `profesional`,
+  `integracion_curricular`), modalidad propia opcional, horas de docencia, prácticas y
+  autónomas, total de horas (lo calcula el servidor), créditos y activa.
+- **Requisito de asignatura** (`requisitos_asignatura`): prerrequisito o correquisito
+  entre dos asignaturas distintas.
+- **Paralelo** (`paralelos`): asignatura, código (único en la asignatura) y jornada
+  (`matutina`, `vespertina`, `nocturna`). No depende del período.
+- **Asignación de paralelo** (`asignaciones_paralelo`): une un paralelo con la asignación
+  de rol de un docente. Como máximo una activa por paralelo.
+- **Período académico** (`periodos_academicos`): código único, fechas de inicio y fin y
+  semanas lectivas (1 a 52). Su estado se calcula con la fecha actual.
 
-- `Facultad` (con campus obligatorio), `Carrera`, `Modalidad`, `PeriodoAcademico`.
-- `Malla`, `DefinicionCampoMalla`, `Asignatura` con ciclo/orden,
-  `ValorCampoAsignatura` y `RequisitoAsignatura`.
-- `ProgramacionAsignatura`, `Paralelo`, `DocenteParalelo`.
-- `AliasInstitucional` traduce el texto libre de la fuente hacia un catálogo normalizado.
+## Plantilla (`Configuration`)
 
-Una `Facultad` agrupa muchas `Carreras` y elige exactamente un campus de la lista fija de
-cinco ubicaciones institucionales. `Carrera` hereda el campus de su facultad; no existe
-un catálogo ni una entidad independiente de campus. La programación conserva una copia
-textual del campus elegido para preservar el contexto histórico del sílabo.
-Su logo, cuando existe, es un `ObjetoAlmacenado` privado e inmutable referenciado por
-`logo_objeto_id`; la facultad no guarda rutas del sistema de archivos.
+- **Plantilla del sílabo** (`plantilla_silabo`): hay una sola. `definicion_plantilla`
+  guarda en JSON el papel, el estilo, las variables, los bloques y las secciones
+  obligatorias (ADR-0011). `plantilla_modificada_en` cambia sola cuando cambia la
+  definición.
+- **Sección** (`secciones_plantilla`): clave, título, posición y orientación.
+- **Campo** (`campos_plantilla`): sección, clave, título y posición.
+- **Definición de campo** (`definiciones_campo`): quién lo llena (`docente`,
+  `coordinacion`, `institucional`) y su contenido inicial como documento.
 
-El campus es un valor fijo de Facultad (I-106), sin código ni CRUD propio. La modalidad
-tampoco es catálogo: son los valores fijos del Reglamento de Régimen Académico
-(`StudyModality`). La programación de asignatura no elige ninguno de los dos: hereda el
-campus de la facultad de su carrera y la modalidad de la materia si se apartó
-(`asignaturas.modalidad`) o de la base aprobada de la carrera (`carreras.modalidad`,
-I-35, I-37). La excepción de una materia no cambia ni recalifica la modalidad de la
-carrera. La programación conserva las copias porque el sílabo toma de ahí campus y modalidad.
+Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 
-`PeriodoAcademico` es un catálogo institucional único: su código no se repite entre
-carreras. Aunque la fuente histórica lo replique por carrera, el producto lo consolida
-como la ventana temporal común de la universidad (I-41).
+## Proyecto de carrera (`Academic`)
 
-Una `Asignatura` se identifica dentro de su carrera por su código visible, que es el que
-leen las personas y el que usa el producto en programaciones, sílabos y documentos.
+- **Ficha de la asignatura**: filas de `valores_campo` con `asignatura_id` y sin
+  `silabo_id`, una por campo de la plantilla que llena Coordinación.
+  `editable_docente_valor_campo` indica si el docente puede editar ese campo en su
+  sílabo.
+- **Importación de ficha** (`importaciones_ficha`): carrera, quién la pidió, estado
+  (`pendiente`, `en_ejecucion`, `lista`, `fallida`, `aplicada`, `descartada`),
+  documentos subidos, propuesta de la IA y error. Hay como máximo una en curso por
+  carrera. Los archivos se borran al aplicar o descartar.
 
-I-144 incorpora `BaseResultadosAsignatura`, con procedencia y confirmación explícita,
-y `ResultadoAprendizajeAsignatura`, una fila ordenada con identidad propia. Coordinación
-mantiene la colección de su carrera. No equivale a una unidad de planificación: la
-cantidad de resultados no determina por sí sola la cantidad de unidades. El sílabo
-conserva una fotografía de la base para lectura y exportación, independiente de cambios
-posteriores en las filas vivas.
+## Convocatoria y sílabo (`Syllabus`)
 
-Las relaciones que ya respaldan un sílabo se protegen y no se eliminan. Las que aún no
-tienen dependencias se eliminan; roles, nombramientos y asignaciones se desactivan sin
-borrar su evidencia.
+- **Convocatoria** (`convocatorias_universidad`): período (una por período), fecha de
+  inicio, fecha de entrega (posterior al inicio), estado (`abierto`, `pausado`,
+  `cerrado`) y fecha de pausa. Solo una puede estar abierta o pausada a la vez. Nace
+  abierta. Hoy ninguna acción la pasa a `cerrado`.
+- **Convocatoria de carrera** (`convocatorias_carreras`): carrera y convocatoria (una por
+  carrera), estado (`preparacion`, `abierta`, `pausada`, `cerrada`). Se crea y se abre
+  en la misma operación, así que en la práctica queda `abierta`.
+- **Sílabo** (`silabos`): convocatoria de carrera, paralelo (uno por paralelo y
+  convocatoria), estado, versión del borrador (control de concurrencia), fechas de
+  inicio y último guardado, y `datos_academicos_silabo` (copia de malla, período y
+  paralelo al crearse).
+- **Valor de campo** (`valores_campo` con `silabo_id`): contenido de cada campo no fijo
+  del sílabo. Al crear el sílabo se copia de la ficha o del contenido inicial, con su
+  marca de editable.
+- **Docente vigente del sílabo** (`docentes_vigentes_silabo`): vista que da el docente
+  activo del paralelo.
+- **Revisión** (`revisiones_silabo`): número correlativo, revisión anterior, clave de
+  idempotencia, versión del borrador, `contenido_enviado` (copia completa: plantilla,
+  contexto académico, logos, variables y valores), huella, quién y cuándo envió. Si se
+  devolvió, guarda comentario, etapa (`coordinacion` o `biblioteca`), quién y cuándo;
+  los cuatro datos van juntos o ninguno.
+- **Revisión de coordinación** (`revisiones_coordinacion`): una por revisión; quién y
+  cuándo aprobó la etapa de coordinación.
+- **Envío a biblioteca** (`envios_biblioteca`): una por revisión; la pone en la bandeja
+  de Biblioteca.
+- **Aprobación** (`aprobaciones`): una por revisión; quién y cuándo, clave de
+  idempotencia y huella.
 
-El Administrador gobierna las entidades institucionales globales y asigna la coordinación
-de una carrera. El Coordinador mantiene su estructura curricular, asignaturas programadas, paralelos y
-asignaciones docentes solo dentro de esa carrera. Un periodo académico representa fechas
-y la cantidad calculada de semanas lectivas. Al crear uno nuevo, su fecha de inicio debe
-ser el día actual en `America/Guayaquil` o una fecha posterior; la fecha final debe ser
-igual o posterior a la inicial. Esta restricción no impide corregir registros históricos;
-el ciclo representa la posición de una materia dentro de la estructura curricular.
+## Documentos (`Documents`)
 
-Cada carrera tiene una sola estructura curricular, almacenada directamente en la carrera:
-su código y cantidad de ciclos. No hay una entidad, versiones ni estado activable de
-`mallas`. Las asignaturas pertenecen directamente a la carrera. Sus atributos académicos
-son fijos y obligatorios; ninguna carrera crea columnas, valores EAV o campos arbitrarios.
-Cada asignatura elige exactamente una unidad de organización curricular del catálogo fijo;
-el ciclo no tiene unidad propia ni restringe la elección de sus asignaturas.
-Las horas totales se derivan de ACD + APE + AA y el servidor las recalcula en cada alta o
-edición. Si el desglose no envía una posición, la materia se agrega después de la última
-del mismo ciclo. Una relación académica guarda origen, destino y tipo; el color del
-diagrama no constituye la regla. El desglose académico y el constructor visual son dos
-proyecciones de la estructura curricular de la carrera.
+- **Archivo** (`archivos`): objeto privado con disco, ruta, nombre, tipo, tamaño, huella
+  y categoría (logo de facultad, exportación, PDF firmado).
+- **Exportación** (`exportaciones_silabo`): revisión, archivo Word, archivo PDF, clave
+  de idempotencia y estado (`pendiente`, `en_ejecucion`, `completado`, `fallido`).
+  Completada exige ambos archivos.
+- **Firma** (`firmas_documento`): exportación, rol con que firma (`docente`,
+  `coordinacion`, `biblioteca`; una de cada una), usuario, PDF firmado y datos del
+  certificado (titular, número, entidad emisora y vigencia).
 
-### Programación por período
+## IA (`AiAssistance`)
 
-`ProgramacionAsignatura` vincula una materia de la carrera con el período en que se dicta.
-Sus paralelos y asignaciones docentes forman la organización operativa de esa
-programación; no son una nueva carrera o programa aprobado por el CES.
+- **Mensaje de IA** (`mensajes_ia`): sílabo, usuario y contenido JSON con tipo
+  (`mensaje` u `ocultamiento`), estado y entrada con clave de idempotencia.
 
-`Paralelo` no tiene estado individual: antes de relacionarse con un sílabo puede
-eliminarse; después se conserva como evidencia histórica. Su disponibilidad se deriva
-de la programación y el período.
+## Operación (`Operations`)
 
-El estado temporal del período no se persiste: se deriva de `fecha_inicio` y
-`fecha_fin` con la fecha local de `America/Guayaquil`. Antes del inicio está
-**Próximo**, dentro del rango inclusivo está **En curso** y después de `fecha_fin` está
-**Finalizado**. Al finalizar, la programación, sus paralelos, asignaciones docentes y
-sílabos se conservan como historia de solo lectura. Las operaciones directas y los
-relevos aplican la misma protección en el servidor (I-64).
-
-### Configuración
-
-- `PlantillaSilabo` institucional única, sin versiones (I-32/I-111): su documento JSON
-  contiene secciones, bloques, tablas y configuración visual. Las definiciones de campo
-  permanecen relacionales por sus referencias transaccionales. Se edita en el sitio.
-- `FuenteAcademica` conserva su nombre físico por compatibilidad, pero desde I-146 es
-  almacenamiento interno de documentos de ingesta I-145. No tiene CRUD público ni
-  alimenta el chat o el revisor mediante recuperación vectorial.
-- `ConceptoCurricular`, `ValorCurricular` e `ImportacionCurricular` conservan el contenido
-  confirmado, su ámbito y procedencia. Los candidatos no modifican la base vigente hasta
-  que Coordinación confirma la selección correspondiente.
-
-No hay publicación: la estructura se comprueba al abrir o reanudar el proceso. Un sílabo
-sin enviar lee la plantilla institucional viva; no conserva una copia de la plantilla con
-la que nació. Una revisión enviada conserva su copia completa y ya no depende de ella
-durante el flujo normal. Cuando Administración cambia la plantilla durante una pausa,
-reanudar requiere confirmación y rehace desde cero todos los sílabos de ese proceso, en
-cualquier estado, incluidos los aprobados y firmados. El reinicio borra sus revisiones,
-aprobaciones, firmas, exportaciones, archivos y mensajes de IA; una auditoría conserva
-el conteo por estado y quién confirmó. El cambio queda marcado durante la pausa y no
-afecta procesos cerrados. Cambiar fechas o pausar y reanudar sin cambios de plantilla no
-rehace sílabos (I-188). Las correcciones de bases académicas mantienen el alcance y las
-protecciones acordadas en I-118/I-144; corregir resultados de aprendizaje solo alcanza a
-la asignatura modificada.
-
-### Proceso de sílabos y convocatoria
-
-`ProcesoSilabos` es el calendario institucional: nombre, período académico, plantilla
-institucional, fecha de inicio, fecha de entrega y estado (`abierto`, `pausado`,
-`cerrado`). Lo administra Administración porque el calendario académico oficial obliga
-a todas las facultades. Se abre desde el período académico con el período fijado, nombre
-y plantilla automáticos; la creación y apertura ocurren en una sola transacción. La base
-impone un solo proceso abierto o pausado a la vez y conserva los cerrados como historial
-(I-121).
-
-Una convocatoria institucional puede eliminarse junto con sus alcances y sílabos
-generados únicamente si nunca hubo un evento `silabo.borrador_iniciado` en ninguno de
-sus expedientes. La eliminación es administrativa, transaccional y auditada.
-
-`Convocatoria` cuelga de un proceso obligatorio y vincula carrera, período heredado del
-proceso, agrupación, fechas y estado (`preparacion`, `abierta`, `pausada`, `cerrada`).
-Hereda la plantilla, el período y las fechas del proceso al prepararse; las fechas se
-copian para validar localmente la ventana de envío. La prórroga institucional actualiza
-la entrega del proceso y la etapa `borrador` de todas sus convocatorias; el inicio no se
-prorroga. Solo se abre con el proceso abierto; al abrirla, la plantilla debe estar completa. I-146 elimina la existencia o selección de fuentes
-como condición para abrir o reanudar la convocatoria.
-
-Una convocatoria está **en curso** cuando ella está abierta y su proceso también. Esa
-condición habilita a los docentes y, por lo mismo, congela lo que sostiene su trabajo:
-con el proceso abierto no se edita la plantilla; los catálogos institucionales, cuentas
-y roles continúan administrables. Con una
-convocatoria en curso no se edita la estructura curricular, los datos curriculares confirmados, programaciones, paralelos ni asignaciones
-genéricas de esa carrera. La asignación docente de un paralelo es la excepción (I-130):
-el sílabo pertenece al paralelo, no a una persona, y su docente es quien tiene hoy la
-asignación vigente. Coordinación quita al docente y asigna otro; el sílabo sigue igual
-en cualquier estado y el nuevo docente continúa. Solo un período finalizado lo impide.
-Para corregir se pausa: Administración
-el proceso —detiene a toda la universidad—, Coordinación su convocatoria —solo su
-carrera—. La plantilla puede cambiarse durante la pausa. Si cambió, Administración ve
-el conteo de sílabos afectados y confirma el reinicio completo al reanudar; si no cambió,
-reanudar conserva los expedientes. Los procesos cerrados permanecen intactos.
-
-### Sílabo
-
-`Silabo` identifica el expediente canónico por asignatura, período y carrera. Fija en
-`contexto_academico` una fotografía de la estructura curricular, materia y su programación al momento de crearse,
-por lo que cambios posteriores no reescriben el expediente. Puede agrupar
-docentes/paralelos compatibles o registrar una excepción justificada.
-
-`RevisionSilabo` es una fotografía inmutable del contenido enviado. El borrador actual
-puede editarse con control de concurrencia; cada envío crea otra revisión.
-
-El contenido dinámico usa definiciones de campo más valores y filas repetibles, no DDL
-por plantilla:
-
-- `ValorCampo` para valores escalares/estructurados;
-- Texto libre (documento JSON en `ValorCampo`) para listas y tablas del docente; I-156
-  retira `FilaRepetible`;
-- referencias explícitas a `DefinicionCampo` y `VersionPlantilla`.
-
-### Revisión
-
-- Comentario de devolución: texto general, etapa (biblioteca o coordinación),
-  autor y fecha, guardado en la revisión devuelta (I-176/I-177). No hay observaciones por
-  campo. El docente no responde: corrige el sílabo y lo reenvía.
-- `Aprobacion`: actor, revisión, fecha, metadatos y huella.
-
-### Validación e IA
-
-- `EjecucionValidacion` y `ResultadoValidacion`: reglas determinísticas reproducibles.
-- `HistorialIA`: mensajes de chat, contexto autorizado y referencias fotografiadas.
-- La generación asistida propone contenido y unidades; el docente decide qué incorpora.
-- I-146 retira ejecución del revisor, recomendaciones aplicables y feedback. Los
-  registros antiguos permanecen para auditoría, sin recrear esas operaciones.
-
-No mezcles ambos subsistemas. Una validación puede bloquear si una regla aprobada lo
-establece; una recomendación de IA nunca bloquea por sí sola.
-
-### Operación
-
-- `ObjetoAlmacenado` y `ArtefactoExportacion`.
-- `Notificacion`, `EventoAuditoria`, `EventoOutbox`, `EjecucionTrabajo`.
+- **Notificación** (`notificaciones`): usuario, clave única (evita duplicados), tipo,
+  título, mensaje, recurso y fecha de lectura.
+- **Evento de auditoría** (`eventos_auditoria`): acción, recurso, resultado (`exito` o
+  `fallido`), detalles y una copia del nombre, rol y carrera del actor.
+- **Ayuda de pantalla** (`ayudas_pantalla`): ruta de la pantalla (única), título,
+  contenido, activa y quién la editó.
 
 ## Invariantes
 
-1. Cada acción protegida exige usuario activo y permiso efectivo sobre el recurso.
-2. No se crean dos coordinaciones activas superpuestas para una misma carrera.
-3. La única plantilla institucional activa crea nuevos sílabos en una convocatoria de cualquier carrera.
-4. Una revisión enviada/aprobada es inmutable en el flujo normal y contiene su propia
-   copia de la plantilla. El reinicio institucional confirmado de I-188 puede eliminar el
-   agregado completo de cualquier estado del proceso pausado cuya plantilla cambió,
-   incluidas aprobaciones y firmas. Las reglas de I-118 siguen aplicando a correcciones
-   de bases académicas. Un sílabo aprobado no se reabre (I-178): cuando aplica el reinicio
-   institucional, se elimina completo y se genera otro sin iniciar.
-5. Todo envío o reenvío inserta una revisión; nunca actualiza la anterior.
-6. Una aprobación apunta a una revisión concreta.
-7. Una aprobación es inmutable; un sílabo aprobado solo puede eliminarse completo.
-8. La comparación solo usa revisiones del mismo expediente autorizado.
-9. El chat cita únicamente el contexto académico/curricular y las tablas de unidades o
-   planificación de su entrada; no consulta fuentes vivas ni índices vectoriales (I-146).
-10. Word y PDF se generan desde la copia que guarda la propia revisión.
-11. Redis y el servicio de IA pueden fallar sin corromper el expediente.
-12. La estructura curricular única de una carrera se define por
-    `cantidad_ciclos_malla`; `codigo_carrera` es obligatorio y único, y no existe código
-    de malla ni estado propio de esa estructura (I-107).
-13. Una materia o relación de requisito pertenece a una única carrera mediante la
-    asignatura.
-14. Programar materias y abrir procesos exige asignaturas activas, programadas con sus
-    paralelos y docentes, no una malla activable.
-15. Todo sílabo y toda revisión conservan el contexto académico fijado al crearse.
-16. Las horas totales de una materia se derivan de sus componentes horarios activos y no
-    de un valor ingresado manualmente.
-
-## Tipos de campo de plantilla
-
-- grupo/sección;
-- texto corto;
-- texto largo con presentación estructurada;
-- número;
-- fecha;
-- selección única o múltiple;
-- booleano;
-- lista o tabla repetible;
-- cálculo;
-- referencia a maestro;
-- campo condicional.
-
-Cada definición tiene clave estable, etiqueta, ayuda, tipo, obligatoriedad, visibilidad,
-origen, permisos, reglas, posición y habilitación de IA.
-
-La cobertura funcional de las doce secciones se detalla en `syllabus-sections.md`.
-
-## Datos estructurados frente a narrativa
-
-Códigos, horas, créditos, resultados, habilidades, TIC/TAC/IA y bibliografía se guardan
-de forma estructurada cuando requieran cálculo, validación o referencia. La plantilla
-persiste la composición visual de la narrativa, listas y tablas como JSON validado; el
-docente no escribe ese JSON a mano ni se usa Markdown como tipo de campo. Nunca se
-extrae un dato exacto desde texto libre si existe una fuente estructurada.
+1. Toda acción protegida exige usuario activo y permiso sobre el registro.
+2. Una carrera tiene como máximo un coordinador activo.
+3. Un paralelo tiene como máximo un docente activo.
+4. Hay una convocatoria por período y solo una abierta o pausada a la vez.
+5. Hay un sílabo por paralelo en cada convocatoria de carrera.
+6. Todo envío crea una revisión nueva; nunca modifica la anterior.
+7. Una revisión enviada no se edita. Solo desaparece si se elimina o se rehace el
+   sílabo completo.
+8. Revisión de coordinación, envío a biblioteca y aprobación se registran una sola vez
+   por revisión.
+9. Word y PDF se generan desde la copia guardada en la revisión.
+10. Las firmas siguen el orden docente → coordinación → biblioteca.
+11. La IA no cambia estados ni escribe en el sílabo.
+12. Redis y el servicio de IA pueden fallar sin dañar el sílabo.
+13. El total de horas de una asignatura es la suma de sus componentes.

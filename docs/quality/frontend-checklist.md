@@ -29,17 +29,18 @@
 - [ ] Pendiente bloquea duplicados sin congelar toda la pantalla.
 - [ ] Guardado/guardado fallido/conflicto/cambios sin guardar son visibles.
 - [ ] Una versión inmutable explica la consecuencia antes de confirmar.
-- [ ] Todo `Dialog` se cierra mediante una acción explícita: no muestra `X` ni responde
-      al fondo o a `Esc`; su acción principal tiene un icono semántico y conserva un
-      indicador de carga cuando corresponda.
+- [ ] Diálogos y hojas laterales no se cierran al hacer clic fuera. `Esc` los cierra
+      solo si no hay cambios sin guardar. Un `Dialog` no muestra `X`: se cierra con una
+      acción explícita. Su acción principal tiene un icono semántico y un indicador de
+      carga cuando corresponda.
 
 ## IA
 
-- [ ] Se etiqueta como recomendación, no validación.
-- [ ] La fuente citada y su extracto se pueden consultar.
-- [ ] Aplicar requiere acción explícita y muestra el cambio.
-- [ ] Fallo/ausencia de evidencia no bloquea.
-- [ ] Confianza no se presenta con falsa precisión.
+- [ ] El chat y la importación de la ficha se presentan como propuestas, no como
+      validación.
+- [ ] Nada se escribe en el sílabo ni en la ficha sin una acción explícita de la persona.
+- [ ] Si la IA está apagada o falla, se explica y el resto de la pantalla sigue usable.
+- [ ] No se muestran nombres de proveedor, modelo ni errores técnicos.
 
 ## Accesibilidad y responsive
 
@@ -62,11 +63,21 @@
 - [ ] Componentes existentes reutilizados.
 - [ ] Toda llamada usa el cliente HTTP compartido y respeta CSRF, cookies y errores.
 - [ ] Pruebas cubren estados y acciones críticas.
-- [ ] Build, lint, tipos y pruebas pasan.
+- [ ] Lint, tipos, pruebas, contrato y build pasan.
 
 ## Automatización disponible
 
-La puerta del repositorio frontend ejecuta `npm test`, `npm run typecheck` y
-`npm run build`. Las comprobaciones automatizadas reducen regresiones, pero los puntos
-manuales anteriores permanecen abiertos hasta registrar evidencia en
-`acceptance-status.md` con la matriz real de `PV-19`.
+En el repositorio frontend, antes de cada push:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run contract:check
+npm run build
+```
+
+`contract:check` compara las llamadas del cliente con el OpenAPI del backend. Estas
+comprobaciones reducen regresiones, pero los puntos manuales siguen abiertos hasta
+registrar evidencia en `acceptance-status.md` (PV-19). Guion manual:
+`manual-review-script.md`.

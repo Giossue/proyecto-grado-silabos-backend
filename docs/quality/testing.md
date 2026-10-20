@@ -2,181 +2,130 @@
 
 ## Objetivo
 
-Demostrar comportamiento, autorización, integridad histórica y operación degradada. La
-cantidad de tests no sustituye cobertura de riesgos.
+Demostrar comportamiento, autorización, integridad de lo enviado y funcionamiento cuando
+falla un servicio externo. La cantidad de pruebas no sustituye la cobertura de riesgos.
 
-## Niveles
+## Dónde viven
 
-### Unitarias
+- **Backend** (este repositorio), con Pest y PHPUnit:
+  - `tests/Unit`: reglas puras (semanas del período, nombres, documentos de campo,
+    lector de OpenParser);
+  - `tests/Feature/<Módulo>`: rutas JSON, políticas, transacciones y trabajos;
+  - `tests/Architecture`: límites de módulos, contrato OpenAPI, protección de la API;
+  - `tests/Integration`: Redis real;
+  - `tests/Support`: ayudas compartidas (crear convocatorias, firmar PDF, logos).
+- **Frontend** (`proyecto-grado-silabos-frontend`):
+  - Vitest en `src/**/*.test.ts`;
+  - Playwright en `tests/e2e`.
 
-- máquina de estados;
-- permisos/invariantes puras;
-- cálculos y reglas de plantilla;
-- claves de idempotencia y huellas;
-- mapeo de contratos externos.
+## Comandos
 
-No necesitan Laravel completo si la regla puede probarse aisladamente.
+No hay CI. Las verificaciones se corren a mano antes de cada push; un push a `main`
+despliega.
 
-### Feature Laravel
+Backend:
 
-- rutas JSON, Form Requests y Policies;
-- transacciones y persistencia;
-- filtros/paginación/alcance;
-- revisión, observación, aprobación y reapertura;
-- carga/descarga privada;
-- eventos, trabajos persistidos y dispatch después del commit.
+| Comando | Qué hace |
+|---|---|
+| `composer verify` | Busca secretos en el repositorio, pasa Pint en modo revisión, Larastan nivel 7 y la suite completa |
+| `php artisan test` | Solo la suite |
+| `composer verify:restore` | Restaura un dump sintético en un clúster efímero de PostgreSQL |
+| `composer benchmark:readiness` | 500 peticiones con concurrencia 50 contra `/health/ready` en loopback |
 
-### Integración
+Frontend:
 
-- constraints/concurrencia específicos de PostgreSQL;
-- Redis/colas y Horizon cuando aplique;
-- renderer DOCX/PDF;
-- almacenamiento real compatible;
-- contrato HTTP del servicio de IA;
-- adaptador institucional contra fixture/entorno autorizado.
-
-### Interfaz y end-to-end
-
-- componentes complejos (editor, diff, observaciones, evidencia);
-- flujo principal Docente/Coordinador/Administrador;
-- teclado, responsive y accesibilidad automatizada + manual;
-- estados de red, conflicto, sesión revocada y proveedor caído.
-
-Las pruebas de componentes y flujos de navegador viven en el repositorio frontend. Allí
-`npm test`, `npm run typecheck` y `npm run build` cubren el contrato del cliente, los
-editores documentales, Texto libre, selección múltiple, booleanos, observaciones e
-IA. La aceptación con documentos y dispositivos reales continúa registrada en PV-19.
-
-La persistencia se verifica aquí con `TemplateDocumentTest` y `ReviewWorkflowTest` sobre
-PostgreSQL: permisos, huellas, saneamiento, datos tipados, reinicio de borradores,
-retiro/restauración de campos e historia inmutable. La prueba de exportación inspecciona
-OOXML generado; no certifica visualmente Microsoft Word.
+| Comando | Qué hace |
+|---|---|
+| `npm run lint` | Prueba las reglas propias de ESLint y luego corre ESLint |
+| `npm run typecheck` | `vue-tsc` sin emitir |
+| `npm test` | Vitest |
+| `npm run contract:check` | Compara las llamadas del cliente con `docs/architecture/openapi.json` del backend |
+| `npm run build` | Tipos y build de Vite |
+| `npm run test:e2e` | Playwright; exige `VITE_API_URL` con una API local en `127.0.0.1` o `localhost` |
 
 ## Base de datos de prueba
 
-Usa PostgreSQL para suites que validan producción. SQLite no puede probar semántica de
-UUID, `timestamptz`, constraints de exclusión, JSON/índices o concurrencia equivalentes.
-Cada test controla sus datos y no depende de orden.
+La suite usa PostgreSQL, nunca SQLite: UUID, `timestamptz`, constraints de exclusión,
+triggers y JSON deben comportarse como en producción. `phpunit.xml` apunta a
+`silabos_ueb_test` en `127.0.0.1:55432` y a Redis en `127.0.0.1:56379`, que levanta
+`compose.yaml`. Las colas corren en modo `sync` y la IA usa el driver `baseline`.
 
-`DatabaseBootstrapTest` verifica que la conexión establezca UTC y que el seeder sintético
-sea idempotente al ejecutarse dos veces, incluidas las asignaciones protegidas por rangos
-de exclusión.
+Cada prueba controla sus datos y no depende del orden. `DatabaseBootstrapTest` comprueba
+que la conexión use UTC y que el seeder de demostración sea idempotente.
 
-## Matriz mínima por mutación
+## Qué probar en cada mutación
 
 1. camino feliz;
 2. entrada inválida;
-3. usuario sin rol;
-4. rol correcto fuera de alcance;
-5. estado inválido;
-6. recurso inexistente/no revelable;
+3. usuario sin el rol;
+4. rol correcto fuera de su carrera;
+5. estado que no permite la acción (convocatoria pausada o cerrada, sílabo enviado);
+6. recurso inexistente o ajeno;
 7. petición repetida;
-8. conflicto concurrente;
-9. rollback a mitad de operación;
-10. auditoría/evento correcto.
+8. conflicto de versión;
+9. rollback a mitad de la operación;
+10. evento de auditoría y aviso correctos.
 
 ## Tiempo y asincronía
 
-- Congela/injecta reloj para vigencias, plazos y zona horaria.
-- Fakes prueban dispatch; una suite integrada prueba el worker real.
-- No uses sleeps para esperar trabajos; observa estado/eventos.
-- Simula reintentos y ejecución duplicada.
-- Verifica que rollback descarte efectos posteriores al commit.
+- Congela el reloj para plazos, fechas del período y zona horaria.
+- Los fakes prueban el despacho; `JobIdempotencyTest` comprueba que cada trabajo sea
+  único y no se solape.
+- No uses `sleep` para esperar trabajos: observa el estado del recurso.
+- `JobDispatchTest` comprueba que `retry_after` supere el timeout de los trabajos de
+  plataforma, exportación y chat. No incluye los de la ficha (ver
+  `docs/plans/pendientes.md`).
 
-## Documentos
+## Documentos y firmas
 
-Prueba contenido y estructura del DOCX/PDF, huella y autorización. Renderiza muestras a
-imagen/PDF y compara visualmente casos representativos. Un archivo “válido” puede estar
-cortado o desalineado.
+- `WordRendererTest` revisa la estructura del Word. `TemplateGoldenWordTest` compara el
+  XML del Word de la plantilla oficial con `tests/Fixtures/golden`. Si un cambio es
+  intencional, se regenera con `UPDATE_GOLDEN=1`.
+- `DocumentOperationsTest` cubre la exportación, la descarga privada y la auditoría.
+  Gotenberg se simula con `Http::fake`.
+- `DocumentSignatureTest` y `SignatureTrustTest` firman PDF de prueba
+  (`tests/Support/SignsPdfIncrementally.php`): orden de firmas, titular, cadena de
+  confianza, PDF alterado y certificado vencido. En el frontend, `signPdf.test.ts` y
+  `DocumentSignatureCard.test.ts` firman en el navegador.
+
+Un archivo válido puede verse cortado o desalineado: la comparación visual con el
+documento oficial sigue siendo manual (PV-07).
 
 ## IA
 
-I-146 retira el revisor y RAG. La cobertura vigente del chat comprueba:
+La suite pasa sin proveedor real. `AiAssistanceTest` y `HostedAiChatGatewayTest` cubren:
 
-- autorización por docente/carrera, límites e idempotencia;
-- contexto académico/curricular fotografiado y Texto libre del docente sin datos personales;
-- ausencia de recuperación textual/vectorial (su código y tablas se borraron en I-168);
-- historia previa conservada, pero excluida de nuevas llamadas al proveedor;
-- referencias inventadas, salida malformada o demasiado grande;
-- prompt injection tratado como datos y ausencia de modificación/decisión automática;
-- timeout, caída y reintento sin impedir la edición determinística;
-- incompatibilidad de caché al cambiar la versión de contexto;
-- rutas del revisor retiradas y trabajos antiguos sin efectos nuevos.
+- alcance del docente y de la carrera, límite de preguntas y de chats;
+- contexto congelado de la carrera, la asignatura y el texto del sílabo, sin datos
+  personales;
+- el chat propone, pero nunca modifica el sílabo;
+- citas inventadas, servicio caído y salida inválida sin bloquear la edición;
+- configuración insegura del proveedor y errores sin exponer la clave;
+- formato de cada proveedor (OpenAI, Claude, DeepSeek).
 
-La extracción curricular I-145 tiene pruebas separadas de evidencia, conflicto,
-asociación a carrera/asignatura y confirmación por lote. `IA-NEG-01` a `IA-NEG-09`
-conservan trazabilidad histórica; no reactivan el revisor retirado.
+`FichaImportTest` y `FichaPdfOcrTest` cubren la importación de la ficha: propuesta,
+aplicación parcial, permisos, falta de proveedor y lectura de PDF con OpenParser.
 
-La suite principal debe aprobar con IA desactivada.
+## Interfaz
 
-## Antecedente de cobertura I-06 (revisor retirado por I-146)
-
-La descripción siguiente documenta la etapa anterior. La cobertura vigente se registra
-en el plan I-146 y en `AiAssistanceTest`; no exige conservar endpoints retirados.
-
-`AiAssistanceTest` usa PostgreSQL real y gateways controlados para cubrir CU-08 e
-`IA-NEG-01` a `IA-NEG-09`:
-
-- autorización por colaborador/carrera/campo, idempotencia y dispatch después del commit;
-- exclusión de fuente inactiva, evidencia vacía y conflicto exacto sin precedencia;
-- contenido hostil tratado como dato y ausencia de modificación/decisión automática;
-- cita inventada, salida sobredimensionada, acción académica y host no loopback;
-- caída con error seguro y continuidad del guardado determinístico;
-- reutilización por clave funcional e invalidación al cambiar contenido;
-- aplicación explícita con huella y `version_bloqueo`, antes/después y repetición idempotente;
-- inmutabilidad y cierre temporal de ejecución, evidencia, recomendaciones, citas y
-  feedback mediante triggers PostgreSQL.
-
-La suite automatizada valida el contrato con `contract-simulator-v1`; no sustituye la
-evaluación experta del modelo/corpus, pruebas de carga del servicio local ni revisión
-manual de accesibilidad, previstas para I-08.
-
-## Cobertura automatizada I-05
-
-`DocumentOperationsTest` usa PostgreSQL real y almacenamiento privado falso para cubrir:
-
-- autorización por revisión y por carrera, idempotencia de solicitud y dispatch;
-- estructura, contenido, huellas y determinismo de DOCX/PDF desde la misma entrada;
-- descarga reautorizada y denegación lateral;
-- fallo seguro y conteo de intentos, con el fallo auditado;
-- trabajo/notificación única, propiedad de lectura e inmutabilidad en PostgreSQL;
-- indicadores y detalle con el mismo alcance de carrera;
-- consulta administrativa y protección append-only de auditoría.
-
-La comparación visual contra el DOCX oficial, accesibilidad manual y prueba en un objeto
-S3 compatible permanecen como evidencia manual/integrada pendiente; no las reemplaza la
-validez estructural.
+- Vitest cubre páginas y componentes: editor del docente, constructor de plantilla,
+  ficha, revisión, biblioteca, firmas, avisos y ayuda.
+- Playwright recorre la navegación por rol, los componentes y la disposición en anchos
+  pequeños. `authentication.spec.ts` y `accessibility.spec.ts` necesitan la API local
+  con datos sembrados; las demás interceptan las respuestas HTTP.
+- Teclado, lector de pantalla, contraste y dispositivos reales se revisan con
+  `manual-review-script.md` (PV-19).
 
 ## Rendimiento, seguridad y usabilidad
 
-- CP-N cubren presupuestos, concurrencia, backup/restauración, compatibilidad y acceso.
-- La carga usa datos representativos y percentiles, no una petición aislada.
-- Seguridad combina pruebas automatizadas, revisión y casos de abuso.
-- Usabilidad usa tareas, éxito, tiempo y errores con instrumento definido.
-
-## Evidencia técnica I-08
-
-- `composer verify` reúne escaneo de secretos, lint PHP/TypeScript/Vue, reglas estáticas
-  de accesibilidad, formato, análisis Larastan nivel 7, suite PostgreSQL y build.
-- `composer verify:restore` crea y elimina un clúster efímero para comprobar un dump
-  sintético; se niega a operar sobre una base sin sufijo seguro.
-- `composer benchmark:readiness` limita el destino a loopback y registra fallos, p95 y
-  tasa con 500 solicitudes/50 concurrencias por defecto.
-- El smoke real debe procesar `critica`; los workers funcionales deben escuchar además
-  `notificaciones`, `documentos`, `ia` e `integraciones`.
-- `eslint-plugin-vuejs-accessibility` protege asociaciones de etiqueta, autofocus y orden
-  de tabulación, pero no reemplaza teclado, lector, contraste, zoom y viewport manuales.
-
-La relación formal individual de `CP-F01..35` y `CP-N01..16` no puede cerrarse porque sus
-enunciados no están en este repositorio. `acceptance-status.md` registra la evidencia por
-capacidad y el procedimiento para incorporar la matriz maestra sin inventarla.
+- La carga usa datos representativos y percentiles, no una petición aislada
+  (`performance.md`).
+- Seguridad combina pruebas automáticas, revisión de código y casos de abuso.
+- La usabilidad se mide con tareas, éxito, tiempo y errores, con un instrumento definido
+  (PV-17).
 
 ## Trazabilidad
 
-Usa nombres como:
-
-```php
-it('CP-F__ RF-___ impide ...', function () { /* ... */ });
-```
-
-o metadatos equivalentes. CI conserva resultados y evidencia de los casos críticos.
+Nombra las pruebas con su caso cuando exista, por ejemplo `test_cp_f_...` o
+`it('RNF-029 ...')`. Al cambiar comportamiento, actualiza la fila de
+`traceability.md`.

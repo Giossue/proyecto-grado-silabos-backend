@@ -33,12 +33,13 @@ vigencia únicamente para carreras en proceso de cierre y rediseños aún vigent
 **Qué sustenta.**
 
 - **El sílabo es de la asignatura, no del docente.** El texto dice «sílabo de asignatura».
-  Es el supuesto sobre el que está construido `silabos`, identificado por convocatoria,
-  asignatura y versión de malla. Confirma la decisión A1 con una fuente escrita, no solo
-  con la respuesta del tutor.
+  En el sistema cada sílabo pertenece a un paralelo de la asignatura dentro de una
+  convocatoria (uno por paralelo); si cambia el docente, el sílabo sigue con el paralelo.
+  Confirma la decisión A1 con una fuente escrita, no solo con la respuesta del tutor.
 - **El sílabo debe existir antes de que empiece el periodo.** Es el anclaje normativo del
-  plazo. Las fechas que fija el coordinador dejan de ser una costumbre y pasan a ser la
-  forma de cumplir una obligación escrita. Sustenta la decisión C1.
+  plazo. Las fechas que fija el Administrador al abrir la convocatoria dejan de ser una
+  costumbre y pasan a ser la forma de cumplir una obligación escrita. Sustenta la
+  decisión C1.
 
 **Qué no dice.** Nada sobre paralelos, ni sobre qué ocurre cuando cambia el docente, ni
 sobre prórrogas.
@@ -89,14 +90,10 @@ UEB, y porque coincide con lo que sí dice la norma vigente de 2021.
 
 ## Lo que no está escrito en ninguna parte
 
-**Un sílabo por paralelo o compartido entre paralelos.** Ni la norma nacional ni los
-reglamentos de la UEB consultados mencionan paralelos a propósito del sílabo. La decisión
-A2 —uno por paralelo— es una definición operativa de la carrera y así debe presentarse en
-la memoria: como decisión de coordinación, no como cumplimiento normativo.
-
-Consecuencia para el diseño: como ninguna norma fija el criterio, retirar del sistema la
-capacidad de agrupar paralelos comprometería el producto con algo que la carrera puede
-cambiar el próximo periodo sin infringir nada.
+**Un sílabo por paralelo.** Ni la norma nacional ni los reglamentos de la UEB consultados
+mencionan paralelos a propósito del sílabo. La decisión A2 —uno por paralelo— es una
+definición operativa de la carrera y así debe presentarse en la memoria: como decisión de
+coordinación, no como cumplimiento normativo.
 
 **Qué ocurre cuando el docente deja de estar en servicio a mitad de periodo.** Ninguna de
 las fuentes consultadas lo regula. Las decisiones B1 a B3 se sostienen solo en la

@@ -1,83 +1,127 @@
-# Servicios de IA e ingesta documental
+# IA y lectura de documentos
 
-## Alcance vigente — I-146
+La IA ayuda en dos lugares. En ambos, una persona decide (ADR-0003):
 
-El chat ayuda a elaborar contenido y unidades desde el contexto académico y curricular
-fotografiado del sílabo. La extracción curricular I-145 propone datos desde documentos
-aportados por Coordinación. Son flujos separados con confirmación humana.
+1. **Chat del docente** sobre su sílabo (`AiAssistance`).
+2. **Importación de fichas**: propone la ficha de cada asignatura a partir de PDF o
+   Excel que sube Coordinación (`Academic`).
 
-Se retiraron el revisor por campo, la revisión integral, sus operaciones de aplicación y
-feedback, y la recuperación textual/vectorial de Fuentes académicas. I-168 borró su
-código, la tabla `documentos_ia`, la extensión `vector` y la configuración de embeddings
-y del revisor. Los gateways del chat son `HostedAiChatGateway`, `BaselineAiChatGateway`
-y `DisabledAiChatGateway`.
+La IA no aprueba, no califica, no cambia estados ni escribe en el sílabo. Si el
+proveedor falla, todo lo demás sigue funcionando.
 
-## Fronteras
+## Proveedor
 
-Laravel conserva permisos, ámbito de carrera, convocatorias, contenido, trabajos y
-decisiones. El chat usa `AiChatGateway`; la extracción documental usa
-`CurricularExtractionGateway`. Los adaptadores no autorizan usuarios ni escriben datos
-académicos por decisión propia.
+Una sola configuración para los dos usos (`config/ai.php`):
 
-```text
-Docente → chat autorizado → contexto fotografiado → cola → AiChatGateway
-       ← propuesta de elaboración y referencias a ese contexto
+| Variable | Uso |
+|---|---|
+| `AI_DRIVER` | `disabled` (por defecto), `baseline`, `openai`, `deepseek`, `claude`/`anthropic` |
+| `AI_BASE_URL` | URL base del proveedor |
+| `AI_MODEL` | Modelo |
+| `AI_API_KEY` | Clave; solo en variables de entorno |
+| `AI_CONNECT_TIMEOUT` / `AI_TIMEOUT` | 2 / 20 s para el chat |
 
-Coordinación → PDF/XLSX privado → lectura/OCR → CurricularExtractionGateway
-            ← propuesta por carrera/materia + extractos + excepciones
-Coordinación → confirma selección → datos curriculares vigentes → nuevos snapshots
-```
+`AppServiceProvider` elige la implementación:
 
-## Contexto del chat
+| Driver | Chat (`AiChatGateway`) | Fichas (`FichaExtractionGateway`) |
+|---|---|---|
+| `disabled` | `DisabledAiChatGateway` | `DisabledFichaExtractionGateway` |
+| `baseline` | `BaselineAiChatGateway`: simulador sin red para pruebas | desactivado |
+| `openai` | `HostedAiChatGateway`, endpoint `responses` | `HostedFichaExtractionGateway`, `chat/completions` |
+| `deepseek` | `HostedAiChatGateway`, `chat/completions` | `HostedFichaExtractionGateway`, `chat/completions` |
+| `claude` / `anthropic` | `HostedAiChatGateway`, `messages` | desactivado |
 
-- Carrera, asignatura, horas y semanas del expediente; datos curriculares confirmados
-  fotografiados; estructura y filas de tablas de unidades/planificación.
-- No se leen otros campos para ampliar ese contexto. La versión `curricular-units-v1` separa las preguntas nuevas del historial
-  anterior, que permanece visible y no se envía al proveedor. Los trabajos de chat
-  anteriores a esa versión terminan sin invocar el gateway.
-- Ninguna búsqueda en documentos vivos ni recuperación vectorial.
-- Referencias del tipo `contexto_academico`, `dato_curricular` y `seccion_silabo`.
-  La respuesta solo puede citar evidencias incluidas en la entrada autorizada.
-- El contenido existente y la pregunta son datos no confiables. No alteran permisos,
-  estados, instrucciones del sistema ni configuración de herramientas.
-- La salida ofrece propuestas; no completa automáticamente campos ni sustituye la
-  validación determinística de semanas, horas o información obligatoria.
+Reglas de conexión:
 
-## Ingesta documental I-145
+- Chat: `AI_BASE_URL` debe ser `https://`, sin usuario ni fragmento.
+- Fichas: si `AI_BASE_URL` está vacío usa `https://api.deepseek.com`. Acepta `http`
+  solo para `localhost`. Necesita `AI_MODEL` y `AI_API_KEY`. Tiempos fijos: 5 s de
+  conexión y 90 s de respuesta.
+- No se siguen redirecciones. La clave no aparece en logs ni respuestas.
 
-PDF y XLSX permanecen privados y asociados a una importación de la carrera. OpenParser
-produce el documento interno PDF; la normalización editorial opcional conserva el
-contenido y las estructuras protegidas. `CurricularWorkbookReader` conserva referencias
-de hoja/celda y rangos combinados. No ejecuta fórmulas ni macros.
+## Chat del docente
 
-La extracción curricular identifica conceptos de texto/lista/tabla, destino y citas.
-Laravel comprueba la correspondencia entre dato, extracto y documento. Solo se guardan
-valores vigentes después de una confirmación con huella, permiso y alcance válidos.
-El detalle técnico está en [academic-source-ingestion.md](academic-source-ingestion.md).
-Estos documentos internos no tienen CRUD público ni alimentan una base vectorizada.
+Rutas: `GET|DELETE teacher/syllabi/{id}/ai-chat` y
+`POST teacher/syllabi/{id}/ai-chat/messages` (límite `ai-analysis`: 6 por minuto por
+usuario y sílabo).
 
-## Configuración, seguridad y degradación
+1. `SendSyllabusAiMessage` guarda la pregunta y una respuesta `pendiente` en
+   `mensajes_ia`. La entrada fija la pregunta, la `idempotency_key`, la versión de
+   contexto `free-text-v3` y la evidencia.
+2. La evidencia la arma `BuildSyllabusChatContext`:
+   - `contexto_academico`: carrera, asignatura, código, ciclo, unidad, créditos, horas
+     y semanas del sílabo;
+   - `seccion_silabo`: el texto de cada campo con contenido.
 
-La configuración de proveedor/modelo del chat permanece disponible. La lectura OCR y la
-extracción curricular conservan sus adaptadores y configuración independientes. Los
-secretos permanecen en configuración del entorno; no se incorporan al documento ni a
-respuestas, logs o mensajes de error.
+   Máximo 50 elementos de hasta 12 000 caracteres.
+3. `AnswerSyllabusChatJob` (cola `ia`) envía la pregunta, los últimos 12 mensajes
+   completados y la evidencia. El prompt limita el alcance a preparar unidades y
+   trata el contexto como datos no confiables.
+4. La respuesta es JSON con `answer` y `citation_ids`. Si cita evidencia que no recibió,
+   el mensaje queda `fallido`. Si no, `completado`.
+5. Un mensaje de una versión de contexto anterior termina `fallido` sin llamar al
+   proveedor.
 
-Cada llamada limita tamaño, tiempo, intentos y salida. La respuesta se valida contra el
-contrato del flujo y se rechazan referencias ajenas. La clave de idempotencia incluye el
-contexto, contenido, modelo e instrucciones relevantes; el historial no se recalcula
-silenciosamente.
+Límites: pregunta de 4 000 caracteres, respuesta de 12 000, cuerpo de 256 KB y 4 096
+tokens de salida.
 
-La indisponibilidad del proveedor afecta solo al servicio de IA correspondiente. La
-elaboración manual, validación, envío, revisión humana y aprobación continúan. La IA no
-califica, aprueba ni bloquea el proceso académico.
+`DELETE …/ai-chat` no borra: agrega un registro `ocultamiento` y la vista se limpia. Los
+mensajes terminados no cambian (trigger `proteger_mensaje_ia`). Se borran solo al
+regenerar o eliminar el sílabo.
 
-## Persistencia e historia
+## Importación de fichas
 
-`historial_ia` conserva solo el chat: sesiones `silabo:{id}:usuario:{usuario}`, tipos
-`mensaje` y `ocultamiento`. Las restricciones de inmutabilidad y la protección de
-aprobados permanecen. Los mensajes usan contexto autorizado del expediente. I-168 quitó
-los mensajes e índices del revisor y la tabla `documentos_ia`.
+Rutas: `GET|POST coordination/ficha-imports`, `POST …/{import}/apply` y
+`DELETE …/{import}`. Detalle del flujo: [sequences.md](sequences.md#6-importación-de-fichas-con-ia).
 
-PV-12, PV-13, PV-14 y PV-18 siguen delimitando privacidad, capacidad y evaluación de los
-servicios vigentes. Embeddings y revisor ya no existen en el código. La evidencia de retirada está en el plan I-146.
+1. Coordinación sube PDF o Excel. Exige la carrera editable, el gateway disponible y
+   que no haya otra importación en curso. Los archivos van a
+   `storage/app/private/importaciones-ficha/{id}/`.
+2. `PrepareFichaImportJob` (cola `ia`, hasta 900 s) extrae el texto con
+   `FichaDocumentText`:
+   - PDF: OpenParser si está activo; si no, `pdftotext -layout` (Poppler);
+   - Excel: PhpSpreadsheet, hasta 20 hojas y 5 000 filas por hoja; rechaza archivos de
+     más de 150 MB descomprimidos;
+   - corta el texto en bloques de unas 1 800 letras y los guarda en `bloques.json`.
+3. Por cada asignatura activa de la carrera, `ExtractSubjectFichaJob` busca sus
+   fragmentos (`FichaEvidence`) y pide a la IA un objeto JSON con los campos de la
+   ficha (campos `coordinacion` de la plantilla).
+   - El prompt pide copiar el texto, no resumir ni inventar, y devolver la bibliografía
+     como `Autor | Título | Año | Ciudad | Editorial | ISBN | Código`.
+   - Temperatura 0,2 y `response_format = json_object`.
+   - Se limpian los valores: textos hasta 4 000 caracteres; listas hasta 40 elementos
+     de 1 500.
+   - Estado por asignatura: `lista`, `sin_evidencia` o `fallida`.
+4. Coordinación revisa la propuesta y elige asignaturas y campos. Aplicar escribe la
+   ficha en `valores_campo` (dueño: asignatura) y borra los archivos. Si hay sílabos en
+   curso, pide confirmación y los regenera.
+
+## OCR con OpenParser
+
+`OpenParserPdfReader` usa la API de OpenParser:
+
+1. `POST /parse/async` con el PDF, `ocr_model` (`paddleocr-vl-1.6`) y
+   `output_format` (`openparser@1`). Envía un `Idempotency-Key` nuevo en cada envío.
+2. Consulta `GET /jobs/{id}` cada `OPENPARSER_POLL_DELAY` segundos hasta
+   `succeeded`, `failed` o `indeterminate`, o hasta `OPENPARSER_MAX_WAIT` (780 s).
+   La espera ocurre dentro de `PrepareFichaImportJob`: el worker queda ocupado.
+3. `GET /jobs/{id}/result?format=openparser@1`. Usa el `markdown` del resultado; si no
+   viene, arma el texto desde `elements` (las tablas como filas separadas por `|`).
+4. Publica en la importación el estado del OCR para que la SPA lo muestre.
+
+Está apagado por defecto. Solo se activa con `OPENPARSER_ENABLED=true`,
+`OPENPARSER_API_KEY` y una `OPENPARSER_BASE_URL` `https://`. Variables y tiempos:
+[deployment.md](deployment.md#ocr-con-openparser).
+
+Referencias: <https://www.openparser.dev/api>,
+<https://www.openparser.dev/openparser-schema> y
+<https://www.openparser.dev/paddleocr-api>.
+
+## Seguridad
+
+- El contenido de documentos, fichas y sílabos se trata como dato no confiable. El
+  prompt lo encierra y prohíbe seguir instrucciones que vengan dentro.
+- Solo Coordinación de la carrera importa fichas. Solo el docente del sílabo usa su
+  chat, y solo mientras puede editarlo (`borrador` o `correccion_solicitada`).
+- Antes de activar un proveedor externo hay que revisar privacidad y aviso al usuario
+  ([aviso-de-privacidad.md](../security/aviso-de-privacidad.md)).

@@ -1,94 +1,58 @@
 # Módulos y límites
 
-## Estructura interna sugerida
+El backend es un monolito modular. Cada módulo vive en `app/Modules/<Módulo>`.
+
+## Módulos
+
+| Módulo | Responsabilidad | Tablas propias |
+|---|---|---|
+| `Identity` | Cuentas, cuatro roles fijos, rol activo en sesión, activación por correo, docentes de la carrera, perfil y preferencias. | `usuarios`, `asignaciones_rol`, `invitaciones_activacion` |
+| `Academic` | Facultades, carreras, períodos, malla (asignaturas y requisitos), paralelos y docentes asignados. Ficha de asignatura y su importación con IA. | `facultades`, `carreras`, `periodos_academicos`, `asignaturas`, `requisitos_asignatura`, `paralelos`, `asignaciones_paralelo`, `importaciones_ficha` |
+| `Configuration` | La plantilla única del sílabo: definición JSON, secciones, campos, bloques, variables, logos e importación/exportación JSON. | `plantilla_silabo`, `secciones_plantilla`, `campos_plantilla`, `definiciones_campo` |
+| `Syllabus` | Convocatorias institucionales y de carrera, sílabos, borrador, validación, envío, revisión de Coordinación, correcciones y regeneración. | `convocatorias_universidad`, `convocatorias_carreras`, `silabos`, `valores_campo`, `revisiones_silabo`, `revisiones_coordinacion`, `aprobaciones`; vista `docentes_vigentes_silabo` |
+| `Library` | Revisión de bibliografía: comentar con motivos o aprobar. Aprobar deja el sílabo `aprobado` y pide la exportación. | `envios_biblioteca` |
+| `Documents` | Word con PHPWord, PDF con Gotenberg, archivos privados, firmas en orden y descargas. | `exportaciones_silabo`, `archivos`, `firmas_documento` |
+| `AiAssistance` | Chat del docente sobre su sílabo. | `mensajes_ia` |
+| `Operations` | Auditoría, notificaciones internas, ayuda por pantalla, lista de preparación y trabajo de humo. | `eventos_auditoria`, `notificaciones`, `ayudas_pantalla` |
+
+Fuera de los módulos quedan el modelo `App\Models\User`, el `DashboardController`, los
+middleware HTTP, los comandos Artisan y `app/Support` (hash canónico, alias de columnas
+y `RunsOnce` para colas).
+
+## Capas
 
 ```text
-app/Modules/Syllabi/
-├── Application/
-│   ├── Actions/
-│   ├── Data/
-│   ├── Queries/
-│   └── Contracts/
-├── Domain/
-│   ├── Entities/
-│   ├── Enums/
-│   ├── Events/
-│   ├── Exceptions/
-│   ├── Policies/
-│   └── ValueObjects/
-├── Infrastructure/
-│   ├── Persistence/
-│   ├── Jobs/
-│   └── Providers/
-└── Presentation/
-    └── Http/
-        ├── Controllers/
-        ├── Requests/
-        └── Resources/
+app/Modules/<Módulo>/
+├── Application/      acciones (casos de uso), consultas y servicios de aplicación
+├── Domain/           contratos, enums, políticas, objetos de valor, excepciones
+├── Infrastructure/   modelos Eloquent, trabajos en cola, gateways, render, correo
+└── Presentation/     controladores y Form Requests HTTP
 ```
 
-No crees carpetas vacías por simetría. Aplica la capa cuando exista una responsabilidad
-real.
+No se crean carpetas vacías por simetría. `Library` y `Operations` no tienen `Domain`.
 
-## Dependencias permitidas
+La única regla automática está en `tests/Architecture/ModuleBoundariesTest.php`: el
+`Domain` de un módulo no usa `Illuminate\Http`, Redis ni controladores.
 
-| Módulo | Puede depender de |
-|---|---|
-| Identidad | soporte común |
-| Académico | identidad (IDs/contratos), soporte, `ProcessLocks` de sílabos para saber si hay convocatoria en curso |
-| Configuración | identidad, académico mediante contratos, `ProcessLocks` de sílabos para saber si el proceso está abierto |
-| Convocatorias | académico, configuración, identidad |
-| Sílabos | académico, configuración, convocatorias, identidad |
-| Revisión | sílabos, identidad |
-| Validación | sílabos/configuración mediante DTO/contratos |
-| IA | contexto fotografiado de sílabos y configuración técnica mediante contratos; generación de unidades sin RAG (I-146) |
-| Documentos | sílabos, configuración mediante snapshots/contratos; DOCX con PhpWord (`PhpWordDocumentRenderer`, I-34) y PDF de texto plano de respaldo |
-| Operaciones | eventos/DTO públicos de módulos |
+## Cómo se comunican
 
-Evita ciclos. Si dos módulos se necesitan mutuamente, extrae un contrato público, un
-evento o revisa el límite.
+- Un módulo llama directamente a acciones o servicios de otro. Ejemplo: `Library`
+  llama a `RequestSyllabusExport` de `Documents` al aprobar la bibliografía.
+- Las lecturas que otro módulo necesita se exponen en `Application/Queries`
+  (`SyllabusNavigationLookup`, `AiHistorySyllabusLookup`, `ExportArtifactLookup`).
+- Las integraciones externas van detrás de un contrato del dominio:
+  `AiChatGateway`, `FichaExtractionGateway` y `DocumentRenderer`.
+  `AppServiceProvider` elige la implementación según la configuración.
+- No hay eventos de dominio ni listeners. Los efectos se resuelven así:
+  - auditoría: `RecordAuditEvent` dentro de la misma transacción;
+  - avisos: `ScheduleWorkflowNotification` / `ScheduleInternalNotification` guardan
+    filas en `notificaciones` dentro de la misma transacción;
+  - trabajo lento: se despacha un job con `afterCommit()`
+    (ver [queues-and-jobs.md](queues-and-jobs.md)).
 
-## Contratos públicos
+## Deuda conocida
 
-Un módulo expone solo:
-
-- acciones/casos de uso invocables;
-- DTO de entrada/salida estables;
-- consultas autorizadas;
-- eventos de dominio/aplicación;
-- interfaces que la infraestructura implementa.
-
-No expone consultas ad hoc sobre sus tablas, modelos Eloquent mutables ni lógica interna.
-
-Las consultas de solo lectura que otro módulo necesita viven en
-`Application/Queries/` del módulo dueño y devuelven identificadores o arreglos, no
-modelos. Ejemplo: `NotificationDestination` (Operaciones) resuelve el destino de un
-aviso con `Syllabus\Application\Queries\SyllabusNavigationLookup`,
-`AiAssistance\Application\Queries\AiHistorySyllabusLookup` y
-`Documents\Application\Queries\ExportArtifactLookup`.
-
-Deuda conocida: aún quedan usos directos de modelos de otros módulos (por ejemplo
-`WorkflowNotificationRecipients` y `SetupChecklist` en Operaciones, y Sílabos sobre modelos de Académico/Configuración). Se migran a este
-patrón cuando se toquen; no hay prueba de arquitectura que los bloquee todavía.
-
-## Eventos recomendados
-
-- `CampaignOpened`
-- `SyllabusDraftCreated`
-- `SyllabusSubmitted`
-- `CorrectionsRequested`
-- `SyllabusResubmitted`
-- `SyllabusApproved`
-- `ApprovedSyllabusReopened`
-- `TemplateVersionPublished`
-- `CurricularImportApplied`
-- `ExportRequested`
-- `ImportCompleted`
-
-Los nombres representan hechos ya confirmados. Efectos externos se procesan después del
-commit y pueden registrarse como `ejecuciones_trabajo` pendientes.
-
-## Soporte común
-
-`app/Support` solo contiene preocupaciones verdaderamente transversales: UUID, reloj,
-idempotencia, paginación, trazas y resultados. No se convierte en un módulo “cajón”.
+Hay dependencias en ambos sentidos entre módulos, por ejemplo `Academic` ↔ `Syllabus`
+y `Syllabus` ↔ `Configuration`. Varios módulos usan modelos Eloquent de otros. Ninguna
+prueba lo impide todavía. Al tocar ese código, se prefiere una consulta en
+`Application/Queries` del módulo dueño que devuelva identificadores o arreglos.

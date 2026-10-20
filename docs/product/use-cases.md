@@ -1,38 +1,37 @@
 # Casos de uso
 
-| ID | Caso de uso | Actor principal | Requisitos |
-|---|---|---|---|
-| CU-01 | Iniciar y cerrar sesión | Todos | RF-001, RF-002, RF-007 |
-| CU-02 | Gestionar usuarios y roles | Administrador | RF-003 a RF-006 |
-| CU-03 | Gestionar estructura académica global y por carrera | Administrador/Coordinador | RF-008 a RF-016 |
-| CU-04 | Diseñar y publicar plantilla | Administrador | RF-017 a RF-026 |
-| CU-05 | Versionar y activar fuentes | Coordinador/Administrador | RF-027 a RF-033 |
-| CU-06 | Abrir convocatoria de sílabos | Coordinador | RF-034 a RF-036 |
-| CU-07 | Elaborar sílabo | Docente | RF-037 a RF-044 |
-| CU-08 | Analizar contenido con IA | Docente | RF-046 a RF-054 |
-| CU-09 | Enviar sílabo | Docente | RF-043, RF-045, RF-047 |
-| CU-10 | Revisar y observar | Coordinador | RF-055 a RF-058 |
-| CU-11 | Corregir y reenviar | Docente | RF-058 a RF-060 |
-| CU-12 | Comparar revisiones | Coordinador/Docente autorizado | RF-061 |
-| CU-13 | Aprobar sílabo | Coordinador | RF-062, RF-063 |
-| CU-14 | Eliminar sílabo aprobado (reemplaza la reapertura, I-178) | Coordinador | RF-064 |
-| CU-15 | Exportar Word y PDF | Usuario autorizado | RF-066 a RF-069 |
-| CU-16 | Consultar avance en el Panel (I-122) | Coordinador | RF-036, RF-070 a RF-072 |
-| CU-17 | Auditar el proceso | Administrador | RF-073, RF-074 |
-| ~~CU-18~~ | ~~Sincronizar datos institucionales~~ | — | Retirado el 2026-08-27 junto con el módulo de importación. RF-016 y RF-075 quedan sin implementación. |
+| ID | Caso de uso | Actor principal | Requisitos | Pantallas |
+|---|---|---|---|---|
+| CU-01 | Iniciar y cerrar sesión, elegir ámbito | Todos | RF-001, RF-002, RF-007 | UI-01, UI-02 |
+| CU-02 | Gestionar usuarios y roles | Administrador; Coordinador para docentes de su carrera | RF-003 a RF-006 | ADM-02, ADM-03, COR-15 |
+| CU-03 | Gestionar facultades, carreras, malla y paralelos | Administrador; Coordinador en su carrera | RF-008 a RF-016 | ADM-04, COR-13, COR-14 |
+| CU-04 | Configurar la plantilla del sílabo | Administrador | RF-017 a RF-026 | ADM-06 |
+| CU-05 | Mantener el Proyecto de carrera (fichas e importación) | Coordinador | RF-027 a RF-033 en su alcance actual | COR-16 |
+| CU-06 | Abrir la convocatoria e iniciar la de la carrera | Administrador; Coordinador | RF-034 a RF-036 | ADM-12, COR-01, COR-04 |
+| CU-07 | Elaborar el sílabo | Docente | RF-037 a RF-044 | DOC-02, DOC-04 |
+| CU-08 | Pedir ayuda al chat de IA | Docente | RF-046 a RF-054 en su alcance actual | DOC-06 |
+| CU-09 | Validar y enviar el sílabo | Docente | RF-043, RF-045, RF-047 | DOC-05, DOC-07 |
+| CU-10 | Revisar y solicitar corrección | Coordinador; Bibliotecario | RF-055 a RF-058 | COR-05, COR-06, COR-08, BIB-02, BIB-03 |
+| CU-11 | Corregir y reenviar | Docente | RF-058 a RF-060 | DOC-08 |
+| CU-12 | Comparar revisiones | Coordinador | RF-061 | COR-07 |
+| CU-13 | Aprobar (Coordinación su etapa; Biblioteca la bibliografía) | Coordinador; Bibliotecario | RF-062, RF-063 | COR-09, BIB-03 |
+| CU-14 | Eliminar un sílabo aprobado | Coordinador | RF-064 | COR-10 |
+| CU-15 | Firmar y descargar Word y PDF | Docente; Coordinador; Bibliotecario | RF-066 a RF-069 | DOC-10, BIB-03 |
+| CU-16 | Consultar el avance en el Panel | Todos | RF-036, RF-070 a RF-072 | ADM-01, COR-01, DOC-01, BIB-01 |
+| CU-17 | Auditar el proceso | Administrador | RF-073, RF-074 | ADM-10 |
 
-## Plantilla breve para implementar un caso
+CU-18 (sincronizar datos institucionales) está retirado: no hay integración con sistemas
+externos.
 
-Antes de modificar código, documenta en el plan activo:
+## Antes de implementar un caso
 
-- actor y rol;
-- disparador;
-- precondiciones;
-- flujo principal;
-- alternativas y errores;
-- transición/efecto persistente;
+Anota en el plan activo:
+
+- actor, rol y alcance;
+- disparador y precondiciones;
+- flujo principal, alternativas y errores;
+- cambio de estado o dato persistente;
 - autorización por registro;
-- evento de auditoría;
-- notificaciones/trabajos posteriores al commit;
+- evento de auditoría y avisos;
 - criterios de aceptación y casos `CP`;
-- dependencias `PV`.
+- decisiones `PV` de las que depende.

@@ -1,156 +1,142 @@
 # Archivos y documentos
 
-## Objetos privados
+## Archivos privados
 
-Fuentes, plantillas DOCX y exportaciones viven en un disco privado. La base conserva:
+Todos los archivos viven en el disco `private` (`storage/app/private`). En producción
+esa carpeta debe estar en un volumen persistente (ver [deployment.md](deployment.md)).
 
-- UUID del objeto;
-- nombre lógico y MIME detectado;
-- tamaño y huella;
-- propietario y alcance;
-- clasificación;
-- ubicación interna no expuesta;
-- fecha y estado.
+| Ruta | Qué guarda | Fila en `archivos` |
+|---|---|---|
+| `exports/{revisión}/{exportación}/syllabus.docx` | Word de la revisión aprobada | sí (`syllabus_export`) |
+| `exports/{revisión}/{exportación}/syllabus.pdf` | PDF sin firmas | sí (`syllabus_export`) |
+| `exports/{revisión}/{exportación}/silabo-firmado-{rol}.pdf` | PDF después de cada firma | sí (`syllabus_signed_export`) |
+| `logos/facultades/{facultad}/{uuid}.png` | Logo de facultad | sí (`logo_facultad`) |
+| `logos/institucion.png` | Logo de la universidad | no |
+| `importaciones-ficha/{importación}/…` | Documentos y `bloques.json` de una importación | no; se borran al aplicar o descartar |
+| `ca-confiables.pem` (sugerido) | Entidades certificadoras reconocidas | no |
 
-Las descargas pasan por autorización por registro y usan streaming o URL temporal corta.
-El nombre físico no concede acceso.
+La tabla `archivos` guarda disco, ruta interna, nombre, tipo MIME, tamaño, hash
+SHA-256, categoría, quién lo subió y cuándo. Es inmutable. Las tablas de dominio
+apuntan a `archivos`; nunca guardan una ruta como dato de negocio.
 
-## Carga segura
+Los logos se publican sin sesión en `GET /logos/institucion` y
+`GET /logos/facultad/{id}`, porque aparecen en la vista previa.
 
-- límite de tamaño y extensiones permitidas por capacidad;
-- detección de tipo real, no solo nombre;
-- nombre generado por servidor;
-- cuarentena/escaneo cuando la infraestructura lo permita;
-- rechazo de archivos activos no necesarios;
-- metadatos y errores sin contenido sensible;
-- limpieza de cargas abandonadas mediante trabajo controlado.
+## Cargas
 
-## Generación documental
+| Carga | Regla |
+|---|---|
+| Ficha (PDF/Excel) | hasta 6 archivos de 20 MB, `pdf`, `xlsx` o `xls` |
+| Planillas de usuarios, docentes, carreras y malla | `xlsx` de hasta 2 MB |
+| Logos | PNG transparente de hasta 4 MB; se ajusta al tamaño del encabezado |
+| PDF firmado | `application/pdf` de hasta 40 MB |
 
-Entrada inmutable:
+Nginx del backend acepta cuerpos de hasta 32 MB (`client_max_body_size`). El nombre
+físico lo genera el servidor.
 
-```text
-revision_id + huella_del_snapshot + renderer_version + locale
-```
+## Descargas
 
-Proceso:
+- `GET exports/{exportación}/{docx|pdf}` exige permiso sobre la revisión, exportación
+  `completado` y las tres firmas (`ExportArtifactPolicy::download`).
+- El PDF que se entrega es el último firmado.
+- La respuesta se transmite desde el disco con `X-Content-Type-Options: nosniff` y se
+  audita como `documento.descargado`.
+- Quien debe firmar obtiene el PDF vigente en `GET revisions/{id}/signature/pdf`.
 
-1. autorizar solicitud;
-2. fijar una clave idempotente;
-3. cargar snapshot de revisión y plantilla;
-4. validar marcadores/mapeos;
-5. generar DOCX;
-6. generar PDF desde la misma entrada aprobada;
-7. validar estructura y render visual;
-8. calcular huella, guardar objeto y registrar artefacto;
-9. notificar finalización.
+## Generar Word y PDF
 
-El motor de generación se seleccionará después de una prueba con el DOCX oficial
-(`PV-07`). Se accede mediante `DocumentRenderer`, no desde el dominio.
+Al aprobar la bibliografía se pide la exportación de forma automática
+(ver [sequences.md](sequences.md#4-verificación-de-biblioteca-y-exportación-automática)).
+`GenerateSyllabusExportJob` hace:
 
-I-05 incorpora `baseline-ooxml-pdf-v1` como implementación técnica reversible del
-puerto. Valida estructura OOXML, XML principal y marcadores PDF antes de publicar; su
-salida se rotula como provisional y no demuestra fidelidad visual institucional.
+1. pasa la exportación a `en_ejecucion`;
+2. toma la fotografía de la revisión (`revisiones_silabo.contenido_enviado`) y le
+   agrega las variables de aprobación;
+3. arma el Word con `PhpWordDocumentRenderer`;
+4. convierte el Word a PDF con Gotenberg, o escribe un PDF de texto si no hay
+   `GOTENBERG_URL`;
+5. comprueba que ambos archivos son válidos (`DocumentBundleValidator`);
+6. guarda los archivos, marca `completado` y avisa a quien pidió la exportación.
 
-I-34 incorporó PHPWord. I-56 usa `phpword-docx-v3+text-pdf-v2`; I-57 eleva el snapshot a
-esquema 4 para conservar `blocks[].page_orientation`, además de `blocks[].document` y
-`template_variables`. `TemplateDocumentResolver` sustituye tokens y expande
-filas/unidades/totales exclusivamente con esa fotografía.
-`TemplateDocumentWord` traduce nodos permitidos a PHPWord: fuentes, marcas, alineación,
-listas, fondos, anchos, `gridSpan` y `vMerge`. La planificación abre una sección carta
-horizontal, cada unidad posterior inicia página y las cabeceras se repiten al desbordar;
-el resto vuelve a la orientación general. No importa HTML ni recursos externos.
-`phpword-docx-v4` corrige el desborde de texto en el PDF de LibreOffice: PhpWord armaba
-`w:tblGrid` con la fila de más celdas sin contar `gridSpan`; `WordTableGrid` recalcula
-la rejilla con los bordes reales de todas las filas, ajusta cada `tcW` a ella, fija el
-ancho total en twips y usa `tblLayout=fixed`. Si una palabra no cabe en su celda, la
-tabla baja la letra desde la del cuerpo hasta 7 pt (6 pt solo en esa celda); una
-cabecera que ni así cabe se escribe en vertical, como «Semana» en el formato UEB.
-Las revisiones anteriores sin documento mantienen su lector. Los artefactos existentes
-no se modifican; la versión del motor participa en la idempotencia.
+Versión del motor: `phpword-docx-v4+libreoffice-pdf-v1` con Gotenberg y
+`phpword-docx-v4+text-pdf-v2` sin él. Se registra en la auditoría de la solicitud.
 
-I-138: fuera del título y los logos del encabezado, nada del documento está fijo en
-código. La sección «Revisión y aprobación» es contenido fijo editable de la plantilla
-con las variables `nombre_docente`, `nombre_coordinador`, `fecha_entrega` y
-`fecha_revision`; las tres últimas no existen al enviar y `GenerateSyllabusExportJob` las
-completa desde la aprobación (fecha de envío, nombre de quien aprobó y fecha de
-aprobación, hora de Ecuador). Solo muestran nombres y fechas: la firma digital dentro del
-sistema es trabajo aparte.
+### El Word sale de la definición congelada
 
-I-165 agrega los datos automáticos de firma `firma_docente`, `firma_coordinador` y
-`firma_bibliotecario`. Su valor es fijo (`SignatureAnchor`): cuatro líneas en blanco para
-el sello y la etiqueta «Firma del docente», «Firma de coordinación» o «Firma de
-biblioteca». La plantilla decide dónde van. `SignatureStampLocator` busca en el PDF la
-etiqueta del rol que firma y centra el sello (150 × 48 pt) justo encima. Si no la
-encuentra, usa las etiquetas «Firma:» por orden o, en último caso, el pie de la última
-página, con tres posiciones. El formato oficial trae una tabla de tres columnas con
-estas variables. La firma es incremental (PAdES) en orden docente → coordinación →
-biblioteca y solo empieza cuando biblioteca aprobó la bibliografía; el PDF no cambia
-entre firmas.
+La fotografía de cada revisión (esquema 9) guarda:
 
-I-227, validación de la firma recibida: el navegador firma con el `.p12` del usuario y solo
-sube el PDF firmado; el archivo y su clave no salen del equipo. El servidor comprueba que la
-firma cubre el documento vigente, que el certificado está vigente y que su titular coincide
-con la cuenta (`SignerHolderMatcher`: mismas palabras del nombre sin importar orden, tildes
-ni mayúsculas; `SIGNATURE_REQUIRE_HOLDER_MATCH`, activo por defecto). Si
-`SIGNATURE_TRUSTED_CA_BUNDLE` apunta a un archivo PEM con las entidades certificadoras
-reconocidas, también exige que la cadena del certificado llegue a una de ellas; vacío, solo
-verifica integridad (DT-16). No hay sello de tiempo externo.
+- `template_definition`: la definición completa de la plantilla al enviar;
+- `logos`: logos de la universidad y la facultad en base64;
+- `identification` y `template_variables`: datos del sistema ya resueltos;
+- `sections[].fields[]`: cada campo con su documento Tiptap y su valor resuelto.
 
-Descarga: el DOCX y el PDF solo se descargan cuando están las tres firmas, y el PDF que se entrega es el firmado (`ExportArtifactPolicy::download`). La tarjeta de firmas ofrece «Descargar PDF firmado» solo en estado `firmado`. Quien firma obtiene el PDF vigente por `signature/pdf`, que usa la propia firma en el navegador. Cargar el archivo PEM con las
-raíces e intermedias reconocidas por la UEB es un paso de despliegue, no de código.
+`SyllabusWordDocument` usa `TemplateContext::fromSnapshot()`. Por eso papel, letra,
+colores, título, encabezado, pie, bloques y textos salen de la fotografía, no de la
+plantilla viva. Cambiar la plantilla después no cambia un documento enviado.
+Las fotografías antiguas sin `template_definition` usan la plantilla oficial
+(`resources/templates/silabo-oficial.json`).
 
-El PDF continúa como respaldo de texto (ahora incluye texto fijo y variables del diseño);
-no se promete maquetación de tablas, colores ni cortes iguales al DOCX. La fidelidad
-institucional y el motor PDF siguen sujetos a PV-07.
+Qué hace el render:
 
-## Fidelidad
+- encabezado con hasta dos logos y el título del documento;
+- una sección de Word por sección de la plantilla, vertical u horizontal;
+- `TemplateDocumentWord` traduce el documento Tiptap: párrafos, marcas, alineación,
+  listas anidadas, tablas con `gridSpan`/`vMerge`, colores y anchos;
+- `WordTableGrid` recalcula la rejilla de cada tabla con anchos fijos; si una palabra no
+  cabe, baja la letra hasta 7 pt (6 pt en esa celda);
+- bloques (unidades, evaluación, etc.) según su `layout` en la definición;
+- pie y línea de metadatos según `document.footer` y `document.metadata` (la oficial
+  usa «Página {page} de {pages}»);
+- no importa HTML ni descarga recursos externos.
 
-Las pruebas incluyen tablas, saltos, encabezados/pies, caracteres, contenido largo,
-repetibles, páginas y fuentes. La equivalencia se evalúa con contenido extraído y render
-visual. Nunca declares éxito solo porque el archivo abre.
+### Variables que se completan al exportar
+
+| Variable | Valor |
+|---|---|
+| `fecha_entrega` | Fecha de envío de la revisión |
+| `nombre_coordinador` | Nombre de quien registró la aprobación (`aprobaciones.aprobado_por`) |
+| `fecha_revision` | Fecha de la aprobación |
+| `firma_docente`, `firma_coordinador`, `firma_bibliotecario` | Espacio en blanco y la etiqueta «Firma del docente», «Firma de coordinación» o «Firma de biblioteca» (`SignatureAnchor`) |
+
+Diferencia conocida: la aprobación la registra Biblioteca. Por eso
+`nombre_coordinador` y `fecha_revision` muestran hoy el nombre y la fecha de Biblioteca,
+no los de `revisiones_coordinacion`.
+
+## Firma electrónica (I-227)
+
+La firma es incremental (PAdES) y se hace en el navegador. Orden fijo:
+docente → coordinación → biblioteca. Solo empieza cuando la revisión está aprobada y
+el PDF existe.
+
+En el navegador (`src/lib/signature` del frontend):
+
+1. pide el PDF vigente y la posición del sello;
+2. lee el `.p12` con su clave; ni el archivo ni la clave salen del equipo;
+3. agrega una firma incremental con el sello visible;
+4. sube solo el PDF firmado y la huella del PDF del que partió.
+
+En el servidor (`AcceptDocumentSignature`):
+
+1. bloquea la exportación y comprueba que es el turno de ese rol;
+2. comprueba que el PDF base no cambió mientras se firmaba;
+3. `IncrementalPdfSignatureVerifier`: el PDF firmado empieza con los bytes exactos del
+   vigente, agrega una sola firma nueva, esa firma cubre todo el archivo y la firma
+   CMS es válida;
+4. si `SIGNATURE_TRUSTED_CA_BUNDLE` apunta a un PEM, exige que la cadena llegue a una de
+   esas entidades; vacío, solo verifica integridad;
+5. si `SIGNATURE_REQUIRE_HOLDER_MATCH` es `true`, el titular del certificado debe
+   coincidir con el nombre de la cuenta (`SignerHolderMatcher`: mismas palabras, sin
+   importar orden, tildes ni mayúsculas);
+6. guarda el PDF, la fila en `archivos` y en `firmas_documento` (titular, número de
+   serie, emisor, vigencia y fecha); audita y avisa al siguiente firmante.
+
+`SignatureStampLocator` lee el PDF con `pdftotext -bbox` y ubica el sello sobre la
+etiqueta del rol. Si no la encuentra, usa las etiquetas «Firma:» en orden y, por último,
+el pie de la última página. No hay sello de tiempo externo.
+
+Configuración y armado del PEM: [deployment.md](deployment.md#firma-electrónica).
 
 ## Retención
 
-No implementes borrado definitivo hasta resolver `PV-11` y `PV-12`. Una política futura
-debe cubrir originales, artefactos, temporales, backups y derecho/obligación de conservar.
-
-## Snapshot v7 y recorrido por tipo (I-195, etapa 4)
-
-El snapshot sube a `schema_version` 7: cada sección añade `fields[]` planos con `type`, `config` y
-valor resuelto (el automático `identification_card` guarda la ficha de datos maestros del momento
-del envío). `SyllabusWordDocument` conserva título, logos y metadatos; por sección, si todos los
-campos son del modelo nuevo delega en `FieldType::toWord` (`WordFieldRenderer::renderTyped`), y si
-alguno tiene clase anterior usa el render viejo. El PDF sigue saliendo de Gotenberg a partir del
-mismo Word. Los snapshots v6 se siguen leyendo; la deuda se retira en la etapa 8.
-
-## Logos dentro del snapshot
-
-Desde que el envío guarda el snapshot, este incluye `logos.institution` y `logos.faculty` en base64,
-tal como estaban en ese momento. `SyllabusWordDocument` los usa primero; si el snapshot no los trae
-(los anteriores a este cambio no se reescriben) toma el logo vigente. Cambiar un logo después no
-altera los documentos de un sílabo ya enviado.
-
-## Formato oficial del Word (I-195)
-
-El Word imita el sílabo oficial: dos logos arriba, título «PROGRAMA DE ASIGNATURA (SÍLABO)» centrado,
-en negrita y azul UEB (`#2F5496`), Arial de 10 pt (título a 14 pt), texto justificado y títulos de sección
-numerados en negrita. El contenido de los campos de texto, ficha y fijo (`WordRenderContext::writeBoxed`)
-va en un recuadro de borde azul fino (`#0070C0`); la tabla de identificación y las tablas no llevan
-recuadro extra. Decisión: `TemplateAppearance::INSTITUTIONAL_STYLE` fija estos valores y `normalize`
-ignora los guardados (fuente Arial, tamaños, margen 2,5 cm, orientación vertical, alineación), igual que ya
-hacía con colores y negritas; las columnas y valores guardados siguen en la base sin migración. El papel
-sigue siendo Carta (el oficial es A4: pendiente). Gotenberg convierte este mismo Word a PDF; el parecido
-visual no se ha comprobado a mano.
-
-I-225 (19 de octubre de 2026) vuelve editables solo los márgenes y los tamaños de título, sección y
-contenido. Desde I-229 todo el formato (papel, letra, colores, título, logos, pie y metadatos) sale de
-`definicion_plantilla.document` congelado en la fotografía; `TemplateAppearance` ya no existe y los valores de la
-UEB viven en `resources/templates/silabo-oficial.json`. Los encabezados de tabla con fondo propio conservan su color
-de texto; el color de encabezado de la plantilla solo se aplica a los que no tienen fondo. Un párrafo con alineación propia distinta de «izquierda» prevalece sobre la del cuerpo.
-Cada sección del Word lleva en el pie «Página X de Y» (campos `PAGE` y `NUMPAGES`).
-
-Contenido fijo oficial (I-195, 2026-10-07): las tablas de evaluación (indicadores y escala) y de firmas usan celdas de
-encabezado (`tableHeader`, con sombreado) y el texto de conducta ética lleva listas anidadas; el Word las escribe con
-sangría por nivel (hasta tres niveles de viñeta o numeración). Los textos del docente marcados `inside` no se repiten
-debajo de la tabla de identificación. Lo que no reproduce: color propio por tabla, hoja horizontal, firma electrónica con QR.
+No hay borrado automático de archivos. Los archivos de un sílabo solo se borran cuando
+se regenera o se elimina ese sílabo (`InProgressWork`), después del commit.

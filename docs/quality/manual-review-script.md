@@ -1,93 +1,110 @@
 # Guion de revisión manual
 
-Cubre lo que la Definition of Done exige y ninguna prueba automatizada puede demostrar:
-teclado, foco, lector de pantalla, contraste percibido, zoom y ancho reducido. Al
-terminarlo se desbloquea el cierre de nueve planes.
+Cubre lo que ninguna prueba automática demuestra: teclado, foco, lector de pantalla,
+contraste percibido, zoom, ancho reducido y el recorrido real con los cuatro roles.
 
 Marca cada casilla solo si se cumple. Si algo falla, anota la página y qué ocurrió al
-final del documento; eso es un defecto con dueño, no una opinión.
+final del documento.
 
 ## Antes de empezar
 
-- Fija el tema en **Claro** u **Oscuro** desde el encabezado, nunca en «Sistema»: si
-  queda en automático no sabrás cuál estás revisando.
-- Ten a mano el ancho reducido: en el navegador, `F12` y activa la vista de dispositivo
-  con **360 px**.
-- Para el lector de pantalla en Linux, `Orca` se activa con `Super + Alt + S`.
+- Prepara la demostración local con `docs/runbooks/demo.md`: cuatro cuentas del seeder,
+  plantilla oficial y worker de colas.
+- Fija el tema en **Claro** u **Oscuro**, nunca en «Sistema».
+- Ancho reducido: `F12` y vista de dispositivo con **360 px**.
+- Lector de pantalla en Linux: `Orca` se activa con `Super + Alt + S`.
 
 ## Muestra a revisar
 
-No hace falta recorrer las 29 páginas. Estas seis cubren todos los patrones del sistema;
-si funcionan, el resto los reutiliza.
+Estas páginas cubren los patrones del sistema; el resto los reutiliza.
 
-| # | Página | Ruta | Qué patrón representa |
+| # | Página | Ruta | Patrón |
 |---|---|---|---|
 | 1 | Acceso | `/ingresar` | Formulario simple y errores |
-| 2 | Panel | `/admin/panel`, `/coordinacion/panel`, `/docente/panel` | Indicadores y encabezado |
-| 3 | Carreras | `/admin/estructura-academica/carreras` | Listado, filtros, tabla, menú de fila y panel lateral |
-| 4 | Usuarios | `/admin/usuarios` | Listado con estados y acciones |
-| 5 | Editor de sílabo | `/docente/mis-silabos` → abrir uno → Editar | La superficie más compleja: campos dinámicos y autoguardado |
-| 6 | Revisión | `/coordinacion/revisiones` | Lectura densa y tablas anchas |
+| 2 | Panel | `/admin/panel`, `/coordinacion/panel`, `/docente/panel`, `/biblioteca/panel` | Indicadores y encabezado |
+| 3 | Facultades y carreras | `/admin/estructura-academica` | Pestañas, tabla, menú de fila y hoja lateral |
+| 4 | Usuarios y roles | `/admin/usuarios` | Listado con estados, filtros y acciones |
+| 5 | Plantilla | `/admin/plantilla` | Editor sobre la hoja y diálogo «Editar JSON» |
+| 6 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Ficha por asignatura e interruptores |
+| 7 | Sílabo | `/docente/mis-silabos` → abrir uno | Editor a pantalla completa y autoguardado |
+| 8 | Revisión | `/coordinacion/revisiones` → abrir una | Lectura densa, decisión y firma |
+| 9 | Revisión de bibliografía | `/biblioteca/revisiones` → abrir una | Motivos, aprobación y firma |
 
 ## 1. Teclado y foco
 
-Recorre cada página de la muestra usando **solo el teclado**.
+Recorre cada página **solo con el teclado**.
 
-- [ ] `Tab` avanza en el orden visual, sin saltos hacia atrás ni trampas.
-- [ ] **Siempre se ve dónde está el foco**: ningún elemento lo recibe de forma invisible.
-- [ ] El menú lateral es alcanzable y sus submenús se abren con `Enter` o `Espacio`.
-- [ ] El acceso de notificaciones del encabezado es alcanzable, anuncia los pendientes y
-      abre UI-03 con cualquiera de los tres roles.
-- [ ] En una tabla, el menú de tres puntos se abre con teclado y sus opciones se
-      recorren con flechas.
-- [ ] Al abrir un panel lateral el foco entra en él y **no se escapa** al fondo.
-- [ ] `Esc` cierra el panel y el foco vuelve al botón que lo abrió.
+- [ ] `Tab` avanza en el orden visual, sin saltos ni trampas.
+- [ ] **Siempre se ve dónde está el foco.**
+- [ ] El menú lateral es alcanzable y se abre con `Enter` o `Espacio`.
+- [ ] La campana de avisos es alcanzable, anuncia los pendientes y abre la lista con
+      cualquiera de los cuatro roles.
+- [ ] El menú de tres puntos de una tabla se abre con teclado y sus opciones se recorren
+      con flechas.
+- [ ] Al abrir un diálogo o una hoja lateral, el foco entra y **no se escapa** al fondo.
+- [ ] `Esc` cierra el diálogo si no hay cambios sin guardar, y el foco vuelve al botón
+      que lo abrió.
 - [ ] Tras guardar, el panel se cierra **una sola vez** y no reaparece.
-- [ ] Ningún control necesita el ratón para usarse.
+- [ ] Ningún control necesita el ratón.
 
 ## 2. Lector de pantalla
 
-Con Orca activo, sobre las páginas 3 y 5 de la muestra.
+Con Orca activo, sobre las páginas 3, 7 y 9.
 
 - [ ] El título de cada página se anuncia al entrar.
-- [ ] Los campos se anuncian con su etiqueta, no con su posición.
-- [ ] Un error de validación se anuncia y dice **qué campo** y **qué corregir**.
-- [ ] Los botones de solo icono se anuncian con su propósito, no como «botón».
+- [ ] Los campos se anuncian con su etiqueta.
+- [ ] Un error dice **qué campo** y **qué corregir**.
+- [ ] Los botones de solo icono anuncian su propósito.
 - [ ] La tabla se anuncia con sus encabezados de columna.
-- [ ] Al abrir el panel lateral se anuncia su título.
+- [ ] Al abrir una hoja lateral se anuncia su título.
 
 ## 3. Contraste percibido
 
-Los cálculos ya se hicieron; esto es mirar con ojos.
-
-- [ ] En **ambos temas**, el texto secundario gris se lee sin esfuerzo.
-- [ ] Las etiquetas de estado se distinguen sin depender solo del color.
+- [ ] En **ambos temas**, el texto secundario se lee sin esfuerzo.
+- [ ] Las etiquetas de estado no dependen solo del color.
 - [ ] El borde de un campo se ve antes de tocarlo.
-- [ ] La tarjeta se distingue del fondo en los dos temas.
-- [ ] Las sombras no crean halos sucios en oscuro.
+- [ ] La tarjeta se distingue del fondo.
+- [ ] La hoja del sílabo y de la plantilla se ve blanca y legible en tema oscuro.
 
 ## 4. Zoom al 200 %
 
-Con `Ctrl` y `+` hasta el 200 %, en las páginas 3 y 5.
+Con `Ctrl` y `+` hasta el 200 %, en las páginas 3, 5 y 7.
 
-- [ ] No se pierde contenido ni aparecen barras horizontales.
+- [ ] No se pierde contenido ni aparece desplazamiento horizontal de la página.
 - [ ] Nada se solapa ni queda cortado.
-- [ ] Los botones siguen siendo alcanzables.
+- [ ] Los botones siguen alcanzables.
 
 ## 5. Ancho de 360 px
 
-- [ ] El menú lateral se convierte en algo abrible y no tapa el contenido.
-- [ ] Las tablas se desplazan sin romper la página.
-- [ ] Los paneles laterales ocupan el ancho completo y siguen siendo usables.
+- [ ] El menú lateral se abre con «Abrir el menú» y no tapa el contenido.
+- [ ] Las tablas se ven como tarjetas con sus datos etiquetados.
+- [ ] Las hojas laterales ocupan el ancho completo y siguen usables.
 - [ ] Ningún texto se corta a media palabra.
 
-## 6. Ambos temas
+## 6. Recorrido con los cuatro roles
 
-Repite un recorrido rápido por la muestra cambiando de tema.
+Sigue `docs/runbooks/demo.md` de principio a fin y comprueba:
 
-- [ ] Ningún texto queda invisible sobre su fondo.
-- [ ] Los iconos se ven en los dos temas.
-- [ ] Ningún elemento conserva un color del otro tema.
+- [ ] **Administración** abre la convocatoria con fechas y ve la plantilla como quedará
+      el sílabo.
+- [ ] **Coordinación** completa la ficha, deja un campo con «El docente puede editarlo»
+      y abre la convocatoria de la carrera.
+- [ ] **Docente** llena el sílabo, ve qué falta antes de enviar y lo envía.
+- [ ] **Coordinación** pide corrección, compara revisiones y aprueba.
+- [ ] **Biblioteca** devuelve con motivos y, tras el reenvío, aprueba la bibliografía.
+- [ ] Cada rol recibe aviso solo cuando debe actuar o cuando cambió su trabajo.
+
+## 7. Firmas y documentos
+
+Con los certificados de prueba de `docs/runbooks/demo.md`.
+
+- [ ] El archivo `.p12` y la clave se eligen y escriben con teclado.
+- [ ] Coordinación no puede firmar antes que el docente, ni Biblioteca antes que
+      Coordinación.
+- [ ] Una clave incorrecta o un certificado vencido muestran un mensaje junto al campo.
+- [ ] Un certificado cuyo titular no coincide con la cuenta es rechazado.
+- [ ] Las descargas de Word y PDF aparecen solo con las tres firmas.
+- [ ] El PDF descargado se abre y muestra las tres firmas.
 
 ## Defectos encontrados
 
@@ -97,8 +114,6 @@ Repite un recorrido rápido por la muestra cambiando de tema.
 
 ## Al terminar
 
-Si no hay defectos, anota la fecha y quién revisó en `docs/quality/acceptance-status.md`
-y marca la revisión manual como cumplida en los planes I-01 a I-05, I-08, I-09, I-10 e
-I-13. Con eso pueden cerrarse y moverse a `docs/plans/completed/`.
-
-Si aparecen defectos, cada uno se corrige con su prueba de regresión antes de cerrar.
+Si no hay defectos, anota la fecha, el commit y quién revisó en
+`docs/quality/acceptance-status.md`. Cada defecto se corrige con su prueba de regresión
+o se anota en `docs/plans/pendientes.md`.

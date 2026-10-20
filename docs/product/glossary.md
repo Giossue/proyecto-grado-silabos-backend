@@ -1,30 +1,40 @@
 # Glosario
 
-| Término                   | Definición operativa                                                                         |
-| ------------------------- | -------------------------------------------------------------------------------------------- |
-| Convocatoria              | Configuración de elaboración de sílabos para una carrera dentro de un proceso; hereda su período institucional. |
-| Ciclo                     | Posición curricular de una materia dentro de una malla; no representa fechas.                |
-| Periodo académico         | Ventana temporal con fecha de inicio y fin en la que se ofrece una materia.                  |
-| Malla                     | Estructura académica actual y única de una carrera; puede estar activa o inactiva.           |
-| Materia                   | Nombre visible de una asignatura perteneciente a la malla de una carrera.                    |
-| Sílabo canónico           | Expediente compartible por asignatura y periodo que fija su contexto académico.              |
-| Borrador                  | Contenido editable actual, todavía no enviado como evidencia.                                |
-| Revisión                  | Fotografía inmutable creada al enviar o reenviar.                                            |
-| Observación               | Retirada en I-177: la revisión se devuelve con un comentario general (biblioteca, con motivos).|
-| Respuesta                 | Retirada en I-120: el docente corrige y reenvía; ya no escribe respuestas a observaciones.   |
-| Aprobación                | Decisión humana sobre una revisión concreta e inmutable.                                     |
-| Reapertura                | Retirada en I-178: un aprobado no se reabre; Coordinación lo elimina y se empieza de cero.    |
-| Plantilla                 | Esquema funcional de secciones, bloques y campos del sílabo.                                 |
-| Versión publicada         | Versión inmutable de plantilla disponible para convocatorias o evidencia histórica.          |
-| Fuente académica          | Documento Markdown que la coordinación entrega a los docentes como apoyo del sílabo.         |
-| Extracto de evidencia     | Fotografía del contenido de una fuente citada por la IA en un análisis concreto.             |
-| Validación determinística | Regla reproducible que entrega el mismo resultado para igual entrada.                        |
-| Recomendación de IA       | Ayuda informativa con evidencia; no es una decisión ni una regla.                            |
-| Alcance                   | Carrera, periodo, asignación u otra frontera donde un rol es válido.                         |
-| Rol activo                | Combinación de rol y alcance usada durante una sesión de trabajo.                            |
-| Huella                    | SHA-256 u otra huella aprobada que permite verificar integridad.                             |
-| Artefacto de exportación  | DOCX/PDF generado desde una revisión y plantilla identificadas.                              |
-| Outbox                    | Registro transaccional de efectos que se entregarán de forma asíncrona.                      |
+| Término | Definición |
+|---|---|
+| Período académico | Fechas de inicio y fin de clases. Su estado (próximo, en curso, finalizado) se calcula con la fecha actual. |
+| Convocatoria | Ventana institucional para elaborar sílabos de un período. Hay una por período. La crea Administración con fecha de inicio y de entrega. Estados: abierto, pausado, cerrado. |
+| Convocatoria de carrera | Parte de la convocatoria que corresponde a una carrera. La inicia Coordinación y crea un sílabo por paralelo. |
+| Malla | Estructura curricular de una carrera: ciclos, asignaturas y requisitos. Hay una por carrera. |
+| Ciclo | Posición de una asignatura en la malla. No es una fecha. |
+| Asignatura | Materia de la malla, con código, horas (ACD, APE, AA), créditos y unidad curricular. |
+| Paralelo | Grupo de una asignatura (código y jornada). Es fijo: se mantiene entre períodos hasta que Coordinación lo cambie. |
+| Asignación docente | Docente vigente de un paralelo. Hay como máximo una activa por paralelo. |
+| Proyecto de carrera | Pantalla de Coordinación con la ficha de cada asignatura de su malla. |
+| Ficha de la asignatura | Valores de los campos de la plantilla que llena Coordinación (por ejemplo, descripción u objetivos). El sílabo copia la ficha al crearse. |
+| Importación de ficha | Carga de documentos PDF o Excel de la carrera para que la IA proponga valores de la ficha. Coordinación elige qué aplicar. |
+| Plantilla | Definición única del sílabo: papel, estilo, variables, bloques, secciones y campos. Es un dato, no código (ADR-0011). |
+| Sección | Parte numerada del sílabo, con título y orientación (vertical u horizontal). |
+| Campo | Contenido dentro de una sección. Indica quién lo llena: docente, coordinación (en pantalla, «Carrera») o institucional («Fijo»). |
+| Variable | Dato del sistema que se inserta en la plantilla, como el nombre de la carrera o las horas de la asignatura. |
+| Bloque | Pieza con diseño, datos y reglas propias, por ejemplo `unidades` (16 semanas) o `si_no`. |
+| Sílabo | Expediente de un paralelo dentro de una convocatoria. Estados: sin iniciar, borrador, en revisión, corrección solicitada, aprobado. |
+| Borrador | Contenido editable aún no enviado. Se guarda solo. |
+| Revisión | Copia inmutable del sílabo creada en cada envío o reenvío. |
+| Etapa | Quién tiene la revisión: coordinación o biblioteca. Se deduce de los registros; no es una columna. |
+| Revisión de coordinación | Registro de que Coordinación aprobó su etapa. |
+| Envío a biblioteca | Registro que pone una revisión en la bandeja de Biblioteca. |
+| Corrección solicitada | Devolución al docente. Coordinación deja un comentario general; Biblioteca elige motivos predefinidos. |
+| Aprobación | Decisión final sobre una revisión concreta, registrada cuando Biblioteca aprueba la bibliografía. Guarda la huella del contenido. |
+| Exportación | Word y PDF generados desde la revisión aprobada. |
+| Firma | Firma electrónica del PDF con un certificado `.p12`. Orden: docente, coordinación, biblioteca. |
+| Huella | SHA-256 que permite comprobar que un contenido o archivo no cambió. |
+| Pausa | Estado que detiene la edición y el envío. Permite corregir plantilla, malla o fichas. |
+| Rehacer sílabos | Borrar y volver a crear sin iniciar los sílabos afectados por un cambio confirmado durante una pausa. |
+| Validación | Regla fija del sistema, como campos obligatorios u horas y semanas del bloque `unidades`. Siempre da el mismo resultado. |
+| Chat de IA | Ayuda opcional para redactar. No escribe en el sílabo ni decide nada. |
+| Rol activo | Rol y carrera con los que se trabaja en la sesión. Solo hay uno a la vez. |
+| Ayuda de pantalla | Texto de ayuda de cada pantalla. Lo escribe Administración. |
 
-Usa estos términos en código, interfaz y documentación. Evita sinónimos ambiguos como
-“versión” cuando sea necesario distinguir borrador, revisión o versión de plantilla.
+Usa estos términos en código, interfaz y documentación. Di «revisión» para lo enviado y
+«borrador» para lo editable; no uses «versión» para ninguno de los dos.

@@ -1,64 +1,102 @@
-# Índice de conocimiento
+# Índice de la documentación
+
+Toda la documentación describe cómo funciona el sistema hoy. El historial está en git.
+
+## Raíz del repositorio
+
+- `../README.md`: qué es el proyecto, cómo levantarlo y cuentas de prueba.
+- `../AGENTS.md`: guía para agentes (qué leer, flujo y reglas).
+- `../CLAUDE.md`: entrada para Claude; remite a `AGENTS.md`.
+- `../ARCHITECTURE.md`: mapa técnico corto.
+- `../DECISIONS_STATUS.md`: decisiones vigentes.
+
+## Planes
+
+- `plans/pendientes.md`: lo único que falta: decisiones abiertas (PV), firma (DT-16),
+  reglas por confirmar, tareas de producción, aceptación manual y deuda técnica.
+- `plans/active/`: planes en curso. Un plan se borra al terminar.
 
 ## Producto
 
 - `product/overview.md`: problema, alcance y resultados.
-- `product/domain-model.md`: agregados, entidades e invariantes.
-- `product/syllabus-lifecycle.md`: estados y transiciones.
-- `product/roles-and-permissions.md`: actores, alcance y autorización.
-- `product/use-cases.md`: CU-01 a CU-17 y requisitos relacionados.
-- `product/screens.md`: UI-01 a UI-04, DOC-01 a DOC-10, COR-01 a COR-12 y
-  ADM-01 a ADM-11.
-- `product/syllabus-sections.md`: contenido funcional de las doce secciones.
-- `product/requirements-map.md`: mapa de RF, RNF, reglas, interfaces y pruebas.
-- `product/glossary.md`: lenguaje ubicuo.
-- `product/features/`: especificaciones por capacidad.
+- `product/glossary.md`: vocabulario del dominio.
+- `product/use-cases.md`: casos de uso.
+- `product/roles-and-permissions.md`: roles, alcance y permisos.
+- `product/syllabus-lifecycle.md`: estados del sílabo y transiciones.
+- `product/syllabus-sections.md`: contenido de las secciones del sílabo.
+- `product/domain-model.md`: entidades, reglas e invariantes.
+- `product/identificacion-institucional.md`: tabla de identificación institucional (sección 1).
+- `product/screens.md`: pantallas por rol.
 
 ## Arquitectura
 
-- `architecture/index.md`: rutas de lectura por tipo de tarea.
-- `architecture/stack.md`: línea base tecnológica y comandos.
-- `architecture/modules.md`: límites del monolito modular.
-- `architecture/backend.md`, `frontend.md`, `database.md`.
-- `architecture/sequences.md`: interacciones canónicas de los flujos críticos.
-- `architecture/queues-and-jobs.md`, `files-and-documents.md`.
-- `architecture/ai-service.md`, `deployment.md`.
-- `architecture/adr/`: decisiones duraderas.
+- `architecture/index.md`: qué leer según la tarea.
+- `architecture/stack.md`: tecnologías y comandos.
+- `architecture/modules.md`: módulos y sus límites.
+- `architecture/backend.md`: organización de la API.
+- `architecture/frontend.md`: organización de la SPA.
+- `architecture/database.md`: convenciones e invariantes de la base.
+- `architecture/deployment.md`: despliegue y Gotenberg.
+- `architecture/queues-and-jobs.md`: colas, trabajos e idempotencia.
+- `architecture/sequences.md`: secuencias de los flujos críticos.
+- `architecture/ai-service.md`: chat de IA, extracción de ficha y OpenParser.
+- `architecture/files-and-documents.md`: archivos, Word, PDF y firmas.
+- `architecture/template-json.md`: manual del JSON de la plantilla.
+- `architecture/openapi.json`: contrato de la API, generado con `php artisan openapi:export`.
+- `architecture/adr/`: decisiones de arquitectura:
+  - `0000`: formato de un ADR;
+  - `0001`: monolito modular;
+  - `0002`: revisiones inmutables;
+  - `0003`: IA bajo control humano;
+  - `0006`: Vue Flow para la malla;
+  - `0007`: editor de la plantilla;
+  - `0008`: SPA y API separadas;
+  - `0010`: campos de plantilla como documentos libres;
+  - `0011`: la plantilla es solo datos.
 
-## Ejecución
+## Generado
 
-- `plans/programming-plan.md`: qué significa el plan de programación.
-- `plans/increments.md`: orden de construcción.
-- `plans/decisions-pending.md`: puertas P0/P1/P2 y entrevistas.
-- `plans/active/`: trabajo en curso.
-- `plans/completed/`: historial de planes finalizados.
+- `generated/README.md`: qué se genera y cómo.
+- `generated/database-schema.md`: lista de tablas de la base.
 
-## Calidad y seguridad
+## Calidad
 
-- `quality/definition-of-done.md`, `testing.md`, `traceability.md`,
-  `code-review.md`, `frontend-checklist.md`, `observability.md` y
-  `version-control.md`.
-- `quality/acceptance-status.md`: evidencia técnica, casos manuales y puertas PV sin
-  atribuir resultados inexistentes.
-- `security/principles.md`, `threat-model.md` y `hardening.md`.
-- `references/baseline.md`: procedencia y actualización de la línea base.
-- `references/entrevista-decisiones-abiertas.md`: guion de consulta sobre titularidad del
-  sílabo, relevo docente, plazos y coordinación encargada, con la evidencia del respaldo
-  institucional que lo sustenta.
-- `references/entrevista-2026-08-26-hallazgos.md`: respuestas de esa consulta, su alcance
-  y el impacto de cada una sobre el sistema.
-- `references/normativa-silabo.md`: normas escritas que sustentan el sílabo, con cita
-  textual, fecha y estado de vigencia.
+- `quality/traceability.md`: requisitos, código y pruebas.
+- `quality/acceptance-status.md`: estado de aceptación.
+- `quality/testing.md`: estrategia de pruebas.
+- `quality/observability.md`: registros, salud y auditoría.
+- `quality/frontend-checklist.md`: revisión de pantallas.
+- `quality/manual-review-script.md`: guion de revisión manual.
+- `quality/performance.md`: rendimiento.
+- `quality/code-review.md`: revisión de código.
+- `quality/definition-of-done.md`: cuándo algo está terminado.
+- `quality/version-control.md`: ramas y commits.
+
+## Referencias
+
+- `references/baseline.md`: línea base documental (artefactos académicos).
+- `references/normativa-silabo.md`: normas que sustentan el sílabo.
+- `references/entrevista-decisiones-abiertas.md`: guion de la entrevista sobre
+  decisiones abiertas.
+- `references/entrevista-2026-08-26-hallazgos.md`: respuestas de esa entrevista y su
+  efecto en el sistema.
 
 ## Operación
 
-- `runbooks/demo.md`: recorrido reproducible de CU-01 a CU-17 con los tres roles.
-- `runbooks/release-verification.md`: puerta, audits, salud, colas, restore y baseline.
-- `runbooks/deploy-dokploy.md`: despliegue de la imagen en Dokploy contra el PostgreSQL
-  y el Redis existentes del servidor.
+- `runbooks/demo.md`: recorrido de demostración con los cuatro roles.
+- `runbooks/deploy-dokploy.md`: despliegue en Dokploy.
+- `runbooks/release-verification.md`: comprobaciones de release.
+- `runbooks/firma-electronica-entidades.md`: lista de entidades certificadoras.
 
-## Regla de mantenimiento
+## Seguridad
 
-Un documento derivado nunca debe contradecir silenciosamente a la SRS o a una decisión
-confirmada. Si cambia el producto, actualiza primero la fuente de verdad y después las
-referencias dependientes.
+- `security/principles.md`: principios de seguridad.
+- `security/threat-model.md`: amenazas y controles.
+- `security/hardening.md`: endurecimiento.
+- `security/aviso-de-privacidad.md`: borrador del aviso de privacidad.
+
+## Mantenimiento
+
+Si cambia el producto, actualiza primero la fuente (`DECISIONS_STATUS.md` o el
+documento del tema) y después las referencias. Un documento nunca contradice en
+silencio una decisión vigente.

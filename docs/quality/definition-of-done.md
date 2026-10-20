@@ -51,15 +51,20 @@ Una unidad está terminada solo si las secciones aplicables se cumplen.
 - [ ] Pruebas feature cubren éxito, validación, permiso, conflicto e idempotencia.
 - [ ] Integraciones tienen fake/contrato y prueba real separada cuando aplica.
 - [ ] Pruebas de regresión protegen cada defecto corregido.
-- [ ] Formato, análisis, tipos, pruebas y build pasan desde un checkout limpio.
+- [ ] `composer verify` pasa en el backend; `npm run lint`, `npm run typecheck`,
+      `npm test`, `npm run contract:check` y `npm run build` pasan en el frontend.
 - [ ] No se debilitó una prueba para ocultar un fallo.
 
 ## Operación y documentación
 
 - [ ] Logs, métricas y auditoría permiten diagnosticar sin exponer datos.
 - [ ] Trabajos tienen timeout, reintentos, idempotencia y estado observable.
-- [ ] Documentación/ADR/plan/trazabilidad están sincronizados.
-- [ ] Se registró cualquier deuda diferida con impacto.
+- [ ] La documentación describe el sistema tal como queda, sin historia.
+- [ ] Las decisiones nuevas o cambiadas están en `DECISIONS_STATUS.md`; un ADR si cambia
+      la arquitectura.
+- [ ] El comportamiento observable nuevo está en `docs/quality/traceability.md`.
+- [ ] Lo que queda pendiente o la deuda con impacto está en `docs/plans/pendientes.md`.
+- [ ] El plan de `docs/plans/active/` se borró al terminar.
 - [ ] Hay evidencia de verificación y estrategia de reversión.
 
 Si un ítem aplicable falla, el trabajo no está Done aunque compile.

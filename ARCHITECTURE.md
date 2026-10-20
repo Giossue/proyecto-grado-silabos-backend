@@ -1,138 +1,70 @@
-# Arquitectura del sistema
+# Arquitectura
 
-## Vista ejecutiva
+Mapa corto del sistema. El detalle está en `docs/architecture/` (índice:
+`docs/architecture/index.md`).
 
-La solución se distribuye en dos artefactos: una **SPA Vue** y una **API Laravel modular**.
-PostgreSQL conserva el estado académico y la trazabilidad; Redis coordina trabajos; los
-archivos se guardan de forma privada; la IA y la importación institucional son adaptadores
-externos. No se divide el dominio en microservicios ni se duplica la base de datos.
+## Vista general
 
 ```text
 Navegador
   │ HTTPS
   ▼
-SPA Vue 3 (repositorio frontend)
-  │ JSON /api/v1 + Sanctum cookie/CSRF
+SPA Vue 3 (repositorio proyecto-grado-silabos-frontend)
+  │ JSON /api/v1 + Sanctum (cookie y CSRF)
   ▼
-API Laravel 13 (este repositorio)
-  ├─ Identidad y acceso
-  ├─ Estructura académica
-  ├─ Plantilla y datos curriculares
-  ├─ Convocatorias
-  ├─ Sílabos y revisiones
-  ├─ Revisión y aprobación
-  ├─ Validación determinística
-  ├─ Documentos y notificaciones
-  ├─ Auditoría y reportes
-  └─ Integraciones
-       │                 │
-       ▼                 ▼
-  PostgreSQL       Redis + workers
-       │                 ├─ exportación Word/PDF
-       │                 ├─ chat de elaboración e ingesta documental
-       │                 └─ importación/notificaciones
-       ├─ almacenamiento privado
-       ├─ servicio HTTP local de IA
-       └─ fuente institucional de solo lectura/importación
+API Laravel 13 (este repositorio, monolito modular)
+  ├─ PostgreSQL: todos los datos y la auditoría
+  ├─ Redis: colas critica, documentos e ia; caché
+  ├─ Disco privado: logos, Word, PDF y firmas
+  ├─ Gotenberg: Word → PDF
+  ├─ Proveedor de IA (AI_DRIVER): chat y propuestas de ficha
+  └─ OpenParser: lectura de PDF de la carrera
 ```
 
-I-146 retira el CRUD de Fuentes académicas y el revisor con recuperación vectorial.
-La importación curricular I-145 conserva documentos privados internos y confirmación
-humana; las estructuras históricas de IA se conservan sin habilitar operaciones nuevas.
+Dos artefactos: la SPA y la API (ADR-0008). La API no tiene pantallas. Un contenedor
+corre PHP-FPM, Nginx, el worker de colas y el scheduler.
 
-## Dirección de dependencias
+## Módulos (`app/Modules`)
 
-```text
-Presentación HTTP JSON
-        ↓
-Aplicación (casos de uso, transacciones, DTO)
-        ↓
-Dominio (reglas, estados, políticas invariantes)
-        ↓
-Infraestructura (Eloquent, Redis, archivos, HTTP, documentos)
-```
-
-El dominio no importa Vue, Redis, clientes HTTP ni detalles de almacenamiento.
-La infraestructura implementa puertos definidos por los módulos. Laravel puede unirlos
-en proveedores de servicio sin convertir cada módulo en un microservicio.
-
-## Módulos
-
-| Módulo | Responsabilidad principal |
+| Módulo | Qué hace |
 |---|---|
-| Identidad | usuarios, roles, sesiones y alcance efectivo |
-| Académico | carreras, periodos, mallas, asignaturas, ofertas y asignaciones |
-| Configuración | plantilla institucional, campos y configuración de operación |
-| Convocatorias | proceso institucional, preparación por carrera, apertura, pausas, plazos y seguimiento |
-| Sílabos | borradores, secciones, revisiones, colaboradores y estados |
-| Revisión | observaciones, respuestas, comparación, aprobación y reapertura |
-| Validación | reglas determinísticas y resultados reproducibles |
-| IA | chat de elaboración con contexto académico/curricular, evidencia e historial |
-| Documentos | archivos privados, Word/PDF y artefactos versionados |
-| Operaciones | notificaciones, auditoría, outbox, trabajos e informes |
-| Integraciones | importaciones, reconciliación y conflictos institucionales |
+| `Identity` | Cuentas, roles, rol activo, sesiones, 2FA, accesibilidad, importación de usuarios y docentes |
+| `Academic` | Facultades, carreras, períodos, malla, paralelos, asignación de docentes, ficha de asignatura e importación de ficha |
+| `Configuration` | Plantilla del sílabo (definición JSON, secciones y campos) y logos |
+| `Syllabus` | Convocatorias, sílabos, validación, envío, revisión de Coordinación, reinicio y regeneración |
+| `Library` | Revisión de bibliografía |
+| `Documents` | Word, PDF, firmas electrónicas y descargas |
+| `AiAssistance` | Chat de IA del docente |
+| `Operations` | Auditoría, notificaciones y ayuda de pantallas |
 
-Consulta `docs/architecture/modules.md` para límites y dependencias permitidas.
+Cada módulo usa las capas que necesita: `Application` (acciones y consultas), `Domain`
+(reglas y políticas), `Infrastructure` (modelos, trabajos, gateways) y `Presentation`
+(controladores y requests). Fuera de los módulos quedan `app/Http` (panel y salud) y `app/Support`
+(utilidades compartidas, como `RunsOnce` para colas). Límites y dependencias:
+`docs/architecture/modules.md`.
 
-## Invariantes arquitectónicos
+## Invariantes
 
-- El backend Laravel es un monolito modular y una unidad de despliegue distinta de la
-  SPA; los módulos son límites de código y datos, no microservicios.
-- PostgreSQL es la única fuente de verdad transaccional.
-- Redis puede vaciarse sin perder información académica.
-- Las revisiones y versiones publicadas se insertan; no se sobrescriben.
-- Las transiciones de estado pasan por un único servicio de dominio/aplicación.
-- Toda autorización crítica se evalúa en servidor y sobre el registro concreto.
-- IA, correo, almacenamiento e importación se acceden mediante interfaces.
-- La aplicación principal funciona cuando la IA está fuera de servicio.
-- La generación documental y tareas lentas se ejecutan en cola.
-- La auditoría registra actor, acción, recurso, tiempo, metadatos y resultado.
+- PostgreSQL es la única fuente de verdad; Redis puede vaciarse sin perder datos.
+- Toda autorización se decide en el servidor y sobre el registro concreto.
+- Las transiciones de estado pasan por acciones de aplicación dentro de transacciones.
+- Una revisión enviada se inserta y no se modifica (ADR-0002).
+- La plantilla es solo datos (ADR-0011).
+- La IA es opcional: si falla, el resto funciona (ADR-0003).
+- Word, PDF e IA corren en cola; los trabajos son idempotentes.
+- La auditoría registra actor, acción, recurso, momento, metadatos y resultado.
 
-## Estructura de código objetivo
+## Dónde leer más
 
-```text
-app/
-├── Modules/
-│   ├── Identity/
-│   ├── Academic/
-│   ├── Configuration/
-│   ├── Campaigns/
-│   ├── Syllabi/
-│   ├── Review/
-│   ├── Validation/
-│   ├── AiAssistance/
-│   ├── Documents/
-│   ├── Operations/
-│   └── Integrations/
-│       ├── Application/
-│       ├── Domain/
-│       ├── Infrastructure/
-│       └── Presentation/
-├── Providers/
-└── Support/
-routes/
-├── api.php
-└── web.php        # salud y logos públicos; no contiene pantallas
-database/
-├── factories/
-├── migrations/
-└── seeders/
-tests/
-├── Feature/
-├── Unit/
-└── Architecture/
-```
-
-Esta estructura es una guía. Si el código demuestra que un agrupamiento más simple es
-mejor, registra el cambio en ADR y conserva los límites de dependencia.
-
-## Decisiones registradas
-
-- `ADR-0001`: monolito modular con Laravel/Inertia.
-- `ADR-0002`: historial mediante revisiones y versiones inmutables.
-- `ADR-0003`: IA desacoplada y bajo control humano.
-- `ADR-0004`: starter Vue vigente de Laravel 13 con Inertia 3.
-- `ADR-0008`: separar SPA Vue y API Laravel; sustituye la decisión de entrega conjunta
-  de `ADR-0001` y `ADR-0004`, que se conservan como historial.
-
-Los detalles están en `docs/architecture/adr/`.
+| Tema | Documento |
+|---|---|
+| Stack y comandos | `docs/architecture/stack.md` |
+| Backend y frontend | `docs/architecture/backend.md`, `docs/architecture/frontend.md` |
+| Base de datos | `docs/architecture/database.md`, `docs/generated/database-schema.md` |
+| Plantilla en JSON | `docs/architecture/template-json.md` |
+| Colas | `docs/architecture/queues-and-jobs.md` |
+| Flujos críticos | `docs/architecture/sequences.md` |
+| IA | `docs/architecture/ai-service.md` |
+| Archivos, Word, PDF y firmas | `docs/architecture/files-and-documents.md` |
+| Despliegue y Gotenberg | `docs/architecture/deployment.md` |
+| Decisiones de arquitectura | `docs/architecture/adr/` |

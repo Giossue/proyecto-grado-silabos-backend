@@ -1,176 +1,123 @@
-# Frontend Vue independiente
+# Frontend Vue (SPA)
 
 La interfaz vive en el repositorio `proyecto-grado-silabos-frontend`. Es una SPA Vue 3
-con TypeScript, Vue Router y Vite; este repositorio Laravel no compila ni sirve sus
-archivos.
+con TypeScript, Vite y Vue Router. Este repositorio no compila ni sirve sus archivos
+(ADR-0008).
 
-## Contrato con la API
+## Estructura
 
-- Todas las operaciones de producto consumen `/api/v1`.
-- La autenticación de primera parte usa Sanctum: primero `GET /sanctum/csrf-cookie` y
-  luego cookies con `credentials: include`.
-- Las mutaciones envían `X-XSRF-TOKEN`; no se almacenan tokens en `localStorage`.
-- `docs/architecture/openapi.json` describe la superficie HTTP y se regenera con
-  `php artisan openapi:export`.
-- Los errores de validación usan `422` con `message` y `errors`; los conflictos de
-  autoguardado usan `409` y un código estable.
+```text
+src/
+├── main.ts          arranque: tema, accesibilidad, paleta documental, router
+├── router.ts        rutas por rol y guardas de sesión
+├── api/             un archivo por área (syllabi, template, reviews, library, signatures…)
+├── state/           estado compartido con ref/reactive de Vue (sin Pinia)
+├── lib/             utilidades: rutas por rol, fechas, estados, firma, bloques
+│   ├── blocks/      intérprete de la definición de plantilla
+│   └── signature/   firma PAdES en el navegador
+├── composables/     lógica reutilizable de componentes
+├── layouts/         AppLayout, AuthLayout, WorkspaceLayout, editores de sílabo y plantilla
+├── pages/           una página por pantalla
+└── components/
+    ├── ui/          primitivas shadcn-vue (Reka UI + Tailwind)
+    ├── domain/      componentes del producto por área (academic, syllabus, configuration…)
+    └── ai-elements/ piezas del chat (conversación, mensaje, entrada)
+```
 
-## Responsabilidades de la SPA
+## Rutas y roles
 
-La SPA presenta navegación por rol, formularios, editor documental, Texto libre del docente (I-156),
-revisión, documentos y asistencia de IA. Las rutas y controles sólo mejoran la
-experiencia: autorización, alcance y transiciones siempre se comprueban en Laravel.
+- Cada rol tiene su prefijo: `/admin`, `/coordinacion`, `/docente`, `/biblioteca`.
+- `meta.requiresAuth`, `meta.guest` y `meta.roles` controlan el acceso. La guarda
+  carga la sesión (`state/session.ts`), exige correo verificado y rol activo, y manda
+  a `/rol` si falta elegirlo.
+- Rutas cortas como `/panel` o `/notificaciones` redirigen a la versión del rol activo.
+- Las páginas se cargan bajo demanda (`import()`).
+- La SPA solo mejora la experiencia. Permisos, alcance y estados los decide la API.
 
-Los componentes reutilizables, pruebas Vitest, estilos, Dockerfile y configuración de
-Nginx pertenecen al repositorio frontend. Sus variables públicas se inyectan en el
-arranque para que el mismo bundle apunte al backend de cada ambiente.
+## Cliente de la API
 
-## Componentes, tema y datos compartidos
+`src/api/client.ts` expone `api<T>(ruta, init)`:
 
-Las acciones y campos visibles se componen con las primitivas locales shadcn-vue de
-`src/components/ui`; los componentes de dominio reúnen esas primitivas sin duplicar
-sus controles. `ChoiceGroup` y `BooleanChoice` usan `RadioGroup`; `EvidenceDisclosure`
-usa `Collapsible`; `StepProgress` usa `Badge` y `Separator`; los avances usan `Progress`.
-`FeedbackAlert`, `EmptyState` y `CommentEntry` comparten errores, vacíos e historiales.
-La salida de un sílabo cuyo autoguardado falla usa `UnsavedChangesDialog` y una respuesta
-asíncrona. El aviso de cierre de pestaña sigue siendo responsabilidad del navegador.
+- llama a `{apiUrl}/api/v1{ruta}` con `credentials: 'include'`;
+- antes de la primera escritura pide `GET /sanctum/csrf-cookie` y envía
+  `X-XSRF-TOKEN`; si recibe `419`, renueva el token y reintenta una vez;
+- convierte errores en `ApiError` (estado, `errors` por campo y cuerpo);
+- con `401` emite `silabos:unauthorized`; con `409` «Seleccione un rol vigente.»
+  emite `silabos:role-required`. `main.ts` escucha ambos y redirige.
 
-Todo botón principal (variante por defecto o `destructive`) de páginas, sheets y diálogos
-lleva un icono `lucide` al inicio con `data-icon="inline-start"`; mientras procesa, el
-`Spinner` reemplaza al icono. `FormSheetActions` aplica `Check` si no recibe otro icono.
-Los botones secundarios (`outline`, `ghost`, `link`) no lo requieren.
+No se guardan tokens en `localStorage`.
 
-`styles.css` centraliza el tema, el avatar, el logo, las dimensiones de layouts y los
-niveles de superposición. Los tokens `--selection-background` y `--selection-foreground`
-definen el par de selección por tema mediante `::selection` global. Las primitivas de
-campos heredan ese par. El avatar del asistente (`RobotAvatar.vue`) es un blob azul con
-dos ojos al estilo «Strobi» de bible-strong-avatar-lab, reimplementado sin dependencia ni
-AGPL: `blobGeometry.ts` modela una esfera (radio 120, foco 620) con dos cápsulas
-proyectadas sobre su superficie; cada expresión gira la cabeza y cambia tamaño, separación
-y ángulo de los ojos, y cada modo o emoción encadena expresiones con transición suave y
-parpadeo (`ANIMATIONS`). Colores: `--avatar-body` y `--avatar-outline` (I-174, 2026-10-04). La paleta solicitada por el responsable del producto el
-2026-10-04 usa el azul `#2d4b6f` en el tema claro. En oscuro, la revisión del
-2026-10-07 adopta el azul acero `#5274a8` en las
-acciones y estados activos del tema oscuro; el rojo `#ac231e` se conserva solo como
-barra del ítem activo del menú. Fondos y sidebar usan superficies sobrias; todo vive
-en los tokens de `src/styles.css`. Éxito, advertencia y acción destructiva tienen
-colores semánticos independientes. Los valores proceden del
-pedido del usuario y no acreditan una guía oficial de identidad de la UEB.
-I-197 normaliza esos roles para toda la interfaz operativa: texto, superficies,
-acciones, campos, estados y foco se resuelven exclusivamente desde los tokens del tema.
-En oscuro, `primary`, `destructive`, `success` y `warning` usan variantes con su
-texto contrastado; los bordes de campos conservan una relación mínima de 3:1 con las
-superficies. Las primitivas compartidas no añaden excepciones cromáticas `dark:` y las
-pestañas se dibujan sin fondo propio. El tema oscuro usa el azul acero `#5274a8`
-con texto blanco en superficies sólidas, `#a9c1e2` cuando funciona como texto y
-`#304761` con texto `#d0dbea` en iconos y estados suaves. El sidebar oscuro usa la
-superficie azul grisácea `#2d4358`,
-ligeramente elevada sobre el fondo del contenido, y un hover `#354f68` con transición de
-200 ms. El foco usa `#9eb5e8` para conservar contraste sobre esa superficie.
-Esta normalización no altera la paleta documental, los gráficos ni los colores que
-identifican unidades curriculares.
-`WorkspaceLayout` comparte la composición de sílabo y revisión
-con sus skeletons. `LoadingSkeleton` mantiene el anuncio accesible de carga y delega
-las composiciones en `src/components/domain/loading`: `TableLoadingSkeleton` recibe
-columnas, búsqueda, filtros, paginación, acciones y líneas por celda;
-`DashboardLoadingSkeleton` ajusta indicadores, plazo y pasos al rol activo;
-`AcademicLoadingSkeleton` distingue Malla, Materias y Docentes;
-`DocumentLoadingSkeleton` reúne sílabo, revisión por etapa, plantilla, comparación y
-exportaciones; `SettingsLoadingSkeleton` representa Perfil o Seguridad dentro del layout
-de Configuración. `ManageTwoFactor` comunica el inicio y la finalización de su consulta
-mediante el evento `loading`; `SecurityPage` conserva montado el componente oculto para
-realizar una sola consulta y muestra el esqueleto completo de la subsección hasta que
-responde, incluso con error. `ProfilePage` espera los datos reactivos de sesión.
-Las páginas pasan la estructura que renderizan actualmente; `table-body`
-no agrega búsqueda ni filtros por defecto cuando esos controles ya están visibles.
-`ClientFilterBar` y los usos de `FilterToolbar` presentan cada búsqueda de tabla con
-«Buscar por…» y mantienen el placeholder alineado con las propiedades que filtra el
-cliente o acepta el endpoint.
-Las tablas declaran si su última columna contiene acciones para que las filas navegables
-de Revisiones y Proyecto de carrera mantengan contenido normal. `Table` usa tarjetas
-por defecto bajo 640 px mediante `data-cards`; `TableRow` etiqueta sus celdas con los
-encabezados y detecta `TableActionsMenu` con `data-table-actions`, un marcador que
-conserva el menú al componer `as-child`, sin volver a montar los slots. Los valores y
-campos editables conservan una sola instancia al cambiar de ancho. `cards=false`
-mantiene las cuadrículas documentales de `TableFieldView` y `UnitsFieldView`. Los
-estilos móviles están en la capa `utilities` para prevalecer sobre anchos y
-`whitespace-nowrap` de las celdas.
-Las tarjetas móviles tienen fondo sólido `card`/`secondary`, borde `input` y sombra
-`shadow-surface-value`, sobre una región `background` con padding. La regla explícita
-para `tr:last-child` prevalece sobre `[&_tr:last-child]:border-0` de `TableBody`.
-Los esqueletos móviles usan esos mismos tokens.
-`TablePagination` conserva el rango y total y sustituye los números por «Página N de M»
-bajo 640 px. Sus controles pueden envolver
-en un pie estrecho. El sidebar usa `width < 48rem`, alineado con `md` de CSS.
-La plantilla mantiene sus medidas documentales y cada hoja dispone de una región con
-desplazamiento horizontal; el contenido cargado permite enfocarla por teclado.
-`TemplateVisualBuilder` mantiene un único estado reactivo `preview` para todas sus
-hojas. Cada esquina superior derecha compone `Button` y `Tooltip` con `Eye`/`EyeOff`
-para alternarlo, también con el proceso bloqueado. La consulta sustituye los
-disparadores por contenido estático y oculta herramientas, contornos y etiquetas del
-constructor. `TemplateFieldContent` muestra el documento y el responsable de cada campo. En
-consulta resuelve las variables con muestras y oculta el responsable. Constructor,
-ficha y editor docente comparten `FreeTextEditor` para texto, listas y tablas; no
-existe registro de tipos. Título y logos son fijos.
-El estado es local, conserva la selección y no solicita mutaciones a la API.
-Los esqueletos comparten esas tarjetas, paginación y regiones desplazables.
-El Panel limita su carga
-a los tres indicadores visibles; Docencia muestra dos indicadores propios. Coordinación
-y Docencia representan el plazo de su convocatoria. El sílabo editable carga una barra de pestañas y una sección, mientras la
-lectura conserva secciones consecutivas. La plantilla reutiliza `template-sheet` y su
-variante horizontal para la tabla de planificación de 16 semanas. `SubjectProfileSheet`
-usa la variante de formulario mientras consulta los campos definidos por la plantilla.
-Las superficies usan `Card` y `Skeleton` locales y las tablas decorativas no montan
-controles de detalle durante la carga. Los componentes de notificaciones, chat, firma
-y segundo factor conservan el título o controles estables y cargan su contenido dentro
-de la misma región. `styles.css` comparte las columnas y desactiva la animación de los
-esqueletos con movimiento reducido.
-`SheetContent` centraliza el movimiento de todos los formularios emergentes, que son
-modales centrados (no paneles laterales): entrada y salida usan fundido y zoom de
-`200 ms`, y el overlay comparte esos parámetros; ningún uso redefine duración o curva.
-`documentPalette.ts` mantiene los colores que se serializan y
-establece sus variables CSS durante el arranque; `documentDefaults.ts` reúne los
-valores documentales por defecto. Los colores del papel conservan su identidad en ambos
-temas. La geometría calculada y los motores Tiptap/Vue Flow permanecen conforme a
-ADR-0006/0007 e I-101; los controles de zoom del lienzo son `Button` con `Tooltip`.
+Las acciones que no deben duplicarse (enviar, aprobar, comentar, exportar, preguntar
+a la IA) envían `idempotency_key`. `lib/attemptKey.ts` reutiliza la clave mientras se
+reintenta el mismo envío y la cambia cuando cambia lo enviado.
 
-Las opciones `options.modalityOptions` y `options.shiftOptions` se reciben de la API
-académica y se describen en `AcademicUiOptions` de OpenAPI. La SPA no mantiene otro
-catálogo de modalidades o jornadas. Las etiquetas de estados, los límites de formulario
-y el formato de fechas se reúnen en utilidades compartidas; Laravel mantiene la
-validación y las decisiones del dominio. La previsualización de plantilla utiliza su
-metadata sin inventar fechas, asignaturas o datos institucionales. La URL de API es
-obligatoria fuera de desarrollo; el fallback local sólo se permite en desarrollo.
+## URL de la API
 
-`npm run lint` verifica las reglas locales `shared-components` y `semantic-styles`
-mediante cuatro casos de regresión y luego revisa el código. Detectan controles visibles
-HTML propios, confirmaciones nativas de ruta, tooltips `title`, paletas locales,
-colores literales en componentes, dimensiones arbitrarias y apilamientos locales.
-Las primitivas, los fixtures, la paleta documental central y el adaptador de PDF tienen
-su alcance específico. Los campos ocultos de transporte/archivo y las medidas calculadas
-no se confunden con controles visibles o datos ficticios. `contract:check` reconoce
-`POST` multipart con `_method=PATCH` en el mismo cuerpo y bloque, y verifica la operación
-PATCH real; no omite endpoints.
+El orden es: `window.__SILABOS_CONFIG__.apiUrl` (archivo `/config.js`), luego
+`VITE_API_URL` y, solo en desarrollo, `http://localhost:8000`. En el contenedor,
+`docker/runtime-config.sh` escribe `/config.js` desde `PUBLIC_API_URL` al arrancar.
+Así la misma imagen sirve para cualquier ambiente. Sin URL, la SPA no arranca.
 
-La evidencia de la corrección autorizada tras AUD-FE-2026-09-29 se mantiene en
-`docs/plans/completed/FE-SHADCN-2026-09-29-componentes-y-tokens-compartidos.md`. La revisión local en Chromium cubre teclado, foco,
-evidencia, zoom, arrastre y layouts en claro/oscuro a 360, 768 y 1440 px; no sustituye
-la aceptación institucional de PV-07/PV-19.
+## Estado
 
-I-146 retira COR-11, su editor documental y los paneles/acciones del revisor de IA.
-La SPA conserva el chat para elaborar contenido y unidades desde el contexto académico
-confirmado del sílabo. La importación curricular I-145 permite cargar PDF/XLSX y
-revisar candidatos por lote; cada importación trae sus archivos (I-152). Mientras está
-abierta, el original se consulta mediante una descarga privada autorizada; al guardar o
-descartar, sus documentos se eliminan. Los nombres wire `sources`/`source_ids` permanecen por compatibilidad
-interna; las etiquetas de producto los presentan como documentos de ingesta.
-I-147 retira del lienzo de Malla el editor manual de resultados de aprendizaje. La
-sección «Datos confirmados» del asistente presenta valores efectivos de la carrera y
-sus materias con procedencia, incluido el respaldo I-144 cuando todavía no hay un
-resultado documental importado para esa asignatura.
+- `state/session.ts`: sesión y rol activo, con carga única compartida.
+- `state/templateEditor.ts`, `state/curriculumEditor.ts`, `state/screenHelp.ts`,
+  `state/accessibilityDialog.ts`: estado de pantallas concretas.
+- El resto vive en cada página o composable.
+
+## Plantilla en tiempo de ejecución (`src/lib/blocks`)
+
+La SPA no conoce la plantilla de antemano. Cuando la API entrega la definición
+(`definition`) y las variables, `setTemplateRuntime()` las guarda en un `shallowRef`.
+Lo llaman `api/template.ts` (constructor), `api/syllabi.ts` (sílabo) y
+`api/career-academics.ts` (ficha).
+
+| Archivo | Qué hace |
+|---|---|
+| `runtime.ts` | Guarda la definición y variables; expande bloques y variables. |
+| `types.ts` | Tipos de la definición: `document`, `blocks`, esquemas de valor y reglas. |
+| `values.ts` | Valor vacío de un bloque y lectura/escritura por ruta. |
+| `rules.ts` | Reglas de bloque al guardar o enviar. |
+| `condition.ts`, `scope.ts`, `walk.ts` | Condiciones, contadores y recorrido del diseño. |
+
+El backend interpreta la misma definición. La prueba `blocks.test.ts` compara el
+resultado con `src/test/fixtures/block-conformance.json`, que genera el backend
+(`php artisan template:conformance`). Ver [template-json.md](template-json.md).
+
+## Editor y documentos
+
+- `components/domain/syllabus/FreeTextEditor.vue`: Tiptap para texto, listas y tablas.
+  Lo usan el constructor de plantilla, la ficha y el editor del docente.
+- `fieldDocumentExtensions.ts` agrega los nodos `variable` y `documentBlock`.
+- `components/domain/configuration/TemplateVisualBuilder.vue`: constructor visual.
+  `TemplateJsonDialog.vue`: «Editar JSON».
+- `components/domain/academic/curriculum/`: lienzo de la malla con Vue Flow (ADR-0006).
+- `lib/signature/`: lee el `.p12`, agrega una firma incremental al PDF y sube solo el
+  PDF firmado. El certificado no sale del equipo.
+
+## Componentes y estilos
+
+- Los controles visibles salen de `components/ui`. Los de dominio combinan esas
+  primitivas; no crean controles propios.
+- `styles.css` define los tokens de tema claro y oscuro. Los componentes no usan
+  colores literales.
+- `documentPalette.ts` y `documentDefaults.ts` guardan colores y valores del documento.
+- `npm run lint` aplica las reglas locales `frontend/shared-components` y
+  `frontend/semantic-styles`.
+
+## Pruebas y verificación
+
+```bash
+npm run lint
+npm run typecheck
+npm test               # Vitest con jsdom
+npm run test:e2e       # Playwright
+npm run contract:check # llamadas del cliente contra openapi.json del backend
+```
 
 ## Despliegue
 
-Frontend y backend producen imágenes distintas. El frontend necesita la URL pública de
-la API; el backend necesita `FRONTEND_URL`, `SANCTUM_STATEFUL_DOMAINS`, CORS y dominio de
-sesión coherentes. Ambos deben usar HTTPS en producción.
+La imagen compila con Node 22 y sirve con Nginx en el puerto 8080 (`/health/live`).
+Necesita `PUBLIC_API_URL`. El backend debe tener `FRONTEND_URL`,
+`SANCTUM_STATEFUL_DOMAINS`, CORS y dominio de sesión coherentes con esa URL. Ambos con
+HTTPS en producción. Ver [deployment.md](deployment.md).
