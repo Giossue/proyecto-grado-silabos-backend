@@ -46,7 +46,7 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
 ## Producción
 
 - **Variables de entorno:**
-  - `TRUSTED_PROXIES` vale `*` por defecto (`bootstrap/app.php`, `.env.example`); hay que fijar el proxy real;
+  - `TRUSTED_PROXIES` vale `*` por defecto (`config/app.php`, `.env.example`); hay que fijar el proxy real;
   - `SESSION_SECURE_COOKIE=true`;
   - `APP_DEBUG=false`.
 - **Cola de la importación de la ficha:** `PrepareFichaImportJob` tiene `timeout` de 900 s, pero

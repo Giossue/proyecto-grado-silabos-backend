@@ -62,9 +62,9 @@ final class ApplyFichaImport
                     $document = match (true) {
                         is_array($value) && str_starts_with((string) $key, 'bibliografia') => FreeText::fromRows(
                             array_map(fn (string $column): array => ['key' => $column, 'label' => $column], self::BIBLIOGRAPHY_COLUMNS),
-                            array_map(fn (string $item): array => array_combine(self::BIBLIOGRAPHY_COLUMNS, array_pad(array_slice(array_map('trim', explode('|', $item)), 0, count(self::BIBLIOGRAPHY_COLUMNS)), count(self::BIBLIOGRAPHY_COLUMNS), '')), $value),
+                            array_values(array_map(fn (string $item): array => array_combine(self::BIBLIOGRAPHY_COLUMNS, array_pad(array_slice(array_map('trim', explode('|', $item)), 0, count(self::BIBLIOGRAPHY_COLUMNS)), count(self::BIBLIOGRAPHY_COLUMNS), '')), $value)),
                         ),
-                        is_array($value) => FreeText::fromRows([['key' => 't', 'label' => '']], array_map(fn (string $item): array => ['t' => $item], $value)),
+                        is_array($value) => FreeText::fromRows([['key' => 't', 'label' => '']], array_values(array_map(fn (string $item): array => ['t' => $item], $value))),
                         default => FreeText::fromText((string) $value),
                     };
                     if (FreeText::isEmpty(FreeText::normalize($document))) {
@@ -85,6 +85,6 @@ final class ApplyFichaImport
             $this->audit->execute($actor->id, $role->id, 'academico.ficha_importacion_aplicada', 'carrera', $locked->carrera_id, 'exito', ['subjects' => $applied]);
 
             return $locked;
-        }), $import->carrera_id, null, 'Coordinación actualizó la ficha de la asignatura', null, array_values($subjectIds));
+        }), $import->carrera_id, null, 'Coordinación actualizó la ficha de la asignatura', null, $subjectIds);
     }
 }

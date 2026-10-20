@@ -55,7 +55,7 @@ class ExtractSubjectFichaJob implements ShouldBeUnique, ShouldQueue
 
             return;
         }
-        $fields = $profile->fields()->map(fn ($field): array => ['key' => $field->clave, 'label' => $field->etiqueta !== '' ? $field->etiqueta : $field->clave])->values()->all();
+        $fields = array_values($profile->fields()->map(fn ($field): array => ['key' => $field->clave, 'label' => $field->etiqueta !== '' ? $field->etiqueta : $field->clave])->all());
         $proposal = $gateway->propose(['code' => $subject['code'], 'name' => $subject['name'], 'cycle' => $subject['cycle']], $fields, $fragments);
         $values = [];
         foreach ($fields as $field) {

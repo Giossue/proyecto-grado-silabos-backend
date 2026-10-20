@@ -21,7 +21,7 @@ final class ReplaceTemplateStructure
     ) {}
 
     /**
-     * @param  list<array<string, mixed>>  $sections
+     * @param  list<array{key: string, title: string, orientation?: string, fields?: list<array{key: string, label?: string|null, quien_llena: string, content: array<string, mixed>}>}>  $sections
      */
     public function execute(SyllabusTemplate $template, array $sections, User $actor, Request $request, ?TemplateDefinition $definition = null): SyllabusTemplate
     {

@@ -224,7 +224,7 @@ class AuditEventController extends Controller
             return $actor->nombre;
         }
 
-        return $event->usuario_id === null ? 'Sistema' : 'Cuenta eliminada';
+        return $event->actor_usuario_id === null ? 'Sistema' : 'Cuenta eliminada';
     }
 
     /**

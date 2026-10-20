@@ -50,7 +50,7 @@ final class RequestFichaImport
             $import = new FichaImport(['carrera_id' => $careerId, 'solicitado_por' => $actor->id, 'estado_importacion' => FichaImport::PENDING, 'documentos_importacion' => [], 'solicitado_en' => now()]);
             $import->save();
             $documents = [];
-            foreach (array_values($files) as $index => $file) {
+            foreach ($files as $index => $file) {
                 $detected = strtolower((string) $file->extension());
                 $extension = in_array($detected, ['pdf', 'xlsx', 'xls'], true) ? $detected : strtolower($file->getClientOriginalExtension());
                 $path = "importaciones-ficha/{$import->id}/".($index + 1).'-'.Str::random(8).'.'.$extension;

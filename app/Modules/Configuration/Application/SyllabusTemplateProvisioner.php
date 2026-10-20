@@ -114,7 +114,7 @@ final class SyllabusTemplateProvisioner
     {
         $sections = [];
         $definitions = [];
-        foreach (array_values($structure) as $sectionIndex => $section) {
+        foreach ($structure as $sectionIndex => $section) {
             $blocks = [];
             foreach (array_values($section['fields'] ?? []) as $fieldIndex => $field) {
                 $blockId = (string) Str::uuid();

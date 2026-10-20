@@ -31,6 +31,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -69,6 +70,8 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+        $proxies = config('app.trusted_proxies');
+        TrustProxies::at(array_values(array_filter(array_map('trim', explode(',', is_string($proxies) ? $proxies : '')))));
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Convocation::class, ConvocationPolicy::class);
         Gate::policy(SyllabusProcess::class, SyllabusProcessPolicy::class);

@@ -88,7 +88,7 @@ class TwoFactorController extends Controller
         }
 
         $startedAt = (int) $request->session()->get('login.at', 0);
-        if ($startedAt === 0 || now()->timestamp - $startedAt > 600) {
+        if ($startedAt === 0 || now()->getTimestamp() - $startedAt > 600) {
             $request->session()->forget(['login.id', 'login.remember', 'login.at']);
 
             return response()->json(['message' => 'La sesión de verificación ya no es válida. Ingrese nuevamente.'], 422);

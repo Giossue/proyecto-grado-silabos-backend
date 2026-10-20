@@ -60,7 +60,7 @@ final class TemplateDocumentResolver
                 }
                 $node['content'] = $children;
                 if (in_array($type, ['bulletList', 'orderedList'], true)) {
-                    $node['content'] = self::flattenItems($children);
+                    $node['content'] = self::flattenItems(array_values($children));
                 }
                 if ($type === 'paragraph') {
                     $parts = [];

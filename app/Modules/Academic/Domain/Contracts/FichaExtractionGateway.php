@@ -10,7 +10,7 @@ interface FichaExtractionGateway
      * @param  array{code: string, name: string, cycle: int|null}  $subject
      * @param  list<array{key: string, label: string}>  $fields
      * @param  list<string>  $evidence
-     * @return array<string, string|list<string>> valor por clave de campo; cadena vacía o lista vacía si no hay sustento
+     * @return array<string, mixed> valor por clave de campo tal como lo propone la IA; el trabajo lo limpia
      */
     public function propose(array $subject, array $fields, array $evidence): array;
 }

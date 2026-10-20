@@ -29,8 +29,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'sections.*.fields.*.content', 'sections.*.fields.*.content.*',
         ]);
 
-        $middleware->trustProxies(at: array_values(array_filter(array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', '*'))))));
-
         $middleware->trustHosts(at: ['^127\\.0\\.0\\.1$', '^localhost$']);
 
         $middleware->web(append: [

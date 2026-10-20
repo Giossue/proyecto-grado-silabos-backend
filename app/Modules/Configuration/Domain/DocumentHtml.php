@@ -285,30 +285,36 @@ final class DocumentHtml
     }
 
     /**
+     * @param  list<array<string, mixed>>  $blocks
+     * @param  list<array<string, mixed>>  $buffer
+     */
+    private static function flushInline(array &$blocks, array &$buffer): void
+    {
+        $last = array_key_last($buffer);
+        if ($last !== null && ($buffer[$last]['type'] ?? '') === 'text' && is_string($buffer[$last]['text'] ?? null)) {
+            $buffer[$last]['text'] = rtrim($buffer[$last]['text'], "\n");
+            if ($buffer[$last]['text'] === '') {
+                array_pop($buffer);
+            }
+        }
+        if ($buffer !== []) {
+            $blocks[] = ['type' => 'paragraph', 'content' => $buffer];
+            $buffer = [];
+        }
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     private static function blocks(DOMNode $parent, bool $layout = false): array
     {
         $blocks = [];
         $buffer = [];
-        $flush = function () use (&$blocks, &$buffer): void {
-            $last = array_key_last($buffer);
-            if ($last !== null && ($buffer[$last]['type'] ?? '') === 'text') {
-                $buffer[$last]['text'] = rtrim($buffer[$last]['text'], "\n");
-                if ($buffer[$last]['text'] === '') {
-                    array_pop($buffer);
-                }
-            }
-            if ($buffer !== []) {
-                $blocks[] = ['type' => 'paragraph', 'content' => $buffer];
-                $buffer = [];
-            }
-        };
         foreach ($parent->childNodes as $child) {
             if ($child instanceof DOMElement) {
                 $tag = strtolower($child->tagName);
                 if ($tag === 'p') {
-                    $flush();
+                    self::flushInline($blocks, $buffer);
                     $content = self::inlineNodes($child, []);
                     $paragraph = ['type' => 'paragraph'];
                     if ($content !== []) {
@@ -321,7 +327,7 @@ final class DocumentHtml
                     }
                     $blocks[] = $paragraph;
                 } elseif ($tag === 'section' && $layout) {
-                    $flush();
+                    self::flushInline($blocks, $buffer);
                     $group = ['type' => 'group', 'content' => self::blocks($child, true)];
                     $attrs = self::directiveAttrs($child);
                     if ($attrs !== []) {
@@ -329,13 +335,13 @@ final class DocumentHtml
                     }
                     $blocks[] = $group;
                 } elseif ($tag === 'ul' || $tag === 'ol') {
-                    $flush();
+                    self::flushInline($blocks, $buffer);
                     $blocks[] = self::withDirectives(self::listNode($child), $child);
                 } elseif ($tag === 'table') {
-                    $flush();
+                    self::flushInline($blocks, $buffer);
                     $blocks[] = self::withDirectives(self::tableNode($child), $child);
                 } elseif ($tag === 'div' && $child->hasAttribute('data-block')) {
-                    $flush();
+                    self::flushInline($blocks, $buffer);
                     $props = json_decode($child->getAttribute('data-props') ?: '{}', true);
                     $value = json_decode($child->getAttribute('data-value') ?: '{}', true);
                     $blocks[] = ['type' => 'documentBlock', 'attrs' => ['kind' => $child->getAttribute('data-block'), 'props' => is_array($props) ? $props : [], 'value' => is_array($value) ? $value : []]];
@@ -352,7 +358,7 @@ final class DocumentHtml
                 }
             }
         }
-        $flush();
+        self::flushInline($blocks, $buffer);
 
         return $blocks;
     }

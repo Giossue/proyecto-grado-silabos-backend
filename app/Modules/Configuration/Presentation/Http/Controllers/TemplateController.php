@@ -111,7 +111,7 @@ class TemplateController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var list<array<string, mixed>> $sections */
+        /** @var list<array{key: string, title: string, orientation?: string, fields?: list<array{key: string, label?: string|null, quien_llena: string, content: array<string, mixed>}>}> $sections */
         $sections = $request->validated('sections');
         $action->execute($template, $sections, $actor, $request, $request->definition());
 
