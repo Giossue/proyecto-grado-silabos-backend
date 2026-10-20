@@ -39,7 +39,8 @@ class UpdateDraftField
             if ($field->plantilla_id !== SyllabusTemplate::institutional()->id || (! $field->getAttribute('vigente_en_plantilla') && ! $locked->values()->where('definicion_campo_id', $field->id)->exists())) {
                 throw ValidationException::withMessages(['field' => 'El campo no pertenece a la plantilla vigente.']);
             }
-            if (! $field->teacherEditable()) {
+            $current = FieldValue::query()->where('silabo_id', $locked->id)->where('definicion_campo_id', $field->id)->first();
+            if (! FieldValue::editableByTeacher($field, $current)) {
                 throw ValidationException::withMessages(['field' => 'Este campo pertenece a Coordinación o a la institución y el docente no puede cambiarlo.']);
             }
 

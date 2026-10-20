@@ -1,5 +1,11 @@
 # Trazabilidad
 
+## Ficha: campo de Carrera que edita el docente — I-230
+
+| Cambio | IDs relacionados | Evidencia | Estado |
+|---|---|---|---|
+| En «Proyecto de carrera», cada campo de la ficha tiene el interruptor «El docente puede editarlo»; el sílabo hereda el texto y el permiso, y el docente lo ajusta | RF-017..026; CU-03, CU-04; I-187 | `SubjectProfileTest::test_coordinator_lets_the_teacher_edit_a_field_and_an_empty_editable_field_counts_as_filled`, `ConvocationAndDraftTest::test_a_career_field_marked_editable_in_the_profile_is_edited_by_the_teacher`, `ConvocationAndDraftTest::test_copy_between_parallels_carries_career_fields_the_teacher_may_edit`, `SubjectProfileSheet.test.ts`, `TeacherSyllabusDetailPage.test.ts` | Verificado en pruebas |
+
 ## Plantilla solo con datos — I-229 e I-228
 
 | Cambio | IDs relacionados | Evidencia | Estado |

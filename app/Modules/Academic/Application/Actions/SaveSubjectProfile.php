@@ -36,35 +36,44 @@ class SaveSubjectProfile
 
     /**
      * @param  array<string, mixed>  $values
+     * @param  array<string, mixed>  $editable
      * @return array<string, array<string, mixed>>
      */
-    public function execute(Subject $subject, array $values, User $actor, Request $request): array
+    public function execute(Subject $subject, array $values, User $actor, Request $request, array $editable = []): array
     {
         $allowed = $this->fields->fields()->keyBy('id');
-        foreach (array_keys($values) as $fieldId) {
+        $fieldIds = array_values(array_unique([...array_map('strval', array_keys($values)), ...array_map('strval', array_keys($editable))]));
+        foreach ($fieldIds as $fieldId) {
             if (! $allowed->has($fieldId)) {
                 throw ValidationException::withMessages(['values' => 'La ficha incluye un campo que ya no existe en la plantilla.']);
             }
         }
 
-        return $this->work->replace($request, function () use ($actor, $request, $subject, $values): array {
+        return $this->work->replace($request, function () use ($actor, $editable, $fieldIds, $request, $subject, $values): array {
             $lockedSubject = Subject::query()->whereKey($subject->id)->lockForUpdate()->firstOrFail();
             $this->authorize($lockedSubject, $request);
             $this->locks->assertCareerEditable($lockedSubject->carrera_id);
 
-            foreach ($values as $fieldId => $value) {
-                $document = is_array($value) ? FieldDocument::normalize($value, "values.{$fieldId}") : null;
-                $query = FieldValue::query()
+            foreach ($fieldIds as $fieldId) {
+                $current = FieldValue::query()
                     ->where('asignatura_id', $lockedSubject->id)
-                    ->where('definicion_campo_id', $fieldId);
-                if ($document === null || FieldDocument::isEmpty($document)) {
-                    $query->delete();
+                    ->where('definicion_campo_id', $fieldId)
+                    ->first();
+                $teacher = array_key_exists($fieldId, $editable) ? $editable[$fieldId] === true : $current?->editable_docente === true;
+                $document = match (true) {
+                    array_key_exists($fieldId, $values) => is_array($values[$fieldId]) ? FieldDocument::normalize($values[$fieldId], "values.{$fieldId}") : null,
+                    is_array($current?->valor) => $current->valor,
+                    default => null,
+                };
+                $empty = $document === null || FieldDocument::isEmpty($document);
+                if ($empty && ! $teacher) {
+                    $current?->delete();
 
                     continue;
                 }
                 FieldValue::query()->updateOrCreate(
                     ['asignatura_id' => $lockedSubject->id, 'definicion_campo_id' => $fieldId],
-                    ['valor' => $document],
+                    ['valor' => $empty ? FieldDocument::empty() : $document, 'editable_docente' => $teacher],
                 );
             }
             $this->audit->execute(
@@ -74,7 +83,7 @@ class SaveSubjectProfile
                 resourceType: 'asignatura',
                 resourceId: $lockedSubject->id,
                 result: 'exito',
-                metadata: ['campos' => count($values)],
+                metadata: ['campos' => count($fieldIds), 'editables_docente' => count(array_filter($editable, fn (mixed $value): bool => $value === true))],
             );
 
             return $this->fields->values($lockedSubject->id);

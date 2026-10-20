@@ -76,6 +76,17 @@ class CopySyllabusContent
                     'valor' => $value->valor,
                 ]);
             }
+            $careerSource = FieldValue::query()
+                ->where('silabo_id', $source->id)
+                ->where('editable_docente', true)
+                ->get()
+                ->keyBy('definicion_campo_id');
+            FieldValue::query()
+                ->where('silabo_id', $locked->id)
+                ->where('editable_docente', true)
+                ->whereIn('definicion_campo_id', $careerSource->keys())
+                ->get()
+                ->each(fn (FieldValue $value) => $value->update(['valor' => $careerSource->get($value->definicion_campo_id)?->valor]));
 
             $locked->update([
                 'estado' => 'borrador',

@@ -124,6 +124,57 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame('Libro añadido por el docente', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
     }
 
+    public function test_a_career_field_marked_editable_in_the_profile_is_edited_by_the_teacher(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
+        $objective = FieldDefinition::query()->where('clave', 'objetivo_general')->firstOrFail();
+        FieldValue::query()->where('asignatura_id', Parallel::query()->firstOrFail()->asignatura_id)->where('definicion_campo_id', $description->id)->firstOrFail()->update(['editable_docente' => true]);
+        $this->openPrepared($convocation);
+        $syllabus = Syllabus::query()->firstOrFail();
+
+        $inherited = $syllabus->values()->where('definicion_campo_id', $description->id)->firstOrFail();
+        $this->assertTrue($inherited->editable_docente);
+        $this->assertSame('Ficha de prueba: descripcion', FreeText::plainText($inherited->valor));
+        $fields = collect($this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()->json('syllabus.sections'))
+            ->flatMap(fn ($section) => $section['fields'])->keyBy('key');
+        $this->assertTrue($fields['descripcion']['teacher_editable']);
+        $this->assertFalse($fields['objetivo_general']['teacher_editable']);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $objective]), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+            'value' => $this->freeTextValue('Cambio no autorizado'),
+        ])->assertUnprocessable()->assertJsonValidationErrors('field');
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $description]), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+            'value' => FieldDocument::empty(),
+        ])->assertOk();
+        $this->assertTrue($syllabus->values()->where('definicion_campo_id', $description->id)->firstOrFail()->editable_docente);
+
+        $messages = collect($this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful()->json('validation.results'))->groupBy('field_id');
+        $this->assertSame('campo_obligatorio_faltante', $messages[$description->id]->first()['code']);
+    }
+
+    public function test_copy_between_parallels_carries_career_fields_the_teacher_may_edit(): void
+    {
+        [$first, $second] = $this->openConvocationWithTwoParallels();
+        $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
+        FieldValue::query()->whereIn('silabo_id', [$first->id, $second->id])->where('definicion_campo_id', $description->id)->get()
+            ->each(fn (FieldValue $value) => $value->update(['editable_docente' => true]));
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $first))->assertSuccessful();
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$first, $description]), [
+            'version_bloqueo' => $first->fresh()->version_bloqueo,
+            'value' => $this->freeTextValue('Descripción ajustada por el docente.'),
+        ])->assertOk();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.copy-from', [$second, $first]), [
+            'version_bloqueo' => $second->version_bloqueo,
+        ])->assertOk();
+
+        $this->assertSame('Descripción ajustada por el docente.', FreeText::plainText($second->values()->where('definicion_campo_id', $description->id)->firstOrFail()->valor));
+    }
+
     public function test_fixed_fields_are_frozen_in_the_snapshot_and_the_teacher_cannot_edit_them(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();

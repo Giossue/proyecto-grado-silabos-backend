@@ -424,6 +424,8 @@ paralelo_id UUID
 ## valores_campo
 
 **Contexto:** valor no repetible de un campo, de un sílabo o de la ficha de una asignatura (I-189).
+`editable_docente_valor_campo` (I-230, migración `000224`) marca un campo de Carrera que el docente puede
+ajustar: en la ficha lo decide Coordinación y el sílabo lo copia al crearse.
 
 ~~~text
 valor_campo_id UUID (PK)
@@ -431,6 +433,7 @@ silabo_id UUID (FK → silabos.silabo_id) NULL ON DELETE CASCADE
 asignatura_id UUID (FK → asignaturas.asignatura_id) NULL ON DELETE CASCADE
 definicion_campo_id UUID (FK → definiciones_campo.definicion_campo_id) NOT NULL
 valor_campo JSONB NULL
+editable_docente_valor_campo BOOLEAN NOT NULL DEFAULT false
 
 CHECK un solo dueño: (silabo_id IS NULL) <> (asignatura_id IS NULL)
 UNIQUE (silabo_id, definicion_campo_id) WHERE silabo_id IS NOT NULL

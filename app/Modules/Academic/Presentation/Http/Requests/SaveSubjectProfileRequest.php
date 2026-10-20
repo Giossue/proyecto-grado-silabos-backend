@@ -17,11 +17,13 @@ class SaveSubjectProfileRequest extends FormRequest
         return [
             'values' => ['present', 'array'],
             'values.*' => ['nullable', 'array'],
+            'editable' => ['sometimes', 'array'],
+            'editable.*' => ['boolean'],
         ];
     }
 
     public function attributes(): array
     {
-        return ['values' => 'datos de la ficha', 'values.*' => 'dato de la ficha'];
+        return ['values' => 'datos de la ficha', 'values.*' => 'dato de la ficha', 'editable' => 'campos que edita el docente', 'editable.*' => 'permiso del docente'];
     }
 }

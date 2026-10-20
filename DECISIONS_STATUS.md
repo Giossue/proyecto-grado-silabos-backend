@@ -849,3 +849,9 @@ plantilla oficial. El Word oficial no cambia salvo que los encabezados con fondo
 definición usada. Las reglas de unidades (4 unidades, 16 semanas, horas de la asignatura) no cambian; solo se mudan
 al JSON.
 
+20 de octubre de 2026, por instrucción del responsable del producto (I-230): en «Proyecto de carrera», cada campo de
+la ficha de una materia tiene el interruptor «El docente puede editarlo» (`valores_campo.editable_docente_valor_campo`,
+migración `000224`). El sílabo hereda el texto y el permiso al crearse; el docente lo ajusta como un campo propio, se
+le pide completarlo al enviar y se copia entre paralelos. Un campo vacío con el interruptor encendido no deja la ficha
+incompleta. Cambiar la ficha después sigue rehaciendo, con confirmación, los sílabos de esa materia. Sin el
+interruptor nada cambia: el docente solo lo consulta.

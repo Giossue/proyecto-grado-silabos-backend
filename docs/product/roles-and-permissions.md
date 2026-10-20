@@ -28,6 +28,7 @@ el permiso, pero no lo sustituyen.
 | Asignar coordinación a una carrera | Sí | No | No | No |
 | Gestionar mallas y materias | No por defecto | Sí, en su carrera, salvo con convocatoria en curso | Consulta asignada | No |
 | Editar ficha académica de una materia (I-187) | Sí, en cualquier carrera desbloqueada | Sí, solo en su carrera desbloqueada | No | No |
+| Permitir que el docente ajuste un campo de la ficha (I-230) | Sí, en la ficha | Sí, en la ficha de su carrera | Edita ese campo en su sílabo | No |
 | Gestionar materias programadas y paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta asignada | No |
 | Asignar docentes a paralelos | No por defecto | Sí, en su carrera, salvo con convocatoria en curso o período finalizado | Consulta propia | No |
 | Diseñar/publicar plantilla | Sí, salvo con proceso abierto | Consulta/aporte según política | No | No |

@@ -62,6 +62,37 @@ class SubjectProfileTest extends TestCase
         $this->assertSame($fields->count() - 1, FieldValue::query()->where('asignatura_id', $subject->id)->count());
     }
 
+    public function test_coordinator_lets_the_teacher_edit_a_field_and_an_empty_editable_field_counts_as_filled(): void
+    {
+        $subject = Subject::query()->firstOrFail();
+        $fields = FieldDefinition::query()->where('quien_llena', 'coordinacion')->get();
+        $open = $fields->first();
+        $values = $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->id => $field->is($open) ? null : FreeText::fromText("Texto de {$field->clave}")])->all();
+
+        $this->asRole('coordinador@silabos.test');
+        $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => $values])
+            ->assertOk()->assertJsonPath('complete', false);
+        $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [], 'editable' => [$open->id => true]])
+            ->assertOk()
+            ->assertJsonPath('complete', true)
+            ->assertJsonPath("editable.{$open->id}", true);
+        $row = FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $open->id)->firstOrFail();
+        $this->assertTrue($row->editable_docente);
+        $this->assertTrue(FreeText::isEmpty($row->valor));
+
+        $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$open->id => FreeText::fromText('Base de la carrera')]])
+            ->assertOk()->assertJsonPath("editable.{$open->id}", true);
+        $this->getJson(route('api.v1.academic.subjects.profile.show', $subject))
+            ->assertOk()->assertJsonPath("editable.{$open->id}", true);
+
+        $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [$open->id => null], 'editable' => [$open->id => false]])
+            ->assertOk()->assertJsonPath('complete', false)->assertJsonPath('editable', []);
+        $this->assertFalse(FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $open->id)->exists());
+
+        $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => [], 'editable' => [$open->id => 'sí']])
+            ->assertUnprocessable()->assertJsonValidationErrors("editable.{$open->id}");
+    }
+
     public function test_another_career_and_teacher_cannot_access_the_profile(): void
     {
         $subject = Subject::query()->firstOrFail();

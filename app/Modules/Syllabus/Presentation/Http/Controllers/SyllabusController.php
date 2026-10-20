@@ -359,7 +359,7 @@ class SyllabusController extends Controller
                     'key' => $field->clave,
                     'label' => $field->etiqueta,
                     'quien_llena' => $field->quien_llena,
-                    'teacher_editable' => $field->teacherEditable(),
+                    'teacher_editable' => FieldValue::editableByTeacher($field, $values->get($field->id) instanceof FieldValue ? $values->get($field->id) : null),
                     'required' => $field->quien_llena !== FieldDefinition::INSTITUTIONAL,
                     'value' => $document,
                     'document' => FieldDocument::resolve($document, $variables),

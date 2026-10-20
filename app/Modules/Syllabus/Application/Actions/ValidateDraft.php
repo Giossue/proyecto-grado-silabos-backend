@@ -13,6 +13,7 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\DraftValidation;
 use App\Modules\Syllabus\Application\IdentificationCard;
 use App\Modules\Syllabus\Application\SyllabusDocumentFields;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,11 +40,12 @@ class ValidateDraft
                     continue;
                 }
                 if (FieldDocument::isEmpty($values->get($field->id)?->valor)) {
+                    $fromCareer = ! FieldValue::editableByTeacher($field, $values->get($field->id));
                     $issues[] = [
                         'field_id' => $field->id,
-                        'code' => $field->fromProfile() ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
+                        'code' => $fromCareer ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
                         'severity' => 'error',
-                        'message' => $field->fromProfile()
+                        'message' => $fromCareer
                             ? 'La asignatura no tiene ficha: pídala al coordinador.'
                             : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
                     ];

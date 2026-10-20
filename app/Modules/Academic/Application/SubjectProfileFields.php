@@ -40,6 +40,19 @@ class SubjectProfileFields
     }
 
     /**
+     * @return array<string, bool> el docente puede editar el campo, por definición de campo
+     */
+    public function editable(string $subjectId): array
+    {
+        return FieldValue::query()
+            ->where('asignatura_id', $subjectId)
+            ->where('editable_docente', true)
+            ->pluck('definicion_campo_id')
+            ->mapWithKeys(fn (string $fieldId): array => [$fieldId => true])
+            ->all();
+    }
+
+    /**
      * @param  array<int, string>  $subjectIds
      * @return array<string, bool> ficha completa por materia: todos los campos de la ficha tienen texto
      */
@@ -62,7 +75,7 @@ class SubjectProfileFields
                 ->whereIn('definicion_campo_id', $fieldIds)
                 ->get()
                 ->each(function (FieldValue $value) use (&$filled): void {
-                    if (FreeText::isDocument($value->valor) && ! FreeText::isEmpty(FieldDocument::normalize($value->valor))) {
+                    if ($value->editable_docente || (FreeText::isDocument($value->valor) && ! FreeText::isEmpty(FieldDocument::normalize($value->valor)))) {
                         $filled[$value->asignatura_id][$value->definicion_campo_id] = true;
                     }
                 });
