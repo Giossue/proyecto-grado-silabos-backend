@@ -10,7 +10,7 @@ La sección contiene tres campos independientes:
 | Estudiantes con discapacidad | Docente | Tabla libre de tipo y breve descripción |
 | Formación y experiencia académica – investigativa | Docente | Documento vacío |
 
-La tabla institucional es contenido de `config/syllabus_template.php`, con celdas
+La tabla institucional es contenido de la plantilla oficial (`silabo-oficial.json`), con celdas
 combinadas, encabezados y variables; no existe un editor especial para esa sección.
 Los datos académicos, horas, créditos, paralelos y docentes salen del contexto del sílabo.
 Las marcas de unidad curricular usan las variables existentes del catálogo. Docencia

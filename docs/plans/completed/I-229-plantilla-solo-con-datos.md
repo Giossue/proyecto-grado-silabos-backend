@@ -58,7 +58,7 @@ desarrollador crea o cambia una plantilla escribiendo JSON, sin tocar código. E
 
 ## Fuera de alcance
 
-`config/syllabus_template.php`, `FixedContent`, `TemplateDocumentDefaults` e `IdentificationCard::document` solo
+`FixedContent`, `TemplateDocumentDefaults` e `IdentificationCard::document` (el config `syllabus_template.php` ya se eliminó) solo
 los usan migraciones antiguas y fotografías anteriores a los bloques; no definen la plantilla vigente.
 
 ## Verificación

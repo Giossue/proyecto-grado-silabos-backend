@@ -33,12 +33,16 @@ return new class extends Migration
         DB::statement("UPDATE definiciones_campo SET quien_llena_definicion_campo = CASE WHEN origen_dato_definicion_campo = 'ficha' THEN 'coordinacion' WHEN tipo_definicion_campo IN ('automatico', 'fijo') THEN 'institucional' ELSE 'docente' END");
         $definitions = DB::table('definiciones_campo')->join('campos_plantilla', 'campos_plantilla.campo_plantilla_id', '=', 'definiciones_campo.campo_plantilla_id')
             ->where('definiciones_campo.vigente_en_plantilla', true)->get(['definiciones_campo.*', 'configuracion_campo_plantilla']);
-        $responsibles = [];
-        foreach (config('syllabus_template.designs') as $design) {
-            foreach ($design['fields'] as $field) {
-                $responsibles[$field[0]] = $field[2];
-            }
-        }
+        $responsibles = [
+            'asignatura' => 'institucional', 'discapacidad' => 'docente', 'formacion_experiencia' => 'docente',
+            'descripcion' => 'coordinacion', 'objetivo_general' => 'coordinacion', 'objetivos_especificos' => 'coordinacion',
+            'resultados_aprendizaje' => 'coordinacion', 'habilidades_blandas' => 'coordinacion', 'unidades' => 'docente',
+            'metodologia' => 'docente', 'tecnicas_ensenanza' => 'docente', 'recursos_medios' => 'docente',
+            'herramientas_tic' => 'docente', 'ambientes_aprendizaje' => 'docente',
+            'indicadores_evaluacion' => 'institucional', 'componentes_evaluacion' => 'institucional',
+            'contribucion_perfil' => 'coordinacion', 'conducta_etica' => 'institucional',
+            'bibliografia' => 'docente', 'bibliografia_complementaria' => 'docente', 'firmas' => 'institucional',
+        ];
         foreach ($definitions as $definition) {
             $config = json_decode($definition->opciones_definicion_campo ?? '{}', true, 512, JSON_THROW_ON_ERROR);
             $block = json_decode($definition->configuracion_campo_plantilla ?? '{}', true, 512, JSON_THROW_ON_ERROR);

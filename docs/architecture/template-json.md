@@ -345,5 +345,5 @@ Los errores de campos llevan su camino (`sections.0.fields.1.content`).
   plantilla oficial, regénerelo con `php artisan template:conformance ../proyecto-grado-silabos-frontend/src/test/fixtures`.
 - **Word sin cambios:** `TemplateGoldenWordTest` compara el `document.xml` del Word con referencias en
   `tests/Fixtures/golden` (`UPDATE_GOLDEN=1` las regenera tras revisar el cambio).
-- `config/syllabus_template.php`, `FixedContent` y `TemplateDocumentDefaults` solo los usan migraciones antiguas;
-  no definen la plantilla.
+- `FixedContent` y `TemplateDocumentDefaults` solo los usan migraciones antiguas; no definen la plantilla.
+  `config/syllabus_template.php` se eliminó.
