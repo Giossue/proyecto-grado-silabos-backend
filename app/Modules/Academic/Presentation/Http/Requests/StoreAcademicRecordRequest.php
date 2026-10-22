@@ -102,8 +102,8 @@ class StoreAcademicRecordRequest extends FormRequest
             }
 
             $today = InstitutionDate::todayOn();
-            $startsOn = InstitutionDate::dayOfValue($this->input('starts_on'));
-            $endsOn = InstitutionDate::dayOfValue($this->input('ends_on'));
+            $startsOn = InstitutionDate::dateOfValue($this->input('starts_on'));
+            $endsOn = InstitutionDate::dateOfValue($this->input('ends_on'));
 
             if ($startsOn !== null && $startsOn < $today) {
                 $validator->errors()->add('starts_on', 'La fecha de inicio debe ser hoy o una fecha posterior.');

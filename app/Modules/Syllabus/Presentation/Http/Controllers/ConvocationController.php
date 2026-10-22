@@ -102,8 +102,8 @@ class ConvocationController extends Controller
                 ],
                 'period' => $convocation->process->academicPeriod->codigo,
                 'template' => SyllabusTemplate::INSTITUTIONAL_NAME,
-                'start_date' => InstitutionDate::dayOf($convocation->process->inicia_en),
-                'draft_deadline' => InstitutionDate::dayOf($convocation->process->entrega_en),
+                'start_date' => InstitutionDate::dateOf($convocation->process->inicia_en),
+                'draft_deadline' => InstitutionDate::dateOf($convocation->process->entrega_en),
                 'counts' => [
                     'total' => $syllabi->count(),
                     'not_started' => $syllabi->where('estado', 'sin_iniciar')->count(),

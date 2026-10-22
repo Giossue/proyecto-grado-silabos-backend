@@ -35,8 +35,8 @@ class ConvocationDatesMigrationTest extends TestCase
             InstitutionDate::endOfDay('2026-10-30')->toIso8601String(),
             $process->entrega_en->setTimezone(InstitutionDate::timezone())->toIso8601String(),
         );
-        $this->assertSame('2026-10-21', InstitutionDate::dayOf($process->inicia_en));
-        $this->assertSame('2026-10-30', InstitutionDate::dayOf($process->entrega_en));
+        $this->assertSame('2026-10-21', InstitutionDate::dateOf($process->inicia_en));
+        $this->assertSame('2026-10-30', InstitutionDate::dateOf($process->entrega_en));
     }
 
     public function test_the_migration_returns_the_markers_to_their_previous_representation(): void

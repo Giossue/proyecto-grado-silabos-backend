@@ -89,8 +89,8 @@ class AcademicStructureViewData
                         return [
                             'id' => $period->id,
                             'code' => $period->codigo,
-                            'starts_on' => InstitutionDate::dayOf($period->fecha_inicio),
-                            'ends_on' => InstitutionDate::dayOf($period->fecha_fin),
+                            'starts_on' => InstitutionDate::dateOf($period->fecha_inicio),
+                            'ends_on' => InstitutionDate::dateOf($period->fecha_fin),
                             'teaching_weeks' => $period->semanas_lectivas,
                             'status' => $this->periodPlanning->status($period),
                             'status_label' => $this->periodPlanning->label($period),

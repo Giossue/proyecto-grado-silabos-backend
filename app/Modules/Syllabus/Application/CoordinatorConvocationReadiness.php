@@ -82,7 +82,7 @@ final class CoordinatorConvocationReadiness
         $templateReady = $process !== null && ($template?->hasStructure() ?? false);
         $facultyLogoReady = $this->logos->facultyIsConfigured($career->faculty);
         $deadlineOpen = $process !== null
-            && InstitutionDate::todayOn() <= InstitutionDate::dayOf($process->entrega_en);
+            && InstitutionDate::todayOn() <= InstitutionDate::dateOf($process->entrega_en);
 
         $canOpen = $process?->estado === SyllabusProcess::STATE_OPEN
             && $deadlineOpen

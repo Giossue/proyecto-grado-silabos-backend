@@ -312,8 +312,8 @@ class DashboardController extends Controller
         CarbonInterface $dueAt,
     ): array {
         $today = InstitutionDate::todayOn();
-        $start = InstitutionDate::dayOf($startsAt);
-        $due = InstitutionDate::dayOf($dueAt);
+        $start = InstitutionDate::dateOf($startsAt);
+        $due = InstitutionDate::dateOf($dueAt);
         $state = match (true) {
             $process->estado === SyllabusProcess::STATE_CLOSED || $convocation?->estado === Convocation::STATE_CLOSED => 'closed',
             $process->estado === SyllabusProcess::STATE_PAUSED || $convocation?->estado === Convocation::STATE_PAUSED => 'paused',
@@ -372,7 +372,7 @@ class DashboardController extends Controller
     private function daysLeftMetric(mixed $deadline, ?string $none): array
     {
         $today = InstitutionDate::todayOn();
-        $dueOn = InstitutionDate::dayOfValue($deadline);
+        $dueOn = InstitutionDate::dateOfValue($deadline);
         $days = $dueOn === null ? 0 : max(0, InstitutionDate::daysBetween($today, $dueOn));
         $hint = match (true) {
             $none !== null => $none,

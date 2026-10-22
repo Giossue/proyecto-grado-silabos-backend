@@ -42,8 +42,8 @@ class ExtendProcessDeadline
         $stage = ConvocationSchedule::STAGE_DRAFT;
         $requested = CarbonImmutable::parse($newDueAt);
         $previous = $process->entrega_en;
-        $requestedOn = InstitutionDate::dayOf($requested);
-        $previousOn = InstitutionDate::dayOf($previous);
+        $requestedOn = InstitutionDate::dateOf($requested);
+        $previousOn = InstitutionDate::dateOf($previous);
 
         if ($requestedOn < InstitutionDate::todayOn()) {
             throw ValidationException::withMessages(['due_at' => 'La nueva fecha ya pasó.']);

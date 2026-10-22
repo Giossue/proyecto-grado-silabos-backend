@@ -49,9 +49,9 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
   - `TRUSTED_PROXIES` vale `*` por defecto (`config/app.php`, `.env.example`); hay que fijar el proxy real;
   - `SESSION_SECURE_COOKIE=true`;
   - `APP_DEBUG=false`;
-  - `DISPLAY_TIMEZONE` fija el día civil de la institución (por defecto `America/Guayaquil`). Cambiarla
+  - `DISPLAY_TIMEZONE` fija la fecha de hoy de la institución (por defecto `America/Guayaquil`). Cambiarla
     cambia los plazos de la convocatoria y las fechas ya guardadas.
-- **Reloj del servidor:** el día civil sale del reloj del servidor, así que debe estar sincronizado con NTP.
+- **Reloj del servidor:** la fecha de hoy sale del reloj del servidor, así que debe estar sincronizado con NTP.
 - **Cola de la importación de la ficha:** `PrepareFichaImportJob` tiene `timeout` de 900 s, pero
   `REDIS_QUEUE_RETRY_AFTER` vale 180 (`.env.example` y `config/queue.php`). Con más de un worker, una importación
   que tarde más de 180 s se entrega otra vez y queda marcada como fallida. Hay que fijar un valor mayor que 900

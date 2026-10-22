@@ -294,8 +294,8 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful();
 
         $process = SyllabusProcess::query()->firstOrFail();
-        $this->assertSame('2026-10-21', InstitutionDate::dayOf($process->inicia_en));
-        $this->assertSame('2026-10-30', InstitutionDate::dayOf($process->entrega_en));
+        $this->assertSame('2026-10-21', InstitutionDate::dateOf($process->inicia_en));
+        $this->assertSame('2026-10-30', InstitutionDate::dateOf($process->entrega_en));
     }
 
     public function test_yesterday_is_rejected_when_utc_already_moved_to_the_next_day(): void

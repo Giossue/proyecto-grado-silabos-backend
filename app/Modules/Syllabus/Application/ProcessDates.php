@@ -26,7 +26,7 @@ final class ProcessDates
         if (preg_match(self::DATE_ONLY, $value) === 1) {
             $day = $value;
         } else {
-            $day = InstitutionDate::dayOfValue($value);
+            $day = InstitutionDate::dateOfValue($value);
             if ($day === null) {
                 return $value;
             }

@@ -7,11 +7,11 @@ use Carbon\CarbonInterface;
 use Throwable;
 
 /**
- * Día civil de la institución.
+ * Fechas de la institución.
  *
  * El calendario de negocio lo decide la institución (`DISPLAY_TIMEZONE`), no el
- * servidor en UTC ni el navegador. Un día civil es una fecha sin hora; sus límites
- * (medianoche y fin del día) se guardan como instantes en esa zona.
+ * servidor en UTC ni el navegador. Una fecha sin hora es una fecha de calendario; sus
+ * límites (medianoche y fin del día) se guardan como instantes en esa zona.
  */
 final class InstitutionDate
 {
@@ -30,15 +30,15 @@ final class InstitutionDate
         return self::today()->toDateString();
     }
 
-    public static function dayOf(CarbonInterface $instant): string
+    public static function dateOf(CarbonInterface $instant): string
     {
         return $instant->copy()->setTimezone(self::timezone())->toDateString();
     }
 
-    public static function dayOfValue(mixed $value): ?string
+    public static function dateOfValue(mixed $value): ?string
     {
         if ($value instanceof CarbonInterface) {
-            return self::dayOf($value);
+            return self::dateOf($value);
         }
         if (! is_string($value) || trim($value) === '') {
             return null;
@@ -47,7 +47,7 @@ final class InstitutionDate
             return $value;
         }
         try {
-            return self::dayOf(CarbonImmutable::parse($value));
+            return self::dateOf(CarbonImmutable::parse($value));
         } catch (Throwable) {
             return null;
         }

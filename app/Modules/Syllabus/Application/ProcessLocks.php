@@ -39,7 +39,7 @@ class ProcessLocks
             'scope' => 'process',
             'period' => $process->academicPeriod?->codigo,
             'institutional_pause' => false,
-            'delivery_on' => InstitutionDate::dayOf($process->entrega_en),
+            'delivery_on' => InstitutionDate::dateOf($process->entrega_en),
         ];
     }
 
@@ -60,7 +60,7 @@ class ProcessLocks
             'scope' => 'convocation',
             'period' => $convocation->process->academicPeriod?->codigo,
             'institutional_pause' => $convocation->process->estado === SyllabusProcess::STATE_PAUSED,
-            'delivery_on' => InstitutionDate::dayOf($convocation->process->entrega_en),
+            'delivery_on' => InstitutionDate::dateOf($convocation->process->entrega_en),
         ];
     }
 

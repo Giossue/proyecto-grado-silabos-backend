@@ -67,10 +67,9 @@ Así la misma imagen sirve para cualquier ambiente. Sin URL, la SPA no arranca.
 
 ## Fechas
 
-- El día civil de negocio lo decide el servidor. La sesión publica
-  `institution.today` e `institution.timezone`, y el composable
-  `useInstitutionToday` lo entrega a los selectores de fecha: el navegador nunca
-  decide el «hoy» de la institución.
+- El día de negocio lo decide el servidor. La sesión publica `institution.today` e
+  `institution.timezone`, y el composable `useInstitutionToday` lo entrega a los
+  selectores de fecha: el navegador nunca decide la fecha de hoy de la institución.
 - `lib/dateDisplay.ts` muestra los instantes en `America/Guayaquil` y las fechas sin
   hora tal cual, sin desplazarlas.
 - La API publica los plazos de la convocatoria como `YYYY-MM-DD`: son fechas, no

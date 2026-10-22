@@ -31,7 +31,7 @@ class ConvocationSchedule
 
         $today = InstitutionDate::todayOn();
         $startsAt = $this->startsAt($convocation);
-        $startsOn = InstitutionDate::dayOf($startsAt);
+        $startsOn = InstitutionDate::dateOf($startsAt);
 
         if ($today < $startsOn) {
             throw ValidationException::withMessages([
@@ -41,7 +41,7 @@ class ConvocationSchedule
         }
 
         $deadline = $this->draftDeadline($convocation);
-        $deadlineOn = InstitutionDate::dayOf($deadline);
+        $deadlineOn = InstitutionDate::dateOf($deadline);
 
         if ($today > $deadlineOn) {
             throw ValidationException::withMessages([
