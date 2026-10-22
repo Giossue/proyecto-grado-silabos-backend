@@ -120,8 +120,7 @@ y el botón «Documentos» (DOC-10).
 
 - «Editar malla» abre el lienzo a pantalla completa. La ayuda de la pantalla sigue
   disponible en la esquina inferior derecha para no cubrir los controles de zoom.
-- En edición, los puntos «+» muestran tooltips para indicar desde dónde iniciar una
-  relación y dónde conectarla.
+- En edición, ambos puntos «+» muestran el tooltip «Conectar materias».
 
 ### COR-14 Materias y asignaciones y COR-15 Docentes
 
