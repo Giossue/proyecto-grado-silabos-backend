@@ -116,6 +116,13 @@ y el botón «Documentos» (DOC-10).
 - Si la plantilla cambió durante la pausa, «Reanudar» muestra el conteo por estado y
   pide «Reanudar y rehacer sílabos».
 
+### COR-13 Malla
+
+- «Editar malla» abre el lienzo a pantalla completa. La ayuda de la pantalla sigue
+  disponible en la esquina inferior derecha para no cubrir los controles de zoom.
+- En edición, los puntos «+» muestran tooltips para indicar desde dónde iniciar una
+  relación y dónde conectarla.
+
 ### COR-14 Materias y asignaciones y COR-15 Docentes
 
 - COR-14 lista las materias de la malla con sus paralelos, jornada y docente. Filtros
