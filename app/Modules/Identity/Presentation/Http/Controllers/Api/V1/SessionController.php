@@ -18,6 +18,7 @@ use App\Modules\Identity\Presentation\Http\Requests\SelectActiveRoleRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateAccessibilityRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateTeacherFormationRequest;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Support\InstitutionDate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -207,7 +208,7 @@ class SessionController extends Controller
         return $user;
     }
 
-    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, can_edit_identity: bool, formation: string|null, accessibility: array{high_contrast: bool, text_size: string, no_motion: bool, underline_links: bool, wide_spacing: bool}|null}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>} */
+    /** @return array{user: array{id: string, name: string, email: string, email_verified: bool, can_edit_identity: bool, formation: string|null, accessibility: array{high_contrast: bool, text_size: string, no_motion: bool, underline_links: bool, wide_spacing: bool}|null}, active_role: array{id: string, code: string, career_id: string|null, career_name: string|null}|null, available_roles: list<array{id: string, code: string, career_id: string|null, career_name: string|null}>, institution: array{today: string, timezone: string}} */
     private function sessionPayload(User $user, Request $request): array
     {
         $activeRole = $this->roles->resolve($request);
@@ -226,6 +227,10 @@ class SessionController extends Controller
             'available_roles' => array_values($this->roles->eligible($user)
                 ->map(fn (RoleAssignment $assignment): array => $this->rolePayload($assignment))
                 ->all()),
+            'institution' => [
+                'today' => InstitutionDate::todayOn(),
+                'timezone' => InstitutionDate::timezone(),
+            ],
         ];
     }
 

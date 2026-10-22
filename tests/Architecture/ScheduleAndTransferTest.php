@@ -30,7 +30,7 @@ it('conserva la fecha anterior al prorrogar', function (): void {
     expect($extend)
         ->toContain("'previous_due_at'")
         ->toContain('proceso_silabos.plazo_extendido')
-        ->toContain('lessThanOrEqualTo');
+        ->toContain('$requestedOn <= $previousOn');
 });
 
 it('marca la aprobacion hecha por quien redacto', function (): void {

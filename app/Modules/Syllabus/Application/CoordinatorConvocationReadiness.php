@@ -11,6 +11,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use App\Support\InstitutionDate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
@@ -80,7 +81,8 @@ final class CoordinatorConvocationReadiness
         $template = SyllabusTemplate::query()->first();
         $templateReady = $process !== null && ($template?->hasStructure() ?? false);
         $facultyLogoReady = $this->logos->facultyIsConfigured($career->faculty);
-        $deadlineOpen = $process !== null && now()->startOfDay()->lessThanOrEqualTo($process->entrega_en->copy()->startOfDay());
+        $deadlineOpen = $process !== null
+            && InstitutionDate::todayOn() <= InstitutionDate::dayOf($process->entrega_en);
 
         $canOpen = $process?->estado === SyllabusProcess::STATE_OPEN
             && $deadlineOpen

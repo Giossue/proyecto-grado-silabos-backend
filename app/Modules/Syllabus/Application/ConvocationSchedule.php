@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use App\Support\InstitutionDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 
@@ -28,22 +29,24 @@ class ConvocationSchedule
     {
         $this->assertNotPaused($convocation);
 
-        $now = CarbonImmutable::now();
+        $today = InstitutionDate::todayOn();
         $startsAt = $this->startsAt($convocation);
+        $startsOn = InstitutionDate::dayOf($startsAt);
 
-        if ($now->lessThan($startsAt)) {
+        if ($today < $startsOn) {
             throw ValidationException::withMessages([
                 'deadline' => 'La convocatoria todavía no inicia; podrá enviar a partir del '
-                    .$startsAt->translatedFormat('d/m/Y H:i').'.',
+                    .CarbonImmutable::parse($startsOn, 'UTC')->translatedFormat('d/m/Y').'.',
             ]);
         }
 
         $deadline = $this->draftDeadline($convocation);
+        $deadlineOn = InstitutionDate::dayOf($deadline);
 
-        if ($now->greaterThan($deadline)) {
+        if ($today > $deadlineOn) {
             throw ValidationException::withMessages([
                 'deadline' => 'El plazo de entrega venció el '
-                    .$deadline->translatedFormat('d/m/Y H:i')
+                    .CarbonImmutable::parse($deadlineOn, 'UTC')->translatedFormat('d/m/Y')
                     .'. Solicite una prórroga a la coordinación de su carrera.',
             ]);
         }

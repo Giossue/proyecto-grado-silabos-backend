@@ -13,11 +13,12 @@ use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use App\Support\InstitutionDate;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 
 /**
  * @phpstan-import-type CoordinatorReadiness from CoordinatorConvocationReadiness
@@ -310,24 +311,24 @@ class DashboardController extends Controller
         CarbonInterface $startsAt,
         CarbonInterface $dueAt,
     ): array {
-        $today = now()->startOfDay();
-        $start = $startsAt->copy()->startOfDay();
-        $due = $dueAt->copy()->startOfDay();
+        $today = InstitutionDate::todayOn();
+        $start = InstitutionDate::dayOf($startsAt);
+        $due = InstitutionDate::dayOf($dueAt);
         $state = match (true) {
             $process->estado === SyllabusProcess::STATE_CLOSED || $convocation?->estado === Convocation::STATE_CLOSED => 'closed',
             $process->estado === SyllabusProcess::STATE_PAUSED || $convocation?->estado === Convocation::STATE_PAUSED => 'paused',
-            $today->lessThan($start) => 'upcoming',
-            $today->greaterThan($due) => 'overdue',
+            $today < $start => 'upcoming',
+            $today > $due => 'overdue',
             default => 'active',
         };
 
         return [
             'period' => $process->academicPeriod->codigo,
-            'starts_at' => $startsAt->toIso8601String(),
-            'due_at' => $dueAt->toIso8601String(),
+            'starts_at' => $start,
+            'due_at' => $due,
             'state' => $state,
-            'days_until_start' => max(0, (int) $today->diffInDays($start, false)),
-            'days_until_due' => max(0, (int) $today->diffInDays($due, false)),
+            'days_until_start' => max(0, InstitutionDate::daysBetween($today, $start)),
+            'days_until_due' => max(0, InstitutionDate::daysBetween($today, $due)),
             'convocation_id' => $convocation?->id,
         ];
     }
@@ -370,13 +371,14 @@ class DashboardController extends Controller
     /** @return array{key: string, label: string, value: int, suffix: string|null, hint: string} */
     private function daysLeftMetric(mixed $deadline, ?string $none): array
     {
-        $due = $deadline === null ? null : ($deadline instanceof CarbonInterface ? $deadline : Carbon::parse((string) $deadline));
-        $days = $due === null ? 0 : max(0, (int) now()->startOfDay()->diffInDays($due->copy()->startOfDay(), false));
+        $today = InstitutionDate::todayOn();
+        $dueOn = InstitutionDate::dayOfValue($deadline);
+        $days = $dueOn === null ? 0 : max(0, InstitutionDate::daysBetween($today, $dueOn));
         $hint = match (true) {
             $none !== null => $none,
-            $due === null => 'Sin fecha de entrega',
-            $due->isPast() => 'El plazo venció el '.$due->translatedFormat('j \d\e F'),
-            default => 'Entrega hasta el '.$due->translatedFormat('j \d\e F'),
+            $dueOn === null => 'Sin fecha de entrega',
+            $dueOn < $today => 'El plazo venció el '.CarbonImmutable::parse($dueOn, 'UTC')->translatedFormat('j \d\e F'),
+            default => 'Entrega hasta el '.CarbonImmutable::parse($dueOn, 'UTC')->translatedFormat('j \d\e F'),
         };
 
         return ['key' => 'days_left', 'label' => 'Días para la entrega', 'value' => $days, 'suffix' => 'días', 'hint' => $hint];

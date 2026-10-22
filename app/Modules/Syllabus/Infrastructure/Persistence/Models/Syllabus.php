@@ -7,6 +7,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Support\Database\MapsLegacyColumnNames;
+use App\Support\InstitutionDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -126,14 +127,14 @@ class Syllabus extends Model
     public function scopeInCurrentPeriod(Builder $query): void
     {
         $query->whereHas('convocation.process.academicPeriod', fn (Builder $period): Builder => $period
-            ->whereDate('fecha_fin_periodo', '>=', now()->toDateString()));
+            ->whereDate('fecha_fin_periodo', '>=', InstitutionDate::todayOn()));
     }
 
     /** @param  Builder<Syllabus>  $query */
     public function scopeInPastPeriod(Builder $query): void
     {
         $query->whereHas('convocation.process.academicPeriod', fn (Builder $period): Builder => $period
-            ->whereDate('fecha_fin_periodo', '<', now()->toDateString()));
+            ->whereDate('fecha_fin_periodo', '<', InstitutionDate::todayOn()));
     }
 
     /** @return HasOneThrough<Career, Convocation, $this> */

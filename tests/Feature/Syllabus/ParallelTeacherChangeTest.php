@@ -19,6 +19,7 @@ use Illuminate\Testing\TestResponse;
 use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
+use Tests\Support\UsesInstitutionalDays;
 use Tests\TestCase;
 
 class ParallelTeacherChangeTest extends TestCase
@@ -27,6 +28,7 @@ class ParallelTeacherChangeTest extends TestCase
     use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
+    use UsesInstitutionalDays;
 
     private User $administrator;
 
@@ -100,7 +102,7 @@ class ParallelTeacherChangeTest extends TestCase
         $this->assertSame(1, Syllabus::query()->where('paralelo_id', $assignment->paralelo_id)->count());
 
         $period = $process->academicPeriod()->firstOrFail();
-        $period->update(['fecha_inicio' => now()->subMonths(5)->toDateString(), 'fecha_fin' => now()->subDay()->toDateString()]);
+        $period->update(['fecha_inicio' => $this->institutionDay(-150), 'fecha_fin' => $this->institutionDay(-1)]);
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.history.index'))
             ->assertOk()->assertJsonCount(1, 'careers');
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();

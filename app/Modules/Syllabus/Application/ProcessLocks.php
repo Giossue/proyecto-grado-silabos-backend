@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Application;
 
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use App\Support\InstitutionDate;
 use Illuminate\Validation\ValidationException;
 
 class ProcessLocks
@@ -38,7 +39,7 @@ class ProcessLocks
             'scope' => 'process',
             'period' => $process->academicPeriod?->codigo,
             'institutional_pause' => false,
-            'delivery_on' => $process->entrega_en->toDateString(),
+            'delivery_on' => InstitutionDate::dayOf($process->entrega_en),
         ];
     }
 
@@ -59,7 +60,7 @@ class ProcessLocks
             'scope' => 'convocation',
             'period' => $convocation->process->academicPeriod?->codigo,
             'institutional_pause' => $convocation->process->estado === SyllabusProcess::STATE_PAUSED,
-            'delivery_on' => $convocation->process->entrega_en->toDateString(),
+            'delivery_on' => InstitutionDate::dayOf($convocation->process->entrega_en),
         ];
     }
 

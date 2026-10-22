@@ -5,6 +5,7 @@ namespace App\Modules\Syllabus\Presentation\Http\Requests;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Syllabus\Application\ProcessDates;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use App\Support\InstitutionDate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -29,8 +30,8 @@ class StoreSyllabusProcessRequest extends FormRequest
     {
         return [
             'period_id' => ['required', 'uuid', Rule::exists('periodos_academicos', 'periodo_academico_id')],
-            'starts_at' => ['required', 'date', 'after_or_equal:today'],
-            'due_at' => ['required', 'date', 'after:now', 'after:starts_at'],
+            'starts_at' => ['required', 'date'],
+            'due_at' => ['required', 'date'],
         ];
     }
 
@@ -38,33 +39,39 @@ class StoreSyllabusProcessRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            $today = InstitutionDate::todayOn();
+            $startsOn = InstitutionDate::dayOfValue($this->input('starts_at'));
+            $dueOn = InstitutionDate::dayOfValue($this->input('due_at'));
+
+            if ($startsOn !== null && $startsOn < $today) {
+                $validator->errors()->add('starts_at', 'El inicio no puede ser anterior a hoy.');
+            }
+            if ($dueOn !== null && $dueOn < $today) {
+                $validator->errors()->add('due_at', 'La fecha de entrega debe ser posterior al inicio y a hoy.');
+            }
+            if ($startsOn !== null && $dueOn !== null && $dueOn < $startsOn) {
+                $validator->errors()->add('due_at', 'La fecha de entrega debe ser posterior al inicio y a hoy.');
+            }
+
             $periodId = $this->input('period_id');
             $period = is_string($periodId) ? AcademicPeriod::query()->find($periodId) : null;
             if ($period === null) {
                 return;
             }
-            $end = $period->fecha_fin->endOfDay();
-            if ($end->isPast()) {
+            $endOn = InstitutionDate::dayOf($period->fecha_fin);
+            if ($endOn < $today) {
                 $validator->errors()->add('period_id', 'El período académico ya terminó ('.$period->fecha_fin->format('d/m/Y').'). Elija uno vigente.');
 
                 return;
             }
             foreach (['starts_at', 'due_at'] as $key) {
                 $value = $this->input($key);
-                if (is_string($value) && strtotime($value) !== false && strtotime($value) > $end->getTimestamp()) {
+                $on = InstitutionDate::dayOfValue($value);
+                if ($on !== null && $on > $endOn) {
                     $validator->errors()->add($key, 'La fecha no puede pasar del fin del período ('.$period->fecha_fin->format('d/m/Y').').');
                 }
             }
         }];
-    }
-
-    /** @return array<string, string> */
-    public function messages(): array
-    {
-        return [
-            'starts_at.after_or_equal' => 'El inicio no puede ser anterior a hoy.',
-            'due_at.after' => 'La fecha de entrega debe ser posterior al inicio y a hoy.',
-        ];
     }
 
     /** @return array{period_id: string, starts_at: string, due_at: string} */

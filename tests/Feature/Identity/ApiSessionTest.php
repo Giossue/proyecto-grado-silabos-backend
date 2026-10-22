@@ -5,6 +5,7 @@ namespace Tests\Feature\Identity;
 use App\Models\User;
 use App\Modules\Identity\Infrastructure\Mail\ManagedUserActivationMail;
 use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
+use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -44,6 +45,20 @@ class ApiSessionTest extends TestCase
             ->assertJsonPath('active_role.id', $assignment->id)
             ->assertJsonPath('available_roles.0.id', $assignment->id)
             ->assertJsonCount(1, 'available_roles');
+    }
+
+    public function test_the_session_publishes_the_institutional_day_even_when_utc_moved_to_the_next_day(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-22T00:30:00Z'));
+        $this->seed(DatabaseSeeder::class);
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+
+        $this->actingAs($teacher)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.session.show'))
+            ->assertOk()
+            ->assertJsonPath('institution.today', '2026-10-21')
+            ->assertJsonPath('institution.timezone', 'America/Guayaquil');
     }
 
     public function test_login_returns_the_authenticated_session_without_exposing_the_password(): void

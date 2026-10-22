@@ -27,6 +27,11 @@ base; este documento explica las reglas que hay detrás.
   La base no genera identificadores, salvo el contador interno de `migraciones`.
 - Tiempo: todas las fechas con hora son `timestamptz`. La conexión usa
   `DB_TIMEZONE=UTC`; la conversión a `America/Guayaquil` ocurre solo al mostrar.
+- Días civiles: las fechas sin hora (inicio y entrega de la convocatoria, fechas de los
+  períodos) son fechas de calendario, no instantes. Cuando se guardan en una columna
+  `timestamptz`, se guardan con los límites del día en `DISPLAY_TIMEZONE`: la
+  medianoche para el inicio y el final del día para la entrega. El día civil de un
+  valor guardado se obtiene con `InstitutionDate::dayOf()`, que lo lee en esa zona.
 - Fechas de dominio con nombre propio (`enviado_en`, `aprobado_en`, `asignado_en`).
   No existen `created_at` ni `updated_at` en tablas de dominio. La historia está en
   `eventos_auditoria`.

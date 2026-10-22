@@ -9,11 +9,13 @@ use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\UsesInstitutionalDays;
 use Tests\TestCase;
 
 class ApiDashboardTest extends TestCase
 {
     use RefreshDatabase;
+    use UsesInstitutionalDays;
 
     protected function setUp(): void
     {
@@ -84,6 +86,8 @@ class ApiDashboardTest extends TestCase
             ->assertOk()
             ->assertJsonCount(3, 'metrics')
             ->assertJsonPath('deadline.state', 'upcoming')
+            ->assertJsonPath('deadline.starts_at', $this->institutionDay(2))
+            ->assertJsonPath('deadline.due_at', $this->institutionDay(9))
             ->assertJsonPath('deadline.days_until_start', 2)
             ->assertJsonPath('deadline.days_until_due', 9)
             ->assertJsonPath('deadline.convocation_id', null)

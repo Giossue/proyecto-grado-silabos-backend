@@ -11,6 +11,7 @@ use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
+use App\Support\InstitutionDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,15 +42,17 @@ class ExtendProcessDeadline
         $stage = ConvocationSchedule::STAGE_DRAFT;
         $requested = CarbonImmutable::parse($newDueAt);
         $previous = $process->entrega_en;
+        $requestedOn = InstitutionDate::dayOf($requested);
+        $previousOn = InstitutionDate::dayOf($previous);
 
-        if ($requested->lessThanOrEqualTo($previous)) {
+        if ($requestedOn < InstitutionDate::todayOn()) {
+            throw ValidationException::withMessages(['due_at' => 'La nueva fecha ya pasó.']);
+        }
+        if ($requestedOn <= $previousOn) {
             throw ValidationException::withMessages([
                 'due_at' => 'La nueva fecha debe ser posterior a la vigente, que es el '
-                    .$previous->translatedFormat('d/m/Y H:i').'.',
+                    .CarbonImmutable::parse($previousOn, 'UTC')->translatedFormat('d/m/Y').'.',
             ]);
-        }
-        if ($requested->isPast()) {
-            throw ValidationException::withMessages(['due_at' => 'La nueva fecha ya pasó.']);
         }
 
         return DB::transaction(function () use ($activeRole, $actor, $previous, $process, $request, $requested, $stage): SyllabusProcess {

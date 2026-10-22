@@ -11,6 +11,8 @@ use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use App\Support\InstitutionDate;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,6 +21,7 @@ use Illuminate\Support\Str;
 use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
+use Tests\Support\UsesInstitutionalDays;
 use Tests\TestCase;
 
 class ConvocationScheduleTest extends TestCase
@@ -27,6 +30,7 @@ class ConvocationScheduleTest extends TestCase
     use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
+    use UsesInstitutionalDays;
 
     private User $administrator;
 
@@ -100,6 +104,49 @@ class ConvocationScheduleTest extends TestCase
 
         $this->assertDatabaseCount('revisiones_silabo', 0);
         $this->assertSame('borrador', $syllabus->fresh()->estado);
+    }
+
+    public function test_a_teacher_can_submit_on_the_delivery_day_even_when_utc_already_moved_on(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-22T00:30:00Z'));
+        $syllabus = $this->createValidDraft();
+        $syllabus->convocation->process()->update([
+            'inicia_en' => InstitutionDate::startOfDay('2026-10-20')->toIso8601String(),
+            'entrega_en' => InstitutionDate::endOfDay('2026-10-21')->toIso8601String(),
+        ]);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'version_bloqueo' => $syllabus->version_bloqueo,
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertSuccessful();
+
+        $this->assertDatabaseCount('revisiones_silabo', 1);
+    }
+
+    public function test_the_delivery_day_closes_at_the_end_of_the_institutional_day(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-22T05:30:00Z'));
+        $syllabus = $this->createValidDraft();
+        $syllabus->convocation->process()->update([
+            'inicia_en' => InstitutionDate::startOfDay('2026-10-20')->toIso8601String(),
+            'entrega_en' => InstitutionDate::endOfDay('2026-10-21')->toIso8601String(),
+        ]);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'version_bloqueo' => $syllabus->version_bloqueo,
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertJsonValidationErrors('deadline');
+
+        $this->assertDatabaseCount('revisiones_silabo', 0);
+    }
+
+    public function test_an_extension_cannot_target_a_day_that_already_passed(): void
+    {
+        $convocation = $this->prepareConvocation();
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
+            'due_at' => $this->institutionDay(-1),
+        ])->assertJsonValidationErrors(['due_at' => 'La nueva fecha ya pasó.']);
     }
 
     public function test_an_extension_reopens_submission_and_keeps_the_previous_date_in_the_audit_trail(): void

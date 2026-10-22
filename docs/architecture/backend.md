@@ -92,6 +92,13 @@ Las rutas `api/*` siempre responden JSON. No se muestran trazas al usuario.
 
 - UUID v7 generados en la aplicación.
 - Instantes en UTC; se muestran en `America/Guayaquil` (`DISPLAY_TIMEZONE`).
+- El día civil de negocio lo decide la institución, no el servidor en UTC ni el
+  navegador. `App\Support\InstitutionDate` es el único origen de «hoy» y de la fecha
+  civil de un instante.
+- Una fecha sin hora es un día civil. Los plazos de la convocatoria se guardan con los
+  límites reales de ese día en `DISPLAY_TIMEZONE` (medianoche y fin del día) y la API
+  los publica como `YYYY-MM-DD`.
+- El navegador nunca decide el día: la SPA usa el día que publica `/api/v1/session`.
 - El borrador usa bloqueo optimista con `version_bloqueo`. Cada guardado lo incrementa;
   si no coincide, la API responde `409` y la SPA ofrece recargar.
 

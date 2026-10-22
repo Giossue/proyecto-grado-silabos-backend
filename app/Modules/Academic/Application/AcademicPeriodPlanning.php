@@ -3,7 +3,7 @@
 namespace App\Modules\Academic\Application;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use Carbon\CarbonImmutable;
+use App\Support\InstitutionDate;
 use Illuminate\Validation\ValidationException;
 
 final class AcademicPeriodPlanning
@@ -17,13 +17,13 @@ final class AcademicPeriodPlanning
     /** @return self::UPCOMING|self::CURRENT|self::FINISHED */
     public function status(AcademicPeriod $period): string
     {
-        $today = CarbonImmutable::today((string) config('app.display_timezone', 'America/Guayaquil'));
+        $today = InstitutionDate::todayOn();
 
-        if ($period->fecha_fin->lt($today)) {
+        if (InstitutionDate::dayOf($period->fecha_fin) < $today) {
             return self::FINISHED;
         }
 
-        return $period->fecha_inicio->gt($today) ? self::UPCOMING : self::CURRENT;
+        return InstitutionDate::dayOf($period->fecha_inicio) > $today ? self::UPCOMING : self::CURRENT;
     }
 
     public function label(AcademicPeriod $period): string

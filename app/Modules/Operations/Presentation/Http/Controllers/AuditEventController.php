@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Presentation\Http\Requests\ViewAuditEventsRequest;
+use App\Support\InstitutionDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 
@@ -37,11 +38,11 @@ class AuditEventController extends Controller
                 ->orWhereHas('actor', fn ($actor) => $actor->where('nombre', 'ilike', "%{$escaped}%")));
         }
         if ($from !== '') {
-            $query->where('ocurrido_en', '>=', CarbonImmutable::createFromFormat('Y-m-d', $from, 'America/Guayaquil')
+            $query->where('ocurrido_en', '>=', CarbonImmutable::createFromFormat('Y-m-d', $from, InstitutionDate::timezone())
                 ->startOfDay()->utc());
         }
         if ($to !== '') {
-            $query->where('ocurrido_en', '<=', CarbonImmutable::createFromFormat('Y-m-d', $to, 'America/Guayaquil')
+            $query->where('ocurrido_en', '<=', CarbonImmutable::createFromFormat('Y-m-d', $to, InstitutionDate::timezone())
                 ->endOfDay()->utc());
         }
 

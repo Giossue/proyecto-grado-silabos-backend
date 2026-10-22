@@ -14,6 +14,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreConvocationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionConvocationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewConvocationsRequest;
+use App\Support\InstitutionDate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -101,8 +102,8 @@ class ConvocationController extends Controller
                 ],
                 'period' => $convocation->process->academicPeriod->codigo,
                 'template' => SyllabusTemplate::INSTITUTIONAL_NAME,
-                'start_date' => $convocation->process->inicia_en->toIso8601String(),
-                'draft_deadline' => $convocation->process->entrega_en->toIso8601String(),
+                'start_date' => InstitutionDate::dayOf($convocation->process->inicia_en),
+                'draft_deadline' => InstitutionDate::dayOf($convocation->process->entrega_en),
                 'counts' => [
                     'total' => $syllabi->count(),
                     'not_started' => $syllabi->where('estado', 'sin_iniciar')->count(),

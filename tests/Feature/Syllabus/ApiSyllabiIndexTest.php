@@ -13,11 +13,12 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\CreatesSyllabusProcess;
+use Tests\Support\UsesInstitutionalDays;
 use Tests\TestCase;
 
 class ApiSyllabiIndexTest extends TestCase
 {
-    use CreatesSyllabusProcess, RefreshDatabase;
+    use CreatesSyllabusProcess, RefreshDatabase, UsesInstitutionalDays;
 
     protected function setUp(): void
     {
@@ -80,12 +81,12 @@ class ApiSyllabiIndexTest extends TestCase
             'version_bloqueo' => 1,
         ]);
 
-        AcademicPeriod::query()->update(['fecha_fin' => now()->addMonth()->toDateString()]);
+        AcademicPeriod::query()->update(['fecha_fin' => $this->institutionDay(30)]);
         $current = $request('api.v1.teacher.syllabi.index')->assertOk()->json('syllabi.total');
         $this->assertGreaterThan(0, $current);
         $request('api.v1.teacher.history.index')->assertOk()->assertJsonCount(0, 'careers');
 
-        AcademicPeriod::query()->update(['fecha_fin' => now()->subDay()->toDateString()]);
+        AcademicPeriod::query()->update(['fecha_fin' => $this->institutionDay(-1)]);
         $request('api.v1.teacher.syllabi.index')->assertOk()->assertJsonPath('syllabi.total', 0);
         $history = $request('api.v1.teacher.history.index')->assertOk()->assertJsonPath('careers.0.syllabi_count', $current);
 

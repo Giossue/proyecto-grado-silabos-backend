@@ -57,6 +57,7 @@ Las más importantes (ver `.env.example`):
 |---|---|
 | `FRONTEND_URL`, `SANCTUM_STATEFUL_DOMAINS` | Dirección de la SPA (por defecto `localhost:5173`) |
 | `DB_*`, `REDIS_*` | Conexión a PostgreSQL y Redis |
+| `DISPLAY_TIMEZONE` | Zona horaria de la institución (por defecto `America/Guayaquil`); fija el día civil de los plazos |
 | `AI_DRIVER`, `AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY` | Proveedor de IA: `disabled` (por defecto), `openai`, `claude`, `deepseek` o `baseline` (pruebas) |
 | `OPENPARSER_ENABLED`, `OPENPARSER_API_KEY` | Lectura de PDF con OpenParser; si está apagado se usa `pdftotext` |
 | `GOTENBERG_URL`, `GOTENBERG_TIMEOUT` | Conversión de Word a PDF; sin ella el PDF sale como texto simple |

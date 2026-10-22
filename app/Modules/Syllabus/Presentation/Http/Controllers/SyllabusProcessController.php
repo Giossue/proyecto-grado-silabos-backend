@@ -15,6 +15,7 @@ use App\Modules\Syllabus\Presentation\Http\Requests\ExtendProcessDeadlineRequest
 use App\Modules\Syllabus\Presentation\Http\Requests\ManageSyllabusProcessesRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreSyllabusProcessRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionSyllabusProcessRequest;
+use App\Support\InstitutionDate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -41,8 +42,8 @@ class SyllabusProcessController extends Controller
                     'template' => SyllabusTemplate::INSTITUTIONAL_NAME,
                     'period_id' => $process->periodo_academico_id,
                     'period_name' => $process->academicPeriod->codigo,
-                    'starts_at' => $process->inicia_en->toIso8601String(),
-                    'due_at' => $process->entrega_en->toIso8601String(),
+                    'starts_at' => InstitutionDate::dayOf($process->inicia_en),
+                    'due_at' => InstitutionDate::dayOf($process->entrega_en),
                     'convocations_count' => $process->convocations_count,
                     'configurable' => $process->isConfigurable(),
                 ]),

@@ -21,6 +21,8 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use App\Support\InstitutionDate;
+use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,12 +31,14 @@ use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\ConfiguresFacultyLogos;
+use Tests\Support\UsesInstitutionalDays;
 use Tests\TestCase;
 
 class SyllabusProcessTest extends TestCase
 {
     use ConfiguresFacultyLogos;
     use RefreshDatabase;
+    use UsesInstitutionalDays;
 
     private User $administrator;
 
@@ -256,12 +260,12 @@ class SyllabusProcessTest extends TestCase
     {
         $template = $this->publishedTemplate();
         $period = AcademicPeriod::query()->firstOrFail();
-        $period->update(['fecha_fin' => now()->addMonth()->toDateString()]);
+        $period->update(['fecha_fin' => $this->institutionDay(30)]);
 
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.processes.store'), [
                 ...$this->processPayload($template),
-                'starts_at' => now()->subDay()->toDateString(),
+                'starts_at' => $this->institutionDay(-1),
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['starts_at' => 'El inicio no puede ser anterior a hoy.']);
@@ -269,10 +273,43 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsAdministrator()
             ->postJson(route('api.v1.admin.processes.store'), [
                 ...$this->processPayload($template),
-                'due_at' => now()->addMonths(2)->toDateString(),
+                'due_at' => $this->institutionDay(60),
             ])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('due_at');
+    }
+
+    public function test_the_start_can_be_today_even_when_utc_already_moved_to_the_next_day(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-22T00:30:00Z'));
+        $template = $this->publishedTemplate();
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.store'), [
+                ...$this->processPayload($template),
+                'nombre' => 'Proceso del día local',
+                'starts_at' => '2026-10-21',
+                'due_at' => '2026-10-30',
+            ])
+            ->assertSuccessful();
+
+        $process = SyllabusProcess::query()->firstOrFail();
+        $this->assertSame('2026-10-21', InstitutionDate::dayOf($process->inicia_en));
+        $this->assertSame('2026-10-30', InstitutionDate::dayOf($process->entrega_en));
+    }
+
+    public function test_yesterday_is_rejected_when_utc_already_moved_to_the_next_day(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-22T00:30:00Z'));
+        $template = $this->publishedTemplate();
+
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.admin.processes.store'), [
+                ...$this->processPayload($template),
+                'starts_at' => '2026-10-20',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['starts_at' => 'El inicio no puede ser anterior a hoy.']);
     }
 
     public function test_process_dates_arrive_as_days_and_cover_the_whole_deadline_day(): void
@@ -292,8 +329,14 @@ class SyllabusProcessTest extends TestCase
             ->assertSuccessful();
 
         $process = SyllabusProcess::query()->firstOrFail();
-        $this->assertSame("{$start} 00:00:00", $process->inicia_en->format('Y-m-d H:i:s'));
-        $this->assertSame("{$due} 23:59:59", $process->entrega_en->format('Y-m-d H:i:s'));
+        $this->assertSame(
+            InstitutionDate::startOfDay($start)->toIso8601String(),
+            $process->inicia_en->setTimezone(InstitutionDate::timezone())->toIso8601String(),
+        );
+        $this->assertSame(
+            InstitutionDate::endOfDay($due)->toIso8601String(),
+            $process->entrega_en->setTimezone(InstitutionDate::timezone())->toIso8601String(),
+        );
     }
 
     public function test_a_process_requires_an_active_institutional_period(): void

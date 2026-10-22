@@ -50,6 +50,13 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 - Administración abre una convocatoria institucional por período, con fecha de inicio
   y fecha de entrega. Solo puede haber una abierta o pausada a la vez (I-31, I-121).
+- El día civil de negocio lo decide la institución (`DISPLAY_TIMEZONE`, por defecto
+  `America/Guayaquil`), no el servidor en UTC ni el navegador. El servidor es la
+  autoridad: `App\Support\InstitutionDate` es el único origen de «hoy» y de la fecha
+  civil de un instante, y la SPA usa el día que publica la sesión.
+- Las fechas de inicio y de entrega son fechas de calendario. Se guardan con los
+  límites del día en la zona institucional y la API las publica como `YYYY-MM-DD`.
+  Un plazo de entrega cierra al final del día local, no a las 19:00.
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener
   coordinación y el período no debe haber terminado.
 - Estados: abierto ⇄ pausado → cerrado. Administración cierra la convocatoria y con ella

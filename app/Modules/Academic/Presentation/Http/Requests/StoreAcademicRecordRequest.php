@@ -11,6 +11,7 @@ use App\Modules\Academic\Domain\StudyModality;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Identity\Application\ActiveRole;
+use App\Support\InstitutionDate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -57,8 +58,8 @@ class StoreAcademicRecordRequest extends FormRequest
                 'cycle_count' => ['required', 'integer', 'min:1', 'max:30'],
             ],
             'periodo' => [
-                'starts_on' => ['required', 'date', 'after_or_equal:'.$this->localToday()],
-                'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
+                'starts_on' => ['required', 'date'],
+                'ends_on' => ['required', 'date'],
             ],
             'asignatura' => $this->subjectRules(),
             'asignacion_docente' => [
@@ -88,6 +89,7 @@ class StoreAcademicRecordRequest extends FormRequest
     {
         return [
             'starts_on.after_or_equal' => 'La fecha de inicio debe ser hoy o una fecha posterior.',
+            'ends_on.after_or_equal' => 'La fecha de fin debe ser igual o posterior a la fecha de inicio.',
         ];
     }
 
@@ -95,8 +97,22 @@ class StoreAcademicRecordRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
-            if ($this->route('entity') !== 'periodo'
-                || $validator->errors()->has('starts_on')
+            if ($this->route('entity') !== 'periodo') {
+                return;
+            }
+
+            $today = InstitutionDate::todayOn();
+            $startsOn = InstitutionDate::dayOfValue($this->input('starts_on'));
+            $endsOn = InstitutionDate::dayOfValue($this->input('ends_on'));
+
+            if ($startsOn !== null && $startsOn < $today) {
+                $validator->errors()->add('starts_on', 'La fecha de inicio debe ser hoy o una fecha posterior.');
+            }
+            if ($endsOn !== null && $startsOn !== null && $endsOn < $startsOn) {
+                $validator->errors()->add('ends_on', 'La fecha de fin debe ser igual o posterior a la fecha de inicio.');
+            }
+
+            if ($validator->errors()->has('starts_on')
                 || $validator->errors()->has('ends_on')) {
                 return;
             }
@@ -140,10 +156,5 @@ class StoreAcademicRecordRequest extends FormRequest
     private function careerId(): ?string
     {
         return app(ActiveRole::class)->resolve($this)?->carrera_id;
-    }
-
-    private function localToday(): string
-    {
-        return now((string) config('app.display_timezone'))->toDateString();
     }
 }
