@@ -366,7 +366,9 @@ Los errores de campos llevan su camino (`sections.0.fields.1.content`).
   bloque.
 - **Conformidad:** `src/test/fixtures/block-conformance.json` guarda lo que produce el backend para cada bloque
   oficial y el frontend debe producir lo mismo (`src/lib/blocks/blocks.test.ts`). Si cambia el motor o la
-  plantilla oficial, regénerelo con `php artisan template:conformance ../proyecto-grado-silabos-frontend/src/test/fixtures`.
+  plantilla oficial, regénerelo con `php artisan template:conformance proyecto-grado-silabos-frontend/src/test/fixtures`
+  si el frontend está dentro del backend; si es un directorio hermano, use
+  `../proyecto-grado-silabos-frontend/src/test/fixtures`.
 - **Word sin cambios:** `TemplateGoldenWordTest` compara el `document.xml` del Word con referencias en
   `tests/Fixtures/golden` (`UPDATE_GOLDEN=1` las regenera tras revisar el cambio).
 - `FixedContent` y `TemplateDocumentDefaults` solo los usan migraciones antiguas; no definen la plantilla.

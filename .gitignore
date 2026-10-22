@@ -14,6 +14,7 @@
 /resources/js/routes
 /resources/js/wayfinder
 /vendor
+/proyecto-grado-silabos-frontend/
 .DS_Store
 .env
 .env.backup

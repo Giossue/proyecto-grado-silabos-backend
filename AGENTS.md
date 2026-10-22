@@ -9,7 +9,8 @@ Stack:
 
 - Laravel 13 con PHP 8.4 o superior (`composer.json`).
 - API JSON bajo `/api/v1`; este repositorio no tiene pantallas (ADR-0008).
-- SPA Vue 3 + TypeScript en el repositorio hermano `proyecto-grado-silabos-frontend`.
+- SPA Vue 3 + TypeScript en el repositorio Git independiente `proyecto-grado-silabos-frontend`,
+  que también puede estar dentro de este directorio.
 - PostgreSQL como única fuente de verdad.
 - Redis para colas (`critica`, `documentos`, `ia`) y caché; nunca como fuente de verdad.
 - Archivos en un disco privado.
