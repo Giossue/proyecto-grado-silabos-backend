@@ -32,11 +32,6 @@ class SyllabusProcess extends Model
         'entrega_en' => 'fecha_entrega',
     ];
 
-    protected static function booted(): void
-    {
-        static::addGlobalScope('no_eliminado', fn (Builder $query) => $query->where($query->qualifyColumn('estado_convocatoria_universidad'), '!=', self::STATE_DELETED));
-    }
-
     public $timestamps = false;
 
     public const STATE_OPEN = 'abierto';
@@ -44,8 +39,6 @@ class SyllabusProcess extends Model
     public const STATE_PAUSED = 'pausado';
 
     public const STATE_CLOSED = 'cerrado';
-
-    public const STATE_DELETED = 'eliminado';
 
     /** @var list<string> */
     public const STATES = [
@@ -60,7 +53,7 @@ class SyllabusProcess extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado', 'pausado_en', 'eliminado_en', 'eliminado_por',
+        'periodo_academico_id', 'inicia_en', 'entrega_en', 'estado', 'pausado_en',
     ];
 
     /** @return array<string, string> */
@@ -70,7 +63,6 @@ class SyllabusProcess extends Model
             'inicia_en' => 'immutable_datetime',
             'entrega_en' => 'immutable_datetime',
             'pausado_en' => 'immutable_datetime',
-            'eliminado_en' => 'immutable_datetime',
         ];
     }
 
@@ -96,6 +88,20 @@ class SyllabusProcess extends Model
     public function isConfigurable(): bool
     {
         return $this->estado === self::STATE_PAUSED;
+    }
+
+    public function isDeletable(): bool
+    {
+        return $this->estado !== self::STATE_CLOSED && $this->deliveredSyllabiCount() === 0;
+    }
+
+    public function deliveredSyllabiCount(): int
+    {
+        return (int) $this->convocations()
+            ->join('silabos', 'silabos.convocatoria_carrera_id', '=', 'convocatorias_carreras.convocatoria_carrera_id')
+            ->join('revisiones_silabo', 'revisiones_silabo.silabo_id', '=', 'silabos.silabo_id')
+            ->distinct()
+            ->count('silabos.silabo_id');
     }
 
     /** @return BelongsTo<AcademicPeriod, $this> */

@@ -13,6 +13,8 @@ class ProcessLocks
 
     private const CONVOCATION_LOCK_REASON = 'Convocatoria activa';
 
+    private const CLOSED_CONVOCATION_LOCK_REASON = 'Convocatoria cerrada';
+
     public function templateLockReason(): ?string
     {
         $process = SyllabusProcess::query()
@@ -104,11 +106,14 @@ class ProcessLocks
     /** @return array<string, string> período => motivo */
     public function lockedPeriodReasons(): array
     {
-        $periodIds = Convocation::query()->running()
-            ->join('convocatorias_universidad', 'convocatorias_universidad.convocatoria_universidad_id', '=', 'convocatorias_carreras.convocatoria_universidad_id')
-            ->distinct()->pluck('convocatorias_universidad.periodo_academico_id');
+        $processes = SyllabusProcess::query()
+            ->get(['periodo_academico_id', 'estado']);
 
-        return $periodIds->mapWithKeys(fn (string $id): array => [$id => self::CONVOCATION_LOCK_REASON])->all();
+        return $processes->mapWithKeys(fn (SyllabusProcess $process): array => [
+            $process->periodo_academico_id => $process->estado === SyllabusProcess::STATE_CLOSED
+                ? self::CLOSED_CONVOCATION_LOCK_REASON
+                : self::CONVOCATION_LOCK_REASON,
+        ])->all();
     }
 
     /** @param list<string> $careerIds */

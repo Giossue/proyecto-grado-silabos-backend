@@ -31,12 +31,14 @@ use Illuminate\Support\Str;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\ConfiguresFacultyLogos;
+use Tests\Support\CreatesSyllabusProcess;
 use Tests\Support\UsesInstitutionalDays;
 use Tests\TestCase;
 
 class SyllabusProcessTest extends TestCase
 {
     use ConfiguresFacultyLogos;
+    use CreatesSyllabusProcess;
     use RefreshDatabase;
     use UsesInstitutionalDays;
 
@@ -169,7 +171,7 @@ class SyllabusProcessTest extends TestCase
         $this->assertNotEmpty(Syllabus::query()->where('convocatoria_id', $convocation->id)->pluck('id'));
     }
 
-    public function test_deleting_a_process_in_progress_closes_and_hides_it_without_erasing_anything(): void
+    public function test_deleting_a_process_without_sent_syllabi_erases_it_and_frees_the_period(): void
     {
         $template = $this->publishedTemplate();
         $convocation = $this->openedConvocation();
@@ -182,15 +184,9 @@ class SyllabusProcessTest extends TestCase
             ->assertOk()
             ->assertJsonPath('message', 'Convocatoria institucional eliminada.');
 
-        $this->assertDatabaseHas('convocatorias_universidad', [
-            'convocatoria_universidad_id' => $process->id,
-            'estado_convocatoria_universidad' => SyllabusProcess::STATE_DELETED,
-            'eliminado_por' => $this->administrator->id,
-        ]);
-        $this->assertDatabaseHas('convocatorias_carreras', ['convocatoria_carrera_id' => $convocation->id, 'estado_convocatoria_carrera' => Convocation::STATE_CLOSED]);
-        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'borrador']);
-        $this->assertNull(SyllabusProcess::query()->find($process->id));
-        $this->assertNull(Syllabus::query()->find($syllabus->id));
+        $this->assertDatabaseMissing('convocatorias_universidad', ['convocatoria_universidad_id' => $process->id]);
+        $this->assertDatabaseMissing('convocatorias_carreras', ['convocatoria_carrera_id' => $convocation->id]);
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
         $this->actingAsAdministrator()->getJson(route('api.v1.admin.processes.index'))
             ->assertOk()->assertJsonCount(0, 'processes');
         $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.index'))
@@ -202,6 +198,35 @@ class SyllabusProcessTest extends TestCase
             ->postJson(route('api.v1.admin.processes.store'), [...$this->processPayload($template), 'period_id' => $process->periodo_academico_id])
             ->assertSuccessful();
         $this->assertSame(1, SyllabusProcess::query()->where('periodo_academico_id', $process->periodo_academico_id)->count());
+    }
+
+    public function test_a_process_with_sent_syllabi_can_only_be_closed(): void
+    {
+        $convocation = $this->openedConvocation();
+        $process = $convocation->process()->firstOrFail();
+        $syllabus = Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail();
+        $this->submitSyllabus($syllabus);
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['process']);
+
+        $this->assertDatabaseHas('convocatorias_universidad', [
+            'convocatoria_universidad_id' => $process->id,
+            'estado_convocatoria_universidad' => SyllabusProcess::STATE_OPEN,
+        ]);
+
+        $this->transition($process, 'cerrar')->assertSuccessful();
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.processes.destroy', $process))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('convocatorias_universidad', [
+            'convocatoria_universidad_id' => $process->id,
+            'estado_convocatoria_universidad' => SyllabusProcess::STATE_CLOSED,
+        ]);
     }
 
     public function test_coordination_cannot_delete_an_institutional_process(): void
@@ -996,6 +1021,22 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsAdministrator()->postJson('/api/v1/admin/processes/'.$convocation->process()->firstOrFail()->id.'/cerrar')->assertSuccessful();
         $this->assertSame('cerrada', $convocation->fresh()->estado);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertForbidden();
+    }
+
+    private function submitSyllabus(Syllabus $syllabus): void
+    {
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $fields = FieldDefinition::query()->where('quien_llena', 'docente')->get();
+        foreach ($fields as $field) {
+            $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
+                'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+                'value' => $this->answeredValue($field, 'Contenido académico de prueba'),
+            ])->assertOk();
+        }
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertSuccessful();
     }
 
     private function closeProcess(SyllabusProcess $process): void

@@ -87,11 +87,18 @@ class DeleteAcademicRecord
             default => true,
         };
 
-        if ($hasDependencies) {
-            throw ValidationException::withMessages([
-                'record' => 'No se puede eliminar porque ya tiene registros dependientes o historia académica. Revise las consecuencias y conserve ese historial.',
-            ]);
+        if (! $hasDependencies) {
+            return;
         }
+
+        throw ValidationException::withMessages([
+            'record' => match ($entity) {
+                'periodo' => 'Este período ya tiene una convocatoria con su historial, por eso no se puede eliminar.',
+                'carrera' => 'Esta carrera ya tiene materias, importaciones o usuarios asignados, por eso no se puede eliminar.',
+                'facultad' => 'Esta facultad ya tiene carreras, por eso no se puede eliminar.',
+                default => 'No se puede eliminar porque ya tiene registros dependientes o historia académica. Revise las consecuencias y conserve ese historial.',
+            },
+        ]);
     }
 
     /** @return array<string, int|string> */

@@ -451,6 +451,53 @@ class AcademicStructureTest extends TestCase
         $this->assertDatabaseHas('paralelos', ['paralelo_id' => $parallel->id]);
     }
 
+    public function test_a_period_with_a_convocation_cannot_be_deleted_and_says_why(): void
+    {
+        $period = AcademicPeriod::query()->firstOrFail();
+        SyllabusProcess::query()->create([
+            'periodo_academico_id' => $period->id,
+            'inicia_en' => now()->subDay(),
+            'entrega_en' => now()->addMonth(),
+            'estado' => SyllabusProcess::STATE_OPEN,
+        ]);
+
+        $this->actingAsAdministrator()
+            ->deleteJson(route('api.v1.admin.academic.destroy', ['periodo', $period->id]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'record' => 'Este período ya tiene una convocatoria con su historial, por eso no se puede eliminar.',
+            ]);
+
+        $this->assertDatabaseHas('periodos_academicos', ['periodo_academico_id' => $period->id]);
+    }
+
+    public function test_a_period_with_a_convocation_is_locked_with_its_reason(): void
+    {
+        $period = AcademicPeriod::query()->firstOrFail();
+        $process = SyllabusProcess::query()->create([
+            'periodo_academico_id' => $period->id,
+            'inicia_en' => now()->subDay(),
+            'entrega_en' => now()->addMonth(),
+            'estado' => SyllabusProcess::STATE_CLOSED,
+        ]);
+
+        $payload = $this->actingAsAdministrator()
+            ->getJson(route('api.v1.admin.academic.index'))
+            ->assertOk()
+            ->json('catalogs.periods');
+
+        $this->assertSame('Convocatoria cerrada', collect($payload)->firstWhere('id', $period->id)['lock_reason']);
+
+        $process->update(['estado' => SyllabusProcess::STATE_OPEN]);
+
+        $payload = $this->actingAsAdministrator()
+            ->getJson(route('api.v1.admin.academic.index'))
+            ->assertOk()
+            ->json('catalogs.periods');
+
+        $this->assertSame('Convocatoria activa', collect($payload)->firstWhere('id', $period->id)['lock_reason']);
+    }
+
     public function test_every_parallel_requires_a_shift_when_creating(): void
     {
         $scheduled = Parallel::query()->firstOrFail();

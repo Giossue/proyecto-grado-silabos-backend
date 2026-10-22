@@ -107,8 +107,12 @@ y el botón «Documentos» (DOC-10).
 - Al pulsar una fila se abre un diálogo: sin convocatoria, «Abrir convocatoria» o
   «Eliminar periodo»; con convocatoria, «Pausar», «Reanudar», «Prorrogar plazo»,
   «Cerrar» y «Eliminar». «Cerrar» pide confirmación y deja el estado «Cerrado». Una
-  cerrada ya no ofrece «Cerrar» ni «Eliminar». «Eliminar» explica que se oculta y no se
-  borra nada.
+  cerrada ya no ofrece «Cerrar» ni «Eliminar». «Eliminar» pide confirmación y explica
+  que se borra de verdad, y solo se ofrece si ningún docente ha enviado su sílabo; si
+  ya hay sílabos enviados, el sistema lo dice y no deja eliminar. «Eliminar periodo»
+  explica que solo se borran las fechas y las semanas lectivas del período, y que las
+  materias, los paralelos y los docentes no se borran. Un período con convocatoria
+  muestra el motivo y no deja eliminarlo.
 - Si la plantilla cambió durante la pausa, «Reanudar» muestra el conteo por estado y
   pide «Reanudar y rehacer sílabos».
 

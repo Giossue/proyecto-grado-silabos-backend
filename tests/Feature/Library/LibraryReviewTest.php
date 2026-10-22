@@ -17,6 +17,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -80,18 +81,24 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.teacher.syllabi.index'))->assertForbidden();
     }
 
-    public function test_lo_de_una_convocatoria_eliminada_no_aparece_en_biblioteca_ni_en_coordinacion(): void
+    public function test_una_convocatoria_con_silabos_enviados_no_se_elimina_y_biblioteca_la_sigue_viendo(): void
     {
         [$syllabus, $revision] = $this->submittedRevision();
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 1);
 
         $process = $syllabus->convocation->process()->firstOrFail();
-        $this->as('admin')->deleteJson(route('api.v1.admin.processes.destroy', $process))->assertOk();
+        $this->as('admin')->deleteJson(route('api.v1.admin.processes.destroy', $process))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['process']);
 
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 0);
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertNotFound();
-        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 0);
+        $this->assertDatabaseHas('convocatorias_universidad', [
+            'convocatoria_universidad_id' => $process->id,
+            'estado_convocatoria_universidad' => SyllabusProcess::STATE_OPEN,
+        ]);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 1);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertOk();
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 1);
         $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id]);
     }
 

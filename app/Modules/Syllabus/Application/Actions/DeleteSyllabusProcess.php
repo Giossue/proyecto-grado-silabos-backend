@@ -9,7 +9,6 @@ use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -33,6 +32,13 @@ final class DeleteSyllabusProcess
                     'process' => 'Una convocatoria cerrada no se elimina: queda como historial.',
                 ]);
             }
+            $delivered = $locked->deliveredSyllabiCount();
+            if ($delivered > 0) {
+                throw ValidationException::withMessages([
+                    'process' => "La convocatoria tiene {$delivered} sílabos ya enviados: no se puede eliminar. Ciérrala para conservarla como historial.",
+                ]);
+            }
+
             $convocations = Convocation::query()
                 ->where('proceso_id', $locked->id)
                 ->lockForUpdate()
@@ -41,33 +47,27 @@ final class DeleteSyllabusProcess
                 ->whereIn('convocatoria_id', $convocations->modelKeys())
                 ->pluck('id')
                 ->all();
-            $revisionIds = SyllabusRevision::query()
-                ->whereIn('silabo_id', $syllabusIds)
-                ->pluck('id')
-                ->all();
             $state = $locked->estado;
 
-            Convocation::query()
-                ->whereKey($convocations->modelKeys())
-                ->where('estado', '!=', Convocation::STATE_CLOSED)
-                ->update(['estado' => Convocation::STATE_CLOSED]);
             DB::statement("SET LOCAL app.reinicio_institucional = 'on'");
-            DB::table('notificaciones')->whereIn('recurso_id', [...$syllabusIds, ...$revisionIds])->delete();
+            DB::table('notificaciones')->whereIn('recurso_id', $syllabusIds)->delete();
             DB::statement("SET LOCAL app.reinicio_institucional = 'off'");
-            $locked->update(['estado' => SyllabusProcess::STATE_DELETED, 'eliminado_en' => now(), 'eliminado_por' => $actor->id]);
+            Syllabus::query()->whereKey($syllabusIds)->delete();
+            Convocation::query()->whereKey($convocations->modelKeys())->delete();
+            $locked->delete();
 
             $this->audit->execute(
                 actorId: $actor->id,
                 roleAssignmentId: $activeRole->id,
                 action: 'proceso_silabos.eliminado',
                 resourceType: 'proceso_silabos',
-                resourceId: $locked->id,
+                resourceId: $process->id,
                 result: 'exito',
                 metadata: [
                     'period_id' => $locked->periodo_academico_id,
                     'previous_state' => $state,
-                    'hidden_convocations' => $convocations->count(),
-                    'hidden_syllabi' => count($syllabusIds),
+                    'deleted_convocations' => $convocations->count(),
+                    'deleted_syllabi' => count($syllabusIds),
                 ],
             );
         });

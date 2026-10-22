@@ -68,12 +68,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   los de convocatorias cerradas se conservan (I-231).
 - En el historial, un sílabo de un período terminado pertenece a quien lo envió; si
   nunca se envió, al docente actual del paralelo (I-231).
-- Administración solo prorroga la fecha de entrega (I-114). Solo elimina una
-  convocatoria abierta o pausada, y eliminar no borra: la convocatoria queda en estado
-  `eliminado`, sus convocatorias de carrera se cierran y todo desaparece de la
-  aplicación, pero queda guardado en la base. El período queda libre para otra
-  convocatoria. Una cerrada no se elimina. No hay restaurar ni borrado definitivo
-  (I-231).
+- Administración solo prorroga la fecha de entrega (I-114). Cerrar es la acción final:
+  una convocatoria cerrada queda solo para consulta y no se elimina nunca. Eliminar
+  borra de verdad y solo se admite mientras ningún docente haya enviado su sílabo; con
+  sílabos enviados, la única salida es cerrar. Un período tiene una sola convocatoria,
+  para siempre, y no se elimina si ya tiene una. No hay restaurar ni borrado
+  definitivo (I-231).
 - Cada carrera abre su propia convocatoria dentro de la institucional. Coordinación
   solo puede abrirla si hay asignaturas, cada una con paralelo, cada paralelo con
   docente, la ficha completa, el logo de la facultad y el plazo vigente. El rechazo

@@ -192,6 +192,16 @@ sequenceDiagram
 
 La plantilla no se puede cambiar con un proceso `abierto`.
 
+### Eliminar la convocatoria institucional
+
+- `DELETE admin/processes/{id}` borra de verdad la convocatoria institucional, la de
+  cada carrera y los sílabos que estén en borrador, y deja el período libre para abrir
+  otra convocatoria.
+- Solo se admite mientras ningún docente haya enviado su sílabo. Con sílabos enviados
+  la API responde `422` y la única salida es cerrar la convocatoria, que es la acción
+  final: una cerrada no se elimina (`403`).
+- El período tampoco se elimina si ya tiene una convocatoria.
+
 ### Malla, paralelos y ficha
 
 - Con la convocatoria de la carrera `abierta`, la malla y la ficha están bloqueadas.

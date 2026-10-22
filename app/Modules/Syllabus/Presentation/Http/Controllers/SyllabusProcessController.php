@@ -46,6 +46,7 @@ class SyllabusProcessController extends Controller
                     'due_at' => InstitutionDate::dateOf($process->entrega_en),
                     'convocations_count' => $process->convocations_count,
                     'configurable' => $process->isConfigurable(),
+                    'deletable' => $process->isDeletable(),
                 ]),
             'template' => $template?->hasStructure()
                 ? SyllabusTemplate::INSTITUTIONAL_NAME
