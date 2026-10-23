@@ -121,6 +121,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   borran al aplicar o descartar. Hay una importación por carrera a la vez.
 - Mientras se analizan los documentos, «Cancelar la importación» ocupa el lugar de
   «Cerrar» al pie del diálogo. No se muestra el aviso sobre porcentajes del OCR.
+  El progreso usa mensajes de lectura y preparación de la propuesta, sin mencionar
+  «OCR» ni mostrar un contador de segundos.
   La propuesta ofrece solo «Descartar» y «Aplicar a N materias» al pie, sin «Cerrar».
 - La importación busca las secciones de cada materia y hace una segunda búsqueda
   acotada para los campos pendientes. Muestra cuántos campos encontró y los motivos

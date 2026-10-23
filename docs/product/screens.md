@@ -147,7 +147,8 @@ y el botón «Documentos» (DOC-10).
   «Guardar ficha». Cada campo tiene el interruptor «El docente puede editarlo».
 - «Importar documentos» abre «Importar el proyecto de carrera»:
   1. subir hasta 6 PDF o Excel y «Analizar documentos»;
-  2. esperar el análisis (se puede cancelar);
+  2. «Leyendo el documento n de m: nombre» y después «Preparando la propuesta para cada
+     materia…», sin jerga ni contador de segundos (se puede cancelar);
   3. revisar «n de m campos encontrados» por materia, consultar campos pendientes y sus
      motivos, previsualizar las tablas, comparar con la ficha actual, marcar materias y
      campos y «Aplicar a N materias», o «Descartar».
