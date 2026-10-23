@@ -52,6 +52,7 @@ class ExportOpenApi extends Command
                     ],
                 ],
                 'schemas' => [
+                    ...$this->fichaSchemas(),
                     'AcademicUiOptions' => [
                         'type' => 'object',
                         'required' => ['modalityOptions', 'shiftOptions'],
@@ -235,6 +236,17 @@ class ExportOpenApi extends Command
         if ($isSubjectProfile) {
             $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectProfile']]];
         }
+        if (in_array($name, ['api.v1.coordination.ficha-imports.index', 'api.v1.coordination.ficha-imports.store', 'api.v1.coordination.ficha-imports.apply'], true)) {
+            $successContent = ['application/json' => ['schema' => [
+                'type' => 'object',
+                'required' => ['import'],
+                'properties' => [
+                    'available' => ['type' => 'boolean'],
+                    'message' => ['type' => 'string'],
+                    'import' => ['oneOf' => [['$ref' => '#/components/schemas/FichaImport'], ['type' => 'null']]],
+                ],
+            ]]];
+        }
         if ($isTemplateRead) {
             $successContent = ['application/json' => ['schema' => [
                 'type' => 'object',
@@ -270,7 +282,7 @@ class ExportOpenApi extends Command
             'operationId' => str_replace('.', '_', $name),
             'summary' => $name,
             'responses' => [
-                ($isSignatureUpload ? '201' : '200') => [
+                ($isSignatureUpload ? '201' : ($name === 'api.v1.coordination.ficha-imports.store' ? '202' : '200')) => [
                     'description' => 'Operación completada.',
                     'content' => $successContent,
                 ],
@@ -289,6 +301,20 @@ class ExportOpenApi extends Command
                     'type' => 'object',
                     'required' => ['logo'],
                     'properties' => ['logo' => ['type' => 'string', 'format' => 'binary']],
+                ]]];
+            } elseif ($name === 'api.v1.coordination.ficha-imports.store') {
+                $content = ['multipart/form-data' => ['schema' => [
+                    'type' => 'object', 'required' => ['files'],
+                    'properties' => ['files' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 6, 'items' => ['type' => 'string', 'format' => 'binary']]],
+                ]]];
+            } elseif ($name === 'api.v1.coordination.ficha-imports.apply') {
+                $content = ['application/json' => ['schema' => [
+                    'type' => 'object', 'required' => ['subjects'],
+                    'properties' => [
+                        'subjects' => ['type' => 'array', 'minItems' => 1, 'items' => ['type' => 'string', 'format' => 'uuid']],
+                        'fields' => ['type' => 'object', 'additionalProperties' => ['type' => 'array', 'items' => ['type' => 'string']]],
+                        'confirm_purge' => ['type' => 'boolean'],
+                    ],
                 ]]];
             } elseif ($isSignatureUpload) {
                 $content = ['multipart/form-data' => ['schema' => [
@@ -364,6 +390,60 @@ class ExportOpenApi extends Command
                     'label' => ['type' => 'string'],
                 ],
                 'additionalProperties' => false,
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function fichaSchemas(): array
+    {
+        $strings = ['type' => 'array', 'items' => ['type' => 'string']];
+        $count = ['type' => 'integer', 'minimum' => 0];
+
+        return [
+            'FichaTableValue' => [
+                'type' => 'object', 'required' => ['columns', 'rows'],
+                'properties' => ['columns' => $strings, 'rows' => ['type' => 'array', 'items' => $strings]],
+                'additionalProperties' => false,
+            ],
+            'FichaImportSubject' => [
+                'type' => 'object',
+                'required' => ['subject_id', 'code', 'name', 'cycle', 'state', 'values', 'coverage', 'missing', 'replaces', 'current', 'extraction'],
+                'properties' => [
+                    'subject_id' => ['type' => 'string', 'format' => 'uuid'],
+                    'code' => ['type' => 'string'], 'name' => ['type' => 'string'], 'cycle' => ['type' => ['integer', 'null']],
+                    'state' => ['enum' => ['pendiente', 'lista', 'sin_evidencia', 'fallida']],
+                    'values' => ['type' => 'object', 'additionalProperties' => ['oneOf' => [['type' => 'string'], $strings, ['$ref' => '#/components/schemas/FichaTableValue']]]],
+                    'replaces' => ['type' => 'boolean'],
+                    'current' => ['type' => 'object', 'additionalProperties' => ['type' => 'string']],
+                    'coverage' => ['type' => 'object', 'required' => ['found', 'total'], 'properties' => ['found' => $count, 'total' => $count]],
+                    'missing' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['key', 'label', 'reason'], 'properties' => [
+                        'key' => ['type' => 'string'], 'label' => ['type' => 'string'],
+                        'reason' => ['enum' => ['sin_contexto', 'no_encontrado', 'estructura_invalida', 'servicio_no_disponible']],
+                    ]]],
+                    'extraction' => ['type' => ['object', 'null'], 'properties' => ['attempts' => $count, 'duration_ms' => $count]],
+                ],
+            ],
+            'FichaImport' => [
+                'type' => 'object', 'required' => ['id', 'state', 'error', 'documents', 'reading', 'progress', 'fields', 'subjects', 'timing'],
+                'properties' => [
+                    'id' => ['type' => 'string', 'format' => 'uuid'],
+                    'state' => ['enum' => ['pendiente', 'en_ejecucion', 'lista', 'fallida', 'aplicada', 'descartada']],
+                    'error' => ['type' => ['string', 'null']],
+                    'documents' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['name', 'size'], 'properties' => ['name' => ['type' => 'string'], 'size' => $count]]],
+                    'reading' => ['type' => ['object', 'null'], 'properties' => [
+                        'index' => $count, 'total' => $count, 'name' => ['type' => 'string'], 'ocr' => ['type' => ['string', 'null']], 'started_at' => ['type' => 'string', 'format' => 'date-time'],
+                    ]],
+                    'progress' => ['type' => 'object', 'required' => ['done', 'total'], 'properties' => ['done' => $count, 'total' => $count]],
+                    'fields' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['key', 'label', 'columns'], 'properties' => ['key' => ['type' => 'string'], 'label' => ['type' => 'string'], 'columns' => $strings]]],
+                    'subjects' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/FichaImportSubject']],
+                    'timing' => ['type' => ['object', 'null'], 'properties' => [
+                        'started_at' => ['type' => 'string', 'format' => 'date-time'],
+                        'ready_at' => ['type' => 'string', 'format' => 'date-time'],
+                        'reading_ms' => $count,
+                        'documents' => ['type' => 'array', 'items' => ['type' => 'object', 'properties' => ['index' => $count, 'method' => ['enum' => ['pdf_text', 'ocr', 'excel']], 'duration_ms' => $count, 'cached' => ['type' => 'boolean']]]],
+                    ]],
+                ],
             ],
         ];
     }

@@ -113,12 +113,18 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - La ficha de cada asignatura reúne los campos que llena Coordinación. Sus valores se
   guardan en `valores_campo` con `asignatura_id` (I-204).
 - Coordinación puede importar la ficha desde documentos de la carrera (PDF o Excel). La
-  IA propone valores solo para los campos de ficha de la plantilla; OpenParser lee los
-  PDF si está activo y, si no, `pdftotext`. Coordinación revisa y aplica. Los archivos se
+  IA propone valores solo para los campos de ficha de la plantilla. Se intenta leer
+  el PDF localmente; OpenParser, si está activo, se usa cuando el texto es insuficiente.
+  Coordinación revisa y aplica. Los archivos se
   borran al aplicar o descartar. Hay una importación por carrera a la vez.
 - Mientras se analizan los documentos, «Cancelar la importación» ocupa el lugar de
   «Cerrar» al pie del diálogo. No se muestra el aviso sobre porcentajes del OCR.
   La propuesta ofrece solo «Descartar» y «Aplicar a N materias» al pie, sin «Cerrar».
+- La importación busca las secciones de cada materia y hace una segunda búsqueda
+  acotada para los campos pendientes. Muestra cuántos campos encontró y los motivos
+  de los pendientes; una propuesta parcial se puede aplicar. No inventa contenido ni
+  relaciones con el perfil de egreso. Las columnas y encabezados de tabla proceden
+  de la plantilla. Se guardan tiempos de lectura y extracción sin registrar documentos.
 - Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
   copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
   encendido no deja la ficha incompleta (I-230).

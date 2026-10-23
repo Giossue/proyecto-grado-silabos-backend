@@ -91,8 +91,8 @@ MAIL_MAILER=log
 - `TRUSTED_PROXIES` vale `*` si no se define; fije la IP real del proxy.
 - `SESSION_SECURE_COOKIE=true` exige HTTPS. Sin certificado nadie puede iniciar sesión.
 - `REDIS_QUEUE_RETRY_AFTER` debe ser mayor que el `timeout` del trabajo más largo:
-  `PrepareFichaImportJob`, con 900 s. `.env.example` trae 180, que solo cubre los demás
-  trabajos (el mayor es `ExtractSubjectFichaJob`, con 150 s). Con un valor menor y más de
+  `PrepareFichaImportJob`, con 900 s. `.env.example` trae 960. Un valor explícito de 180
+  tampoco cubre `ExtractSubjectFichaJob`, con 240 s. Con un valor menor y más de
   un worker, Redis entrega de nuevo una importación en curso y esta termina marcada como
   fallida.
 - Las claves (`APP_KEY`, `DB_PASSWORD`, `REDIS_PASSWORD`, `AI_API_KEY`,
@@ -135,9 +135,11 @@ datos (`PV-12`, `PV-14`).
 
 La importación acepta PDF y Excel. El Excel se lee en el servidor. El PDF:
 
-- con `OPENPARSER_ENABLED=true` y `OPENPARSER_API_KEY`, se envía al OCR de OpenParser
-  (modelo `paddleocr-vl-1.6`, espera hasta `OPENPARSER_MAX_WAIT=780` s);
-- si no, se lee en el servidor con `pdftotext`.
+- primero se intenta leer en el servidor con `pdftotext`, conservando sus páginas;
+- si falta texto legible y están `OPENPARSER_ENABLED=true` y `OPENPARSER_API_KEY`, se
+  envía al OCR de OpenParser (modelo `paddleocr-vl-1.6`, espera hasta
+  `OPENPARSER_MAX_WAIT=780` s). Sin OCR se conserva el texto local disponible y se
+  rechaza el archivo si no contiene texto.
 
 `pdftotext` viene de `poppler-utils`, instalado en la imagen. También se usa para ubicar
 el sello de cada firma en el PDF. OpenParser es otro tercero: aplica la misma condición

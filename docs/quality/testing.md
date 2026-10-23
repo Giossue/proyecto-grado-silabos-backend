@@ -73,8 +73,7 @@ que la conexión use UTC y que el seeder de demostración sea idempotente.
   único y no se solape.
 - No uses `sleep` para esperar trabajos: observa el estado del recurso.
 - `JobDispatchTest` comprueba que `retry_after` supere el timeout de los trabajos de
-  plataforma, exportación y chat. No incluye los de la ficha (ver
-  `docs/plans/pendientes.md`).
+  plataforma, exportación, chat, lectura de documentos y extracción de fichas.
 
 ## Documentos y firmas
 
@@ -105,6 +104,13 @@ La suite pasa sin proveedor real. `AiAssistanceTest` y `HostedAiChatGatewayTest`
 
 `FichaImportTest` y `FichaPdfOcrTest` cubren la importación de la ficha: propuesta,
 aplicación parcial, permisos, falta de proveedor y lectura de PDF con OpenParser.
+También cubren lectura local antes del OCR, PDF mixto, páginas, documentos idénticos,
+tablas derivadas de la plantilla y tiempos. `FichaEvidenceTest`, `FichaFieldValuesTest`
+y `ExtractFichaProposalTest` cubren continuaciones, separación entre materias y
+documentos, índices, variantes de nombre, recuperación de evidencia tardía y conservación
+de resultados cuando falla la segunda consulta. Los originales reales eliminados tras
+aplicar no forman parte de estas pruebas; su cobertura y tiempo se comparan al volver
+a importarlos, sin convertir un ejemplo sintético en una medida de precisión (PV-18).
 
 ## Interfaz
 

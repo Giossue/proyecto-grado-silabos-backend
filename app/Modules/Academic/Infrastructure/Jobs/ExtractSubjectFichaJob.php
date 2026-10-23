@@ -2,9 +2,9 @@
 
 namespace App\Modules\Academic\Infrastructure\Jobs;
 
-use App\Modules\Academic\Application\FichaEvidence;
+use App\Modules\Academic\Application\ExtractFichaProposal;
+use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Application\SubjectProfileFields;
-use App\Modules\Academic\Domain\Contracts\FichaExtractionGateway;
 use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
 use App\Support\Queue\RunsOnce;
 use Illuminate\Bus\Queueable;
@@ -16,7 +16,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Throwable;
 
 #[UniqueFor(600)]
@@ -26,7 +25,7 @@ class ExtractSubjectFichaJob implements ShouldBeUnique, ShouldQueue
 
     public int $tries = 2;
 
-    public int $timeout = 150;
+    public int $timeout = 240;
 
     public function __construct(public readonly string $importId, public readonly string $subjectId)
     {
@@ -38,7 +37,7 @@ class ExtractSubjectFichaJob implements ShouldBeUnique, ShouldQueue
         return $this->importId.':'.$this->subjectId;
     }
 
-    public function handle(FichaExtractionGateway $gateway, FichaEvidence $evidence, SubjectProfileFields $profile): void
+    public function handle(ExtractFichaProposal $extractor, SubjectProfileFields $profile, FichaFieldValues $values): void
     {
         $import = FichaImport::query()->find($this->importId);
         if ($import === null || $import->estado_importacion !== FichaImport::RUNNING) {
@@ -48,26 +47,13 @@ class ExtractSubjectFichaJob implements ShouldBeUnique, ShouldQueue
         if (! is_array($subject)) {
             return;
         }
-        $blocks = json_decode((string) Storage::disk('private')->get("importaciones-ficha/{$import->id}/bloques.json"), true) ?: [];
-        $fragments = $evidence->for($subject['name'], $subject['code'], $blocks);
-        if ($fragments === []) {
-            $this->store(['state' => 'sin_evidencia']);
-
+        if (($subject['state'] ?? '') !== 'pendiente') {
             return;
         }
-        $fields = array_values($profile->fields()->map(fn ($field): array => ['key' => $field->clave, 'label' => $field->etiqueta !== '' ? $field->etiqueta : $field->clave])->all());
-        $proposal = $gateway->propose(['code' => $subject['code'], 'name' => $subject['name'], 'cycle' => $subject['cycle']], $fields, $fragments);
-        $values = [];
-        foreach ($fields as $field) {
-            $value = $proposal[$field['key']] ?? null;
-            $clean = is_array($value)
-                ? array_slice(array_values(array_filter(array_map(fn (mixed $item): string => is_scalar($item) ? Str::limit(trim((string) $item), 1500, '') : '', $value), fn (string $item): bool => $item !== '')), 0, 40)
-                : (is_scalar($value) ? Str::limit(trim((string) $value), 4000, '') : '');
-            if ($clean !== '' && $clean !== []) {
-                $values[$field['key']] = $clean;
-            }
-        }
-        $this->store(['state' => $values === [] ? 'sin_evidencia' : 'lista', 'values' => (object) $values]);
+        $blocks = json_decode((string) Storage::disk('private')->get("importaciones-ficha/{$import->id}/bloques.json"), true) ?: [];
+        $fields = array_values($profile->fields()->map(fn ($field): array => $values->schema($field))->all());
+        $subjects = array_map(fn (array $entry): array => ['name' => $entry['name'], 'code' => $entry['code']], $import->propuesta_importacion['subjects'] ?? []);
+        $this->store($extractor->execute(['code' => $subject['code'], 'name' => $subject['name'], 'cycle' => $subject['cycle']], $fields, $blocks, $subjects));
     }
 
     public function failed(Throwable $exception): void
@@ -83,13 +69,17 @@ class ExtractSubjectFichaJob implements ShouldBeUnique, ShouldQueue
             if ($import === null || $import->estado_importacion !== FichaImport::RUNNING) {
                 return;
             }
-            $proposal = ['subjects' => $import->propuesta_importacion['subjects'] ?? []];
+            $proposal = $import->propuesta_importacion ?? [];
+            $proposal['subjects'] ??= [];
             foreach ($proposal['subjects'] as $index => $entry) {
                 if ($entry['subject_id'] === $this->subjectId) {
                     $proposal['subjects'][$index] = [...$entry, ...$patch];
                 }
             }
             $pending = collect($proposal['subjects'])->contains(fn (array $entry): bool => $entry['state'] === 'pendiente');
+            if (! $pending) {
+                $proposal['timing']['ready_at'] = now()->toIso8601String();
+            }
             $import->update(['propuesta_importacion' => $proposal] + ($pending ? [] : ['estado_importacion' => FichaImport::READY]));
         });
     }

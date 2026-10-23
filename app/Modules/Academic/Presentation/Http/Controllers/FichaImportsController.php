@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Modules\Academic\Application\Actions\ApplyFichaImport;
 use App\Modules\Academic\Application\Actions\DiscardFichaImport;
 use App\Modules\Academic\Application\Actions\RequestFichaImport;
+use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Domain\Contracts\FichaExtractionGateway;
@@ -21,6 +22,8 @@ use Illuminate\Http\Request;
 
 class FichaImportsController extends Controller
 {
+    public function __construct(private readonly FichaFieldValues $values) {}
+
     public function index(Request $request, ActiveRole $roles, FichaExtractionGateway $gateway, SubjectProfileFields $profile): JsonResponse
     {
         $careerId = $this->careerId($request, $roles);
@@ -69,7 +72,7 @@ class FichaImportsController extends Controller
     /** @return array<string, mixed> */
     private function detail(FichaImport $import, SubjectProfileFields $profile): array
     {
-        $fields = $profile->fields()->map(fn ($field): array => ['key' => $field->clave, 'label' => $field->etiqueta !== '' ? $field->etiqueta : $field->clave])->values()->all();
+        $fields = array_values($profile->fields()->map(fn ($field): array => $this->values->schema($field))->all());
         $subjects = $import->propuesta_importacion['subjects'] ?? [];
         $fieldIds = $profile->fields()->pluck('id', 'clave');
         $keysById = $fieldIds->flip();
@@ -91,10 +94,13 @@ class FichaImportsController extends Controller
             'reading' => $import->estado_importacion === FichaImport::RUNNING ? ($import->propuesta_importacion['reading'] ?? null) : null,
             'progress' => ['done' => count(array_filter($subjects, fn (array $entry): bool => $entry['state'] !== 'pendiente')), 'total' => count($subjects)],
             'fields' => $fields,
+            'timing' => $import->propuesta_importacion['timing'] ?? null,
             'subjects' => array_map(fn (array $entry): array => [
                 'subject_id' => $entry['subject_id'], 'code' => $entry['code'], 'name' => $entry['name'], 'cycle' => $entry['cycle'],
                 'state' => $entry['state'], 'values' => (object) ($entry['values'] ?? []), 'replaces' => isset($current[$entry['subject_id']]),
                 'current' => (object) ($current[$entry['subject_id']] ?? []),
+                'extraction' => $entry['extraction'] ?? null,
+                ...$this->values->coverage($entry, $fields),
             ], $subjects),
         ];
     }

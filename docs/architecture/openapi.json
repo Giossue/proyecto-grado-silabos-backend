@@ -4653,7 +4653,28 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "required": [
+                                        "import"
+                                    ],
+                                    "properties": {
+                                        "available": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "import": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/FichaImport"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -4681,12 +4702,33 @@
                 "operationId": "api_v1_coordination_ficha-imports_store",
                 "summary": "api.v1.coordination.ficha-imports.store",
                 "responses": {
-                    "200": {
+                    "202": {
                         "description": "Operación completada.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "required": [
+                                        "import"
+                                    ],
+                                    "properties": {
+                                        "available": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "import": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/FichaImport"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -4704,10 +4746,23 @@
                 "requestBody": {
                     "required": false,
                     "content": {
-                        "application/json": {
+                        "multipart/form-data": {
                             "schema": {
                                 "type": "object",
-                                "additionalProperties": true
+                                "required": [
+                                    "files"
+                                ],
+                                "properties": {
+                                    "files": {
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "maxItems": 6,
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -4788,7 +4843,28 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "required": [
+                                        "import"
+                                    ],
+                                    "properties": {
+                                        "available": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "import": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/FichaImport"
+                                                },
+                                                {
+                                                    "type": "null"
+                                                }
+                                            ]
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -4819,7 +4895,31 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "additionalProperties": true
+                                "required": [
+                                    "subjects"
+                                ],
+                                "properties": {
+                                    "subjects": {
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    },
+                                    "fields": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "confirm_purge": {
+                                        "type": "boolean"
+                                    }
+                                }
                             }
                         }
                     }
@@ -6645,6 +6745,339 @@
             }
         },
         "schemas": {
+            "FichaTableValue": {
+                "type": "object",
+                "required": [
+                    "columns",
+                    "rows"
+                ],
+                "properties": {
+                    "columns": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "rows": {
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "additionalProperties": false
+            },
+            "FichaImportSubject": {
+                "type": "object",
+                "required": [
+                    "subject_id",
+                    "code",
+                    "name",
+                    "cycle",
+                    "state",
+                    "values",
+                    "coverage",
+                    "missing",
+                    "replaces",
+                    "current",
+                    "extraction"
+                ],
+                "properties": {
+                    "subject_id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "cycle": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "state": {
+                        "enum": [
+                            "pendiente",
+                            "lista",
+                            "sin_evidencia",
+                            "fallida"
+                        ]
+                    },
+                    "values": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "oneOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                {
+                                    "$ref": "#/components/schemas/FichaTableValue"
+                                }
+                            ]
+                        }
+                    },
+                    "replaces": {
+                        "type": "boolean"
+                    },
+                    "current": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "coverage": {
+                        "type": "object",
+                        "required": [
+                            "found",
+                            "total"
+                        ],
+                        "properties": {
+                            "found": {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            "total": {
+                                "type": "integer",
+                                "minimum": 0
+                            }
+                        }
+                    },
+                    "missing": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "key",
+                                "label",
+                                "reason"
+                            ],
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "reason": {
+                                    "enum": [
+                                        "sin_contexto",
+                                        "no_encontrado",
+                                        "estructura_invalida",
+                                        "servicio_no_disponible"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "extraction": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "attempts": {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            "duration_ms": {
+                                "type": "integer",
+                                "minimum": 0
+                            }
+                        }
+                    }
+                }
+            },
+            "FichaImport": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "state",
+                    "error",
+                    "documents",
+                    "reading",
+                    "progress",
+                    "fields",
+                    "subjects",
+                    "timing"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "state": {
+                        "enum": [
+                            "pendiente",
+                            "en_ejecucion",
+                            "lista",
+                            "fallida",
+                            "aplicada",
+                            "descartada"
+                        ]
+                    },
+                    "error": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "name",
+                                "size"
+                            ],
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "size": {
+                                    "type": "integer",
+                                    "minimum": 0
+                                }
+                            }
+                        }
+                    },
+                    "reading": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "index": {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            "total": {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "ocr": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            },
+                            "started_at": {
+                                "type": "string",
+                                "format": "date-time"
+                            }
+                        }
+                    },
+                    "progress": {
+                        "type": "object",
+                        "required": [
+                            "done",
+                            "total"
+                        ],
+                        "properties": {
+                            "done": {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            "total": {
+                                "type": "integer",
+                                "minimum": 0
+                            }
+                        }
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "key",
+                                "label",
+                                "columns"
+                            ],
+                            "properties": {
+                                "key": {
+                                    "type": "string"
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "columns": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "subjects": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FichaImportSubject"
+                        }
+                    },
+                    "timing": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "started_at": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "ready_at": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "reading_ms": {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            "documents": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "index": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        },
+                                        "method": {
+                                            "enum": [
+                                                "pdf_text",
+                                                "ocr",
+                                                "excel"
+                                            ]
+                                        },
+                                        "duration_ms": {
+                                            "type": "integer",
+                                            "minimum": 0
+                                        },
+                                        "cached": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "AcademicUiOptions": {
                 "type": "object",
                 "required": [

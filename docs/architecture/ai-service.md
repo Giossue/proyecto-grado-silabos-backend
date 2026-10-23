@@ -79,22 +79,54 @@ Rutas: `GET|POST coordination/ficha-imports`, `POST …/{import}/apply` y
    `storage/app/private/importaciones-ficha/{id}/`.
 2. `PrepareFichaImportJob` (cola `ia`, hasta 900 s) extrae el texto con
    `FichaDocumentText`:
-   - PDF: OpenParser si está activo; si no, `pdftotext -layout` (Poppler);
+   - PDF: primero `pdftotext -layout` (Poppler). Si una página tiene menos de 80 letras
+     o caracteres de sustitución y OpenParser está disponible, recurre al OCR. Es una
+     heurística técnica de lectura, no un umbral de aceptación académica (PV-18).
+     Sin OCR, conserva el texto local disponible; si no hay texto, explica el fallo;
    - Excel: PhpSpreadsheet, hasta 20 hojas y 5 000 filas por hoja; rechaza archivos de
      más de 150 MB descomprimidos;
-   - corta el texto en bloques de unas 1 800 letras y los guarda en `bloques.json`.
+   - corta el texto por página y líneas en bloques de unos 1 800 caracteres y guarda
+     texto, documento y página en `bloques.json`. Solo atribuye página al PDF leído
+     localmente; con OCR sin paginación la página queda nula;
+   - documentos idénticos se leen una sola vez dentro de la importación. No hay caché
+     entre importaciones ni cambios en la eliminación de temporales.
 3. Por cada asignatura activa de la carrera, `ExtractSubjectFichaJob` busca sus
-   fragmentos (`FichaEvidence`) y pide a la IA un objeto JSON con los campos de la
-   ficha (campos `coordinacion` de la plantilla).
+   secciones (`FichaEvidence`) por código, nombre normalizado y palabras del nombre.
+   Conserva continuaciones hasta otra materia del catálogo o un nuevo documento,
+   descarta entradas con puntos de índice y selecciona hasta 24 000 caracteres.
+   Pide a la IA un JSON para los campos `coordinacion` de la plantilla. El trabajo
+   tiene un timeout de 240 s para hasta dos consultas de 90 s.
+   - Si faltan campos, vuelve a buscar por sus etiquetas y columnas; prioriza la
+     evidencia correspondiente y hace una sola consulta adicional, solo para esos
+     campos, con un presupuesto total de 30 000 caracteres. Conserva lo obtenido
+     si esta segunda consulta falla.
    - El prompt pide copiar el texto, no resumir ni inventar, y devolver la bibliografía
      como `Autor | Título | Año | Ciudad | Editorial | ISBN | Código`.
    - Temperatura 0,2 y `response_format = json_object`.
-   - Se limpian los valores: textos hasta 4 000 caracteres; listas hasta 40 elementos
-     de 1 500.
+   - Textos: hasta 12 000 caracteres. Listas: hasta 60 elementos de 3 000 caracteres.
+     Tablas: hasta 40 filas con una celda de texto por columna, de hasta 1 500 caracteres.
+     Las columnas se derivan de los encabezados de la plantilla, incluidos encabezados
+     combinados. Las celdas ausentes quedan vacías; una estructura inválida se rechaza.
    - Estado por asignatura: `lista`, `sin_evidencia` o `fallida`.
 4. Coordinación revisa la propuesta y elige asignaturas y campos. Aplicar escribe la
    ficha en `valores_campo` (dueño: asignatura) y borra los archivos. Si hay sílabos en
    curso, pide confirmación y los regenera.
+   Las tablas se escriben conservando los encabezados y atributos de la tabla de la
+   plantilla, sin deducir niveles ni relaciones académicas.
+
+El contrato publica `coverage` (`found`, `total`), `missing` (clave, etiqueta y motivo)
+y `extraction` (intentos y duración por materia). Los motivos son `sin_contexto`,
+`no_encontrado` en los fragmentos analizados, `estructura_invalida` y
+`servicio_no_disponible`. `lista` permite aplicar una propuesta parcial y no equivale
+a ficha completa. La interfaz muestra «n de m campos encontrados» y permite revisar
+pendientes aun cuando no haya valores propuestos.
+
+`propuesta_importacion.timing` conserva inicio, fin, tiempo de lectura y método,
+duración y reutilización de cada documento. No guarda prompts ni respuestas crudas.
+Al terminar la lectura se retira el estado transitorio `reading`. Los resultados y
+tiempos sobreviven a aplicar, mientras los archivos y fragmentos se eliminan.
+Propuestas antiguas siguen siendo legibles; su cobertura se calcula con los campos
+actuales y sus tiempos pueden ser nulos.
 
 ## OCR con OpenParser
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Academic;
 
 use App\Models\User;
+use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Domain\Contracts\FichaExtractionGateway;
 use App\Modules\Academic\Infrastructure\Gateways\DisabledFichaExtractionGateway;
 use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
@@ -82,6 +83,12 @@ class FichaImportTest extends TestCase
         $this->assertSame("Ficha propuesta de {$subject->nombre}", $entry['values']['descripcion']);
         $this->assertSame(['Analizar.', 'Aplicar.'], $entry['values']['objetivos_especificos']);
         $this->assertArrayNotHasKey('objetivo_general', $entry['values']);
+        $this->assertSame(2, $entry['coverage']['found']);
+        $this->assertSame(6, $entry['coverage']['total']);
+        $this->assertCount(4, $entry['missing']);
+        $this->assertSame(2, $entry['extraction']['attempts']);
+        $this->assertArrayHasKey('reading_ms', $detail['timing']);
+        $this->assertArrayHasKey('ready_at', $detail['timing']);
         Storage::disk('private')->assertExists("importaciones-ficha/{$importId}/bloques.json");
 
         $this->asCoordinator()->postJson(route('api.v1.coordination.ficha-imports.apply', $importId), ['subjects' => [$subject->id]])->assertOk();
@@ -131,5 +138,48 @@ class FichaImportTest extends TestCase
 
         $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.store'), ['files' => [$this->workbook('Cualquiera')]], ['Accept' => 'application/json'])
             ->assertUnprocessable()->assertJsonValidationErrors('files');
+    }
+
+    public function test_table_rows_follow_the_template_and_are_applied_as_a_table(): void
+    {
+        $this->app->bind(FichaExtractionGateway::class, fn () => new class implements FichaExtractionGateway
+        {
+            public function available(): bool
+            {
+                return true;
+            }
+
+            public function propose(array $subject, array $fields, array $evidence): array
+            {
+                return ['contribucion_perfil' => ['rows' => [['Resuelve sistemas lineales', 'X', '', '', 'Resuelve problemas matemáticos']]]];
+            }
+        });
+        $subject = Subject::query()->where('carrera_id', $this->context->carrera_id)->where('activo', true)->firstOrFail();
+        $response = $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.store'), ['files' => [$this->workbook($subject->nombre)]], ['Accept' => 'application/json'])->assertStatus(202);
+        $entry = collect($this->asCoordinator()->getJson(route('api.v1.coordination.ficha-imports.index'))->json('import.subjects'))->firstWhere('subject_id', $subject->id);
+        $field = FieldDefinition::query()->where('clave', 'contribucion_perfil')->firstOrFail();
+
+        $this->assertSame(app(FichaFieldValues::class)->schema($field)['columns'], $entry['values']['contribucion_perfil']['columns']);
+        $this->assertCount(5, $entry['values']['contribucion_perfil']['columns']);
+        $this->asCoordinator()->postJson(route('api.v1.coordination.ficha-imports.apply', $response->json('import.id')), ['subjects' => [$subject->id]])->assertOk();
+
+        $value = FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $field->id)->firstOrFail();
+        $this->assertSame('table', $value->valor['content'][0]['type']);
+        $this->assertStringContainsString('Resuelve sistemas lineales', FreeText::plainText($value->valor));
+        $this->assertStringContainsString('ALTA (A)', FreeText::plainText($value->valor));
+    }
+
+    public function test_identical_documents_are_read_once_and_their_timing_is_kept(): void
+    {
+        $subject = Subject::query()->where('carrera_id', $this->context->carrera_id)->where('activo', true)->firstOrFail();
+        $file = $this->workbook($subject->nombre);
+        $copy = UploadedFile::fake()->createWithContent('copia.xlsx', file_get_contents($file->getRealPath()));
+        $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.store'), ['files' => [$file, $copy]], ['Accept' => 'application/json'])->assertStatus(202);
+        $detail = $this->asCoordinator()->getJson(route('api.v1.coordination.ficha-imports.index'))->assertOk()->json('import');
+
+        $this->assertFalse($detail['timing']['documents'][0]['cached']);
+        $this->assertTrue($detail['timing']['documents'][1]['cached']);
+        $this->assertSame(0, $detail['timing']['documents'][1]['duration_ms']);
+        $this->assertSame('excel', $detail['timing']['documents'][0]['method']);
     }
 }

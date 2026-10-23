@@ -3,9 +3,9 @@
 namespace App\Modules\Academic\Application;
 
 use App\Modules\Academic\Infrastructure\Gateways\OpenParserPdfReader;
+use Illuminate\Support\Facades\Process;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use RuntimeException;
-use Symfony\Component\Process\Process;
 use ZipArchive;
 
 final class FichaDocumentText
@@ -26,25 +26,69 @@ final class FichaDocumentText
      */
     public function blocks(string $absolutePath, string $name, ?callable $onOcrStatus = null): array
     {
-        $text = match (strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION))) {
-            'pdf' => $this->ocr->available() ? $this->ocr->text($absolutePath, $name, $onOcrStatus) : $this->pdf($absolutePath),
+        return array_column($this->read($absolutePath, $name, $onOcrStatus)['blocks'], 'text');
+    }
+
+    /**
+     * @param  (callable(string): void)|null  $onStatus
+     * @return array{blocks: list<array{text: string, document: string, page: int|null}>, method: string, duration_ms: int}
+     */
+    public function read(string $absolutePath, string $name, ?callable $onStatus = null): array
+    {
+        $started = microtime(true);
+        $method = 'excel';
+        $extension = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION));
+        $text = match ($extension) {
+            'pdf' => $this->pdfText($absolutePath, $name, $method, $onStatus),
             'xlsx', 'xls' => $this->workbook($absolutePath),
             default => throw new RuntimeException('Solo se admiten archivos PDF o Excel.'),
         };
-
-        return $this->split($text);
-    }
-
-    private function pdf(string $path): string
-    {
-        $process = new Process(['pdftotext', '-layout', '-enc', 'UTF-8', $path, '-']);
-        $process->setTimeout(90);
-        $process->run();
-        if (! $process->isSuccessful()) {
-            throw new RuntimeException('No se pudo leer el PDF.');
+        $blocks = [];
+        foreach ($this->pages($text) as $page => $content) {
+            foreach ($this->split($content) as $piece) {
+                $blocks[] = ['text' => $piece, 'document' => $name, 'page' => $method === 'pdf_text' ? $page + 1 : null];
+            }
         }
 
-        return $process->getOutput();
+        return ['blocks' => $blocks, 'method' => $method, 'duration_ms' => (int) round((microtime(true) - $started) * 1000)];
+    }
+
+    /** @param (callable(string): void)|null $onStatus */
+    private function pdfText(string $path, string $name, string &$method, ?callable $onStatus): string
+    {
+        $method = 'pdf_text';
+        if ($onStatus !== null) {
+            $onStatus('native');
+        }
+        try {
+            $result = Process::timeout(90)->run(['pdftotext', '-layout', '-enc', 'UTF-8', $path, '-']);
+            $text = $result->successful() ? $result->output() : '';
+        } catch (\Throwable) {
+            $text = '';
+        }
+        $pages = $this->pages($text);
+        $legible = $text !== '' && array_all($pages, fn (string $page): bool => preg_match_all('/\p{L}/u', $page) >= 80 && ! str_contains($page, "\u{FFFD}"));
+        if ($legible || ! $this->ocr->available()) {
+            if (trim($text) === '') {
+                throw new RuntimeException('El PDF no tiene texto legible y el lector de documentos escaneados no está disponible.');
+            }
+
+            return $text;
+        }
+        $method = 'ocr';
+
+        return $this->ocr->text($path, $name, $onStatus);
+    }
+
+    /** @return list<string> */
+    private function pages(string $text): array
+    {
+        $text = rtrim($text, "\r\n");
+        if (str_ends_with($text, "\f")) {
+            $text = substr($text, 0, -1);
+        }
+
+        return explode("\f", $text);
     }
 
     private function assertSafeArchive(string $path): void

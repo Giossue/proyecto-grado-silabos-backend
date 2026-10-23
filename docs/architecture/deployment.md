@@ -68,7 +68,7 @@ Hoy solo se usan `critica`, `documentos`, `ia` y `general` (correo de activació
 | `PlatformSmokeJob` | `critica` | 30 s | 3 |
 | `GenerateSyllabusExportJob` | `documentos` | 120 s | 3 |
 | `AnswerSyllabusChatJob` | `ia` | 60 s | 3 |
-| `ExtractSubjectFichaJob` | `ia` | 150 s | 2 |
+| `ExtractSubjectFichaJob` | `ia` | 240 s | 2 |
 | `PrepareFichaImportJob` | `ia` | 900 s | 1 |
 
 Detalle de cada trabajo: [queues-and-jobs.md](queues-and-jobs.md).
@@ -81,15 +81,15 @@ trabajo más largo. Si no, el trabajo puede ejecutarse dos veces o marcarse como
 mientras sigue corriendo.
 
 - El trabajo más largo es `PrepareFichaImportJob` con 900 s.
-- `.env.example` y `config/queue.php` usan 180 s.
+- `.env.example` y `config/queue.php` usan 960 s.
 - **Riesgo conocido:** con 180 s, una lectura de fichas que dure más de 180 s puede
   entregarse otra vez a un segundo worker. Con `tries = 1`, esa segunda entrega marca
   la importación como `fallida` aunque la primera siga bien. Con el único worker actual
   el riesgo aparece cuando hay otro proceso tomando trabajos: una réplica, o el
   contenedor nuevo de un despliegue mientras el viejo sigue trabajando.
 - Requisito: `REDIS_QUEUE_RETRY_AFTER` mayor que 900 (por ejemplo 960) en todo
-  entorno que use la importación de fichas. Este cambio de configuración está
-  pendiente.
+  entorno que use la importación de fichas. Verificarlo también en las variables de
+  Dokploy: un valor explícito de 180 conserva el riesgo aunque cambie el valor por defecto.
 
 ### Otros límites del worker
 
@@ -145,7 +145,7 @@ la entidad. Qué entidades cargar: [firma-electronica-entidades.md](../runbooks/
 
 | Variable | Por defecto | Efecto |
 |---|---|---|
-| `OPENPARSER_ENABLED` | `false` | Activa el OCR de PDF. Apagado, se usa `pdftotext`. |
+| `OPENPARSER_ENABLED` | `false` | Permite recurrir al OCR si el PDF no tiene texto local suficiente. Primero se intenta `pdftotext`. |
 | `OPENPARSER_BASE_URL` | `https://api.openparser.dev` | Debe ser `https://`; si no, el OCR queda apagado. |
 | `OPENPARSER_API_KEY` | vacío | Sin clave, el OCR queda apagado. |
 | `OPENPARSER_OCR_MODEL` | `paddleocr-vl-1.6` | Modelo de OCR. |

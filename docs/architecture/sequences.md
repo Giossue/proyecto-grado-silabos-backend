@@ -154,13 +154,21 @@ sequenceDiagram
     API->>API: carrera editable; IA configurada; sin otra importación en curso
     API->>DB: importaciones_ficha pendiente; archivos en importaciones-ficha/{id}/
     API-->>Q: PrepareFichaImportJob (afterCommit)
-    Q->>OCR: PDF (si OPENPARSER está activo; si no, pdftotext)
-    Q->>DB: bloques de texto; una entrada por asignatura activa
-    loop por asignatura
-        Q->>IA: fragmentos de esa asignatura + campos de la ficha
-        Q->>DB: propuesta lista / sin_evidencia / fallida
+    Q->>Q: pdftotext por página; reutiliza documentos idénticos
+    opt texto insuficiente y OCR configurado
+        Q->>OCR: PDF
     end
-    Q->>DB: importación lista
+    Q->>Q: bloques con documento y página cuando está disponible
+    Q->>DB: tiempos de lectura; una entrada por asignatura activa
+    loop por asignatura
+        Q->>IA: secciones de la asignatura + campos y columnas de la plantilla
+        opt quedan campos pendientes
+            Q->>Q: busca evidencia por etiqueta y columnas
+            Q->>IA: solo campos pendientes (una consulta adicional)
+        end
+        Q->>DB: propuesta parcial, motivos pendientes y tiempo de extracción
+    end
+    Q->>DB: importación lista y hora de finalización
     C->>API: POST …/{import}/apply (asignaturas y campos elegidos)
     API->>DB: valores_campo de la asignatura; archivos borrados; aplicada
     API->>DB: si hay sílabos en curso: pide confirmación y los regenera

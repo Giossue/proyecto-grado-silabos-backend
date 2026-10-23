@@ -148,8 +148,12 @@ y el botón «Documentos» (DOC-10).
 - «Importar documentos» abre «Importar el proyecto de carrera»:
   1. subir hasta 6 PDF o Excel y «Analizar documentos»;
   2. esperar el análisis (se puede cancelar);
-  3. revisar la propuesta por materia, comparar con la ficha actual, marcar materias y
+  3. revisar «n de m campos encontrados» por materia, consultar campos pendientes y sus
+     motivos, previsualizar las tablas, comparar con la ficha actual, marcar materias y
      campos y «Aplicar a N materias», o «Descartar».
+- La propuesta puede ser parcial. Se muestra el tiempo de análisis cuando está
+  disponible. Durante el análisis, «Cancelar la importación» ocupa el pie; en la
+  propuesta solo aparecen «Descartar» y «Aplicar a N materias».
 - Sin proveedor de IA, el asistente muestra que no está configurado.
 - Con la convocatoria de la carrera abierta, la ficha y la importación quedan bloqueadas.
 

@@ -22,7 +22,7 @@ guardan ahí; no usan cola.
 | `GenerateSyllabusExportJob` | Documents | `documentos` | 120 s | 3 | 5, 30, 120 s | exportación |
 | `AnswerSyllabusChatJob` | AiAssistance | `ia` | 60 s | 3 | 5, 30, 120 s | mensaje |
 | `PrepareFichaImportJob` | Academic | `ia` | 900 s | 1 | — | importación |
-| `ExtractSubjectFichaJob` | Academic | `ia` | 150 s | 2 | — | importación:asignatura |
+| `ExtractSubjectFichaJob` | Academic | `ia` | 240 s | 2 | — | importación:asignatura |
 | `ManagedUserActivationMail` | Identity | `general` | por defecto | por defecto | — | — |
 
 El estado de cada trabajo vive en su registro de dominio, no en una tabla de trabajos
@@ -65,14 +65,14 @@ que repetirla no crea otra exportación.
 ## Configuración de Redis
 
 - Conexión `redis`, cola por defecto `general` (`REDIS_QUEUE`).
-- `retry_after` = `REDIS_QUEUE_RETRY_AFTER`, 180 s por defecto.
+- `retry_after` = `REDIS_QUEUE_RETRY_AFTER`, 960 s por defecto.
 - El estado funcional está en PostgreSQL. Si Redis se vacía, se pierden los trabajos en
   espera y sus registros quedan `pendiente`.
 
 **Requisito:** `retry_after` debe ser mayor que el `timeout` del trabajo más largo.
 Hoy ese trabajo es `PrepareFichaImportJob` (900 s), así que en todo entorno que use la
 importación de fichas `REDIS_QUEUE_RETRY_AFTER` debe superar 900 (por ejemplo 960).
-Con el valor actual (180 s), si otro worker toma la copia entregada de nuevo, el trabajo
+Con un valor remoto explícito de 180 s, si otro worker toma la copia entregada de nuevo, el trabajo
 cuenta un segundo intento; con `tries = 1` se marca la importación como `fallida`.
 `RunsOnce` evita la doble ejecución, pero no ese fallo. Ver [deployment.md](deployment.md#colas-y-worker).
 

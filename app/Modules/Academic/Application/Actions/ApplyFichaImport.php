@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
@@ -27,6 +28,7 @@ final class ApplyFichaImport
         private readonly SubjectProfileFields $profile,
         private readonly RecordAuditEvent $audit,
         private readonly InProgressWork $work,
+        private readonly FichaFieldValues $values,
     ) {}
 
     /**
@@ -60,6 +62,7 @@ final class ApplyFichaImport
                         continue;
                     }
                     $document = match (true) {
+                        is_array($value) && isset($value['rows'], $value['columns']) => $this->values->document($this->values->clean($value, $this->values->schema($field)['columns']), $field->contenido),
                         is_array($value) && str_starts_with((string) $key, 'bibliografia') => FreeText::fromRows(
                             array_map(fn (string $column): array => ['key' => $column, 'label' => $column], self::BIBLIOGRAPHY_COLUMNS),
                             array_values(array_map(fn (string $item): array => array_combine(self::BIBLIOGRAPHY_COLUMNS, array_pad(array_slice(array_map('trim', explode('|', $item)), 0, count(self::BIBLIOGRAPHY_COLUMNS)), count(self::BIBLIOGRAPHY_COLUMNS), '')), $value)),
