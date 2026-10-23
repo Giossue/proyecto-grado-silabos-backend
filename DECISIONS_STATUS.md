@@ -42,6 +42,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   APE y AA (I-75).
 - Los paralelos son fijos por asignatura y no dependen del período. Cada uno tiene
   código, jornada y como máximo un docente activo (I-209).
+- Al agregar o editar un paralelo, el selector de docente permite buscar por nombre
+  sin distinguir mayúsculas ni tildes. La selección se guarda al confirmar el paralelo.
 - El período recibe su nombre automático (por ejemplo, `Agosto-Diciembre 2026`) y sus
   semanas se calculan desde las fechas. Empieza hoy o después (I-108, I-109, I-112).
 - Administración carga cuentas y carreras por Excel; Coordinación carga docentes y la

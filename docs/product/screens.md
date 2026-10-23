@@ -130,6 +130,10 @@ y el botón «Documentos» (DOC-10).
   asignar docente.
 - «Paralelos y docentes de la materia»: agregar, editar o eliminar paralelos y quitar o
   asignar docente. Cambiar el docente reinicia el sílabo del paralelo.
+- Al agregar o editar un paralelo, el desplegable de Docente incluye «Buscar por nombre»
+  y filtra sin distinguir mayúsculas ni tildes. Si no hay coincidencias muestra «No se
+  encontraron docentes». Al agregar se conserva la opción «Sin docente»; el cambio se
+  guarda al confirmar el paralelo.
 - COR-15 muestra docente, correo y estado (activa o pendiente). En «Editar docente», el
   nombre y el correo se editan solo mientras la cuenta está pendiente, y «Quitar de la
   carrera» se deshabilita con la convocatoria de la carrera abierta.
