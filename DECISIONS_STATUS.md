@@ -23,6 +23,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - No hay registro público. Administración crea las cuentas y la persona la activa con
   una invitación por correo.
 - Administración puede quitar un rol a una cuenta, salvo el único que le queda (I-197).
+- En «Usuarios y roles», la columna «Roles» muestra los roles vigentes de cada cuenta.
 - Coordinación crea o incorpora docentes en su carrera, corrige su nombre y su correo
   (el correo solo antes de activar la cuenta) y puede quitarlos de la carrera sin tocar
   la cuenta (I-54, I-170, I-175).

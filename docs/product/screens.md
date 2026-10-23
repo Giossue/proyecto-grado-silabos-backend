@@ -22,7 +22,7 @@ muestra «Página no encontrada».
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
 | ADM-01 | Panel | `/admin/panel` | Avance del proceso, días para la entrega y carreras sin convocar. Lista «Puesta en marcha de la institución». |
-| ADM-02 | Usuarios y roles | `/admin/usuarios` | Tabla de cuentas; «Crear cuenta» e «Importar desde Excel». |
+| ADM-02 | Usuarios y roles | `/admin/usuarios` | Tabla de cuentas con la columna «Roles» para sus roles vigentes; «Crear cuenta» e «Importar desde Excel». |
 | ADM-03 | Detalle de la cuenta | hoja lateral en ADM-02 | Roles vigentes y finalizados, «Agregar otro rol», «Quitar rol», «Reenviar invitación», «Deshabilitar/Habilitar acceso», «Eliminar cuenta pendiente». |
 | ADM-04 | Facultades y carreras | `/admin/estructura-academica` | Pestañas Facultades (campus y logo PNG) y Carreras (modalidad, ciclos, «Asignar/Reemplazar coordinador», importación desde Excel). |
 | ADM-06 | Plantilla | `/admin/plantilla` | Ver y editar la plantilla única. Detalle abajo. |
