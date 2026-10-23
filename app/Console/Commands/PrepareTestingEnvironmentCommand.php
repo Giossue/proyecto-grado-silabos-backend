@@ -283,9 +283,7 @@ class PrepareTestingEnvironmentCommand extends Command
 
     private function scheduleSubject(RoleAssignment $coordinator, Subject $subject, User $teacher): void
     {
-        app(CreateParallels::class)->execute(['subject_id' => $subject->id, 'codes' => [self::PARALLEL_CODE], 'shift' => 'matutina'], $coordinator->user, $this->requestAs($coordinator));
-        $parallel = Parallel::query()->where('asignatura_id', $subject->id)->where('codigo_paralelo', self::PARALLEL_CODE)->firstOrFail();
-        app(CreateAcademicRecord::class)->execute('asignacion_docente', ['parallel_id' => $parallel->id, 'user_id' => $teacher->id], $coordinator->user, $this->requestAs($coordinator));
+        app(CreateParallels::class)->execute(['subject_id' => $subject->id, 'codes' => [self::PARALLEL_CODE], 'shift' => 'matutina', 'user_id' => $teacher->id], $coordinator->user, $this->requestAs($coordinator));
     }
 
     private function assignExisting(Subject $subject, RoleAssignment $coordinator, User $teacher): void
@@ -294,8 +292,9 @@ class PrepareTestingEnvironmentCommand extends Command
         $free = $parallels()->whereDoesntHave('teacherAssignments', fn ($q) => $q->where('activo', true))->orderBy('codigo')->first();
         if ($free === null) {
             $code = 'P'.($parallels()->count() + 1);
-            app(CreateParallels::class)->execute(['subject_id' => $subject->id, 'codes' => [$code], 'shift' => 'matutina'], $coordinator->user, $this->requestAs($coordinator));
-            $free = $parallels()->where('codigo', $code)->firstOrFail();
+            app(CreateParallels::class)->execute(['subject_id' => $subject->id, 'codes' => [$code], 'shift' => 'matutina', 'user_id' => $teacher->id], $coordinator->user, $this->requestAs($coordinator));
+
+            return;
         }
         app(CreateAcademicRecord::class)->execute('asignacion_docente', ['parallel_id' => $free->id, 'user_id' => $teacher->id], $coordinator->user, $this->requestAs($coordinator));
     }
