@@ -78,7 +78,7 @@ class CareerAcademicStructureController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        /** @var array{subject_id: string, codes: list<string>, shift: string} $data */
+        /** @var array{subject_id: string, codes: list<string>, shift: string, user_id: string} $data */
         $data = $request->validated();
         $created = $action->execute($data, $actor, $request);
 

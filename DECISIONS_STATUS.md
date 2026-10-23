@@ -42,6 +42,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   APE y AA (I-75).
 - Los paralelos son fijos por asignatura y no dependen del período. Cada uno tiene
   código, jornada y como máximo un docente activo (I-209).
+- Crear un paralelo exige código, jornada y docente de la carrera con cuenta activa
+  y correo verificado, también en acciones masivas. El paralelo y su asignación se
+  guardan juntos: si falla la asignación, no se crea el paralelo.
 - Al agregar o editar un paralelo, el selector de docente permite buscar por nombre
   sin distinguir mayúsculas ni tildes. La selección se guarda al confirmar el paralelo.
 - El período recibe su nombre automático (por ejemplo, `Agosto-Diciembre 2026`) y sus

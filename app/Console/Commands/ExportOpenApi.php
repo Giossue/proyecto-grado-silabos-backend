@@ -303,6 +303,23 @@ class ExportOpenApi extends Command
                 $content = ['application/json' => ['schema' => [
                     '$ref' => '#/components/schemas/SubjectProfileInput',
                 ]]];
+            } elseif ($name === 'api.v1.coordination.academic.parallels.store') {
+                $content = ['application/json' => ['schema' => [
+                    'type' => 'object',
+                    'required' => ['subject_id', 'codes', 'shift', 'user_id'],
+                    'properties' => [
+                        'subject_id' => ['type' => 'string', 'format' => 'uuid'],
+                        'codes' => [
+                            'type' => 'array',
+                            'minItems' => 1,
+                            'maxItems' => 50,
+                            'uniqueItems' => true,
+                            'items' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 30],
+                        ],
+                        'shift' => ['type' => 'string', 'enum' => Parallel::SHIFTS],
+                        'user_id' => ['type' => 'string', 'format' => 'uuid'],
+                    ],
+                ]]];
             } elseif ($isProcessTransition) {
                 $content = ['application/json' => ['schema' => [
                     'type' => 'object',
@@ -320,7 +337,7 @@ class ExportOpenApi extends Command
                 $content = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/DraftFieldInput']]];
             }
             $operation['requestBody'] = [
-                'required' => $isSubjectProfile,
+                'required' => $isSubjectProfile || $name === 'api.v1.coordination.academic.parallels.store',
                 'content' => $content,
             ];
         }

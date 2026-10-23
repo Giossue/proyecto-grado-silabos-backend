@@ -19,9 +19,10 @@ class CreateParallels
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly CreateAcademicRecord $records,
     ) {}
 
-    /** @param  array{subject_id: string, codes: list<string>, shift: string}  $data */
+    /** @param  array{subject_id: string, codes: list<string>, shift: string, user_id: string}  $data */
     public function execute(array $data, User $actor, Request $request): int
     {
         $activeRole = $this->roles->resolve($request);
@@ -31,7 +32,7 @@ class CreateParallels
             throw new AuthorizationException('No puede crear paralelos con el rol activo.');
         }
 
-        return DB::transaction(function () use ($data, $actor, $activeRole): int {
+        return DB::transaction(function () use ($data, $actor, $activeRole, $request): int {
             $subject = Subject::query()
                 ->whereKey($data['subject_id'])
                 ->where('activo', true)
@@ -67,6 +68,10 @@ class CreateParallels
                     result: 'exito',
                     metadata: ['bulk' => true],
                 );
+                $this->records->execute('asignacion_docente', [
+                    'parallel_id' => $parallel->id,
+                    'user_id' => $data['user_id'],
+                ], $actor, $request);
             }
 
             return $codes->count();

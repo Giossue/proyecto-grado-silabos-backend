@@ -127,13 +127,14 @@ y el botón «Documentos» (DOC-10).
 - COR-14 lista las materias de la malla con sus paralelos, jornada y docente. Filtros
   por ciclo, paralelo y jornada.
 - «Acciones masivas» sobre las materias marcadas: agregar un paralelo, asignar jornada o
-  asignar docente.
+  asignar docente. «Agregar un paralelo» pide jornada y docente obligatorios para los
+  nuevos paralelos; el código siguiente libre se calcula por materia.
 - «Paralelos y docentes de la materia»: agregar, editar o eliminar paralelos y quitar o
   asignar docente. Cambiar el docente reinicia el sílabo del paralelo.
 - Al agregar o editar un paralelo, el desplegable de Docente incluye «Buscar por nombre»
   y filtra sin distinguir mayúsculas ni tildes. Si no hay coincidencias muestra «No se
-  encontraron docentes». Al agregar se conserva la opción «Sin docente»; el cambio se
-  guarda al confirmar el paralelo.
+  encontraron docentes». Crear un paralelo exige código, jornada y docente; la API
+  guarda el paralelo y su asignación juntos al confirmar.
 - COR-15 muestra docente, correo y estado (activa o pendiente). En «Editar docente», el
   nombre y el correo se editan solo mientras la cuenta está pendiente, y «Quitar de la
   carrera» se deshabilita con la convocatoria de la carrera abierta.

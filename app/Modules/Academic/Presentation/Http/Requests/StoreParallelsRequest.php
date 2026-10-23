@@ -52,6 +52,22 @@ class StoreParallelsRequest extends FormRequest
             'codes' => ['required', 'array', 'min:1', 'max:50'],
             'codes.*' => ['required', 'string', 'max:30', 'distinct'],
             'shift' => ['required', 'string', Rule::in(Parallel::SHIFTS)],
+            'user_id' => [
+                'required',
+                'uuid',
+                Rule::exists('usuarios', 'usuario_id')->where(fn ($query) => $query
+                    ->where('usuario_activo', true)
+                    ->whereNotNull('correo_verificado_en')),
+            ],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'user_id.required' => 'Seleccione el docente del paralelo.',
+            'user_id.exists' => 'Elija un docente activo con el correo verificado.',
         ];
     }
 }

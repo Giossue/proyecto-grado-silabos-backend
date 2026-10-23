@@ -133,9 +133,13 @@ class ParallelTeacherChangeTest extends TestCase
         $parallel = $assignment->parallel;
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.academic.parallels.store'), [
-            'subject_id' => $parallel->asignatura_id, 'codes' => ['Z'], 'shift' => 'matutina',
+            'subject_id' => $parallel->asignatura_id, 'codes' => ['Z'], 'shift' => 'matutina', 'user_id' => $this->teacher->id,
         ])->assertSuccessful();
         $created = Parallel::query()->where('asignatura_id', $parallel->asignatura_id)->where('codigo_paralelo', 'Z')->firstOrFail();
+        $createdAssignment = $created->teacherAssignments()->where('activo', true)->sole();
+        $this->assertSame($this->teacher->id, $createdAssignment->roleAssignment->usuario_id);
+        $this->actingAsCoordinator()
+            ->deleteJson(route('api.v1.coordination.academic.destroy', ['asignacion_docente', $createdAssignment->id]))->assertSuccessful();
         $this->actingAsCoordinator()
             ->deleteJson(route('api.v1.coordination.academic.parallels.destroy', $created->id))->assertSuccessful();
 

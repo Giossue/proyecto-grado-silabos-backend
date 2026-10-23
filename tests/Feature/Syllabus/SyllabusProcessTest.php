@@ -902,11 +902,15 @@ class SyllabusProcessTest extends TestCase
                 'subject_id' => $scheduledSubject->asignatura_id,
                 'codes' => ['B'],
                 'shift' => 'matutina',
+                'user_id' => $this->teacher->id,
             ])
             ->assertSuccessful();
         $created = Parallel::query()->where('asignatura_id', $scheduledSubject->asignatura_id)->where('codigo_paralelo', 'B')->firstOrFail();
         $this->actingAsCoordinator()
             ->patchJson(route('api.v1.coordination.academic.parallels.update', $created), ['code' => 'C', 'shift' => 'nocturna'])
+            ->assertSuccessful();
+        $this->actingAsCoordinator()
+            ->deleteJson(route('api.v1.coordination.academic.destroy', ['asignacion_docente', $created->teacherAssignments()->where('activo', true)->sole()->id]))
             ->assertSuccessful();
         $this->actingAsCoordinator()
             ->deleteJson(route('api.v1.coordination.academic.parallels.destroy', $created))
@@ -955,6 +959,7 @@ class SyllabusProcessTest extends TestCase
                 'subject_id' => $scheduledSubject->asignatura_id,
                 'codes' => ['B'],
                 'shift' => 'matutina',
+                'user_id' => $this->teacher->id,
             ])
             ->assertSuccessful()
             ->assertSuccessful();

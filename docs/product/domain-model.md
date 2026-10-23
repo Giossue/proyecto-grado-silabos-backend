@@ -29,7 +29,9 @@ esquema completo está en `docs/generated/database-schema.md`; las reglas de est
 - **Requisito de asignatura** (`requisitos_asignatura`): prerrequisito o correquisito
   entre dos asignaturas distintas.
 - **Paralelo** (`paralelos`): asignatura, código (único en la asignatura) y jornada
-  (`matutina`, `vespertina`, `nocturna`). No depende del período.
+  (`matutina`, `vespertina`, `nocturna`). No depende del período. Su creación exige
+  seleccionar un docente de la carrera; el paralelo y su asignación se guardan en la
+  misma transacción.
 - **Asignación de paralelo** (`asignaciones_paralelo`): une un paralelo con la asignación
   de rol de un docente. Como máximo una activa por paralelo.
 - **Período académico** (`periodos_academicos`): código único, fechas de inicio y fin y

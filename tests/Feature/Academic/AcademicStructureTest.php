@@ -10,7 +10,9 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
+use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Carbon\CarbonImmutable;
@@ -381,7 +383,7 @@ class AcademicStructureTest extends TestCase
 
         foreach ([$first, $second] as $subject) {
             $this->actingAsCoordinator()
-                ->postJson(route('api.v1.coordination.academic.parallels.store'), ['subject_id' => $subject->id, 'codes' => ['A'], 'shift' => 'matutina'])
+                ->postJson(route('api.v1.coordination.academic.parallels.store'), ['subject_id' => $subject->id, 'codes' => ['A'], 'shift' => 'matutina', 'user_id' => $this->coordinator->id])
                 ->assertSuccessful();
         }
 
@@ -395,7 +397,7 @@ class AcademicStructureTest extends TestCase
         $code = $scheduled->codigo;
 
         $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.academic.parallels.store'), ['subject_id' => $scheduled->asignatura_id, 'codes' => [strtolower($code)], 'shift' => 'matutina'])
+            ->postJson(route('api.v1.coordination.academic.parallels.store'), ['subject_id' => $scheduled->asignatura_id, 'codes' => [strtolower($code)], 'shift' => 'matutina', 'user_id' => $this->coordinator->id])
             ->assertJsonValidationErrors('codes');
         $this->assertSame(1, Parallel::query()->where('asignatura_id', $scheduled->asignatura_id)->count());
     }
@@ -510,6 +512,78 @@ class AcademicStructureTest extends TestCase
 
         $this->expectException(QueryException::class);
         Parallel::query()->create(['asignatura_id' => $scheduled->asignatura_id, 'codigo' => 'Q']);
+    }
+
+    public function test_creating_a_parallel_requires_a_teacher_and_writes_nothing_without_one(): void
+    {
+        $subject = Subject::query()->firstOrFail();
+        $parallels = Parallel::query()->count();
+        $audits = AuditEvent::query()->count();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.parallels.store'), [
+                'subject_id' => $subject->id, 'codes' => ['B'], 'shift' => 'matutina',
+            ])
+            ->assertJsonValidationErrors(['user_id' => 'Seleccione el docente del paralelo.']);
+
+        $this->assertSame($parallels, Parallel::query()->count());
+        $this->assertSame($audits, AuditEvent::query()->count());
+    }
+
+    public function test_creating_parallels_assigns_the_selected_teacher_and_audits_both_records(): void
+    {
+        $subject = Subject::query()->firstOrFail();
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.parallels.store'), [
+                'subject_id' => $subject->id, 'codes' => ['B', 'C'], 'shift' => 'vespertina', 'user_id' => $teacher->id,
+            ])
+            ->assertSuccessful();
+
+        foreach (['B', 'C'] as $code) {
+            $parallel = Parallel::query()->where('asignatura_id', $subject->id)->where('codigo', $code)->firstOrFail();
+            $assignment = TeacherAssignment::query()->where('paralelo_id', $parallel->id)->where('activo', true)->sole();
+            $this->assertSame($teacher->id, $assignment->roleAssignment->usuario_id);
+            $this->assertSame('vespertina', $parallel->jornada);
+            $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.paralelo.creacion', 'recurso_id' => $parallel->id]);
+            $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.asignacion_docente.creacion', 'recurso_id' => $assignment->id]);
+        }
+    }
+
+    public function test_a_teacher_from_another_career_rolls_back_parallel_creation_and_its_audit(): void
+    {
+        $subject = Subject::query()->firstOrFail();
+        $career = $this->createCareer('OTRA-DOCENTE');
+        $teacher = User::factory()->create();
+        RoleAssignment::query()->create(['usuario_id' => $teacher->id, 'carrera_id' => $career->id, 'rol' => 'docente', 'activo' => true]);
+        $parallels = Parallel::query()->count();
+        $assignments = TeacherAssignment::query()->count();
+        $audits = AuditEvent::query()->count();
+
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.parallels.store'), [
+                'subject_id' => $subject->id, 'codes' => ['B', 'C'], 'shift' => 'matutina', 'user_id' => $teacher->id,
+            ])
+            ->assertJsonValidationErrors('user_id');
+
+        $this->assertSame($parallels, Parallel::query()->count());
+        $this->assertSame($assignments, TeacherAssignment::query()->count());
+        $this->assertSame($audits, AuditEvent::query()->count());
+    }
+
+    public function test_an_inactive_or_unverified_teacher_cannot_be_used_to_create_a_parallel(): void
+    {
+        $subject = Subject::query()->firstOrFail();
+        foreach ([User::factory()->inactive()->create(), User::factory()->unverified()->create()] as $teacher) {
+            RoleAssignment::query()->create(['usuario_id' => $teacher->id, 'carrera_id' => $subject->carrera_id, 'rol' => 'docente', 'activo' => true]);
+            $this->actingAsCoordinator()
+                ->postJson(route('api.v1.coordination.academic.parallels.store'), [
+                    'subject_id' => $subject->id, 'codes' => ['B'], 'shift' => 'matutina', 'user_id' => $teacher->id,
+                ])
+                ->assertJsonValidationErrors('user_id');
+        }
+        $this->assertDatabaseMissing('paralelos', ['asignatura_id' => $subject->id, 'codigo_paralelo' => 'B']);
     }
 
     public function test_coordinator_edits_code_and_shift_of_a_parallel_with_audit(): void
