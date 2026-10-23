@@ -82,37 +82,37 @@ final class OpenParserPdfReader
             $this->request()->get($this->url('/jobs/'.rawurlencode($jobId).'/result'), ['format' => (string) config('openparser.output_format')]),
             'No se pudo descargar el resultado del OCR.',
         );
-        if (is_string($document['markdown'] ?? null) && trim($document['markdown']) !== '') {
-            return trim($document['markdown']);
-        }
         $lines = [];
+        $tables = new OpenParserTableText;
+        $heading = '';
+        $career = '';
         foreach (is_array($document['elements'] ?? null) ? $document['elements'] : [] as $element) {
             if (is_array($element)) {
-                $lines[] = $this->element($element);
+                if (($element['kind'] ?? null) === 'table') {
+                    $page = $element['locations'][0]['page_number'] ?? null;
+                    $context = implode(' · ', array_filter([$heading, is_int($page) ? 'Página '.$page : '']));
+                    $lines[] = $tables->render($element, $context, $career);
+                } else {
+                    $text = $this->element($element);
+                    if (($element['role'] ?? null) === 'heading') {
+                        $tables = new OpenParserTableText;
+                        $heading = trim(ltrim($text, '# '));
+                        if (preg_match('/\bcarrera\s+de\s+(.+)$/iu', $heading, $matches) === 1) {
+                            $career = trim($matches[1]);
+                        }
+                    }
+                    $lines[] = $text;
+                }
             }
         }
+        $text = trim(implode("\n\n", array_filter($lines, fn (string $line): bool => $line !== '')));
 
-        return trim(implode("\n\n", array_filter($lines, fn (string $line): bool => $line !== '')));
+        return $text !== '' ? $text : trim(is_string($document['markdown'] ?? null) ? $document['markdown'] : '');
     }
 
     /** @param array<string, mixed> $element */
     private function element(array $element): string
     {
-        if (($element['kind'] ?? null) === 'table' && is_array($element['cells'] ?? null)) {
-            $rows = [];
-            foreach ($element['cells'] as $cell) {
-                if (is_array($cell) && is_string($cell['text'] ?? null)) {
-                    $rows[(int) ($cell['row_index'] ?? 0)][(int) ($cell['column_index'] ?? 0)] = html_entity_decode(trim($cell['text']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-                }
-            }
-            ksort($rows);
-
-            return implode("\n", array_map(function (array $row): string {
-                ksort($row);
-
-                return implode(' | ', $row);
-            }, $rows));
-        }
         foreach (['text', 'value', 'title', 'caption'] as $field) {
             if (is_string($element[$field] ?? null) && trim($element[$field]) !== '') {
                 return trim($element[$field]);

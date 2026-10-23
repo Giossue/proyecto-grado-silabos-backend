@@ -90,6 +90,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 ## Plantilla
 
+- La importación de fichas prioriza los elementos estructurados del OCR. Expande
+  celdas combinadas, conserva los encabezados entre páginas y separa las filas por
+  asignatura. Las tablas que declaran otra carrera se excluyen comparando su nombre
+  normalizado con el de la importación. El Markdown se usa si no hay contenido
+  estructurado; la IA sigue copiando evidencia, sin redactar objetivos ausentes.
+
 - Hay una sola plantilla. Se edita en el sitio, sin versiones ni publicación (I-32).
 - La plantilla es solo datos (ADR-0011, I-229). `plantilla_silabo.definicion_plantilla`
   guarda el estilo del documento, las variables, los bloques (valor, reglas y diseño),

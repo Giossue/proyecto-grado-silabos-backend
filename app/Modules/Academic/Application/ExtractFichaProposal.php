@@ -20,10 +20,10 @@ final class ExtractFichaProposal
      * @param  list<array{name: string, code: string}>  $subjects
      * @return array<string, mixed>
      */
-    public function execute(array $subject, array $fields, array $blocks, array $subjects): array
+    public function execute(array $subject, array $fields, array $blocks, array $subjects, ?string $career = null): array
     {
         $started = microtime(true);
-        $fragments = $this->evidence->for($subject['name'], $subject['code'], $blocks, $subjects);
+        $fragments = $this->evidence->for($subject['name'], $subject['code'], $blocks, $subjects, career: $career);
         $values = [];
         $reasons = [];
         $attempts = 0;
@@ -40,7 +40,7 @@ final class ExtractFichaProposal
             if (! $failed && $missing !== []) {
                 $recovery = [];
                 foreach ($missing as $field) {
-                    $pieces = $this->evidence->for($subject['name'], $subject['code'], $blocks, $subjects, $field['label'].' '.implode(' ', $field['columns']));
+                    $pieces = $this->evidence->for($subject['name'], $subject['code'], $blocks, $subjects, $field['label'].' '.implode(' ', $field['columns']), $career);
                     $budget = (int) floor(30000 / count($missing));
                     $used = 0;
                     foreach ($pieces as $piece) {

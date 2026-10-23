@@ -13,13 +13,14 @@ final class FichaEvidence
      * @param  list<array{name: string, code: string}>  $subjects
      * @return list<string>
      */
-    public function for(string $subjectName, string $subjectCode, array $blocks, array $subjects = [], ?string $field = null): array
+    public function for(string $subjectName, string $subjectCode, array $blocks, array $subjects = [], ?string $field = null, ?string $career = null): array
     {
         $subjects = array_values(array_filter($subjects, fn (array $subject): bool => $subject['name'] !== $subjectName));
         array_unshift($subjects, ['name' => $subjectName, 'code' => $subjectCode]);
         $sections = [];
         $owner = null;
         $document = null;
+        $allowedCareer = true;
         foreach ($blocks as $block) {
             $text = is_string($block) ? $block : $block['text'];
             $source = is_string($block) ? 'Documento' : $block['document'];
@@ -28,22 +29,29 @@ final class FichaEvidence
             if ($sourceId !== $document) {
                 $owner = null;
                 $document = $sourceId;
+                $allowedCareer = true;
             }
             $piece = '';
             foreach (preg_split('/\R/u', $text) ?: [] as $line) {
+                $careerBoundary = preg_match('/^Carrera del documento: (.+)$/u', $line, $careerMatch) === 1;
                 $matches = [];
                 foreach ($subjects as $key => $subject) {
                     if ($this->matches($line, $subject['name'], $subject['code'])) {
                         $matches[] = $key;
                     }
                 }
-                $boundary = $matches !== [] || $this->subjectHeading($line);
+                $boundary = $careerBoundary || $matches !== [] || $this->subjectHeading($line);
                 if ($boundary) {
                     if (trim($piece) !== '') {
                         $sections[] = ['text' => trim($piece), 'owner' => $owner, 'document' => $source, 'source' => $sourceId, 'page' => $page];
                     }
                     $piece = '';
-                    $owner = count($matches) === 1 && preg_match('/\.{3,}/u', $line) !== 1 ? $matches[0] : -1;
+                    if ($careerBoundary) {
+                        $allowedCareer = $career === null || $this->normalize($careerMatch[1]) === $this->normalize($career);
+                        $owner = null;
+                    } else {
+                        $owner = $allowedCareer && count($matches) === 1 && preg_match('/\.{3,}/u', $line) !== 1 ? $matches[0] : -1;
+                    }
                 }
                 $piece .= $line."\n";
             }
@@ -60,7 +68,8 @@ final class FichaEvidence
             $score = 10;
             $normalized = $this->normalize($section['text']);
             foreach ($terms as $term) {
-                if (str_contains($normalized, $term)) {
+                $stem = rtrim($term, 'es');
+                if (str_contains($normalized, $term) || (strlen($stem) >= 4 && str_contains($normalized, $stem))) {
                     $score += 20;
                 }
             }

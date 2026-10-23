@@ -92,12 +92,18 @@ Rutas: `GET|POST coordination/ficha-imports`, `POST …/{import}/apply` y
    secciones (`FichaEvidence`) por código, nombre normalizado y palabras del nombre.
    Conserva continuaciones hasta otra materia del catálogo o un nuevo documento,
    descarta entradas con puntos de índice y selecciona hasta 24 000 caracteres.
+   Las filas OCR identifican explícitamente cada asignatura, incluso las que no están
+   en la malla activa, para cortar su contexto. Si una tabla declara una carrera,
+   se compara su nombre normalizado con
+   el de la importación y se excluyen las filas de otra carrera.
    Pide a la IA un JSON para los campos `coordinacion` de la plantilla. El trabajo
    tiene un timeout de 240 s para hasta dos consultas de 90 s.
    - Si faltan campos, vuelve a buscar por sus etiquetas y columnas; prioriza la
      evidencia correspondiente y hace una sola consulta adicional, solo para esos
      campos, con un presupuesto total de 30 000 caracteres. Conserva lo obtenido
      si esta segunda consulta falla.
+     La puntuación admite terminaciones de singular y plural para recuperar, por
+     ejemplo, «Habilidad Blanda» al buscar «Habilidades blandas».
    - El prompt pide copiar el texto, no resumir ni inventar, y devolver la bibliografía
      como `Autor | Título | Año | Ciudad | Editorial | ISBN | Código`.
    - Temperatura 0,2 y `response_format = json_object`.
@@ -135,9 +141,23 @@ actuales y sus tiempos pueden ser nulos.
 2. Consulta `GET /jobs/{id}` cada `OPENPARSER_POLL_DELAY` segundos hasta
    `succeeded`, `failed` o `indeterminate`, o hasta `OPENPARSER_MAX_WAIT` (780 s).
    La espera ocurre dentro de `PrepareFichaImportJob`: el worker queda ocupado.
-3. `GET /jobs/{id}/result?format=openparser@1`. Usa el `markdown` del resultado; si no
-   viene, arma el texto desde `elements` (las tablas como filas separadas por `|`).
+3. `GET /jobs/{id}/result?format=openparser@1`. Prefiere `elements` y solo usa
+   `markdown` si no obtiene contenido estructurado. `OpenParserTableText` expande
+   `row_span` y `column_span`, conserva los encabezados y delimita las filas por
+   asignatura. Los encabezados de una tabla continúan en las tablas siguientes del
+   mismo ancho hasta un nuevo título o un cambio de ancho. Una fila sin nombre
+   conserva la última asignatura de esa tabla, para las continuaciones entre páginas.
+   Cada fila conserva título, carrera explícita y página de origen cuando existen.
+   No interpreta una tabla HTML completa como una única mención ambigua de materias.
 4. Publica en la importación el estado del OCR para que la SPA lo muestre.
+
+Reproducción local del 2026-10-23 con los dos JSON OCR aportados (34 y 26 páginas):
+antes, la guía no aportaba ningún fragmento para Álgebra Lineal ni Programación
+Orientada a Objetos. Con las filas estructuradas, ambas selecciones incluyen
+«Adaptabilidad» y «Aprender a Aprender», con la página 3 y los ciclos I y II,
+respectivamente, y excluyen la tabla de Tecnologías de la Información. La comprobación
+reutilizó las respuestas OCR sin llamadas externas; no evalúa una nueva respuesta
+del proveedor de IA ni implica que todos los campos estén presentes en los documentos.
 
 Está apagado por defecto. Solo se activa con `OPENPARSER_ENABLED=true`,
 `OPENPARSER_API_KEY` y una `OPENPARSER_BASE_URL` `https://`. Variables y tiempos:
