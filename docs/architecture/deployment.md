@@ -145,7 +145,7 @@ la entidad. Qué entidades cargar: [firma-electronica-entidades.md](../runbooks/
 
 | Variable | Por defecto | Efecto |
 |---|---|---|
-| `OPENPARSER_ENABLED` | `false` | Permite recurrir al OCR si el PDF no tiene texto local suficiente. Primero se intenta `pdftotext`. |
+| `OPENPARSER_ENABLED` | `false` | Debe activarse para importar PDF. Todos los PDF de la ficha se envían al OCR; no hay extracción local alternativa. |
 | `OPENPARSER_BASE_URL` | `https://api.openparser.dev` | Debe ser `https://`; si no, el OCR queda apagado. |
 | `OPENPARSER_API_KEY` | vacío | Sin clave, el OCR queda apagado. |
 | `OPENPARSER_OCR_MODEL` | `paddleocr-vl-1.6` | Modelo de OCR. |

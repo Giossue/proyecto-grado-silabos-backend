@@ -104,7 +104,8 @@ La suite pasa sin proveedor real. `AiAssistanceTest` y `HostedAiChatGatewayTest`
 
 `FichaImportTest` y `FichaPdfOcrTest` cubren la importación de la ficha: propuesta,
 aplicación parcial, permisos, falta de proveedor y lectura de PDF con OpenParser.
-También cubren lectura local antes del OCR, PDF mixto, páginas, documentos idénticos,
+También cubren envío al OCR de PDF con texto seleccionable, error sin extracción
+local alternativa, OCR no configurado, documentos idénticos,
 tablas derivadas de la plantilla y tiempos. `FichaEvidenceTest`, `FichaFieldValuesTest`
 y `ExtractFichaProposalTest` cubren continuaciones, separación entre materias y
 documentos, índices, variantes de nombre, recuperación de evidencia tardía y conservación

@@ -113,8 +113,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - La ficha de cada asignatura reúne los campos que llena Coordinación. Sus valores se
   guardan en `valores_campo` con `asignatura_id` (I-204).
 - Coordinación puede importar la ficha desde documentos de la carrera (PDF o Excel). La
-  IA propone valores solo para los campos de ficha de la plantilla. Se intenta leer
-  el PDF localmente; OpenParser, si está activo, se usa cuando el texto es insuficiente.
+  IA propone valores solo para los campos de ficha de la plantilla. Todos los PDF se
+  envían al OCR de OpenParser, incluso si contienen texto seleccionable. Este módulo
+  no extrae texto del PDF localmente ni sustituye el OCR si falla o no está configurado;
+  muestra el error correspondiente. El Excel se lee en el servidor.
   Coordinación revisa y aplica. Los archivos se
   borran al aplicar o descartar. Hay una importación por carrera a la vez.
 - Mientras se analizan los documentos, «Cancelar la importación» ocupa el lugar de

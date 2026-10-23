@@ -79,15 +79,13 @@ Rutas: `GET|POST coordination/ficha-imports`, `POST …/{import}/apply` y
    `storage/app/private/importaciones-ficha/{id}/`.
 2. `PrepareFichaImportJob` (cola `ia`, hasta 900 s) extrae el texto con
    `FichaDocumentText`:
-   - PDF: primero `pdftotext -layout` (Poppler). Si una página tiene menos de 80 letras
-     o caracteres de sustitución y OpenParser está disponible, recurre al OCR. Es una
-     heurística técnica de lectura, no un umbral de aceptación académica (PV-18).
-     Sin OCR, conserva el texto local disponible; si no hay texto, explica el fallo;
+   - PDF: siempre OpenParser, incluidos los PDF con texto seleccionable. Si no está
+     configurado o falla, explica el error; no usa extracción local ni un lector alternativo;
    - Excel: PhpSpreadsheet, hasta 20 hojas y 5 000 filas por hoja; rechaza archivos de
      más de 150 MB descomprimidos;
-   - corta el texto por página y líneas en bloques de unos 1 800 caracteres y guarda
-     texto, documento y página en `bloques.json`. Solo atribuye página al PDF leído
-     localmente; con OCR sin paginación la página queda nula;
+   - corta el resultado por líneas y separadores de página en bloques de unos 1 800
+     caracteres y guarda texto, documento y página en `bloques.json`. La página queda
+     nula cuando el resultado no aporta una numeración verificable;
    - documentos idénticos se leen una sola vez dentro de la importación. No hay caché
      entre importaciones ni cambios en la eliminación de temporales.
 3. Por cada asignatura activa de la carrera, `ExtractSubjectFichaJob` busca sus

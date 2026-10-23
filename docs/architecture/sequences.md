@@ -154,10 +154,9 @@ sequenceDiagram
     API->>API: carrera editable; IA configurada; sin otra importación en curso
     API->>DB: importaciones_ficha pendiente; archivos en importaciones-ficha/{id}/
     API-->>Q: PrepareFichaImportJob (afterCommit)
-    Q->>Q: pdftotext por página; reutiliza documentos idénticos
-    opt texto insuficiente y OCR configurado
-        Q->>OCR: PDF
-    end
+    Q->>Q: reutiliza documentos idénticos dentro de la importación
+    Q->>OCR: PDF completo (también si tiene texto seleccionable)
+    OCR-->>Q: texto extraído o error (sin sustitución por extracción local)
     Q->>Q: bloques con documento y página cuando está disponible
     Q->>DB: tiempos de lectura; una entrada por asignatura activa
     loop por asignatura

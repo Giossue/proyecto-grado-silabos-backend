@@ -135,14 +135,13 @@ datos (`PV-12`, `PV-14`).
 
 La importación acepta PDF y Excel. El Excel se lee en el servidor. El PDF:
 
-- primero se intenta leer en el servidor con `pdftotext`, conservando sus páginas;
-- si falta texto legible y están `OPENPARSER_ENABLED=true` y `OPENPARSER_API_KEY`, se
-  envía al OCR de OpenParser (modelo `paddleocr-vl-1.6`, espera hasta
-  `OPENPARSER_MAX_WAIT=780` s). Sin OCR se conserva el texto local disponible y se
-  rechaza el archivo si no contiene texto.
+- todos los PDF, incluso los que tienen texto seleccionable, se envían al OCR de
+  OpenParser (modelo `paddleocr-vl-1.6`, espera hasta `OPENPARSER_MAX_WAIT=780` s);
+- exige `OPENPARSER_ENABLED=true`, `OPENPARSER_API_KEY` y una URL válida. Si no está
+  configurado o falla, se informa el error y no se sustituye por extracción local.
 
-`pdftotext` viene de `poppler-utils`, instalado en la imagen. También se usa para ubicar
-el sello de cada firma en el PDF. OpenParser es otro tercero: aplica la misma condición
+`pdftotext` viene de `poppler-utils`, instalado en la imagen, y se usa para ubicar
+el sello de cada firma en el PDF, fuera de la importación de fichas. OpenParser es otro tercero: aplica la misma condición
 de `PV-12`.
 
 ### Gotenberg

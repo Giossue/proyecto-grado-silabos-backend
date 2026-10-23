@@ -3,7 +3,6 @@
 namespace App\Modules\Academic\Application;
 
 use App\Modules\Academic\Infrastructure\Gateways\OpenParserPdfReader;
-use Illuminate\Support\Facades\Process;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use RuntimeException;
 use ZipArchive;
@@ -36,17 +35,17 @@ final class FichaDocumentText
     public function read(string $absolutePath, string $name, ?callable $onStatus = null): array
     {
         $started = microtime(true);
-        $method = 'excel';
         $extension = strtolower(pathinfo($absolutePath, PATHINFO_EXTENSION));
+        $method = $extension === 'pdf' ? 'ocr' : 'excel';
         $text = match ($extension) {
-            'pdf' => $this->pdfText($absolutePath, $name, $method, $onStatus),
+            'pdf' => $this->pdfText($absolutePath, $name, $onStatus),
             'xlsx', 'xls' => $this->workbook($absolutePath),
             default => throw new RuntimeException('Solo se admiten archivos PDF o Excel.'),
         };
         $blocks = [];
-        foreach ($this->pages($text) as $page => $content) {
+        foreach ($this->pages($text) as $content) {
             foreach ($this->split($content) as $piece) {
-                $blocks[] = ['text' => $piece, 'document' => $name, 'page' => $method === 'pdf_text' ? $page + 1 : null];
+                $blocks[] = ['text' => $piece, 'document' => $name, 'page' => null];
             }
         }
 
@@ -54,28 +53,11 @@ final class FichaDocumentText
     }
 
     /** @param (callable(string): void)|null $onStatus */
-    private function pdfText(string $path, string $name, string &$method, ?callable $onStatus): string
+    private function pdfText(string $path, string $name, ?callable $onStatus): string
     {
-        $method = 'pdf_text';
-        if ($onStatus !== null) {
-            $onStatus('native');
+        if (! $this->ocr->available()) {
+            throw new RuntimeException('El servicio OCR no está configurado. Pídale a Administración que lo active para importar PDF.');
         }
-        try {
-            $result = Process::timeout(90)->run(['pdftotext', '-layout', '-enc', 'UTF-8', $path, '-']);
-            $text = $result->successful() ? $result->output() : '';
-        } catch (\Throwable) {
-            $text = '';
-        }
-        $pages = $this->pages($text);
-        $legible = $text !== '' && array_all($pages, fn (string $page): bool => preg_match_all('/\p{L}/u', $page) >= 80 && ! str_contains($page, "\u{FFFD}"));
-        if ($legible || ! $this->ocr->available()) {
-            if (trim($text) === '') {
-                throw new RuntimeException('El PDF no tiene texto legible y el lector de documentos escaneados no está disponible.');
-            }
-
-            return $text;
-        }
-        $method = 'ocr';
 
         return $this->ocr->text($path, $name, $onStatus);
     }
