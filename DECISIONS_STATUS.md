@@ -115,6 +115,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   borran al aplicar o descartar. Hay una importación por carrera a la vez.
 - Mientras se analizan los documentos, «Cancelar la importación» ocupa el lugar de
   «Cerrar» al pie del diálogo. No se muestra el aviso sobre porcentajes del OCR.
+  La propuesta ofrece solo «Descartar» y «Aplicar a N materias» al pie, sin «Cerrar».
 - Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
   copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
   encendido no deja la ficha incompleta (I-230).
