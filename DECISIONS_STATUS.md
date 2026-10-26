@@ -98,7 +98,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Cada campo dice quién lo llena: `docente`, `coordinacion` o `institucional`. Su
   contenido es un documento TipTap (I-210).
 - Administración la crea en blanco o con el formato oficial. La edita en un editor
-  visual tipo Word o con el diálogo «Editar JSON».
+  visual tipo Word. «Editar» es la acción principal; «Opciones avanzadas» contiene
+  «Editar JSON», que abre el diálogo de edición, exportación e importación JSON.
 - La letra, los colores, los márgenes y la alineación los fija la plantilla. El Word
   numera las páginas.
 - Todo campo del docente es obligatorio. No hay límites de caracteres ni opción

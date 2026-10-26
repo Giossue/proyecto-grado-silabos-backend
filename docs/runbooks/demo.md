@@ -82,7 +82,7 @@ con Docente Demo asignado.
 2. En **Facultades y carreras**, edite la facultad y cargue su logo (PNG sin fondo). Sin
    logo, Coordinación no puede abrir su convocatoria.
 3. En **Plantilla**, revise las secciones y campos. Cada campo indica **Quién llena**:
-   Docente, Carrera (ficha) o Fijo. Abra **Editar JSON** para ver la plantilla como dato:
+   Docente, Carrera (ficha) o Fijo. Abra **Opciones avanzadas → Editar JSON** para ver la plantilla como dato:
    permite **Descargar**, **Cargar archivo** y **Aplicar y reemplazar**. Si la plantilla
    aparece vacía, cargue ahí `resources/templates/silabo-oficial.json`.
 4. En **Convocatorias**, el período `2026-2027` aparece sin convocatoria. En sus acciones

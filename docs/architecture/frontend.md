@@ -100,7 +100,7 @@ resultado con `src/test/fixtures/block-conformance.json`, que genera el backend
   Lo usan el constructor de plantilla, la ficha y el editor del docente.
 - `fieldDocumentExtensions.ts` agrega los nodos `variable` y `documentBlock`.
 - `components/domain/configuration/TemplateVisualBuilder.vue`: constructor visual.
-  `TemplateJsonDialog.vue`: «Editar JSON».
+  `TemplateJsonDialog.vue`: «Opciones avanzadas → Editar JSON».
 - `components/domain/academic/curriculum/`: lienzo de la malla con Vue Flow (ADR-0006).
 - `lib/signature/`: lee el `.p12`, agrega una firma incremental al PDF y sube solo el
   PDF firmado. El certificado no sale del equipo.

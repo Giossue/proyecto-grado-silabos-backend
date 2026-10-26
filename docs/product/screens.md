@@ -77,7 +77,7 @@ y el botón «Documentos» (DOC-10).
 ### ADM-06 Plantilla
 
 - Abre en modo lectura: las hojas muestran la plantilla con datos de muestra, como
-  quedará el sílabo. Arriba: «Editar JSON» y «Editar».
+  quedará el sílabo. Arriba: «Opciones avanzadas» y la acción principal «Editar».
 - «Editar» activa la cinta de edición sobre las mismas hojas:
   - formato de texto (negrita, cursiva, subrayado, alineación, listas);
   - menú «Tabla» (insertar, filas, columnas, combinar, separar, encabezado, fondo de
@@ -90,8 +90,8 @@ y el botón «Documentos» (DOC-10).
   - «Cancelar» y «Guardar» (también Ctrl+S). Nada se guarda hasta «Guardar».
 - En la hoja se agregan secciones y campos («Nueva sección», «Agregar campo»), se editan
   títulos en línea y se cambia el logo de la universidad.
-- «Editar JSON» abre «Plantilla como JSON»: «Descargar», «Cargar archivo» y «Aplicar y
-  reemplazar». Si hay errores, no cambia nada y muestra la ruta de cada uno. Los bloques
+- «Opciones avanzadas → Editar JSON» abre «Plantilla como JSON»: «Descargar», «Cargar archivo»
+  y «Aplicar y reemplazar». Si hay errores, no cambia nada y muestra la ruta de cada uno. Los bloques
   `evaluacion`, `si_no` y `repetible` solo se agregan por JSON.
 - Con la convocatoria abierta, todo queda bloqueado y aparece el aviso de edición
   bloqueada. Si la plantilla cambió durante una pausa, se avisa que al reanudar se

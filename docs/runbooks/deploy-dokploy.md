@@ -201,7 +201,7 @@ php artisan db:seed --class=SyllabusTemplateSeeder --force
 ```
 
 El seeder no sobrescribe una plantilla con contenido. También puede cargarse desde
-Administración → Plantilla → **Editar JSON** con `resources/templates/silabo-oficial.json`.
+Administración → Plantilla → **Opciones avanzadas → Editar JSON** con `resources/templates/silabo-oficial.json`.
 
 ## 4. Comprobación
 

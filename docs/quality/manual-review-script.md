@@ -24,7 +24,7 @@ Estas páginas cubren los patrones del sistema; el resto los reutiliza.
 | 2 | Panel | `/admin/panel`, `/coordinacion/panel`, `/docente/panel`, `/biblioteca/panel` | Indicadores y encabezado |
 | 3 | Facultades y carreras | `/admin/estructura-academica` | Pestañas, tabla, menú de fila y hoja lateral |
 | 4 | Usuarios y roles | `/admin/usuarios` | Listado con estados, filtros y acciones |
-| 5 | Plantilla | `/admin/plantilla` | Editor sobre la hoja y diálogo «Editar JSON» |
+| 5 | Plantilla | `/admin/plantilla` | Editor sobre la hoja y «Opciones avanzadas → Editar JSON» |
 | 6 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Ficha por asignatura e interruptores |
 | 7 | Sílabo | `/docente/mis-silabos` → abrir uno | Editor a pantalla completa y autoguardado |
 | 8 | Revisión | `/coordinacion/revisiones` → abrir una | Lectura densa, decisión y firma |
