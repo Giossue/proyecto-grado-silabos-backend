@@ -125,6 +125,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - «Importar desde Excel» permite descargar, completar, cargar y revisar una vista previa.
   Coordinación selecciona materias y campos antes de aplicar; las celdas vacías
   conservan los valores actuales. El archivo subido no se conserva.
+- El botón «Importar desde Excel» de Proyecto de carrera usa la misma variante verde
+  `success` que las demás entradas de importación Excel.
 - El servidor valida el alcance, la estructura y su vigencia al cargar y al aplicar.
   Si cambian los campos o las materias, exige descargar una plantilla nueva. Rechaza
   fórmulas y modificaciones de identificación; la protección del Excel no sustituye

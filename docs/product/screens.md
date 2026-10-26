@@ -145,7 +145,8 @@ y el botón «Documentos» (DOC-10).
   «Incompleta». Filtros por materia, ciclo y estado.
 - Un clic abre «Ficha de {materia}»: pestañas por sección, un editor por campo y
   «Guardar ficha». Cada campo tiene el interruptor «El docente puede editarlo».
-- «Importar desde Excel» abre «Importar el proyecto de carrera»:
+- «Importar desde Excel», con la misma variante verde de las otras importaciones,
+  abre «Importar el proyecto de carrera»:
   1. «Descargar plantilla Excel» genera las materias y los campos de Coordinación;
   2. completar las celdas de contenido, manteniendo nombres, encabezados y materias;
   3. cargar un `.xlsx` y pulsar «Revisar Excel»;
