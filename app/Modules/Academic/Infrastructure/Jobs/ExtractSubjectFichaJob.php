@@ -51,7 +51,7 @@ class ExtractSubjectFichaJob implements ShouldBeUnique, ShouldQueue
             return;
         }
         $blocks = json_decode((string) Storage::disk('private')->get("importaciones-ficha/{$import->id}/bloques.json"), true) ?: [];
-        $fields = array_values($profile->fields()->map(fn ($field): array => $values->schema($field))->all());
+        $fields = array_values($profile->fields()->map(fn ($field): array => $values->instructions($field))->all());
         $subjects = array_map(fn (array $entry): array => ['name' => $entry['name'], 'code' => $entry['code']], $import->propuesta_importacion['subjects'] ?? []);
         $this->store($extractor->execute(['code' => $subject['code'], 'name' => $subject['name'], 'cycle' => $subject['cycle']], $fields, $blocks, $subjects, $import->career?->nombre));
     }

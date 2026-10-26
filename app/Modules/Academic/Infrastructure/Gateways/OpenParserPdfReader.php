@@ -86,12 +86,13 @@ final class OpenParserPdfReader
         $tables = new OpenParserTableText;
         $heading = '';
         $career = '';
+        $currentPage = null;
         foreach (is_array($document['elements'] ?? null) ? $document['elements'] : [] as $element) {
             if (is_array($element)) {
+                $page = $element['locations'][0]['page_number'] ?? null;
                 if (($element['kind'] ?? null) === 'table') {
-                    $page = $element['locations'][0]['page_number'] ?? null;
                     $context = implode(' · ', array_filter([$heading, is_int($page) ? 'Página '.$page : '']));
-                    $lines[] = $tables->render($element, $context, $career);
+                    $text = $tables->render($element, $context, $career);
                 } else {
                     $text = $this->element($element);
                     if (($element['role'] ?? null) === 'heading') {
@@ -101,11 +102,17 @@ final class OpenParserPdfReader
                             $career = trim($matches[1]);
                         }
                     }
+                }
+                if (trim($text) !== '') {
+                    if (is_int($page) && $page !== $currentPage) {
+                        $lines[] = "\f[Página del documento: ".$page.']';
+                        $currentPage = $page;
+                    }
                     $lines[] = $text;
                 }
             }
         }
-        $text = trim(implode("\n\n", array_filter($lines, fn (string $line): bool => $line !== '')));
+        $text = trim(implode("\n\n", $lines));
 
         return $text !== '' ? $text : trim(is_string($document['markdown'] ?? null) ? $document['markdown'] : '');
     }

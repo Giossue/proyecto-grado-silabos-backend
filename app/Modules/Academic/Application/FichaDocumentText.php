@@ -44,8 +44,13 @@ final class FichaDocumentText
         };
         $blocks = [];
         foreach ($this->pages($text) as $content) {
+            $page = null;
+            if ($extension === 'pdf' && preg_match('/^\[Página del documento: (\d+)\]\s*\R/u', $content, $match) === 1) {
+                $page = (int) $match[1];
+                $content = substr($content, strlen($match[0]));
+            }
             foreach ($this->split($content) as $piece) {
-                $blocks[] = ['text' => $piece, 'document' => $name, 'page' => null];
+                $blocks[] = ['text' => $piece, 'document' => $name, 'page' => $page];
             }
         }
 

@@ -33,6 +33,61 @@ final class FichaFieldValues
         return ['key' => $field->clave, 'label' => $field->displayName(), 'columns' => $this->columns($field->contenido)];
     }
 
+    /** @return array{key: string, label: string, columns: list<string>, section: array{key: string, label: string}, format: string, template: array<string, mixed>, components: array<string, mixed>} */
+    public function instructions(FieldDefinition $field): array
+    {
+        $schema = $this->schema($field);
+        $block = $field->block;
+        $components = [];
+        $catalog = $block?->template->definition()->toArray()['blocks'] ?? [];
+        $remaining = 12000;
+        $template = $this->structure($field->contenido, $catalog, $components, $remaining);
+
+        return [...$schema,
+            'section' => ['key' => $block?->section->clave ?? '', 'label' => $block?->section->titulo ?? ''],
+            'format' => $schema['columns'] === [] ? 'text_or_list' : 'table',
+            'template' => $template,
+            'components' => $components,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @param  array<string, mixed>  $catalog
+     * @param  array<string, mixed>  $components
+     * @return array<string, mixed>
+     */
+    private function structure(array $node, array $catalog, array &$components, int &$remaining): array
+    {
+        $result = ['type' => $node['type'] ?? 'paragraph'];
+        if (is_string($node['text'] ?? null)) {
+            $result['text'] = mb_substr($node['text'], 0, max(0, $remaining));
+            $remaining -= mb_strlen($result['text']);
+        }
+        $attrs = array_intersect_key($node['attrs'] ?? [], array_flip(['rowspan', 'colspan', 'level', 'kind', 'props', 'value']));
+        if ($attrs !== []) {
+            $result['attrs'] = $attrs;
+        }
+        $kind = $attrs['kind'] ?? null;
+        if (is_string($kind) && is_array($catalog[$kind] ?? null) && ! isset($components[$kind])) {
+            $definition = $catalog[$kind];
+            $components[$kind] = array_intersect_key($definition, array_flip(['label', 'props', 'value', 'rules']));
+            $layout = $definition['layout'] ?? [];
+            $components[$kind]['guidance'] = mb_substr(trim(strip_tags(is_array($layout) ? implode("\n", $layout) : (string) $layout)), 0, 4000);
+        }
+        foreach (array_slice($node['content'] ?? [], 0, 200) as $child) {
+            if ($remaining <= 0) {
+                $result['truncated'] = true;
+                break;
+            }
+            if (is_array($child)) {
+                $result['content'][] = $this->structure($child, $catalog, $components, $remaining);
+            }
+        }
+
+        return $result;
+    }
+
     /**
      * @param  array<string, mixed>  $document
      * @return list<string>

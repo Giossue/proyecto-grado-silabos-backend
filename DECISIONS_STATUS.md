@@ -135,6 +135,13 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   de los pendientes; una propuesta parcial se puede aplicar. No inventa contenido ni
   relaciones con el perfil de egreso. Las columnas y encabezados de tabla proceden
   de la plantilla. Se guardan tiempos de lectura y extracción sin registrar documentos.
+- La IA recibe los campos dinámicos de Coordinación con su sección, estructura y
+  componentes de la plantilla, y fragmentos identificados de la materia separados del
+  contexto compartido de carrera. La plantilla describe el formato: no es evidencia
+  académica. Cada valor del proveedor debe citar fragmentos recibidos; se rechazan
+  las referencias ausentes o desconocidas. Se conservan los localizadores por campo,
+  sin guardar los fragmentos en la propuesta. Esto no autoriza redactar contenido
+  ausente ni convertir objetivos de carrera en objetivos de la asignatura.
 - Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
   copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
   encendido no deja la ficha incompleta (I-230).

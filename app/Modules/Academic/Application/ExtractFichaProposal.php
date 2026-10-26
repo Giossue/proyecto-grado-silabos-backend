@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Application;
 
 use App\Modules\Academic\Domain\Contracts\FichaExtractionGateway;
+use App\Modules\Academic\Domain\FichaExtractionResult;
 use Throwable;
 
 final class ExtractFichaProposal
@@ -15,7 +16,7 @@ final class ExtractFichaProposal
 
     /**
      * @param  array{code: string, name: string, cycle: int|null}  $subject
-     * @param  list<array{key: string, label: string, columns: list<string>}>  $fields
+     * @param  list<array{key: string, label: string, columns: list<string>, section?: array{key: string, label: string}, format?: string, template?: array<string, mixed>, components?: array<string, mixed>}>  $fields
      * @param  list<string|array{text: string, document: string, page: int|null, source?: int}>  $blocks
      * @param  list<array{name: string, code: string}>  $subjects
      * @return array<string, mixed>
@@ -23,16 +24,18 @@ final class ExtractFichaProposal
     public function execute(array $subject, array $fields, array $blocks, array $subjects, ?string $career = null): array
     {
         $started = microtime(true);
-        $fragments = $this->evidence->for($subject['name'], $subject['code'], $blocks, $subjects, career: $career);
+        $subject['career'] = $career;
+        $fragments = $this->evidence->context($subject['name'], $subject['code'], $blocks, $subjects, $fields, $career);
         $values = [];
         $reasons = [];
+        $sources = [];
         $attempts = 0;
         $failed = false;
         if ($fragments !== [] && $fields !== []) {
             $attempts++;
             try {
                 $proposal = $this->gateway->propose($subject, $fields, $fragments);
-                $this->merge($fields, $proposal, $values, $reasons);
+                $this->merge($fields, $proposal, $values, $reasons, $sources);
             } catch (Throwable) {
                 $failed = true;
             }
@@ -40,24 +43,14 @@ final class ExtractFichaProposal
             if (! $failed && $missing !== []) {
                 $recovery = [];
                 foreach ($missing as $field) {
-                    $pieces = $this->evidence->for($subject['name'], $subject['code'], $blocks, $subjects, $field['label'].' '.implode(' ', $field['columns']), $career);
                     $budget = (int) floor(30000 / count($missing));
-                    $used = 0;
-                    foreach ($pieces as $piece) {
-                        $piece = mb_substr($piece, 0, max(0, $budget - $used));
-                        if ($piece !== '') {
-                            $recovery[] = $piece;
-                            $used += mb_strlen($piece);
-                        }
-                        if ($used >= $budget) {
-                            break;
-                        }
-                    }
+                    $pieces = $this->evidence->context($subject['name'], $subject['code'], $blocks, $subjects, [$field], $career, $field['label'].' '.implode(' ', $field['columns']).' '.($field['section']['label'] ?? ''), $budget);
+                    $recovery = [...$recovery, ...$pieces];
                 }
                 $attempts++;
                 try {
                     $proposal = $this->gateway->propose($subject, $missing, array_values(array_unique($recovery)));
-                    $this->merge($missing, $proposal, $values, $reasons);
+                    $this->merge($missing, $proposal, $values, $reasons, $sources);
                 } catch (Throwable) {
                     $failed = $values === [];
                     foreach ($missing as $field) {
@@ -76,6 +69,7 @@ final class ExtractFichaProposal
         return [
             'state' => $failed ? 'fallida' : ($values === [] ? 'sin_evidencia' : 'lista'),
             'values' => (object) $values,
+            'sources' => (object) $sources,
             'missing' => $missing,
             'extraction' => ['attempts' => $attempts, 'duration_ms' => (int) round((microtime(true) - $started) * 1000)],
         ];
@@ -83,17 +77,29 @@ final class ExtractFichaProposal
 
     /**
      * @param  list<array{key: string, label: string, columns: list<string>}>  $fields
-     * @param  array<string, mixed>  $proposal
+     * @param  array<string, mixed>|FichaExtractionResult  $proposal
      * @param  array<string, mixed>  $values
      * @param  array<string, string>  $reasons
+     * @param  array<string, list<array{id: string, document: string, page: int|null, scope: string}>>  $sources
      */
-    private function merge(array $fields, array $proposal, array &$values, array &$reasons): void
+    private function merge(array $fields, array|FichaExtractionResult $proposal, array &$values, array &$reasons, array &$sources): void
     {
+        $rawValues = $proposal instanceof FichaExtractionResult ? $proposal->values : $proposal;
+        $invalid = $proposal instanceof FichaExtractionResult ? $proposal->invalid : [];
+        $references = $proposal instanceof FichaExtractionResult ? $proposal->sources : [];
         foreach ($fields as $field) {
-            $raw = $proposal[$field['key']] ?? null;
+            if (in_array($field['key'], $invalid, true)) {
+                $reasons[$field['key']] = 'estructura_invalida';
+
+                continue;
+            }
+            $raw = $rawValues[$field['key']] ?? null;
             $clean = $this->values->clean($raw, $field['columns']);
             if ($clean !== null) {
                 $values[$field['key']] = $clean;
+                if (isset($references[$field['key']])) {
+                    $sources[$field['key']] = $references[$field['key']];
+                }
                 unset($reasons[$field['key']]);
             } elseif ($raw !== null && $raw !== '' && $raw !== [] && $raw !== ['rows' => []]) {
                 $reasons[$field['key']] = 'estructura_invalida';
