@@ -35,6 +35,9 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
 - Carrera escribe el nombre y el resultado de las cuatro unidades en la ficha (campo
   `unidades_curriculares`, también en el Excel). Ese campo no se imprime solo: sus
   datos aparecen dentro de cada tabla de unidad.
+- En la ficha web, Carrera los escribe dentro de las mismas tablas de unidad de la
+  plantilla; las semanas se ven vacías y no se editan. El Excel conserva una tabla
+  simple de cuatro filas.
 - El docente ve el nombre y el resultado en solo lectura y completa las semanas. El
   servidor los vuelve a copiar de la ficha al crear, reiniciar, copiar o guardar.
 - Cada semana tiene contenidos, horas ACD, APE y AA, actividades de cada componente y
