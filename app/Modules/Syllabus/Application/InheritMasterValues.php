@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 
 class InheritMasterValues
 {
-    public function __construct(private readonly SubjectProfileFields $profiles) {}
+    public function __construct(private readonly SubjectProfileFields $profiles, private readonly SyncBlockSources $sources) {}
 
     /**
      * @param  Collection<int, FieldDefinition>  $fields
@@ -34,5 +34,6 @@ class InheritMasterValues
                 'editable_docente' => $field->fromProfile() && ($editable[$field->id] ?? false),
             ]);
         }
+        $this->sources->execute($syllabus);
     }
 }

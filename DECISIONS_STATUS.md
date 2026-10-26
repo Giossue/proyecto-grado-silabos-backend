@@ -106,6 +106,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   por celda. Las definiciones anteriores se mantienen hasta actualizar la plantilla.
   La plantilla activa de Sílabos se actualizó el 2026-10-26 conservando campos y valores;
   la convocatoria sigue pausada mientras Coordinación completa las unidades.
+- El diseño no se parte según quién llena: el responsable se fija por dato (`from`,
+  2026-10-26). La sección 6 conserva el formato oficial de una tabla por unidad.
 - Administración la crea en blanco o con el formato oficial. La edita en un editor
   visual tipo Word. «Editar» es la acción principal; «Opciones avanzadas» contiene
   «Editar JSON», que abre el diálogo de edición, exportación e importación JSON.
@@ -148,9 +150,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
   copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
   encendido no deja la ficha incompleta (I-230).
-- La nueva plantilla oficial separa los nombres y resultados de las cuatro unidades,
-  en un campo de Carrera, de la planificación semanal docente. Se utiliza el mismo
-  interruptor de la ficha, apagado por defecto. Las horas ACD, APE y AA de toda la
+- Los nombres y resultados de las cuatro unidades los escribe Carrera en la ficha
+  (`unidades_curriculares`, también en el Excel). Se imprimen dentro de cada tabla de
+  unidad del formato oficial y el docente los ve en solo lectura; ese campo no se
+  imprime aparte. El docente completa la planificación semanal. Las horas ACD, APE y AA de toda la
   planificación deben sumar las de la asignatura para enviar. Activar el nuevo formato
   en una plantilla existente exige pausa y las confirmaciones de regeneración vigentes;
   el despliegue no modifica por sí solo la plantilla activa.

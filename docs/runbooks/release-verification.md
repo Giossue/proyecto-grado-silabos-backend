@@ -185,6 +185,11 @@ contenido de planificación y se activa `response_policy: protected`. Las demás
 secciones y personalizaciones se conservan. La convocatoria sigue pausada.
 Coordinación debe completar las unidades de cada materia antes de reanudar.
 
+La migración `2026_10_26_000230_units_from_subject_profile` ejecuta la misma acción
+al desplegar, para pasar de la primera versión (tabla de unidades aparte) al bloque
+`unidades` con datos de la ficha. Si no puede aplicarse, no cambia nada y escribe el
+motivo en el registro de la migración.
+
 Si ya existen sílabos, este comando se detiene. Use el flujo administrativo habitual:
 pausa, edición y confirmación al reanudar con el conteo del trabajo que se rehace.
 No use una importación completa del JSON para simular esta actualización inicial:

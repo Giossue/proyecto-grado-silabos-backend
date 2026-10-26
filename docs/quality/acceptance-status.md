@@ -71,6 +71,16 @@ secretos y `git diff --check`; se regeneró OpenAPI. El chequeo directo del cont
 frontend sigue señalando las dos rutas dinámicas previas de `spreadsheet-import.ts`
 (líneas 12 y 16), ajenas a este cambio. No se ejecutaron suites ni builds.
 
+### Corrección del mismo día: unidades con el formato oficial
+
+La sección 6 vuelve a una tabla por unidad. El nombre y el resultado vienen de la
+ficha (`from`) y el campo de Carrera no se imprime aparte. Pasan la suite completa del
+backend (471 pruebas, en paralelo), PHPStan, Pint, y en el frontend TypeScript, ESLint
+y Vitest (416 pruebas, una omitida). El Word oficial coincide de nuevo con las
+referencias del formato original. Se corrigieron siete pruebas que la primera versión
+dejó sin ajustar. La activación en la base la hace la migración `000230` al
+desplegar; falta comprobarla en el sitio, junto con la aceptación visual.
+
 
 ## Series CP
 

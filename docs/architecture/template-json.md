@@ -182,7 +182,7 @@ Un objeto con un esquema por clave:
 
 | `type` | Claves | Se guarda como |
 |---|---|---|
-| `text` | `max` (1 a 20000, por defecto 1000), `multiline` | texto |
+| `text` | `max` (1 a 20000, por defecto 1000), `multiline`, `from` | texto |
 | `number` | `digits` (enteros, por defecto 3), `decimals` (por defecto 2) | texto con número (`2`, `1,5`) |
 | `choice` | `options`: `{"si": "Sí", "no": "No"}` | la clave elegida o `null` |
 | `object` | `fields`: otro objeto de esquemas | objeto |
@@ -195,6 +195,17 @@ discapacidad se borra si la respuesta es «No».
 
 Una lista ausente arranca con `initial` elementos. Una lista con `min` < `max` se puede agrandar y achicar desde
 el editor, y debe repetirse en una fila de tabla (`<tr data-repeat>`).
+
+#### `from`: datos que llena Carrera dentro de un bloque
+
+El diseño no se parte según quién llena: el responsable se fija por dato. Un `text` con
+`"from": {"field": "unidades_curriculares", "column": 2}` toma el texto de la columna 2 de la tabla de ese campo de
+Carrera. La fila es la posición del elemento de la lista que lo contiene (primera unidad, primera fila de datos;
+las filas con encabezados no cuentan).
+
+- El servidor copia el dato al crear, reiniciar, copiar o guardar el sílabo. El docente lo ve sin poder cambiarlo.
+- El campo fuente (`field`) debe ser `coordinacion`. Se llena en la ficha y el Excel y cuenta para enviar, pero no
+  se imprime solo: sus datos aparecen donde el bloque los coloca.
 
 ### `props`: qué fija la plantilla en cada aparición
 
@@ -296,8 +307,7 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 | Bloque | Qué hace |
 |---|---|
 | `identificacion` | Tabla de identificación con datos del sistema; el docente responde la discapacidad (Sí/No, tipo y descripción). |
-| `unidades` (anterior) | Cuatro unidades (lista fija de 4) con semanas (lista que crece), horas y actividades. Reglas: máximo 16 semanas al guardar; exactamente 16 y horas iguales a las de la asignatura al enviar. |
-| `planificacion_semanal` | Cuatro unidades identificadas por número, con semanas, actividades y horas. Los nombres y resultados se consultan en el campo de Carrera `unidades_curriculares`. Conserva las reglas de horas y semanas. |
+| `unidades` | Cuatro unidades (lista fija de 4) con semanas (lista que crece), horas y actividades. El nombre y el resultado vienen de `unidades_curriculares` (`from`). Reglas: máximo 16 semanas al guardar; exactamente 16 y horas iguales a las de la asignatura al enviar. |
 | `evaluacion` | Tabla de puntos con dos variantes según `horas_practicas` (con o sin práctico-experimental). |
 | `si_no` | Pregunta Sí/No con tabla opcional si responde Sí. Propiedades: `question` y `columns`. |
 | `repetible` | Lista de filas con columnas que fija el administrador. Propiedades: `label` y `columns`. |

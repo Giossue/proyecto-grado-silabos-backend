@@ -297,7 +297,7 @@ class ReviewWorkflowTest extends TestCase
         $syllabus->refresh();
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $freeTextField]), [
             'version_bloqueo' => $syllabus->version_bloqueo,
-            'value' => $this->freeTextValue('Bibliografía básica corregida.'),
+            'value' => $this->answeredValue($freeTextField, 'Bibliografía básica corregida.'),
         ])->assertOk();
         $syllabus->refresh();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
@@ -312,8 +312,8 @@ class ReviewWorkflowTest extends TestCase
         $comparison = app(RevisionDiff::class)->compare($firstRevision, $secondRevision);
         $this->assertGreaterThan(0, $comparison['changed_fields']);
         $freeTextChange = collect($comparison['changes'])->firstWhere('field_key', 'bibliografia');
-        $this->assertEquals($this->freeTextValue('Contenido académico bibliografia'), $freeTextChange['before']['value']);
-        $this->assertEquals($this->freeTextValue('Bibliografía básica corregida.'), $freeTextChange['after']['value']);
+        $this->assertStringContainsString('Contenido académico bibliografia', FreeText::plainText($freeTextChange['before']['value']));
+        $this->assertStringContainsString('Bibliografía básica corregida.', FreeText::plainText($freeTextChange['after']['value']));
 
         $this->actingAsTeacher()
             ->getJson(route('api.v1.coordination.reviews.compare', [$firstRevision, $secondRevision]))
@@ -571,8 +571,12 @@ class ReviewWorkflowTest extends TestCase
         $fresh = $syllabus->fresh();
         $this->assertSame('sin_iniciar', $fresh->estado);
         $this->assertSame(0, $fresh->version_bloqueo);
-        $fresh->values()->whereHas('field', fn ($field) => $field->where('quien_llena', 'docente'))->with('field')->get()
+        $teacherValues = $fresh->values()->whereHas('field', fn ($field) => $field->where('quien_llena', 'docente'))->with('field')->get();
+        $teacherValues->reject(fn ($value) => $value->field->clave === 'unidades')
             ->each(fn ($value) => $this->assertEquals($value->field->contenido, $value->valor));
+        $units = $teacherValues->firstOrFail(fn ($value) => $value->field->clave === 'unidades')->valor['content'][0]['attrs']['value']['units'];
+        $this->assertSame('Ficha de prueba: unidades_curriculares', $units[0]['nombre']);
+        $this->assertSame('', $units[0]['semanas'][0]['contenidos']);
         $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
         $this->assertWorkflowNotification($syllabus->id, 'silabo.reiniciado');

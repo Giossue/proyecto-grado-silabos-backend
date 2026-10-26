@@ -39,25 +39,25 @@ final readonly class ProtectTemplateResponses
                 throw ValidationException::withMessages(['template' => 'La plantilla no tiene el campo de unidades esperado. Adapte sus campos desde el editor administrativo.']);
             }
             $preserved = FieldValue::query()->count();
-            if (($locked->definition()->toArray()['response_policy'] ?? null) === 'protected' && $fields->has('unidades_curriculares')
-                && ($units->contenido['content'][0]['attrs']['kind'] ?? null) === 'planificacion_semanal') {
+            $official = OfficialTemplate::definition();
+            $current = $locked->definition();
+            $kind = $units->contenido['content'][0]['attrs']['kind'] ?? null;
+            if (($current->toArray()['response_policy'] ?? null) === 'protected' && $fields->has('unidades_curriculares')
+                && $kind === 'unidades' && ($current->blocks()['unidades'] ?? null) === $official->blocks()['unidades']) {
                 return ['updated' => false, 'fields' => $fields->count(), 'preserved_values' => $preserved];
             }
-            if ($fields->has('unidades_curriculares')) {
-                throw ValidationException::withMessages(['template' => 'Ya existe un campo de unidades curriculares. Revise su contenido antes de actualizar la plantilla.']);
-            }
-
-            $official = OfficialTemplate::definition();
-            $catalog = collect(OfficialTemplate::sections())->flatMap(fn (array $section): array => $section['fields'])->firstWhere('key', 'unidades_curriculares');
-            $planning = collect(OfficialTemplate::sections())->flatMap(fn (array $section): array => $section['fields'])->firstWhere('key', 'unidades');
+            $officialFields = collect(OfficialTemplate::sections())->flatMap(fn (array $section): array => $section['fields']);
+            $catalog = $officialFields->firstWhere('key', 'unidades_curriculares');
+            $planning = $officialFields->firstWhere('key', 'unidades');
             if (! is_array($catalog) || ! is_array($planning)) {
                 throw ValidationException::withMessages(['template' => 'La plantilla oficial no contiene los campos de unidades esperados.']);
             }
-            $current = $locked->definition();
-            if (isset($current->blocks()['planificacion_semanal']) && $current->blocks()['planificacion_semanal'] !== $official->blocks()['planificacion_semanal']) {
-                throw ValidationException::withMessages(['template' => 'El bloque de planificación ya está personalizado. Revíselo desde el editor administrativo.']);
+            // Desde ADR-0012 inicial: catálogo ya creado y planificación en el bloque retirado.
+            $split = $fields->has('unidades_curriculares') && $kind === 'planificacion_semanal';
+            if ($fields->has('unidades_curriculares') && ! $split) {
+                throw ValidationException::withMessages(['template' => 'Ya existe un campo de unidades curriculares. Revise su contenido antes de actualizar la plantilla.']);
             }
-            if (array_any($current->presets(), fn (array $preset): bool => $preset['key'] === 'unidades_curriculares')) {
+            if (! $split && array_any($current->presets(), fn (array $preset): bool => $preset['key'] === 'unidades_curriculares')) {
                 throw ValidationException::withMessages(['template' => 'Ya existe una plantilla lista con la clave del catálogo de unidades. Revísela desde el editor administrativo.']);
             }
             foreach (['horas_docencia', 'horas_practicas', 'horas_autonomas'] as $variable) {
@@ -67,11 +67,15 @@ final readonly class ProtectTemplateResponses
             }
             $presets = array_map(fn (array $preset): array => $preset['field'] === 'unidades'
                 ? [...$preset, 'content' => $planning['content'], 'quien_llena' => FieldDefinition::TEACHER] : $preset, $current->presets());
-            $presets[] = collect($official->presets())->firstWhere('field', 'unidades_curriculares');
+            if (! $split) {
+                $presets[] = collect($official->presets())->firstWhere('field', 'unidades_curriculares');
+            }
+            $blocks = $current->blocks();
+            unset($blocks['planificacion_semanal']);
             $definition = TemplateDefinition::trusted([
                 ...$current->toArray(),
                 'response_policy' => 'protected',
-                'blocks' => [...$current->blocks(), 'planificacion_semanal' => $official->blocks()['planificacion_semanal']],
+                'blocks' => [...$blocks, 'unidades' => $official->blocks()['unidades']],
                 'presets' => $presets,
             ]);
             app(TemplateContext::class)->using($definition, function () use ($fields): void {
@@ -80,21 +84,23 @@ final readonly class ProtectTemplateResponses
                     FieldResponse::normalize($field->contenido, $value->valor);
                 }
             });
-            $sectionId = $units->block->seccion_plantilla_id;
-            $ids = $locked->sectionOrFail($sectionId)->blocks()->sortBy('posicion')->map(fn (TemplateBlock $block): string => $block->id)->values()->all();
-            $blockId = (string) Str::uuid();
-            $locked->appendBlock($sectionId, ['id' => $blockId, 'clave' => 'unidades_curriculares', 'titulo' => $catalog['label'] ?? 'Unidades y resultados de aprendizaje', 'posicion' => count($ids) + 1]);
-            FieldDefinition::query()->create([
-                'plantilla_id' => $locked->id,
-                'campo_plantilla_id' => $blockId,
-                'quien_llena' => FieldDefinition::COORDINATION,
-                'contenido' => $catalog['content'],
-            ]);
-            $position = array_search($units->campo_plantilla_id, $ids, true);
-            array_splice($ids, $position === false ? count($ids) : $position, 0, [$blockId]);
-            $locked->reorderBlocks($sectionId, $ids);
+            if (! $split) {
+                $sectionId = $units->block->seccion_plantilla_id;
+                $ids = $locked->sectionOrFail($sectionId)->blocks()->sortBy('posicion')->map(fn (TemplateBlock $block): string => $block->id)->values()->all();
+                $blockId = (string) Str::uuid();
+                $locked->appendBlock($sectionId, ['id' => $blockId, 'clave' => 'unidades_curriculares', 'titulo' => $catalog['label'] ?? 'Unidades y resultados de aprendizaje', 'posicion' => count($ids) + 1]);
+                FieldDefinition::query()->create([
+                    'plantilla_id' => $locked->id,
+                    'campo_plantilla_id' => $blockId,
+                    'quien_llena' => FieldDefinition::COORDINATION,
+                    'contenido' => $catalog['content'],
+                ]);
+                $position = array_search($units->campo_plantilla_id, $ids, true);
+                array_splice($ids, $position === false ? count($ids) : $position, 0, [$blockId]);
+                $locked->reorderBlocks($sectionId, $ids);
+            }
             $units->update(['quien_llena' => FieldDefinition::TEACHER, 'contenido' => $planning['content']]);
-            $locked->updateBlockDocument($units->campo_plantilla_id, ['titulo' => $planning['label'] ?? 'Planificación semanal']);
+            $locked->updateBlockDocument($units->campo_plantilla_id, ['titulo' => $planning['label'] ?? 'Unidades']);
             $locked->saveDefinition($definition);
             $this->audit->execute(
                 actorId: null,
@@ -106,7 +112,7 @@ final readonly class ProtectTemplateResponses
                 metadata: ['origen' => 'mantenimiento_cli', 'silabos' => 0, 'valores_preservados' => $preserved],
             );
 
-            return ['updated' => true, 'fields' => $fields->count() + 1, 'preserved_values' => $preserved];
+            return ['updated' => true, 'fields' => $fields->count() + ($split ? 0 : 1), 'preserved_values' => $preserved];
         });
     }
 }

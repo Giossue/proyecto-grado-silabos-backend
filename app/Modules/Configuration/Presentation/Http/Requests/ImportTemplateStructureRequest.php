@@ -87,6 +87,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'document' => 'documento',
             'variables' => 'datos del sistema',
             'blocks' => 'bloques',
+            'response_policy' => 'política de respuestas',
             'required_sections' => 'secciones obligatorias',
             'library_sections' => 'secciones de biblioteca',
             'presets' => 'plantillas listas',

@@ -3,9 +3,12 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\User;
+use App\Modules\Configuration\Application\Actions\ProtectTemplateResponses;
 use App\Modules\Configuration\Application\OfficialTemplate;
+use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
 use App\Modules\Configuration\Domain\FreeText;
+use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use Database\Seeders\DatabaseSeeder;
@@ -50,10 +53,34 @@ class OfficialTemplateTest extends TestCase
         $sections = $this->template->fresh()->sections();
         $this->assertCount(12, $sections);
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get();
-        $this->assertSame(['coordinacion' => 6, 'docente' => 9, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
+        $this->assertSame(['coordinacion' => 7, 'docente' => 9, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
         $this->assertSame(OfficialTemplate::sectionKeys(), $sections->sortBy('posicion')->pluck('clave')->values()->all());
         $this->assertSame(array_column(OfficialTemplate::sections(), 'title'), $sections->sortBy('posicion')->pluck('titulo')->values()->all());
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.formateada']);
+    }
+
+    public function test_the_split_unit_tables_return_to_the_official_format_keeping_ids_and_profiles(): void
+    {
+        $this->format()->assertOk();
+        $template = $this->template->fresh();
+        $units = FieldDefinition::query()->where('plantilla_id', $template->id)->get()->firstOrFail(fn (FieldDefinition $field): bool => $field->clave === 'unidades');
+        $official = $template->definition()->toArray();
+        $planning = $official['blocks']['unidades'];
+        unset($planning['value']['units']['item']['fields']['nombre'], $planning['value']['units']['item']['fields']['resultado']);
+        $template->saveDefinition(TemplateDefinition::trusted([...$official, 'blocks' => [...$official['blocks'], 'planificacion_semanal' => $planning]]));
+        $units->update(['contenido' => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'planificacion_semanal', 'props' => [], 'value' => []]]]]]);
+        $ids = FieldDefinition::query()->where('plantilla_id', $template->id)->pluck('id')->sort()->values()->all();
+        app(TemplateContext::class)->forget();
+
+        $this->assertTrue(app(ProtectTemplateResponses::class)->execute($template->fresh())['updated']);
+
+        app(TemplateContext::class)->forget();
+        $definition = $template->fresh()->definition();
+        $this->assertArrayNotHasKey('planificacion_semanal', $definition->blocks());
+        $this->assertSame(['unidades_curriculares'], $definition->sourceFields());
+        $this->assertSame('unidades', $units->fresh()->contenido['content'][0]['attrs']['kind']);
+        $this->assertSame($ids, FieldDefinition::query()->where('plantilla_id', $template->id)->pluck('id')->sort()->values()->all());
+        $this->assertFalse(app(ProtectTemplateResponses::class)->execute($template->fresh())['updated']);
     }
 
     public function test_the_template_can_be_reset_to_the_official_format_after_editing_it(): void
@@ -65,7 +92,7 @@ class OfficialTemplateTest extends TestCase
         $template = $this->template->fresh();
         $this->assertCount(12, $template->sections());
         $this->assertNull($template->sections()->firstWhere('clave', 'libre'));
-        $this->assertSame(19, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
+        $this->assertSame(20, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
     }
 
     public function test_the_document_title_can_be_changed_with_the_template(): void
@@ -152,7 +179,7 @@ class OfficialTemplateTest extends TestCase
 
         $this->assertSame(2, $exported['version']);
         $this->assertSame(['version', 'response_policy', 'document', 'variables', 'blocks', 'required_sections', 'library_sections', 'presets', 'sections'], array_keys($exported));
-        $this->assertSame(['identificacion', 'unidades', 'evaluacion', 'si_no', 'repetible', 'planificacion_semanal'], array_keys($exported['blocks']));
+        $this->assertSame(['identificacion', 'unidades', 'evaluacion', 'si_no', 'repetible'], array_keys($exported['blocks']));
         $this->assertCount(12, $exported['sections']);
         $this->assertSame(['key', 'title', 'orientation', 'fields'], array_keys($exported['sections'][0]));
         $this->assertSame(['key', 'label', 'quien_llena', 'content'], array_keys($exported['sections'][0]['fields'][0]));
@@ -301,7 +328,7 @@ class OfficialTemplateTest extends TestCase
         $text = fn (string $key): string => FreeText::plainText($fields[$key]->contenido);
 
         $this->assertSame('evaluacion', $fields['indicadores_evaluacion']->contenido['content'][0]['attrs']['kind']);
-        $this->assertSame('planificacion_semanal', $fields['unidades']->contenido['content'][0]['attrs']['kind']);
+        $this->assertSame('unidades', $fields['unidades']->contenido['content'][0]['attrs']['kind']);
         foreach (['ESCALA CUALITATIVA', 'Igual a 10 o mayor o igual que 9', 'Menos de 6', 'Recuperación', 'No aprueba'] as $expected) {
             $this->assertStringContainsString($expected, $text('componentes_evaluacion'));
         }

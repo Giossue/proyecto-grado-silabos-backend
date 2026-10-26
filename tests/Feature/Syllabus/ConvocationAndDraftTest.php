@@ -119,9 +119,9 @@ class ConvocationAndDraftTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('field');
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $bibliography]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
-            'value' => $this->freeTextValue('Libro añadido por el docente'),
+            'value' => $this->answeredValue($bibliography, 'Libro añadido por el docente'),
         ])->assertOk();
-        $this->assertSame('Libro añadido por el docente', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
+        $this->assertStringContainsString('Libro añadido por el docente', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
     }
 
     public function test_a_career_field_marked_editable_in_the_profile_is_edited_by_the_teacher(): void
@@ -389,7 +389,7 @@ class ConvocationAndDraftTest extends TestCase
         }
     }
 
-    public function test_empty_profile_bibliography_is_optional_for_validation(): void
+    public function test_the_teacher_bibliography_is_required_even_without_a_profile_value(): void
     {
         $convocation = $this->createPreparedConvocation();
         $bibliographyIds = FieldDefinition::query()->whereIn('campo_plantilla_id', DB::table('campos_plantilla')->whereIn('clave_campo_plantilla', ['bibliografia', 'bibliografia_complementaria'])->select('campo_plantilla_id'))->pluck('id')->all();
@@ -398,7 +398,7 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = Syllabus::query()->firstOrFail();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $issues = $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertOk()->json('validation.results');
-        $this->assertSame([], array_values(array_intersect($bibliographyIds, array_column($issues, 'field_id'))));
+        $this->assertEqualsCanonicalizing($bibliographyIds, array_values(array_intersect($bibliographyIds, array_column($issues, 'field_id'))));
     }
 
     public function test_faculty_logo_is_required_before_opening_the_convocation(): void
@@ -750,7 +750,7 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $field = FieldDefinition::query()->where('clave', 'unidades')->firstOrFail();
-        $block = fn (array $units): array => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'planificacion_semanal', 'props' => [], 'value' => ['units' => $units]]]]];
+        $block = fn (array $units): array => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'unidades', 'props' => [], 'value' => ['units' => $units]]]]];
         $codes = fn () => collect($this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful()->json('validation.results'))->where('field_id', $field->id)->pluck('code')->all();
 
         $wrong = $this->plannedUnits()['units'];
@@ -765,6 +765,38 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block($this->plannedUnits()['units'])])->assertOk();
         $this->assertSame([], $codes());
+    }
+
+    public function test_unit_names_and_results_come_from_the_subject_profile_and_the_teacher_cannot_change_them(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        $catalog = FieldDefinition::query()->where('clave', 'unidades_curriculares')->firstOrFail();
+        $document = $this->filledTemplateValue($catalog, '');
+        foreach ($document['content'][0]['content'] as $row => $tableRow) {
+            if ($row > 0) {
+                $document['content'][0]['content'][$row]['content'][1]['content'] = FreeText::fromText("Nombre {$row}")['content'];
+                $document['content'][0]['content'][$row]['content'][2]['content'] = FreeText::fromText("Resultado {$row}")['content'];
+            }
+        }
+        FieldValue::query()->where('definicion_campo_id', $catalog->id)->whereNotNull('asignatura_id')->update(['valor' => json_encode($document)]);
+        $this->openPrepared($convocation);
+        $syllabus = Syllabus::query()->firstOrFail();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
+        $field = FieldDefinition::query()->where('clave', 'unidades')->firstOrFail();
+        $units = fn (): array => FieldValue::query()->where('silabo_id', $syllabus->id)->where('definicion_campo_id', $field->id)->firstOrFail()->valor['content'][0]['attrs']['value']['units'];
+
+        $this->assertSame(['Nombre 1', 'Nombre 2', 'Nombre 3', 'Nombre 4'], array_column($units(), 'nombre'));
+        $this->assertSame('Resultado 4', $units()[3]['resultado']);
+
+        $changed = $this->plannedUnits()['units'];
+        $changed[0]['nombre'] = 'Escrito por el docente';
+        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
+            'value' => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'unidades', 'props' => [], 'value' => ['units' => $changed]]]]],
+        ])->assertOk();
+
+        $this->assertSame('Nombre 1', $units()[0]['nombre']);
+        $this->assertSame('Tema de prueba', $units()[0]['semanas'][0]['contenidos']);
     }
 
     public function test_every_teacher_field_is_required_only_when_sending(): void

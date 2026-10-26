@@ -10,7 +10,7 @@ class ProtectTemplateResponses extends Command
 {
     protected $signature = 'template:protect-responses {--apply}';
 
-    protected $description = 'Activa respuestas protegidas y separa unidades antes de crear sílabos';
+    protected $description = 'Activa respuestas protegidas y las unidades con datos de la ficha antes de crear sílabos';
 
     public function handle(ProtectResponses $action): int
     {

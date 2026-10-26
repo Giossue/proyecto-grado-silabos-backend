@@ -10,6 +10,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\SyncBlockSources;
 use App\Modules\Syllabus\Domain\Exceptions\DraftConflictException;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -22,6 +23,7 @@ class UpdateDraftField
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly SyncBlockSources $sources,
     ) {}
 
     /**
@@ -54,6 +56,7 @@ class UpdateDraftField
                 'silabo_id' => $locked->id,
                 'definicion_campo_id' => $field->id,
             ], ['valor' => $document]);
+            $this->sources->execute($locked);
 
             $locked->update([
                 'version_bloqueo' => $locked->version_bloqueo + 1,

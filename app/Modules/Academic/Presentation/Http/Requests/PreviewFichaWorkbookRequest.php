@@ -22,4 +22,10 @@ class PreviewFichaWorkbookRequest extends FormRequest
     {
         return ['file.required' => 'Elija el Excel que completó.', 'file.mimes' => 'Use la plantilla Excel (.xlsx) descargada desde el sitio.', 'file.max' => 'El Excel no puede superar los 20 MB.'];
     }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return ['file' => 'archivo Excel'];
+    }
 }

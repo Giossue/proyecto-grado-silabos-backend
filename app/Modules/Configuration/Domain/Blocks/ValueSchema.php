@@ -63,6 +63,7 @@ final class ValueSchema
             'text' => $clean += [
                 'max' => self::integer($schema['max'] ?? 1000, "{$where}.max", 1, 20000),
                 'multiline' => self::boolean($schema['multiline'] ?? false, "{$where}.multiline"),
+                ...(isset($schema['from']) && ! $props ? ['from' => self::from($schema['from'], "{$where}.from")] : []),
             ],
             'number' => $clean += [
                 'digits' => self::integer($schema['digits'] ?? 3, "{$where}.digits", 1, 9),
@@ -373,6 +374,43 @@ final class ValueSchema
         }
 
         return $clean;
+    }
+
+    /**
+     * @return array{field: string, column: int}
+     */
+    private static function from(mixed $value, string $where): array
+    {
+        if (! is_array($value) || array_diff(array_keys($value), ['field', 'column']) !== []
+            || ! is_string($value['field'] ?? null) || preg_match('/^[a-z][a-z0-9_]{0,99}$/', $value['field']) !== 1) {
+            BlockDefinitionError::fail("{$where}: escriba {\"field\": \"clave del campo\", \"column\": número}.");
+        }
+
+        return ['field' => $value['field'], 'column' => self::integer($value['column'] ?? null, "{$where}.column", 1, 24)];
+    }
+
+    /**
+     * Claves de los campos que alimentan datos `from` de los bloques.
+     *
+     * @param  array<string, array<string, mixed>>  $blocks
+     * @return list<string>
+     */
+    public static function sourceFields(array $blocks): array
+    {
+        $keys = [];
+        $visit = function (array $schema) use (&$visit, &$keys): void {
+            if (isset($schema['from']['field'])) {
+                $keys[$schema['from']['field']] = true;
+            }
+            foreach ([...($schema['fields'] ?? []), ...(isset($schema['item']) ? [$schema['item']] : [])] as $child) {
+                $visit($child);
+            }
+        };
+        foreach ($blocks as $block) {
+            $visit(['type' => 'object', 'fields' => $block['value'] ?? []]);
+        }
+
+        return array_keys($keys);
     }
 
     private static function path(mixed $value, string $where): string

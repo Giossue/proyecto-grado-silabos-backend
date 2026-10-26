@@ -24,6 +24,6 @@ class ApplyFichaImportRequest extends PreviewFichaWorkbookRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['fingerprint' => 'estructura de la plantilla', 'file_hash' => 'archivo revisado', 'subjects' => 'materias', 'subjects.*' => 'materia', 'fields' => 'campos', 'fields.*' => 'campos de la materia', 'fields.*.*' => 'campo'];
+        return ['file' => 'archivo Excel', 'fingerprint' => 'estructura de la plantilla', 'file_hash' => 'archivo revisado', 'subjects' => 'materias', 'subjects.*' => 'materia', 'fields' => 'campos', 'fields.*' => 'campos de la materia', 'fields.*.*' => 'campo'];
     }
 }

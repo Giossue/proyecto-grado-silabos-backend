@@ -28,7 +28,7 @@ trait CreatesSyllabusProcess
                 $content['content'][$index]['attrs']['value'] = match ($kind) {
                     'identificacion' => ['disability' => ['answer' => 'no', 'type' => '', 'description' => '']],
                     'si_no' => ['answer' => 'no', 'rows' => []],
-                    'unidades', 'planificacion_semanal' => $this->plannedUnits(),
+                    'unidades' => $this->plannedUnits(),
                     'evaluacion' => [],
                     default => ['rows' => []],
                 };

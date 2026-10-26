@@ -32,15 +32,17 @@ de comprobar su contenido. No se confía en bloqueos del navegador o del Excel.
 
 ## Unidades
 
-La plantilla oficial separa «Unidades y resultados de aprendizaje», de Carrera, de
-«Planificación semanal», del Docente. El primer campo es una tabla fija con cuatro
-filas numeradas y columnas para nombre y resultado. Su permiso de edición docente
-empieza desactivado y sigue siendo una decisión explícita de Coordinación.
+Corregido el 2026-10-26. La primera versión separaba los nombres y resultados en una
+tabla aparte y el bloque `planificacion_semanal`; eso cambió el formato oficial y se
+retiró. El diseño no se parte según quién llena: el responsable se fija por dato.
 
-Las cuatro unidades de la planificación se identifican por el número de la tabla
-anterior. El bloque nuevo `planificacion_semanal` conserva las reglas de semanas y
-horas ACD, APE y AA; no tiene respuestas para nombres ni resultados. El bloque
-anterior `unidades` permanece disponible para interpretar documentos anteriores.
+Carrera escribe el nombre y el resultado de las cuatro unidades en la ficha (campo
+`unidades_curriculares`, una tabla fija de cuatro filas, también en el Excel). El
+bloque `unidades` conserva su diseño: cada tabla de unidad muestra esos datos arriba
+y las semanas debajo. Sus datos `nombre` y `resultado` declaran `from` y el servidor
+los copia de la ficha al crear, reiniciar, copiar o guardar el sílabo. El docente los
+ve en solo lectura. El campo fuente no se imprime solo, pero sigue en la ficha y en la
+validación. Se conservan las reglas de semanas y horas ACD, APE y AA.
 
 Un cambio de docente conserva la ficha y reinicia la planificación en curso con las
 reglas existentes. Un cambio de plantilla o ficha sigue exigiendo pausa y confirmación
@@ -64,10 +66,14 @@ Antes de reanudar,
 Coordinación completa el catálogo de unidades de cada materia y se confirma la
 regeneración del trabajo en curso. Las fotografías anteriores conservan su definición.
 
-No se añadieron ni ejecutaron pruebas automatizadas en este cambio. Se adaptaron
-casos y datos existentes; quedan pendientes la ejecución y la aceptación visual del
-formato nuevo, del Excel y del Word/PDF. Las referencias Word anteriores se mantienen
-para comprobar compatibilidad histórica cuando se ejecute la suite.
+La corrección incluye la migración `2026_10_26_000230_units_from_subject_profile`,
+que aplica la misma acción al desplegar. Lleva la plantilla activada con la primera
+versión, o una anterior, al bloque `unidades` con `from`, conservando IDs y fichas.
+Si hay sílabos o procesos abiertos no cambia nada y deja el motivo en el registro.
+
+La suite completa pasa: 471 pruebas del backend y 416 del frontend (una omitida). El Word oficial
+vuelve a coincidir con las referencias `tests/Fixtures/golden` del formato original.
+Queda pendiente la aceptación visual en el sitio.
 
 ## Activación realizada
 

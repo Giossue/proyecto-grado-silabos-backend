@@ -165,7 +165,7 @@ class LibraryReviewTest extends TestCase
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->answeredValue($other, 'Ajuste general'),
         ])->assertOk();
         $this->as('teacher')->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $this->field('bibliografia')]), [
-            'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue('Martin, R. Arquitectura limpia (2.ª ed.).'),
+            'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->answeredValue($this->field('bibliografia'), 'Martin, R. Arquitectura limpia (2.ª ed.).'),
         ])->assertOk();
         $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'idempotency_key' => (string) Str::uuid(),

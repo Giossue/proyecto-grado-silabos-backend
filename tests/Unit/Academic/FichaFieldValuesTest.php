@@ -16,6 +16,7 @@ class FichaFieldValuesTest extends TestCase
         $field = new FieldDefinition(['contenido' => ['type' => 'doc', 'content' => [['type' => 'table', 'content' => [
             ['type' => 'tableRow', 'content' => [$cell('Resultado', ['rowspan' => 2]), $cell('Nivel', ['colspan' => 2])]],
             ['type' => 'tableRow', 'content' => [$cell('Alto'), $cell('Medio')]],
+            ['type' => 'tableRow', 'content' => array_fill(0, 3, ['type' => 'tableCell', 'content' => [['type' => 'paragraph']]])],
         ]]]]]);
         $field->setRelation('blockRecord', (new TemplateBlockRecord)->forceFill(['clave_campo_plantilla' => 'relacion', 'titulo_campo_plantilla' => 'Relación de resultados']));
         $values = new FichaFieldValues;
