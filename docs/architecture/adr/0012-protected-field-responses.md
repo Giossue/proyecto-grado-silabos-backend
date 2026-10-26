@@ -70,6 +70,11 @@ La corrección incluye la migración `2026_10_26_000230_units_from_subject_profi
 que aplica la misma acción al desplegar. Lleva la plantilla activada con la primera
 versión, o una anterior, al bloque `unidades` con `from`, conservando IDs y fichas.
 Si hay sílabos o procesos abiertos no cambia nada y deja el motivo en el registro.
+La activación guardaba el contenido oficial sin normalizar y el bloque quedaba sin
+sus cuatro unidades (la sección 6 se veía vacía). Ahora se normaliza, y la migración
+`2026_10_26_000231_fill_empty_template_blocks` completa los bloques ya guardados así.
+La vista previa del editor de plantilla tampoco muestra el campo fuente; en «Editar»
+aparece con la nota de que no se imprime.
 
 La suite completa pasa: 471 pruebas del backend y 416 del frontend (una omitida). El Word oficial
 vuelve a coincidir con las referencias `tests/Fixtures/golden` del formato original.

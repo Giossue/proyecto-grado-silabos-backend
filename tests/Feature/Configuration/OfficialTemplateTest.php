@@ -79,6 +79,7 @@ class OfficialTemplateTest extends TestCase
         $this->assertArrayNotHasKey('planificacion_semanal', $definition->blocks());
         $this->assertSame(['unidades_curriculares'], $definition->sourceFields());
         $this->assertSame('unidades', $units->fresh()->contenido['content'][0]['attrs']['kind']);
+        $this->assertCount(4, $units->fresh()->contenido['content'][0]['attrs']['value']['units']);
         $this->assertSame($ids, FieldDefinition::query()->where('plantilla_id', $template->id)->pluck('id')->sort()->values()->all());
         $this->assertFalse(app(ProtectTemplateResponses::class)->execute($template->fresh())['updated']);
     }

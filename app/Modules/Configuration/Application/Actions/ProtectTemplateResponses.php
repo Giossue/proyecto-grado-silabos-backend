@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Application\Actions;
 
 use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\TemplateContext;
+use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
@@ -78,6 +79,11 @@ final readonly class ProtectTemplateResponses
                 'blocks' => [...$blocks, 'unidades' => $official->blocks()['unidades']],
                 'presets' => $presets,
             ]);
+            // El contenido oficial viene de HTML: se normaliza para que el bloque tenga sus cuatro unidades.
+            [$catalogContent, $planningContent] = app(TemplateContext::class)->using($definition, fn (): array => [
+                FieldDocument::normalize($catalog['content']),
+                FieldDocument::normalize($planning['content']),
+            ]);
             app(TemplateContext::class)->using($definition, function () use ($fields): void {
                 foreach (FieldValue::query()->whereNotNull('asignatura_id')->whereIn('definicion_campo_id', $fields->pluck('id'))->get() as $value) {
                     $field = $fields->firstWhere('id', $value->definicion_campo_id);
@@ -93,13 +99,13 @@ final readonly class ProtectTemplateResponses
                     'plantilla_id' => $locked->id,
                     'campo_plantilla_id' => $blockId,
                     'quien_llena' => FieldDefinition::COORDINATION,
-                    'contenido' => $catalog['content'],
+                    'contenido' => $catalogContent,
                 ]);
                 $position = array_search($units->campo_plantilla_id, $ids, true);
                 array_splice($ids, $position === false ? count($ids) : $position, 0, [$blockId]);
                 $locked->reorderBlocks($sectionId, $ids);
             }
-            $units->update(['quien_llena' => FieldDefinition::TEACHER, 'contenido' => $planning['content']]);
+            $units->update(['quien_llena' => FieldDefinition::TEACHER, 'contenido' => $planningContent]);
             $locked->updateBlockDocument($units->campo_plantilla_id, ['titulo' => $planning['label'] ?? 'Unidades']);
             $locked->saveDefinition($definition);
             $this->audit->execute(
