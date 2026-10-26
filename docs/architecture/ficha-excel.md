@@ -82,3 +82,12 @@ y dos materias de ejemplo recuperó seis campos por materia, incluida una tabla 
 cinco columnas. También rechazó una fórmula, un código de materia alterado, una
 carrera distinta y una huella desactualizada. No utilizó servicios externos ni
 modificó fichas. No sustituye la aceptación funcional con el archivo real de la carrera.
+
+## Despliegue del 26 de octubre de 2026
+
+Se verificó un respaldo completo antes del push. El despliegue registró la migración
+`2026_10_26_000229_drop_ficha_imports_table` en `silabos_ueb_db`: la tabla
+`importaciones_ficha` ya no existe y quedan 32 tablas. Los propietarios y permisos
+del resto de las tablas y secuencias permanecieron iguales. Se comprobaron tipos y
+estilo; no se ejecutaron pruebas automatizadas en este cambio. Sigue pendiente la
+aceptación funcional con el archivo real de la carrera.
