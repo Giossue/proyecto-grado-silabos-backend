@@ -21,7 +21,7 @@ las colas y la caché.
 
 - PHP 8.4 o superior, Composer 2 y las extensiones usuales de Laravel con `pdo_pgsql`.
 - Docker Compose (o compatible) para PostgreSQL y Redis.
-- `pdftotext` (paquete `poppler-utils`) para leer PDF.
+- `pdftotext` (paquete `poppler-utils`) para ubicar los sellos de firma en el PDF.
 
 ## Puesta en marcha
 
@@ -42,7 +42,7 @@ php artisan queue:work redis --queue=critica,documentos,ia,general --tries=3
 
 - `critica`: verificación de plataforma.
 - `documentos`: Word y PDF del sílabo.
-- `ia`: chat del docente y compatibilidad con importaciones de documentos anteriores. La carga actual de fichas usa Excel estructurado sin cola.
+- `ia`: chat del docente. La carga de fichas usa Excel estructurado sin cola.
 - `general`: correos de activación de cuenta.
 
 Compose publica PostgreSQL en `127.0.0.1:55432` y Redis en `127.0.0.1:56379`. También
@@ -59,7 +59,6 @@ Las más importantes (ver `.env.example`):
 | `DB_*`, `REDIS_*` | Conexión a PostgreSQL y Redis |
 | `DISPLAY_TIMEZONE` | Zona horaria de la institución (por defecto `America/Guayaquil`); fija la fecha de hoy que usa el sistema |
 | `AI_DRIVER`, `AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY` | Proveedor de IA: `disabled` (por defecto), `openai`, `claude`, `deepseek` o `baseline` (pruebas) |
-| `OPENPARSER_ENABLED`, `OPENPARSER_API_KEY` | Lectura de PDF con OpenParser; si está apagado se usa `pdftotext` |
 | `GOTENBERG_URL`, `GOTENBERG_TIMEOUT` | Conversión de Word a PDF; sin ella el PDF sale como texto simple |
 | `SIGNATURE_TRUSTED_CA_BUNDLE`, `SIGNATURE_REQUIRE_HOLDER_MATCH` | Validación de la firma electrónica |
 | `MAIL_MAILER`, `RESEND_API_KEY` | Correo (por defecto `log`) |

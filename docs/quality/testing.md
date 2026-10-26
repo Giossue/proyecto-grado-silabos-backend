@@ -8,8 +8,7 @@ falla un servicio externo. La cantidad de pruebas no sustituye la cobertura de r
 ## Dónde viven
 
 - **Backend** (este repositorio), con Pest y PHPUnit:
-  - `tests/Unit`: reglas puras (semanas del período, nombres, documentos de campo,
-    lector de OpenParser);
+  - `tests/Unit`: reglas puras (semanas del período, nombres y documentos de campo);
   - `tests/Feature/<Módulo>`: rutas JSON, políticas, transacciones y trabajos;
   - `tests/Architecture`: límites de módulos, contrato OpenAPI, protección de la API;
   - `tests/Integration`: Redis real;
@@ -102,16 +101,13 @@ La suite pasa sin proveedor real. `AiAssistanceTest` y `HostedAiChatGatewayTest`
 - configuración insegura del proveedor y errores sin exponer la clave;
 - formato de cada proveedor (OpenAI, Claude, DeepSeek).
 
-`FichaImportTest` y `FichaPdfOcrTest` cubren la importación de la ficha: propuesta,
-aplicación parcial, permisos, falta de proveedor y lectura de PDF con OpenParser.
-También cubren envío al OCR de PDF con texto seleccionable, error sin extracción
-local alternativa, OCR no configurado, documentos idénticos,
-tablas derivadas de la plantilla y tiempos. `FichaEvidenceTest`, `FichaFieldValuesTest`
-y `ExtractFichaProposalTest` cubren continuaciones, separación entre materias y
-documentos, índices, variantes de nombre, recuperación de evidencia tardía y conservación
-de resultados cuando falla la segunda consulta. Los originales reales eliminados tras
-aplicar no forman parte de estas pruebas; su cobertura y tiempo se comparan al volver
-a importarlos, sin convertir un ejemplo sintético en una medida de precisión (PV-18).
+`FichaImportTest` conserva los casos de vista previa Excel, aplicación parcial,
+comparación con valores actuales, permisos y tablas derivadas de la plantilla.
+`FichaFieldValuesTest` cubre encabezados combinados y validación de valores.
+Los casos exclusivos del lector OCR, selección de evidencia y extracción por IA se
+eliminaron junto a ese código. Las pruebas existentes se adaptaron al contrato Excel;
+no se añadieron ni ejecutaron pruebas durante esta limpieza. La aceptación con un
+Excel real y el recorrido de usuario siguen pendientes.
 
 ## Interfaz
 

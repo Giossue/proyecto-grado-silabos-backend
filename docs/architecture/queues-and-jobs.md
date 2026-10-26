@@ -6,7 +6,6 @@ Solo lo lento o externo:
 
 - generar Word y PDF de una revisión aprobada;
 - responder una pregunta del chat de IA;
-- leer los documentos de una importación histórica de fichas y proponer cada ficha;
 - enviar el correo de activación de cuenta;
 - el trabajo de humo de la plataforma.
 
@@ -15,8 +14,7 @@ web, dentro de una transacción. Las notificaciones internas y la auditoría tam
 guardan ahí; no usan cola.
 
 La carga actual de fichas mediante Excel estructurado también se resuelve en la
-petición web. Los trabajos de importación descritos aquí corresponden al flujo
-histórico de documentos; ver [ficha-excel.md](ficha-excel.md).
+petición web; no tiene trabajos de cola. Ver [ficha-excel.md](ficha-excel.md).
 
 ## Trabajos
 
@@ -25,8 +23,6 @@ histórico de documentos; ver [ficha-excel.md](ficha-excel.md).
 | `PlatformSmokeJob` | Operations | `critica` | 30 s | 3 | 1, 5, 15 s | clave del comando |
 | `GenerateSyllabusExportJob` | Documents | `documentos` | 120 s | 3 | 5, 30, 120 s | exportación |
 | `AnswerSyllabusChatJob` | AiAssistance | `ia` | 60 s | 3 | 5, 30, 120 s | mensaje |
-| `PrepareFichaImportJob` | Academic | `ia` | 900 s | 1 | — | importación |
-| `ExtractSubjectFichaJob` | Academic | `ia` | 240 s | 2 | — | importación:asignatura |
 | `ManagedUserActivationMail` | Identity | `general` | por defecto | por defecto | — | — |
 
 El estado de cada trabajo vive en su registro de dominio, no en una tabla de trabajos
@@ -36,7 +32,6 @@ El estado de cada trabajo vive en su registro de dominio, no en una tabla de tra
 |---|---|
 | `exportaciones_silabo.estado_exportacion` | `pendiente`, `en_ejecucion`, `completado`, `fallido` |
 | `mensajes_ia.contenido_mensaje->estado` | `pendiente`, `en_ejecucion`, `completado`, `fallido` |
-| `importaciones_ficha.estado_importacion` | `pendiente`, `en_ejecucion`, `lista`, `fallida`, `aplicada`, `descartada` |
 
 Los trabajos fallidos no se guardan en otra tabla (`queue.failed.driver = null`). El
 método `failed()` de cada trabajo deja el registro de dominio en `fallido`/`fallida`.
@@ -48,7 +43,7 @@ método `failed()` de cada trabajo deja el registro de dominio en `fallido`/`fal
 | Petición | `idempotency_key` (UUID) + índice único + `lockForUpdate` en la transacción | Enviar, exportar y preguntar a la IA |
 | Petición | Un solo registro por revisión (índice único) + `lockForUpdate`; si ya existe, se devuelve | Aprobar en Coordinación y verificar en Biblioteca |
 | Cliente | `attemptKey`: misma clave al reintentar lo mismo; clave nueva si cambia lo enviado | SPA |
-| Despacho | `->afterCommit()`: si la transacción se revierte, el trabajo no se envía | Exportación, chat e importación de fichas |
+| Despacho | `->afterCommit()`: si la transacción se revierte, el trabajo no se envía | Exportación y chat |
 | Cola | `ShouldBeUnique` con `uniqueId()` y `#[UniqueFor]`: se descarta un duplicado mientras el primero espera o corre | Los cinco trabajos de la tabla |
 | Ejecución | `RunsOnce`: `WithoutOverlapping(uniqueId)->dontRelease()->expireAfter(timeout + 30)`. Si Redis entrega una copia de un trabajo que sigue corriendo, la copia se descarta | Los cinco trabajos de la tabla |
 | Consumidor | Solo cambia el registro si sigue en el estado esperado | Todos |
@@ -74,11 +69,9 @@ que repetirla no crea otra exportación.
   espera y sus registros quedan `pendiente`.
 
 **Requisito:** `retry_after` debe ser mayor que el `timeout` del trabajo más largo.
-Hoy ese trabajo es `PrepareFichaImportJob` (900 s), así que en todo entorno que use la
-importación de fichas `REDIS_QUEUE_RETRY_AFTER` debe superar 900 (por ejemplo 960).
-Con un valor remoto explícito de 180 s, si otro worker toma la copia entregada de nuevo, el trabajo
-cuenta un segundo intento; con `tries = 1` se marca la importación como `fallida`.
-`RunsOnce` evita la doble ejecución, pero no ese fallo. Ver [deployment.md](deployment.md#colas-y-worker).
+El mayor timeout actual es el de `GenerateSyllabusExportJob` (120 s). Se conserva
+el valor predeterminado de 960 s; no necesita cambiarse por el retiro de la importación
+OCR. Ver [deployment.md](deployment.md#colas-y-worker).
 
 ## Worker
 
@@ -92,7 +85,7 @@ php artisan queue:work \
 
 - El orden de `--queue` es la prioridad.
 - El `timeout` y los intentos de cada trabajo mandan sobre los del worker.
-- Un trabajo largo ocupa el único worker: mientras se leen fichas, lo demás espera.
+- Un trabajo largo ocupa el único worker: los demás esperan mientras se procesa.
 
 Para probar en local:
 
@@ -108,8 +101,3 @@ php artisan platform:smoke-job
 - `AnswerSyllabusChatJob`: llama al `AiChatGateway` con la pregunta, el historial y la
   evidencia fijada. Rechaza respuestas que citan evidencia ajena. Ver
   [ai-service.md](ai-service.md).
-- `PrepareFichaImportJob`: extrae texto de cada PDF o Excel, lo guarda en bloques y
-  despacha un `ExtractSubjectFichaJob` por asignatura activa de la carrera.
-- `ExtractSubjectFichaJob`: busca los fragmentos de una asignatura y pide a la IA una
-  propuesta de ficha. Cuando no quedan asignaturas pendientes, la importación pasa a
-  `lista`.

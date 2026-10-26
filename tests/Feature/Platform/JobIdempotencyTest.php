@@ -2,8 +2,6 @@
 
 namespace Tests\Feature\Platform;
 
-use App\Modules\Academic\Infrastructure\Jobs\ExtractSubjectFichaJob;
-use App\Modules\Academic\Infrastructure\Jobs\PrepareFichaImportJob;
 use App\Modules\AiAssistance\Infrastructure\Jobs\AnswerSyllabusChatJob;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
 use App\Modules\Operations\Infrastructure\Jobs\PlatformSmokeJob;
@@ -24,8 +22,6 @@ class JobIdempotencyTest extends TestCase
         return [
             'exportación' => [new GenerateSyllabusExportJob('artefacto-1')],
             'respuesta del chat' => [new AnswerSyllabusChatJob('mensaje-1')],
-            'extracción de ficha' => [new ExtractSubjectFichaJob('importacion-1', 'materia-1')],
-            'lectura de fichas' => [new PrepareFichaImportJob('importacion-1')],
             'verificación de plataforma' => [new PlatformSmokeJob('smoke-1')],
         ];
     }

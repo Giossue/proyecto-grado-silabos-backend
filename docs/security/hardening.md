@@ -98,11 +98,11 @@ un `POST` a la API con un cuerpo de 16 KB no debe devolver 500.
 ## Archivos
 
 - Disco privado, nombres generados, tipo real, tamaño máximo y huella SHA-256.
-- Tipos aceptados: Excel para importaciones, PDF o Excel para fichas (hasta 6 de 20 MB),
+- Tipos aceptados: Excel para importaciones, un Excel estructurado para fichas (20 MB),
   PNG para logos y PDF para firmas.
 - Las descargas de sílabos pasan por la API autenticada: cada una se autoriza y se
   audita. No hay enlaces públicos; solo los logos institucionales se sirven sin sesión.
-- Los documentos subidos para la ficha se borran al aplicar o descartar la importación.
+- El Excel de la ficha se lee desde el temporal de PHP y no se conserva en el disco privado.
 - La plantilla es solo datos (JSON); no se ejecuta como código.
 - La conversión a PDF corre en un servicio Gotenberg aparte.
 
@@ -120,15 +120,13 @@ un `POST` a la API con un cuerpo de 16 KB no debe devolver 500.
 ## IA
 
 - Desactivada por defecto (`AI_DRIVER=disabled`). El proveedor alojado se elige con
-  `AI_DRIVER` (`openai`, `claude` o `deepseek`; la lectura de fichas solo funciona con
-  `openai` o `deepseek`) y la clave vive en un secreto del despliegue.
+  `AI_DRIVER` (`openai`, `claude` o `deepseek`) y la clave vive en un secreto del despliegue.
 - La URL del proveedor debe ser HTTPS, sin credenciales embebidas y sin redirecciones.
-- Los documentos y el contenido del sílabo se envían como datos delimitados; el modelo no
+- El contenido del sílabo se envía como datos delimitados; el modelo no
   tiene herramientas ni acciones.
-- La salida se valida: el chat solo cita evidencias autorizadas y la ficha propuesta la
-  aplica una persona.
+- La salida se valida: el chat solo cita evidencias autorizadas y sus propuestas las
+  usa el docente bajo su responsabilidad.
 - Límites de tokens, tamaño, tiempo, frecuencia y mensajes por sílabo (`config/ai.php`).
-- OpenParser (OCR de PDF de fichas) está desactivado por defecto y solo usa HTTPS.
 
 ## Cabeceras y transporte
 

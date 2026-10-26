@@ -57,9 +57,10 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
   `editable_docente_valor_campo` indica si el docente puede editar ese campo en su
   sílabo.
 - **Importación de ficha** (`importaciones_ficha`): carrera, quién la pidió, estado
-  (`pendiente`, `en_ejecucion`, `lista`, `fallida`, `aplicada`, `descartada`),
-  metadatos del archivo, vista previa y error; conserva propuestas históricas de IA. Hay como máximo una en curso por
-  carrera. Los archivos se borran al aplicar o descartar.
+  (`lista`, `aplicada`, `descartada` en el flujo actual), metadatos del archivo y vista
+  previa Excel. Hay como máximo una vista previa disponible por carrera. El archivo
+  se lee desde el temporal de PHP y no se conserva. La base conserva registros y
+  estados históricos del flujo retirado; no se ofrecen en la interfaz.
 
 ## Convocatoria y sílabo (`Syllabus`)
 

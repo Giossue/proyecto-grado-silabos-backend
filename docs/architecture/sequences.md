@@ -160,8 +160,8 @@ sequenceDiagram
 ```
 
 `DELETE …/{import}` descarta la vista previa. El flujo no utiliza IA, OCR ni cola.
-La lectura de documentos anterior queda por compatibilidad, descrita en
-[ai-service.md](ai-service.md#importación-de-fichas).
+La ruta de carga de documentos anterior fue retirada. Solo se consultan y aplican
+vistas previas generadas desde el Excel estructurado.
 
 ## 7. Cambios con sílabos en curso y regeneración
 

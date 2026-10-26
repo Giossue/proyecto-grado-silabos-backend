@@ -79,8 +79,6 @@ AI_BASE_URL=
 AI_MODEL=
 AI_API_KEY=
 
-OPENPARSER_ENABLED=false
-OPENPARSER_API_KEY=
 
 SIGNATURE_TRUSTED_CA_BUNDLE=
 SIGNATURE_REQUIRE_HOLDER_MATCH=true
@@ -90,13 +88,10 @@ MAIL_MAILER=log
 
 - `TRUSTED_PROXIES` vale `*` si no se define; fije la IP real del proxy.
 - `SESSION_SECURE_COOKIE=true` exige HTTPS. Sin certificado nadie puede iniciar sesión.
-- `REDIS_QUEUE_RETRY_AFTER` debe ser mayor que el `timeout` del trabajo más largo:
-  `PrepareFichaImportJob`, con 900 s. `.env.example` trae 960. Un valor explícito de 180
-  tampoco cubre `ExtractSubjectFichaJob`, con 240 s. Con un valor menor y más de
-  un worker, Redis entrega de nuevo una importación en curso y esta termina marcada como
-  fallida.
+- `REDIS_QUEUE_RETRY_AFTER` debe ser mayor que el timeout del trabajo más largo:
+  `GenerateSyllabusExportJob`, con 120 s. `.env.example` conserva 960 s.
 - Las claves (`APP_KEY`, `DB_PASSWORD`, `REDIS_PASSWORD`, `AI_API_KEY`,
-  `OPENPARSER_API_KEY`, `RESEND_API_KEY`) se cargan como secretos de Dokploy. No van al
+  `RESEND_API_KEY`) se cargan como secretos de Dokploy. No van al
   repositorio, a la base, a los logs ni a comandos de diagnóstico.
 - Tras cambiar variables, redespliegue o reinicie el contenedor: el arranque rehace la
   caché de configuración y reinicia el worker.
@@ -109,10 +104,8 @@ local `pgvector/pgvector:0.8.6-pg18-trixie` ya trae ambas.
 ### Proveedor de IA
 
 La IA parte apagada (`AI_DRIVER=disabled`) y su ausencia no bloquea el flujo del sílabo.
-Se usa en dos lugares:
-
-- **Asistente de unidades** del docente: admite `openai`, `claude` y `deepseek`.
-- **Importación de la ficha** en Proyecto de carrera: admite solo `openai` y `deepseek`.
+El **asistente de unidades** del docente admite `openai`, `claude` y `deepseek`.
+La importación de fichas usa Excel estructurado y no utiliza este proveedor.
 
 Se configuran cuatro variables. La URL debe ser HTTPS y puede ser la base o el endpoint
 completo.
@@ -127,22 +120,17 @@ completo.
 `AI_TIMEOUT` (20 s) tienen valores por defecto.
 
 Activar un proveedor envía datos a un tercero: la pregunta del chat con el contexto
-autorizado del sílabo y el texto de los documentos de la ficha. Antes de usarlo con
+autorizado del sílabo. Antes de usarlo con
 información institucional deben acordarse proveedor, región, retención y tratamiento de
 datos (`PV-12`, `PV-14`).
 
-### Lectura de documentos de la ficha
+### Importación de fichas
 
-La importación acepta PDF y Excel. El Excel se lee en el servidor. El PDF:
+Se genera y lee una plantilla Excel en el servidor, sin proveedor externo ni cola.
+El flujo antiguo de documentos y su configuración fueron retirados.
 
-- todos los PDF, incluso los que tienen texto seleccionable, se envían al OCR de
-  OpenParser (modelo `paddleocr-vl-1.6`, espera hasta `OPENPARSER_MAX_WAIT=780` s);
-- exige `OPENPARSER_ENABLED=true`, `OPENPARSER_API_KEY` y una URL válida. Si no está
-  configurado o falla, se informa el error y no se sustituye por extracción local.
-
-`pdftotext` viene de `poppler-utils`, instalado en la imagen, y se usa para ubicar
-el sello de cada firma en el PDF, fuera de la importación de fichas. OpenParser es otro tercero: aplica la misma condición
-de `PV-12`.
+`pdftotext` viene de `poppler-utils`, instalado en la imagen, y se conserva para
+ubicar el sello de cada firma en el PDF.
 
 ### Gotenberg
 
@@ -204,7 +192,7 @@ credenciales), que es lo que `PV-15` debe resolver.
 
 El worker escucha `critica,notificaciones,documentos,ia,integraciones,general` con
 `--tries=3`. Hoy se usan `critica` (trabajo de prueba), `documentos` (Word y PDF), `ia`
-(asistente e importación de la ficha) y `general` (correo de activación).
+(asistente del docente) y `general` (correo de activación).
 
 En una instalación nueva, cargue la plantilla oficial una vez:
 
@@ -234,6 +222,5 @@ coordinación, dos docentes, paralelos y la convocatoria. Lee la contraseña de 
 
 ## 6. Almacenamiento persistente
 
-`storage/app` guarda los archivos privados: Word y PDF, PDF firmados, logos y documentos
-de importación de la ficha. Sin un volumen, cada redespliegue los pierde. En Dokploy
+`storage/app` guarda los archivos privados: Word y PDF, PDF firmados y logos. Sin un volumen, cada redespliegue los pierde. En Dokploy
 añada un **volume mount** hacia `/var/www/html/storage/app`.

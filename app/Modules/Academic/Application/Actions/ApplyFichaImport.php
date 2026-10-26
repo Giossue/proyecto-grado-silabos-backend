@@ -17,13 +17,10 @@ use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 final class ApplyFichaImport
 {
-    private const BIBLIOGRAPHY_COLUMNS = ['Autor', 'Título', 'Año', 'Ciudad', 'Editorial', 'ISBN', 'Código'];
-
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly ProcessLocks $locks,
@@ -46,11 +43,10 @@ final class ApplyFichaImport
 
         return $this->work->replace($request, fn (): FichaImport => DB::transaction(function () use ($import, $subjectIds, $actor, $role, $fieldsBySubject): FichaImport {
             $locked = FichaImport::query()->lockForUpdate()->findOrFail($import->id);
-            if ($locked->estado_importacion !== FichaImport::READY) {
+            if ($locked->estado_importacion !== FichaImport::READY || ($locked->propuesta_importacion['format'] ?? null) !== FichaWorkbook::FORMAT) {
                 throw ValidationException::withMessages(['subjects' => 'La propuesta ya no está lista para aplicarse.']);
             }
-            if (($locked->propuesta_importacion['format'] ?? null) === FichaWorkbook::FORMAT
-                && ($locked->propuesta_importacion['fingerprint'] ?? '') !== $this->workbookContext->for($locked->carrera_id)->fingerprint()) {
+            if (($locked->propuesta_importacion['fingerprint'] ?? '') !== $this->workbookContext->for($locked->carrera_id)->fingerprint()) {
                 throw ValidationException::withMessages(['subjects' => 'La plantilla o las materias cambiaron. Descargue un Excel nuevo y vuelva a preparar la vista previa.']);
             }
             $fields = $this->profile->fields()->keyBy('clave');
@@ -69,15 +65,7 @@ final class ApplyFichaImport
                     if ($field === null) {
                         continue;
                     }
-                    $document = match (true) {
-                        is_array($value) && isset($value['rows'], $value['columns']) => $this->values->document($this->values->clean($value, $this->values->schema($field)['columns']), $field->contenido),
-                        is_array($value) && str_starts_with((string) $key, 'bibliografia') => FreeText::fromRows(
-                            array_map(fn (string $column): array => ['key' => $column, 'label' => $column], self::BIBLIOGRAPHY_COLUMNS),
-                            array_values(array_map(fn (string $item): array => array_combine(self::BIBLIOGRAPHY_COLUMNS, array_pad(array_slice(array_map('trim', explode('|', $item)), 0, count(self::BIBLIOGRAPHY_COLUMNS)), count(self::BIBLIOGRAPHY_COLUMNS), '')), $value)),
-                        ),
-                        is_array($value) => FreeText::fromRows([['key' => 't', 'label' => '']], array_values(array_map(fn (string $item): array => ['t' => $item], $value))),
-                        default => FreeText::fromText((string) $value),
-                    };
+                    $document = $this->values->document($this->values->clean($value, $this->values->schema($field)['columns']), $field->contenido);
                     if (FreeText::isEmpty(FreeText::normalize($document))) {
                         continue;
                     }
@@ -95,7 +83,6 @@ final class ApplyFichaImport
             if ($applied === 0) {
                 throw ValidationException::withMessages(['subjects' => 'Elija al menos una materia con ficha propuesta.']);
             }
-            Storage::disk('private')->deleteDirectory("importaciones-ficha/{$locked->id}");
             $locked->update(['estado_importacion' => FichaImport::APPLIED, 'aplicado_en' => now(), 'documentos_importacion' => []]);
             $this->audit->execute($actor->id, $role->id, 'academico.ficha_importacion_aplicada', 'carrera', $locked->carrera_id, 'exito', ['subjects' => $applied]);
 

@@ -90,12 +90,6 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 ## Plantilla
 
-- La lectura histórica de PDF para fichas prioriza los elementos estructurados del OCR. Expande
-  celdas combinadas, conserva los encabezados entre páginas y separa las filas por
-  asignatura. Las tablas que declaran otra carrera se excluyen comparando su nombre
-  normalizado con el de la importación. El Markdown se usa si no hay contenido
-  estructurado; la IA sigue copiando evidencia, sin redactar objetivos ausentes.
-
 - Hay una sola plantilla. Se edita en el sitio, sin versiones ni publicación (I-32).
 - La plantilla es solo datos (ADR-0011, I-229). `plantilla_silabo.definicion_plantilla`
   guarda el estilo del documento, las variables, los bloques (valor, reglas y diseño),
@@ -132,8 +126,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   fórmulas y modificaciones de identificación; la protección del Excel no sustituye
   la autorización. No hay versiones de plantilla: se compara una huella de estructura.
 - Se reutilizan la comparación con valores actuales, los permisos, la transacción y
-  la confirmación para regenerar sílabos en curso. Se conserva compatibilidad para
-  importaciones anteriores; los trabajos en ejecución no se interrumpen.
+  la confirmación para regenerar sílabos en curso. Se eliminaron la carga antigua de
+  documentos, los lectores OCR, los gateways de extracción de fichas y sus trabajos
+  de cola. Solo se consultan y aplican vistas previas Excel; los registros históricos
+  permanecen en la base sin ofrecerse en la interfaz.
 - Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
   copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
   encendido no deja la ficha incompleta (I-230).
@@ -188,8 +184,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   por defecto (I-73).
 - El docente tiene un chat que usa los datos de la carrera, de la asignatura y lo que ya
   escribió en el sílabo (contexto `free-text-v3`).
-- La importación histórica de documentos conserva propuestas de IA (`openai` o
-  `deepseek`) por compatibilidad. La carga actual de fichas usa Excel estructurado.
+- La IA se limita al chat del docente. La ficha se importa exclusivamente por Excel
+  estructurado; se retiró su configuración de OCR y extracción por IA.
 - La IA nunca aprueba, bloquea ni escribe sola. Si falla, solo se pierde la ayuda de IA
   (ADR-0003).
 

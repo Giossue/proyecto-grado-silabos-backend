@@ -215,8 +215,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.ficha-imports.template');
             Route::post('coordination/ficha-imports/spreadsheet', [FichaImportsController::class, 'spreadsheet'])
                 ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.coordination.ficha-imports.spreadsheet');
-            Route::post('coordination/ficha-imports', [FichaImportsController::class, 'store'])
-                ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.coordination.ficha-imports.store');
             Route::post('coordination/ficha-imports/{import}/apply', [FichaImportsController::class, 'apply'])
                 ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.ficha-imports.apply');
             Route::delete('coordination/ficha-imports/{import}', [FichaImportsController::class, 'destroy'])

@@ -4,15 +4,14 @@
 
 - credenciales, sesiones, 2FA y asignaciones de rol;
 - datos personales de usuarios, incluida la formación del docente;
-- estructura académica, malla, fichas de asignatura y los documentos subidos para
-  importarlas;
+- estructura académica, malla, fichas de asignatura y el contenido del Excel de importación;
 - borradores, revisiones de Coordinación y Biblioteca, comentarios y aprobaciones;
 - plantilla del sílabo, DOCX y PDF generados y sus huellas;
 - PDF firmados, datos del certificado de cada firmante y la lista de entidades
   certificadoras de confianza;
 - archivo `.p12` y su clave, que solo existen en el navegador del firmante;
 - auditoría, conversaciones con la IA y avisos;
-- secretos de base, almacenamiento, correo, IA y OpenParser;
+- secretos de base, almacenamiento, correo e IA;
 - disponibilidad del sistema durante los plazos académicos.
 
 ## Fronteras
@@ -21,10 +20,9 @@
 2. Laravel ↔ PostgreSQL;
 3. Laravel/worker ↔ Redis;
 4. aplicación ↔ almacenamiento privado;
-5. worker ↔ proveedor de IA alojado (chat e importaciones históricas de fichas);
-6. worker ↔ OpenParser (OCR de PDF de fichas);
-7. worker ↔ Gotenberg (DOCX a PDF);
-8. operadores ↔ despliegue y respaldos.
+5. worker ↔ proveedor de IA alojado (chat del docente);
+6. worker ↔ Gotenberg (DOCX a PDF);
+7. operadores ↔ despliegue y respaldos.
 
 ## Amenazas prioritarias
 
@@ -44,14 +42,14 @@
 | Revisión manipulada | Un sílabo aprobado se cambia fuera del flujo | aprobaciones y auditoría de solo inserción, huella, regeneración solo por cambios de plantilla, malla o ficha |
 | Carrera / reintento | Dos envíos o aprobaciones a la vez | bloqueo de fila, versión, idempotencia, transacción |
 | Trabajo repetido | Un job duplica efectos | `ShouldBeUnique`, `RunsOnce`, estado persistido |
-| Prompt injection | Un documento de ficha o un mensaje ordena ignorar reglas | evidencia delimitada como datos no confiables, sin herramientas, salida JSON validada |
+| Prompt injection | El contenido del sílabo o un mensaje ordena ignorar reglas | evidencia delimitada como datos no confiables, sin herramientas, salida JSON validada |
 | Referencia inventada | La IA cita evidencia inexistente | solo se aceptan citas de evidencias enviadas |
-| Decisión encubierta de IA | La IA intenta aprobar o cambiar estados | la IA solo devuelve texto o una propuesta; aplicar la ficha es una acción humana aparte |
+| Decisión encubierta de IA | La IA intenta aprobar o cambiar estados | el chat solo devuelve texto; el docente decide qué usar |
 | SSRF / proveedor externo | Una URL manipulada desvía contenido o la clave | URL definida solo por operación, HTTPS, sin credenciales embebidas ni redirecciones; clave en secreto de despliegue |
-| Tratamiento por terceros | Borradores, preguntas y documentos de importaciones históricas salen hacia la IA u OpenParser | ambos desactivados por defecto, activación explícita, contexto mínimo; base legal pendiente (PV-12) |
+| Tratamiento por terceros | Borradores y preguntas del chat salen hacia la IA | desactivada por defecto, activación explícita, contexto mínimo; base legal pendiente (PV-12) |
 | Exfiltración por logs | Prompts o documentos aparecen en logs | minimización, acceso y retención controlados |
 | Pérdida de datos | Base o archivos destruidos | respaldos aislados, restauración probada (PV-11), mínimo privilegio |
-| Denegación de servicio | IA, OCR y exportación agotan los workers | colas separadas, límites por actor, tamaño y tiempo, timeouts |
+| Denegación de servicio | Chat de IA y exportación agotan los workers | colas separadas, límites por actor, tamaño y tiempo, timeouts |
 
 ## Casos de abuso obligatorios
 
@@ -59,7 +57,7 @@
 - coordinador accede a otra carrera;
 - docente manipula el estado o el identificador de la revisión;
 - descarga con sesión revocada o sin permiso;
-- documento de ficha con texto que da instrucciones a la IA;
+- contenido del sílabo con texto que da instrucciones a la IA;
 - archivo con extensión permitida y contenido distinto;
 - PDF firmado por otra persona, vencido o que no parte del documento vigente;
 - misma petición enviada en paralelo;

@@ -16,11 +16,14 @@ IA, OCR, Redis ni trabajos de cola. Funciona con `AI_DRIVER=disabled`.
   elegidos, con la confirmación de regeneración existente cuando corresponda.
 - `DELETE /api/v1/coordination/ficha-imports/{import}`: descarta la vista previa.
 
-La importación nueva identifica `format=ficha_xlsx_v1`. Los registros anteriores
-devuelven `format=null`. Los demás campos JSON se conservan. El POST histórico de
-documentos permanece por compatibilidad y está marcado como obsoleto en OpenAPI;
-no se ofrece en la interfaz nueva. Los trabajos anteriores pueden terminar y sus
-propuestas todavía se pueden consultar, descartar y aplicar.
+La importación identifica `format=ficha_xlsx_v1`. El contrato conserva estado,
+metadatos del archivo, campos, materias, comparación, cobertura y campos pendientes.
+Se retiraron el POST de documentos y los datos de lectura OCR, progreso asíncrono,
+extracción y tiempos. La SPA no hace consultas periódicas.
+
+Solo se consultan, reemplazan, aplican y descartan vistas previas Excel. Los registros
+históricos permanecen en la base, pero no se ofrecen ni bloquean cargas nuevas.
+No se modificaron migraciones aplicadas ni se borraron fichas existentes.
 
 ## Libro
 
@@ -66,7 +69,7 @@ el archivo no se conserva. Preparar la vista previa no modifica `valores_campo`.
 conserva los encabezados de las tablas y respeta los permisos de edición docente.
 Si ninguna celda de una materia seleccionada se puede aplicar, rechaza la operación.
 `InProgressWork` exige confirmación para rehacer sílabos en curso y no toca procesos
-cerrados. Las importaciones en ejecución no se reemplazan por otra carga.
+cerrados. Preparar un nuevo Excel descarta la vista previa Excel anterior de la carrera.
 
 ## Evidencia local
 

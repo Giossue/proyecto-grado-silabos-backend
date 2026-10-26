@@ -154,8 +154,8 @@ y el botón «Documentos» (DOC-10).
   5. seleccionar materias y campos y «Aplicar a N materias», o «Descartar».
 - Los campos vacíos conservan sus valores actuales. El servidor señala hoja y celda
   de los errores; si cambió la estructura, exige descargar una plantilla nueva.
-- El flujo funciona sin IA ni OCR. Las importaciones anteriores que sigan en proceso
-  conservan su estado de lectura y la acción de cancelación al pie del diálogo.
+- El flujo funciona sin IA, OCR ni cola. Solo se ofrecen vistas previas Excel; la carga
+  antigua de documentos y su progreso asíncrono fueron retirados.
 - Con la convocatoria de la carrera abierta, la ficha y la importación quedan bloqueadas.
 
 ### DOC-04 Sílabo

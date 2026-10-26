@@ -16,8 +16,8 @@ Stack:
 - Archivos en un disco privado.
 - Gotenberg convierte el Word del sílabo en PDF.
 - IA con un proveedor externo configurable (`AI_DRIVER`, apagado por defecto) para el
-  chat. La ficha se importa con una plantilla Excel; OpenParser queda por compatibilidad
-  con la carga de documentos anterior.
+  chat. La ficha se importa exclusivamente con una plantilla Excel generada desde los
+  campos actuales de Coordinación, sin OCR ni extracción por IA.
 - Despliegue en Dokploy: un push a `main` despliega y ejecuta las migraciones.
 
 ## Lee antes de trabajar

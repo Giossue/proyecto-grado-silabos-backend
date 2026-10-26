@@ -21,7 +21,7 @@ proxy con TLS (Dokploy)
 - Un push a `main` dispara el despliegue y el arranque aplica las migraciones.
 - Frontend y backend son imágenes distintas. Se despliegan versiones compatibles de
   ambas.
-- El proveedor de IA y OpenParser son servicios externos por HTTPS.
+- El proveedor de IA del chat es un servicio externo por HTTPS.
 
 ## Arranque del backend
 
@@ -38,7 +38,7 @@ Como la configuración queda en caché, un cambio de variables exige redesplegar
 
 ## Archivos persistentes
 
-Exportaciones, PDF firmados, logos, importaciones de ficha y el paquete de entidades
+Exportaciones, PDF firmados, logos y el paquete de entidades
 certificadoras viven en `storage/app/private` (disco `private`). Monte un volumen
 persistente en `/var/www/html/storage/app`; sin él, cada despliegue los borra.
 
@@ -68,8 +68,6 @@ Hoy solo se usan `critica`, `documentos`, `ia` y `general` (correo de activació
 | `PlatformSmokeJob` | `critica` | 30 s | 3 |
 | `GenerateSyllabusExportJob` | `documentos` | 120 s | 3 |
 | `AnswerSyllabusChatJob` | `ia` | 60 s | 3 |
-| `ExtractSubjectFichaJob` | `ia` | 240 s | 2 |
-| `PrepareFichaImportJob` | `ia` | 900 s | 1 |
 
 Detalle de cada trabajo: [queues-and-jobs.md](queues-and-jobs.md).
 
@@ -80,21 +78,15 @@ Redis vuelve a entregar un trabajo reservado cuando pasan `retry_after` segundos
 trabajo más largo. Si no, el trabajo puede ejecutarse dos veces o marcarse como fallido
 mientras sigue corriendo.
 
-- El trabajo más largo es `PrepareFichaImportJob` con 900 s.
-- `.env.example` y `config/queue.php` usan 960 s.
-- **Riesgo conocido:** con 180 s, una lectura de fichas que dure más de 180 s puede
-  entregarse otra vez a un segundo worker. Con `tries = 1`, esa segunda entrega marca
-  la importación como `fallida` aunque la primera siga bien. Con el único worker actual
-  el riesgo aparece cuando hay otro proceso tomando trabajos: una réplica, o el
-  contenedor nuevo de un despliegue mientras el viejo sigue trabajando.
-- Requisito: `REDIS_QUEUE_RETRY_AFTER` mayor que 900 (por ejemplo 960) en todo
-  entorno que use la importación de fichas. Verificarlo también en las variables de
-  Dokploy: un valor explícito de 180 conserva el riesgo aunque cambie el valor por defecto.
+- El trabajo más largo actual es `GenerateSyllabusExportJob` con 120 s.
+- `.env.example` y `config/queue.php` conservan 960 s.
+- `REDIS_QUEUE_RETRY_AFTER` debe superar 120 s. El retiro del OCR no requiere cambiar
+  una configuración que ya cumpla esta condición.
 
 ### Otros límites del worker
 
-- Un solo worker: mientras corre una lectura de fichas (hasta 900 s), las exportaciones
-  y el chat esperan.
+- Un solo worker: mientras corre una exportación (hasta 120 s), el chat y los demás
+  trabajos esperan.
 - `supervisord` espera 65 s (`stopwaitsecs`) al detener el worker. Un despliegue
   durante un trabajo largo lo corta; el trabajo se reintenta o queda `fallido` según
   sus intentos.
@@ -120,7 +112,6 @@ imagen, el repositorio o el frontend.
 | PDF | `GOTENBERG_URL`, `GOTENBERG_TIMEOUT` (90 por defecto) |
 | Firma | `SIGNATURE_TRUSTED_CA_BUNDLE`, `SIGNATURE_REQUIRE_HOLDER_MATCH` |
 | IA | `AI_DRIVER`, `AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY`, `AI_CONNECT_TIMEOUT`, `AI_TIMEOUT` |
-| OCR | `OPENPARSER_ENABLED`, `OPENPARSER_BASE_URL`, `OPENPARSER_API_KEY`, `OPENPARSER_OCR_MODEL`, `OPENPARSER_CONNECT_TIMEOUT`, `OPENPARSER_TIMEOUT`, `OPENPARSER_POLL_DELAY`, `OPENPARSER_MAX_WAIT` |
 
 El frontend solo necesita `PUBLIC_API_URL` (origen de la API, sin ruta).
 
@@ -140,24 +131,6 @@ php artisan signatures:build-trust-bundle <certificados .cer/.crt/.pem> \
 
 El comando muestra la huella de cada certificado para compararla con la que publica
 la entidad. Qué entidades cargar: [firma-electronica-entidades.md](../runbooks/firma-electronica-entidades.md).
-
-### OCR con OpenParser (compatibilidad histórica)
-
-La carga actual de fichas usa Excel estructurado y no requiere estas variables ni
-un proveedor de IA. Esta configuración solo afecta a la importación histórica de
-documentos que permanece en la API; ver [ficha-excel.md](ficha-excel.md).
-
-| Variable | Por defecto | Efecto |
-|---|---|---|
-| `OPENPARSER_ENABLED` | `false` | Debe activarse para importar PDF. Todos los PDF de la ficha se envían al OCR; no hay extracción local alternativa. |
-| `OPENPARSER_BASE_URL` | `https://api.openparser.dev` | Debe ser `https://`; si no, el OCR queda apagado. |
-| `OPENPARSER_API_KEY` | vacío | Sin clave, el OCR queda apagado. |
-| `OPENPARSER_OCR_MODEL` | `paddleocr-vl-1.6` | Modelo de OCR. |
-| `OPENPARSER_CONNECT_TIMEOUT` / `OPENPARSER_TIMEOUT` | 5 / 120 s | Tiempos de cada petición HTTP. |
-| `OPENPARSER_POLL_DELAY` | 5 s | Espera entre consultas de estado. |
-| `OPENPARSER_MAX_WAIT` | 780 s | Espera máxima por documento. Debe quedar por debajo de los 900 s de `PrepareFichaImportJob`. |
-
-Más detalle en [ai-service.md](ai-service.md).
 
 ## Gotenberg (PDF igual al Word)
 

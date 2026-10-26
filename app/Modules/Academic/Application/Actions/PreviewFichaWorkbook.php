@@ -27,20 +27,16 @@ final class PreviewFichaWorkbook
         $careerId = $role->carrera_id;
         $this->locks->assertCareerEditable($careerId);
         $started = now();
-        $clock = microtime(true);
         $definition = $this->context->for($careerId);
         $subjects = $this->workbook->read($file->getRealPath(), $definition);
 
-        return DB::transaction(function () use ($careerId, $actor, $role, $file, $definition, $subjects, $started, $clock): FichaImport {
+        return DB::transaction(function () use ($careerId, $actor, $role, $file, $definition, $subjects, $started): FichaImport {
             DB::table('carreras')->where('carrera_id', $careerId)->lockForUpdate()->first();
             $this->locks->assertCareerEditable($careerId);
             if ($this->context->for($careerId)->fingerprint() !== $definition->fingerprint()) {
                 throw ValidationException::withMessages(['file' => 'La plantilla o las materias cambiaron durante la lectura. Descargue un Excel nuevo.']);
             }
-            if (FichaImport::query()->where('carrera_id', $careerId)->whereIn('estado_importacion', [FichaImport::PENDING, FichaImport::RUNNING])->exists()) {
-                throw ValidationException::withMessages(['file' => 'Hay una importación en curso. Espere a que termine o cancélela desde el diálogo.']);
-            }
-            FichaImport::query()->where('carrera_id', $careerId)->whereIn('estado_importacion', [FichaImport::READY, FichaImport::FAILED])
+            FichaImport::query()->where('carrera_id', $careerId)->where('propuesta_importacion->format', FichaWorkbook::FORMAT)->where('estado_importacion', FichaImport::READY)
                 ->get()->each(fn (FichaImport $old) => $this->imports->execute($old));
             $import = FichaImport::query()->create([
                 'carrera_id' => $careerId, 'solicitado_por' => $actor->id, 'estado_importacion' => FichaImport::READY,
@@ -48,7 +44,6 @@ final class PreviewFichaWorkbook
                 'solicitado_en' => $started,
                 'propuesta_importacion' => [
                     'format' => FichaWorkbook::FORMAT, 'fingerprint' => $definition->fingerprint(), 'subjects' => $subjects,
-                    'timing' => ['started_at' => $started->toIso8601String(), 'ready_at' => now()->toIso8601String(), 'reading_ms' => (int) round((microtime(true) - $clock) * 1000)],
                 ],
             ]);
             $this->audit->execute($actor->id, $role->id, 'academico.ficha_importacion_solicitada', 'carrera', $careerId, 'exito', ['documents' => 1, 'method' => FichaWorkbook::FORMAT]);

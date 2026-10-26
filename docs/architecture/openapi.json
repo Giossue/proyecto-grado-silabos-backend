@@ -4694,86 +4694,6 @@
                         "sanctumCookie": []
                     }
                 ]
-            },
-            "post": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_ficha-imports_store",
-                "summary": "api.v1.coordination.ficha-imports.store",
-                "responses": {
-                    "202": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": [
-                                        "import"
-                                    ],
-                                    "properties": {
-                                        "available": {
-                                            "type": "boolean"
-                                        },
-                                        "message": {
-                                            "type": "string"
-                                        },
-                                        "import": {
-                                            "oneOf": [
-                                                {
-                                                    "$ref": "#/components/schemas/FichaImport"
-                                                },
-                                                {
-                                                    "type": "null"
-                                                }
-                                            ]
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "deprecated": true,
-                "description": "Carga histórica de documentos con IA. La interfaz usa la plantilla y vista previa Excel.",
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "files"
-                                ],
-                                "properties": {
-                                    "files": {
-                                        "type": "array",
-                                        "minItems": 1,
-                                        "maxItems": 6,
-                                        "items": {
-                                            "type": "string",
-                                            "format": "binary"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
             }
         },
         "/api/v1/coordination/ficha-imports/spreadsheet": {
@@ -6895,8 +6815,7 @@
                     "coverage",
                     "missing",
                     "replaces",
-                    "current",
-                    "extraction"
+                    "current"
                 ],
                 "properties": {
                     "subject_id": {
@@ -6917,10 +6836,8 @@
                     },
                     "state": {
                         "enum": [
-                            "pendiente",
                             "lista",
-                            "sin_evidencia",
-                            "fallida"
+                            "sin_evidencia"
                         ]
                     },
                     "values": {
@@ -6986,28 +6903,9 @@
                                 },
                                 "reason": {
                                     "enum": [
-                                        "sin_contexto",
-                                        "no_encontrado",
-                                        "estructura_invalida",
-                                        "servicio_no_disponible"
+                                        "no_encontrado"
                                     ]
                                 }
-                            }
-                        }
-                    },
-                    "extraction": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "properties": {
-                            "attempts": {
-                                "type": "integer",
-                                "minimum": 0
-                            },
-                            "duration_ms": {
-                                "type": "integer",
-                                "minimum": 0
                             }
                         }
                     }
@@ -7017,14 +6915,12 @@
                 "type": "object",
                 "required": [
                     "id",
+                    "format",
                     "state",
                     "error",
                     "documents",
-                    "reading",
-                    "progress",
                     "fields",
-                    "subjects",
-                    "timing"
+                    "subjects"
                 ],
                 "properties": {
                     "id": {
@@ -7032,21 +6928,14 @@
                         "format": "uuid"
                     },
                     "format": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
+                        "type": "string",
                         "enum": [
-                            "ficha_xlsx_v1",
-                            null
+                            "ficha_xlsx_v1"
                         ]
                     },
                     "state": {
                         "enum": [
-                            "pendiente",
-                            "en_ejecucion",
                             "lista",
-                            "fallida",
                             "aplicada",
                             "descartada"
                         ]
@@ -7073,52 +6962,6 @@
                                     "type": "integer",
                                     "minimum": 0
                                 }
-                            }
-                        }
-                    },
-                    "reading": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "properties": {
-                            "index": {
-                                "type": "integer",
-                                "minimum": 0
-                            },
-                            "total": {
-                                "type": "integer",
-                                "minimum": 0
-                            },
-                            "name": {
-                                "type": "string"
-                            },
-                            "ocr": {
-                                "type": [
-                                    "string",
-                                    "null"
-                                ]
-                            },
-                            "started_at": {
-                                "type": "string",
-                                "format": "date-time"
-                            }
-                        }
-                    },
-                    "progress": {
-                        "type": "object",
-                        "required": [
-                            "done",
-                            "total"
-                        ],
-                        "properties": {
-                            "done": {
-                                "type": "integer",
-                                "minimum": 0
-                            },
-                            "total": {
-                                "type": "integer",
-                                "minimum": 0
                             }
                         }
                     },
@@ -7151,52 +6994,6 @@
                         "type": "array",
                         "items": {
                             "$ref": "#/components/schemas/FichaImportSubject"
-                        }
-                    },
-                    "timing": {
-                        "type": [
-                            "object",
-                            "null"
-                        ],
-                        "properties": {
-                            "started_at": {
-                                "type": "string",
-                                "format": "date-time"
-                            },
-                            "ready_at": {
-                                "type": "string",
-                                "format": "date-time"
-                            },
-                            "reading_ms": {
-                                "type": "integer",
-                                "minimum": 0
-                            },
-                            "documents": {
-                                "type": "array",
-                                "items": {
-                                    "type": "object",
-                                    "properties": {
-                                        "index": {
-                                            "type": "integer",
-                                            "minimum": 0
-                                        },
-                                        "method": {
-                                            "enum": [
-                                                "pdf_text",
-                                                "ocr",
-                                                "excel"
-                                            ]
-                                        },
-                                        "duration_ms": {
-                                            "type": "integer",
-                                            "minimum": 0
-                                        },
-                                        "cached": {
-                                            "type": "boolean"
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }

@@ -17,8 +17,8 @@ API Laravel 13 (este repositorio, monolito modular)
   ├─ Redis: colas critica, documentos e ia; caché
   ├─ Disco privado: logos, Word, PDF y firmas
   ├─ Gotenberg: Word → PDF
-  ├─ Proveedor de IA (AI_DRIVER): chat y compatibilidad de fichas antiguas
-  └─ Excel estructurado para fichas; OpenParser para documentos anteriores
+  ├─ Proveedor de IA (AI_DRIVER): chat del docente
+  └─ Excel estructurado para fichas
 ```
 
 Dos artefactos: la SPA y la API (ADR-0008). La API no tiene pantallas. Un contenedor

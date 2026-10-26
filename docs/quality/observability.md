@@ -49,14 +49,14 @@ No copies el contenido completo del sílabo en la auditoría.
 ## Trabajos en cola
 
 No hay tabla de trabajos ni de trabajos fallidos. Cada recurso guarda su propio estado:
-la exportación, la importación de la ficha y el mensaje del chat. Si un trabajo falla,
+la exportación y el mensaje del chat. Si un trabajo falla,
 el recurso queda en estado fallido con una causa segura que ve el usuario.
 
 | Cola | Trabajos |
 |---|---|
 | `critica` | `PlatformSmokeJob` (verificación de la plataforma) |
 | `documentos` | `GenerateSyllabusExportJob` (Word y PDF) |
-| `ia` | `AnswerSyllabusChatJob`, `PrepareFichaImportJob`, `ExtractSubjectFichaJob` |
+| `ia` | `AnswerSyllabusChatJob` |
 | `general` (cola por defecto) | Correo de activación de la cuenta |
 
 El worker del contenedor escucha todas estas colas. Si un worker escucha solo `general`,
@@ -72,7 +72,7 @@ medir:
 - consultas lentas;
 - espera y fallos por cola;
 - duración y resultado de exportaciones e IA;
-- disponibilidad de PostgreSQL, Redis, Gotenberg, OpenParser y el proveedor de IA.
+- disponibilidad de PostgreSQL, Redis, Gotenberg y el proveedor de IA.
 
 Y alertar solo por síntomas que tengan una acción: errores sostenidos, cola detenida,
 respaldo fallido, disco casi lleno o una dependencia caída.

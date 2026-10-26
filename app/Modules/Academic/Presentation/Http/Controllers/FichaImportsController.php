@@ -8,14 +8,13 @@ use App\Modules\Academic\Application\Actions\ApplyFichaImport;
 use App\Modules\Academic\Application\Actions\DiscardFichaImport;
 use App\Modules\Academic\Application\Actions\DownloadFichaWorkbook;
 use App\Modules\Academic\Application\Actions\PreviewFichaWorkbook;
-use App\Modules\Academic\Application\Actions\RequestFichaImport;
 use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
+use App\Modules\Academic\Infrastructure\Spreadsheets\FichaWorkbook;
 use App\Modules\Academic\Presentation\Http\Requests\ApplyFichaImportRequest;
 use App\Modules\Academic\Presentation\Http\Requests\PreviewFichaWorkbookRequest;
-use App\Modules\Academic\Presentation\Http\Requests\RequestFichaImportRequest;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -32,7 +31,8 @@ class FichaImportsController extends Controller
     {
         $careerId = $this->careerId($request, $roles);
         $import = FichaImport::query()->where('carrera_id', $careerId)
-            ->whereIn('estado_importacion', [FichaImport::PENDING, FichaImport::RUNNING, FichaImport::READY, FichaImport::FAILED])
+            ->where('propuesta_importacion->format', FichaWorkbook::FORMAT)
+            ->where('estado_importacion', FichaImport::READY)
             ->latest('solicitado_en')->first();
 
         return response()->json(['available' => true, 'import' => $import === null ? null : $this->detail($import, $profile)]);
@@ -53,15 +53,6 @@ class FichaImportsController extends Controller
         abort_unless($actor instanceof User && $file instanceof UploadedFile, 400);
 
         return response()->json(['import' => $this->detail($action->execute($file, $actor, $request), $profile)]);
-    }
-
-    public function store(RequestFichaImportRequest $request, RequestFichaImport $action, SubjectProfileFields $profile): JsonResponse
-    {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $files = array_values(array_filter((array) $request->file('files', [])));
-
-        return response()->json(['import' => $this->detail($action->execute($files, $actor, $request), $profile)], 202);
     }
 
     public function apply(string $import, ApplyFichaImportRequest $request, ApplyFichaImport $action, SubjectProfileFields $profile): JsonResponse
@@ -113,15 +104,11 @@ class FichaImportsController extends Controller
             'state' => $import->estado_importacion,
             'error' => $import->mensaje_error_importacion,
             'documents' => array_map(fn (array $document): array => ['name' => $document['name'], 'size' => $document['size']], $import->documentos_importacion),
-            'reading' => $import->estado_importacion === FichaImport::RUNNING ? ($import->propuesta_importacion['reading'] ?? null) : null,
-            'progress' => ['done' => count(array_filter($subjects, fn (array $entry): bool => $entry['state'] !== 'pendiente')), 'total' => count($subjects)],
             'fields' => $fields,
-            'timing' => $import->propuesta_importacion['timing'] ?? null,
             'subjects' => array_map(fn (array $entry): array => [
                 'subject_id' => $entry['subject_id'], 'code' => $entry['code'], 'name' => $entry['name'], 'cycle' => $entry['cycle'],
                 'state' => $entry['state'], 'values' => (object) ($entry['values'] ?? []), 'replaces' => isset($current[$entry['subject_id']]),
                 'current' => (object) ($current[$entry['subject_id']] ?? []),
-                'extraction' => $entry['extraction'] ?? null,
                 ...$this->values->coverage($entry, $fields),
             ], $subjects),
         ];

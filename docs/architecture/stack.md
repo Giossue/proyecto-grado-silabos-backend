@@ -19,7 +19,7 @@
 | PDF | Gotenberg (LibreOffice) a partir del Word; sin Gotenberg, PDF de texto simple |
 | Lectura de Excel | PhpSpreadsheet y OpenSpout |
 | Fichas de carrera | Excel estructurado generado y leído con PhpSpreadsheet |
-| Lectura histórica de documentos | OCR de OpenParser para PDF; lectura local de Excel |
+| Sellos de firma PDF | `pdftotext` (Poppler) para localizar la posición de cada sello |
 | IA | Proveedor externo configurable por `AI_DRIVER` (ver [ai-service.md](ai-service.md)) |
 | Correo | Resend o SMTP según `MAIL_MAILER` |
 | Archivos | Disco `private` en `storage/app/private` |

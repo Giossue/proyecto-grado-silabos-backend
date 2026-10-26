@@ -48,11 +48,11 @@ Verifique al menos:
   repositorio;
 - `SESSION_SECURE_COOKIE=true` y `TRUSTED_PROXIES` con la IP real del proxy;
 - usuario PostgreSQL de ejecución sin DDL, red restringida y `DB_TIMEZONE=UTC`;
-- `QUEUE_CONNECTION=redis` y `REDIS_QUEUE_RETRY_AFTER` mayor que 900 s, el `timeout` de
-  `PrepareFichaImportJob`;
+- `QUEUE_CONNECTION=redis` y `REDIS_QUEUE_RETRY_AFTER` mayor que 120 s, el `timeout` de
+  `GenerateSyllabusExportJob`;
 - volumen persistente en `storage/app`; nada funcional bajo `public/`;
 - `GOTENBERG_URL` apuntando al servicio interno;
-- `AI_DRIVER=disabled` y `OPENPARSER_ENABLED=false` mientras no haya proveedor aprobado;
+- `AI_DRIVER=disabled` mientras no haya proveedor de chat aprobado;
 - `SIGNATURE_REQUIRE_HOLDER_MATCH=true` y, si se exige, `SIGNATURE_TRUSTED_CA_BUNDLE`;
 - correo, respaldo, retención y observabilidad resueltos antes de producción.
 

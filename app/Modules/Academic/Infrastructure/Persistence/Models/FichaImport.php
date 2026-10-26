@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $solicitado_por
  * @property string $estado_importacion
  * @property list<array{name: string, path: string, size: int}> $documentos_importacion
- * @property array{format?: string, fingerprint?: string, subjects?: list<array<string, mixed>>, reading?: array{index: int, total: int, name: string, ocr: string|null, started_at: string}, timing?: array<string, mixed>}|null $propuesta_importacion
+ * @property array{format?: string, fingerprint?: string, subjects?: list<array<string, mixed>>}|null $propuesta_importacion
  * @property string|null $mensaje_error_importacion
  * @property CarbonImmutable $solicitado_en
  * @property CarbonImmutable|null $aplicado_en
@@ -26,13 +26,7 @@ class FichaImport extends Model
 
     protected const LEGACY_COLUMN_ALIASES = ['id' => 'importacion_ficha_id'];
 
-    public const PENDING = 'pendiente';
-
-    public const RUNNING = 'en_ejecucion';
-
     public const READY = 'lista';
-
-    public const FAILED = 'fallida';
 
     public const APPLIED = 'aplicada';
 
@@ -63,10 +57,5 @@ class FichaImport extends Model
     public function requestedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'solicitado_por');
-    }
-
-    public function inProgress(): bool
-    {
-        return in_array($this->estado_importacion, [self::PENDING, self::RUNNING, self::READY, self::FAILED], true);
     }
 }

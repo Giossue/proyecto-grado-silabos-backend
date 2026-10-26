@@ -41,7 +41,7 @@ La única regla automática está en `tests/Architecture/ModuleBoundariesTest.ph
 - Las lecturas que otro módulo necesita se exponen en `Application/Queries`
   (`SyllabusNavigationLookup`, `AiHistorySyllabusLookup`, `ExportArtifactLookup`).
 - Las integraciones externas van detrás de un contrato del dominio:
-  `AiChatGateway`, `FichaExtractionGateway` y `DocumentRenderer`.
+  `AiChatGateway` y `DocumentRenderer`.
   `AppServiceProvider` elige la implementación según la configuración.
 - No hay eventos de dominio ni listeners. Los efectos se resuelven así:
   - auditoría: `RecordAuditEvent` dentro de la misma transacción;

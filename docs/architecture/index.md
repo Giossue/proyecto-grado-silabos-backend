@@ -14,7 +14,7 @@
 | Generar Word/PDF o firmar | [files-and-documents.md](files-and-documents.md) |
 | Cambiar la plantilla del sílabo | [template-json.md](template-json.md) y [ADR-0011](adr/0011-template-as-data.md) |
 | Importar las fichas de la carrera | [ficha-excel.md](ficha-excel.md) |
-| Trabajar con IA u OCR | [ai-service.md](ai-service.md) |
+| Trabajar con el chat de IA | [ai-service.md](ai-service.md) |
 | Desplegar o cambiar variables | [deployment.md](deployment.md) |
 
 ## Decisiones (ADR)

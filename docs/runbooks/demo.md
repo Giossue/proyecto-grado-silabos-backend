@@ -31,8 +31,8 @@ Opcional en `.env`, antes de levantar los procesos:
   proveedor de IA, OCR ni cola.
 - `GOTENBERG_URL=http://127.0.0.1:3000` con `docker run --rm -p 3000:3000 gotenberg/gotenberg:8`:
   el PDF sale igual al Word. Sin Gotenberg el PDF es de texto simple.
-- `REDIS_QUEUE_RETRY_AFTER=960` solo si procesa importaciones históricas de documentos (ver
-  `docs/plans/pendientes.md`).
+- `REDIS_QUEUE_RETRY_AFTER` debe superar los 120 s de la exportación; el valor
+  predeterminado de 960 s cumple esa condición.
 
 Levante dos procesos en terminales separadas:
 
