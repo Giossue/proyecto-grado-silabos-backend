@@ -69,6 +69,25 @@ casos y datos existentes; quedan pendientes la ejecución y la aceptación visua
 formato nuevo, del Excel y del Word/PDF. Las referencias Word anteriores se mantienen
 para comprobar compatibilidad histórica cuando se ejecute la suite.
 
+## Activación realizada
+
+El 2026-10-26 se activó en `silabos_ueb_db`, después del push de backend
+`e44bb065` y frontend `8250323`. Se verificaron identidad y tablas centinela, el
+propietario de la aplicación y el respaldo privado
+`antes-activar-respuestas-20261026T140201Z.dump` (SHA-256
+`7178b76e083c7c45ae2d170bd250d680d0f997e8ce47ca0601d6dd1777f698b3`).
+
+La transacción se ejecutó como el propietario verificado. Comparó la huella de la
+plantilla preparada, todos los valores de ficha, los campos existentes, los estilos,
+las variables, el esquema y los permisos antes de confirmar. La lectura posterior
+confirmó 20 campos, siete de Coordinación, 16 valores preservados, cero sílabos,
+32 tablas, 195 migraciones y un evento de auditoría de activación. No se ejecutaron
+migraciones. La convocatoria institucional permaneció pausada.
+
+El push activa el despliegue configurado en Dokploy; esta evidencia no confirma la
+terminación del despliegue ni una aceptación visual en el sitio. Coordinación debe
+completar el catálogo de unidades antes de reanudar.
+
 ## Trazabilidad
 
 RF-017..033, RF-037..045; RN-009..012; CU-04, CU-05, CU-07, CU-09;

@@ -61,6 +61,17 @@ Word anteriores siguen cubriendo el formato anterior. La ejecución de pruebas y
 aceptación visual del formato nuevo, sus filas, el Excel y el Word/PDF están pendientes.
 No debe interpretarse la evidencia anterior como verificación automática de este cambio.
 
+La activación en `silabos_ueb_db` conservó los 16 valores de ficha y los IDs de los
+campos anteriores; quedaron 20 campos, siete de Coordinación y 32 tablas. Se verificó
+un respaldo antes de la transacción y los permisos después. La convocatoria sigue
+pausada y no hay sílabos. El detalle de la activación está en ADR-0012.
+
+Pasaron PHPStan, Pint, TypeScript, ESLint de los archivos cambiados, el escaneo de
+secretos y `git diff --check`; se regeneró OpenAPI. El chequeo directo del contrato
+frontend sigue señalando las dos rutas dinámicas previas de `spreadsheet-import.ts`
+(líneas 12 y 16), ajenas a este cambio. No se ejecutaron suites ni builds.
+
+
 ## Series CP
 
 | Serie | Qué se puede afirmar | Qué no se puede afirmar |

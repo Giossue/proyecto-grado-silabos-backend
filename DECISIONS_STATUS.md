@@ -104,6 +104,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   encabezados, columnas y estilos se conservan. Una tabla con encabezados y una sola
   fila vacía permite variar filas; las demás tablas son fijas. No hay permisos nuevos
   por celda. Las definiciones anteriores se mantienen hasta actualizar la plantilla.
+  La plantilla activa de Sílabos se actualizó el 2026-10-26 conservando campos y valores;
+  la convocatoria sigue pausada mientras Coordinación completa las unidades.
 - Administración la crea en blanco o con el formato oficial. La edita en un editor
   visual tipo Word. «Editar» es la acción principal; «Opciones avanzadas» contiene
   «Editar JSON», que abre el diálogo de edición, exportación e importación JSON.
