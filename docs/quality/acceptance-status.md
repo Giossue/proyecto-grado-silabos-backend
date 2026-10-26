@@ -51,6 +51,16 @@ acciones visibles sin desbordamiento global (`tests/e2e/ficha-import.spec.ts`). 
 capturas de 360 px se generan en `test-results/`, sin datos reales. Esta evidencia no
 sustituye la revisión con lector de pantalla ni otros navegadores y dispositivos (PV-19).
 
+## Cambio del 26 de octubre de 2026: respuestas protegidas
+
+Se implementó la separación entre formato y respuestas en API, ficha, Excel y sílabo.
+La nueva plantilla oficial separa nombres/resultados de unidades y planificación
+semanal. Se adaptaron pruebas y datos existentes sin añadir ni ejecutar casos nuevos;
+PHPStan, TypeScript, estilo y contrato generado se revisan por separado. Las referencias
+Word anteriores siguen cubriendo el formato anterior. La ejecución de pruebas y la
+aceptación visual del formato nuevo, sus filas, el Excel y el Word/PDF están pendientes.
+No debe interpretarse la evidencia anterior como verificación automática de este cambio.
+
 ## Series CP
 
 | Serie | Qué se puede afirmar | Qué no se puede afirmar |

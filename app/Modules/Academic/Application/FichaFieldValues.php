@@ -2,9 +2,11 @@
 
 namespace App\Modules\Academic\Application;
 
+use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 final class FichaFieldValues
 {
@@ -26,10 +28,28 @@ final class FichaFieldValues
         return ['coverage' => ['found' => count($values), 'total' => count($fields)], 'missing' => $missing];
     }
 
-    /** @return array{key: string, label: string, columns: list<string>} */
+    /** @return array{key: string, label: string, columns: list<string>, table: array<string, mixed>|null} */
     public function schema(FieldDefinition $field): array
     {
-        return ['key' => $field->clave, 'label' => $field->displayName(), 'columns' => $this->columns($field->contenido)];
+        return ['key' => $field->clave, 'label' => $field->displayName(), 'columns' => $this->columns($field->contenido), 'table' => FieldResponse::enabled() ? $this->table($field->contenido) : null];
+    }
+
+    /** @param array<string, mixed> $document
+     * @return array<string, mixed>|null
+     */
+    private function table(array $document): ?array
+    {
+        if (($document['type'] ?? '') === 'table') {
+            return $document;
+        }
+        foreach ($document['content'] ?? [] as $child) {
+            $table = $this->table($child);
+            if ($table !== null) {
+                return $table;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -141,6 +161,28 @@ final class FichaFieldValues
             return $template === null ? $document : $this->fillTable($template, array_values(array_slice($document['content'][0]['content'], 1)), $filled);
         }
 
+        if ($template !== null && FieldResponse::enabled() && ! FieldResponse::blank($template)) {
+            $document = FieldResponse::template($template);
+            foreach ($document['content'] as $index => $node) {
+                if (($node['type'] ?? '') === 'paragraph' && FieldResponse::blank($node)) {
+                    $parts = preg_split('/\R/u', is_array($value) ? implode("\n", $value) : (string) $value) ?: [];
+                    $content = [];
+                    foreach ($parts as $line => $text) {
+                        if ($line > 0) {
+                            $content[] = ['type' => 'hardBreak'];
+                        }
+                        if ($text !== '') {
+                            $content[] = ['type' => 'text', 'text' => $text];
+                        }
+                    }
+                    $document['content'][$index]['content'] = $content;
+
+                    return $document;
+                }
+            }
+            throw ValidationException::withMessages(['file' => 'Este campo debe completarse desde la ficha porque su contenido no es una tabla o un espacio de texto.']);
+        }
+
         return is_array($value)
             ? FreeText::fromRows([['key' => 't', 'label' => '']], array_values(array_map(fn (string $item): array => ['t' => $item], $value)))
             : FreeText::fromText((string) $value);
@@ -159,6 +201,31 @@ final class FichaFieldValues
         if (($node['type'] ?? '') === 'table') {
             $headers = array_values(array_filter($node['content'] ?? [], fn (array $row): bool => ($row['content'] ?? []) !== []
                 && array_all($row['content'], fn (array $cell): bool => ($cell['type'] ?? '') === 'tableHeader')));
+            if (FieldResponse::enabled()) {
+                $body = array_values(array_slice($node['content'], count($headers)));
+                if (! FieldResponse::listTable($node) && count($rows) !== count($body)) {
+                    throw ValidationException::withMessages(['file' => 'Conserve todas las filas de la tabla fija.']);
+                }
+                foreach ($rows as $index => &$row) {
+                    $source = $body[$index] ?? end($body);
+                    if (! is_array($source) || count($row['content']) !== count($source['content'])) {
+                        throw ValidationException::withMessages(['file' => 'Las columnas no coinciden con la plantilla.']);
+                    }
+                    foreach ($row['content'] as $column => &$cell) {
+                        $original = $source['content'][$column];
+                        if (! FieldResponse::blank($original)) {
+                            if (trim(FreeText::plainText(['type' => 'doc', 'content' => $cell['content']])) !== trim(FreeText::plainText(['type' => 'doc', 'content' => $original['content']]))) {
+                                throw ValidationException::withMessages(['file' => 'No cambie el texto fijo de la plantilla.']);
+                            }
+                            $cell = $original;
+                        } else {
+                            $cell = [...$original, 'content' => $cell['content']];
+                        }
+                    }
+                    unset($cell);
+                }
+                unset($row);
+            }
             $node['content'] = [...$headers, ...$rows];
             $filled = true;
         } elseif (isset($node['content'])) {

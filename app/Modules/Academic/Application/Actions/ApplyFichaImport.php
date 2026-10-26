@@ -7,6 +7,7 @@ use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Application\FichaWorkbookContext;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\FichaWorkbookPreview;
+use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -69,7 +70,8 @@ final class ApplyFichaImport
                         continue;
                     }
                     $document = $this->values->document($this->values->clean($value, $this->values->schema($field)['columns']), $field->contenido);
-                    if (FreeText::isEmpty(FreeText::normalize($document))) {
+                    $document = FieldResponse::normalize($field->contenido, $document);
+                    if (FieldResponse::isEmpty($field->contenido, $document)) {
                         continue;
                     }
                     FieldValue::query()->updateOrCreate(

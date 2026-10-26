@@ -158,3 +158,34 @@ aplicadas no se editan ni se revierten de forma destructiva. Una restauración r
 autorización del responsable, punto de recuperación acordado, resguardo de la base
 afectada y conciliación de archivos y colas; el script local no reemplaza ese
 procedimiento institucional.
+
+
+## Activación inicial de respuestas protegidas (ADR-0012)
+
+El despliegue no sustituye la plantilla activa. Cuando todavía no exista ningún
+sílabo, se puede aplicar la actualización inicial conservando los IDs de los campos
+y los valores de las fichas:
+
+```bash
+php artisan template:protect-responses
+php artisan template:protect-responses --apply
+```
+
+El primer comando solo muestra las condiciones. Antes de usar `--apply`, verifique
+la base de Sílabos mediante su identidad y las tablas `silabos`, `usuarios` y
+`migraciones`; compruebe un respaldo y ejecute como propietario de la aplicación.
+Use las credenciales locales solo en memoria desde `.pgpass`. La acción bloquea
+los procesos y la plantilla dentro de una transacción, exige cero sílabos en toda la
+base y rechaza procesos abiertos, catálogos en conflicto y horas personalizadas.
+La auditoría identifica el origen como mantenimiento CLI ejecutado por Sistema.
+
+Después compare los valores de ficha, los IDs de campos existentes, el esquema y
+los permisos antes/después. Solo se agrega el catálogo de unidades, se sustituye el
+contenido de planificación y se activa `response_policy: protected`. Las demás
+secciones y personalizaciones se conservan. La convocatoria sigue pausada.
+Coordinación debe completar las unidades de cada materia antes de reanudar.
+
+Si ya existen sílabos, este comando se detiene. Use el flujo administrativo habitual:
+pausa, edición y confirmación al reanudar con el conteo del trabajo que se rehace.
+No use una importación completa del JSON para simular esta actualización inicial:
+la importación conserva historia mediante campos archivados y puede crear otros IDs.

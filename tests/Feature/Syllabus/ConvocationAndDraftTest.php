@@ -750,7 +750,7 @@ class ConvocationAndDraftTest extends TestCase
         $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $field = FieldDefinition::query()->where('clave', 'unidades')->firstOrFail();
-        $block = fn (array $units): array => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'unidades', 'props' => [], 'value' => ['units' => $units]]]]];
+        $block = fn (array $units): array => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'planificacion_semanal', 'props' => [], 'value' => ['units' => $units]]]]];
         $codes = fn () => collect($this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful()->json('validation.results'))->where('field_id', $field->id)->pluck('code')->all();
 
         $wrong = $this->plannedUnits()['units'];

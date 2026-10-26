@@ -7,6 +7,7 @@ use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
@@ -49,23 +50,24 @@ class SaveSubjectProfile
             }
         }
 
-        return $this->work->replace($request, function () use ($actor, $editable, $fieldIds, $request, $subject, $values): array {
+        return $this->work->replace($request, function () use ($actor, $allowed, $editable, $fieldIds, $request, $subject, $values): array {
             $lockedSubject = Subject::query()->whereKey($subject->id)->lockForUpdate()->firstOrFail();
             $this->authorize($lockedSubject, $request);
             $this->locks->assertCareerEditable($lockedSubject->carrera_id);
 
             foreach ($fieldIds as $fieldId) {
+                $template = $allowed->get($fieldId)->contenido;
                 $current = FieldValue::query()
                     ->where('asignatura_id', $lockedSubject->id)
                     ->where('definicion_campo_id', $fieldId)
                     ->first();
                 $teacher = array_key_exists($fieldId, $editable) ? $editable[$fieldId] === true : $current?->editable_docente === true;
                 $document = match (true) {
-                    array_key_exists($fieldId, $values) => is_array($values[$fieldId]) ? FieldDocument::normalize($values[$fieldId], "values.{$fieldId}") : null,
+                    array_key_exists($fieldId, $values) => is_array($values[$fieldId]) ? FieldResponse::normalize($template, $values[$fieldId], "values.{$fieldId}") : null,
                     is_array($current?->valor) => $current->valor,
                     default => null,
                 };
-                $empty = $document === null || FieldDocument::isEmpty($document);
+                $empty = $document === null || FieldResponse::isEmpty($template, $document);
                 if ($empty && ! $teacher) {
                     $current?->delete();
 

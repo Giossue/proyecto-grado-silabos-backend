@@ -44,7 +44,7 @@ class FichaImportTest extends TestCase
         $subjectIndex = array_search($subjectId, array_column($definition->subjects, 'id'), true);
         foreach ($definition->fields as $field) {
             $sheet = $book->getSheetByName($field['sheet']);
-            $row = 4 + $subjectIndex * ($field['columns'] === [] ? 1 : 40);
+            $row = 4 + $subjectIndex * ($field['key'] === 'unidades_curriculares' ? 4 : ($field['columns'] === [] ? 1 : 40));
             if ($table && $field['key'] === 'contribucion_perfil') {
                 $sheet->fromArray([['Resuelve sistemas lineales', 'X', '', '', 'Resuelve problemas matemáticos']], null, 'D'.$row);
             } elseif (! $table && in_array($field['key'], ['descripcion', 'objetivos_especificos'], true)) {
@@ -79,8 +79,8 @@ class FichaImportTest extends TestCase
         $this->assertSame(['Analizar.', 'Aplicar.'], $entry['values']['objetivos_especificos']);
         $this->assertArrayNotHasKey('objetivo_general', $entry['values']);
         $this->assertSame(2, $entry['coverage']['found']);
-        $this->assertSame(6, $entry['coverage']['total']);
-        $this->assertCount(4, $entry['missing']);
+        $this->assertSame(7, $entry['coverage']['total']);
+        $this->assertCount(5, $entry['missing']);
 
         $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.apply'), ['file' => $file, 'fingerprint' => $detail['fingerprint'], 'file_hash' => $detail['file_hash'], 'subjects' => [$subject->id]], ['Accept' => 'application/json'])->assertOk();
 

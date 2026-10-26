@@ -151,8 +151,8 @@ class OfficialTemplateTest extends TestCase
         $exported = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->assertOk()->json();
 
         $this->assertSame(2, $exported['version']);
-        $this->assertSame(['version', 'document', 'variables', 'blocks', 'required_sections', 'library_sections', 'presets', 'sections'], array_keys($exported));
-        $this->assertSame(['identificacion', 'unidades', 'evaluacion', 'si_no', 'repetible'], array_keys($exported['blocks']));
+        $this->assertSame(['version', 'response_policy', 'document', 'variables', 'blocks', 'required_sections', 'library_sections', 'presets', 'sections'], array_keys($exported));
+        $this->assertSame(['identificacion', 'unidades', 'evaluacion', 'si_no', 'repetible', 'planificacion_semanal'], array_keys($exported['blocks']));
         $this->assertCount(12, $exported['sections']);
         $this->assertSame(['key', 'title', 'orientation', 'fields'], array_keys($exported['sections'][0]));
         $this->assertSame(['key', 'label', 'quien_llena', 'content'], array_keys($exported['sections'][0]['fields'][0]));
@@ -282,10 +282,10 @@ class OfficialTemplateTest extends TestCase
     {
         $presets = collect($this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk()->json('presets'));
 
-        $this->assertSame(['identificacion', 'planificacion', 'bibliografia_basica', 'bibliografia_complementaria', 'firmas'], $presets->pluck('key')->all());
-        $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares', 'Bibliografía básica', 'Bibliografía complementaria', 'Firmas de revisión y aprobación'], $presets->pluck('label')->all());
-        $this->assertSame(['docente', 'docente', 'docente', 'docente', 'institucional'], $presets->pluck('quien_llena')->all());
-        $this->assertSame(['asignatura', 'unidades', 'bibliografia', 'bibliografia_complementaria', 'firmas'], $presets->pluck('field_key')->all());
+        $this->assertSame(['identificacion', 'planificacion', 'bibliografia_basica', 'bibliografia_complementaria', 'firmas', 'unidades_curriculares'], $presets->pluck('key')->all());
+        $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares', 'Bibliografía básica', 'Bibliografía complementaria', 'Firmas de revisión y aprobación', 'Unidades y resultados de aprendizaje (Carrera)'], $presets->pluck('label')->all());
+        $this->assertSame(['docente', 'docente', 'docente', 'docente', 'institucional', 'coordinacion'], $presets->pluck('quien_llena')->all());
+        $this->assertSame(['asignatura', 'unidades', 'bibliografia', 'bibliografia_complementaria', 'firmas', 'unidades_curriculares'], $presets->pluck('field_key')->all());
         $this->assertSame('documentBlock', $presets->firstWhere('key', 'identificacion')['content']['content'][0]['type']);
     }
 
@@ -301,7 +301,7 @@ class OfficialTemplateTest extends TestCase
         $text = fn (string $key): string => FreeText::plainText($fields[$key]->contenido);
 
         $this->assertSame('evaluacion', $fields['indicadores_evaluacion']->contenido['content'][0]['attrs']['kind']);
-        $this->assertSame('unidades', $fields['unidades']->contenido['content'][0]['attrs']['kind']);
+        $this->assertSame('planificacion_semanal', $fields['unidades']->contenido['content'][0]['attrs']['kind']);
         foreach (['ESCALA CUALITATIVA', 'Igual a 10 o mayor o igual que 9', 'Menos de 6', 'Recuperación', 'No aprueba'] as $expected) {
             $this->assertStringContainsString($expected, $text('componentes_evaluacion'));
         }

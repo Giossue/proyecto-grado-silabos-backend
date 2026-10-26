@@ -11,6 +11,7 @@ use App\Modules\Academic\Presentation\Http\Requests\SaveSubjectProfileRequest;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplatePresentation;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\FieldResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -52,6 +53,7 @@ class SubjectProfileController extends Controller
                 'label' => $field->etiqueta,
                 'quien_llena' => $field->quien_llena,
                 'content' => $field->contenido,
+                ...(FieldResponse::enabled() ? ['template' => FieldResponse::template($field->contenido)] : []),
                 'section' => $field->block?->section?->titulo,
             ])->all(),
             'values' => (object) $values,

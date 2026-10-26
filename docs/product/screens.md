@@ -80,6 +80,8 @@ y el botón «Documentos» (DOC-10).
   quedará el sílabo. Arriba: «Opciones avanzadas» y la acción principal «Editar»,
   alineadas con el borde derecho de la primera hoja. La barra respeta su papel,
   orientación y el ancho disponible de pantalla, también durante la edición.
+- En las plantillas protegidas, el editor indica que el texto escrito queda fijo y
+  que los párrafos y celdas vacíos son espacios de respuesta. No hay controles por celda.
 - «Editar» activa la cinta de edición sobre las mismas hojas:
   - formato de texto (negrita, cursiva, subrayado, alineación, listas);
   - menú «Tabla» (insertar, filas, columnas, combinar, separar, encabezado, fondo de

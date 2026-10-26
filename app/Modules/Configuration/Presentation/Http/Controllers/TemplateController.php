@@ -81,6 +81,7 @@ class TemplateController extends Controller
 
         return response()->json([
             'version' => ImportTemplateStructureRequest::FORMAT_VERSION,
+            ...(($definition->toArray()['response_policy'] ?? null) === 'protected' ? ['response_policy' => 'protected'] : []),
             'document' => $definition->document(),
             'variables' => $definition->variables(),
             'blocks' => array_map(fn (array $block): array => [

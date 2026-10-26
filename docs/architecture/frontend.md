@@ -75,6 +75,14 @@ Así la misma imagen sirve para cualquier ambiente. Sin URL, la SPA no arranca.
 - La API publica los plazos de la convocatoria como `YYYY-MM-DD`: son fechas, no
   instantes.
 
+## Respuestas protegidas
+
+`FieldResponseEditor.ts` usa `template` de la API para dibujar el texto fijo y editar
+solo párrafos y celdas vacíos. Las tablas de listas tienen controles para añadir filas
+y quitar la última; las tablas fijas no los ofrecen. Los bloques reutilizan
+`DocumentBlockContent`. El constructor de Administración conserva `FreeTextEditor`
+completo. Los campos antiguos sin `template` conservan el comportamiento anterior.
+
 ## Plantilla en tiempo de ejecución (`src/lib/blocks`)
 
 La SPA no conoce la plantilla de antemano. Cuando la API entrega la definición

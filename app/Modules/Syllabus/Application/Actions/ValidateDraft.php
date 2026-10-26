@@ -5,7 +5,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 use App\Models\User;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\DocumentBlock;
-use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Identity\Application\ActiveRole;
@@ -17,6 +17,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ValidateDraft
 {
@@ -39,7 +40,7 @@ class ValidateDraft
                 if ($field->quien_llena === FieldDefinition::INSTITUTIONAL) {
                     continue;
                 }
-                if (FieldDocument::isEmpty($values->get($field->id)?->valor)) {
+                if (FieldResponse::isEmpty($field->contenido, $values->get($field->id)?->valor)) {
                     $fromCareer = ! FieldValue::editableByTeacher($field, $values->get($field->id));
                     $issues[] = [
                         'field_id' => $field->id,
@@ -49,6 +50,14 @@ class ValidateDraft
                             ? 'La asignatura no tiene ficha: pídala al coordinador.'
                             : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
                     ];
+                }
+                $stored = $values->get($field->id)?->valor;
+                if (FieldResponse::enabled() && is_array($stored)) {
+                    try {
+                        FieldResponse::normalize($field->contenido, $stored);
+                    } catch (ValidationException) {
+                        $issues[] = ['field_id' => $field->id, 'code' => 'estructura_respuesta_modificada', 'severity' => 'error', 'message' => 'El formato de este campo cambió. Complete las respuestas en la estructura vigente.'];
+                    }
                 }
                 $issues = [...$issues, ...$this->blockIssues($field, $values->get($field->id)?->valor, $variables)];
             }

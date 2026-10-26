@@ -34,9 +34,9 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
 
 ## Reglas por confirmar
 
-- **Unidades y horas:** Docencia debe confirmar las reglas que se exigen al enviar:
-  - las horas suman exactamente las de la asignatura;
-  - hay 16 semanas.
+- **Unidades y horas:** la concordancia por componente con las horas de la asignatura
+  fue confirmada por el responsable del producto el 2026-10-26. Docencia debe confirmar
+  la regla vigente de 16 semanas.
 
   También debe decir si valen para materias de prácticas. Falta decidir cómo se evalúa una asignatura con 0 horas
   ACD o AA (Vicerrectorado).

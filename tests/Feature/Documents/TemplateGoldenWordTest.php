@@ -19,12 +19,12 @@ class TemplateGoldenWordTest extends TestCase
         'layout' => ['margin_cm' => 1.5, 'title_font_size' => 14, 'section_font_size' => 11, 'body_font_size' => 11],
     ];
 
-    public function test_official_template_renders_the_same_word_document(): void
+    public function test_the_previous_official_template_keeps_the_same_word_document(): void
     {
         $this->assertGolden('oficial', $this->officialInput([]));
     }
 
-    public function test_official_template_without_practice_renders_the_same_word_document(): void
+    public function test_the_previous_official_template_without_practice_keeps_the_same_word_document(): void
     {
         $this->assertGolden('oficial-sin-practicas', $this->officialInput(['horas_practicas' => '0']));
     }
@@ -56,6 +56,11 @@ class TemplateGoldenWordTest extends TestCase
         $variables = [...array_column(TemplateVariables::catalog(), 'sample', 'key'), ...$overrides];
         $sections = [];
         foreach (OfficialTemplate::sections() as $section) {
+            if ($section['key'] === 'planificacion') {
+                $section['fields'] = array_values(array_filter($section['fields'], fn (array $field): bool => $field['key'] !== 'unidades_curriculares'));
+                $section['fields'][0]['label'] = 'Unidades';
+                $section['fields'][0]['content'] = DocumentHtml::fromHtml('<div data-block="unidades" data-props="{}" data-value="{}"></div>');
+            }
             $fields = [];
             foreach ($section['fields'] as $field) {
                 $document = $this->filled(FieldDocument::normalize($field['content']));

@@ -47,7 +47,7 @@ class SubjectProfileTest extends TestCase
     {
         $subject = Subject::query()->firstOrFail();
         $fields = FieldDefinition::query()->where('quien_llena', 'coordinacion')->get();
-        $values = $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->id => FreeText::fromText("Texto de {$field->clave}")])->all();
+        $values = $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->id => $this->filledTemplateValue($field, "Texto de {$field->clave}")])->all();
 
         $this->asRole('coordinador@silabos.test');
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => $values])
@@ -67,7 +67,7 @@ class SubjectProfileTest extends TestCase
         $subject = Subject::query()->firstOrFail();
         $fields = FieldDefinition::query()->where('quien_llena', 'coordinacion')->get();
         $open = $fields->first();
-        $values = $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->id => $field->is($open) ? null : FreeText::fromText("Texto de {$field->clave}")])->all();
+        $values = $fields->mapWithKeys(fn (FieldDefinition $field): array => [$field->id => $field->is($open) ? null : $this->filledTemplateValue($field, "Texto de {$field->clave}")])->all();
 
         $this->asRole('coordinador@silabos.test');
         $this->putJson(route('api.v1.academic.subjects.profile.update', $subject), ['values' => $values])

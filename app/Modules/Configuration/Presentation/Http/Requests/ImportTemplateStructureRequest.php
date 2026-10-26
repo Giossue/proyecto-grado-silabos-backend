@@ -39,6 +39,7 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'layout.section_font_size' => ['sometimes', 'integer', Rule::in($choices['section'])],
             'layout.body_font_size' => ['sometimes', 'integer', Rule::in($choices['body'])],
             ...array_fill_keys(TemplateDefinition::ROOT_KEYS, ['sometimes', 'array']),
+            'response_policy' => ['sometimes', 'in:protected'],
             'sections' => ['present', 'array', 'max:60'],
             'sections.*.key' => ['required', 'string', 'regex:/^[a-z][a-z0-9_]*$/', 'max:100', 'distinct'],
             'sections.*.title' => ['required', 'string', 'max:180'],

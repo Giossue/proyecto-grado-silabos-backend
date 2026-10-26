@@ -8,11 +8,11 @@ use App\Modules\Configuration\Domain\TemplateStyle;
 final class TemplatePresentation
 {
     /**
-     * @return array{document: array<string, mixed>, blocks: array<string, array<string, mixed>>}
+     * @return array{document: array<string, mixed>, blocks: array<string, array<string, mixed>>, response_policy?: string}
      */
     public static function definition(TemplateDefinition $definition): array
     {
-        return ['document' => $definition->document(), 'blocks' => $definition->blocks()];
+        return ['document' => $definition->document(), 'blocks' => $definition->blocks(), ...(($definition->toArray()['response_policy'] ?? null) === 'protected' ? ['response_policy' => 'protected'] : [])];
     }
 
     /**

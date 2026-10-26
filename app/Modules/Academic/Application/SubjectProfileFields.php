@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Application;
 
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -68,15 +69,16 @@ class SubjectProfileFields
      */
     public function progressBySubject(array $subjectIds): array
     {
-        $fieldIds = $this->fields()->pluck('id')->all();
+        $definitions = $this->fields()->keyBy('id');
+        $fieldIds = $definitions->keys()->all();
         $filled = [];
         if ($fieldIds !== [] && $subjectIds !== []) {
             FieldValue::query()
                 ->whereIn('asignatura_id', $subjectIds)
                 ->whereIn('definicion_campo_id', $fieldIds)
                 ->get()
-                ->each(function (FieldValue $value) use (&$filled): void {
-                    if ($value->editable_docente || (FreeText::isDocument($value->valor) && ! FreeText::isEmpty(FieldDocument::normalize($value->valor)))) {
+                ->each(function (FieldValue $value) use (&$filled, $definitions): void {
+                    if ($value->editable_docente || (FreeText::isDocument($value->valor) && ! FieldResponse::isEmpty($definitions->get($value->definicion_campo_id)->contenido, FieldDocument::normalize($value->valor)))) {
                         $filled[$value->asignatura_id][$value->definicion_campo_id] = true;
                     }
                 });

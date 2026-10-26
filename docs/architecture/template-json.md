@@ -31,6 +31,7 @@ plantilla o el código después no altera cómo se ve.
 ```json
 {
   "version": 2,
+  "response_policy": "protected",
   "document": { },
   "variables": { },
   "blocks": { },
@@ -44,6 +45,7 @@ plantilla o el código después no altera cómo se ve.
 | Clave | Qué es |
 |---|---|
 | `version` | `2`. El formato `1` (solo `sections`, `title` y `layout`) se sigue aceptando: conserva la definición actual. |
+| `response_policy` | `protected`. Las definiciones nuevas o importadas en formato 2 protegen el formato. Las definiciones antiguas guardadas sin esa clave conservan su interpretación hasta actualizarlas. |
 | `document` | Papel, letra, colores, título, encabezado y pie. |
 | `variables` | Catálogo de datos del sistema que se pueden insertar. |
 | `blocks` | Definición de cada bloque: valor, propiedades, reglas y diseño. |
@@ -53,6 +55,26 @@ plantilla o el código después no altera cómo se ve.
 | `sections` | Secciones y campos (igual que en el formato 1). |
 
 Opcionalmente, `title` y `layout` (formato 1) sobrescriben el título y los márgenes/tamaños de `document`.
+
+## Formato fijo y respuestas
+
+`response_policy` no añade interruptores al constructor. Administración edita todo el
+documento; Carrera y Docencia completan sus respuestas con los permisos de campo
+existentes. El texto no vacío y los encabezados quedan fijos. Un párrafo vacío recibe
+texto con saltos de línea; una celda de datos vacía recibe texto enriquecido. Un campo
+completamente vacío admite una respuesta documental libre. Si solo hay texto fijo,
+se añade un espacio de respuesta al final al presentar el campo.
+
+Una tabla con encabezados y una sola fila de datos totalmente vacía es una lista:
+permite añadir filas o quitar la última, conservando al menos una fila de datos.
+Las demás tablas conservan filas, columnas, celdas combinadas y estilos. El servidor
+rechaza cualquier modificación de las partes fijas. Los rótulos no cuentan como
+respuesta para completar la ficha o enviar el sílabo.
+
+La API entrega `template` junto a `value` en campos de sílabo protegidos y junto a
+`content` en campos de ficha protegidos. La SPA usa `FieldResponseEditor`; los campos
+anteriores sin `template` conservan el editor libre. Los bloques siguen usando sus
+esquemas de valor, propiedades y reglas. Detalle: ADR-0012.
 
 ## `document`
 
@@ -274,7 +296,8 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 | Bloque | Qué hace |
 |---|---|
 | `identificacion` | Tabla de identificación con datos del sistema; el docente responde la discapacidad (Sí/No, tipo y descripción). |
-| `unidades` | Cuatro unidades (lista fija de 4) con semanas (lista que crece), horas y actividades. Reglas: máximo 16 semanas al guardar; exactamente 16 y horas iguales a las de la asignatura al enviar. |
+| `unidades` (anterior) | Cuatro unidades (lista fija de 4) con semanas (lista que crece), horas y actividades. Reglas: máximo 16 semanas al guardar; exactamente 16 y horas iguales a las de la asignatura al enviar. |
+| `planificacion_semanal` | Cuatro unidades identificadas por número, con semanas, actividades y horas. Los nombres y resultados se consultan en el campo de Carrera `unidades_curriculares`. Conserva las reglas de horas y semanas. |
 | `evaluacion` | Tabla de puntos con dos variantes según `horas_practicas` (con o sin práctico-experimental). |
 | `si_no` | Pregunta Sí/No con tabla opcional si responde Sí. Propiedades: `question` y `columns`. |
 | `repetible` | Lista de filas con columnas que fija el administrador. Propiedades: `label` y `columns`. |

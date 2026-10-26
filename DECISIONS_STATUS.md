@@ -67,7 +67,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener
   coordinación y el período no debe haber terminado.
 - Estados: abierto ⇄ pausado → cerrado. Administración cierra la convocatoria y con ella
-  las de cada carrera (I-231). Una convocatoria cerrada queda solo para consulta: sus
+  las de cada carrera (I-231). Al cerrar se congela también el documento de los
+  borradores y sílabos sin iniciar; las revisiones enviadas conservan su fotografía
+  existente (ADR-0012). Una convocatoria cerrada queda solo para consulta: sus
   sílabos ya no se editan, envían ni revisan, pero los aprobados todavía se firman, y
   después se puede abrir la del período siguiente.
 - Un cambio de docente solo rehace el sílabo del paralelo en la convocatoria en curso;
@@ -97,6 +99,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   los campos van en sus tablas. Manual: `docs/architecture/template-json.md`.
 - Cada campo dice quién lo llena: `docente`, `coordinacion` o `institucional`. Su
   contenido es un documento TipTap (I-210).
+- Las plantillas nuevas o importadas en formato 2 protegen el formato de Administración
+  (ADR-0012). Docencia y Coordinación completan párrafos y celdas vacíos; texto,
+  encabezados, columnas y estilos se conservan. Una tabla con encabezados y una sola
+  fila vacía permite variar filas; las demás tablas son fijas. No hay permisos nuevos
+  por celda. Las definiciones anteriores se mantienen hasta actualizar la plantilla.
 - Administración la crea en blanco o con el formato oficial. La edita en un editor
   visual tipo Word. «Editar» es la acción principal; «Opciones avanzadas» contiene
   «Editar JSON», que abre el diálogo de edición, exportación e importación JSON.
@@ -139,6 +146,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
   copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
   encendido no deja la ficha incompleta (I-230).
+- La nueva plantilla oficial separa los nombres y resultados de las cuatro unidades,
+  en un campo de Carrera, de la planificación semanal docente. Se utiliza el mismo
+  interruptor de la ficha, apagado por defecto. Las horas ACD, APE y AA de toda la
+  planificación deben sumar las de la asignatura para enviar. Activar el nuevo formato
+  en una plantilla existente exige pausa y las confirmaciones de regeneración vigentes;
+  el despliegue no modifica por sí solo la plantilla activa.
 - Cambiar la malla o una ficha con sílabos existentes exige pausar la convocatoria de la
   carrera y confirmar. Los sílabos afectados se rehacen desde cero, incluso los
   aprobados.

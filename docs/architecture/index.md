@@ -30,6 +30,7 @@
 | [0008](adr/0008-separate-spa-api.md) | SPA y API separadas | Aceptado |
 | [0010](adr/0010-simple-template-documents.md) | Campos como documentos libres | Aceptado; ampliado por 0011 |
 | [0011](adr/0011-template-as-data.md) | Plantilla solo como datos | Aceptado |
+| [0012](adr/0012-protected-field-responses.md) | Formato fijo y respuestas por responsable | Aceptado; activación por plantilla |
 
 ## Principios
 

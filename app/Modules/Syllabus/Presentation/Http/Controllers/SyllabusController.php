@@ -9,6 +9,7 @@ use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplatePresentation;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
@@ -242,8 +243,13 @@ class SyllabusController extends Controller
         $template = SyllabusTemplate::institutional();
         $identification = IdentificationCard::fromSyllabus($syllabus);
         $revision = $syllabus->revisions->sortByDesc('numero_revision')->first();
-        $frozen = $revision instanceof SyllabusRevision && in_array($syllabus->estado, ['en_revision', 'aprobado'], true)
-            ? SnapshotDocuments::present($revision->fotografia) : null;
+        $snapshot = $revision instanceof SyllabusRevision && in_array($syllabus->estado, ['en_revision', 'aprobado'], true)
+            ? $revision->fotografia : null;
+        if ($snapshot === null && $syllabus->convocation->estado === Convocation::STATE_CLOSED
+            && is_array($syllabus->contexto_academico['closed_document'] ?? null)) {
+            $snapshot = $syllabus->contexto_academico['closed_document'];
+        }
+        $frozen = $snapshot === null ? null : SnapshotDocuments::present($snapshot);
         $archived = $frozen === null ? SyllabusDocumentFields::archivedSections($syllabus) : null;
         $archivedView = $archived === null ? null : SnapshotDocuments::present(['sections' => $archived, 'identification' => $identification, 'template_definition' => $template->definition()->toArray()]);
         if ($archivedView !== null) {
@@ -254,7 +260,7 @@ class SyllabusController extends Controller
                 }
             }
         }
-        $definition = $frozen !== null ? TemplateContext::fromSnapshot($revision->fotografia) : $template->definition();
+        $definition = $snapshot !== null ? TemplateContext::fromSnapshot($snapshot) : $template->definition();
         $variables = $frozen['template_variables'] ?? TemplateVariables::resolve(['identification' => $identification]);
 
         return [
@@ -359,6 +365,7 @@ class SyllabusController extends Controller
                     'key' => $field->clave,
                     'label' => $field->etiqueta,
                     'quien_llena' => $field->quien_llena,
+                    ...(FieldResponse::enabled() && $field->quien_llena !== FieldDefinition::INSTITUTIONAL ? ['template' => FieldResponse::template(FieldDocument::normalize($field->contenido))] : []),
                     'teacher_editable' => FieldValue::editableByTeacher($field, $values->get($field->id) instanceof FieldValue ? $values->get($field->id) : null),
                     'required' => $field->quien_llena !== FieldDefinition::INSTITUTIONAL,
                     'value' => $document,

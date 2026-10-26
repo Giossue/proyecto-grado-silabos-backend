@@ -5,7 +5,7 @@ namespace App\Modules\Academic\Domain;
 final readonly class FichaWorkbookDefinition
 {
     /**
-     * @param  list<array{id: string, key: string, label: string, section: string, columns: list<string>, sheet: string, definition_hash: string}>  $fields
+     * @param  list<array{id: string, key: string, label: string, section: string, columns: list<string>, sheet: string, definition_hash: string, table?: array<string, mixed>|null}>  $fields
      * @param  list<array{id: string, code: string, name: string, cycle: int|null}>  $subjects
      */
     public function __construct(public string $careerId, public string $careerName, public array $fields, public array $subjects) {}

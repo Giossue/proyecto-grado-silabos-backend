@@ -11,7 +11,7 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
 | 3 | Objetivos de la asignatura | Objetivo general; objetivos específicos | Coordinación (ficha) | — |
 | 4 | Resultados de aprendizaje | Resultados de aprendizaje | Coordinación (ficha) | — |
 | 5 | Habilidades blandas | Habilidades blandas | Coordinación (ficha) | — |
-| 6 | Distribución y planificación de las unidades curriculares | Unidades | Docente | `unidades`, hoja horizontal. Ver abajo. |
+| 6 | Distribución y planificación de las unidades curriculares | Unidades y resultados; planificación semanal | Carrera y Docente, en campos separados | Tabla fija de cuatro unidades y bloque `planificacion_semanal`, hoja horizontal. Ver abajo. |
 | 7 | Metodología y ambientes de aprendizaje | 7.1 Métodos; 7.2 Técnicas; 7.3 Recursos; 7.4 Herramientas TIC/TAC e IA; 7.5 Ambientes | Docente | — |
 | 8 | Evaluación de los aprendizajes | Indicadores por parcial; escala de valoración | Fijo | `evaluacion`: tabla de puntos por parcial. Tiene dos variantes, con o sin horas prácticas (APE). |
 | 9 | Perfil de egreso | Resultados de la asignatura frente a los de la carrera | Coordinación (ficha) | — |
@@ -28,15 +28,28 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
   aviso «La asignatura no tiene ficha: pídala al coordinador».
 - **Fijo** (`institucional`): igual para todos los sílabos; nadie lo edita en el sílabo.
 
-## Bloque `unidades` (sección 6)
+## Unidades (sección 6)
 
-- Cuatro unidades fijas, cada una con nombre, resultado de aprendizaje y semanas.
+- Carrera completa los nombres y resultados en una tabla fija de cuatro filas numeradas.
+  El docente los consulta, salvo permiso explícito del interruptor de la ficha.
+- El docente completa la planificación semanal de esas cuatro unidades, identificadas
+  por número. El bloque `planificacion_semanal` no permite escribir nombres o resultados.
 - Cada semana tiene contenidos, horas ACD, APE y AA, actividades de cada componente y
   evaluación.
 - Al guardar: las unidades no pueden sumar más de 16 semanas.
 - Al enviar: deben sumar exactamente 16 semanas, y las horas ACD, APE y AA deben ser
   iguales a las de la asignatura en la malla.
 - El editor muestra en vivo el avance (por ejemplo, «ACD 30 de 32»).
+- El bloque anterior `unidades` se conserva para los documentos anteriores; el nuevo
+  formato se activa actualizando la plantilla con pausa y confirmación.
+
+## Formato y respuestas
+
+En las plantillas protegidas (ADR-0012), Administración conserva la edición completa.
+Los otros responsables completan los espacios vacíos; no modifican textos fijos,
+encabezados, columnas ni estilos. Una tabla con encabezados y una sola fila vacía
+permite añadir filas y quitar la última. Las demás tablas conservan sus filas.
+Los rótulos e instrucciones no cuentan como respuesta para completar un campo.
 
 ## Otros bloques disponibles
 

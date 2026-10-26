@@ -54,6 +54,7 @@ Toda la documentación describe cómo funciona el sistema hoy. El historial est�
   - `0008`: SPA y API separadas;
   - `0010`: campos de plantilla como documentos libres;
   - `0011`: la plantilla es solo datos.
+  - `0012`: formato fijo y respuestas por responsable.
 
 ## Generado
 

@@ -17,7 +17,7 @@ final class TemplateDefinition
         'signature.docente', 'signature.coordinacion', 'signature.biblioteca',
     ];
 
-    public const ROOT_KEYS = ['document', 'variables', 'blocks', 'required_sections', 'library_sections', 'presets'];
+    public const ROOT_KEYS = ['document', 'variables', 'blocks', 'required_sections', 'library_sections', 'presets', 'response_policy'];
 
     private const KEY = '/^[a-z][a-z0-9_]{0,99}$/';
 
@@ -39,6 +39,9 @@ final class TemplateDefinition
             BlockDefinitionError::fail('Clave desconocida en la plantilla: «'.implode('», «', $unknown).'».');
         }
         $variables = self::defineVariables($raw['variables'] ?? []);
+        if (($raw['response_policy'] ?? 'protected') !== 'protected') {
+            BlockDefinitionError::fail('«response_policy» debe ser «protected».');
+        }
         $keys = array_keys($variables);
         $blocks = [];
         $rawBlocks = $raw['blocks'] ?? [];
@@ -50,6 +53,7 @@ final class TemplateDefinition
         }
 
         return new self([
+            'response_policy' => 'protected',
             'document' => TemplateStyle::define($raw['document'] ?? []),
             'variables' => $variables,
             'blocks' => $blocks,

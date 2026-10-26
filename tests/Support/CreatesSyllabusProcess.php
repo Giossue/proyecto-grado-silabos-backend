@@ -28,14 +28,14 @@ trait CreatesSyllabusProcess
                 $content['content'][$index]['attrs']['value'] = match ($kind) {
                     'identificacion' => ['disability' => ['answer' => 'no', 'type' => '', 'description' => '']],
                     'si_no' => ['answer' => 'no', 'rows' => []],
-                    'unidades' => $this->plannedUnits(),
+                    'unidades', 'planificacion_semanal' => $this->plannedUnits(),
                     'evaluacion' => [],
                     default => ['rows' => []],
                 };
             }
         }
 
-        return $hasBlock ? FieldDocument::normalize($content) : $this->freeTextValue($text);
+        return $hasBlock ? FieldDocument::normalize($content) : $this->filledTemplateValue($field, $text);
     }
 
     /** @return array<string, mixed> */

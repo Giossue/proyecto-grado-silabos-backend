@@ -106,6 +106,11 @@ el estado: el sílabo sigue «En revisión».
   revisan) y los aprobados todavía se pueden firmar. Cerrar no se deshace. Mientras
   siga abierta o pausada no se puede crear otra.
 
+Al cerrar, los sílabos sin revisión enviada o aprobada guardan una fotografía del
+documento y su definición en el contexto existente. La consulta posterior usa esa
+fotografía, aunque se modifique la plantilla. Las revisiones enviadas y aprobadas
+conservan sus propias fotografías. Aplica a cierres realizados desde ADR-0012.
+
 ## Pausas y cambios con sílabos en curso
 
 | Qué cambia | Requisito | Efecto |

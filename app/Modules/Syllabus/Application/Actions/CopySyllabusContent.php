@@ -3,6 +3,7 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
@@ -73,7 +74,7 @@ class CopySyllabusContent
                 FieldValue::query()->create([
                     'silabo_id' => $locked->id,
                     'definicion_campo_id' => $value->definicion_campo_id,
-                    'valor' => $value->valor,
+                    'valor' => FieldResponse::normalize(FieldDefinition::query()->findOrFail($value->definicion_campo_id)->contenido, $value->valor),
                 ]);
             }
             $careerSource = FieldValue::query()
@@ -86,7 +87,7 @@ class CopySyllabusContent
                 ->where('editable_docente', true)
                 ->whereIn('definicion_campo_id', $careerSource->keys())
                 ->get()
-                ->each(fn (FieldValue $value) => $value->update(['valor' => $careerSource->get($value->definicion_campo_id)?->valor]));
+                ->each(fn (FieldValue $value) => $value->update(['valor' => FieldResponse::normalize(FieldDefinition::query()->findOrFail($value->definicion_campo_id)->contenido, $careerSource->get($value->definicion_campo_id)?->valor)]));
 
             $locked->update([
                 'estado' => 'borrador',

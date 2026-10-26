@@ -4,6 +4,8 @@ namespace App\Modules\Academic\Infrastructure\Spreadsheets;
 
 use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Domain\FichaWorkbookDefinition;
+use App\Modules\Configuration\Domain\FieldResponse;
+use App\Modules\Configuration\Domain\FreeText;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -40,7 +42,7 @@ final class FichaWorkbook
             ['2', 'No cambie los nombres de las hojas, los encabezados ni los datos de las materias.'],
             ['3', 'Las celdas vacías conservan los valores actuales. No borran contenido de las fichas.'],
             ['4', 'Para listas, escriba un elemento por línea empezando con «- ». Para párrafos, use saltos de línea normales.'],
-            ['5', 'En las tablas hay hasta 40 filas por materia. Deje vacías las que no necesite.'],
+            ['5', 'Las tablas de listas admiten hasta 40 filas por materia. Las tablas fijas conservan sus filas y rótulos.'],
             ['6', 'Cargue el archivo en el sitio, revise la vista previa y confirme qué materias y campos aplicar.'],
             ['7', 'Si cambian los campos de la plantilla o las materias, descargue un Excel nuevo.'],
         ];
@@ -79,17 +81,30 @@ final class FichaWorkbook
             }
             $row = 4;
             foreach ($definition->subjects as $subject) {
-                $slots = $field['columns'] === [] ? 1 : self::TABLE_ROWS;
+                $slots = $this->slots($field);
                 for ($slot = 0; $slot < $slots; $slot++) {
                     $this->text($sheet, 'A'.$row, $subject['id']);
                     $this->text($sheet, 'B'.$row, $subject['code']);
                     $this->text($sheet, 'C'.$row, $subject['name']);
+                    foreach ($field['columns'] as $column => $label) {
+                        $fixed = $this->fixedCell($field, $slot, $column);
+                        if ($fixed !== null) {
+                            $this->text($sheet, Coordinate::stringFromColumnIndex($column + 4).$row, $fixed);
+                        }
+                    }
                     $sheet->getRowDimension($row)->setRowHeight($slots === 1 ? 95 : 35);
                     $row++;
                 }
             }
             $range = 'D4:'.$lastColumn.($row - 1);
             $sheet->getStyle($range)->getProtection()->setLocked(Protection::PROTECTION_UNPROTECTED);
+            for ($index = 4; $index < $row; $index++) {
+                foreach ($field['columns'] as $column => $label) {
+                    if ($this->fixedCell($field, ($index - 4) % $this->slots($field), $column) !== null) {
+                        $sheet->getStyle(Coordinate::stringFromColumnIndex($column + 4).$index)->getProtection()->setLocked(Protection::PROTECTION_PROTECTED);
+                    }
+                }
+            }
             $sheet->getStyle($range)->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
             $sheet->getStyle('B1:'.$lastColumn.($row - 1))->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_TOP);
             $sheet->getStyle('B1:'.$lastColumn.'3')->getFont()->setBold(true);
@@ -157,8 +172,9 @@ final class FichaWorkbook
                 }
                 $row = 4;
                 foreach ($definition->subjects as $subject) {
-                    $slots = $field['columns'] === [] ? 1 : self::TABLE_ROWS;
+                    $slots = $this->slots($field);
                     $data = [];
+                    $hasAnswers = false;
                     for ($slot = 0; $slot < $slots; $slot++) {
                         $this->expect($sheet, 'A'.$row, $subject['id']);
                         $this->expect($sheet, 'B'.$row, $subject['code']);
@@ -170,14 +186,20 @@ final class FichaWorkbook
                             if (mb_strlen($content) > ($field['columns'] === [] ? 12000 : 1500)) {
                                 $this->fail('El contenido supera el límite permitido.', $sheet, $address);
                             }
+                            $fixed = $this->fixedCell($field, $slot, $column - 4);
+                            if ($fixed !== null) {
+                                $this->expect($sheet, $address, $fixed);
+                            } elseif ($content !== '') {
+                                $hasAnswers = true;
+                            }
                             $cells[] = $content;
                         }
-                        if (array_any($cells, fn (string $cell): bool => $cell !== '')) {
+                        if (($field['table'] ?? null) !== null && ! FieldResponse::listTable($field['table']) || array_any($cells, fn (string $cell): bool => $cell !== '')) {
                             $data[] = $cells;
                         }
                         $row++;
                     }
-                    if ($data !== []) {
+                    if ($data !== [] && $hasAnswers) {
                         $raw = $field['columns'] === [] ? $this->textValue($data[0][0], $sheet) : ['rows' => $data];
                         $value = $this->values->clean($raw, $field['columns']);
                         if ($value === null) {
@@ -204,6 +226,40 @@ final class FichaWorkbook
         }
     }
 
+    /** @param array<string, mixed> $field */
+    private function slots(array $field): int
+    {
+        if ($field['columns'] === []) {
+            return 1;
+        }
+        $table = $field['table'] ?? null;
+        if (! is_array($table) || FieldResponse::listTable($table)) {
+            return self::TABLE_ROWS;
+        }
+
+        return max(1, count($this->body($table)));
+    }
+
+    /** @param array<string, mixed> $table
+     * @return list<array<string, mixed>>
+     */
+    private function body(array $table): array
+    {
+        return array_values(array_filter($table['content'] ?? [], fn (array $row): bool => ! array_all($row['content'] ?? [], fn (array $cell): bool => ($cell['type'] ?? '') === 'tableHeader')));
+    }
+
+    /** @param array<string, mixed> $field */
+    private function fixedCell(array $field, int $row, int $column): ?string
+    {
+        $table = $field['table'] ?? null;
+        if (! is_array($table) || FieldResponse::listTable($table)) {
+            return null;
+        }
+        $cell = $this->body($table)[$row]['content'][$column] ?? null;
+
+        return is_array($cell) && ! FieldResponse::blank($cell) ? trim(FreeText::plainText(['type' => 'doc', 'content' => $cell['content'] ?? []])) : null;
+    }
+
     /** @param list<string> $columns
      * @return list<string>
      */
@@ -216,7 +272,7 @@ final class FichaWorkbook
     {
         $cells = 0;
         foreach ($definition->fields as $field) {
-            $cells += count($definition->subjects) * ($field['columns'] === [] ? 4 : (3 + count($field['columns'])) * self::TABLE_ROWS);
+            $cells += count($definition->subjects) * ($field['columns'] === [] ? 4 : (3 + count($field['columns'])) * $this->slots($field));
         }
         if ($cells > self::MAX_CELLS) {
             $this->fail('La plantilla supera el tamaño que se puede procesar en una sola carga.');
@@ -244,7 +300,7 @@ final class FichaWorkbook
     {
         $bounds = ['Indicaciones' => [8, 2], '_estructura' => [3, 2]];
         foreach ($definition->fields as $field) {
-            $bounds[$field['sheet']] = [3 + count($definition->subjects) * ($field['columns'] === [] ? 1 : self::TABLE_ROWS), 3 + max(1, count($field['columns']))];
+            $bounds[$field['sheet']] = [3 + count($definition->subjects) * ($this->slots($field)), 3 + max(1, count($field['columns']))];
         }
         if (array_column($sheets, 'worksheetName') !== array_keys($bounds)) {
             $this->fail('Las hojas del Excel cambiaron. Descargue una plantilla nueva y conserve sus nombres y orden.');

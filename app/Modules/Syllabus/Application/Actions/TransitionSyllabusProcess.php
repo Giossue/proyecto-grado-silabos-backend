@@ -8,7 +8,9 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
@@ -35,6 +37,7 @@ class TransitionSyllabusProcess
         private readonly RecordAuditEvent $audit,
         private readonly TemplateStructureValidator $templateStructure,
         private readonly RegenerateProcessSyllabi $regenerate,
+        private readonly SyllabusSnapshot $snapshots,
     ) {}
 
     /** @return array{process: SyllabusProcess, confirmation_required: bool, counts: array<string, int>} */
@@ -110,6 +113,12 @@ class TransitionSyllabusProcess
                     ->update(['pausado_en' => DB::raw('clock_timestamp()')]);
             }
             if ($rule['to'] === SyllabusProcess::STATE_CLOSED) {
+                $syllabi = Syllabus::query()->whereHas('convocation', fn ($query) => $query->where('proceso_id', $locked->id))
+                    ->whereNotIn('estado', ['en_revision', 'aprobado'])->lockForUpdate()->get();
+                foreach ($syllabi as $syllabus) {
+                    $snapshot = $this->snapshots->build($syllabus);
+                    $syllabus->update(['contexto_academico' => [...$syllabus->contexto_academico, 'closed_document' => $snapshot]]);
+                }
                 Convocation::query()
                     ->where('proceso_id', $locked->id)
                     ->whereIn('estado', [Convocation::STATE_OPEN, Convocation::STATE_PAUSED])

@@ -6159,7 +6159,28 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "properties": {
+                                        "syllabus": {
+                                            "type": "object",
+                                            "properties": {
+                                                "sections": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "fields": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "$ref": "#/components/schemas/SyllabusField"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -6950,7 +6971,8 @@
                             "table",
                             "tableRow",
                             "tableCell",
-                            "tableHeader"
+                            "tableHeader",
+                            "documentBlock"
                         ]
                     },
                     "text": {
@@ -6975,6 +6997,43 @@
                     }
                 },
                 "additionalProperties": false
+            },
+            "SyllabusField": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "key": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "quien_llena": {
+                        "enum": [
+                            "docente",
+                            "coordinacion",
+                            "institucional"
+                        ]
+                    },
+                    "teacher_editable": {
+                        "type": "boolean"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    },
+                    "template": {
+                        "$ref": "#/components/schemas/FieldDocument"
+                    },
+                    "value": {
+                        "$ref": "#/components/schemas/FieldDocument"
+                    },
+                    "document": {
+                        "$ref": "#/components/schemas/FieldDocument"
+                    }
+                }
             },
             "TemplateField": {
                 "type": "object",
@@ -7143,6 +7202,9 @@
                                     "const": "coordinacion"
                                 },
                                 "content": {
+                                    "$ref": "#/components/schemas/FieldDocument"
+                                },
+                                "template": {
                                     "$ref": "#/components/schemas/FieldDocument"
                                 }
                             }

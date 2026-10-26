@@ -35,7 +35,10 @@ no guarda contenido de vista previa en PostgreSQL, Redis, sesión ni disco priva
   un elemento por línea iniciado con «- », «•», «*» o numeración. Se admiten hasta
   60 elementos de hasta 3 000 caracteres dentro del límite de la celda.
 - Tablas: columnas derivadas de la plantilla, incluidos encabezados combinados;
-  hasta 40 filas por materia y 1 500 caracteres por celda. Se omiten filas vacías.
+  hasta 40 filas por materia en listas y 1 500 caracteres por celda. En plantillas
+  protegidas, las tablas fijas conservan su cantidad de filas y sus textos prellenados
+  quedan bloqueados; por ejemplo, Unidad 1..4. Solo las respuestas no vacías cuentan
+  como contenido encontrado. Las filas fijas no se compactan al dejar una sin respuesta.
 - El Excel se genera vacío de contenido. Las celdas vacías no borran valores actuales.
 - La protección de Excel previene cambios accidentales. No concede permisos ni
   sustituye las comprobaciones del servidor.
@@ -69,7 +72,8 @@ pertenezcan a la carga y tengan contenido.
 
 `ApplyFichaImport` bloquea la carrera, comprueba editabilidad y estructura otra vez y
 escribe únicamente lo seleccionado en `valores_campo`, dentro de una transacción.
-Conserva los encabezados de tablas y los permisos de edición docente. La auditoría
+Conserva encabezados, textos fijos, estilos de celdas y permisos de edición docente;
+`FieldResponse` valida la estructura nuevamente antes de persistir. La auditoría
 registra quién aplicó y cuántas materias; no conserva el Excel ni su contenido.
 `InProgressWork` exige confirmación para rehacer sílabos en curso y no toca procesos
 cerrados. Si falla la aplicación, el diálogo conserva la vista previa para corregir

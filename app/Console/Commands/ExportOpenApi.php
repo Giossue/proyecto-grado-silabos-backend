@@ -80,13 +80,27 @@ class ExportOpenApi extends Command
                         'type' => 'object',
                         'required' => ['type'],
                         'properties' => [
-                            'type' => ['enum' => ['paragraph', 'text', 'hardBreak', 'variable', 'bulletList', 'orderedList', 'listItem', 'table', 'tableRow', 'tableCell', 'tableHeader']],
+                            'type' => ['enum' => ['paragraph', 'text', 'hardBreak', 'variable', 'bulletList', 'orderedList', 'listItem', 'table', 'tableRow', 'tableCell', 'tableHeader', 'documentBlock']],
                             'text' => ['type' => 'string'],
                             'attrs' => ['type' => 'object', 'additionalProperties' => true],
                             'marks' => ['type' => 'array', 'items' => ['type' => 'object', 'additionalProperties' => true]],
                             'content' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/DocumentNode']],
                         ],
                         'additionalProperties' => false,
+                    ],
+                    'SyllabusField' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'id' => ['type' => 'string', 'format' => 'uuid'],
+                            'key' => ['type' => 'string'],
+                            'label' => ['type' => 'string'],
+                            'quien_llena' => ['enum' => ['docente', 'coordinacion', 'institucional']],
+                            'teacher_editable' => ['type' => 'boolean'],
+                            'required' => ['type' => 'boolean'],
+                            'template' => ['$ref' => '#/components/schemas/FieldDocument'],
+                            'value' => ['$ref' => '#/components/schemas/FieldDocument'],
+                            'document' => ['$ref' => '#/components/schemas/FieldDocument'],
+                        ],
                     ],
                     'TemplateField' => [
                         'type' => 'object',
@@ -147,6 +161,7 @@ class ExportOpenApi extends Command
                                     'section' => ['type' => ['string', 'null']],
                                     'quien_llena' => ['const' => 'coordinacion'],
                                     'content' => ['$ref' => '#/components/schemas/FieldDocument'],
+                                    'template' => ['$ref' => '#/components/schemas/FieldDocument'],
                                 ],
                             ]],
                             'values' => ['type' => 'object', 'additionalProperties' => ['type' => ['object', 'null']]],
@@ -235,6 +250,18 @@ class ExportOpenApi extends Command
                 : ['application/json' => ['schema' => ['type' => 'object']]]);
         if ($isSubjectProfile) {
             $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectProfile']]];
+        }
+        if ($name === 'api.v1.teacher.syllabi.show') {
+            $successContent = ['application/json' => ['schema' => [
+                'type' => 'object',
+                'properties' => ['syllabus' => [
+                    'type' => 'object',
+                    'properties' => ['sections' => ['type' => 'array', 'items' => [
+                        'type' => 'object',
+                        'properties' => ['fields' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/SyllabusField']]],
+                    ]]],
+                ]],
+            ]]];
         }
         if ($name === 'api.v1.coordination.ficha-imports.spreadsheet') {
             $successContent = ['application/json' => ['schema' => [

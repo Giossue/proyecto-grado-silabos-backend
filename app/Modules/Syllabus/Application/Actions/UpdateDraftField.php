@@ -5,6 +5,7 @@ namespace App\Modules\Syllabus\Application\Actions;
 use App\Models\User;
 use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\FieldDocument;
+use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\ActiveRole;
@@ -44,7 +45,7 @@ class UpdateDraftField
                 throw ValidationException::withMessages(['field' => 'Este campo pertenece a Coordinación o a la institución y el docente no puede cambiarlo.']);
             }
 
-            $document = FieldDocument::normalize($data['value'] ?? FieldDocument::empty(), 'value');
+            $document = FieldResponse::normalize($field->contenido, $data['value'] ?? FieldDocument::empty(), 'value');
             if (! DocumentBlock::sameStructure(FieldDocument::normalize($field->contenido), $document)) {
                 throw ValidationException::withMessages(['value' => 'Los bloques de este campo los define la plantilla; el docente solo los responde.']);
             }
