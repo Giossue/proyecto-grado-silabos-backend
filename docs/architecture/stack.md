@@ -18,7 +18,8 @@
 | Word | PHPWord |
 | PDF | Gotenberg (LibreOffice) a partir del Word; sin Gotenberg, PDF de texto simple |
 | Lectura de Excel | PhpSpreadsheet y OpenSpout |
-| Lectura de PDF | `pdftotext` (Poppler) u OCR de OpenParser |
+| Fichas de carrera | Excel estructurado generado y leído con PhpSpreadsheet |
+| Lectura histórica de documentos | OCR de OpenParser para PDF; lectura local de Excel |
 | IA | Proveedor externo configurable por `AI_DRIVER` (ver [ai-service.md](ai-service.md)) |
 | Correo | Resend o SMTP según `MAIL_MAILER` |
 | Archivos | Disco `private` en `storage/app/private` |

@@ -6,13 +6,17 @@ Solo lo lento o externo:
 
 - generar Word y PDF de una revisión aprobada;
 - responder una pregunta del chat de IA;
-- leer los documentos de una importación de fichas y proponer cada ficha;
+- leer los documentos de una importación histórica de fichas y proponer cada ficha;
 - enviar el correo de activación de cuenta;
 - el trabajo de humo de la plataforma.
 
 Guardar, validar, enviar, revisar, aprobar, firmar y regenerar ocurren en la petición
 web, dentro de una transacción. Las notificaciones internas y la auditoría también se
 guardan ahí; no usan cola.
+
+La carga actual de fichas mediante Excel estructurado también se resuelve en la
+petición web. Los trabajos de importación descritos aquí corresponden al flujo
+histórico de documentos; ver [ficha-excel.md](ficha-excel.md).
 
 ## Trabajos
 

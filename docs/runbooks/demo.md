@@ -27,11 +27,11 @@ Opcional en `.env`, antes de levantar los procesos:
 
 - `AI_DRIVER=baseline`: el asistente de unidades usa un simulador que responde con texto
   fijo, sin proveedor externo.
-- Importar la ficha con IA necesita `AI_DRIVER=openai` o `AI_DRIVER=deepseek`, con
-  `AI_BASE_URL`, `AI_MODEL` y `AI_API_KEY`. Sin eso, Coordinación llena la ficha a mano.
+- La ficha se importa con la plantilla Excel descargada desde el sitio. No requiere
+  proveedor de IA, OCR ni cola.
 - `GOTENBERG_URL=http://127.0.0.1:3000` con `docker run --rm -p 3000:3000 gotenberg/gotenberg:8`:
   el PDF sale igual al Word. Sin Gotenberg el PDF es de texto simple.
-- `REDIS_QUEUE_RETRY_AFTER=960` si va a probar la importación de la ficha (ver
+- `REDIS_QUEUE_RETRY_AFTER=960` solo si procesa importaciones históricas de documentos (ver
   `docs/plans/pendientes.md`).
 
 Levante dos procesos en terminales separadas:
@@ -100,7 +100,8 @@ con Docente Demo asignado.
    también a Docente Demo.
 3. En **Proyecto de carrera**, abra la **Ficha** de `SW-601` y llene todos sus campos. En
    un campo active **El docente puede editarlo**. Con IA configurada, pruebe también
-   **Importar documentos** (PDF o Excel, hasta 6) y aplique la propuesta.
+   **Importar desde Excel**, descargue la plantilla, complete el contenido y revise
+   el archivo antes de aplicar.
 4. En el **Panel**, pulse **Abrir convocatoria de la carrera**. Se crea un sílabo por
    paralelo y el docente recibe un aviso.
 
@@ -160,7 +161,7 @@ se descarga nada.
 - Cada envío crea una revisión nueva y las anteriores no cambian.
 - Un sílabo aprobado no se edita.
 - Word y PDF se generan sin acción manual; la descarga exige las tres firmas.
-- Con `AI_DRIVER=disabled` todo funciona salvo el asistente y la importación de la ficha.
+- Con `AI_DRIVER=disabled` la importación Excel funciona; solo el asistente de IA queda desactivado.
 - **Auditoría** registra los pasos del recorrido.
 
 Anote fecha, versión del código, rol de cada paso y resultado. No registre contraseñas,

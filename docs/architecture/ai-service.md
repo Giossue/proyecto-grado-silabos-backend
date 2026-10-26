@@ -3,7 +3,7 @@
 La IA ayuda en dos lugares. En ambos, una persona decide (ADR-0003):
 
 1. **Chat del docente** sobre su sílabo (`AiAssistance`).
-2. **Importación de fichas**: propone la ficha de cada asignatura a partir de PDF o
+2. **Compatibilidad de importaciones antiguas de fichas**: propone la ficha de cada asignatura a partir de PDF o
    Excel que sube Coordinación (`Academic`).
 
 La IA no aprueba, no califica, no cambia estados ni escribe en el sílabo. Si el
@@ -71,8 +71,13 @@ regenerar o eliminar el sílabo.
 
 ## Importación de fichas
 
+El flujo actual de la interfaz genera y lee una plantilla Excel sin IA ni OCR:
+[ficha-excel.md](ficha-excel.md). El resto de esta sección describe la compatibilidad
+con documentos e importaciones anteriores. El POST histórico sigue disponible,
+marcado como obsoleto en OpenAPI; no aparece en el diálogo nuevo.
+
 Rutas: `GET|POST coordination/ficha-imports`, `POST …/{import}/apply` y
-`DELETE …/{import}`. Detalle del flujo: [sequences.md](sequences.md#6-importación-de-fichas-con-ia).
+`DELETE …/{import}`. Detalle del flujo: [sequences.md](sequences.md#6-importación-de-fichas).
 
 1. Coordinación sube PDF o Excel. Exige la carrera editable, el gateway disponible y
    que no haya otra importación en curso. Los archivos van a

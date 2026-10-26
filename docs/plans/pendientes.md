@@ -52,9 +52,9 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
   - `DISPLAY_TIMEZONE` fija la fecha de hoy de la institución (por defecto `America/Guayaquil`). Cambiarla
     cambia los plazos de la convocatoria y las fechas ya guardadas.
 - **Reloj del servidor:** la fecha de hoy sale del reloj del servidor, así que debe estar sincronizado con NTP.
-- **Cola de la importación de la ficha:** verificar `REDIS_QUEUE_RETRY_AFTER=960` en el servidor.
+- **Cola de la importación histórica de documentos de ficha:** verificar `REDIS_QUEUE_RETRY_AFTER=960` en el servidor.
   `.env.example`, la configuración por defecto y las pruebas ya usan 960, por encima del `timeout` de 900 s
-  de `PrepareFichaImportJob`. Un valor remoto explícito de 180 todavía permite entregas repetidas mientras
+  de `PrepareFichaImportJob`. La carga actual de Excel estructurado no usa esa cola. Un valor remoto explícito de 180 todavía permite entregas repetidas mientras
   la primera lectura sigue ejecutándose. No se ha cambiado la configuración remota.
 - **Dependencias:** `npm audit` marca `node-forge` (GHSA-86w9-cpqp-85rv) como alta y sin versión corregida (≤ 1.4.0).
   - **Dónde se usa:** el frontend la usa, directamente y a través de `@signpdf`, para abrir el `.p12` y firmar

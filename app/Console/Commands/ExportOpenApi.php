@@ -236,7 +236,7 @@ class ExportOpenApi extends Command
         if ($isSubjectProfile) {
             $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectProfile']]];
         }
-        if (in_array($name, ['api.v1.coordination.ficha-imports.index', 'api.v1.coordination.ficha-imports.store', 'api.v1.coordination.ficha-imports.apply'], true)) {
+        if (in_array($name, ['api.v1.coordination.ficha-imports.index', 'api.v1.coordination.ficha-imports.store', 'api.v1.coordination.ficha-imports.spreadsheet', 'api.v1.coordination.ficha-imports.apply'], true)) {
             $successContent = ['application/json' => ['schema' => [
                 'type' => 'object',
                 'required' => ['import'],
@@ -246,6 +246,9 @@ class ExportOpenApi extends Command
                     'import' => ['oneOf' => [['$ref' => '#/components/schemas/FichaImport'], ['type' => 'null']]],
                 ],
             ]]];
+        }
+        if ($name === 'api.v1.coordination.ficha-imports.template') {
+            $successContent = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => ['schema' => ['type' => 'string', 'format' => 'binary']]];
         }
         if ($isTemplateRead) {
             $successContent = ['application/json' => ['schema' => [
@@ -291,6 +294,10 @@ class ExportOpenApi extends Command
                 '422' => ['$ref' => '#/components/responses/ValidationError'],
             ],
         ];
+        if ($name === 'api.v1.coordination.ficha-imports.store') {
+            $operation['deprecated'] = true;
+            $operation['description'] = 'Carga histórica de documentos con IA. La interfaz usa la plantilla y vista previa Excel.';
+        }
         if ($parameters !== []) {
             $operation['parameters'] = $parameters;
         }
@@ -301,6 +308,11 @@ class ExportOpenApi extends Command
                     'type' => 'object',
                     'required' => ['logo'],
                     'properties' => ['logo' => ['type' => 'string', 'format' => 'binary']],
+                ]]];
+            } elseif ($name === 'api.v1.coordination.ficha-imports.spreadsheet') {
+                $content = ['multipart/form-data' => ['schema' => [
+                    'type' => 'object', 'required' => ['file'],
+                    'properties' => ['file' => ['type' => 'string', 'format' => 'binary']],
                 ]]];
             } elseif ($name === 'api.v1.coordination.ficha-imports.store') {
                 $content = ['multipart/form-data' => ['schema' => [
@@ -428,6 +440,7 @@ class ExportOpenApi extends Command
                 'type' => 'object', 'required' => ['id', 'state', 'error', 'documents', 'reading', 'progress', 'fields', 'subjects', 'timing'],
                 'properties' => [
                     'id' => ['type' => 'string', 'format' => 'uuid'],
+                    'format' => ['type' => ['string', 'null'], 'enum' => ['ficha_xlsx_v1', null]],
                     'state' => ['enum' => ['pendiente', 'en_ejecucion', 'lista', 'fallida', 'aplicada', 'descartada']],
                     'error' => ['type' => ['string', 'null']],
                     'documents' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['name', 'size'], 'properties' => ['name' => ['type' => 'string'], 'size' => $count]]],

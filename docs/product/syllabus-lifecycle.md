@@ -138,10 +138,10 @@ Prorrogar o reanudar sin cambios no rehace nada.
   editar. Usa los datos académicos del sílabo y el texto de sus campos. Responde sobre
   unidades y planificación. No escribe en el sílabo, no aprueba ni bloquea. Límites: 20
   preguntas por sílabo, 3 conversaciones, 6 por minuto y 4000 caracteres por mensaje.
-- **Importación de ficha**: la IA propone valores de la ficha desde los documentos de la
-  carrera. Coordinación elige qué aplicar.
-- Se configura con `AI_DRIVER`. Sin proveedor, el chat y la importación se desactivan
-  con un aviso; todo lo demás funciona igual.
+- **Importación de ficha**: Coordinación completa el Excel generado con los campos
+  actuales, revisa la vista previa y elige qué aplicar. No requiere IA ni OCR.
+- Se configura con `AI_DRIVER`. Sin proveedor, el chat se desactiva
+  con un aviso; la importación Excel sigue disponible.
 
 ## Casos de borde
 

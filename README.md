@@ -42,7 +42,7 @@ php artisan queue:work redis --queue=critica,documentos,ia,general --tries=3
 
 - `critica`: verificación de plataforma.
 - `documentos`: Word y PDF del sílabo.
-- `ia`: chat del docente y lectura de documentos de la carrera.
+- `ia`: chat del docente y compatibilidad con importaciones de documentos anteriores. La carga actual de fichas usa Excel estructurado sin cola.
 - `general`: correos de activación de cuenta.
 
 Compose publica PostgreSQL en `127.0.0.1:55432` y Redis en `127.0.0.1:56379`. También

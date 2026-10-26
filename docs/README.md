@@ -39,7 +39,8 @@ Toda la documentación describe cómo funciona el sistema hoy. El historial est�
 - `architecture/deployment.md`: despliegue y Gotenberg.
 - `architecture/queues-and-jobs.md`: colas, trabajos e idempotencia.
 - `architecture/sequences.md`: secuencias de los flujos críticos.
-- `architecture/ai-service.md`: chat de IA, extracción de ficha y OpenParser.
+- `architecture/ai-service.md`: chat de IA y compatibilidad de documentos con OpenParser.
+- `architecture/ficha-excel.md`: generación, validación e importación de fichas mediante Excel.
 - `architecture/files-and-documents.md`: archivos, Word, PDF y firmas.
 - `architecture/template-json.md`: manual del JSON de la plantilla.
 - `architecture/openapi.json`: contrato de la API, generado con `php artisan openapi:export`.

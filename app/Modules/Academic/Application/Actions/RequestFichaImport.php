@@ -24,6 +24,7 @@ final class RequestFichaImport
         private readonly ProcessLocks $locks,
         private readonly FichaExtractionGateway $gateway,
         private readonly RecordAuditEvent $audit,
+        private readonly ForgetFichaImport $forget,
     ) {}
 
     /** @param list<UploadedFile> $files */
@@ -70,7 +71,6 @@ final class RequestFichaImport
 
     public function forget(FichaImport $import): void
     {
-        Storage::disk('private')->deleteDirectory("importaciones-ficha/{$import->id}");
-        $import->update(['estado_importacion' => FichaImport::DISCARDED, 'documentos_importacion' => []]);
+        $this->forget->execute($import);
     }
 }

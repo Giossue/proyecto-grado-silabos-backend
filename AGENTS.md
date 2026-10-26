@@ -15,8 +15,9 @@ Stack:
 - Redis para colas (`critica`, `documentos`, `ia`) y caché; nunca como fuente de verdad.
 - Archivos en un disco privado.
 - Gotenberg convierte el Word del sílabo en PDF.
-- IA con un proveedor externo configurable (`AI_DRIVER`, apagado por defecto) y
-  OpenParser para leer PDF de la carrera.
+- IA con un proveedor externo configurable (`AI_DRIVER`, apagado por defecto) para el
+  chat. La ficha se importa con una plantilla Excel; OpenParser queda por compatibilidad
+  con la carga de documentos anterior.
 - Despliegue en Dokploy: un push a `main` despliega y ejecuta las migraciones.
 
 ## Lee antes de trabajar
@@ -36,7 +37,7 @@ Según la tarea:
 | Plantilla del sílabo | `docs/architecture/template-json.md`, `docs/architecture/adr/0011-template-as-data.md`, `docs/product/syllabus-sections.md` |
 | Base de datos | `docs/architecture/database.md`, `docs/generated/database-schema.md` |
 | Interfaz | `docs/product/screens.md`, `docs/architecture/frontend.md`, `docs/quality/frontend-checklist.md` |
-| IA y ficha | `docs/architecture/ai-service.md` |
+| IA y ficha | `docs/architecture/ai-service.md`, `docs/architecture/ficha-excel.md` |
 | Word, PDF y firmas | `docs/architecture/files-and-documents.md`, `docs/runbooks/firma-electronica-entidades.md` |
 | Colas | `docs/architecture/queues-and-jobs.md` |
 | Despliegue | `docs/architecture/deployment.md`, `docs/runbooks/deploy-dokploy.md`, `docs/runbooks/release-verification.md`, `docs/security/hardening.md` |

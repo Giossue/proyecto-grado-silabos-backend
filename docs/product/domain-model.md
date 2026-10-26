@@ -58,7 +58,7 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
   sílabo.
 - **Importación de ficha** (`importaciones_ficha`): carrera, quién la pidió, estado
   (`pendiente`, `en_ejecucion`, `lista`, `fallida`, `aplicada`, `descartada`),
-  documentos subidos, propuesta de la IA y error. Hay como máximo una en curso por
+  metadatos del archivo, vista previa y error; conserva propuestas históricas de IA. Hay como máximo una en curso por
   carrera. Los archivos se borran al aplicar o descartar.
 
 ## Convocatoria y sílabo (`Syllabus`)

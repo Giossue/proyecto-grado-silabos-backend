@@ -4,9 +4,11 @@ namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Academic\Application\FichaFieldValues;
+use App\Modules\Academic\Application\FichaWorkbookContext;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
+use App\Modules\Academic\Infrastructure\Spreadsheets\FichaWorkbook;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -29,6 +31,7 @@ final class ApplyFichaImport
         private readonly RecordAuditEvent $audit,
         private readonly InProgressWork $work,
         private readonly FichaFieldValues $values,
+        private readonly FichaWorkbookContext $workbookContext,
     ) {}
 
     /**
@@ -46,6 +49,10 @@ final class ApplyFichaImport
             if ($locked->estado_importacion !== FichaImport::READY) {
                 throw ValidationException::withMessages(['subjects' => 'La propuesta ya no está lista para aplicarse.']);
             }
+            if (($locked->propuesta_importacion['format'] ?? null) === FichaWorkbook::FORMAT
+                && ($locked->propuesta_importacion['fingerprint'] ?? '') !== $this->workbookContext->for($locked->carrera_id)->fingerprint()) {
+                throw ValidationException::withMessages(['subjects' => 'La plantilla o las materias cambiaron. Descargue un Excel nuevo y vuelva a preparar la vista previa.']);
+            }
             $fields = $this->profile->fields()->keyBy('clave');
             $applied = 0;
             foreach ($locked->propuesta_importacion['subjects'] ?? [] as $entry) {
@@ -53,6 +60,7 @@ final class ApplyFichaImport
                     continue;
                 }
                 $chosenFields = $fieldsBySubject[$entry['subject_id']] ?? null;
+                $changed = false;
                 foreach ($entry['values'] as $key => $value) {
                     if (is_array($chosenFields) && ! in_array($key, $chosenFields, true)) {
                         continue;
@@ -77,6 +85,10 @@ final class ApplyFichaImport
                         ['asignatura_id' => $entry['subject_id'], 'definicion_campo_id' => $field->id],
                         ['valor' => FreeText::normalize($document)],
                     );
+                    $changed = true;
+                }
+                if (! $changed) {
+                    throw ValidationException::withMessages(['subjects' => 'Elija al menos un campo con contenido en cada materia seleccionada.']);
                 }
                 $applied++;
             }

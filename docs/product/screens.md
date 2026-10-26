@@ -45,7 +45,7 @@ muestra «Página no encontrada».
 | COR-13 | Malla | `/coordinacion/malla` | Lienzo con ciclos, materias y requisitos; «Editar malla» abre el editor a pantalla completa; «Importar desde Excel». |
 | COR-14 | Materias y asignaciones | `/coordinacion/materias-asignaciones` | Materias con paralelos, jornada y docente; «Acciones masivas»; un clic abre «Paralelos y docentes de la materia». |
 | COR-15 | Docentes | `/coordinacion/docentes` | Docentes de la carrera; «Crear docente», «Importar desde Excel»; la fila abre «Editar docente» con «Reenviar invitación» y «Quitar de la carrera». |
-| COR-16 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Fichas de las asignaturas e importación de documentos. Detalle abajo. |
+| COR-16 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Fichas de las asignaturas e importación mediante plantilla Excel. Detalle abajo. |
 
 COR-06 también ofrece «Reiniciar sílabo» mientras está en borrador, revisión o corrección,
 y el botón «Documentos» (DOC-10).
@@ -145,17 +145,16 @@ y el botón «Documentos» (DOC-10).
   «Incompleta». Filtros por materia, ciclo y estado.
 - Un clic abre «Ficha de {materia}»: pestañas por sección, un editor por campo y
   «Guardar ficha». Cada campo tiene el interruptor «El docente puede editarlo».
-- «Importar documentos» abre «Importar el proyecto de carrera»:
-  1. subir hasta 6 PDF o Excel y «Analizar documentos»;
-  2. «Leyendo el documento n de m: nombre» y después «Preparando la propuesta para cada
-     materia…», sin jerga ni contador de segundos (se puede cancelar);
-  3. revisar «n de m campos encontrados» por materia, consultar campos pendientes y sus
-     motivos, previsualizar las tablas, comparar con la ficha actual, marcar materias y
-     campos y «Aplicar a N materias», o «Descartar».
-- La propuesta puede ser parcial. Se muestra el tiempo de análisis cuando está
-  disponible. Durante el análisis, «Cancelar la importación» ocupa el pie; en la
-  propuesta solo aparecen «Descartar» y «Aplicar a N materias».
-- Sin proveedor de IA, el asistente muestra que no está configurado.
+- «Importar desde Excel» abre «Importar el proyecto de carrera»:
+  1. «Descargar plantilla Excel» genera las materias y los campos de Coordinación;
+  2. completar las celdas de contenido, manteniendo nombres, encabezados y materias;
+  3. cargar un `.xlsx` y pulsar «Revisar Excel»;
+  4. revisar «n de m campos con contenido», tablas y comparación con la ficha actual;
+  5. seleccionar materias y campos y «Aplicar a N materias», o «Descartar».
+- Los campos vacíos conservan sus valores actuales. El servidor señala hoja y celda
+  de los errores; si cambió la estructura, exige descargar una plantilla nueva.
+- El flujo funciona sin IA ni OCR. Las importaciones anteriores que sigan en proceso
+  conservan su estado de lectura y la acción de cancelación al pie del diálogo.
 - Con la convocatoria de la carrera abierta, la ficha y la importación quedan bloqueadas.
 
 ### DOC-04 Sílabo

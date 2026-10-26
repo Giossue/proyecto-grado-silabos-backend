@@ -21,7 +21,7 @@
 2. Laravel ↔ PostgreSQL;
 3. Laravel/worker ↔ Redis;
 4. aplicación ↔ almacenamiento privado;
-5. worker ↔ proveedor de IA alojado (chat y lectura de fichas);
+5. worker ↔ proveedor de IA alojado (chat e importaciones históricas de fichas);
 6. worker ↔ OpenParser (OCR de PDF de fichas);
 7. worker ↔ Gotenberg (DOCX a PDF);
 8. operadores ↔ despliegue y respaldos.
@@ -48,7 +48,7 @@
 | Referencia inventada | La IA cita evidencia inexistente | solo se aceptan citas de evidencias enviadas |
 | Decisión encubierta de IA | La IA intenta aprobar o cambiar estados | la IA solo devuelve texto o una propuesta; aplicar la ficha es una acción humana aparte |
 | SSRF / proveedor externo | Una URL manipulada desvía contenido o la clave | URL definida solo por operación, HTTPS, sin credenciales embebidas ni redirecciones; clave en secreto de despliegue |
-| Tratamiento por terceros | Borradores, preguntas y documentos de ficha salen hacia la IA u OpenParser | ambos desactivados por defecto, activación explícita, contexto mínimo; base legal pendiente (PV-12) |
+| Tratamiento por terceros | Borradores, preguntas y documentos de importaciones históricas salen hacia la IA u OpenParser | ambos desactivados por defecto, activación explícita, contexto mínimo; base legal pendiente (PV-12) |
 | Exfiltración por logs | Prompts o documentos aparecen en logs | minimización, acceso y retención controlados |
 | Pérdida de datos | Base o archivos destruidos | respaldos aislados, restauración probada (PV-11), mínimo privilegio |
 | Denegación de servicio | IA, OCR y exportación agotan los workers | colas separadas, límites por actor, tamaño y tiempo, timeouts |

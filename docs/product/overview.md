@@ -42,7 +42,7 @@ está en `roles-and-permissions.md`.
 
 1. Usuarios, roles y estructura académica (facultades, carreras, malla, paralelos).
 2. Plantilla del sílabo como datos (secciones, campos y bloques).
-3. Proyecto de carrera: ficha por asignatura, con importación asistida por IA.
+3. Proyecto de carrera: ficha por asignatura, con importación mediante plantilla Excel.
 4. Convocatoria por período y un sílabo por paralelo.
 5. Elaboración con autoguardado, validación y chat de IA opcional.
 6. Revisión: coordinación y luego biblioteca; corrección y reenvío.

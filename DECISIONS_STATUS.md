@@ -90,7 +90,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 ## Plantilla
 
-- La importación de fichas prioriza los elementos estructurados del OCR. Expande
+- La lectura histórica de PDF para fichas prioriza los elementos estructurados del OCR. Expande
   celdas combinadas, conserva los encabezados entre páginas y separa las filas por
   asignatura. Las tablas que declaran otra carrera se excluyen comparando su nombre
   normalizado con el de la importación. El Markdown se usa si no hay contenido
@@ -118,30 +118,20 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 - La ficha de cada asignatura reúne los campos que llena Coordinación. Sus valores se
   guardan en `valores_campo` con `asignatura_id` (I-204).
-- Coordinación puede importar la ficha desde documentos de la carrera (PDF o Excel). La
-  IA propone valores solo para los campos de ficha de la plantilla. Todos los PDF se
-  envían al OCR de OpenParser, incluso si contienen texto seleccionable. Este módulo
-  no extrae texto del PDF localmente ni sustituye el OCR si falla o no está configurado;
-  muestra el error correspondiente. El Excel se lee en el servidor.
-  Coordinación revisa y aplica. Los archivos se
-  borran al aplicar o descartar. Hay una importación por carrera a la vez.
-- Mientras se analizan los documentos, «Cancelar la importación» ocupa el lugar de
-  «Cerrar» al pie del diálogo. No se muestra el aviso sobre porcentajes del OCR.
-  El progreso usa mensajes de lectura y preparación de la propuesta, sin mencionar
-  «OCR» ni mostrar un contador de segundos.
-  La propuesta ofrece solo «Descartar» y «Aplicar a N materias» al pie, sin «Cerrar».
-- La importación busca las secciones de cada materia y hace una segunda búsqueda
-  acotada para los campos pendientes. Muestra cuántos campos encontró y los motivos
-  de los pendientes; una propuesta parcial se puede aplicar. No inventa contenido ni
-  relaciones con el perfil de egreso. Las columnas y encabezados de tabla proceden
-  de la plantilla. Se guardan tiempos de lectura y extracción sin registrar documentos.
-- La IA recibe los campos dinámicos de Coordinación con su sección, estructura y
-  componentes de la plantilla, y fragmentos identificados de la materia separados del
-  contexto compartido de carrera. La plantilla describe el formato: no es evidencia
-  académica. Cada valor del proveedor debe citar fragmentos recibidos; se rechazan
-  las referencias ausentes o desconocidas. Se conservan los localizadores por campo,
-  sin guardar los fragmentos en la propuesta. Esto no autoriza redactar contenido
-  ausente ni convertir objetivos de carrera en objetivos de la asignatura.
+- Coordinación importa fichas con un Excel generado automáticamente desde las materias
+  activas de su carrera y todos los campos vigentes asignados a Coordinación. El libro
+  protege títulos, códigos y nombres; solo se completa el contenido. Las tablas llevan
+  las columnas de la plantilla. No requiere IA, OCR ni cola.
+- «Importar desde Excel» permite descargar, completar, cargar y revisar una vista previa.
+  Coordinación selecciona materias y campos antes de aplicar; las celdas vacías
+  conservan los valores actuales. El archivo subido no se conserva.
+- El servidor valida el alcance, la estructura y su vigencia al cargar y al aplicar.
+  Si cambian los campos o las materias, exige descargar una plantilla nueva. Rechaza
+  fórmulas y modificaciones de identificación; la protección del Excel no sustituye
+  la autorización. No hay versiones de plantilla: se compara una huella de estructura.
+- Se reutilizan la comparación con valores actuales, los permisos, la transacción y
+  la confirmación para regenerar sílabos en curso. Se conserva compatibilidad para
+  importaciones anteriores; los trabajos en ejecución no se interrumpen.
 - Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
   copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
   encendido no deja la ficha incompleta (I-230).
@@ -196,8 +186,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   por defecto (I-73).
 - El docente tiene un chat que usa los datos de la carrera, de la asignatura y lo que ya
   escribió en el sílabo (contexto `free-text-v3`).
-- La IA también propone valores de ficha al importar documentos (solo `openai` o
-  `deepseek`).
+- La importación histórica de documentos conserva propuestas de IA (`openai` o
+  `deepseek`) por compatibilidad. La carga actual de fichas usa Excel estructurado.
 - La IA nunca aprueba, bloquea ni escribe sola. Si falla, solo se pierde la ayuda de IA
   (ADR-0003).
 

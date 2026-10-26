@@ -139,41 +139,29 @@ sequenceDiagram
 - Word y PDF se descargan (`GET exports/{id}/{docx|pdf}`) solo con las tres firmas. El
   PDF que se entrega es el último firmado.
 
-## 6. Importación de fichas con IA
+## 6. Importación de fichas
 
 ```mermaid
 sequenceDiagram
     actor C as Coordinador
     participant API as API
     participant DB as PostgreSQL
-    participant Q as Cola ia
-    participant OCR as OpenParser
-    participant IA as Proveedor de IA
-
-    C->>API: POST coordination/ficha-imports (PDF o Excel)
-    API->>API: carrera editable; IA configurada; sin otra importación en curso
-    API->>DB: importaciones_ficha pendiente; archivos en importaciones-ficha/{id}/
-    API-->>Q: PrepareFichaImportJob (afterCommit)
-    Q->>Q: reutiliza documentos idénticos dentro de la importación
-    Q->>OCR: PDF completo (también si tiene texto seleccionable)
-    OCR-->>Q: texto extraído o error (sin sustitución por extracción local)
-    Q->>Q: bloques con documento y página cuando está disponible
-    Q->>DB: tiempos de lectura; una entrada por asignatura activa
-    loop por asignatura
-        Q->>IA: secciones de la asignatura + campos y columnas de la plantilla
-        opt quedan campos pendientes
-            Q->>Q: busca evidencia por etiqueta y columnas
-            Q->>IA: solo campos pendientes (una consulta adicional)
-        end
-        Q->>DB: propuesta parcial, motivos pendientes y tiempo de extracción
-    end
-    Q->>DB: importación lista y hora de finalización
-    C->>API: POST …/{import}/apply (asignaturas y campos elegidos)
-    API->>DB: valores_campo de la asignatura; archivos borrados; aplicada
-    API->>DB: si hay sílabos en curso: pide confirmación y los regenera
+    C->>API: GET coordination/ficha-imports/template
+    API->>DB: campos de Coordinación y materias activas de la carrera
+    API-->>C: Excel con estructura protegida y celdas de contenido
+    C->>C: completa el contenido
+    C->>API: POST coordination/ficha-imports/spreadsheet (file)
+    API->>API: valida alcance, estructura, celdas y ausencia de fórmulas
+    API->>DB: importaciones_ficha lista (vista previa; sin guardar el archivo)
+    API-->>C: materias, campos con contenido y comparación actual
+    C->>API: POST …/{import}/apply (materias y campos elegidos)
+    API->>API: comprueba vigencia de la estructura y permisos
+    API->>DB: valores_campo; si hay sílabos en curso exige confirmación y los regenera
 ```
 
-`DELETE …/{import}` descarta la propuesta y borra los archivos.
+`DELETE …/{import}` descarta la vista previa. El flujo no utiliza IA, OCR ni cola.
+La lectura de documentos anterior queda por compatibilidad, descrita en
+[ai-service.md](ai-service.md#importación-de-fichas).
 
 ## 7. Cambios con sílabos en curso y regeneración
 

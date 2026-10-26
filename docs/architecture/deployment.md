@@ -141,7 +141,11 @@ php artisan signatures:build-trust-bundle <certificados .cer/.crt/.pem> \
 El comando muestra la huella de cada certificado para compararla con la que publica
 la entidad. Qué entidades cargar: [firma-electronica-entidades.md](../runbooks/firma-electronica-entidades.md).
 
-### OCR con OpenParser
+### OCR con OpenParser (compatibilidad histórica)
+
+La carga actual de fichas usa Excel estructurado y no requiere estas variables ni
+un proveedor de IA. Esta configuración solo afecta a la importación histórica de
+documentos que permanece en la API; ver [ficha-excel.md](ficha-excel.md).
 
 | Variable | Por defecto | Efecto |
 |---|---|---|

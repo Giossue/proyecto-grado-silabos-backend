@@ -211,6 +211,10 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereUuid('asignatura')->name('api.v1.academic.subjects.profile.update');
             Route::get('coordination/ficha-imports', [FichaImportsController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.coordination.ficha-imports.index');
+            Route::get('coordination/ficha-imports/template', [FichaImportsController::class, 'template'])
+                ->middleware('active-role')->name('api.v1.coordination.ficha-imports.template');
+            Route::post('coordination/ficha-imports/spreadsheet', [FichaImportsController::class, 'spreadsheet'])
+                ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.coordination.ficha-imports.spreadsheet');
             Route::post('coordination/ficha-imports', [FichaImportsController::class, 'store'])
                 ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.coordination.ficha-imports.store');
             Route::post('coordination/ficha-imports/{import}/apply', [FichaImportsController::class, 'apply'])

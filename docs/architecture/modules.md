@@ -7,7 +7,7 @@ El backend es un monolito modular. Cada módulo vive en `app/Modules/<Módulo>`.
 | Módulo | Responsabilidad | Tablas propias |
 |---|---|---|
 | `Identity` | Cuentas, cuatro roles fijos, rol activo en sesión, activación por correo, docentes de la carrera, perfil y preferencias. | `usuarios`, `asignaciones_rol`, `invitaciones_activacion` |
-| `Academic` | Facultades, carreras, períodos, malla (asignaturas y requisitos), paralelos y docentes asignados. Ficha de asignatura y su importación con IA. | `facultades`, `carreras`, `periodos_academicos`, `asignaturas`, `requisitos_asignatura`, `paralelos`, `asignaciones_paralelo`, `importaciones_ficha` |
+| `Academic` | Facultades, carreras, períodos, malla (asignaturas y requisitos), paralelos y docentes asignados. Ficha de asignatura y su importación mediante plantilla Excel. | `facultades`, `carreras`, `periodos_academicos`, `asignaturas`, `requisitos_asignatura`, `paralelos`, `asignaciones_paralelo`, `importaciones_ficha` |
 | `Configuration` | La plantilla única del sílabo: definición JSON, secciones, campos, bloques, variables, logos e importación/exportación JSON. | `plantilla_silabo`, `secciones_plantilla`, `campos_plantilla`, `definiciones_campo` |
 | `Syllabus` | Convocatorias institucionales y de carrera, sílabos, borrador, validación, envío, revisión de Coordinación, correcciones y regeneración. | `convocatorias_universidad`, `convocatorias_carreras`, `silabos`, `valores_campo`, `revisiones_silabo`, `revisiones_coordinacion`, `aprobaciones`; vista `docentes_vigentes_silabo` |
 | `Library` | Revisión de bibliografía: comentar con motivos o aprobar. Aprobar deja el sílabo `aprobado` y pide la exportación. | `envios_biblioteca` |

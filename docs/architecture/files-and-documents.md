@@ -12,7 +12,7 @@ esa carpeta debe estar en un volumen persistente (ver [deployment.md](deployment
 | `exports/{revisión}/{exportación}/silabo-firmado-{rol}.pdf` | PDF después de cada firma | sí (`syllabus_signed_export`) |
 | `logos/facultades/{facultad}/{uuid}.png` | Logo de facultad | sí (`logo_facultad`) |
 | `logos/institucion.png` | Logo de la universidad | no |
-| `importaciones-ficha/{importación}/…` | Documentos y `bloques.json` de una importación | no; se borran al aplicar o descartar |
+| `importaciones-ficha/{importación}/…` | Documentos y `bloques.json` de importaciones históricas | no; se borran al aplicar o descartar |
 | `ca-confiables.pem` (sugerido) | Entidades certificadoras reconocidas | no |
 
 La tabla `archivos` guarda disco, ruta interna, nombre, tipo MIME, tamaño, hash

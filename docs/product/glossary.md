@@ -12,7 +12,7 @@
 | Asignación docente | Docente vigente de un paralelo. Hay como máximo una activa por paralelo. |
 | Proyecto de carrera | Pantalla de Coordinación con la ficha de cada asignatura de su malla. |
 | Ficha de la asignatura | Valores de los campos de la plantilla que llena Coordinación (por ejemplo, descripción u objetivos). El sílabo copia la ficha al crearse. |
-| Importación de ficha | Carga de documentos PDF o Excel de la carrera para que la IA proponga valores de la ficha. Coordinación elige qué aplicar. |
+| Importación de ficha | Carga de un Excel generado desde las materias y campos actuales de Coordinación. Se completa el contenido y se revisa antes de aplicar. |
 | Plantilla | Definición única del sílabo: papel, estilo, variables, bloques, secciones y campos. Es un dato, no código (ADR-0011). |
 | Sección | Parte numerada del sílabo, con título y orientación (vertical u horizontal). |
 | Campo | Contenido dentro de una sección. Indica quién lo llena: docente, coordinación (en pantalla, «Carrera») o institucional («Fijo»). |
