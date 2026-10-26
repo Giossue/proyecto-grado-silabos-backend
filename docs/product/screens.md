@@ -77,7 +77,9 @@ y el botón «Documentos» (DOC-10).
 ### ADM-06 Plantilla
 
 - Abre en modo lectura: las hojas muestran la plantilla con datos de muestra, como
-  quedará el sílabo. Arriba: «Opciones avanzadas» y la acción principal «Editar».
+  quedará el sílabo. Arriba: «Opciones avanzadas» y la acción principal «Editar»,
+  alineadas con el borde derecho de la primera hoja. La barra respeta su papel,
+  orientación y el ancho disponible de pantalla, también durante la edición.
 - «Editar» activa la cinta de edición sobre las mismas hojas:
   - formato de texto (negrita, cursiva, subrayado, alineación, listas);
   - menú «Tabla» (insertar, filas, columnas, combinar, separar, encabezado, fondo de
