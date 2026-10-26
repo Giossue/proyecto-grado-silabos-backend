@@ -2,11 +2,11 @@
 
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
-- Fecha: 2026-10-22.
-- Última migración aplicada: `2026_10_22_000227_remove_hidden_convocation_state`.
-- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 33 tablas.
+- Fecha: 2026-10-26.
+- Última migración aplicada: `2026_10_26_000229_drop_ficha_imports_table`.
+- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 32 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
-  `psql "postgresql://silabos_ueb:silabos_ueb@127.0.0.1:55432/silabos_ueb" -X -At -f <consulta>.sql`.
+  `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
   - columnas: `pg_attribute` + `format_type()` + `pg_attrdef` (`pg_get_expr`);
   - PK, FK y CHECK: `pg_constraint` + `pg_get_constraintdef()`;
   - únicos: `pg_index` con `indisunique` y sin `indisprimary` + `pg_get_indexdef()`;
@@ -417,27 +417,6 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
   - `firmas_documento_firmado_como_check`: `CHECK (((firmado_como)::text = ANY ((ARRAY['docente'::character varying, 'coordinacion'::character varying, 'biblioteca'::character varying])::text[])))`
 - Triggers:
   - `proteger_firma_documento`: BEFORE DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION proteger_registro_append_only()
-
-### `importaciones_ficha`
-
-| Columna | Tipo | Nulo | Por defecto |
-|---|---|---|---|
-| `importacion_ficha_id` | uuid | no |  |
-| `carrera_id` | uuid | no |  |
-| `solicitado_por` | uuid | no |  |
-| `estado_importacion` | character varying(20) | no |  |
-| `documentos_importacion` | jsonb | no |  |
-| `propuesta_importacion` | jsonb | sí |  |
-| `mensaje_error_importacion` | text | sí |  |
-| `solicitado_en` | timestamp(0) with time zone | no |  |
-| `aplicado_en` | timestamp(0) with time zone | sí |  |
-
-- PK: `PRIMARY KEY (importacion_ficha_id)`
-- FK:
-  - `importaciones_ficha_carrera_id_foreign`: `FOREIGN KEY (carrera_id) REFERENCES carreras(carrera_id) ON DELETE RESTRICT`
-  - `importaciones_ficha_solicitado_por_foreign`: `FOREIGN KEY (solicitado_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
-- CHECK:
-  - `importaciones_ficha_estado_check`: `CHECK (((estado_importacion)::text = ANY ((ARRAY['pendiente'::character varying, 'en_ejecucion'::character varying, 'lista'::character varying, 'fallida'::character varying, 'aplicada'::character varying, 'descartada'::character varying])::text[])))`
 
 ### `invitaciones_activacion`
 

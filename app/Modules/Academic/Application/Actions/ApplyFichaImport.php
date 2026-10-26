@@ -6,9 +6,7 @@ use App\Models\User;
 use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Application\FichaWorkbookContext;
 use App\Modules\Academic\Application\SubjectProfileFields;
-use App\Modules\Academic\Domain\AcademicStructurePermissions;
-use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
-use App\Modules\Academic\Infrastructure\Spreadsheets\FichaWorkbook;
+use App\Modules\Academic\Domain\FichaWorkbookPreview;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -16,6 +14,7 @@ use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -29,29 +28,33 @@ final class ApplyFichaImport
         private readonly InProgressWork $work,
         private readonly FichaFieldValues $values,
         private readonly FichaWorkbookContext $workbookContext,
+        private readonly PreviewFichaWorkbook $preview,
     ) {}
 
     /**
      * @param  list<string>  $subjectIds
      * @param  array<string, list<string>>|null  $fieldsBySubject
      */
-    public function execute(FichaImport $import, array $subjectIds, User $actor, Request $request, ?array $fieldsBySubject = null): FichaImport
+    public function execute(UploadedFile $file, string $fingerprint, string $fileHash, array $subjectIds, User $actor, Request $request, ?array $fieldsBySubject = null): int
     {
+        $preview = $this->preview->execute($file, $actor, $request);
+        if (! hash_equals($preview->definition->fingerprint(), $fingerprint) || ! hash_equals($preview->fileHash, $fileHash)) {
+            throw ValidationException::withMessages(['file' => 'El Excel o la estructura cambió desde la vista previa. Vuelva a revisar el archivo antes de aplicar.']);
+        }
+        $this->assertSelection($preview, $subjectIds, $fieldsBySubject);
+        $careerId = $preview->definition->careerId;
         $role = $this->roles->resolve($request);
-        abort_unless($actor->activo && AcademicStructurePermissions::isCareerContext($role) && $role?->carrera_id === $import->carrera_id, 403);
-        $this->locks->assertCareerEditable($import->carrera_id);
+        abort_unless($role !== null && $role->carrera_id === $careerId, 403);
 
-        return $this->work->replace($request, fn (): FichaImport => DB::transaction(function () use ($import, $subjectIds, $actor, $role, $fieldsBySubject): FichaImport {
-            $locked = FichaImport::query()->lockForUpdate()->findOrFail($import->id);
-            if ($locked->estado_importacion !== FichaImport::READY || ($locked->propuesta_importacion['format'] ?? null) !== FichaWorkbook::FORMAT) {
-                throw ValidationException::withMessages(['subjects' => 'La propuesta ya no está lista para aplicarse.']);
-            }
-            if (($locked->propuesta_importacion['fingerprint'] ?? '') !== $this->workbookContext->for($locked->carrera_id)->fingerprint()) {
-                throw ValidationException::withMessages(['subjects' => 'La plantilla o las materias cambiaron. Descargue un Excel nuevo y vuelva a preparar la vista previa.']);
+        return $this->work->replace($request, fn (): int => DB::transaction(function () use ($preview, $careerId, $subjectIds, $actor, $role, $fieldsBySubject): int {
+            DB::table('carreras')->where('carrera_id', $careerId)->lockForUpdate()->first();
+            $this->locks->assertCareerEditable($careerId);
+            if ($preview->definition->fingerprint() !== $this->workbookContext->for($careerId)->fingerprint()) {
+                throw ValidationException::withMessages(['file' => 'La plantilla o las materias cambiaron. Descargue un Excel nuevo y vuelva a preparar la vista previa.']);
             }
             $fields = $this->profile->fields()->keyBy('clave');
             $applied = 0;
-            foreach ($locked->propuesta_importacion['subjects'] ?? [] as $entry) {
+            foreach ($preview->subjects as $entry) {
                 if (! in_array($entry['subject_id'], $subjectIds, true) || $entry['state'] !== 'lista') {
                     continue;
                 }
@@ -83,10 +86,31 @@ final class ApplyFichaImport
             if ($applied === 0) {
                 throw ValidationException::withMessages(['subjects' => 'Elija al menos una materia con ficha propuesta.']);
             }
-            $locked->update(['estado_importacion' => FichaImport::APPLIED, 'aplicado_en' => now(), 'documentos_importacion' => []]);
-            $this->audit->execute($actor->id, $role->id, 'academico.ficha_importacion_aplicada', 'carrera', $locked->carrera_id, 'exito', ['subjects' => $applied]);
+            $this->audit->execute($actor->id, $role->id, 'academico.ficha_importacion_aplicada', 'carrera', $careerId, 'exito', ['subjects' => $applied]);
 
-            return $locked;
-        }), $import->carrera_id, null, 'Coordinación actualizó la ficha de la asignatura', null, $subjectIds);
+            return $applied;
+        }), $careerId, null, 'Coordinación actualizó la ficha de la asignatura', null, $subjectIds);
+    }
+
+    /**
+     * @param  list<string>  $subjectIds
+     * @param  array<string, list<string>>|null  $fieldsBySubject
+     */
+    private function assertSelection(FichaWorkbookPreview $preview, array $subjectIds, ?array $fieldsBySubject): void
+    {
+        $entries = array_column($preview->subjects, null, 'subject_id');
+        if ($fieldsBySubject !== null && array_diff(array_keys($fieldsBySubject), $subjectIds) !== []) {
+            throw ValidationException::withMessages(['fields' => 'Los campos deben pertenecer a las materias seleccionadas.']);
+        }
+        foreach ($subjectIds as $subjectId) {
+            $entry = $entries[$subjectId] ?? null;
+            if ($entry === null || $entry['state'] !== 'lista') {
+                throw ValidationException::withMessages(['subjects' => 'Seleccione únicamente materias de su carrera con contenido en el Excel.']);
+            }
+            $chosenFields = $fieldsBySubject[$subjectId] ?? array_keys($entry['values']);
+            if ($chosenFields === [] || array_diff($chosenFields, array_keys($entry['values'])) !== []) {
+                throw ValidationException::withMessages(['fields' => 'Seleccione al menos un campo con contenido del Excel en cada materia.']);
+            }
+        }
     }
 }

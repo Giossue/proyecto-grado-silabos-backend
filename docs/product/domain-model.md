@@ -56,11 +56,10 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
   `silabo_id`, una por campo de la plantilla que llena Coordinación.
   `editable_docente_valor_campo` indica si el docente puede editar ese campo en su
   sílabo.
-- **Importación de ficha** (`importaciones_ficha`): carrera, quién la pidió, estado
-  (`lista`, `aplicada`, `descartada` en el flujo actual), metadatos del archivo y vista
-  previa Excel. Hay como máximo una vista previa disponible por carrera. El archivo
-  se lee desde el temporal de PHP y no se conserva. La base conserva registros y
-  estados históricos del flujo retirado; no se ofrecen en la interfaz.
+- **Vista previa de importación**: objeto en memoria generado al leer el Excel.
+  Coordinación revisa y selecciona materias y campos. Al aplicar se envía el mismo
+  archivo y se vuelve a validar. Solo los valores confirmados se guardan en
+  `valores_campo`. Cerrar o recargar descarta la vista previa; no hay tabla de cargas.
 
 ## Convocatoria y sílabo (`Syllabus`)
 

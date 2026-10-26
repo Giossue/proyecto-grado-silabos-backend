@@ -152,6 +152,8 @@ y el botón «Documentos» (DOC-10).
   3. cargar un `.xlsx` y pulsar «Revisar Excel»;
   4. revisar «n de m campos con contenido», tablas y comparación con la ficha actual;
   5. seleccionar materias y campos y «Aplicar a N materias», o «Descartar».
+  La vista previa solo dura mientras el diálogo esté abierto. Al cerrar o recargar
+  hay que volver a subir el archivo; «Descartar» limpia únicamente la pantalla.
 - Los campos vacíos conservan sus valores actuales. El servidor señala hoja y celda
   de los errores; si cambió la estructura, exige descargar una plantilla nueva.
 - El flujo funciona sin IA, OCR ni cola. Solo se ofrecen vistas previas Excel; la carga

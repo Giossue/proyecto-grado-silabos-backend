@@ -236,15 +236,16 @@ class ExportOpenApi extends Command
         if ($isSubjectProfile) {
             $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectProfile']]];
         }
-        if (in_array($name, ['api.v1.coordination.ficha-imports.index', 'api.v1.coordination.ficha-imports.spreadsheet', 'api.v1.coordination.ficha-imports.apply'], true)) {
+        if ($name === 'api.v1.coordination.ficha-imports.spreadsheet') {
             $successContent = ['application/json' => ['schema' => [
-                'type' => 'object',
-                'required' => ['import'],
-                'properties' => [
-                    'available' => ['type' => 'boolean'],
-                    'message' => ['type' => 'string'],
-                    'import' => ['oneOf' => [['$ref' => '#/components/schemas/FichaImport'], ['type' => 'null']]],
-                ],
+                'type' => 'object', 'required' => ['preview'],
+                'properties' => ['preview' => ['$ref' => '#/components/schemas/FichaWorkbookPreview']],
+            ]]];
+        }
+        if ($name === 'api.v1.coordination.ficha-imports.apply') {
+            $successContent = ['application/json' => ['schema' => [
+                'type' => 'object', 'required' => ['message', 'applied'],
+                'properties' => ['message' => ['type' => 'string'], 'applied' => ['type' => 'integer', 'minimum' => 1]],
             ]]];
         }
         if ($name === 'api.v1.coordination.ficha-imports.template') {
@@ -311,10 +312,13 @@ class ExportOpenApi extends Command
                     'properties' => ['file' => ['type' => 'string', 'format' => 'binary']],
                 ]]];
             } elseif ($name === 'api.v1.coordination.ficha-imports.apply') {
-                $content = ['application/json' => ['schema' => [
-                    'type' => 'object', 'required' => ['subjects'],
+                $content = ['multipart/form-data' => ['schema' => [
+                    'type' => 'object', 'required' => ['file', 'fingerprint', 'file_hash', 'subjects'],
                     'properties' => [
-                        'subjects' => ['type' => 'array', 'minItems' => 1, 'items' => ['type' => 'string', 'format' => 'uuid']],
+                        'file' => ['type' => 'string', 'format' => 'binary'],
+                        'fingerprint' => ['type' => 'string', 'pattern' => '^[a-f0-9]{64}$'],
+                        'file_hash' => ['type' => 'string', 'pattern' => '^[a-f0-9]{64}$'],
+                        'subjects' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 100, 'uniqueItems' => true, 'items' => ['type' => 'string', 'format' => 'uuid']],
                         'fields' => ['type' => 'object', 'additionalProperties' => ['type' => 'array', 'items' => ['type' => 'string']]],
                         'confirm_purge' => ['type' => 'boolean'],
                     ],
@@ -409,7 +413,7 @@ class ExportOpenApi extends Command
                 'properties' => ['columns' => $strings, 'rows' => ['type' => 'array', 'items' => $strings]],
                 'additionalProperties' => false,
             ],
-            'FichaImportSubject' => [
+            'FichaWorkbookSubject' => [
                 'type' => 'object',
                 'required' => ['subject_id', 'code', 'name', 'cycle', 'state', 'values', 'coverage', 'missing', 'replaces', 'current'],
                 'properties' => [
@@ -426,16 +430,14 @@ class ExportOpenApi extends Command
                     ]]],
                 ],
             ],
-            'FichaImport' => [
-                'type' => 'object', 'required' => ['id', 'format', 'state', 'error', 'documents', 'fields', 'subjects'],
+            'FichaWorkbookPreview' => [
+                'type' => 'object', 'required' => ['format', 'fingerprint', 'file_hash', 'fields', 'subjects'],
                 'properties' => [
-                    'id' => ['type' => 'string', 'format' => 'uuid'],
                     'format' => ['type' => 'string', 'enum' => ['ficha_xlsx_v1']],
-                    'state' => ['enum' => ['lista', 'aplicada', 'descartada']],
-                    'error' => ['type' => ['string', 'null']],
-                    'documents' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['name', 'size'], 'properties' => ['name' => ['type' => 'string'], 'size' => $count]]],
+                    'fingerprint' => ['type' => 'string', 'pattern' => '^[a-f0-9]{64}$'],
+                    'file_hash' => ['type' => 'string', 'pattern' => '^[a-f0-9]{64}$'],
                     'fields' => ['type' => 'array', 'items' => ['type' => 'object', 'required' => ['key', 'label', 'columns'], 'properties' => ['key' => ['type' => 'string'], 'label' => ['type' => 'string'], 'columns' => $strings]]],
-                    'subjects' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/FichaImportSubject']],
+                    'subjects' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/FichaWorkbookSubject']],
                 ],
             ],
         ];

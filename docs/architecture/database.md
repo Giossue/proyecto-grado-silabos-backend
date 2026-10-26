@@ -40,7 +40,7 @@ base; este documento explica las reglas que hay detrás.
 - Huellas: `character(64)` con SHA-256 en hexadecimal.
 - JSON solo para documentos y datos sin relaciones: definición de la plantilla
   (`json`); valores de campo, fotografías de revisión, contexto académico del sílabo,
-  mensajes de IA, importaciones de ficha y detalles de auditoría (`jsonb`).
+  mensajes de IA y detalles de auditoría (`jsonb`).
 - Agregar un campo a la plantilla no cambia el esquema: es una fila nueva.
 
 ## Invariantes que protege la base
@@ -150,7 +150,6 @@ archivos y mensajes de IA. Fuera de esa transacción, los triggers rechazan el c
   `php artisan db:rename-migrations-table --force` y luego
   `php artisan migrate --force --isolated`.
 - Toda FK nueva llega con un índice que la encabece. Hoy no lo tienen
-  `definiciones_campo.plantilla_id`, `importaciones_ficha.solicitado_por` y
-  `ayudas_pantalla.actualizado_por`.
+  `definiciones_campo.plantilla_id` y `ayudas_pantalla.actualizado_por`.
 - Tras cambiar el esquema, se regenera
   [database-schema.md](../generated/database-schema.md).

@@ -5,7 +5,6 @@ namespace Tests\Feature\Academic;
 use App\Models\User;
 use App\Modules\Academic\Application\FichaFieldValues;
 use App\Modules\Academic\Application\FichaWorkbookContext;
-use App\Modules\Academic\Infrastructure\Persistence\Models\FichaImport;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Spreadsheets\FichaWorkbook;
 use App\Modules\Configuration\Domain\FreeText;
@@ -70,12 +69,10 @@ class FichaImportTest extends TestCase
     {
         $subject = Subject::query()->where('carrera_id', $this->context->carrera_id)->where('activo', true)->firstOrFail();
 
-        $response = $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.spreadsheet'), ['file' => $this->workbook($subject->id)], ['Accept' => 'application/json'])
+        $file = $this->workbook($subject->id);
+        $response = $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.spreadsheet'), ['file' => $file], ['Accept' => 'application/json'])
             ->assertOk();
-        $importId = $response->json('import.id');
-
-        $detail = $this->asCoordinator()->getJson(route('api.v1.coordination.ficha-imports.index'))->assertOk()->json('import');
-        $this->assertSame('lista', $detail['state']);
+        $detail = $response->json('preview');
         $entry = collect($detail['subjects'])->firstWhere('subject_id', $subject->id);
         $this->assertSame('lista', $entry['state']);
         $this->assertSame('Ficha completada en Excel', $entry['values']['descripcion']);
@@ -85,12 +82,11 @@ class FichaImportTest extends TestCase
         $this->assertSame(6, $entry['coverage']['total']);
         $this->assertCount(4, $entry['missing']);
 
-        $this->asCoordinator()->postJson(route('api.v1.coordination.ficha-imports.apply', $importId), ['subjects' => [$subject->id]])->assertOk();
+        $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.apply'), ['file' => $file, 'fingerprint' => $detail['fingerprint'], 'file_hash' => $detail['file_hash'], 'subjects' => [$subject->id]], ['Accept' => 'application/json'])->assertOk();
 
         $description = FieldValue::query()->where('asignatura_id', $subject->id)
             ->whereIn('definicion_campo_id', FieldDefinition::query()->where('clave', 'descripcion')->select('definicion_campo_id'))->firstOrFail();
         $this->assertStringContainsString('Ficha completada en Excel', json_encode($description->valor, JSON_UNESCAPED_UNICODE));
-        $this->assertSame('aplicada', FichaImport::query()->findOrFail($importId)->estado_importacion);
     }
 
     public function test_the_proposal_shows_the_current_profile_and_applies_only_the_chosen_fields(): void
@@ -102,15 +98,17 @@ class FichaImportTest extends TestCase
             ['valor' => FreeText::fromText('Descripción que ya estaba')],
         );
 
-        $importId = $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.spreadsheet'), ['file' => $this->workbook($subject->id)], ['Accept' => 'application/json'])->json('import.id');
-        $entry = collect($this->asCoordinator()->getJson(route('api.v1.coordination.ficha-imports.index'))->json('import.subjects'))->firstWhere('subject_id', $subject->id);
+        $file = $this->workbook($subject->id);
+        $preview = $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.spreadsheet'), ['file' => $file], ['Accept' => 'application/json'])->assertOk()->json('preview');
+        $entry = collect($preview['subjects'])->firstWhere('subject_id', $subject->id);
         $this->assertTrue($entry['replaces']);
         $this->assertSame('Descripción que ya estaba', $entry['current']['descripcion']);
 
-        $this->asCoordinator()->postJson(route('api.v1.coordination.ficha-imports.apply', $importId), [
+        $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.apply'), [
+            'file' => $file, 'fingerprint' => $preview['fingerprint'], 'file_hash' => $preview['file_hash'],
             'subjects' => [$subject->id],
             'fields' => [$subject->id => ['objetivos_especificos']],
-        ])->assertOk();
+        ], ['Accept' => 'application/json'])->assertOk();
 
         $kept = FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $description->id)->firstOrFail();
         $this->assertStringContainsString('Descripción que ya estaba', json_encode($kept->valor, JSON_UNESCAPED_UNICODE));
@@ -122,19 +120,21 @@ class FichaImportTest extends TestCase
     {
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
         $this->actingAs($teacher)->withSession(['active_role_assignment_id' => $teacher->roleAssignments()->firstOrFail()->id])
-            ->getJson(route('api.v1.coordination.ficha-imports.index'))->assertForbidden();
+            ->getJson(route('api.v1.coordination.ficha-imports.template'))->assertForbidden();
     }
 
     public function test_table_rows_follow_the_template_and_are_applied_as_a_table(): void
     {
         $subject = Subject::query()->where('carrera_id', $this->context->carrera_id)->where('activo', true)->firstOrFail();
-        $response = $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.spreadsheet'), ['file' => $this->workbook($subject->id, true)], ['Accept' => 'application/json'])->assertOk();
-        $entry = collect($this->asCoordinator()->getJson(route('api.v1.coordination.ficha-imports.index'))->json('import.subjects'))->firstWhere('subject_id', $subject->id);
+        $file = $this->workbook($subject->id, true);
+        $response = $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.spreadsheet'), ['file' => $file], ['Accept' => 'application/json'])->assertOk();
+        $preview = $response->json('preview');
+        $entry = collect($preview['subjects'])->firstWhere('subject_id', $subject->id);
         $field = FieldDefinition::query()->where('clave', 'contribucion_perfil')->firstOrFail();
 
         $this->assertSame(app(FichaFieldValues::class)->schema($field)['columns'], $entry['values']['contribucion_perfil']['columns']);
         $this->assertCount(5, $entry['values']['contribucion_perfil']['columns']);
-        $this->asCoordinator()->postJson(route('api.v1.coordination.ficha-imports.apply', $response->json('import.id')), ['subjects' => [$subject->id]])->assertOk();
+        $this->asCoordinator()->post(route('api.v1.coordination.ficha-imports.apply'), ['file' => $file, 'fingerprint' => $preview['fingerprint'], 'file_hash' => $preview['file_hash'], 'subjects' => [$subject->id]], ['Accept' => 'application/json'])->assertOk();
 
         $value = FieldValue::query()->where('asignatura_id', $subject->id)->where('definicion_campo_id', $field->id)->firstOrFail();
         $this->assertSame('table', $value->valor['content'][0]['type']);

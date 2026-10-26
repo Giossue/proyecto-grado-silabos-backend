@@ -143,25 +143,25 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor C as Coordinador
-    participant API as API
+    participant C as Coordinación
+    participant API as Laravel
     participant DB as PostgreSQL
     C->>API: GET coordination/ficha-imports/template
-    API->>DB: campos de Coordinación y materias activas de la carrera
-    API-->>C: Excel con estructura protegida y celdas de contenido
-    C->>C: completa el contenido
+    API->>DB: Materias activas y campos actuales de Coordinación
+    API-->>C: Excel con identificaciones y encabezados protegidos
     C->>API: POST coordination/ficha-imports/spreadsheet (file)
-    API->>API: valida alcance, estructura, celdas y ausencia de fórmulas
-    API->>DB: importaciones_ficha lista (vista previa; sin guardar el archivo)
-    API-->>C: materias, campos con contenido y comparación actual
-    C->>API: POST …/{import}/apply (materias y campos elegidos)
-    API->>API: comprueba vigencia de la estructura y permisos
-    API->>DB: valores_campo; si hay sílabos en curso exige confirmación y los regenera
+    API->>DB: Leer estructura vigente y valores actuales
+    API-->>C: Vista previa y huellas, sin persistir la carga
+    Note over C: Archivo y vista previa solo en memoria del diálogo
+    C->>API: POST coordination/ficha-imports/apply (mismo file, huellas, selección)
+    API->>DB: Verificar permisos, estructura y confirmación de regeneración
+    Note over API: Releer Excel y validar archivo, materias y campos
+    API->>DB: Transacción: valores_campo y auditoría; regenerar si corresponde
+    API-->>C: Cantidad de materias aplicadas
 ```
 
-`DELETE …/{import}` descarta la vista previa. El flujo no utiliza IA, OCR ni cola.
-La ruta de carga de documentos anterior fue retirada. Solo se consultan y aplican
-vistas previas generadas desde el Excel estructurado.
+«Descartar», cerrar o recargar limpia la revisión en el navegador. No hay tabla,
+recuperación ni descarte HTTP de importaciones. El flujo no usa IA, OCR ni cola.
 
 ## 7. Cambios con sílabos en curso y regeneración
 

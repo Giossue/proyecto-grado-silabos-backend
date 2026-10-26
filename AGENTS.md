@@ -1,5 +1,12 @@
 # Guía de agentes — Sílabos UEB
 
+## Base de producción de este repositorio
+
+La base de Sílabos confirmada por el usuario es `silabos_ueb_db`. Verificar también
+las tablas `silabos`, `usuarios` y `migraciones` antes de operar. `calidad_software`
+pertenece a otro sistema; no usarla para las tareas de este repositorio. Las
+credenciales se consumen solo en memoria desde `.pgpass` y nunca se muestran.
+
 ## Proyecto
 
 Sistema web para elaborar, revisar, aprobar y firmar los sílabos de la Universidad

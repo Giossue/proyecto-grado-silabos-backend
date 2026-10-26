@@ -118,7 +118,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   las columnas de la plantilla. No requiere IA, OCR ni cola.
 - «Importar desde Excel» permite descargar, completar, cargar y revisar una vista previa.
   Coordinación selecciona materias y campos antes de aplicar; las celdas vacías
-  conservan los valores actuales. El archivo subido no se conserva.
+  conservan los valores actuales. Archivo y vista previa se mantienen solo mientras
+  el diálogo está abierto; cerrar o recargar exige volver a subir el Excel. No hay
+  importaciones persistidas, caché ni contenido de vista previa en sesión.
 - El botón «Importar desde Excel» de Proyecto de carrera usa la misma variante verde
   `success` que las demás entradas de importación Excel.
 - El servidor valida el alcance, la estructura y su vigencia al cargar y al aplicar.
@@ -128,8 +130,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Se reutilizan la comparación con valores actuales, los permisos, la transacción y
   la confirmación para regenerar sílabos en curso. Se eliminaron la carga antigua de
   documentos, los lectores OCR, los gateways de extracción de fichas y sus trabajos
-  de cola. Solo se consultan y aplican vistas previas Excel; los registros históricos
-  permanecen en la base sin ofrecerse en la interfaz.
+  de cola. Se elimina `importaciones_ficha`, incluidos sus registros históricos, con
+  una nueva migración y respaldo previo. La aplicación relee el mismo Excel al
+  confirmar, compara sus huellas y guarda únicamente la selección en `valores_campo`.
 - Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
   copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
   encendido no deja la ficha incompleta (I-230).

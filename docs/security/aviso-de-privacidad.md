@@ -16,7 +16,7 @@ Universidad Estatal de Bolívar, [dirección], [correo del delegado de protecci�
 | Contraseña (cifrada) y datos de verificación en dos pasos | Proteger el acceso a la cuenta. |
 | Formación y experiencia del docente | Completar el sílabo que elabora. |
 | Contenido de sílabos, revisiones, comentarios y documentos generados | Elaborar, revisar, aprobar y conservar el sílabo. |
-| Contenido del Excel de la ficha que sube Coordinación | Revisar y llenar la ficha de la asignatura. El archivo se lee temporalmente y no se conserva; sus valores y metadatos quedan en la vista previa. |
+| Contenido del Excel de la ficha que sube Coordinación | Revisar y llenar la ficha de la asignatura. El archivo se lee temporalmente; la vista previa solo permanece en el navegador. Se guardan los valores confirmados en la ficha y el registro de la acción. |
 | Preguntas al asistente de IA y sus respuestas | Ayudar al docente a redactar su sílabo. |
 | Nombre del titular, serie, emisor y vigencia del certificado de firma, y hora de la firma | Dejar constancia de quién firmó cada documento. El archivo de firma y su clave nunca llegan al sistema. |
 | Dirección IP, navegador, fecha y acción realizada | Seguridad y trazabilidad de lo que ocurre en el sistema. |

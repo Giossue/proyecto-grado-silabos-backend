@@ -463,14 +463,12 @@ class AcademicStructureViewData
         $this->careerDependencies ??= [
             'subjects' => Subject::query()->get(['carrera_id'])->countBy(fn (Subject $subject) => (string) $subject->carrera_id)->all(),
             'convocations' => DB::table('convocatorias_carreras')->selectRaw('carrera_id, count(*) as total')->groupBy('carrera_id')->pluck('total', 'carrera_id')->all(),
-            'imports' => DB::table('importaciones_ficha')->selectRaw('carrera_id, count(*) as total')->whereNotNull('carrera_id')->groupBy('carrera_id')->pluck('total', 'carrera_id')->all(),
         ];
         $count = fn (string $kind): int => (int) ($this->careerDependencies[$kind][$careerId] ?? 0);
 
         return match (true) {
             $count('subjects') > 0 => 'No se puede eliminar: tiene '.$count('subjects').($count('subjects') === 1 ? ' materia.' : ' materias.'),
             $count('convocations') > 0 => 'No se puede eliminar: ya tuvo convocatorias.',
-            $count('imports') > 0 => 'No se puede eliminar: tiene fichas importadas.',
             default => DeleteAcademicRecord::careerRoleBlock($careerId),
         };
     }

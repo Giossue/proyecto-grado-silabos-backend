@@ -94,8 +94,7 @@ Hallazgos de la revisión de documentación del 2026-10-20, todavía sin corregi
    - el worker escucha `notificaciones` e `integraciones`, que no usa ningún trabajo.
 4. **Configuración:**
    - Nginx acepta 32 MB y el PDF firmado admite 40 MB;
-   - faltan índices en `definiciones_campo.plantilla_id`, `importaciones_ficha.solicitado_por` y
-     `ayudas_pantalla.actualizado_por`;
+   - faltan índices en `definiciones_campo.plantilla_id` y `ayudas_pantalla.actualizado_por`;
    - `composer dev` no procesa las colas `documentos` e `ia`;
    - `GOTENBERG_URL` no está en `.env.example`.
 5. **Prueba e2e desactualizada:** `tests/e2e/accessibility.spec.ts` (frontend) busca el botón «Nueva plantilla», que

@@ -197,7 +197,7 @@ final class FichaWorkbook
             return array_map(function (array $subject) use ($values): array {
                 $content = $values[$subject['id']] ?? [];
 
-                return ['subject_id' => $subject['id'], 'code' => $subject['code'], 'name' => $subject['name'], 'cycle' => $subject['cycle'], 'state' => $content === [] ? 'sin_evidencia' : 'lista', 'values' => (object) $content, 'error' => null];
+                return ['subject_id' => $subject['id'], 'code' => $subject['code'], 'name' => $subject['name'], 'cycle' => $subject['cycle'], 'state' => $content === [] ? 'sin_evidencia' : 'lista', 'values' => $content, 'error' => null];
             }, $definition->subjects);
         } finally {
             $book->disconnectWorksheets();

@@ -9,21 +9,19 @@ IA, OCR, Redis ni trabajos de cola. Funciona con `AI_DRIVER=disabled`.
 
 - `GET /api/v1/coordination/ficha-imports/template`: descarga `proyecto-carrera.xlsx`.
 - `POST /api/v1/coordination/ficha-imports/spreadsheet`: multipart `file`, un `.xlsx`
-  de hasta 20 MB; devuelve `200` con `import` lista para revisar.
-- `GET /api/v1/coordination/ficha-imports`: recupera la vista previa. `available`
-  indica la disponibilidad del flujo de carga; no consulta al proveedor de IA.
-- `POST /api/v1/coordination/ficha-imports/{import}/apply`: aplica materias y campos
-  elegidos, con la confirmación de regeneración existente cuando corresponda.
-- `DELETE /api/v1/coordination/ficha-imports/{import}`: descarta la vista previa.
+  de hasta 20 MB; devuelve `200` con `preview`: formato, huella de estructura,
+  `file_hash` SHA-256 del archivo, campos, materias, comparación, cobertura y pendientes.
+- `POST /api/v1/coordination/ficha-imports/apply`: multipart con el mismo `file`,
+  `fingerprint`, `file_hash`, `subjects[]`, selección opcional `fields[UUID][]` y
+  `confirm_purge` cuando corresponda. Devuelve `200` con `message` y `applied`.
 
-La importación identifica `format=ficha_xlsx_v1`. El contrato conserva estado,
-metadatos del archivo, campos, materias, comparación, cobertura y campos pendientes.
-Se retiraron el POST de documentos y los datos de lectura OCR, progreso asíncrono,
-extracción y tiempos. La SPA no hace consultas periódicas.
+La vista previa tiene `format=ficha_xlsx_v1`, sin ID ni estado persistido. Se retiraron
+GET de recuperación y DELETE de descarte. El navegador conserva archivo y vista previa
+solo mientras el diálogo está abierto; descartarlos es una acción local. Al cerrar o
+recargar se pierden y hay que subir otra vez el archivo. No hay consultas periódicas.
 
-Solo se consultan, reemplazan, aplican y descartan vistas previas Excel. Los registros
-históricos permanecen en la base, pero no se ofrecen ni bloquean cargas nuevas.
-No se modificaron migraciones aplicadas ni se borraron fichas existentes.
+La nueva migración elimina `importaciones_ficha` y sus registros históricos. El flujo
+no guarda contenido de vista previa en PostgreSQL, Redis, sesión ni disco privado.
 
 ## Libro
 
@@ -63,13 +61,19 @@ cuando se pueden localizar. La vista previa se crea solo si todo el archivo es v
 y contiene al menos un campo; los campos vacíos se muestran como pendientes.
 
 El archivo subido se lee desde el temporal de PHP y no se copia al disco privado.
-`importaciones_ficha` conserva nombre, tamaño, huella y valores para la vista previa;
-el archivo no se conserva. Preparar la vista previa no modifica `valores_campo`.
-`ApplyFichaImport` sigue aplicando únicamente lo seleccionado en una transacción,
-conserva los encabezados de las tablas y respeta los permisos de edición docente.
-Si ninguna celda de una materia seleccionada se puede aplicar, rechaza la operación.
+`FichaWorkbookPreview` es un objeto en memoria. Revisar no escribe fichas ni registros
+de importación. La pantalla vuelve a enviar el archivo al confirmar y el servidor
+repite toda la lectura y validación. Compara la huella de estructura y la del archivo
+con la revisión mostrada; también comprueba que todas las materias y campos elegidos
+pertenezcan a la carga y tengan contenido.
+
+`ApplyFichaImport` bloquea la carrera, comprueba editabilidad y estructura otra vez y
+escribe únicamente lo seleccionado en `valores_campo`, dentro de una transacción.
+Conserva los encabezados de tablas y los permisos de edición docente. La auditoría
+registra quién aplicó y cuántas materias; no conserva el Excel ni su contenido.
 `InProgressWork` exige confirmación para rehacer sílabos en curso y no toca procesos
-cerrados. Preparar un nuevo Excel descarta la vista previa Excel anterior de la carrera.
+cerrados. Si falla la aplicación, el diálogo conserva la vista previa para corregir
+la selección o volver a intentarlo mientras permanezca abierto.
 
 ## Evidencia local
 

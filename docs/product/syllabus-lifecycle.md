@@ -139,7 +139,9 @@ Prorrogar o reanudar sin cambios no rehace nada.
   unidades y planificación. No escribe en el sílabo, no aprueba ni bloquea. Límites: 20
   preguntas por sílabo, 3 conversaciones, 6 por minuto y 4000 caracteres por mensaje.
 - **Importación de ficha**: Coordinación completa el Excel generado con los campos
-  actuales, revisa la vista previa y elige qué aplicar. No requiere IA ni OCR.
+  actuales, revisa la vista previa y elige qué aplicar. La revisión queda solo en el
+  navegador mientras el diálogo esté abierto. Al aplicar, el servidor relee el mismo
+  Excel y guarda la selección en `valores_campo`. No requiere IA ni OCR.
 - Se configura con `AI_DRIVER`. Sin proveedor, el chat se desactiva
   con un aviso; la importación Excel sigue disponible.
 

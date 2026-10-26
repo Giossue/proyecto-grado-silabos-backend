@@ -103,6 +103,8 @@ La suite pasa sin proveedor real. `AiAssistanceTest` y `HostedAiChatGatewayTest`
 
 `FichaImportTest` conserva los casos de vista previa Excel, aplicación parcial,
 comparación con valores actuales, permisos y tablas derivadas de la plantilla.
+Los casos existentes reciben la vista previa en la respuesta y reenvían el archivo
+al aplicar, sin recuperar un registro de importación.
 `FichaFieldValuesTest` cubre encabezados combinados y validación de valores.
 Los casos exclusivos del lector OCR, selección de evidencia y extracción por IA se
 eliminaron junto a ese código. Las pruebas existentes se adaptaron al contrato Excel;

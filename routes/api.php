@@ -209,16 +209,12 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->whereUuid('asignatura')->name('api.v1.academic.subjects.profile.show');
             Route::put('academic/asignaturas/{asignatura}/ficha', [SubjectProfileController::class, 'update'])
                 ->middleware('active-role')->whereUuid('asignatura')->name('api.v1.academic.subjects.profile.update');
-            Route::get('coordination/ficha-imports', [FichaImportsController::class, 'index'])
-                ->middleware('active-role')->name('api.v1.coordination.ficha-imports.index');
             Route::get('coordination/ficha-imports/template', [FichaImportsController::class, 'template'])
                 ->middleware('active-role')->name('api.v1.coordination.ficha-imports.template');
             Route::post('coordination/ficha-imports/spreadsheet', [FichaImportsController::class, 'spreadsheet'])
                 ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.coordination.ficha-imports.spreadsheet');
-            Route::post('coordination/ficha-imports/{import}/apply', [FichaImportsController::class, 'apply'])
-                ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.ficha-imports.apply');
-            Route::delete('coordination/ficha-imports/{import}', [FichaImportsController::class, 'destroy'])
-                ->middleware('active-role')->whereUuid('import')->name('api.v1.coordination.ficha-imports.destroy');
+            Route::post('coordination/ficha-imports/apply', [FichaImportsController::class, 'apply'])
+                ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.coordination.ficha-imports.apply');
             Route::get('coordination/academic/scheduled-subjects', [CareerAcademicStructureController::class, 'scheduledSubjects'])
                 ->middleware('active-role')->name('api.v1.coordination.academic.scheduled-subjects.index');
             Route::get('coordination/academic/teacher-assignments', [CareerAcademicStructureController::class, 'teacherAssignments'])
