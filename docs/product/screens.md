@@ -230,7 +230,8 @@ firmado» aparece con las tres firmas.
 - **Formularios.** Las altas se hacen en un modal o en una hoja lateral. Los datos
   obligatorios llevan asterisco.
 - **Estados.** Mismas etiquetas y colores en todo el producto. Las cargas muestran
-  esqueletos con la forma de la pantalla.
+  esqueletos con la forma de la pantalla. Los botones de la pantalla aparecen cuando
+  termina de cargar, nunca antes ni deshabilitados mientras carga.
 
 ## IDs retirados
 
