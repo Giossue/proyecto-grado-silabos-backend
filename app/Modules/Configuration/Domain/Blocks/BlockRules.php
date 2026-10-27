@@ -69,11 +69,13 @@ final class BlockRules
         }
         $target = $raw[$comparisons[0]];
         if (is_array($target)) {
-            if (! is_string($target['variable'] ?? null) || ! in_array($target['variable'], $variables, true) || count($target) !== 1) {
-                BlockDefinitionError::fail("{$where}.{$comparisons[0]}: use un número o {\"variable\": \"clave\"} del catálogo.");
+            $byVariable = is_string($target['variable'] ?? null) && in_array($target['variable'], $variables, true);
+            $byCount = is_string($target['count'] ?? null) && ValueSchema::at($value, $target['count']) !== null;
+            if (count($target) !== 1 || (! $byVariable && ! $byCount)) {
+                BlockDefinitionError::fail("{$where}.{$comparisons[0]}: use un número, {\"variable\": \"clave\"} del catálogo o {\"count\": \"lista\"} del valor.");
             }
         } elseif (! is_int($target) && ! is_float($target)) {
-            BlockDefinitionError::fail("{$where}.{$comparisons[0]}: use un número o {\"variable\": \"clave\"}.");
+            BlockDefinitionError::fail("{$where}.{$comparisons[0]}: use un número, {\"variable\": \"clave\"} o {\"count\": \"lista\"}.");
         }
         $check = [$measures[0] => $path, $comparisons[0] => $target];
         if (isset($raw['label'])) {
@@ -132,8 +134,13 @@ final class BlockRules
             };
             $comparison = isset($check['equals']) ? 'equals' : (isset($check['max']) ? 'max' : 'min');
             $target = $check[$comparison];
-            $expected = is_array($target) ? Numbers::parse($variables[$target['variable']] ?? '') : $target;
-            $ok = match ($comparison) {
+            $expected = match (true) {
+                is_array($target) && isset($target['count']) => BlockLayout::count($scope->collect($target['count'])),
+                is_array($target) => Numbers::parse($variables[$target['variable']] ?? ''),
+                default => $target,
+            };
+            $unknown = is_array($target) && isset($target['variable']) && trim($variables[$target['variable']] ?? '') === '';
+            $ok = $unknown || match ($comparison) {
                 'equals' => abs($actual - $expected) <= 0.001,
                 'max' => $actual <= $expected + 0.001,
                 default => $actual >= $expected - 0.001,

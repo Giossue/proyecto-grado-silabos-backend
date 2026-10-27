@@ -57,7 +57,7 @@ y el botón «Documentos» (DOC-10).
 | DOC-02 | Mis sílabos | `/docente/mis-silabos` | Entrada del docente; no tiene Panel. Arriba, sílabos por entregar, por corregir y en revisión, Bajo la barra superior, un aviso ámbar con los días que quedan para enviar sus sílabos a revisión y la fecha límite. Debajo, tarjetas del período vigente: asignatura, paralelo, estado y último guardado. Botón «Historial». |
 | DOC-04 | Sílabo | `/docente/mis-silabos/:syllabus` | Editor a pantalla completa, sin menú lateral. Detalle abajo. |
 | DOC-05 | Validación | dentro de DOC-04 | Campos faltantes y reglas de bloques; el botón de envío explica qué falta. |
-| DOC-06 | Asistente de unidades | panel en DOC-04 | Chat de IA con preguntas sugeridas y «Nuevo chat». |
+| DOC-06 | Asistente de unidades | botón flotante en DOC-04 | «Asistente» abre el chat de IA con preguntas sugeridas y «Nuevo chat»; «Cerrar asistente» lo oculta. |
 | DOC-07 | Envío | diálogo en DOC-04 | «¿Enviar a revisión?» → «Enviar a revisión». |
 | DOC-08 | Corrección | tarjeta en DOC-04 | «Comentario de Coordinación» o «Comentario de Biblioteca». |
 | DOC-09 | Historial | `/docente/historial`, `/docente/historial/:career` | Carreras con sílabos de períodos terminados y, dentro, sus sílabos por período, en solo lectura. |
@@ -104,7 +104,8 @@ y el botón «Documentos» (DOC-10).
 
 - Columnas: período, clases, elaboración de sílabos y estado («Sin iniciar», «Abierto»,
   «Pausado», «Finalizado»).
-- «Nueva convocatoria» pide en dos pasos las fechas de clases y las de elaboración y
+- «Nueva convocatoria» pide en dos pasos las fechas de clases (con «Semanas de clase»,
+  que sugiere las semanas entre las fechas y se puede corregir) y las de elaboración y
   entrega, y abre la convocatoria. Está deshabilitado mientras otra siga abierta o
   pausada.
 - Al pulsar una fila se abre un diálogo: sin convocatoria, «Abrir convocatoria» o
@@ -171,8 +172,10 @@ y el botón «Documentos» (DOC-10).
 - Al abrir un sílabo sin iniciar, el borrador empieza solo.
 - Título con la materia; debajo, período y paralelo.
 - Formulario con los componentes del sistema, generado desde la plantilla: pestañas solo
-  para las secciones con campos del docente, un campo con etiqueta por dato, una tarjeta
-  por unidad, semana o fila de tabla, y «Agregar»/«Quitar». Cada campo se guarda solo
+  para las secciones con campos del docente, un campo con etiqueta por dato y asterisco
+  de obligatorio, las unidades en un acordeón, y las semanas y las tablas de respuesta
+  (como la bibliografía) en tablas del sistema con «Agregar» y «Quitar». Las horas solo
+  admiten números. «Anterior» y «Siguiente» recorren las secciones. Cada campo se guarda solo
   tras una breve pausa; si falla, muestra «Sin guardar» y «Reintentar»; si hay
   conflicto, «Recargar borrador».
 - Campos del docente: editables. Campos de la ficha: solo lectura, salvo los marcados

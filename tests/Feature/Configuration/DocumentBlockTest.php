@@ -5,6 +5,7 @@ namespace Tests\Feature\Configuration;
 use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use App\Modules\Configuration\Application\TemplateVariables;
+use App\Modules\Configuration\Domain\Blocks\BlockRules;
 use App\Modules\Configuration\Domain\DocumentBlock;
 use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
@@ -114,12 +115,24 @@ class DocumentBlockTest extends TestCase
         $this->assertSame('16', FreeText::plainText($tables[3]['content'][5 + 3]['content'][1]));
     }
 
-    public function test_the_units_block_rejects_more_than_sixteen_weeks_and_text_as_hours(): void
+    public function test_the_weeks_cannot_exceed_those_of_the_period(): void
     {
         $week = ['contenidos' => '', 'acd_h' => '', 'ape_h' => '', 'aa_h' => ''];
-        $units = array_fill(0, 4, ['nombre' => '', 'resultado' => '', 'semanas' => array_fill(0, 5, $week)]);
+        $block = DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => array_fill(0, 4, ['nombre' => '', 'resultado' => '', 'semanas' => array_fill(0, 5, $week)])]]);
+        $rules = OfficialTemplate::definition()->block('unidades')['rules'];
+
+        $this->assertSame('Las unidades suman más semanas que el período.', BlockRules::failures($rules, $block['value'], ['semanas_periodo' => '16'], 'save')[0]['message']);
+        $this->assertSame([], BlockRules::failures($rules, $block['value'], ['semanas_periodo' => '20'], 'save'));
+    }
+
+    public function test_the_teacher_declares_from_one_to_eight_units(): void
+    {
+        $unit = ['nombre' => 'U', 'resultado' => 'R', 'semanas' => []];
+        $this->assertCount(3, DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => array_fill(0, 3, $unit)]])['value']['units']);
+
         $this->expectException(ValidationException::class);
-        DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => $units]]);
+        $this->expectExceptionMessage('La planificación admite de 1 a 8 unidades.');
+        DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => array_fill(0, 9, $unit)]]);
     }
 
     public function test_the_units_block_rejects_hours_that_are_not_numbers(): void
@@ -131,10 +144,10 @@ class DocumentBlockTest extends TestCase
     public function test_the_unit_hours_are_added_per_component_and_compared_with_the_subject(): void
     {
         $block = DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => [['semanas' => [['acd_h' => '3', 'ape_h' => '1,5', 'aa_h' => ''], ['acd_h' => '2']]], ['semanas' => [['aa_h' => '4']]]]]]);
-        $failures = DocumentBlock::failures(['attrs' => $block], ['horas_docencia' => '5', 'horas_practicas' => '2', 'horas_autonomas' => '4']);
+        $failures = DocumentBlock::failures(['attrs' => $block], ['horas_docencia' => '5', 'horas_practicas' => '2', 'horas_autonomas' => '4', 'semanas_periodo' => '16']);
 
         $this->assertSame(['unidades_sin_nombre', 'semanas_unidades_incompletas', 'horas_unidades_no_coinciden'], array_column($failures, 'code'));
-        $this->assertSame('Escriba el nombre y el resultado de aprendizaje de las 4 unidades: Nombres 0 de 4, Resultados 0 de 4.', $failures[0]['message']);
+        $this->assertSame('Escriba el nombre y el resultado de aprendizaje de cada unidad: Nombres 0 de 2, Resultados 0 de 2.', $failures[0]['message']);
         $this->assertSame('Las horas de las unidades deben sumar las de la asignatura: APE 1.5 de 2.', $failures[2]['message']);
         $this->assertSame('Las unidades deben repartir las 16 semanas del período: tienen 3.', $failures[1]['message']);
     }

@@ -168,6 +168,12 @@
             "format": "number",
             "sample": "48"
         },
+        "semanas_periodo": {
+            "label": "Semanas de clase del período",
+            "source": "identification.teaching_weeks",
+            "format": "number",
+            "sample": "16"
+        },
         "horas_totales": {
             "label": "Total de horas del período",
             "source": "identification.total_hours",
@@ -314,11 +320,11 @@
             "value": {
                 "units": {
                     "type": "array",
-                    "minItems": 4,
-                    "maxItems": 4,
+                    "minItems": 1,
+                    "maxItems": 8,
                     "initial": 4,
                     "title": "unidad",
-                    "errorMessage": "La planificación admite 4 unidades.",
+                    "errorMessage": "La planificación admite de 1 a 8 unidades.",
                     "items": {
                         "type": "object",
                         "properties": {
@@ -338,10 +344,10 @@
                             "semanas": {
                                 "type": "array",
                                 "minItems": 0,
-                                "maxItems": 16,
+                                "maxItems": 52,
                                 "initial": 4,
                                 "title": "semana",
-                                "errorMessage": "Las unidades suman más de 16 semanas.",
+                                "errorMessage": "Las unidades suman más semanas que el período.",
                                 "items": {
                                     "type": "object",
                                     "properties": {
@@ -412,41 +418,49 @@
                 {
                     "code": "semanas_maximas",
                     "on": "save",
-                    "message": "Las unidades suman más de 16 semanas.",
+                    "message": "Las unidades suman más semanas que el período.",
                     "checks": [
                         {
                             "count": "units.*.semanas",
-                            "max": 16
+                            "max": {
+                                "variable": "semanas_periodo"
+                            }
                         }
                     ]
                 },
                 {
                     "code": "unidades_sin_nombre",
                     "on": "submit",
-                    "message": "Escriba el nombre y el resultado de aprendizaje de las 4 unidades: {detail}.",
+                    "message": "Escriba el nombre y el resultado de aprendizaje de cada unidad: {detail}.",
                     "hint": "Cada unidad necesita su nombre y su resultado de aprendizaje para poder enviar",
                     "checks": [
                         {
                             "label": "Nombres",
                             "filled": "units.*.nombre",
-                            "equals": 4
+                            "equals": {
+                                "count": "units"
+                            }
                         },
                         {
                             "label": "Resultados",
                             "filled": "units.*.resultado",
-                            "equals": 4
+                            "equals": {
+                                "count": "units"
+                            }
                         }
                     ]
                 },
                 {
                     "code": "semanas_unidades_incompletas",
                     "on": "submit",
-                    "message": "Las unidades deben repartir las 16 semanas del período: tienen {actual}.",
+                    "message": "Las unidades deben repartir las {expected} semanas del período: tienen {actual}.",
                     "checks": [
                         {
                             "label": "Semanas",
                             "count": "units.*.semanas",
-                            "equals": 16
+                            "equals": {
+                                "variable": "semanas_periodo"
+                            }
                         }
                     ]
                 },
@@ -485,7 +499,7 @@
                 "<table>",
                 "<tr><th rowspan=\"2\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Unidad No.</span></strong></th><th rowspan=\"2\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\"><span data-slot='{\"index\":true}'></span></span></strong></th><th colspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Nombre de la unidad</span></strong></th><td colspan=\"4\"><span data-slot='{\"value\":\"nombre\"}'></span></td></tr>",
                 "<tr><th colspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Resultados de aprendizaje</span></strong></th><td colspan=\"4\"><span data-slot='{\"value\":\"resultado\"}'></span></td></tr>",
-                "<tr><th rowspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Contenidos temáticos de la unidad</span></strong></th><th rowspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Semanas (16)</span></strong></th><th colspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Horas por semana — Organización del aprendizaje</span></strong></th><th colspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">ACTIVIDADES DE APRENDIZAJE</span></strong></th><th rowspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Evaluación de los aprendizajes</span></strong></th></tr>",
+                "<tr><th rowspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Contenidos temáticos de la unidad</span></strong></th><th rowspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Semanas (<span data-variable=\"semanas_periodo\"></span>)</span></strong></th><th colspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Horas por semana — Organización del aprendizaje</span></strong></th><th colspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">ACTIVIDADES DE APRENDIZAJE</span></strong></th><th rowspan=\"3\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Evaluación de los aprendizajes</span></strong></th></tr>",
                 "<tr><th style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">DOCENCIA</span></strong></th><th colspan=\"2\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">ESTUDIANTE</span></strong></th><th rowspan=\"2\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Aprendizaje en contacto con el docente (ACD)</span></strong></th><th rowspan=\"2\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Aprendizaje práctico-experimental (APE)</span></strong></th><th rowspan=\"2\" style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">Aprendizaje autónomo (AA)</span></strong></th></tr>",
                 "<tr><th style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">ACD</span></strong></th><th style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">APE</span></strong></th><th style=\"background:#C3D4EA;text-align:center\"><strong><span style=\"color:#365F91\">AA</span></strong></th></tr>",
                 "<tr data-repeat='{\"value\":\"semanas\"}' data-band=\"#E1E9F4\"><td><span data-slot='{\"value\":\"contenidos\"}'></span></td><td style=\"text-align:center\"><span data-slot='{\"counter\":\"semana\"}'></span></td><td style=\"text-align:center\"><span data-slot='{\"value\":\"acd_h\"}'></span></td><td style=\"text-align:center\"><span data-slot='{\"value\":\"ape_h\"}'></span></td><td style=\"text-align:center\"><span data-slot='{\"value\":\"aa_h\"}'></span></td><td><span data-slot='{\"value\":\"acd\"}'></span></td><td><span data-slot='{\"value\":\"ape\"}'></span></td><td><span data-slot='{\"value\":\"aa\"}'></span></td><td><span data-slot='{\"value\":\"evaluacion\"}'></span></td></tr>",

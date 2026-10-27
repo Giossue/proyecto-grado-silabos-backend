@@ -63,7 +63,7 @@ el estado: el sílabo sigue «En revisión».
 - Todo campo del docente y de la ficha debe tener contenido. Si falta la ficha, el aviso
   es «La asignatura no tiene ficha: pídala al coordinador».
 - Las reglas de los bloques deben cumplirse; por ejemplo, el bloque `unidades` exige
-  16 semanas y horas iguales a las de la asignatura.
+  las semanas de clase del período y horas iguales a las de la asignatura.
 - La fecha actual debe estar entre el inicio y la entrega de la convocatoria, y ni la
   convocatoria ni la de la carrera pueden estar en pausa.
 - «Enviar sílabo» queda deshabilitado mientras falten campos o falle una regla. El

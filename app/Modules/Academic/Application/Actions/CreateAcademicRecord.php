@@ -100,7 +100,7 @@ class CreateAcademicRecord
                 'codigo' => $this->periodLabel->make($data['starts_on'], $data['ends_on']),
                 'fecha_inicio' => $data['starts_on'],
                 'fecha_fin' => $data['ends_on'],
-                'semanas_lectivas' => $this->periodWeeks->calculate($data['starts_on'], $data['ends_on']),
+                'semanas_lectivas' => $data['teaching_weeks'] ?? $this->periodWeeks->calculate($data['starts_on'], $data['ends_on']),
             ]),
             'asignatura' => $this->createSubject($data, $this->careerId($activeRole)),
             'asignacion_docente' => $this->createTeacherAssignment($data, $this->careerId($activeRole)),

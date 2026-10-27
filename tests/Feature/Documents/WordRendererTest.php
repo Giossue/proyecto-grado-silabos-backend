@@ -33,7 +33,7 @@ class WordRendererTest extends TestCase
         [$xml, $dom, $xpath] = $this->documentXml($bundle->docx->bytes);
         $this->assertSame(11, $xpath->query('//w:tbl[.//w:t]')->length);
         $this->assertSame(4, $xpath->query('//w:tbl[.//w:t[contains(., "Contenidos temáticos")]]')->length);
-        $this->assertSame(1, $xpath->query('//w:tbl[.//w:t[contains(., "Contenidos temáticos")]]/w:tr[.//w:t[text()="16"]]')->length);
+        $this->assertSame(1, $xpath->query('//w:tbl[.//w:t[contains(., "Contenidos temáticos")]]/w:tr[.//w:t[text()="16"] and not(.//w:t[contains(., "Contenidos temáticos")])]')->length);
         $this->assertStringContainsString('w:orient="landscape"', $xml);
         foreach (['FACULTAD:', 'Semanas (16)', 'Puntualidad:', 'Firma del docente', 'Firma de coordinación', 'Firma de biblioteca', 'Fecha de revisión:', 'Nivel de contribución', 'ISBN'] as $text) {
             $this->assertStringContainsString($text, $dom->textContent);

@@ -163,7 +163,7 @@ class UpdateAcademicRecord
                 'codigo' => $this->periodLabel->make($data['starts_on'], $data['ends_on']),
                 'fecha_inicio' => $data['starts_on'],
                 'fecha_fin' => $data['ends_on'],
-                'semanas_lectivas' => $this->periodWeeks->calculate($data['starts_on'], $data['ends_on']),
+                'semanas_lectivas' => $data['teaching_weeks'] ?? $this->periodWeeks->calculate($data['starts_on'], $data['ends_on']),
             ],
             default => throw ValidationException::withMessages([
                 'entity' => 'El tipo de registro no admite edición.',

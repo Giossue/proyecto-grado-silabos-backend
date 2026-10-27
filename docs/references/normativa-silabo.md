@@ -61,10 +61,25 @@ de unidades y sus filas semanales son datos del sílabo, no geometría de la pla
 
 <https://www.ces.gob.ec/wp-content/uploads/2025/05/Reglamento-de-Regimen-Academico.pdf>
 
+Resolución RPC-SE-08-No.023-2022 (14 de julio de 2022), codificada el 9 de marzo de 2023.
+
 **Qué sustenta.** El artículo 9 establece 48 horas de actividad de aprendizaje por cada
-crédito y el artículo 10 permite que cada IES distribuya las horas del período académico.
-La planificación conserva los componentes ACD, APE y AA de la malla y comprueba su
-distribución; no deriva de esta norma una cantidad universal de unidades o semanas.
+crédito. El artículo 10 dice:
+
+> «Las IES implementarán al menos dos (2) períodos académicos al año. Las IES en
+> ejercicio de su autonomía responsable podrán distribuir el número de horas que
+> comprenderá cada período académico, considerando que un estudiante de tiempo completo
+> durante su carrera dedicará un promedio de cuarenta y cinco (45) horas por semana a
+> las diferentes actividades de aprendizaje, indistinto de la modalidad de estudios.»
+
+Solo para el campo de la Salud, el artículo 113 fija períodos ordinarios «entre dieciséis
+(16) a veinte (20) semanas de duración cada uno, que incluyan la evaluación, excepto la
+correspondiente a recuperación», de 800 a 1000 horas; el artículo 114 permite períodos
+extraordinarios «de mínimo cuatro (4) semanas».
+
+Por eso la planificación conserva los componentes ACD, APE y AA de la malla y comprueba
+su distribución, pero no fija unidades ni semanas: el docente declara sus unidades y estas
+suman las semanas de clase que tiene cada período (decisión del 2026-10-27).
 
 ---
 

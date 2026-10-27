@@ -36,10 +36,11 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
   su tabla y completa las semanas. Desde el 2026-10-27 la ficha ya no los trae.
 - Cada semana tiene contenidos, horas ACD, APE y AA, actividades de cada componente y
   evaluación.
-- Al guardar: las unidades no pueden sumar más de 16 semanas.
-- Al enviar: las cuatro unidades deben tener nombre y resultado, deben sumar exactamente
-  16 semanas, y las horas ACD, APE y AA deben ser iguales a las de la asignatura en la
-  malla.
+- El docente declara de 1 a 8 unidades; empieza con 4 («Agregar unidad», «Quitar»).
+- Al guardar: las unidades no pueden sumar más semanas que las de clase del período.
+- Al enviar: cada unidad debe tener nombre y resultado, las unidades deben sumar las
+  semanas de clase del período, y las horas ACD, APE y AA deben ser iguales a las de la
+  asignatura en la malla.
 - El editor muestra en vivo el avance (por ejemplo, «ACD 30 de 32»).
 - La primera versión de ADR-0012 separaba los nombres en otra tabla y cambiaba el
   formato. Se retiró el 2026-10-26 (bloque `planificacion_semanal`).

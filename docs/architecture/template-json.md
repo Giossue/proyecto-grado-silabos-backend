@@ -149,7 +149,7 @@ Fuentes del sistema:
 
 - `identification.`: `faculty`, `career`, `subject`, `code`, `modality`, `campus`, `period`, `cycle`, `parallel`,
   `shift`, `prerequisites`, `corequisites`, `organization_unit`, `hours_ac`, `hours_pae`, `hours_aa`, `total_hours`,
-  `credits`, `teacher`, `email`, `formation`.
+  `credits`, `teaching_weeks` (semanas de clase del período), `teacher`, `email`, `formation`.
 - `approval.`: `submitted_on`, `coordinator`, `approved_on` (se llenan al exportar).
 - `signature.`: `docente`, `coordinacion`, `biblioteca`. Marcan dónde va cada firma electrónica en el PDF.
 
@@ -199,7 +199,7 @@ discapacidad se borra si la respuesta es «No».
 Tres claves son propias de este formato y JSON Schema no las define: `multiline` (la pantalla muestra un cuadro de
 varias líneas; si falta, una sola línea), `initial` (con cuántos elementos arranca una lista ausente) y `keep_if`.
 Una lista con `minItems` < `maxItems` se puede agrandar y achicar desde el editor, y debe repetirse en una fila de
-tabla (`<tr data-repeat>`).
+tabla (`<tr data-repeat>`) o en una sección (`<section data-repeat>`).
 
 Los nombres anteriores (`text`, `choice` con `options`, `number` con `digits` y `decimals`, `list` con `item`,
 `min` y `max`, `fields`, `label`, `error`) se siguen aceptando al importar y al leer revisiones antiguas: el
@@ -214,8 +214,10 @@ administrador los escribe en el constructor.
 
 ```json
 "rules": [
-  { "code": "semanas_maximas", "on": "save", "message": "Las unidades suman más de 16 semanas.",
-    "checks": [ { "count": "units.*.semanas", "max": 16 } ] },
+  { "code": "semanas_maximas", "on": "save", "message": "Las unidades suman más semanas que el período.",
+    "checks": [ { "count": "units.*.semanas", "max": { "variable": "semanas_periodo" } } ] },
+  { "code": "unidades_sin_nombre", "on": "submit", "message": "Escriba el nombre y el resultado de cada unidad: {detail}.",
+    "checks": [ { "label": "Nombres", "filled": "units.*.nombre", "equals": { "count": "units" } } ] },
   { "code": "horas_unidades_no_coinciden", "on": "submit",
     "message": "Las horas de las unidades deben sumar las de la asignatura: {detail}.",
     "hint": "Las horas deben coincidir con las de la asignatura para poder enviar",
@@ -227,7 +229,7 @@ administrador los escribe en el constructor.
 |---|---|
 | `code` | Código estable del error (lo usan pantallas y pruebas). |
 | `on` | `save`: rechaza el guardado. `submit`: impide enviar el sílabo. |
-| `checks` | `count` (cuántos elementos hay en la ruta), `filled` (cuántos textos o números no están vacíos) o `sum` (suma de números) comparado con `equals`, `max` o `min`. El valor es un número o `{"variable": "clave"}`. |
+| `checks` | `count` (cuántos elementos hay en la ruta), `filled` (cuántos textos o números no están vacíos) o `sum` (suma de números) comparado con `equals`, `max` o `min`. El valor es un número, `{"variable": "clave"}` o `{"count": "lista"}` (cuántos elementos tiene esa lista; así «cada unidad» vale con 3 o con 6). Si la variable no tiene valor, la comprobación no se aplica. |
 | `label` | Si la comprobación lleva nombre, el editor la muestra en vivo («ACD 30 de 32»). |
 | `message` | `{actual}` y `{expected}` (primera comprobación que falla) y `{detail}` («ACD 30 de 32, AA 10 de 32»). |
 | `hint` | Texto de ayuda junto al resumen en vivo. |
@@ -305,7 +307,7 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 | Bloque | Qué hace |
 |---|---|
 | `identificacion` | Tabla de identificación con datos del sistema; el docente responde la discapacidad (Sí/No, tipo y descripción). |
-| `unidades` | Cuatro unidades (lista fija de 4) con semanas (lista que crece), horas y actividades. El docente escribe el nombre y el resultado de cada unidad. Reglas: máximo 16 semanas al guardar; al enviar, las 4 unidades con nombre y resultado, exactamente 16 semanas y horas iguales a las de la asignatura. |
+| `unidades` | De 1 a 8 unidades (empieza con 4) con semanas, horas y actividades. El docente escribe el nombre y el resultado de cada unidad. Reglas: al guardar, no más semanas que las del período (`semanas_periodo`); al enviar, cada unidad con nombre y resultado, las semanas del período y horas iguales a las de la asignatura. |
 | `evaluacion` | Tabla de puntos con dos variantes según `horas_practicas` (con o sin práctico-experimental). |
 
 ## Secciones y campos

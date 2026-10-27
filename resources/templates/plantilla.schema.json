@@ -203,7 +203,8 @@
         "target": {
             "anyOf": [
                 { "type": "number" },
-                { "type": "object", "required": ["variable"], "additionalProperties": false, "properties": { "variable": { "type": "string" } } }
+                { "type": "object", "required": ["variable"], "additionalProperties": false, "properties": { "variable": { "type": "string" } } },
+                { "type": "object", "required": ["count"], "additionalProperties": false, "properties": { "count": { "type": "string", "description": "Cantidad de elementos de una lista del valor." } } }
             ]
         },
         "check": {

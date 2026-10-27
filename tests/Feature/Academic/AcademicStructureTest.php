@@ -147,7 +147,7 @@ class AcademicStructureTest extends TestCase
             ->assertJsonValidationErrors(['code', 'cycle_count']);
     }
 
-    public function test_administrator_creates_a_period_without_manual_code_or_weeks(): void
+    public function test_administrator_creates_a_period_whose_weeks_come_from_the_dates_unless_corrected(): void
     {
         $this->travelTo(CarbonImmutable::parse('2026-08-16 12:00:00', 'America/Guayaquil'));
 
@@ -155,7 +155,6 @@ class AcademicStructureTest extends TestCase
             ->postJson(route('api.v1.admin.academic.store', 'periodo'), [
                 'starts_on' => '2026-08-17',
                 'ends_on' => '2026-12-18',
-                'teaching_weeks' => 1,
             ])
             ->assertSuccessful();
 
@@ -168,12 +167,20 @@ class AcademicStructureTest extends TestCase
             ->patchJson(route('api.v1.admin.academic.update', ['periodo', $period->id]), [
                 'starts_on' => '2026-09-01',
                 'ends_on' => '2026-12-04',
-                'teaching_weeks' => 1,
+                'teaching_weeks' => 12,
             ])
             ->assertSuccessful();
 
         $this->assertSame('Septiembre-Diciembre 2026', $period->fresh()->codigo);
-        $this->assertSame(14, $period->fresh()->semanas_lectivas);
+        $this->assertSame(12, $period->fresh()->semanas_lectivas);
+
+        $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.academic.update', ['periodo', $period->id]), [
+                'starts_on' => '2026-09-01',
+                'ends_on' => '2026-12-04',
+                'teaching_weeks' => 15,
+            ])
+            ->assertJsonValidationErrors(['teaching_weeks' => 'Las semanas de clase no pueden superar las 14 semanas entre las fechas.']);
     }
 
     public function test_period_start_date_must_be_today_or_later(): void

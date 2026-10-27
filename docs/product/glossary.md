@@ -17,7 +17,7 @@
 | Sección | Parte numerada del sílabo, con título y orientación (vertical u horizontal). |
 | Campo | Contenido dentro de una sección. Indica quién lo llena: docente, coordinación (en pantalla, «Carrera») o institucional («Fijo»). |
 | Variable | Dato del sistema que se inserta en la plantilla, como el nombre de la carrera o las horas de la asignatura. |
-| Bloque | Pieza con diseño, datos y reglas propias, por ejemplo `unidades` (16 semanas) o `identificacion`. |
+| Bloque | Pieza con diseño, datos y reglas propias, por ejemplo `unidades` (semanas del período) o `identificacion`. |
 | Sílabo | Expediente de un paralelo dentro de una convocatoria. Estados: sin iniciar, borrador, en revisión, corrección solicitada, aprobado. |
 | Borrador | Contenido editable aún no enviado. Se guarda solo. |
 | Revisión | Copia inmutable del sílabo creada en cada envío o reenvío. |

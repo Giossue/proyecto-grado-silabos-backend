@@ -60,6 +60,7 @@ class StoreAcademicRecordRequest extends FormRequest
             'periodo' => [
                 'starts_on' => ['required', 'date'],
                 'ends_on' => ['required', 'date'],
+                'teaching_weeks' => ['nullable', 'integer', 'min:1', 'max:52'],
             ],
             'asignatura' => $this->subjectRules(),
             'asignacion_docente' => [
@@ -123,6 +124,9 @@ class StoreAcademicRecordRequest extends FormRequest
             );
             if ($weeks > 52) {
                 $validator->errors()->add('ends_on', 'El período no puede superar 52 semanas calendario.');
+            }
+            if ((int) $this->input('teaching_weeks', 0) > $weeks) {
+                $validator->errors()->add('teaching_weeks', "Las semanas de clase no pueden superar las {$weeks} semanas entre las fechas.");
             }
         }];
     }

@@ -49,8 +49,8 @@ final class BlockLayout
                 if (($list['type'] ?? null) !== 'array') {
                     BlockDefinitionError::fail("{$where}: «{$repeat['value']}» no es una lista del valor.");
                 }
-                if ($list['minItems'] < $list['maxItems'] && $node['type'] !== 'tableRow') {
-                    BlockDefinitionError::fail("{$where}: la lista «{$repeat['value']}» cambia de tamaño y por eso se repite en una fila de tabla (tr).");
+                if ($list['minItems'] < $list['maxItems'] && ! in_array($node['type'], ['tableRow', 'group'], true)) {
+                    BlockDefinitionError::fail("{$where}: la lista «{$repeat['value']}» cambia de tamaño y por eso se repite en una fila de tabla (tr) o en una sección (section).");
                 }
                 $inner = $list['items'];
                 if (isset($repeat['as'])) {

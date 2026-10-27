@@ -78,6 +78,7 @@ final class IdentificationCard
             'hours_aa' => self::number($get('subject.hours_aa')),
             'total_hours' => self::number($get('subject.total_hours')),
             'credits' => self::number($get('subject.credits')),
+            'teaching_weeks' => self::number($scheduled('teaching_weeks')),
             'teacher' => self::join($teachers),
             'email' => self::join($emails),
 
@@ -103,7 +104,7 @@ final class IdentificationCard
                     'prerequisites' => ['SW-P6-032'], 'corequisites' => [],
                     'hours_ac' => 32, 'hours_pae' => 16, 'hours_aa' => 48, 'total_hours' => 96, 'credits' => 2,
                 ],
-                'scheduled_subject' => ['period' => 'Marzo – Julio 2026', 'campus' => 'Matriz', 'modality' => 'Presencial'],
+                'scheduled_subject' => ['period' => 'Marzo – Julio 2026', 'campus' => 'Matriz', 'modality' => 'Presencial', 'teaching_weeks' => 16],
             ],
             ['A'],
             ['NOMBRE DEL DOCENTE'],
