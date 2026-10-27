@@ -54,8 +54,7 @@ y el botón «Documentos» (DOC-10).
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| DOC-01 | Panel | `/docente/panel` | Sílabos por entregar, por corregir y en revisión. Tarjeta de plazo con «Continuar mis sílabos». |
-| DOC-02 | Mis sílabos | `/docente/mis-silabos` | Tarjetas del período vigente: asignatura, paralelo, estado y último guardado. Botón «Historial». |
+| DOC-02 | Mis sílabos | `/docente/mis-silabos` | Entrada del docente; no tiene Panel. Arriba, sílabos por entregar, por corregir y en revisión, y la tarjeta de plazo. Debajo, tarjetas del período vigente: asignatura, paralelo, estado y último guardado. Botón «Historial». |
 | DOC-04 | Sílabo | `/docente/mis-silabos/:syllabus` | Editor a pantalla completa, sin menú lateral. Detalle abajo. |
 | DOC-05 | Validación | dentro de DOC-04 | Campos faltantes y reglas de bloques; el botón de envío explica qué falta. |
 | DOC-06 | Asistente de unidades | panel en DOC-04 | Chat de IA con preguntas sugeridas y «Nuevo chat». |
@@ -203,7 +202,7 @@ firmado» aparece con las tres firmas.
 - **Menú lateral por rol.** Administrador: Panel, Convocatorias, Usuarios y roles,
   Facultades y carreras, Plantilla, Auditoría, Ayuda de pantallas. Coordinador: Panel,
   Revisión, Materias y asignaciones, Docentes, Proyecto de carrera, Malla. Docente:
-  Panel, Mis sílabos. Bibliotecario: Panel, Revisiones de biblioteca.
+  Mis sílabos. Bibliotecario: Panel, Revisiones de biblioteca.
 - **Encabezado.** Campana de avisos, tema claro u oscuro y menú de usuario
   (Configuración, Cerrar sesión). Con más de un rol, el pie del menú lateral ofrece
   «Cambiar carrera o rol».
@@ -220,7 +219,7 @@ firmado» aparece con las tres firmas.
   Convocatorias». Convocatorias usa la misma franja para «Convocatoria en curso». El
   servidor rechaza igual la petición.
 - **Panel.** Tres indicadores por rol. Administración y Coordinación ven «Puesta en
-  marcha» hasta completar sus pasos.
+  marcha» hasta completar sus pasos. El docente ve sus indicadores en «Mis sílabos».
 - **Tablas.** Búsqueda «Buscar por…», filtros y 20 filas por página. La fila abre el
   detalle. En pantallas angostas, cada fila se vuelve una tarjeta.
 - **Formularios.** Las altas se hacen en un modal o en una hoja lateral. Los datos

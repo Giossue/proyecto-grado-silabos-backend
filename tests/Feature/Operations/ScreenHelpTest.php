@@ -24,10 +24,12 @@ class ScreenHelpTest extends TestCase
     {
         $screens = ScreenHelp::query()->pluck('pantalla')->all();
 
-        $this->assertGreaterThanOrEqual(35, count($screens));
+        $this->assertGreaterThanOrEqual(34, count($screens));
         foreach (['/admin/panel', '/coordinacion/malla', '/docente/mis-silabos', '/biblioteca/revisiones'] as $screen) {
             $this->assertContains($screen, $screens);
         }
+        $this->assertNotContains('/docente/panel', $screens);
+        $this->assertStringStartsWith('Arriba ve cuántos sílabos', ScreenHelp::query()->where('pantalla', '/docente/mis-silabos')->value('contenido_ayuda'));
         $this->assertSame(0, ScreenHelp::query()->where('activa', false)->count());
         foreach (ScreenHelp::query()->get() as $help) {
             $this->assertMatchesRegularExpression('/^\/[a-z0-9\/:_-]*$/', $help->pantalla);
