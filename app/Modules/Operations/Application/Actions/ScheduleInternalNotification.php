@@ -18,8 +18,9 @@ class ScheduleInternalNotification
         string $message,
         string $resourceType,
         string $resourceId,
+        ?string $periodId = null,
     ): void {
-        $this->store->execute($eventType, $deduplicationKey, $recipientIds, $title, $message, $resourceType, $resourceId);
+        $this->store->execute($eventType, $deduplicationKey, $recipientIds, $title, $message, $resourceType, $resourceId, $periodId);
     }
 
     public function date(CarbonInterface $at): string

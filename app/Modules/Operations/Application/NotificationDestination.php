@@ -15,6 +15,8 @@ use Illuminate\Support\Collection;
 /** @phpstan-type Destination array{assignment: RoleAssignment|null, path: string} */
 final class NotificationDestination
 {
+    private const ADMINISTRATION_EVENTS = ['documento.exportacion_fallida'];
+
     private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'silabo.firmado_docente'];
 
     public const INFORMATIONAL_EVENTS = [
@@ -49,6 +51,9 @@ final class NotificationDestination
     {
         if (in_array($notification->tipo, self::INFORMATIONAL_EVENTS, true)) {
             return null;
+        }
+        if (in_array($notification->tipo, self::ADMINISTRATION_EVENTS, true)) {
+            return $this->withRole($eligible ?? $this->roles->eligible($user), RoleCode::Administrator, null, '/admin/auditoria')[0] ?? null;
         }
         if ($notification->tipo_recurso === 'asignacion_rol') {
             return ['assignment' => null, 'path' => '/rol'];

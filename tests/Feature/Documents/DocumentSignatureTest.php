@@ -133,8 +133,11 @@ class DocumentSignatureTest extends TestCase
         $libraryPdf = $this->signPdfIncrementally($coordinationPdf, $librarianCredentials);
         $this->upload($revision, $libraryPdf, hash('sha256', $coordinationPdf), 'librarian')->assertCreated();
         $finalPdf = $libraryPdf;
-        $this->assertNotNotified($this->teacher->id, 'silabo.firmado');
-        $this->assertNotNotified($this->coordinator->id, 'silabo.firmado');
+        $signed = $this->assertNotified($this->teacher->id, 'silabo.firmado', 'Ya puede descargar el PDF firmado');
+        $this->assertSame('artefacto_exportacion', $signed->tipo_recurso);
+        $this->assertSame($revision->syllabus->convocation->process->periodo_academico_id, $signed->periodo_academico_id);
+        $this->assertNotified($this->coordinator->id, 'silabo.firmado', 'Ya puede descargar el PDF firmado');
+        $this->assertNotNotified($this->librarian->id, 'silabo.firmado');
 
         $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
             ->assertOk()

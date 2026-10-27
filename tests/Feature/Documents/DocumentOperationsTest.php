@@ -244,7 +244,9 @@ class DocumentOperationsTest extends TestCase
         $this->assertSame($docxBytes, Storage::disk('private')->get($docx->ruta_interna));
         $this->assertDatabaseHas('notificaciones', [
             'usuario_id' => $this->teacher->id,
-            'tipo_notificacion' => 'documento.exportacion.completada',
+            'tipo_notificacion' => 'silabo.aprobado',
+            'titulo_notificacion' => 'Sílabo aprobado: ya puede firmarlo',
+            'tipo_recurso' => 'artefacto_exportacion',
         ]);
 
         $this->actingAsTeacher()
@@ -308,6 +310,15 @@ class DocumentOperationsTest extends TestCase
             'accion' => 'documento.exportacion_fallida',
             'resultado' => 'fallido',
         ]);
+        $notice = InternalNotification::query()->where('tipo', 'documento.exportacion_fallida')->sole();
+        $this->assertSame($this->administrator->id, $notice->usuario_id);
+        $this->assertSame('No se pudieron generar los documentos', $notice->titulo);
+        $this->assertStringNotContainsString($secret, $notice->mensaje);
+        $this->assertSame($revision->syllabus->convocation->process->periodo_academico_id, $notice->periodo_academico_id);
+        $this->actingAsAdministrator()
+            ->postJson(route('api.v1.notifications.open', $notice))
+            ->assertOk()
+            ->assertJsonPath('path', '/admin/auditoria');
     }
 
     public function test_cp_f_workflow_notification_is_stored_once_and_enforces_ownership(): void
@@ -410,6 +421,7 @@ class DocumentOperationsTest extends TestCase
             'mensaje' => 'El sílabo fue aprobado.',
             'tipo_recurso' => 'silabo',
             'recurso_id' => $syllabus->id,
+            'periodo_academico_id' => $syllabus->convocation->process->periodo_academico_id,
             'notificado_en' => now(),
         ]);
         $career = $syllabus->convocation->career->nombre;

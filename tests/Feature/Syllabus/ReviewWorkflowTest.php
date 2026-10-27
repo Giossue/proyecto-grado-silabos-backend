@@ -349,7 +349,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame($this->librarian->id, $approval->aprobado_por);
         $this->assertSame($revision->id, $approval->revision_silabo_id);
         $this->assertSame(64, strlen($approval->huella_sha256));
-        $this->assertWorkflowNotification($syllabus->id, 'silabo.aprobado');
+        $this->assertFalse(InternalNotification::query()->where('tipo', 'silabo.aprobado')->exists());
         Queue::assertPushed(GenerateSyllabusExportJob::class);
 
         $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();

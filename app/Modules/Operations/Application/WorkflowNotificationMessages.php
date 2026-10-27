@@ -14,8 +14,8 @@ final class WorkflowNotificationMessages
     {
         if ($eventType === self::TEMPLATE_REDONE) {
             return [
-                'El sílabo volvió a empezar',
-                'El administrador cambió la plantilla. Su sílabo se rehízo desde cero; vuelva a completarlo.',
+                'Su sílabo volvió a empezar',
+                'El administrador cambió la plantilla. Sus sílabos de este proceso volvieron a empezar desde cero; complételos otra vez.',
             ];
         }
         if ($syllabus === null) {
@@ -35,7 +35,7 @@ final class WorkflowNotificationMessages
                 "Coordinación aprobó el sílabo {$subject}{$revisionLabel}. Falta que biblioteca apruebe la bibliografía.",
             ],
             'silabo.reenviado_biblioteca' => [
-                'Sílabo corregido para revisión',
+                'Sílabo listo para revisión',
                 "El docente corrigió el sílabo {$subject}{$revisionLabel} y lo reenvió a biblioteca.",
             ],
             'silabo.correccion_solicitada' => [
@@ -43,12 +43,12 @@ final class WorkflowNotificationMessages
                 "Se solicitó corregir el sílabo {$subject}{$revisionLabel}. Corríjalo y reenvíelo.",
             ],
             'silabo.aprobado' => [
-                'Sílabo aprobado',
-                "Biblioteca aprobó el sílabo {$subject}{$revisionLabel}. Se genera el PDF; luego firman docente, coordinación y biblioteca.",
+                'Sílabo aprobado: ya puede firmarlo',
+                "Biblioteca aprobó el sílabo {$subject}{$revisionLabel}. El PDF está listo: fírmelo para que sigan coordinación y biblioteca.",
             ],
             'silabo.eliminado' => [
-                'Sílabo eliminado',
-                "Coordinación eliminó el sílabo aprobado {$subject}. Empiece de nuevo con la malla y la plantilla actuales.",
+                'Su sílabo volvió a empezar',
+                "Coordinación eliminó su sílabo aprobado de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.",
             ],
             'silabo.firmado_docente' => [
                 'Sílabo listo para su firma',
@@ -59,8 +59,16 @@ final class WorkflowNotificationMessages
                 "Docente y coordinación firmaron el sílabo {$subject}{$revisionLabel}. Falta la firma de biblioteca.",
             ],
             'silabo.reiniciado' => [
-                'Sílabo reiniciado',
-                "Coordinación reinició el sílabo {$subject}. Empiece de nuevo con la malla y la plantilla actuales.",
+                'Su sílabo volvió a empezar',
+                "Coordinación reinició su sílabo de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.",
+            ],
+            'silabo.firmado' => [
+                'Sílabo firmado',
+                "Docente, coordinación y biblioteca firmaron el sílabo {$subject}{$revisionLabel}. Ya puede descargar el PDF firmado.",
+            ],
+            'documento.exportacion_fallida' => [
+                'No se pudieron generar los documentos',
+                "Falló la generación del Word y el PDF del sílabo {$subject}{$revisionLabel}. Revise el servicio de documentos y la cola; luego Coordinación puede generarlos de nuevo desde «Documentos».",
             ],
             default => throw new RuntimeException('Tipo de notificación interna no soportado.'),
         };

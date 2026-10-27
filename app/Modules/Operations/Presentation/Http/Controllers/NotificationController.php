@@ -29,7 +29,7 @@ class NotificationController extends Controller
         $active = $this->roles->resolve($request);
         $eligible = $this->roles->eligible($actor);
         $status = $request->string('status')->toString() ?: 'all';
-        $query = InternalNotification::query()->where('usuario_id', $actor->id);
+        $query = InternalNotification::query()->where('usuario_id', $actor->id)->inCurrentPeriod();
         if ($status === 'unread') {
             $query->whereNull('leido_en');
         }
@@ -41,6 +41,7 @@ class NotificationController extends Controller
             'notifications' => $notifications,
             'unread_count' => InternalNotification::query()
                 ->where('usuario_id', $actor->id)
+                ->inCurrentPeriod()
                 ->whereNull('leido_en')
                 ->count(),
         ];
@@ -93,6 +94,7 @@ class NotificationController extends Controller
         abort_unless($actor instanceof User, 401);
         InternalNotification::query()
             ->where('usuario_id', $actor->id)
+            ->inCurrentPeriod()
             ->whereNull('leido_en')
             ->update(['leido_en' => now()]);
 

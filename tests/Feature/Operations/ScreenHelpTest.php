@@ -36,6 +36,7 @@ class ScreenHelpTest extends TestCase
         $this->assertStringStartsWith('Arriba ve el avance de su carrera', ScreenHelp::query()->where('pantalla', '/coordinacion/revisiones')->value('contenido_ayuda'));
         $this->assertStringStartsWith('Arriba ve cuántos sílabos esperan', ScreenHelp::query()->where('pantalla', '/biblioteca/revisiones')->value('contenido_ayuda'));
         $this->assertStringStartsWith('Arriba ve cuántos sílabos', ScreenHelp::query()->where('pantalla', '/docente/mis-silabos')->value('contenido_ayuda'));
+        $this->assertStringStartsWith('Aquí aparecen los avisos del período en curso', ScreenHelp::query()->where('pantalla', '/docente/notificaciones')->value('contenido_ayuda'));
         $this->assertSame(0, ScreenHelp::query()->where('activa', false)->count());
         foreach (ScreenHelp::query()->get() as $help) {
             $this->assertMatchesRegularExpression('/^\/[a-z0-9\/:_-]*$/', $help->pantalla);

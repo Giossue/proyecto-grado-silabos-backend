@@ -11,7 +11,7 @@ activo.
 |---|---|---|---|
 | UI-01 | Acceso | `/ingresar`, `/recuperar-contrasena`, `/restablecer-contrasena`, `/activar-cuenta`, `/verificar-correo`, `/verificar-dos-factores` | Iniciar sesión, recuperar la contraseña, activar la cuenta, verificar el correo y pasar el segundo factor. |
 | UI-02 | Selección de ámbito | `/rol` | Una tarjeta por rol y carrera. Aparece cuando no hay rol activo (ver `roles-and-permissions.md`). |
-| UI-03 | Notificaciones | `/{área}/notificaciones` | «Todas» o «No leídas», «Marcar todas como leídas», «Abrir». También en la campana del encabezado. |
+| UI-03 | Notificaciones | `/{área}/notificaciones` | Solo avisos del período en curso. «Todas» o «No leídas», «Marcar todas como leídas», «Abrir». También en la campana del encabezado. |
 | UI-04 | Perfil y seguridad | `/{área}/configuracion/perfil`, `/{área}/configuracion/seguridad` | Perfil: nombre y correo (solo si la cuenta lo permite) y, para el docente, «Formación y experiencia académica-investigativa». Seguridad: contraseña y segundo factor con códigos de recuperación. |
 
 `{área}` es `admin`, `coordinacion`, `docente` o `biblioteca`. Una ruta inexistente
@@ -209,7 +209,16 @@ firmado» aparece con las tres firmas.
   sistema no corre instalado.
 - **Avisos.** Solo llegan cuando hay algo que hacer o cambió el trabajo propio. Abrir un
   aviso lleva a la pantalla donde se actúa y, si hace falta, activa el rol que
-  corresponde.
+  corresponde. Cada aviso pertenece a un período; al terminar el período deja de verse.
+  - Docente: «Tiene sílabos por elaborar», «Plazo extendido», «Corrección solicitada»,
+    «Sílabo aprobado: ya puede firmarlo» (cuando el PDF está listo), «Su sílabo volvió a
+    empezar» (reinicio, eliminación, cambio de la base o de la plantilla) y «Sílabo
+    firmado».
+  - Coordinación de la carrera: «Sílabo listo para revisión», «Sílabo listo para su
+    firma» y «Sílabo firmado».
+  - Biblioteca: «Sílabo listo para revisión» (también el reenvío corregido) y «Sílabo
+    listo para su firma».
+  - Administración: «No se pudieron generar los documentos».
 - **Accesibilidad.** Botón flotante en escritorio (en móvil, en el menú de usuario):
   tamaño del texto, alto contraste, sin animaciones, subrayar enlaces y texto más
   espaciado. Se guarda en la cuenta.

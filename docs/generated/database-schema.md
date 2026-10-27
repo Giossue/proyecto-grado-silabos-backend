@@ -473,9 +473,11 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 | `recurso_id` | uuid | sí |  |
 | `leido_en` | timestamp(0) with time zone | sí |  |
 | `notificado_en` | timestamp(0) with time zone | no |  |
+| `periodo_academico_id` | uuid | sí |  |
 
 - PK: `PRIMARY KEY (notificacion_id)`
 - FK:
+  - `notificaciones_periodo_academico_id_foreign`: `FOREIGN KEY (periodo_academico_id) REFERENCES periodos_academicos(periodo_academico_id) ON DELETE SET NULL`
   - `notificaciones_usuario_id_foreign`: `FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
 - Únicos:
   - `notificaciones_usuario_id_clave_unica_unique`: `(usuario_id, clave_unica)`

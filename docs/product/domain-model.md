@@ -110,7 +110,7 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 ## Operación (`Operations`)
 
 - **Notificación** (`notificaciones`): usuario, clave única (evita duplicados), tipo,
-  título, mensaje, recurso y fecha de lectura.
+  título, mensaje, recurso, período académico y fecha de lectura.
 - **Evento de auditoría** (`eventos_auditoria`): acción, recurso, resultado (`exito` o
   `fallido`), detalles y una copia del nombre, rol y carrera del actor.
 - **Ayuda de pantalla** (`ayudas_pantalla`): ruta de la pantalla (única), título,

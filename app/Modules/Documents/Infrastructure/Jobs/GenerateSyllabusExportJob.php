@@ -10,7 +10,8 @@ use App\Modules\Documents\Domain\Data\RenderedDocument;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
+use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
+use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
@@ -107,19 +108,13 @@ class GenerateSyllabusExportJob implements ShouldBeUnique, ShouldQueue
                 'estado' => 'completado',
                 'completado_en' => now(),
             ]);
-            InternalNotification::query()->firstOrCreate(
-                [
-                    'usuario_id' => $locked->solicitado_por,
-                    'clave_deduplicacion' => "documento.exportacion.completada:{$locked->id}",
-                ],
-                [
-                    'tipo' => 'documento.exportacion.completada',
-                    'titulo' => 'Documentos listos para firmar',
-                    'mensaje' => "El Word y el PDF del sílabo {$syllabus->academicSubjectName()}, revisión {$revision->numero_revision}, están listos. Se descargan cuando firmen el docente, la coordinación y la biblioteca.",
-                    'tipo_recurso' => 'artefacto_exportacion',
-                    'recurso_id' => $locked->id,
-                    'notificado_en' => now(),
-                ],
+            app(ScheduleWorkflowNotification::class)->execute(
+                syllabus: $syllabus,
+                eventType: 'silabo.aprobado',
+                deduplicationKey: "silabo.aprobado:{$revision->id}",
+                recipientIds: app(WorkflowNotificationRecipients::class)->teachersFor($syllabus),
+                revisionNumber: $revision->numero_revision,
+                artifactId: $locked->id,
             );
             $audit->execute(
                 actorId: null,
@@ -153,6 +148,14 @@ class GenerateSyllabusExportJob implements ShouldBeUnique, ShouldQueue
                 resourceId: $artifact->id,
                 result: 'fallido',
                 metadata: ['error_code' => 'exportacion_documento_fallida'],
+            );
+            app(ScheduleWorkflowNotification::class)->execute(
+                syllabus: $artifact->syllabus,
+                eventType: 'documento.exportacion_fallida',
+                deduplicationKey: "documento.exportacion_fallida:{$artifact->id}",
+                recipientIds: app(WorkflowNotificationRecipients::class)->administrators(),
+                revisionNumber: $artifact->revision->numero_revision,
+                artifactId: $artifact->id,
             );
         });
     }

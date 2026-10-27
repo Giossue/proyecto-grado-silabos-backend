@@ -30,7 +30,7 @@ Estados guardados (`silabos.estado_silabo`): `sin_iniciar`, `borrador`, `en_revi
 | Borrador o Corrección solicitada | Enviar | Docente | En revisión | Valida, crea una revisión inmutable con huella y avisa. |
 | En revisión · coordinación | Aprobar | Coordinación | En revisión · biblioteca | Registra la revisión de coordinación y el envío a biblioteca; avisa a Biblioteca. |
 | En revisión · coordinación | Solicitar corrección | Coordinación | Corrección solicitada | Comentario general de 10 a 10 000 caracteres. |
-| En revisión · biblioteca | Aprobar bibliografía | Biblioteca | Aprobado | Crea la aprobación con huella, genera Word y PDF y avisa al docente. |
+| En revisión · biblioteca | Aprobar bibliografía | Biblioteca | Aprobado | Crea la aprobación con huella y genera Word y PDF; cuando están listos avisa al docente que ya puede firmar. |
 | En revisión · biblioteca | Devolver al docente | Biblioteca | Corrección solicitada | Uno o más motivos predefinidos, sin texto libre. |
 | Borrador, En revisión o Corrección solicitada | Reiniciar | Coordinación | Sin iniciar | Borra lo escrito, vuelve a copiar la ficha y la plantilla y conserva las revisiones. |
 | Aprobado | Eliminar | Coordinación | Sin iniciar (sílabo nuevo) | Borra el sílabo con revisiones, aprobación, documentos, firmas y chat; crea uno nuevo para el paralelo. |
@@ -80,7 +80,8 @@ el estado: el sílabo sigue «En revisión».
   todo el documento, que el certificado está vigente y que su titular coincide con la
   cuenta. La cadena de confianza se comprueba si está configurada
   (`docs/runbooks/firma-electronica-entidades.md`).
-- Cada firma avisa al siguiente firmante.
+- Cada firma avisa al siguiente firmante. La tercera avisa al docente y a Coordinación que
+  el sílabo quedó firmado. Si Word y PDF no se generan, se avisa a Administración.
 - Word y PDF firmado se descargan solo cuando están las tres firmas.
 - Cada revisión tiene su propio PDF y sus propias firmas.
 

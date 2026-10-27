@@ -16,9 +16,18 @@ class ScheduleWorkflowNotification
         string $deduplicationKey,
         array $recipientIds,
         ?int $revisionNumber,
+        ?string $artifactId = null,
     ): void {
         [$title, $message] = WorkflowNotificationMessages::for($eventType, $syllabus, $revisionNumber);
-        $this->store->execute($eventType, $deduplicationKey, $recipientIds, $title, $message, 'silabo', $syllabus->id);
+        $this->store->execute(
+            $eventType,
+            $deduplicationKey,
+            $recipientIds,
+            $title,
+            $message,
+            $artifactId === null ? 'silabo' : 'artefacto_exportacion',
+            $artifactId ?? $syllabus->id,
+        );
     }
 
     /** @param list<string> $recipientIds */

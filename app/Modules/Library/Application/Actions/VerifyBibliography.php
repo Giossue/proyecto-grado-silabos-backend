@@ -7,8 +7,6 @@ use App\Modules\Documents\Application\Actions\RequestSyllabusExport;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
-use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -24,8 +22,6 @@ class VerifyBibliography
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
-        private readonly ScheduleWorkflowNotification $notifications,
-        private readonly WorkflowNotificationRecipients $recipients,
         private readonly CanonicalHasher $hasher,
         private readonly RequestSyllabusExport $exports,
     ) {}
@@ -86,13 +82,6 @@ class VerifyBibliography
                     'fingerprint' => $fingerprint,
                     'self_approved' => $revision->enviado_por === $actor->id,
                 ],
-            );
-            $this->notifications->execute(
-                syllabus: $syllabus,
-                eventType: 'silabo.aprobado',
-                deduplicationKey: "silabo.aprobado:{$approval->id}",
-                recipientIds: $this->recipients->teachersFor($syllabus),
-                revisionNumber: $revision->numero_revision,
             );
             $this->exports->execute($revision, $approval->id, $actor, $request);
 

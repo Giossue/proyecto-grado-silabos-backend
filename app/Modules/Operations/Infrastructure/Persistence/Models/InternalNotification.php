@@ -2,8 +2,11 @@
 
 namespace App\Modules\Operations\Infrastructure\Persistence\Models;
 
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Support\Database\MapsLegacyColumnNames;
+use App\Support\InstitutionDate;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use LogicException;
@@ -16,6 +19,7 @@ use LogicException;
  * @property string $mensaje
  * @property string|null $tipo_recurso
  * @property string|null $recurso_id
+ * @property string|null $periodo_academico_id
  * @property CarbonImmutable|null $leido_en
  * @property CarbonImmutable $notificado_en
  */
@@ -42,13 +46,21 @@ class InternalNotification extends Model
     /** @var list<string> */
     protected $fillable = [
         'usuario_id', 'clave_deduplicacion', 'tipo', 'titulo', 'mensaje',
-        'tipo_recurso', 'recurso_id', 'leido_en', 'notificado_en',
+        'tipo_recurso', 'recurso_id', 'periodo_academico_id', 'leido_en', 'notificado_en',
     ];
 
     /** @return array<string, string> */
     protected function casts(): array
     {
         return ['leido_en' => 'immutable_datetime', 'notificado_en' => 'immutable_datetime'];
+    }
+
+    /** @param  Builder<InternalNotification>  $query */
+    public function scopeInCurrentPeriod(Builder $query): void
+    {
+        $query->whereIn('periodo_academico_id', AcademicPeriod::query()
+            ->whereDate('fecha_fin_periodo', '>=', InstitutionDate::todayOn())
+            ->select('periodo_academico_id'));
     }
 
     protected static function booted(): void

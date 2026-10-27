@@ -125,17 +125,16 @@ class AcceptDocumentSignature
                 [$eventType, $recipientIds] = match ($role) {
                     DocumentSignature::ROLE_TEACHER => ['silabo.firmado_docente', $this->recipients->coordinatorsFor($syllabus)],
                     DocumentSignature::ROLE_COORDINATION => ['silabo.firmado_coordinacion', $this->recipients->librarians()],
-                    default => [null, []],
+                    default => ['silabo.firmado', [...$this->recipients->teachersFor($syllabus), ...$this->recipients->coordinatorsFor($syllabus)]],
                 };
-                if ($eventType !== null) {
-                    $this->notifications->execute(
-                        syllabus: $syllabus,
-                        eventType: $eventType,
-                        deduplicationKey: "documento.firmado:{$signature->id}",
-                        recipientIds: $recipientIds,
-                        revisionNumber: $revision->numero_revision,
-                    );
-                }
+                $this->notifications->execute(
+                    syllabus: $syllabus,
+                    eventType: $eventType,
+                    deduplicationKey: "documento.firmado:{$signature->id}",
+                    recipientIds: $recipientIds,
+                    revisionNumber: $revision->numero_revision,
+                    artifactId: $eventType === 'silabo.firmado' ? $artifact->id : null,
+                );
 
                 return $signature;
             });

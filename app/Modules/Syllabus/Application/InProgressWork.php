@@ -125,6 +125,8 @@ final class InProgressWork
         $convocationIds = $syllabi->pluck('convocatoria_id')->unique()->values()->all();
         $syllabusIds = array_values(array_map('strval', $syllabi->pluck('id')->all()));
         $teachers = $this->currentTeachers($syllabusIds);
+        $periods = Convocation::query()->whereKey($convocationIds)->with('process')->get()
+            ->mapWithKeys(fn (Convocation $convocation): array => [$convocation->id => $convocation->process->periodo_academico_id]);
         $this->deleteAggregates($syllabusIds);
         foreach ($syllabi as $syllabus) {
             $subject = $syllabus->academicSubjectName();
@@ -132,11 +134,12 @@ final class InProgressWork
                 eventType: 'silabo.regenerado',
                 deduplicationKey: "silabo.regenerado:{$syllabus->id}:".Str::uuid(),
                 recipientIds: $teachers[$syllabus->id] ?? [],
-                title: "Su sílabo de {$subject} se generó de nuevo",
-                message: "Su sílabo de {$subject} se generó de nuevo porque ".($reason ?? self::DEFAULT_REASON)
-                    .'. Se perdió el contenido anterior (borrador, revisiones, aprobación, firmas y análisis de IA); debe completarlo otra vez.',
+                title: 'Su sílabo volvió a empezar',
+                message: "Su sílabo de {$subject} volvió a empezar porque ".($reason ?? self::DEFAULT_REASON)
+                    .'. Se perdió el contenido anterior (borrador, revisiones, aprobación, firmas y análisis de IA); complételo otra vez.',
                 resourceType: 'carrera',
                 resourceId: (string) $syllabus->convocation->carrera_id,
+                periodId: $periods[$syllabus->convocatoria_id] ?? null,
             );
         }
 

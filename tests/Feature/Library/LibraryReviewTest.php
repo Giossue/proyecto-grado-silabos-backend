@@ -236,7 +236,7 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
         $this->assertSame($this->people['librarian'][0]->id, Approval::query()->firstOrFail()->aprobado_por);
-        $this->assertNotified($this->people['teacher'][0]->id, 'silabo.aprobado');
+        $this->assertNotNotified($this->people['teacher'][0]->id, 'silabo.aprobado');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
             ->assertJsonPath('review.state', 'por_firmar')
             ->assertJsonPath('review.can_comment', false)

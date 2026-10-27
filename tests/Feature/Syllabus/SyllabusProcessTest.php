@@ -689,7 +689,8 @@ class SyllabusProcessTest extends TestCase
             ->where('tipo', 'proceso.plantilla_rehecho')->sole();
         $this->assertSame('proceso_silabos', $deliveredNotice->tipo_recurso);
         $this->assertSame($process->id, $deliveredNotice->recurso_id);
-        $this->assertStringContainsString('se rehízo desde cero', $deliveredNotice->mensaje);
+        $this->assertSame('Su sílabo volvió a empezar', $deliveredNotice->titulo);
+        $this->assertStringContainsString('volvieron a empezar desde cero', $deliveredNotice->mensaje);
     }
 
     public function test_changing_the_cycle_count_or_requirements_refreshes_without_purging(): void

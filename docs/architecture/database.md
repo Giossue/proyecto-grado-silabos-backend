@@ -112,7 +112,8 @@ Reglas:
   exportación.
 - Un mensaje de IA terminado no cambia y ningún mensaje se borra
   (`proteger_mensaje_ia`). La entrada de un mensaje pendiente tampoco cambia.
-- En `notificaciones` solo puede cambiar `leido_en` (`proteger_notificacion`).
+- En `notificaciones` solo puede cambiar `leido_en` (`proteger_notificacion`). Si se borra
+  el período, `periodo_academico_id` queda vacío y el aviso deja de mostrarse.
 
 ### Idempotencia
 

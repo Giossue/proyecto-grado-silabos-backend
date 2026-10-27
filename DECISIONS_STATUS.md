@@ -237,7 +237,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   actor y no se modifica (I-194).
 - No hay tabla de trabajos. Cada recurso guarda su estado; los trabajos de cola son
   únicos e idempotentes (`RunsOnce`) (I-221, I-226).
-- Solo se avisa a quien debe actuar o cuyo trabajo cambió (I-186).
+- Solo se avisa a quien debe actuar o cuyo trabajo cambió (I-186). Cada aviso guarda su
+  período académico; la campana y Notificaciones muestran solo los del período en curso
+  (2026-10-27). Administración solo recibe el fallo al generar Word y PDF.
 - Administración edita la ayuda de cada pantalla.
 - Los archivos son privados y registran quién los subió (I-180).
 - Un push a `main` despliega en Dokploy y ejecuta las migraciones.

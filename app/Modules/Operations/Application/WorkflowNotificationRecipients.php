@@ -76,9 +76,21 @@ class WorkflowNotificationRecipients
     /** @return list<string> */
     public function librarians(): array
     {
+        return $this->withRole(RoleCode::Librarian);
+    }
+
+    /** @return list<string> */
+    public function administrators(): array
+    {
+        return $this->withRole(RoleCode::Administrator);
+    }
+
+    /** @return list<string> */
+    private function withRole(RoleCode $role): array
+    {
         $ids = RoleAssignment::query()
             ->effective()
-            ->where('rol', RoleCode::Librarian->value)
+            ->where('rol', $role->value)
             ->whereHas('user', fn ($query) => $query->where('activo', true))
             ->pluck('usuario_id')
             ->all();
