@@ -79,7 +79,7 @@ Un solo `queue:work` en el contenedor del backend:
 
 ```bash
 php artisan queue:work \
-  --queue=critica,notificaciones,documentos,ia,integraciones,general \
+  --queue=critica,documentos,ia,general \
   --sleep=1 --tries=3 --max-time=3600
 ```
 

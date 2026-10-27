@@ -49,7 +49,7 @@ class ResetSyllabus
             if (! in_array($locked->estado, self::RESETTABLE_STATES, true)) {
                 throw ValidationException::withMessages([
                     'syllabus' => $locked->estado === 'aprobado'
-                        ? 'Un sílabo aprobado no se reinicia: reábralo para conservar la aprobación.'
+                        ? 'Un sílabo aprobado no se reinicia. Si tiene un error, elimínelo: el docente empieza de nuevo.'
                         : 'El sílabo todavía no tiene trabajo que descartar.',
                 ]);
             }

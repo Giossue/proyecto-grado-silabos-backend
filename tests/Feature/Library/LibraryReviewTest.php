@@ -109,7 +109,7 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 0);
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
             'reasons' => ['codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
-        ])->assertJsonValidationErrors('revision');
+        ])->assertForbidden();
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
         $this->assertNotified($this->people['librarian'][0]->id, 'coordinacion.aprobado', 'Falta que biblioteca apruebe');
 
@@ -222,6 +222,25 @@ class LibraryReviewTest extends TestCase
         $this->upload($revision, $librarySigned, $coordinationSigned, 'librarian')->assertCreated();
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'firmado']))->assertJsonPath('reviews.total', 1);
         $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))->assertJsonPath('state', 'firmado')->assertJsonCount(3, 'signatures');
+    }
+
+    public function test_con_la_convocatoria_cerrada_biblioteca_no_devuelve_ni_aprueba(): void
+    {
+        [$syllabus, $revision] = $this->submittedRevision();
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
+        $syllabus->convocation->update(['estado' => Convocation::STATE_CLOSED]);
+        $message = 'La convocatoria está cerrada: la revisión queda solo para consulta y no admite decisiones.';
+
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertOk()
+            ->assertJsonPath('review.can_comment', false)
+            ->assertJsonPath('review.can_verify', false);
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
+            'reasons' => ['codigo_incorrecto'], 'idempotency_key' => (string) Str::uuid(),
+        ])->assertForbidden()->assertJsonPath('message', $message);
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))->assertForbidden();
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertNull($revision->fresh()->correccion_etapa);
     }
 
     /**

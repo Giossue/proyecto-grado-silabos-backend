@@ -8,6 +8,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\ProcessLocks;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +19,7 @@ class RemoveCareerTeacher
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly RevokeUserSessions $sessions,
+        private readonly ProcessLocks $locks,
     ) {}
 
     /** @return array{removed_parallel_assignments: int} */
@@ -29,6 +31,7 @@ class RemoveCareerTeacher
         $careerId = $activeRole->carrera_id;
 
         return DB::transaction(function () use ($target, $actor, $activeRole, $careerId): array {
+            $this->locks->assertCareerEditable($careerId);
             $roleAssignment = RoleAssignment::query()
                 ->where('usuario_id', $target->id)
                 ->where('rol', RoleCode::Teacher->value)

@@ -42,11 +42,11 @@ php artisan serve
 
 ```bash
 php artisan queue:work redis \
-  --queue=critica,notificaciones,documentos,ia,integraciones,general --tries=3
+  --queue=critica,documentos,ia,general --tries=3
 ```
 
-No use `composer dev` para la demostración: su `queue:listen` solo escucha la cola por
-defecto y no procesa `documentos` ni `ia`.
+`composer dev` también procesa estas colas: `AppServiceProvider` reemplaza su `queue:listen`
+por uno con `--queue=critica,documentos,ia,general`.
 
 Frontend, en el repositorio `proyecto-grado-silabos-frontend`:
 

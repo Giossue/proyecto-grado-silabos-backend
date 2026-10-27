@@ -366,7 +366,7 @@ class DocumentOperationsTest extends TestCase
             'usuario_id' => $this->coordinator->id,
             'clave_deduplicacion' => "documento.exportacion.completada:{$artifact->id}",
             'tipo' => 'documento.exportacion.completada',
-            'titulo' => 'Documentos listos para descargar',
+            'titulo' => 'Documentos listos para firmar',
             'mensaje' => 'Los documentos están disponibles.',
             'tipo_recurso' => 'artefacto_exportacion',
             'recurso_id' => $artifact->id,

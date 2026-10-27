@@ -11,15 +11,18 @@ use App\Modules\Identity\Infrastructure\Mail\ManagedUserActivationMail;
 use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\Fluent\AssertableJson as Assert;
+use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
 
 class CareerTeacherTest extends TestCase
 {
+    use CreatesSyllabusProcess;
     use RefreshDatabase;
 
     private User $coordinator;
@@ -289,6 +292,24 @@ class CareerTeacherTest extends TestCase
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'usuario.docente_retirado', 'recurso_id' => $teacher->id]);
 
         $this->deleteJson(route('api.v1.coordination.academic.teachers.destroy', $teacher))->assertForbidden();
+    }
+
+    public function test_a_teacher_cannot_be_removed_from_the_career_while_its_convocation_is_open(): void
+    {
+        $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $assignment = TeacherAssignment::query()->forUser($teacher->id)->firstOrFail();
+        Convocation::query()->create([
+            'carrera_id' => $this->context->carrera_id,
+            'proceso_id' => $this->openSyllabusProcess('')->id,
+            'estado' => Convocation::STATE_OPEN,
+        ]);
+
+        $this->deleteJson(route('api.v1.coordination.academic.teachers.destroy', $teacher))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('process');
+
+        $this->assertDatabaseHas('asignaciones_paralelo', ['asignacion_paralelo_id' => $assignment->id]);
+        $this->assertTrue($teacher->roleAssignments()->where('rol', RoleCode::Teacher->value)->firstOrFail()->activo);
     }
 
     public function test_coordinator_cannot_remove_a_teacher_of_another_career(): void

@@ -28,7 +28,7 @@ Los logos se publican sin sesión en `GET /logos/institucion` y
 | Ficha (PDF/Excel) | hasta 6 archivos de 20 MB, `pdf`, `xlsx` o `xls` |
 | Planillas de usuarios, docentes, carreras y malla | `xlsx` de hasta 2 MB |
 | Logos | PNG transparente de hasta 4 MB; se ajusta al tamaño del encabezado |
-| PDF firmado | `application/pdf` de hasta 40 MB |
+| PDF firmado | `application/pdf` de hasta 30 MB (Nginx y PHP aceptan 32 MB por petición) |
 
 Nginx del backend acepta cuerpos de hasta 32 MB (`client_max_body_size`). El nombre
 físico lo genera el servidor.

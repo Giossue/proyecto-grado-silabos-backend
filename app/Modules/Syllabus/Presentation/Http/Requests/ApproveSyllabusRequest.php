@@ -24,6 +24,6 @@ class ApproveSyllabusRequest extends FormRequest
     /** @return array<string, list<string>> */
     public function rules(): array
     {
-        return ['idempotency_key' => ['required', 'uuid']];
+        return [];
     }
 }

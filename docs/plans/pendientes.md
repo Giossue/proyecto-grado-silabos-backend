@@ -74,36 +74,6 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
   - fidelidad del Word y del PDF frente al documento oficial (PV-07);
   - recorrido completo con los cuatro roles.
 
-## Errores encontrados en el código
-
-Hallazgos de la revisión de documentación del 2026-10-20, todavía sin corregir.
-
-1. **Textos que contradicen al servidor:**
-   - `ResetSyllabus` pide «reábralo»;
-   - el diálogo de Biblioteca dice que el reenvío vuelve a Coordinación;
-   - la guía de Coordinación pide «Programar las materias del período» y menciona una importación de paralelos que
-     no existe;
-   - el aviso «exportación completada» ofrece descargar antes de las tres firmas.
-2. **Permisos que solo controla la pantalla:**
-   - «Quitar de la carrera» con la convocatoria abierta;
-   - «Devolver al docente» de Biblioteca no revisa el estado de la convocatoria, a diferencia de «Aprobar
-     bibliografía».
-3. **Restos sin uso:**
-   - `idempotency_key` se exige al aprobar en Coordinación y al comentar en Biblioteca, pero no se usa;
-   - la función `proteger_datos_entrada_trabajo()` no tiene trigger;
-   - el worker escucha `notificaciones` e `integraciones`, que no usa ningún trabajo.
-4. **Configuración:**
-   - Nginx acepta 32 MB y el PDF firmado admite 40 MB;
-   - faltan índices en `definiciones_campo.plantilla_id` y `ayudas_pantalla.actualizado_por`;
-   - `composer dev` no procesa las colas `documentos` e `ia`;
-   - `GOTENBERG_URL` no está en `.env.example`.
-5. **Prueba e2e desactualizada:** `tests/e2e/accessibility.spec.ts` (frontend) busca el botón «Nueva plantilla», que
-   ya no existe.
-6. **Verificación de contrato rota (frontend):** `npm run contract:check` termina con error porque
-   `src/api/spreadsheet-import.ts` llama a la API con una ruta variable (`sendImport(path, …)`) y el verificador solo
-   acepta rutas literales. El verificador debería resolver la ruta desde quien la llama o aceptar un conjunto de rutas
-   declaradas.
-
 ## Deuda técnica
 
 | ID | Hallazgo | Acción |

@@ -100,7 +100,7 @@ class SetupChecklist
                 $this->step(
                     'parallels',
                     'Crear los paralelos',
-                    $scheduledTotal === 0 ? 'Primero programe las materias del período.' : "{$scheduledWithParallels} de {$scheduledTotal} materias programadas tienen paralelos. Puede importarlos desde Excel junto con su docente.",
+                    $scheduledTotal === 0 ? 'Primero programe las materias del período.' : "{$scheduledWithParallels} de {$scheduledTotal} materias programadas tienen paralelos.",
                     $scheduledTotal > 0 && $scheduledWithParallels === $scheduledTotal,
                 ),
                 $this->step(

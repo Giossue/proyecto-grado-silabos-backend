@@ -114,8 +114,8 @@ class GenerateSyllabusExportJob implements ShouldBeUnique, ShouldQueue
                 ],
                 [
                     'tipo' => 'documento.exportacion.completada',
-                    'titulo' => 'Documentos listos para descargar',
-                    'mensaje' => "Los documentos del sílabo {$syllabus->academicSubjectName()}, revisión {$revision->numero_revision}, están disponibles.",
+                    'titulo' => 'Documentos listos para firmar',
+                    'mensaje' => "El Word y el PDF del sílabo {$syllabus->academicSubjectName()}, revisión {$revision->numero_revision}, están listos. Se descargan cuando firmen el docente, la coordinación y la biblioteca.",
                     'tipo_recurso' => 'artefacto_exportacion',
                     'recurso_id' => $locked->id,
                     'notificado_en' => now(),

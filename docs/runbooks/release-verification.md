@@ -101,7 +101,7 @@ El worker debe mostrar el trabajo como terminado y el log debe registrar
 En ejecución continua el worker escucha, por prioridad:
 
 ```text
-critica,notificaciones,documentos,ia,integraciones,general
+critica,documentos,ia,general
 ```
 
 Los trabajos actuales usan `critica`, `documentos`, `ia` y `general`. Después de un

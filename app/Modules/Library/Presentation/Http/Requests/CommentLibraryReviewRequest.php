@@ -3,15 +3,22 @@
 namespace App\Modules\Library\Presentation\Http\Requests;
 
 use App\Modules\Library\Application\LibraryCommentReasons;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class CommentLibraryReviewRequest extends FormRequest
 {
-    public function authorize(): bool
+    public function authorize(): Response
     {
-        return Gate::allows('review-library');
+        $revision = $this->route('revision');
+        if (! Gate::allows('review-library') || ! $revision instanceof SyllabusRevision) {
+            return Response::deny();
+        }
+
+        return Gate::forUser($this->user())->inspect('decide', $revision);
     }
 
     /** @return array<string, list<mixed>> */
@@ -20,7 +27,6 @@ class CommentLibraryReviewRequest extends FormRequest
         return [
             'reasons' => ['required', 'array', 'min:1'],
             'reasons.*' => ['string', 'distinct', Rule::in(array_keys(LibraryCommentReasons::REASONS))],
-            'idempotency_key' => ['required', 'uuid'],
         ];
     }
 

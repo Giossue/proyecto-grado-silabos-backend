@@ -47,8 +47,9 @@ src/
 
 No se guardan tokens en `localStorage`.
 
-Las acciones que no deben duplicarse (enviar, aprobar, comentar, exportar, preguntar
-a la IA) envían `idempotency_key`. `lib/attemptKey.ts` reutiliza la clave mientras se
+Las acciones que no deben duplicarse (enviar, exportar y preguntar a la IA) envían
+`idempotency_key`. Aprobar en Coordinación o Biblioteca y devolver desde Biblioteca no
+la necesitan: el estado del sílabo, bloqueado en la transacción, impide repetirlas. `lib/attemptKey.ts` reutiliza la clave mientras se
 reintenta el mismo envío y la cambia cuando cambia lo enviado.
 
 ## URL de la API

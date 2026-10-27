@@ -18,7 +18,7 @@ class SignRevisionDocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'signed_pdf' => ['required', 'file', 'mimetypes:application/pdf', 'max:40960'],
+            'signed_pdf' => ['required', 'file', 'mimetypes:application/pdf', 'max:30720'],
             'base_sha256' => ['required', 'string', 'regex:/^[A-Fa-f0-9]{64}$/'],
         ];
     }

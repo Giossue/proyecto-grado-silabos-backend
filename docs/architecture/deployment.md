@@ -57,11 +57,11 @@ Redis, Gotenberg y la IA no hacen que el backend quede «no listo».
 Un solo proceso `queue:work` atiende todas las colas, en este orden de prioridad:
 
 ```text
-critica, notificaciones, documentos, ia, integraciones, general
+critica, documentos, ia, general
 ```
 
-Hoy solo se usan `critica`, `documentos`, `ia` y `general` (correo de activación).
-`notificaciones` e `integraciones` se escuchan, pero ningún trabajo las usa.
+`critica` es el trabajo de prueba, `documentos` el Word y el PDF, `ia` el asistente del
+docente y `general` el correo de activación.
 
 | Trabajo | Cola | `timeout` | Intentos |
 |---|---|---:|---:|

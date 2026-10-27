@@ -28,6 +28,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
@@ -57,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        DevCommands::artisan('queue:listen --queue=critica,documentos,ia,general --tries=1 --timeout=0', 'queue');
     }
 
     protected function configureDefaults(): void

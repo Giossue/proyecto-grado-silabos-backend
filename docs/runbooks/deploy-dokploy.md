@@ -190,7 +190,7 @@ credenciales), que es lo que `PV-15` debe resolver.
    migraciones se aplican a mano según `docs/security/hardening.md`;
 5. prepara `storage/app` y crea el enlace de almacenamiento público.
 
-El worker escucha `critica,notificaciones,documentos,ia,integraciones,general` con
+El worker escucha `critica,documentos,ia,general` con
 `--tries=3`. Hoy se usan `critica` (trabajo de prueba), `documentos` (Word y PDF), `ia`
 (asistente del docente) y `general` (correo de activación).
 

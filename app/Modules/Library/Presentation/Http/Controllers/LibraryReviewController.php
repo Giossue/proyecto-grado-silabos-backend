@@ -20,6 +20,7 @@ use App\Modules\Syllabus\Application\BibliographySections;
 use App\Modules\Syllabus\Application\ReviewComments;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\SnapshotDocuments;
+use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use Illuminate\Http\JsonResponse;
@@ -64,7 +65,8 @@ class LibraryReviewController extends Controller
         $state = $this->reviews->stateOf($submission);
         $reviewable = $state === LibraryReviews::STATE_PENDING
             && $syllabus->estado === 'en_revision'
-            && ReviewStage::ofRevision($revision) === ReviewStage::LIBRARY;
+            && ReviewStage::ofRevision($revision) === ReviewStage::LIBRARY
+            && SyllabusPolicy::convocationAllowsDecisions($syllabus->convocation()->value('estado'));
         $snapshot = SnapshotDocuments::present($revision->fotografia);
         $definition = TemplateContext::fromSnapshot($snapshot);
 

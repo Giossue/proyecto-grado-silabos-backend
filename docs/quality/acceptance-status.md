@@ -34,7 +34,7 @@ Estados:
 | Área | Evidencia | Estado y límite |
 |---|---|---|
 | Calidad de código backend | `composer verify`: búsqueda de secretos, Pint, Larastan nivel 7 y la suite sobre PostgreSQL | Verificado automático |
-| Calidad de código frontend | `npm run lint`, `npm run typecheck`, `npm test` y `npm run build` pasan; `npm run contract:check` falla por dos rutas variables de importación Excel | Verificado automático con el fallo de contrato previo registrado en `pendientes.md` |
+| Calidad de código frontend | `npm run lint`, `npm run typecheck`, `npm test`, `npm run contract:check` y `npm run build` pasan | Verificado automático |
 | Arquitectura | `ModuleBoundariesTest`, `ApiBoundaryTest`, `OpenApiContractTest` | Verificado automático para las reglas escritas |
 | Seguridad HTTP | `HealthAndSecurityTest`, `AuthHardeningTest`, `SecurityHardeningTest` | Verificado automático; pentest manual pendiente |
 | Dependencias | `composer audit` y `npm audit`, a mano. No hay CI | Verificado técnico; hay que repetirlo antes de cada entrega |
