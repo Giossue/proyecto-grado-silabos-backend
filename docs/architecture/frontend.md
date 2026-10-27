@@ -140,7 +140,8 @@ npm run contract:check # llamadas del cliente contra openapi.json del backend
 se registra. El service worker guarda la interfaz compilada para abrir rápido, pero no
 `config.js` ni las llamadas a la API: sin conexión la interfaz abre y los datos no
 cargan. Con una versión nueva, `AppUpdatePrompt` muestra «Hay una versión nueva del
-sistema» y solo recarga si la persona pulsa «Actualizar»; revisa si hay versión nueva
+sistema» con un único botón, «Actualizar», sin opción de posponer; solo recarga cuando la
+persona lo pulsa. Revisa si hay versión nueva
 cada hora. «Instalar aplicación», al pie del menú lateral, abre `InstallAppDialog`: si el
 navegador ofrece instalar, muestra el botón «Instalar»; en iPhone explica Compartir →
 «Agregar a pantalla de inicio»; en otros navegadores, cómo hacerlo en Chrome, Edge o
