@@ -46,7 +46,6 @@ class DashboardController extends Controller
         $metrics = match (true) {
             $activeRole === null || ! $user instanceof User => [],
             $activeRole->role->codigo_rol === RoleCode::Administrator->value => $this->administratorMetrics(),
-            $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherMetrics($user, $activeRole->carrera_id),
             $activeRole->role->codigo_rol === RoleCode::Librarian->value => $this->librarianMetrics($libraryReviews),
             default => [],
         };
@@ -197,39 +196,6 @@ class DashboardController extends Controller
                 'value' => $counts[LibraryReviews::STATE_SIGNED],
                 'suffix' => null,
                 'hint' => 'Sílabos con la firma de biblioteca',
-            ],
-        ];
-    }
-
-    /** @return list<array{key: string, label: string, value: int, suffix: string|null, hint: string}> */
-    private function teacherMetrics(User $user, ?string $careerId): array
-    {
-        $own = fn (): Builder => Syllabus::query()
-            ->when($careerId !== null, fn (Builder $query) => $query->whereHas('convocation', fn (Builder $convocation) => $convocation->where('carrera_id', $careerId)))
-            ->whereCurrentTeacher($user);
-        $pending = $own()->whereNotIn('estado', ['en_revision', 'aprobado'])->count();
-
-        return [
-            [
-                'key' => 'pending',
-                'label' => 'Sílabos por entregar',
-                'value' => $pending,
-                'suffix' => null,
-                'hint' => $pending === 0 ? 'Nada pendiente por ahora' : 'Aún no enviados a revisión',
-            ],
-            [
-                'key' => 'correction_requested',
-                'label' => 'Por corregir',
-                'value' => $own()->where('estado', 'correccion_solicitada')->count(),
-                'suffix' => null,
-                'hint' => 'Devueltos por Biblioteca o Coordinación',
-            ],
-            [
-                'key' => 'in_review',
-                'label' => 'En revisión',
-                'value' => $own()->where('estado', 'en_revision')->count(),
-                'suffix' => null,
-                'hint' => 'Enviados y a la espera de revisión',
             ],
         ];
     }
