@@ -142,6 +142,7 @@ class CreateAcademicRecord
             'horas_pae' => $data['horas_pae'] ?? null,
             'horas_aa' => $data['horas_aa'] ?? null,
             'activo' => true,
+            'genera_silabo' => filter_var($data['generates_syllabus'] ?? true, FILTER_VALIDATE_BOOLEAN),
         ]);
 
         return $subject->refresh();

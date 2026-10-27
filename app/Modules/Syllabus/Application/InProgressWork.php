@@ -147,7 +147,7 @@ final class InProgressWork
             ->lockForUpdate()
             ->get();
         foreach ($convocations as $convocation) {
-            $generated += $this->generator->execute($convocation, $subjectId, $subjectIds);
+            $generated += $this->generator->execute($convocation, $subjectId, $subjectIds, allowEmpty: true);
         }
 
         return ['deleted' => count($syllabusIds), 'generated' => $generated];

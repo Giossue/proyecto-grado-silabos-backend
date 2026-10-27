@@ -3,6 +3,7 @@
 namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
+use App\Modules\Academic\Application\FichaWorkbookContext;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
@@ -510,6 +511,25 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->assertOpeningFails($convocation, 'Falta 1 materia sin paralelo.');
         $this->assertSame('preparacion', $convocation->fresh()->estado);
+    }
+
+    public function test_a_subject_that_does_not_generate_syllabi_is_ignored_when_opening(): void
+    {
+        $convocation = $this->createPreparedConvocation();
+        $base = Parallel::query()->firstOrFail()->subject;
+        $practice = $base->replicate();
+        $practice->codigo_asignatura = 'PRAC-01';
+        $practice->nombre_asignatura = 'Prácticas preprofesionales';
+        $practice->genera_silabo = false;
+        $practice->save();
+        $withoutTeacher = Parallel::query()->create(['asignatura_id' => $practice->id, 'codigo' => 'A', 'jornada' => 'matutina']);
+
+        $this->assertNotContains($practice->id, array_column(app(FichaWorkbookContext::class)->for($convocation->carrera_id)->subjects, 'id'));
+        $this->openPrepared($convocation);
+
+        $this->assertSame('abierta', $convocation->fresh()->estado);
+        $this->assertSame(1, Syllabus::query()->count());
+        $this->assertFalse(Syllabus::query()->where('paralelo_id', $withoutTeacher->id)->exists());
     }
 
     public function test_opening_is_rejected_without_curriculum_subjects(): void

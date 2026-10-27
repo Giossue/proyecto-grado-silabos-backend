@@ -125,6 +125,9 @@ y el botón «Documentos» (DOC-10).
 - «Editar malla» abre el lienzo a pantalla completa. La ayuda de la pantalla sigue
   disponible en la esquina inferior derecha para no cubrir los controles de zoom.
 - En edición, ambos puntos «+» muestran el tooltip «Conectar materias».
+- El formulario de la materia tiene el interruptor «Puede generar sílabos». La tarjeta de
+  una materia que no genera muestra «Sin sílabo» junto a la modalidad, y COR-14 la marca
+  con la etiqueta «Sin sílabo».
 
 ### COR-14 Materias y asignaciones y COR-15 Docentes
 

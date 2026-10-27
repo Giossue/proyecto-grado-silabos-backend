@@ -3,7 +3,7 @@
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
 - Fecha: 2026-10-26.
-- Última migración aplicada: `2026_10_26_000229_drop_ficha_imports_table`.
+- Última migración aplicada: `2026_10_26_000234_add_generates_syllabus_to_subjects`.
 - Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 32 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
@@ -50,7 +50,6 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 - `impedir_cambio_periodo_proceso_con_convocatorias()`: triggers en `convocatorias_universidad`
 - `marcar_cambio_plantilla()`: triggers en `campos_plantilla`, `definiciones_campo`, `secciones_plantilla`
 - `marcar_definicion_plantilla_modificada()`: triggers en `plantilla_silabo`
-- `proteger_datos_entrada_trabajo()`: ningún trigger la llama directamente
 - `proteger_envio_biblioteca()`: triggers en `envios_biblioteca`
 - `proteger_mensaje_ia()`: triggers en `mensajes_ia`
 - `proteger_notificacion()`: triggers en `notificaciones`
@@ -168,6 +167,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 | `modalidad_asignatura` | modalidad_estudio | sí |  |
 | `carrera_id` | uuid | no |  |
 | `total_horas_asignatura` | smallint | sí | generada: `(round(((COALESCE(horas_docencia, (0)::numeric) + COALESCE(horas_practicas, (0)::numeric)) + COALESCE(horas_autonomas, (0)::numeric))))::smallint` |
+| `genera_silabo_asignatura` | boolean | no | `true` |
 
 - PK: `PRIMARY KEY (asignatura_id)`
 - FK:

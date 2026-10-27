@@ -40,6 +40,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Cada carrera tiene una sola malla, sin versiones (I-82). Las asignaturas tienen campos
   fijos: código, nombre, ciclo, unidad de organización, modalidad, créditos y horas ACD,
   APE y AA (I-75).
+- Cada asignatura indica si «Puede generar sílabos» (por defecto, sí). Una que no genera
+  no recibe sílabo, no exige paralelos, docente ni ficha para abrir la convocatoria y no
+  aparece en Proyecto de carrera ni en el Excel de fichas. Cambiarlo es un cambio de
+  malla: con sílabos en curso exige pausa y confirmación; los sílabos de una materia
+  que vuelve a generar se crean al reanudar (2026-10-26).
 - Los paralelos son fijos por asignatura y no dependen del período. Cada uno tiene
   código, jornada y como máximo un docente activo (I-209).
 - Crear un paralelo exige código, jornada y docente de la carrera con cuenta activa

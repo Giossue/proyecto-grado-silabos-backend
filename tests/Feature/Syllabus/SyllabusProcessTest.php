@@ -784,6 +784,48 @@ class SyllabusProcessTest extends TestCase
             ->assertJsonValidationErrors('purge_required');
     }
 
+    public function test_turning_off_syllabus_generation_removes_the_subject_syllabi_and_turning_it_on_creates_them(): void
+    {
+        $convocation = $this->openedConvocation();
+        $syllabus = Syllabus::query()->firstOrFail();
+        $subject = Subject::query()->findOrFail($syllabus->subject->id);
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))
+            ->assertSuccessful();
+        $payload = [
+            'code' => $subject->codigo_asignatura,
+            'nombre' => $subject->nombre,
+            'cycle' => $subject->ciclo,
+            'position' => $subject->orden_en_ciclo,
+            'organization_unit' => $subject->unidad_organizacion_curricular?->value ?? 'basica',
+            'modality' => $subject->modalidad?->value,
+            'creditos' => $subject->creditos,
+            'horas_totales' => $subject->horas_totales,
+            'horas_ac' => $subject->horas_ac,
+            'horas_pae' => $subject->horas_pae,
+            'horas_aa' => $subject->horas_aa,
+        ];
+        $update = fn (array $data) => $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.update', ['asignatura', $subject->id]), [...$payload, ...$data]);
+
+        $update(['generates_syllabus' => '0'])->assertJsonValidationErrors('purge_required');
+        $this->assertTrue($subject->fresh()->genera_silabo);
+        $update(['generates_syllabus' => '0', 'confirm_purge' => true])->assertSuccessful();
+        $this->assertFalse($subject->fresh()->genera_silabo);
+        $this->assertSame(0, Syllabus::query()->forSubjects([$subject->id])->count());
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'academico.asignatura.actualizacion', 'recurso_id' => $subject->id]);
+        $this->assertFalse(collect($this->actingAsCoordinator()->getJson(route('api.v1.coordination.academic.scheduled-subjects.index'))->json('scheduledSubjects'))
+            ->firstWhere('subject_id', $subject->id)['generates_syllabus']);
+
+        $update(['generates_syllabus' => '1'])->assertSuccessful();
+        $this->assertTrue($subject->fresh()->genera_silabo);
+        $this->assertSame(0, Syllabus::query()->forSubjects([$subject->id])->count());
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))
+            ->assertSuccessful();
+        $this->assertSame(1, Syllabus::query()->forSubjects([$subject->id])->count());
+    }
+
     public function test_a_purge_never_replaces_an_approved_syllabus(): void
     {
         $convocation = $this->openedConvocation();

@@ -49,6 +49,7 @@ final class CoordinatorConvocationReadiness
 
         $subjects = Subject::query()
             ->where('activo', true)
+            ->where('genera_silabo', true)
             ->where('carrera_id', $careerId)
             ->when($process === null, fn (Builder $query) => $query->whereRaw('1 = 0'));
         $scheduledTotal = (clone $subjects)->count();
@@ -58,7 +59,7 @@ final class CoordinatorConvocationReadiness
 
         $parallels = Parallel::query()
             ->when($process === null, fn (Builder $query) => $query->whereRaw('1 = 0'))
-            ->whereHas('subject', fn (Builder $subject) => $subject->where('activo', true)->where('carrera_id', $careerId));
+            ->whereHas('subject', fn (Builder $subject) => $subject->where('activo', true)->where('genera_silabo', true)->where('carrera_id', $careerId));
         $parallelTotal = (clone $parallels)->count();
         $parallelsWithTeacher = (clone $parallels)->whereHas('teacherAssignments', fn (Builder $assignment) => $assignment
             ->where('asignaciones_paralelo.asignacion_paralelo_activa', true)

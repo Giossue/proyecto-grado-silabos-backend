@@ -26,7 +26,7 @@ final class FichaWorkbookContext
                 'definition_hash' => hash('sha256', json_encode($field->contenido, JSON_THROW_ON_ERROR)),
             ];
         }
-        $subjects = Subject::query()->where('carrera_id', $careerId)->where('activo', true)
+        $subjects = Subject::query()->where('carrera_id', $careerId)->where('activo', true)->where('genera_silabo', true)
             ->orderBy('ciclo')->orderBy('orden_en_ciclo')->orderBy('codigo_asignatura')->orderBy('asignatura_id')->get()
             ->map(fn (Subject $subject): array => ['id' => $subject->id, 'code' => $subject->codigo_asignatura, 'name' => $subject->nombre, 'cycle' => $subject->ciclo])->values()->all();
         if ($fields === [] || $subjects === []) {

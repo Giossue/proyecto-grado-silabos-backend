@@ -10,7 +10,7 @@ Lo único que falta, en un solo lugar. Cuando algo se resuelve, se borra de aqu�
 | PV-03 | Período de pilotaje y aceptación | Dirección o Coordinación | — |
 | PV-04 | Responsable de la aceptación funcional | Dirección o Coordinación | — |
 | PV-05 | Cantidad real de docentes, paralelos y sílabos | Coordinación | Datos de prueba |
-| PV-11 | Conservación, respaldo, RPO y RTO | Personal técnico y autoridad | Sin política formal |
+| PV-11 | Conservación, respaldo, RPO y RTO | Personal técnico y autoridad | TIC respalda todas las bases a nivel de servidor (2026-10-26); falta confirmar que incluye el volumen `storage/app` y cada cuánto |
 | PV-12 | Base legal y aviso de privacidad | UEB | Borrador en `docs/security/aviso-de-privacidad.md` |
 | PV-15 | Correo institucional y contenido de los avisos | Personal técnico y Coordinación | El servidor de pruebas envía con Resend desde `no-responder@devs-ueb.tech` |
 | PV-16 | Edición excepcional del contenido por Coordinación | Coordinación | No se permite |
@@ -31,9 +31,6 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
 
 ## Reglas por confirmar
 
-- **Materias sin sílabo:** el responsable del producto propone (2026-10-26) que la malla marque
-  por materia si genera sílabo, en lugar de reglas para materias de prácticas o con 0 horas ACD
-  o AA. Falta implementarlo.
 - **Motivos de rechazo de Biblioteca:** los cinco motivos de `LibraryCommentReasons::REASONS` están por validar con
   Biblioteca.
 

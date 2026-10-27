@@ -17,10 +17,10 @@ final class GenerateConvocationSyllabi
     ) {}
 
     /** @param list<string>|null $subjectIds */
-    public function execute(Convocation $convocation, ?string $subjectId = null, ?array $subjectIds = null): int
+    public function execute(Convocation $convocation, ?string $subjectId = null, ?array $subjectIds = null, bool $allowEmpty = false): int
     {
         $parallels = Parallel::query()
-            ->whereHas('subject', fn ($query) => $query->where('carrera_id', $convocation->carrera_id)->where('activo', true))
+            ->whereHas('subject', fn ($query) => $query->where('carrera_id', $convocation->carrera_id)->where('activo', true)->where('genera_silabo', true))
             ->when($subjectId !== null, fn ($query) => $query->where('asignatura_id', $subjectId))
             ->when($subjectIds !== null, fn ($query) => $query->whereIn('asignatura_id', $subjectIds))
             ->with([
@@ -42,6 +42,9 @@ final class GenerateConvocationSyllabi
             ->lockForUpdate()
             ->get();
 
+        if ($parallels->isEmpty() && $allowEmpty) {
+            return 0;
+        }
         if ($parallels->isEmpty()) {
             throw ValidationException::withMessages([
                 'convocation' => 'No existen paralelos de la carrera.',

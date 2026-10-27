@@ -148,6 +148,7 @@ class StoreAcademicRecordRequest extends FormRequest
             'horas_ac' => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'horas_pae' => ['required', 'numeric', 'min:0', 'max:9999.99'],
             'horas_aa' => ['required', 'numeric', 'min:0', 'max:9999.99'],
+            'generates_syllabus' => ['sometimes', 'boolean'],
         ];
 
         return $rules;

@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $horas_pae
  * @property string|null $horas_aa
  * @property bool $activo
+ * @property bool $genera_silabo
  * @property string $carrera_id
  * @property-read Career $career
  */
@@ -39,6 +40,7 @@ class Subject extends Model
         'creditos' => 'creditos_asignatura',
         'horas_totales' => 'total_horas_asignatura',
         'activo' => 'asignatura_activa',
+        'genera_silabo' => 'genera_silabo_asignatura',
         'orden_en_ciclo' => 'orden_asignatura_en_ciclo',
         'unidad_organizacion_curricular' => 'unidad_curricular_asignatura',
         'horas_ac' => 'horas_docencia',
@@ -67,6 +69,7 @@ class Subject extends Model
         'horas_pae',
         'horas_aa',
         'activo',
+        'genera_silabo',
     ];
 
     /** @return array<string, string> */
@@ -83,6 +86,7 @@ class Subject extends Model
             'horas_pae' => 'decimal:2',
             'horas_aa' => 'decimal:2',
             'activo' => 'boolean',
+            'genera_silabo' => 'boolean',
         ];
     }
 

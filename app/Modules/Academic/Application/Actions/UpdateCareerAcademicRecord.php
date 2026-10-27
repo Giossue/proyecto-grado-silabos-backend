@@ -34,6 +34,7 @@ class UpdateCareerAcademicRecord
         'horas_docencia' => 'Horas AC',
         'horas_practicas' => 'Horas PAE',
         'horas_autonomas' => 'Horas AA',
+        'genera_silabo_asignatura' => 'Puede generar sílabos',
         'periodo_academico_id' => 'Periodo académico',
         'asignatura_id' => 'Materia',
         'modalidad' => 'Modalidad',
@@ -58,6 +59,7 @@ class UpdateCareerAcademicRecord
         'modalidad' => 'modality',
         'creditos' => 'credits',
         'horas_totales' => 'total_hours',
+        'genera_silabo_asignatura' => 'generates_syllabus',
         'horas_docencia' => 'horas_ac',
         'horas_practicas' => 'horas_pae',
         'horas_autonomas' => 'horas_aa',
@@ -216,6 +218,9 @@ class UpdateCareerAcademicRecord
             if (array_key_exists($input, $data)) {
                 $attributes[$attribute] = $data[$input];
             }
+        }
+        if (array_key_exists('generates_syllabus', $data)) {
+            $attributes['genera_silabo'] = filter_var($data['generates_syllabus'], FILTER_VALIDATE_BOOLEAN);
         }
 
         return $attributes;

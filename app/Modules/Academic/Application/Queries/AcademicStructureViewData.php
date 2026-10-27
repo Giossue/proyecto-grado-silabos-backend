@@ -209,6 +209,7 @@ class AcademicStructureViewData
                     'credits' => $subject->creditos,
                     'total_hours' => $subject->horas_totales,
                     'active' => $subject->activo,
+                    'generates_syllabus' => $subject->genera_silabo,
                     'system_values' => collect(CurriculumSystemFields::ATTRIBUTES)->mapWithKeys(
                         fn (string $attribute, string $key) => [$key => $subject->getAttribute($attribute)],
                     ),
@@ -258,7 +259,7 @@ class AcademicStructureViewData
             ->orderBy('ciclo')
             ->orderBy('orden_en_ciclo')
             ->orderBy('nombre')
-            ->get(['id', 'carrera_id', 'codigo_asignatura', 'nombre', 'ciclo', 'activo', 'modalidad']);
+            ->get(['id', 'carrera_id', 'codigo_asignatura', 'nombre', 'ciclo', 'activo', 'genera_silabo', 'modalidad']);
         $profileComplete = $this->profiles->completeBySubject($careerSubjects->map(fn (Subject $subject): string => $subject->id)->all());
         $rows = [];
         foreach ($careerSubjects as $subject) {
@@ -274,6 +275,7 @@ class AcademicStructureViewData
                 'subject_name' => $subject->nombre,
                 'subject_cycle' => $subject->ciclo,
                 'profile_complete' => $profileComplete[$subject->id] ?? false,
+                'generates_syllabus' => $subject->genera_silabo,
                 'campus_name' => $subject->campusName(),
                 'modality_name' => $subject->studyModality()?->label(),
                 'parallels' => $group
@@ -296,7 +298,7 @@ class AcademicStructureViewData
             ->orderBy('ciclo')
             ->orderBy('orden_en_ciclo')
             ->orderBy('nombre')
-            ->get(['id', 'codigo_asignatura', 'nombre', 'ciclo']);
+            ->get(['id', 'codigo_asignatura', 'nombre', 'ciclo', 'genera_silabo']);
         $activeProgress = $this->profiles->progressBySubject($activeSubjects->map(fn (Subject $subject): string => $subject->id)->all());
 
         return [
@@ -315,6 +317,7 @@ class AcademicStructureViewData
                         'codigo_asignatura' => $subject->codigo_asignatura,
                         'nombre' => $subject->nombre,
                         'ciclo' => $subject->ciclo,
+                        'generates_syllabus' => $subject->genera_silabo,
                         'profile_complete' => ($activeProgress[$subject->id]['filled'] ?? 0) === ($activeProgress[$subject->id]['total'] ?? 0),
                         'profile_filled' => $activeProgress[$subject->id]['filled'] ?? 0,
                         'profile_total' => $activeProgress[$subject->id]['total'] ?? 0,
