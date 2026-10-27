@@ -12,7 +12,7 @@ Lo único que falta, en un solo lugar. Cuando algo se resuelve, se borra de aqu�
 | PV-05 | Cantidad real de docentes, paralelos y sílabos | Coordinación | Datos de prueba |
 | PV-11 | Conservación, respaldo, RPO y RTO | Personal técnico y autoridad | Sin política formal |
 | PV-12 | Base legal y aviso de privacidad | UEB | Borrador en `docs/security/aviso-de-privacidad.md` |
-| PV-15 | Correo institucional y contenido de los avisos | Personal técnico y Coordinación | `MAIL_MAILER=log` |
+| PV-15 | Correo institucional y contenido de los avisos | Personal técnico y Coordinación | El servidor de pruebas envía con Resend desde `no-responder@devs-ueb.tech` |
 | PV-16 | Edición excepcional del contenido por Coordinación | Coordinación | No se permite |
 | PV-17 | Instrumento para medir el proceso actual | Dirección y autores | — |
 | PV-18 | Umbrales de utilidad y precisión de la IA | Coordinación y docentes | — |
@@ -25,7 +25,7 @@ no hay comparación automática de documentos y la IA usa proveedores externos. 
 ## Firma electrónica (DT-16)
 
 La firma valida la cadena con `SIGNATURE_TRUSTED_CA_BUNDLE`. `resources/trust/ca-ecuador.pem` trae 14 entidades,
-pero la variable está vacía en `.env.example`, así que hoy solo se verifica la integridad. La UEB debe confirmar la
+y el servidor de pruebas ya tiene la variable configurada (2026-10-26); en `.env.example` sigue vacía. La UEB debe confirmar la
 lista de entidades y si exige sello de tiempo externo (hoy la hora es la del servidor). Pasos en
 `docs/runbooks/firma-electronica-entidades.md`.
 
@@ -40,9 +40,9 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
 ## Producción
 
 - **Variables de entorno:**
-  - `TRUSTED_PROXIES` vale `*` por defecto (`config/app.php`, `.env.example`); hay que fijar el proxy real;
-  - `SESSION_SECURE_COOKIE=true`;
-  - `APP_DEBUG=false`;
+  - `TRUSTED_PROXIES` vale `*` por defecto (`config/app.php`, `.env.example`) y también en el servidor de pruebas;
+    hay que fijar la red del proxy;
+  - `AI_TIMEOUT` debe ser menor que los 60 s del trabajo `AnswerSyllabusChatJob` (el servidor de pruebas tiene 60);
   - `DISPLAY_TIMEZONE` fija la fecha de hoy de la institución (por defecto `America/Guayaquil`). Cambiarla
     cambia los plazos de la convocatoria y las fechas ya guardadas.
 - **Reloj del servidor:** la fecha de hoy sale del reloj del servidor, así que debe estar sincronizado con NTP.
