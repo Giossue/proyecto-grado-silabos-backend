@@ -99,6 +99,31 @@ class ApiDashboardTest extends TestCase
             ->assertJsonPath('setup.steps.4.action', null);
     }
 
+    public function test_library_receives_the_institutional_deadline_to_review_before_it_ends(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
+        $request = fn () => $this->actingAs($librarian)
+            ->withSession(['active_role_assignment_id' => $librarian->roleAssignments()->firstOrFail()->id])
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.dashboard.show'));
+
+        SyllabusProcess::query()->update(['estado' => SyllabusProcess::STATE_CLOSED]);
+        $request()->assertOk()->assertJsonPath('deadline', null);
+
+        SyllabusProcess::query()->create([
+            'periodo_academico_id' => AcademicPeriod::query()->firstOrFail()->id,
+            'inicia_en' => now()->subDays(2),
+            'entrega_en' => now()->addDays(5),
+            'estado' => SyllabusProcess::STATE_OPEN,
+        ]);
+        $request()->assertOk()
+            ->assertJsonPath('deadline.state', 'active')
+            ->assertJsonPath('deadline.due_at', $this->institutionDay(5))
+            ->assertJsonPath('deadline.days_until_due', 5)
+            ->assertJsonPath('deadline.convocation_id', null);
+    }
+
     public function test_dashboard_requires_an_active_role(): void
     {
         $this->seed(DatabaseSeeder::class);

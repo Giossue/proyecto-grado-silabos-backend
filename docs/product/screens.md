@@ -34,9 +34,9 @@ muestra «Página no encontrada».
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| COR-01 | Panel | `/coordinacion/panel` | Avance, por revisar y sin iniciar. Tarjeta de plazo con «Abrir», «Pausar» o «Reanudar convocatoria» y «Ver seguimiento». Lista «Puesta en marcha de la carrera». |
-| COR-04 | Seguimiento por expediente | diálogo en COR-01 | Sílabos de la carrera con paralelos, docentes, estado y fecha de inicio. |
-| COR-05 | Revisión | `/coordinacion/revisiones` | Cola: asignatura, docente, número de revisión, estado y etapa. |
+| COR-01 | Puesta en marcha | `/coordinacion/puesta-en-marcha` | Pasos para preparar la carrera y «Abrir convocatoria». Fuera del menú lateral: se llega desde «Puesta en marcha» en COR-05. |
+| COR-04 | Seguimiento | pestaña en COR-05 | Todos los sílabos de la convocatoria con paralelos, docentes, estado y fecha de inicio. |
+| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Arriba, avance, por revisar y sin iniciar; acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Puesta en marcha». Pestañas «Cola de revisión» (asignatura, docente, número de revisión, estado y etapa) y «Seguimiento» (COR-04). |
 | COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | Contenido enviado en solo lectura, historial de revisiones, decisión y firma. |
 | COR-07 | Comparar revisiones | `/coordinacion/revisiones/:before/comparar/:after` | Campos agregados, retirados o modificados, lado a lado. |
 | COR-08 | Solicitar corrección | tarjeta en COR-06 | «Comentario para el docente» y «Solicitar corrección». |
@@ -67,7 +67,7 @@ y el botón «Documentos» (DOC-10).
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Entrada de Biblioteca; no tiene Panel. Arriba, por verificar, por firmar y con comentario. Debajo, bandeja de toda la universidad: búsqueda, período y estado («Por revisar», «Por firmar», «Firmado», «Con comentario», «Anulado»). Columnas: carrera, docente y estado. |
+| BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Entrada de Biblioteca; no tiene Panel. Aviso del plazo para revisar y firmar bajo la barra superior. Arriba, por verificar, por firmar y con comentario. Debajo, bandeja de toda la universidad: búsqueda, período y estado («Por revisar», «Por firmar», «Firmado», «Con comentario», «Anulado»). Columnas: carrera, docente y estado. |
 | BIB-03 | Revisión de bibliografía | `/biblioteca/revisiones/:revision` | Bibliografía en solo lectura, «Aprobar bibliografía», «Devolver al docente» con motivos, motivos enviados y firma. |
 
 ## Detalle de pantallas clave
@@ -199,7 +199,7 @@ firmado» aparece con las tres firmas.
 ## Patrones comunes
 
 - **Menú lateral por rol.** Administrador: Panel, Convocatorias, Usuarios y roles,
-  Facultades y carreras, Plantilla, Auditoría, Ayuda de pantallas. Coordinador: Panel,
+  Facultades y carreras, Plantilla, Auditoría, Ayuda de pantallas. Coordinador:
   Revisión, Materias y asignaciones, Docentes, Proyecto de carrera, Malla. Docente:
   Mis sílabos. Bibliotecario: Revisiones de biblioteca.
 - **Encabezado.** Campana de avisos, tema claro u oscuro y menú de usuario
@@ -215,10 +215,14 @@ firmado» aparece con las tres firmas.
   ADM-13 tiene un texto activo para esa pantalla.
 - **Edición bloqueada.** Una franja a todo el ancho, bajo la barra superior, dice
   «Edición bloqueada · Convocatoria {período}» y qué pausar, con «¿Por qué?» e «Ir a
-  Convocatorias». Convocatorias usa la misma franja para «Convocatoria en curso». El
-  servidor rechaza igual la petición.
-- **Panel.** Tres indicadores por rol. Administración y Coordinación ven «Puesta en
-  marcha» hasta completar sus pasos. El docente ve sus indicadores en «Mis sílabos» y Biblioteca, en «Revisiones de biblioteca».
+  Convocatorias» («Ir a Revisión» para Coordinación). Convocatorias usa la misma franja
+  para «Convocatoria en curso». El servidor rechaza igual la petición.
+- **Aviso de plazo.** Docente, Coordinación y Biblioteca ven bajo la barra superior una
+  franja ámbar con los días que quedan, qué les toca hacer antes del plazo de entrega y
+  la fecha límite. Biblioteca usa el plazo de la convocatoria institucional.
+- **Panel.** Solo Administración: tres indicadores y «Puesta en marcha de la institución»
+  hasta completar sus pasos. Los demás roles ven sus indicadores arriba de su lista de
+  trabajo: «Revisión», «Mis sílabos» y «Revisiones de biblioteca».
 - **Tablas.** Búsqueda «Buscar por…», filtros y 20 filas por página. La fila abre el
   detalle. En pantallas angostas, cada fila se vuelve una tarjeta.
 - **Formularios.** Las altas se hacen en un modal o en una hoja lateral. Los datos
@@ -231,8 +235,8 @@ firmado» aparece con las tres firmas.
 - ADM-05 (Plantillas) y ADM-07 (Publicar): hay una sola plantilla, sin publicación.
 - ADM-09 (Trabajos fallidos): sin pantalla.
 - ADM-11 (Configuración): es UI-04.
-- COR-02 y COR-03 (Convocatorias de carrera): están en COR-01.
+- COR-02 y COR-03 (Convocatorias de carrera): están en COR-01 y COR-05.
 - COR-11 (Fuentes académicas): retirada.
-- COR-12 (Informes): el avance está en COR-01.
+- COR-12 (Informes): el avance está en COR-05.
 - DOC-03 (Resumen del sílabo): la vista previa está en DOC-04.
 - DEC-01 y DEC-02 (Decanato): el rol no existe.

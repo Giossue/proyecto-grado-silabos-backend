@@ -30,6 +30,9 @@ class ScreenHelpTest extends TestCase
         }
         $this->assertNotContains('/docente/panel', $screens);
         $this->assertNotContains('/biblioteca/panel', $screens);
+        $this->assertNotContains('/coordinacion/panel', $screens);
+        $this->assertContains('/coordinacion/puesta-en-marcha', $screens);
+        $this->assertStringStartsWith('Arriba ve el avance de su carrera', ScreenHelp::query()->where('pantalla', '/coordinacion/revisiones')->value('contenido_ayuda'));
         $this->assertStringStartsWith('Arriba ve cuántos sílabos esperan', ScreenHelp::query()->where('pantalla', '/biblioteca/revisiones')->value('contenido_ayuda'));
         $this->assertStringStartsWith('Arriba ve cuántos sílabos', ScreenHelp::query()->where('pantalla', '/docente/mis-silabos')->value('contenido_ayuda'));
         $this->assertSame(0, ScreenHelp::query()->where('activa', false)->count());

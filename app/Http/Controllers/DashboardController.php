@@ -63,6 +63,7 @@ class DashboardController extends Controller
             $activeRole === null || ! $user instanceof User => null,
             $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorDeadline($coordinatorReadiness, $schedule),
             $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherDeadline($user, $activeRole->carrera_id, $schedule),
+            $activeRole->role->codigo_rol === RoleCode::Librarian->value => $this->librarianDeadline(),
             default => null,
         };
 
@@ -302,6 +303,14 @@ class DashboardController extends Controller
             $schedule->startsAt($convocation),
             $schedule->draftDeadline($convocation),
         );
+    }
+
+    /** @return DeadlinePayload|null */
+    private function librarianDeadline(): ?array
+    {
+        $process = SyllabusProcess::query()->inProgress()->with('academicPeriod')->first();
+
+        return $process === null ? null : $this->deadlinePayload($process, null, $process->inicia_en, $process->entrega_en);
     }
 
     /** @return DeadlinePayload */
