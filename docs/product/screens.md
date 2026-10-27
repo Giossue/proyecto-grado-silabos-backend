@@ -195,7 +195,8 @@ firmado» aparece con las tres firmas.
 
 - «Aprobar bibliografía» pide confirmación; el sílabo queda aprobado y se genera el PDF.
 - «Devolver al docente» pide al menos un motivo: libro no disponible, código incorrecto,
-  ISBN incorrecto, edición desactualizada o datos incompletos.
+  ISBN incorrecto, edición desactualizada, datos incompletos u «Otro motivo». Con «Otro
+  motivo» aparece un cuadro obligatorio; su texto se envía junto a los motivos marcados.
 
 ## Patrones comunes
 

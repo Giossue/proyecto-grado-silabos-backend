@@ -11,7 +11,10 @@ final class LibraryCommentReasons
         'isbn_incorrecto' => 'El ISBN es incorrecto',
         'edicion_desactualizada' => 'La edición está desactualizada',
         'datos_incompletos' => 'Los datos de la obra están incompletos',
+        self::OTHER => 'Otro motivo',
     ];
+
+    public const OTHER = 'otro';
 
     /** @return list<array{code: string, label: string}> */
     public static function options(): array
@@ -24,8 +27,13 @@ final class LibraryCommentReasons
     }
 
     /** @param  list<string>  $codes */
-    public static function text(array $codes): string
+    public static function text(array $codes, ?string $other = null): string
     {
-        return implode('; ', array_map(fn (string $code): string => self::REASONS[$code], $codes)).'.';
+        $parts = array_map(fn (string $code): string => self::REASONS[$code], array_values(array_diff($codes, [self::OTHER])));
+        if (in_array(self::OTHER, $codes, true)) {
+            $parts[] = rtrim(trim((string) $other), '. ');
+        }
+
+        return implode('; ', $parts).'.';
     }
 }

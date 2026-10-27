@@ -99,7 +99,8 @@ class LibraryReviewController extends Controller
          * @var list<string> $reasons
          */
         $reasons = $request->validated('reasons');
-        $action->execute($revision, LibraryCommentReasons::text($reasons), $actor, $request);
+        $other = $request->validated('other');
+        $action->execute($revision, LibraryCommentReasons::text($reasons, is_string($other) ? $other : null), $actor, $request);
 
         return response()->json(['message' => 'Comentario enviado. El docente corregirá el sílabo y lo reenviará; volverá a biblioteca.'], 201);
     }

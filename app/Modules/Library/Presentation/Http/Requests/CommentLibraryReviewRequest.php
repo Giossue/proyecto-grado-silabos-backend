@@ -27,6 +27,7 @@ class CommentLibraryReviewRequest extends FormRequest
         return [
             'reasons' => ['required', 'array', 'min:1'],
             'reasons.*' => ['string', 'distinct', Rule::in(array_keys(LibraryCommentReasons::REASONS))],
+            'other' => [Rule::requiredIf(fn (): bool => in_array(LibraryCommentReasons::OTHER, (array) $this->input('reasons', []), true)), 'nullable', 'string', 'min:5', 'max:1000'],
         ];
     }
 
@@ -37,6 +38,14 @@ class CommentLibraryReviewRequest extends FormRequest
             'reasons.required' => 'Elija al menos un motivo.',
             'reasons.min' => 'Elija al menos un motivo.',
             'reasons.*.in' => 'El motivo elegido no es válido.',
+            'other.required' => 'Escriba el otro motivo.',
+            'other.min' => 'Escriba el otro motivo con al menos 5 caracteres.',
         ];
+    }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return ['reasons' => 'motivos', 'reasons.*' => 'motivo', 'other' => 'otro motivo'];
     }
 }

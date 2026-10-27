@@ -224,6 +224,23 @@ class LibraryReviewTest extends TestCase
         $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))->assertJsonPath('state', 'firmado')->assertJsonCount(3, 'signatures');
     }
 
+    public function test_con_otro_motivo_biblioteca_escribe_el_texto_y_se_une_a_los_motivos_marcados(): void
+    {
+        [$syllabus, $revision] = $this->submittedRevision();
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision))->assertSuccessful();
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertJsonPath('review.comment_reasons.5', ['code' => 'otro', 'label' => 'Otro motivo']);
+
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), ['reasons' => ['otro']])
+            ->assertJsonValidationErrors(['other' => 'Escriba el otro motivo.']);
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), [
+            'reasons' => ['codigo_incorrecto', 'otro'], 'other' => '  Falta la 3.ª edición de Pressman. ',
+        ])->assertCreated();
+
+        $this->assertSame('El código del libro es incorrecto; Falta la 3.ª edición de Pressman.', $revision->fresh()->correccion_justificacion);
+        $this->assertSame('correccion_solicitada', $syllabus->fresh()->estado);
+    }
+
     public function test_con_la_convocatoria_cerrada_biblioteca_no_devuelve_ni_aprueba(): void
     {
         [$syllabus, $revision] = $this->submittedRevision();
