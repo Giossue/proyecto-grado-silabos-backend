@@ -67,8 +67,7 @@ y el botón «Documentos» (DOC-10).
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| BIB-01 | Panel | `/biblioteca/panel` | Por verificar, por firmar y con comentario. |
-| BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Bandeja de toda la universidad: búsqueda, período y estado («Por revisar», «Por firmar», «Firmado», «Con comentario», «Anulado»). Columnas: carrera, docente y estado. |
+| BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Entrada de Biblioteca; no tiene Panel. Arriba, por verificar, por firmar y con comentario. Debajo, bandeja de toda la universidad: búsqueda, período y estado («Por revisar», «Por firmar», «Firmado», «Con comentario», «Anulado»). Columnas: carrera, docente y estado. |
 | BIB-03 | Revisión de bibliografía | `/biblioteca/revisiones/:revision` | Bibliografía en solo lectura, «Aprobar bibliografía», «Devolver al docente» con motivos, motivos enviados y firma. |
 
 ## Detalle de pantallas clave
@@ -202,7 +201,7 @@ firmado» aparece con las tres firmas.
 - **Menú lateral por rol.** Administrador: Panel, Convocatorias, Usuarios y roles,
   Facultades y carreras, Plantilla, Auditoría, Ayuda de pantallas. Coordinador: Panel,
   Revisión, Materias y asignaciones, Docentes, Proyecto de carrera, Malla. Docente:
-  Mis sílabos. Bibliotecario: Panel, Revisiones de biblioteca.
+  Mis sílabos. Bibliotecario: Revisiones de biblioteca.
 - **Encabezado.** Campana de avisos, tema claro u oscuro y menú de usuario
   (Configuración, Cerrar sesión). Con más de un rol, el pie del menú lateral ofrece
   «Cambiar carrera o rol».
@@ -219,7 +218,7 @@ firmado» aparece con las tres firmas.
   Convocatorias». Convocatorias usa la misma franja para «Convocatoria en curso». El
   servidor rechaza igual la petición.
 - **Panel.** Tres indicadores por rol. Administración y Coordinación ven «Puesta en
-  marcha» hasta completar sus pasos. El docente ve sus indicadores en «Mis sílabos».
+  marcha» hasta completar sus pasos. El docente ve sus indicadores en «Mis sílabos» y Biblioteca, en «Revisiones de biblioteca».
 - **Tablas.** Búsqueda «Buscar por…», filtros y 20 filas por página. La fila abre el
   detalle. En pantallas angostas, cada fila se vuelve una tarjeta.
 - **Formularios.** Las altas se hacen en un modal o en una hoja lateral. Los datos

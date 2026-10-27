@@ -24,11 +24,13 @@ class ScreenHelpTest extends TestCase
     {
         $screens = ScreenHelp::query()->pluck('pantalla')->all();
 
-        $this->assertGreaterThanOrEqual(34, count($screens));
+        $this->assertGreaterThanOrEqual(33, count($screens));
         foreach (['/admin/panel', '/coordinacion/malla', '/docente/mis-silabos', '/biblioteca/revisiones'] as $screen) {
             $this->assertContains($screen, $screens);
         }
         $this->assertNotContains('/docente/panel', $screens);
+        $this->assertNotContains('/biblioteca/panel', $screens);
+        $this->assertStringStartsWith('Arriba ve cuántos sílabos esperan', ScreenHelp::query()->where('pantalla', '/biblioteca/revisiones')->value('contenido_ayuda'));
         $this->assertStringStartsWith('Arriba ve cuántos sílabos', ScreenHelp::query()->where('pantalla', '/docente/mis-silabos')->value('contenido_ayuda'));
         $this->assertSame(0, ScreenHelp::query()->where('activa', false)->count());
         foreach (ScreenHelp::query()->get() as $help) {

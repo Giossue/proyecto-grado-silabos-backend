@@ -21,7 +21,7 @@ Estas páginas cubren los patrones del sistema; el resto los reutiliza.
 | # | Página | Ruta | Patrón |
 |---|---|---|---|
 | 1 | Acceso | `/ingresar` | Formulario simple y errores |
-| 2 | Panel | `/admin/panel`, `/coordinacion/panel`, `/biblioteca/panel` | Indicadores y encabezado; el docente los ve en `/docente/mis-silabos` |
+| 2 | Panel | `/admin/panel`, `/coordinacion/panel` | Indicadores y encabezado; docente y Biblioteca los ven en `/docente/mis-silabos` y `/biblioteca/revisiones` |
 | 3 | Facultades y carreras | `/admin/estructura-academica` | Pestañas, tabla, menú de fila y hoja lateral |
 | 4 | Usuarios y roles | `/admin/usuarios` | Listado con estados, filtros y acciones |
 | 5 | Plantilla | `/admin/plantilla` | Editor sobre la hoja y «Opciones avanzadas → Editar JSON» |
