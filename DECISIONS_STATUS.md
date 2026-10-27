@@ -119,6 +119,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Administración la crea en blanco o con el formato oficial. La edita en un editor
   visual tipo Word. «Editar» es la acción principal; «Opciones avanzadas» contiene
   «Editar JSON», que abre el diálogo de edición, exportación e importación JSON.
+  Importar reemplaza la plantilla entera, pero las fichas pasan a los campos de
+  Coordinación con la misma clave (2026-10-27).
   La barra de acciones se alinea con el borde derecho de la primera hoja según
   su papel y orientación, limitada al ancho disponible de pantalla.
 - La letra, los colores, los márgenes y la alineación los fija la plantilla. El Word

@@ -64,15 +64,48 @@ final class SyllabusTemplateProvisioner
     {
         return DB::transaction(function () use ($template, $structure, $definition): SyllabusTemplate {
             $locked = SyllabusTemplate::query()->whereKey($template->getKey())->lockForUpdate()->firstOrFail();
+            $previous = $this->coordinationFieldsByKey($locked->id);
             $locked = $this->retireStructure($locked);
             if ($definition !== null) {
                 $locked->saveDefinition($definition);
             }
 
             $this->buildStructure($locked, $structure);
+            $this->keepSubjectProfiles($previous, $this->coordinationFieldsByKey($locked->id));
 
             return $locked->fresh();
         });
+    }
+
+    /** @return array<string, string> clave del campo => definición vigente de Coordinación */
+    private function coordinationFieldsByKey(string $templateId): array
+    {
+        return DB::table('definiciones_campo')
+            ->join('campos_plantilla', 'campos_plantilla.campo_plantilla_id', '=', 'definiciones_campo.campo_plantilla_id')
+            ->where('definiciones_campo.plantilla_id', $templateId)
+            ->where('definiciones_campo.vigente_en_plantilla', true)
+            ->where('campos_plantilla.vigente_en_plantilla', true)
+            ->where('definiciones_campo.quien_llena_definicion_campo', FieldDefinition::COORDINATION)
+            ->pluck('definiciones_campo.definicion_campo_id', 'campos_plantilla.clave_campo_plantilla')
+            ->map(fn (mixed $id): string => (string) $id)
+            ->all();
+    }
+
+    /**
+     * @param  array<string, string>  $previous
+     * @param  array<string, string>  $current
+     */
+    private function keepSubjectProfiles(array $previous, array $current): void
+    {
+        foreach ($current as $key => $definitionId) {
+            $old = $previous[$key] ?? null;
+            if ($old !== null && $old !== $definitionId) {
+                DB::table('valores_campo')
+                    ->where('definicion_campo_id', $old)
+                    ->whereNotNull('asignatura_id')
+                    ->update(['definicion_campo_id' => $definitionId]);
+            }
+        }
     }
 
     private function retireStructure(SyllabusTemplate $template): SyllabusTemplate

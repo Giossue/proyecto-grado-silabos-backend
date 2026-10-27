@@ -3,6 +3,8 @@
 namespace Tests\Feature\Configuration;
 
 use App\Models\User;
+use App\Modules\Academic\Application\SubjectProfileFields;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Configuration\Application\Actions\ProtectTemplateResponses;
 use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\TemplateContext;
@@ -11,6 +13,7 @@ use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Domain\TemplateDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
@@ -190,6 +193,23 @@ class OfficialTemplateTest extends TestCase
 
         $this->assertEquals($exported, $again);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.importada']);
+    }
+
+    public function test_importing_the_template_again_keeps_the_subject_profiles(): void
+    {
+        $this->format()->assertOk();
+        $this->fillSubjectProfiles();
+        $subjects = Subject::query()->pluck('id')->all();
+        $profiles = app(SubjectProfileFields::class);
+        $this->assertNotContains(false, $profiles->completeBySubject($subjects));
+        $count = FieldValue::query()->whereNotNull('asignatura_id')->count();
+
+        $exported = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->assertOk()->json();
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $exported)->assertOk();
+
+        $this->assertNotContains(false, $profiles->completeBySubject($subjects));
+        $this->assertSame($count, FieldValue::query()->whereNotNull('asignatura_id')->count());
+        $this->assertSame(0, FieldValue::query()->whereNotNull('asignatura_id')->whereDoesntHave('field')->count());
     }
 
     public function test_the_spaces_around_formatted_text_are_kept_when_saving_a_field(): void
