@@ -205,7 +205,8 @@ firmado» aparece con las tres firmas.
   Mis sílabos. Bibliotecario: Revisiones de biblioteca.
 - **Encabezado.** Campana de avisos, tema claro u oscuro y menú de usuario
   (Configuración, Cerrar sesión). Con más de un rol, el pie del menú lateral ofrece
-  «Cambiar carrera o rol».
+  «Cambiar carrera o rol». El pie ofrece también «Instalar aplicación» mientras el
+  sistema no corre instalado.
 - **Avisos.** Solo llegan cuando hay algo que hacer o cambió el trabajo propio. Abrir un
   aviso lleva a la pantalla donde se actúa y, si hace falta, activa el rol que
   corresponde.

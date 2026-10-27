@@ -141,7 +141,11 @@ se registra. El service worker guarda la interfaz compilada para abrir rápido, 
 `config.js` ni las llamadas a la API: sin conexión la interfaz abre y los datos no
 cargan. Con una versión nueva, `AppUpdatePrompt` muestra «Hay una versión nueva del
 sistema» y solo recarga si la persona pulsa «Actualizar»; revisa si hay versión nueva
-cada hora. Nginx sirve `sw.js` y el manifiesto con `no-store`. Necesita HTTPS.
+cada hora. «Instalar aplicación», al pie del menú lateral, abre `InstallAppDialog`: si el
+navegador ofrece instalar, muestra el botón «Instalar»; en iPhone explica Compartir →
+«Agregar a pantalla de inicio»; en otros navegadores, cómo hacerlo en Chrome, Edge o
+Safari de Mac. La opción se oculta cuando el sistema ya corre instalado. Nginx sirve
+`sw.js` y el manifiesto con `no-store`. Necesita HTTPS.
 
 ## Despliegue
 
