@@ -84,7 +84,6 @@ class OfficialTemplateTest extends TestCase
         app(TemplateContext::class)->forget();
         $definition = $template->fresh()->definition();
         $this->assertArrayNotHasKey('planificacion_semanal', $definition->blocks());
-        $this->assertSame([], $definition->sourceFields());
         $this->assertArrayNotHasKey('from', $definition->blocks()['unidades']['value']['units']['item']['fields']['nombre']);
         $this->assertNull(FieldDefinition::query()->where('plantilla_id', $template->id)->get()->first(fn (FieldDefinition $field): bool => $field->clave === 'unidades_curriculares'));
         $this->assertSame('unidades', $units->fresh()->contenido['content'][0]['attrs']['kind']);
@@ -189,7 +188,7 @@ class OfficialTemplateTest extends TestCase
 
         $this->assertSame(2, $exported['version']);
         $this->assertSame(['version', 'response_policy', 'document', 'variables', 'blocks', 'required_sections', 'library_sections', 'presets', 'sections'], array_keys($exported));
-        $this->assertSame(['identificacion', 'unidades', 'evaluacion', 'si_no', 'repetible'], array_keys($exported['blocks']));
+        $this->assertSame(['identificacion', 'unidades', 'evaluacion'], array_keys($exported['blocks']));
         $this->assertCount(12, $exported['sections']);
         $this->assertSame(['key', 'title', 'orientation', 'fields'], array_keys($exported['sections'][0]));
         $this->assertSame(['key', 'label', 'quien_llena', 'content'], array_keys($exported['sections'][0]['fields'][0]));

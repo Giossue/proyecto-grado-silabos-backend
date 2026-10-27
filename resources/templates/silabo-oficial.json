@@ -479,7 +479,7 @@
         "evaluacion": {
             "label": "Indicadores de evaluación por parcial",
             "layout": [
-                "<table data-when='{\"not\":{\"variable\":\"horas_practicas\",\"zero\":true}}'>",
+                "<table data-when='{\"variable\":\"horas_practicas\",\"zero\":false}'>",
                 "<tr><th rowspan=\"2\">INDICADORES</th><th colspan=\"2\">PRIMER PARCIAL</th><th colspan=\"2\">SEGUNDO PARCIAL</th></tr>",
                 "<tr><th>(PUNTOS)</th><th>PONDERACIÓN</th><th>(PUNTOS)</th><th>PONDERACIÓN</th></tr>",
                 "<tr><th>Aprendizaje en contacto con el docente</th><td>2.5 PUNTOS</td><td>1.25</td><td>2.5 PUNTOS</td><td>1.25</td></tr>",
@@ -495,104 +495,6 @@
                 "<tr><th>Aprendizaje autónomo</th><td>3.0 PUNTOS</td><td>1.5</td><td>3.0 PUNTOS</td><td>1.5</td></tr>",
                 "<tr><th>Evaluación parcial de los aprendizajes</th><td>3.5 PUNTOS</td><td>1.75</td><td>3.5 PUNTOS</td><td>1.75</td></tr>",
                 "<tr><th>TOTAL</th><td>10 PUNTOS</td><td>5 PUNTOS</td><td>10 PUNTOS</td><td>5 PUNTOS</td></tr>",
-                "</table>"
-            ]
-        },
-        "si_no": {
-            "label": "Pregunta Sí/No",
-            "props": {
-                "question": {
-                    "type": "text",
-                    "max": 300,
-                    "required": true,
-                    "label": "Pregunta",
-                    "error": "La pregunta del bloque Sí/No es obligatoria y admite hasta 300 caracteres."
-                },
-                "columns": {
-                    "type": "columns",
-                    "min": 0,
-                    "max": 8,
-                    "label": "Columnas de la tabla si responde Sí",
-                    "error": "El bloque admite hasta 8 columnas."
-                }
-            },
-            "value": {
-                "answer": {
-                    "type": "choice",
-                    "options": {
-                        "si": "Sí",
-                        "no": "No"
-                    },
-                    "label": "Respuesta",
-                    "error": "La respuesta del bloque Sí/No no es válida."
-                },
-                "rows": {
-                    "type": "list",
-                    "max": 100,
-                    "label": "fila",
-                    "error": "El bloque admite hasta 100 filas.",
-                    "item": {
-                        "type": "row",
-                        "columns": "columns",
-                        "cell": {
-                            "type": "text",
-                            "max": 1000,
-                            "error": "Una celda del bloque supera los 1000 caracteres."
-                        }
-                    },
-                    "keep_if": {
-                        "value": "answer",
-                        "equals": "si"
-                    }
-                }
-            },
-            "layout": [
-                "<p><strong><span data-slot='{\"prop\":\"question\"}'></span> <span data-slot='{\"value\":\"answer\"}'></span></strong></p>",
-                "<table data-when='{\"all\":[{\"value\":\"answer\",\"equals\":\"si\"},{\"prop\":\"columns\",\"empty\":false}]}'>",
-                "<tr><th data-repeat='{\"prop\":\"columns\",\"as\":\"column\"}'><span data-slot='{\"item\":\"column.label\"}'></span></th></tr>",
-                "<tr data-repeat='{\"value\":\"rows\",\"at_least\":1}'><td data-repeat='{\"prop\":\"columns\",\"as\":\"column\"}'><span data-slot='{\"value\":\"{column.key}\"}'></span></td></tr>",
-                "</table>"
-            ]
-        },
-        "repetible": {
-            "label": "Lista repetible",
-            "props": {
-                "label": {
-                    "type": "text",
-                    "max": 120,
-                    "label": "Título de la lista",
-                    "error": "El título de la lista repetible admite hasta 120 caracteres."
-                },
-                "columns": {
-                    "type": "columns",
-                    "min": 1,
-                    "max": 8,
-                    "label": "Columnas",
-                    "error": "La lista repetible necesita entre 1 y 8 columnas."
-                }
-            },
-            "value": {
-                "rows": {
-                    "type": "list",
-                    "max": 100,
-                    "label": "fila",
-                    "error": "El bloque admite hasta 100 filas.",
-                    "item": {
-                        "type": "row",
-                        "columns": "columns",
-                        "cell": {
-                            "type": "text",
-                            "max": 1000,
-                            "error": "Una celda del bloque supera los 1000 caracteres."
-                        }
-                    }
-                }
-            },
-            "layout": [
-                "<p data-when='{\"prop\":\"label\",\"empty\":false}'><strong><span data-slot='{\"prop\":\"label\"}'></span></strong></p>",
-                "<table data-when='{\"prop\":\"columns\",\"empty\":false}'>",
-                "<tr><th data-repeat='{\"prop\":\"columns\",\"as\":\"column\"}'><span data-slot='{\"item\":\"column.label\"}'></span></th></tr>",
-                "<tr data-repeat='{\"value\":\"rows\",\"at_least\":1}'><td data-repeat='{\"prop\":\"columns\",\"as\":\"column\"}'><span data-slot='{\"value\":\"{column.key}\"}'></span></td></tr>",
                 "</table>"
             ]
         }

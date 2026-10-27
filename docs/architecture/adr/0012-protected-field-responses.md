@@ -49,7 +49,8 @@ unidad, como en los antecedentes (Meza Luque, 2022; Llumitaxi Chacha y Morocho
 Tualombo, 2019). La plantilla oficial retira `unidades_curriculares` y sus datos ya no
 declaran `from`; una regla de envío (`filled`) exige los cuatro nombres y resultados.
 `ProtectTemplateResponses` lleva la plantilla activa a ese formato cuando no hay
-sílabos. `from` sigue disponible en el lenguaje de la plantilla.
+sílabos. Ese mismo día `from` se retiró del lenguaje de la plantilla: una migración lo
+quita de la plantilla guardada.
 
 Un cambio de docente conserva la ficha y reinicia la planificación en curso con las
 reglas existentes. Un cambio de plantilla o ficha sigue exigiendo pausa y confirmación

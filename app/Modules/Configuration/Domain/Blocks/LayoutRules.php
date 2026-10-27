@@ -43,25 +43,21 @@ final class LayoutRules
     private function repeat(mixed $raw): array
     {
         if (! is_array($raw) || array_is_list($raw)) {
-            BlockDefinitionError::fail("{$this->where}.repeat: escriba {\"value\": \"lista\"} o {\"prop\": \"lista\", \"as\": \"nombre\"}.");
+            BlockDefinitionError::fail("{$this->where}.repeat: escriba {\"value\": \"lista\"}.");
         }
-        $sources = array_values(array_intersect(['value', 'prop'], array_keys($raw)));
-        if (count($sources) !== 1 || array_diff(array_keys($raw), ['value', 'prop', 'as', 'at_least']) !== []) {
-            BlockDefinitionError::fail("{$this->where}.repeat: use «value» o «prop», y opcionalmente «as» y «at_least».");
+        if (! isset($raw['value']) || array_diff(array_keys($raw), ['value', 'as', 'at_least']) !== []) {
+            BlockDefinitionError::fail("{$this->where}.repeat: use «value», y opcionalmente «as» y «at_least».");
         }
-        $path = $raw[$sources[0]];
+        $path = $raw['value'];
         if (! is_string($path) || preg_match(self::PATH, $path) !== 1 || str_contains($path, '*')) {
-            BlockDefinitionError::fail("{$this->where}.repeat: «{$sources[0]}» debe ser una ruta sin *.");
+            BlockDefinitionError::fail("{$this->where}.repeat: «value» debe ser una ruta sin *.");
         }
-        $clean = [$sources[0] => $path];
+        $clean = ['value' => $path];
         if (isset($raw['as'])) {
             if (! is_string($raw['as']) || preg_match(self::NAME, $raw['as']) !== 1) {
                 BlockDefinitionError::fail("{$this->where}.repeat.as: use minúsculas, números y _.");
             }
             $clean['as'] = $raw['as'];
-        }
-        if ($sources[0] === 'prop' && ! isset($clean['as'])) {
-            BlockDefinitionError::fail("{$this->where}.repeat: al repetir una propiedad, nombre cada elemento con «as».");
         }
         if (isset($raw['at_least'])) {
             if (! is_int($raw['at_least']) || $raw['at_least'] < 0 || $raw['at_least'] > 100) {

@@ -158,7 +158,6 @@ diseño propio. En el contenido de un campo se inserta así:
 
 ```html
 <div data-block="unidades"></div>
-<div data-block="si_no" data-props='{"question":"¿Usa laboratorio?","columns":[]}'></div>
 ```
 
 `data-props` fija las propiedades de esa aparición; `data-value` (opcional) da un valor inicial. El docente solo
@@ -182,12 +181,11 @@ Un objeto con un esquema por clave:
 
 | `type` | Claves | Se guarda como |
 |---|---|---|
-| `text` | `max` (1 a 20000, por defecto 1000), `multiline`, `from` | texto |
+| `text` | `max` (1 a 20000, por defecto 1000), `multiline` | texto |
 | `number` | `digits` (enteros, por defecto 3), `decimals` (por defecto 2) | texto con número (`2`, `1,5`) |
 | `choice` | `options`: `{"si": "Sí", "no": "No"}` | la clave elegida o `null` |
 | `object` | `fields`: otro objeto de esquemas | objeto |
 | `list` | `item` (esquema de cada elemento; si no lleva `type` se toma como `fields` de un objeto), `min`, `max` (≤ 100), `initial` | lista |
-| `row` | `columns` (nombre de una propiedad `columns`), `cell` (esquema de cada celda) | objeto con una clave por columna |
 
 Comunes: `label` (nombre del dato en la pantalla y en los errores), `error` (mensaje propio al rechazarlo) y
 `keep_if` (condición, ver abajo). Si `keep_if` deja de cumplirse, el dato se borra. Por ejemplo, el detalle de
@@ -196,23 +194,9 @@ discapacidad se borra si la respuesta es «No».
 Una lista ausente arranca con `initial` elementos. Una lista con `min` < `max` se puede agrandar y achicar desde
 el editor, y debe repetirse en una fila de tabla (`<tr data-repeat>`).
 
-#### `from`: datos que llena Carrera dentro de un bloque
-
-La plantilla oficial no usa `from` desde el 2026-10-27: el docente escribe los nombres y resultados de las unidades.
-
-El diseño no se parte según quién llena: el responsable se fija por dato. Un `text` con
-`"from": {"field": "unidades_curriculares", "column": 2}` toma el texto de la columna 2 de la tabla de ese campo de
-Carrera. La fila es la posición del elemento de la lista que lo contiene (primera unidad, primera fila de datos;
-las filas con encabezados no cuentan).
-
-- El servidor copia el dato al crear, reiniciar, copiar o guardar el sílabo. El docente lo ve sin poder cambiarlo.
-- El campo fuente (`field`) debe ser `coordinacion`. Se llena en la ficha y el Excel y cuenta para enviar, pero no
-  se imprime solo: sus datos aparecen donde el bloque los coloca.
-
 ### `props`: qué fija la plantilla en cada aparición
 
-Solo `text` (`max`, `required`, `label`, `error`) y `columns` (`min`, `max`: lista de `{key, label}` que el
-administrador edita en el constructor).
+Solo `text` (`max`, `required`, `label`, `error`). El administrador lo escribe en el constructor.
 
 ### `rules`: reglas de negocio
 
@@ -246,7 +230,6 @@ directivas:
 | Directiva | Dónde | Qué hace |
 |---|---|---|
 | `data-repeat='{"value": "units"}'` | `<section>`, `<table>`, `<tr>`, `<td>`, `<th>`, `<p>`, listas | Repite el elemento por cada elemento de la lista. Dentro, las rutas son relativas a ese elemento. |
-| `data-repeat='{"prop": "columns", "as": "column"}'` | igual | Repite por cada columna de las propiedades; `as` le pone nombre. |
 | `"at_least": 1` (dentro de `data-repeat`) | igual | Dibuja filas vacías hasta llegar a ese número. |
 | `data-when='{...}'` | igual | Dibuja el elemento solo si se cumple la condición. |
 | `data-band="#E1E9F4"` | `<tr>` | Pinta las filas impares que no tengan fondo propio. |
@@ -258,9 +241,8 @@ Datos dentro del texto (`<span data-slot='{...}'></span>`):
 |---|---|
 | `{"value": "nombre"}` | El dato. El editor del docente pone ahí un campo para escribir, un número o una elección. Una elección muestra su texto («Sí»). |
 | `{"value": "disability.answer", "option": "si"}` | `X` si el dato es esa opción (`"mark"` cambia la marca). En el editor, una casilla. |
-| `{"value": "{column.key}"}` | El dato cuya clave da el nombre `column` (filas de columnas variables). |
 | `{"prop": "question"}` | Una propiedad de texto. |
-| `{"item": "column.label"}` | Un dato del elemento nombrado con `as`. |
+| `{"item": "unidad.nombre"}` | Un dato del elemento nombrado con `as` en `data-repeat`. |
 | `{"index": true}` | Posición (desde 1) en la repetición más cercana. |
 | `{"counter": "semana"}` | Contador que sigue entre repeticiones (1, 2, 3… en todo el bloque). |
 | `{"sum": "semanas.*.acd_h"}` | Suma de números. |
@@ -271,13 +253,13 @@ Condiciones (`data-when` y `keep_if`):
 
 ```json
 { "value": "answer", "equals": "si" }
-{ "prop": "columns", "empty": false }
-{ "variable": "horas_practicas", "zero": true }
-{ "all": [ ... ] }   { "any": [ ... ] }   { "not": { ... } }
+{ "prop": "titulo", "empty": false }
+{ "variable": "horas_practicas", "zero": false }
 ```
 
 Una condición lleva una fuente (`value`, `prop`, `item` o `variable`) y una prueba (`equals`, `empty` o `zero`,
-donde `zero` significa que el dato tiene un número igual a 0).
+donde `zero` significa que el dato tiene un número igual a 0). Para negar, use `false` en la prueba. No hay
+condiciones compuestas (`all`, `any`, `not`); las revisiones antiguas que guardaron un `not` se siguen mostrando.
 
 ### Ejemplo completo: un bloque nuevo sin código
 
@@ -312,8 +294,6 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 | `identificacion` | Tabla de identificación con datos del sistema; el docente responde la discapacidad (Sí/No, tipo y descripción). |
 | `unidades` | Cuatro unidades (lista fija de 4) con semanas (lista que crece), horas y actividades. El docente escribe el nombre y el resultado de cada unidad. Reglas: máximo 16 semanas al guardar; al enviar, las 4 unidades con nombre y resultado, exactamente 16 semanas y horas iguales a las de la asignatura. |
 | `evaluacion` | Tabla de puntos con dos variantes según `horas_practicas` (con o sin práctico-experimental). |
-| `si_no` | Pregunta Sí/No con tabla opcional si responde Sí. Propiedades: `question` y `columns`. |
-| `repetible` | Lista de filas con columnas que fija el administrador. Propiedades: `label` y `columns`. |
 
 ## Secciones y campos
 

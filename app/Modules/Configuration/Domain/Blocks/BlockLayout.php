@@ -45,18 +45,14 @@ final class BlockLayout
             $innerAliases = $aliases;
             if (isset($attrs['repeat'])) {
                 $repeat = $attrs['repeat'];
-                if (isset($repeat['value'])) {
-                    $list = self::schemaAt($schema, $repeat['value']);
-                    if (($list['type'] ?? null) !== 'list') {
-                        BlockDefinitionError::fail("{$where}: «{$repeat['value']}» no es una lista del valor.");
-                    }
-                    if ($list['min'] < $list['max'] && $node['type'] !== 'tableRow') {
-                        BlockDefinitionError::fail("{$where}: la lista «{$repeat['value']}» cambia de tamaño y por eso se repite en una fila de tabla (tr).");
-                    }
-                    $inner = $list['item'];
-                } elseif (($props[explode('.', $repeat['prop'])[0]]['type'] ?? null) !== 'columns') {
-                    BlockDefinitionError::fail("{$where}: «{$repeat['prop']}» no es una lista de columnas de las propiedades.");
+                $list = self::schemaAt($schema, $repeat['value']);
+                if (($list['type'] ?? null) !== 'list') {
+                    BlockDefinitionError::fail("{$where}: «{$repeat['value']}» no es una lista del valor.");
                 }
+                if ($list['min'] < $list['max'] && $node['type'] !== 'tableRow') {
+                    BlockDefinitionError::fail("{$where}: la lista «{$repeat['value']}» cambia de tamaño y por eso se repite en una fila de tabla (tr).");
+                }
+                $inner = $list['item'];
                 if (isset($repeat['as'])) {
                     $innerAliases[$repeat['as']] = true;
                 }
@@ -85,7 +81,7 @@ final class BlockLayout
         }
         if (isset($attrs['value'])) {
             $target = self::schemaAt($schema, $attrs['value']);
-            if ($target === null || in_array($target['type'], ['object', 'list', 'row'], true)) {
+            if ($target === null || in_array($target['type'], ['object', 'list'], true)) {
                 BlockDefinitionError::fail("{$where}: «{$attrs['value']}» no es un dato del valor del bloque.");
             }
             if (isset($attrs['option']) && ($target['type'] !== 'choice' || ! isset($target['options'][$attrs['option']]))) {
@@ -111,12 +107,6 @@ final class BlockLayout
      */
     public static function schemaAt(array $schema, string $path): ?array
     {
-        if ($schema['type'] === 'row') {
-            $segments = Scope::segments($path);
-
-            return count($segments) === 1 ? $schema['cell'] : null;
-        }
-
         return $schema['type'] === 'object' ? ValueSchema::at($schema['fields'], $path) : null;
     }
 
@@ -150,7 +140,7 @@ final class BlockLayout
                 continue;
             }
             $repeat = $attrs['repeat'];
-            $items = isset($repeat['value']) ? $scope->value($repeat['value']) : $scope->prop($repeat['prop']);
+            $items = isset($repeat['value']) ? $scope->value($repeat['value']) : [];
             $items = is_array($items) && array_is_list($items) ? $items : [];
             while (count($items) < ($repeat['at_least'] ?? 0)) {
                 $items[] = [];

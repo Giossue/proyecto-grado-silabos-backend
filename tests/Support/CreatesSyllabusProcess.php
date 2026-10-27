@@ -27,10 +27,9 @@ trait CreatesSyllabusProcess
                 $kind = $node['attrs']['kind'];
                 $content['content'][$index]['attrs']['value'] = match ($kind) {
                     'identificacion' => ['disability' => ['answer' => 'no', 'type' => '', 'description' => '']],
-                    'si_no' => ['answer' => 'no', 'rows' => []],
                     'unidades' => $this->plannedUnits(),
                     'evaluacion' => [],
-                    default => ['rows' => []],
+                    default => [],
                 };
             }
         }

@@ -4,7 +4,6 @@ namespace Tests\Feature\Documents;
 
 use App\Modules\Configuration\Application\OfficialTemplate;
 use App\Modules\Configuration\Application\TemplateVariables;
-use App\Modules\Configuration\Domain\DocumentHtml;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
@@ -27,27 +26,6 @@ class TemplateGoldenWordTest extends TestCase
     public function test_official_template_without_practice_renders_the_same_word_document(): void
     {
         $this->assertGolden('oficial-sin-practicas', $this->officialInput(['horas_practicas' => '0']));
-    }
-
-    public function test_question_and_list_blocks_render_the_same_word_document(): void
-    {
-        $block = fn (string $kind, array $props, array $value): string => '<div data-block="'.$kind.'" data-props=\''.json_encode($props, JSON_UNESCAPED_UNICODE).'\' data-value=\''.json_encode($value, JSON_UNESCAPED_UNICODE).'\'></div>';
-        $columns = [['key' => 'autor', 'label' => 'Autor'], ['key' => 'titulo', 'label' => 'Título']];
-        $content = [
-            '<p>Antes de los bloques.</p>',
-            $block('si_no', ['question' => '¿Usa laboratorio?', 'columns' => $columns], ['answer' => 'si', 'rows' => [['autor' => 'Ana', 'titulo' => 'Redes'], ['autor' => 'Luis', 'titulo' => 'Datos']]]),
-            $block('si_no', ['question' => '¿Tiene salidas de campo?', 'columns' => []], ['answer' => 'no', 'rows' => []]),
-            $block('si_no', ['question' => '¿Sin responder?', 'columns' => $columns], ['answer' => null, 'rows' => []]),
-            $block('repetible', ['label' => 'Lecturas', 'columns' => $columns], ['rows' => [['autor' => 'Eva', 'titulo' => 'Algoritmos']]]),
-            $block('repetible', ['label' => '', 'columns' => $columns], ['rows' => []]),
-        ];
-        $variables = array_column(TemplateVariables::catalog(), 'sample', 'key');
-        $document = FieldDocument::normalize(DocumentHtml::fromHtml($content));
-        $sections = [['key' => 'bloques', 'title' => 'Bloques', 'orientation' => 'portrait', 'fields' => [
-            ['key' => 'bloques', 'label' => 'Bloques', 'quien_llena' => 'docente', 'document' => $document, 'value' => FieldDocument::resolve($document, $variables)],
-        ]]];
-
-        $this->assertGolden('bloques', $this->input($sections, $variables));
     }
 
     /** @param  array<string, string>  $overrides */

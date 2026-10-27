@@ -95,7 +95,7 @@ y el botón «Documentos» (DOC-10).
   títulos en línea y se cambia el logo de la universidad.
 - «Opciones avanzadas → Editar JSON» abre «Plantilla como JSON»: «Descargar», «Cargar archivo»
   y «Aplicar y reemplazar». Si hay errores, no cambia nada y muestra la ruta de cada uno. Los bloques
-  `evaluacion`, `si_no` y `repetible` solo se agregan por JSON.
+  solo se agregan por JSON.
 - Con la convocatoria abierta, todo queda bloqueado y aparece el aviso de edición
   bloqueada. Si la plantilla cambió durante una pausa, se avisa que al reanudar se
   rehacen los sílabos.
@@ -178,8 +178,8 @@ y el botón «Documentos» (DOC-10).
 - Campos del docente: editables. Campos de la ficha: solo lectura, salvo los marcados
   como editables («Viene de la ficha; puede ajustarlo.»). Lo institucional se ve en
   «Vista previa».
-- Bloques: unidades y semanas con contador de horas, discapacidad (los datos aparecen
-  solo si responde Sí), Sí/No y filas repetibles.
+- Bloques: unidades y semanas con contador de horas, y discapacidad (los datos aparecen
+  solo si responde Sí).
 - En revisión o aprobado, la pantalla muestra el documento tal como sale.
 - «Vista previa» muestra la hoja del sílabo en la pantalla, como en Plantilla; «Editar»
   vuelve al formulario. «Copiar desde paralelo X» trae lo escrito en

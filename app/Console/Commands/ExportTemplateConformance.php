@@ -24,15 +24,11 @@ class ExportTemplateConformance extends Command
         }
         $definition = OfficialTemplate::definition();
         $week = fn (int $unit, int $number): array => ['contenidos' => "Contenido {$unit}.{$number}", 'acd_h' => '2', 'ape_h' => $number === 1 ? '1,5' : '1', 'aa_h' => '1', 'acd' => "Clase {$unit}.{$number}", 'ape' => '', 'aa' => 'Lectura', 'evaluacion' => ''];
-        $columns = [['key' => 'autor', 'label' => 'Autor'], ['key' => 'titulo', 'label' => 'Título']];
         $cases = [
             ['kind' => 'unidades', 'props' => [], 'value' => ['units' => array_map(fn (int $unit): array => ['nombre' => "Unidad {$unit}", 'resultado' => "Resultado {$unit}", 'semanas' => array_map(fn (int $number): array => $week($unit, $number), range(1, $unit === 1 ? 5 : 3))], range(1, 4))], 'variables' => []],
             ['kind' => 'identificacion', 'props' => [], 'value' => ['disability' => ['answer' => 'si', 'type' => 'Visual', 'description' => 'Baja visión']], 'variables' => []],
             ['kind' => 'evaluacion', 'props' => [], 'value' => [], 'variables' => ['horas_practicas' => '16']],
             ['kind' => 'evaluacion', 'props' => [], 'value' => [], 'variables' => ['horas_practicas' => '0']],
-            ['kind' => 'si_no', 'props' => ['question' => '¿Usa laboratorio?', 'columns' => $columns], 'value' => ['answer' => 'si', 'rows' => [['autor' => 'Ana', 'titulo' => 'Redes']]], 'variables' => []],
-            ['kind' => 'si_no', 'props' => ['question' => '¿Sin responder?', 'columns' => []], 'value' => ['answer' => null, 'rows' => []], 'variables' => []],
-            ['kind' => 'repetible', 'props' => ['label' => 'Lecturas', 'columns' => [$columns[0]]], 'value' => ['rows' => []], 'variables' => []],
         ];
         foreach ($cases as &$case) {
             $block = $definition->block($case['kind']) ?? [];

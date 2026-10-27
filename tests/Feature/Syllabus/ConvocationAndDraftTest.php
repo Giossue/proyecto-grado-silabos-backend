@@ -231,18 +231,17 @@ class ConvocationAndDraftTest extends TestCase
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
         $field = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
-        $block = fn (array $props, array $value = []): array => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'si_no', 'props' => $props, 'value' => $value]]]];
-        $props = ['question' => '¿Hay estudiantes con discapacidad?', 'columns' => [['key' => 'tipo', 'label' => 'Tipo']]];
-        $field->update(['contenido' => $block($props)]);
-        $syllabus->values()->where('definicion_campo_id', $field->id)->update(['valor' => $block($props)]);
+        $block = fn (string $kind, array $value = []): array => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => $kind, 'props' => [], 'value' => $value]]]];
+        $field->update(['contenido' => $block('identificacion')]);
+        $syllabus->values()->where('definicion_campo_id', $field->id)->update(['valor' => $block('identificacion')]);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $url = route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]);
 
-        $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block([...$props, 'question' => 'Otra'], ['answer' => 'no'])])
+        $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block('evaluacion')])
             ->assertUnprocessable()->assertJsonValidationErrors('value');
         $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $this->freeTextValue('Texto suelto')])
             ->assertUnprocessable()->assertJsonValidationErrors('value');
-        $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block($props, ['answer' => 'si', 'rows' => [['tipo' => 'Visual']]])])
+        $this->actingAsTeacher()->patchJson($url, ['version_bloqueo' => $syllabus->fresh()->version_bloqueo, 'value' => $block('identificacion', ['disability' => ['answer' => 'si', 'type' => 'Visual', 'description' => 'Baja visión']])])
             ->assertOk();
 
         $snapshot = app(SyllabusSnapshot::class)->build($syllabus->fresh());

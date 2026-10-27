@@ -114,8 +114,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   por celda. Las definiciones anteriores se mantienen hasta actualizar la plantilla.
   La plantilla activa de Sílabos se actualizó el 2026-10-26 conservando campos y valores;
   la convocatoria sigue pausada mientras Coordinación completa las unidades.
-- El diseño no se parte según quién llena: el responsable se fija por dato (`from`,
-  2026-10-26). La sección 6 conserva el formato oficial de una tabla por unidad.
+- El lenguaje de bloques se limita a lo que usa la plantilla oficial (2026-10-27): datos
+  `text`, `number`, `choice`, `object` y `list`; propiedades solo de texto; condiciones
+  simples (`equals`, `empty`, `zero`). Se retiraron `from`, `row`, `columns`, las
+  condiciones compuestas y los bloques `si_no` y `repetible`. La sección 6 conserva el
+  formato oficial de una tabla por unidad y el docente escribe cada unidad.
 - Administración la crea en blanco o con el formato oficial. La edita en un editor
   visual tipo Word. «Editar» es la acción principal; «Opciones avanzadas» contiene
   «Editar JSON», que abre el diálogo de edición, exportación e importación JSON.

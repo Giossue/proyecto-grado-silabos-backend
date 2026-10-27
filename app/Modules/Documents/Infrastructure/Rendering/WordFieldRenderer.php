@@ -2,7 +2,6 @@
 
 namespace App\Modules\Documents\Infrastructure\Rendering;
 
-use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplateDocumentResolver;
 use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Syllabus\Application\IdentificationCard;
@@ -59,11 +58,7 @@ final class WordFieldRenderer
     {
         $fields = WordValues::arrayList($snapshotSection['fields'] ?? null);
         $historicalCard = array_filter($fields, fn (array $field): bool => ($field['type'] ?? null) === 'automatico' && ($field['config']['source'] ?? null) === 'identification_card') !== [];
-        $sources = TemplateContext::active()->sourceFields();
         foreach ($fields as $field) {
-            if (in_array($field['key'] ?? null, $sources, true)) {
-                continue;
-            }
             if ($historicalCard && ($field['type'] ?? null) === 'texto' && (($field['config']['inside'] ?? null) === 'identification_card' || array_key_exists((string) ($field['key'] ?? ''), IdentificationCard::INPUT_KEYS))) {
                 continue;
             }

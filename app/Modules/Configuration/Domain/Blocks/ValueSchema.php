@@ -6,7 +6,7 @@ use App\Modules\Configuration\Domain\TemplateDocument;
 
 final class ValueSchema
 {
-    public const TYPES = ['text', 'number', 'choice', 'object', 'list', 'row', 'columns'];
+    public const TYPES = ['text', 'number', 'choice', 'object', 'list'];
 
     private const KEY = '/^[a-z][a-z0-9_]{0,40}$/';
 
@@ -41,11 +41,8 @@ final class ValueSchema
             BlockDefinitionError::fail("{$where}: «type» debe ser uno de ".implode(', ', self::TYPES).'.');
         }
         $type = $schema['type'];
-        if ($props && ! in_array($type, ['text', 'columns'], true)) {
-            BlockDefinitionError::fail("{$where}: las propiedades solo admiten «text» y «columns».");
-        }
-        if (! $props && $type === 'columns') {
-            BlockDefinitionError::fail("{$where}: «columns» solo se usa en propiedades.");
+        if ($props && $type !== 'text') {
+            BlockDefinitionError::fail("{$where}: las propiedades solo admiten «text».");
         }
         $clean = ['type' => $type];
         foreach (['label', 'error'] as $text) {
@@ -63,7 +60,6 @@ final class ValueSchema
             'text' => $clean += [
                 'max' => self::integer($schema['max'] ?? 1000, "{$where}.max", 1, 20000),
                 'multiline' => self::boolean($schema['multiline'] ?? false, "{$where}.multiline"),
-                ...(isset($schema['from']) && ! $props ? ['from' => self::from($schema['from'], "{$where}.from")] : []),
             ],
             'number' => $clean += [
                 'digits' => self::integer($schema['digits'] ?? 3, "{$where}.digits", 1, 9),
@@ -72,18 +68,7 @@ final class ValueSchema
             'choice' => $clean['options'] = self::options($schema['options'] ?? null, "{$where}.options"),
             'object' => $clean['fields'] = self::define($schema['fields'] ?? null, "{$where}.fields"),
             'list' => $clean += self::listSchema($schema, $where),
-            'row' => $clean += [
-                'columns' => self::path($schema['columns'] ?? null, "{$where}.columns"),
-                'cell' => self::schema($schema['cell'] ?? ['type' => 'text'], "{$where}.cell", false),
-            ],
-            'columns' => $clean += [
-                'min' => self::integer($schema['min'] ?? 0, "{$where}.min", 0, 24),
-                'max' => self::integer($schema['max'] ?? 8, "{$where}.max", 1, 24),
-            ],
         };
-        if ($type === 'row' && in_array($clean['cell']['type'], ['object', 'list', 'row'], true)) {
-            BlockDefinitionError::fail("{$where}.cell: una celda solo puede ser text, number o choice.");
-        }
 
         return $clean;
     }
@@ -141,33 +126,14 @@ final class ValueSchema
         $clean = [];
         foreach ($fields as $key => $schema) {
             $label = $schema['label'] ?? $key;
-            if ($schema['type'] === 'text') {
-                $text = trim(is_scalar($raw[$key] ?? null) ? (string) $raw[$key] : '');
-                if (($schema['required'] ?? false) && $text === '') {
-                    TemplateDocument::fail($schema['error'] ?? "«{$label}» es obligatorio.");
-                }
-                if (mb_strlen($text) > $schema['max']) {
-                    TemplateDocument::fail($schema['error'] ?? "«{$label}» admite hasta {$schema['max']} caracteres.");
-                }
-                $clean[$key] = $text;
-
-                continue;
+            $text = trim(is_scalar($raw[$key] ?? null) ? (string) $raw[$key] : '');
+            if (($schema['required'] ?? false) && $text === '') {
+                TemplateDocument::fail($schema['error'] ?? "«{$label}» es obligatorio.");
             }
-            $columns = [];
-            $keys = [];
-            foreach (is_array($raw[$key] ?? null) && array_is_list($raw[$key]) ? $raw[$key] : [] as $column) {
-                $columnKey = is_array($column) ? ($column['key'] ?? null) : null;
-                $columnLabel = is_array($column) ? trim((string) ($column['label'] ?? '')) : '';
-                if (! is_string($columnKey) || preg_match('/^[a-z][a-z0-9_]{0,30}$/', $columnKey) !== 1 || in_array($columnKey, $keys, true) || $columnLabel === '' || mb_strlen($columnLabel) > 120) {
-                    TemplateDocument::fail('Las columnas del bloque necesitan una clave única y un nombre de hasta 120 caracteres.');
-                }
-                $keys[] = $columnKey;
-                $columns[] = ['key' => $columnKey, 'label' => $columnLabel];
+            if (mb_strlen($text) > $schema['max']) {
+                TemplateDocument::fail($schema['error'] ?? "«{$label}» admite hasta {$schema['max']} caracteres.");
             }
-            if (count($columns) < $schema['min'] || count($columns) > $schema['max']) {
-                TemplateDocument::fail($schema['error'] ?? "«{$label}» necesita entre {$schema['min']} y {$schema['max']} columnas.");
-            }
-            $clean[$key] = $columns;
+            $clean[$key] = $text;
         }
 
         return $clean;
@@ -208,7 +174,6 @@ final class ValueSchema
             'choice' => self::choice($schema, $raw, $label),
             'object' => self::object($schema['fields'], is_array($raw) && ! array_is_list($raw) ? $raw : [], $props, $fresh),
             'list' => self::list($schema, $raw, $props, $fresh, $label),
-            'row' => self::row($schema, $raw, $props),
             default => null,
         };
     }
@@ -284,36 +249,6 @@ final class ValueSchema
     /**
      * @param  array<string, mixed>  $schema
      * @param  array<string, mixed>  $props
-     * @return array<string, mixed>
-     */
-    private static function row(array $schema, mixed $raw, array $props): array
-    {
-        $raw = is_array($raw) && ! array_is_list($raw) ? $raw : [];
-        $clean = [];
-        foreach (self::columnKeys($schema['columns'], $props) as $key) {
-            $clean[$key] = self::value($schema['cell'], $raw[$key] ?? null, $props, false);
-        }
-
-        return $clean;
-    }
-
-    /**
-     * @param  array<string, mixed>  $props
-     * @return list<string>
-     */
-    public static function columnKeys(string $path, array $props): array
-    {
-        $columns = Scope::read($props, $path);
-
-        return array_values(array_filter(array_map(
-            fn (mixed $column): mixed => is_array($column) ? ($column['key'] ?? null) : null,
-            is_array($columns) ? $columns : [],
-        ), 'is_string'));
-    }
-
-    /**
-     * @param  array<string, mixed>  $schema
-     * @param  array<string, mixed>  $props
      */
     private static function empty(array $schema, array $props): mixed
     {
@@ -322,7 +257,6 @@ final class ValueSchema
             'choice' => null,
             'object' => self::object($schema['fields'], [], $props, false),
             'list' => [],
-            'row' => self::row($schema, [], $props),
             default => null,
         };
     }
@@ -340,11 +274,6 @@ final class ValueSchema
                     return null;
                 }
                 $schema = $schema['item'];
-
-                continue;
-            }
-            if ($schema['type'] === 'row' && str_starts_with($segment, '{')) {
-                $schema = $schema['cell'];
 
                 continue;
             }
@@ -374,52 +303,6 @@ final class ValueSchema
         }
 
         return $clean;
-    }
-
-    /**
-     * @return array{field: string, column: int}
-     */
-    private static function from(mixed $value, string $where): array
-    {
-        if (! is_array($value) || array_diff(array_keys($value), ['field', 'column']) !== []
-            || ! is_string($value['field'] ?? null) || preg_match('/^[a-z][a-z0-9_]{0,99}$/', $value['field']) !== 1) {
-            BlockDefinitionError::fail("{$where}: escriba {\"field\": \"clave del campo\", \"column\": número}.");
-        }
-
-        return ['field' => $value['field'], 'column' => self::integer($value['column'] ?? null, "{$where}.column", 1, 24)];
-    }
-
-    /**
-     * Claves de los campos que alimentan datos `from` de los bloques.
-     *
-     * @param  array<string, array<string, mixed>>  $blocks
-     * @return list<string>
-     */
-    public static function sourceFields(array $blocks): array
-    {
-        $keys = [];
-        $visit = function (array $schema) use (&$visit, &$keys): void {
-            if (isset($schema['from']['field'])) {
-                $keys[$schema['from']['field']] = true;
-            }
-            foreach ([...($schema['fields'] ?? []), ...(isset($schema['item']) ? [$schema['item']] : [])] as $child) {
-                $visit($child);
-            }
-        };
-        foreach ($blocks as $block) {
-            $visit(['type' => 'object', 'fields' => $block['value'] ?? []]);
-        }
-
-        return array_keys($keys);
-    }
-
-    private static function path(mixed $value, string $where): string
-    {
-        if (! is_string($value) || preg_match('/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/', $value) !== 1) {
-            BlockDefinitionError::fail("{$where}: escriba el nombre de una propiedad.");
-        }
-
-        return $value;
     }
 
     private static function string(mixed $value, string $where, int $max): string

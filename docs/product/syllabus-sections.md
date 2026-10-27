@@ -52,14 +52,8 @@ encabezados, columnas ni estilos. Una tabla con encabezados y una sola fila vac�
 permite añadir filas y quitar la última. Las demás tablas conservan sus filas.
 Los rótulos e instrucciones no cuentan como respuesta para completar un campo.
 
-## Otros bloques disponibles
-
-- `si_no`: pregunta Sí/No; si la respuesta es Sí, pide una tabla con columnas que fija
-  Administración.
-- `repetible`: lista de filas con columnas que fija Administración.
-
-El docente solo llena los datos del bloque; no cambia su tipo ni sus columnas. El detalle
-técnico está en `docs/architecture/template-json.md`.
+El docente solo llena los datos del bloque; no cambia su tipo. El detalle técnico está en
+`docs/architecture/template-json.md`.
 
 ## Reglas de modelado
 

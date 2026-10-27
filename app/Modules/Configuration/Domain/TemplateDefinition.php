@@ -4,7 +4,6 @@ namespace App\Modules\Configuration\Domain;
 
 use App\Modules\Configuration\Domain\Blocks\BlockDefinition;
 use App\Modules\Configuration\Domain\Blocks\BlockDefinitionError;
-use App\Modules\Configuration\Domain\Blocks\ValueSchema;
 
 final class TemplateDefinition
 {
@@ -51,19 +50,6 @@ final class TemplateDefinition
         }
         foreach ($rawBlocks as $kind => $block) {
             $blocks[(string) $kind] = BlockDefinition::define((string) $kind, $block, $keys);
-        }
-        if ($sections !== []) {
-            $responsible = [];
-            foreach ($sections as $section) {
-                foreach ($section['fields'] ?? [] as $field) {
-                    $responsible[$field['key']] = $field['quien_llena'] ?? null;
-                }
-            }
-            foreach (ValueSchema::sourceFields($blocks) as $source) {
-                if (($responsible[$source] ?? null) !== 'coordinacion') {
-                    BlockDefinitionError::fail("blocks: «from» usa «{$source}», que no es un campo de Carrera de la plantilla.");
-                }
-            }
         }
 
         return new self([
@@ -142,16 +128,6 @@ final class TemplateDefinition
     public function librarySections(): array
     {
         return $this->definition['library_sections'];
-    }
-
-    /**
-     * Campos que alimentan datos de bloques: se llenan, pero no se imprimen solos.
-     *
-     * @return list<string>
-     */
-    public function sourceFields(): array
-    {
-        return ValueSchema::sourceFields($this->definition['blocks']);
     }
 
     /**
