@@ -180,9 +180,19 @@ class DocumentBlockTest extends TestCase
         $block = DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => [['semanas' => [['acd_h' => '3', 'ape_h' => '1,5', 'aa_h' => ''], ['acd_h' => '2']]], ['semanas' => [['aa_h' => '4']]]]]]);
         $failures = DocumentBlock::failures(['attrs' => $block], ['horas_docencia' => '5', 'horas_practicas' => '2', 'horas_autonomas' => '4']);
 
-        $this->assertSame(['semanas_unidades_incompletas', 'horas_unidades_no_coinciden'], array_column($failures, 'code'));
-        $this->assertSame('Las horas de las unidades deben sumar las de la asignatura: APE 1.5 de 2.', $failures[1]['message']);
-        $this->assertSame('Las unidades deben repartir las 16 semanas del período: tienen 3.', $failures[0]['message']);
+        $this->assertSame(['unidades_sin_nombre', 'semanas_unidades_incompletas', 'horas_unidades_no_coinciden'], array_column($failures, 'code'));
+        $this->assertSame('Escriba el nombre y el resultado de aprendizaje de las 4 unidades: Nombres 0 de 4, Resultados 0 de 4.', $failures[0]['message']);
+        $this->assertSame('Las horas de las unidades deben sumar las de la asignatura: APE 1.5 de 2.', $failures[2]['message']);
+        $this->assertSame('Las unidades deben repartir las 16 semanas del período: tienen 3.', $failures[1]['message']);
+    }
+
+    public function test_the_teacher_names_each_unit_and_writes_its_result_before_sending(): void
+    {
+        $unit = fn (string $name, string $result): array => ['nombre' => $name, 'resultado' => $result, 'semanas' => [['acd_h' => '1']]];
+        $codes = fn (array $units): array => array_column(DocumentBlock::failures(['attrs' => DocumentBlock::normalize(['kind' => 'unidades', 'value' => ['units' => $units]])], ['horas_docencia' => '4', 'horas_practicas' => '0', 'horas_autonomas' => '0']), 'code');
+
+        $this->assertContains('unidades_sin_nombre', $codes([$unit('Uno', 'R1'), $unit('Dos', 'R2'), $unit('Tres', '  '), $unit('', 'R4')]));
+        $this->assertNotContains('unidades_sin_nombre', $codes([$unit('Uno', 'R1'), $unit('Dos', 'R2'), $unit('Tres', 'R3'), $unit('Cuatro', 'R4')]));
     }
 
     public function test_the_evaluation_points_follow_the_practical_hours_of_the_subject(): void

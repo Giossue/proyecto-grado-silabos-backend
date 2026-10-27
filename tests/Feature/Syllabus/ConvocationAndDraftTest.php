@@ -787,36 +787,29 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame([], $codes());
     }
 
-    public function test_unit_names_and_results_come_from_the_subject_profile_and_the_teacher_cannot_change_them(): void
+    public function test_the_teacher_writes_the_unit_names_and_results_and_must_complete_them_to_send(): void
     {
-        $convocation = $this->createPreparedConvocation();
-        $catalog = FieldDefinition::query()->where('clave', 'unidades_curriculares')->firstOrFail();
-        $document = $this->filledTemplateValue($catalog, '');
-        foreach ($document['content'][0]['content'] as $row => $tableRow) {
-            if ($row > 0) {
-                $document['content'][0]['content'][$row]['content'][1]['content'] = FreeText::fromText("Nombre {$row}")['content'];
-                $document['content'][0]['content'][$row]['content'][2]['content'] = FreeText::fromText("Resultado {$row}")['content'];
-            }
-        }
-        FieldValue::query()->where('definicion_campo_id', $catalog->id)->whereNotNull('asignatura_id')->update(['valor' => json_encode($document)]);
-        $this->openPrepared($convocation);
-        $syllabus = Syllabus::query()->firstOrFail();
+        $this->assertNull(FieldDefinition::query()->where('clave', 'unidades_curriculares')->first());
+        $syllabus = $this->openConvocationAndGetSyllabus();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus));
         $field = FieldDefinition::query()->where('clave', 'unidades')->firstOrFail();
         $units = fn (): array => FieldValue::query()->where('silabo_id', $syllabus->id)->where('definicion_campo_id', $field->id)->firstOrFail()->valor['content'][0]['attrs']['value']['units'];
-
-        $this->assertSame(['Nombre 1', 'Nombre 2', 'Nombre 3', 'Nombre 4'], array_column($units(), 'nombre'));
-        $this->assertSame('Resultado 4', $units()[3]['resultado']);
-
-        $changed = $this->plannedUnits()['units'];
-        $changed[0]['nombre'] = 'Escrito por el docente';
-        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
+        $save = fn (array $value) => $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
-            'value' => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'unidades', 'props' => [], 'value' => ['units' => $changed]]]]],
-        ])->assertOk();
+            'value' => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'unidades', 'props' => [], 'value' => ['units' => $value]]]]],
+        ]);
+        $codes = fn () => collect($this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful()->json('validation.results'))->where('field_id', $field->id)->pluck('code')->all();
 
-        $this->assertSame('Nombre 1', $units()[0]['nombre']);
-        $this->assertSame('Tema de prueba', $units()[0]['semanas'][0]['contenidos']);
+        $this->assertSame(['', '', '', ''], array_column($units(), 'nombre'));
+        $planned = $this->plannedUnits()['units'];
+        $planned[0]['nombre'] = 'Escrito por el docente';
+        $planned[3]['resultado'] = '';
+        $save($planned)->assertOk();
+        $this->assertSame('Escrito por el docente', $units()[0]['nombre']);
+        $this->assertSame(['unidades_sin_nombre'], $codes());
+
+        $save($this->plannedUnits()['units'])->assertOk();
+        $this->assertSame([], $codes());
     }
 
     public function test_every_teacher_field_is_required_only_when_sending(): void

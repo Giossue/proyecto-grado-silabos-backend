@@ -575,7 +575,7 @@ class ReviewWorkflowTest extends TestCase
         $teacherValues->reject(fn ($value) => $value->field->clave === 'unidades')
             ->each(fn ($value) => $this->assertEquals($value->field->contenido, $value->valor));
         $units = $teacherValues->firstOrFail(fn ($value) => $value->field->clave === 'unidades')->valor['content'][0]['attrs']['value']['units'];
-        $this->assertSame('Ficha de prueba: unidades_curriculares', $units[0]['nombre']);
+        $this->assertSame('', $units[0]['nombre']);
         $this->assertSame('', $units[0]['semanas'][0]['contenidos']);
         $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id]);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);

@@ -317,21 +317,13 @@
                             "type": "text",
                             "max": 1000,
                             "label": "Nombre de la unidad",
-                            "error": "El nombre de la unidad supera los 1000 caracteres.",
-                            "from": {
-                                "field": "unidades_curriculares",
-                                "column": 2
-                            }
+                            "error": "El nombre de la unidad supera los 1000 caracteres."
                         },
                         "resultado": {
                             "type": "text",
                             "max": 1000,
                             "label": "Resultados de aprendizaje",
-                            "error": "El resultado de aprendizaje supera los 1000 caracteres.",
-                            "from": {
-                                "field": "unidades_curriculares",
-                                "column": 3
-                            }
+                            "error": "El resultado de aprendizaje supera los 1000 caracteres."
                         },
                         "semanas": {
                             "type": "list",
@@ -406,6 +398,24 @@
                         {
                             "count": "units.*.semanas",
                             "max": 16
+                        }
+                    ]
+                },
+                {
+                    "code": "unidades_sin_nombre",
+                    "on": "submit",
+                    "message": "Escriba el nombre y el resultado de aprendizaje de las 4 unidades: {detail}.",
+                    "hint": "Cada unidad necesita su nombre y su resultado de aprendizaje para poder enviar",
+                    "checks": [
+                        {
+                            "label": "Nombres",
+                            "filled": "units.*.nombre",
+                            "equals": 4
+                        },
+                        {
+                            "label": "Resultados",
+                            "filled": "units.*.resultado",
+                            "equals": 4
                         }
                     ]
                 },
@@ -629,11 +639,6 @@
             "key": "firmas",
             "label": "Firmas de revisión y aprobación",
             "field": "firmas"
-        },
-        {
-            "key": "unidades_curriculares",
-            "label": "Unidades y resultados de aprendizaje (Carrera)",
-            "field": "unidades_curriculares"
         }
     ],
     "sections": [
@@ -725,20 +730,6 @@
             "title": "6. Distribución y planificación de las unidades curriculares",
             "orientation": "landscape",
             "fields": [
-                {
-                    "key": "unidades_curriculares",
-                    "label": "Unidades y resultados de aprendizaje",
-                    "quien_llena": "coordinacion",
-                    "content": [
-                        "<table>",
-                        "<tr><th>Unidad</th><th>Nombre de la unidad</th><th>Resultados de aprendizaje</th></tr>",
-                        "<tr><td>Unidad 1</td><td></td><td></td></tr>",
-                        "<tr><td>Unidad 2</td><td></td><td></td></tr>",
-                        "<tr><td>Unidad 3</td><td></td><td></td></tr>",
-                        "<tr><td>Unidad 4</td><td></td><td></td></tr>",
-                        "</table>"
-                    ]
-                },
                 {
                     "key": "unidades",
                     "label": "Unidades",

@@ -58,10 +58,10 @@ final class BlockRules
         if (! is_array($raw)) {
             BlockDefinitionError::fail("{$where}: escriba la comprobación como objeto.");
         }
-        $measures = array_values(array_intersect(['count', 'sum'], array_keys($raw)));
+        $measures = array_values(array_intersect(['count', 'filled', 'sum'], array_keys($raw)));
         $comparisons = array_values(array_intersect(['equals', 'max', 'min'], array_keys($raw)));
         if (count($measures) !== 1 || count($comparisons) !== 1) {
-            BlockDefinitionError::fail("{$where}: use «count» o «sum» y una comparación: equals, max o min.");
+            BlockDefinitionError::fail("{$where}: use «count», «filled» o «sum» y una comparación: equals, max o min.");
         }
         $path = $raw[$measures[0]];
         if (! is_string($path) || ValueSchema::at($value, $path) === null) {
@@ -125,9 +125,11 @@ final class BlockRules
         $scope = new Scope($value, [], $variables);
 
         return array_values(array_map(function (array $check) use ($scope, $variables): array {
-            $actual = isset($check['count'])
-                ? BlockLayout::count($scope->collect($check['count']))
-                : array_sum(array_map(Numbers::parse(...), $scope->collect($check['sum'])));
+            $actual = match (true) {
+                isset($check['count']) => BlockLayout::count($scope->collect($check['count'])),
+                isset($check['filled']) => count(array_filter($scope->collect($check['filled']), fn (mixed $item): bool => (is_string($item) || is_int($item) || is_float($item)) && trim((string) $item) !== '')),
+                default => array_sum(array_map(Numbers::parse(...), $scope->collect($check['sum']))),
+            };
             $comparison = isset($check['equals']) ? 'equals' : (isset($check['max']) ? 'max' : 'min');
             $target = $check[$comparison];
             $expected = is_array($target) ? Numbers::parse($variables[$target['variable']] ?? '') : $target;

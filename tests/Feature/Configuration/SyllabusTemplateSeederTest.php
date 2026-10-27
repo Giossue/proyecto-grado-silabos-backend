@@ -62,7 +62,7 @@ class SyllabusTemplateSeederTest extends TestCase
         $template = SyllabusTemplate::query()->firstOrFail();
         app(TemplateStructureValidator::class)->assertUsable($template);
         $fields = $template->fields()->get()->keyBy('clave');
-        $this->assertSame(['coordinacion' => 7, 'docente' => 9, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
+        $this->assertSame(['coordinacion' => 6, 'docente' => 9, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
         foreach ($fields as $field) {
             $this->assertEquals($field->contenido, FieldDocument::normalize($field->contenido));
         }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Configuration;
 
+use Illuminate\Support\Str;
 use App\Models\User;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
@@ -56,13 +57,13 @@ class OfficialTemplateTest extends TestCase
         $sections = $this->template->fresh()->sections();
         $this->assertCount(12, $sections);
         $fields = FieldDefinition::query()->where('plantilla_id', $this->template->id)->get();
-        $this->assertSame(['coordinacion' => 7, 'docente' => 9, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
+        $this->assertSame(['coordinacion' => 6, 'docente' => 9, 'institucional' => 4], $fields->countBy('quien_llena')->sortKeys()->all());
         $this->assertSame(OfficialTemplate::sectionKeys(), $sections->sortBy('posicion')->pluck('clave')->values()->all());
         $this->assertSame(array_column(OfficialTemplate::sections(), 'title'), $sections->sortBy('posicion')->pluck('titulo')->values()->all());
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.formateada']);
     }
 
-    public function test_the_split_unit_tables_return_to_the_official_format_keeping_ids_and_profiles(): void
+    public function test_unit_names_kept_in_the_profile_return_to_the_teacher_keeping_ids_and_profiles(): void
     {
         $this->format()->assertOk();
         $template = $this->template->fresh();
@@ -73,6 +74,9 @@ class OfficialTemplateTest extends TestCase
         $template->saveDefinition(TemplateDefinition::trusted([...$official, 'blocks' => [...$official['blocks'], 'planificacion_semanal' => $planning]]));
         $units->update(['contenido' => ['type' => 'doc', 'content' => [['type' => 'documentBlock', 'attrs' => ['kind' => 'planificacion_semanal', 'props' => [], 'value' => []]]]]]);
         $ids = FieldDefinition::query()->where('plantilla_id', $template->id)->pluck('id')->sort()->values()->all();
+        $blockId = (string) Str::uuid();
+        $template->appendBlock($units->block->seccion_plantilla_id, ['id' => $blockId, 'clave' => 'unidades_curriculares', 'titulo' => 'Unidades y resultados de aprendizaje', 'posicion' => 99]);
+        FieldDefinition::query()->create(['plantilla_id' => $template->id, 'campo_plantilla_id' => $blockId, 'quien_llena' => FieldDefinition::COORDINATION, 'contenido' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]]]);
         app(TemplateContext::class)->forget();
 
         $this->assertTrue(app(ProtectTemplateResponses::class)->execute($template->fresh())['updated']);
@@ -80,7 +84,9 @@ class OfficialTemplateTest extends TestCase
         app(TemplateContext::class)->forget();
         $definition = $template->fresh()->definition();
         $this->assertArrayNotHasKey('planificacion_semanal', $definition->blocks());
-        $this->assertSame(['unidades_curriculares'], $definition->sourceFields());
+        $this->assertSame([], $definition->sourceFields());
+        $this->assertArrayNotHasKey('from', $definition->blocks()['unidades']['value']['units']['item']['fields']['nombre']);
+        $this->assertNull(FieldDefinition::query()->where('plantilla_id', $template->id)->get()->first(fn (FieldDefinition $field): bool => $field->clave === 'unidades_curriculares'));
         $this->assertSame('unidades', $units->fresh()->contenido['content'][0]['attrs']['kind']);
         $this->assertCount(4, $units->fresh()->contenido['content'][0]['attrs']['value']['units']);
         $this->assertSame($ids, FieldDefinition::query()->where('plantilla_id', $template->id)->pluck('id')->sort()->values()->all());
@@ -96,7 +102,7 @@ class OfficialTemplateTest extends TestCase
         $template = $this->template->fresh();
         $this->assertCount(12, $template->sections());
         $this->assertNull($template->sections()->firstWhere('clave', 'libre'));
-        $this->assertSame(20, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
+        $this->assertSame(19, FieldDefinition::query()->where('plantilla_id', $template->id)->count());
     }
 
     public function test_the_document_title_can_be_changed_with_the_template(): void
@@ -330,10 +336,10 @@ class OfficialTemplateTest extends TestCase
     {
         $presets = collect($this->getJson(route('api.v1.admin.template.show', $this->template))->assertOk()->json('presets'));
 
-        $this->assertSame(['identificacion', 'planificacion', 'bibliografia_basica', 'bibliografia_complementaria', 'firmas', 'unidades_curriculares'], $presets->pluck('key')->all());
-        $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares', 'Bibliografía básica', 'Bibliografía complementaria', 'Firmas de revisión y aprobación', 'Unidades y resultados de aprendizaje (Carrera)'], $presets->pluck('label')->all());
-        $this->assertSame(['docente', 'docente', 'docente', 'docente', 'institucional', 'coordinacion'], $presets->pluck('quien_llena')->all());
-        $this->assertSame(['asignatura', 'unidades', 'bibliografia', 'bibliografia_complementaria', 'firmas', 'unidades_curriculares'], $presets->pluck('field_key')->all());
+        $this->assertSame(['identificacion', 'planificacion', 'bibliografia_basica', 'bibliografia_complementaria', 'firmas'], $presets->pluck('key')->all());
+        $this->assertSame(['Identificación institucional', 'Distribución y planificación de las unidades curriculares', 'Bibliografía básica', 'Bibliografía complementaria', 'Firmas de revisión y aprobación'], $presets->pluck('label')->all());
+        $this->assertSame(['docente', 'docente', 'docente', 'docente', 'institucional'], $presets->pluck('quien_llena')->all());
+        $this->assertSame(['asignatura', 'unidades', 'bibliografia', 'bibliografia_complementaria', 'firmas'], $presets->pluck('field_key')->all());
         $this->assertSame('documentBlock', $presets->firstWhere('key', 'identificacion')['content']['content'][0]['type']);
     }
 
