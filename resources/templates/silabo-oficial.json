@@ -245,35 +245,42 @@
             "value": {
                 "disability": {
                     "type": "object",
-                    "fields": {
+                    "properties": {
                         "answer": {
-                            "type": "choice",
-                            "options": {
-                                "si": "Sí",
-                                "no": "No"
-                            },
-                            "label": "Estudiantes con discapacidad",
-                            "error": "La respuesta sobre estudiantes con discapacidad no es válida."
+                            "type": "string",
+                            "oneOf": [
+                                {
+                                    "const": "si",
+                                    "title": "Sí"
+                                },
+                                {
+                                    "const": "no",
+                                    "title": "No"
+                                }
+                            ],
+                            "title": "Estudiantes con discapacidad",
+                            "errorMessage": "La respuesta sobre estudiantes con discapacidad no es válida."
                         },
                         "type": {
-                            "type": "text",
-                            "max": 500,
-                            "label": "Tipo de discapacidad",
-                            "error": "El texto sobre discapacidad admite hasta 500 caracteres.",
+                            "type": "string",
+                            "maxLength": 500,
+                            "title": "Tipo de discapacidad",
+                            "errorMessage": "El texto sobre discapacidad admite hasta 500 caracteres.",
                             "keep_if": {
                                 "value": "answer",
                                 "equals": "si"
                             }
                         },
                         "description": {
-                            "type": "text",
-                            "max": 500,
-                            "label": "Breve descripción",
-                            "error": "El texto sobre discapacidad admite hasta 500 caracteres.",
+                            "type": "string",
+                            "maxLength": 500,
+                            "title": "Breve descripción",
+                            "errorMessage": "El texto sobre discapacidad admite hasta 500 caracteres.",
                             "keep_if": {
                                 "value": "answer",
                                 "equals": "si"
-                            }
+                            },
+                            "multiline": true
                         }
                     }
                 }
@@ -306,83 +313,95 @@
             "label": "Distribución y planificación de las unidades",
             "value": {
                 "units": {
-                    "type": "list",
-                    "min": 4,
-                    "max": 4,
+                    "type": "array",
+                    "minItems": 4,
+                    "maxItems": 4,
                     "initial": 4,
-                    "label": "unidad",
-                    "error": "La planificación admite 4 unidades.",
-                    "item": {
-                        "nombre": {
-                            "type": "text",
-                            "max": 1000,
-                            "label": "Nombre de la unidad",
-                            "error": "El nombre de la unidad supera los 1000 caracteres."
-                        },
-                        "resultado": {
-                            "type": "text",
-                            "max": 1000,
-                            "label": "Resultados de aprendizaje",
-                            "error": "El resultado de aprendizaje supera los 1000 caracteres."
-                        },
-                        "semanas": {
-                            "type": "list",
-                            "min": 0,
-                            "max": 16,
-                            "initial": 4,
-                            "label": "semana",
-                            "error": "Las unidades suman más de 16 semanas.",
-                            "item": {
-                                "contenidos": {
-                                    "type": "text",
-                                    "max": 1000,
-                                    "error": "Una celda de la semana supera los 1000 caracteres.",
-                                    "label": "Contenidos temáticos"
-                                },
-                                "acd_h": {
-                                    "type": "number",
-                                    "digits": 3,
-                                    "decimals": 2,
-                                    "label": "ACD",
-                                    "error": "Las horas por semana deben ser un número."
-                                },
-                                "ape_h": {
-                                    "type": "number",
-                                    "digits": 3,
-                                    "decimals": 2,
-                                    "label": "APE",
-                                    "error": "Las horas por semana deben ser un número."
-                                },
-                                "aa_h": {
-                                    "type": "number",
-                                    "digits": 3,
-                                    "decimals": 2,
-                                    "label": "AA",
-                                    "error": "Las horas por semana deben ser un número."
-                                },
-                                "acd": {
-                                    "type": "text",
-                                    "max": 1000,
-                                    "error": "Una celda de la semana supera los 1000 caracteres.",
-                                    "label": "Aprendizaje en contacto con el docente (ACD)"
-                                },
-                                "ape": {
-                                    "type": "text",
-                                    "max": 1000,
-                                    "error": "Una celda de la semana supera los 1000 caracteres.",
-                                    "label": "Aprendizaje práctico-experimental (APE)"
-                                },
-                                "aa": {
-                                    "type": "text",
-                                    "max": 1000,
-                                    "error": "Una celda de la semana supera los 1000 caracteres.",
-                                    "label": "Aprendizaje autónomo (AA)"
-                                },
-                                "evaluacion": {
-                                    "type": "text",
-                                    "max": 1000,
-                                    "error": "Una celda de la semana supera los 1000 caracteres.",
-                                    "label": "Evaluación de los aprendizajes"
+                    "title": "unidad",
+                    "errorMessage": "La planificación admite 4 unidades.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "nombre": {
+                                "type": "string",
+                                "maxLength": 1000,
+                                "title": "Nombre de la unidad",
+                                "errorMessage": "El nombre de la unidad supera los 1000 caracteres."
+                            },
+                            "resultado": {
+                                "type": "string",
+                                "maxLength": 1000,
+                                "title": "Resultados de aprendizaje",
+                                "errorMessage": "El resultado de aprendizaje supera los 1000 caracteres.",
+                                "multiline": true
+                            },
+                            "semanas": {
+                                "type": "array",
+                                "minItems": 0,
+                                "maxItems": 16,
+                                "initial": 4,
+                                "title": "semana",
+                                "errorMessage": "Las unidades suman más de 16 semanas.",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "contenidos": {
+                                            "type": "string",
+                                            "maxLength": 1000,
+                                            "errorMessage": "Una celda de la semana supera los 1000 caracteres.",
+                                            "title": "Contenidos temáticos",
+                                            "multiline": true
+                                        },
+                                        "acd_h": {
+                                            "type": "number",
+                                            "maximum": 999.99,
+                                            "multipleOf": 0.01,
+                                            "title": "ACD",
+                                            "errorMessage": "Las horas por semana deben ser un número."
+                                        },
+                                        "ape_h": {
+                                            "type": "number",
+                                            "maximum": 999.99,
+                                            "multipleOf": 0.01,
+                                            "title": "APE",
+                                            "errorMessage": "Las horas por semana deben ser un número."
+                                        },
+                                        "aa_h": {
+                                            "type": "number",
+                                            "maximum": 999.99,
+                                            "multipleOf": 0.01,
+                                            "title": "AA",
+                                            "errorMessage": "Las horas por semana deben ser un número."
+                                        },
+                                        "acd": {
+                                            "type": "string",
+                                            "maxLength": 1000,
+                                            "errorMessage": "Una celda de la semana supera los 1000 caracteres.",
+                                            "title": "Aprendizaje en contacto con el docente (ACD)",
+                                            "multiline": true
+                                        },
+                                        "ape": {
+                                            "type": "string",
+                                            "maxLength": 1000,
+                                            "errorMessage": "Una celda de la semana supera los 1000 caracteres.",
+                                            "title": "Aprendizaje práctico-experimental (APE)",
+                                            "multiline": true
+                                        },
+                                        "aa": {
+                                            "type": "string",
+                                            "maxLength": 1000,
+                                            "errorMessage": "Una celda de la semana supera los 1000 caracteres.",
+                                            "title": "Aprendizaje autónomo (AA)",
+                                            "multiline": true
+                                        },
+                                        "evaluacion": {
+                                            "type": "string",
+                                            "maxLength": 1000,
+                                            "errorMessage": "Una celda de la semana supera los 1000 caracteres.",
+                                            "title": "Evaluación de los aprendizajes",
+                                            "multiline": true
+                                        }
+                                    }
                                 }
                             }
                         }

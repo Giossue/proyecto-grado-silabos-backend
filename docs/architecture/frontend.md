@@ -82,7 +82,7 @@ Así la misma imagen sirve para cualquier ambiente. Sin URL, la SPA no arranca.
 como formulario: cada fila de una tabla es una tarjeta con un campo por columna,
 etiquetado con el encabezado de la plantilla. Las tablas de listas permiten agregar y
 quitar filas; las fijas no. Los bloques se llenan con `BlockForm.ts`, que recorre el
-esquema de valores del bloque (etiquetas, listas, `keep_if` y reglas) en vez de
+esquema de valores del bloque (`title`, listas, `keep_if`, `multiline` y reglas) en vez de
 su dibujo; `DocumentBlockContent` queda para el constructor. El aspecto del
 Word solo aparece en la vista previa. El constructor de Administración conserva
 `FreeTextEditor` completo. Los campos antiguos sin `template` conservan el

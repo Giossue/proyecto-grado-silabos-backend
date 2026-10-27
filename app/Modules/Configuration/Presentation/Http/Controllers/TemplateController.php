@@ -80,6 +80,7 @@ class TemplateController extends Controller
         $definition = $template->definition();
 
         return response()->json([
+            '$schema' => route('template.schema'),
             'version' => ImportTemplateStructureRequest::FORMAT_VERSION,
             ...(($definition->toArray()['response_policy'] ?? null) === 'protected' ? ['response_policy' => 'protected'] : []),
             'document' => $definition->document(),

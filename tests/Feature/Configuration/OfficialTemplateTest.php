@@ -18,6 +18,10 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Opis\JsonSchema\Errors\ErrorFormatter;
+use Opis\JsonSchema\Helper;
+use Opis\JsonSchema\ValidationResult;
+use Opis\JsonSchema\Validator;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;
 
@@ -84,7 +88,7 @@ class OfficialTemplateTest extends TestCase
         app(TemplateContext::class)->forget();
         $definition = $template->fresh()->definition();
         $this->assertArrayNotHasKey('planificacion_semanal', $definition->blocks());
-        $this->assertArrayNotHasKey('from', $definition->blocks()['unidades']['value']['units']['item']['fields']['nombre']);
+        $this->assertArrayNotHasKey('from', $definition->blocks()['unidades']['value']['units']['items']['properties']['nombre']);
         $this->assertNull(FieldDefinition::query()->where('plantilla_id', $template->id)->get()->first(fn (FieldDefinition $field): bool => $field->clave === 'unidades_curriculares'));
         $this->assertSame('unidades', $units->fresh()->contenido['content'][0]['attrs']['kind']);
         $this->assertCount(4, $units->fresh()->contenido['content'][0]['attrs']['value']['units']);
@@ -187,7 +191,9 @@ class OfficialTemplateTest extends TestCase
         $exported = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->assertOk()->json();
 
         $this->assertSame(2, $exported['version']);
-        $this->assertSame(['version', 'response_policy', 'document', 'variables', 'blocks', 'required_sections', 'library_sections', 'presets', 'sections'], array_keys($exported));
+        $this->assertSame(['$schema', 'version', 'response_policy', 'document', 'variables', 'blocks', 'required_sections', 'library_sections', 'presets', 'sections'], array_keys($exported));
+        $this->assertSame(route('template.schema'), $exported['$schema']);
+        $this->assertMatchesTemplateSchema($exported);
         $this->assertSame(['identificacion', 'unidades', 'evaluacion'], array_keys($exported['blocks']));
         $this->assertCount(12, $exported['sections']);
         $this->assertSame(['key', 'title', 'orientation', 'fields'], array_keys($exported['sections'][0]));
@@ -377,5 +383,31 @@ class OfficialTemplateTest extends TestCase
         $this->actingAsRole('admin@silabos.test');
         $this->openSyllabusProcess($this->template->id);
         $this->format()->assertJsonValidationErrors('process');
+    }
+
+    public function test_the_official_template_follows_the_published_schema(): void
+    {
+        $official = json_decode((string) file_get_contents(resource_path('templates/silabo-oficial.json')), true);
+        $this->assertMatchesTemplateSchema($official);
+        $official['blocks']['unidades']['value']['units']['type'] = 'list';
+        $this->assertFalse($this->templateSchemaResult($official)->isValid());
+        $this->get(route('template.schema'))->assertOk()->assertHeader('Content-Type', 'application/schema+json');
+    }
+
+    /** @param  array<string, mixed>  $template */
+    private function assertMatchesTemplateSchema(array $template): void
+    {
+        $result = $this->templateSchemaResult($template);
+
+        $this->assertTrue($result->isValid(), $result->hasError() ? json_encode((new ErrorFormatter)->format($result->error()), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : '');
+    }
+
+    /** @param  array<string, mixed>  $template */
+    private function templateSchemaResult(array $template): ValidationResult
+    {
+        $validator = new Validator;
+        $validator->resolver()?->registerFile('https://silabos.ueb/plantilla.schema.json', resource_path('templates/plantilla.schema.json'));
+
+        return $validator->validate(Helper::toJSON($template), 'https://silabos.ueb/plantilla.schema.json');
     }
 }

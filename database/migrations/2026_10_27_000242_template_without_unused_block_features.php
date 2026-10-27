@@ -35,7 +35,7 @@ return new class extends Migration
         if (! is_array($node)) {
             return $node;
         }
-        if (($node['type'] ?? null) === 'text') {
+        if (in_array($node['type'] ?? null, ['text', 'string'], true)) {
             unset($node['from']);
         }
         if (array_keys($node) === ['not'] && is_array($node['not'])) {

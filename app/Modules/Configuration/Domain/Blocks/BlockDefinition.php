@@ -67,7 +67,7 @@ final class BlockDefinition
      */
     public static function expand(array $definition, array $attrs, array $variables): array
     {
-        return BlockLayout::expand($definition['layout'], self::scope($attrs, $variables), ['type' => 'object', 'fields' => $definition['value']]);
+        return BlockLayout::expand($definition['layout'], self::scope($attrs, $variables), ['type' => 'object', 'properties' => $definition['value']]);
     }
 
     /**
@@ -77,7 +77,7 @@ final class BlockDefinition
     public static function filledText(array $definition, array $attrs): string
     {
         $parts = [];
-        BlockLayout::expand($definition['layout'], self::scope($attrs, []), ['type' => 'object', 'fields' => $definition['value']], function (string $text) use (&$parts): void {
+        BlockLayout::expand($definition['layout'], self::scope($attrs, []), ['type' => 'object', 'properties' => $definition['value']], function (string $text) use (&$parts): void {
             if (trim($text) !== '') {
                 $parts[] = trim($text);
             }

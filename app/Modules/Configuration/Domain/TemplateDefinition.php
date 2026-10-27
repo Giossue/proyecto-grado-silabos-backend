@@ -4,6 +4,7 @@ namespace App\Modules\Configuration\Domain;
 
 use App\Modules\Configuration\Domain\Blocks\BlockDefinition;
 use App\Modules\Configuration\Domain\Blocks\BlockDefinitionError;
+use App\Modules\Configuration\Domain\Blocks\ValueSchema;
 
 final class TemplateDefinition
 {
@@ -71,6 +72,14 @@ final class TemplateDefinition
      */
     public static function trusted(array $stored): self
     {
+        foreach (is_array($stored['blocks'] ?? null) ? $stored['blocks'] : [] as $kind => $block) {
+            foreach (['props', 'value'] as $part) {
+                if (is_array($block[$part] ?? null)) {
+                    $stored['blocks'][$kind][$part] = ValueSchema::upgradeAll($block[$part]);
+                }
+            }
+        }
+
         return new self($stored);
     }
 

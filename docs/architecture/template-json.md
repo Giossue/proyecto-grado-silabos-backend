@@ -22,6 +22,11 @@ leen la misma definición.
   - `GET /api/v1/admin/template/{id}/json` exporta.
   - `PUT /api/v1/admin/template/{id}/json` **reemplaza toda** la plantilla (auditado como `plantilla.importada`).
 
+El archivo exportado empieza con `"$schema"`, que apunta al esquema publicado del formato
+(`resources/templates/plantilla.schema.json`, servido en `/plantilla.schema.json`). Con él, un editor como VS Code
+autocompleta y marca errores mientras se escribe; importar ignora esa clave. El servidor valida además lo que el
+esquema no puede expresar (rutas de las reglas, datos del diseño, campos obligatorios).
+
 Importar exige el proceso pausado y, al reanudar, los sílabos en curso se rehacen (I-188). **Un sílabo enviado o
 aprobado guarda una copia de la definición** (`template_definition` en la fotografía de la revisión): cambiar la
 plantilla o el código después no altera cómo se ve.
@@ -177,26 +182,33 @@ Cada definición tiene:
 
 ### `value`: qué datos guarda
 
-Un objeto con un esquema por clave:
+Un objeto con un esquema por clave, con el vocabulario de JSON Schema:
 
-| `type` | Claves | Se guarda como |
+| Dato | Esquema | Se guarda como |
 |---|---|---|
-| `text` | `max` (1 a 20000, por defecto 1000), `multiline` | texto |
-| `number` | `digits` (enteros, por defecto 3), `decimals` (por defecto 2) | texto con número (`2`, `1,5`) |
-| `choice` | `options`: `{"si": "Sí", "no": "No"}` | la clave elegida o `null` |
-| `object` | `fields`: otro objeto de esquemas | objeto |
-| `list` | `item` (esquema de cada elemento; si no lleva `type` se toma como `fields` de un objeto), `min`, `max` (≤ 100), `initial` | lista |
+| Texto | `"type": "string"`, `maxLength` (1 a 20000, por defecto 1000), `multiline` | texto |
+| Elección | `"type": "string"`, `oneOf`: `[{"const": "si", "title": "Sí"}, {"const": "no", "title": "No"}]` | la clave elegida o `null` |
+| Número | `"type": "number"`, `maximum` (por defecto 999.99), `multipleOf` (1, 0.1, 0.01… por defecto 0.01) | texto con número (`2`, `1,5`) |
+| Grupo | `"type": "object"`, `properties`: otro objeto de esquemas | objeto |
+| Lista | `"type": "array"`, `items` (esquema de cada elemento), `minItems`, `maxItems` (≤ 100), `initial` | lista |
 
-Comunes: `label` (nombre del dato en la pantalla y en los errores), `error` (mensaje propio al rechazarlo) y
+Comunes: `title` (nombre del dato en la pantalla y en los errores), `errorMessage` (mensaje propio al rechazarlo) y
 `keep_if` (condición, ver abajo). Si `keep_if` deja de cumplirse, el dato se borra. Por ejemplo, el detalle de
 discapacidad se borra si la respuesta es «No».
 
-Una lista ausente arranca con `initial` elementos. Una lista con `min` < `max` se puede agrandar y achicar desde
-el editor, y debe repetirse en una fila de tabla (`<tr data-repeat>`).
+Tres claves son propias de este formato y JSON Schema no las define: `multiline` (la pantalla muestra un cuadro de
+varias líneas; si falta, una sola línea), `initial` (con cuántos elementos arranca una lista ausente) y `keep_if`.
+Una lista con `minItems` < `maxItems` se puede agrandar y achicar desde el editor, y debe repetirse en una fila de
+tabla (`<tr data-repeat>`).
+
+Los nombres anteriores (`text`, `choice` con `options`, `number` con `digits` y `decimals`, `list` con `item`,
+`min` y `max`, `fields`, `label`, `error`) se siguen aceptando al importar y al leer revisiones antiguas: el
+servidor los traduce a los de esta tabla.
 
 ### `props`: qué fija la plantilla en cada aparición
 
-Solo `text` (`max`, `required`, `label`, `error`). El administrador lo escribe en el constructor.
+Solo textos (`"type": "string"`, `maxLength`, `minLength: 1` si es obligatorio, `title`, `errorMessage`). El
+administrador los escribe en el constructor.
 
 ### `rules`: reglas de negocio
 
@@ -266,10 +278,11 @@ condiciones compuestas (`all`, `any`, `not`); las revisiones antiguas que guarda
 ```json
 "practicas": {
   "label": "Prácticas de laboratorio",
-  "value": { "practicas": { "type": "list", "max": 10, "initial": 1, "label": "práctica", "item": {
-    "tema": { "type": "text", "max": 200, "label": "Tema" },
-    "horas": { "type": "number", "digits": 2, "decimals": 0, "label": "Horas" }
-  } } },
+  "value": { "practicas": { "type": "array", "maxItems": 10, "initial": 1, "title": "práctica", "items": {
+    "type": "object", "properties": {
+      "tema": { "type": "string", "maxLength": 200, "title": "Tema" },
+      "horas": { "type": "number", "maximum": 99, "multipleOf": 1, "title": "Horas" }
+    } } } },
   "rules": [ { "code": "horas_practicas_insuficientes", "on": "submit",
     "message": "Las prácticas suman {actual} horas de {expected}.",
     "checks": [ { "label": "Horas", "sum": "practicas.*.horas", "min": { "variable": "horas_practicas" } } ] } ],

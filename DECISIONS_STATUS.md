@@ -115,8 +115,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   La plantilla activa de Sílabos se actualizó el 2026-10-26 conservando campos y valores;
   la convocatoria sigue pausada mientras Coordinación completa las unidades.
 - El lenguaje de bloques se limita a lo que usa la plantilla oficial (2026-10-27): datos
-  `text`, `number`, `choice`, `object` y `list`; propiedades solo de texto; condiciones
-  simples (`equals`, `empty`, `zero`). Se retiraron `from`, `row`, `columns`, las
+  de texto, elección, número, grupo y lista con el vocabulario de JSON Schema (`string`,
+  `oneOf`, `number`, `object`, `array`, `title`, `maxLength`…), más `multiline`, `initial`
+  y `keep_if`; la pantalla obedece a `multiline`. Los nombres anteriores se traducen al
+  leer. El formato se publica como JSON Schema (`/plantilla.schema.json`, `$schema` en la
+  exportación). Propiedades solo de texto; condiciones simples (`equals`, `empty`, `zero`). Se retiraron `from`, `row`, `columns`, las
   condiciones compuestas y los bloques `si_no` y `repetible`. La sección 6 conserva el
   formato oficial de una tabla por unidad y el docente escribe cada unidad.
 - Administración la crea en blanco o con el formato oficial. La edita en un editor

@@ -20,7 +20,7 @@ class TemplateWithoutUnusedBlockFeaturesMigrationTest extends TestCase
         $this->storeDefinition(function (array $definition): array {
             $definition['blocks']['si_no'] = ['label' => 'Pregunta Sí/No', 'value' => [], 'layout' => []];
             $definition['blocks']['repetible'] = ['label' => 'Lista', 'value' => [], 'layout' => []];
-            $definition['blocks']['unidades']['value']['units']['item']['fields']['nombre']['from'] = ['field' => 'unidades_curriculares', 'column' => 1];
+            $definition['blocks']['unidades']['value']['units']['items']['properties']['nombre']['from'] = ['field' => 'unidades_curriculares', 'column' => 1];
             $definition['blocks']['evaluacion']['layout'][0]['attrs']['when'] = ['not' => ['variable' => 'horas_practicas', 'zero' => true]];
 
             return $definition;
@@ -30,7 +30,7 @@ class TemplateWithoutUnusedBlockFeaturesMigrationTest extends TestCase
 
         $definition = json_decode((string) DB::table('plantilla_silabo')->value('definicion_plantilla'), true);
         $this->assertSame(['identificacion', 'unidades', 'evaluacion'], array_keys($definition['blocks']));
-        $this->assertArrayNotHasKey('from', $definition['blocks']['unidades']['value']['units']['item']['fields']['nombre']);
+        $this->assertArrayNotHasKey('from', $definition['blocks']['unidades']['value']['units']['items']['properties']['nombre']);
         $this->assertSame(['variable' => 'horas_practicas', 'zero' => false], $definition['blocks']['evaluacion']['layout'][0]['attrs']['when']);
     }
 

@@ -30,3 +30,14 @@ Route::get('logos/institucion', [LogoController::class, 'institution'])->name('l
 Route::get('logos/facultad/{faculty}', [LogoController::class, 'faculty'])
     ->whereUuid('faculty')
     ->name('logos.faculty');
+
+Route::get('plantilla.schema.json', fn () => response()->file(resource_path('templates/plantilla.schema.json'), ['Content-Type' => 'application/schema+json']))
+    ->withoutMiddleware([
+        EncryptCookies::class,
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        ValidateCsrfToken::class,
+        PreventRequestForgery::class,
+    ])
+    ->name('template.schema');

@@ -41,10 +41,10 @@ class TemplateDefinitionTest extends TestCase
     {
         return [
             'label' => 'Prácticas de laboratorio',
-            'value' => ['practicas' => ['type' => 'list', 'max' => 10, 'initial' => 1, 'label' => 'práctica', 'item' => [
-                'tema' => ['type' => 'text', 'max' => 200],
-                'horas' => ['type' => 'number', 'digits' => 2, 'decimals' => 0],
-            ]]],
+            'value' => ['practicas' => ['type' => 'array', 'maxItems' => 10, 'initial' => 1, 'title' => 'práctica', 'items' => ['type' => 'object', 'properties' => [
+                'tema' => ['type' => 'string', 'maxLength' => 200],
+                'horas' => ['type' => 'number', 'maximum' => 99, 'multipleOf' => 1],
+            ]]]],
             'rules' => [['code' => 'horas_practicas_insuficientes', 'on' => 'submit', 'message' => 'Las prácticas suman {actual} horas de {expected}.', 'checks' => [['label' => 'Horas', 'sum' => 'practicas.*.horas', 'min' => ['variable' => 'horas_practicas']]]]],
             'layout' => [
                 '<table>',
@@ -131,5 +131,24 @@ class TemplateDefinitionTest extends TestCase
 
             $this->assertEquals($block['layout'], $again->block($kind)['layout'], "El diseño de «{$kind}» cambió al pasar por HTML.");
         }
+    }
+
+    public function test_block_data_written_with_the_former_names_reads_as_json_schema(): void
+    {
+        $former = ['respuesta' => ['type' => 'object', 'fields' => [
+            'eleccion' => ['type' => 'choice', 'label' => 'Respuesta', 'options' => ['si' => 'Sí', 'no' => 'No']],
+            'detalle' => ['type' => 'text', 'max' => 300, 'multiline' => false, 'error' => 'Detalle muy largo.', 'keep_if' => ['value' => 'eleccion', 'equals' => 'si']],
+            'filas' => ['type' => 'list', 'min' => 1, 'max' => 5, 'initial' => 1, 'item' => ['horas' => ['type' => 'number', 'digits' => 2, 'decimals' => 1]]],
+        ]]];
+        $current = ['respuesta' => ['type' => 'object', 'properties' => [
+            'eleccion' => ['type' => 'string', 'title' => 'Respuesta', 'oneOf' => [['const' => 'si', 'title' => 'Sí'], ['const' => 'no', 'title' => 'No']]],
+            'detalle' => ['type' => 'string', 'maxLength' => 300, 'errorMessage' => 'Detalle muy largo.', 'keep_if' => ['value' => 'eleccion', 'equals' => 'si']],
+            'filas' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 5, 'items' => ['type' => 'object', 'properties' => ['horas' => ['type' => 'number', 'maximum' => 99.9, 'multipleOf' => 0.1]]]],
+        ]]];
+        $block = fn (array $value): array => ['label' => 'Bloque', 'value' => $value, 'layout' => ['<p>Bloque</p>']];
+
+        $defined = TemplateDefinition::define(['blocks' => ['bloque' => $block($current)]])->block('bloque');
+        $this->assertEquals($defined['value'], TemplateDefinition::define(['blocks' => ['bloque' => $block($former)]])->block('bloque')['value']);
+        $this->assertEquals($defined['value'], TemplateDefinition::trusted(['blocks' => ['bloque' => [...$defined, 'value' => $former]]])->block('bloque')['value']);
     }
 }
