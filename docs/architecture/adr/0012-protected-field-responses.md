@@ -44,6 +44,13 @@ los copia de la ficha al crear, reiniciar, copiar o guardar el sílabo. El docen
 ve en solo lectura. El campo fuente no se imprime solo, pero sigue en la ficha y en la
 validación. Se conservan las reglas de semanas y horas ACD, APE y AA.
 
+Actualizado el 2026-10-27: el docente vuelve a escribir el nombre y el resultado de cada
+unidad, como en los antecedentes (Meza Luque, 2022; Llumitaxi Chacha y Morocho
+Tualombo, 2019). La plantilla oficial retira `unidades_curriculares` y sus datos ya no
+declaran `from`; una regla de envío (`filled`) exige los cuatro nombres y resultados.
+`ProtectTemplateResponses` lleva la plantilla activa a ese formato cuando no hay
+sílabos. `from` sigue disponible en el lenguaje de la plantilla.
+
 Un cambio de docente conserva la ficha y reinicia la planificación en curso con las
 reglas existentes. Un cambio de plantilla o ficha sigue exigiendo pausa y confirmación
 de regeneración; nada de una convocatoria cerrada se reescribe. Al cerrar una

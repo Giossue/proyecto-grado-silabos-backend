@@ -198,6 +198,8 @@ el editor, y debe repetirse en una fila de tabla (`<tr data-repeat>`).
 
 #### `from`: datos que llena Carrera dentro de un bloque
 
+La plantilla oficial no usa `from` desde el 2026-10-27: el docente escribe los nombres y resultados de las unidades.
+
 El diseño no se parte según quién llena: el responsable se fija por dato. Un `text` con
 `"from": {"field": "unidades_curriculares", "column": 2}` toma el texto de la columna 2 de la tabla de ese campo de
 Carrera. La fila es la posición del elemento de la lista que lo contiene (primera unidad, primera fila de datos;
@@ -229,7 +231,7 @@ administrador edita en el constructor).
 |---|---|
 | `code` | Código estable del error (lo usan pantallas y pruebas). |
 | `on` | `save`: rechaza el guardado. `submit`: impide enviar el sílabo. |
-| `checks` | `count` (cuántos elementos hay en la ruta) o `sum` (suma de números) comparado con `equals`, `max` o `min`. El valor es un número o `{"variable": "clave"}`. |
+| `checks` | `count` (cuántos elementos hay en la ruta), `filled` (cuántos textos o números no están vacíos) o `sum` (suma de números) comparado con `equals`, `max` o `min`. El valor es un número o `{"variable": "clave"}`. |
 | `label` | Si la comprobación lleva nombre, el editor la muestra en vivo («ACD 30 de 32»). |
 | `message` | `{actual}` y `{expected}` (primera comprobación que falla) y `{detail}` («ACD 30 de 32, AA 10 de 32»). |
 | `hint` | Texto de ayuda junto al resumen en vivo. |
@@ -263,6 +265,7 @@ Datos dentro del texto (`<span data-slot='{...}'></span>`):
 | `{"counter": "semana"}` | Contador que sigue entre repeticiones (1, 2, 3… en todo el bloque). |
 | `{"sum": "semanas.*.acd_h"}` | Suma de números. |
 | `{"count": "units.*.semanas"}` | Cantidad de elementos. |
+| `{"filled": "units.*.nombre"}` | Cantidad de datos escritos; los vacíos o solo con espacios no cuentan. |
 
 Condiciones (`data-when` y `keep_if`):
 
@@ -307,7 +310,7 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 | Bloque | Qué hace |
 |---|---|
 | `identificacion` | Tabla de identificación con datos del sistema; el docente responde la discapacidad (Sí/No, tipo y descripción). |
-| `unidades` | Cuatro unidades (lista fija de 4) con semanas (lista que crece), horas y actividades. El nombre y el resultado vienen de `unidades_curriculares` (`from`). Reglas: máximo 16 semanas al guardar; exactamente 16 y horas iguales a las de la asignatura al enviar. |
+| `unidades` | Cuatro unidades (lista fija de 4) con semanas (lista que crece), horas y actividades. El docente escribe el nombre y el resultado de cada unidad. Reglas: máximo 16 semanas al guardar; al enviar, las 4 unidades con nombre y resultado, exactamente 16 semanas y horas iguales a las de la asignatura. |
 | `evaluacion` | Tabla de puntos con dos variantes según `horas_practicas` (con o sin práctico-experimental). |
 | `si_no` | Pregunta Sí/No con tabla opcional si responde Sí. Propiedades: `question` y `columns`. |
 | `repetible` | Lista de filas con columnas que fija el administrador. Propiedades: `label` y `columns`. |

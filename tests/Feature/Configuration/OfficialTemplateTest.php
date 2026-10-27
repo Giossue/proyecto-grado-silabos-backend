@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Configuration;
 
-use Illuminate\Support\Str;
 use App\Models\User;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
@@ -17,6 +16,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\CreatesSyllabusProcess;
 use Tests\TestCase;

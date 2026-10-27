@@ -68,7 +68,7 @@ final readonly class ProtectTemplateResponses
             ]);
             // El contenido oficial viene de HTML: se normaliza para que el bloque tenga sus cuatro unidades.
             $planningContent = app(TemplateContext::class)->using($definition, fn (): array => FieldDocument::normalize($planning['content']));
-            $profileFields = $fields->except('unidades_curriculares');
+            $profileFields = $fields->except(['unidades_curriculares']);
             app(TemplateContext::class)->using($definition, function () use ($profileFields): void {
                 foreach (FieldValue::query()->whereNotNull('asignatura_id')->whereIn('definicion_campo_id', $profileFields->pluck('id'))->get() as $value) {
                     $field = $profileFields->firstWhere('id', $value->definicion_campo_id);

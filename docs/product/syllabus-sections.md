@@ -32,19 +32,14 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
 
 - El sílabo conserva el formato oficial: una tabla por unidad con «Nombre de la
   unidad» y «Resultados de aprendizaje» arriba y las semanas debajo.
-- Carrera escribe el nombre y el resultado de las cuatro unidades en la ficha (campo
-  `unidades_curriculares`, también en el Excel). Ese campo no se imprime solo: sus
-  datos aparecen dentro de cada tabla de unidad.
-- En la ficha web, Carrera los escribe dentro de las mismas tablas de unidad de la
-  plantilla; las semanas se ven vacías y no se editan. El Excel conserva una tabla
-  simple de cuatro filas.
-- El docente ve el nombre y el resultado en solo lectura y completa las semanas. El
-  servidor los vuelve a copiar de la ficha al crear, reiniciar, copiar o guardar.
+- El docente escribe el nombre y el resultado de aprendizaje de cada unidad dentro de
+  su tabla y completa las semanas. Desde el 2026-10-27 la ficha ya no los trae.
 - Cada semana tiene contenidos, horas ACD, APE y AA, actividades de cada componente y
   evaluación.
 - Al guardar: las unidades no pueden sumar más de 16 semanas.
-- Al enviar: deben sumar exactamente 16 semanas, y las horas ACD, APE y AA deben ser
-  iguales a las de la asignatura en la malla.
+- Al enviar: las cuatro unidades deben tener nombre y resultado, deben sumar exactamente
+  16 semanas, y las horas ACD, APE y AA deben ser iguales a las de la asignatura en la
+  malla.
 - El editor muestra en vivo el avance (por ejemplo, «ACD 30 de 32»).
 - La primera versión de ADR-0012 separaba los nombres en otra tabla y cambiaba el
   formato. Se retiró el 2026-10-26 (bloque `planificacion_semanal`).

@@ -160,10 +160,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
   copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
   encendido no deja la ficha incompleta (I-230).
-- Los nombres y resultados de las cuatro unidades los escribe Carrera en la ficha
-  (`unidades_curriculares`, también en el Excel). Se imprimen dentro de cada tabla de
-  unidad del formato oficial y el docente los ve en solo lectura; ese campo no se
-  imprime aparte. El docente completa la planificación semanal. Las horas ACD, APE y AA de toda la
+- El docente escribe el nombre y el resultado de aprendizaje de cada una de las cuatro
+  unidades en su sílabo, dentro de la tabla de cada unidad del formato oficial, y
+  completa la planificación semanal. Para enviar, las cuatro unidades deben tener
+  nombre y resultado. La ficha ya no tiene «Unidades y resultados de aprendizaje»
+  (decisión del responsable del producto del 2026-10-27, como en los antecedentes). Las horas ACD, APE y AA de toda la
   planificación deben sumar las de la asignatura para enviar, y las unidades suman 16
   semanas (confirmado por el responsable del producto el 2026-10-26). Activar el nuevo formato
   en una plantilla existente exige pausa y las confirmaciones de regeneración vigentes;
