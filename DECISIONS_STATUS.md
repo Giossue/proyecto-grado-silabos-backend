@@ -193,7 +193,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - El orden es Docente → Coordinación → Biblioteca → Aprobado (I-220).
 - Coordinación aprueba o pide corrección con un comentario general (I-177).
 - Biblioteca revisa la bibliografía: la aprueba o devuelve el sílabo marcando motivos
-  predefinidos (I-177).
+  predefinidos, sin texto libre (I-177). Los motivos son: libro no disponible, código
+  incorrecto, ISBN incorrecto, edición desactualizada y datos incompletos (confirmados
+  por Biblioteca el 2026-10-26).
 - Si Biblioteca devuelve, el reenvío del docente va directo a Biblioteca (I-220).
 - Una revisión enviada o aprobada no se modifica (ADR-0002).
 - Con la convocatoria cerrada, la revisión queda solo para consulta.

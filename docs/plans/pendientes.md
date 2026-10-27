@@ -29,11 +29,6 @@ y el servidor de pruebas ya tiene la variable configurada (2026-10-26); en `.env
 lista de entidades y si exige sello de tiempo externo (hoy la hora es la del servidor). Pasos en
 `docs/runbooks/firma-electronica-entidades.md`.
 
-## Reglas por confirmar
-
-- **Motivos de rechazo de Biblioteca:** los cinco motivos de `LibraryCommentReasons::REASONS` están por validar con
-  Biblioteca.
-
 ## Producción
 
 - **Variables de entorno:**
