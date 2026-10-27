@@ -11,7 +11,7 @@ activo.
 |---|---|---|---|
 | UI-01 | Acceso | `/ingresar`, `/recuperar-contrasena`, `/restablecer-contrasena`, `/activar-cuenta`, `/verificar-correo`, `/verificar-dos-factores` | Iniciar sesión, recuperar la contraseña, activar la cuenta, verificar el correo y pasar el segundo factor. |
 | UI-02 | Selección de ámbito | `/rol` | Una tarjeta por rol y carrera. Aparece cuando no hay rol activo (ver `roles-and-permissions.md`). |
-| UI-03 | Notificaciones | `/{área}/notificaciones` | Solo avisos del período en curso. «Todas» o «No leídas», «Marcar todas como leídas», «Abrir». También en la campana del encabezado. |
+| UI-03 | Notificaciones | `/{área}/notificaciones` | Solo avisos del período en curso. Abre en «No leídas»; también «Todas», «Marcar todas como leídas» y «Abrir». También en la campana del encabezado, que abre siempre en «No leídas». |
 | UI-04 | Perfil y seguridad | `/{área}/configuracion/perfil`, `/{área}/configuracion/seguridad` | Perfil: nombre y correo (solo si la cuenta lo permite) y, para el docente, «Formación y experiencia académica-investigativa». Seguridad: contraseña y segundo factor con códigos de recuperación. |
 
 `{área}` es `admin`, `coordinacion`, `docente` o `biblioteca`. Una ruta inexistente
