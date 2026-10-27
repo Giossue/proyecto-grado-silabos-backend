@@ -20,13 +20,13 @@ Estados:
 |---|---|---|---|
 | Acceso, cuentas y roles | RF-001..007; CU-01, CU-02; UI-01..04, ADM-02, ADM-03, COR-15 | `ApiSessionTest`, `SecurityHardeningTest`, `ManagedUserTest`, `ManagedUserUpdateTest`, `CareerTeacherTest`, `SpreadsheetImportTest` | Verificado automático |
 | Estructura académica | RF-008..016; CU-03; ADM-04, COR-13, COR-14 | `AcademicStructureTest`, `CoordinatorReplacementTest`, `InstitutionalLogosTest`, `ParallelTeacherChangeTest` | Verificado automático |
-| Plantilla como datos | RF-017..026; CU-04; ADM-06 | `TemplateDefinitionTest`, `OfficialTemplateTest`, `TemplateStructureApiTest`, `DocumentBlockTest`, `TemplateGoldenWordTest` | Verificado automático; fidelidad bloqueada PV-07 |
+| Plantilla como datos | RF-017..026; CU-04; ADM-06 | `TemplateDefinitionTest`, `OfficialTemplateTest`, `TemplateStructureApiTest`, `DocumentBlockTest`, `TemplateGoldenWordTest` | Verificado automático; revisión visual del Word pendiente |
 | Proyecto de carrera | RF-027..033; CU-05; COR-16 | `SubjectProfileTest`, `FichaImportTest`, `FichaFieldValuesTest`; `FichaImportDialog.test.ts`, `tests/e2e/ficha-import.spec.ts`; reproducción local de Excel y tipos/estilo | Flujo exclusivamente Excel con vista previa en memoria y relectura al aplicar; nueva migración elimina `importaciones_ficha`. Lectura local anterior verificada con seis campos y dos materias de ejemplo. Aceptación con Excel real y recorrido de usuario pendiente. Pruebas existentes adaptadas; suite automática no ejecutada en esta limpieza. |
 | Convocatoria, borrador y validación | RF-034..045; CU-06, CU-07, CU-09; COR-01, DOC-01..07 | `SyllabusProcessTest`, `ConvocationScheduleTest`, `ConvocationAndDraftTest` | Verificado automático; volumen pendiente PV-05 |
 | Revisión y aprobación | RF-055..065; CU-10..CU-14; COR-05..10, BIB-01..03, DOC-08 | `ReviewWorkflowTest`, `LibraryReviewTest` | Verificado automático; motivos de Biblioteca por validar |
-| Firmas, Word y PDF | RF-066..069; CU-15; DOC-10 | `DocumentSignatureTest`, `SignatureTrustTest`, `DocumentOperationsTest`, `WordRendererTest` | Verificado automático; entidades certificadoras pendientes (DT-16); fidelidad PV-07 |
+| Firmas, Word y PDF | RF-066..069; CU-15; DOC-10 | `DocumentSignatureTest`, `SignatureTrustTest`, `DocumentOperationsTest`, `WordRendererTest` | Verificado automático; entidades certificadoras pendientes (DT-16); revisión visual pendiente |
 | Panel, avisos, auditoría y ayuda | RF-070..074; CU-16, CU-17; UI-03, ADM-10, ADM-13 | `ApiDashboardTest`, `NotificationLinksTest`, `DocumentOperationsTest`, `ScreenHelpTest` | Verificado automático; correo real PV-15 |
-| Chat de IA | RF-046..054; CU-08; DOC-06; IA-NEG-01..09 | `AiAssistanceTest`, `HostedAiChatGatewayTest` | Verificado automático con proveedor simulado; evaluación experta bloqueada PV-14/PV-18 |
+| Chat de IA | RF-046..054; CU-08; DOC-06; IA-NEG-01..09 | `AiAssistanceTest`, `HostedAiChatGatewayTest` | Verificado automático con proveedor simulado; evaluación experta con DeepSeek bloqueada PV-18 |
 | Interfaz (SPA) | UI-01..04 y pantallas de los cuatro roles | Pruebas Vitest del repositorio frontend (ver `traceability.md`) | Verificado automático; inspección visual y asistiva pendiente PV-19 |
 
 ## Evidencia no funcional
@@ -43,7 +43,7 @@ Estados:
 | Recuperación | `composer verify:restore` sobre un dump sintético y un clúster efímero | Verificado técnico; política bloqueada PV-11 |
 | Rendimiento | `composer benchmark:readiness` contra `/health/ready` en loopback | Prueba del script; no acepta RNF-011..015 (PV-05) |
 | Accesibilidad real | Teclado, lector, foco, contraste, 360 px, zoom 200 %, claro y oscuro | Pendiente manual (PV-19) |
-| Fidelidad documental | `TemplateGoldenWordTest` compara el Word con referencias | Comparación visual con el documento oficial pendiente (PV-07) |
+| Fidelidad documental | `TemplateGoldenWordTest` compara el Word con referencias | Comparación visual del Word y del PDF generados pendiente |
 
 La propuesta de importación se revisó en Chromium local a 360, 768 y 1440 px, en claro
 y oscuro, con apertura por teclado, tabla de cinco columnas, campos pendientes y
@@ -100,11 +100,10 @@ que bloquean la aceptación son:
 
 | PV | Qué falta |
 |---|---|
-| PV-01, PV-07 | Autoridad de la plantilla y Word oficial |
 | PV-03, PV-04 | Período del piloto y responsable de la aceptación |
 | PV-05 | Volumen real de docentes, paralelos y sílabos |
 | PV-11, PV-12 | Respaldo, RPO/RTO, base legal y aviso de privacidad |
-| PV-14, PV-18 | Modelo de IA y umbrales de utilidad |
+| PV-18 | Umbrales de utilidad de la IA (el modelo es DeepSeek) |
 | PV-15 | Correo institucional |
 | PV-16 | Edición excepcional por Coordinación (hoy el servidor la niega) |
 | PV-17, PV-19, PV-20 | Instrumento de medición, dispositivos reales y metadatos académicos |

@@ -211,9 +211,10 @@ firmado» aparece con las tres firmas.
   espaciado. Se guarda en la cuenta.
 - **Ayuda de pantalla.** Botón flotante y arrastrable «Ayuda de esta pantalla» cuando
   ADM-13 tiene un texto activo para esa pantalla.
-- **Edición bloqueada.** Un aviso «Edición bloqueada · Convocatoria {período}» explica
-  qué pausar, con «¿Por qué?» e «Ir a Convocatorias». El servidor rechaza igual la
-  petición.
+- **Edición bloqueada.** Una franja a todo el ancho, bajo la barra superior, dice
+  «Edición bloqueada · Convocatoria {período}» y qué pausar, con «¿Por qué?» e «Ir a
+  Convocatorias». Convocatorias usa la misma franja para «Convocatoria en curso». El
+  servidor rechaza igual la petición.
 - **Panel.** Tres indicadores por rol. Administración y Coordinación ven «Puesta en
   marcha» hasta completar sus pasos.
 - **Tablas.** Búsqueda «Buscar por…», filtros y 20 filas por página. La fila abre el

@@ -93,6 +93,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 ## Plantilla
 
 - Hay una sola plantilla. Se edita en el sitio, sin versiones ni publicación (I-32).
+- La plantilla la define Administración, y el Word que genera es el formato oficial del
+  sílabo. No hay otra autoridad que la apruebe (antes PV-01 y PV-07; confirmado por el
+  responsable del producto el 2026-10-26).
 - La plantilla es solo datos (ADR-0011, I-229). `plantilla_silabo.definicion_plantilla`
   guarda el estilo del documento, las variables, los bloques (valor, reglas y diseño),
   las secciones obligatorias, las de biblioteca y las plantillas listas. Las secciones y
@@ -154,7 +157,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   (`unidades_curriculares`, también en el Excel). Se imprimen dentro de cada tabla de
   unidad del formato oficial y el docente los ve en solo lectura; ese campo no se
   imprime aparte. El docente completa la planificación semanal. Las horas ACD, APE y AA de toda la
-  planificación deben sumar las de la asignatura para enviar. Activar el nuevo formato
+  planificación deben sumar las de la asignatura para enviar, y las unidades suman 16
+  semanas (confirmado por el responsable del producto el 2026-10-26). Activar el nuevo formato
   en una plantilla existente exige pausa y las confirmaciones de regeneración vigentes;
   el despliegue no modifica por sí solo la plantilla activa.
 - Cambiar la malla o una ficha con sílabos existentes exige pausar la convocatoria de la
@@ -205,7 +209,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 ## IA
 
 - El proveedor se elige con `AI_DRIVER` (`openai`, `claude` o `deepseek`) y está apagado
-  por defecto (I-73).
+  por defecto (I-73). En el piloto se usa DeepSeek (antes PV-14; confirmado el 2026-10-26).
 - El docente tiene un chat que usa los datos de la carrera, de la asignatura y lo que ya
   escribió en el sílabo (contexto `free-text-v3`).
 - La IA se limita al chat del docente. La ficha se importa exclusivamente por Excel

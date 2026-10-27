@@ -7,14 +7,11 @@ Lo único que falta, en un solo lugar. Cuando algo se resuelve, se borra de aqu�
 
 | ID | Decisión | Quién decide | Mientras tanto |
 |---|---|---|---|
-| PV-01 | Autoridad que emite, aprueba y publica la plantilla | Coordinación o autoridad | Administración edita la plantilla |
 | PV-03 | Período de pilotaje y aceptación | Dirección o Coordinación | — |
 | PV-04 | Responsable de la aceptación funcional | Dirección o Coordinación | — |
 | PV-05 | Cantidad real de docentes, paralelos y sílabos | Coordinación | Datos de prueba |
-| PV-07 | Word oficial y reglas de exportación | Autoridad de la plantilla | La plantilla oficial reproduce el sílabo de ejemplo |
 | PV-11 | Conservación, respaldo, RPO y RTO | Personal técnico y autoridad | Sin política formal |
 | PV-12 | Base legal y aviso de privacidad | UEB | Borrador en `docs/security/aviso-de-privacidad.md` |
-| PV-14 | Modelos de IA que se usarán | Autores y evaluación experta | Proveedor configurable por `AI_DRIVER` |
 | PV-15 | Correo institucional y contenido de los avisos | Personal técnico y Coordinación | `MAIL_MAILER=log` |
 | PV-16 | Edición excepcional del contenido por Coordinación | Coordinación | No se permite |
 | PV-17 | Instrumento para medir el proceso actual | Dirección y autores | — |
@@ -34,12 +31,9 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
 
 ## Reglas por confirmar
 
-- **Unidades y horas:** la concordancia por componente con las horas de la asignatura
-  fue confirmada por el responsable del producto el 2026-10-26. Docencia debe confirmar
-  la regla vigente de 16 semanas.
-
-  También debe decir si valen para materias de prácticas. Falta decidir cómo se evalúa una asignatura con 0 horas
-  ACD o AA (Vicerrectorado).
+- **Materias sin sílabo:** el responsable del producto propone (2026-10-26) que la malla marque
+  por materia si genera sílabo, en lugar de reglas para materias de prácticas o con 0 horas ACD
+  o AA. Falta implementarlo.
 - **Motivos de rechazo de Biblioteca:** los cinco motivos de `LibraryCommentReasons::REASONS` están por validar con
   Biblioteca.
 
@@ -71,7 +65,7 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
   - teclado y lector de pantalla;
   - contraste, zoom y 360 px;
   - navegadores y dispositivos reales (PV-19);
-  - fidelidad del Word y del PDF frente al documento oficial (PV-07);
+  - que el Word y el PDF generados se vean igual que la plantilla;
   - recorrido completo con los cuatro roles.
 
 ## Deuda técnica
@@ -80,7 +74,7 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
 |---|---|---|
 | D-01 | Las tablas `sesiones`, `restablecimientos_contrasena` y `migraciones` conservan columnas en inglés: los drivers de Laravel las fijan | Aceptado; solo cambia si se cambia de driver |
 | D-02 | Claves en inglés dentro de JSON (`contexto_academico`, `fotografia`, `metadatos` de auditoría) | Traducir solo documentos nuevos con lector doble; nunca reescribir fotografías selladas |
-| D-03 | El contrato del gateway de IA (`contract-simulator-v1`) sigue en inglés | Decidir al cerrar PV-14 |
+| D-03 | El contrato del gateway de IA (`contract-simulator-v1`) sigue en inglés | Traducir al ajustar el gateway para DeepSeek |
 | D-04 | `FixedContent`, `TemplateDocumentDefaults` e `IdentificationCard::document` solo los usan migraciones antiguas y fotografías anteriores a I-229 | Mover su contenido a las migraciones y borrarlos |
 | D-05 | Caminos de dibujo para fotografías antiguas (`SyllabusWordDocument::sectionCompact`, `HistoricalFieldDocument`) | Retirar cuando no queden revisiones con esos formatos |
 | D-06 | Los motivos de rechazo de Biblioteca están en código (`LibraryCommentReasons`) | Pasarlos a datos si Biblioteca pide cambiarlos |
