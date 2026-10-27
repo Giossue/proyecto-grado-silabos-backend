@@ -78,11 +78,15 @@ Así la misma imagen sirve para cualquier ambiente. Sin URL, la SPA no arranca.
 
 ## Respuestas protegidas
 
-`FieldResponseEditor.ts` usa `template` de la API para dibujar el texto fijo y editar
-solo párrafos y celdas vacíos. Las tablas de listas tienen controles para añadir filas
-y quitar la última; las tablas fijas no los ofrecen. Los bloques reutilizan
-`DocumentBlockContent`. El constructor de Administración conserva `FreeTextEditor`
-completo. Los campos antiguos sin `template` conservan el comportamiento anterior.
+`FieldResponseEditor.ts` usa `template` de la API y edita solo párrafos y celdas vacíos,
+como formulario: cada fila de una tabla es una tarjeta con un campo por columna,
+etiquetado con el encabezado de la plantilla. Las tablas de listas permiten agregar y
+quitar filas; las fijas no. Los bloques se llenan con `BlockForm.ts`, que recorre el
+esquema de valores del bloque (etiquetas, listas, `keep_if`, `from` y reglas) en vez de
+su dibujo; `DocumentBlockContent` queda para el constructor y la ficha. El aspecto del
+Word solo aparece en la vista previa. El constructor de Administración conserva
+`FreeTextEditor` completo. Los campos antiguos sin `template` conservan el
+comportamiento anterior.
 
 ## Plantilla en tiempo de ejecución (`src/lib/blocks`)
 

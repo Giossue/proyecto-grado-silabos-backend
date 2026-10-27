@@ -179,6 +179,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Estados: Sin iniciar, Borrador, En revisión, Corrección solicitada y Aprobado.
 - El docente edita en Borrador y en Corrección solicitada: sus campos y los de la ficha
   con el interruptor encendido. Ve una vista previa del documento.
+- El docente llena un formulario con los componentes del sistema, generado desde la
+  plantilla; el aspecto del Word queda solo en la vista previa (2026-10-27).
 - Solo puede enviar entre la fecha de inicio y la de entrega, con la convocatoria sin
   pausa.
 - Puede copiar el contenido desde otro paralelo suyo de la misma asignatura, si el

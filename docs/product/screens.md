@@ -169,13 +169,18 @@ y el botón «Documentos» (DOC-10).
 ### DOC-04 Sílabo
 
 - Al abrir un sílabo sin iniciar, el borrador empieza solo.
-- Pestañas por sección. Cada campo se guarda solo tras una breve pausa; si falla,
-  muestra «Sin guardar» y «Reintentar»; si hay conflicto, «Recargar borrador».
+- Título con la materia; debajo, período y paralelo.
+- Formulario con los componentes del sistema, generado desde la plantilla: pestañas solo
+  para las secciones con campos del docente, un campo con etiqueta por dato, una tarjeta
+  por unidad, semana o fila de tabla, y «Agregar»/«Quitar». Cada campo se guarda solo
+  tras una breve pausa; si falla, muestra «Sin guardar» y «Reintentar»; si hay
+  conflicto, «Recargar borrador».
 - Campos del docente: editables. Campos de la ficha: solo lectura, salvo los marcados
-  como editables («Lo trae la ficha de la carrera; puede ajustarlo.»). Campos fijos:
-  solo lectura.
-- Los bloques se llenan dentro del editor: unidades y semanas con contador de horas,
-  discapacidad, Sí/No y filas repetibles.
+  como editables («Viene de la ficha; puede ajustarlo.»). Lo institucional se ve en
+  «Vista previa».
+- Bloques: unidades y semanas con contador de horas, discapacidad (los datos aparecen
+  solo si responde Sí), Sí/No y filas repetibles.
+- En revisión o aprobado, la pantalla muestra el documento tal como sale.
 - «Vista previa» muestra el sílabo completo. «Copiar desde paralelo X» trae lo escrito en
   otro paralelo propio.
 - «Enviar sílabo» queda deshabilitado mientras falten campos («Faltan N campos por
