@@ -217,9 +217,10 @@ firmado» aparece con las tres firmas.
   «Edición bloqueada · Convocatoria {período}» y qué pausar, con «¿Por qué?» e «Ir a
   Convocatorias» («Ir a Revisión» para Coordinación). Convocatorias usa la misma franja
   para «Convocatoria en curso». El servidor rechaza igual la petición.
-- **Aviso de plazo.** Docente, Coordinación y Biblioteca ven bajo la barra superior una
-  franja ámbar con los días que quedan, qué les toca hacer antes del plazo de entrega y
-  la fecha límite. Biblioteca usa el plazo de la convocatoria institucional.
+- **Aviso de plazo.** Docente, Coordinación y Biblioteca ven en todas sus pantallas, bajo
+  la barra superior, una franja ámbar con los días que quedan, qué les toca hacer antes
+  del plazo de entrega y la fecha límite. Biblioteca usa el plazo de la convocatoria
+  institucional. El editor del sílabo, a pantalla completa, no la muestra.
 - **Panel.** Solo Administración: tres indicadores y «Puesta en marcha de la institución»
   hasta completar sus pasos. Los demás roles ven sus indicadores arriba de su lista de
   trabajo: «Revisión», «Mis sílabos» y «Revisiones de biblioteca».

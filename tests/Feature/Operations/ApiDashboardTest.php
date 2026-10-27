@@ -124,6 +124,31 @@ class ApiDashboardTest extends TestCase
             ->assertJsonPath('deadline.convocation_id', null);
     }
 
+    public function test_every_role_but_administration_gets_its_deadline_alone_to_show_it_on_every_screen(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        SyllabusProcess::query()->update(['estado' => SyllabusProcess::STATE_CLOSED]);
+        SyllabusProcess::query()->create([
+            'periodo_academico_id' => AcademicPeriod::query()->firstOrFail()->id,
+            'inicia_en' => now()->subDay(),
+            'entrega_en' => now()->addDays(3),
+            'estado' => SyllabusProcess::STATE_OPEN,
+        ]);
+        $deadline = function (string $email) {
+            $user = User::query()->where('correo_electronico', $email)->firstOrFail();
+
+            return $this->actingAs($user)
+                ->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id])
+                ->withHeader('Origin', 'http://localhost:5173')
+                ->getJson(route('api.v1.dashboard.deadline'))
+                ->assertOk();
+        };
+
+        $deadline('coordinador@silabos.test')->assertJsonPath('deadline.days_until_due', 3)->assertJsonPath('deadline.convocation_id', null)->assertJsonMissingPath('metrics');
+        $deadline('bibliotecario@silabos.test')->assertJsonPath('deadline.state', 'active')->assertJsonPath('deadline.days_until_due', 3);
+        $deadline('admin@silabos.test')->assertJsonPath('deadline', null);
+    }
+
     public function test_dashboard_requires_an_active_role(): void
     {
         $this->seed(DatabaseSeeder::class);

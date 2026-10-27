@@ -61,7 +61,11 @@ class DashboardController extends Controller
 
         $deadline = match (true) {
             $activeRole === null || ! $user instanceof User => null,
-            $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorDeadline($coordinatorReadiness, $schedule),
+            $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorDeadline(
+                $coordinatorReadiness['process'] ?? null,
+                ($coordinatorReadiness['convocation'] ?? null) instanceof Convocation ? $coordinatorReadiness['convocation'] : null,
+                $schedule,
+            ),
             $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherDeadline($user, $activeRole->carrera_id, $schedule),
             $activeRole->role->codigo_rol === RoleCode::Librarian->value => $this->librarianDeadline(),
             default => null,
@@ -77,6 +81,22 @@ class DashboardController extends Controller
         ];
 
         return response()->json($this->apiPayload($payload));
+    }
+
+    public function deadline(Request $request, ActiveRole $roles, ConvocationSchedule $schedule): JsonResponse
+    {
+        $activeRole = $roles->resolve($request);
+        $user = $request->user();
+
+        $deadline = match (true) {
+            $activeRole === null || ! $user instanceof User => null,
+            $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->careerDeadline($activeRole->carrera_id, $schedule),
+            $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherDeadline($user, $activeRole->carrera_id, $schedule),
+            $activeRole->role->codigo_rol === RoleCode::Librarian->value => $this->librarianDeadline(),
+            default => null,
+        };
+
+        return response()->json(['deadline' => $deadline]);
     }
 
     /**
@@ -251,19 +271,28 @@ class DashboardController extends Controller
         ];
     }
 
-    /**
-     * @param  CoordinatorReadiness|null  $readiness
-     * @return DeadlinePayload|null
-     */
-    private function coordinatorDeadline(?array $readiness, ConvocationSchedule $schedule): ?array
+    /** @return DeadlinePayload|null */
+    private function careerDeadline(?string $careerId, ConvocationSchedule $schedule): ?array
     {
-        $process = $readiness['process'] ?? null;
+        $process = SyllabusProcess::query()->inProgress()->with('academicPeriod')->first();
+        if ($process === null || $careerId === null) {
+            return null;
+        }
+
+        return $this->coordinatorDeadline(
+            $process,
+            Convocation::query()->where('carrera_id', $careerId)->where('proceso_id', $process->id)->first(),
+            $schedule,
+        );
+    }
+
+    /** @return DeadlinePayload|null */
+    private function coordinatorDeadline(mixed $process, ?Convocation $convocation, ConvocationSchedule $schedule): ?array
+    {
         if (! $process instanceof SyllabusProcess) {
             return null;
         }
 
-        $convocation = $readiness['convocation'] ?? null;
-        $convocation = $convocation instanceof Convocation ? $convocation : null;
         if ($convocation !== null) {
             $convocation->loadMissing('process.academicPeriod');
             $startsAt = $schedule->startsAt($convocation);

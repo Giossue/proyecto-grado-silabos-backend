@@ -90,6 +90,9 @@ Route::prefix('v1')->group(function (): void {
             Route::get('dashboard', [DashboardController::class, 'index'])
                 ->middleware('active-role')
                 ->name('api.v1.dashboard.show');
+            Route::get('dashboard/deadline', [DashboardController::class, 'deadline'])
+                ->middleware('active-role')
+                ->name('api.v1.dashboard.deadline');
             Route::get('notifications', [NotificationController::class, 'index'])
                 ->name('api.v1.notifications.index');
             Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])
