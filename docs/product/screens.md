@@ -28,7 +28,7 @@ muestra «Página no encontrada».
 | ADM-06 | Plantilla | `/admin/plantilla` | Ver y editar la plantilla única. Detalle abajo. |
 | ADM-10 | Auditoría | `/admin/auditoria` | Registro paginado: fecha, actividad y responsable. |
 | ADM-12 | Convocatorias | `/admin/convocatorias` | Una fila por período. Detalle abajo. |
-| ADM-13 | Ayuda de pantallas | `/admin/ayuda` | Tabla de pantallas por rol con estado «Con ayuda», «Sin ayuda» u «Oculta». Se edita el texto y si se muestra. |
+| ADM-13 | Ayuda de pantallas | `/admin/ayuda` | Tabla de pantallas por rol con estado «Listo» (la ayuda se ve) o «Pendiente» (sin texto u oculta). Se edita el texto y si se muestra. |
 
 ## Coordinador
 
