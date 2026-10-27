@@ -181,7 +181,8 @@ y el botón «Documentos» (DOC-10).
 - Bloques: unidades y semanas con contador de horas, discapacidad (los datos aparecen
   solo si responde Sí), Sí/No y filas repetibles.
 - En revisión o aprobado, la pantalla muestra el documento tal como sale.
-- «Vista previa» muestra el sílabo completo. «Copiar desde paralelo X» trae lo escrito en
+- «Vista previa» muestra la hoja del sílabo en la pantalla, como en Plantilla; «Editar»
+  vuelve al formulario. «Copiar desde paralelo X» trae lo escrito en
   otro paralelo propio.
 - «Enviar sílabo» queda deshabilitado mientras falten campos («Faltan N campos por
   completar»).
