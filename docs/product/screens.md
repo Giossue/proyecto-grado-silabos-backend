@@ -36,7 +36,7 @@ muestra «Página no encontrada».
 |---|---|---|---|
 | COR-01 | Puesta en marcha | `/coordinacion/puesta-en-marcha` | Pasos para preparar la carrera y «Abrir convocatoria». Fuera del menú lateral: se llega desde «Puesta en marcha» en COR-05. |
 | COR-04 | Seguimiento | pestaña en COR-05 | Todos los sílabos de la convocatoria con paralelos, docentes, estado y fecha de inicio. |
-| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Arriba, avance, por revisar y sin iniciar; acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Puesta en marcha». Pestañas «Cola de revisión» (asignatura, docente, número de revisión, estado y etapa) y «Seguimiento» (COR-04). |
+| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Puesta en marcha». Pestañas «Cola de revisión» (asignatura, docente, número de revisión, estado y etapa) y «Seguimiento» (COR-04). |
 | COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | Contenido enviado en solo lectura, historial de revisiones, decisión y firma. |
 | COR-07 | Comparar revisiones | `/coordinacion/revisiones/:before/comparar/:after` | Campos agregados, retirados o modificados, lado a lado. |
 | COR-08 | Solicitar corrección | tarjeta en COR-06 | «Comentario para el docente» y «Solicitar corrección». |

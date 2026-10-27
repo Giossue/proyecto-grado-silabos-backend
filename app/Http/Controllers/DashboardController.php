@@ -46,7 +46,6 @@ class DashboardController extends Controller
         $metrics = match (true) {
             $activeRole === null || ! $user instanceof User => [],
             $activeRole->role->codigo_rol === RoleCode::Administrator->value => $this->administratorMetrics(),
-            $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->coordinatorMetrics($coordinatorReadiness),
             $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherMetrics($user, $activeRole->carrera_id),
             $activeRole->role->codigo_rol === RoleCode::Librarian->value => $this->librarianMetrics($libraryReviews),
             default => [],
@@ -154,42 +153,6 @@ class DashboardController extends Controller
                 'value' => $careersWithoutConvocation,
                 'suffix' => null,
                 'hint' => 'Coordinaciones que aún no abren su convocatoria',
-            ],
-            [
-                'key' => 'not_started',
-                'label' => 'Sílabos sin iniciar',
-                'value' => (clone $syllabi)->where('estado', 'sin_iniciar')->count(),
-                'suffix' => null,
-                'hint' => 'Docentes que todavía no empiezan',
-            ],
-        ];
-    }
-
-    /**
-     * @param  CoordinatorReadiness|null  $readiness
-     * @return list<array{key: string, label: string, value: int, suffix: string|null, hint: string}>
-     */
-    private function coordinatorMetrics(?array $readiness): array
-    {
-        $convocation = $readiness['convocation'] ?? null;
-        $convocation = $convocation instanceof Convocation ? $convocation : null;
-        $syllabi = Syllabus::query()->when(
-            $convocation !== null,
-            fn (Builder $query) => $query->where('convocatoria_id', $convocation->id),
-            fn (Builder $query) => $query->whereRaw('1 = 0'),
-        );
-        $total = (clone $syllabi)->count();
-        $approved = (clone $syllabi)->where('estado', 'aprobado')->count();
-        $none = $convocation === null ? 'Sin convocatoria en curso' : null;
-
-        return [
-            $this->progressMetric($approved, $total, $none),
-            [
-                'key' => 'in_review',
-                'label' => 'Por revisar',
-                'value' => (clone $syllabi)->where('estado', 'en_revision')->count(),
-                'suffix' => null,
-                'hint' => 'Enviados por los docentes y a la espera de su revisión',
             ],
             [
                 'key' => 'not_started',
