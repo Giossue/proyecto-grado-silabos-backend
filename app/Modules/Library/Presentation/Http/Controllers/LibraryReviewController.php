@@ -4,6 +4,7 @@ namespace App\Modules\Library\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateContext;
@@ -24,6 +25,7 @@ use App\Modules\Syllabus\Application\SnapshotDocuments;
 use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use App\Support\InstitutionDate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 
@@ -36,18 +38,41 @@ class LibraryReviewController extends Controller
 
     public function index(ViewLibraryReviewsRequest $request): JsonResponse
     {
+        return response()->json($this->listing($request, LibraryReviews::PERIOD_CURRENT));
+    }
+
+    public function history(ViewLibraryReviewsRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $period = $request->validated('period');
+
+        return response()->json([
+            ...$this->listing(
+                $request,
+                LibraryReviews::PERIOD_PAST,
+                is_string($period) ? $period : null,
+                $request->boolean('mine') && $user instanceof User ? $user->id : null,
+            ),
+            'periods' => AcademicPeriod::query()->whereDate('fecha_fin_periodo', '<', InstitutionDate::todayOn())->orderByDesc('fecha_fin_periodo')->get()
+                ->map(fn (AcademicPeriod $item): array => ['id' => $item->id, 'code' => $item->codigo])->all(),
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function listing(ViewLibraryReviewsRequest $request, string $period, ?string $periodId = null, ?string $handledBy = null): array
+    {
         $state = $request->validated('state');
         $search = is_string($request->validated('q')) ? trim($request->validated('q')) : null;
         $faculty = $request->validated('faculty');
         $faculty = is_string($faculty) ? $faculty : null;
-        $page = $this->reviews->query(is_string($state) ? $state : null, $search, $faculty)
+        $page = $this->reviews->query(is_string($state) ? $state : null, $search, $faculty, $period, $periodId, $handledBy)
             ->with('revision.submitter:id,nombre')
             ->paginate(20)
             ->withQueryString();
         $syllabi = $this->syllabi(array_values(collect($page->items())->pluck('silabo_id')->all()));
 
-        return response()->json([
-            'filters' => ['q' => $search ?: null, 'state' => $state, 'faculty' => $faculty],
+        return [
+            'filters' => ['q' => $search ?: null, 'state' => $state, 'faculty' => $faculty, 'period' => $periodId, 'mine' => $handledBy !== null],
             'faculties' => Faculty::query()->where('facultad_activa', true)->orderBy('nombre_facultad')->get()
                 ->map(fn (Faculty $item): array => ['id' => $item->id, 'name' => $item->nombre])->all(),
             'reviews' => $page->through(fn (LibrarySubmission $submission): array => [
@@ -57,7 +82,7 @@ class LibraryReviewController extends Controller
                 'sent_by' => $submission->revision->submitter->nombre,
                 'state' => $submission->getAttribute('estado_envio'),
             ]),
-        ]);
+        ];
     }
 
     public function show(SyllabusRevision $revision, ViewLibraryReviewsRequest $request, SignatureWorkflow $workflow): JsonResponse

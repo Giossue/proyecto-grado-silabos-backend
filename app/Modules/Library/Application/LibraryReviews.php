@@ -3,6 +3,7 @@
 namespace App\Modules\Library\Application;
 
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
+use App\Support\InstitutionDate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -19,6 +20,12 @@ final class LibraryReviews
     public const STATE_VOIDED = 'anulado';
 
     public const STATES = [self::STATE_PENDING, self::STATE_TO_SIGN, self::STATE_SIGNED, self::STATE_COMMENTED, self::STATE_VOIDED];
+
+    public const PERIOD_ANY = 'cualquiera';
+
+    public const PERIOD_CURRENT = 'actual';
+
+    public const PERIOD_PAST = 'terminado';
 
     private const STATE_SQL = <<<'SQL'
         CASE
@@ -41,8 +48,14 @@ final class LibraryReviews
         SQL;
 
     /** @return Builder<LibrarySubmission> */
-    public function query(?string $state = null, ?string $search = null, ?string $facultyId = null): Builder
-    {
+    public function query(
+        ?string $state = null,
+        ?string $search = null,
+        ?string $facultyId = null,
+        string $period = self::PERIOD_ANY,
+        ?string $periodId = null,
+        ?string $handledBy = null,
+    ): Builder {
         return LibrarySubmission::query()
             ->join('revisiones_silabo as revision', 'revision.revision_silabo_id', '=', 'envios_biblioteca.revision_silabo_id')
             ->join('silabos as silabo', 'silabo.silabo_id', '=', 'revision.silabo_id')
@@ -61,6 +74,30 @@ final class LibraryReviews
                     ->whereColumn('convocatoria.convocatoria_carrera_id', 'silabo.convocatoria_carrera_id')
                     ->where('carrera.facultad_id', $facultyId),
             ))
+            ->when($period !== self::PERIOD_ANY || $periodId !== null, fn (Builder $query) => $query->whereExists(
+                fn ($convocation) => $convocation->selectRaw('1')
+                    ->from('convocatorias_carreras as convocatoria')
+                    ->join('convocatorias_universidad as proceso', 'proceso.convocatoria_universidad_id', '=', 'convocatoria.convocatoria_universidad_id')
+                    ->join('periodos_academicos as periodo', 'periodo.periodo_academico_id', '=', 'proceso.periodo_academico_id')
+                    ->whereColumn('convocatoria.convocatoria_carrera_id', 'silabo.convocatoria_carrera_id')
+                    ->when($period === self::PERIOD_CURRENT, fn ($q) => $q->whereDate('periodo.fecha_fin_periodo', '>=', InstitutionDate::todayOn()))
+                    ->when($period === self::PERIOD_PAST, fn ($q) => $q->whereDate('periodo.fecha_fin_periodo', '<', InstitutionDate::todayOn()))
+                    ->when($periodId !== null, fn ($q) => $q->where('periodo.periodo_academico_id', $periodId)),
+            ))
+            ->when($handledBy !== null, fn (Builder $query) => $query->where(
+                fn (Builder $handled) => $handled
+                    ->whereExists(fn ($approval) => $approval->selectRaw('1')->from('aprobaciones as aprobacion')
+                        ->whereColumn('aprobacion.revision_silabo_id', 'envios_biblioteca.revision_silabo_id')
+                        ->where('aprobacion.aprobado_por', $handledBy))
+                    ->orWhere(fn (Builder $returned) => $returned
+                        ->where('revision.correccion_etapa', 'biblioteca')
+                        ->where('revision.correccion_solicitada_por', $handledBy))
+                    ->orWhereExists(fn ($signature) => $signature->selectRaw('1')->from('firmas_documento as firma')
+                        ->join('exportaciones_silabo as exportacion', 'exportacion.exportacion_silabo_id', '=', 'firma.exportacion_silabo_id')
+                        ->whereColumn('exportacion.revision_silabo_id', 'envios_biblioteca.revision_silabo_id')
+                        ->where('firma.firmado_como', 'biblioteca')
+                        ->where('firma.usuario_id', $handledBy)),
+            ))
             ->orderByDesc('revision.enviado_en');
     }
 
@@ -75,7 +112,7 @@ final class LibraryReviews
     public function counts(): array
     {
         $totals = DB::query()
-            ->fromSub($this->query()->reorder()->toBase(), 'envios')
+            ->fromSub($this->query(period: self::PERIOD_CURRENT)->reorder()->toBase(), 'envios')
             ->selectRaw('estado_envio, count(*) AS total')
             ->groupBy('estado_envio')
             ->pluck('total', 'estado_envio');

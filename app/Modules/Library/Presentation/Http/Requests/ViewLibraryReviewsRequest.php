@@ -21,12 +21,14 @@ class ViewLibraryReviewsRequest extends FormRequest
             'state' => ['nullable', 'string', Rule::in(LibraryReviews::STATES)],
             'q' => ['nullable', 'string', 'max:100'],
             'faculty' => ['nullable', 'uuid', Rule::exists('facultades', 'facultad_id')],
+            'period' => ['nullable', 'uuid', Rule::exists('periodos_academicos', 'periodo_academico_id')],
+            'mine' => ['nullable', 'boolean'],
         ];
     }
 
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['faculty' => 'facultad'];
+        return ['faculty' => 'facultad', 'period' => 'período', 'mine' => 'solo los míos'];
     }
 }

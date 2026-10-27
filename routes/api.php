@@ -310,6 +310,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.signature.store');
             Route::get('library/reviews', [LibraryReviewController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.library.reviews.index');
+            Route::get('library/history', [LibraryReviewController::class, 'history'])
+                ->middleware('active-role')->name('api.v1.library.history.index');
             Route::get('library/reviews/{revision}', [LibraryReviewController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.library.reviews.show');
             Route::post('library/reviews/{revision}/verify', [LibraryReviewController::class, 'verify'])
