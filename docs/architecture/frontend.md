@@ -134,6 +134,15 @@ npm run test:e2e       # Playwright
 npm run contract:check # llamadas del cliente contra openapi.json del backend
 ```
 
+## Aplicación instalable (PWA)
+
+`vite-plugin-pwa` genera `manifest.webmanifest` y `sw.js` al compilar; en desarrollo no
+se registra. El service worker guarda la interfaz compilada para abrir rápido, pero no
+`config.js` ni las llamadas a la API: sin conexión la interfaz abre y los datos no
+cargan. Con una versión nueva, `AppUpdatePrompt` muestra «Hay una versión nueva del
+sistema» y solo recarga si la persona pulsa «Actualizar»; revisa si hay versión nueva
+cada hora. Nginx sirve `sw.js` y el manifiesto con `no-store`. Necesita HTTPS.
+
 ## Despliegue
 
 La imagen compila con Node 22 y sirve con Nginx en el puerto 8080 (`/health/live`).
