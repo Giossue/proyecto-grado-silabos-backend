@@ -54,7 +54,7 @@ y el botón «Documentos» (DOC-10).
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| DOC-02 | Mis sílabos | `/docente/mis-silabos` | Entrada del docente; no tiene Panel. Arriba, sílabos por entregar, por corregir y en revisión, y la tarjeta de plazo. Debajo, tarjetas del período vigente: asignatura, paralelo, estado y último guardado. Botón «Historial». |
+| DOC-02 | Mis sílabos | `/docente/mis-silabos` | Entrada del docente; no tiene Panel. Arriba, sílabos por entregar, por corregir y en revisión, y una franja con los días que quedan para enviar sus sílabos a revisión, la fecha límite y una barra de avance. Debajo, tarjetas del período vigente: asignatura, paralelo, estado y último guardado. Botón «Historial». |
 | DOC-04 | Sílabo | `/docente/mis-silabos/:syllabus` | Editor a pantalla completa, sin menú lateral. Detalle abajo. |
 | DOC-05 | Validación | dentro de DOC-04 | Campos faltantes y reglas de bloques; el botón de envío explica qué falta. |
 | DOC-06 | Asistente de unidades | panel en DOC-04 | Chat de IA con preguntas sugeridas y «Nuevo chat». |
