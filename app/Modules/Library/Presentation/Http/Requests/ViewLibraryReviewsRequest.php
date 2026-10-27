@@ -20,6 +20,13 @@ class ViewLibraryReviewsRequest extends FormRequest
         return [
             'state' => ['nullable', 'string', Rule::in(LibraryReviews::STATES)],
             'q' => ['nullable', 'string', 'max:100'],
+            'faculty' => ['nullable', 'uuid', Rule::exists('facultades', 'facultad_id')],
         ];
+    }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return ['faculty' => 'facultad'];
     }
 }

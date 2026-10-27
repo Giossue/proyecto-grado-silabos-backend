@@ -3,6 +3,7 @@
 namespace Tests\Feature\Library;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Domain\FreeText;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -100,6 +101,20 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertOk();
         $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 1);
         $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id]);
+    }
+
+    public function test_cada_bibliotecario_filtra_su_bandeja_por_facultad(): void
+    {
+        [$syllabus, $revision] = $this->submittedRevision();
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
+        $own = $syllabus->convocation->career()->firstOrFail()->facultad_id;
+        $other = Faculty::query()->create(['nombre' => 'Facultad de Ciencias de la Salud', 'campus' => 'Campus Matriz Dr. Gabriel Galarza López', 'activo' => true]);
+
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['faculty' => $own]))
+            ->assertOk()->assertJsonPath('reviews.total', 1)->assertJsonPath('filters.faculty', $own)
+            ->assertJsonFragment(['id' => $other->id, 'name' => 'Facultad de Ciencias de la Salud']);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['faculty' => $other->id]))->assertOk()->assertJsonPath('reviews.total', 0);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['faculty' => (string) Str::uuid()]))->assertUnprocessable()->assertJsonValidationErrors(['faculty']);
     }
 
     public function test_biblioteca_revisa_tras_coordinacion_y_devuelve_al_docente_que_reenvia_directo(): void

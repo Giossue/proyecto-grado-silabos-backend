@@ -67,7 +67,7 @@ y el botón «Documentos» (DOC-10).
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Entrada de Biblioteca; no tiene Panel. Aviso del plazo para revisar y firmar bajo la barra superior. Arriba, por verificar, por firmar y con comentario. Debajo, bandeja de toda la universidad: búsqueda, período y estado («Por revisar», «Por firmar», «Firmado», «Con comentario», «Anulado»). Columnas: carrera, docente y estado. |
+| BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Entrada de Biblioteca; no tiene Panel. Aviso del plazo para revisar y firmar bajo la barra superior. Arriba, por verificar, por firmar y con comentario. Debajo, bandeja de toda la universidad: búsqueda, facultad y estado («Por revisar», «Por firmar», «Firmado», «Con comentario», «Anulado»). Columnas: carrera, docente y estado. Los bibliotecarios se reparten el trabajo por facultad: cada uno ve la última facultad que eligió. |
 | BIB-03 | Revisión de bibliografía | `/biblioteca/revisiones/:revision` | Bibliografía en solo lectura, «Aprobar bibliografía», «Devolver al docente» con motivos, motivos enviados y firma. |
 
 ## Detalle de pantallas clave

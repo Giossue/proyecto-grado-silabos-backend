@@ -4,6 +4,7 @@ namespace App\Modules\Library\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplatePresentation;
@@ -37,14 +38,18 @@ class LibraryReviewController extends Controller
     {
         $state = $request->validated('state');
         $search = is_string($request->validated('q')) ? trim($request->validated('q')) : null;
-        $page = $this->reviews->query(is_string($state) ? $state : null, $search)
+        $faculty = $request->validated('faculty');
+        $faculty = is_string($faculty) ? $faculty : null;
+        $page = $this->reviews->query(is_string($state) ? $state : null, $search, $faculty)
             ->with('revision.submitter:id,nombre')
             ->paginate(20)
             ->withQueryString();
         $syllabi = $this->syllabi(array_values(collect($page->items())->pluck('silabo_id')->all()));
 
         return response()->json([
-            'filters' => ['q' => $search ?: null, 'state' => $state],
+            'filters' => ['q' => $search ?: null, 'state' => $state, 'faculty' => $faculty],
+            'faculties' => Faculty::query()->where('facultad_activa', true)->orderBy('nombre_facultad')->get()
+                ->map(fn (Faculty $item): array => ['id' => $item->id, 'name' => $item->nombre])->all(),
             'reviews' => $page->through(fn (LibrarySubmission $submission): array => [
                 ...$this->summary($syllabi->get($submission->getAttribute('silabo_id')), (int) $submission->getAttribute('numero_revision')),
                 'revision_id' => $submission->getAttribute('revision_id'),

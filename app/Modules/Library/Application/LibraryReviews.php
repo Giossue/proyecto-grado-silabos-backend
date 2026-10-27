@@ -41,7 +41,7 @@ final class LibraryReviews
         SQL;
 
     /** @return Builder<LibrarySubmission> */
-    public function query(?string $state = null, ?string $search = null): Builder
+    public function query(?string $state = null, ?string $search = null, ?string $facultyId = null): Builder
     {
         return LibrarySubmission::query()
             ->join('revisiones_silabo as revision', 'revision.revision_silabo_id', '=', 'envios_biblioteca.revision_silabo_id')
@@ -53,6 +53,13 @@ final class LibraryReviews
                 fn (Builder $outer) => $outer
                     ->whereRaw("silabo.datos_academicos_silabo->'subject'->>'name' ILIKE ?", ['%'.addcslashes($search, '%_\\').'%'])
                     ->orWhereRaw("silabo.datos_academicos_silabo->'subject'->>'code' ILIKE ?", ['%'.addcslashes($search, '%_\\').'%']),
+            ))
+            ->when($facultyId !== null, fn (Builder $query) => $query->whereExists(
+                fn ($career) => $career->selectRaw('1')
+                    ->from('convocatorias_carreras as convocatoria')
+                    ->join('carreras as carrera', 'carrera.carrera_id', '=', 'convocatoria.carrera_id')
+                    ->whereColumn('convocatoria.convocatoria_carrera_id', 'silabo.convocatoria_carrera_id')
+                    ->where('carrera.facultad_id', $facultyId),
             ))
             ->orderByDesc('revision.enviado_en');
     }
