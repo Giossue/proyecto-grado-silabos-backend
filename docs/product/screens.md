@@ -26,7 +26,7 @@ muestra «Página no encontrada».
 | ADM-03 | Detalle de la cuenta | hoja lateral en ADM-02 | Roles vigentes y finalizados, «Agregar otro rol», «Quitar rol», «Reenviar invitación», «Deshabilitar/Habilitar acceso», «Eliminar cuenta pendiente». |
 | ADM-04 | Facultades y carreras | `/admin/estructura-academica` | Pestañas Facultades (campus y logo PNG) y Carreras (modalidad, ciclos, «Asignar/Reemplazar coordinador», importación desde Excel). |
 | ADM-06 | Plantilla | `/admin/plantilla` | Ver y editar la plantilla única. Detalle abajo. |
-| ADM-10 | Auditoría | `/admin/auditoria` | Registro paginado: fecha, actividad y responsable. |
+| ADM-10 | Auditoría | `/admin/auditoria` | Registro paginado: fecha, actividad y responsable, todo con el mismo tamaño de letra. Filtros de lista, sin búsqueda de texto: período (por sus fechas), rol, carrera, actividad y resultado. |
 | ADM-12 | Convocatorias | `/admin/convocatorias` | Una fila por período. Detalle abajo. |
 | ADM-13 | Ayuda de pantallas | `/admin/ayuda` | Tabla de pantallas por rol con estado «Listo» (la ayuda se ve) o «Pendiente» (sin texto u oculta). Se edita el texto y si se muestra. |
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Documents;
 
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
@@ -535,6 +536,44 @@ class DocumentOperationsTest extends TestCase
         } catch (QueryException) {
             $this->assertSame('exito', $event->fresh()->resultado);
         }
+    }
+
+    public function test_audit_filters_by_period_role_and_career_without_free_text(): void
+    {
+        $period = AcademicPeriod::query()->create([
+            'codigo' => 'ENERO-2020-JUNIO-2020',
+            'nombre' => 'Enero 2020 - Junio 2020',
+            'fecha_inicio' => '2020-01-06',
+            'fecha_fin' => '2020-06-30',
+        ]);
+        $record = fn (string $when): AuditEvent => AuditEvent::query()->create([
+            'actor_usuario_id' => $this->coordinator->id,
+            'asignacion_rol_id' => $this->coordinatorContext->id,
+            'accion' => 'academico.oferta.creacion',
+            'tipo_recurso' => 'oferta',
+            'recurso_id' => (string) Str::uuid(),
+            'resultado' => 'exito',
+            'metadatos' => [],
+            'ocurrido_en' => $when,
+        ]);
+        $record('2020-03-10 15:00:00');
+        $record(now()->toDateTimeString());
+        $careerId = (string) $this->coordinatorContext->carrera_id;
+
+        $audit = fn (array $filters) => $this->actingAsAdministrator()
+            ->getJson(route('api.v1.admin.audit-events.index', $filters))->assertOk();
+
+        $audit([])
+            ->assertJsonPath('period_options.0.value', fn ($value) => is_string($value))
+            ->assertJsonFragment(['value' => 'coordinador', 'label' => 'Coordinador'])
+            ->assertJsonFragment(['value' => $careerId]);
+        $audit(['period' => $period->id])->assertJsonPath('events.total', 1)->assertJsonPath('filters.period', $period->id);
+        $audit(['role' => 'coordinador'])->assertJsonPath('events.total', 2);
+        $audit(['role' => 'docente'])->assertJsonPath('events.total', 0);
+        $audit(['career' => $careerId])->assertJsonPath('events.total', 2);
+        $audit(['career' => (string) Str::uuid()])->assertJsonPath('events.total', 0);
+        $audit(['period' => (string) Str::uuid()])->assertJsonPath('events.total', 0);
+        $audit(['period' => $period->id, 'role' => 'coordinador'])->assertJsonPath('events.total', 1);
     }
 
     /** @return array{Syllabus, SyllabusRevision} */

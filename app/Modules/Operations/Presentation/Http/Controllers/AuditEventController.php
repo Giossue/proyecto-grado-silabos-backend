@@ -4,6 +4,9 @@ namespace App\Modules\Operations\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
+use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
+use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Presentation\Http\Requests\ViewAuditEventsRequest;
 use App\Support\InstitutionDate;
@@ -19,6 +22,9 @@ class AuditEventController extends Controller
         $search = trim($request->string('search')->toString());
         $from = $request->string('from')->toString();
         $to = $request->string('to')->toString();
+        $periodId = $request->string('period')->toString();
+        $roleCode = $request->string('role')->toString();
+        $careerId = $request->string('career')->toString();
         $query = AuditEvent::query()->with([
             'actor:id,nombre',
             'roleAssignment',
@@ -37,6 +43,31 @@ class AuditEventController extends Controller
                 ->orWhere('actor_nombre', 'ilike', "%{$escaped}%")
                 ->orWhereHas('actor', fn ($actor) => $actor->where('nombre', 'ilike', "%{$escaped}%")));
         }
+        $period = $periodId !== '' ? AcademicPeriod::query()->find($periodId) : null;
+        if ($periodId !== '' && ! $period instanceof AcademicPeriod) {
+            $query->whereRaw('1 = 0');
+        }
+        if ($period instanceof AcademicPeriod) {
+            $query->whereBetween('ocurrido_en', [
+                CarbonImmutable::createFromFormat('Y-m-d', $period->fecha_inicio->toDateString(), InstitutionDate::timezone())->startOfDay()->utc(),
+                CarbonImmutable::createFromFormat('Y-m-d', $period->fecha_fin->toDateString(), InstitutionDate::timezone())->endOfDay()->utc(),
+            ]);
+        }
+        $role = RoleCode::tryFrom($roleCode);
+        if ($role instanceof RoleCode) {
+            $query->where(fn ($builder) => $builder
+                ->where('actor_rol', $role->label())
+                ->orWhereHas('roleAssignment', fn ($assignment) => $assignment->where('rol', $role->value)));
+        }
+        $career = $careerId !== '' ? Career::query()->find($careerId) : null;
+        if ($careerId !== '' && ! $career instanceof Career) {
+            $query->whereRaw('1 = 0');
+        }
+        if ($career instanceof Career) {
+            $query->where(fn ($builder) => $builder
+                ->where('actor_carrera', $career->nombre)
+                ->orWhereHas('roleAssignment', fn ($assignment) => $assignment->where('carrera_id', $career->id)));
+        }
         if ($from !== '') {
             $query->where('ocurrido_en', '>=', CarbonImmutable::createFromFormat('Y-m-d', $from, InstitutionDate::timezone())
                 ->startOfDay()->utc());
@@ -53,8 +84,16 @@ class AuditEventController extends Controller
                 'search' => $search,
                 'from' => $from,
                 'to' => $to,
+                'period' => $periodId,
+                'role' => $roleCode,
+                'career' => $careerId,
             ],
             'action_options' => $this->actionOptions(),
+            'period_options' => AcademicPeriod::query()->orderByDesc('fecha_inicio')->get(['id', 'codigo'])
+                ->map(fn (AcademicPeriod $item): array => ['value' => $item->id, 'label' => $item->codigo])->values()->all(),
+            'role_options' => array_map(fn (RoleCode $item): array => ['value' => $item->value, 'label' => $item->label()], RoleCode::cases()),
+            'career_options' => Career::query()->orderBy('nombre')->get(['id', 'nombre'])
+                ->map(fn (Career $item): array => ['value' => $item->id, 'label' => $item->nombre])->values()->all(),
             'events' => $query->latest('ocurrido_en')->paginate(20)->withQueryString()
                 ->through(fn (AuditEvent $event): array => [
                     'id' => $event->id,
