@@ -34,7 +34,7 @@ Desde el menú de la fila puede abrir, pausar, reanudar o cerrar la convocatoria
 
 Mientras la convocatoria esté abierta, la plantilla del sílabo no se puede modificar; para corregirla, pause el proceso.
 
-Arriba están los indicadores de la convocatoria vigente y el botón «Puesta en marcha».',
+Arriba están los indicadores de la convocatoria vigente. «Puesta en marcha» abre los pasos previos (facultades, carreras, cuentas, coordinadores y plantilla), cada uno con «Ir» a su pantalla y un check al completarlo. «Nueva convocatoria» se habilita cuando están todos.',
         ],
         '/admin/estructura-academica' => [
             'title' => 'Facultades y carreras',
@@ -65,12 +65,6 @@ Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leíd
 Con una convocatoria abierta la plantilla está bloqueada. Para cambiarla, pause la convocatoria. Al reanudar se le pedirá confirmación: todos los sílabos de este período se borran y empiezan desde cero, incluso los aprobados, porque el formato es único para toda la universidad.
 
 Los sílabos de períodos anteriores no se tocan. Si la plantilla está vacía, puede cargar el formato oficial de la UEB.',
-        ],
-        '/admin/puesta-en-marcha' => [
-            'title' => 'Puesta en marcha del sistema',
-            'content' => 'Los pasos para preparar el sistema, en orden: Facultades y carreras, Usuarios y roles, la Plantilla del sílabo y por último abrir la convocatoria. Cada paso pendiente enlaza a la pantalla donde se completa.
-
-Se llega desde el botón «Puesta en marcha» de Convocatorias.',
         ],
         '/admin/usuarios' => [
             'title' => 'Usuarios y roles',
@@ -162,15 +156,11 @@ Con «Importar desde Excel», descargue la plantilla de su carrera. Complete las
 
 Con una convocatoria abierta la edición está bloqueada. Si hay sílabos en curso, cambiar una ficha exige pausar y confirmar su regeneración; los procesos cerrados no se modifican.',
         ],
-        '/coordinacion/puesta-en-marcha' => [
-            'title' => 'Puesta en marcha de la carrera',
-            'content' => 'Los pasos para preparar su carrera, en orden: armar la malla, programar las materias del período, crear los paralelos, asignar un docente a cada uno y abrir la convocatoria.
-
-Al abrir la convocatoria se crea un sílabo por paralelo con su docente. Se llega desde el botón «Puesta en marcha» de Revisión.',
-        ],
         '/coordinacion/revisiones' => [
             'title' => 'Revisión de sílabos',
             'content' => 'Arriba ve el aviso con el plazo de entrega. Desde aquí abre, pausa o reanuda la convocatoria de su carrera.
+
+«Puesta en marcha» abre los pasos previos (malla, materias del período, paralelos y docentes), cada uno con «Ir» a su pantalla y un check al completarlo. «Abrir convocatoria» se habilita cuando todo está listo; si no, al pasar el cursor dice qué falta.
 
 «Por revisar» lista los sílabos que los docentes ya enviaron. Coordinación revisa primero el contenido; cuando lo aprueba, el sílabo pasa a Biblioteca para revisar la bibliografía. Abra uno para aprobarlo o pedir correcciones.
 

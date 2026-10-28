@@ -21,7 +21,7 @@ muestra «Página no encontrada».
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| ADM-01 | Puesta en marcha | `/admin/puesta-en-marcha` | Lista «Puesta en marcha de la institución», aunque esté completa. Se llega desde el botón «Puesta en marcha» de Convocatorias; no está en el menú lateral. |
+| ADM-01 | Puesta en marcha | modal en ADM-12 | Pasos previos a abrir la convocatoria (facultades, carreras, cuentas, coordinadores y plantilla), cada uno con «Ir» a su pantalla y un check al completarlo. «Nueva convocatoria» queda deshabilitada hasta completarlos. |
 | ADM-02 | Usuarios y roles | `/admin/usuarios` | Tabla de cuentas con la columna «Roles» para sus roles vigentes; «Crear cuenta» e «Importar desde Excel». |
 | ADM-03 | Detalle de la cuenta | hoja lateral en ADM-02 | Roles vigentes y finalizados, «Agregar otro rol», «Quitar rol», «Reenviar invitación», «Deshabilitar/Habilitar acceso», «Eliminar cuenta pendiente». |
 | ADM-04 | Facultades y carreras | `/admin/estructura-academica` | Pestañas Facultades (campus y logo PNG) y Carreras (modalidad, ciclos, «Asignar/Reemplazar coordinador», importación desde Excel). |
@@ -33,7 +33,7 @@ muestra «Página no encontrada».
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| COR-01 | Puesta en marcha | `/coordinacion/puesta-en-marcha` | Pasos para preparar la carrera y «Abrir convocatoria». Fuera del menú lateral: se llega desde «Puesta en marcha» en COR-05. |
+| COR-01 | Puesta en marcha | modal en COR-05 | Pasos previos a abrir la convocatoria de la carrera (malla, materias del período, paralelos y docentes), cada uno con «Ir» y un check al completarlo. «Abrir convocatoria» queda deshabilitado hasta que todo esté listo; su ayuda emergente dice qué falta. |
 | COR-04 | Seguimiento | pestaña en COR-05 | Todos los sílabos de la convocatoria con paralelos, docentes, estado y fecha de inicio. |
 | COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Puesta en marcha». Pestañas «Cola de revisión» (asignatura, docente, número de revisión, estado y etapa) y «Seguimiento» (COR-04). |
 | COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | El sílabo se ve como el documento final. Decisiones en la cabecera, con diálogos: «Solicitar corrección» y «Firmar y enviar a biblioteca». Historial y comparación en un botón secundario; reiniciar y eliminar en «Más». |
@@ -236,9 +236,9 @@ envían. Cada persona firma una sola vez por sílabo.
   la barra superior, una franja ámbar con los días que quedan, qué les toca hacer antes
   del plazo de entrega y la fecha límite. Biblioteca usa el plazo de la convocatoria
   institucional. El editor del sílabo, a pantalla completa, no la muestra.
-- **Panel.** Solo Administración: tres indicadores y «Puesta en marcha de la institución»
-  hasta completar sus pasos. Los demás roles ven sus indicadores arriba de su lista de
-  trabajo: «Revisión», «Mis sílabos» y «Revisiones de biblioteca».
+- **Sin Panel.** Cada rol entra a su lista de trabajo y ve ahí sus indicadores:
+  «Convocatorias», «Revisión», «Mis sílabos» y «Revisiones de biblioteca». La puesta en
+  marcha de Administración y de Coordinación es un modal en su pantalla de entrada.
 - **Tablas.** Búsqueda «Buscar por…», filtros y 20 filas por página. La fila abre el
   detalle. En pantallas angostas, cada fila se vuelve una tarjeta.
 - **Formularios.** Las altas se hacen en un modal o en una hoja lateral. Los datos
