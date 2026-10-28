@@ -177,11 +177,18 @@ class DashboardController extends Controller
                 'hint' => $counts[LibraryReviews::STATE_PENDING] === 0 ? 'Nada pendiente por ahora' : 'Aprobados por coordinación; falta la bibliografía',
             ],
             [
-                'key' => 'library_handled',
-                'label' => 'Atendidos',
-                'value' => $counts[LibraryReviews::STATE_HANDLED],
+                'key' => 'library_signed',
+                'label' => 'Firmados',
+                'value' => $counts[LibraryReviews::OUTCOME_SIGNED],
                 'suffix' => null,
-                'hint' => 'Firmados, devueltos o reemplazados',
+                'hint' => 'Bibliografía aprobada y firmada',
+            ],
+            [
+                'key' => 'library_commented',
+                'label' => 'Devueltos',
+                'value' => $counts[LibraryReviews::OUTCOME_RETURNED],
+                'suffix' => null,
+                'hint' => 'Con observaciones para el docente',
             ],
         ];
     }

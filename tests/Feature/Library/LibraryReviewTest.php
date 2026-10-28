@@ -257,6 +257,9 @@ class LibraryReviewTest extends TestCase
         ])->assertJsonValidationErrors('revision');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'atendido']))
             ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.outcome', 'firmado');
+        $this->as('librarian')->getJson(route('api.v1.dashboard.show'))->assertOk()
+            ->assertJsonPath('metrics.*.key', ['library_pending', 'library_signed', 'library_commented'])
+            ->assertJsonPath('metrics.*.value', [0, 1, 0]);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'por_firmar']))->assertUnprocessable();
         $this->as('librarian')->getJson(route('api.v1.library.history.index', ['mine' => 1]))->assertOk();
 

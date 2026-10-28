@@ -113,13 +113,13 @@ final class LibraryReviews
     {
         $totals = DB::query()
             ->fromSub($this->query(period: self::PERIOD_CURRENT)->reorder()->toBase(), 'envios')
-            ->selectRaw('estado_envio, count(*) AS total')
-            ->groupBy('estado_envio')
-            ->pluck('total', 'estado_envio');
-        $counts = array_fill_keys(self::STATES, 0);
-        foreach ($totals as $state => $total) {
-            if (isset($counts[$state])) {
-                $counts[$state] = (int) $total;
+            ->selectRaw('resultado_envio, count(*) AS total')
+            ->groupBy('resultado_envio')
+            ->pluck('total', 'resultado_envio');
+        $counts = array_fill_keys([self::STATE_PENDING, self::OUTCOME_SIGNED, self::OUTCOME_RETURNED, self::OUTCOME_REPLACED], 0);
+        foreach ($totals as $outcome => $total) {
+            if (isset($counts[$outcome])) {
+                $counts[$outcome] = (int) $total;
             }
         }
 
