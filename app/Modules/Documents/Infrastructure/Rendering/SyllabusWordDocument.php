@@ -6,6 +6,7 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Domain\TemplateStyle;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
+use Carbon\CarbonImmutable;
 use PhpOffice\PhpWord\Element\Section;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\Settings;
@@ -269,8 +270,9 @@ class SyllabusWordDocument
                 '{revision}' => (string) $input->revisionNumber,
                 '{subject}' => $input->subject,
                 '{code}' => $input->subjectCode,
-                '{fingerprint}' => $input->revisionFingerprint,
-                '{generated}' => $input->generatedAt,
+                // Huella corta y fecha local: la línea completa cabe en un renglón.
+                '{fingerprint}' => substr($input->revisionFingerprint, 0, 16),
+                '{generated}' => CarbonImmutable::parse($input->generatedAt)->setTimezone('America/Guayaquil')->format('d-m-Y H:i'),
                 '{period}' => $input->academicPeriod,
             ]),
             ['size' => $metadata['size'], 'color' => ltrim($metadata['color'], '#')],

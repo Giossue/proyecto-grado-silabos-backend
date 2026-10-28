@@ -221,6 +221,8 @@ class GenerateSyllabusExportJob implements ShouldBeUnique, ShouldQueue
                 'submitted_on' => $revision->enviado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
                 'coordinator' => $review?->reviewer->nombre ?? $approval->approver->nombre,
                 'approved_on' => ($review->revisado_en ?? $approval->aprobado_en)->setTimezone('America/Guayaquil')->format('d-m-Y'),
+                'librarian' => $approval->approver->nombre,
+                'verified_on' => $approval->aprobado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
             ]),
             ...TemplateVariables::signatures($stamps),
         ]);

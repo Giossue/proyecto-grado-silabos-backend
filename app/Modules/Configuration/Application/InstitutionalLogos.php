@@ -136,6 +136,17 @@ class InstitutionalLogos
         return $this->facultyPath($facultyId === null ? null : Faculty::query()->find($facultyId));
     }
 
+    /** URL del logo de la facultad del sílabo para las vistas previas; sin logo propio, el de muestra. */
+    public function facultyUrl(mixed $facultyId): string
+    {
+        $faculty = is_string($facultyId) ? Faculty::query()->find($facultyId) : null;
+        if ($faculty !== null && $this->facultyIsConfigured($faculty)) {
+            return route('logos.faculty', ['faculty' => $faculty->id, 'v' => $this->version($this->facultyPath($faculty))]);
+        }
+
+        return asset('images/silabo/facultad.jpeg').'?v='.$this->version(public_path('images/silabo/facultad.jpeg'));
+    }
+
     /**
      * @return array{institution: string, faculty: string}
      */

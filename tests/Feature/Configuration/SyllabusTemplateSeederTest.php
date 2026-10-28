@@ -87,6 +87,6 @@ class SyllabusTemplateSeederTest extends TestCase
         $this->assertStringContainsString('Nivel de contribución', FreeText::plainText($fields['contribucion_perfil']->contenido));
         $this->assertSame('Revisión y aprobación', $template->sections->firstWhere('clave', 'revision')->titulo);
         $signatureKeys = array_column(array_column(TemplateDocument::nodes($fields['firmas']->contenido, 'variable'), 'attrs'), 'id');
-        $this->assertEqualsCanonicalizing(['firma_docente', 'firma_coordinador', 'firma_bibliotecario', 'nombre_docente', 'nombre_coordinador', 'fecha_entrega', 'fecha_revision'], $signatureKeys);
+        $this->assertEqualsCanonicalizing(['firma_docente', 'firma_coordinador', 'firma_bibliotecario', 'nombre_docente', 'nombre_coordinador', 'nombre_bibliotecario', 'fecha_entrega', 'fecha_revision', 'fecha_verificacion'], $signatureKeys);
     }
 }

@@ -53,7 +53,7 @@
             "color": "#7F7F7F"
         },
         "metadata": {
-            "text": "Revisión {revision} · {subject} ({code}) · hash {fingerprint} · generado {generated}",
+            "text": "Revisión {revision} · {subject} ({code}) · huella {fingerprint} · generado {generated}",
             "size": 7,
             "color": "#7F7F7F"
         },
@@ -230,6 +230,16 @@
         "fecha_revision": {
             "label": "Fecha de aprobación de coordinación",
             "source": "approval.approved_on",
+            "sample": "14-08-2026"
+        },
+        "nombre_bibliotecario": {
+            "label": "Nombre de quien verificó la bibliografía",
+            "source": "approval.librarian",
+            "sample": "Lic. Nombre Apellido"
+        },
+        "fecha_verificacion": {
+            "label": "Fecha de verificación de biblioteca",
+            "source": "approval.verified_on",
             "sample": "14-08-2026"
         },
         "firma_docente": {
@@ -877,11 +887,12 @@
                         "<p>Coordinador de Carrera</p>",
                         "</td>",
                         "<td>",
-                        "<p>Nombre en la firma electrónica</p>",
+                        "<p>Nombre:</p>",
+                                "<p><span data-variable=\"nombre_bibliotecario\"></span></p>",
                         "<p>Bibliotecario</p>",
                         "</td>",
                         "</tr>",
-                        "<tr><td>Fecha de entrega: <span data-variable=\"fecha_entrega\"></span></td><td>Fecha de revisión: <span data-variable=\"fecha_revision\"></span></td><td>Fecha de verificación en la firma electrónica</td></tr>",
+                        "<tr><td>Fecha de entrega: <span data-variable=\"fecha_entrega\"></span></td><td>Fecha de revisión: <span data-variable=\"fecha_revision\"></span></td><td>Fecha de verificación: <span data-variable=\"fecha_verificacion\"></span></td></tr>",
                         "</table>"
                     ]
                 }

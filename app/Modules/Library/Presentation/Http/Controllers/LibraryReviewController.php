@@ -124,7 +124,7 @@ class LibraryReviewController extends Controller
             'verified_by' => $revision->approval?->approver->nombre,
             'presentation' => TemplatePresentation::presentation($definition, [
                 'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
-                'faculty' => asset('images/silabo/facultad.jpeg').'?v='.$this->logos->version(public_path('images/silabo/facultad.jpeg')),
+                'faculty' => $this->logos->facultyUrl(data_get($syllabus->contexto_academico, 'career.faculty_id')),
             ]),
             'template_variables' => is_array($snapshot['template_variables'] ?? null) ? $snapshot['template_variables'] : [],
             'sections' => BibliographySections::of($snapshot),

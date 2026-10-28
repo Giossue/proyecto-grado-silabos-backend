@@ -63,7 +63,8 @@ final class WordFieldRenderer
                 continue;
             }
             $label = WordValues::string($field['label'] ?? null, '');
-            if ($label !== '') {
+            // Un campo que se llama igual que su sección no repite el título.
+            if ($label !== '' && mb_strtolower(trim($label)) !== mb_strtolower(trim(WordValues::string($snapshotSection['title'] ?? null, '')))) {
                 $section->addText($label,
                     ['bold' => true, 'size' => $this->context->appearance['field_font_size'], 'color' => $this->context->color('text_color')],
                     ['spaceBefore' => 160, 'spaceAfter' => 80, 'keepNext' => true]);

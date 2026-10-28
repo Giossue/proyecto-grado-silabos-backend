@@ -167,8 +167,11 @@ class DocumentOperationsTest extends TestCase
 
         $documentXml = $this->exportedDocumentXml($artifact);
         $this->assertStringContainsString($this->coordinator->nombre, $documentXml);
-        $this->assertStringNotContainsString($librarian->nombre, $documentXml);
         $this->assertStringContainsString(now()->subDays(3)->setTimezone('America/Guayaquil')->format('d-m-Y'), $documentXml);
+        // La columna de biblioteca lleva a quien verificó la bibliografía y la fecha de su aprobación.
+        $this->assertStringContainsString($librarian->nombre, $documentXml);
+        $this->assertStringContainsString('Fecha de verificación: ', $documentXml);
+        $this->assertStringNotContainsString('en la firma electrónica', $documentXml);
     }
 
     public function test_cp_f_job_generates_consistent_private_documents_and_reauthorizes_download(): void
@@ -206,7 +209,7 @@ class DocumentOperationsTest extends TestCase
         $zip->close();
         @unlink($path);
         $this->assertIsString($documentXml);
-        $this->assertStringContainsString($revision->huella_sha256, $documentXml);
+        $this->assertStringContainsString(substr($revision->huella_sha256, 0, 16), $documentXml);
         $this->assertStringContainsString('Contenido academico verificable', $documentXml);
         $this->assertStringContainsString($this->coordinator->nombre, $documentXml);
         $this->assertStringContainsString(now()->setTimezone('America/Guayaquil')->format('d-m-Y'), $documentXml);

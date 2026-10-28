@@ -51,9 +51,9 @@ final class TemplateDocumentDefaults
         return self::fixedTable([
             [['Elaborado por'], ['Revisado y aprobado por'], ['Bibliografía verificada por']],
             [['[[variable:firma_docente]]'], ['[[variable:firma_coordinador]]'], ['[[variable:firma_bibliotecario]]']],
-            [['[[variable:nombre_docente]]'], ['[[variable:nombre_coordinador]]'], ['Nombre en la firma electrónica']],
+            [['[[variable:nombre_docente]]'], ['[[variable:nombre_coordinador]]'], ['[[variable:nombre_bibliotecario]]']],
             [['Docente de la asignatura'], ['Coordinación de carrera'], ['Biblioteca']],
-            [['Fecha de entrega: [[variable:fecha_entrega]]'], ['Fecha de aprobación: [[variable:fecha_revision]]'], ['Fecha en la firma electrónica']],
+            [['Fecha de entrega: [[variable:fecha_entrega]]'], ['Fecha de aprobación: [[variable:fecha_revision]]'], ['Fecha de verificación: [[variable:fecha_verificacion]]']],
         ], 1);
     }
 

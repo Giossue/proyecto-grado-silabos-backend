@@ -28,7 +28,7 @@ final class TemplateVariables
     }
 
     /**
-     * @param  array{submitted_on: string, coordinator: string, approved_on: string}  $approval
+     * @param  array{submitted_on: string, coordinator: string, approved_on: string, librarian: string, verified_on: string}  $approval
      * @return array<string, string>
      */
     public static function approval(array $approval): array

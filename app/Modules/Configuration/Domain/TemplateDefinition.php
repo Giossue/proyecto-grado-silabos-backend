@@ -15,6 +15,7 @@ final class TemplateDefinition
         'identification.organization_unit', 'identification.hours_ac', 'identification.hours_pae', 'identification.hours_aa',
         'identification.total_hours', 'identification.credits', 'identification.teaching_weeks', 'identification.teacher', 'identification.email',
         'identification.formation', 'approval.submitted_on', 'approval.coordinator', 'approval.approved_on',
+        'approval.librarian', 'approval.verified_on',
         'signature.docente', 'signature.coordinacion', 'signature.biblioteca',
     ];
 
