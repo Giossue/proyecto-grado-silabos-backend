@@ -100,16 +100,17 @@ Reglas:
 - El número de revisión es consecutivo por sílabo y la revisión anterior debe ser del
   mismo sílabo (`validar_relaciones_revision`).
 - `contenido_enviado` es la fotografía completa del envío, con la definición de la
-  plantilla congelada. Word y PDF se generan desde ahí.
-- `aprobaciones`, `revisiones_coordinacion`, `firmas_documento`, `archivos` y
+  plantilla congelada. El PDF se genera desde ahí.
+- `aprobaciones`, `revisiones_coordinacion`, `firmas_silabo`, `archivos` y
   `eventos_auditoria` no admiten `UPDATE` ni `DELETE` (`proteger_registro_append_only`).
 - `envios_biblioteca` tampoco se modifica (`proteger_envio_biblioteca`).
 - Una revisión tiene como máximo una revisión de coordinación, un envío a biblioteca y
   una aprobación (índices únicos por `revision_silabo_id`).
 - Una exportación completada no cambia y ninguna exportación se borra
-  (`validar_exportacion_silabo`). Al completarse debe tener Word, PDF y fecha.
+  (`validar_exportacion_silabo`). Al completarse debe tener PDF y fecha; el Word ya no
+  se guarda.
 - Cada firma ocupa un rol (`docente`, `coordinacion`, `biblioteca`) una sola vez por
-  exportación.
+  sílabo (`firmas_silabo_firmado_como_unico`).
 - Un mensaje de IA terminado no cambia y ningún mensaje se borra
   (`proteger_mensaje_ia`). La entrada de un mensaje pendiente tampoco cambia.
 - En `notificaciones` solo puede cambiar `leido_en` (`proteger_notificacion`). Si se borra
@@ -127,7 +128,8 @@ Reglas:
 
 Las protecciones anteriores ceden solo dentro de una transacción que ejecuta
 `SET LOCAL app.reinicio_institucional = 'on'` (`reinicio_institucional_habilitado()`).
-Solo lo hace `InProgressWork`. Lo usa para regenerar sílabos tras un cambio confirmado
+Lo hacen `InProgressWork` y, para borrar las firmas de un sílabo que se reinicia,
+`ResetSyllabus`. `InProgressWork` lo usa para regenerar sílabos tras un cambio confirmado
 de plantilla, malla, ficha o paralelo, para eliminar un sílabo aprobado y para borrar un
 proceso. Borra el sílabo completo con sus revisiones, aprobación, exportaciones, firmas,
 archivos y mensajes de IA. Fuera de esa transacción, los triggers rechazan el cambio.

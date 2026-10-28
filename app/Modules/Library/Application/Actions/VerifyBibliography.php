@@ -4,6 +4,9 @@ namespace App\Modules\Library\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Documents\Application\Actions\RequestSyllabusExport;
+use App\Modules\Documents\Application\Actions\SignSyllabusDecision;
+use App\Modules\Documents\Domain\Data\DecisionSignature;
+use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -24,13 +27,14 @@ class VerifyBibliography
         private readonly RecordAuditEvent $audit,
         private readonly CanonicalHasher $hasher,
         private readonly RequestSyllabusExport $exports,
+        private readonly SignSyllabusDecision $signing,
     ) {}
 
-    public function execute(SyllabusRevision $revision, User $actor, Request $request): LibrarySubmission
+    public function execute(SyllabusRevision $revision, ?DecisionSignature $signature, User $actor, Request $request): LibrarySubmission
     {
         abort_unless($actor->can('decide', $revision->syllabus), 403);
 
-        return DB::transaction(function () use ($actor, $request, $revision): LibrarySubmission {
+        return DB::transaction(function () use ($actor, $request, $revision, $signature): LibrarySubmission {
             $syllabus = Syllabus::query()->lockForUpdate()->findOrFail($revision->silabo_id);
             $submission = LibrarySubmission::query()->where('revision_silabo_id', $revision->id)->lockForUpdate()->firstOrFail();
             if (Approval::query()->where('revision_silabo_id', $revision->id)->exists()) {
@@ -41,6 +45,7 @@ class VerifyBibliography
                 throw ValidationException::withMessages(['revision' => 'Este sílabo ya no espera la revisión de biblioteca.']);
             }
 
+            $this->signing->execute($revision, SyllabusSignature::ROLE_LIBRARY, $signature, $actor, $request);
             $approvedAt = now();
             $idempotencyKey = (string) Str::uuid();
             $fingerprint = $this->hasher->hash([

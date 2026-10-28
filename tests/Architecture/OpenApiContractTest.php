@@ -26,11 +26,14 @@ it('mantiene el contrato OpenAPI sincronizado con las rutas públicas v1', funct
                 '/api/v1/teacher/syllabi/{syllabus}',
                 '/api/v1/teacher/syllabi/{syllabus}/ai-chat',
                 '/api/v1/coordination/reviews/{revision}',
-                '/api/v1/exports/{artifact}/{format}',
+                '/api/v1/exports/{artifact}/pdf',
+                '/api/v1/teacher/syllabi/{syllabus}/signing-statement',
             ])
             ->and($committed['paths']['/api/v1/session']['get']['security'])->toBe([['sanctumCookie' => []]])
-            ->and($committed['paths']['/api/v1/exports/{artifact}/{format}']['get']['responses']['200']['content'])
-            ->toHaveKey('application/octet-stream')
+            ->and($committed['paths']['/api/v1/exports/{artifact}/pdf']['get']['responses']['200']['content'])
+            ->toHaveKey('application/pdf')
+            ->and($committed['paths'])->not->toHaveKey('/api/v1/revisions/{revision}/signature')
+            ->and($committed['components']['schemas'])->toHaveKey('DecisionSignature')
             ->and($committed['paths']['/api/v1/admin/processes/{process}/{transition}']['post']['requestBody']['content']['application/json']['schema']['properties'])
             ->toHaveKey('confirmar_rehacer')
             ->and($committed['components']['schemas']['Error']['properties'])

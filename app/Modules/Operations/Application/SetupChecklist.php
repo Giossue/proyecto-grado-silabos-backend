@@ -7,7 +7,6 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\CoordinatorAssignment;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
-use App\Modules\Documents\Infrastructure\Persistence\Models\DocumentSignature;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Application\CoordinatorConvocationReadiness;
@@ -146,25 +145,14 @@ class SetupChecklist
         $total = (clone $own)->count();
         $started = (clone $own)->where('estado', '!=', 'sin_iniciar')->count();
         $submitted = (clone $own)->whereIn('estado', ['en_revision', 'aprobado'])->count();
-        $approvedIds = (clone $own)->where('estado', 'aprobado')->pluck('id')->all();
-        $approved = count($approvedIds);
-        $signed = $approvedIds === [] ? 0 : DocumentSignature::query()
-            ->where('rol_firma', DocumentSignature::ROLE_TEACHER)
-            ->whereHas('artifact.revision', fn (Builder $revision) => $revision->whereIn('silabo_id', $approvedIds))
-            ->with('artifact.revision:id,silabo_id')
-            ->get()
-            ->map(fn (DocumentSignature $signature): string => $signature->artifact->revision->silabo_id)
-            ->unique()
-            ->count();
 
         return $this->build(
             'Sus sílabos, paso a paso',
-            $total === 0 ? 'Cuando Coordinación abra la convocatoria, aquí aparecerán sus sílabos.' : 'Cada sílabo se abre, se completa, lo revisan Biblioteca y Coordinación y, una vez aprobado, se firma.',
+            $total === 0 ? 'Cuando Coordinación abra la convocatoria, aquí aparecerán sus sílabos.' : 'Cada sílabo se abre, se completa, se firma y se envía; luego lo revisan Coordinación y Biblioteca.',
             [
                 $this->step('assigned', 'Recibir los sílabos asignados', $total > 0 ? "{$total} asignados." : 'Los asigna Coordinación al abrir la convocatoria.', $total > 0),
                 $this->step('started', 'Abrir cada sílabo', $total > 0 ? "{$started} de {$total} abiertos." : 'Al abrirlo, el borrador parte de la ficha de la materia; también puede copiar el de otro de sus paralelos.', $total > 0 && $started === $total),
-                $this->step('submitted', 'Completar y enviar a revisión', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega. Primero lo revisa Coordinación y luego Biblioteca; el asistente de IA ayuda a redactar.', $total > 0 && $submitted === $total),
-                $this->step('signed', 'Firmar electrónicamente el sílabo aprobado', $approved > 0 ? "{$signed} de {$approved} aprobados firmados." : 'Cuando Coordinación lo apruebe, fírmelo con su certificado (.p12); después firman Coordinación y Biblioteca.', $total > 0 && $approved === $total && $signed === $approved),
+                $this->step('submitted', 'Completar, firmar y enviar', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega. Al primer envío se firma con su certificado (.p12).', $total > 0 && $submitted === $total),
             ],
         );
     }

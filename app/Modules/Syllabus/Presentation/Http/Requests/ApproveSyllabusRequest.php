@@ -24,6 +24,6 @@ class ApproveSyllabusRequest extends FormRequest
     /** @return array<string, list<string>> */
     public function rules(): array
     {
-        return [];
+        return ['signature' => ['nullable', 'array']];
     }
 }

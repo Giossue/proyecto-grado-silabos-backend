@@ -226,12 +226,10 @@ final class InProgressWork
         $exports = DB::table('exportaciones_silabo')
             ->whereIn('revision_silabo_id', $revisionIds)
             ->get(['exportacion_silabo_id', 'archivo_word_id', 'archivo_pdf_id']);
-        $signatures = DB::table('firmas_documento')->whereIn('exportacion_silabo_id', $exports->pluck('exportacion_silabo_id')->all());
         $objectIds = $exports->flatMap(fn ($export) => [$export->archivo_word_id, $export->archivo_pdf_id])
-            ->merge((clone $signatures)->pluck('archivo_firmado_id'))
             ->filter()->unique()->values()->all();
         $objects = DB::table('archivos')->whereIn('archivo_id', $objectIds)->get(['disco', 'ruta_archivo']);
-        $signatures->delete();
+        DB::table('firmas_silabo')->whereIn('silabo_id', $syllabusIds)->delete();
         DB::table('exportaciones_silabo')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('archivos')->whereIn('archivo_id', $objectIds)->delete();
         DB::afterCommit(function () use ($objects): void {

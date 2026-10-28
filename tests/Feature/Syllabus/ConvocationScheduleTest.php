@@ -21,6 +21,7 @@ use Illuminate\Support\Str;
 use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
+use Tests\Support\SignsStatements;
 use Tests\Support\UsesInstitutionalDays;
 use Tests\TestCase;
 
@@ -30,6 +31,7 @@ class ConvocationScheduleTest extends TestCase
     use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
+    use SignsStatements;
     use UsesInstitutionalDays;
 
     private User $administrator;
@@ -85,6 +87,7 @@ class ConvocationScheduleTest extends TestCase
         $syllabus = $this->createValidDraft(startsAt: now()->addWeek());
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('deadline');
@@ -98,6 +101,7 @@ class ConvocationScheduleTest extends TestCase
         $this->expireDeadline($syllabus);
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('deadline');
@@ -108,14 +112,15 @@ class ConvocationScheduleTest extends TestCase
 
     public function test_a_teacher_can_submit_on_the_delivery_day_even_when_utc_already_moved_on(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-22T00:30:00Z'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2027-10-22T00:30:00Z'));
         $syllabus = $this->createValidDraft();
         $syllabus->convocation->process()->update([
-            'inicia_en' => InstitutionDate::startOfDay('2026-10-20')->toIso8601String(),
-            'entrega_en' => InstitutionDate::endOfDay('2026-10-21')->toIso8601String(),
+            'inicia_en' => InstitutionDate::startOfDay('2027-10-20')->toIso8601String(),
+            'entrega_en' => InstitutionDate::endOfDay('2027-10-21')->toIso8601String(),
         ]);
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
@@ -125,14 +130,15 @@ class ConvocationScheduleTest extends TestCase
 
     public function test_the_delivery_day_closes_at_the_end_of_the_institutional_day(): void
     {
-        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-10-22T05:30:00Z'));
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2027-10-22T05:30:00Z'));
         $syllabus = $this->createValidDraft();
         $syllabus->convocation->process()->update([
-            'inicia_en' => InstitutionDate::startOfDay('2026-10-20')->toIso8601String(),
-            'entrega_en' => InstitutionDate::endOfDay('2026-10-21')->toIso8601String(),
+            'inicia_en' => InstitutionDate::startOfDay('2027-10-20')->toIso8601String(),
+            'entrega_en' => InstitutionDate::endOfDay('2027-10-21')->toIso8601String(),
         ]);
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('deadline');
@@ -171,6 +177,7 @@ class ConvocationScheduleTest extends TestCase
         $this->assertNotNotified($this->administrator->id, 'proceso.plazo_extendido');
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();

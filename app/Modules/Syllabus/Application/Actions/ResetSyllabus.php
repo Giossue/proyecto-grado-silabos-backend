@@ -67,6 +67,9 @@ class ResetSyllabus
             ];
 
             FieldValue::query()->where('silabo_id', $locked->id)->delete();
+            DB::statement("SET LOCAL app.reinicio_institucional = 'on'");
+            $discarded['discarded_signatures'] = DB::table('firmas_silabo')->where('silabo_id', $locked->id)->delete();
+            DB::statement("SET LOCAL app.reinicio_institucional = 'off'");
 
             $locked->update([
                 'estado' => 'sin_iniciar',

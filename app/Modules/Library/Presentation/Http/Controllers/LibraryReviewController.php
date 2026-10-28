@@ -9,7 +9,10 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplatePresentation;
-use App\Modules\Documents\Application\SignatureWorkflow;
+use App\Modules\Documents\Application\SyllabusSignatures;
+use App\Modules\Documents\Domain\Data\DecisionSignature;
+use App\Modules\Documents\Domain\SigningStatement;
+use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Library\Application\Actions\VerifyBibliography;
 use App\Modules\Library\Application\LibraryCommentReasons;
 use App\Modules\Library\Application\LibraryReviews;
@@ -34,6 +37,7 @@ class LibraryReviewController extends Controller
     public function __construct(
         private readonly LibraryReviews $reviews,
         private readonly InstitutionalLogos $logos,
+        private readonly SyllabusSignatures $signatures,
     ) {}
 
     public function index(ViewLibraryReviewsRequest $request): JsonResponse
@@ -86,10 +90,12 @@ class LibraryReviewController extends Controller
         ];
     }
 
-    public function show(SyllabusRevision $revision, ViewLibraryReviewsRequest $request, SignatureWorkflow $workflow): JsonResponse
+    public function show(SyllabusRevision $revision, ViewLibraryReviewsRequest $request): JsonResponse
     {
-        $artifact = $workflow->artifactFor($revision);
-        $submission = $workflow->submission($revision);
+        $submission = LibrarySubmission::query()
+            ->where('revision_silabo_id', $revision->id)
+            ->with(['revision.submitter:id,nombre', 'revision.approval.approver:id,nombre'])
+            ->first();
         abort_if($submission === null, 404);
         $syllabus = $this->syllabi([$revision->silabo_id])->get($revision->silabo_id);
         abort_if($syllabus === null, 404);
@@ -110,6 +116,10 @@ class LibraryReviewController extends Controller
             'outcome' => $outcome,
             'can_comment' => $reviewable,
             'can_verify' => $reviewable,
+            'signing_statement' => $reviewable && ! $this->signatures->signed($syllabus->id, SyllabusSignature::ROLE_LIBRARY)
+                ? SigningStatement::for($syllabus->id, SyllabusSignature::ROLE_LIBRARY, $revision->huella_sha256)
+                : null,
+            'signatures' => $this->signatures->summary($syllabus->id),
             'verified_at' => $revision->approval?->aprobado_en->toIso8601String(),
             'verified_by' => $revision->approval?->approver->nombre,
             'presentation' => TemplatePresentation::presentation($definition, [
@@ -141,9 +151,9 @@ class LibraryReviewController extends Controller
     {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute($revision, $actor, $request);
+        $action->execute($revision, DecisionSignature::from($request->input('signature')), $actor, $request);
 
-        return response()->json(['message' => 'Bibliografía aprobada. El sílabo queda aprobado y se genera el PDF para las firmas.'], 201);
+        return response()->json(['message' => 'Sílabo firmado y aprobado.'], 201);
     }
 
     /**

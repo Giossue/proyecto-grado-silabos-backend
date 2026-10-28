@@ -55,7 +55,7 @@ el recurso queda en estado fallido con una causa segura que ve el usuario.
 | Cola | Trabajos |
 |---|---|
 | `critica` | `PlatformSmokeJob` (verificación de la plataforma) |
-| `documentos` | `GenerateSyllabusExportJob` (Word y PDF) |
+| `documentos` | `GenerateSyllabusExportJob` (PDF) |
 | `ia` | `AnswerSyllabusChatJob` |
 | `general` (cola por defecto) | Correo de activación de la cuenta |
 

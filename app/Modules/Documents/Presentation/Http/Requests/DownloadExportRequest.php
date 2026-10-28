@@ -17,11 +17,6 @@ class DownloadExportRequest extends FormRequest
     /** @return array<string, list<string>> */
     public function rules(): array
     {
-        return ['format' => ['required', 'string', 'in:docx,pdf']];
-    }
-
-    protected function prepareForValidation(): void
-    {
-        $this->merge(['format' => $this->route('format')]);
+        return [];
     }
 }

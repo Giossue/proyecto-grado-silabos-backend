@@ -2,12 +2,44 @@
 
 namespace Tests\Support;
 
+use App\Models\User;
+use App\Modules\Documents\Domain\SigningStatement;
+use App\Modules\Syllabus\Application\SyllabusSnapshot;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
+use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use App\Support\CanonicalHasher;
 use OpenSSLAsymmetricKey;
 use OpenSSLCertificate;
 use RuntimeException;
 
-trait SignsPdfIncrementally
+trait SignsStatements
 {
+    /** @var array<string, array{certificate: OpenSSLCertificate, key: OpenSSLAsymmetricKey}> */
+    private static array $signingCredentials = [];
+
+    /** @return array{statement: string, cms: string} */
+    private function teacherSignature(Syllabus $syllabus, User $teacher): array
+    {
+        $fresh = $syllabus->fresh() ?? $syllabus;
+        $fingerprint = app(CanonicalHasher::class)->hash(app(SyllabusSnapshot::class)->build($fresh));
+
+        return $this->decisionSignature(SigningStatement::for($fresh->id, 'docente', $fingerprint), $teacher->nombre);
+    }
+
+    /** @return array{statement: string, cms: string} */
+    private function revisionSignature(SyllabusRevision $revision, string $role, User $signer): array
+    {
+        return $this->decisionSignature(SigningStatement::for($revision->silabo_id, $role, $revision->huella_sha256), $signer->nombre);
+    }
+
+    /** @return array{statement: string, cms: string} */
+    private function decisionSignature(string $statement, string $holder): array
+    {
+        self::$signingCredentials[$holder] ??= $this->makeSigningCertificate($holder, 3650);
+
+        return ['statement' => $statement, 'cms' => $this->signStatement($statement, self::$signingCredentials[$holder])];
+    }
+
     /** @return array{certificate: OpenSSLCertificate, key: OpenSSLAsymmetricKey} */
     private function makeSigningCertificate(string $holder, int $days = 30): array
     {
@@ -71,31 +103,14 @@ trait SignsPdfIncrementally
     }
 
     /** @param array{certificate: OpenSSLCertificate, key: OpenSSLAsymmetricKey} $credentials */
-    private function signPdfIncrementally(string $pdf, array $credentials, string $contentsHexLength = '32768'): string
+    private function signStatement(string $statement, array $credentials): string
     {
-        $placeholder = str_repeat('0', (int) $contentsHexLength);
-        $object = 9000 + substr_count($pdf, '/ByteRange');
-        $increment = "\n{$object} 0 obj\n<< /Type /Sig /Filter /Adobe.PPKLite /SubFilter /adbe.pkcs7.detached "
-            .'/ByteRange [0 /********** /********** /**********]'
-            ." /Contents <{$placeholder}> /M (D:20260924000000Z) >>\nendobj\n%%EOF\n";
-        $document = $pdf.$increment;
-
-        $contentsStart = strrpos($document, "/Contents <{$placeholder}>");
-        if ($contentsStart === false) {
-            throw new RuntimeException('No se encontró el marcador de la firma.');
-        }
-        $first = $contentsStart + strlen('/Contents ');
-        $second = $first + strlen($placeholder) + 2;
-        $range = sprintf('/ByteRange [0 %d %d %d]', $first, $second, strlen($document) - $second);
-        $document = str_replace('/ByteRange [0 /********** /********** /**********]', str_pad($range, strlen('/ByteRange [0 /********** /********** /**********]')), $document);
-
-        $signedContent = substr($document, 0, $first).substr($document, $second);
         $directory = sys_get_temp_dir().'/silabos-prueba-firma-'.bin2hex(random_bytes(6));
         mkdir($directory);
         try {
-            file_put_contents("{$directory}/contenido.bin", $signedContent);
+            file_put_contents("{$directory}/declaracion.txt", $statement);
             $ok = openssl_cms_sign(
-                "{$directory}/contenido.bin",
+                "{$directory}/declaracion.txt",
                 "{$directory}/firma.der",
                 $credentials['certificate'],
                 $credentials['key'],
@@ -104,15 +119,14 @@ trait SignsPdfIncrementally
                 OPENSSL_ENCODING_DER,
             );
             if (! $ok) {
-                throw new RuntimeException('No se pudo firmar el PDF de prueba.');
+                throw new RuntimeException('No se pudo firmar la declaración de prueba.');
             }
-            $hex = bin2hex((string) file_get_contents("{$directory}/firma.der"));
+
+            return base64_encode((string) file_get_contents("{$directory}/firma.der"));
         } finally {
-            @unlink("{$directory}/contenido.bin");
+            @unlink("{$directory}/declaracion.txt");
             @unlink("{$directory}/firma.der");
             @rmdir($directory);
         }
-
-        return substr($document, 0, $first + 1).str_pad($hex, strlen($placeholder), '0').substr($document, $second - 1);
     }
 }

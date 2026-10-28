@@ -112,10 +112,11 @@ pida.
 - Revisión: el docente envía, Coordinación aprueba o pide corrección con un comentario
   general, y Biblioteca revisa la bibliografía (aprueba o devuelve con motivos
   predefinidos). Si Biblioteca devuelve, el reenvío vuelve a Biblioteca.
-- Al aprobar Biblioteca se generan el Word y el PDF. El PDF se firma en el navegador
-  con un `.p12`, en orden docente → coordinación → biblioteca, y el titular del
-  certificado debe coincidir con la cuenta. Word y PDF se descargan solo con las tres
-  firmas.
+- Cada uno firma al decidir, en el navegador con su `.p12`: el docente en su primer envío,
+  Coordinación al aprobar y Biblioteca al aprobar (queda aprobado). Se firma una declaración
+  con la huella del contenido (CMS separada); el titular del certificado debe coincidir con la
+  cuenta. Nadie vuelve a firmar en los reenvíos. Al aprobar Biblioteca se genera un solo PDF con
+  los sellos de las tres firmas; se descarga apenas existe. No se ofrece Word.
 - Una revisión enviada o aprobada no se modifica; congela la definición de la
   plantilla.
 - La plantilla es una sola, se edita en el sitio y no tiene versiones. Es solo datos

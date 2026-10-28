@@ -3,6 +3,10 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Documents\Application\Actions\SignSyllabusDecision;
+use App\Modules\Documents\Domain\Data\DecisionSignature;
+use App\Modules\Documents\Domain\SigningStatement;
+use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -30,12 +34,29 @@ class SubmitSyllabus
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
+        private readonly SignSyllabusDecision $signing,
     ) {}
+
+    /** @return array{statement: string, required: bool} */
+    public function statement(Syllabus $syllabus, int $expectedLockVersion): array
+    {
+        $this->assertSubmittable($syllabus, $expectedLockVersion);
+
+        return [
+            'statement' => SigningStatement::for(
+                $syllabus->id,
+                SyllabusSignature::ROLE_TEACHER,
+                $this->hasher->hash($this->snapshots->build($syllabus)),
+            ),
+            'required' => $this->signing->required($syllabus->id, SyllabusSignature::ROLE_TEACHER),
+        ];
+    }
 
     public function execute(
         Syllabus $syllabus,
         int $expectedLockVersion,
         string $idempotencyKey,
+        ?DecisionSignature $signature,
         User $actor,
         Request $request,
     ): SyllabusRevision {
@@ -43,14 +64,7 @@ class SubmitSyllabus
         if ($existing !== null) {
             return $existing;
         }
-        if (! in_array($syllabus->estado, ['borrador', 'correccion_solicitada'], true)) {
-            throw ValidationException::withMessages(['syllabus' => 'El expediente no está listo para envío.']);
-        }
-        $this->schedule->assertOpenForSubmission($syllabus->convocation()->firstOrFail());
-
-        if ($syllabus->version_bloqueo !== $expectedLockVersion) {
-            throw new DraftConflictException($syllabus->version_bloqueo);
-        }
+        $this->assertSubmittable($syllabus, $expectedLockVersion);
 
         $validation = $this->validateDraft->execute($syllabus, $actor, $request);
         if ($validation->blockingErrors() > 0) {
@@ -59,7 +73,7 @@ class SubmitSyllabus
             ]);
         }
 
-        return DB::transaction(function () use ($actor, $expectedLockVersion, $idempotencyKey, $request, $syllabus): SyllabusRevision {
+        return DB::transaction(function () use ($actor, $expectedLockVersion, $idempotencyKey, $request, $signature, $syllabus): SyllabusRevision {
             $locked = Syllabus::query()->lockForUpdate()->findOrFail($syllabus->id);
             $existing = $this->existingRevision($locked, $idempotencyKey, $actor);
             if ($existing !== null) {
@@ -89,6 +103,8 @@ class SubmitSyllabus
                 'enviado_por' => $actor->id,
                 'enviado_en' => now(),
             ]);
+
+            $this->signing->execute($revision, SyllabusSignature::ROLE_TEACHER, $signature, $actor, $request);
 
             $toLibrary = $previous?->correccion_etapa === ReviewStage::LIBRARY;
             if ($toLibrary) {
@@ -130,6 +146,18 @@ class SubmitSyllabus
 
             return $revision;
         });
+    }
+
+    private function assertSubmittable(Syllabus $syllabus, int $expectedLockVersion): void
+    {
+        if (! in_array($syllabus->estado, ['borrador', 'correccion_solicitada'], true)) {
+            throw ValidationException::withMessages(['syllabus' => 'El expediente no está listo para envío.']);
+        }
+        $this->schedule->assertOpenForSubmission($syllabus->convocation()->firstOrFail());
+
+        if ($syllabus->version_bloqueo !== $expectedLockVersion) {
+            throw new DraftConflictException($syllabus->version_bloqueo);
+        }
     }
 
     private function existingRevision(Syllabus $syllabus, string $key, User $actor): ?SyllabusRevision

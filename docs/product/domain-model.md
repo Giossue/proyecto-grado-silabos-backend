@@ -94,13 +94,14 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 ## Documentos (`Documents`)
 
 - **Archivo** (`archivos`): objeto privado con disco, ruta, nombre, tipo, tamaño, huella
-  y categoría (logo de facultad, exportación, PDF firmado).
-- **Exportación** (`exportaciones_silabo`): revisión, archivo Word, archivo PDF, clave
-  de idempotencia y estado (`pendiente`, `en_ejecucion`, `completado`, `fallido`).
-  Completada exige ambos archivos.
-- **Firma** (`firmas_documento`): exportación, rol con que firma (`docente`,
-  `coordinacion`, `biblioteca`; una de cada una), usuario, PDF firmado y datos del
-  certificado (titular, número, entidad emisora y vigencia).
+  y categoría (logo de facultad, exportación).
+- **Exportación** (`exportaciones_silabo`): revisión, archivo PDF, clave de
+  idempotencia y estado (`pendiente`, `en_ejecucion`, `completado`, `fallido`).
+  Completada exige el PDF. `archivo_word_id` solo queda en exportaciones antiguas.
+- **Firma** (`firmas_silabo`): sílabo, revisión sobre la que se decidió, rol con que firma
+  (`docente`, `coordinacion`, `biblioteca`; una de cada una por sílabo), usuario,
+  declaración firmada, firma CMS en base64 y datos del certificado (titular, número,
+  entidad emisora y vigencia).
 
 ## IA (`AiAssistance`)
 
@@ -128,8 +129,9 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
    sílabo completo.
 8. Revisión de coordinación, envío a biblioteca y aprobación se registran una sola vez
    por revisión.
-9. Word y PDF se generan desde la copia guardada en la revisión.
-10. Las firmas siguen el orden docente → coordinación → biblioteca.
+9. El PDF se genera desde la copia guardada en la revisión.
+10. Cada persona firma una vez por sílabo, al decidir: docente al primer envío,
+    Coordinación al aprobar y Biblioteca al aprobar.
 11. La IA no cambia estados ni escribe en el sílabo.
 12. Perder la cola o el servicio de IA no daña el sílabo.
 13. El total de horas de una asignatura es la suma de sus componentes.

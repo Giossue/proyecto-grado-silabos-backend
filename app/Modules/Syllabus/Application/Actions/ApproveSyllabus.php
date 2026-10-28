@@ -3,6 +3,9 @@
 namespace App\Modules\Syllabus\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Documents\Application\Actions\SignSyllabusDecision;
+use App\Modules\Documents\Domain\Data\DecisionSignature;
+use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -23,11 +26,12 @@ class ApproveSyllabus
         private readonly RecordAuditEvent $audit,
         private readonly ScheduleWorkflowNotification $notifications,
         private readonly WorkflowNotificationRecipients $recipients,
+        private readonly SignSyllabusDecision $signing,
     ) {}
 
-    public function execute(SyllabusRevision $revision, User $actor, Request $request): CoordinationReview
+    public function execute(SyllabusRevision $revision, ?DecisionSignature $signature, User $actor, Request $request): CoordinationReview
     {
-        return DB::transaction(function () use ($actor, $request, $revision): CoordinationReview {
+        return DB::transaction(function () use ($actor, $request, $revision, $signature): CoordinationReview {
             $syllabus = Syllabus::query()->lockForUpdate()->findOrFail($revision->silabo_id);
             $existing = CoordinationReview::query()->where('revision_silabo_id', $revision->id)->first();
             if ($existing !== null) {
@@ -44,6 +48,7 @@ class ApproveSyllabus
                 throw ValidationException::withMessages(['revision' => 'La revisión ya no espera la decisión de coordinación.']);
             }
 
+            $this->signing->execute($revision, SyllabusSignature::ROLE_COORDINATION, $signature, $actor, $request);
             $review = CoordinationReview::query()->create([
                 'revision_silabo_id' => $revision->id,
                 'revisado_por' => $actor->id,

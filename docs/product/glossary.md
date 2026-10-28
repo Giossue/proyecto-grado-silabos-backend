@@ -26,8 +26,8 @@
 | Envío a biblioteca | Registro que pone una revisión en la bandeja de Biblioteca. |
 | Corrección solicitada | Devolución al docente. Coordinación deja un comentario general; Biblioteca elige motivos predefinidos. |
 | Aprobación | Decisión final sobre una revisión concreta, registrada cuando Biblioteca aprueba la bibliografía. Guarda la huella del contenido. |
-| Exportación | Word y PDF generados desde la revisión aprobada. |
-| Firma | Firma electrónica del PDF con un certificado `.p12`. Orden: docente, coordinación, biblioteca. |
+| Exportación | PDF generado desde la revisión aprobada, con los sellos de las firmas. |
+| Firma | Firma electrónica con un certificado `.p12` de una declaración que da el servidor, al decidir: docente al primer envío, Coordinación y Biblioteca al aprobar. Una por persona y sílabo. |
 | Huella | SHA-256 que permite comprobar que un contenido o archivo no cambió. |
 | Pausa | Estado que detiene la edición y el envío. Permite corregir plantilla, malla o fichas. |
 | Rehacer sílabos | Borrar y volver a crear sin iniciar los sílabos afectados por un cambio confirmado durante una pausa. |

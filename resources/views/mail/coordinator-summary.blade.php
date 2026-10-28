@@ -11,9 +11,6 @@ Esto espera su atención en el sistema.
 @if ($career['review'] > 0)
 - {{ $career['review'] }} {{ $career['review'] === 1 ? 'sílabo por revisar' : 'sílabos por revisar' }}
 @endif
-@if ($career['sign'] > 0)
-- {{ $career['sign'] }} {{ $career['sign'] === 1 ? 'sílabo por firmar' : 'sílabos por firmar' }}
-@endif
 
 @endforeach
 <x-mail::button :url="$url">

@@ -81,8 +81,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   las de cada carrera (I-231). Al cerrar se congela también el documento de los
   borradores y sílabos sin iniciar; las revisiones enviadas conservan su fotografía
   existente (ADR-0012). Una convocatoria cerrada queda solo para consulta: sus
-  sílabos ya no se editan, envían ni revisan, pero los aprobados todavía se firman, y
-  después se puede abrir la del período siguiente.
+  sílabos ya no se editan, envían, revisan ni firman, y después se puede abrir la del
+  período siguiente.
 - Un cambio de docente solo rehace el sílabo del paralelo en la convocatoria en curso;
   los de convocatorias cerradas se conservan (I-231).
 - En el historial, un sílabo de un período terminado pertenece a quien lo envió; si
@@ -219,22 +219,33 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Si Biblioteca devuelve, el reenvío del docente va directo a Biblioteca (I-220).
 - Una revisión enviada o aprobada no se modifica (ADR-0002).
 - Con la convocatoria cerrada, la revisión queda solo para consulta.
-- Biblioteca ve tres estados en su bandeja (2026-10-28): «Por revisar», «Por firmar» y «Atendidos».
-  «Atendido» junta lo firmado por biblioteca, lo devuelto al docente y lo reemplazado por una revisión
-  nueva; la API lo detalla en `outcome` (`firmado`, `devuelto`, `reemplazado`).
+- Biblioteca ve dos estados en su bandeja (2026-10-28, firmas al decidir): «Por revisar» y
+  «Atendidos». «Atendido» junta lo firmado y aprobado por biblioteca, lo devuelto al docente y lo
+  reemplazado por una revisión nueva; la API lo detalla en `outcome` (`firmado`, `devuelto`,
+  `reemplazado`). Ya no existe «Por firmar» (`por_firmar`).
 
 ## Firmas y documentos
 
-- Cuando Biblioteca aprueba, el sistema genera el Word y el PDF en cola. Gotenberg
-  convierte el Word en PDF; sin Gotenberg el PDF sale como texto simple.
-- El PDF se firma en el navegador con un archivo `.p12`, en orden docente →
-  coordinación → biblioteca (I-227).
+- Firmas al decidir (2026-10-28, reemplaza la firma secuencial del PDF ya aprobado): cada
+  persona firma una sola vez por sílabo con su `.p12` en el navegador, en el momento de
+  decidir. El docente firma al primer envío («Firmar y enviar»); los reenvíos tras una
+  corrección no se firman. Coordinación firma al aprobar («Firmar y enviar a biblioteca»)
+  y Biblioteca al aprobar («Firmar y aprobar»), con lo que el sílabo queda aprobado. Pedir
+  corrección o devolver no se firma. Reiniciar o eliminar el sílabo borra sus firmas.
+- Se firma una declaración de texto que da el servidor
+  (`silabos-ueb|silabo:{id}|accion:{envio_docente|aprobacion_coordinacion|aprobacion_biblioteca}|huella:{sha256}`)
+  con firma CMS/PKCS#7 separada (SHA-256). La huella es la del contenido que se decide: la
+  fotografía que envía el docente o la `hash_contenido` de la revisión. Se guarda en
+  `firmas_silabo` y se audita como `silabo.firmado` (I-227).
 - El titular del certificado debe coincidir con el nombre de la cuenta. Si se configura
   la lista de entidades certificadoras (DT-16), la cadena debe llegar a una de ellas.
-- Un documento firmado que cambia no se vuelve a firmar ni tiene verificación pública de
-  alteración, por pedido de la UEB.
-- Word y PDF se descargan solo con las tres firmas; el PDF es el firmado. Cada descarga
-  queda en auditoría.
+- Cuando Biblioteca aprueba, el sistema genera en cola un solo PDF (el Word es un paso
+  interno y no se guarda ni se descarga). Gotenberg convierte el Word en PDF; sin
+  Gotenberg el PDF sale como texto simple. El cuadro de firmas lleva un sello visible por
+  persona: «Firmado electrónicamente por NOMBRE · ROL · fecha · certificado N.º · emisor».
+- Si la bibliografía cambió después de la firma del docente o de Coordinación, el PDF
+  igual lleva sus sellos: no se vuelve a firmar (decisión del usuario).
+- El PDF se descarga apenas existe. Cada descarga queda en auditoría.
 
 ## IA
 
@@ -267,14 +278,14 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   conservan solo para mostrar los eventos ya registrados.
 - Solo se avisa a quien debe actuar o cuyo trabajo cambió (I-186). Cada aviso guarda su
   período académico; la campana y Notificaciones muestran solo los del período en curso
-  (2026-10-27). Administración solo recibe el fallo al generar Word y PDF.
+  (2026-10-27). Administración solo recibe el fallo al generar el PDF.
 - Por correo llegan pocos avisos (2026-10-27): solo los que piden actuar y ocurren poco,
   en esta lista inicial para el docente: convocatoria abierta, corrección solicitada y sílabo
-  aprobado (listo para firmar). Un correo por aviso y por persona, nunca repetido, y solo a
+  aprobado (PDF listo). Un correo por aviso y por persona, nunca repetido, y solo a
   cuentas activas con correo verificado. La lista se ajusta con `NOTIFICATION_EMAIL_EVENTS`
   y se apaga con `NOTIFICATION_EMAILS=false`.
 - Coordinación recibe un solo correo al día, de lunes a viernes a las 08:00 (hora de la
-  institución), y solo si tiene algo pendiente: sílabos por revisar y por firmar de las
+  institución), y solo si tiene algo pendiente: sílabos por revisar de las
   convocatorias abiertas o pausadas de su carrera. Con la convocatoria cerrada no insiste.
   Se ajusta con `NOTIFICATION_DIGEST_TIME` y se apaga con `NOTIFICATION_DIGEST=false`.
   Administración y Biblioteca no reciben correo de avisos. Todo es provisional hasta

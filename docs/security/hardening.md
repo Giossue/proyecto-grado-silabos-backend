@@ -110,8 +110,9 @@ un `POST` a la API con un cuerpo de 16 KB no debe devolver 500.
 ## Firma electrónica
 
 - El archivo `.p12` y su clave se usan solo en el navegador; nunca llegan al servidor.
-- El servidor acepta el PDF firmado solo si parte exacto del PDF vigente, agrega una sola
-  firma que cubre todo el documento, la firma CMS es válida y el certificado está vigente.
+- Se firma una declaración que da el servidor (sílabo, acción y huella del contenido). El
+  servidor acepta la firma solo si la declaración es idéntica a la esperada, la firma CMS
+  separada es válida sobre esos bytes y el certificado está vigente.
 - El titular del certificado debe coincidir con la cuenta que firma
   (`SIGNATURE_REQUIRE_HOLDER_MATCH`).
 - Con `SIGNATURE_TRUSTED_CA_BUNDLE` cargado, la cadena debe llegar a una entidad

@@ -13,7 +13,7 @@ class CoordinatorSummaryMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    /** @param list<array{career: string, review: int, sign: int}> $careers */
+    /** @param list<array{career: string, review: int}> $careers */
     public function __construct(
         public readonly string $name,
         public readonly array $careers,

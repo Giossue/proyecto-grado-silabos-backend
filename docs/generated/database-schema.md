@@ -3,7 +3,7 @@
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
 - Fecha: 2026-10-28.
-- Última migración aplicada: `2026_10_28_000246_screen_help_lives_in_code`.
+- Última migración aplicada: `2026_10_28_000247_sign_syllabus_when_deciding`.
 - Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 34 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
@@ -53,7 +53,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 - `proteger_envio_biblioteca()`: triggers en `envios_biblioteca`
 - `proteger_mensaje_ia()`: triggers en `mensajes_ia`
 - `proteger_notificacion()`: triggers en `notificaciones`
-- `proteger_registro_append_only()`: triggers en `aprobaciones`, `archivos`, `eventos_auditoria`, `firmas_documento`, `revisiones_coordinacion`
+- `proteger_registro_append_only()`: triggers en `aprobaciones`, `archivos`, `eventos_auditoria`, `firmas_silabo`, `revisiones_coordinacion`
 - `proteger_registro_con_campos_unicos()`: triggers en `revisiones_silabo`
 - `reinicio_institucional_habilitado()`: ningún trigger la llama directamente
 - `validar_exportacion_silabo()`: triggers en `exportaciones_silabo`
@@ -349,7 +349,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
   - `exportaciones_silabo_archivo_word_id_unique`: `(archivo_word_id)`
   - `exportaciones_silabo_revision_clave_solicitud_unica`: `(revision_silabo_id, clave_solicitud)`
 - CHECK:
-  - `exportaciones_silabo_completitud_check`: `CHECK (((((estado_exportacion)::text = 'completado'::text) AND (archivo_word_id IS NOT NULL) AND (archivo_pdf_id IS NOT NULL) AND (completado_en IS NOT NULL)) OR ((estado_exportacion)::text <> 'completado'::text)))`
+  - `exportaciones_silabo_completitud_check`: `CHECK ((((estado_exportacion)::text <> 'completado'::text) OR ((archivo_pdf_id IS NOT NULL) AND (completado_en IS NOT NULL))))`
   - `exportaciones_silabo_estado_check`: `CHECK (((estado_exportacion)::text = ANY ((ARRAY['pendiente'::character varying, 'en_ejecucion'::character varying, 'completado'::character varying, 'fallido'::character varying])::text[])))`
 - Triggers:
   - `validar_exportacion_silabo`: BEFORE INSERT OR DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION validar_exportacion_silabo()
@@ -370,33 +370,34 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 - CHECK:
   - `facultades_campus_facultad_check`: `CHECK (((campus_facultad)::text = ANY ((ARRAY['Campus Matriz Dr. Gabriel Galarza López'::character varying, 'Campus Laguacoto'::character varying, 'Campus CENI (Centro de Eventos Nacionales e Internacionales)'::character varying, 'Extensión San Miguel'::character varying, 'Sede Chimbo'::character varying])::text[])))`
 
-### `firmas_documento`
+### `firmas_silabo`
 
 | Columna | Tipo | Nulo | Por defecto |
 |---|---|---|---|
-| `firma_documento_id` | uuid | no |  |
-| `exportacion_silabo_id` | uuid | no |  |
+| `firma_silabo_id` | uuid | no |  |
+| `silabo_id` | uuid | no |  |
+| `revision_silabo_id` | uuid | no |  |
 | `firmado_como` | character varying(16) | no |  |
 | `usuario_id` | uuid | no |  |
-| `archivo_firmado_id` | uuid | no |  |
+| `declaracion_firmada` | text | no |  |
+| `firma_cms` | text | no |  |
 | `nombre_en_certificado` | character varying(255) | no |  |
 | `numero_certificado` | character varying(255) | no |  |
 | `entidad_emisora` | character varying(500) | no |  |
 | `certificado_valido_hasta` | timestamp(0) with time zone | no |  |
 | `firmado_en` | timestamp(0) with time zone | no |  |
 
-- PK: `PRIMARY KEY (firma_documento_id)`
+- PK: `PRIMARY KEY (firma_silabo_id)`
 - FK:
-  - `firmas_documento_archivo_firmado_id_foreign`: `FOREIGN KEY (archivo_firmado_id) REFERENCES archivos(archivo_id) ON DELETE RESTRICT`
-  - `firmas_documento_exportacion_silabo_id_foreign`: `FOREIGN KEY (exportacion_silabo_id) REFERENCES exportaciones_silabo(exportacion_silabo_id) ON DELETE RESTRICT`
-  - `firmas_documento_usuario_id_foreign`: `FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
+  - `firmas_silabo_revision_silabo_id_foreign`: `FOREIGN KEY (revision_silabo_id) REFERENCES revisiones_silabo(revision_silabo_id) ON DELETE RESTRICT`
+  - `firmas_silabo_silabo_id_foreign`: `FOREIGN KEY (silabo_id) REFERENCES silabos(silabo_id) ON DELETE RESTRICT`
+  - `firmas_silabo_usuario_id_foreign`: `FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
 - Únicos:
-  - `firmas_documento_archivo_firmado_unico`: `(archivo_firmado_id)`
-  - `firmas_documento_firmado_como_unico`: `(exportacion_silabo_id, firmado_como)`
+  - `firmas_silabo_firmado_como_unico`: `(silabo_id, firmado_como)`
 - CHECK:
-  - `firmas_documento_firmado_como_check`: `CHECK (((firmado_como)::text = ANY ((ARRAY['docente'::character varying, 'coordinacion'::character varying, 'biblioteca'::character varying])::text[])))`
+  - `firmas_silabo_firmado_como_check`: `CHECK (((firmado_como)::text = ANY ((ARRAY['docente'::character varying, 'coordinacion'::character varying, 'biblioteca'::character varying])::text[])))`
 - Triggers:
-  - `proteger_firma_documento`: BEFORE DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION proteger_registro_append_only()
+  - `proteger_firma_silabo`: BEFORE DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION proteger_registro_append_only()
 
 ### `invitaciones_activacion`
 

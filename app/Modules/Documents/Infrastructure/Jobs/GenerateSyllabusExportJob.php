@@ -2,13 +2,17 @@
 
 namespace App\Modules\Documents\Infrastructure\Jobs;
 
+use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Documents\Application\DocumentBundleValidator;
+use App\Modules\Documents\Application\SyllabusSignatures;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use App\Modules\Documents\Domain\Data\RenderedDocument;
+use App\Modules\Documents\Domain\SignatureAnchor;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
+use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
@@ -92,18 +96,15 @@ class GenerateSyllabusExportJob implements ShouldBeUnique, ShouldQueue
         ));
         $validator->validate($bundle);
 
-        $basePath = "exports/{$revision->id}/{$artifact->id}";
-        $docx = $this->persistObject($artifact, $bundle->docx, "{$basePath}/syllabus.docx");
-        $pdf = $this->persistObject($artifact, $bundle->pdf, "{$basePath}/syllabus.pdf");
+        $pdf = $this->persistObject($artifact, $bundle->pdf, "exports/{$revision->id}/{$artifact->id}/syllabus.pdf");
 
-        DB::transaction(function () use ($artifact, $audit, $docx, $pdf, $revision, $syllabus): void {
+        DB::transaction(function () use ($artifact, $audit, $pdf, $revision, $syllabus): void {
             $locked = ExportArtifact::query()->lockForUpdate()->findOrFail($artifact->id);
             if ($locked->estado === 'completado') {
                 return;
             }
 
             $locked->update([
-                'objeto_docx_id' => $docx->id,
                 'objeto_pdf_id' => $pdf->id,
                 'estado' => 'completado',
                 'completado_en' => now(),
@@ -125,7 +126,6 @@ class GenerateSyllabusExportJob implements ShouldBeUnique, ShouldQueue
                 result: 'exito',
                 metadata: [
                     'revision_number' => $revision->numero_revision,
-                    'docx_object_id' => $docx->id,
                     'pdf_object_id' => $pdf->id,
                 ],
             );
@@ -211,12 +211,33 @@ class GenerateSyllabusExportJob implements ShouldBeUnique, ShouldQueue
             ->whereHas('revision', fn ($query) => $query->where('silabo_id', $revision->silabo_id)->where('numero_revision', '<=', $revision->numero_revision))
             ->latest('revisado_en')
             ->first();
-        $snapshot['template_variables'] = [...$variables, ...TemplateVariables::approval([
-            'submitted_on' => $revision->enviado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
-            'coordinator' => $review?->reviewer->nombre ?? $approval->approver->nombre,
-            'approved_on' => ($review->revisado_en ?? $approval->aprobado_en)->setTimezone('America/Guayaquil')->format('d-m-Y'),
-        ])];
+        $stamps = [];
+        foreach (app(SyllabusSignatures::class)->of($revision->silabo_id) as $signature) {
+            $stamps[$signature->firmado_como] = $this->stamp($signature);
+        }
+        $snapshot['template_variables'] = app(TemplateContext::class)->forSnapshot($snapshot, fn (): array => [
+            ...$variables,
+            ...TemplateVariables::approval([
+                'submitted_on' => $revision->enviado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
+                'coordinator' => $review?->reviewer->nombre ?? $approval->approver->nombre,
+                'approved_on' => ($review->revisado_en ?? $approval->aprobado_en)->setTimezone('America/Guayaquil')->format('d-m-Y'),
+            ]),
+            ...TemplateVariables::signatures($stamps),
+        ]);
 
         return $snapshot;
+    }
+
+    private function stamp(SyllabusSignature $signature): string
+    {
+        $issuer = preg_match('/(?:^|,\s*)CN=([^,]+)/', $signature->entidad_emisora, $match) === 1 ? trim($match[1]) : $signature->entidad_emisora;
+
+        return SignatureAnchor::stamp(
+            $signature->firmado_como,
+            $signature->nombre_en_certificado,
+            $signature->firmado_en->setTimezone('America/Guayaquil')->format('d-m-Y H:i'),
+            $signature->numero_certificado,
+            $issuer,
+        );
     }
 }

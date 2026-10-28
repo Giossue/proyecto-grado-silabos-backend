@@ -13,8 +13,9 @@ Aplicación web con inicio de sesión. Administración abre una convocatoria por
 Cada sílabo nace de una plantilla institucional única y trae ya los datos de la malla,
 del paralelo y de la ficha de la asignatura. El docente completa lo suyo, con ayuda
 opcional de un chat de IA, y lo envía. Coordinación revisa el contenido y Biblioteca
-verifica la bibliografía. Al aprobarse, el sistema genera el Word y el PDF, que firman
-docente, coordinación y biblioteca con firma electrónica.
+verifica la bibliografía. Cada uno firma con su firma electrónica al decidir: el docente
+al enviar, Coordinación y Biblioteca al aprobar. Al aprobarse, el sistema genera el PDF
+con los tres sellos.
 
 ## Objetivo de valor
 
@@ -23,7 +24,7 @@ docente, coordinación y biblioteca con firma electrónica.
 - plantilla configurable sin cambiar código ni esquema de base;
 - devoluciones con comentario, no archivos de ida y vuelta;
 - revisiones enviadas inmutables y comparables;
-- Word y PDF generados desde la revisión aprobada;
+- PDF generado desde la revisión aprobada, con los sellos de las firmas;
 - auditoría de las acciones importantes.
 
 ## Usuarios
@@ -31,9 +32,9 @@ docente, coordinación y biblioteca con firma electrónica.
 | Rol | Qué hace |
 |---|---|
 | Administrador | Usuarios y roles, facultades y carreras, plantilla, convocatorias y auditoría. |
-| Coordinador | Malla, paralelos, docentes y Proyecto de carrera de su carrera; inicia su convocatoria; revisa y aprueba la etapa de coordinación; firma. |
-| Docente | Elabora, corrige y envía el sílabo de sus paralelos; firma. |
-| Bibliotecario | Verifica la bibliografía de toda la universidad: aprueba o devuelve con motivos; firma al final. |
+| Coordinador | Malla, paralelos, docentes y Proyecto de carrera de su carrera; inicia su convocatoria; revisa la etapa de coordinación y la aprueba firmando. |
+| Docente | Elabora, corrige y envía el sílabo de sus paralelos; firma en el primer envío. |
+| Bibliotecario | Verifica la bibliografía de toda la universidad: aprueba firmando o devuelve con motivos. |
 
 Una persona puede tener varios roles, salvo Administrador, que es exclusivo. El detalle
 está en `roles-and-permissions.md`.
@@ -46,7 +47,7 @@ está en `roles-and-permissions.md`.
 4. Convocatoria por período y un sílabo por paralelo.
 5. Elaboración con autoguardado, validación y chat de IA opcional.
 6. Revisión: coordinación y luego biblioteca; corrección y reenvío.
-7. Word y PDF automáticos al aprobar; firma electrónica en tres pasos.
+7. Firma electrónica al decidir y PDF automático al aprobar.
 8. Avisos cuando hay que actuar, ayuda por pantalla, accesibilidad y auditoría.
 
 ## Fuera de alcance

@@ -9,16 +9,12 @@ use Illuminate\Support\Facades\DB;
 
 final class LibraryReviews
 {
-    // Biblioteca ve tres estados: lo que debe revisar, lo que debe firmar y lo que ya atendió.
     public const STATE_PENDING = 'pendiente';
-
-    public const STATE_TO_SIGN = 'por_firmar';
 
     public const STATE_HANDLED = 'atendido';
 
-    public const STATES = [self::STATE_PENDING, self::STATE_TO_SIGN, self::STATE_HANDLED];
+    public const STATES = [self::STATE_PENDING, self::STATE_HANDLED];
 
-    // Cómo terminó un envío atendido: firmado por biblioteca, devuelto al docente o reemplazado por otra revisión.
     public const OUTCOME_SIGNED = 'firmado';
 
     public const OUTCOME_RETURNED = 'devuelto';
@@ -34,24 +30,18 @@ final class LibraryReviews
     private const OUTCOME_SQL = <<<'SQL'
         CASE
             WHEN EXISTS (
-                SELECT 1 FROM firmas_documento firma
-                JOIN exportaciones_silabo exportacion ON exportacion.exportacion_silabo_id = firma.exportacion_silabo_id
-                WHERE exportacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
-                  AND firma.firmado_como = 'biblioteca'
+                SELECT 1 FROM aprobaciones aprobacion WHERE aprobacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
             ) THEN 'firmado'
             WHEN revision.correccion_etapa = 'biblioteca' THEN 'devuelto'
             WHEN EXISTS (
                 SELECT 1 FROM revisiones_silabo posterior
                 WHERE posterior.silabo_id = revision.silabo_id AND posterior.numero_revision > revision.numero_revision
             ) THEN 'reemplazado'
-            WHEN EXISTS (
-                SELECT 1 FROM aprobaciones aprobacion WHERE aprobacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
-            ) THEN 'por_firmar'
             ELSE 'pendiente'
         END
         SQL;
 
-    private const STATE_SQL = 'CASE ('.self::OUTCOME_SQL.") WHEN 'pendiente' THEN 'pendiente' WHEN 'por_firmar' THEN 'por_firmar' ELSE 'atendido' END";
+    private const STATE_SQL = 'CASE ('.self::OUTCOME_SQL.") WHEN 'pendiente' THEN 'pendiente' ELSE 'atendido' END";
 
     /** @return Builder<LibrarySubmission> */
     public function query(
@@ -98,12 +88,7 @@ final class LibraryReviews
                         ->where('aprobacion.aprobado_por', $handledBy))
                     ->orWhere(fn (Builder $returned) => $returned
                         ->where('revision.correccion_etapa', 'biblioteca')
-                        ->where('revision.correccion_solicitada_por', $handledBy))
-                    ->orWhereExists(fn ($signature) => $signature->selectRaw('1')->from('firmas_documento as firma')
-                        ->join('exportaciones_silabo as exportacion', 'exportacion.exportacion_silabo_id', '=', 'firma.exportacion_silabo_id')
-                        ->whereColumn('exportacion.revision_silabo_id', 'envios_biblioteca.revision_silabo_id')
-                        ->where('firma.firmado_como', 'biblioteca')
-                        ->where('firma.usuario_id', $handledBy)),
+                        ->where('revision.correccion_solicitada_por', $handledBy)),
             ))
             ->orderByDesc('revision.enviado_en');
     }

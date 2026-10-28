@@ -10,8 +10,8 @@ Estatal de Bolívar. Admite varias facultades y carreras.
 - **Administración:** gestiona cuentas, facultades, carreras, períodos, convocatorias y
   la plantilla del sílabo.
 
-Al aprobarse, el sistema genera el Word y el PDF; docente, coordinación y biblioteca
-firman el PDF con su certificado `.p12`.
+Docente, coordinación y biblioteca firman con su certificado `.p12` al decidir (enviar o
+aprobar). Al aprobarse, el sistema genera un solo PDF con los sellos de las tres firmas.
 
 Este repositorio es la API Laravel 13 (JSON bajo `/api/v1`). La interfaz es una SPA Vue
 3 en `proyecto-grado-silabos-frontend`. PostgreSQL guarda todos los datos y atiende
@@ -21,7 +21,6 @@ las colas y la caché.
 
 - PHP 8.4 o superior, Composer 2 y las extensiones usuales de Laravel con `pdo_pgsql`.
 - Docker Compose (o compatible) para PostgreSQL.
-- `pdftotext` (paquete `poppler-utils`) para ubicar los sellos de firma en el PDF.
 
 ## Puesta en marcha
 
@@ -41,7 +40,7 @@ php artisan queue:work --queue=critica,documentos,ia,general --tries=3
 ```
 
 - `critica`: verificación de plataforma.
-- `documentos`: Word y PDF del sílabo.
+- `documentos`: PDF del sílabo.
 - `ia`: chat del docente. La carga de fichas usa Excel estructurado sin cola.
 - `general`: correos de activación de cuenta.
 

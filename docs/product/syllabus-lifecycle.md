@@ -27,12 +27,12 @@ Estados guardados (`silabos.estado_silabo`): `sin_iniciar`, `borrador`, `en_revi
 | — | Abrir la convocatoria de la carrera | Coordinación | Sin iniciar | Un sílabo por paralelo; copia la ficha y el contexto académico; avisa a los docentes. |
 | Sin iniciar | Abrir el sílabo | Docente | Borrador | El borrador se inicia solo al abrirlo. |
 | Sin iniciar o Borrador | Copiar desde otro paralelo propio | Docente | Borrador | Copia los campos del docente y los de la ficha marcados como editables. |
-| Borrador o Corrección solicitada | Enviar | Docente | En revisión | Valida, crea una revisión inmutable con huella y avisa. |
-| En revisión · coordinación | Aprobar | Coordinación | En revisión · biblioteca | Registra la revisión de coordinación y el envío a biblioteca; avisa a Biblioteca. |
+| Borrador o Corrección solicitada | Firmar y enviar (primer envío) / Enviar (reenvío) | Docente | En revisión | Valida, crea una revisión inmutable con huella y avisa. En el primer envío exige la firma del docente. |
+| En revisión · coordinación | Firmar y enviar a biblioteca | Coordinación | En revisión · biblioteca | Exige la firma de Coordinación; registra la revisión de coordinación y el envío a biblioteca; avisa a Biblioteca. |
 | En revisión · coordinación | Solicitar corrección | Coordinación | Corrección solicitada | Comentario general de 10 a 10 000 caracteres. |
-| En revisión · biblioteca | Aprobar bibliografía | Biblioteca | Aprobado | Crea la aprobación con huella y genera Word y PDF; cuando están listos avisa al docente que ya puede firmar. |
+| En revisión · biblioteca | Firmar y aprobar | Biblioteca | Aprobado | Exige la firma de Biblioteca; crea la aprobación con huella y genera el PDF final; cuando está listo avisa al docente. |
 | En revisión · biblioteca | Devolver al docente | Biblioteca | Corrección solicitada | Uno o más motivos predefinidos, sin texto libre. |
-| Borrador, En revisión o Corrección solicitada | Reiniciar | Coordinación | Sin iniciar | Borra lo escrito, vuelve a copiar la ficha y la plantilla y conserva las revisiones. |
+| Borrador, En revisión o Corrección solicitada | Reiniciar | Coordinación | Sin iniciar | Borra lo escrito y las firmas, vuelve a copiar la ficha y la plantilla y conserva las revisiones. |
 | Aprobado | Eliminar | Coordinación | Sin iniciar (sílabo nuevo) | Borra el sílabo con revisiones, aprobación, documentos, firmas y chat; crea uno nuevo para el paralelo. |
 
 Reiniciar y eliminar exigen la convocatoria de la carrera abierta o pausada. Lo mismo
@@ -69,21 +69,29 @@ el estado: el sílabo sigue «En revisión».
 - «Enviar sílabo» queda deshabilitado mientras falten campos o falle una regla. El
   servidor vuelve a validar al recibir el envío.
 
-## Documentos y firmas
+## Firmas y documento
 
-- Al aprobar Biblioteca, el sistema genera el Word y el PDF desde la copia guardada en la
-  revisión. También se pueden generar a mano desde Documentos.
-- El PDF se firma en tres pasos y en orden: docente, coordinación, biblioteca.
-- La firma ocurre en el navegador con un certificado `.p12` o `.pfx` y su clave. El
-  certificado no sale del equipo; solo se sube el PDF firmado.
-- El servidor comprueba que el PDF base no cambió, que se agregó una sola firma sobre
-  todo el documento, que el certificado está vigente y que su titular coincide con la
-  cuenta. La cadena de confianza se comprueba si está configurada
-  (`docs/runbooks/firma-electronica-entidades.md`).
-- Cada firma avisa al siguiente firmante. La tercera avisa al docente y a Coordinación que
-  el sílabo quedó firmado. Si Word y PDF no se generan, se avisa a Administración.
-- Word y PDF firmado se descargan solo cuando están las tres firmas.
-- Cada revisión tiene su propio PDF y sus propias firmas.
+- Cada persona firma una sola vez por sílabo, al decidir, con su certificado `.p12` o
+  `.pfx` y su clave en el navegador. El certificado no sale del equipo.
+- Docente: firma en el primer envío. Si Coordinación o Biblioteca piden corrección,
+  reenvía sin volver a firmar.
+- Coordinación: firma al aprobar («Firmar y enviar a biblioteca»). Pedir corrección no se
+  firma. Si Biblioteca devuelve y el docente reenvía, va directo a Biblioteca y
+  Coordinación no vuelve a firmar.
+- Biblioteca: firma al aprobar («Firmar y aprobar»); el sílabo queda aprobado. Devolver al
+  docente no se firma.
+- Se firma una declaración corta que entrega el servidor con la huella del contenido que
+  se decide. El servidor comprueba la firma, que la declaración sea la esperada, que el
+  certificado esté vigente, que su titular coincida con la cuenta y, si está configurada,
+  la cadena de confianza (`docs/runbooks/firma-electronica-entidades.md`). Cualquier
+  error se muestra en `signature` y la decisión no se registra.
+- Al aprobar Biblioteca se genera un solo PDF desde la copia guardada en la revisión, con
+  un sello visible por persona en el cuadro de firmas. No hay descarga de Word. El PDF
+  se descarga apenas existe. Si no se genera, se avisa a Administración y se puede
+  reintentar desde Documentos.
+- Si la bibliografía cambió después de las firmas del docente o de Coordinación, el PDF
+  igual lleva sus sellos.
+- Reiniciar o eliminar el sílabo borra sus firmas; el ciclo nuevo se vuelve a firmar.
 
 ## Convocatoria y plazos
 
@@ -103,8 +111,8 @@ el estado: el sílabo sigue «En revisión».
   enviados, no se puede eliminar: hay que cerrar la convocatoria, que es la acción
   final. Una convocatoria cerrada no se elimina nunca.
 - Administración cierra la convocatoria cuando termina el período. Se cierran también
-  las de cada carrera. Sus sílabos quedan solo para consulta (no se editan, envían ni
-  revisan) y los aprobados todavía se pueden firmar. Cerrar no se deshace. Mientras
+  las de cada carrera. Sus sílabos quedan solo para consulta (no se editan, envían,
+  revisan ni firman). Cerrar no se deshace. Mientras
   siga abierta o pausada no se puede crear otra.
 
 Al cerrar, los sílabos sin revisión enviada o aprobada guardan una fotografía del

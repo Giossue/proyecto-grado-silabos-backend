@@ -7,6 +7,10 @@ use App\Models\User;
 use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Application\TemplatePresentation;
+use App\Modules\Documents\Application\SyllabusSignatures;
+use App\Modules\Documents\Domain\Data\DecisionSignature;
+use App\Modules\Documents\Domain\SigningStatement;
+use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\Actions\ApproveSyllabus;
 use App\Modules\Syllabus\Application\Actions\DeleteSyllabus;
@@ -29,7 +33,10 @@ use Illuminate\Validation\ValidationException;
 
 class ReviewController extends Controller
 {
-    public function __construct(private readonly InstitutionalLogos $logos) {}
+    public function __construct(
+        private readonly InstitutionalLogos $logos,
+        private readonly SyllabusSignatures $signatures,
+    ) {}
 
     public function index(ViewReviewsRequest $request, ActiveRole $roles): JsonResponse
     {
@@ -120,9 +127,9 @@ class ReviewController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $approve->execute($revision, $actor, $request);
+        $approve->execute($revision, DecisionSignature::from($request->input('signature')), $actor, $request);
 
-        $message = "Revisión {$revision->numero_revision} aprobada. Pasa a biblioteca, que aprueba la bibliografía.";
+        $message = 'Sílabo firmado y enviado a biblioteca.';
 
         return response()->json(['message' => $message]);
     }
@@ -194,6 +201,9 @@ class ReviewController extends Controller
         $myStage = $activeRole === null ? null : ReviewStage::forRole($activeRole->role->codigo_rol);
         $stage = $syllabus->estado === 'en_revision' && $latest?->id === $revision->id ? self::stageOf($revision) : null;
         $definition = TemplateContext::fromSnapshot($revision->fotografia);
+        $canDecide = $decisionsAllowed && $stage !== null && $stage === $myStage;
+        $mustSign = $canDecide && $myStage === ReviewStage::COORDINATION
+            && ! $this->signatures->signed($syllabus->id, SyllabusSignature::ROLE_COORDINATION);
 
         return [
             'syllabus' => [
@@ -207,7 +217,11 @@ class ReviewController extends Controller
             ],
             'my_stage' => $myStage,
 
-            'can_decide' => $decisionsAllowed && $stage !== null && $stage === $myStage,
+            'can_decide' => $canDecide,
+            'signing_statement' => $mustSign
+                ? SigningStatement::for($syllabus->id, SyllabusSignature::ROLE_COORDINATION, $revision->huella_sha256)
+                : null,
+            'signatures' => $this->signatures->summary($syllabus->id),
             'can_delete' => $decisionsAllowed && $syllabus->estado === 'aprobado' && $myStage === ReviewStage::COORDINATION,
             'presentation' => TemplatePresentation::presentation($definition, [
                 'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),

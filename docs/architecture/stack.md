@@ -11,15 +11,14 @@
 | Componentes | shadcn-vue sobre Reka UI, Tailwind CSS 4, iconos Lucide |
 | Editor de documentos | Tiptap 3 (núcleo y extensiones MIT) (ADR-0007) |
 | Lienzo de la malla | Vue Flow (ADR-0006) |
-| Firma en el navegador | `@signpdf`, `node-forge` y `pdf-lib` |
+| Firma en el navegador | `node-forge` (CMS/PKCS#7 separado de una declaración del servidor) |
 | Base de datos | PostgreSQL 18 |
 | Colas, caché y bloqueos | PostgreSQL con los drivers `database` de Laravel (`cola_trabajos`, `datos_temporales`, `bloqueos_temporales`); colas `critica`, `documentos`, `ia` y `general` |
 | Sesiones | Tabla `sesiones` en PostgreSQL |
-| Word | PHPWord |
+| Word (interno, no se descarga) | PHPWord |
 | PDF | Gotenberg (LibreOffice) a partir del Word; sin Gotenberg, PDF de texto simple |
 | Lectura de Excel | PhpSpreadsheet y OpenSpout |
 | Fichas de carrera | Excel estructurado generado y leído con PhpSpreadsheet |
-| Sellos de firma PDF | `pdftotext` (Poppler) para localizar la posición de cada sello |
 | IA | Proveedor externo configurable por `AI_DRIVER` (ver [ai-service.md](ai-service.md)) |
 | Correo | Resend en el servidor de pruebas hasta la instalación; SMTP institucional en la UEB (`MAIL_MAILER`) |
 | Archivos | Disco `private` en `storage/app/private` |

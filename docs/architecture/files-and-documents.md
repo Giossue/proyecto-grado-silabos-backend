@@ -7,9 +7,7 @@ esa carpeta debe estar en un volumen persistente (ver [deployment.md](deployment
 
 | Ruta | Qué guarda | Fila en `archivos` |
 |---|---|---|
-| `exports/{revisión}/{exportación}/syllabus.docx` | Word de la revisión aprobada | sí (`syllabus_export`) |
-| `exports/{revisión}/{exportación}/syllabus.pdf` | PDF sin firmas | sí (`syllabus_export`) |
-| `exports/{revisión}/{exportación}/silabo-firmado-{rol}.pdf` | PDF después de cada firma | sí (`syllabus_signed_export`) |
+| `exports/{revisión}/{exportación}/syllabus.pdf` | PDF final de la revisión aprobada, con los sellos de las tres firmas | sí (`syllabus_export`) |
 | `logos/facultades/{facultad}/{uuid}.png` | Logo de facultad | sí (`logo_facultad`) |
 | `logos/institucion.png` | Logo de la universidad | no |
 | `ca-confiables.pem` (sugerido) | Entidades certificadoras reconocidas | no |
@@ -28,21 +26,22 @@ Los logos se publican sin sesión en `GET /logos/institucion` y
 | Ficha (PDF/Excel) | hasta 6 archivos de 20 MB, `pdf`, `xlsx` o `xls` |
 | Planillas de usuarios, docentes, carreras y malla | `xlsx` de hasta 2 MB |
 | Logos | PNG transparente de hasta 4 MB; se ajusta al tamaño del encabezado |
-| PDF firmado | `application/pdf` de hasta 30 MB (Nginx y PHP aceptan 32 MB por petición) |
 
 Nginx del backend acepta cuerpos de hasta 32 MB (`client_max_body_size`). El nombre
 físico lo genera el servidor.
 
 ## Descargas
 
-- `GET exports/{exportación}/{docx|pdf}` exige permiso sobre la revisión, exportación
-  `completado` y las tres firmas (`ExportArtifactPolicy::download`).
-- El PDF que se entrega es el último firmado.
+- Solo hay PDF: `GET exports/{exportación}/pdf` exige permiso sobre la revisión y la
+  exportación `completado` (`ExportArtifactPolicy::download`). Está disponible apenas se
+  genera; las firmas ya ocurrieron antes, al decidir.
+- No hay descarga de Word: el Word es solo un paso interno para obtener el PDF y no se
+  guarda. Las exportaciones anteriores a este cambio conservan su fila en
+  `archivo_word_id`, pero no se ofrece.
 - La respuesta se transmite desde el disco con `X-Content-Type-Options: nosniff` y se
   audita como `documento.descargado`.
-- Quien debe firmar obtiene el PDF vigente en `GET revisions/{id}/signature/pdf`.
 
-## Generar Word y PDF
+## Generar el PDF
 
 Al aprobar la bibliografía se pide la exportación de forma automática
 (ver [sequences.md](sequences.md#4-verificación-de-biblioteca-y-exportación-automática)).
@@ -50,12 +49,13 @@ Al aprobar la bibliografía se pide la exportación de forma automática
 
 1. pasa la exportación a `en_ejecucion`;
 2. toma la fotografía de la revisión (`revisiones_silabo.contenido_enviado`) y le
-   agrega las variables de aprobación;
+   agrega las variables de aprobación y los sellos de las firmas (`firmas_silabo`);
 3. arma el Word con `PhpWordDocumentRenderer`;
 4. convierte el Word a PDF con Gotenberg, o escribe un PDF de texto si no hay
    `GOTENBERG_URL`;
-5. comprueba que ambos archivos son válidos (`DocumentBundleValidator`);
-6. guarda los archivos, marca `completado` y avisa a quien pidió la exportación.
+5. comprueba que ambos son válidos (`DocumentBundleValidator`);
+6. guarda solo el PDF, marca `completado` y avisa al docente y a Coordinación
+   (`silabo.aprobado`).
 
 Versión del motor: `phpword-docx-v4+libreoffice-pdf-v1` con Gotenberg y
 `phpword-docx-v4+text-pdf-v2` sin él. Se registra en la auditoría de la solicitud.
@@ -95,43 +95,66 @@ Qué hace el render:
 | `fecha_entrega` | Fecha de envío de la revisión |
 | `nombre_coordinador` | Nombre de quien registró la aprobación (`aprobaciones.aprobado_por`) |
 | `fecha_revision` | Fecha de la aprobación |
-| `firma_docente`, `firma_coordinador`, `firma_bibliotecario` | Espacio en blanco y la etiqueta «Firma del docente», «Firma de coordinación» o «Firma de biblioteca» (`SignatureAnchor`) |
+| `firma_docente`, `firma_coordinador`, `firma_bibliotecario` | Sello visible de la firma de ese rol: «Firmado electrónicamente por NOMBRE · ROL · fecha · certificado N.º · emisor» y debajo la etiqueta «Firma del docente», «Firma de coordinación» o «Firma de biblioteca» (`SignatureAnchor::stamp`). Sin firma de ese rol queda el espacio en blanco con la etiqueta. |
 
 Diferencia conocida: la aprobación la registra Biblioteca. Por eso
 `nombre_coordinador` y `fecha_revision` muestran hoy el nombre y la fecha de Biblioteca,
 no los de `revisiones_coordinacion`.
 
-## Firma electrónica (I-227)
+## Firma electrónica al decidir (I-227)
 
-La firma es incremental (PAdES) y se hace en el navegador. Orden fijo:
-docente → coordinación → biblioteca. Solo empieza cuando la revisión está aprobada y
-el PDF existe.
+Cada persona firma una sola vez por sílabo, en el momento en que decide:
 
-En el navegador (`src/lib/signature` del frontend):
+| Quién | Cuándo | `accion` en la declaración | Huella firmada |
+|---|---|---|---|
+| Docente | Primer envío del sílabo («Firmar y enviar»). Los reenvíos tras una corrección no se firman. | `envio_docente` | Huella SHA-256 de la fotografía que envía (será la `hash_contenido` de la revisión) |
+| Coordinación | «Firmar y enviar a biblioteca» | `aprobacion_coordinacion` | `hash_contenido` de la revisión |
+| Biblioteca | «Firmar y aprobar»: el sílabo queda aprobado | `aprobacion_biblioteca` | `hash_contenido` de la revisión |
 
-1. pide el PDF vigente y la posición del sello;
-2. lee el `.p12` con su clave; ni el archivo ni la clave salen del equipo;
-3. agrega una firma incremental con el sello visible;
-4. sube solo el PDF firmado y la huella del PDF del que partió.
+Pedir corrección o devolver al docente no se firma. Si Biblioteca devuelve y el docente
+reenvía, el sílabo vuelve directo a Biblioteca: ni docente ni Coordinación firman otra
+vez. Si cambió la bibliografía tras la firma del docente o de Coordinación, el PDF igual
+lleva sus sellos.
 
-En el servidor (`AcceptDocumentSignature`):
+### Qué se firma
 
-1. bloquea la exportación y comprueba que es el turno de ese rol;
-2. comprueba que el PDF base no cambió mientras se firmaba;
-3. `IncrementalPdfSignatureVerifier`: el PDF firmado empieza con los bytes exactos del
-   vigente, agrega una sola firma nueva, esa firma cubre todo el archivo y la firma
-   CMS es válida;
-4. si `SIGNATURE_TRUSTED_CA_BUNDLE` apunta a un PEM, exige que la cadena llegue a una de
-   esas entidades; vacío, solo verifica integridad;
+El servidor entrega una declaración en texto UTF-8:
+
+    silabos-ueb|silabo:{silabo_id}|accion:{accion}|huella:{sha256}
+
+- Docente: `POST teacher/syllabi/{silabo}/signing-statement` con `{version_bloqueo}`
+  devuelve `{statement, required}` (`required=false` si ya firmó en este ciclo). Valida
+  estado, plazo y versión igual que el envío (409 si la versión cambió).
+- Coordinación y Biblioteca: el detalle de la revisión trae `signing_statement` (o
+  `null` si no puede o no debe firmar) y `signatures: [{role, name, signed_at}]`.
+
+En el navegador (frontend, `node-forge`), el `.p12` y su clave producen una firma
+CMS/PKCS#7 separada (detached, SHA-256) de esa declaración, en base64. Ni el archivo ni
+la clave salen del equipo. La firma viaja como `signature: {statement, cms}` en el
+envío, la aprobación de Coordinación o la aprobación de Biblioteca.
+
+### Qué verifica el servidor
+
+`SignSyllabusDecision`, dentro de la misma transacción que la decisión:
+
+1. si ese rol ya firmó el sílabo, no pide firma y la ignora;
+2. sin firma: 422 en `signature` («Firme con su firma electrónica.»);
+3. la declaración recibida debe ser idéntica a la esperada;
+4. `CmsSignatureVerifier`: la firma CMS es válida sobre esos bytes, trae el certificado,
+   está vigente y, si `SIGNATURE_TRUSTED_CA_BUNDLE` apunta a un PEM, su cadena llega a
+   una de esas entidades (o la firmó directamente una entidad de la lista); vacío, solo
+   verifica integridad;
 5. si `SIGNATURE_REQUIRE_HOLDER_MATCH` es `true`, el titular del certificado debe
    coincidir con el nombre de la cuenta (`SignerHolderMatcher`: mismas palabras, sin
    importar orden, tildes ni mayúsculas);
-6. guarda el PDF, la fila en `archivos` y en `firmas_documento` (titular, número de
-   serie, emisor, vigencia y fecha); audita y avisa al siguiente firmante.
+6. guarda una fila en `firmas_silabo` (sílabo, revisión, rol, usuario, declaración,
+   firma CMS, titular, número, emisor, vigencia y fecha) y audita `silabo.firmado` con
+   el rol.
 
-`SignatureStampLocator` lee el PDF con `pdftotext -bbox` y ubica el sello sobre la
-etiqueta del rol. Si no la encuentra, usa las etiquetas «Firma:» en orden y, por último,
-el pie de la última página. No hay sello de tiempo externo.
+Cualquier error responde 422 en `signature` con un mensaje corto, y la decisión no se
+registra. No hay sello de tiempo externo: la hora de la firma es la del servidor.
+
+Reiniciar o eliminar el sílabo borra sus firmas; el ciclo nuevo se vuelve a firmar.
 
 Configuración y armado del PEM: [deployment.md](deployment.md#firma-electrónica).
 

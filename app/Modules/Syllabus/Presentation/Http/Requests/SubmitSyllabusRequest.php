@@ -20,6 +20,7 @@ class SubmitSyllabusRequest extends FormRequest
         return [
             'version_bloqueo' => ['required', 'integer', 'min:0'],
             'idempotency_key' => ['required', 'uuid'],
+            'signature' => ['nullable', 'array'],
         ];
     }
 }

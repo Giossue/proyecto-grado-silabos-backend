@@ -17,13 +17,13 @@ final class NotificationDestination
 {
     private const ADMINISTRATION_EVENTS = ['documento.exportacion_fallida'];
 
-    private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado', 'silabo.firmado_docente'];
+    private const COORDINATION_EVENTS = ['silabo.enviado', 'silabo.reenviado'];
 
     public const INFORMATIONAL_EVENTS = [
         'proceso.plazo_extendido',
     ];
 
-    private const LIBRARY_EVENTS = ['coordinacion.aprobado', 'silabo.reenviado_biblioteca', 'silabo.firmado_coordinacion'];
+    private const LIBRARY_EVENTS = ['coordinacion.aprobado', 'silabo.reenviado_biblioteca'];
 
     private const PROCESS_TEACHER_EVENTS = ['proceso.plantilla_rehecho'];
 

@@ -4,7 +4,7 @@
 
 Solo lo lento o externo:
 
-- generar Word y PDF de una revisión aprobada;
+- generar el PDF de una revisión aprobada (el Word es interno);
 - responder una pregunta del chat de IA;
 - enviar el correo de activación de cuenta;
 - el trabajo de humo de la plataforma.
@@ -105,8 +105,9 @@ php artisan platform:smoke-job
 
 ## Detalle por trabajo
 
-- `GenerateSyllabusExportJob`: arma Word y PDF desde la fotografía de la revisión,
-  los guarda en `archivos` y marca la exportación `completado`. Avisa a quien la pidió.
+- `GenerateSyllabusExportJob`: arma el Word interno desde la fotografía de la revisión
+  con los sellos de `firmas_silabo`, lo convierte en PDF, guarda solo el PDF en
+  `archivos` y marca la exportación `completado`. Avisa al docente.
   Ver [files-and-documents.md](files-and-documents.md).
 - `AnswerSyllabusChatJob`: llama al `AiChatGateway` con la pregunta, el historial y la
   evidencia fijada. Rechaza respuestas que citan evidencia ajena. Ver

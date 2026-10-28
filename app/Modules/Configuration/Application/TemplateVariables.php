@@ -41,6 +41,23 @@ final class TemplateVariables
         return array_intersect_key(self::resolve(['approval' => $approval]), array_flip($keys));
     }
 
+    /**
+     * @param  array<string, string>  $stamps
+     * @return array<string, string>
+     */
+    public static function signatures(array $stamps): array
+    {
+        $values = [];
+        foreach (self::definitions() as $key => $definition) {
+            $role = str_starts_with($definition['source'], 'signature.') ? substr($definition['source'], strlen('signature.')) : null;
+            if ($role !== null && isset($stamps[$role])) {
+                $values[$key] = $stamps[$role];
+            }
+        }
+
+        return $values;
+    }
+
     /** @return list<array{key: string, label: string, sample: string}> */
     public static function catalog(): array
     {

@@ -14,6 +14,9 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
+use App\Modules\Documents\Application\SyllabusSignatures;
+use App\Modules\Documents\Domain\Data\DecisionSignature;
+use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\Actions\CopySyllabusContent;
 use App\Modules\Syllabus\Application\Actions\StartDraft;
@@ -30,6 +33,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Modules\Syllabus\Presentation\Http\Requests\CopySyllabusContentRequest;
+use App\Modules\Syllabus\Presentation\Http\Requests\SigningStatementRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\SubmitSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\UpdateDraftFieldRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewSyllabiRequest;
@@ -42,6 +46,7 @@ class SyllabusController extends Controller
 {
     public function __construct(
         private readonly InstitutionalLogos $logos,
+        private readonly SyllabusSignatures $signatures,
     ) {}
 
     public function index(ViewSyllabiRequest $request, ActiveRole $roles): JsonResponse
@@ -169,14 +174,23 @@ class SyllabusController extends Controller
             $syllabus,
             $request->integer('version_bloqueo'),
             $request->string('idempotency_key')->toString(),
+            DecisionSignature::from($request->input('signature')),
             $actor,
             $request,
         );
 
         return response()->json([
-            'message' => "Revisión {$revision->numero_revision} enviada y fijada correctamente.",
+            'message' => "Revisión {$revision->numero_revision} enviada.",
             'syllabus' => $this->syllabusPayload($syllabus->fresh() ?? $syllabus),
         ]);
+    }
+
+    public function signingStatement(
+        Syllabus $syllabus,
+        SigningStatementRequest $request,
+        SubmitSyllabus $action,
+    ): JsonResponse {
+        return response()->json($action->statement($syllabus, $request->integer('version_bloqueo')));
     }
 
     public function updateField(
@@ -298,6 +312,8 @@ class SyllabusController extends Controller
             ])->values(),
             'review_stage' => ReviewStage::of($syllabus),
             'review_comments' => ReviewComments::forSyllabus($syllabus),
+            'signatures' => $this->signatures->summary($syllabus->id),
+            'teacher_signature_required' => ! $this->signatures->signed($syllabus->id, SyllabusSignature::ROLE_TEACHER),
         ];
     }
 

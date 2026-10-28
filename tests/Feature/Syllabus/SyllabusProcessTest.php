@@ -32,6 +32,7 @@ use Illuminate\Testing\Fluent\AssertableJson as Assert;
 use Illuminate\Testing\TestResponse;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
+use Tests\Support\SignsStatements;
 use Tests\Support\UsesInstitutionalDays;
 use Tests\TestCase;
 
@@ -40,6 +41,7 @@ class SyllabusProcessTest extends TestCase
     use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
+    use SignsStatements;
     use UsesInstitutionalDays;
 
     private User $administrator;
@@ -1082,6 +1084,7 @@ class SyllabusProcessTest extends TestCase
             ])->assertOk();
         }
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();

@@ -38,7 +38,7 @@ Como la configuración queda en caché, un cambio de variables exige redesplegar
 
 ## Archivos persistentes
 
-Exportaciones, PDF firmados, logos y el paquete de entidades
+Exportaciones (PDF), logos y el paquete de entidades
 certificadoras viven en `storage/app/private` (disco `private`). Monte un volumen
 persistente en `/var/www/html/storage/app`; sin él, cada despliegue los borra.
 
@@ -60,7 +60,7 @@ Un solo proceso `queue:work` atiende todas las colas, en este orden de prioridad
 critica, documentos, ia, general
 ```
 
-`critica` es el trabajo de prueba, `documentos` el Word y el PDF, `ia` el asistente del
+`critica` es el trabajo de prueba, `documentos` el PDF, `ia` el asistente del
 docente y `general` el correo de activación.
 
 | Trabajo | Cola | `timeout` | Intentos |
@@ -137,8 +137,8 @@ la entidad. Qué entidades cargar: [firma-electronica-entidades.md](../runbooks/
 ## Gotenberg (PDF igual al Word)
 
 Gotenberg convierte el Word del sílabo en un PDF con el mismo formato: tablas, colores
-y logos. La firma se hace sobre ese PDF. Sin `GOTENBERG_URL`, el sistema genera un PDF
-de texto simple: sirve para pruebas locales, no para firmar en serio. Si
+y logos, con los sellos de las firmas. Sin `GOTENBERG_URL`, el sistema genera un PDF
+de texto simple: sirve solo para pruebas locales. Si
 `GOTENBERG_URL` está definido y Gotenberg falla, la exportación falla y se reintenta;
 no cae al PDF simple.
 
@@ -165,8 +165,8 @@ Comprobar:
 
 1. Desde el contenedor del backend, `curl http://<nombre-interno>:3000/health` responde
    `{"status":"up"}`.
-2. Aprueba un sílabo de prueba y, como docente, abre el PDF que se va a firmar. Si
-   tiene tablas y logos igual al Word, Gotenberg funciona.
+2. Aprueba un sílabo de prueba y, como docente, abre su PDF. Si tiene tablas, logos y
+   los sellos de las firmas, Gotenberg funciona.
 3. Si sale como texto simple, revisa `GOTENBERG_URL` (nombre y puerto) y los registros
    del servicio `gotenberg`.
 

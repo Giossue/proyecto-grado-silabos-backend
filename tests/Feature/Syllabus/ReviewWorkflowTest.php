@@ -33,6 +33,7 @@ use LogicException;
 use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
+use Tests\Support\SignsStatements;
 use Tests\TestCase;
 
 class ReviewWorkflowTest extends TestCase
@@ -41,6 +42,7 @@ class ReviewWorkflowTest extends TestCase
     use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
+    use SignsStatements;
 
     private User $administrator;
 
@@ -100,6 +102,7 @@ class ReviewWorkflowTest extends TestCase
         $payload = ['label' => 'Objetivo general (ajustado)'];
         $this->actingAsAdministrator()->patchJson($url, $payload)->assertJsonValidationErrors('process');
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
@@ -128,6 +131,7 @@ class ReviewWorkflowTest extends TestCase
 
                 ->where('syllabus.version_bloqueo', $lockVersion));
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $lockVersion,
             'idempotency_key' => $key,
         ])->assertSuccessful();
@@ -148,11 +152,13 @@ class ReviewWorkflowTest extends TestCase
         $this->assertWorkflowNotification($syllabus->id, 'silabo.enviado');
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $lockVersion,
             'idempotency_key' => $key,
         ])->assertSuccessful();
         $this->assertDatabaseCount('revisiones_silabo', 1);
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('syllabus');
@@ -181,6 +187,7 @@ class ReviewWorkflowTest extends TestCase
         $syllabus = $this->createStartedDraft();
 
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertJsonValidationErrors('validation');
@@ -198,6 +205,7 @@ class ReviewWorkflowTest extends TestCase
 
         $this->actingAsTeacher()
             ->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+                'signature' => $this->teacherSignature($syllabus, $this->teacher),
                 'version_bloqueo' => $staleVersion,
                 'idempotency_key' => (string) Str::uuid(),
             ])
@@ -262,7 +270,7 @@ class ReviewWorkflowTest extends TestCase
         $freeTextField = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
         $firstSnapshot = $firstRevision->fotografia;
 
-        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $firstRevision))->assertForbidden();
+        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $firstRevision), ['signature' => $this->revisionSignature($firstRevision, 'biblioteca', $this->librarian)])->assertForbidden();
 
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $firstRevision), [
             'justification' => 'Corto',
@@ -301,6 +309,7 @@ class ReviewWorkflowTest extends TestCase
         ])->assertOk();
         $syllabus->refresh();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
@@ -329,8 +338,8 @@ class ReviewWorkflowTest extends TestCase
         [$syllabus, $revision] = $this->submitValidDraft();
         $key = (string) Str::uuid();
 
-        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision))->assertForbidden();
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertForbidden();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
             'idempotency_key' => $key,
         ])->assertSuccessful();
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
@@ -338,12 +347,12 @@ class ReviewWorkflowTest extends TestCase
         $this->assertDatabaseHas('revisiones_coordinacion', ['revision_silabo_id' => $revision->id, 'revisado_por' => $this->coordinator->id]);
         $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id]);
         $this->assertWorkflowNotification($syllabus->id, 'coordinacion.aprobado');
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
             'idempotency_key' => $key,
         ])->assertSuccessful();
         $this->assertDatabaseCount('revisiones_coordinacion', 1);
 
-        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
+        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertCreated();
         $approval = Approval::query()->firstOrFail();
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
         $this->assertSame($this->librarian->id, $approval->aprobado_por);
@@ -352,10 +361,10 @@ class ReviewWorkflowTest extends TestCase
         $this->assertFalse(InternalNotification::query()->where('tipo', 'silabo.aprobado')->exists());
         Queue::assertPushed(GenerateSyllabusExportJob::class);
 
-        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
+        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertCreated();
         $this->assertDatabaseCount('aprobaciones', 1);
 
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
         $this->assertDatabaseCount('revisiones_coordinacion', 1);
@@ -527,6 +536,7 @@ class ReviewWorkflowTest extends TestCase
     {
         $syllabus = $this->createValidDraft();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
@@ -603,7 +613,7 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
             'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
         ])->assertForbidden()->assertJsonPath('message', $message);
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
             'idempotency_key' => (string) Str::uuid(),
         ])->assertForbidden()->assertJsonPath('message', $message);
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus))->assertForbidden()->assertJsonPath('message', $message);
@@ -632,6 +642,7 @@ class ReviewWorkflowTest extends TestCase
             $pending->values()->where('definicion_campo_id', $value->definicion_campo_id)->update(['valor' => $value->valor]);
         }
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $pending), [
+            'signature' => $this->teacherSignature($pending, $this->teacher),
             'version_bloqueo' => 0, 'idempotency_key' => (string) Str::uuid(),
         ])->assertOk();
         $pendingRevision = $pending->revisions()->firstOrFail()->id;
@@ -783,9 +794,9 @@ class ReviewWorkflowTest extends TestCase
 
     private function approveThroughChain(SyllabusRevision $revision): void
     {
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();
-        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision))->assertCreated();
+        $this->actingAsLibrarian()->postJson(route('api.v1.library.reviews.verify', $revision), ['signature' => $this->revisionSignature($revision, 'biblioteca', $this->librarian)])->assertCreated();
     }
 }

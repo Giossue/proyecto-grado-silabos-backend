@@ -2,17 +2,19 @@
 
 namespace Tests\Feature\Documents;
 
-use App\Modules\Documents\Application\IncrementalPdfSignatureVerifier;
+use App\Modules\Documents\Application\CmsSignatureVerifier;
 use App\Modules\Documents\Application\SignerHolderMatcher;
 use Illuminate\Validation\ValidationException;
-use Tests\Support\SignsPdfIncrementally;
+use Tests\Support\SignsStatements;
 use Tests\TestCase;
 
 class SignatureTrustTest extends TestCase
 {
-    use SignsPdfIncrementally;
+    use SignsStatements;
 
-    private const PDF = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n";
+    private const STATEMENT = 'silabos-ueb|silabo:00000000-0000-0000-0000-000000000000|accion:envio_docente|huella:'.self::HASH;
+
+    private const HASH = '0000000000000000000000000000000000000000000000000000000000000000';
 
     private string $bundle;
 
@@ -31,9 +33,9 @@ class SignatureTrustTest extends TestCase
     public function test_sin_entidades_configuradas_acepta_cualquier_certificado(): void
     {
         config(['signatures.trusted_ca_bundle' => null]);
-        $signed = $this->signPdfIncrementally(self::PDF, $this->makeSigningCertificate('PERSONA DE PRUEBA'));
+        $signed = $this->signStatement(self::STATEMENT, $this->makeSigningCertificate('PERSONA DE PRUEBA'));
 
-        $certificate = app(IncrementalPdfSignatureVerifier::class)->verify(self::PDF, $signed);
+        $certificate = app(CmsSignatureVerifier::class)->verify(self::STATEMENT, $signed);
 
         $this->assertSame('PERSONA DE PRUEBA', $certificate->holder);
     }
@@ -43,9 +45,9 @@ class SignatureTrustTest extends TestCase
         $authority = $this->makeCertificateAuthority();
         file_put_contents($this->bundle, $authority['pem']);
         config(['signatures.trusted_ca_bundle' => $this->bundle]);
-        $signed = $this->signPdfIncrementally(self::PDF, $this->makeSigningCertificateIssuedBy($authority, 'JUAN CARLOS PEREZ GOMEZ'));
+        $signed = $this->signStatement(self::STATEMENT, $this->makeSigningCertificateIssuedBy($authority, 'JUAN CARLOS PEREZ GOMEZ'));
 
-        $certificate = app(IncrementalPdfSignatureVerifier::class)->verify(self::PDF, $signed);
+        $certificate = app(CmsSignatureVerifier::class)->verify(self::STATEMENT, $signed);
 
         $this->assertSame('JUAN CARLOS PEREZ GOMEZ', $certificate->holder);
     }
@@ -55,15 +57,15 @@ class SignatureTrustTest extends TestCase
         $authority = $this->makeCertificateAuthority();
         file_put_contents($this->bundle, $authority['pem']);
         config(['signatures.trusted_ca_bundle' => $this->bundle]);
-        $verifier = app(IncrementalPdfSignatureVerifier::class);
+        $verifier = app(CmsSignatureVerifier::class);
         $stranger = $this->makeCertificateAuthority('OTRA ENTIDAD');
 
         foreach ([$this->makeSigningCertificate('AUTOFIRMADO'), $this->makeSigningCertificateIssuedBy($stranger, 'EMITIDO POR OTRA')] as $credentials) {
             try {
-                $verifier->verify(self::PDF, $this->signPdfIncrementally(self::PDF, $credentials));
+                $verifier->verify(self::STATEMENT, $this->signStatement(self::STATEMENT, $credentials));
                 $this->fail('Debió rechazar el certificado.');
             } catch (ValidationException $exception) {
-                $this->assertSame(['El certificado de firma no fue emitido por una entidad certificadora reconocida.'], $exception->errors()['signed_pdf']);
+                $this->assertSame(['El certificado no es de una entidad reconocida.'], $exception->errors()['signature']);
             }
         }
     }
@@ -74,13 +76,13 @@ class SignatureTrustTest extends TestCase
         $intermediate = $this->makeCertificateAuthority('ENTIDAD INTERMEDIA', $root);
         file_put_contents($this->bundle, $intermediate['pem']);
         config(['signatures.trusted_ca_bundle' => $this->bundle]);
-        $verifier = app(IncrementalPdfSignatureVerifier::class);
+        $verifier = app(CmsSignatureVerifier::class);
 
-        $signed = $this->signPdfIncrementally(self::PDF, $this->makeSigningCertificateIssuedBy($intermediate, 'JUAN CARLOS PEREZ GOMEZ'));
-        $this->assertSame('JUAN CARLOS PEREZ GOMEZ', $verifier->verify(self::PDF, $signed)->holder);
+        $signed = $this->signStatement(self::STATEMENT, $this->makeSigningCertificateIssuedBy($intermediate, 'JUAN CARLOS PEREZ GOMEZ'));
+        $this->assertSame('JUAN CARLOS PEREZ GOMEZ', $verifier->verify(self::STATEMENT, $signed)->holder);
 
         $this->expectException(ValidationException::class);
-        $verifier->verify(self::PDF, $this->signPdfIncrementally(self::PDF, $this->makeSigningCertificateIssuedBy($this->makeCertificateAuthority('OTRA'), 'INTRUSO')));
+        $verifier->verify(self::STATEMENT, $this->signStatement(self::STATEMENT, $this->makeSigningCertificateIssuedBy($this->makeCertificateAuthority('OTRA'), 'INTRUSO')));
     }
 
     public function test_la_coincidencia_del_titular_ignora_orden_tildes_y_mayusculas(): void

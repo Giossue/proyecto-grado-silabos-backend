@@ -102,42 +102,40 @@ sequenceDiagram
 
     alt aprueba la bibliografía
         B->>API: POST library/reviews/{revision}/verify
-        API->>DB: aprobaciones(N); estado aprobado; auditoría; aviso al docente
+        API->>API: verifica la firma de biblioteca (SignSyllabusDecision)
+        API->>DB: firmas_silabo; aprobaciones(N); estado aprobado; auditoría
         API->>DB: exportaciones_silabo pendiente (clave = id de la aprobación)
         API-->>Q: GenerateSyllabusExportJob (afterCommit)
-        Q->>Q: Word con PHPWord desde la fotografía
+        Q->>Q: Word interno con PHPWord desde la fotografía y los sellos de las firmas
         Q->>G: Word → PDF
-        Q->>DB: archivos Word y PDF; exportación completado
+        Q->>DB: archivo PDF; exportación completado; aviso al docente
     else comenta
         B->>API: POST …/comments (motivos)
         API->>DB: correccion_* con etapa biblioteca; estado correccion_solicitada
     end
 ```
 
-## 5. Firma electrónica (I-227)
+## 5. Firma electrónica al decidir (I-227)
 
 ```mermaid
 sequenceDiagram
-    actor U as Firmante
+    actor U as Docente, Coordinación o Biblioteca
     participant SPA as SPA
     participant API as API
     participant DB as PostgreSQL
 
-    U->>SPA: Abre la tarjeta de firmas
-    SPA->>API: GET revisions/{id}/signature (estado, turno, posición del sello)
-    SPA->>API: GET revisions/{id}/signature/pdf (PDF vigente)
+    U->>SPA: «Firmar y enviar» / «Firmar y enviar a biblioteca» / «Firmar y aprobar»
+    SPA->>API: declaración (signing-statement del docente o signing_statement del detalle)
     U->>SPA: Elige su .p12 y escribe la clave
-    SPA->>SPA: agrega una firma incremental (la clave no sale del equipo)
-    SPA->>API: POST revisions/{id}/signature (PDF firmado, huella del PDF base)
-    API->>DB: lock exportación; ¿es su turno?; ¿el PDF base sigue igual?
-    API->>API: la firma nueva extiende el PDF vigente y cubre todo el archivo
-    API->>API: certificado válido; titular = cuenta; cadena reconocida (si hay PEM)
-    API->>DB: archivos + firmas_documento; auditoría; aviso al siguiente firmante
+    SPA->>SPA: firma CMS separada SHA-256 de la declaración (la clave no sale del equipo)
+    SPA->>API: submit / approve / verify con signature {statement, cms}
+    API->>API: ¿ya firmó este rol el sílabo? si no: declaración = esperada; CMS válida
+    API->>API: certificado vigente; titular = cuenta; cadena reconocida (si hay PEM)
+    API->>DB: firmas_silabo; auditoría silabo.firmado; la decisión en la misma transacción
 ```
 
-- Orden fijo: docente → coordinación → biblioteca.
-- Word y PDF se descargan (`GET exports/{id}/{docx|pdf}`) solo con las tres firmas. El
-  PDF que se entrega es el último firmado.
+- Cada persona firma una vez por sílabo. Los reenvíos tras una corrección no se firman.
+- El PDF se descarga (`GET exports/{id}/pdf`) apenas se genera. No hay descarga de Word.
 
 ## 6. Importación de fichas
 

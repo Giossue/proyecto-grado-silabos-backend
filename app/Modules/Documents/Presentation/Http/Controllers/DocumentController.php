@@ -5,9 +5,7 @@ namespace App\Modules\Documents\Presentation\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Documents\Application\Actions\RequestSyllabusExport;
-use App\Modules\Documents\Application\SignatureWorkflow;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
-use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
 use App\Modules\Documents\Presentation\Http\Requests\DownloadExportRequest;
 use App\Modules\Documents\Presentation\Http\Requests\RequestSyllabusExportRequest;
 use App\Modules\Documents\Presentation\Http\Requests\ViewRevisionDocumentsRequest;
@@ -21,7 +19,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
-    public function show(SyllabusRevision $revision, ViewRevisionDocumentsRequest $request, SignatureWorkflow $workflow): JsonResponse
+    public function show(SyllabusRevision $revision, ViewRevisionDocumentsRequest $request): JsonResponse
     {
         $revision->load([
             'approval.approver:id,nombre',
@@ -31,7 +29,7 @@ class DocumentController extends Controller
         abort_unless($revision->approval !== null, 404);
         $artifacts = ExportArtifact::query()
             ->where('revision_silabo_id', $revision->id)
-            ->with(['docxObject', 'pdfObject'])
+            ->with('pdfObject')
             ->latest('solicitado_en')
             ->get();
 
@@ -49,16 +47,14 @@ class DocumentController extends Controller
                 'approved_by' => $revision->approval->approver->nombre,
             ],
             'artifacts' => $artifacts->map(fn (ExportArtifact $artifact): array => [
-                'signed' => $artifact->estado === 'completado' && $workflow->isFullySigned($artifact),
                 'id' => $artifact->id,
                 'estado' => $artifact->estado,
                 'requested_at' => $artifact->solicitado_en->toIso8601String(),
                 'completed_at' => $artifact->completado_en?->toIso8601String(),
                 'renderer_label' => 'Formato institucional en revisión',
-                'error' => $artifact->estado === 'fallido' ? 'No fue posible generar los documentos. Puede solicitar un reintento.' : null,
-                'files' => $artifact->estado !== 'completado' || ! $workflow->isFullySigned($artifact) ? null : [
-                    'docx_size' => $artifact->docxObject?->tamano_bytes,
-                    'pdf_size' => $workflow->currentPdf($artifact, $workflow->signatures($artifact))?->tamano_bytes,
+                'error' => $artifact->estado === 'fallido' ? 'No se pudo generar el PDF. Puede reintentar.' : null,
+                'files' => $artifact->estado !== 'completado' || $artifact->pdfObject === null ? null : [
+                    'pdf_size' => $artifact->pdfObject->tamano_bytes,
                 ],
             ])->values(),
         ];
@@ -81,59 +77,41 @@ class DocumentController extends Controller
         );
 
         $message = $artifact->estado === 'completado'
-            ? 'Los documentos de esta solicitud ya estaban disponibles.'
-            : 'La generación de DOCX y PDF quedó en cola.';
+            ? 'El PDF ya estaba disponible.'
+            : 'El PDF se está generando.';
 
         return response()->json(['message' => $message, 'artifact_id' => $artifact->id], 202);
     }
 
     public function download(
         ExportArtifact $artifact,
-        string $format,
         DownloadExportRequest $request,
         ActiveRole $roles,
         RecordAuditEvent $audit,
-        SignatureWorkflow $workflow,
     ): StreamedResponse {
-        $object = $this->objectFor($artifact, $format, $workflow);
-        abort_unless($object->disco === 'private' && Storage::disk('private')->exists($object->ruta_interna), 404);
+        $object = $artifact->pdfObject;
+        abort_unless($object !== null && $object->disco === 'private' && Storage::disk('private')->exists($object->ruta_interna), 404);
         $artifact->loadMissing('revision.syllabus.parallel.subject');
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $activeRole = $roles->resolve($request);
         $audit->execute(
             actorId: $actor->id,
-            roleAssignmentId: $activeRole?->id,
+            roleAssignmentId: $roles->resolve($request)?->id,
             action: 'documento.descargado',
             resourceType: 'artefacto_exportacion',
             resourceId: $artifact->id,
             result: 'exito',
             metadata: [
-                'format' => $format,
+                'format' => 'pdf',
                 'revision_number' => $artifact->revision->numero_revision,
                 'object_id' => $object->id,
             ],
         );
         $code = Str::slug($artifact->revision->syllabus->academicSubjectCode()) ?: 'asignatura';
-        $suffix = $format === 'pdf' ? '-firmado' : '';
-        $filename = "silabo-{$code}-revision-{$artifact->revision->numero_revision}{$suffix}.{$format}";
 
-        return Storage::disk('private')->download($object->ruta_interna, $filename, [
-            'Content-Type' => $object->mime,
+        return Storage::disk('private')->download($object->ruta_interna, "silabo-{$code}-revision-{$artifact->revision->numero_revision}.pdf", [
+            'Content-Type' => 'application/pdf',
             'X-Content-Type-Options' => 'nosniff',
         ]);
-    }
-
-    private function objectFor(ExportArtifact $artifact, string $format, SignatureWorkflow $workflow): StoredObject
-    {
-        $artifact->loadMissing(['docxObject', 'pdfObject']);
-        $object = match ($format) {
-            'docx' => $artifact->docxObject,
-            'pdf' => $workflow->currentPdf($artifact, $workflow->signatures($artifact)),
-            default => null,
-        };
-        abort_unless($artifact->estado === 'completado' && $object instanceof StoredObject, 404);
-
-        return $object;
     }
 }

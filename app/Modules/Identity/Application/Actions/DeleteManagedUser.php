@@ -16,7 +16,7 @@ class DeleteManagedUser
         'revisiones_silabo' => 'enviado_por',
         'exportaciones_silabo' => 'solicitado_por',
         'archivos' => 'subido_por',
-        'firmas_documento' => 'usuario_id',
+        'firmas_silabo' => 'usuario_id',
     ];
 
     public function __construct(

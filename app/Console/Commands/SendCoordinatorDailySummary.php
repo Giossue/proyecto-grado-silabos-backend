@@ -13,7 +13,7 @@ class SendCoordinatorDailySummary extends Command
 {
     protected $signature = 'avisos:resumen-coordinacion';
 
-    protected $description = 'Envía a cada coordinador un solo correo con sus sílabos por revisar y por firmar, solo si tiene algo pendiente';
+    protected $description = 'Envía a cada coordinador un solo correo con sus sílabos por revisar, solo si tiene algo pendiente';
 
     public function handle(CoordinatorDailySummary $summary): int
     {

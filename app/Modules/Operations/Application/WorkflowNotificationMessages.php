@@ -43,32 +43,20 @@ final class WorkflowNotificationMessages
                 "Se solicitó corregir el sílabo {$subject}{$revisionLabel}. Corríjalo y reenvíelo.",
             ],
             'silabo.aprobado' => [
-                'Sílabo aprobado: ya puede firmarlo',
-                "Biblioteca aprobó el sílabo {$subject}{$revisionLabel}. El PDF está listo: fírmelo para que sigan coordinación y biblioteca.",
+                'Sílabo aprobado',
+                "Biblioteca aprobó el sílabo {$subject}{$revisionLabel}. Ya puede descargar el PDF firmado.",
             ],
             'silabo.eliminado' => [
                 'Su sílabo volvió a empezar',
                 "Coordinación eliminó su sílabo aprobado de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.",
             ],
-            'silabo.firmado_docente' => [
-                'Sílabo listo para su firma',
-                "El docente firmó electrónicamente el sílabo {$subject}{$revisionLabel}. Falta la firma de coordinación.",
-            ],
-            'silabo.firmado_coordinacion' => [
-                'Sílabo listo para su firma',
-                "Docente y coordinación firmaron el sílabo {$subject}{$revisionLabel}. Falta la firma de biblioteca.",
-            ],
             'silabo.reiniciado' => [
                 'Su sílabo volvió a empezar',
                 "Coordinación reinició su sílabo de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.",
             ],
-            'silabo.firmado' => [
-                'Sílabo firmado',
-                "Docente, coordinación y biblioteca firmaron el sílabo {$subject}{$revisionLabel}. Ya puede descargar el PDF firmado.",
-            ],
             'documento.exportacion_fallida' => [
                 'No se pudieron generar los documentos',
-                "Falló la generación del Word y el PDF del sílabo {$subject}{$revisionLabel}. Revise el servicio de documentos y la cola; luego Coordinación puede generarlos de nuevo desde «Documentos».",
+                "Falló la generación del PDF del sílabo {$subject}{$revisionLabel}. Revise el servicio de documentos y la cola; luego Coordinación puede generarlos de nuevo desde «Documentos».",
             ],
             default => throw new RuntimeException('Tipo de notificación interna no soportado.'),
         };

@@ -14,7 +14,7 @@ src/
 ├── state/           estado compartido con ref/reactive de Vue (sin Pinia)
 ├── lib/             utilidades: rutas por rol, fechas, estados, firma, bloques
 │   ├── blocks/      intérprete de la definición de plantilla
-│   └── signature/   firma PAdES en el navegador
+│   └── signature/   firma CMS de la declaración en el navegador
 ├── composables/     lógica reutilizable de componentes
 ├── layouts/         AppLayout, AuthLayout, WorkspaceLayout, editores de sílabo y plantilla
 ├── pages/           una página por pantalla
@@ -115,8 +115,9 @@ resultado con `src/test/fixtures/block-conformance.json`, que genera el backend
 - `components/domain/configuration/TemplateVisualBuilder.vue`: constructor visual.
   `TemplateJsonDialog.vue`: «Opciones avanzadas → Editar JSON».
 - `components/domain/academic/curriculum/`: lienzo de la malla con Vue Flow (ADR-0006).
-- `lib/signature/`: lee el `.p12`, agrega una firma incremental al PDF y sube solo el
-  PDF firmado. El certificado no sale del equipo.
+- `lib/signature/`: lee el `.p12` con `node-forge` y firma (CMS/PKCS#7 separado, SHA-256)
+  la declaración que da el servidor; envía `signature: {statement, cms}` con la decisión.
+  El certificado y la clave no salen del equipo.
 
 ## Componentes y estilos
 

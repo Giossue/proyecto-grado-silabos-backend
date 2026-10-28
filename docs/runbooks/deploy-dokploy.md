@@ -125,13 +125,10 @@ datos (`PV-12`, `PV-14`).
 Se genera y lee una plantilla Excel en el servidor, sin proveedor externo ni cola.
 El flujo antiguo de documentos y su configuración fueron retirados.
 
-`pdftotext` viene de `poppler-utils`, instalado en la imagen, y se conserva para
-ubicar el sello de cada firma en el PDF.
-
 ### Gotenberg
 
-Sin `GOTENBERG_URL` el sistema genera un PDF de texto simple. Como las firmas se hacen
-sobre el PDF, conviene tenerlo.
+Sin `GOTENBERG_URL` el sistema genera un PDF de texto simple. Para el PDF con el formato
+oficial y los sellos de firma, conviene tenerlo.
 
 1. En el proyecto de Dokploy cree un servicio **Aplicación → Docker** con imagen
    `gotenberg/gotenberg:8` y puerto interno `3000`. No le ponga dominio ni lo publique.
@@ -207,7 +204,7 @@ verificado; los demás avisos quedan en la campana.
 | `NOTIFICATION_DIGEST_TIME` | `08:00` | Hora del resumen (`HH:MM`), en la hora de la institución. Vacía o con otro formato vale 08:00. |
 
 Coordinación no recibe correo por cada aviso: recibe un resumen al día, de lunes a viernes, y
-solo si tiene sílabos por revisar o por firmar. Requiere que el programador (`schedule:work`) y
+solo si tiene sílabos por revisar. Requiere que el programador (`schedule:work`) y
 el worker estén activos. Con `MAIL_MAILER=log` ninguno sale del sistema. Los tipos disponibles
 están en `NotificationDestination` (`silabo.enviado`, `coordinacion.aprobado`, etc.).
 
@@ -227,7 +224,7 @@ están en `NotificationDestination` (`silabo.enviado`, `coordinacion.aprobado`, 
 5. prepara `storage/app` y crea el enlace de almacenamiento público.
 
 El worker escucha `critica,documentos,ia,general` con
-`--tries=3`. Hoy se usan `critica` (trabajo de prueba), `documentos` (Word y PDF), `ia`
+`--tries=3`. Hoy se usan `critica` (trabajo de prueba), `documentos` (PDF), `ia`
 (asistente del docente) y `general` (correo de activación).
 
 En una instalación nueva, cargue la plantilla oficial una vez:
@@ -258,5 +255,5 @@ coordinación, dos docentes, paralelos y la convocatoria. Lee la contraseña de 
 
 ## 6. Almacenamiento persistente
 
-`storage/app` guarda los archivos privados: Word y PDF, PDF firmados y logos. Sin un volumen, cada redespliegue los pierde. En Dokploy
+`storage/app` guarda los archivos privados: PDF de los sílabos y logos. Sin un volumen, cada redespliegue los pierde. En Dokploy
 añada un **volume mount** hacia `/var/www/html/storage/app`.

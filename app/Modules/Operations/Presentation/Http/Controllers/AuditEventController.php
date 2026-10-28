@@ -174,7 +174,7 @@ class AuditEventController extends Controller
             'documento.exportacion_completada' => 'Exportación completada',
             'documento.exportacion_fallida' => 'Exportación fallida',
             'documento.exportacion_solicitada' => 'Exportación solicitada',
-            'documento.firmado' => 'Documento firmado electrónicamente',
+            'silabo.firmado' => 'Sílabo firmado electrónicamente',
             'trabajo.reintento_solicitado' => 'Reintento solicitado',
             'fuente.creada' => 'Fuente académica creada',
             'fuente.actualizada' => 'Fuente académica actualizada',
@@ -221,7 +221,7 @@ class AuditEventController extends Controller
         return match ($resource) {
             'fuente_academica' => 'Fuente académica',
             'aprobacion' => 'Aprobación',
-            'firma_documento' => 'Firma electrónica',
+            'firma_silabo' => 'Firma electrónica',
             'envio_biblioteca' => 'Envío a biblioteca',
             'revision_coordinacion' => 'Revisión de coordinación',
             'campus' => 'Campus',

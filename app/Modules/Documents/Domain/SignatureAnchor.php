@@ -10,6 +10,12 @@ final class SignatureAnchor
         'biblioteca' => 'Firma de biblioteca',
     ];
 
+    public const ROLES = [
+        'docente' => 'Docente',
+        'coordinacion' => 'Coordinación',
+        'biblioteca' => 'Biblioteca',
+    ];
+
     private const BLANK_LINES = 4;
 
     public static function text(string $role): string
@@ -17,9 +23,8 @@ final class SignatureAnchor
         return str_repeat("\n", self::BLANK_LINES).self::LABELS[$role];
     }
 
-    /** @return list<string> */
-    public static function words(string $role): array
+    public static function stamp(string $role, string $name, string $signedOn, string $serial, string $issuer): string
     {
-        return explode(' ', self::LABELS[$role] ?? '');
+        return "\n\nFirmado electrónicamente por {$name} · ".self::ROLES[$role]." · {$signedOn} · certificado N.º {$serial} · {$issuer}\n".self::LABELS[$role];
     }
 }

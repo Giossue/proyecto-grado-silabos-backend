@@ -12,7 +12,7 @@ $time = trim((string) env('NOTIFICATION_DIGEST_TIME', ''));
 
 return [
     /*
-    | `digest`: resumen diario para Coordinación (sílabos por revisar y por firmar), de lunes a
+    | `digest`: resumen diario para Coordinación (sílabos por revisar), de lunes a
     | viernes a la hora de la institución y solo si hay algo pendiente. Una hora vacía o que no sea
     | «HH:MM» vale 08:00.
     |

@@ -3,412 +3,314 @@
 namespace Tests\Feature\Documents;
 
 use App\Models\User;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
-use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
+use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Application\DocumentBundleValidator;
-use App\Modules\Documents\Application\IncrementalPdfSignatureVerifier;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
+use App\Modules\Documents\Domain\SigningStatement;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
-use App\Modules\Documents\Infrastructure\Persistence\Models\DocumentSignature;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
-use App\Modules\Documents\Infrastructure\Rendering\GotenbergPdfConverter;
-use App\Modules\Documents\Infrastructure\Rendering\PhpWordDocumentRenderer;
+use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
-use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
-use App\Modules\Operations\Infrastructure\Mail\CoordinatorSummaryMail;
-use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
-use App\Support\CanonicalHasher;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as ClientRequest;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
-use Illuminate\Validation\ValidationException;
 use Tests\Support\AssertsInternalNotifications;
+use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
-use Tests\Support\SignsPdfIncrementally;
+use Tests\Support\SignsStatements;
 use Tests\TestCase;
+use ZipArchive;
 
 class DocumentSignatureTest extends TestCase
 {
     use AssertsInternalNotifications;
+    use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
-    use SignsPdfIncrementally;
+    use SignsStatements;
 
-    private User $coordinator;
+    private const LIBREOFFICE_PDF = "%PDF-1.7\n1 0 obj\n<</Creator(Writer)/Producer(LibreOffice 25.2)/CreationDate(D:20260924101112-05'00')>>\nendobj\n"
+        ."trailer\n<</Size 2/Root 1 0 R/ID [ <0123456789ABCDEF0123456789ABCDEF>\n<0123456789ABCDEF0123456789ABCDEF> ]>>\n%%EOF\n";
 
-    private RoleAssignment $coordinatorContext;
-
-    private User $teacher;
-
-    private RoleAssignment $teacherContext;
-
-    private User $librarian;
-
-    private RoleAssignment $librarianContext;
+    /** @var array<string, array{User, RoleAssignment}> */
+    private array $people = [];
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
         Storage::fake('private');
-        config(['signatures.require_holder_match' => false]);
-
-        $this->coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
-        $this->coordinatorContext = $this->coordinator->roleAssignments()->firstOrFail();
-        $this->teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
-        $this->teacherContext = $this->teacher->roleAssignments()->firstOrFail();
-        $this->librarian = User::query()->where('correo_electronico', 'bibliotecario@silabos.test')->firstOrFail();
-        $this->librarianContext = $this->librarian->roleAssignments()->firstOrFail();
+        $this->configureFacultyLogos();
+        foreach (['admin' => 'admin', 'coordinator' => 'coordinador', 'teacher' => 'docente', 'librarian' => 'bibliotecario'] as $key => $mail) {
+            $user = User::query()->where('correo_electronico', "{$mail}@silabos.test")->firstOrFail();
+            $this->people[$key] = [$user, $user->roleAssignments()->firstOrFail()];
+        }
     }
 
-    public function test_docente_coordinacion_y_biblioteca_firman_el_pdf_de_la_revision_aprobada(): void
+    public function test_el_docente_firma_solo_en_el_primer_envio(): void
     {
-        [, $revision] = $this->exportedRevision();
-        $teacherCredentials = $this->makeSigningCertificate('DOCENTE DE PRUEBA');
-        $coordinatorCredentials = $this->makeSigningCertificate('COORDINACION DE PRUEBA');
-        $librarianCredentials = $this->makeSigningCertificate('BIBLIOTECA DE PRUEBA');
+        $syllabus = $this->validDraft();
+        $expected = SigningStatement::for($syllabus->id, 'docente', $this->draftFingerprint($syllabus));
 
-        $status = $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
-            ->assertOk()
-            ->assertJsonPath('state', 'pendiente_docente')
-            ->assertJsonPath('my_role', 'docente')
-            ->assertJsonPath('can_sign', true)
-            ->assertJsonPath('signatures', []);
-        $this->assertIsArray($status->json('stamp'));
-        $original = $this->currentPdf($revision, 'teacher');
-        $this->assertSame(hash('sha256', $original), $status->json('document.sha256'));
-        $earlyArtifactId = ExportArtifact::query()->where('revision_silabo_id', $revision->id)->firstOrFail()->id;
-        $this->actingAsTeacher()->getJson(route('api.v1.documents.download', [$earlyArtifactId, 'pdf']))->assertForbidden();
-        $this->actingAsTeacher()->getJson(route('api.v1.documents.show', $revision))
-            ->assertOk()->assertJsonPath('artifacts.0.signed', false)->assertJsonPath('artifacts.0.files', null);
-
-        $this->actingAsCoordinator()->getJson(route('api.v1.signature.show', $revision))
-            ->assertOk()->assertJsonPath('can_sign', false)->assertJsonPath('my_role', 'coordinacion');
-        $this->upload($revision, $this->signPdfIncrementally($original, $coordinatorCredentials), hash('sha256', $original), 'coordinator')
-            ->assertJsonValidationErrors(['signed_pdf' => 'Primero debe firmar el docente.']);
-
-        $teacherSigned = $this->signPdfIncrementally($original, $teacherCredentials);
-        $this->upload($revision, $teacherSigned, hash('sha256', $original), 'teacher')->assertCreated();
-        $this->assertNotified($this->coordinator->id, 'silabo.firmado_docente', 'Falta la firma de coordinación');
-
-        $this->actingAsCoordinator()->getJson(route('api.v1.signature.show', $revision))
-            ->assertOk()
-            ->assertJsonPath('state', 'pendiente_coordinacion')
-            ->assertJsonPath('can_sign', true)
-            ->assertJsonPath('document.sha256', hash('sha256', $teacherSigned))
-            ->assertJsonPath('signatures.0.certificate_holder', 'DOCENTE DE PRUEBA');
-        $this->assertSame($teacherSigned, $this->currentPdf($revision, 'coordinator'));
-
-        $this->upload($revision, $this->signPdfIncrementally($original, $coordinatorCredentials), hash('sha256', $original), 'coordinator')
-            ->assertJsonValidationErrors(['signed_pdf' => 'El documento cambió mientras firmaba. Descárguelo de nuevo y vuelva a firmar.']);
-
-        $coordinationPdf = $this->signPdfIncrementally($teacherSigned, $coordinatorCredentials);
-        $this->upload($revision, $coordinationPdf, hash('sha256', $teacherSigned), 'coordinator')->assertCreated();
-        $this->assertNotified($this->librarian->id, 'silabo.firmado_coordinacion', 'Falta la firma de biblioteca');
-        $this->upload($revision, $this->signPdfIncrementally($coordinationPdf, $librarianCredentials), hash('sha256', $coordinationPdf), 'teacher')
-            ->assertJsonValidationErrors(['signed_pdf' => 'Su firma ya está registrada; ahora firma biblioteca.']);
-
-        $status = $this->actingAsLibrarian()->getJson(route('api.v1.signature.show', $revision))
-            ->assertOk()
-            ->assertJsonPath('state', 'pendiente_biblioteca')
-            ->assertJsonPath('my_role', 'biblioteca')
-            ->assertJsonPath('can_sign', true)
-            ->assertJsonPath('library.sent_by', $this->teacher->nombre)
-            ->assertJsonPath('library.verified_by', $this->librarian->nombre);
-        $this->assertIsArray($status->json('stamp'));
-        $this->assertSame($coordinationPdf, $this->currentPdf($revision, 'librarian'));
-
-        $libraryPdf = $this->signPdfIncrementally($coordinationPdf, $librarianCredentials);
-        $this->upload($revision, $libraryPdf, hash('sha256', $coordinationPdf), 'librarian')->assertCreated();
-        $finalPdf = $libraryPdf;
-        $signed = $this->assertNotified($this->teacher->id, 'silabo.firmado', 'Ya puede descargar el PDF firmado');
-        $this->assertSame('artefacto_exportacion', $signed->tipo_recurso);
-        $this->assertSame($revision->syllabus->convocation->process->periodo_academico_id, $signed->periodo_academico_id);
-        $this->assertNotified($this->coordinator->id, 'silabo.firmado', 'Ya puede descargar el PDF firmado');
-        $this->assertNotNotified($this->librarian->id, 'silabo.firmado');
-
-        $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
-            ->assertOk()
-            ->assertJsonPath('state', 'firmado')
-            ->assertJsonPath('can_sign', false)
-            ->assertJsonCount(3, 'signatures')
-            ->assertJsonPath('signatures.0.role', 'docente')
-            ->assertJsonPath('signatures.1.role', 'coordinacion')
-            ->assertJsonPath('signatures.2.role', 'biblioteca');
-        $this->assertSame($finalPdf, $this->currentPdf($revision, 'teacher'));
-        $artifactId = ExportArtifact::query()->where('revision_silabo_id', $revision->id)->firstOrFail()->id;
-        $this->actingAsTeacher()->getJson(route('api.v1.documents.download', [$artifactId, 'docx']))->assertOk();
-        $this->assertSame($finalPdf, $this->actingAsCoordinator()->get(route('api.v1.documents.download', [$artifactId, 'pdf']))->streamedContent());
-        $this->actingAsTeacher()->getJson(route('api.v1.documents.show', $revision))
-            ->assertOk()->assertJsonPath('artifacts.0.signed', true)->assertJsonPath('artifacts.0.files.pdf_size', strlen($finalPdf));
-        $this->assertSame(3, DocumentSignature::query()->count());
-        $this->assertSame(3, AuditEvent::query()->where('accion', 'documento.firmado')->count());
-        $this->upload($revision, $this->signPdfIncrementally($finalPdf, $teacherCredentials), hash('sha256', $finalPdf), 'teacher')
-            ->assertJsonValidationErrors(['signed_pdf' => 'El documento ya tiene todas las firmas.']);
-    }
-
-    public function test_el_resumen_diario_cuenta_la_firma_de_coordinacion_solo_cuando_ya_firmo_el_docente(): void
-    {
-        Mail::fake();
-        $this->coordinator->forceFill(['correo_verificado_en' => now()])->save();
-        [, $revision] = $this->exportedRevision();
-        $original = $this->currentPdf($revision, 'teacher');
-
-        Artisan::call('avisos:resumen-coordinacion');
-        Mail::assertNotQueued(CoordinatorSummaryMail::class);
-
-        $teacherSigned = $this->signPdfIncrementally($original, $this->makeSigningCertificate('DOCENTE DE PRUEBA'));
-        $this->upload($revision, $teacherSigned, hash('sha256', $original), 'teacher')->assertCreated();
-        Artisan::call('avisos:resumen-coordinacion');
-        Mail::assertQueued(CoordinatorSummaryMail::class, 1);
-        Mail::assertQueued(CoordinatorSummaryMail::class, fn (CoordinatorSummaryMail $mail): bool => $mail->hasTo('coordinador@silabos.test')
-            && $mail->careers[0]['review'] === 0 && $mail->careers[0]['sign'] === 1);
-
-        $this->upload($revision, $this->signPdfIncrementally($teacherSigned, $this->makeSigningCertificate('COORDINACION DE PRUEBA')), hash('sha256', $teacherSigned), 'coordinator')->assertCreated();
-        Cache::flush();
-        Artisan::call('avisos:resumen-coordinacion');
-        Mail::assertQueued(CoordinatorSummaryMail::class, 1);
-    }
-
-    public function test_rechaza_pdf_alterado_firma_que_no_cubre_el_archivo_y_certificado_vencido(): void
-    {
-        [, $revision] = $this->exportedRevision();
-        $credentials = $this->makeSigningCertificate('DOCENTE DE PRUEBA', days: 1);
-        $original = $this->currentPdf($revision, 'teacher');
-        $base = hash('sha256', $original);
-
-        $tampered = $this->signPdfIncrementally(str_replace('%PDF-1.4', '%PDF-1.5', $original), $credentials);
-        $this->upload($revision, $tampered, $base, 'teacher')
-            ->assertJsonValidationErrors(['signed_pdf' => 'El PDF firmado no parte del documento vigente. Descárguelo de nuevo y vuelva a firmar.']);
-
-        $signed = $this->signPdfIncrementally($original, $credentials);
-        $afterSigning = substr_replace($signed, 'X', strlen($signed) - 10, 1);
-        $this->upload($revision, $afterSigning, $base, 'teacher')
-            ->assertJsonValidationErrors(['signed_pdf' => 'La firma no corresponde al documento: el PDF fue alterado o la firma es inválida.']);
-
-        $this->upload($revision, $signed."\n% agregado\n", $base, 'teacher')
-            ->assertJsonValidationErrors(['signed_pdf' => 'La firma nueva no cubre el documento completo.']);
-
-        $this->upload($revision, $original."\n% sin firma\n%%EOF\n", $base, 'teacher')
-            ->assertJsonValidationErrors(['signed_pdf' => 'El PDF debe agregar exactamente una firma nueva.']);
-
-        $this->travel(3)->days();
-        $this->upload($revision, $signed, $base, 'teacher')
-            ->assertJsonValidationErrors(['signed_pdf' => 'El certificado de firma está vencido. Renueve su firma electrónica.']);
-        $this->assertSame(0, DocumentSignature::query()->count());
-        $this->assertSame([], array_values(array_filter(
-            Storage::disk('private')->allFiles("exports/{$revision->id}"),
-            fn (string $path): bool => str_contains($path, 'firmado'),
-        )));
-    }
-
-    public function test_exige_que_el_titular_del_certificado_sea_quien_firma(): void
-    {
-        config(['signatures.require_holder_match' => true]);
-        [, $revision] = $this->exportedRevision();
-        $original = $this->currentPdf($revision, 'teacher');
-        $base = hash('sha256', $original);
-
-        $this->upload($revision, $this->signPdfIncrementally($original, $this->makeSigningCertificate('MARIA LUISA GOMEZ TORRES')), $base, 'teacher')
-            ->assertJsonValidationErrors('signed_pdf');
-        $this->assertSame(0, DocumentSignature::query()->count());
-
-        $this->upload($revision, $this->signPdfIncrementally($original, $this->makeSigningCertificate(mb_strtoupper($this->teacher->nombre))), $base, 'teacher')
-            ->assertCreated();
-        $this->assertSame(1, DocumentSignature::query()->count());
-    }
-
-    public function test_reabrir_anula_el_proceso_y_personas_ajenas_no_firman(): void
-    {
-        [, $revision] = $this->exportedRevision();
-        $credentials = $this->makeSigningCertificate('DOCENTE DE PRUEBA');
-        $original = $this->currentPdf($revision, 'teacher');
-
-        $outsider = User::factory()->create();
-        $outsiderContext = RoleAssignment::query()->create([
-            'usuario_id' => $outsider->id,
-            'rol' => 'docente',
-            'carrera_id' => $this->teacherContext->carrera_id,
-            'activo' => true,
-        ]);
-        $this->actingAs($outsider)->withSession(['active_role_assignment_id' => $outsiderContext->id])
-            ->post(route('api.v1.signature.store', $revision), [
-                'signed_pdf' => UploadedFile::fake()->createWithContent('firmado.pdf', $this->signPdfIncrementally($original, $credentials)),
-                'base_sha256' => hash('sha256', $original),
-            ], ['Accept' => 'application/json'])
+        $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.signing-statement', $syllabus), ['version_bloqueo' => $syllabus->version_bloqueo])
+            ->assertOk()->assertExactJson(['statement' => $expected, 'required' => true]);
+        $this->assertStringStartsWith("silabos-ueb|silabo:{$syllabus->id}|accion:envio_docente|huella:", $expected);
+        $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.signing-statement', $syllabus), ['version_bloqueo' => $syllabus->version_bloqueo + 5])
+            ->assertConflict();
+        $this->as('coordinator')->postJson(route('api.v1.teacher.syllabi.signing-statement', $syllabus), ['version_bloqueo' => $syllabus->version_bloqueo])
             ->assertForbidden();
+        $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
+            ->assertJsonPath('syllabus.teacher_signature_required', true)->assertJsonPath('syllabus.signatures', []);
 
-        $this->assertSame(0, DocumentSignature::query()->count());
+        $this->submit($syllabus, null)->assertJsonValidationErrors(['signature' => 'Firme con su firma electrónica.']);
+        $this->assertDatabaseCount('revisiones_silabo', 0);
+
+        $this->submit($syllabus, $this->decisionSignature($expected, $this->people['teacher'][0]->nombre))->assertSuccessful();
+        $revision = SyllabusRevision::query()->firstOrFail();
+        $signature = SyllabusSignature::query()->firstOrFail();
+        $this->assertSame('docente', $signature->firmado_como);
+        $this->assertSame($revision->id, $signature->revision_silabo_id);
+        $this->assertSame($expected, $signature->declaracion_firmada);
+        $this->assertSame($this->people['teacher'][0]->nombre, $signature->nombre_en_certificado);
+        $this->assertStringEndsWith("huella:{$revision->huella_sha256}", $expected);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.firmado', 'recurso_id' => $signature->id, 'detalles->role' => 'docente']);
+        $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
+            ->assertJsonPath('syllabus.teacher_signature_required', false)
+            ->assertJsonPath('syllabus.signatures.0.role', 'docente')
+            ->assertJsonPath('syllabus.signatures.0.name', $this->people['teacher'][0]->nombre);
+
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
+            'justification' => 'Ajuste los resultados de aprendizaje.',
+        ])->assertSuccessful();
+        $syllabus->refresh();
+        $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.signing-statement', $syllabus), ['version_bloqueo' => $syllabus->version_bloqueo])
+            ->assertOk()->assertJsonPath('required', false);
+        $this->submit($syllabus, null)->assertSuccessful();
+        $this->assertDatabaseCount('revisiones_silabo', 2);
+        $this->assertSame(1, SyllabusSignature::query()->count());
     }
 
-    public function test_el_verificador_acepta_la_segunda_firma_sin_romper_la_primera(): void
+    public function test_coordinacion_y_biblioteca_firman_al_decidir_y_el_pdf_lleva_los_tres_sellos(): void
     {
-        $verifier = app(IncrementalPdfSignatureVerifier::class);
-        $pdf = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n";
-        $first = $this->signPdfIncrementally($pdf, $this->makeSigningCertificate('PRIMERA FIRMA'));
-        $second = $this->signPdfIncrementally($first, $this->makeSigningCertificate('SEGUNDA FIRMA'));
+        Queue::fake([GenerateSyllabusExportJob::class]);
+        [$syllabus, $revision] = $this->submitted();
+        [$coordinator] = $this->people['coordinator'];
+        [$librarian] = $this->people['librarian'];
+        $coordinationStatement = SigningStatement::for($syllabus->id, 'coordinacion', $revision->huella_sha256);
 
-        $this->assertSame('PRIMERA FIRMA', $verifier->verify($pdf, $first)->holder);
-        $this->assertSame('SEGUNDA FIRMA', $verifier->verify($first, $second)->holder);
-        $this->expectException(ValidationException::class);
-        $verifier->verify($pdf, $second);
-    }
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.show', $revision))
+            ->assertOk()
+            ->assertJsonPath('signing_statement', $coordinationStatement)
+            ->assertJsonCount(1, 'signatures');
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision))
+            ->assertJsonValidationErrors(['signature' => 'Firme con su firma electrónica.']);
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+            'signature' => $this->decisionSignature(SigningStatement::for($syllabus->id, 'biblioteca', $revision->huella_sha256), $coordinator->nombre),
+        ])->assertJsonValidationErrors(['signature' => 'La declaración firmada no corresponde. Vuelva a firmar.']);
+        $this->assertDatabaseCount('revisiones_coordinacion', 0);
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), [
+            'signature' => $this->decisionSignature($coordinationStatement, $coordinator->nombre),
+        ])->assertSuccessful();
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.show', $revision))
+            ->assertJsonPath('signing_statement', null)->assertJsonPath('signatures.1.role', 'coordinacion');
 
-    public function test_con_gotenberg_el_pdf_sale_del_docx_y_es_reproducible(): void
-    {
+        $libraryStatement = SigningStatement::for($syllabus->id, 'biblioteca', $revision->huella_sha256);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
+            ->assertOk()->assertJsonPath('review.signing_statement', $libraryStatement)->assertJsonCount(2, 'review.signatures');
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision))
+            ->assertJsonValidationErrors(['signature' => 'Firme con su firma electrónica.']);
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->as('librarian')->postJson(route('api.v1.library.reviews.verify', $revision), [
+            'signature' => $this->decisionSignature($libraryStatement, $librarian->nombre),
+        ])->assertCreated();
+        $this->assertSame('aprobado', $syllabus->fresh()->estado);
+        $this->assertSame(['docente', 'coordinacion', 'biblioteca'], SyllabusSignature::query()->orderBy('firmado_en')->orderByRaw("firmado_como = 'biblioteca', firmado_como = 'coordinacion'")->pluck('firmado_como')->all());
+        $this->assertSame(3, DB::table('eventos_auditoria')->where('accion', 'silabo.firmado')->count());
+
         config(['services.gotenberg.url' => 'http://gotenberg:3000/']);
-        $libreOffice = "%PDF-1.7\n1 0 obj\n<</Creator(Writer)/Producer(LibreOffice 25.2)/CreationDate(D:20260924101112-05'00')>>\nendobj\n"
-            ."trailer\n<</Size 2/Root 1 0 R/ID [ <0123456789ABCDEF0123456789ABCDEF>\n<0123456789ABCDEF0123456789ABCDEF> ]>>\n%%EOF\n";
-        Http::fake(['gotenberg:3000/forms/libreoffice/convert' => Http::response($libreOffice, 200, ['Content-Type' => 'application/pdf'])]);
+        $sentDocx = null;
+        Http::fake(function (ClientRequest $request) use (&$sentDocx) {
+            foreach ($request->data() as $part) {
+                if (($part['name'] ?? null) === 'files') {
+                    $sentDocx = $part['contents'];
+                }
+            }
 
-        $renderer = app(PhpWordDocumentRenderer::class);
-        $this->assertSame(PhpWordDocumentRenderer::VERSION_GOTENBERG, $renderer->version());
-        $converter = app(GotenbergPdfConverter::class);
-        $first = $converter->convert('docx-bytes', '2026-09-24T10:00:00+00:00');
-        $again = $converter->convert('docx-bytes', '2026-09-24T10:00:00+00:00');
+            return Http::response(self::LIBREOFFICE_PDF, 200, ['Content-Type' => 'application/pdf']);
+        });
+        $artifact = ExportArtifact::query()->where('revision_silabo_id', $revision->id)->firstOrFail();
+        (new GenerateSyllabusExportJob($artifact->id))->handle(app(DocumentRenderer::class), app(RecordAuditEvent::class), app(DocumentBundleValidator::class));
+        $artifact->refresh();
+        $this->assertSame('completado', $artifact->estado);
+        $this->assertNull($artifact->objeto_docx_id);
+        $this->assertNotNull($artifact->objeto_pdf_id);
+        $this->assertSame([], array_values(array_filter(Storage::disk('private')->allFiles(), fn (string $path): bool => str_ends_with($path, '.docx'))));
+        $this->assertIsString($sentDocx);
+        $text = $this->docxText($sentDocx);
+        foreach ([[$this->people['teacher'][0], 'Docente'], [$coordinator, 'Coordinación'], [$librarian, 'Biblioteca']] as [$signer, $role]) {
+            $this->assertStringContainsString("Firmado electrónicamente por {$signer->nombre} · {$role} · ", $text);
+        }
+        $this->assertSame(3, substr_count($text, 'certificado N.º '));
+        $this->assertNotified($this->people['teacher'][0]->id, 'silabo.aprobado', 'Ya puede descargar el PDF firmado');
+        $this->assertNotNotified($coordinator->id, 'silabo.aprobado');
 
-        $this->assertSame($first, $again);
-        $this->assertSame(strlen($libreOffice), strlen($first));
-        $this->assertStringContainsString("/CreationDate(D:20260924100000Z00'00')", $first);
-        $this->assertStringNotContainsString('0123456789ABCDEF', $first);
-        Http::assertSent(fn (ClientRequest $request): bool => $request->url() === 'http://gotenberg:3000/forms/libreoffice/convert' && $request->isMultipart());
-
-        config(['services.gotenberg.url' => null]);
-        $this->assertSame(PhpWordDocumentRenderer::VERSION, app(PhpWordDocumentRenderer::class)->version());
+        $this->as('teacher')->getJson(route('api.v1.documents.show', $revision))
+            ->assertOk()
+            ->assertJsonPath('artifacts.0.files', ['pdf_size' => strlen((string) Storage::disk('private')->get("exports/{$revision->id}/{$artifact->id}/syllabus.pdf"))])
+            ->assertJsonMissingPath('artifacts.0.signed');
+        $download = $this->as('coordinator')->get(route('api.v1.documents.download', $artifact))->assertOk();
+        $this->assertStringStartsWith('%PDF-', $download->streamedContent());
+        $this->assertSame('application/pdf', $download->headers->get('Content-Type'));
+        $this->as('teacher')->get("/api/v1/exports/{$artifact->id}/docx")->assertNotFound();
+        $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertJsonCount(3, 'syllabus.signatures');
     }
 
-    private function upload(SyllabusRevision $revision, string $pdf, string $base, string $as): TestResponse
+    public function test_rechaza_firmas_invalidas_vencidas_ajenas_o_de_entidades_no_reconocidas(): void
     {
-        $this->actingAsRole($as);
+        $syllabus = $this->validDraft();
+        [$teacher] = $this->people['teacher'];
+        $statement = SigningStatement::for($syllabus->id, 'docente', $this->draftFingerprint($syllabus));
+        $own = $this->makeSigningCertificate($teacher->nombre);
 
-        return $this->post(route('api.v1.signature.store', $revision), [
-            'signed_pdf' => UploadedFile::fake()->createWithContent('firmado.pdf', $pdf),
-            'base_sha256' => $base,
-        ], ['Accept' => 'application/json']);
+        $this->submit($syllabus, ['statement' => $statement, 'cms' => 'no-es-base64'])
+            ->assertJsonValidationErrors(['signature' => 'La firma no es válida.']);
+        $this->submit($syllabus, ['statement' => $statement])
+            ->assertJsonValidationErrors(['signature' => 'La firma no es válida.']);
+        $this->submit($syllabus, $this->decisionSignature(SigningStatement::for($syllabus->id, 'docente', str_repeat('a', 64)), $teacher->nombre))
+            ->assertJsonValidationErrors(['signature' => 'La declaración firmada no corresponde. Vuelva a firmar.']);
+        $this->submit($syllabus, ['statement' => $statement, 'cms' => $this->signStatement($statement.'|otra', $own)])
+            ->assertJsonValidationErrors(['signature' => 'La firma no corresponde a la declaración.']);
+        $this->submit($syllabus, ['statement' => $statement, 'cms' => $this->signStatement($statement, $this->makeSigningCertificate('MARIA LUISA GOMEZ TORRES'))])
+            ->assertJsonValidationErrors(['signature' => "El certificado es de «MARIA LUISA GOMEZ TORRES», no de {$teacher->nombre}."]);
+
+        $bundle = (string) tempnam(sys_get_temp_dir(), 'silabos-ca-');
+        file_put_contents($bundle, $this->makeCertificateAuthority()['pem']);
+        config(['signatures.trusted_ca_bundle' => $bundle]);
+        $this->submit($syllabus, ['statement' => $statement, 'cms' => $this->signStatement($statement, $own)])
+            ->assertJsonValidationErrors(['signature' => 'El certificado no es de una entidad reconocida.']);
+        @unlink($bundle);
+        config(['signatures.trusted_ca_bundle' => null]);
+
+        $shortLived = $this->signStatement($statement, $this->makeSigningCertificate($teacher->nombre, days: 1));
+        $this->travel(3)->days();
+        $this->submit($syllabus, ['statement' => $statement, 'cms' => $shortLived])
+            ->assertJsonValidationErrors(['signature' => 'El certificado está vencido.']);
+
+        $this->assertDatabaseCount('firmas_silabo', 0);
+        $this->assertDatabaseCount('revisiones_silabo', 0);
+        $this->assertSame('borrador', $syllabus->fresh()->estado);
     }
 
-    private function currentPdf(SyllabusRevision $revision, string $as): string
+    public function test_reiniciar_borra_las_firmas_y_las_firmas_no_se_modifican(): void
     {
-        $this->actingAsRole($as);
+        Queue::fake([GenerateSyllabusExportJob::class]);
+        [$syllabus] = $this->submitted();
+        $signature = SyllabusSignature::query()->firstOrFail();
 
-        return $this->get(route('api.v1.signature.pdf', $revision))->assertOk()->streamedContent();
+        try {
+            DB::transaction(fn () => DB::table('firmas_silabo')->where('firma_silabo_id', $signature->id)->update(['nombre_en_certificado' => 'OTRA PERSONA']));
+            $this->fail('PostgreSQL permitió modificar una firma.');
+        } catch (QueryException) {
+            $this->assertSame($signature->nombre_en_certificado, $signature->fresh()?->nombre_en_certificado);
+        }
+
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.reset', $syllabus))->assertSuccessful();
+        $this->assertDatabaseCount('firmas_silabo', 0);
+        $fresh = Syllabus::query()->where('paralelo_id', $syllabus->paralelo_id)->firstOrFail();
+        $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $fresh))
+            ->assertJsonPath('syllabus.teacher_signature_required', true)->assertJsonPath('syllabus.signatures', []);
+    }
+
+    public function test_ya_no_existen_la_firma_secuencial_del_pdf_ni_la_descarga_word(): void
+    {
+        foreach (['api.v1.signature.show', 'api.v1.signature.pdf', 'api.v1.signature.store'] as $name) {
+            $this->assertFalse(Route::has($name));
+        }
+        $revision = (string) Str::uuid();
+        $this->as('teacher')->getJson("/api/v1/revisions/{$revision}/signature")->assertNotFound();
+        $this->as('teacher')->postJson("/api/v1/revisions/{$revision}/signature")->assertNotFound();
+        $this->as('teacher')->getJson("/api/v1/revisions/{$revision}/signature/pdf")->assertNotFound();
+        $this->assertStringEndsWith('/pdf', route('api.v1.documents.download', (string) Str::uuid()));
+    }
+
+    /** @param array<string, string>|null $signature */
+    private function submit(Syllabus $syllabus, ?array $signature): TestResponse
+    {
+        return $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), array_filter([
+            'version_bloqueo' => $syllabus->fresh()?->version_bloqueo,
+            'idempotency_key' => (string) Str::uuid(),
+            'signature' => $signature,
+        ], fn (mixed $value): bool => $value !== null));
     }
 
     /** @return array{Syllabus, SyllabusRevision} */
-    private function exportedRevision(): array
+    private function submitted(): array
     {
-        Queue::fake([GenerateSyllabusExportJob::class]);
-        $career = Career::query()->firstOrFail();
-        $subject = Subject::query()->firstOrFail();
-        $template = SyllabusTemplate::query()->create([
-            'nombre' => 'Plantilla de firma I-139',
-            'activo' => true,
-        ]);
-        $convocation = Convocation::query()->create([
-            'carrera_id' => $career->id,
-            'proceso_id' => $this->openSyllabusProcess($template->id)->id,
-            'estado' => 'abierta',
-        ]);
-        $teacherAssignment = TeacherAssignment::query()->forUser($this->teacher->id)->firstOrFail();
-        $syllabus = Syllabus::query()->create([
-            'convocatoria_id' => $convocation->id,
-            'paralelo_id' => $teacherAssignment->paralelo_id,
-            'asignatura_id' => $subject->id,
-            'estado' => 'aprobado',
-            'version_bloqueo' => 2,
-            'iniciado_en' => now()->subDay(),
-            'guardado_en' => now(),
-        ]);
-        $snapshot = [
-            'schema_version' => 1,
-            'template_id' => $template->id,
-            'sections' => [[
-                'key' => 'general',
-                'title' => 'Información general',
-                'blocks' => [[
-                    'key' => 'contenido',
-                    'title' => 'Contenido académico',
-                    'fields' => [[
-                        'key' => 'descripcion', 'label' => 'Descripción', 'type' => 'text',
-                        'inherited' => false, 'value' => 'Contenido para firmar',
-                    ]],
-                ]],
-            ]],
-        ];
-        $revision = SyllabusRevision::query()->create([
-            'silabo_id' => $syllabus->id,
-            'numero_revision' => 1,
-            'clave_idempotencia' => (string) Str::uuid(),
-            'version_bloqueo_origen' => 1,
-            'fotografia' => $snapshot,
-            'huella_sha256' => app(CanonicalHasher::class)->hash($snapshot),
-            'enviado_por' => $this->teacher->id,
-            'enviado_en' => now()->subMinute(),
-        ]);
-        LibrarySubmission::query()->create(['revision_silabo_id' => $revision->id]);
-        Approval::query()->create([
-            'revision_silabo_id' => $revision->id,
-            'clave_idempotencia' => (string) Str::uuid(),
-            'huella_sha256' => hash('sha256', $revision->huella_sha256),
-            'aprobado_por' => $this->librarian->id,
-            'aprobado_en' => now(),
-        ]);
-        $this->actingAsTeacher()->getJson(route('api.v1.signature.show', $revision))
-            ->assertOk()->assertJsonPath('state', 'sin_documento')->assertJsonPath('can_sign', false);
-        $this->actingAsTeacher()->postJson(route('api.v1.documents.store', $revision), [
-            'idempotency_key' => (string) Str::uuid(),
+        $syllabus = $this->validDraft();
+        $this->submit($syllabus, $this->teacherSignature($syllabus, $this->people['teacher'][0]))->assertSuccessful();
+
+        return [$syllabus->fresh() ?? $syllabus, SyllabusRevision::query()->where('silabo_id', $syllabus->id)->latest('numero_revision')->firstOrFail()];
+    }
+
+    private function validDraft(): Syllabus
+    {
+        $this->as('admin')->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla de firmas']);
+        $template = SyllabusTemplate::query()->firstOrFail();
+        $this->as('admin')->postJson(route('api.v1.admin.template.format', $template))->assertSuccessful();
+        $this->fillSubjectProfiles();
+        $this->as('coordinator')->postJson(route('api.v1.coordination.convocations.store'), [
+            'process_id' => $this->openSyllabusProcess($template->id, now()->subDay()->toIso8601String(), now()->addMonth()->toIso8601String())->id,
         ])->assertSuccessful();
-        (new GenerateSyllabusExportJob(ExportArtifact::query()->firstOrFail()->id))->handle(
-            app(DocumentRenderer::class),
-            app(RecordAuditEvent::class),
-            app(DocumentBundleValidator::class),
-        );
+        $this->assertSame(1, Convocation::query()->count());
+        $syllabus = Syllabus::query()->firstOrFail();
+        $this->as('teacher')->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        foreach (FieldDefinition::query()->where('quien_llena', 'docente')->get() as $field) {
+            $this->as('teacher')->patchJson(
+                route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
+                ['version_bloqueo' => $syllabus->fresh()?->version_bloqueo, 'value' => $this->answeredValue($field, "Contenido {$field->clave}")],
+            )->assertOk();
+        }
 
-        return [$syllabus->fresh(), $revision->fresh()];
+        return $syllabus->fresh() ?? $syllabus;
     }
 
-    private function actingAsRole(string $as): static
+    private function draftFingerprint(Syllabus $syllabus): string
     {
-        return match ($as) {
-            'teacher' => $this->actingAsTeacher(),
-            'librarian' => $this->actingAsLibrarian(),
-            default => $this->actingAsCoordinator(),
-        };
+        $statement = $this->teacherSignature($syllabus, $this->people['teacher'][0])['statement'];
+
+        return substr($statement, (int) strrpos($statement, ':') + 1);
     }
 
-    private function actingAsLibrarian(): static
+    private function docxText(string $docx): string
     {
-        $this->actingAs($this->librarian)->withSession(['active_role_assignment_id' => $this->librarianContext->id]);
+        $path = (string) tempnam(sys_get_temp_dir(), 'silabos-docx-');
+        file_put_contents($path, $docx);
+        $zip = new ZipArchive;
+        $zip->open($path);
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        @unlink($path);
 
-        return $this;
+        return html_entity_decode(strip_tags($xml), ENT_QUOTES | ENT_XML1, 'UTF-8');
     }
 
-    private function actingAsCoordinator(): static
+    private function as(string $who): static
     {
-        $this->actingAs($this->coordinator)->withSession(['active_role_assignment_id' => $this->coordinatorContext->id]);
-
-        return $this;
-    }
-
-    private function actingAsTeacher(): static
-    {
-        $this->actingAs($this->teacher)->withSession(['active_role_assignment_id' => $this->teacherContext->id]);
+        [$user, $assignment] = $this->people[$who];
+        $this->actingAs($user)->withSession(['active_role_assignment_id' => $assignment->id]);
 
         return $this;
     }

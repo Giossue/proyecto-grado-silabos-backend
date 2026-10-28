@@ -4816,7 +4816,21 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "properties": {
+                                        "signing_statement": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "signatures": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SignatureSummary"
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -4892,6 +4906,18 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
+                                "properties": {
+                                    "signature": {
+                                        "oneOf": [
+                                            {
+                                                "$ref": "#/components/schemas/DecisionSignature"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ]
+                                    }
+                                },
                                 "additionalProperties": true
                             }
                         }
@@ -5142,7 +5168,7 @@
                 ]
             }
         },
-        "/api/v1/exports/{artifact}/{format}": {
+        "/api/v1/exports/{artifact}/pdf": {
             "get": {
                 "tags": [
                     "Documentos"
@@ -5153,7 +5179,7 @@
                     "200": {
                         "description": "Operación completada.",
                         "content": {
-                            "application/octet-stream": {
+                            "application/pdf": {
                                 "schema": {
                                     "type": "string",
                                     "format": "binary"
@@ -5174,14 +5200,6 @@
                 "parameters": [
                     {
                         "name": "artifact",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "format",
                         "in": "path",
                         "required": true,
                         "schema": {
@@ -5349,7 +5367,26 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "type": "object",
+                                    "properties": {
+                                        "review": {
+                                            "type": "object",
+                                            "properties": {
+                                                "signing_statement": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "signatures": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/SignatureSummary"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -5481,6 +5518,18 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
+                                "properties": {
+                                    "signature": {
+                                        "oneOf": [
+                                            {
+                                                "$ref": "#/components/schemas/DecisionSignature"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ]
+                                    }
+                                },
                                 "additionalProperties": true
                             }
                         }
@@ -5785,164 +5834,6 @@
                 ]
             }
         },
-        "/api/v1/revisions/{revision}/signature": {
-            "get": {
-                "tags": [
-                    "Documentos"
-                ],
-                "operationId": "api_v1_signature_show",
-                "summary": "api.v1.signature.show",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "revision",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            },
-            "post": {
-                "tags": [
-                    "Documentos"
-                ],
-                "operationId": "api_v1_signature_store",
-                "summary": "api.v1.signature.store",
-                "responses": {
-                    "201": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "revision",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "type": "object",
-                                "required": [
-                                    "signed_pdf",
-                                    "base_sha256"
-                                ],
-                                "properties": {
-                                    "signed_pdf": {
-                                        "type": "string",
-                                        "format": "binary"
-                                    },
-                                    "base_sha256": {
-                                        "type": "string",
-                                        "pattern": "^[A-Fa-f0-9]{64}$"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/revisions/{revision}/signature/pdf": {
-            "get": {
-                "tags": [
-                    "Documentos"
-                ],
-                "operationId": "api_v1_signature_pdf",
-                "summary": "api.v1.signature.pdf",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/pdf": {
-                                "schema": {
-                                    "type": "string",
-                                    "format": "binary"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "revision",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
         "/api/v1/session": {
             "get": {
                 "tags": [
@@ -6124,6 +6015,15 @@
                                                             }
                                                         }
                                                     }
+                                                },
+                                                "signatures": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/SignatureSummary"
+                                                    }
+                                                },
+                                                "teacher_signature_required": {
+                                                    "type": "boolean"
                                                 }
                                             }
                                         }
@@ -6441,6 +6341,82 @@
                 ]
             }
         },
+        "/api/v1/teacher/syllabi/{syllabus}/signing-statement": {
+            "post": {
+                "tags": [
+                    "Docencia"
+                ],
+                "operationId": "api_v1_teacher_syllabi_signing-statement",
+                "summary": "api.v1.teacher.syllabi.signing-statement",
+                "responses": {
+                    "200": {
+                        "description": "Operación completada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "statement",
+                                        "required"
+                                    ],
+                                    "properties": {
+                                        "statement": {
+                                            "type": "string"
+                                        },
+                                        "required": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationError"
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "syllabus",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "version_bloqueo"
+                                ],
+                                "properties": {
+                                    "version_bloqueo": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctumCookie": []
+                    }
+                ]
+            }
+        },
         "/api/v1/teacher/syllabi/{syllabus}/start": {
             "post": {
                 "tags": [
@@ -6541,7 +6517,30 @@
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "additionalProperties": true
+                                "required": [
+                                    "version_bloqueo",
+                                    "idempotency_key"
+                                ],
+                                "properties": {
+                                    "version_bloqueo": {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    "idempotency_key": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "signature": {
+                                        "oneOf": [
+                                            {
+                                                "$ref": "#/components/schemas/DecisionSignature"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ]
+                                    }
+                                }
                             }
                         }
                     }
@@ -7083,6 +7082,50 @@
                     "position": {
                         "type": "integer",
                         "minimum": 1
+                    }
+                },
+                "additionalProperties": false
+            },
+            "DecisionSignature": {
+                "type": "object",
+                "required": [
+                    "statement",
+                    "cms"
+                ],
+                "properties": {
+                    "statement": {
+                        "type": "string",
+                        "maxLength": 500
+                    },
+                    "cms": {
+                        "type": "string",
+                        "description": "Firma CMS/PKCS#7 separada (SHA-256) de la declaración, en base64."
+                    }
+                },
+                "additionalProperties": false
+            },
+            "SignatureSummary": {
+                "type": "object",
+                "required": [
+                    "role",
+                    "name",
+                    "signed_at"
+                ],
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "docente",
+                            "coordinacion",
+                            "biblioteca"
+                        ]
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "signed_at": {
+                        "type": "string",
+                        "format": "date-time"
                     }
                 },
                 "additionalProperties": false

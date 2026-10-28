@@ -25,6 +25,7 @@ use LogicException;
  * @property CarbonImmutable|null $completado_en
  * @property-read SyllabusRevision $revision
  * @property-read Syllabus $syllabus
+ * @property-read StoredObject|null $pdfObject
  */
 class ExportArtifact extends Model
 {
@@ -68,12 +69,6 @@ class ExportArtifact extends Model
     public function syllabus(): HasOneThrough
     {
         return $this->hasOneThrough(Syllabus::class, SyllabusRevision::class, 'revision_silabo_id', 'silabo_id', 'revision_silabo_id', 'silabo_id');
-    }
-
-    /** @return BelongsTo<StoredObject, $this> */
-    public function docxObject(): BelongsTo
-    {
-        return $this->belongsTo(StoredObject::class, 'archivo_word_id');
     }
 
     /** @return BelongsTo<StoredObject, $this> */

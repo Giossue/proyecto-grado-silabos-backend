@@ -6,8 +6,8 @@
 - datos personales de usuarios, incluida la formación del docente;
 - estructura académica, malla, fichas de asignatura y el contenido del Excel de importación;
 - borradores, revisiones de Coordinación y Biblioteca, comentarios y aprobaciones;
-- plantilla del sílabo, DOCX y PDF generados y sus huellas;
-- PDF firmados, datos del certificado de cada firmante y la lista de entidades
+- plantilla del sílabo, PDF generado y sus huellas;
+- firmas CMS de las decisiones, datos del certificado de cada firmante y la lista de entidades
   certificadoras de confianza;
 - archivo `.p12` y su clave, que solo existen en el navegador del firmante;
 - auditoría, conversaciones con la IA y avisos;
@@ -34,9 +34,9 @@
 | Inyección | Los filtros alteran la consulta | Query Builder, listas permitidas, validación |
 | Mass assignment | La petición cambia un estado o rol no permitido | datos validados, casos de uso, estados por acción específica |
 | Subida maliciosa | Archivo con extensión permitida y contenido distinto, o enorme | tipo real, tamaño máximo, disco privado, límite de descompresión en Excel |
-| Descarga indebida | Alguien descarga un documento ajeno o sin las tres firmas | descarga por API autenticada, autorización por petición, auditoría |
-| Firma suplantada | Alguien sube un PDF firmado con un certificado ajeno | titular del certificado igual a la cuenta, certificado vigente, firma CMS válida, cadena hacia la lista de confianza (DT-16) |
-| Firma fuera de turno o sobre otro documento | El PDF firmado no parte del vigente o salta un firmante | orden docente → coordinación → biblioteca, huella del PDF base, el PDF firmado debe empezar con el vigente y agregar una sola firma |
+| Descarga indebida | Alguien descarga un documento ajeno | descarga por API autenticada, autorización por petición, auditoría |
+| Firma suplantada | Alguien firma una decisión con un certificado ajeno | titular del certificado igual a la cuenta, certificado vigente, firma CMS válida, cadena hacia la lista de confianza (DT-16) |
+| Firma sobre otro contenido | La firma corresponde a otro sílabo, otra acción u otra versión | la declaración incluye sílabo, acción y huella del contenido; el servidor la compara con la esperada y verifica la firma sobre esos bytes; solo firma quien tiene la etapa |
 | Robo de la firma | El `.p12` o su clave salen del equipo del firmante | la firma ocurre en el navegador; el archivo y la clave nunca se envían |
 | Revisión manipulada | Un sílabo aprobado se cambia fuera del flujo | aprobaciones y auditoría de solo inserción, huella, regeneración solo por cambios de plantilla, malla o ficha |
 | Carrera / reintento | Dos envíos o aprobaciones a la vez | bloqueo de fila, versión, idempotencia, transacción |
@@ -58,7 +58,7 @@
 - descarga con sesión revocada o sin permiso;
 - contenido del sílabo con texto que da instrucciones a la IA;
 - archivo con extensión permitida y contenido distinto;
-- PDF firmado por otra persona, vencido o que no parte del documento vigente;
+- firma de otra persona, con certificado vencido o sobre otra declaración;
 - misma petición enviada en paralelo;
 - worker que procesa después de que cambió la versión esperada;
 - alguien intenta modificar un evento de auditoría.

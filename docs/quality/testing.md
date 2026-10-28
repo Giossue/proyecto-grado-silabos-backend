@@ -11,7 +11,7 @@ falla un servicio externo. La cantidad de pruebas no sustituye la cobertura de r
   - `tests/Unit`: reglas puras (semanas del período, nombres y documentos de campo);
   - `tests/Feature/<Módulo>`: rutas JSON, políticas, transacciones y trabajos;
   - `tests/Architecture`: límites de módulos, contrato OpenAPI, protección de la API;
-  - `tests/Support`: ayudas compartidas (crear convocatorias, firmar PDF, logos).
+  - `tests/Support`: ayudas compartidas (crear convocatorias, firmar declaraciones, logos).
 - **Frontend** (`proyecto-grado-silabos-frontend`):
   - Vitest en `src/**/*.test.ts`;
   - Playwright en `tests/e2e`.
@@ -80,10 +80,12 @@ que la conexión use UTC y que el seeder de demostración sea idempotente.
   intencional, se regenera con `UPDATE_GOLDEN=1`.
 - `DocumentOperationsTest` cubre la exportación, la descarga privada y la auditoría.
   Gotenberg se simula con `Http::fake`.
-- `DocumentSignatureTest` y `SignatureTrustTest` firman PDF de prueba
-  (`tests/Support/SignsPdfIncrementally.php`): orden de firmas, titular, cadena de
-  confianza, PDF alterado y certificado vencido. En el frontend, `signPdf.test.ts` y
-  `DocumentSignatureCard.test.ts` firman en el navegador.
+- `DocumentSignatureTest` y `SignatureTrustTest` firman declaraciones de prueba con
+  certificados creados por OpenSSL (`tests/Support/SignsStatements.php`): firma al primer
+  envío y no al reenviar, firma de Coordinación y Biblioteca al aprobar, titular, cadena
+  de confianza, firma inválida o sobre otro texto, declaración ajena, certificado vencido
+  y los tres sellos del PDF final. Las demás pruebas que envían o aprueban usan las mismas
+  ayudas (`teacherSignature`, `revisionSignature`).
 
 Un archivo válido puede verse cortado o desalineado: la comparación visual con el
 documento oficial sigue siendo manual (PV-07).

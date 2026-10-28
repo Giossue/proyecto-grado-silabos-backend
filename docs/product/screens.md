@@ -36,11 +36,11 @@ muestra «Página no encontrada».
 | COR-01 | Puesta en marcha | `/coordinacion/puesta-en-marcha` | Pasos para preparar la carrera y «Abrir convocatoria». Fuera del menú lateral: se llega desde «Puesta en marcha» en COR-05. |
 | COR-04 | Seguimiento | pestaña en COR-05 | Todos los sílabos de la convocatoria con paralelos, docentes, estado y fecha de inicio. |
 | COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Puesta en marcha». Pestañas «Cola de revisión» (asignatura, docente, número de revisión, estado y etapa) y «Seguimiento» (COR-04). |
-| COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | Contenido enviado en solo lectura, historial de revisiones, decisión y firma. |
+| COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | El sílabo se ve como el documento final. Decisiones en la cabecera, con diálogos: «Solicitar corrección» y «Firmar y enviar a biblioteca». Historial y comparación en un botón secundario; reiniciar y eliminar en «Más». |
 | COR-07 | Comparar revisiones | `/coordinacion/revisiones/:before/comparar/:after` | Campos agregados, retirados o modificados, lado a lado. |
-| COR-08 | Solicitar corrección | tarjeta en COR-06 | «Comentario para el docente» y «Solicitar corrección». |
-| COR-09 | Aprobar | tarjeta en COR-06 | «Aprobar revisión N»: pasa a Biblioteca. |
-| COR-10 | Eliminar sílabo aprobado | tarjeta en COR-06 | «Eliminar sílabo» → «Eliminar definitivamente». |
+| COR-08 | Solicitar corrección | diálogo en COR-06 | «Comentario para el docente» y «Solicitar corrección»; no se firma. |
+| COR-09 | Firmar y enviar a biblioteca | diálogo en COR-06 | Archivo `.p12`/`.pfx`, clave y confirmar: firma y pasa a Biblioteca. |
+| COR-10 | Eliminar sílabo aprobado | «Más» en COR-06 | «Eliminar sílabo» → «Eliminar definitivamente». |
 | COR-13 | Malla | `/coordinacion/malla` | Lienzo con ciclos, materias y requisitos; «Editar malla» abre el editor a pantalla completa; «Importar desde Excel». |
 | COR-14 | Materias y asignaciones | `/coordinacion/materias-asignaciones` | Materias con paralelos, jornada y docente; «Acciones masivas»; un clic abre «Paralelos y docentes de la materia». |
 | COR-15 | Docentes | `/coordinacion/docentes` | Docentes de la carrera; «Crear docente», «Importar desde Excel»; la fila abre «Editar docente» con «Reenviar invitación» y «Quitar de la carrera». |
@@ -57,18 +57,18 @@ y el botón «Documentos» (DOC-10).
 | DOC-04 | Sílabo | `/docente/mis-silabos/:syllabus` | Editor a pantalla completa, sin menú lateral. Detalle abajo. |
 | DOC-05 | Validación | dentro de DOC-04 | Campos faltantes y reglas de bloques; el botón de envío explica qué falta. |
 | DOC-06 | Asistente de unidades | botón flotante en DOC-04 | «Asistente» abre el chat de IA con preguntas sugeridas y «Nuevo chat»; «Cerrar asistente» lo oculta. |
-| DOC-07 | Envío | diálogo en DOC-04 | «¿Enviar a revisión?» → «Enviar a revisión». |
+| DOC-07 | Envío | diálogo en DOC-04 | Primer envío: «Firmar y enviar» pide el archivo `.p12`/`.pfx` y la clave. Reenvío tras una corrección: «Enviar», sin firmar. |
 | DOC-08 | Corrección | aviso en DOC-04 | Aviso ámbar «Coordinación pidió correcciones» o «Biblioteca pidió correcciones» con el comentario, autor y fecha; «Comentarios anteriores (N)» plegados. Fuera de corrección, «Último comentario de …» en un aviso neutro. Si la corrección vino de biblioteca, el diálogo de envío dice que va directo a biblioteca. |
 | DOC-09 | Historial | `/docente/historial`, `/docente/historial/:career` | Carreras con sílabos de períodos terminados y, dentro, sus sílabos por período, en solo lectura. |
-| DOC-10 | Documentos | `/docente/revisiones/:revision/documentos`, `/coordinacion/revisiones/:revision/documentos` | Word y PDF de la revisión aprobada; «Generar DOCX y PDF». Las descargas aparecen con las tres firmas. |
+| DOC-10 | Documentos | `/docente/revisiones/:revision/documentos`, `/coordinacion/revisiones/:revision/documentos` | Ver y descargar el PDF de la revisión aprobada apenas se genera, con los sellos de las tres firmas. Sin Word. «Reintentar» si falló. |
 
 ## Bibliotecario
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Entrada de Biblioteca; no tiene Panel. Aviso del plazo para revisar y firmar bajo la barra superior. Arriba, por revisar, por firmar y atendidos. Debajo, bandeja de toda la universidad con el período en curso: búsqueda, facultad y estado («Por revisar», «Por firmar», «Atendidos»). «Atendido» junta los envíos firmados por biblioteca, los devueltos al docente y los reemplazados por una revisión nueva; el detalle dice cuál de los tres fue. Columnas: carrera, docente y estado. Los bibliotecarios se reparten el trabajo por facultad: cada uno ve la última facultad que eligió. |
-| BIB-03 | Revisión de bibliografía | `/biblioteca/revisiones/:revision` | Bibliografía en solo lectura, «Aprobar bibliografía», «Devolver al docente» con motivos, motivos enviados y firma. |
-| BIB-04 | Historial | `/biblioteca/historial` | Sílabos de períodos terminados, en solo lectura; se llega desde «Historial» en BIB-02. Filtros por período, facultad, estado y «Solo los míos» (los que el bibliotecario aprobó, devolvió o firmó). La fila abre BIB-03. |
+| BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Entrada de Biblioteca; no tiene Panel. Aviso del plazo para revisar bajo la barra superior. Arriba, por revisar y atendidos. Debajo, bandeja de toda la universidad con el período en curso: búsqueda, facultad y estado («Por revisar», «Atendidos»). «Atendido» junta los envíos firmados y aprobados por biblioteca, los devueltos al docente y los reemplazados por una revisión nueva; el detalle dice cuál de los tres fue. Columnas: carrera, docente y estado. Los bibliotecarios se reparten el trabajo por facultad: cada uno ve la última facultad que eligió. |
+| BIB-03 | Revisión de bibliografía | `/biblioteca/revisiones/:revision` | Solo asignatura, carrera, docente y la bibliografía; sin número de revisión ni «Enviado por». Botones en la cabecera: «Devolver al docente» (motivos) y «Firmar y aprobar». |
+| BIB-04 | Historial | `/biblioteca/historial` | Sílabos de períodos terminados, en solo lectura; se llega desde «Historial» en BIB-02. Filtros por período, facultad, estado y «Solo los míos» (los que el bibliotecario firmó o devolvió). La fila abre BIB-03. |
 
 ## Detalle de pantallas clave
 
@@ -186,21 +186,19 @@ y el botón «Documentos» (DOC-10).
 - «Vista previa» muestra la hoja del sílabo en la pantalla, como en Plantilla; «Editar»
   vuelve al formulario. «Copiar desde paralelo X» trae lo escrito en
   otro paralelo propio.
-- «Enviar sílabo» queda deshabilitado mientras falten campos («Faltan N campos por
-  completar»).
-- Al aprobarse aparece la tarjeta de firma.
+- «Firmar y enviar» (primer envío) o «Enviar» (reenvío ya firmado) queda deshabilitado
+  mientras falten campos («Faltan N campos por completar»).
 
-### Tarjeta de firma
+### Diálogo de firma
 
-Aparece en DOC-04, COR-06 y BIB-03 cuando la revisión está aprobada. Muestra los tres
-firmantes en orden y su estado («Pendiente docente», «Pendiente coordinación»,
-«Pendiente biblioteca», «Firmado»). «Firmar electrónicamente» pide el archivo `.p12` o
-`.pfx` y su clave, firma en el navegador y sube solo el PDF firmado. «Descargar PDF
-firmado» aparece con las tres firmas.
+Lo usan «Firmar y enviar» (DOC-04), «Firmar y enviar a biblioteca» (COR-06) y «Firmar y
+aprobar» (BIB-03): archivo `.p12` o `.pfx`, clave y confirmar. La firma se hace en el
+navegador sobre la declaración que entrega el servidor; el archivo y la clave no se
+envían. Cada persona firma una sola vez por sílabo.
 
 ### BIB-03 Revisión de bibliografía
 
-- «Aprobar bibliografía» pide confirmación; el sílabo queda aprobado y se genera el PDF.
+- «Firmar y aprobar» abre el diálogo de firma; el sílabo queda aprobado y se genera el PDF.
 - «Devolver al docente» pide al menos un motivo: libro no disponible, código incorrecto,
   ISBN incorrecto, edición desactualizada, datos incompletos u «Otro motivo». Con «Otro
   motivo» aparece un cuadro obligatorio; su texto se envía junto a los motivos marcados.
@@ -219,13 +217,10 @@ firmado» aparece con las tres firmas.
   aviso lleva a la pantalla donde se actúa y, si hace falta, activa el rol que
   corresponde. Cada aviso pertenece a un período; al terminar el período deja de verse.
   - Docente: «Tiene sílabos por elaborar», «Plazo extendido», «Corrección solicitada»,
-    «Sílabo aprobado: ya puede firmarlo» (cuando el PDF está listo), «Su sílabo volvió a
-    empezar» (reinicio, eliminación, cambio de la base o de la plantilla) y «Sílabo
-    firmado».
-  - Coordinación de la carrera: «Sílabo listo para revisión», «Sílabo listo para su
-    firma» y «Sílabo firmado».
-  - Biblioteca: «Sílabo listo para revisión» (también el reenvío corregido) y «Sílabo
-    listo para su firma».
+    «Sílabo aprobado» (cuando el PDF está listo) y «Su sílabo volvió a empezar»
+    (reinicio, eliminación, cambio de la base o de la plantilla).
+  - Coordinación de la carrera: «Sílabo listo para revisión».
+  - Biblioteca: «Sílabo listo para revisión» (también el reenvío corregido).
   - Administración: «No se pudieron generar los documentos».
 - **Accesibilidad.** Botón flotante en escritorio (en móvil, en el menú de usuario):
   tamaño del texto, alto contraste, sin animaciones, subrayar enlaces y texto más

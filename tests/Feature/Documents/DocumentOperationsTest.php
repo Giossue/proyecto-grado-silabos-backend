@@ -11,6 +11,7 @@ use App\Modules\Configuration\Application\TemplateDocumentDefaults;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Application\DocumentBundleValidator;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
+use App\Modules\Documents\Domain\Data\DocumentBundle;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
@@ -164,12 +165,7 @@ class DocumentOperationsTest extends TestCase
         ])->assertSuccessful();
         $artifact = ExportArtifact::query()->where('revision_silabo_id', $resubmitted->id)->firstOrFail();
 
-        (new GenerateSyllabusExportJob($artifact->id))->handle(app(DocumentRenderer::class), app(RecordAuditEvent::class), app(DocumentBundleValidator::class));
-
-        $zip = new ZipArchive;
-        $this->assertTrue($zip->open(Storage::disk('private')->path($artifact->refresh()->docxObject->ruta_interna)) === true);
-        $documentXml = (string) $zip->getFromName('word/document.xml');
-        $zip->close();
+        $documentXml = $this->exportedDocumentXml($artifact);
         $this->assertStringContainsString($this->coordinator->nombre, $documentXml);
         $this->assertStringNotContainsString($librarian->nombre, $documentXml);
         $this->assertStringContainsString(now()->subDays(3)->setTimezone('America/Guayaquil')->format('d-m-Y'), $documentXml);
@@ -184,37 +180,32 @@ class DocumentOperationsTest extends TestCase
         ]);
         $artifact = ExportArtifact::query()->firstOrFail();
         $job = new GenerateSyllabusExportJob($artifact->id);
-        $job->handle(
-            app(DocumentRenderer::class),
-            app(RecordAuditEvent::class),
-            app(DocumentBundleValidator::class),
-        );
+        $docxBytes = $this->exportedDocx($artifact);
 
-        $artifact->refresh()->load(['docxObject', 'pdfObject']);
+        $artifact->refresh()->load('pdfObject');
         $this->assertSame('completado', $artifact->estado);
-        $this->assertDatabaseCount('archivos', 2);
-        $docx = $artifact->docxObject;
+        $this->assertDatabaseCount('archivos', 1);
+        $this->assertNull($artifact->objeto_docx_id);
         $pdf = $artifact->pdfObject;
-        $this->assertInstanceOf(StoredObject::class, $docx);
         $this->assertInstanceOf(StoredObject::class, $pdf);
-        Storage::disk('private')->assertExists($docx->ruta_interna);
         Storage::disk('private')->assertExists($pdf->ruta_interna);
-        $docxBytes = Storage::disk('private')->get($docx->ruta_interna);
         $pdfBytes = Storage::disk('private')->get($pdf->ruta_interna);
-        $this->assertSame(hash('sha256', $docxBytes), $docx->huella_sha256);
         $this->assertSame(hash('sha256', $pdfBytes), $pdf->huella_sha256);
         $this->assertStringStartsWith('%PDF-1.4', $pdfBytes);
         $this->assertStringEndsWith("%%EOF\n", $pdfBytes);
         $this->assertStringContainsString($revision->huella_sha256, $pdfBytes);
         $this->assertStringContainsString('Contenido academico verificable', $pdfBytes);
 
+        $path = (string) tempnam(sys_get_temp_dir(), 'silabos-docx-');
+        file_put_contents($path, $docxBytes);
         $zip = new ZipArchive;
-        $this->assertTrue($zip->open(Storage::disk('private')->path($docx->ruta_interna)) === true);
+        $this->assertTrue($zip->open($path) === true);
         foreach (['[Content_Types].xml', '_rels/.rels', 'word/document.xml', 'word/styles.xml'] as $entry) {
             $this->assertNotFalse($zip->locateName($entry));
         }
         $documentXml = $zip->getFromName('word/document.xml');
         $zip->close();
+        @unlink($path);
         $this->assertIsString($documentXml);
         $this->assertStringContainsString($revision->huella_sha256, $documentXml);
         $this->assertStringContainsString('Contenido academico verificable', $documentXml);
@@ -241,22 +232,19 @@ class DocumentOperationsTest extends TestCase
             app(RecordAuditEvent::class),
             app(DocumentBundleValidator::class),
         );
-        $this->assertDatabaseCount('archivos', 2);
-        $this->assertSame($docxBytes, Storage::disk('private')->get($docx->ruta_interna));
+        $this->assertDatabaseCount('archivos', 1);
+        $this->assertSame($pdfBytes, Storage::disk('private')->get($pdf->ruta_interna));
         $this->assertDatabaseHas('notificaciones', [
             'usuario_id' => $this->teacher->id,
             'tipo_notificacion' => 'silabo.aprobado',
-            'titulo_notificacion' => 'Sílabo aprobado: ya puede firmarlo',
+            'titulo_notificacion' => 'Sílabo aprobado',
             'tipo_recurso' => 'artefacto_exportacion',
         ]);
 
-        $this->actingAsTeacher()
-            ->getJson(route('api.v1.documents.download', [$artifact, 'docx']))
-            ->assertForbidden();
-        $this->actingAsCoordinator()
-            ->getJson(route('api.v1.documents.download', [$artifact, 'pdf']))
-            ->assertForbidden();
-        $this->actingAsAdministrator()->getJson(route('api.v1.documents.download', [$artifact, 'pdf']))->assertForbidden();
+        $this->actingAsTeacher()->get("/api/v1/exports/{$artifact->id}/docx")->assertNotFound();
+        $this->assertSame($pdfBytes, $this->actingAsTeacher()->get(route('api.v1.documents.download', $artifact))->assertOk()->streamedContent());
+        $this->actingAsCoordinator()->get(route('api.v1.documents.download', $artifact))->assertOk();
+        $this->actingAsAdministrator()->getJson(route('api.v1.documents.download', $artifact))->assertForbidden();
 
         try {
             $artifact->update(['estado' => 'fallido']);
@@ -266,10 +254,10 @@ class DocumentOperationsTest extends TestCase
         }
         try {
             DB::transaction(fn () => DB::table('archivos')
-                ->where('archivo_id', $docx->id)->update(['nombre_archivo' => 'alterado.docx']));
+                ->where('archivo_id', $pdf->id)->update(['nombre_archivo' => 'alterado.pdf']));
             $this->fail('PostgreSQL permitió reescribir un objeto publicado.');
         } catch (QueryException) {
-            $this->assertSame($docx->nombre_logico, $docx->fresh()->nombre_logico);
+            $this->assertSame($pdf->nombre_logico, $pdf->fresh()->nombre_logico);
         }
     }
 
@@ -279,14 +267,8 @@ class DocumentOperationsTest extends TestCase
         [, $revision] = $this->approvedRevision($this->typedSnapshot());
         $this->actingAsTeacher()->postJson(route('api.v1.documents.store', $revision), ['idempotency_key' => (string) Str::uuid()]);
         $artifact = ExportArtifact::query()->firstOrFail();
-        (new GenerateSyllabusExportJob($artifact->id))->handle(app(DocumentRenderer::class), app(RecordAuditEvent::class), app(DocumentBundleValidator::class));
-
-        $artifact->refresh()->load('docxObject');
-        $this->assertSame('completado', $artifact->estado);
-        $zip = new ZipArchive;
-        $this->assertTrue($zip->open(Storage::disk('private')->path($artifact->docxObject->ruta_interna)) === true);
-        $xml = (string) $zip->getFromName('word/document.xml');
-        $zip->close();
+        $xml = $this->exportedDocumentXml($artifact);
+        $this->assertSame('completado', $artifact->refresh()->estado);
         foreach (['Facultad de Pruebas Integradas', 'Texto escrito por el docente', 'Ficha heredada de la asignatura', 'Semana dos', 'Agentes'] as $text) {
             $this->assertStringContainsString($text, $xml);
         }
@@ -306,7 +288,7 @@ class DocumentOperationsTest extends TestCase
 
         $this->assertSame('fallido', $artifact->fresh()->estado);
         $this->actingAsTeacher()->getJson(route('api.v1.documents.show', $revision))
-            ->assertJsonPath('artifacts.0.error', 'No fue posible generar los documentos. Puede solicitar un reintento.');
+            ->assertJsonPath('artifacts.0.error', 'No se pudo generar el PDF. Puede reintentar.');
         $this->assertDatabaseHas('eventos_auditoria', [
             'accion' => 'documento.exportacion_fallida',
             'resultado' => 'fallido',
@@ -648,6 +630,43 @@ class DocumentOperationsTest extends TestCase
         ]);
 
         return [$syllabus->fresh(), $revision->fresh()];
+    }
+
+    private function exportedDocx(ExportArtifact $artifact): string
+    {
+        $spy = new class(app(DocumentRenderer::class)) implements DocumentRenderer
+        {
+            public ?DocumentBundle $last = null;
+
+            public function __construct(private readonly DocumentRenderer $inner) {}
+
+            public function version(): string
+            {
+                return $this->inner->version();
+            }
+
+            public function render(DocumentRenderInput $input): DocumentBundle
+            {
+                return $this->last = $this->inner->render($input);
+            }
+        };
+        (new GenerateSyllabusExportJob($artifact->id))->handle($spy, app(RecordAuditEvent::class), app(DocumentBundleValidator::class));
+        $this->assertNotNull($spy->last);
+
+        return $spy->last->docx->bytes;
+    }
+
+    private function exportedDocumentXml(ExportArtifact $artifact): string
+    {
+        $path = (string) tempnam(sys_get_temp_dir(), 'silabos-docx-');
+        file_put_contents($path, $this->exportedDocx($artifact));
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        @unlink($path);
+
+        return $xml;
     }
 
     private function actingAsAdministrator(): static

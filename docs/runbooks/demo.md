@@ -2,7 +2,7 @@
 
 Recorrido completo con las cuatro cuentas del seeder: Administración prepara plantilla y
 convocatoria, Coordinación prepara la carrera y revisa, Docente elabora y envía,
-Biblioteca aprueba la bibliografía y los tres firman. Usa solo datos sintéticos y la base
+Biblioteca aprueba la bibliografía. Cada uno firma al decidir. Usa solo datos sintéticos y la base
 local.
 
 ## 1. Preparación
@@ -111,31 +111,32 @@ con Docente Demo asignado.
    editan los marcados por Coordinación. Revise la **Vista previa**.
 3. Opcional: **Asistente de unidades** (requiere `AI_DRIVER`) y, en el paralelo `B`,
    **Copiar desde paralelo**.
-4. Pulse **Enviar a revisión** y confirme. Si falta algún campo, el sistema lo señala y
-   no envía.
+4. Pulse **Firmar y enviar**, elija `docente.p12` (ver «Certificados de prueba») y
+   escriba la clave. Si falta algún campo, el sistema lo señala y no envía.
 
 ### Coordinación: revisión
 
 1. En **Revisión**, abra la revisión 1.
 2. Pulse **Solicitar corrección** con un comentario. Como Docente, corrija y reenvíe: se
-   crea la revisión 2. Como Coordinación, use **Comparar con la anterior**.
-3. Pulse **Aprobar revisión**. El sílabo pasa a Biblioteca.
+   reenvía sin volver a firmar: se crea la revisión 2. Como Coordinación, use
+   **Comparar con la anterior**.
+3. Pulse **Firmar y enviar a biblioteca** con `coordinadora.p12`. El sílabo pasa a
+   Biblioteca.
 
 ### Biblioteca: bibliografía
 
 1. Ingrese con `bibliotecario@silabos.test` y abra **Revisiones de biblioteca**.
 2. Pruebe **Devolver al docente** marcando motivos. El docente corrige y reenvía; el
    sílabo vuelve directo a Biblioteca.
-3. Pulse **Aprobar bibliografía**. El sílabo queda aprobado y el worker genera el Word y
-   el PDF en la cola `documentos`.
+3. Pulse **Firmar y aprobar** con `bibliotecaria.p12`. El sílabo queda aprobado y el
+   worker genera el PDF en la cola `documentos`.
 
-### Firmas
+### Certificados de prueba
 
-El orden es Docente → Coordinación → Biblioteca. Cada uno firma desde su pantalla del
-sílabo con **Firmar electrónicamente**: elige su archivo `.p12` y escribe la clave. La
-firma se hace en el navegador; al servidor solo llega el PDF firmado. El servidor
-comprueba que la firma sea íntegra y que el titular del certificado coincida con el
-nombre de la cuenta.
+Cada persona firma una vez por sílabo, al decidir: elige su archivo `.p12` y escribe la
+clave. La firma se hace en el navegador; al servidor solo llega la firma de una
+declaración corta. El servidor comprueba que la firma sea íntegra y que el titular del
+certificado coincida con el nombre de la cuenta.
 
 Para la demostración, cree certificados de prueba cuyo titular coincida con cada cuenta:
 
@@ -147,19 +148,20 @@ openssl pkcs12 -export -inkey docente.key -in docente.crt \
   -passout pass:clave-docente -out docente.p12
 ```
 
-Repita con `COORDINADORA DEMO` y `BIBLIOTECARIA DEMO`. Deje
+Repita con `COORDINADORA DEMO` (`coordinadora.p12`) y `BIBLIOTECARIA DEMO`
+(`bibliotecaria.p12`). Deje
 `SIGNATURE_TRUSTED_CA_BUNDLE` vacío: con el archivo de entidades de Ecuador, un
 certificado hecho en casa se rechaza.
 
-Con las tres firmas, **Documentos** permite descargar el Word y el PDF firmado. Antes no
-se descarga nada.
+Al aprobarse, **Documentos** permite ver y descargar el PDF con los tres sellos. No hay
+Word.
 
 ## 4. Qué comprobar
 
 - Cada rol ve solo su menú y su alcance.
 - Cada envío crea una revisión nueva y las anteriores no cambian.
 - Un sílabo aprobado no se edita.
-- Word y PDF se generan sin acción manual; la descarga exige las tres firmas.
+- El PDF se genera sin acción manual y se descarga apenas existe.
 - Con `AI_DRIVER=disabled` la importación Excel funciona; solo el asistente de IA queda desactivado.
 - **Auditoría** registra los pasos del recorrido.
 

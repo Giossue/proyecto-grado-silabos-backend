@@ -19,6 +19,7 @@ use Illuminate\Testing\TestResponse;
 use Tests\Support\AssertsInternalNotifications;
 use Tests\Support\ConfiguresFacultyLogos;
 use Tests\Support\CreatesSyllabusProcess;
+use Tests\Support\SignsStatements;
 use Tests\Support\UsesInstitutionalDays;
 use Tests\TestCase;
 
@@ -28,6 +29,7 @@ class ParallelTeacherChangeTest extends TestCase
     use ConfiguresFacultyLogos;
     use CreatesSyllabusProcess;
     use RefreshDatabase;
+    use SignsStatements;
     use UsesInstitutionalDays;
 
     private User $administrator;
@@ -298,6 +300,7 @@ class ParallelTeacherChangeTest extends TestCase
     {
         $syllabus = $this->validDraft();
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'signature' => $this->teacherSignature($syllabus, $this->teacher),
             'version_bloqueo' => $syllabus->version_bloqueo,
             'idempotency_key' => (string) Str::uuid(),
         ])->assertSuccessful();

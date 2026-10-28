@@ -15,7 +15,7 @@ SPA Vue 3 (repositorio proyecto-grado-silabos-frontend)
 API Laravel 13 (este repositorio, monolito modular)
   ├─ PostgreSQL: todos los datos y la auditoría
   ├─ PostgreSQL (también): colas critica, documentos, ia y general; caché y bloqueos
-  ├─ Disco privado: logos, Word, PDF y firmas
+  ├─ Disco privado: logos y PDF de los sílabos
   ├─ Gotenberg: Word → PDF
   ├─ Proveedor de IA (AI_DRIVER): chat del docente
   └─ Excel estructurado para fichas
@@ -33,7 +33,7 @@ corre PHP-FPM, Nginx, el worker de colas y el scheduler.
 | `Configuration` | Plantilla del sílabo (definición JSON, secciones y campos) y logos |
 | `Syllabus` | Convocatorias, sílabos, validación, envío, revisión de Coordinación, reinicio y regeneración |
 | `Library` | Revisión de bibliografía |
-| `Documents` | Word, PDF, firmas electrónicas y descargas |
+| `Documents` | PDF final (Word interno), firmas electrónicas al decidir y descarga |
 | `AiAssistance` | Chat de IA del docente |
 | `Operations` | Auditoría, notificaciones y textos fijos de ayuda de pantalla |
 
@@ -51,7 +51,7 @@ Cada módulo usa las capas que necesita: `Application` (acciones y consultas), `
 - Una revisión enviada se inserta y no se modifica (ADR-0002).
 - La plantilla es solo datos (ADR-0011).
 - La IA es opcional: si falla, el resto funciona (ADR-0003).
-- Word, PDF e IA corren en cola; los trabajos son idempotentes.
+- El PDF y la IA corren en cola; los trabajos son idempotentes.
 - La auditoría registra actor, acción, recurso, momento, metadatos y resultado.
 
 ## Dónde leer más

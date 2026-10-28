@@ -7,47 +7,23 @@ use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
-class IncrementalPdfSignatureVerifier
+class CmsSignatureVerifier
 {
-    public function verify(string $previous, string $signed): SignerCertificate
+    public function verify(string $content, string $signature): SignerCertificate
     {
-        $previousLength = strlen($previous);
-        $length = strlen($signed);
-        if ($length <= $previousLength || ! hash_equals($previous, substr($signed, 0, $previousLength))) {
-            $this->fail('El PDF firmado no parte del documento vigente. Descárguelo de nuevo y vuelva a firmar.');
+        $encoded = preg_replace('/-----(BEGIN|END) [A-Z0-9 ]+-----|\s+/', '', $signature) ?? '';
+        $binary = base64_decode($encoded, true);
+        if ($encoded === '' || $binary === false) {
+            $this->fail('La firma no es válida.');
         }
 
-        preg_match_all('/\/ByteRange\s*\[\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/', $signed, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE, $previousLength);
-        if (count($matches) !== 1 || preg_match('/\/ByteRange\s*\[\s*\//', $signed, $placeholder, 0, $previousLength) === 1) {
-            $this->fail('El PDF debe agregar exactamente una firma nueva.');
-        }
-        [$start, $firstLength, $secondStart, $secondLength] = array_map(
-            fn (array $group): int => (int) $group[0],
-            array_slice($matches[0], 1),
-        );
-        if ($start !== 0
-            || $firstLength <= $previousLength
-            || $secondStart <= $firstLength + 2
-            || $secondStart + $secondLength !== $length
-            || $signed[$firstLength] !== '<'
-            || $signed[$secondStart - 1] !== '>') {
-            $this->fail('La firma nueva no cubre el documento completo.');
-        }
-        $hex = substr($signed, $firstLength + 1, $secondStart - $firstLength - 2);
-        if ($hex === '' || strlen($hex) % 2 !== 0 || ! ctype_xdigit($hex)) {
-            $this->fail('El contenido de la firma no es válido.');
-        }
-
-        return $this->verifyCms(
-            $this->der((string) hex2bin($hex)),
-            substr($signed, 0, $firstLength).substr($signed, $secondStart, $secondLength),
-        );
+        return $this->verifyCms($this->der($binary), $content);
     }
 
     private function der(string $binary): string
     {
         if (strlen($binary) < 2 || ord($binary[0]) !== 0x30) {
-            $this->fail('El contenido de la firma no es un CMS válido.');
+            $this->fail('La firma no es válida.');
         }
         $lengthByte = ord($binary[1]);
         if ($lengthByte < 0x80) {
@@ -55,7 +31,7 @@ class IncrementalPdfSignatureVerifier
         }
         $octets = $lengthByte & 0x7F;
         if ($octets < 1 || $octets > 4 || strlen($binary) < 2 + $octets) {
-            $this->fail('El contenido de la firma no es un CMS válido.');
+            $this->fail('La firma no es válida.');
         }
         $bodyLength = 0;
         for ($index = 0; $index < $octets; $index++) {
@@ -63,7 +39,7 @@ class IncrementalPdfSignatureVerifier
         }
         $total = 2 + $octets + $bodyLength;
         if ($total > strlen($binary)) {
-            $this->fail('El contenido de la firma está incompleto.');
+            $this->fail('La firma está incompleta.');
         }
 
         return substr($binary, 0, $total);
@@ -95,7 +71,7 @@ class IncrementalPdfSignatureVerifier
                 OPENSSL_ENCODING_DER,
             );
             if ($valid !== true || ! is_file($signerFile)) {
-                $this->fail('La firma no corresponde al documento: el PDF fue alterado o la firma es inválida.');
+                $this->fail('La firma no corresponde a la declaración.');
             }
             $signerPem = (string) file_get_contents($signerFile);
             $this->assertTrustedChain($contentFile, $signatureFile, "{$directory}/cadena.pem", $signerPem);
@@ -132,7 +108,7 @@ class IncrementalPdfSignatureVerifier
             OPENSSL_ENCODING_DER,
         );
         if ($trusted !== true && ! $this->issuedByListedAuthority($signerPem, $bundle)) {
-            $this->fail('El certificado de firma no fue emitido por una entidad certificadora reconocida.');
+            $this->fail('El certificado no es de una entidad reconocida.');
         }
     }
 
@@ -162,25 +138,25 @@ class IncrementalPdfSignatureVerifier
     private function certificate(string $pem): SignerCertificate
     {
         if (preg_match('/-----BEGIN CERTIFICATE-----.+?-----END CERTIFICATE-----/s', $pem, $match) !== 1) {
-            $this->fail('La firma no incluye el certificado del firmante.');
+            $this->fail('La firma no incluye el certificado.');
         }
         $parsed = openssl_x509_parse($match[0]);
         if (! is_array($parsed)) {
-            $this->fail('No se pudo leer el certificado del firmante.');
+            $this->fail('No se pudo leer el certificado.');
         }
         $validFrom = CarbonImmutable::createFromTimestampUTC((int) ($parsed['validFrom_time_t'] ?? 0));
         $validTo = CarbonImmutable::createFromTimestampUTC((int) ($parsed['validTo_time_t'] ?? 0));
         $now = CarbonImmutable::now();
         if ($validTo->lessThan($now)) {
-            $this->fail('El certificado de firma está vencido. Renueve su firma electrónica.');
+            $this->fail('El certificado está vencido.');
         }
         if ($validFrom->greaterThan($now)) {
-            $this->fail('El certificado de firma todavía no es válido.');
+            $this->fail('El certificado todavía no es válido.');
         }
         $subject = is_array($parsed['subject'] ?? null) ? $parsed['subject'] : [];
         $holder = $this->first($subject['CN'] ?? null);
         if ($holder === '') {
-            $this->fail('El certificado de firma no identifica a su titular.');
+            $this->fail('El certificado no identifica a su titular.');
         }
 
         return new SignerCertificate(
@@ -215,6 +191,6 @@ class IncrementalPdfSignatureVerifier
 
     private function fail(string $message): never
     {
-        throw ValidationException::withMessages(['signed_pdf' => $message]);
+        throw ValidationException::withMessages(['signature' => $message]);
     }
 }

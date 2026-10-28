@@ -92,7 +92,7 @@ Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si p
             'title' => 'Historial de biblioteca',
             'content' => 'Los sílabos de períodos terminados, en solo lectura. Aquí llegan solos cuando termina el período académico.
 
-Filtre por período, facultad o estado. «Solo los míos» muestra los que usted aprobó, devolvió o firmó.',
+Filtre por período, facultad o estado. «Solo los míos» muestra los que usted firmó o devolvió.',
         ],
         '/biblioteca/notificaciones' => [
             'title' => 'Notificaciones',
@@ -102,9 +102,9 @@ Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leíd
         ],
         '/biblioteca/revisiones' => [
             'title' => 'Revisiones de biblioteca',
-            'content' => 'Arriba ve cuántos sílabos esperan su revisión, cuántos esperan su firma y cuántos ya atendió: firmados, devueltos al docente o reemplazados por una revisión nueva.
+            'content' => 'Arriba ve cuántos sílabos esperan su revisión y cuántos ya atendió: firmados, devueltos al docente o reemplazados por una revisión nueva.
 
-Debajo llegan, de todas las carreras, los sílabos del período en curso que Coordinación ya aprobó, para que verifique su bibliografía. Cuando usted aprueba la bibliografía, el sílabo queda aprobado.
+Debajo llegan, de todas las carreras, los sílabos del período en curso que Coordinación ya firmó, para que revise su bibliografía. Cuando usted firma y aprueba, el sílabo queda aprobado.
 
 Filtre por facultad si se reparten el trabajo: el sistema recuerda la que eligió. Los períodos terminados están en «Historial».',
         ],
@@ -112,7 +112,7 @@ Filtre por facultad si se reparten el trabajo: el sistema recuerda la que eligi�
             'title' => 'Revisión de bibliografía',
             'content' => 'Revise los libros que propuso el docente: que estén en biblioteca, completos y bien citados.
 
-Si todo está bien, apruebe la bibliografía: el sílabo queda aprobado y lo firman docente, coordinación y biblioteca. Si hay un problema, devuélvalo al docente marcando los motivos; cuando lo corrija y reenvíe, vuelve a esta bandeja sin pasar de nuevo por Coordinación.',
+Si todo está bien, pulse «Firmar y aprobar» y firme con su archivo .p12: el sílabo queda aprobado y se genera el PDF. Si hay un problema, devuélvalo al docente marcando los motivos; cuando lo corrija y reenvíe, vuelve a esta bandeja sin pasar de nuevo por Coordinación.',
         ],
         '/coordinacion/configuracion/perfil' => [
             'title' => 'Perfil',
@@ -184,15 +184,13 @@ Al abrir la convocatoria se crea un sílabo por paralelo con su docente. Se lleg
             'title' => 'Detalle de la revisión',
             'content' => 'Aquí revisa el contenido enviado por el docente, sección por sección.
 
-Puede solicitar una corrección con un comentario para el docente o aprobar la revisión; al aprobarla, el sílabo pasa a Biblioteca. Una revisión enviada no se modifica: si el docente corrige, se crea una nueva revisión y el historial permite compararlas.
+Puede solicitar una corrección con un comentario para el docente o pulsar «Firmar y enviar a biblioteca» y firmar con su archivo .p12. Una revisión enviada no se modifica: si el docente corrige, se crea una nueva revisión y el historial permite compararlas.
 
 Un sílabo aprobado no se modifica. Si tiene un error, puede eliminarlo con todo su historial y el docente empieza de cero.',
         ],
         '/coordinacion/revisiones/:revision/documentos' => [
             'title' => 'Documentos aprobados',
-            'content' => 'Archivos de una revisión aprobada: el sílabo en Word y en PDF.
-
-Genere el documento, descárguelo y, si corresponde, fírmelo electrónicamente. La firma se hace en su equipo: su archivo de firma y su clave no se envían; solo se sube el PDF ya firmado.',
+            'content' => 'El PDF del sílabo aprobado, con las firmas del docente, Coordinación y Biblioteca. Véalo o descárguelo.',
         ],
         '/docente/configuracion/perfil' => [
             'title' => 'Perfil',
@@ -212,7 +210,7 @@ Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si p
 
 Debajo, un sílabo por cada paralelo que usted dicta en el período. Pulse uno para empezar o continuar su elaboración.
 
-Estados: sin iniciar, borrador, en revisión, corrección solicitada y aprobado. Mientras está en revisión no se puede editar; si Coordinación o Biblioteca piden correcciones, vuelve a quedar editable.
+Estados: sin iniciar, borrador, en revisión, corrección solicitada y aprobado. Al primer envío lo firma con su archivo .p12; los reenvíos no se vuelven a firmar. Mientras está en revisión no se puede editar; si Coordinación o Biblioteca piden correcciones, vuelve a quedar editable.
 
 Los sílabos de períodos anteriores están en «Historial».',
         ],
@@ -224,9 +222,7 @@ Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leíd
         ],
         '/docente/revisiones/:revision/documentos' => [
             'title' => 'Documentos aprobados',
-            'content' => 'Cuando su sílabo está aprobado puede generar y descargar el documento en Word y en PDF.
-
-Si debe firmarlo, la firma se hace en su equipo: su archivo de firma y su clave no se envían; solo se sube el PDF ya firmado.',
+            'content' => 'Cuando su sílabo está aprobado puede ver y descargar el PDF con las tres firmas.',
         ],
     ];
 

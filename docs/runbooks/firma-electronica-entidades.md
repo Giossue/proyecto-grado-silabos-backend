@@ -1,7 +1,8 @@
 # Firma electrónica: entidades certificadoras de confianza
 
-Cada sílabo aprobado se firma en orden: docente, coordinación y biblioteca. Cada persona
-firma en el navegador con su archivo `.p12`; al servidor solo llega el PDF firmado.
+Cada persona firma una vez por sílabo, al decidir: el docente al primer envío,
+Coordinación y Biblioteca al aprobar. Firma en el navegador con su archivo `.p12` una
+declaración que da el servidor; al servidor solo llega la firma CMS (con el certificado).
 
 Por defecto el sistema comprueba que la firma es íntegra y que su titular coincide con la
 cuenta (`SIGNATURE_REQUIRE_HOLDER_MATCH=true`), pero acepta certificados de cualquier
@@ -71,18 +72,14 @@ BCE de 2008 (2028-10-23) y las CA1/CA2 de Uanataca 2016 (2029-03-11).
 
 Después de cada despliegue que toque documentos o firmas:
 
-1. Apruebe un sílabo de prueba y espere su PDF.
-2. Firme con un `.p12` real, primero como docente, luego como coordinación y al final como
-   biblioteca. Cada cuenta usa su propio certificado, cuyo titular debe coincidir con el
-   nombre de la cuenta.
-3. Valide el PDF firmado en https://www.firmadigital.gob.ec (FirmaEC) y revise que cada
-   sello caiga en su celda «Firma:».
+1. Con un `.p12` real, envíe un sílabo de prueba como docente («Firmar y enviar»).
+2. Apruébelo como coordinación («Firmar y enviar a biblioteca») y como biblioteca
+   («Firmar y aprobar»), cada cuenta con su propio certificado, cuyo titular debe
+   coincidir con el nombre de la cuenta.
+3. Abra el PDF y revise que el cuadro de firmas muestre un sello por persona.
 
-Para una prueba local sin certificados reales, el frontend trae `scripts/signature-e2e.sh
-<pdf>`. Crea dos `.p12` de prueba (docente y coordinación), firma el PDF dos veces con el
-mismo código del navegador, verifica cada firma con el verificador del backend y muestra
-`pdfsig`. Espera el backend junto al frontend (o en `BACKEND_DIR`) y necesita `openssl`,
-`php`, `pdfsig` y las dependencias del frontend instaladas. Con `SIGNATURE_TRUSTED_CA_BUNDLE` activo esas firmas se rechazan, como
-corresponde.
+Las pruebas automáticas del backend crean certificados de prueba con OpenSSL
+(`tests/Support/SignsStatements.php`). Con `SIGNATURE_TRUSTED_CA_BUNDLE` activo, los
+certificados autofirmados se rechazan, como corresponde.
 
 Sin sello de tiempo externo: la hora de la firma es la del servidor (DT-16).

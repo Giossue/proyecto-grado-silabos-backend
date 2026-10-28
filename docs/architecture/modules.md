@@ -11,7 +11,7 @@ El backend es un monolito modular. Cada módulo vive en `app/Modules/<Módulo>`.
 | `Configuration` | La plantilla única del sílabo: definición JSON, secciones, campos, bloques, variables, logos e importación/exportación JSON. | `plantilla_silabo`, `secciones_plantilla`, `campos_plantilla`, `definiciones_campo` |
 | `Syllabus` | Convocatorias institucionales y de carrera, sílabos, borrador, validación, envío, revisión de Coordinación, correcciones y regeneración. | `convocatorias_universidad`, `convocatorias_carreras`, `silabos`, `valores_campo`, `revisiones_silabo`, `revisiones_coordinacion`, `aprobaciones`; vista `docentes_vigentes_silabo` |
 | `Library` | Revisión de bibliografía: comentar con motivos o aprobar. Aprobar deja el sílabo `aprobado` y pide la exportación. | `envios_biblioteca` |
-| `Documents` | Word con PHPWord, PDF con Gotenberg, archivos privados, firmas en orden y descargas. | `exportaciones_silabo`, `archivos`, `firmas_documento` |
+| `Documents` | Word interno con PHPWord, PDF con Gotenberg, archivos privados, firmas al decidir (declaración y CMS) y descarga del PDF. | `exportaciones_silabo`, `archivos`, `firmas_silabo` |
 | `AiAssistance` | Chat del docente sobre su sílabo. | `mensajes_ia` |
 | `Operations` | Auditoría, notificaciones internas, ayuda por pantalla (texto fijo en `ScreenHelpCatalog`), lista de preparación y trabajo de humo. | `eventos_auditoria`, `notificaciones` |
 

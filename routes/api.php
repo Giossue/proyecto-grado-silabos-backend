@@ -12,7 +12,6 @@ use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateStructureController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
-use App\Modules\Documents\Presentation\Http\Controllers\SignatureController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\ActivationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\PasswordRecoveryController;
@@ -278,6 +277,9 @@ Route::prefix('v1')->group(function (): void {
             Route::post('teacher/syllabi/{syllabus}/validate', [SyllabusController::class, 'validateDraft'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.validate');
+            Route::post('teacher/syllabi/{syllabus}/signing-statement', [SyllabusController::class, 'signingStatement'])
+                ->middleware('active-role')
+                ->name('api.v1.teacher.syllabi.signing-statement');
             Route::post('teacher/syllabi/{syllabus}/submit', [SyllabusController::class, 'submit'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.submit');
@@ -294,14 +296,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.documents.show');
             Route::post('revisions/{revision}/documents', [DocumentController::class, 'store'])
                 ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.documents.store');
-            Route::get('exports/{artifact}/{format}', [DocumentController::class, 'download'])
-                ->middleware('active-role')->whereIn('format', ['docx', 'pdf'])->name('api.v1.documents.download');
-            Route::get('revisions/{revision}/signature', [SignatureController::class, 'show'])
-                ->middleware('active-role')->name('api.v1.signature.show');
-            Route::get('revisions/{revision}/signature/pdf', [SignatureController::class, 'pdf'])
-                ->middleware('active-role')->name('api.v1.signature.pdf');
-            Route::post('revisions/{revision}/signature', [SignatureController::class, 'store'])
-                ->middleware(['active-role', 'throttle:20,1'])->name('api.v1.signature.store');
+            Route::get('exports/{artifact}/pdf', [DocumentController::class, 'download'])
+                ->middleware('active-role')->name('api.v1.documents.download');
             Route::get('library/reviews', [LibraryReviewController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.library.reviews.index');
             Route::get('library/history', [LibraryReviewController::class, 'history'])

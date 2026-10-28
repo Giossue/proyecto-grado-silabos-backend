@@ -138,6 +138,25 @@ class ExportOpenApi extends Command
                         ],
                         'additionalProperties' => false,
                     ],
+                    'DecisionSignature' => [
+                        'type' => 'object',
+                        'required' => ['statement', 'cms'],
+                        'properties' => [
+                            'statement' => ['type' => 'string', 'maxLength' => 500],
+                            'cms' => ['type' => 'string', 'description' => 'Firma CMS/PKCS#7 separada (SHA-256) de la declaración, en base64.'],
+                        ],
+                        'additionalProperties' => false,
+                    ],
+                    'SignatureSummary' => [
+                        'type' => 'object',
+                        'required' => ['role', 'name', 'signed_at'],
+                        'properties' => [
+                            'role' => ['type' => 'string', 'enum' => ['docente', 'coordinacion', 'biblioteca']],
+                            'name' => ['type' => 'string'],
+                            'signed_at' => ['type' => 'string', 'format' => 'date-time'],
+                        ],
+                        'additionalProperties' => false,
+                    ],
                     'DraftFieldInput' => [
                         'type' => 'object',
                         'required' => ['version_bloqueo', 'value'],
@@ -233,21 +252,17 @@ class ExportOpenApi extends Command
             str_contains($name, '.admin.') => 'Administración',
             str_contains($name, '.coordination.') => 'Coordinación',
             str_contains($name, '.teacher.') => 'Docencia',
-            str_contains($name, '.documents.'), str_contains($name, '.signature.') => 'Documentos',
+            str_contains($name, '.documents.') => 'Documentos',
             default => 'Operación',
         };
         $isDownload = $name === 'api.v1.documents.download';
         $isLogoUpload = str_ends_with($name, '.logo.store');
-        $isSignaturePdf = $name === 'api.v1.signature.pdf';
-        $isSignatureUpload = $name === 'api.v1.signature.store';
         $isSubjectProfile = str_contains($name, '.subjects.profile.');
         $isProcessTransition = $name === 'api.v1.admin.processes.transition';
         $isTemplateRead = in_array($name, ['api.v1.admin.template.index', 'api.v1.admin.template.show'], true);
         $successContent = $isDownload
-            ? ['application/octet-stream' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
-            : ($isSignaturePdf
-                ? ['application/pdf' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
-                : ['application/json' => ['schema' => ['type' => 'object']]]);
+            ? ['application/pdf' => ['schema' => ['type' => 'string', 'format' => 'binary']]]
+            : ['application/json' => ['schema' => ['type' => 'object']]];
         if ($isSubjectProfile) {
             $successContent = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/SubjectProfile']]];
         }
@@ -256,11 +271,31 @@ class ExportOpenApi extends Command
                 'type' => 'object',
                 'properties' => ['syllabus' => [
                     'type' => 'object',
-                    'properties' => ['sections' => ['type' => 'array', 'items' => [
-                        'type' => 'object',
-                        'properties' => ['fields' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/SyllabusField']]],
-                    ]]],
+                    'properties' => [
+                        'sections' => ['type' => 'array', 'items' => [
+                            'type' => 'object',
+                            'properties' => ['fields' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/SyllabusField']]],
+                        ]],
+                        'signatures' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/SignatureSummary']],
+                        'teacher_signature_required' => ['type' => 'boolean'],
+                    ],
                 ]],
+            ]]];
+        }
+        if (in_array($name, ['api.v1.coordination.reviews.show', 'api.v1.library.reviews.show'], true)) {
+            $fields = [
+                'signing_statement' => ['type' => ['string', 'null']],
+                'signatures' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/SignatureSummary']],
+            ];
+            $successContent = ['application/json' => ['schema' => $name === 'api.v1.library.reviews.show'
+                ? ['type' => 'object', 'properties' => ['review' => ['type' => 'object', 'properties' => $fields]]]
+                : ['type' => 'object', 'properties' => $fields],
+            ]];
+        }
+        if ($name === 'api.v1.teacher.syllabi.signing-statement') {
+            $successContent = ['application/json' => ['schema' => [
+                'type' => 'object', 'required' => ['statement', 'required'],
+                'properties' => ['statement' => ['type' => 'string'], 'required' => ['type' => 'boolean']],
             ]]];
         }
         if ($name === 'api.v1.coordination.ficha-imports.spreadsheet') {
@@ -313,7 +348,7 @@ class ExportOpenApi extends Command
             'operationId' => str_replace('.', '_', $name),
             'summary' => $name,
             'responses' => [
-                ($isSignatureUpload ? '201' : '200') => [
+                '200' => [
                     'description' => 'Operación completada.',
                     'content' => $successContent,
                 ],
@@ -348,15 +383,6 @@ class ExportOpenApi extends Command
                         'subjects' => ['type' => 'array', 'minItems' => 1, 'maxItems' => 100, 'uniqueItems' => true, 'items' => ['type' => 'string', 'format' => 'uuid']],
                         'fields' => ['type' => 'object', 'additionalProperties' => ['type' => 'array', 'items' => ['type' => 'string']]],
                         'confirm_purge' => ['type' => 'boolean'],
-                    ],
-                ]]];
-            } elseif ($isSignatureUpload) {
-                $content = ['multipart/form-data' => ['schema' => [
-                    'type' => 'object',
-                    'required' => ['signed_pdf', 'base_sha256'],
-                    'properties' => [
-                        'signed_pdf' => ['type' => 'string', 'format' => 'binary'],
-                        'base_sha256' => ['type' => 'string', 'pattern' => '^[A-Fa-f0-9]{64}$'],
                     ],
                 ]]];
             } elseif ($isSubjectProfile) {
@@ -395,6 +421,32 @@ class ExportOpenApi extends Command
             }
             if ($name === 'api.v1.teacher.syllabi.fields.update') {
                 $content = ['application/json' => ['schema' => ['$ref' => '#/components/schemas/DraftFieldInput']]];
+            }
+            $signature = ['oneOf' => [['$ref' => '#/components/schemas/DecisionSignature'], ['type' => 'null']]];
+            if ($name === 'api.v1.teacher.syllabi.signing-statement') {
+                $content = ['application/json' => ['schema' => [
+                    'type' => 'object',
+                    'required' => ['version_bloqueo'],
+                    'properties' => ['version_bloqueo' => ['type' => 'integer', 'minimum' => 0]],
+                ]]];
+            }
+            if ($name === 'api.v1.teacher.syllabi.submit') {
+                $content = ['application/json' => ['schema' => [
+                    'type' => 'object',
+                    'required' => ['version_bloqueo', 'idempotency_key'],
+                    'properties' => [
+                        'version_bloqueo' => ['type' => 'integer', 'minimum' => 0],
+                        'idempotency_key' => ['type' => 'string', 'format' => 'uuid'],
+                        'signature' => $signature,
+                    ],
+                ]]];
+            }
+            if (in_array($name, ['api.v1.coordination.reviews.approve', 'api.v1.library.reviews.verify'], true)) {
+                $content = ['application/json' => ['schema' => [
+                    'type' => 'object',
+                    'properties' => ['signature' => $signature],
+                    'additionalProperties' => true,
+                ]]];
             }
             $operation['requestBody'] = [
                 'required' => $isSubjectProfile || $name === 'api.v1.coordination.academic.parallels.store',

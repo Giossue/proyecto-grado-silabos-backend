@@ -319,6 +319,7 @@ return [
         'recovery_code' => 'código de recuperación',
         'remember' => 'recordarme',
         'idempotency_key' => 'identificador de la solicitud',
+        'signature' => 'firma electrónica',
         'comment' => 'comentario',
         'reasons' => 'motivos',
         'reasons.*' => 'motivo',
