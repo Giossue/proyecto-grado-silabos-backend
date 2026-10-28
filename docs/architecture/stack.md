@@ -21,7 +21,7 @@
 | Fichas de carrera | Excel estructurado generado y leído con PhpSpreadsheet |
 | Sellos de firma PDF | `pdftotext` (Poppler) para localizar la posición de cada sello |
 | IA | Proveedor externo configurable por `AI_DRIVER` (ver [ai-service.md](ai-service.md)) |
-| Correo | Resend o SMTP según `MAIL_MAILER` |
+| Correo | SMTP institucional en producción; Resend solo en pruebas (`MAIL_MAILER`) |
 | Archivos | Disco `private` en `storage/app/private` |
 | Despliegue | Contenedores en Dokploy; push a `main` despliega y migra |
 
