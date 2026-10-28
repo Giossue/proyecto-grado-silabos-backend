@@ -23,7 +23,8 @@ class AuthenticationMailTest extends TestCase
 
         $this->assertSame('Restablezca su contraseña', $reset->subject);
         $this->assertSame('Verifique su correo electrónico', $verify->subject);
-        $this->assertStringContainsString('Atentamente,', $html);
+        $this->assertStringNotContainsString('Atentamente,', $html);
+        $this->assertStringNotContainsString('Todos los derechos reservados', $html);
         $this->assertStringContainsString('copie y pegue este enlace', $html);
         $this->assertStringNotContainsString('https://api.test', (string) $reset->render());
     }

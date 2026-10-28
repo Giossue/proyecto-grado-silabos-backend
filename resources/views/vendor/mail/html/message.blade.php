@@ -15,9 +15,4 @@
 </x-slot:subcopy>
 @endisset
 
-<x-slot:footer>
-<x-mail::footer>
-© {{ date('Y') }} {{ config('app.name') }}. Todos los derechos reservados.
-</x-mail::footer>
-</x-slot:footer>
 </x-mail::layout>
