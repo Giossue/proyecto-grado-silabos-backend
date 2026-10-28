@@ -183,8 +183,8 @@ MAIL_FROM_NAME="${APP_NAME}"
   rechazan. El valor de `.env.example` (`no-responder@devs-ueb.tech`) es del servidor de pruebas:
   cámbielo.
 - Si el servidor SMTP está en la red interna, el contenedor de la app debe poder alcanzarlo.
-- Los envíos pasan por la cola `general`: el worker debe estar activo. Un fallo de envío queda en
-  `failed_jobs` y en los logs, no en la pantalla del usuario.
+- Los envíos pasan por la cola `general`: el worker debe estar activo. Si un envío falla tras sus
+  reintentos, solo queda en los logs (no se guardan trabajos fallidos) y no se ve en la pantalla del usuario.
 
 **Pruebas, hasta la instalación en la UEB: Resend**, cuyo transporte ya está instalado:
 
