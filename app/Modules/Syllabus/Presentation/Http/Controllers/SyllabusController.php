@@ -233,7 +233,7 @@ class SyllabusController extends Controller
     private function syllabusPayload(Syllabus $syllabus): array
     {
         $syllabus->load([
-            'convocation.career', 'convocation.process.academicPeriod', 'parallel.subject', 'parallel', 'teachers:id,nombre,correo_electronico',
+            'convocation.career', 'convocation.process.academicPeriod', 'parallel.subject', 'parallel', 'teachers:id,nombre,correo_electronico,formacion_experiencia_usuario',
             'values',
             'revisions' => fn ($query) => $query->with([
                 'submitter:id,nombre', 'approval.approver:id,nombre',

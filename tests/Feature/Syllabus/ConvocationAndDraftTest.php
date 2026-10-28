@@ -269,6 +269,17 @@ class ConvocationAndDraftTest extends TestCase
         }
     }
 
+    public function test_the_draft_screen_shows_the_teacher_profile_formation(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $this->teacher->forceFill(['formacion_experiencia' => 'Magíster en Tecnología, docente titular'])->save();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+
+        $response = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk();
+
+        $this->assertStringContainsString('Magíster en Tecnología, docente titular', json_encode($response->json(), JSON_UNESCAPED_UNICODE));
+    }
+
     public function test_snapshot_keeps_the_logos_it_was_taken_with(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();
