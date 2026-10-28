@@ -18,6 +18,7 @@ use App\Modules\Documents\Infrastructure\Rendering\PhpWordDocumentRenderer;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Operations\Infrastructure\Mail\CoordinatorSummaryMail;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
@@ -28,7 +29,10 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -157,6 +161,29 @@ class DocumentSignatureTest extends TestCase
         $this->assertSame(3, AuditEvent::query()->where('accion', 'documento.firmado')->count());
         $this->upload($revision, $this->signPdfIncrementally($finalPdf, $teacherCredentials), hash('sha256', $finalPdf), 'teacher')
             ->assertJsonValidationErrors(['signed_pdf' => 'El documento ya tiene todas las firmas.']);
+    }
+
+    public function test_el_resumen_diario_cuenta_la_firma_de_coordinacion_solo_cuando_ya_firmo_el_docente(): void
+    {
+        Mail::fake();
+        $this->coordinator->forceFill(['correo_verificado_en' => now()])->save();
+        [, $revision] = $this->exportedRevision();
+        $original = $this->currentPdf($revision, 'teacher');
+
+        Artisan::call('avisos:resumen-coordinacion');
+        Mail::assertNotQueued(CoordinatorSummaryMail::class);
+
+        $teacherSigned = $this->signPdfIncrementally($original, $this->makeSigningCertificate('DOCENTE DE PRUEBA'));
+        $this->upload($revision, $teacherSigned, hash('sha256', $original), 'teacher')->assertCreated();
+        Artisan::call('avisos:resumen-coordinacion');
+        Mail::assertQueued(CoordinatorSummaryMail::class, 1);
+        Mail::assertQueued(CoordinatorSummaryMail::class, fn (CoordinatorSummaryMail $mail): bool => $mail->hasTo('coordinador@silabos.test')
+            && $mail->careers[0]['review'] === 0 && $mail->careers[0]['sign'] === 1);
+
+        $this->upload($revision, $this->signPdfIncrementally($teacherSigned, $this->makeSigningCertificate('COORDINACION DE PRUEBA')), hash('sha256', $teacherSigned), 'coordinator')->assertCreated();
+        Cache::flush();
+        Artisan::call('avisos:resumen-coordinacion');
+        Mail::assertQueued(CoordinatorSummaryMail::class, 1);
     }
 
     public function test_rechaza_pdf_alterado_firma_que_no_cubre_el_archivo_y_certificado_vencido(): void

@@ -14,6 +14,7 @@ use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Operations\Infrastructure\Mail\CoordinatorSummaryMail;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
@@ -24,7 +25,10 @@ use App\Support\InstitutionDate;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -302,6 +306,28 @@ class LibraryReviewTest extends TestCase
     /**
      * @return array{Syllabus, SyllabusRevision}
      */
+    public function test_el_resumen_diario_avisa_a_coordinacion_solo_de_lo_que_espera_su_revision(): void
+    {
+        Mail::fake();
+        $coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
+        $coordinator->forceFill(['correo_verificado_en' => now()])->save();
+
+        Artisan::call('avisos:resumen-coordinacion');
+        Mail::assertNothingQueued();
+
+        [, $revision] = $this->submittedRevision();
+        Artisan::call('avisos:resumen-coordinacion');
+        Artisan::call('avisos:resumen-coordinacion');
+        Mail::assertQueued(CoordinatorSummaryMail::class, 1);
+        Mail::assertQueued(CoordinatorSummaryMail::class, fn (CoordinatorSummaryMail $mail): bool => $mail->hasTo('coordinador@silabos.test')
+            && $mail->careers[0]['review'] === 1 && $mail->careers[0]['sign'] === 0);
+
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['idempotency_key' => (string) Str::uuid()])->assertSuccessful();
+        Cache::flush();
+        Artisan::call('avisos:resumen-coordinacion');
+        Mail::assertQueued(CoordinatorSummaryMail::class, 1);
+    }
+
     private function submittedRevision(): array
     {
         $this->as('admin')->postJson(route('api.v1.admin.template.store'), ['nombre' => 'Plantilla I-165']);

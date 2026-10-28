@@ -16,7 +16,7 @@
 - En ambientes expuestos, `SESSION_ENCRYPT=true`. Los hosts aceptados son el de `APP_URL`
   y sus subdominios, más `127.0.0.1` y `localhost` para el health check interno de
   Dokploy; así los enlaces de recuperación no aceptan un `Host` manipulado.
-- El scheduler ejecuta `auth:clear-resets` cada quince minutos; debe estar activo en el
+- El scheduler ejecuta `auth:clear-resets` cada quince minutos y el resumen diario de Coordinación; debe estar activo en el
   despliegue (el contenedor lo levanta con `supervisord`).
 - Nadie elimina su propia cuenta. El Administrador solo elimina cuentas sin activar y sin
   actividad; las demás se desactivan y conservan su historial.

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Operations\Application\Actions\StoreInternalNotifications;
 use App\Modules\Operations\Infrastructure\Mail\WorkflowNotificationMail;
 use Database\Seeders\DatabaseSeeder;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -82,6 +83,16 @@ class NotificationEmailTest extends TestCase
         $this->notify('silabo.aprobado', key: 'otro');
         $this->notify('silabo.enviado', key: 'ajustado');
         Mail::assertQueued(WorkflowNotificationMail::class, 1);
+    }
+
+    public function test_the_coordinator_summary_runs_on_weekdays_at_the_institution_hour(): void
+    {
+        $this->artisan('schedule:list')->expectsOutputToContain('avisos:resumen-coordinacion')->assertSuccessful();
+        $event = collect(app(Schedule::class)->events())
+            ->first(fn ($event): bool => str_contains((string) $event->command, 'avisos:resumen-coordinacion'));
+
+        $this->assertSame('0 8 * * 1-5', $event->expression);
+        $this->assertSame('America/Guayaquil', (string) $event->timezone);
     }
 
     public function test_the_email_renders_with_the_notice_and_a_link_to_the_system(): void

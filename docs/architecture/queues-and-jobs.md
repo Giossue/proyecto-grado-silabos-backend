@@ -25,6 +25,7 @@ petición web; no tiene trabajos de cola. Ver [ficha-excel.md](ficha-excel.md).
 | `AnswerSyllabusChatJob` | AiAssistance | `ia` | 60 s | 3 | 5, 30, 120 s | mensaje |
 | `ManagedUserActivationMail` | Identity | `general` | por defecto | por defecto | — | — |
 | `WorkflowNotificationMail` | Operations | `general` | por defecto | por defecto | — | — |
+| `CoordinatorSummaryMail` | Operations | `general` | por defecto | por defecto | — | — |
 
 El estado de cada trabajo vive en su registro de dominio, no en una tabla de trabajos
 (I-221):

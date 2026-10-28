@@ -180,7 +180,12 @@ verificado; los demás avisos quedan en la campana.
 |---|---|---|
 | `NOTIFICATION_EMAILS` | `true` | `false` apaga estos correos; las invitaciones de activación no cambian. |
 | `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,silabo.correccion_solicitada,silabo.aprobado` | Tipos de aviso que se envían por correo, separados por coma. |
+| `NOTIFICATION_DIGEST` | `true` | `false` apaga el resumen diario de Coordinación. |
+| `NOTIFICATION_DIGEST_TIME` | `08:00` | Hora del resumen, en la hora de la institución. |
 
+Coordinación no recibe correo por cada aviso: recibe un resumen al día, de lunes a viernes, y
+solo si tiene sílabos por revisar o por firmar. Requiere que el programador (`schedule:work`) y
+el worker estén activos.
 Con `MAIL_MAILER=log` ninguno sale del sistema. Los tipos disponibles están en
 `NotificationDestination` (`silabo.enviado`, `coordinacion.aprobado`, etc.).
 

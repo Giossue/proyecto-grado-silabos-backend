@@ -12,7 +12,7 @@ Lo único que falta, en un solo lugar. Cuando algo se resuelve, se borra de aqu�
 | PV-05 | Cantidad real de docentes, paralelos y sílabos | Coordinación | Datos de prueba |
 | PV-11 | Conservación, respaldo, RPO y RTO | Personal técnico y autoridad | TIC respalda todas las bases a nivel de servidor (2026-10-26); falta confirmar que incluye el volumen `storage/app` y cada cuánto |
 | PV-12 | Base legal y aviso de privacidad | UEB | Borrador en `docs/security/aviso-de-privacidad.md` |
-| PV-15 | Correo institucional y qué avisos llegan por correo | Personal técnico y Coordinación | El servidor de pruebas envía con Resend desde `no-responder@devs-ueb.tech`. Por correo solo llegan al docente la convocatoria abierta, la corrección solicitada y el sílabo aprobado (lista en `NOTIFICATION_EMAIL_EVENTS`); Coordinación y Biblioteca no reciben correo |
+| PV-15 | Correo institucional y qué avisos llegan por correo | Personal técnico y Coordinación | El servidor de pruebas envía con Resend desde `no-responder@devs-ueb.tech`. Por correo solo llegan al docente la convocatoria abierta, la corrección solicitada y el sílabo aprobado (lista en `NOTIFICATION_EMAIL_EVENTS`), y a Coordinación un resumen diario de lunes a viernes si tiene sílabos por revisar o firmar; Administración y Biblioteca no reciben correo |
 | PV-16 | Edición excepcional del contenido por Coordinación | Coordinación | No se permite |
 | PV-17 | Instrumento para medir el proceso actual | Dirección y autores | — |
 | PV-18 | Umbrales de utilidad y precisión de la IA | Coordinación y docentes | — |

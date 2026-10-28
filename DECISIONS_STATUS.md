@@ -258,10 +258,15 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   (2026-10-27). Administración solo recibe el fallo al generar Word y PDF.
 - Por correo llegan pocos avisos (2026-10-27): solo los que piden actuar y ocurren poco,
   en esta lista inicial para el docente: convocatoria abierta, corrección solicitada y sílabo
-  aprobado (listo para firmar). Coordinación y Biblioteca los ven en la campana, sin correo.
-  Un correo por aviso y por persona, nunca repetido, y solo a cuentas activas con correo
-  verificado. La lista se ajusta con `NOTIFICATION_EMAIL_EVENTS` y se apaga con
-  `NOTIFICATION_EMAILS=false`. Es provisional hasta que se resuelva PV-15.
+  aprobado (listo para firmar). Un correo por aviso y por persona, nunca repetido, y solo a
+  cuentas activas con correo verificado. La lista se ajusta con `NOTIFICATION_EMAIL_EVENTS`
+  y se apaga con `NOTIFICATION_EMAILS=false`.
+- Coordinación recibe un solo correo al día, de lunes a viernes a las 08:00 (hora de la
+  institución), y solo si tiene algo pendiente: sílabos por revisar y por firmar de las
+  convocatorias abiertas o pausadas de su carrera. Con la convocatoria cerrada no insiste.
+  Se ajusta con `NOTIFICATION_DIGEST_TIME` y se apaga con `NOTIFICATION_DIGEST=false`.
+  Administración y Biblioteca no reciben correo de avisos. Todo es provisional hasta
+  resolver PV-15.
 - Administración edita la ayuda de cada pantalla.
 - Interfaz (2026-10-27): los campos y selects usan el borde de las tablas (el alto contraste
   lo refuerza); no hay tooltips nativos del navegador, solo el `Tooltip` del sistema; los
