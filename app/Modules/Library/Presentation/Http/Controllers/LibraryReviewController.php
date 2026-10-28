@@ -81,6 +81,7 @@ class LibraryReviewController extends Controller
                 'sent_at' => $submission->revision->enviado_en->toIso8601String(),
                 'sent_by' => $submission->revision->submitter->nombre,
                 'state' => $submission->getAttribute('estado_envio'),
+                'outcome' => LibraryReviews::outcome((string) $submission->getAttribute('estado_envio'), $submission->getAttribute('resultado_envio')),
             ]),
         ];
     }
@@ -92,7 +93,7 @@ class LibraryReviewController extends Controller
         abort_if($submission === null, 404);
         $syllabus = $this->syllabi([$revision->silabo_id])->get($revision->silabo_id);
         abort_if($syllabus === null, 404);
-        $state = $this->reviews->stateOf($submission);
+        ['state' => $state, 'outcome' => $outcome] = $this->reviews->statusOf($submission);
         $reviewable = $state === LibraryReviews::STATE_PENDING
             && $syllabus->estado === 'en_revision'
             && ReviewStage::ofRevision($revision) === ReviewStage::LIBRARY
@@ -106,6 +107,7 @@ class LibraryReviewController extends Controller
             'sent_at' => $submission->revision->enviado_en->toIso8601String(),
             'sent_by' => $submission->revision->submitter->nombre,
             'state' => $state,
+            'outcome' => $outcome,
             'can_comment' => $reviewable,
             'can_verify' => $reviewable,
             'verified_at' => $revision->approval?->aprobado_en->toIso8601String(),

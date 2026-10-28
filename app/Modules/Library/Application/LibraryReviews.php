@@ -9,17 +9,21 @@ use Illuminate\Support\Facades\DB;
 
 final class LibraryReviews
 {
+    // Biblioteca ve tres estados: lo que debe revisar, lo que debe firmar y lo que ya atendió.
     public const STATE_PENDING = 'pendiente';
 
     public const STATE_TO_SIGN = 'por_firmar';
 
-    public const STATE_SIGNED = 'firmado';
+    public const STATE_HANDLED = 'atendido';
 
-    public const STATE_COMMENTED = 'comentado';
+    public const STATES = [self::STATE_PENDING, self::STATE_TO_SIGN, self::STATE_HANDLED];
 
-    public const STATE_VOIDED = 'anulado';
+    // Cómo terminó un envío atendido: firmado por biblioteca, devuelto al docente o reemplazado por otra revisión.
+    public const OUTCOME_SIGNED = 'firmado';
 
-    public const STATES = [self::STATE_PENDING, self::STATE_TO_SIGN, self::STATE_SIGNED, self::STATE_COMMENTED, self::STATE_VOIDED];
+    public const OUTCOME_RETURNED = 'devuelto';
+
+    public const OUTCOME_REPLACED = 'reemplazado';
 
     public const PERIOD_ANY = 'cualquiera';
 
@@ -27,7 +31,7 @@ final class LibraryReviews
 
     public const PERIOD_PAST = 'terminado';
 
-    private const STATE_SQL = <<<'SQL'
+    private const OUTCOME_SQL = <<<'SQL'
         CASE
             WHEN EXISTS (
                 SELECT 1 FROM firmas_documento firma
@@ -35,17 +39,19 @@ final class LibraryReviews
                 WHERE exportacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
                   AND firma.firmado_como = 'biblioteca'
             ) THEN 'firmado'
-            WHEN revision.correccion_etapa = 'biblioteca' THEN 'comentado'
+            WHEN revision.correccion_etapa = 'biblioteca' THEN 'devuelto'
             WHEN EXISTS (
                 SELECT 1 FROM revisiones_silabo posterior
                 WHERE posterior.silabo_id = revision.silabo_id AND posterior.numero_revision > revision.numero_revision
-            ) THEN 'anulado'
+            ) THEN 'reemplazado'
             WHEN EXISTS (
                 SELECT 1 FROM aprobaciones aprobacion WHERE aprobacion.revision_silabo_id = envios_biblioteca.revision_silabo_id
             ) THEN 'por_firmar'
             ELSE 'pendiente'
         END
         SQL;
+
+    private const STATE_SQL = 'CASE ('.self::OUTCOME_SQL.") WHEN 'pendiente' THEN 'pendiente' WHEN 'por_firmar' THEN 'por_firmar' ELSE 'atendido' END";
 
     /** @return Builder<LibrarySubmission> */
     public function query(
@@ -61,6 +67,7 @@ final class LibraryReviews
             ->join('silabos as silabo', 'silabo.silabo_id', '=', 'revision.silabo_id')
             ->select('envios_biblioteca.*', 'revision.revision_silabo_id as revision_id', 'revision.silabo_id as silabo_id', 'revision.numero_revision as numero_revision')
             ->selectRaw(self::STATE_SQL.' AS estado_envio')
+            ->selectRaw(self::OUTCOME_SQL.' AS resultado_envio')
             ->when($state !== null, fn (Builder $query) => $query->whereRaw('('.self::STATE_SQL.') = ?', [$state]))
             ->when($search !== null && $search !== '', fn (Builder $query) => $query->where(
                 fn (Builder $outer) => $outer
@@ -101,11 +108,19 @@ final class LibraryReviews
             ->orderByDesc('revision.enviado_en');
     }
 
-    public function stateOf(LibrarySubmission $submission): string
+    /** @return array{state: string, outcome: string|null} */
+    public function statusOf(LibrarySubmission $submission): array
     {
-        $state = $this->query()->where('envios_biblioteca.id', $submission->id)->first()?->getAttribute('estado_envio');
+        $row = $this->query()->where('envios_biblioteca.id', $submission->id)->first();
+        $state = $row?->getAttribute('estado_envio');
+        $state = is_string($state) ? $state : self::STATE_PENDING;
 
-        return is_string($state) ? $state : self::STATE_PENDING;
+        return ['state' => $state, 'outcome' => self::outcome($state, $row?->getAttribute('resultado_envio'))];
+    }
+
+    public static function outcome(string $state, mixed $detail): ?string
+    {
+        return $state === self::STATE_HANDLED && is_string($detail) ? $detail : null;
     }
 
     /** @return array<string, int> */

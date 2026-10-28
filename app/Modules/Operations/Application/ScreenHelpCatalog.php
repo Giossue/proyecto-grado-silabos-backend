@@ -102,7 +102,7 @@ Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leíd
         ],
         '/biblioteca/revisiones' => [
             'title' => 'Revisiones de biblioteca',
-            'content' => 'Arriba ve cuántos sílabos esperan su verificación, cuántos esperan su firma y cuántos devolvió con comentario.
+            'content' => 'Arriba ve cuántos sílabos esperan su revisión, cuántos esperan su firma y cuántos ya atendió: firmados, devueltos al docente o reemplazados por una revisión nueva.
 
 Debajo llegan, de todas las carreras, los sílabos del período en curso que Coordinación ya aprobó, para que verifique su bibliografía. Cuando usted aprueba la bibliografía, el sílabo queda aprobado.
 

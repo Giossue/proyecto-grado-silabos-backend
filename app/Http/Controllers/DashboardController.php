@@ -171,7 +171,7 @@ class DashboardController extends Controller
         return [
             [
                 'key' => 'library_pending',
-                'label' => 'Por verificar',
+                'label' => 'Por revisar',
                 'value' => $counts[LibraryReviews::STATE_PENDING],
                 'suffix' => null,
                 'hint' => $counts[LibraryReviews::STATE_PENDING] === 0 ? 'Nada pendiente por ahora' : 'Aprobados por coordinación; falta la bibliografía',
@@ -184,18 +184,11 @@ class DashboardController extends Controller
                 'hint' => 'Aprobados por coordinación; su firma va después de docente y coordinación',
             ],
             [
-                'key' => 'library_commented',
-                'label' => 'Con comentario',
-                'value' => $counts[LibraryReviews::STATE_COMMENTED],
+                'key' => 'library_handled',
+                'label' => 'Atendidos',
+                'value' => $counts[LibraryReviews::STATE_HANDLED],
                 'suffix' => null,
-                'hint' => 'Devueltos al docente desde biblioteca',
-            ],
-            [
-                'key' => 'library_signed',
-                'label' => 'Firmados',
-                'value' => $counts[LibraryReviews::STATE_SIGNED],
-                'suffix' => null,
-                'hint' => 'Sílabos con la firma de biblioteca',
+                'hint' => 'Firmados, devueltos al docente o reemplazados por una revisión nueva',
             ],
         ];
     }

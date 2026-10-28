@@ -141,7 +141,7 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.library.history.index', ['mine' => 1]))->assertJsonPath('reviews.total', 0)->assertJsonPath('filters.mine', true);
 
         $this->as('librarian')->postJson(route('api.v1.library.reviews.comments.store', $revision), ['reasons' => ['codigo_incorrecto']])->assertCreated();
-        $this->as('librarian')->getJson(route('api.v1.library.history.index', ['mine' => 1]))->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.state', 'comentado');
+        $this->as('librarian')->getJson(route('api.v1.library.history.index', ['mine' => 1]))->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.state', 'atendido')->assertJsonPath('reviews.data.0.outcome', 'devuelto');
         $this->as('coordinator')->getJson(route('api.v1.library.history.index'))->assertForbidden();
     }
 
@@ -194,7 +194,7 @@ class LibraryReviewTest extends TestCase
         $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id, 'correccion_etapa' => 'biblioteca']);
         $this->assertNotified($this->people['teacher'][0]->id, 'silabo.correccion_solicitada', 'Corríjalo y reenvíelo');
         $this->assertSame('correccion_solicitada', $syllabus->fresh()->estado);
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertJsonPath('reviews.data.0.state', 'comentado');
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertJsonPath('reviews.data.0.state', 'atendido')->assertJsonPath('reviews.data.0.outcome', 'devuelto');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
             ->assertJsonPath('review.can_comment', false)
             ->assertJsonPath('review.comments.0.comment', 'El libro no está disponible en biblioteca; El código del libro es incorrecto.');
@@ -221,7 +221,9 @@ class LibraryReviewTest extends TestCase
         $this->assertNotified($this->people['librarian'][0]->id, 'silabo.reenviado_biblioteca', 'reenvió a biblioteca');
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'pendiente']))
             ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $corrected->id);
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'anulado']))->assertJsonPath('reviews.total', 0);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'atendido']))
+            ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $revision->id)->assertJsonPath('reviews.data.0.outcome', 'devuelto');
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'anulado']))->assertUnprocessable();
         $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertJsonPath('syllabus.review_stage', 'biblioteca');
     }
 
@@ -263,7 +265,9 @@ class LibraryReviewTest extends TestCase
         $this->assertNotified($this->people['librarian'][0]->id, 'silabo.firmado_coordinacion');
         $librarySigned = $this->signPdfIncrementally($coordinationSigned, $this->makeSigningCertificate('BIBLIOTECA DE PRUEBA'));
         $this->upload($revision, $librarySigned, $coordinationSigned, 'librarian')->assertCreated();
-        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'firmado']))->assertJsonPath('reviews.total', 1);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'atendido']))
+            ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.outcome', 'firmado');
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertJsonPath('review.state', 'atendido')->assertJsonPath('review.outcome', 'firmado');
         $this->as('teacher')->getJson(route('api.v1.signature.show', $revision))->assertJsonPath('state', 'firmado')->assertJsonCount(3, 'signatures');
     }
 

@@ -219,6 +219,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Si Biblioteca devuelve, el reenvío del docente va directo a Biblioteca (I-220).
 - Una revisión enviada o aprobada no se modifica (ADR-0002).
 - Con la convocatoria cerrada, la revisión queda solo para consulta.
+- Biblioteca ve tres estados en su bandeja (2026-10-28): «Por revisar», «Por firmar» y «Atendidos».
+  «Atendido» junta lo firmado por biblioteca, lo devuelto al docente y lo reemplazado por una revisión
+  nueva; la API lo detalla en `outcome` (`firmado`, `devuelto`, `reemplazado`).
 
 ## Firmas y documentos
 
