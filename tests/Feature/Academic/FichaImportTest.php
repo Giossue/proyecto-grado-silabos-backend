@@ -16,6 +16,7 @@ use Database\Seeders\SyllabusTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Tests\TestCase;
 
@@ -87,6 +88,32 @@ class FichaImportTest extends TestCase
         $description = FieldValue::query()->where('asignatura_id', $subject->id)
             ->whereIn('definicion_campo_id', FieldDefinition::query()->where('clave', 'descripcion')->select('definicion_campo_id'))->firstOrFail();
         $this->assertStringContainsString('Ficha completada en Excel', json_encode($description->valor, JSON_UNESCAPED_UNICODE));
+    }
+
+    public function test_the_template_download_matches_the_current_fields_and_subjects(): void
+    {
+        $this->asCoordinator();
+        ob_start();
+        $this->get(route('api.v1.coordination.ficha-imports.template'))->assertOk()
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->sendContent();
+        $path = tempnam(sys_get_temp_dir(), 'ficha-');
+        file_put_contents($path, (string) ob_get_clean());
+
+        $definition = app(FichaWorkbookContext::class)->for((string) $this->context->carrera_id);
+        $book = IOFactory::load($path);
+        $this->assertSame(
+            array_column($definition->fields, 'sheet'),
+            array_values(array_diff($book->getSheetNames(), ['Indicaciones', '_estructura'])),
+        );
+        $this->assertCount(6, $definition->fields);
+        $this->assertSame(
+            Subject::query()->where('carrera_id', $this->context->carrera_id)->where('activo', true)->where('genera_silabo', true)->count(),
+            count($definition->subjects),
+        );
+        foreach ($definition->fields as $field) {
+            $this->assertTrue($book->getSheetByName($field['sheet'])->getProtection()->getSheet());
+        }
     }
 
     public function test_the_proposal_shows_the_current_profile_and_applies_only_the_chosen_fields(): void

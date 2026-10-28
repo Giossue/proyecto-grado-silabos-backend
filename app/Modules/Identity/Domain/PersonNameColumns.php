@@ -11,6 +11,8 @@ final class PersonNameColumns
         'segundo_apellido' => 'Segundo apellido',
     ];
 
+    public const MAX_LENGTH = 45;
+
     public const NOTES = [
         'Una fila por persona; no deje filas vacías entre registros.',
         'Primer nombre, segundo nombre, primer apellido y segundo apellido son obligatorios.',
@@ -41,6 +43,11 @@ final class PersonNameColumns
         }
         if ($values['primer_apellido'] === '') {
             $errors[] = 'El primer apellido es obligatorio.';
+        }
+        foreach (self::COLUMNS as $key => $label) {
+            if (mb_strlen($values[$key]) > self::MAX_LENGTH) {
+                $errors[] = 'El '.mb_strtolower($label).' admite hasta '.self::MAX_LENGTH.' caracteres.';
+            }
         }
         $name = PersonName::normalize(implode(' ', array_filter([
             $values['primer_nombre'], $values['segundo_nombre'], $values['primer_apellido'], $values['segundo_apellido'],

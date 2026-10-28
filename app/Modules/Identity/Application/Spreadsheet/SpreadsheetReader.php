@@ -14,9 +14,10 @@ class SpreadsheetReader
 
     /**
      * @param  array<string, string>  $columns
+     * @param  list<string>  $optional  columnas que un archivo antiguo puede no traer; llegan vacías
      * @return list<array{line: int, values: array<string, string>}>
      */
-    public function read(UploadedFile $file, array $columns): array
+    public function read(UploadedFile $file, array $columns, array $optional = []): array
     {
         $reader = new Reader;
         $rows = [];
@@ -28,13 +29,13 @@ class SpreadsheetReader
                 foreach ($sheet->getRowIterator() as $index => $row) {
                     $cells = array_values(array_map(fn (mixed $cell): string => is_scalar($cell) ? trim((string) $cell) : '', $row->toArray()));
                     if ($map === null) {
-                        $map = $this->headerMap($cells, $columns);
+                        $map = $this->headerMap($cells, $columns, $optional);
 
                         continue;
                     }
                     $values = [];
                     foreach ($map as $key => $position) {
-                        $values[$key] = $cells[$position] ?? '';
+                        $values[$key] = $position === null ? '' : ($cells[$position] ?? '');
                     }
                     if (implode('', $values) === '') {
                         continue;
@@ -64,14 +65,20 @@ class SpreadsheetReader
     /**
      * @param  list<string>  $cells
      * @param  array<string, string>  $columns
-     * @return array<string, int>
+     * @param  list<string>  $optional
+     * @return array<string, int|null>
      */
-    private function headerMap(array $cells, array $columns): array
+    private function headerMap(array $cells, array $columns, array $optional): array
     {
         $normalized = array_map(fn (string $cell): string => $this->normalize($cell), $cells);
         $map = [];
         foreach ($columns as $key => $header) {
             $position = array_search($this->normalize($header), $normalized, true);
+            if ($position === false && in_array($key, $optional, true)) {
+                $map[$key] = null;
+
+                continue;
+            }
             if ($position === false) {
                 throw ValidationException::withMessages(['file' => "Falta la columna «{$header}». Use la plantilla .xlsx."]);
             }

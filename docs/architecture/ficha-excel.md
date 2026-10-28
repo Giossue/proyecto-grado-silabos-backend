@@ -37,7 +37,7 @@ no guarda contenido de vista previa en PostgreSQL, Redis, sesión ni disco priva
 - Tablas: columnas derivadas de la plantilla, incluidos encabezados combinados;
   hasta 40 filas por materia en listas y 1 500 caracteres por celda. En plantillas
   protegidas, las tablas fijas conservan su cantidad de filas y sus textos prellenados
-  quedan bloqueados; por ejemplo, Unidad 1..4. Solo las respuestas no vacías cuentan
+  quedan bloqueados. Solo las respuestas no vacías cuentan
   como contenido encontrado. Las filas fijas no se compactan al dejar una sin respuesta.
 - El Excel se genera vacío de contenido. Las celdas vacías no borran valores actuales.
 - La protección de Excel previene cambios accidentales. No concede permisos ni

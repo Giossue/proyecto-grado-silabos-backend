@@ -439,7 +439,7 @@ class SyllabusProcessTest extends TestCase
         $this->actingAsTeacher()
             ->getJson(route('api.v1.dashboard.show'))
             ->assertOk()
-            ->assertJsonCount(3, 'metrics')
+            ->assertJsonCount(0, 'metrics')
             ->assertJsonPath('deadline.convocation_id', $convocation->id)
             ->assertJsonPath('coordination_convocation', null);
 

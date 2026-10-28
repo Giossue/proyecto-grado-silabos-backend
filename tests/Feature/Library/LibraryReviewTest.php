@@ -20,6 +20,7 @@ use App\Modules\Syllabus\Infrastructure\Persistence\Models\FieldValue;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
+use App\Support\InstitutionDate;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -125,7 +126,7 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.library.history.index'))->assertOk()->assertJsonPath('reviews.total', 0);
 
         $period = $syllabus->convocation->process()->firstOrFail()->academicPeriod()->firstOrFail();
-        DB::table('periodos_academicos')->where('periodo_academico_id', $period->id)->update(['fecha_fin_periodo' => now()->subDay()->toDateString()]);
+        DB::table('periodos_academicos')->where('periodo_academico_id', $period->id)->update(['fecha_fin_periodo' => InstitutionDate::today()->subDay()->toDateString()]);
 
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 0);
         $this->as('librarian')->getJson(route('api.v1.dashboard.show'))->assertOk()->assertJsonPath('metrics.0.value', 0);

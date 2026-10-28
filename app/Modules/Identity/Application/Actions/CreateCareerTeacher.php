@@ -52,20 +52,9 @@ class CreateCareerTeacher
                 }
             }
 
-            if (! $user->activo) {
-                throw ValidationException::withMessages([
-                    'correo_electronico' => 'No se puede incorporar esta cuenta. Solicite a Administración que revise su acceso.',
-                ]);
-            }
-
-            if (RoleAssignment::query()
-                ->where('usuario_id', $user->id)
-                ->effective()
-                ->where('rol', RoleCode::Administrator->value)
-                ->exists()) {
-                throw ValidationException::withMessages([
-                    'correo_electronico' => 'No se puede incorporar como docente una cuenta con el rol Administrador.',
-                ]);
+            $blocked = $this->blockedReason($user);
+            if ($blocked !== null) {
+                throw ValidationException::withMessages(['correo_electronico' => $blocked]);
             }
 
             $identity = [
@@ -107,6 +96,26 @@ class CreateCareerTeacher
 
             return ['created' => $created, 'attached' => $attached];
         });
+    }
+
+    /** Por qué una cuenta que ya existe no puede incorporarse como docente; null si puede. */
+    public function blockedReason(?User $user): ?string
+    {
+        if ($user === null) {
+            return null;
+        }
+        if (! $user->activo) {
+            return 'No se puede incorporar esta cuenta. Solicite a Administración que revise su acceso.';
+        }
+        if (RoleAssignment::query()
+            ->where('usuario_id', $user->id)
+            ->effective()
+            ->where('rol', RoleCode::Administrator->value)
+            ->exists()) {
+            return 'No se puede incorporar como docente una cuenta con el rol Administrador.';
+        }
+
+        return null;
     }
 
     private function findAccount(string $email): ?User

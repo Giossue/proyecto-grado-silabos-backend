@@ -287,6 +287,7 @@ return [
         'state' => 'estado',
         'status' => 'estado',
         'result' => 'resultado',
+        'period' => 'período',
         'stage' => 'etapa',
         'starts_at' => 'fecha de inicio',
         'due_at' => 'fecha límite',

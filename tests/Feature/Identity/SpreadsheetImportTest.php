@@ -7,6 +7,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\SubjectRequirement;
+use App\Modules\Identity\Application\Spreadsheet\SpreadsheetReader;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,7 +15,9 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Style\Protection;
 use Tests\TestCase;
 
 class SpreadsheetImportTest extends TestCase
@@ -229,6 +232,123 @@ class SpreadsheetImportTest extends TestCase
         $sheet = IOFactory::load($this->templateFile(route('api.v1.admin.academic.careers.import-template')))->getSheetByName('Datos');
         $this->assertSame('list', $sheet->getCell('A2')->getDataValidation()->getType());
         $this->assertSame('list', $sheet->getCell('B2')->getDataValidation()->getType());
+    }
+
+    public function test_every_template_locks_all_but_the_data_rows(): void
+    {
+        $templates = [
+            'admin@silabos.test' => [route('api.v1.admin.users.import-template'), 7],
+            'coordinador@silabos.test' => [route('api.v1.coordination.academic.teachers.import-template'), 5],
+        ];
+        foreach ([
+            'admin@silabos.test' => [route('api.v1.admin.academic.careers.import-template'), 5],
+            'coordinador@silabos.test' => [route('api.v1.coordination.academic.curriculum-import.template'), 12],
+        ] as $email => $template) {
+            $templates[$email.'#'.$template[0]] = $template;
+        }
+
+        foreach ($templates as $key => [$url, $columns]) {
+            $this->actingAsRole(explode('#', $key)[0]);
+            $book = IOFactory::load($this->templateFile($url));
+            $sheet = $book->getSheetByName('Datos');
+            $last = Coordinate::stringFromColumnIndex($columns);
+            $notes = Coordinate::stringFromColumnIndex($columns + 2);
+
+            $this->assertTrue($sheet->getProtection()->getSheet(), "{$url}: la hoja de datos debe estar protegida");
+            $this->assertTrue($book->getSheetByName('Listas')->getProtection()->getSheet(), "{$url}: la hoja de listas debe estar protegida");
+            $this->assertNotSame(Protection::PROTECTION_UNPROTECTED, $sheet->getStyle('A1')->getProtection()->getLocked(), "{$url}: encabezado bloqueado");
+            $this->assertNotSame(Protection::PROTECTION_UNPROTECTED, $sheet->getStyle("{$notes}2")->getProtection()->getLocked(), "{$url}: indicaciones bloqueadas");
+            $this->assertSame(Protection::PROTECTION_UNPROTECTED, $sheet->getStyle('A2')->getProtection()->getLocked(), "{$url}: primera fila de datos libre");
+            $this->assertSame(Protection::PROTECTION_UNPROTECTED, $sheet->getStyle($last.(SpreadsheetReader::MAX_ROWS + 1))->getProtection()->getLocked(), "{$url}: última fila de datos libre");
+            $this->assertNotSame(Protection::PROTECTION_UNPROTECTED, $sheet->getStyle('A'.(SpreadsheetReader::MAX_ROWS + 2))->getProtection()->getLocked(), "{$url}: fuera del área de datos bloqueado");
+        }
+    }
+
+    public function test_curriculum_template_offers_only_yes_or_no_for_the_syllabus(): void
+    {
+        $this->actingAsRole('coordinador@silabos.test');
+        $book = IOFactory::load($this->templateFile(route('api.v1.coordination.academic.curriculum-import.template')));
+        $sheet = $book->getSheetByName('Datos');
+
+        $this->assertSame('Genera sílabo', $sheet->getCell('F1')->getValue());
+        $this->assertSame('list', $sheet->getCell('F2')->getDataValidation()->getType());
+        $this->assertSame(['Sí', 'No'], [$book->getSheetByName('Listas')->getCell('F1')->getValue(), $book->getSheetByName('Listas')->getCell('F2')->getValue()]);
+        $this->assertNull($book->getSheetByName('Listas')->getCell('F3')->getValue());
+        $this->assertStringContainsString('Genera sílabo', (string) $sheet->getCell('N2')->getValue());
+    }
+
+    public function test_curriculum_import_marks_subjects_without_syllabus_and_keeps_old_files_working(): void
+    {
+        $this->actingAsRole('coordinador@silabos.test');
+        $header = ['Código', 'Nombre de la materia', 'Ciclo', 'Unidad de organización', 'Modalidad', 'Genera sílabo', 'Horas ACD', 'Horas APE', 'Horas AA', 'Créditos', 'Prerrequisitos (códigos)', 'Correquisitos (códigos)'];
+        $url = route('api.v1.coordination.academic.curriculum-import.store');
+
+        $bad = $this->workbook([$header, ['SIL-001', 'Optativa', '1', 'Unidad básica', '', 'Quizás', '48', '32', '64', '3', '', '']]);
+        $this->postJson($url, ['file' => $bad, 'confirm' => true])->assertOk()
+            ->assertJsonPath('valid', false)->assertJsonPath('rows.0.errors', ['Genera sílabo debe ser Sí o No.']);
+
+        $file = $this->workbook([
+            $header,
+            ['SIL-001', 'Con sílabo', '1', 'Unidad básica', '', 'Sí', '48', '32', '64', '3', '', ''],
+            ['SIL-002', 'Sin sílabo', '1', 'Unidad básica', '', 'No', '48', '32', '64', '3', '', ''],
+            ['SIL-003', 'Vacía', '1', 'Unidad básica', '', '', '48', '32', '64', '3', '', ''],
+        ]);
+        $this->postJson($url, ['file' => $file, 'confirm' => true])->assertOk()->assertJsonPath('created', 3);
+        $generates = fn (string $code): bool => Subject::query()->where('codigo_asignatura', $code)->firstOrFail()->genera_silabo;
+        $this->assertTrue($generates('SIL-001'));
+        $this->assertFalse($generates('SIL-002'));
+        $this->assertTrue($generates('SIL-003'));
+
+        $old = $this->workbook([
+            ['Código', 'Nombre de la materia', 'Ciclo', 'Unidad de organización', 'Modalidad', 'Horas ACD', 'Horas APE', 'Horas AA', 'Créditos', 'Prerrequisitos (códigos)', 'Correquisitos (códigos)'],
+            ['SIL-004', 'De plantilla anterior', '1', 'Unidad básica', '', '48', '32', '64', '3', '', ''],
+        ]);
+        $this->postJson($url, ['file' => $old, 'confirm' => true])->assertOk()->assertJsonPath('created', 1);
+        $this->assertTrue($generates('SIL-004'));
+    }
+
+    public function test_names_over_the_form_limit_are_rejected_in_user_and_teacher_imports(): void
+    {
+        $long = str_repeat('A', 46);
+        $teachers = $this->workbook([
+            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'],
+            [$long, 'Luz', 'Uno', 'Dos', 'largo@silabos.test'],
+            [str_repeat('A', 45), 'Luz', 'Uno', 'Dos', 'justo@silabos.test'],
+        ]);
+        $this->actingAsRole('coordinador@silabos.test');
+        $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $teachers, 'confirm' => true])->assertOk()
+            ->assertJsonPath('valid', false)
+            ->assertJsonPath('rows.0.errors', ['El primer nombre admite hasta 45 caracteres.'])
+            ->assertJsonPath('rows.1.errors', []);
+
+        $users = $this->workbook([
+            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo', 'Rol', 'Carrera'],
+            ['Ana', 'Luz', $long, 'Dos', 'largo2@silabos.test', 'Administrador', ''],
+        ]);
+        $this->actingAsRole('admin@silabos.test');
+        $this->postJson(route('api.v1.admin.users.import'), ['file' => $users, 'confirm' => true])->assertOk()
+            ->assertJsonPath('rows.0.errors', ['El primer apellido admite hasta 45 caracteres.'])
+            ->assertJsonPath('created', 0);
+    }
+
+    public function test_teacher_preview_flags_accounts_that_cannot_join_instead_of_failing_the_whole_file(): void
+    {
+        $this->actingAsRole('coordinador@silabos.test');
+        User::query()->where('correo_electronico', 'docente@silabos.test')->update(['activo' => false]);
+        $file = $this->workbook([
+            ['Primer nombre', 'Segundo nombre', 'Primer apellido', 'Segundo apellido', 'Correo'],
+            ['Ana', 'Luz', 'Uno', 'Dos', 'docente@silabos.test'],
+            ['Ada', 'Luz', 'Uno', 'Dos', 'admin@silabos.test'],
+            ['Eva', 'Luz', 'Uno', 'Dos', 'nuevo.docente@silabos.test'],
+        ]);
+
+        $this->postJson(route('api.v1.coordination.academic.teachers.import'), ['file' => $file, 'confirm' => true])->assertOk()
+            ->assertJsonPath('valid', false)
+            ->assertJsonPath('created', 0)
+            ->assertJsonPath('rows.0.errors', ['No se puede incorporar esta cuenta. Solicite a Administración que revise su acceso.'])
+            ->assertJsonPath('rows.1.errors', ['No se puede incorporar como docente una cuenta con el rol Administrador.'])
+            ->assertJsonPath('rows.2.errors', []);
+        $this->assertDatabaseMissing('usuarios', ['correo_electronico' => 'nuevo.docente@silabos.test']);
     }
 
     private function templateFile(string $url): string

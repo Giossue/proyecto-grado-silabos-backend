@@ -2,12 +2,14 @@
 
 namespace App\Modules\Identity\Application\Spreadsheet;
 
+use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Protection;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -50,10 +52,19 @@ class SpreadsheetTemplate
             $sheet->getStyle("{$last}2:{$last}{$lastRow}")->getFont()->getColor()->setRGB('64748B');
             $sheet->getStyle("{$last}1:{$last}{$lastRow}")->getBorders()->getOutline()->setBorderStyle(Border::BORDER_THIN);
 
+            $this->protect($sheet, count($headers));
+            $lists->getProtection()->setPassword(Str::random(24))->setSheet(true);
             $lists->setSheetState(Worksheet::SHEETSTATE_HIDDEN);
             $book->setActiveSheetIndex(0);
             (new Xlsx($book))->save('php://output');
         }, $filename, ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']);
+    }
+
+    /** Solo se escribe en las filas de datos: encabezados, indicaciones y listas quedan bloqueados. */
+    private function protect(Worksheet $sheet, int $columns): void
+    {
+        $sheet->getStyle([1, 2, $columns, SpreadsheetReader::MAX_ROWS + 1])->getProtection()->setLocked(Protection::PROTECTION_UNPROTECTED);
+        $sheet->getProtection()->setPassword(Str::random(24))->setSheet(true);
     }
 
     /** @param array<int, string> $options */

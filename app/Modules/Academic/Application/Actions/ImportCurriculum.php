@@ -24,6 +24,7 @@ class ImportCurriculum
         'ciclo' => 'Ciclo',
         'unidad' => 'Unidad de organización',
         'modalidad' => 'Modalidad',
+        'genera_silabo' => 'Genera sílabo',
         'acd' => 'Horas ACD',
         'ape' => 'Horas APE',
         'aa' => 'Horas AA',
@@ -32,13 +33,20 @@ class ImportCurriculum
         'correquisitos' => 'Correquisitos (códigos)',
     ];
 
+    /** Un archivo de una plantilla anterior puede no traerlas: se toma «Sí». */
+    public const OPTIONAL_COLUMNS = ['genera_silabo'];
+
+    public const YES = 'Sí';
+
+    public const NO = 'No';
+
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly CreateAcademicRecord $createRecord,
         private readonly MutateCurriculumBuilder $curriculum,
     ) {}
 
-    /** @return array{units: list<string>, modalities: list<string>} */
+    /** @return array{units: list<string>, modalities: list<string>, syllabus: list<string>} */
     public function templateOptions(Request $request): array
     {
         $this->career($request);
@@ -46,6 +54,7 @@ class ImportCurriculum
         return [
             'units' => array_map(fn (CurricularUnit $unit): string => $unit->label(), CurricularUnit::cases()),
             'modalities' => StudyModality::values(),
+            'syllabus' => [self::YES, self::NO],
         ];
     }
 
@@ -95,6 +104,10 @@ class ImportCurriculum
             if (trim($values['modalidad']) !== '' && $modality === null) {
                 $errors[] = 'La modalidad no es válida.';
             }
+            $syllabusKey = $this->key($values['genera_silabo']);
+            if (! in_array($syllabusKey, ['', $this->key(self::YES), $this->key(self::NO)], true)) {
+                $errors[] = 'Genera sílabo debe ser Sí o No.';
+            }
             $numbers = [];
             foreach (['acd' => 'Horas ACD', 'ape' => 'Horas APE', 'aa' => 'Horas AA', 'creditos' => 'Créditos'] as $key => $label) {
                 $value = str_replace(',', '.', trim($values[$key]));
@@ -128,6 +141,7 @@ class ImportCurriculum
                 'data' => [
                     'code' => $code, 'nombre' => $name, 'cycle' => (int) $cycle,
                     'organization_unit' => $unit?->value, 'modality' => $modality,
+                    'generates_syllabus' => $syllabusKey !== $this->key(self::NO),
                     'horas_ac' => $numbers['acd'], 'horas_pae' => $numbers['ape'], 'horas_aa' => $numbers['aa'],
                     'creditos' => $numbers['creditos'],
                     'horas_totales' => (int) round(CurriculumSystemFields::totalHours(['horas_ac' => $numbers['acd'], 'horas_pae' => $numbers['ape'], 'horas_aa' => $numbers['aa']])),

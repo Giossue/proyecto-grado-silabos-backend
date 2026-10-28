@@ -56,6 +56,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   semanas se calculan desde las fechas. Empieza hoy o después (I-108, I-109, I-112).
 - Administración carga cuentas y carreras por Excel; Coordinación carga docentes y la
   malla. Cada carga muestra una vista previa y se aplica todo o nada (I-198).
+- Las plantillas de cuentas, docentes, carreras y malla se descargan protegidas, como la
+  del proyecto de carrera: solo se escriben las filas de datos; encabezados, indicaciones
+  y listas quedan bloqueados. La malla trae «Genera sílabo» con solo Sí o No; vacío vale
+  Sí y las plantillas anteriores siguen sirviendo. Cada nombre admite hasta 45 caracteres,
+  como el formulario, y la vista previa de docentes marca las cuentas que no se pueden
+  incorporar (deshabilitadas o de Administración).
 
 ## Convocatorias y períodos
 
