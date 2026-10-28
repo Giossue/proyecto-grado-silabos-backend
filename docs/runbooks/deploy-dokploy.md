@@ -8,8 +8,9 @@ El sistema se despliega como dos aplicaciones de Dokploy y un servicio auxiliar:
 - **Frontend** (`Giossue/proyecto-grado-silabos-frontend`): la SPA servida por Nginx.
 - **Gotenberg**: convierte el Word del sílabo en PDF con el mismo formato.
 
-PostgreSQL y Redis no van en la imagen: el backend se conecta a los del servidor con
-variables de entorno. Un push a `main` despliega y el arranque aplica las migraciones.
+PostgreSQL no va en la imagen: el backend se conecta al del servidor con
+variables de entorno. Cola, caché y bloqueos usan esa misma base; no hace falta Redis.
+Un push a `main` despliega y el arranque aplica las migraciones.
 
 ## 1. Crear las aplicaciones
 
@@ -56,14 +57,9 @@ DB_USERNAME=<usuario>
 DB_PASSWORD=<secreto>
 DB_TIMEZONE=UTC
 
-REDIS_CLIENT=predis
-REDIS_HOST=<host de Redis>
-REDIS_PORT=6379
-REDIS_PASSWORD=<secreto>
-
-CACHE_STORE=redis
-QUEUE_CONNECTION=redis
-REDIS_QUEUE_RETRY_AFTER=960
+CACHE_STORE=database
+QUEUE_CONNECTION=database
+QUEUE_RETRY_AFTER=960
 SESSION_DRIVER=database
 SESSION_SECURE_COOKIE=true
 
@@ -88,9 +84,9 @@ MAIL_MAILER=log
 
 - `TRUSTED_PROXIES` vale `*` si no se define; fije la IP real del proxy.
 - `SESSION_SECURE_COOKIE=true` exige HTTPS. Sin certificado nadie puede iniciar sesión.
-- `REDIS_QUEUE_RETRY_AFTER` debe ser mayor que el timeout del trabajo más largo:
+- `QUEUE_RETRY_AFTER` debe ser mayor que el timeout del trabajo más largo:
   `GenerateSyllabusExportJob`, con 120 s. `.env.example` conserva 960 s.
-- Las claves (`APP_KEY`, `DB_PASSWORD`, `REDIS_PASSWORD`, `AI_API_KEY`,
+- Las claves (`APP_KEY`, `DB_PASSWORD`, `AI_API_KEY`,
   `RESEND_API_KEY`) se cargan como secretos de Dokploy. No van al
   repositorio, a la base, a los logs ni a comandos de diagnóstico.
 - Tras cambiar variables, redespliegue o reinicie el contenedor: el arranque rehace la

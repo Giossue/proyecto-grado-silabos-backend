@@ -2,9 +2,9 @@
 
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
-- Fecha: 2026-10-26.
-- Última migración aplicada: `2026_10_26_000234_add_generates_syllabus_to_subjects`.
-- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 32 tablas.
+- Fecha: 2026-10-27.
+- Última migración aplicada: `2026_10_27_000245_queue_and_cache_tables_in_postgresql`.
+- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 35 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
   - columnas: `pg_attribute` + `format_type()` + `pg_attrdef` (`pg_get_expr`);
@@ -698,6 +698,40 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 
 Laravel las usa con nombres en español por configuración. Sus columnas conservan los nombres que exige cada driver.
 
+### `bloqueos_temporales`
+
+| Columna | Tipo | Nulo | Por defecto |
+|---|---|---|---|
+| `key` | character varying(255) | no |  |
+| `owner` | character varying(255) | no |  |
+| `expiration` | bigint | no |  |
+
+- PK: `PRIMARY KEY (key)`
+
+### `cola_trabajos`
+
+| Columna | Tipo | Nulo | Por defecto |
+|---|---|---|---|
+| `id` | bigint | no | `nextval('cola_trabajos_id_seq'::regclass)` |
+| `queue` | character varying(255) | no |  |
+| `payload` | text | no |  |
+| `attempts` | smallint | no |  |
+| `reserved_at` | integer | sí |  |
+| `available_at` | integer | no |  |
+| `created_at` | integer | no |  |
+
+- PK: `PRIMARY KEY (id)`
+
+### `datos_temporales`
+
+| Columna | Tipo | Nulo | Por defecto |
+|---|---|---|---|
+| `key` | character varying(255) | no |  |
+| `value` | text | no |  |
+| `expiration` | bigint | no |  |
+
+- PK: `PRIMARY KEY (key)`
+
 ### `migraciones`
 
 | Columna | Tipo | Nulo | Por defecto |
@@ -741,7 +775,7 @@ Tablas (`gen.sql`):
 -- Genera Markdown del esquema public. Solo lectura sobre pg_catalog.
 with tabla as (
   select c.oid, c.relname,
-         c.relname in ('migraciones','sesiones','restablecimientos_contrasena') as framework
+         c.relname in ('migraciones','sesiones','restablecimientos_contrasena','cola_trabajos','datos_temporales','bloqueos_temporales') as framework
   from pg_class c join pg_namespace n on n.oid = c.relnamespace
   where n.nspname = 'public' and c.relkind in ('r','p')
 ),

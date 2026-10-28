@@ -13,7 +13,7 @@
 | Lienzo de la malla | Vue Flow (ADR-0006) |
 | Firma en el navegador | `@signpdf`, `node-forge` y `pdf-lib` |
 | Base de datos | PostgreSQL 18 |
-| Colas y caché | Redis 8 con Predis; colas `critica`, `documentos` e `ia` |
+| Colas, caché y bloqueos | PostgreSQL con los drivers `database` de Laravel (`cola_trabajos`, `datos_temporales`, `bloqueos_temporales`); colas `critica`, `documentos`, `ia` y `general` |
 | Sesiones | Tabla `sesiones` en PostgreSQL |
 | Word | PHPWord |
 | PDF | Gotenberg (LibreOffice) a partir del Word; sin Gotenberg, PDF de texto simple |
@@ -35,7 +35,6 @@ Las fijan `composer.lock` y `package-lock.json`. Valores al 2026-10-20:
 | Fortify / Sanctum | 1.38.0 / 4.3.3 |
 | PHPWord | 1.4.0 |
 | PhpSpreadsheet / OpenSpout | 5.10.0 / 5.12.0 |
-| Predis | 3.5.1 |
 | Pest / Larastan (nivel 7) / Pint | 5.1.1 / 3.10.0 / 1.30.5 |
 | Imagen PHP del contenedor | `php:8.4-fpm-alpine3.23` |
 | Vue / Vue Router | 3.5.42 / 4.6.4 |

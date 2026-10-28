@@ -20,21 +20,6 @@ services:
       retries: 20
     restart: unless-stopped
 
-  redis:
-    image: redis:8-alpine
-    command: ['redis-server', '--appendonly', 'yes']
-    ports:
-      - '127.0.0.1:56379:6379'
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 5s
-      timeout: 3s
-      retries: 20
-    restart: unless-stopped
-
 volumes:
   postgres-data:
     name: silabos-ueb-postgres-data
-  redis-data:

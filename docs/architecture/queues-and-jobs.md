@@ -47,7 +47,7 @@ método `failed()` de cada trabajo deja el registro de dominio en `fallido`/`fal
 | Cliente | `attemptKey`: misma clave al reintentar lo mismo; clave nueva si cambia lo enviado | SPA |
 | Despacho | `->afterCommit()`: si la transacción se revierte, el trabajo no se envía | Exportación y chat |
 | Cola | `ShouldBeUnique` con `uniqueId()` y `#[UniqueFor]`: se descarta un duplicado mientras el primero espera o corre | Los cinco trabajos de la tabla |
-| Ejecución | `RunsOnce`: `WithoutOverlapping(uniqueId)->dontRelease()->expireAfter(timeout + 30)`. Si Redis entrega una copia de un trabajo que sigue corriendo, la copia se descarta | Los cinco trabajos de la tabla |
+| Ejecución | `RunsOnce`: `WithoutOverlapping(uniqueId)->dontRelease()->expireAfter(timeout + 30)`. Si la cola entrega una copia de un trabajo que sigue corriendo, la copia se descarta | Los cinco trabajos de la tabla |
 | Consumidor | Solo cambia el registro si sigue en el estado esperado | Todos |
 
 La verificación de Biblioteca pide la exportación con la clave de la aprobación, así
@@ -61,14 +61,22 @@ que repetirla no crea otra exportación.
 - Guarda el estado en el registro de dominio y cámbialo solo desde el estado esperado.
 - Despacha con `->afterCommit()` cuando se crea dentro de una transacción.
 - Implementa `failed()` para dejar un estado final y un mensaje seguro.
-- Si su `timeout` supera `retry_after`, sube `REDIS_QUEUE_RETRY_AFTER` (ver abajo).
+- Si su `timeout` supera `retry_after`, sube `QUEUE_RETRY_AFTER` (ver abajo).
 
-## Configuración de Redis
+## Configuración de la cola
 
-- Conexión `redis`, cola por defecto `general` (`REDIS_QUEUE`).
-- `retry_after` = `REDIS_QUEUE_RETRY_AFTER`, 960 s por defecto.
-- El estado funcional está en PostgreSQL. Si Redis se vacía, se pierden los trabajos en
-  espera y sus registros quedan `pendiente`.
+- Conexión `database` (tabla `cola_trabajos`), cola por defecto `general`. Dos workers no
+  toman el mismo trabajo: Laravel reserva con `FOR UPDATE SKIP LOCKED`.
+- La caché usa `datos_temporales` y los bloqueos (`ShouldBeUnique`, `RunsOnce`, límites de
+  intentos), `bloqueos_temporales`.
+- `retry_after` = `QUEUE_RETRY_AFTER`, 960 s por defecto (respaldo: `REDIS_QUEUE_RETRY_AFTER`
+  mientras el servidor la conserve).
+- `QUEUE_CONNECTION=redis` y `CACHE_STORE=redis` ya no existen: `config/queue.php` y
+  `config/cache.php` los tratan como `database`, así que un servidor con las variables
+  antiguas sigue funcionando.
+- No hay tabla de trabajos fallidos (`failed` es `null`). El estado funcional está en
+  PostgreSQL: si se vacía la cola, se pierden los trabajos en espera y sus registros quedan
+  `pendiente`.
 
 **Requisito:** `retry_after` debe ser mayor que el `timeout` del trabajo más largo.
 El mayor timeout actual es el de `GenerateSyllabusExportJob` (120 s). Se conserva

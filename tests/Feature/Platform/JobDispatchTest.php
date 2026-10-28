@@ -26,7 +26,7 @@ class JobDispatchTest extends TestCase
         Log::shouldHaveReceived('info')->with('platform-smoke-ok', ['key' => 'CP-N-smoke'])->once();
     }
 
-    public function test_redis_retry_window_exceeds_every_job_timeout(): void
+    public function test_database_retry_window_exceeds_every_job_timeout(): void
     {
         $jobs = [
             new PlatformSmokeJob('CP-N-timeout'),
@@ -40,8 +40,8 @@ class JobDispatchTest extends TestCase
 
         $this->assertGreaterThan(
             $longestJobTimeout,
-            (int) config('queue.connections.redis.retry_after'),
-            'REDIS_QUEUE_RETRY_AFTER debe superar el timeout del trabajo más largo.',
+            (int) config('queue.connections.database.retry_after'),
+            'QUEUE_RETRY_AFTER debe superar el timeout del trabajo más largo.',
         );
     }
 }

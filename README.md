@@ -14,13 +14,13 @@ Al aprobarse, el sistema genera el Word y el PDF; docente, coordinación y bibli
 firman el PDF con su certificado `.p12`.
 
 Este repositorio es la API Laravel 13 (JSON bajo `/api/v1`). La interfaz es una SPA Vue
-3 en `proyecto-grado-silabos-frontend`. PostgreSQL guarda todos los datos; Redis atiende
+3 en `proyecto-grado-silabos-frontend`. PostgreSQL guarda todos los datos y atiende
 las colas y la caché.
 
 ## Requisitos
 
 - PHP 8.4 o superior, Composer 2 y las extensiones usuales de Laravel con `pdo_pgsql`.
-- Docker Compose (o compatible) para PostgreSQL y Redis.
+- Docker Compose (o compatible) para PostgreSQL.
 - `pdftotext` (paquete `poppler-utils`) para ubicar los sellos de firma en el PDF.
 
 ## Puesta en marcha
@@ -37,7 +37,7 @@ crea la base con datos de prueba (`migrate:fresh --seed`).
 En otra terminal, el worker de colas:
 
 ```bash
-php artisan queue:work redis --queue=critica,documentos,ia,general --tries=3
+php artisan queue:work --queue=critica,documentos,ia,general --tries=3
 ```
 
 - `critica`: verificación de plataforma.
@@ -45,7 +45,7 @@ php artisan queue:work redis --queue=critica,documentos,ia,general --tries=3
 - `ia`: chat del docente. La carga de fichas usa Excel estructurado sin cola.
 - `general`: correos de activación de cuenta.
 
-Compose publica PostgreSQL en `127.0.0.1:55432` y Redis en `127.0.0.1:56379`. También
+Compose publica PostgreSQL en `127.0.0.1:55432`. También
 crea la base `silabos_ueb_test` para las pruebas. Las credenciales de `.env.example` son
 solo para desarrollo.
 
@@ -56,7 +56,8 @@ Las más importantes (ver `.env.example`):
 | Variable | Uso |
 |---|---|
 | `FRONTEND_URL`, `SANCTUM_STATEFUL_DOMAINS` | Dirección de la SPA (por defecto `localhost:5173`) |
-| `DB_*`, `REDIS_*` | Conexión a PostgreSQL y Redis |
+| `DB_*` | Conexión a PostgreSQL |
+| `QUEUE_CONNECTION`, `CACHE_STORE`, `QUEUE_RETRY_AFTER` | Cola y caché en PostgreSQL (`database`); `QUEUE_RETRY_AFTER` en segundos (960 por defecto) |
 | `DISPLAY_TIMEZONE` | Zona horaria de la institución (por defecto `America/Guayaquil`); fija la fecha de hoy que usa el sistema |
 | `AI_DRIVER`, `AI_BASE_URL`, `AI_MODEL`, `AI_API_KEY` | Proveedor de IA: `disabled` (por defecto), `openai`, `claude`, `deepseek` o `baseline` (pruebas) |
 | `GOTENBERG_URL`, `GOTENBERG_TIMEOUT` | Conversión de Word a PDF; sin ella el PDF sale como texto simple |
@@ -81,7 +82,7 @@ No hay registro público; las cuentas se crean desde la aplicación.
 
 ## Verificación
 
-Con PostgreSQL y Redis activos:
+Con PostgreSQL activo:
 
 ```bash
 composer verify
@@ -94,7 +95,7 @@ Salud del servicio: `/health/live` y `/health/ready`. Prueba rápida de la cola:
 
 ```bash
 php artisan platform:smoke-job
-php artisan queue:work redis --queue=critica --stop-when-empty
+php artisan queue:work --queue=critica --stop-when-empty
 ```
 
 Otros comandos de release (`composer audit`, `composer verify:restore`,

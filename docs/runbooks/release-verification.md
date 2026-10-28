@@ -9,7 +9,7 @@ ejecutan a mano.
 
 ## 1. Puerta desde instalación limpia
 
-Use PostgreSQL y Redis locales. No ejecute dos suites a la vez contra la misma base:
+Use PostgreSQL local. No ejecute dos suites a la vez contra la misma base:
 `RefreshDatabase` recrea el esquema.
 
 ```bash
@@ -48,7 +48,7 @@ Verifique al menos:
   repositorio;
 - `SESSION_SECURE_COOKIE=true` y `TRUSTED_PROXIES` con la IP real del proxy;
 - usuario PostgreSQL de ejecución sin DDL, red restringida y `DB_TIMEZONE=UTC`;
-- `QUEUE_CONNECTION=redis` y `REDIS_QUEUE_RETRY_AFTER` mayor que 120 s, el `timeout` de
+- `QUEUE_CONNECTION=database`, `CACHE_STORE=database` y `QUEUE_RETRY_AFTER` mayor que 120 s, el `timeout` de
   `GenerateSyllabusExportJob`;
 - volumen persistente en `storage/app`; nada funcional bajo `public/`;
 - `GOTENBERG_URL` apuntando al servicio interno;
@@ -86,13 +86,13 @@ Las rutas públicas de logos (`logos.institution` y `logos.faculty`) son la úni
 excepción: responden `Cross-Origin-Resource-Policy: cross-origin` para que la SPA las
 muestre desde otro origen. No aplica a documentos, descargas ni JSON.
 
-## 4. Cola Redis real
+## 4. Cola real en PostgreSQL
 
 Despache un trabajo de prueba y procese su cola:
 
 ```bash
 php artisan platform:smoke-job --key=release-smoke-local
-php artisan queue:work redis --queue=critica --stop-when-empty --tries=3
+php artisan queue:work --queue=critica --stop-when-empty --tries=3
 ```
 
 El worker debe mostrar el trabajo como terminado y el log debe registrar
@@ -106,7 +106,7 @@ critica,documentos,ia,general
 
 Los trabajos actuales usan `critica`, `documentos`, `ia` y `general`. Después de un
 despliegue ejecute `php artisan queue:restart` (en Dokploy, reiniciar el contenedor
-basta). PostgreSQL conserva el estado; vaciar Redis no debe borrar evidencia funcional.
+basta). PostgreSQL conserva el estado; vaciar `cola_trabajos` no debe borrar evidencia funcional.
 
 ## 5. Respaldo y restauración técnica
 

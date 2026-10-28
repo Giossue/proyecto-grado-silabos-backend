@@ -251,8 +251,13 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   (`valor_campo_id`) (I-28, I-179).
 - La auditoría no depende de las cuentas: guarda una copia del nombre, rol y carrera del
   actor y no se modifica (I-194).
-- No hay tabla de trabajos. Cada recurso guarda su estado; los trabajos de cola son
-  únicos e idempotentes (`RunsOnce`) (I-221, I-226).
+- No hay tabla de trabajos funcionales ni de trabajos fallidos. Cada recurso guarda su estado;
+  los trabajos de cola son únicos e idempotentes (`RunsOnce`) (I-221, I-226).
+- No hay Redis (2026-10-27). Colas, caché y bloqueos usan PostgreSQL con los drivers `database`
+  de Laravel (`cola_trabajos`, `datos_temporales`, `bloqueos_temporales`): con decenas de
+  docentes, un servicio menos que instalar en la UEB pesa más que la velocidad de Redis. Un
+  servidor que aún diga `QUEUE_CONNECTION=redis` o `CACHE_STORE=redis` usa `database`. Los trabajos
+  que estuvieran en Redis al cambiar se pierden; el estado funcional sigue en PostgreSQL.
 - Solo se avisa a quien debe actuar o cuyo trabajo cambió (I-186). Cada aviso guarda su
   período académico; la campana y Notificaciones muestran solo los del período en curso
   (2026-10-27). Administración solo recibe el fallo al generar Word y PDF.

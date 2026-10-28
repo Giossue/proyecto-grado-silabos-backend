@@ -11,7 +11,6 @@ falla un servicio externo. La cantidad de pruebas no sustituye la cobertura de r
   - `tests/Unit`: reglas puras (semanas del período, nombres y documentos de campo);
   - `tests/Feature/<Módulo>`: rutas JSON, políticas, transacciones y trabajos;
   - `tests/Architecture`: límites de módulos, contrato OpenAPI, protección de la API;
-  - `tests/Integration`: Redis real;
   - `tests/Support`: ayudas compartidas (crear convocatorias, firmar PDF, logos).
 - **Frontend** (`proyecto-grado-silabos-frontend`):
   - Vitest en `src/**/*.test.ts`;
@@ -46,8 +45,8 @@ Frontend:
 
 La suite usa PostgreSQL, nunca SQLite: UUID, `timestamptz`, constraints de exclusión,
 triggers y JSON deben comportarse como en producción. `phpunit.xml` apunta a
-`silabos_ueb_test` en `127.0.0.1:55432` y a Redis en `127.0.0.1:56379`, que levanta
-`compose.yaml`. Las colas corren en modo `sync` y la IA usa el driver `baseline`.
+`silabos_ueb_test` en `127.0.0.1:55432`, que levanta
+`compose.yaml`. Las colas corren en modo `sync`, la caché en `array` y la IA usa el driver `baseline`.
 
 Cada prueba controla sus datos y no depende del orden. `DatabaseBootstrapTest` comprueba
 que la conexión use UTC y que el seeder de demostración sea idempotente.

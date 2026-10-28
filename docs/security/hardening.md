@@ -88,9 +88,9 @@ Los cuerpos de petición grandes pasan por `/var/lib/nginx/tmp`. El `Dockerfile`
 nginx responde 500 a cualquier subida antes de llegar a PHP. Prueba rápida tras desplegar:
 un `POST` a la API con un cuerpo de 16 KB no debe devolver 500.
 
-## Redis y trabajos
+## Cola y trabajos
 
-- Redis sin exposición pública; autenticación o red privada.
+- La cola y la caché viven en PostgreSQL (`cola_trabajos`, `datos_temporales`, `bloqueos_temporales`); el usuario de ejecución de la base ya las cubre.
 - Los trabajos llevan solo identificadores, nunca secretos ni documentos completos.
 - Cada trabajo tiene timeout, intentos e idempotencia (`RunsOnce`, `ShouldBeUnique`).
 - Colas separadas: `critica`, `documentos` e `ia`.

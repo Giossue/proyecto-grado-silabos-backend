@@ -31,7 +31,7 @@ Opcional en `.env`, antes de levantar los procesos:
   proveedor de IA, OCR ni cola.
 - `GOTENBERG_URL=http://127.0.0.1:3000` con `docker run --rm -p 3000:3000 gotenberg/gotenberg:8`:
   el PDF sale igual al Word. Sin Gotenberg el PDF es de texto simple.
-- `REDIS_QUEUE_RETRY_AFTER` debe superar los 120 s de la exportación; el valor
+- `QUEUE_RETRY_AFTER` debe superar los 120 s de la exportación; el valor
   predeterminado de 960 s cumple esa condición.
 
 Levante dos procesos en terminales separadas:
@@ -41,7 +41,7 @@ php artisan serve
 ```
 
 ```bash
-php artisan queue:work redis \
+php artisan queue:work \
   --queue=critica,documentos,ia,general --tries=3
 ```
 

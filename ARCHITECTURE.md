@@ -14,7 +14,7 @@ SPA Vue 3 (repositorio proyecto-grado-silabos-frontend)
   ▼
 API Laravel 13 (este repositorio, monolito modular)
   ├─ PostgreSQL: todos los datos y la auditoría
-  ├─ Redis: colas critica, documentos e ia; caché
+  ├─ PostgreSQL (también): colas critica, documentos, ia y general; caché y bloqueos
   ├─ Disco privado: logos, Word, PDF y firmas
   ├─ Gotenberg: Word → PDF
   ├─ Proveedor de IA (AI_DRIVER): chat del docente
@@ -45,7 +45,7 @@ Cada módulo usa las capas que necesita: `Application` (acciones y consultas), `
 
 ## Invariantes
 
-- PostgreSQL es la única fuente de verdad; Redis puede vaciarse sin perder datos.
+- PostgreSQL es la única fuente de verdad; la cola y la caché se pueden vaciar sin perder datos funcionales.
 - Toda autorización se decide en el servidor y sobre el registro concreto.
 - Las transiciones de estado pasan por acciones de aplicación dentro de transacciones.
 - Una revisión enviada se inserta y no se modifica (ADR-0002).

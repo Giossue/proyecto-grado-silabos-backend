@@ -19,7 +19,8 @@ Stack:
 - SPA Vue 3 + TypeScript en el repositorio Git independiente `proyecto-grado-silabos-frontend`,
   que también puede estar dentro de este directorio.
 - PostgreSQL como única fuente de verdad.
-- Redis para colas (`critica`, `documentos`, `ia`) y caché; nunca como fuente de verdad.
+- Colas (`critica`, `documentos`, `ia`, `general`), caché y bloqueos en PostgreSQL con los drivers
+  `database` de Laravel; no hay Redis.
 - Archivos en un disco privado.
 - Gotenberg convierte el Word del sílabo en PDF.
 - IA con un proveedor externo configurable (`AI_DRIVER`, apagado por defecto) para el
@@ -84,7 +85,7 @@ estados, datos, infraestructura o aceptación sí bloquea esa parte.
 
 ## Verificación
 
-Backend, con PostgreSQL y Redis activos (`docker compose up -d`):
+Backend, con PostgreSQL activo (`docker compose up -d`):
 
 ```bash
 composer verify
@@ -154,8 +155,9 @@ pida.
   base para invariantes estructurales. Detalle en `docs/architecture/database.md`.
 - No edites migraciones ya aplicadas en un entorno compartido; agrega una nueva.
 - Despacha trabajos que dependen de una transacción después del commit.
-- Los trabajos de cola son idempotentes (`App\Support\Queue\RunsOnce`) y no existe una
-  tabla de trabajos: cada recurso guarda su propio estado.
+- Los trabajos de cola son idempotentes (`App\Support\Queue\RunsOnce`). La cola técnica
+  (`cola_trabajos`) es transitoria y no guarda trabajos fallidos: cada recurso guarda su
+  propio estado.
 - Los archivos son privados; las descargas pasan por autorización.
 - No registres secretos, documentos completos, prompts sensibles ni datos personales
   innecesarios en logs.

@@ -48,7 +48,7 @@ No copies el contenido completo del sílabo en la auditoría.
 
 ## Trabajos en cola
 
-No hay tabla de trabajos ni de trabajos fallidos. Cada recurso guarda su propio estado:
+No hay tabla de trabajos fallidos; `cola_trabajos` solo es la cola técnica y se vacía al procesarse. Cada recurso guarda su propio estado:
 la exportación y el mensaje del chat. Si un trabajo falla,
 el recurso queda en estado fallido con una causa segura que ve el usuario.
 
@@ -72,7 +72,7 @@ medir:
 - consultas lentas;
 - espera y fallos por cola;
 - duración y resultado de exportaciones e IA;
-- disponibilidad de PostgreSQL, Redis, Gotenberg y el proveedor de IA.
+- disponibilidad de PostgreSQL, Gotenberg y el proveedor de IA.
 
 Y alertar solo por síntomas que tengan una acción: errores sostenidos, cola detenida,
 respaldo fallido, disco casi lleno o una dependencia caída.

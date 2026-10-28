@@ -39,7 +39,7 @@ Estados:
 | Seguridad HTTP | `HealthAndSecurityTest`, `AuthHardeningTest`, `SecurityHardeningTest` | Verificado automático; pentest manual pendiente |
 | Dependencias | `composer audit` y `npm audit`, a mano. No hay CI | Verificado técnico; hay que repetirlo antes de cada entrega |
 | PostgreSQL | `DatabaseBootstrapTest`, `SpanishSchemaTest`, constraints y triggers en las pruebas de cada módulo | Verificado automático |
-| Redis y colas | `RedisConnectionTest`, `JobDispatchTest`, `JobIdempotencyTest` | Verificado automático; incluye los trabajos de la ficha y una ventana de reentrega mayor que su timeout; variable remota pendiente de comprobar |
+| Colas y caché en PostgreSQL | `QueueAndCacheInPostgresqlTest`, `JobDispatchTest`, `JobIdempotencyTest` | Verificado automático; incluye los trabajos de la ficha y una ventana de reentrega mayor que su timeout; variable remota pendiente de comprobar |
 | Recuperación | `composer verify:restore` sobre un dump sintético y un clúster efímero | Verificado técnico; política bloqueada PV-11 |
 | Rendimiento | `composer benchmark:readiness` contra `/health/ready` en loopback | Prueba del script; no acepta RNF-011..015 (PV-05) |
 | Accesibilidad real | Teclado, lector, foco, contraste, 360 px, zoom 200 %, claro y oscuro | Pendiente manual (PV-19) |
@@ -87,7 +87,7 @@ desplegar; falta comprobarla en el sitio, junto con la aceptación visual.
 | Serie | Qué se puede afirmar | Qué no se puede afirmar |
 |---|---|---|
 | CP-F01..CP-F35 | Las capacidades de CU-01..17 tienen pruebas agrupadas arriba. | Que cada CP-F esté aprobado, sin su enunciado oficial. |
-| CP-N01..CP-N16 | Hay evidencia técnica de seguridad, calidad, PostgreSQL, Redis, restauración y un script de carga. | Que cada CP-N y sus umbrales estén aceptados, sin enunciados, PV-05, PV-11 y pruebas manuales. |
+| CP-N01..CP-N16 | Hay evidencia técnica de seguridad, calidad, PostgreSQL, restauración y un script de carga. | Que cada CP-N y sus umbrales estén aceptados, sin enunciados, PV-05, PV-11 y pruebas manuales. |
 | IA-NEG-01..IA-NEG-09 | `AiAssistanceTest` y `HostedAiChatGatewayTest` cubren citas inventadas, servicio caído, límites, alcance y configuración insegura del chat. | Que sustituyan la evaluación experta del modelo. |
 
 Para cerrar esto hay que incorporar la fuente maestra de CP sin renumerarla y agregar

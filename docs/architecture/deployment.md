@@ -11,10 +11,9 @@ proxy con TLS (Dokploy)
 ├── frontend: Nginx con la SPA            (repositorio proyecto-grado-silabos-frontend)
 ├── backend: un contenedor con supervisord (este repositorio)
 │   ├── php-fpm + nginx  → API en el puerto 8080
-│   ├── queue:work       → colas en Redis
+│   ├── queue:work       → cola en PostgreSQL
 │   └── schedule:work    → tareas programadas
 ├── PostgreSQL 18
-├── Redis 8
 └── Gotenberg 8 (interno, sin dominio público)
 ```
 
@@ -50,7 +49,7 @@ persistente en `/var/www/html/storage/app`; sin él, cada despliegue los borra.
 | `GET /health/ready` | PostgreSQL responde a `select 1`. Si no, `503`. |
 | `GET /health/live` (frontend) | Nginx responde. |
 
-Redis, Gotenberg y la IA no hacen que el backend quede «no listo».
+Gotenberg y la IA no hacen que el backend quede «no listo».
 
 ## Colas y worker
 
@@ -73,14 +72,14 @@ Detalle de cada trabajo: [queues-and-jobs.md](queues-and-jobs.md).
 
 ### Requisito: `retry_after` mayor que el `timeout` más largo
 
-Redis vuelve a entregar un trabajo reservado cuando pasan `retry_after` segundos
-(`REDIS_QUEUE_RETRY_AFTER`). Laravel exige que ese valor sea mayor que el `timeout` del
+La cola vuelve a entregar un trabajo reservado cuando pasan `retry_after` segundos
+(`QUEUE_RETRY_AFTER`). Laravel exige que ese valor sea mayor que el `timeout` del
 trabajo más largo. Si no, el trabajo puede ejecutarse dos veces o marcarse como fallido
 mientras sigue corriendo.
 
 - El trabajo más largo actual es `GenerateSyllabusExportJob` con 120 s.
 - `.env.example` y `config/queue.php` conservan 960 s.
-- `REDIS_QUEUE_RETRY_AFTER` debe superar 120 s. El retiro del OCR no requiere cambiar
+- `QUEUE_RETRY_AFTER` debe superar 120 s. El retiro del OCR no requiere cambiar
   una configuración que ya cumpla esta condición.
 
 ### Otros límites del worker
@@ -108,7 +107,7 @@ imagen, el repositorio o el frontend.
 | Aplicación | `APP_KEY`, `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, `APP_TIMEZONE=UTC`, `DISPLAY_TIMEZONE=America/Guayaquil`, `TRUSTED_PROXIES`, `RUN_MIGRATIONS` |
 | SPA y sesión | `FRONTEND_URL` (origen permitido por CORS), `SANCTUM_STATEFUL_DOMAINS`, `SESSION_DOMAIN`, `SESSION_ENCRYPT=true` |
 | Base de datos | `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`, `DB_TIMEZONE=UTC` |
-| Redis | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `QUEUE_CONNECTION=redis`, `CACHE_STORE=redis`, `REDIS_QUEUE_RETRY_AFTER` (ver arriba) |
+| Cola y caché | `QUEUE_CONNECTION=database`, `CACHE_STORE=database`, `QUEUE_RETRY_AFTER` (ver arriba). No hay variables `REDIS_*` |
 | Correo | `MAIL_MAILER` (`resend` en pruebas hasta la instalación; `smtp` en la UEB), `MAIL_HOST`, `MAIL_PORT`, `MAIL_SCHEME`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `RESEND_API_KEY` (solo con `resend`), `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`, `NOTIFICATION_EMAILS`, `NOTIFICATION_EMAIL_EVENTS`, `NOTIFICATION_DIGEST`, `NOTIFICATION_DIGEST_TIME` |
 | Archivos | `FILESYSTEM_DISK=private` |
 | PDF | `GOTENBERG_URL`, `GOTENBERG_TIMEOUT` (90 por defecto) |

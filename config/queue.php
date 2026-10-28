@@ -2,7 +2,7 @@
 
 return [
 
-    'default' => env('QUEUE_CONNECTION', 'redis'),
+    'default' => ($queue = env('QUEUE_CONNECTION', 'database')) === 'redis' ? 'database' : $queue,
 
     'connections' => [
 
@@ -30,12 +30,12 @@ return [
             'after_commit' => false,
         ],
 
-        'redis' => [
-            'driver' => 'redis',
-            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
-            'queue' => env('REDIS_QUEUE', 'general'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 960),
-            'block_for' => null,
+        'database' => [
+            'driver' => 'database',
+            'connection' => env('DB_CONNECTION'),
+            'table' => 'cola_trabajos',
+            'queue' => 'general',
+            'retry_after' => (int) env('QUEUE_RETRY_AFTER', env('REDIS_QUEUE_RETRY_AFTER', 960)),
             'after_commit' => false,
         ],
 
@@ -50,7 +50,7 @@ return [
         'failover' => [
             'driver' => 'failover',
             'connections' => [
-                'redis',
+                'database',
                 'deferred',
             ],
         ],

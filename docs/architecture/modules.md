@@ -32,7 +32,7 @@ app/Modules/<Módulo>/
 No se crean carpetas vacías por simetría. `Library` y `Operations` no tienen `Domain`.
 
 La única regla automática está en `tests/Architecture/ModuleBoundariesTest.php`: el
-`Domain` de un módulo no usa `Illuminate\Http`, Redis ni controladores.
+`Domain` de un módulo no usa `Illuminate\Http`, la fachada `Redis` ni controladores.
 
 ## Cómo se comunican
 

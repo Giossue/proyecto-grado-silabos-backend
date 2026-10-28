@@ -60,7 +60,7 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
 
 | ID | Hallazgo | Acción |
 |---|---|---|
-| D-01 | Las tablas `sesiones`, `restablecimientos_contrasena` y `migraciones` conservan columnas en inglés: los drivers de Laravel las fijan | Aceptado; solo cambia si se cambia de driver |
+| D-01 | Las tablas `sesiones`, `restablecimientos_contrasena`, `migraciones`, `cola_trabajos`, `datos_temporales` y `bloqueos_temporales` conservan columnas en inglés: los drivers de Laravel las fijan | Aceptado; solo cambia si se cambia de driver |
 | D-02 | Claves en inglés dentro de JSON (`contexto_academico`, `fotografia`, `metadatos` de auditoría) | Traducir solo documentos nuevos con lector doble; nunca reescribir fotografías selladas |
 | D-03 | El contrato del gateway de IA (`contract-simulator-v1`) sigue en inglés | Traducir al ajustar el gateway para DeepSeek |
 | D-04 | `FixedContent`, `TemplateDocumentDefaults` e `IdentificationCard::document` solo los usan migraciones antiguas y fotografías anteriores a I-229 | Mover su contenido a las migraciones y borrarlos |

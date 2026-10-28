@@ -36,14 +36,14 @@ Son metas propuestas hasta la validación de volumen/infraestructura.
 - Pagina y filtra en servidor.
 - Usa trabajos para operaciones pesadas.
 - Cachea únicamente datos derivables y define invalidación.
-- Redis no corrige una consulta sin índice ni una arquitectura defectuosa.
+- La caché no corrige una consulta sin índice ni una arquitectura defectuosa.
 - Mide PostgreSQL con datos representativos antes de agregar índices.
 
 ## Línea base técnica
 
 `composer benchmark:readiness` ejecuta por defecto 500 peticiones con concurrencia 50 y
 solo admite URLs HTTP de loopback. El 2026-08-14, sobre el servidor PHP integrado local,
-PostgreSQL 18 y Redis 8, obtuvo cero fallos, p95 0,415 s y 126,42 req/s con cachés de
+PostgreSQL 18 y Redis 8 (entonces la caché), obtuvo cero fallos, p95 0,415 s y 126,42 req/s con cachés de
 producción.
 
 Este resultado prueba el harness y el endpoint de salud; no simula sesiones, consultas de

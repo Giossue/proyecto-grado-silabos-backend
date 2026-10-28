@@ -131,5 +131,5 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 9. Word y PDF se generan desde la copia guardada en la revisión.
 10. Las firmas siguen el orden docente → coordinación → biblioteca.
 11. La IA no cambia estados ni escribe en el sílabo.
-12. Redis y el servicio de IA pueden fallar sin dañar el sílabo.
+12. Perder la cola o el servicio de IA no daña el sílabo.
 13. El total de horas de una asignatura es la suma de sus componentes.

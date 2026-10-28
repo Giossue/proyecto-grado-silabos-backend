@@ -3,7 +3,7 @@
 1. **Denegar por defecto.** Cada ruta, consulta, mutación y descarga exige autorización.
 2. **Alcance por registro.** El rol no basta: también cuentan carrera, asignación, vigencia
    y estado.
-3. **Mínimo privilegio.** Usuarios, base, Redis, almacenamiento e integraciones reciben
+3. **Mínimo privilegio.** Usuarios, base, almacenamiento e integraciones reciben
    solo permisos necesarios.
 4. **Defensa en profundidad.** Form Request, Policy, dominio y constraint protegen capas
    diferentes.

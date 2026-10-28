@@ -3,7 +3,7 @@
 Coordinación descarga un Excel generado desde las materias activas de su carrera y
 los campos vigentes cuyo responsable sea `coordinacion`. Completa el contenido,
 carga el archivo, revisa la vista previa y elige qué aplicar. Este flujo no utiliza
-IA, OCR, Redis ni trabajos de cola. Funciona con `AI_DRIVER=disabled`.
+IA, OCR ni trabajos de cola. Funciona con `AI_DRIVER=disabled`.
 
 ## Contrato
 
@@ -21,7 +21,7 @@ solo mientras el diálogo está abierto; descartarlos es una acción local. Al c
 recargar se pierden y hay que subir otra vez el archivo. No hay consultas periódicas.
 
 La nueva migración elimina `importaciones_ficha` y sus registros históricos. El flujo
-no guarda contenido de vista previa en PostgreSQL, Redis, sesión ni disco privado.
+no guarda contenido de vista previa en PostgreSQL, caché, sesión ni disco privado.
 
 ## Libro
 

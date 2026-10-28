@@ -4,7 +4,7 @@ use Illuminate\Support\Str;
 
 return [
 
-    'default' => env('CACHE_STORE', 'redis'),
+    'default' => ($store = env('CACHE_STORE', 'database')) === 'redis' ? 'database' : $store,
 
     'stores' => [
 
@@ -43,10 +43,12 @@ return [
             ],
         ],
 
-        'redis' => [
-            'driver' => 'redis',
-            'connection' => env('REDIS_CACHE_CONNECTION', 'cache'),
-            'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
+        'database' => [
+            'driver' => 'database',
+            'connection' => env('DB_CONNECTION'),
+            'table' => 'datos_temporales',
+            'lock_connection' => env('DB_CONNECTION'),
+            'lock_table' => 'bloqueos_temporales',
         ],
 
         'dynamodb' => [
@@ -65,7 +67,7 @@ return [
         'failover' => [
             'driver' => 'failover',
             'stores' => [
-                'redis',
+                'database',
                 'array',
             ],
         ],

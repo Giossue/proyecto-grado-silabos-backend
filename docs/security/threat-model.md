@@ -18,11 +18,10 @@
 
 1. navegador ↔ Laravel;
 2. Laravel ↔ PostgreSQL;
-3. Laravel/worker ↔ Redis;
-4. aplicación ↔ almacenamiento privado;
-5. worker ↔ proveedor de IA alojado (chat del docente);
-6. worker ↔ Gotenberg (DOCX a PDF);
-7. operadores ↔ despliegue y respaldos.
+3. aplicación ↔ almacenamiento privado;
+4. worker ↔ proveedor de IA alojado (chat del docente);
+5. worker ↔ Gotenberg (DOCX a PDF);
+6. operadores ↔ despliegue y respaldos.
 
 ## Amenazas prioritarias
 

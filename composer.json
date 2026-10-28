@@ -18,7 +18,6 @@
         "openspout/openspout": "^5.12",
         "phpoffice/phpspreadsheet": "^5.10",
         "phpoffice/phpword": "^1.4",
-        "predis/predis": "^3.0",
         "resend/resend-php": "^1.11"
     },
     "require-dev": {
