@@ -254,6 +254,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Interfaz (2026-10-27): los campos y selects usan el borde de las tablas (el alto contraste
   lo refuerza); no hay tooltips nativos del navegador, solo el `Tooltip` del sistema; los
   loadings imitan la pantalla real. Revisión de Coordinación y Mis sílabos no tienen
-  indicadores arriba.
+  indicadores arriba. Los campos obligatorios vacíos no muestran el globo del navegador:
+  el campo se marca en rojo y el mensaje sale debajo (`lib/nativeValidation.ts`).
 - Los archivos son privados y registran quién los subió (I-180).
 - Un push a `main` despliega en Dokploy y ejecuta las migraciones.
