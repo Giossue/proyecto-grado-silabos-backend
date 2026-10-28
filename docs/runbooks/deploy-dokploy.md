@@ -158,8 +158,8 @@ aceptar solo entidades acreditadas en Ecuador siga
 
 ### Correo
 
-La universidad no usa Resend: en producción el correo sale por **su servidor SMTP**. Resend solo
-sirve en el servidor de pruebas del desarrollador. El enlace de las invitaciones usa
+Hasta instalar el sistema en la UEB (diciembre de 2026) el servidor de pruebas envía con **Resend**
+y se conserva. En la universidad el correo saldrá por **su servidor SMTP**, no por Resend. El enlace de las invitaciones usa
 `FRONTEND_URL` y caduca en 24 horas. Mientras `PV-15` siga abierta se deja `MAIL_MAILER=log`:
 los mensajes se escriben en los logs de Dokploy sin salir del sistema.
 
@@ -186,7 +186,7 @@ MAIL_FROM_NAME="${APP_NAME}"
 - Los envíos pasan por la cola `general`: el worker debe estar activo. Un fallo de envío queda en
   `failed_jobs` y en los logs, no en la pantalla del usuario.
 
-**Pruebas: Resend**, cuyo transporte ya está instalado:
+**Pruebas, hasta la instalación en la UEB: Resend**, cuyo transporte ya está instalado:
 
 ```text
 MAIL_MAILER=resend

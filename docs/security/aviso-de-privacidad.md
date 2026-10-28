@@ -26,7 +26,7 @@ No se tratan datos sensibles ni se usan los datos para publicidad.
 
 ## Quién más recibe datos
 
-- **Correo electrónico:** en producción, el servidor de correo institucional de la UEB; envía invitaciones, recuperación de contraseña y avisos. El servidor de pruebas usa Resend.
+- **Correo electrónico:** en producción, el servidor de correo institucional de la UEB; envía invitaciones, recuperación de contraseña y avisos. Hasta la instalación en la UEB, el servidor de pruebas usa Resend.
 - **Proveedor de IA (OpenAI, Anthropic o DeepSeek, según configure la UEB):** en el chat
   del docente recibe los datos de la carrera y la asignatura, lo que el docente ya escribió
   en el sílabo y su pregunta. Está desactivado por defecto. Las fichas se importan
