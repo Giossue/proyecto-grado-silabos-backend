@@ -21,21 +21,21 @@ muestra «Página no encontrada».
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| ADM-01 | Puesta en marcha | modal en ADM-12 | Pasos previos a abrir la convocatoria (facultades, carreras, cuentas, coordinadores y plantilla), cada uno con «Ir» a su pantalla y un check al completarlo. «Nueva convocatoria» queda deshabilitada hasta completarlos. |
+| ADM-01 | Antes de empezar | modal en ADM-12 | Pasos previos a abrir la convocatoria (facultades, carreras, cuentas, coordinadores y plantilla), cada uno con «Ir» a su pantalla y un check al completarlo. «Nueva convocatoria» queda deshabilitada hasta completarlos. |
 | ADM-02 | Usuarios y roles | `/admin/usuarios` | Tabla de cuentas con la columna «Roles» para sus roles vigentes; «Crear cuenta» e «Importar desde Excel». |
 | ADM-03 | Detalle de la cuenta | hoja lateral en ADM-02 | Roles vigentes y finalizados, «Agregar otro rol», «Quitar rol», «Reenviar invitación», «Deshabilitar/Habilitar acceso», «Eliminar cuenta pendiente». |
 | ADM-04 | Facultades y carreras | `/admin/estructura-academica` | Pestañas Facultades (campus y logo PNG) y Carreras (modalidad, ciclos, «Asignar/Reemplazar coordinador», importación desde Excel). |
 | ADM-06 | Plantilla | `/admin/plantilla` | Ver y editar la plantilla única. Detalle abajo. |
 | ADM-10 | Auditoría | `/admin/auditoria` | Registro paginado: fecha, actividad y responsable, todo con el mismo tamaño de letra. Filtros de lista, sin búsqueda de texto: período (por sus fechas), rol, carrera, actividad y resultado. |
-| ADM-12 | Convocatorias | `/admin/convocatorias` | Entrada del Administrador; no tiene Panel. Arriba, avance del proceso, días para la entrega y carreras sin convocar, y el botón «Puesta en marcha». Una fila por período. Detalle abajo. |
+| ADM-12 | Convocatorias | `/admin/convocatorias` | Entrada del Administrador; no tiene Panel. Arriba, avance del proceso, días para la entrega y carreras sin convocar, y el botón «Antes de empezar». Una fila por período. Detalle abajo. |
 
 ## Coordinador
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| COR-01 | Puesta en marcha | modal en COR-05 | Pasos previos a abrir la convocatoria de la carrera (malla, materias del período, paralelos y docentes), cada uno con «Ir» y un check al completarlo. «Abrir convocatoria» queda deshabilitado hasta que todo esté listo; su ayuda emergente dice qué falta. |
+| COR-01 | Antes de empezar | modal en COR-05 | Pasos previos a abrir la convocatoria de la carrera (malla, materias del período, paralelos y docentes), cada uno con «Ir» y un check al completarlo. «Abrir convocatoria» queda deshabilitado hasta que todo esté listo; su ayuda emergente dice qué falta. |
 | COR-04 | Seguimiento | pestaña en COR-05 | Todos los sílabos de la convocatoria con paralelos, docentes, estado y fecha de inicio. |
-| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Puesta en marcha». Pestañas «Cola de revisión» (asignatura, docente, número de revisión, estado y etapa) y «Seguimiento» (COR-04). |
+| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Antes de empezar». Pestañas «Cola de revisión» (asignatura, docente, número de revisión, estado y etapa) y «Seguimiento» (COR-04). |
 | COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | El sílabo se ve como el documento final. Decisiones en la cabecera, con diálogos: «Solicitar corrección» y «Firmar y enviar a biblioteca». Historial y comparación en un botón secundario; reiniciar y eliminar en «Más». |
 | COR-07 | Comparar revisiones | `/coordinacion/revisiones/:before/comparar/:after` | Campos agregados, retirados o modificados, lado a lado. |
 | COR-08 | Solicitar corrección | diálogo en COR-06 | «Comentario para el docente» y «Solicitar corrección»; no se firma. |

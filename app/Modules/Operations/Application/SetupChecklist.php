@@ -54,7 +54,7 @@ class SetupChecklist
         $templateReady = $template?->hasStructure() ?? false;
 
         return $this->build(
-            'Puesta en marcha de la institución',
+            'Antes de empezar',
             'En este orden. Cada paso habilita el siguiente; las coordinaciones no pueden empezar hasta que termine.',
             [
                 $this->step('faculties', 'Registrar las facultades', 'Elija el campus de cada facultad. El logo puede cargarse ahora o después, pero Coordinación lo necesita para abrir su convocatoria.', Faculty::query()->where('activo', true)->exists()),
@@ -74,7 +74,7 @@ class SetupChecklist
     public function forCoordinator(?string $careerId, ?array $readiness = null): array
     {
         if ($careerId === null) {
-            return $this->build('Puesta en marcha de la carrera', '', []);
+            return $this->build('Antes de empezar', '', []);
         }
 
         $readiness ??= $this->coordinatorReadiness->inspect($careerId);
@@ -86,7 +86,7 @@ class SetupChecklist
         $parallelsWithTeacher = $readiness['parallels_with_teacher'];
 
         return $this->build(
-            'Puesta en marcha de la carrera',
+            'Antes de empezar',
             'En este orden. Al abrir la convocatoria se crea un sílabo por paralelo con su docente.',
             [
                 $this->step('curriculum', 'Armar la malla con sus materias', 'Ciclos, materias, horas, créditos y prerrequisitos. Se edita desde la vista de la malla.', $readiness['curriculum_ready']),

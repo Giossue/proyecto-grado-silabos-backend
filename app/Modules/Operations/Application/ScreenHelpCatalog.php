@@ -34,7 +34,7 @@ Desde el menú de la fila puede abrir, pausar, reanudar o cerrar la convocatoria
 
 Mientras la convocatoria esté abierta, la plantilla del sílabo no se puede modificar; para corregirla, pause el proceso.
 
-Arriba están los indicadores de la convocatoria vigente. «Puesta en marcha» abre los pasos previos (facultades, carreras, cuentas, coordinadores y plantilla), cada uno con «Ir» a su pantalla y un check al completarlo. «Nueva convocatoria» se habilita cuando están todos.',
+Arriba están los indicadores de la convocatoria vigente. «Antes de empezar» abre los pasos previos (facultades, carreras, cuentas, coordinadores y plantilla), cada uno con «Ir» a su pantalla y un check al completarlo. «Nueva convocatoria» se habilita cuando están todos.',
         ],
         '/admin/estructura-academica' => [
             'title' => 'Facultades y carreras',
@@ -160,7 +160,7 @@ Con una convocatoria abierta la edición está bloqueada. Si hay sílabos en cur
             'title' => 'Revisión de sílabos',
             'content' => 'Arriba ve el aviso con el plazo de entrega. Desde aquí abre, pausa o reanuda la convocatoria de su carrera.
 
-«Puesta en marcha» abre los pasos previos (malla, materias del período, paralelos y docentes), cada uno con «Ir» a su pantalla y un check al completarlo. «Abrir convocatoria» se habilita cuando todo está listo; si no, al pasar el cursor dice qué falta.
+«Antes de empezar» abre los pasos previos (malla, materias del período, paralelos y docentes), cada uno con «Ir» a su pantalla y un check al completarlo. «Abrir convocatoria» se habilita cuando todo está listo; si no, al pasar el cursor dice qué falta.
 
 «Por revisar» lista los sílabos que los docentes ya enviaron. Coordinación revisa primero el contenido; cuando lo aprueba, el sílabo pasa a Biblioteca para revisar la bibliografía. Abra uno para aprobarlo o pedir correcciones.
 
