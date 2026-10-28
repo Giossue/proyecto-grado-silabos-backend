@@ -38,6 +38,12 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'layout.title_font_size' => ['sometimes', 'integer', Rule::in($choices['title'])],
             'layout.section_font_size' => ['sometimes', 'integer', Rule::in($choices['section'])],
             'layout.body_font_size' => ['sometimes', 'integer', Rule::in($choices['body'])],
+            'lists' => ['sometimes', 'array', 'max:20'],
+            'lists.*.block' => ['required', 'string', 'max:40'],
+            'lists.*.path' => ['required', 'string', 'max:200'],
+            'lists.*.min' => ['required', 'integer', 'min:0', 'max:100'],
+            'lists.*.max' => ['required', 'integer', 'min:1', 'max:100'],
+            'lists.*.initial' => ['required', 'integer', 'min:0', 'max:100'],
             ...array_fill_keys(TemplateDefinition::ROOT_KEYS, ['sometimes', 'array']),
             'response_policy' => ['sometimes', 'in:protected'],
             'sections' => ['present', 'array', 'max:60'],
@@ -84,6 +90,12 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             'layout.title_font_size' => 'tamaño del título',
             'layout.section_font_size' => 'tamaño de las secciones',
             'layout.body_font_size' => 'tamaño del contenido',
+            'lists' => 'listas',
+            'lists.*.block' => 'bloque de la lista',
+            'lists.*.path' => 'lista',
+            'lists.*.min' => 'mínimo',
+            'lists.*.max' => 'máximo',
+            'lists.*.initial' => 'al empezar',
             'document' => 'documento',
             'variables' => 'datos del sistema',
             'blocks' => 'bloques',
@@ -173,6 +185,13 @@ class ImportTemplateStructureRequest extends ManageTemplatesRequest
             $document['title']['text'] = trim($title);
         }
         $layout = $this->input('layout');
+        $lists = $this->input('lists');
+        if (is_array($lists) && $lists !== []) {
+            $definition = $definition->withListLimits(array_map(fn (mixed $list): array => [
+                'block' => (string) ($list['block'] ?? ''), 'path' => (string) ($list['path'] ?? ''),
+                'min' => (int) ($list['min'] ?? 0), 'max' => (int) ($list['max'] ?? 0), 'initial' => (int) ($list['initial'] ?? 0),
+            ], array_values(array_filter($lists, 'is_array'))));
+        }
 
         return $definition->withDocument(is_array($layout) ? TemplateStyle::withLayout($document, array_intersect_key($layout, array_flip(['margin_cm', 'title_font_size', 'section_font_size', 'body_font_size']))) : $document);
     }

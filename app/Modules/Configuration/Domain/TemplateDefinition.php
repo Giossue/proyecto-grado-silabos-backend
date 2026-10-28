@@ -157,6 +157,66 @@ final class TemplateDefinition
     }
 
     /**
+     * Cambia cuántos elementos admite cada lista de un bloque (por ejemplo, unidades y semanas).
+     *
+     * @param  list<array{block: string, path: string, min: int, max: int, initial: int}>  $lists
+     */
+    public function withListLimits(array $lists): self
+    {
+        $blocks = $this->definition['blocks'];
+        $changed = [];
+        foreach ($lists as $list) {
+            $block = $blocks[$list['block']] ?? null;
+            if ($block === null) {
+                BlockDefinitionError::fail("«{$list['block']}» no es un bloque de la plantilla.");
+            }
+            $schema = self::withLimits(['type' => 'object', 'properties' => $block['value']], explode('.', $list['path']), $list);
+            $blocks[$list['block']]['value'] = $schema['properties'];
+            $changed[$list['block']] = true;
+        }
+        $variables = array_keys($this->variables());
+        foreach (array_keys($changed) as $kind) {
+            $blocks[$kind] = BlockDefinition::define($kind, $blocks[$kind], $variables);
+        }
+
+        return new self([...$this->definition, 'blocks' => $blocks]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $schema
+     * @param  list<string>  $path
+     * @param  array{block: string, path: string, min: int, max: int, initial: int}  $limits
+     * @return array<string, mixed>
+     */
+    private static function withLimits(array $schema, array $path, array $limits): array
+    {
+        $segment = array_shift($path);
+        if ($segment === null) {
+            if (($schema['type'] ?? null) !== 'array') {
+                BlockDefinitionError::fail("«{$limits['path']}» no es una lista del bloque «{$limits['block']}».");
+            }
+            $name = $schema['title'] ?? $limits['path'];
+            if ($limits['max'] < 1 || $limits['min'] > $limits['max']) {
+                BlockDefinitionError::fail("«{$name}»: el máximo debe ser al menos 1 y no menor que el mínimo.");
+            }
+            if ($limits['initial'] < $limits['min'] || $limits['initial'] > $limits['max']) {
+                BlockDefinitionError::fail("«{$name}»: «Al empezar» debe estar entre el mínimo y el máximo.");
+            }
+
+            return [...$schema, 'minItems' => $limits['min'], 'maxItems' => $limits['max'], 'initial' => $limits['initial']];
+        }
+        if ($segment === '*' && ($schema['type'] ?? null) === 'array') {
+            return [...$schema, 'items' => self::withLimits($schema['items'], $path, $limits)];
+        }
+        if (($schema['type'] ?? null) === 'object' && isset($schema['properties'][$segment])) {
+            $schema['properties'][$segment] = self::withLimits($schema['properties'][$segment], $path, $limits);
+
+            return $schema;
+        }
+        BlockDefinitionError::fail("«{$limits['path']}» no es una lista del bloque «{$limits['block']}».");
+    }
+
+    /**
      * @return array<string, array<string, mixed>>
      */
     private static function defineVariables(mixed $raw): array

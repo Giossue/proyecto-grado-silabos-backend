@@ -201,6 +201,11 @@ varias líneas; si falta, una sola línea), `initial` (con cuántos elementos ar
 Una lista con `minItems` < `maxItems` se puede agrandar y achicar desde el editor, y debe repetirse en una fila de
 tabla (`<tr data-repeat>`) o en una sección (`<section data-repeat>`).
 
+El constructor visual cambia `minItems`, `maxItems` e `initial` de cada lista sin tocar el JSON («Editar → Listas»).
+Al guardar envía `"lists": [{"block": "unidades", "path": "units.*.semanas", "min": 1, "max": 20, "initial": 2}]`.
+El servidor vuelve a validar el bloque y rechaza un máximo menor que el mínimo o un «Al
+empezar» fuera de ese rango.
+
 Los nombres anteriores (`text`, `choice` con `options`, `number` con `digits` y `decimals`, `list` con `item`,
 `min` y `max`, `fields`, `label`, `error`) se siguen aceptando al importar y al leer revisiones antiguas: el
 servidor los traduce a los de esta tabla.
@@ -307,7 +312,7 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 | Bloque | Qué hace |
 |---|---|
 | `identificacion` | Tabla de identificación con datos del sistema; el docente responde la discapacidad (Sí/No, tipo y descripción). |
-| `unidades` | De 1 a 8 unidades (empieza con 4) con semanas, horas y actividades. El docente escribe el nombre y el resultado de cada unidad. Reglas: al guardar, no más semanas que las del período (`semanas_periodo`); al enviar, cada unidad con nombre y resultado, las semanas del período y horas iguales a las de la asignatura. |
+| `unidades` | De 1 a 8 unidades (empieza con 4; el administrador lo cambia en «Editar → Listas») con semanas, horas y actividades. El docente escribe el nombre y el resultado de cada unidad. Reglas: al guardar, no más semanas que las del período (`semanas_periodo`); al enviar, cada unidad con nombre y resultado, las semanas del período y horas iguales a las de la asignatura. |
 | `evaluacion` | Tabla de puntos con dos variantes según `horas_practicas` (con o sin práctico-experimental). |
 
 ## Secciones y campos

@@ -117,6 +117,30 @@ class OfficialTemplateTest extends TestCase
         $this->assertSame('SÍLABO UEB', $this->getJson(route('api.v1.admin.template.show', $this->template))->json('template.titleBlock.text'));
     }
 
+    public function test_the_administrator_sets_how_many_units_and_weeks_the_teacher_can_use(): void
+    {
+        $file = json_decode((string) file_get_contents(base_path(OfficialTemplate::PATH)), true, 512, JSON_THROW_ON_ERROR);
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $file)->assertOk();
+        $sections = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->json('sections');
+        $lists = [
+            ['block' => 'unidades', 'path' => 'units', 'min' => 3, 'max' => 6, 'initial' => 3],
+            ['block' => 'unidades', 'path' => 'units.*.semanas', 'min' => 1, 'max' => 20, 'initial' => 2],
+        ];
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), ['version' => 1, 'sections' => $sections, 'lists' => $lists])->assertOk();
+
+        $units = $this->getJson(route('api.v1.admin.template.json.export', $this->template))->json('blocks.unidades.value.units');
+        $this->assertSame([3, 6, 3], [$units['minItems'], $units['maxItems'], $units['initial']]);
+        $this->assertSame([1, 20, 2], [$units['items']['properties']['semanas']['minItems'], $units['items']['properties']['semanas']['maxItems'], $units['items']['properties']['semanas']['initial']]);
+
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), ['version' => 1, 'sections' => $sections, 'lists' => [[...$lists[0], 'min' => 7]]])
+            ->assertUnprocessable()->assertJsonPath('errors.definition.0', '«unidad»: el máximo debe ser al menos 1 y no menor que el mínimo.');
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), ['version' => 1, 'sections' => $sections, 'lists' => [[...$lists[0], 'initial' => 8]]])
+            ->assertUnprocessable()->assertJsonPath('errors.definition.0', '«unidad»: «Al empezar» debe estar entre el mínimo y el máximo.');
+        $this->putJson(route('api.v1.admin.template.json.import', $this->template), ['version' => 1, 'sections' => $sections, 'lists' => [[...$lists[0], 'path' => 'units.*.nombre']]])
+            ->assertUnprocessable()->assertJsonValidationErrors('definition');
+    }
+
     public function test_margins_and_sizes_travel_in_the_json_and_the_rest_of_the_design_stays_institutional(): void
     {
         $file = json_decode((string) file_get_contents(base_path(OfficialTemplate::PATH)), true, 512, JSON_THROW_ON_ERROR);

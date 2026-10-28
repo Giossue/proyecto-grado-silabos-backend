@@ -89,6 +89,8 @@ y el botón «Documentos» (DOC-10).
     complementaria, o Firmas), nombre, subir, bajar y eliminar;
   - con una sección elegida: vertical u horizontal, subir, bajar y eliminar;
   - «Diseño»: márgenes y tamaños de letra;
+  - «Listas»: mínimo, máximo y «Al empezar» de cada lista de los bloques (por ejemplo,
+    «Unidades» y «Semanas por unidad»);
   - «Cancelar» y «Guardar» (también Ctrl+S). Nada se guarda hasta «Guardar».
 - En la hoja se agregan secciones y campos («Nueva sección», «Agregar campo»), se editan
   títulos en línea y se cambia el logo de la universidad.
