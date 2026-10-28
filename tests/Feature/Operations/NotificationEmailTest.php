@@ -95,6 +95,29 @@ class NotificationEmailTest extends TestCase
         $this->assertSame('America/Guayaquil', (string) $event->timezone);
     }
 
+    public function test_wrong_environment_values_fall_back_to_the_defaults(): void
+    {
+        $load = function (array $env): array {
+            foreach ($env as $key => $value) {
+                $_ENV[$key] = $_SERVER[$key] = $value;
+            }
+            try {
+                return require config_path('notifications.php');
+            } finally {
+                foreach (array_keys($env) as $key) {
+                    unset($_ENV[$key], $_SERVER[$key]);
+                }
+            }
+        };
+        $defaults = ['convocatoria.abierta', 'silabo.correccion_solicitada', 'silabo.aprobado'];
+
+        foreach ([['TRUE', ''], ['', '8am'], ['1,true', '25:00'], ['silabo.enviado, silabo.reenviado', '07:30']] as [$events, $time]) {
+            $config = $load(['NOTIFICATION_EMAIL_EVENTS' => $events, 'NOTIFICATION_DIGEST_TIME' => $time]);
+            $this->assertSame($events === 'silabo.enviado, silabo.reenviado' ? ['silabo.enviado', 'silabo.reenviado'] : $defaults, $config['email']['events']);
+            $this->assertSame($time === '07:30' ? '07:30' : '08:00', $config['digest']['time']);
+        }
+    }
+
     public function test_the_email_renders_with_the_notice_and_a_link_to_the_system(): void
     {
         config(['app.frontend_url' => 'https://silabos.ueb.test/']);
