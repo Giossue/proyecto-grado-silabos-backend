@@ -21,13 +21,13 @@ muestra «Página no encontrada».
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| ADM-01 | Panel | `/admin/panel` | Avance del proceso, días para la entrega y carreras sin convocar. Lista «Puesta en marcha de la institución». |
+| ADM-01 | Puesta en marcha | `/admin/puesta-en-marcha` | Lista «Puesta en marcha de la institución», aunque esté completa. Se llega desde el botón «Puesta en marcha» de Convocatorias; no está en el menú lateral. |
 | ADM-02 | Usuarios y roles | `/admin/usuarios` | Tabla de cuentas con la columna «Roles» para sus roles vigentes; «Crear cuenta» e «Importar desde Excel». |
 | ADM-03 | Detalle de la cuenta | hoja lateral en ADM-02 | Roles vigentes y finalizados, «Agregar otro rol», «Quitar rol», «Reenviar invitación», «Deshabilitar/Habilitar acceso», «Eliminar cuenta pendiente». |
 | ADM-04 | Facultades y carreras | `/admin/estructura-academica` | Pestañas Facultades (campus y logo PNG) y Carreras (modalidad, ciclos, «Asignar/Reemplazar coordinador», importación desde Excel). |
 | ADM-06 | Plantilla | `/admin/plantilla` | Ver y editar la plantilla única. Detalle abajo. |
 | ADM-10 | Auditoría | `/admin/auditoria` | Registro paginado: fecha, actividad y responsable, todo con el mismo tamaño de letra. Filtros de lista, sin búsqueda de texto: período (por sus fechas), rol, carrera, actividad y resultado. |
-| ADM-12 | Convocatorias | `/admin/convocatorias` | Una fila por período. Detalle abajo. |
+| ADM-12 | Convocatorias | `/admin/convocatorias` | Entrada del Administrador; no tiene Panel. Arriba, avance del proceso, días para la entrega y carreras sin convocar, y el botón «Puesta en marcha». Una fila por período. Detalle abajo. |
 
 ## Coordinador
 

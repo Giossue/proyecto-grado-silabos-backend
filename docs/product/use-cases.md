@@ -17,7 +17,7 @@
 | CU-13 | Aprobar (Coordinación su etapa; Biblioteca la bibliografía) | Coordinador; Bibliotecario | RF-062, RF-063 | COR-09, BIB-03 |
 | CU-14 | Eliminar un sílabo aprobado | Coordinador | RF-064 | COR-10 |
 | CU-15 | Firmar al decidir y descargar el PDF | Docente; Coordinador; Bibliotecario | RF-066 a RF-069 | DOC-07, COR-09, BIB-03, DOC-10 |
-| CU-16 | Consultar el avance en el Panel | Todos | RF-036, RF-070 a RF-072 | ADM-01, COR-05, DOC-02, BIB-02 |
+| CU-16 | Consultar el avance | Todos | RF-036, RF-070 a RF-072 | ADM-01, COR-05, DOC-02, BIB-02 |
 | CU-17 | Auditar el proceso | Administrador | RF-073, RF-074 | ADM-10 |
 
 CU-18 (sincronizar datos institucionales) está retirado: no hay integración con sistemas

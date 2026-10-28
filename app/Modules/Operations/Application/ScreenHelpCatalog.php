@@ -32,7 +32,9 @@ Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si p
 
 Desde el menú de la fila puede abrir, pausar, reanudar o cerrar la convocatoria, y extender el plazo de entrega. Cada coordinación inicia después la convocatoria de su carrera.
 
-Mientras la convocatoria esté abierta, la plantilla del sílabo no se puede modificar; para corregirla, pause el proceso.',
+Mientras la convocatoria esté abierta, la plantilla del sílabo no se puede modificar; para corregirla, pause el proceso.
+
+Arriba están los indicadores de la convocatoria vigente y el botón «Puesta en marcha».',
         ],
         '/admin/estructura-academica' => [
             'title' => 'Facultades y carreras',
@@ -56,12 +58,6 @@ Mientras haya una convocatoria en curso, algunos cambios quedan bloqueados; el a
 
 Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leído.',
         ],
-        '/admin/panel' => [
-            'title' => 'Panel de administración',
-            'content' => 'Resumen de la puesta en marcha del sistema y de la convocatoria vigente. Los pasos pendientes enlazan a la pantalla donde se completan.
-
-Un orden recomendado: primero Facultades y carreras, luego Usuarios y roles, después la Plantilla del sílabo y por último abrir la convocatoria.',
-        ],
         '/admin/plantilla' => [
             'title' => 'Plantilla del sílabo',
             'content' => 'Es el formato único del sílabo: sus secciones, sus campos y el orden en que aparecen. Aquí también se configura el logo institucional.
@@ -69,6 +65,12 @@ Un orden recomendado: primero Facultades y carreras, luego Usuarios y roles, des
 Con una convocatoria abierta la plantilla está bloqueada. Para cambiarla, pause la convocatoria. Al reanudar se le pedirá confirmación: todos los sílabos de este período se borran y empiezan desde cero, incluso los aprobados, porque el formato es único para toda la universidad.
 
 Los sílabos de períodos anteriores no se tocan. Si la plantilla está vacía, puede cargar el formato oficial de la UEB.',
+        ],
+        '/admin/puesta-en-marcha' => [
+            'title' => 'Puesta en marcha del sistema',
+            'content' => 'Los pasos para preparar el sistema, en orden: Facultades y carreras, Usuarios y roles, la Plantilla del sílabo y por último abrir la convocatoria. Cada paso pendiente enlaza a la pantalla donde se completa.
+
+Se llega desde el botón «Puesta en marcha» de Convocatorias.',
         ],
         '/admin/usuarios' => [
             'title' => 'Usuarios y roles',
