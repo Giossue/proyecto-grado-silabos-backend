@@ -185,7 +185,6 @@ class DocumentOperationsTest extends TestCase
         $artifact->refresh()->load('pdfObject');
         $this->assertSame('completado', $artifact->estado);
         $this->assertDatabaseCount('archivos', 1);
-        $this->assertNull($artifact->objeto_docx_id);
         $pdf = $artifact->pdfObject;
         $this->assertInstanceOf(StoredObject::class, $pdf);
         Storage::disk('private')->assertExists($pdf->ruta_interna);

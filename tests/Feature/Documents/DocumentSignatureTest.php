@@ -155,7 +155,6 @@ class DocumentSignatureTest extends TestCase
         (new GenerateSyllabusExportJob($artifact->id))->handle(app(DocumentRenderer::class), app(RecordAuditEvent::class), app(DocumentBundleValidator::class));
         $artifact->refresh();
         $this->assertSame('completado', $artifact->estado);
-        $this->assertNull($artifact->objeto_docx_id);
         $this->assertNotNull($artifact->objeto_pdf_id);
         $this->assertSame([], array_values(array_filter(Storage::disk('private')->allFiles(), fn (string $path): bool => str_ends_with($path, '.docx'))));
         $this->assertIsString($sentDocx);

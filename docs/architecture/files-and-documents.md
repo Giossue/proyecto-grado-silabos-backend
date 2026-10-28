@@ -36,8 +36,8 @@ físico lo genera el servidor.
   exportación `completado` (`ExportArtifactPolicy::download`). Está disponible apenas se
   genera; las firmas ya ocurrieron antes, al decidir.
 - No hay descarga de Word: el Word es solo un paso interno para obtener el PDF y no se
-  guarda. Las exportaciones anteriores a este cambio conservan su fila en
-  `archivo_word_id`, pero no se ofrece.
+  guarda. La migración `2026_10_28_000248` quitó `archivo_word_id` y borró los Word de
+  exportaciones anteriores.
 - La respuesta se transmite desde el disco con `X-Content-Type-Options: nosniff` y se
   audita como `documento.descargado`.
 

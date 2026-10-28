@@ -3,7 +3,7 @@
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
 - Fecha: 2026-10-28.
-- Última migración aplicada: `2026_10_28_000247_sign_syllabus_when_deciding`.
+- Última migración aplicada: `2026_10_28_000248_drop_word_from_exports`.
 - Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 34 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
@@ -330,7 +330,6 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 |---|---|---|---|
 | `exportacion_silabo_id` | uuid | no |  |
 | `revision_silabo_id` | uuid | no |  |
-| `archivo_word_id` | uuid | sí |  |
 | `archivo_pdf_id` | uuid | sí |  |
 | `clave_solicitud` | uuid | no |  |
 | `estado_exportacion` | character varying(24) | no | `'pendiente'::character varying` |
@@ -341,12 +340,10 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 - PK: `PRIMARY KEY (exportacion_silabo_id)`
 - FK:
   - `exportaciones_silabo_archivo_pdf_id_foreign`: `FOREIGN KEY (archivo_pdf_id) REFERENCES archivos(archivo_id) ON DELETE RESTRICT`
-  - `exportaciones_silabo_archivo_word_id_foreign`: `FOREIGN KEY (archivo_word_id) REFERENCES archivos(archivo_id) ON DELETE RESTRICT`
   - `exportaciones_silabo_revision_silabo_id_foreign`: `FOREIGN KEY (revision_silabo_id) REFERENCES revisiones_silabo(revision_silabo_id) ON DELETE RESTRICT`
   - `exportaciones_silabo_solicitado_por_foreign`: `FOREIGN KEY (solicitado_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
 - Únicos:
   - `exportaciones_silabo_archivo_pdf_id_unique`: `(archivo_pdf_id)`
-  - `exportaciones_silabo_archivo_word_id_unique`: `(archivo_word_id)`
   - `exportaciones_silabo_revision_clave_solicitud_unica`: `(revision_silabo_id, clave_solicitud)`
 - CHECK:
   - `exportaciones_silabo_completitud_check`: `CHECK ((((estado_exportacion)::text <> 'completado'::text) OR ((archivo_pdf_id IS NOT NULL) AND (completado_en IS NOT NULL))))`

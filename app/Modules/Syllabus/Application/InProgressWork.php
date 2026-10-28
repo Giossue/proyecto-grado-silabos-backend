@@ -225,8 +225,8 @@ final class InProgressWork
 
         $exports = DB::table('exportaciones_silabo')
             ->whereIn('revision_silabo_id', $revisionIds)
-            ->get(['exportacion_silabo_id', 'archivo_word_id', 'archivo_pdf_id']);
-        $objectIds = $exports->flatMap(fn ($export) => [$export->archivo_word_id, $export->archivo_pdf_id])
+            ->get(['exportacion_silabo_id', 'archivo_pdf_id']);
+        $objectIds = $exports->pluck('archivo_pdf_id')
             ->filter()->unique()->values()->all();
         $objects = DB::table('archivos')->whereIn('archivo_id', $objectIds)->get(['disco', 'ruta_archivo']);
         DB::table('firmas_silabo')->whereIn('silabo_id', $syllabusIds)->delete();

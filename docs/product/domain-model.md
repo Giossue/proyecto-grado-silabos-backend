@@ -97,7 +97,7 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
   y categoría (logo de facultad, exportación).
 - **Exportación** (`exportaciones_silabo`): revisión, archivo PDF, clave de
   idempotencia y estado (`pendiente`, `en_ejecucion`, `completado`, `fallido`).
-  Completada exige el PDF. `archivo_word_id` solo queda en exportaciones antiguas.
+  Completada exige el PDF. No guarda Word.
 - **Firma** (`firmas_silabo`): sílabo, revisión sobre la que se decidió, rol con que firma
   (`docente`, `coordinacion`, `biblioteca`; una de cada una por sílabo), usuario,
   declaración firmada, firma CMS en base64 y datos del certificado (titular, número,

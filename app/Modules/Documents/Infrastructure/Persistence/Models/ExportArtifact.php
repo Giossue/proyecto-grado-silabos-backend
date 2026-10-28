@@ -16,7 +16,6 @@ use LogicException;
 /**
  * @property string $id
  * @property string $revision_silabo_id
- * @property string|null $objeto_docx_id
  * @property string|null $objeto_pdf_id
  * @property string $clave_idempotencia
  * @property string $estado
@@ -34,7 +33,6 @@ class ExportArtifact extends Model
     protected const LEGACY_COLUMN_ALIASES = [
         'id' => 'exportacion_silabo_id',
         'estado' => 'estado_exportacion',
-        'objeto_docx_id' => 'archivo_word_id',
         'objeto_pdf_id' => 'archivo_pdf_id',
         'clave_idempotencia' => 'clave_solicitud',
     ];
@@ -48,7 +46,7 @@ class ExportArtifact extends Model
     /** @var list<string> */
     protected $fillable = [
         'revision_silabo_id',
-        'objeto_docx_id', 'objeto_pdf_id',
+        'objeto_pdf_id',
         'clave_idempotencia', 'estado', 'solicitado_por',
         'solicitado_en', 'completado_en',
     ];
