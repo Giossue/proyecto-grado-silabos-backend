@@ -81,10 +81,11 @@ funcional de cada recurso, no a la cola técnica; dejarlo aclarado).
    `docs/security/hardening.md` (sección «Redis y trabajos»), `principles.md`,
    `threat-model.md`. Anotar la decisión en `DECISIONS_STATUS.md` (Operación y datos) y
    quitar de `docs/plans/pendientes.md` lo que ya no aplique.
-6. **Tesis** (Google Doc `1BFww6XN…`, con los scripts de `temp/tesis/herramientas-gdocs`):
-   2.2.4 («Redis se usa solo para colas y caché»), 2.2.8 (Redis en el texto) y su fila en la
-   Tabla 2, RNF-09 de la Tabla 11, y cualquier otra mención de Redis. Hacerlo solo si el
-   usuario lo pide.
+6. **Tesis**: ya actualizada (2026-10-27) en el marco científico, la Tabla 2, la descripción del
+   backend, RNF-09, la arquitectura, la tabla de tecnologías, el plan y el entorno de pruebas, y
+   se retiró la referencia de Redis. No tocar. Quedan las tablas de **resultados** de pruebas
+   (Tablas 41 y 42 y el cierre del 4.4.6, con la fila «Integración (Redis)»): se actualizan
+   después de este cambio con una corrida real de las suites; no inventar cifras.
 
 ## Despliegue
 
