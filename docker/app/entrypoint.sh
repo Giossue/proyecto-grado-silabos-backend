@@ -24,7 +24,9 @@ done
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then
     php artisan db:rename-migrations-table --force
 
-    php artisan migrate --force --isolated
+    # --isolated toma un bloqueo en la caché, que vive en PostgreSQL (bloqueos_temporales). En una
+    # base nueva, o antes de la migración que crea esa tabla, el bloqueo no existe: se migra sin él.
+    php artisan migrate --force --isolated || php artisan migrate --force
 fi
 
 mkdir -p storage/app/private storage/app/public

@@ -221,7 +221,8 @@ están en `NotificationDestination` (`silabo.enviado`, `coordinacion.aprobado`, 
 3. espera hasta 60 segundos a que PostgreSQL responda;
 4. ejecuta `db:rename-migrations-table --force` (renombra la tabla de control a
    `migraciones` si hace falta) y `migrate --force --isolated`, con bloqueo para que dos
-   réplicas no migren a la vez. Con `RUN_MIGRATIONS=false` se omiten ambos pasos y las
+   réplicas no migren a la vez. Si la tabla del bloqueo (`bloqueos_temporales`) todavía no
+   existe, migra sin bloqueo. Con `RUN_MIGRATIONS=false` se omiten ambos pasos y las
    migraciones se aplican a mano según `docs/security/hardening.md`;
 5. prepara `storage/app` y crea el enlace de almacenamiento público.
 

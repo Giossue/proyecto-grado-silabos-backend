@@ -30,7 +30,8 @@ proxy con TLS (Dokploy)
 2. `config:cache`, `route:cache`, `view:cache`, `event:cache`;
 3. espera a PostgreSQL (hasta 30 intentos);
 4. si `RUN_MIGRATIONS` es `true` (por defecto): `db:rename-migrations-table --force` y
-   `migrate --force --isolated`;
+   `migrate --force --isolated`. El bloqueo de `--isolated` vive en `bloqueos_temporales`; si la
+   tabla aún no existe (base nueva o primera migración tras quitar Redis), migra sin bloqueo;
 5. prepara `storage/app/private` y `storage/app/public`, y ejecuta `storage:link`.
 
 Como la configuración queda en caché, un cambio de variables exige redesplegar.
