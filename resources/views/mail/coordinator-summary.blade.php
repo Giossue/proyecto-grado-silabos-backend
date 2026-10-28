@@ -19,6 +19,4 @@ Esto espera su atención en el sistema.
 <x-mail::button :url="$url">
 Abrir Revisión
 </x-mail::button>
-
-Le escribimos una vez al día y solo si tiene algo pendiente.
 </x-mail::message>
