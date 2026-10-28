@@ -775,6 +775,20 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertSame(0, $last->json('validation.blocking_errors'));
     }
 
+    public function test_the_teacher_formation_is_required_before_sending(): void
+    {
+        $syllabus = $this->openConvocationAndGetSyllabus();
+        $this->teacher->forceFill(['formacion_experiencia' => null])->save();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
+        $codes = fn () => collect($this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful()->json('validation.results'))->pluck('code')->all();
+
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()->assertJsonPath('syllabus.teacher_formation_required', true);
+        $this->assertContains('formacion_docente_faltante', $codes());
+
+        $this->teacher->forceFill(['formacion_experiencia' => 'Magíster en Tecnología'])->save();
+        $this->assertNotContains('formacion_docente_faltante', $codes());
+    }
+
     public function test_unit_hours_must_add_up_to_the_subject_hours_before_sending(): void
     {
         $syllabus = $this->openConvocationAndGetSyllabus();

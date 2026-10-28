@@ -61,6 +61,7 @@ class ValidateDraft
                 }
                 $issues = [...$issues, ...$this->blockIssues($field, $values->get($field->id)?->valor, $variables)];
             }
+            $issues = [...$issues, ...$this->formationIssues($locked, $actor)];
 
             $activeRole = $this->roles->resolve($request);
             $this->audit->execute(
@@ -75,6 +76,38 @@ class ValidateDraft
 
             return new DraftValidation($locked->version_bloqueo, $issues);
         });
+    }
+
+    public static function formationRequired(): bool
+    {
+        return array_filter(
+            TemplateVariables::definitions(),
+            fn (array $definition): bool => $definition['source'] === 'identification.'.IdentificationCard::INPUT_KEYS['formacion_experiencia'],
+        ) !== [];
+    }
+
+    /** @return list<array{field_id: null, code: string, severity: string, message: string}> */
+    private function formationIssues(Syllabus $syllabus, User $actor): array
+    {
+        if (! self::formationRequired()) {
+            return [];
+        }
+        $issues = [];
+        foreach ($syllabus->teachers()->get() as $teacher) {
+            if (trim((string) $teacher->formacion_experiencia) !== '') {
+                continue;
+            }
+            $issues[] = [
+                'field_id' => null,
+                'code' => 'formacion_docente_faltante',
+                'severity' => 'error',
+                'message' => $teacher->is($actor)
+                    ? 'Falta su formación y experiencia académica-investigativa. Complétela antes de enviar.'
+                    : "Falta la formación y experiencia académica-investigativa de {$teacher->nombre}.",
+            ];
+        }
+
+        return $issues;
     }
 
     /**

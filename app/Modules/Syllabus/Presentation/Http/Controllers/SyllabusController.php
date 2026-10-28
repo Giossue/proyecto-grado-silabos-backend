@@ -314,6 +314,7 @@ class SyllabusController extends Controller
             'review_comments' => ReviewComments::forSyllabus($syllabus),
             'signatures' => $this->signatures->summary($syllabus->id),
             'teacher_signature_required' => ! $this->signatures->signed($syllabus->id, SyllabusSignature::ROLE_TEACHER),
+            'teacher_formation_required' => ValidateDraft::formationRequired(),
         ];
     }
 

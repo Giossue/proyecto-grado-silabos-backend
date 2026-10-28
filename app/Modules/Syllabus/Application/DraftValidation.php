@@ -2,7 +2,7 @@
 
 namespace App\Modules\Syllabus\Application;
 
-/** @phpstan-type Issue array{field_id: string, code: string, severity: string, message: string} */
+/** @phpstan-type Issue array{field_id: string|null, code: string, severity: string, message: string} */
 final readonly class DraftValidation
 {
     /** @param list<Issue> $results */

@@ -6024,6 +6024,9 @@
                                                 },
                                                 "teacher_signature_required": {
                                                     "type": "boolean"
+                                                },
+                                                "teacher_formation_required": {
+                                                    "type": "boolean"
                                                 }
                                             }
                                         }

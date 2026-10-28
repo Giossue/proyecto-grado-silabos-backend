@@ -278,6 +278,7 @@ class ExportOpenApi extends Command
                         ]],
                         'signatures' => ['type' => 'array', 'items' => ['$ref' => '#/components/schemas/SignatureSummary']],
                         'teacher_signature_required' => ['type' => 'boolean'],
+                        'teacher_formation_required' => ['type' => 'boolean'],
                     ],
                 ]],
             ]]];
