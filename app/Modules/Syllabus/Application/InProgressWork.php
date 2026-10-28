@@ -238,11 +238,16 @@ final class InProgressWork
             }
         });
 
-        DB::table('revisiones_silabo')->whereIn('revision_silabo_id', $revisionIds)->update(['revision_anterior_id' => null]);
         DB::table('envios_biblioteca')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('revisiones_coordinacion')->whereIn('revision_silabo_id', $revisionIds)->delete();
         DB::table('aprobaciones')->whereIn('revision_silabo_id', $revisionIds)->delete();
-        DB::table('revisiones_silabo')->whereIn('revision_silabo_id', $revisionIds)->delete();
+        // De la última a la primera: cada revisión apunta a la anterior y la base no deja una
+        // revisión posterior sin anterior.
+        $ordered = DB::table('revisiones_silabo')->whereIn('revision_silabo_id', $revisionIds)
+            ->orderByDesc('numero_revision')->pluck('revision_silabo_id');
+        foreach ($ordered as $revisionId) {
+            DB::table('revisiones_silabo')->where('revision_silabo_id', $revisionId)->delete();
+        }
         DB::table('notificaciones')->whereIn('recurso_id', [...$syllabusIds, ...$revisionIds])->delete();
 
         Syllabus::query()->whereKey($syllabusIds)->delete();

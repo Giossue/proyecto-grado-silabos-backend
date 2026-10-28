@@ -396,6 +396,29 @@ class ReviewWorkflowTest extends TestCase
         $this->assertFalse(Route::has('api.v1.coordination.reviews.reopen'));
     }
 
+    public function test_coordinator_deletes_an_approved_syllabus_with_several_revisions(): void
+    {
+        [$syllabus, $first] = $this->submitValidDraft();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.correction.store', $first), [
+            'justification' => 'Se requiere precisión académica antes de aprobar la revisión.',
+        ])->assertSuccessful();
+        $syllabus->refresh();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.submit', $syllabus), [
+            'version_bloqueo' => $syllabus->version_bloqueo,
+            'idempotency_key' => (string) Str::uuid(),
+        ])->assertSuccessful();
+        $second = SyllabusRevision::query()->where('silabo_id', $syllabus->id)->orderByDesc('numero_revision')->firstOrFail();
+        $this->assertSame(2, $second->numero_revision);
+        $this->approveThroughChain($second);
+
+        $this->actingAsCoordinator()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertSuccessful();
+
+        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
+        $this->assertDatabaseCount('revisiones_silabo', 0);
+        $this->assertDatabaseCount('firmas_silabo', 0);
+        $this->assertSame('sin_iniciar', Syllabus::query()->where('paralelo_id', $syllabus->paralelo_id)->firstOrFail()->estado);
+    }
+
     public function test_cp_f_correction_columns_are_write_once_and_complete_and_approvals_are_immutable(): void
     {
         [, $revision] = $this->submitValidDraft();
