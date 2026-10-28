@@ -251,5 +251,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   período académico; la campana y Notificaciones muestran solo los del período en curso
   (2026-10-27). Administración solo recibe el fallo al generar Word y PDF.
 - Administración edita la ayuda de cada pantalla.
+- Interfaz (2026-10-27): los campos y selects usan el borde de las tablas (el alto contraste
+  lo refuerza); no hay tooltips nativos del navegador, solo el `Tooltip` del sistema; los
+  loadings imitan la pantalla real. Revisión de Coordinación y Mis sílabos no tienen
+  indicadores arriba.
 - Los archivos son privados y registran quién los subió (I-180).
 - Un push a `main` despliega en Dokploy y ejecuta las migraciones.

@@ -62,7 +62,7 @@ Con Orca activo, sobre las páginas 3, 7 y 9.
 
 - [ ] En **ambos temas**, el texto secundario se lee sin esfuerzo.
 - [ ] Las etiquetas de estado no dependen solo del color.
-- [ ] El borde de un campo se ve antes de tocarlo.
+- [ ] El borde de un campo se ve antes de tocarlo (en alto contraste se refuerza).
 - [ ] La tarjeta se distingue del fondo.
 - [ ] La hoja del sílabo y de la plantilla se ve blanca y legible en tema oscuro.
 
