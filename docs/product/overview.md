@@ -30,7 +30,7 @@ docente, coordinación y biblioteca con firma electrónica.
 
 | Rol | Qué hace |
 |---|---|
-| Administrador | Usuarios y roles, facultades y carreras, plantilla, convocatorias, ayuda de pantallas y auditoría. |
+| Administrador | Usuarios y roles, facultades y carreras, plantilla, convocatorias y auditoría. |
 | Coordinador | Malla, paralelos, docentes y Proyecto de carrera de su carrera; inicia su convocatoria; revisa y aprueba la etapa de coordinación; firma. |
 | Docente | Elabora, corrige y envía el sílabo de sus paralelos; firma. |
 | Bibliotecario | Verifica la bibliografía de toda la universidad: aprueba o devuelve con motivos; firma al final. |

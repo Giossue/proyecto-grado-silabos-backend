@@ -25,7 +25,7 @@ Estados:
 | Convocatoria, borrador y validación | RF-034..045; CU-06, CU-07, CU-09; COR-01, DOC-02..07 | `SyllabusProcessTest`, `ConvocationScheduleTest`, `ConvocationAndDraftTest` | Verificado automático; volumen pendiente PV-05 |
 | Revisión y aprobación | RF-055..065; CU-10..CU-14; COR-05..10, BIB-02, BIB-03, DOC-08 | `ReviewWorkflowTest`, `LibraryReviewTest` | Verificado automático; motivos confirmados por Biblioteca |
 | Firmas, Word y PDF | RF-066..069; CU-15; DOC-10 | `DocumentSignatureTest`, `SignatureTrustTest`, `DocumentOperationsTest`, `WordRendererTest` | Verificado automático; entidades certificadoras pendientes (DT-16); revisión visual pendiente |
-| Panel, avisos, auditoría y ayuda | RF-070..074; CU-16, CU-17; UI-03, ADM-10, ADM-13 | `ApiDashboardTest`, `NotificationLinksTest`, `DocumentOperationsTest`, `ScreenHelpTest` | Verificado automático; correo real PV-15 |
+| Panel, avisos, auditoría y ayuda | RF-070..074; CU-16, CU-17; UI-03, ADM-10 | `ApiDashboardTest`, `NotificationLinksTest`, `DocumentOperationsTest`, `ScreenHelpTest` | Verificado automático; correo real PV-15 |
 | Chat de IA | RF-046..054; CU-08; DOC-06; IA-NEG-01..09 | `AiAssistanceTest`, `HostedAiChatGatewayTest` | Verificado automático con proveedor simulado; evaluación experta con DeepSeek bloqueada PV-18 |
 | Interfaz (SPA) | UI-01..04 y pantallas de los cuatro roles | Pruebas Vitest del repositorio frontend (ver `traceability.md`) | Verificado automático; inspección visual y asistiva pendiente PV-19 |
 

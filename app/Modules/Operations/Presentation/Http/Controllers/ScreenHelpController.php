@@ -3,27 +3,20 @@
 namespace App\Modules\Operations\Presentation\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Modules\Identity\Application\ActiveRole;
-use App\Modules\Operations\Application\Actions\DeleteScreenHelp;
-use App\Modules\Operations\Application\Actions\SaveScreenHelp;
-use App\Modules\Operations\Infrastructure\Persistence\Models\ScreenHelp;
+use App\Modules\Operations\Application\ScreenHelpCatalog;
 use App\Modules\Operations\Presentation\Http\Requests\AvailableScreenHelpRequest;
-use App\Modules\Operations\Presentation\Http\Requests\ManageScreenHelpRequest;
 use App\Modules\Operations\Presentation\Http\Requests\ShowScreenHelpRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 
 class ScreenHelpController extends Controller
 {
-    public function show(ShowScreenHelpRequest $request): JsonResponse
+    public function show(ShowScreenHelpRequest $request, ScreenHelpCatalog $catalog): JsonResponse
     {
-        $help = ScreenHelp::query()->where('pantalla', $request->string('screen')->toString())->where('activa', true)->first();
-
-        return response()->json(['help' => $help === null ? null : $this->payload($help)]);
+        return response()->json(['help' => $catalog->forScreen($request->string('screen')->toString())]);
     }
 
-    public function available(AvailableScreenHelpRequest $request, ActiveRole $roles): JsonResponse
+    public function available(AvailableScreenHelpRequest $request, ActiveRole $roles, ScreenHelpCatalog $catalog): JsonResponse
     {
         $prefix = match ($roles->resolve($request)?->role->codigo_rol) {
             'administrador' => '/admin',
@@ -32,54 +25,7 @@ class ScreenHelpController extends Controller
             'bibliotecario' => '/biblioteca',
             default => null,
         };
-        $items = $prefix === null ? [] : ScreenHelp::query()
-            ->where('activa', true)
-            ->where(fn ($query) => $query->where('pantalla', $prefix)->orWhere('pantalla', 'like', $prefix.'/%'))
-            ->orderBy('pantalla')->get()
-            ->map(fn (ScreenHelp $help): array => $this->payload($help))->all();
 
-        return response()->json(['help' => $items]);
-    }
-
-    public function index(ManageScreenHelpRequest $request): JsonResponse
-    {
-        return response()->json(['help' => ScreenHelp::query()->orderBy('pantalla')->get()->map(fn (ScreenHelp $help): array => $this->payload($help))->all()]);
-    }
-
-    public function update(ManageScreenHelpRequest $request, ActiveRole $roles, SaveScreenHelp $action): JsonResponse
-    {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $help = $action->execute(
-            $actor,
-            $roles->resolve($request),
-            $request->string('screen')->toString(),
-            trim($request->string('title')->toString()),
-            trim($request->string('content')->toString()),
-            $request->boolean('active'),
-        );
-
-        return response()->json(['help' => $this->payload($help)]);
-    }
-
-    public function destroy(ManageScreenHelpRequest $request, ActiveRole $roles, DeleteScreenHelp $action): Response
-    {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($actor, $roles->resolve($request), $request->string('screen')->toString());
-
-        return response()->noContent();
-    }
-
-    /** @return array{screen: string, title: string, content: string, active: bool, updated_at: string} */
-    private function payload(ScreenHelp $help): array
-    {
-        return [
-            'screen' => $help->pantalla,
-            'title' => $help->titulo_ayuda,
-            'content' => $help->contenido_ayuda,
-            'active' => $help->activa,
-            'updated_at' => $help->editada_en_ayuda->toIso8601String(),
-        ];
+        return response()->json(['help' => $prefix === null ? [] : $catalog->underPrefix($prefix)]);
     }
 }

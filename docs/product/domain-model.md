@@ -113,8 +113,8 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
   título, mensaje, recurso, período académico y fecha de lectura.
 - **Evento de auditoría** (`eventos_auditoria`): acción, recurso, resultado (`exito` o
   `fallido`), detalles y una copia del nombre, rol y carrera del actor.
-- **Ayuda de pantalla** (`ayudas_pantalla`): ruta de la pantalla (única), título,
-  contenido, activa y quién la editó.
+- **Ayuda de pantalla**: texto fijo por ruta de pantalla, en `ScreenHelpCatalog`; no se
+  guarda en la base ni se edita desde el sistema.
 
 ## Invariantes
 

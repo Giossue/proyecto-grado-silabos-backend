@@ -88,8 +88,7 @@ con Docente Demo asignado.
 4. En **Convocatorias**, el período `2026-2027` aparece sin convocatoria. En sus acciones
    elija **Abrir convocatoria**, ponga **Inicio de la elaboración** (hoy) y una **Fecha
    límite de entrega** futura, y confirme.
-5. Opcional: **Usuarios y roles** (alta manual o importación Excel), **Auditoría** y
-   **Ayuda de pantallas**.
+5. Opcional: **Usuarios y roles** (alta manual o importación Excel) y **Auditoría**.
 
 ### Coordinación: carrera lista y apertura
 

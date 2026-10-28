@@ -2,9 +2,9 @@
 
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
-- Fecha: 2026-10-27.
-- Última migración aplicada: `2026_10_27_000245_queue_and_cache_tables_in_postgresql`.
-- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 35 tablas.
+- Fecha: 2026-10-28.
+- Última migración aplicada: `2026_10_28_000246_screen_help_lives_in_code`.
+- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 34 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
   - columnas: `pg_attribute` + `format_type()` + `pg_attrdef` (`pg_get_expr`);
@@ -177,26 +177,6 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
   - `asignaturas_identidad_carrera_unica`: `(asignatura_id, carrera_id)`
 - CHECK:
   - `asignaturas_unidad_curricular_check`: `CHECK (((unidad_curricular_asignatura)::text = ANY ((ARRAY['basica'::character varying, 'profesional'::character varying, 'integracion_curricular'::character varying])::text[])))`
-
-### `ayudas_pantalla`
-
-| Columna | Tipo | Nulo | Por defecto |
-|---|---|---|---|
-| `ayuda_pantalla_id` | uuid | no |  |
-| `pantalla` | character varying(160) | no |  |
-| `titulo_ayuda` | character varying(120) | no |  |
-| `contenido_ayuda` | text | no |  |
-| `activa` | boolean | no | `true` |
-| `actualizado_por` | uuid | sí |  |
-| `editada_en_ayuda` | timestamp(0) with time zone | no |  |
-
-- PK: `PRIMARY KEY (ayuda_pantalla_id)`
-- FK:
-  - `ayudas_pantalla_actualizado_por_foreign`: `FOREIGN KEY (actualizado_por) REFERENCES usuarios(usuario_id) ON DELETE SET NULL`
-- Únicos:
-  - `ayudas_pantalla_pantalla_unique`: `(pantalla)`
-- CHECK:
-  - `ayudas_pantalla_clave_check`: `CHECK (((pantalla)::text ~ '^/[a-z0-9/:_-]*$'::text))`
 
 ### `campos_plantilla`
 

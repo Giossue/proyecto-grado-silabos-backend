@@ -42,7 +42,7 @@ Se auditan, entre otros:
 - sílabo: inicio, guardado, copia, envío, reenvío, corrección, aprobación, reinicio y
   eliminación;
 - revisión de Biblioteca, firmas, exportación y cada descarga;
-- solicitudes al chat de IA y cambios de la ayuda de pantallas.
+- solicitudes al chat de IA.
 
 No copies el contenido completo del sílabo en la auditoría.
 

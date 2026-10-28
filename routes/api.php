@@ -105,12 +105,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.help.available');
             Route::get('help', [ScreenHelpController::class, 'show'])
                 ->middleware('active-role')->name('api.v1.help.show');
-            Route::get('admin/help', [ScreenHelpController::class, 'index'])
-                ->middleware('active-role')->name('api.v1.admin.help.index');
-            Route::put('admin/help', [ScreenHelpController::class, 'update'])
-                ->middleware('active-role')->name('api.v1.admin.help.update');
-            Route::delete('admin/help', [ScreenHelpController::class, 'destroy'])
-                ->middleware('active-role')->name('api.v1.admin.help.destroy');
             Route::get('admin/users', [ManagedUserController::class, 'index'])
                 ->middleware('active-role')
                 ->name('api.v1.admin.users.index');

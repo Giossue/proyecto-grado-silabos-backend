@@ -34,7 +34,7 @@
 | Validación | Regla fija del sistema, como campos obligatorios u horas y semanas del bloque `unidades`. Siempre da el mismo resultado. |
 | Chat de IA | Ayuda opcional para redactar. No escribe en el sílabo ni decide nada. |
 | Rol activo | Rol y carrera con los que se trabaja en la sesión. Solo hay uno a la vez. |
-| Ayuda de pantalla | Texto de ayuda de cada pantalla. Lo escribe Administración. |
+| Ayuda de pantalla | Texto de ayuda de cada pantalla. Es fijo y está en el código del backend. |
 
 Usa estos términos en código, interfaz y documentación. Di «revisión» para lo enviado y
 «borrador» para lo editable; no uses «versión» para ninguno de los dos.

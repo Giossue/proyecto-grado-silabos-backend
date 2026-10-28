@@ -13,7 +13,7 @@ El backend es un monolito modular. Cada módulo vive en `app/Modules/<Módulo>`.
 | `Library` | Revisión de bibliografía: comentar con motivos o aprobar. Aprobar deja el sílabo `aprobado` y pide la exportación. | `envios_biblioteca` |
 | `Documents` | Word con PHPWord, PDF con Gotenberg, archivos privados, firmas en orden y descargas. | `exportaciones_silabo`, `archivos`, `firmas_documento` |
 | `AiAssistance` | Chat del docente sobre su sílabo. | `mensajes_ia` |
-| `Operations` | Auditoría, notificaciones internas, ayuda por pantalla, lista de preparación y trabajo de humo. | `eventos_auditoria`, `notificaciones`, `ayudas_pantalla` |
+| `Operations` | Auditoría, notificaciones internas, ayuda por pantalla (texto fijo en `ScreenHelpCatalog`), lista de preparación y trabajo de humo. | `eventos_auditoria`, `notificaciones` |
 
 Fuera de los módulos quedan el modelo `App\Models\User`, el `DashboardController`, los
 middleware HTTP, los comandos Artisan y `app/Support` (hash canónico, alias de columnas

@@ -35,7 +35,7 @@ corre PHP-FPM, Nginx, el worker de colas y el scheduler.
 | `Library` | Revisión de bibliografía |
 | `Documents` | Word, PDF, firmas electrónicas y descargas |
 | `AiAssistance` | Chat de IA del docente |
-| `Operations` | Auditoría, notificaciones y ayuda de pantallas |
+| `Operations` | Auditoría, notificaciones y textos fijos de ayuda de pantalla |
 
 Cada módulo usa las capas que necesita: `Application` (acciones y consultas), `Domain`
 (reglas y políticas), `Infrastructure` (modelos, trabajos, gateways) y `Presentation`

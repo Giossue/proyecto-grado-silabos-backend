@@ -45,7 +45,6 @@ El menú y los botones reflejan el permiso, pero no lo reemplazan.
 | Eliminar un sílabo aprobado | No | Sí, en su carrera | No | No |
 | Firmar el PDF | No | Sí, segundo | Sí, primero | Sí, tercero |
 | Descargar Word y PDF (solo con las tres firmas) | No | Sí, en su carrera | Sí, de sus paralelos | Sí, de los sílabos que llegaron a biblioteca |
-| Ayuda de pantallas | Sí | No | No | No |
 | Auditoría | Sí | No | No | No |
 
 Las decisiones de revisión solo se admiten con la convocatoria de la carrera abierta o

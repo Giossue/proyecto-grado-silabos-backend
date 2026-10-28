@@ -150,7 +150,7 @@ archivos y mensajes de IA. Fuera de esa transacción, los triggers rechazan el c
 - La tabla de control se llama `migraciones`. El arranque del contenedor ejecuta
   `php artisan db:rename-migrations-table --force` y luego
   `php artisan migrate --force --isolated`.
-- Toda FK nueva llega con un índice que la encabece. Hoy no lo tienen
-  `definiciones_campo.plantilla_id` y `ayudas_pantalla.actualizado_por`.
+- Toda FK nueva llega con un índice que la encabece. Hoy no lo tiene
+  `definiciones_campo.plantilla_id`.
 - Tras cambiar el esquema, se regenera
   [database-schema.md](../generated/database-schema.md).

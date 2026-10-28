@@ -28,7 +28,6 @@ muestra «Página no encontrada».
 | ADM-06 | Plantilla | `/admin/plantilla` | Ver y editar la plantilla única. Detalle abajo. |
 | ADM-10 | Auditoría | `/admin/auditoria` | Registro paginado: fecha, actividad y responsable, todo con el mismo tamaño de letra. Filtros de lista, sin búsqueda de texto: período (por sus fechas), rol, carrera, actividad y resultado. |
 | ADM-12 | Convocatorias | `/admin/convocatorias` | Una fila por período. Detalle abajo. |
-| ADM-13 | Ayuda de pantallas | `/admin/ayuda` | Tabla de pantallas por rol con estado «Listo» (la ayuda se ve) o «Pendiente» (sin texto u oculta). Se edita el texto y si se muestra. |
 
 ## Coordinador
 
@@ -209,7 +208,7 @@ firmado» aparece con las tres firmas.
 ## Patrones comunes
 
 - **Menú lateral por rol.** Administrador: Panel, Convocatorias, Usuarios y roles,
-  Facultades y carreras, Plantilla, Auditoría, Ayuda de pantallas. Coordinador:
+  Facultades y carreras, Plantilla, Auditoría. Coordinador:
   Revisión, Materias y asignaciones, Docentes, Proyecto de carrera, Malla. Docente:
   Mis sílabos. Bibliotecario: Revisiones de biblioteca.
 - **Encabezado.** Campana de avisos, tema claro u oscuro y menú de usuario
@@ -231,8 +230,9 @@ firmado» aparece con las tres firmas.
 - **Accesibilidad.** Botón flotante en escritorio (en móvil, en el menú de usuario):
   tamaño del texto, alto contraste, sin animaciones, subrayar enlaces y texto más
   espaciado. Se guarda en la cuenta.
-- **Ayuda de pantalla.** Botón flotante y arrastrable «Ayuda de esta pantalla» cuando
-  ADM-13 tiene un texto activo para esa pantalla.
+- **Ayuda de pantalla.** Botón flotante y arrastrable «Ayuda de esta pantalla» cuando la
+  pantalla tiene texto en `ScreenHelpCatalog` (backend). Los textos no se editan desde el
+  sistema.
 - **Edición bloqueada.** Una franja a todo el ancho, bajo la barra superior, dice
   «Edición bloqueada · Convocatoria {período}» y qué pausar, con «¿Por qué?» e «Ir a
   Convocatorias» («Ir a Revisión» para Coordinación). Convocatorias usa la misma franja

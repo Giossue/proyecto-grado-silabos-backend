@@ -258,6 +258,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   docentes, un servicio menos que instalar en la UEB pesa más que la velocidad de Redis. Un
   servidor que aún diga `QUEUE_CONNECTION=redis` o `CACHE_STORE=redis` usa `database`. Los trabajos
   que estuvieran en Redis al cambiar se pierden; el estado funcional sigue en PostgreSQL.
+- Los textos de «Ayuda de esta pantalla» son fijos y viven en `ScreenHelpCatalog` (2026-10-28).
+  No hay tabla `ayudas_pantalla` ni pantalla de Administración para editarlos: cambiar un texto
+  es un cambio de código. Las etiquetas de auditoría `ayuda.guardada` y `ayuda.eliminada` se
+  conservan solo para mostrar los eventos ya registrados.
 - Solo se avisa a quien debe actuar o cuyo trabajo cambió (I-186). Cada aviso guarda su
   período académico; la campana y Notificaciones muestran solo los del período en curso
   (2026-10-27). Administración solo recibe el fallo al generar Word y PDF.

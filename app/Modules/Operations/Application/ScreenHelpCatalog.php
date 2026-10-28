@@ -1,0 +1,253 @@
+<?php
+
+namespace App\Modules\Operations\Application;
+
+/**
+ * Textos del botón «Ayuda de esta pantalla». Están en el código: no se editan desde el sistema.
+ * La clave es la ruta de la pantalla en el frontend, con sus parámetros (`:revision`).
+ */
+final class ScreenHelpCatalog
+{
+    /** @var array<string, array{title: string, content: string}> */
+    public const HELP = [
+        '/admin/auditoria' => [
+            'title' => 'Auditoría',
+            'content' => 'Registro de las acciones importantes que se hacen en el sistema: quién las hizo, cuándo, con qué rol y con qué resultado.
+
+Es solo de consulta.',
+        ],
+        '/admin/configuracion/perfil' => [
+            'title' => 'Perfil',
+            'content' => 'Aquí puede actualizar su nombre y su correo electrónico.',
+        ],
+        '/admin/configuracion/seguridad' => [
+            'title' => 'Seguridad',
+            'content' => 'Cambie su contraseña y administre la verificación en dos pasos. Para activarla o desactivarla se le pedirá su contraseña actual.
+
+Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si pierde el acceso a su aplicación de autenticación.',
+        ],
+        '/admin/convocatorias' => [
+            'title' => 'Convocatorias',
+            'content' => 'Cada fila es un período lectivo y su convocatoria institucional: las fechas de clases y las fechas en que los docentes elaboran y entregan sus sílabos. Solo puede haber una convocatoria abierta o pausada a la vez.
+
+Desde el menú de la fila puede abrir, pausar, reanudar o cerrar la convocatoria, y extender el plazo de entrega. Cada coordinación inicia después la convocatoria de su carrera.
+
+Mientras la convocatoria esté abierta, la plantilla del sílabo no se puede modificar; para corregirla, pause el proceso.',
+        ],
+        '/admin/estructura-academica' => [
+            'title' => 'Facultades y carreras',
+            'content' => 'Administre el catálogo académico: facultades (con su logo en PNG), carreras, coordinadores y períodos académicos. Use las pestañas para cambiar de catálogo.
+
+Puede crear, editar y activar o desactivar cada registro; un registro con historial no se elimina, solo se desactiva. Las carreras también se pueden importar desde Excel, y desde una carrera puede reemplazar a su coordinador.
+
+Mientras haya una convocatoria en curso, algunos cambios quedan bloqueados; el aviso de la pantalla le dice qué hacer.',
+        ],
+        '/admin/estructura-academica/:section' => [
+            'title' => 'Facultades y carreras',
+            'content' => 'Administre el catálogo académico: facultades (con su logo en PNG), carreras, coordinadores y períodos académicos. Use las pestañas para cambiar de catálogo.
+
+Puede crear, editar y activar o desactivar cada registro; un registro con historial no se elimina, solo se desactiva. Las carreras también se pueden importar desde Excel, y desde una carrera puede reemplazar a su coordinador.
+
+Mientras haya una convocatoria en curso, algunos cambios quedan bloqueados; el aviso de la pantalla le dice qué hacer.',
+        ],
+        '/admin/notificaciones' => [
+            'title' => 'Notificaciones',
+            'content' => 'Aquí aparecen los avisos del período en curso que le corresponden. Cuando el período termina, sus avisos ya no se muestran.
+
+Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leído.',
+        ],
+        '/admin/panel' => [
+            'title' => 'Panel de administración',
+            'content' => 'Resumen de la puesta en marcha del sistema y de la convocatoria vigente. Los pasos pendientes enlazan a la pantalla donde se completan.
+
+Un orden recomendado: primero Facultades y carreras, luego Usuarios y roles, después la Plantilla del sílabo y por último abrir la convocatoria.',
+        ],
+        '/admin/plantilla' => [
+            'title' => 'Plantilla del sílabo',
+            'content' => 'Es el formato único del sílabo: sus secciones, sus campos y el orden en que aparecen. Aquí también se configura el logo institucional.
+
+Con una convocatoria abierta la plantilla está bloqueada. Para cambiarla, pause la convocatoria. Al reanudar se le pedirá confirmación: todos los sílabos de este período se borran y empiezan desde cero, incluso los aprobados, porque el formato es único para toda la universidad.
+
+Los sílabos de períodos anteriores no se tocan. Si la plantilla está vacía, puede cargar el formato oficial de la UEB.',
+        ],
+        '/admin/usuarios' => [
+            'title' => 'Usuarios y roles',
+            'content' => 'Cree las cuentas de coordinación, docencia y biblioteca, una por una o importándolas desde Excel. Cada persona recibe un correo de invitación para verificar su correo y definir su contraseña.
+
+Coordinación y docencia se asignan a una carrera; biblioteca trabaja con toda la universidad. Una persona puede tener más de un rol: el «+1» junto al rol indica que tiene otros.
+
+Pulse una fila para ver la ficha de la cuenta y use «Editar» para corregir sus datos, quitar un rol o agregar otro. Desde el menú de la fila puede desactivar o reactivar la cuenta, y reenviar la invitación si sigue pendiente. Al desactivar una cuenta, su sesión se cierra.',
+        ],
+        '/biblioteca/configuracion/perfil' => [
+            'title' => 'Perfil',
+            'content' => 'Aquí consulta los datos de su cuenta. Su nombre y su correo institucional los administra Administración; si hay un error, pídale que lo corrija.',
+        ],
+        '/biblioteca/configuracion/seguridad' => [
+            'title' => 'Seguridad',
+            'content' => 'Cambie su contraseña y administre la verificación en dos pasos. Para activarla o desactivarla se le pedirá su contraseña actual.
+
+Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si pierde el acceso a su aplicación de autenticación.',
+        ],
+        '/biblioteca/historial' => [
+            'title' => 'Historial de biblioteca',
+            'content' => 'Los sílabos de períodos terminados, en solo lectura. Aquí llegan solos cuando termina el período académico.
+
+Filtre por período, facultad o estado. «Solo los míos» muestra los que usted aprobó, devolvió o firmó.',
+        ],
+        '/biblioteca/notificaciones' => [
+            'title' => 'Notificaciones',
+            'content' => 'Aquí aparecen los avisos del período en curso que le corresponden. Cuando el período termina, sus avisos ya no se muestran.
+
+Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leído.',
+        ],
+        '/biblioteca/revisiones' => [
+            'title' => 'Revisiones de biblioteca',
+            'content' => 'Arriba ve cuántos sílabos esperan su verificación, cuántos esperan su firma y cuántos devolvió con comentario.
+
+Debajo llegan, de todas las carreras, los sílabos del período en curso que Coordinación ya aprobó, para que verifique su bibliografía. Cuando usted aprueba la bibliografía, el sílabo queda aprobado.
+
+Filtre por facultad si se reparten el trabajo: el sistema recuerda la que eligió. Los períodos terminados están en «Historial».',
+        ],
+        '/biblioteca/revisiones/:revision' => [
+            'title' => 'Revisión de bibliografía',
+            'content' => 'Revise los libros que propuso el docente: que estén en biblioteca, completos y bien citados.
+
+Si todo está bien, apruebe la bibliografía: el sílabo queda aprobado y lo firman docente, coordinación y biblioteca. Si hay un problema, devuélvalo al docente marcando los motivos; cuando lo corrija y reenvíe, vuelve a esta bandeja sin pasar de nuevo por Coordinación.',
+        ],
+        '/coordinacion/configuracion/perfil' => [
+            'title' => 'Perfil',
+            'content' => 'Aquí consulta los datos de su cuenta. Su nombre y su correo institucional los administra Administración; si hay un error, pídale que lo corrija.',
+        ],
+        '/coordinacion/configuracion/seguridad' => [
+            'title' => 'Seguridad',
+            'content' => 'Cambie su contraseña y administre la verificación en dos pasos. Para activarla o desactivarla se le pedirá su contraseña actual.
+
+Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si pierde el acceso a su aplicación de autenticación.',
+        ],
+        '/coordinacion/docentes' => [
+            'title' => 'Docentes de la carrera',
+            'content' => 'Cuentas docentes de su carrera y los paralelos que dictan en el período en curso.
+
+Puede crear un docente, importar varios desde Excel, corregir su nombre (y su correo, mientras la cuenta no esté activada) y retirarlo de la carrera. Cada docente recibe una invitación por correo para activar su cuenta.',
+        ],
+        '/coordinacion/malla' => [
+            'title' => 'Malla curricular',
+            'content' => 'Vista de la malla de su carrera: ciclos, materias y relaciones de prerrequisito y correquisito.
+
+Pulse «Editar malla» para modificarla. Cada materia tiene un menú para editarla, moverla, eliminarla o agregarle relaciones; el botón «Relaciones» lista todas en formato de tabla.
+
+Si hay una convocatoria abierta en su carrera, la malla está bloqueada; pause la convocatoria para corregirla.',
+        ],
+        '/coordinacion/materias-asignaciones' => [
+            'title' => 'Materias y asignaciones',
+            'content' => 'Aquí programa las materias del período en curso, crea sus paralelos y elige el docente de cada uno.
+
+Seleccione una o varias materias para agregarles paralelos. Un paralelo sin docente queda pendiente de asignación.
+
+Si asigna un docente nuevo a un paralelo, su sílabo empieza desde cero. Cambiar el código o la jornada de un paralelo con el sílabo enviado o aprobado también lo elimina; el sistema le pide confirmación antes.',
+        ],
+        '/coordinacion/notificaciones' => [
+            'title' => 'Notificaciones',
+            'content' => 'Aquí aparecen los avisos del período en curso que le corresponden. Cuando el período termina, sus avisos ya no se muestran.
+
+Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leído.',
+        ],
+        '/coordinacion/proyecto-carrera' => [
+            'title' => 'Proyecto de carrera',
+            'content' => 'Las fichas contienen los campos que Administración asignó a Coordinación en la plantilla del sílabo. Pulse una materia para editar su ficha y elegir qué campos puede modificar el docente.
+
+Con «Importar desde Excel», descargue la plantilla de su carrera. Complete las celdas de contenido sin cambiar hojas, encabezados ni materias. Cargue el Excel, revise la vista previa y seleccione qué materias y campos aplicar. Las celdas vacías conservan los valores actuales. Esta carga no necesita IA ni OCR.
+
+Con una convocatoria abierta la edición está bloqueada. Si hay sílabos en curso, cambiar una ficha exige pausar y confirmar su regeneración; los procesos cerrados no se modifican.',
+        ],
+        '/coordinacion/puesta-en-marcha' => [
+            'title' => 'Puesta en marcha de la carrera',
+            'content' => 'Los pasos para preparar su carrera, en orden: armar la malla, programar las materias del período, crear los paralelos, asignar un docente a cada uno y abrir la convocatoria.
+
+Al abrir la convocatoria se crea un sílabo por paralelo con su docente. Se llega desde el botón «Puesta en marcha» de Revisión.',
+        ],
+        '/coordinacion/revisiones' => [
+            'title' => 'Revisión de sílabos',
+            'content' => 'Arriba ve el aviso con el plazo de entrega. Desde aquí abre, pausa o reanuda la convocatoria de su carrera.
+
+«Por revisar» lista los sílabos que los docentes ya enviaron. Coordinación revisa primero el contenido; cuando lo aprueba, el sílabo pasa a Biblioteca para revisar la bibliografía. Abra uno para aprobarlo o pedir correcciones.
+
+«Seguimiento» muestra todos los sílabos de la convocatoria con su estado.',
+        ],
+        '/coordinacion/revisiones/:before/comparar/:after' => [
+            'title' => 'Comparar revisiones',
+            'content' => 'Muestra, campo por campo, lo que cambió entre dos revisiones del mismo sílabo.
+
+Úselo para verificar que el docente atendió sus observaciones antes de aprobar.',
+        ],
+        '/coordinacion/revisiones/:revision' => [
+            'title' => 'Detalle de la revisión',
+            'content' => 'Aquí revisa el contenido enviado por el docente, sección por sección.
+
+Puede solicitar una corrección con un comentario para el docente o aprobar la revisión; al aprobarla, el sílabo pasa a Biblioteca. Una revisión enviada no se modifica: si el docente corrige, se crea una nueva revisión y el historial permite compararlas.
+
+Un sílabo aprobado no se modifica. Si tiene un error, puede eliminarlo con todo su historial y el docente empieza de cero.',
+        ],
+        '/coordinacion/revisiones/:revision/documentos' => [
+            'title' => 'Documentos aprobados',
+            'content' => 'Archivos de una revisión aprobada: el sílabo en Word y en PDF.
+
+Genere el documento, descárguelo y, si corresponde, fírmelo electrónicamente. La firma se hace en su equipo: su archivo de firma y su clave no se envían; solo se sube el PDF ya firmado.',
+        ],
+        '/docente/configuracion/perfil' => [
+            'title' => 'Perfil',
+            'content' => 'Aquí consulta los datos de su cuenta. Su nombre y su correo institucional los administra Administración; si hay un error, pídale que lo corrija.
+
+Su formación y experiencia académica-investigativa se escribe una sola vez: todos sus sílabos la copian, y se actualizan los que aún no ha enviado.',
+        ],
+        '/docente/configuracion/seguridad' => [
+            'title' => 'Seguridad',
+            'content' => 'Cambie su contraseña y administre la verificación en dos pasos. Para activarla o desactivarla se le pedirá su contraseña actual.
+
+Guarde los códigos de recuperación en un lugar seguro: le permiten entrar si pierde el acceso a su aplicación de autenticación.',
+        ],
+        '/docente/mis-silabos' => [
+            'title' => 'Mis sílabos',
+            'content' => 'Arriba ve el aviso con el plazo de la convocatoria.
+
+Debajo, un sílabo por cada paralelo que usted dicta en el período. Pulse uno para empezar o continuar su elaboración.
+
+Estados: sin iniciar, borrador, en revisión, corrección solicitada y aprobado. Mientras está en revisión no se puede editar; si Coordinación o Biblioteca piden correcciones, vuelve a quedar editable.
+
+Los sílabos de períodos anteriores están en «Historial».',
+        ],
+        '/docente/notificaciones' => [
+            'title' => 'Notificaciones',
+            'content' => 'Aquí aparecen los avisos del período en curso que le corresponden. Cuando el período termina, sus avisos ya no se muestran.
+
+Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leído.',
+        ],
+        '/docente/revisiones/:revision/documentos' => [
+            'title' => 'Documentos aprobados',
+            'content' => 'Cuando su sílabo está aprobado puede generar y descargar el documento en Word y en PDF.
+
+Si debe firmarlo, la firma se hace en su equipo: su archivo de firma y su clave no se envían; solo se sube el PDF ya firmado.',
+        ],
+    ];
+
+    /** @return array{screen: string, title: string, content: string}|null */
+    public function forScreen(string $screen): ?array
+    {
+        $help = self::HELP[$screen] ?? null;
+
+        return $help === null ? null : ['screen' => $screen, ...$help];
+    }
+
+    /** @return list<array{screen: string, title: string, content: string}> */
+    public function underPrefix(string $prefix): array
+    {
+        $items = [];
+        foreach (self::HELP as $screen => $help) {
+            if ($screen === $prefix || str_starts_with($screen, $prefix.'/')) {
+                $items[] = ['screen' => $screen, ...$help];
+            }
+        }
+
+        return $items;
+    }
+}
