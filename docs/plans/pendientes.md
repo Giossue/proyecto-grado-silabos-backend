@@ -12,7 +12,7 @@ Lo único que falta, en un solo lugar. Cuando algo se resuelve, se borra de aqu�
 | PV-05 | Cantidad real de docentes, paralelos y sílabos | Coordinación | Datos de prueba |
 | PV-11 | Conservación, respaldo, RPO y RTO | Personal técnico y autoridad | TIC respalda todas las bases a nivel de servidor (2026-10-26); falta confirmar que incluye el volumen `storage/app` y cada cuánto |
 | PV-12 | Base legal y aviso de privacidad | UEB | Borrador en `docs/security/aviso-de-privacidad.md` |
-| PV-15 | Correo institucional y contenido de los avisos | Personal técnico y Coordinación | El servidor de pruebas envía con Resend desde `no-responder@devs-ueb.tech` |
+| PV-15 | Correo institucional y qué avisos llegan por correo | Personal técnico y Coordinación | El servidor de pruebas envía con Resend desde `no-responder@devs-ueb.tech`. Por correo solo llegan al docente la convocatoria abierta, la corrección solicitada y el sílabo aprobado (lista en `NOTIFICATION_EMAIL_EVENTS`); Coordinación y Biblioteca no reciben correo |
 | PV-16 | Edición excepcional del contenido por Coordinación | Coordinación | No se permite |
 | PV-17 | Instrumento para medir el proceso actual | Dirección y autores | — |
 | PV-18 | Umbrales de utilidad y precisión de la IA | Coordinación y docentes | — |
@@ -38,12 +38,8 @@ lista de entidades y si exige sello de tiempo externo (hoy la hora es la del ser
   - `DISPLAY_TIMEZONE` fija la fecha de hoy de la institución (por defecto `America/Guayaquil`). Cambiarla
     cambia los plazos de la convocatoria y las fechas ya guardadas.
 - **Reloj del servidor:** la fecha de hoy sale del reloj del servidor, así que debe estar sincronizado con NTP.
-- **Dependencias:** `npm audit` marca `node-forge` (GHSA-86w9-cpqp-85rv) como alta y sin versión corregida (≤ 1.4.0).
-  - **Dónde se usa:** el frontend la usa, directamente y a través de `@signpdf`, para abrir el `.p12` y firmar
-    en el navegador.
-  - **Por qué el riesgo es bajo:** el fallo está en la verificación de firmas RSA, que la app no usa; las firmas
-    las verifica el backend.
-  - **Acción:** actualizar cuando salga una versión corregida.
+- **Dependencias:** `npm audit --audit-level=high` y `composer audit` no marcan nada alto (2026-10-27).
+  Quedan 4 avisos bajos en herramientas de compilación (`workbox-build`, `vite-plugin-pwa`); no llegan al navegador.
 - **Cuenta de demostración:** rotar su clave si se usa en un servidor real.
 - **Servidor:** confirmar que la base remota está en la migración más reciente y que hay un worker para la cola `ia`.
 

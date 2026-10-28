@@ -256,6 +256,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Solo se avisa a quien debe actuar o cuyo trabajo cambió (I-186). Cada aviso guarda su
   período académico; la campana y Notificaciones muestran solo los del período en curso
   (2026-10-27). Administración solo recibe el fallo al generar Word y PDF.
+- Por correo llegan pocos avisos (2026-10-27): solo los que piden actuar y ocurren poco,
+  en esta lista inicial para el docente: convocatoria abierta, corrección solicitada y sílabo
+  aprobado (listo para firmar). Coordinación y Biblioteca los ven en la campana, sin correo.
+  Un correo por aviso y por persona, nunca repetido, y solo a cuentas activas con correo
+  verificado. La lista se ajusta con `NOTIFICATION_EMAIL_EVENTS` y se apaga con
+  `NOTIFICATION_EMAILS=false`. Es provisional hasta que se resuelva PV-15.
 - Administración edita la ayuda de cada pantalla.
 - Interfaz (2026-10-27): los campos y selects usan el borde de las tablas (el alto contraste
   lo refuerza); no hay tooltips nativos del navegador, solo el `Tooltip` del sistema; los

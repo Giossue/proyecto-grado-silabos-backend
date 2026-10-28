@@ -171,6 +171,19 @@ MAIL_FROM_ADDRESS="no-responder@devs-ueb.tech"
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
+Además de las invitaciones, llegan por correo pocos avisos del sistema, solo los que piden
+actuar. Hoy son tres, para el docente: convocatoria abierta, corrección solicitada y sílabo
+aprobado. Se manda un correo por aviso y persona, solo a cuentas activas con correo
+verificado; los demás avisos quedan en la campana.
+
+| Variable | Por defecto | Efecto |
+|---|---|---|
+| `NOTIFICATION_EMAILS` | `true` | `false` apaga estos correos; las invitaciones de activación no cambian. |
+| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,silabo.correccion_solicitada,silabo.aprobado` | Tipos de aviso que se envían por correo, separados por coma. |
+
+Con `MAIL_MAILER=log` ninguno sale del sistema. Los tipos disponibles están en
+`NotificationDestination` (`silabo.enviado`, `coordinacion.aprobado`, etc.).
+
 Antes hay que verificar el dominio en el panel de Resend con los registros DNS que pida.
 Sin eso los mensajes se rechazan o llegan a spam, y el fallo solo se ve en el panel del
 proveedor. El destino a largo plazo es el SMTP institucional (`MAIL_MAILER=smtp` y sus

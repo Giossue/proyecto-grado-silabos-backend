@@ -4,7 +4,10 @@ namespace App\Modules\Operations\Application\Actions;
 
 use App\Models\User;
 use App\Modules\Operations\Application\NotificationPeriod;
+use App\Modules\Operations\Infrastructure\Mail\WorkflowNotificationMail;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class StoreInternalNotifications
 {
@@ -25,11 +28,11 @@ class StoreInternalNotifications
         if ($recipientIds === []) {
             return 0;
         }
-        $activeIds = User::query()->whereIn('id', $recipientIds)->where('activo', true)->pluck('id');
+        $recipients = User::query()->whereIn('id', $recipientIds)->where('activo', true)->get();
         $periodId ??= $this->periods->of($resourceType, $resourceId);
-        foreach ($activeIds as $recipientId) {
-            InternalNotification::query()->firstOrCreate(
-                ['usuario_id' => $recipientId, 'clave_deduplicacion' => 'flujo:'.$deduplicationKey],
+        foreach ($recipients as $recipient) {
+            $notification = InternalNotification::query()->firstOrCreate(
+                ['usuario_id' => $recipient->id, 'clave_deduplicacion' => 'flujo:'.$deduplicationKey],
                 [
                     'tipo' => $eventType,
                     'titulo' => $title,
@@ -40,8 +43,28 @@ class StoreInternalNotifications
                     'notificado_en' => now(),
                 ],
             );
+            if ($notification->wasRecentlyCreated) {
+                $this->email($recipient, $eventType, $title, $message);
+            }
         }
 
-        return $activeIds->count();
+        return $recipients->count();
+    }
+
+    // Un correo por aviso y persona, solo para los avisos que piden actuar y a cuentas con correo verificado.
+    private function email(User $recipient, string $eventType, string $title, string $message): void
+    {
+        if (! config('notifications.email.enabled')
+            || ! in_array($eventType, (array) config('notifications.email.events'), true)
+            || ! $recipient->hasVerifiedEmail()) {
+            return;
+        }
+        $url = rtrim((string) config('app.frontend_url'), '/').'/';
+        DB::afterCommit(fn () => Mail::to($recipient->correo_electronico)->queue(new WorkflowNotificationMail(
+            name: $recipient->nombre,
+            title: $title,
+            body: $message,
+            url: $url,
+        )));
     }
 }

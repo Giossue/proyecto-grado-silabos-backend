@@ -24,6 +24,7 @@ petición web; no tiene trabajos de cola. Ver [ficha-excel.md](ficha-excel.md).
 | `GenerateSyllabusExportJob` | Documents | `documentos` | 120 s | 3 | 5, 30, 120 s | exportación |
 | `AnswerSyllabusChatJob` | AiAssistance | `ia` | 60 s | 3 | 5, 30, 120 s | mensaje |
 | `ManagedUserActivationMail` | Identity | `general` | por defecto | por defecto | — | — |
+| `WorkflowNotificationMail` | Operations | `general` | por defecto | por defecto | — | — |
 
 El estado de cada trabajo vive en su registro de dominio, no en una tabla de trabajos
 (I-221):
