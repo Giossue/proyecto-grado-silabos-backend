@@ -35,8 +35,8 @@ muestra «Página no encontrada».
 |---|---|---|---|
 | COR-01 | Antes de empezar | modal en COR-05 | Pasos previos a abrir la convocatoria de la carrera (malla, materias del período, paralelos y docentes), cada uno con «Ir» y un check al completarlo. «Abrir convocatoria» queda deshabilitado hasta que todo esté listo; su ayuda emergente dice qué falta. |
 | COR-04 | Seguimiento | pestaña en COR-05 | Todos los sílabos de la convocatoria con paralelos, docentes, estado y fecha de inicio. |
-| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Antes de empezar». Pestañas «Cola de revisión» (asignatura, docente, número de revisión, estado y etapa) y «Seguimiento» (COR-04). |
-| COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | El sílabo se ve como el documento final. Decisiones en la cabecera, con diálogos: «Solicitar corrección» y «Firmar y enviar a biblioteca». Historial y comparación en un botón secundario; reiniciar y eliminar en «Más». |
+| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Antes de empezar». Pestañas «Cola de revisión» (asignatura, docente, número de revisión y estado: «Por revisar» si le toca a Coordinación y «En biblioteca» si ya la aprobó) y «Seguimiento» (COR-04). |
+| COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | A pantalla completa, sin menú lateral, con «Volver a la cola». Bajo el título, el período y el docente. El sílabo se ve como el documento final. Decisiones en la cabecera, con diálogos: «Solicitar corrección» y «Firmar y enviar a biblioteca». Historial y comparación en un botón con ícono; reiniciar y eliminar en «Más». |
 | COR-07 | Comparar revisiones | `/coordinacion/revisiones/:before/comparar/:after` | Campos agregados, retirados o modificados, lado a lado. |
 | COR-08 | Solicitar corrección | diálogo en COR-06 | «Comentario para el docente» y «Solicitar corrección»; no se firma. |
 | COR-09 | Firmar y enviar a biblioteca | diálogo en COR-06 | Archivo `.p12`/`.pfx`, clave y confirmar: firma y pasa a Biblioteca. |
@@ -207,14 +207,17 @@ envían. Cada persona firma una sola vez por sílabo.
 
 ## Patrones comunes
 
-- **Menú lateral por rol.** Administrador: Panel, Convocatorias, Usuarios y roles,
+- **Menú lateral por rol.** Administrador: Convocatorias, Usuarios y roles,
   Facultades y carreras, Plantilla, Auditoría. Coordinador:
-  Revisión, Materias y asignaciones, Docentes, Proyecto de carrera, Malla. Docente:
-  Mis sílabos. Bibliotecario: Revisiones de biblioteca.
+  Revisión, Materias y asignaciones, Docentes, Proyecto de carrera, Malla. Docente y
+  Bibliotecario no tienen menú lateral: el logo va a la izquierda del encabezado y lleva a
+  su única pantalla. Se reactiva quitando el rol de `ROLES_WITHOUT_SIDEBAR`
+  (`useShowsSidebar.ts`).
 - **Encabezado.** Campana de avisos, tema claro u oscuro y menú de usuario
   (Configuración, Cerrar sesión). Con más de un rol, el pie del menú lateral ofrece
   «Cambiar carrera o rol». El pie ofrece también «Instalar aplicación» mientras el
-  sistema no corre instalado.
+  sistema no corre instalado. Sin menú lateral, ambas opciones están en el menú de
+  usuario.
 - **Avisos.** Solo llegan cuando hay algo que hacer o cambió el trabajo propio. Abrir un
   aviso lleva a la pantalla donde se actúa y, si hace falta, activa el rol que
   corresponde. Cada aviso pertenece a un período; al terminar el período deja de verse.

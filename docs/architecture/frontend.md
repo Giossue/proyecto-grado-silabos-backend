@@ -147,7 +147,7 @@ se registra. El service worker guarda la interfaz compilada para abrir rápido, 
 cargan. Con una versión nueva, `AppUpdatePrompt` muestra «Hay una versión nueva del
 sistema» con un único botón, «Actualizar», sin opción de posponer; solo recarga cuando la
 persona lo pulsa. Revisa si hay versión nueva
-cada hora. «Instalar aplicación», al pie del menú lateral, abre `InstallAppDialog`: si el
+cada hora. «Instalar aplicación», al pie del menú lateral (o en el menú de usuario de los roles sin menú lateral), abre `InstallAppDialog`: si el
 navegador ofrece instalar, muestra el botón «Instalar»; en iPhone explica Compartir →
 «Agregar a pantalla de inicio»; en otros navegadores, cómo hacerlo en Chrome, Edge o
 Safari de Mac. La opción se oculta cuando el sistema ya corre instalado. Nginx sirve
