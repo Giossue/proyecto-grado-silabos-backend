@@ -2,8 +2,8 @@
 
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
-- Fecha: 2026-10-28.
-- Última migración aplicada: `2026_10_28_000248_drop_word_from_exports`.
+- Fecha: 2026-10-30.
+- Última migración aplicada: `2026_10_30_000250_coordination_fields_not_teacher_editable`.
 - Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 34 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
@@ -659,7 +659,6 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 | `definicion_campo_id` | uuid | no |  |
 | `valor_campo` | jsonb | sí |  |
 | `asignatura_id` | uuid | sí |  |
-| `editable_docente_valor_campo` | boolean | no | `false` |
 
 - PK: `PRIMARY KEY (valor_campo_id)`
 - FK:
