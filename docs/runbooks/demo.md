@@ -97,9 +97,8 @@ con Docente Demo asignado.
 2. En **Malla** y **Materias y asignaciones**, compruebe `SW-601`, su paralelo `A` y el
    docente asignado. Para probar la copia entre paralelos, cree el paralelo `B` y asígnele
    también a Docente Demo.
-3. En **Proyecto de carrera**, abra la **Ficha** de `SW-601` y llene todos sus campos. En
-   un campo active **El docente puede editarlo**. Con IA configurada, pruebe también
-   **Importar desde Excel**, descargue la plantilla, complete el contenido y revise
+3. En **Proyecto de carrera**, abra la **Ficha** de `SW-601` y llene todos sus campos.
+   Con IA configurada, pruebe también **Importar desde Excel**, descargue la plantilla, complete el contenido y revise
    el archivo antes de aplicar.
 4. En el **Panel**, pulse **Abrir convocatoria de la carrera**. Se crea un sílabo por
    paralelo y el docente recibe un aviso.

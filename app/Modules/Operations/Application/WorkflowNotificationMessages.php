@@ -50,6 +50,10 @@ final class WorkflowNotificationMessages
                 'Su sílabo volvió a empezar',
                 "Coordinación eliminó su sílabo aprobado de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.",
             ],
+            'silabo.devuelto_borrador' => [
+                'Su sílabo volvió a borrador',
+                "Coordinación cambió la malla o la ficha de {$subject}. Lo que escribió se conserva; revíselo, envíelo y fírmelo de nuevo.",
+            ],
             'silabo.reiniciado' => [
                 'Su sílabo volvió a empezar',
                 "Coordinación reinició su sílabo de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.",

@@ -32,12 +32,8 @@ class SubjectProfileController extends Controller
          * @var array<string, mixed> $values
          */
         $values = $request->validated('values');
-        /**
-         * @var array<string, mixed> $editable
-         */
-        $editable = $request->validated('editable', []);
 
-        return response()->json($this->payload($asignatura->id, $action->execute($asignatura, $values, $actor, $request, $editable), $profile));
+        return response()->json($this->payload($asignatura->id, $action->execute($asignatura, $values, $actor, $request), $profile));
     }
 
     /**
@@ -57,7 +53,6 @@ class SubjectProfileController extends Controller
                 'section' => $field->block?->section?->titulo,
             ])->all(),
             'values' => (object) $values,
-            'editable' => (object) $profile->editable($subjectId),
             'complete' => $profile->completeBySubject([$subjectId])[$subjectId] ?? false,
             'definition' => TemplatePresentation::definition(TemplateContext::active()),
             'variables' => (object) array_column(TemplateVariables::catalog(), 'sample', 'key'),

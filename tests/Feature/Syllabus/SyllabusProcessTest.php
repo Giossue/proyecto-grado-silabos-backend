@@ -784,7 +784,67 @@ class SyllabusProcessTest extends TestCase
                 ...$payload,
                 'horas_aa' => (float) $subject->horas_aa + 16,
             ])
-            ->assertJsonValidationErrors('purge_required');
+            ->assertSuccessful();
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'sin_iniciar']);
+        $this->assertEquals((float) $subject->horas_aa + 16, data_get($syllabus->fresh()->contexto_academico, 'subject.hours_aa'));
+    }
+
+    public function test_a_curriculum_change_returns_only_the_affected_sent_syllabus_to_draft_and_keeps_its_content(): void
+    {
+        $convocation = $this->openedConvocation();
+        $career = Career::query()->firstOrFail();
+        $syllabus = Syllabus::query()->firstOrFail();
+        $subject = Subject::query()->findOrFail($syllabus->subject->id);
+        $bibliography = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
+        FieldValue::query()->where('silabo_id', $syllabus->id)->where('definicion_campo_id', $bibliography->id)
+            ->update(['valor' => $this->answeredValue($bibliography, 'Libro elegido por el docente')]);
+        Syllabus::query()->whereKey($syllabus->id)->update(['estado' => 'aprobado', 'iniciado_en' => now()]);
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))
+            ->assertSuccessful();
+
+        $later = $subject->replicate();
+        $later->codigo_asignatura = 'SW-799';
+        $later->nombre = 'Materia posterior';
+        $later->ciclo = $subject->ciclo + 1;
+        $later->save();
+        $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.academic.curriculum.requirements.store', $career->id), [
+                'subject_id' => $later->id,
+                'requirement_id' => $subject->id,
+                'type' => 'prerrequisito',
+            ])
+            ->assertSuccessful();
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
+
+        $payload = [
+            'code' => $subject->codigo_asignatura,
+            'nombre' => $subject->nombre,
+            'cycle' => $subject->ciclo,
+            'position' => $subject->orden_en_ciclo,
+            'organization_unit' => $subject->unidad_organizacion_curricular?->value ?? 'basica',
+            'modality' => $subject->modalidad?->value,
+            'creditos' => $subject->creditos,
+            'horas_totales' => $subject->horas_totales,
+            'horas_ac' => $subject->horas_ac,
+            'horas_pae' => $subject->horas_pae,
+            'horas_aa' => (float) $subject->horas_aa + 16,
+        ];
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.update', ['asignatura', $subject->id]), $payload)
+            ->assertJsonValidationErrors('purge_required')
+            ->assertJsonPath('errors.purge_count.0', '1');
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
+
+        $this->actingAsCoordinator()
+            ->patchJson(route('api.v1.coordination.academic.update', ['asignatura', $subject->id]), [...$payload, 'confirm_purge' => true])
+            ->assertSuccessful();
+        $fresh = $syllabus->fresh();
+        $this->assertSame('borrador', $fresh->estado);
+        $this->assertEquals((float) $subject->horas_aa + 16, data_get($fresh->contexto_academico, 'subject.hours_aa'));
+        $this->assertStringContainsString('Libro elegido por el docente', FreeText::plainText($fresh->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
+        $this->assertTrue(InternalNotification::query()->where('tipo', 'silabo.devuelto_borrador')->exists());
+        $this->assertFalse(InternalNotification::query()->where('tipo', 'silabo.regenerado')->exists());
     }
 
     public function test_turning_off_syllabus_generation_removes_the_subject_syllabi_and_turning_it_on_creates_them(): void
@@ -911,30 +971,31 @@ class SyllabusProcessTest extends TestCase
         $this->assertSame('abierta', $convocation->fresh()->estado);
     }
 
-    public function test_changing_a_subject_profile_restarts_that_subjects_syllabi_even_if_approved_after_confirmation(): void
+    public function test_changing_a_subject_profile_returns_its_approved_syllabus_to_draft_after_confirmation(): void
     {
         $convocation = $this->openedConvocation();
         $syllabus = Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail();
         $subjectId = $syllabus->subject->id;
-        $others = Syllabus::query()->where('convocatoria_id', $convocation->id)->whereKeyNot($syllabus->id)->pluck('id')->all();
+        $field = FieldDefinition::query()->where('quien_llena', 'coordinacion')->firstOrFail();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))->assertSuccessful();
         Syllabus::query()->whereKey($syllabus->id)->update(['estado' => 'aprobado']);
 
         $this->actingAsCoordinator()
             ->putJson(route('api.v1.academic.subjects.profile.update', $subjectId), ['values' => []])
+            ->assertSuccessful();
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
+
+        $values = ['values' => [$field->id => $this->answeredValue($field, 'Ficha corregida por Coordinación')]];
+        $this->actingAsCoordinator()
+            ->putJson(route('api.v1.academic.subjects.profile.update', $subjectId), $values)
             ->assertJsonValidationErrors('purge_required');
-        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'aprobado']);
 
         $this->actingAsCoordinator()
-            ->putJson(route('api.v1.academic.subjects.profile.update', $subjectId), ['values' => [], 'confirm_purge' => true])
+            ->putJson(route('api.v1.academic.subjects.profile.update', $subjectId), [...$values, 'confirm_purge' => true])
             ->assertSuccessful();
-        $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
-        foreach ($others as $id) {
-            $syllabusOfOther = Syllabus::query()->find($id);
-            if ($syllabusOfOther !== null && $syllabusOfOther->subject->id !== $subjectId) {
-                $this->assertDatabaseHas('silabos', ['silabo_id' => $id]);
-            }
-        }
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id, 'estado_silabo' => 'borrador']);
+        $this->assertStringContainsString('Ficha corregida por Coordinación', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor));
     }
 
     public function test_an_open_cycle_freezes_the_template_and_the_institutional_data_but_not_the_parallels(): void

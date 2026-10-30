@@ -4,6 +4,7 @@ namespace Tests\Feature\Syllabus;
 
 use App\Models\User;
 use App\Modules\Academic\Application\FichaWorkbookContext;
+use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\InstitutionalLogos;
@@ -125,55 +126,27 @@ class ConvocationAndDraftTest extends TestCase
         $this->assertStringContainsString('Libro añadido por el docente', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
     }
 
-    public function test_a_career_field_marked_editable_in_the_profile_is_edited_by_the_teacher(): void
+    public function test_the_teacher_keeps_what_they_wrote_in_the_previous_period(): void
     {
-        $convocation = $this->createPreparedConvocation();
-        $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
-        $objective = FieldDefinition::query()->where('clave', 'objetivo_general')->firstOrFail();
-        FieldValue::query()->where('asignatura_id', Parallel::query()->firstOrFail()->asignatura_id)->where('definicion_campo_id', $description->id)->firstOrFail()->update(['editable_docente' => true]);
-        $this->openPrepared($convocation);
-        $syllabus = Syllabus::query()->firstOrFail();
+        [$bibliography, $current] = $this->previousAndCurrentPeriod();
 
-        $inherited = $syllabus->values()->where('definicion_campo_id', $description->id)->firstOrFail();
-        $this->assertTrue($inherited->editable_docente);
-        $this->assertSame('Ficha de prueba: descripcion', FreeText::plainText($inherited->valor));
-        $fields = collect($this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()->json('syllabus.sections'))
-            ->flatMap(fn ($section) => $section['fields'])->keyBy('key');
-        $this->assertTrue($fields['descripcion']['teacher_editable']);
-        $this->assertFalse($fields['objetivo_general']['teacher_editable']);
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $current))->assertSuccessful();
 
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
-        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $objective]), [
-            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
-            'value' => $this->freeTextValue('Cambio no autorizado'),
-        ])->assertUnprocessable()->assertJsonValidationErrors('field');
-        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $description]), [
-            'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
-            'value' => FieldDocument::empty(),
-        ])->assertOk();
-        $this->assertTrue($syllabus->values()->where('definicion_campo_id', $description->id)->firstOrFail()->editable_docente);
-
-        $messages = collect($this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.validate', $syllabus))->assertSuccessful()->json('validation.results'))->groupBy('field_id');
-        $this->assertSame('campo_obligatorio_faltante', $messages[$description->id]->first()['code']);
+        $fresh = $current->fresh();
+        $this->assertSame('borrador', $fresh->estado);
+        $this->assertStringContainsString('Libro del período anterior', FreeText::plainText($fresh->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
+        $this->assertFalse($fresh->revisions()->exists());
     }
 
-    public function test_copy_between_parallels_carries_career_fields_the_teacher_may_edit(): void
+    public function test_a_template_change_since_the_previous_period_starts_from_scratch(): void
     {
-        [$first, $second] = $this->openConvocationWithTwoParallels();
-        $description = FieldDefinition::query()->where('clave', 'descripcion')->firstOrFail();
-        FieldValue::query()->whereIn('silabo_id', [$first->id, $second->id])->where('definicion_campo_id', $description->id)->get()
-            ->each(fn (FieldValue $value) => $value->update(['editable_docente' => true]));
+        [$bibliography, $current] = $this->previousAndCurrentPeriod();
+        $this->travel(5)->seconds();
+        DB::table('plantilla_silabo')->update(['plantilla_modificada_en' => now()]);
 
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $first))->assertSuccessful();
-        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$first, $description]), [
-            'version_bloqueo' => $first->fresh()->version_bloqueo,
-            'value' => $this->freeTextValue('Descripción ajustada por el docente.'),
-        ])->assertOk();
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.copy-from', [$second, $first]), [
-            'version_bloqueo' => $second->version_bloqueo,
-        ])->assertOk();
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $current))->assertSuccessful();
 
-        $this->assertSame('Descripción ajustada por el docente.', FreeText::plainText($second->values()->where('definicion_campo_id', $description->id)->firstOrFail()->valor));
+        $this->assertStringNotContainsString('Libro del período anterior', FreeText::plainText($current->fresh()->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
     }
 
     public function test_fixed_fields_are_frozen_in_the_snapshot_and_the_teacher_cannot_edit_them(): void
@@ -908,6 +881,44 @@ class ConvocationAndDraftTest extends TestCase
         ]);
 
         return $convocation;
+    }
+
+    /**
+     * @return array{FieldDefinition, Syllabus}
+     */
+    private function previousAndCurrentPeriod(): array
+    {
+        $previousPeriod = AcademicPeriod::query()->create([
+            'codigo' => 'ENERO-2020-JUNIO-2020',
+            'nombre' => 'Enero 2020 - Junio 2020',
+            'fecha_inicio' => '2020-01-06',
+            'fecha_fin' => '2020-06-30',
+        ]);
+        $previousConvocation = $this->createPreparedConvocation($previousPeriod->id);
+        $this->openPrepared($previousConvocation);
+        $previous = Syllabus::query()->where('convocatoria_id', $previousConvocation->id)->firstOrFail();
+        $bibliography = FieldDefinition::query()->where('clave', 'bibliografia')->firstOrFail();
+        $this->travel(5)->seconds();
+        $previous->values()->where('definicion_campo_id', $bibliography->id)->update(['valor' => $this->answeredValue($bibliography, 'Libro del período anterior')]);
+        Syllabus::query()->whereKey($previous->id)->update(['estado' => 'aprobado', 'iniciado_en' => now()]);
+        Convocation::query()->whereKey($previousConvocation->id)->update(['estado' => Convocation::STATE_CLOSED]);
+        SyllabusProcess::query()->whereKey($previousConvocation->proceso_id)->update(['estado' => SyllabusProcess::STATE_CLOSED]);
+
+        $process = SyllabusProcess::query()->create([
+            'periodo_academico_id' => AcademicPeriod::query()->whereKeyNot($previousPeriod->id)->valueOrFail('id'),
+            'inicia_en' => now()->subDay(),
+            'entrega_en' => now()->addMonth(),
+            'estado' => SyllabusProcess::STATE_OPEN,
+        ]);
+        $convocation = Convocation::query()->create([
+            'carrera_id' => $this->coordinatorContext->carrera_id,
+            'proceso_id' => $process->id,
+            'estado' => 'preparacion',
+        ]);
+        $this->openPrepared($convocation);
+        $this->travel(5)->seconds();
+
+        return [$bibliography, Syllabus::query()->where('convocatoria_id', $convocation->id)->firstOrFail()];
     }
 
     private function publishedConfiguration(): SyllabusTemplate

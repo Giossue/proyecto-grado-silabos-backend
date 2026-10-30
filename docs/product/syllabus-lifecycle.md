@@ -25,8 +25,8 @@ Estados guardados (`silabos.estado_silabo`): `sin_iniciar`, `borrador`, `en_revi
 | Desde | Acción | Quién | Hacia | Efecto |
 |---|---|---|---|---|
 | — | Abrir la convocatoria de la carrera | Coordinación | Sin iniciar | Un sílabo por paralelo; copia la ficha y el contexto académico; avisa a los docentes. |
-| Sin iniciar | Abrir el sílabo | Docente | Borrador | El borrador se inicia solo al abrirlo. |
-| Sin iniciar o Borrador | Copiar desde otro paralelo propio | Docente | Borrador | Copia los campos del docente y los de la ficha marcados como editables. |
+| Sin iniciar | Abrir el sílabo | Docente | Borrador | El borrador se inicia solo al abrirlo. Hereda los campos del docente de su último sílabo de esa asignatura en una convocatoria cerrada, si la plantilla no cambió desde que lo empezó. |
+| Sin iniciar o Borrador | Copiar desde otro paralelo propio | Docente | Borrador | Copia los campos del docente. |
 | Borrador o Corrección solicitada | Firmar y enviar (primer envío) / Enviar (reenvío) | Docente | En revisión | Valida, crea una revisión inmutable con huella y avisa. En el primer envío exige la firma del docente. |
 | En revisión · coordinación | Firmar y enviar a biblioteca | Coordinación | En revisión · biblioteca | Exige la firma de Coordinación; registra la revisión de coordinación y el envío a biblioteca; avisa a Biblioteca. |
 | En revisión · coordinación | Solicitar corrección | Coordinación | Corrección solicitada | Comentario general de 10 a 10 000 caracteres. |
@@ -125,14 +125,16 @@ conservan sus propias fotografías. Aplica a cierres realizados desde ADR-0012.
 | Qué cambia | Requisito | Efecto |
 |---|---|---|
 | Plantilla | Convocatoria pausada o inexistente (Administración) | Al reanudar, si la plantilla cambió, se muestra el conteo por estado y se pide «Reanudar y rehacer sílabos». Se rehacen desde cero todos los sílabos de la convocatoria, incluidos los aprobados y firmados. Sin confirmación, sigue en pausa. |
-| Malla: horas, créditos o modalidad | Convocatoria de la carrera pausada o sin abrir (Coordinación) | Pide confirmación y rehace los sílabos de la carrera, en cualquier estado, incluidos los aprobados. |
-| Malla: nombre, código, ciclo, orden, unidad o requisitos | Convocatoria de la carrera pausada o sin abrir | Actualiza los datos académicos de los sílabos sin rehacerlos. |
-| Ficha de una asignatura | Convocatoria de la carrera pausada o sin abrir | Pide confirmación y rehace los sílabos de esa asignatura, en cualquier estado. |
+| Malla: horas, créditos, modalidad, nombre, código, ciclo, unidad o requisitos | Convocatoria de la carrera pausada o sin abrir (Coordinación) | Actualiza los datos solo en los sílabos que los muestran: los de esa materia y, si cambia su código, los de las materias que la tienen como requisito. Conserva lo escrito. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar. |
+| Malla: orden en el ciclo o número de ciclos | Convocatoria de la carrera pausada o sin abrir | Actualiza los datos sin cambiar el estado. |
+| Ficha de una asignatura | Convocatoria de la carrera pausada o sin abrir | Copia los campos cambiados a los sílabos de esa asignatura y conserva lo del docente. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar. |
 | Docente de un paralelo | Ninguno; se puede con la convocatoria abierta | El sílabo del paralelo en la convocatoria en curso se borra con todo su historial y empieza de cero para el docente nuevo. Los sílabos de convocatorias cerradas no se tocan. |
 | Código o jornada de un paralelo | Ninguno | Sin enviar: se actualiza la identificación. Enviado o aprobado: pide confirmación y lo rehace. |
 
 Rehacer un sílabo borra su contenido, revisiones, aprobación, firmas y chat, y avisa al
-docente. Con la pausa, los docentes no editan ni envían; los borradores se conservan.
+docente. Volver a Borrador conserva el contenido y el chat, borra revisiones, aprobación,
+PDF y firmas, y avisa al docente por correo: debe enviarlo y firmarlo de nuevo. Toda
+confirmación de estos cambios espera unos segundos antes de habilitar el botón. Con la pausa, los docentes no editan ni envían; los borradores se conservan.
 Prorrogar o reanudar sin cambios no rehace nada.
 
 ## Docente

@@ -21,7 +21,6 @@ class InheritMasterValues
     {
         $parallel->loadMissing('subject');
         $profile = $this->profiles->values($parallel->subject->id);
-        $editable = $this->profiles->editable($parallel->subject->id);
         foreach ($fields as $field) {
             if ($field->quien_llena === FieldDefinition::INSTITUTIONAL) {
                 continue;
@@ -31,7 +30,6 @@ class InheritMasterValues
                 'silabo_id' => $syllabus->id,
                 'definicion_campo_id' => $field->id,
                 'valor' => $inherited === null || FieldDocument::isEmpty($inherited) ? $field->contenido : $inherited,
-                'editable_docente' => $field->fromProfile() && ($editable[$field->id] ?? false),
             ]);
         }
     }

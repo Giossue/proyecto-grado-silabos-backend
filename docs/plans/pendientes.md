@@ -12,7 +12,7 @@ Lo único que falta, en un solo lugar. Cuando algo se resuelve, se borra de aqu�
 | PV-05 | Cantidad real de docentes, paralelos y sílabos | Coordinación | Datos de prueba |
 | PV-11 | Conservación, respaldo, RPO y RTO | Personal técnico y autoridad | TIC respalda todas las bases a nivel de servidor (2026-10-26); falta confirmar que incluye el volumen `storage/app` y cada cuánto |
 | PV-12 | Base legal y aviso de privacidad | UEB | Borrador en `docs/security/aviso-de-privacidad.md` |
-| PV-15 | Correo institucional (servidor SMTP, puerto, cuenta y dirección de envío; Resend queda para pruebas hasta la instalación en diciembre) y qué avisos llegan por correo | Personal técnico y Coordinación | El servidor de pruebas envía con Resend desde `no-responder@devs-ueb.tech`; en producción se configura el SMTP de la UEB (`docs/runbooks/deploy-dokploy.md`). Por correo solo llegan al docente la convocatoria abierta, la corrección solicitada y el sílabo aprobado (lista en `NOTIFICATION_EMAIL_EVENTS`), y a Coordinación un resumen diario de lunes a viernes si tiene sílabos por revisar o firmar; Administración y Biblioteca no reciben correo |
+| PV-15 | Correo institucional (servidor SMTP, puerto, cuenta y dirección de envío; Resend queda para pruebas hasta la instalación en diciembre) y qué avisos llegan por correo | Personal técnico y Coordinación | El servidor de pruebas envía con Resend desde `no-responder@devs-ueb.tech`; en producción se configura el SMTP de la UEB (`docs/runbooks/deploy-dokploy.md`). Por correo solo llegan al docente la convocatoria abierta, la corrección solicitada, el sílabo devuelto a borrador por un cambio de malla o ficha y el sílabo aprobado (lista en `NOTIFICATION_EMAIL_EVENTS`), y a Coordinación un resumen diario de lunes a viernes si tiene sílabos por revisar o firmar; Administración y Biblioteca no reciben correo |
 | PV-16 | Edición excepcional del contenido por Coordinación | Coordinación | No se permite |
 | PV-17 | Instrumento para medir el proceso actual | Dirección y autores | — |
 | PV-18 | Umbrales de utilidad y precisión de la IA | Coordinación y docentes | — |
@@ -21,30 +21,6 @@ Lo único que falta, en un solo lugar. Cuando algo se resuelve, se borra de aqu�
 
 PV-02 (precedencia entre documentos de la carrera) y PV-13 (equipo para IA local) probablemente ya no aplican:
 no hay comparación automática de documentos y la IA usa proveedores externos. Falta confirmarlo.
-
-## Continuidad del sílabo entre períodos (PV-21)
-
-Pedido: mientras la plantilla no cambie, el docente conserva lo que llenó en el período anterior. Acordado con el
-usuario el 2026-10-30; falta implementarlo. Mientras tanto rige la regla actual: cada convocatoria crea los
-sílabos desde cero.
-
-- **Qué se conserva:** solo los campos del docente. Lo de Coordinación sale de la ficha actual.
-- **Interruptor «El docente puede editarlo»:** se elimina. El docente nunca edita campos de Coordinación.
-- **Estado inicial:** Borrador sin firmas ni revisiones; el docente edita encima, sin aviso ni botón para
-  descartar.
-- **Momento:** al abrir el docente su sílabo (supuesto; el usuario no tiene preferencia).
-- **Origen:** el último sílabo del mismo docente en esa asignatura, en un período cerrado. Si cambia de paralelo,
-  hereda igual.
-- **Sin herencia (empieza de cero):** docente distinto, docente retirado de la carrera y reemplazado, o plantilla
-  modificada desde el período de origen.
-- **Plantilla:** cualquier cambio corta la herencia. Antes de abrir la convocatoria, y al editar la plantilla con
-  la convocatoria en pausa, el botón espera unos segundos con un mensaje claro de lo que implica. Falta definir
-  cómo detectar el cambio: la plantilla no tiene versiones (requiere guardar una huella de su estructura).
-- **Malla en curso:** horas, créditos o modalidad afectan solo los sílabos de esa asignatura, no los de toda la
-  carrera (hoy rehace toda la carrera). Una relación, un código o un nombre afecta solo las asignaturas que lo
-  muestran. En ambos casos se conserva lo escrito; si el sílabo estaba enviado o aprobado, vuelve a Borrador para
-  reenviarse y firmarse, con correo al docente. Coordinación ve la misma espera de unos segundos antes de guardar.
-- **Períodos cerrados:** nunca se modifican.
 
 ## Firma electrónica (DT-16)
 

@@ -1,6 +1,6 @@
 <?php
 
-$defaultEvents = ['convocatoria.abierta', 'silabo.correccion_solicitada', 'silabo.aprobado'];
+$defaultEvents = ['convocatoria.abierta', 'silabo.correccion_solicitada', 'silabo.devuelto_borrador', 'silabo.aprobado'];
 
 // Solo se aceptan tipos de aviso («grupo.nombre»); un valor vacío o equivocado (TRUE, 1…) no apaga nada.
 $events = array_values(array_filter(

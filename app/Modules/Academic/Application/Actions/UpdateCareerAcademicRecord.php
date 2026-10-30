@@ -42,11 +42,6 @@ class UpdateCareerAcademicRecord
         'paralelo_id' => 'Paralelo',
     ];
 
-    /** @var list<string> Campos de materia que solo cambian cómo se presenta la ficha. */
-    private const PRESENTATION_SUBJECT_FIELDS = [
-        'codigo_asignatura', 'nombre', 'ciclo', 'orden_en_ciclo', 'unidad_organizacion_curricular',
-    ];
-
     /** @var array<string, string> */
     private const AUDIT_KEYS = [
         'codigo' => 'code',
@@ -89,11 +84,11 @@ class UpdateCareerAcademicRecord
             throw new AuthorizationException('No puede editar este registro con el rol activo.');
         }
         $this->locks->assertCareerEditable($activeRole->carrera_id);
-        $cosmeticSubject = $entity === 'asignatura'
-            && $this->onlyPresentationChanges($recordId, $data, $activeRole->carrera_id);
-        $careerScope = $entity === 'asignatura' && ! $cosmeticSubject ? $activeRole->carrera_id : [];
+        $togglesSyllabi = $entity === 'asignatura'
+            && array_key_exists('generates_syllabus', $data)
+            && Subject::query()->whereKey($recordId)->value('genera_silabo') !== filter_var($data['generates_syllabus'], FILTER_VALIDATE_BOOLEAN);
 
-        return $this->work->replace($request, function () use ($actor, $activeRole, $cosmeticSubject, $data, $entity, $recordId): Model {
+        $change = function () use ($actor, $activeRole, $data, $entity, $recordId): Model {
             $record = $this->scopedRecord($entity, $recordId, $activeRole->carrera_id);
             $this->ensureMutable($entity, $record);
             if ($record instanceof Subject && isset($data['cycle'])) {
@@ -127,27 +122,13 @@ class UpdateCareerAcademicRecord
                 result: 'exito',
                 metadata: $metadata,
             );
-            if ($cosmeticSubject) {
-                $this->work->refreshSubjects($activeRole->carrera_id);
-            }
 
             return $record;
-        }, $careerScope);
-    }
+        };
 
-    /** @param array<string, mixed> $data */
-    private function onlyPresentationChanges(string $recordId, array $data, string $careerId): bool
-    {
-        $subject = Subject::query()->whereKey($recordId)->where('carrera_id', $careerId)->first();
-        if (! $subject instanceof Subject) {
-            return false;
-        }
-        $subject->fill(array_diff_key(
-            $this->subjectAttributes($data, $subject),
-            array_flip(self::PRESENTATION_SUBJECT_FIELDS),
-        ));
-
-        return ! $subject->isDirty();
+        return $togglesSyllabi
+            ? $this->work->replace($request, $change, $activeRole->carrera_id, null, null, $recordId)
+            : $this->work->keepContent($request, $activeRole->carrera_id, $change);
     }
 
     private function scopedRecord(string $entity, string $recordId, string $careerId): Model

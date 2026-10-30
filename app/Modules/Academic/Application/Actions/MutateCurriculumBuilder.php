@@ -53,7 +53,7 @@ class MutateCurriculumBuilder
                 'before_cycle_count' => $beforeCycleCount,
                 'after_cycle_count' => $cycleCount,
             ]);
-            $this->work->refreshSubjects($role->carrera_id);
+            $this->work->sync($request, $role->carrera_id);
 
             return $career;
         });
@@ -113,7 +113,7 @@ class MutateCurriculumBuilder
                 'requirement_id' => $requirement->requisito_id,
                 'type' => $requirement->tipo,
             ]);
-            $this->work->refreshSubjects($role->carrera_id);
+            $this->work->sync($request, $role->carrera_id);
 
             return $requirement;
         });
@@ -135,7 +135,7 @@ class MutateCurriculumBuilder
             $metadata = ['career_id' => $career->id, 'type' => $requirement->tipo];
             $requirement->delete();
             $this->record($actor, $role, $request, 'academico.requisito_asignatura.eliminacion', 'requisito_asignatura', $requirementId, $metadata);
-            $this->work->refreshSubjects($role->carrera_id);
+            $this->work->sync($request, $role->carrera_id);
         });
     }
 
@@ -184,7 +184,7 @@ class MutateCurriculumBuilder
             ];
             $subject->delete();
             $this->record($actor, $role, $request, 'academico.asignatura.eliminacion', 'asignatura', $subjectId, $metadata);
-            $this->work->refreshSubjects($role->carrera_id);
+            $this->work->sync($request, $role->carrera_id);
         });
     }
 
@@ -231,7 +231,7 @@ class MutateCurriculumBuilder
                 'before_position' => $beforePosition,
                 'after_position' => $subject->orden_en_ciclo,
             ]);
-            $this->work->refreshSubjects($role->carrera_id);
+            $this->work->sync($request, $role->carrera_id);
 
             return $subject;
         });

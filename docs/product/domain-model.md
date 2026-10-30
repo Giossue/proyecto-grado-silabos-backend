@@ -53,9 +53,8 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 ## Proyecto de carrera (`Academic`)
 
 - **Ficha de la asignatura**: filas de `valores_campo` con `asignatura_id` y sin
-  `silabo_id`, una por campo de la plantilla que llena Coordinación.
-  `editable_docente_valor_campo` indica si el docente puede editar ese campo en su
-  sílabo.
+  `silabo_id`, una por campo de la plantilla que llena Coordinación. Solo la edita
+  Coordinación.
 - **Vista previa de importación**: objeto en memoria generado al leer el Excel.
   Coordinación revisa y selecciona materias y campos. Al aplicar se envía el mismo
   archivo y se vuelve a validar. Solo los valores confirmados se guardan en

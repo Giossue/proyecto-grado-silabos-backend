@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
-use App\Modules\Configuration\Domain\FieldDocument;
 use App\Modules\Configuration\Domain\FieldResponse;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
@@ -37,20 +36,19 @@ class SaveSubjectProfile
 
     /**
      * @param  array<string, mixed>  $values
-     * @param  array<string, mixed>  $editable
      * @return array<string, array<string, mixed>>
      */
-    public function execute(Subject $subject, array $values, User $actor, Request $request, array $editable = []): array
+    public function execute(Subject $subject, array $values, User $actor, Request $request): array
     {
         $allowed = $this->fields->fields()->keyBy('id');
-        $fieldIds = array_values(array_unique([...array_map('strval', array_keys($values)), ...array_map('strval', array_keys($editable))]));
+        $fieldIds = array_map('strval', array_keys($values));
         foreach ($fieldIds as $fieldId) {
             if (! $allowed->has($fieldId)) {
                 throw ValidationException::withMessages(['values' => 'La ficha incluye un campo que ya no existe en la plantilla.']);
             }
         }
 
-        return $this->work->replace($request, function () use ($actor, $allowed, $editable, $fieldIds, $request, $subject, $values): array {
+        return $this->work->keepContent($request, $subject->carrera_id, function () use ($actor, $allowed, $fieldIds, $request, $subject, $values): array {
             $lockedSubject = Subject::query()->whereKey($subject->id)->lockForUpdate()->firstOrFail();
             $this->authorize($lockedSubject, $request);
             $this->locks->assertCareerEditable($lockedSubject->carrera_id);
@@ -61,21 +59,20 @@ class SaveSubjectProfile
                     ->where('asignatura_id', $lockedSubject->id)
                     ->where('definicion_campo_id', $fieldId)
                     ->first();
-                $teacher = array_key_exists($fieldId, $editable) ? $editable[$fieldId] === true : $current?->editable_docente === true;
                 $document = match (true) {
                     array_key_exists($fieldId, $values) => is_array($values[$fieldId]) ? FieldResponse::normalize($template, $values[$fieldId], "values.{$fieldId}") : null,
                     is_array($current?->valor) => $current->valor,
                     default => null,
                 };
                 $empty = $document === null || FieldResponse::isEmpty($template, $document);
-                if ($empty && ! $teacher) {
+                if ($empty) {
                     $current?->delete();
 
                     continue;
                 }
                 FieldValue::query()->updateOrCreate(
                     ['asignatura_id' => $lockedSubject->id, 'definicion_campo_id' => $fieldId],
-                    ['valor' => $empty ? FieldDocument::empty() : $document, 'editable_docente' => $teacher],
+                    ['valor' => $document],
                 );
             }
             $this->audit->execute(
@@ -85,10 +82,10 @@ class SaveSubjectProfile
                 resourceType: 'asignatura',
                 resourceId: $lockedSubject->id,
                 result: 'exito',
-                metadata: ['campos' => count($fieldIds), 'editables_docente' => count(array_filter($editable, fn (mixed $value): bool => $value === true))],
+                metadata: ['campos' => count($fieldIds)],
             );
 
             return $this->fields->values($lockedSubject->id);
-        }, $subject->carrera_id, null, 'Coordinación actualizó la ficha de la asignatura', $subject->id);
+        }, [$subject->id]);
     }
 }

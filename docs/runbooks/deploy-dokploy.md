@@ -199,7 +199,7 @@ verificado; los demás avisos quedan en la campana.
 | Variable | Por defecto | Efecto |
 |---|---|---|
 | `NOTIFICATION_EMAILS` | `true` | `false` apaga estos correos; las invitaciones de activación no cambian. |
-| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,silabo.correccion_solicitada,silabo.aprobado` | Tipos de aviso que se envían por correo, separados por coma. Vacía o con valores que no son tipos de aviso (como `TRUE`) usa la lista por defecto. Normalmente no hace falta definirla. |
+| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,silabo.correccion_solicitada,silabo.devuelto_borrador,silabo.aprobado` | Tipos de aviso que se envían por correo, separados por coma. Vacía o con valores que no son tipos de aviso (como `TRUE`) usa la lista por defecto. Normalmente no hace falta definirla. |
 | `NOTIFICATION_DIGEST` | `true` | `false` apaga el resumen diario de Coordinación. |
 | `NOTIFICATION_DIGEST_TIME` | `08:00` | Hora del resumen (`HH:MM`), en la hora de la institución. Vacía o con otro formato vale 08:00. |
 

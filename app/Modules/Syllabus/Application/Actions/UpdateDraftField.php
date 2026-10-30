@@ -41,7 +41,7 @@ class UpdateDraftField
                 throw ValidationException::withMessages(['field' => 'El campo no pertenece a la plantilla vigente.']);
             }
             $current = FieldValue::query()->where('silabo_id', $locked->id)->where('definicion_campo_id', $field->id)->first();
-            if (! FieldValue::editableByTeacher($field, $current)) {
+            if (! $field->teacherEditable()) {
                 throw ValidationException::withMessages(['field' => 'Este campo pertenece a Coordinación o a la institución y el docente no puede cambiarlo.']);
             }
 

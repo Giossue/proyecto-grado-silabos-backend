@@ -31,6 +31,7 @@ final class NotificationDestination
         'convocatoria.abierta',
         'silabo.correccion_solicitada',
         'silabo.reiniciado',
+        'silabo.devuelto_borrador',
         'silabo.eliminado',
         'silabo.regenerado',
         'silabo.aprobado',

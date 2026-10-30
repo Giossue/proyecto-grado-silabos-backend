@@ -123,11 +123,16 @@ pida.
   (ADR-0011): `plantilla_silabo.definicion_plantilla` más secciones y campos. Cada campo
   dice quién lo llena (`docente`, `coordinacion` o `institucional`).
 - La ficha de cada asignatura («Proyecto de carrera») guarda los campos de
-  Coordinación en `valores_campo`. Cada valor tiene el interruptor «El docente puede
-  editarlo»; el sílabo copia valor e interruptor al crearse.
-- Cambiar la plantilla, la malla o una ficha con sílabos existentes exige pausar y
-  confirmar. Los sílabos afectados se rehacen desde cero, incluso los aprobados. Los
-  procesos cerrados no se tocan.
+  Coordinación en `valores_campo`. Solo Coordinación los edita; el sílabo copia el valor
+  al crearse.
+- Al abrir su sílabo, el docente hereda sus campos del último sílabo suyo de esa
+  asignatura en una convocatoria cerrada, salvo que la plantilla haya cambiado desde
+  entonces.
+- Cambiar la plantilla con sílabos existentes exige pausar y confirmar; esos sílabos se
+  rehacen desde cero, incluso los aprobados. Cambiar la malla o una ficha también exige
+  pausar, pero conserva lo escrito: solo cambian los sílabos de las materias afectadas y
+  los enviados o aprobados vuelven a Borrador tras confirmar. Los procesos cerrados no se
+  tocan.
 - Cambiar el docente o los paralelos no exige pausa. Un docente nuevo empieza desde cero
   el sílabo de la convocatoria en curso; nada de una convocatoria cerrada se borra.
 - Administración cierra la convocatoria al terminar el período; lo cerrado queda solo para

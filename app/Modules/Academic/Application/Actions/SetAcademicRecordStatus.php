@@ -96,7 +96,7 @@ class SetAcademicRecordStatus
             );
 
             return $record;
-        }, $careerScope);
+        }, $careerScope, null, null, $careerScope === [] ? null : $recordId);
     }
 
     private function findCareerRecord(string $entity, string $recordId, ?string $careerId): Model

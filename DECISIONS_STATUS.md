@@ -169,9 +169,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   de cola. Se elimina `importaciones_ficha`, incluidos sus registros históricos, con
   una nueva migración y respaldo previo. La aplicación relee el mismo Excel al
   confirmar, compara sus huellas y guarda únicamente la selección en `valores_campo`.
-- Cada campo de la ficha tiene el interruptor «El docente puede editarlo». El sílabo
-  copia el valor y el interruptor al crearse. Un campo vacío con el interruptor
-  encendido no deja la ficha incompleta (I-230).
+- Los campos de la ficha son solo de Coordinación: el docente no los edita y la ficha
+  está completa solo si todos tienen texto. Se eliminó el interruptor «El docente puede
+  editarlo» (PV-21, 2026-10-30; reemplaza I-230).
 - El docente declara de 1 a 8 unidades (empieza con 4) y escribe el nombre y el
   resultado de aprendizaje de cada una dentro de su tabla del formato oficial, y
   completa la planificación semanal. Para enviar, cada unidad debe tener nombre y
@@ -184,15 +184,26 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   en una plantilla existente exige pausa y las confirmaciones de regeneración vigentes;
   el despliegue no modifica por sí solo la plantilla activa.
 - Cambiar la malla o una ficha con sílabos existentes exige pausar la convocatoria de la
-  carrera y confirmar. Los sílabos afectados se rehacen desde cero, incluso los
-  aprobados.
+  carrera y conserva lo escrito por el docente (PV-21, 2026-10-30). Solo cambian los
+  sílabos cuyo documento muestra el dato: horas, créditos, modalidad, nombre, código,
+  ciclo y unidad de su materia, y los códigos de sus requisitos. Los enviados, en
+  corrección o aprobados vuelven a Borrador sin revisiones ni firmas, tras confirmar con
+  una espera de unos segundos, y el docente recibe un aviso por correo. Activar o
+  desactivar «Puede generar sílabos» rehace solo los de esa materia.
 
 ## Elaboración del sílabo
 
 - Cada paralelo tiene su sílabo. Su docente es quien tiene la asignación vigente.
 - Estados: Sin iniciar, Borrador, En revisión, Corrección solicitada y Aprobado.
-- El docente edita en Borrador y en Corrección solicitada: sus campos y los de la ficha
-  con el interruptor encendido. Ve una vista previa del documento.
+- El docente edita en Borrador y en Corrección solicitada solo sus campos. Ve una vista
+  previa del documento.
+- Al abrir su sílabo, el docente hereda sus campos del último sílabo suyo de esa
+  asignatura en una convocatoria cerrada (aunque cambie de paralelo), si la plantilla no
+  se modificó después de que empezó ese sílabo. Nace en Borrador sin firmas; no hay aviso
+  ni botón para descartar. Un docente nuevo en el paralelo empieza de cero (PV-21,
+  2026-10-30).
+- Abrir la convocatoria y entrar a editar la plantilla piden confirmar con una espera de
+  unos segundos y explican que un cambio de plantilla hace empezar de cero.
 - El docente llena un formulario con los componentes del sistema, generado desde la
   plantilla; el aspecto del Word queda solo en la vista previa (2026-10-27).
 - Solo puede enviar entre la fecha de inicio y la de entrega, con la convocatoria sin

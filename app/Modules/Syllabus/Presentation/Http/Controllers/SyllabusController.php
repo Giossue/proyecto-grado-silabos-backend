@@ -383,7 +383,7 @@ class SyllabusController extends Controller
                     'label' => $field->etiqueta,
                     'quien_llena' => $field->quien_llena,
                     ...(FieldResponse::enabled() && $field->quien_llena !== FieldDefinition::INSTITUTIONAL ? ['template' => FieldResponse::template(FieldDocument::normalize($field->contenido))] : []),
-                    'teacher_editable' => FieldValue::editableByTeacher($field, $values->get($field->id) instanceof FieldValue ? $values->get($field->id) : null),
+                    'teacher_editable' => $field->teacherEditable(),
                     'required' => $field->quien_llena !== FieldDefinition::INSTITUTIONAL,
                     'value' => $document,
                     'document' => FieldDocument::resolve($document, $variables),

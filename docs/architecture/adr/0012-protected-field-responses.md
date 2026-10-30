@@ -111,3 +111,8 @@ completar el catálogo de unidades antes de reanudar.
 
 RF-017..033, RF-037..045; RN-009..012; CU-04, CU-05, CU-07, CU-09;
 ADM-06, COR-16, DOC-04. PV-16 no cambia.
+
+## Actualización 2026-10-30
+
+Se eliminó el interruptor de edición docente de la ficha (PV-21): los campos de
+Coordinación solo los edita Coordinación.

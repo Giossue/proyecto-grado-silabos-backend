@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property array<string, mixed>|list<mixed>|bool|float|int|string|null $valor
- * @property bool $editable_docente
  */
 class FieldValue extends Model
 {
@@ -19,7 +18,6 @@ class FieldValue extends Model
     protected const LEGACY_COLUMN_ALIASES = [
         'id' => 'valor_campo_id',
         'valor' => 'valor_campo',
-        'editable_docente' => 'editable_docente_valor_campo',
     ];
 
     public $timestamps = false;
@@ -29,17 +27,12 @@ class FieldValue extends Model
     protected $primaryKey = 'valor_campo_id';
 
     /** @var list<string> */
-    protected $fillable = ['silabo_id', 'asignatura_id', 'definicion_campo_id', 'valor', 'editable_docente'];
+    protected $fillable = ['silabo_id', 'asignatura_id', 'definicion_campo_id', 'valor'];
 
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['valor' => 'json', 'editable_docente' => 'boolean'];
-    }
-
-    public static function editableByTeacher(FieldDefinition $field, ?self $value): bool
-    {
-        return $field->teacherEditable() || ($field->fromProfile() && $value?->editable_docente === true);
+        return ['valor' => 'json'];
     }
 
     /** @return BelongsTo<FieldDefinition, $this> */

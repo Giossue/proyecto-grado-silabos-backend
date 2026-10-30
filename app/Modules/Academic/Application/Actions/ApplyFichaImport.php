@@ -47,7 +47,7 @@ final class ApplyFichaImport
         $role = $this->roles->resolve($request);
         abort_unless($role !== null && $role->carrera_id === $careerId, 403);
 
-        return $this->work->replace($request, fn (): int => DB::transaction(function () use ($preview, $careerId, $subjectIds, $actor, $role, $fieldsBySubject): int {
+        return $this->work->keepContent($request, $careerId, fn (): int => DB::transaction(function () use ($preview, $careerId, $subjectIds, $actor, $role, $fieldsBySubject): int {
             DB::table('carreras')->where('carrera_id', $careerId)->lockForUpdate()->first();
             $this->locks->assertCareerEditable($careerId);
             if ($preview->definition->fingerprint() !== $this->workbookContext->for($careerId)->fingerprint()) {
@@ -91,7 +91,7 @@ final class ApplyFichaImport
             $this->audit->execute($actor->id, $role->id, 'academico.ficha_importacion_aplicada', 'carrera', $careerId, 'exito', ['subjects' => $applied]);
 
             return $applied;
-        }), $careerId, null, 'Coordinación actualizó la ficha de la asignatura', null, $subjectIds);
+        }), $subjectIds);
     }
 
     /**

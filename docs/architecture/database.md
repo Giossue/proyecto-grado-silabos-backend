@@ -88,8 +88,6 @@ Reglas:
 
 - Cada fila tiene exactamente un dueño (`valores_campo_un_solo_dueno_check`).
 - Hay un solo valor por dueño y campo (dos índices únicos parciales).
-- `editable_docente_valor_campo` (falso por defecto) indica que Coordinación permite
-  al docente editar ese campo de la ficha. Al crear el sílabo se copia a su fila.
 - Borrar el sílabo o la asignatura borra sus valores (`ON DELETE CASCADE`).
 
 ### Revisiones y evidencia
