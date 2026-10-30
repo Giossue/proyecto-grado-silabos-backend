@@ -214,10 +214,10 @@ envían. Cada persona firma una sola vez por sílabo.
   su única pantalla. Se reactiva quitando el rol de `ROLES_WITHOUT_SIDEBAR`
   (`useShowsSidebar.ts`).
 - **Encabezado.** Campana de avisos, tema claro u oscuro y menú de usuario
-  (Configuración, Cerrar sesión). Con más de un rol, el pie del menú lateral ofrece
-  «Cambiar carrera o rol». El pie ofrece también «Instalar aplicación» mientras el
-  sistema no corre instalado. Sin menú lateral, ambas opciones están en el menú de
-  usuario.
+  (Configuración, Cerrar sesión). Con más de un rol, el menú de usuario ofrece «Cambiar
+  carrera o rol», con o sin menú lateral. El pie del menú lateral ofrece «Instalar
+  aplicación» mientras el sistema no corre instalado; sin menú lateral, esa opción
+  también está en el menú de usuario.
 - **Avisos.** Solo llegan cuando hay algo que hacer o cambió el trabajo propio. Abrir un
   aviso lleva a la pantalla donde se actúa y, si hace falta, activa el rol que
   corresponde. Cada aviso pertenece a un período; al terminar el período deja de verse.
