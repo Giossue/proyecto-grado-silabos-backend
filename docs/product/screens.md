@@ -66,7 +66,7 @@ y el botón «Documentos» (DOC-10).
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Entrada de Biblioteca; no tiene Panel. Aviso del plazo para revisar bajo la barra superior. Arriba, tres indicadores: por revisar, firmados y devueltos. Debajo, bandeja de toda la universidad con el período en curso: búsqueda, facultad y estado («Por revisar», «Atendidos»). «Atendido» junta los envíos firmados y aprobados por biblioteca, los devueltos al docente y los reemplazados por una revisión nueva; el detalle dice cuál de los tres fue. Columnas: carrera, docente y estado. Los bibliotecarios se reparten el trabajo por facultad: cada uno ve la última facultad que eligió. |
+| BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Entrada de Biblioteca; no tiene Panel. Aviso del plazo para revisar bajo la barra superior. Arriba, tres indicadores: por revisar, firmados y devueltos. Debajo, bandeja de toda la universidad con el período en curso: búsqueda por asignatura, código, carrera o docente, facultad y estado («Por revisar», «Atendidos»). «Atendido» junta los envíos firmados y aprobados por biblioteca, los devueltos al docente y los reemplazados por una revisión nueva; el detalle dice cuál de los tres fue. Columnas: carrera, docente y estado. Los bibliotecarios se reparten el trabajo por facultad: cada uno ve la última facultad que eligió. |
 | BIB-03 | Revisión de bibliografía | `/biblioteca/revisiones/:revision` | Solo asignatura, carrera, docente y la bibliografía; sin número de revisión ni «Enviado por». Botones en la cabecera: «Devolver al docente» (motivos) y «Firmar y aprobar». |
 | BIB-04 | Historial | `/biblioteca/historial` | Sílabos de períodos terminados, en solo lectura; se llega desde «Historial» en BIB-02. Filtros por período, facultad, estado y «Solo los míos» (los que el bibliotecario firmó o devolvió). La fila abre BIB-03. |
 
@@ -245,7 +245,10 @@ envían. Cada persona firma una sola vez por sílabo.
   «Convocatorias», «Revisión», «Mis sílabos» y «Revisiones de biblioteca». La puesta en
   marcha de Administración y de Coordinación es un modal en su pantalla de entrada.
 - **Tablas.** Búsqueda «Buscar por…», filtros y 20 filas por página. La fila abre el
-  detalle. En pantallas angostas, cada fila se vuelve una tarjeta.
+  detalle. En pantallas angostas, cada fila se vuelve una tarjeta. La búsqueda no distingue
+  tildes ni mayúsculas, y buscar vuelve a la primera página. En las tablas que consultan
+  al servidor, los filtros y la página quedan en la dirección y «Quitar filtros» aparece
+  siempre que haya alguno activo.
 - **Formularios.** Las altas se hacen en un modal o en una hoja lateral. Los datos
   obligatorios llevan asterisco.
 - **Estados.** Mismas etiquetas y colores en todo el producto. Las cargas muestran

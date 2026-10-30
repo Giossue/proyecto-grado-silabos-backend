@@ -22,6 +22,7 @@ use App\Modules\Identity\Presentation\Http\Requests\CreateManagedUserRequest;
 use App\Modules\Identity\Presentation\Http\Requests\ImportSpreadsheetRequest;
 use App\Modules\Identity\Presentation\Http\Requests\IndexUsersRequest;
 use App\Modules\Identity\Presentation\Http\Requests\UpdateManagedUserRequest;
+use App\Support\Search\AccentInsensitive;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -56,8 +57,8 @@ class ManagedUserController extends Controller
             ])
             ->when($search, fn (Builder $query, string $term) => $query->where(
                 fn (Builder $searchQuery) => $searchQuery
-                    ->whereRaw('nombre_usuario ILIKE ?', ['%'.addcslashes($term, '%_\\').'%'])
-                    ->orWhereRaw('correo_electronico ILIKE ?', ['%'.addcslashes($term, '%_\\').'%']),
+                    ->whereRaw(AccentInsensitive::matches('nombre_usuario'), [AccentInsensitive::pattern($term)])
+                    ->orWhereRaw(AccentInsensitive::matches('correo_electronico'), [AccentInsensitive::pattern($term)]),
             ))
             ->when($status === 'active', fn (Builder $query) => $query
                 ->where('activo', true)->whereNotNull('correo_verificado_en'))

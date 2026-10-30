@@ -471,12 +471,12 @@ class DocumentOperationsTest extends TestCase
         ]);
 
         $this->actingAsAdministrator()
-            ->getJson(route('api.v1.admin.audit-events.index', ['search' => 'syllabus.approved']))
+            ->getJson(route('api.v1.admin.audit-events.index', ['action' => 'syllabus.approved']))
             ->assertOk()
             ->assertDontSee($fingerprint)
             ->assertJson(fn (Assert $page) => $page->etc()
 
-                ->where('filters.search', 'syllabus.approved')
+                ->where('filters.action', 'syllabus.approved')
                 ->where('events.total', 1)
                 ->where('events.data.0.details.0.label', 'Número de revisión')
                 ->where('events.data.0.details.0.value', 2));

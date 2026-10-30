@@ -4,6 +4,7 @@ namespace App\Modules\Library\Application;
 
 use App\Modules\Library\Infrastructure\Persistence\Models\LibrarySubmission;
 use App\Support\InstitutionDate;
+use App\Support\Search\AccentInsensitive;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -61,8 +62,18 @@ final class LibraryReviews
             ->when($state !== null, fn (Builder $query) => $query->whereRaw('('.self::STATE_SQL.') = ?', [$state]))
             ->when($search !== null && $search !== '', fn (Builder $query) => $query->where(
                 fn (Builder $outer) => $outer
-                    ->whereRaw("silabo.datos_academicos_silabo->'subject'->>'name' ILIKE ?", ['%'.addcslashes($search, '%_\\').'%'])
-                    ->orWhereRaw("silabo.datos_academicos_silabo->'subject'->>'code' ILIKE ?", ['%'.addcslashes($search, '%_\\').'%']),
+                    ->whereRaw(AccentInsensitive::matches("silabo.datos_academicos_silabo->'subject'->>'name'"), [AccentInsensitive::pattern($search)])
+                    ->orWhereRaw(AccentInsensitive::matches("silabo.datos_academicos_silabo->'subject'->>'code'"), [AccentInsensitive::pattern($search)])
+                    ->orWhereExists(fn ($career) => $career->selectRaw('1')
+                        ->from('convocatorias_carreras as convocatoria_busqueda')
+                        ->join('carreras as carrera_busqueda', 'carrera_busqueda.carrera_id', '=', 'convocatoria_busqueda.carrera_id')
+                        ->whereColumn('convocatoria_busqueda.convocatoria_carrera_id', 'silabo.convocatoria_carrera_id')
+                        ->whereRaw(AccentInsensitive::matches('carrera_busqueda.nombre_carrera'), [AccentInsensitive::pattern($search)]))
+                    ->orWhereExists(fn ($teacher) => $teacher->selectRaw('1')
+                        ->from('docentes_vigentes_silabo as docente_busqueda')
+                        ->join('usuarios as usuario_busqueda', 'usuario_busqueda.usuario_id', '=', 'docente_busqueda.usuario_id')
+                        ->whereColumn('docente_busqueda.silabo_id', 'silabo.silabo_id')
+                        ->whereRaw(AccentInsensitive::matches('usuario_busqueda.nombre_usuario'), [AccentInsensitive::pattern($search)])),
             ))
             ->when($facultyId !== null, fn (Builder $query) => $query->whereExists(
                 fn ($career) => $career->selectRaw('1')

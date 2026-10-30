@@ -271,6 +271,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 ## Operación y datos
 
+- Los buscadores de tablas no distinguen tildes ni mayúsculas. En el servidor se resuelve
+  con `App\Support\Search\AccentInsensitive`, sin extensiones de la base. Biblioteca busca por
+  asignatura, código, carrera o docente; Auditoría no tiene búsqueda de texto.
 - La API JSON y la SPA son proyectos separados (ADR-0008).
 - El esquema está en español. La llave primaria se llama como la entidad
   (`valor_campo_id`) (I-28, I-179).

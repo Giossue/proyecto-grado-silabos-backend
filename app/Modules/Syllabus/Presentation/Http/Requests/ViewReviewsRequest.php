@@ -17,7 +17,7 @@ class ViewReviewsRequest extends FormRequest
     {
         return [
             'state' => ['nullable', 'string', 'in:en_revision,correccion_solicitada,aprobado'],
-            'search' => ['nullable', 'string', 'max:100'],
+            'search' => ['nullable', 'string', 'max:120'],
         ];
     }
 }

@@ -55,6 +55,18 @@ class ManagedUserTest extends TestCase
                 ->where('filters.status', null));
     }
 
+    public function test_user_search_ignores_accents_and_case(): void
+    {
+        User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail()->update(['nombre' => 'Ángel Núñez']);
+
+        foreach (['angel nunez', 'ÁNGEL', 'nuñez'] as $term) {
+            $this->actingAsAdministrator()
+                ->getJson(route('api.v1.admin.users.index', ['q' => $term]))
+                ->assertOk()
+                ->assertJsonPath('users.data.0.correo_electronico', 'docente@silabos.test');
+        }
+    }
+
     public function test_administrator_enters_without_selecting_its_only_role(): void
     {
         $this->actingAs($this->administrator)

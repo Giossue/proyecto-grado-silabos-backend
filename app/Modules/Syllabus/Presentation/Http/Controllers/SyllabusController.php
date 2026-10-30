@@ -37,6 +37,7 @@ use App\Modules\Syllabus\Presentation\Http\Requests\SigningStatementRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\SubmitSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\UpdateDraftFieldRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewSyllabiRequest;
+use App\Support\Search\AccentInsensitive;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -65,8 +66,11 @@ class SyllabusController extends Controller
             ->whereHas('convocation', fn ($query) => $query->where('carrera_id', $activeRole?->carrera_id))
             ->whereCurrentTeacher($user)
             ->inCurrentPeriod()
-            ->when($search, fn ($query, string $term) => $query
-                ->whereRaw("datos_academicos_silabo->'subject'->>'name' ILIKE ?", ['%'.addcslashes($term, '%_\\').'%']))
+            ->when($search, fn ($query, string $term) => $query->where(
+                fn ($outer) => $outer
+                    ->whereRaw(AccentInsensitive::matches("datos_academicos_silabo->'subject'->>'name'"), [AccentInsensitive::pattern($term)])
+                    ->orWhereRaw(AccentInsensitive::matches("datos_academicos_silabo->'subject'->>'code'"), [AccentInsensitive::pattern($term)]),
+            ))
             ->when($state, fn ($query, string $value) => $query->where('estado', $value))
             ->with(['convocation:id,carrera_id,convocatoria_universidad_id', 'convocation.career:id,nombre', 'convocation.process:id,periodo_academico_id', 'convocation.process.academicPeriod:id,codigo', 'parallel.subject'])
             ->orderByRaw('guardado_en DESC NULLS LAST')

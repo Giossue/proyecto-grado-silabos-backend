@@ -27,6 +27,7 @@ use App\Modules\Syllabus\Presentation\Http\Requests\DeleteSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ResetSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreCorrectionRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewReviewsRequest;
+use App\Support\Search\AccentInsensitive;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -62,10 +63,9 @@ class ReviewController extends Controller
             $query->whereIn('estado', ['en_revision', 'correccion_solicitada', 'aprobado']);
         }
         if ($search !== '') {
-            $escaped = addcslashes($search, '%_\\');
-            $query->whereHas('parallel.subject', fn ($subject) => $subject
-                ->where('nombre', 'ilike', "%{$escaped}%")
-                ->orWhere('codigo_asignatura', 'ilike', "%{$escaped}%"));
+            $query->where(fn ($outer) => $outer
+                ->whereRaw(AccentInsensitive::matches("datos_academicos_silabo->'subject'->>'name'"), [AccentInsensitive::pattern($search)])
+                ->orWhereRaw(AccentInsensitive::matches("datos_academicos_silabo->'subject'->>'code'"), [AccentInsensitive::pattern($search)]));
         }
 
         $payload = [

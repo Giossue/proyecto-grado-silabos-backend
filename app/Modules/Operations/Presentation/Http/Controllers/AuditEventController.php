@@ -19,7 +19,6 @@ class AuditEventController extends Controller
     {
         $action = $request->string('action')->toString();
         $result = $request->string('result')->toString();
-        $search = trim($request->string('search')->toString());
         $from = $request->string('from')->toString();
         $to = $request->string('to')->toString();
         $periodId = $request->string('period')->toString();
@@ -35,13 +34,6 @@ class AuditEventController extends Controller
         }
         if ($result !== '') {
             $query->where('resultado', $result);
-        }
-        if ($search !== '') {
-            $escaped = addcslashes($search, '%_\\');
-            $query->where(fn ($builder) => $builder
-                ->where('accion', 'ilike', "%{$escaped}%")
-                ->orWhere('actor_nombre', 'ilike', "%{$escaped}%")
-                ->orWhereHas('actor', fn ($actor) => $actor->where('nombre', 'ilike', "%{$escaped}%")));
         }
         $period = $periodId !== '' ? AcademicPeriod::query()->find($periodId) : null;
         if ($periodId !== '' && ! $period instanceof AcademicPeriod) {
@@ -81,7 +73,6 @@ class AuditEventController extends Controller
             'filters' => [
                 'action' => $action,
                 'result' => $result,
-                'search' => $search,
                 'from' => $from,
                 'to' => $to,
                 'period' => $periodId,

@@ -19,7 +19,7 @@ class ViewLibraryReviewsRequest extends FormRequest
     {
         return [
             'state' => ['nullable', 'string', Rule::in(LibraryReviews::STATES)],
-            'q' => ['nullable', 'string', 'max:100'],
+            'q' => ['nullable', 'string', 'max:120'],
             'faculty' => ['nullable', 'uuid', Rule::exists('facultades', 'facultad_id')],
             'period' => ['nullable', 'uuid', Rule::exists('periodos_academicos', 'periodo_academico_id')],
             'mine' => ['nullable', 'boolean'],

@@ -17,7 +17,6 @@ class ViewAuditEventsRequest extends FormRequest
         return [
             'action' => ['nullable', 'string', 'max:120'],
             'result' => ['nullable', 'string', 'in:exito,fallido'],
-            'search' => ['nullable', 'string', 'max:100'],
             'period' => ['nullable', 'uuid'],
             'role' => ['nullable', 'string', 'max:40'],
             'career' => ['nullable', 'uuid'],

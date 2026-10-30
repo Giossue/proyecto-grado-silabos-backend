@@ -15,6 +15,7 @@ use App\Modules\Syllabus\Presentation\Http\Requests\StoreConvocationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\TransitionConvocationRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewConvocationsRequest;
 use App\Support\InstitutionDate;
+use App\Support\Search\AccentInsensitive;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -34,7 +35,7 @@ class ConvocationController extends Controller
             'convocations' => SyllabusProcess::query()
                 ->when($search, fn ($query, string $term) => $query->where(
                     fn ($outer) => $outer->whereHas('academicPeriod', fn ($period) => $period
-                        ->whereRaw('codigo_periodo_academico ILIKE ?', ['%'.addcslashes($term, '%_\\').'%'])),
+                        ->whereRaw(AccentInsensitive::matches('codigo_periodo_academico'), [AccentInsensitive::pattern($term)])),
                 ))
                 ->when($state, function ($query, string $value) use ($careerId): void {
                     if ($value === 'sin_iniciar') {

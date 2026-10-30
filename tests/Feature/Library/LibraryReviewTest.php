@@ -104,6 +104,9 @@ class LibraryReviewTest extends TestCase
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 1);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertOk();
         $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 1);
+        $subject = $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->json('syllabi.data.0.subject');
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index', ['search' => mb_strtoupper((string) $subject)]))->assertOk()->assertJsonPath('syllabi.total', 1);
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index', ['search' => 'no-existe-nadie']))->assertOk()->assertJsonPath('syllabi.total', 0);
         $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id]);
     }
 
@@ -160,6 +163,9 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('reviews.data.0.revision_id', $revision->id)
             ->assertJsonPath('reviews.data.0.state', 'pendiente')
             ->assertJsonPath('reviews.data.0.teachers.0', $this->people['teacher'][0]->nombre);
+        $teacherName = mb_strtoupper($this->people['teacher'][0]->nombre);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['q' => $teacherName]))->assertOk()->assertJsonPath('reviews.total', 1);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['q' => 'no-existe-nadie']))->assertOk()->assertJsonPath('reviews.total', 0);
         $detail = $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))
             ->assertOk()
             ->assertJsonPath('review.can_comment', true)
