@@ -22,6 +22,30 @@ Lo único que falta, en un solo lugar. Cuando algo se resuelve, se borra de aqu�
 PV-02 (precedencia entre documentos de la carrera) y PV-13 (equipo para IA local) probablemente ya no aplican:
 no hay comparación automática de documentos y la IA usa proveedores externos. Falta confirmarlo.
 
+## Continuidad del sílabo entre períodos (PV-21)
+
+Pedido: mientras la plantilla no cambie, el docente conserva lo que llenó en el período anterior. Acordado con el
+usuario el 2026-10-30; falta implementarlo. Mientras tanto rige la regla actual: cada convocatoria crea los
+sílabos desde cero.
+
+- **Qué se conserva:** solo los campos del docente. Lo de Coordinación sale de la ficha actual.
+- **Interruptor «El docente puede editarlo»:** se elimina. El docente nunca edita campos de Coordinación.
+- **Estado inicial:** Borrador sin firmas ni revisiones; el docente edita encima, sin aviso ni botón para
+  descartar.
+- **Momento:** al abrir el docente su sílabo (supuesto; el usuario no tiene preferencia).
+- **Origen:** el último sílabo del mismo docente en esa asignatura, en un período cerrado. Si cambia de paralelo,
+  hereda igual.
+- **Sin herencia (empieza de cero):** docente distinto, docente retirado de la carrera y reemplazado, o plantilla
+  modificada desde el período de origen.
+- **Plantilla:** cualquier cambio corta la herencia. Antes de abrir la convocatoria, y al editar la plantilla con
+  la convocatoria en pausa, el botón espera unos segundos con un mensaje claro de lo que implica. Falta definir
+  cómo detectar el cambio: la plantilla no tiene versiones (requiere guardar una huella de su estructura).
+- **Malla en curso:** horas, créditos o modalidad afectan solo los sílabos de esa asignatura, no los de toda la
+  carrera (hoy rehace toda la carrera). Una relación, un código o un nombre afecta solo las asignaturas que lo
+  muestran. En ambos casos se conserva lo escrito; si el sílabo estaba enviado o aprobado, vuelve a Borrador para
+  reenviarse y firmarse, con correo al docente. Coordinación ve la misma espera de unos segundos antes de guardar.
+- **Períodos cerrados:** nunca se modifican.
+
 ## Firma electrónica (DT-16)
 
 La firma valida la cadena con `SIGNATURE_TRUSTED_CA_BUNDLE`. `resources/trust/ca-ecuador.pem` trae 14 entidades,
