@@ -80,7 +80,9 @@ y el botón «Documentos» (DOC-10).
   orientación y el ancho disponible de pantalla, también durante la edición.
 - En las plantillas protegidas, los párrafos y celdas vacíos son espacios de respuesta.
   El editor no muestra un aviso sobre esto. No hay controles por celda.
-- «Editar» activa la cinta de edición sobre las mismas hojas:
+- «Editar» pasa a pantalla completa, sin menú lateral: arriba, «Volver a la vista», el
+  título y el cambio de tema. «Volver a la vista» pide confirmar si hay cambios sin
+  guardar. Activa la cinta de edición sobre las mismas hojas:
   - formato de texto (negrita, cursiva, subrayado, alineación, listas);
   - menú «Tabla» (insertar, filas, columnas, combinar, separar, encabezado, fondo de
     celda, quitar);
@@ -91,7 +93,7 @@ y el botón «Documentos» (DOC-10).
   - «Diseño»: márgenes y tamaños de letra;
   - «Listas»: mínimo, máximo y «Al empezar» de cada lista de los bloques (por ejemplo,
     «Unidades» y «Semanas por unidad»);
-  - «Cancelar» y «Guardar» (también Ctrl+S). Nada se guarda hasta «Guardar».
+  - «Guardar» (también Ctrl+S). Nada se guarda hasta «Guardar».
 - En la hoja se agregan secciones y campos («Nueva sección», «Agregar campo»), se editan
   títulos en línea y se cambia el logo de la universidad.
 - «Opciones avanzadas → Editar JSON» abre «Plantilla como JSON»: «Descargar», «Cargar archivo»
