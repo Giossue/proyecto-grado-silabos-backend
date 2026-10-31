@@ -105,8 +105,8 @@ y el botón «Documentos» (DOC-10).
 
 - Columnas: período, clases, elaboración de sílabos y estado («Sin iniciar», «Abierto»,
   «Pausado», «Finalizado»).
-- «Nueva convocatoria» pide en dos pasos las fechas de clases (con «Semanas de clase»,
-  que sugiere las semanas entre las fechas y se puede corregir) y las de elaboración y
+- «Nueva convocatoria» pide en dos pasos las fechas de clases (con el aviso «Serían N
+  semanas de clase entre las fechas», no editable) y las de elaboración y
   entrega, y abre la convocatoria. Está deshabilitado mientras otra siga abierta o
   pausada.
 - Al pulsar una fila se abre un diálogo: sin convocatoria, «Abrir convocatoria» o
