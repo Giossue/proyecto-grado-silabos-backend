@@ -75,6 +75,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Las fechas de inicio y de entrega son fechas de calendario. Se guardan con los
   límites del día en la zona institucional y la API las publica como `YYYY-MM-DD`.
   Un plazo de entrega cierra al final del día local, no a las 19:00.
+- La cola de revisión de Coordinación solo trae lo que espera su decisión (en revisión y todavía sin pasar a Biblioteca); lo demás (en biblioteca, devuelto, aprobado) está en Seguimiento, cuyas filas abren la revisión (2026-10-31). Coordinación no ve el comentario ni quién verificó de Biblioteca: solo que lo devolvió; Biblioteca ve únicamente su bibliografía.
+- Coordinación tiene una sola acción para descartar un sílabo, «Reiniciar sílabo» (2026-10-31), con motivo obligatorio que ve el docente y queda en la auditoría, cuenta regresiva y, si está aprobado (borra todo y no hay reapertura), el nombre de la materia. Se retiró «Eliminar sílabo» (`DELETE /coordination/syllabi/{syllabus}`); `POST .../reset` hace ambas cosas según el estado.
+- Con el plazo de entrega vencido (2026-10-31) el docente queda en solo lectura: el servidor
+  rechaza iniciar, editar y enviar, y la API explica el motivo en `edit_block_reason`.
+  Coordinación y Biblioteca siguen revisando lo ya enviado. Solo Administración prorroga; al
+  hacerlo, todo se reabre. El aviso de plazo vencido sale en rojo.
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener
   coordinación y el período no debe haber terminado.
 - Estados: abierto ⇄ pausado → cerrado. Administración cierra la convocatoria y con ella

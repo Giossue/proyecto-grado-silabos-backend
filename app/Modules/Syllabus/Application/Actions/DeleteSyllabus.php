@@ -25,7 +25,7 @@ class DeleteSyllabus
         private readonly InProgressWork $work,
     ) {}
 
-    public function execute(Syllabus $syllabus, User $actor, Request $request): Syllabus
+    public function execute(Syllabus $syllabus, User $actor, Request $request, string $reason): Syllabus
     {
         $activeRole = $this->roles->resolve($request);
         if ($activeRole?->role->codigo_rol !== RoleCode::Coordinator->value
@@ -33,7 +33,7 @@ class DeleteSyllabus
             abort(403);
         }
 
-        return DB::transaction(function () use ($activeRole, $actor, $syllabus): Syllabus {
+        return DB::transaction(function () use ($activeRole, $actor, $syllabus, $reason): Syllabus {
             $locked = Syllabus::query()
                 ->lockForUpdate()
                 ->with(['convocation', 'parallel'])
@@ -54,6 +54,7 @@ class DeleteSyllabus
                 'previous_syllabus_id' => $locked->id,
                 'paralelo_id' => $locked->paralelo_id,
                 'revisions' => $locked->revisions()->count(),
+                'reason' => $reason,
             ];
             $teachers = $this->recipients->teachersFor($locked);
             $fresh = $this->work->restartSyllabus($locked);
@@ -73,6 +74,7 @@ class DeleteSyllabus
                 deduplicationKey: 'silabo.eliminado:'.$fresh->id,
                 recipientIds: $teachers,
                 revisionNumber: null,
+                reason: $reason,
             );
 
             return $fresh;

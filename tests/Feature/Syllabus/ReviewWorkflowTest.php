@@ -11,6 +11,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Documents\Infrastructure\Jobs\GenerateSyllabusExportJob;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
 use App\Modules\Syllabus\Application\RevisionDiff;
@@ -330,6 +331,9 @@ class ReviewWorkflowTest extends TestCase
             ->assertJson(fn (Assert $page) => $page->etc()
 
                 ->where('comparison.before_revision', 1)
+                ->where('syllabus.current_revision_id', $secondRevision->id)
+                ->where('syllabus.revisions.0.number', 1)
+                ->where('syllabus.revisions.1.id', $secondRevision->id)
                 ->where('comparison.after_revision', 2));
     }
 
@@ -374,16 +378,17 @@ class ReviewWorkflowTest extends TestCase
     {
         [$syllabus, $revision] = $this->submitValidDraft();
 
-        $this->actingAsCoordinator()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
-
         $this->approveThroughChain($revision);
         $this->assertSame('aprobado', $syllabus->fresh()->estado);
         $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))
-            ->assertOk()->assertJsonPath('can_delete', true);
-        $this->actingAsTeacher()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
+            ->assertOk()->assertJsonPath('reset.allowed', true)->assertJsonPath('reset.erases_history', true)->assertJsonPath('reset.has_pdf', true);
+        $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'El docente cambió de materia y debe empezar otra vez.'])->assertForbidden();
+        $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), [])->assertUnprocessable()->assertJsonValidationErrors('reason');
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'no'])->assertUnprocessable()->assertJsonValidationErrors('reason');
         $this->assertDatabaseHas('silabos', ['silabo_id' => $syllabus->id]);
 
-        $this->actingAsCoordinator()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertSuccessful();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'El docente cambió de materia y debe empezar otra vez.'])->assertSuccessful();
 
         $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertDatabaseCount('revisiones_silabo', 0);
@@ -392,6 +397,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertNotSame($syllabus->id, $fresh->id);
         $this->assertSame('sin_iniciar', $fresh->estado);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.eliminado', 'recurso_id' => $fresh->id]);
+        $this->assertStringContainsString('El docente cambió de materia', json_encode(AuditEvent::query()->where('accion', 'silabo.eliminado')->firstOrFail()->metadatos, JSON_UNESCAPED_UNICODE));
         $this->assertWorkflowNotification($fresh->id, 'silabo.eliminado');
         $this->assertFalse(Route::has('api.v1.coordination.reviews.reopen'));
     }
@@ -411,7 +417,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame(2, $second->numero_revision);
         $this->approveThroughChain($second);
 
-        $this->actingAsCoordinator()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertSuccessful();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'El docente cambió de materia y debe empezar otra vez.'])->assertSuccessful();
 
         $this->assertDatabaseMissing('silabos', ['silabo_id' => $syllabus->id]);
         $this->assertDatabaseCount('revisiones_silabo', 0);
@@ -597,7 +603,7 @@ class ReviewWorkflowTest extends TestCase
         $this->assertSame('en_revision', $syllabus->estado);
 
         $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.reviews.reset', $syllabus))
+            ->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Se cambió la ficha y hay que volver a empezar.'])
             ->assertSuccessful()
             ->assertSuccessful();
 
@@ -617,7 +623,7 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
         $this->assertSame('borrador', $syllabus->fresh()->estado);
 
-        $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.reset', $syllabus))->assertForbidden();
+        $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Motivo de prueba.'])->assertForbidden();
     }
 
     public function test_closed_convocation_keeps_the_review_read_only(): void
@@ -639,8 +645,8 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
             'idempotency_key' => (string) Str::uuid(),
         ])->assertForbidden()->assertJsonPath('message', $message);
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus))->assertForbidden()->assertJsonPath('message', $message);
-        $this->actingAsCoordinator()->deleteJson(route('api.v1.coordination.reviews.destroy', $syllabus))->assertForbidden();
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Motivo de prueba.'])->assertForbidden()->assertJsonPath('message', $message);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'El docente cambió de materia y debe empezar otra vez.'])->assertForbidden();
 
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
         $this->assertDatabaseCount('aprobaciones', 0);

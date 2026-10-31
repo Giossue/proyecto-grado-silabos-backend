@@ -4,6 +4,7 @@ namespace App\Modules\Syllabus\Infrastructure\Persistence\Models;
 
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Support\Database\MapsLegacyColumnNames;
+use App\Support\InstitutionDate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -69,6 +70,11 @@ class Convocation extends Model
                 SyllabusProcess::STATE_OPEN,
                 SyllabusProcess::STATE_PAUSED,
             ]));
+    }
+
+    public function deadlinePassed(): bool
+    {
+        return InstitutionDate::todayOn() > InstitutionDate::dateOf($this->process->entrega_en);
     }
 
     public function isRunning(): bool

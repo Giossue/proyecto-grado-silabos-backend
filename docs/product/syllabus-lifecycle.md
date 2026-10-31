@@ -32,10 +32,10 @@ Estados guardados (`silabos.estado_silabo`): `sin_iniciar`, `borrador`, `en_revi
 | En revisión · coordinación | Solicitar corrección | Coordinación | Corrección solicitada | Comentario general de 10 a 10 000 caracteres. |
 | En revisión · biblioteca | Firmar y aprobar | Biblioteca | Aprobado | Exige la firma de Biblioteca; crea la aprobación con huella y genera el PDF final; cuando está listo avisa al docente. |
 | En revisión · biblioteca | Devolver al docente | Biblioteca | Corrección solicitada | Uno o más motivos predefinidos, sin texto libre. |
-| Borrador, En revisión o Corrección solicitada | Reiniciar | Coordinación | Sin iniciar | Borra lo escrito y las firmas, vuelve a copiar la ficha y la plantilla y conserva las revisiones. |
-| Aprobado | Eliminar | Coordinación | Sin iniciar (sílabo nuevo) | Borra el sílabo con revisiones, aprobación, documentos, firmas y chat; crea uno nuevo para el paralelo. |
+| Borrador, En revisión o Corrección solicitada | Reiniciar | Coordinación | Sin iniciar | Pide un motivo, que ve el docente. Borra lo escrito y las firmas, vuelve a copiar la ficha y la plantilla y conserva las revisiones. |
+| Aprobado | Reiniciar | Coordinación | Sin iniciar (sílabo nuevo) | Pide un motivo y el nombre de la materia. Borra el sílabo con revisiones, aprobación, documentos, firmas y chat; crea uno nuevo para el paralelo. |
 
-Reiniciar y eliminar exigen la convocatoria de la carrera abierta o pausada. Lo mismo
+Reiniciar exige la convocatoria de la carrera abierta o pausada. Lo mismo
 vale para aprobar y pedir corrección.
 
 ## Etapas de revisión
@@ -91,7 +91,7 @@ el estado: el sílabo sigue «En revisión».
   reintentar desde Documentos.
 - Si la bibliografía cambió después de las firmas del docente o de Coordinación, el PDF
   igual lleva sus sellos.
-- Reiniciar o eliminar el sílabo borra sus firmas; el ciclo nuevo se vuelve a firmar.
+- Reiniciar el sílabo borra sus firmas; el ciclo nuevo se vuelve a firmar.
 
 ## Convocatoria y plazos
 
@@ -105,6 +105,10 @@ el estado: el sílabo sigue «En revisión».
   docente activo, las fichas están completas y la facultad tiene logo.
 - Solo Administración prorroga la entrega. La fecha nueva debe ser posterior a la
   actual. Se avisa a los docentes con sílabos sin aprobar.
+- Con la fecha de entrega vencida, el docente queda en solo lectura: no puede iniciar,
+  editar ni enviar (el servidor lo rechaza) y se le dice que pida una prórroga a
+  Administración. Coordinación y Biblioteca siguen revisando lo ya enviado. Al prorrogar,
+  todo se reabre. El cierre de la convocatoria no cambia.
 - Administración puede eliminar una convocatoria abierta o pausada mientras ningún
   docente haya enviado su sílabo. Entonces se borra de verdad, con las de cada carrera y
   los sílabos en borrador, y el período queda libre para abrir otra. Si ya hay sílabos

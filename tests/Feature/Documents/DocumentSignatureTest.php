@@ -226,7 +226,7 @@ class DocumentSignatureTest extends TestCase
             $this->assertSame($signature->nombre_en_certificado, $signature->fresh()?->nombre_en_certificado);
         }
 
-        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.reset', $syllabus))->assertSuccessful();
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Se reinicia para firmar de nuevo.'])->assertSuccessful();
         $this->assertDatabaseCount('firmas_silabo', 0);
         $fresh = Syllabus::query()->where('paralelo_id', $syllabus->paralelo_id)->firstOrFail();
         $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $fresh))

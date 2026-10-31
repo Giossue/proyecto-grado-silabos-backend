@@ -357,6 +357,7 @@ class SyllabusController extends Controller
             ! in_array($syllabus->estado, ['sin_iniciar', 'borrador', 'correccion_solicitada'], true) => 'El sílabo no admite cambios en su estado actual.',
             $convocationState === Convocation::STATE_CLOSED => 'La convocatoria está cerrada: el sílabo queda solo para consulta.',
             ! $syllabus->convocation->isRunning() => 'La convocatoria está en pausa. Podrá seguir editando cuando se reanude.',
+            $syllabus->convocation->deadlinePassed() => 'El plazo de entrega venció. Pida una prórroga a Administración.',
             default => 'No tiene una asignación vigente para editar este sílabo.',
         };
 

@@ -57,23 +57,14 @@ class SyllabusPolicy
 
     public function submit(User $user, Syllabus $syllabus): bool
     {
-        return $this->canTeacherEdit($user, $syllabus)
+        return $this->canTeacherEdit($user, $syllabus, enforceDeadline: false)
             && in_array($syllabus->estado, ['borrador', 'correccion_solicitada', 'en_revision'], true);
     }
 
     public function reset(User $user, Syllabus $syllabus): Response
     {
-        if (! in_array($syllabus->estado, ['borrador', 'en_revision', 'correccion_solicitada'], true)
+        if (! in_array($syllabus->estado, ['borrador', 'en_revision', 'correccion_solicitada', 'aprobado'], true)
             || ! $this->roles->hasRole(request(), RoleCode::Coordinator)) {
-            return Response::deny();
-        }
-
-        return $this->decide($user, $syllabus);
-    }
-
-    public function delete(User $user, Syllabus $syllabus): Response
-    {
-        if ($syllabus->estado !== 'aprobado' || ! $this->roles->hasRole(request(), RoleCode::Coordinator)) {
             return Response::deny();
         }
 
@@ -117,10 +108,14 @@ class SyllabusPolicy
         };
     }
 
-    private function canTeacherEdit(User $user, Syllabus $syllabus): bool
+    private function canTeacherEdit(User $user, Syllabus $syllabus, bool $enforceDeadline = true): bool
     {
-        return $this->isCurrentTeacher($user, $syllabus)
-            && $syllabus->convocation()->running()->exists();
+        if (! $this->isCurrentTeacher($user, $syllabus)) {
+            return false;
+        }
+        $convocation = $syllabus->convocation()->running()->first();
+
+        return $convocation !== null && (! $enforceDeadline || ! $convocation->deadlinePassed());
     }
 
     private function isCurrentTeacher(User $user, Syllabus $syllabus): bool

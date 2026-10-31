@@ -17,8 +17,9 @@ class ScheduleWorkflowNotification
         array $recipientIds,
         ?int $revisionNumber,
         ?string $artifactId = null,
+        ?string $reason = null,
     ): void {
-        [$title, $message] = WorkflowNotificationMessages::for($eventType, $syllabus, $revisionNumber);
+        [$title, $message] = WorkflowNotificationMessages::for($eventType, $syllabus, $revisionNumber, $reason);
         $this->store->execute(
             $eventType,
             $deduplicationKey,

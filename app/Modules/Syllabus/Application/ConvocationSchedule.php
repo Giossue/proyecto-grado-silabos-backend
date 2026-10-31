@@ -47,7 +47,7 @@ class ConvocationSchedule
             throw ValidationException::withMessages([
                 'deadline' => 'El plazo de entrega venció el '
                     .CarbonImmutable::parse($deadlineOn, 'UTC')->translatedFormat('d/m/Y')
-                    .'. Solicite una prórroga a la coordinación de su carrera.',
+                    .'. Pida una prórroga a Administración.',
             ]);
         }
     }

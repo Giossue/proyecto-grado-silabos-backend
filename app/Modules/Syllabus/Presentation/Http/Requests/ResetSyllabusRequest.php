@@ -22,6 +22,12 @@ class ResetSyllabusRequest extends FormRequest
     /** @return array<string, list<mixed>> */
     public function rules(): array
     {
-        return [];
+        return ['reason' => ['required', 'string', 'min:5', 'max:500']];
+    }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return ['reason' => 'motivo'];
     }
 }

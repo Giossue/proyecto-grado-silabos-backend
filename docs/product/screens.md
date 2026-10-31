@@ -34,26 +34,26 @@ muestra «Página no encontrada».
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
 | COR-01 | Antes de empezar | modal en COR-05 | Pasos previos a abrir la convocatoria de la carrera (malla, materias del período, paralelos y docentes), cada uno con «Ir» y un check al completarlo. «Abrir convocatoria» queda deshabilitado hasta que todo esté listo; su ayuda emergente dice qué falta. |
-| COR-04 | Seguimiento | pestaña en COR-05 | Todos los sílabos de la convocatoria con paralelos, docentes, estado y fecha de inicio. |
-| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Antes de empezar». Pestañas «Cola de revisión» (asignatura, docente, número de revisión y estado: «Por revisar» si le toca a Coordinación y «En biblioteca» si ya la aprobó) y «Seguimiento» (COR-04). |
-| COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | A pantalla completa, sin menú lateral, con «Volver a la cola». Bajo el título, el período y el docente. El sílabo se ve como el documento final. Decisiones en la cabecera, con diálogos: «Solicitar corrección» y «Firmar y enviar a biblioteca». Historial y comparación en un botón con ícono; reiniciar y eliminar en «Más». |
+| COR-04 | Seguimiento | pestaña en COR-05 | Todos los sílabos de la convocatoria con paralelos, docentes y estado; en revisión indica la etapa («En coordinación» o «En biblioteca»). La fila de un sílabo ya enviado abre su revisión (COR-06). |
+| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Antes de empezar». Pestañas «Cola de revisión» (solo lo que espera la decisión de Coordinación: asignatura, docente, número de revisión y fecha de envío; sin filtro de estado) y «Seguimiento» (COR-04), donde está todo lo demás: en biblioteca, devueltos y aprobados. |
+| COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | A pantalla completa, sin menú lateral, con «Volver a la cola». Junto al título, el estado como insignia y notas en texto («En biblioteca», «Devuelto por biblioteca», «Convocatoria cerrada · solo consulta», «Revisión N (anterior) · solo consulta»); debajo, el período y el docente. De lo que hace Biblioteca no ve comentarios ni quién verificó. El sílabo se ve como el documento final. Decisiones en la cabecera, con diálogos: «Solicitar corrección» y «Firmar y enviar a biblioteca». Historial y comparación en un botón con ícono; reiniciar en «Más». |
 | COR-07 | Comparar revisiones | `/coordinacion/revisiones/:before/comparar/:after` | Campos agregados, retirados o modificados, lado a lado. |
 | COR-08 | Solicitar corrección | diálogo en COR-06 | «Comentario para el docente» y «Solicitar corrección»; no se firma. |
 | COR-09 | Firmar y enviar a biblioteca | diálogo en COR-06 | Archivo `.p12`/`.pfx`, clave y confirmar: firma y pasa a Biblioteca. |
-| COR-10 | Eliminar sílabo aprobado | «Más» en COR-06 | «Eliminar sílabo» → «Eliminar definitivamente». |
+| COR-10 | Reiniciar sílabo | «Más» en COR-06 | Única acción para descartar un sílabo, en rojo y separada de «Historial». El diálogo dice qué se borra con números (firmas y, si está aprobado, revisiones y PDF), pide el motivo (lo ve el docente y queda en la auditoría), un botón con cuenta regresiva y, en un sílabo aprobado, escribir el nombre de la materia. |
 | COR-13 | Malla | `/coordinacion/malla` | Lienzo con ciclos, materias y requisitos; «Editar malla» abre el editor a pantalla completa; «Importar desde Excel». |
 | COR-14 | Materias y asignaciones | `/coordinacion/materias-asignaciones` | Materias con paralelos, jornada y docente; «Acciones masivas»; un clic abre «Paralelos y docentes de la materia». |
 | COR-15 | Docentes | `/coordinacion/docentes` | Docentes de la carrera; «Crear docente», «Importar desde Excel»; la fila abre «Editar docente» con «Reenviar invitación» y «Quitar de la carrera». |
 | COR-16 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Fichas de las asignaturas e importación mediante plantilla Excel. Detalle abajo. |
 
-COR-06 también ofrece «Reiniciar sílabo» mientras está en borrador, revisión o corrección,
+COR-06 también ofrece «Reiniciar sílabo» (COR-10) en borrador, revisión, corrección o aprobado,
 y el botón «Documentos» (DOC-10).
 
 ## Docente
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| DOC-02 | Mis sílabos | `/docente/mis-silabos` | Entrada del docente; no tiene Panel ni indicadores. Bajo la barra superior, un aviso ámbar con los días que quedan para enviar sus sílabos a revisión y la fecha límite. Debajo, tarjetas del período vigente, hasta tres por fila: asignatura, paralelo y estado. Botón «Historial». |
+| DOC-02 | Mis sílabos | `/docente/mis-silabos` | Entrada del docente; no tiene Panel ni indicadores. Bajo la barra superior, un aviso con los días que quedan para enviar sus sílabos a revisión y la fecha límite (en rojo cuando venció). Debajo, tarjetas del período vigente, hasta tres por fila: asignatura, paralelo y estado. Botón «Historial». |
 | DOC-04 | Sílabo | `/docente/mis-silabos/:syllabus` | Editor a pantalla completa, sin menú lateral. Detalle abajo. |
 | DOC-05 | Validación | dentro de DOC-04 | Campos faltantes y reglas de bloques; el botón de envío explica qué falta. |
 | DOC-06 | Asistente de unidades | botón flotante en DOC-04 | Solo mientras el sílabo se edita (Borrador o Corrección solicitada). «Asistente» abre el chat de IA con preguntas sugeridas y «Nuevo chat»; «Cerrar asistente» lo oculta. |
@@ -241,7 +241,9 @@ envían. Cada persona firma una sola vez por sílabo.
 - **Aviso de plazo.** Docente, Coordinación y Biblioteca ven en todas sus pantallas, bajo
   la barra superior, una franja ámbar con los días que quedan, qué les toca hacer antes
   del plazo de entrega y la fecha límite. Biblioteca usa el plazo de la convocatoria
-  institucional. El editor del sílabo, a pantalla completa, no la muestra.
+  institucional. El editor del sílabo, a pantalla completa, no la muestra. Con el plazo
+  vencido la franja sale en rojo: al docente le dice que pida una prórroga a Administración
+  y a Coordinación y Biblioteca que solo pueden revisar lo ya enviado.
 - **Sin Panel.** Cada rol entra a su lista de trabajo y ve ahí sus indicadores:
   «Convocatorias», «Revisión», «Mis sílabos» y «Revisiones de biblioteca». La puesta en
   marcha de Administración y de Coordinación es un modal en su pantalla de entrada.

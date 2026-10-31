@@ -146,6 +146,43 @@ class ConvocationScheduleTest extends TestCase
         $this->assertDatabaseCount('revisiones_silabo', 0);
     }
 
+    public function test_once_the_deadline_passes_the_teacher_can_only_read_and_an_extension_reopens_editing(): void
+    {
+        $syllabus = $this->createValidDraft();
+        $field = FieldDefinition::query()->where('quien_llena', 'docente')->firstOrFail();
+        $convocation = $this->expireDeadline($syllabus);
+
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
+            ->assertOk()
+            ->assertJsonPath('syllabus.editable', false)
+            ->assertJsonPath('syllabus.edit_block_reason', 'El plazo de entrega venció. Pida una prórroga a Administración.');
+        $this->actingAsTeacher()->patchJson(
+            route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
+            $this->validFieldPayload($field, $syllabus->fresh()->version_bloqueo),
+        )->assertForbidden();
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.deadline.extend', $convocation->proceso_id), [
+            'due_at' => now()->addWeek()->toIso8601String(),
+        ])->assertSuccessful();
+
+        $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
+            ->assertJsonPath('syllabus.editable', true);
+        $this->actingAsTeacher()->patchJson(
+            route('api.v1.teacher.syllabi.fields.update', [$syllabus, $field]),
+            $this->validFieldPayload($field, $syllabus->fresh()->version_bloqueo),
+        )->assertOk();
+    }
+
+    public function test_once_the_deadline_passes_the_teacher_cannot_start_a_new_syllabus(): void
+    {
+        $this->prepareConvocation();
+        $syllabus = Syllabus::query()->firstOrFail();
+        $this->expireDeadline($syllabus);
+
+        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertForbidden();
+        $this->assertSame('sin_iniciar', $syllabus->fresh()->estado);
+    }
+
     public function test_an_extension_cannot_target_a_day_that_already_passed(): void
     {
         $convocation = $this->prepareConvocation();

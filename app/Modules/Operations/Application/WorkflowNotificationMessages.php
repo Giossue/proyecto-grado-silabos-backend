@@ -10,7 +10,7 @@ final class WorkflowNotificationMessages
     public const TEMPLATE_REDONE = 'proceso.plantilla_rehecho';
 
     /** @return array{string, string} */
-    public static function for(string $eventType, ?Syllabus $syllabus, ?int $revision): array
+    public static function for(string $eventType, ?Syllabus $syllabus, ?int $revision, ?string $reason = null): array
     {
         if ($eventType === self::TEMPLATE_REDONE) {
             return [
@@ -24,6 +24,7 @@ final class WorkflowNotificationMessages
         $syllabus->loadMissing('parallel.subject:id,nombre');
         $subject = $syllabus->subject->nombre;
         $revisionLabel = $revision === null ? '' : ", revisión {$revision}";
+        $reasonLabel = $reason === null || trim($reason) === '' ? '' : ' Motivo: '.trim($reason);
 
         return match ($eventType) {
             'silabo.enviado', 'silabo.reenviado' => [
@@ -48,7 +49,7 @@ final class WorkflowNotificationMessages
             ],
             'silabo.eliminado' => [
                 'Su sílabo volvió a empezar',
-                "Coordinación eliminó su sílabo aprobado de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.",
+                "Coordinación eliminó su sílabo aprobado de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.{$reasonLabel}",
             ],
             'silabo.devuelto_borrador' => [
                 'Su sílabo volvió a borrador',
@@ -56,7 +57,7 @@ final class WorkflowNotificationMessages
             ],
             'silabo.reiniciado' => [
                 'Su sílabo volvió a empezar',
-                "Coordinación reinició su sílabo de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.",
+                "Coordinación reinició su sílabo de {$subject}. Complételo de nuevo con la malla y la plantilla actuales.{$reasonLabel}",
             ],
             'documento.exportacion_fallida' => [
                 'No se pudieron generar los documentos',

@@ -32,7 +32,7 @@ class ResetSyllabus
         private readonly InheritMasterValues $inherit,
     ) {}
 
-    public function execute(Syllabus $syllabus, User $actor, Request $request): Syllabus
+    public function execute(Syllabus $syllabus, User $actor, Request $request, string $reason): Syllabus
     {
         $activeRole = $this->roles->resolve($request);
         if ($activeRole?->role->codigo_rol !== RoleCode::Coordinator->value
@@ -40,7 +40,7 @@ class ResetSyllabus
             abort(403);
         }
 
-        return DB::transaction(function () use ($activeRole, $actor, $syllabus): Syllabus {
+        return DB::transaction(function () use ($activeRole, $actor, $syllabus, $reason): Syllabus {
             $locked = Syllabus::query()
                 ->lockForUpdate()
                 ->with(['convocation', 'parallel'])
@@ -64,6 +64,7 @@ class ResetSyllabus
             $discarded = [
                 'previous_state' => $locked->estado,
                 'discarded_values' => $locked->values()->count(),
+                'reason' => $reason,
             ];
 
             FieldValue::query()->where('silabo_id', $locked->id)->delete();
@@ -99,6 +100,7 @@ class ResetSyllabus
                 deduplicationKey: 'silabo.reiniciado:'.$locked->id.':'.now()->timestamp,
                 recipientIds: $this->recipients->teachersFor($locked),
                 revisionNumber: null,
+                reason: $reason,
             );
 
             return $locked->refresh();

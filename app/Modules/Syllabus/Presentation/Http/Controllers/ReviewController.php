@@ -23,13 +23,13 @@ use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Modules\Syllabus\Presentation\Http\Requests\ApproveSyllabusRequest;
-use App\Modules\Syllabus\Presentation\Http\Requests\DeleteSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ResetSyllabusRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\StoreCorrectionRequest;
 use App\Modules\Syllabus\Presentation\Http\Requests\ViewReviewsRequest;
 use App\Support\Search\AccentInsensitive;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 class ReviewController extends Controller
@@ -42,7 +42,6 @@ class ReviewController extends Controller
     public function index(ViewReviewsRequest $request, ActiveRole $roles): JsonResponse
     {
         $activeRole = $roles->resolve($request);
-        $state = $request->string('state')->toString();
         $search = trim($request->string('search')->toString());
 
         $query = Syllabus::query()
@@ -57,11 +56,10 @@ class ReviewController extends Controller
                     ->orderByDesc('numero_revision')
                     ->limit(1),
             ]);
-        if ($state !== '') {
-            $query->where('estado', $state);
-        } else {
-            $query->whereIn('estado', ['en_revision', 'correccion_solicitada', 'aprobado']);
-        }
+        $query->where('estado', 'en_revision')->whereHas('revisions', fn ($revision) => $revision
+            ->whereDoesntHave('librarySubmission')
+            ->whereDoesntHave('approval')
+            ->whereRaw('numero_revision = (select max(latest.numero_revision) from revisiones_silabo latest where latest.silabo_id = revisiones_silabo.silabo_id)'));
         if ($search !== '') {
             $query->where(fn ($outer) => $outer
                 ->whereRaw(AccentInsensitive::matches("datos_academicos_silabo->'subject'->>'name'"), [AccentInsensitive::pattern($search)])
@@ -69,7 +67,7 @@ class ReviewController extends Controller
         }
 
         $payload = [
-            'filters' => ['state' => $state, 'search' => $search],
+            'filters' => ['search' => $search],
             'syllabi' => $query->orderByRaw('guardado_en DESC NULLS LAST')->paginate(20)->withQueryString()
                 ->through(function (Syllabus $syllabus): array {
                     $revision = $syllabus->revisions->first();
@@ -134,20 +132,6 @@ class ReviewController extends Controller
         return response()->json(['message' => $message]);
     }
 
-    public function destroy(
-        Syllabus $syllabus,
-        DeleteSyllabusRequest $request,
-        DeleteSyllabus $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        $action->execute($syllabus, $actor, $request);
-
-        $message = 'Sílabo eliminado con todo su historial. El docente empieza de cero con la malla y la plantilla actuales.';
-
-        return response()->json(['message' => $message]);
-    }
-
     public function compare(
         SyllabusRevision $before,
         SyllabusRevision $after,
@@ -170,6 +154,10 @@ class ReviewController extends Controller
                 'subject' => $syllabus->academicSubjectName(),
                 'code' => $syllabus->academicSubjectCode(),
                 'period' => $syllabus->convocation->process->academicPeriod->codigo,
+                'current_revision_id' => $syllabus->revisions()->orderByDesc('numero_revision')->value('revision_silabo_id'),
+                'revisions' => $syllabus->revisions()->orderBy('numero_revision')->get(['revision_silabo_id', 'numero_revision', 'enviado_en'])
+                    ->map(fn (SyllabusRevision $item): array => ['id' => $item->id, 'number' => $item->numero_revision, 'submitted_at' => $item->enviado_en->toIso8601String()])
+                    ->all(),
             ],
             'comparison' => $diff->compare($before, $after),
         ];
@@ -222,7 +210,6 @@ class ReviewController extends Controller
                 ? SigningStatement::for($syllabus->id, SyllabusSignature::ROLE_COORDINATION, $revision->huella_sha256)
                 : null,
             'signatures' => $this->signatures->summary($syllabus->id),
-            'can_delete' => $decisionsAllowed && $syllabus->estado === 'aprobado' && $myStage === ReviewStage::COORDINATION,
             'presentation' => TemplatePresentation::presentation($definition, [
                 'institution' => route('logos.institution', ['v' => $this->logos->version($this->logos->institutionPath())]),
                 'faculty' => $this->logos->facultyUrl(data_get($syllabus->contexto_academico, 'career.faculty_id')),
@@ -240,24 +227,86 @@ class ReviewController extends Controller
                 'number' => $item->numero_revision,
                 'submitted_at' => $item->enviado_en->toIso8601String(),
                 'submitted_by' => $item->submitter->nombre,
-                'library_verified_at' => $item->approval?->aprobado_en->toIso8601String(),
-                'library_verified_by' => $item->approval?->approver->nombre,
                 'coordination_reviewed_at' => $item->coordinationReview?->revisado_en->toIso8601String(),
                 'coordination_reviewed_by' => $item->coordinationReview?->reviewer->nombre,
                 'approved_at' => $item->approval?->aprobado_en->toIso8601String(),
                 'approved_by' => $item->approval?->approver->nombre,
             ])->values(),
+            'timeline' => $this->timeline($syllabus->revisions->sortBy('numero_revision')->values()),
             'correction_request' => ! $revision->hasCorrectionRequest() ? null : [
-                'justification' => $revision->correccion_justificacion,
+                'justification' => $revision->correccion_etapa === ReviewStage::LIBRARY ? null : $revision->correccion_justificacion,
                 'stage' => $revision->correccion_etapa,
-                'requested_by' => $revision->correctionRequester->nombre,
+                'requested_by' => $revision->correccion_etapa === ReviewStage::LIBRARY ? null : $revision->correctionRequester->nombre,
                 'requested_at' => $revision->correccion_solicitada_en->toIso8601String(),
             ],
             'decisions_allowed' => $decisionsAllowed,
             'reset' => [
-                'allowed' => $decisionsAllowed && $myStage === ReviewStage::COORDINATION && in_array($syllabus->estado, ResetSyllabus::RESETTABLE_STATES, true),
+                'allowed' => $decisionsAllowed && $myStage === ReviewStage::COORDINATION && in_array($syllabus->estado, [...ResetSyllabus::RESETTABLE_STATES, 'aprobado'], true),
+                'erases_history' => $syllabus->estado === 'aprobado',
+                'revisions' => $syllabus->revisions->count(),
+                'signatures' => SyllabusSignature::query()->where('silabo_id', $syllabus->id)->count(),
+                'has_pdf' => $syllabus->estado === 'aprobado',
             ],
         ];
+    }
+
+    /**
+     * @param  Collection<int, SyllabusRevision>  $revisions
+     * @return list<array<string, mixed>>
+     */
+    private function timeline(Collection $revisions): array
+    {
+        $events = [];
+        foreach ($revisions as $index => $item) {
+            $events[] = [
+                'kind' => 'enviado',
+                'at' => $item->enviado_en->toIso8601String(),
+                'revision_id' => $item->id,
+                'revision_number' => $item->numero_revision,
+                'by' => $item->submitter->nombre,
+                'comment' => null,
+                'previous_id' => $revisions->get($index - 1)?->id,
+            ];
+            if ($item->coordinationReview !== null) {
+                $events[] = [
+                    'kind' => 'coordinacion_aprobo',
+                    'at' => $item->coordinationReview->revisado_en->toIso8601String(),
+                    'revision_id' => $item->id,
+                    'revision_number' => $item->numero_revision,
+                    'by' => $item->coordinationReview->reviewer->nombre,
+                    'comment' => null,
+                    'previous_id' => null,
+                ];
+            }
+            if ($item->hasCorrectionRequest()) {
+                $fromLibrary = $item->correccion_etapa === ReviewStage::LIBRARY;
+                $events[] = [
+                    'kind' => $fromLibrary ? 'devuelto_biblioteca' : 'correccion',
+                    'at' => $item->correccion_solicitada_en->toIso8601String(),
+                    'revision_id' => $item->id,
+                    'revision_number' => $item->numero_revision,
+                    'by' => $fromLibrary ? null : $item->correctionRequester->nombre,
+                    'comment' => $fromLibrary ? null : $item->correccion_justificacion,
+                    'previous_id' => null,
+                ];
+            }
+            if ($item->approval !== null) {
+                $events[] = [
+                    'kind' => 'aprobado',
+                    'at' => $item->approval->aprobado_en->toIso8601String(),
+                    'revision_id' => $item->id,
+                    'revision_number' => $item->numero_revision,
+                    'by' => null,
+                    'comment' => null,
+                    'previous_id' => null,
+                ];
+            }
+        }
+        $weight = ['enviado' => 0, 'coordinacion_aprobo' => 1, 'correccion' => 2, 'devuelto_biblioteca' => 2, 'aprobado' => 3];
+        usort($events, fn (array $left, array $right): int => [(string) $right['at'], $right['revision_number'], $weight[$right['kind']]]
+            <=> [(string) $left['at'], $left['revision_number'], $weight[$left['kind']]]);
+
+        return $events;
     }
 
     private static function stageOf(SyllabusRevision $revision): string
@@ -268,13 +317,19 @@ class ReviewController extends Controller
     public function reset(
         Syllabus $syllabus,
         ResetSyllabusRequest $request,
-        ResetSyllabus $action,
+        ResetSyllabus $reset,
+        DeleteSyllabus $delete,
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
-        $action->execute($syllabus, $actor, $request);
-
-        $message = 'Sílabo reiniciado. El docente empieza de cero con la malla y la plantilla actuales; el historial se conserva.';
+        $reason = trim($request->string('reason')->toString());
+        if ($syllabus->estado === 'aprobado') {
+            $delete->execute($syllabus, $actor, $request, $reason);
+            $message = 'Sílabo reiniciado con todo su historial. El docente empieza de cero con la malla y la plantilla actuales.';
+        } else {
+            $reset->execute($syllabus, $actor, $request, $reason);
+            $message = 'Sílabo reiniciado. El docente empieza de cero con la malla y la plantilla actuales; el historial se conserva.';
+        }
 
         return response()->json(['message' => $message]);
     }

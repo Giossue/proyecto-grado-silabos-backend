@@ -8,6 +8,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\Actions\CreateConvocation;
 use App\Modules\Syllabus\Application\Actions\TransitionConvocation;
+use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
@@ -87,7 +88,7 @@ class ConvocationController extends Controller
         abort_unless($request->user()?->can('view', $convocation) === true, 403);
         $convocation->load(['career', 'process.academicPeriod']);
         $syllabi = $convocation->syllabi()
-            ->with(['parallel:id,codigo,asignatura_id', 'parallel.subject:id,nombre,codigo_asignatura', 'teachers:id,nombre'])
+            ->with(['parallel:id,codigo,asignatura_id', 'parallel.subject:id,nombre,codigo_asignatura', 'teachers:id,nombre', 'revisions:id,silabo_id,numero_revision,correccion_etapa'])
             ->get()
             ->sortBy(fn ($syllabus): string => $syllabus->subject->nombre.'|'.$syllabus->academicParallelCode())
             ->values();
@@ -117,6 +118,9 @@ class ConvocationController extends Controller
                     'subject' => $syllabus->academicSubjectName(),
                     'code' => $syllabus->academicSubjectCode(),
                     'state' => $syllabus->estado,
+                    'stage' => ReviewStage::of($syllabus),
+                    'revision_id' => $syllabus->revisions->sortByDesc('numero_revision')->first()?->id,
+                    'returned_by' => $syllabus->estado === 'correccion_solicitada' ? $syllabus->revisions->sortByDesc('numero_revision')->first()?->correccion_etapa : null,
                     'iniciado_en' => $syllabus->iniciado_en?->toIso8601String(),
                     'parallels' => [$syllabus->academicParallelCode()],
                     'teachers' => $syllabus->teachers->pluck('nombre')->unique()->values(),

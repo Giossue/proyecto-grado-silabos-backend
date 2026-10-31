@@ -195,8 +195,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.coordination.reviews.correction.store');
             Route::post('coordination/reviews/{revision}/approve', [ReviewController::class, 'approve'])
                 ->middleware('active-role')->name('api.v1.coordination.reviews.approve');
-            Route::delete('coordination/syllabi/{syllabus}', [ReviewController::class, 'destroy'])
-                ->middleware('active-role')->name('api.v1.coordination.reviews.destroy');
             Route::post('coordination/syllabi/{syllabus}/reset', [ReviewController::class, 'reset'])
                 ->middleware('active-role')->name('api.v1.coordination.reviews.reset');
             Route::get('coordination/academic/curriculum/{curriculum}', [CareerAcademicStructureController::class, 'curriculumBuilder'])

@@ -4986,62 +4986,6 @@
                 ]
             }
         },
-        "/api/v1/coordination/syllabi/{syllabus}": {
-            "delete": {
-                "tags": [
-                    "Coordinación"
-                ],
-                "operationId": "api_v1_coordination_reviews_destroy",
-                "summary": "api.v1.coordination.reviews.destroy",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "syllabus",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
         "/api/v1/coordination/syllabi/{syllabus}/reset": {
             "post": {
                 "tags": [

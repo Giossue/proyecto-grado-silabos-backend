@@ -103,17 +103,16 @@ class LibraryReviewTest extends TestCase
         ]);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index'))->assertOk()->assertJsonPath('reviews.total', 1);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.show', $revision))->assertOk();
-        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 1);
-        $subject = $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->json('syllabi.data.0.subject');
-        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index', ['search' => mb_strtoupper((string) $subject)]))->assertOk()->assertJsonPath('syllabi.total', 1);
-        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index', ['search' => 'no-existe-nadie']))->assertOk()->assertJsonPath('syllabi.total', 0);
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 0);
         $this->assertDatabaseHas('envios_biblioteca', ['revision_silabo_id' => $revision->id]);
     }
 
     public function test_cada_bibliotecario_filtra_su_bandeja_por_facultad(): void
     {
         [$syllabus, $revision] = $this->submittedRevision();
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 1)->assertJsonPath('syllabi.data.0.stage', 'coordinacion');
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->people['coordinator'][0]), 'idempotency_key' => (string) Str::uuid()])->assertSuccessful();
+        $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.index'))->assertOk()->assertJsonPath('syllabi.total', 0);
         $own = $syllabus->convocation->career()->firstOrFail()->facultad_id;
         $other = Faculty::query()->create(['nombre' => 'Facultad de Ciencias de la Salud', 'campus' => 'Campus Matriz Dr. Gabriel Galarza López', 'activo' => true]);
 
@@ -205,6 +204,20 @@ class LibraryReviewTest extends TestCase
         $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))
             ->assertJsonPath('syllabus.review_comments.0.stage', 'biblioteca')
             ->assertJsonPath('syllabus.review_comments.0.comment', 'El libro no está disponible en biblioteca; El código del libro es incorrecto.');
+
+        $coordinatorView = $this->as('coordinator')->getJson(route('api.v1.coordination.reviews.show', $revision))->assertOk()
+            ->assertJsonPath('correction_request.stage', 'biblioteca')
+            ->assertJsonPath('correction_request.justification', null)
+            ->assertJsonPath('correction_request.requested_by', null);
+        $this->assertArrayNotHasKey('library_verified_by', $coordinatorView->json('history.0'));
+        $tracking = $this->as('coordinator')->getJson(route('api.v1.coordination.convocations.show', $syllabus->convocation))->assertOk();
+        $this->assertSame('biblioteca', collect($tracking->json('convocation.syllabi'))->firstWhere('id', $syllabus->id)['returned_by']);
+        $this->assertStringNotContainsString('El libro no está disponible', (string) $coordinatorView->getContent());
+        $kinds = array_column($coordinatorView->json('timeline'), 'kind');
+        $this->assertSame(['devuelto_biblioteca', 'coordinacion_aprobo', 'enviado'], $kinds);
+        $returned = collect($coordinatorView->json('timeline'))->firstWhere('kind', 'devuelto_biblioteca');
+        $this->assertNull($returned['by']);
+        $this->assertNull($returned['comment']);
 
         $other = FieldDefinition::query()->where('quien_llena', 'docente')
             ->where('clave', '!=', 'bibliografia')->firstOrFail();
