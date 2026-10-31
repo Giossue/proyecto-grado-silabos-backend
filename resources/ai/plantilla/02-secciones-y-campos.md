@@ -6,7 +6,11 @@
   hoja: vertical u horizontal.
 - Los títulos suelen llevar numeración («7. Metodología…»). Si agrega, quita o mueve una
   sección numerada, renombre las siguientes para que la numeración siga siendo consecutiva.
-  Haga lo mismo con los campos numerados («7.1 …», «7.2 …»).
+  Haga lo mismo con los campos numerados («7.1 …», «7.2 …»): si una sección cambia de número,
+  sus campos numerados también (si «7. Metodología» pasa a ser la 8, «7.1 …» pasa a «8.1 …»).
+  Use `renombrar_campo` en el mismo paso que los demás renombres. Renumere solo los títulos que ya
+  llevan número: no agregue números a los que no lo tienen (por ejemplo, «Revisión y
+  aprobación»).
 - Toda sección necesita al menos un campo.
 - `ver_plantilla` marca las secciones obligatorias (`obligatoria`) y la que revisa Biblioteca
   (`revisa_biblioteca`). Esas no se quitan.

@@ -229,8 +229,13 @@ que la IA no usa.
 
 ## Fases
 
-1. **Prueba técnica, sin pantalla.** Código y pruebas listos (2026-10-31); falta correr el
-   comando con DeepSeek real.
+1. **Prueba técnica, sin pantalla.** Hecha (2026-10-31) con `deepseek-flash`, modo estricto y
+   razonamiento apagado. Primera corrida: 9 de 10; fallaron mover la bibliografía (renombraba
+   de a una sección por paso y llegó al tope de 8) y se numeró «Revisión y aprobación», que no
+   llevaba número. Se ajustaron las reglas (varias funciones en un mismo paso, renumerar solo lo
+   numerado y también los campos de una sección que cambia de número). Segunda corrida: 10 de
+   10, entre 1 y 5 pasos y entre 1 y 9 s por pedido; los 10 pedidos usaron unos 238 000 tokens
+   de entrada (91 % en caché) y 4 300 de salida, menos de un centavo de dólar en total.
    - Contrato nuevo para el ciclo con *tools* (por ejemplo `AiAgentGateway`), separado de
      `AiChatGateway` para no tocar el chat del docente. Implementaciones: DeepSeek y
      `baseline` (simulador sin red que reproduce llamadas a *tools* en las pruebas).
