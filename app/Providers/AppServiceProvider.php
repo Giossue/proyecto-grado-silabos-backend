@@ -5,9 +5,13 @@ namespace App\Providers;
 use App\Models\User;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Access\AcademicRoleEligibility;
+use App\Modules\AiAssistance\Domain\Contracts\AiAgentGateway;
 use App\Modules\AiAssistance\Domain\Contracts\AiChatGateway;
+use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiAgentGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\BaselineAiChatGateway;
+use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiAgentGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\DisabledAiChatGateway;
+use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiAgentGateway;
 use App\Modules\AiAssistance\Infrastructure\Gateways\HostedAiChatGateway;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
@@ -51,6 +55,13 @@ class AppServiceProvider extends ServiceProvider
                 'baseline' => app(BaselineAiChatGateway::class),
                 'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiChatGateway::class),
                 default => app(DisabledAiChatGateway::class),
+            };
+        });
+        $this->app->bind(AiAgentGateway::class, function (): AiAgentGateway {
+            return match ((string) config('ai.driver')) {
+                'baseline' => app(BaselineAiAgentGateway::class),
+                'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiAgentGateway::class),
+                default => app(DisabledAiAgentGateway::class),
             };
         });
     }

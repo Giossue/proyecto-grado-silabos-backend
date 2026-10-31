@@ -62,6 +62,31 @@ tokens de salida.
 mensajes terminados no cambian (trigger `proteger_mensaje_ia`). Se borran solo al
 regenerar o eliminar el sílabo.
 
+## Asistente de la plantilla (POR VALIDAR)
+
+Fase 1 de `docs/plans/active/asistente-ia-plantilla.md`: el código existe, pero aún no tiene
+pantalla ni guarda nada. Administración pide un cambio en lenguaje natural y la IA arma una
+propuesta llamando funciones (*tools*), sin tocar la plantilla real.
+
+- Contrato `AiAgentGateway` (un paso del ciclo con *tools*), separado de `AiChatGateway`.
+  `HostedAiAgentGateway` solo admite DeepSeek (`chat/completions`, `tool_choice: required`,
+  razonamiento apagado, `user_id` anónimo). Con `AI_TOOLS_STRICT=true` (por defecto) usa
+  `https://api.deepseek.com/beta/chat/completions` y marca cada función como `strict`.
+  `baseline` es un simulador sin red; `disabled` falla con «no disponible».
+- `AI_TEMPLATE_MODEL` elige el modelo del asistente; vacía, usa `AI_MODEL`. Los dos modelos
+  vigentes (`deepseek-flash` y `deepseek-v4-pro`) usan la misma API.
+- `TemplateAssistant` corre el ciclo: máximo 8 pasos, 2 minutos y 3 pasos seguidos con error
+  (`config/ai.php`, `template`). Reintenta 429, 5xx y caídas de conexión tras 2 s y 5 s; 401,
+  402, 400 y 422 no se reintentan.
+- `TemplateDraft` es la copia en memoria sobre la que trabajan las funciones;
+  `TemplateDraftValidator` aplica las mismas reglas que «Guardar»
+  (`ImportTemplateStructureRequest`) más secciones obligatorias y secciones sin campos. La
+  propuesta tiene el formato que guarda el editor visual.
+- El contexto de la IA está en `resources/ai/plantilla/*.md` y va completo como mensaje de
+  sistema (DeepSeek lo cachea).
+- Prueba con pedidos reales, sin guardar: `php artisan template:assistant-trial`
+  (`--pedido="…"` para uno suelto).
+
 ## Seguridad
 
 - El contenido del sílabo se trata como dato no confiable. El prompt lo encierra y

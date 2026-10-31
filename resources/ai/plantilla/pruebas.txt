@@ -1,0 +1,10 @@
+Agrega un campo "Competencias" al final de la sección de resultados de aprendizaje, que lo llene el docente.
+Que la descripción de la asignatura la escriba el docente y no Coordinación.
+Agrega una sección "Prácticas de laboratorio" después de la metodología, con una tabla de práctica, horas y lugar que llene el docente.
+Quita la sección de habilidades blandas.
+Mueve la bibliografía antes de la metodología.
+Pon la sección de planificación en vertical.
+En conducta ética agrega un punto sobre el uso responsable de la inteligencia artificial.
+Agrega un campo para los datos del docente.
+¿Qué campos llena Coordinación?
+Cambia el nombre del campo "Métodos de enseñanza – aprendizaje" por "Métodos de enseñanza y aprendizaje", sin perder la numeración.

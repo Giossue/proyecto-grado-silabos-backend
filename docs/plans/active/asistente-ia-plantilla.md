@@ -94,39 +94,54 @@ prueba con pedidos reales.
 6. La pantalla muestra la propuesta sobre la vista previa, con lo que cambia marcado. La persona
    pulsa «Aplicar» o «Descartar».
 
-### Catálogo de *tools*
+### Catálogo de *tools* (implementado en la fase 1)
+
+Una función por acción, como pidió el docente. Todos los parámetros son obligatorios y no hay
+parámetros extra, para cumplir el modo estricto de DeepSeek. Las claves de secciones y campos
+nuevos las genera el servidor a partir del nombre y nunca reusan la clave de algo que se quitó
+(así una ficha de Coordinación no se pega a otro campo).
 
 Consulta (solo leen):
 
 | Tool | Devuelve |
 |---|---|
-| `ver_plantilla` | Secciones y campos en orden, con clave, título y quién llena cada uno |
-| `ver_seccion` | Detalle de una sección |
-| `ver_campo` | Detalle de un campo, con su contenido |
-| `listar_bloques` | Bloques definidos y qué hace cada uno |
-| `listar_presets` | Presets que se pueden insertar |
-| `listar_variables` | Variables disponibles |
-| `ver_estado` | Si la convocatoria está abierta o en pausa y cuántos sílabos se rehacen al aplicar |
+| `ver_plantilla` | Secciones y campos en orden: clave, título, orientación, si es obligatoria o la revisa Biblioteca, y de cada campo su nombre, quién lo llena y un resumen |
+| `ver_campo` | Un campo con su contenido completo en HTML |
+| `listar_presets` | Contenidos listos (tablas y bloques oficiales) |
+| `listar_variables` | Datos del sistema que se pueden insertar |
+| `ver_estado` | Convocatoria abierta, en pausa o ninguna, y qué implica |
 
-Propuesta (cambian el borrador):
+Propuesta (cambian el borrador; no se ofrecen con la convocatoria abierta):
 
 | Tool | Hace |
 |---|---|
-| `proponer_seccion` | Agregar, renombrar, mover o quitar una sección (fase 1) |
-| `proponer_campo` | Agregar, editar, mover o quitar un campo y fijar quién lo llena (fase 1) |
-| `validar_borrador` | Corre la validación del servidor y devuelve los errores con su ruta (fase 1) |
-| `proponer_bloque` | Insertar un bloque o preset existente (fase 3) |
-| `proponer_diseno` | Márgenes y tamaños (fase 3) |
-| `proponer_limites_lista` | Mínimo, máximo y «Al empezar» de una lista (fase 3) |
+| `agregar_seccion` | Agrega una sección vacía |
+| `renombrar_seccion` | Cambia el título |
+| `cambiar_orientacion_seccion` | Vertical u horizontal |
+| `mover_seccion` | Cambia la posición |
+| `quitar_seccion` | Quita la sección; rechaza las obligatorias y la de Biblioteca |
+| `agregar_campo` | Agrega un campo con nombre, responsable y contenido HTML |
+| `renombrar_campo` | Cambia el nombre (subtítulo) |
+| `cambiar_responsable_campo` | Cambia quién lo llena |
+| `cambiar_contenido_campo` | Reemplaza el contenido HTML |
+| `mover_campo` | Lo mueve dentro de la sección o a otra |
+| `quitar_campo` | Quita el campo |
+| `usar_preset` | Pone un contenido listo (así se insertan los bloques) |
+| `validar_borrador` | Corre la validación de «Guardar» y lista los cambios |
 
-Conversación:
+Conversación (terminan el turno):
 
 | Tool | Hace |
 |---|---|
-| `responder` | Explica o resume la propuesta para la persona |
-| `preguntar` | Pide una aclaración cuando el pedido es ambiguo y termina el ciclo |
+| `responder` | Resume la propuesta o responde. Si el borrador cambió y tiene errores, se le devuelven a la IA para que los corrija |
+| `preguntar` | Pide una aclaración; descarta el borrador |
 
-La IA trabaja sobre secciones y campos, no sobre el JSON completo.
+Se descartaron `ver_seccion` y `listar_bloques`: `ver_plantilla` y `listar_presets` ya dan esa
+información. Diseño (márgenes, letra) y límites de listas quedan para la fase 3.
+
+La IA trabaja sobre secciones y campos, no sobre el JSON completo. La propuesta tiene el mismo
+formato que guarda el editor visual (`PUT admin/template/{id}/json`, versión 1), así que pasa
+por la misma validación.
 
 ### Rutas para el frontend
 
@@ -156,7 +171,8 @@ Todas solo para Administración, con `active-role` y su Form Request y Policy.
 
 - Por llamada: `AI_TIMEOUT` (20 s), suficiente sin razonamiento.
 - Por pedido: máximo 8 pasos en total (pasos normales y reintentos juntos) y 2 minutos.
-- Por error de validación: hasta 3 correcciones del mismo error.
+- Por errores: hasta 3 pasos seguidos con error (de una *tool*, de validación o respuesta en
+  blanco); al cuarto se detiene.
 - Si se pasa de un límite: «No pude completar el pedido; intente explicarlo de otra forma».
   No se guarda ninguna propuesta a medias.
 - Por persona: sin cupo diario ni por minuto para Administración (decisión del usuario,
@@ -168,8 +184,11 @@ Todas solo para Administración, con `active-role` y su Form Request y Policy.
 | Caso | Qué hace |
 |---|---|
 | 402 sin saldo, 401 clave inválida | «Asistente no disponible»; el editor sigue funcionando |
-| 429 límite | Espera y reintenta; si persiste, «inténtelo en unos minutos» |
-| 500 / 503 | Reintenta tras esperar, dentro del tope de pasos |
+| 429 límite | Reintenta tras 2 s y 5 s; si persiste, «inténtelo en unos minutos» |
+| 500, 502, 503, 504 o sin conexión | Reintenta tras 2 s y 5 s; si persiste, «no disponible» |
+| 400 o 422 | No reintenta; guarda el detalle del proveedor (sin datos del pedido) |
+| Sin capacidad (`insufficient_system_resource`) | «Inténtelo en unos minutos» |
+| Respuesta cortada (`length`) o filtrada | Cuenta como paso con error |
 | Respuesta en blanco | Cuenta como reintento, no como error final |
 | Argumentos inválidos de una *tool* | Se devuelve el error a la IA como resultado de la *tool* |
 | `tool_calls` con una función que no existe | Igual que el anterior |
@@ -195,28 +214,32 @@ Todas solo para Administración, con `active-role` y su Form Request y Policy.
 
 ## Contexto en Markdown
 
-Carpeta nueva en el backend (por ejemplo `resources/ai/plantilla/`), versionada:
+`resources/ai/plantilla/` (se leen en orden y van completos como mensaje de sistema, que se
+cachea):
 
-- `reglas.md`: qué es una sección, un campo, quién llena cada cosa, qué no se puede tocar
-  (secciones obligatorias, sección de Biblioteca).
-- `glosario.md`: bloques, presets y variables de la plantilla oficial.
-- `ejemplos.md`: 10 a 15 pares «pedido → *tools* esperadas».
-- `prohibiciones.md`: no inventar bloques ni directivas; no aplicar; preguntar si hay duda.
-- El manual `template-json.md` como referencia.
+- `01-rol-y-reglas.md`: cómo trabaja, qué no hace, preguntar si hay duda, no aplicar.
+- `02-secciones-y-campos.md`: secciones, numeración de títulos, quién llena cada campo, partes
+  fijas y espacios para responder, presets.
+- `03-contenido-html.md`: HTML permitido, estilo oficial de las tablas y ejemplos.
+- `04-ejemplos.md`: 10 pedidos con las *tools* esperadas.
+- `pruebas.txt`: los 10 pedidos del comando de prueba (no va al prompt).
 
-Orden fijo en el prompt (para aprovechar la caché): reglas y manual primero; después la
-plantilla actual; al final la conversación.
+No se incluye el manual `template-json.md` completo: explica el JSON y el diseño de bloques,
+que la IA no usa.
 
 ## Fases
 
-1. **Prueba técnica, sin pantalla.**
+1. **Prueba técnica, sin pantalla.** Código y pruebas listos (2026-10-31); falta correr el
+   comando con DeepSeek real.
    - Contrato nuevo para el ciclo con *tools* (por ejemplo `AiAgentGateway`), separado de
      `AiChatGateway` para no tocar el chat del docente. Implementaciones: DeepSeek y
      `baseline` (simulador sin red que reproduce llamadas a *tools* en las pruebas).
    - *Tools* de consulta, `proponer_seccion`, `proponer_campo` y `validar_borrador`.
    - `AI_TEMPLATE_MODEL` con respaldo en `AI_MODEL`; `user_id` anónimo.
-   - Comando de consola que corre 10 pedidos reales y muestra qué hizo la IA. Criterio para
-     seguir: la mayoría termina en una propuesta válida y correcta (umbral a acordar, PV-18).
+   - Comando `php artisan template:assistant-trial` (pedidos de `resources/ai/plantilla/pruebas.txt`
+     o `--pedido="…"`): muestra cada paso, el resultado, los cambios, los tokens y el tiempo, sin
+     guardar nada. Criterio para seguir: la mayoría termina en una propuesta válida y correcta
+     (umbral a acordar, PV-18).
 2. **Chat y propuesta en la pantalla de plantilla.** Rutas, tablas, panel del asistente,
    vista previa con cambios marcados, «Aplicar» y «Descartar», y auditoría.
 3. **Bloques, diseño y límites de listas.** Si aprieta el tiempo antes de diciembre, queda como

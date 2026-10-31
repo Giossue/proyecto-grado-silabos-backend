@@ -115,6 +115,12 @@ completo.
 `AI_MODEL` es el modelo elegido y `AI_API_KEY` su clave. `AI_CONNECT_TIMEOUT` (2 s) y
 `AI_TIMEOUT` (20 s) tienen valores por defecto.
 
+Modelos vigentes de DeepSeek (2026-10-31): `deepseek-flash` y `deepseek-v4-pro`;
+`deepseek-chat` y `deepseek-reasoner` se retiraron. El asistente de la plantilla (en prueba)
+usa `AI_TEMPLATE_MODEL` si está definida y, si no, `AI_MODEL`; solo funciona con
+`AI_DRIVER=deepseek`. `AI_TOOLS_STRICT` (por defecto `true`) activa el modo estricto de las
+funciones en la API beta de DeepSeek.
+
 Activar un proveedor envía datos a un tercero: la pregunta del chat con el contexto
 autorizado del sílabo. Antes de usarlo con
 información institucional deben acordarse proveedor, región, retención y tratamiento de

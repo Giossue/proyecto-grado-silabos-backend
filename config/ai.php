@@ -10,6 +10,15 @@ return [
         'timeout_seconds' => (int) env('AI_TIMEOUT', 20),
         'max_output_tokens' => 4096,
     ],
+    'template' => [
+        'model' => env('AI_TEMPLATE_MODEL'),
+        'strict_tools' => (bool) env('AI_TOOLS_STRICT', true),
+        'max_output_tokens' => 8192,
+        'max_steps' => 8,
+        'max_seconds' => 120,
+        'max_consecutive_errors' => 3,
+        'retry_delays_ms' => [2000, 5000],
+    ],
     'limits' => [
         'evidence_items' => 50,
         'evidence_excerpt_characters' => 12000,

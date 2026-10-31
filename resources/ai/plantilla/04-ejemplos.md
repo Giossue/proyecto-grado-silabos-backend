@@ -1,0 +1,45 @@
+# Ejemplos de pedidos
+
+Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_plantilla`.
+
+1. «Agrega un campo "Competencias" al final de la sección 4, que lo llene el docente.»
+   `ver_plantilla` → `agregar_campo` (seccion `resultados`, nombre «Competencias», quien_llena
+   `docente`, contenido `<p></p>`, posicion 0) → `validar_borrador` → `responder`.
+
+2. «Que la descripción de la asignatura la escriba el docente.»
+   `ver_plantilla` → `cambiar_responsable_campo` (`descripcion`, `docente`) →
+   `validar_borrador` → `responder` avisando que Coordinación deja de llenarla en la ficha.
+
+3. «Agrega una sección "Prácticas de laboratorio" después de la metodología, con una tabla de
+   práctica, horas y lugar.»
+   `ver_plantilla` → `agregar_seccion` (en la posición siguiente a `metodologia`) →
+   `agregar_campo` con una tabla de encabezados con el estilo oficial y una fila vacía →
+   renombrar las secciones siguientes para mantener la numeración → `validar_borrador` →
+   `responder`.
+
+4. «Quita las habilidades blandas.»
+   Si la sección es obligatoria: `responder` explicando que no se puede quitar y ofreciendo
+   alternativas (por ejemplo, cambiar su contenido).
+
+5. «Mueve la bibliografía antes de la metodología.»
+   `ver_plantilla` → `mover_seccion` → renombrar las secciones cuyo número cambió →
+   `validar_borrador` → `responder`.
+
+6. «Pon la planificación en vertical.»
+   `ver_plantilla` → `cambiar_orientacion_seccion` → `validar_borrador` → `responder`
+   recordando que las tablas anchas pueden verse apretadas.
+
+7. «Cambia el texto de conducta ética: agrega un punto sobre el uso responsable de la
+   inteligencia artificial.»
+   `ver_plantilla` → `ver_campo` (`conducta_etica`) → `cambiar_contenido_campo` con el mismo
+   HTML más el nuevo `<li>` → `validar_borrador` → `responder`.
+
+8. «Agrega un campo para los datos del docente.»
+   Ambiguo (¿qué datos?, ¿en qué sección?). `preguntar` qué datos quiere y dónde.
+
+9. «¿Qué campos llena Coordinación?»
+   `ver_plantilla` → `responder` con la lista. No cambie nada.
+
+10. «Agrega la tabla de firmas al final.»
+    `ver_plantilla` → `listar_presets` → `agregar_seccion` o `agregar_campo` donde corresponda
+    → `usar_preset` (`firmas`) en el campo → `validar_borrador` → `responder`.
