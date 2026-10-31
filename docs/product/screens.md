@@ -90,6 +90,8 @@ y el botón «Documentos» (DOC-10).
     Identificación institucional, Distribución y planificación, Bibliografía básica o
     complementaria, o Firmas), nombre, subir, bajar y eliminar;
   - con una sección elegida: vertical u horizontal, subir, bajar y eliminar;
+  - íconos con ayuda al pasar el cursor, junto a las demás herramientas: «Opciones
+    avanzadas», «Diseño» y «Listas»;
   - «Diseño»: márgenes y tamaños de letra;
   - «Listas»: mínimo, máximo y «Al empezar» de cada lista de los bloques (por ejemplo,
     «Unidades» y «Semanas por unidad»);
