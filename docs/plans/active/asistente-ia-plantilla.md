@@ -52,6 +52,8 @@ prueba con pedidos reales.
 - `TemplateDefinition::define()` valida la definición y devuelve errores con su ruta exacta.
 - Límite de IA del docente: `RateLimiter` `ai-analysis` (6 por minuto) y `SyllabusAiLimits`
   (20 preguntas y 3 sesiones por sílabo).
+- El servidor de pruebas usa `AI_DRIVER=deepseek`, `AI_BASE_URL=https://api.deepseek.com` y
+  `AI_MODEL=deepseek-flash` (confirmado por el usuario el 2026-10-31): ya es un modelo vigente.
 - Material para el contexto que ya existe: `docs/architecture/template-json.md`,
   `resources/templates/plantilla.schema.json` y `resources/templates/silabo-oficial.json`
   (unos 86 KB, unos 25 000 tokens).
@@ -241,8 +243,6 @@ plantilla actual; al final la conversación.
 
 ## Preguntas abiertas
 
-- ¿Qué valor tiene hoy `AI_MODEL` en Dokploy? Si es `deepseek-chat` o `deepseek-reasoner`,
-  el chat del docente puede estar fallando desde el 2026-07-24.
 - ¿Quién pidió las *tools* confirma que se refería a esto?
 - ¿El chat del docente también pasará a *tools* (por ejemplo `proponer_texto_campo`)? Fuera de
   este plan por ahora.
