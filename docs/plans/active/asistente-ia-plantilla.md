@@ -1,8 +1,8 @@
 # Asistente de IA para la plantilla
 
 Pedido del usuario (2026-10-31): que Administración pida cambios a la plantilla en lenguaje
-natural y que la IA (DeepSeek, el mismo proveedor del chat del docente) arme la propuesta. Se
-pidió que cada capacidad sea una función aparte («tools» o *function calling*): conversar,
+natural y que la IA (DeepSeek, el mismo proveedor del chat del docente) arme la propuesta. Un
+docente pidió que cada capacidad sea una función aparte («tools» o *function calling*): conversar,
 proponer, validar, etc. La IA trabaja con un conjunto de archivos Markdown con reglas y
 ejemplos.
 
@@ -243,7 +243,6 @@ plantilla actual; al final la conversación.
 
 ## Preguntas abiertas
 
-- ¿Quién pidió las *tools* confirma que se refería a esto?
 - ¿El chat del docente también pasará a *tools* (por ejemplo `proponer_texto_campo`)? Fuera de
   este plan por ahora.
 - Límite diario de pedidos por administrador.
