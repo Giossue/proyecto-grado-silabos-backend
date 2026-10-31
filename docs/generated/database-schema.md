@@ -2,9 +2,9 @@
 
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
-- Fecha: 2026-10-30.
-- Última migración aplicada: `2026_10_30_000250_coordination_fields_not_teacher_editable`.
-- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 34 tablas.
+- Fecha: 2026-10-31.
+- Última migración aplicada: `2026_10_31_000251_create_template_assistant_tables`.
+- Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 36 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
   - columnas: `pg_attribute` + `format_type()` + `pg_attrdef` (`pg_get_expr`);
@@ -437,6 +437,26 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 - Triggers:
   - `proteger_mensaje_ia`: BEFORE DELETE OR UPDATE FOR EACH ROW EXECUTE FUNCTION proteger_mensaje_ia()
 
+### `mensajes_ia_plantilla`
+
+| Columna | Tipo | Nulo | Por defecto |
+|---|---|---|---|
+| `mensaje_ia_plantilla_id` | uuid | no |  |
+| `plantilla_id` | uuid | no |  |
+| `usuario_id` | uuid | no |  |
+| `contenido_mensaje` | jsonb | no |  |
+| `enviado_en` | timestamp(6) with time zone | no | `clock_timestamp()` |
+| `ocultado_en` | timestamp(6) with time zone | sí |  |
+
+- PK: `PRIMARY KEY (mensaje_ia_plantilla_id)`
+- FK:
+  - `mensajes_ia_plantilla_plantilla_id_foreign`: `FOREIGN KEY (plantilla_id) REFERENCES plantilla_silabo(plantilla_id) ON DELETE CASCADE`
+  - `mensajes_ia_plantilla_usuario_id_foreign`: `FOREIGN KEY (usuario_id) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
+- Únicos:
+  - `mensajes_ia_plantilla_idempotencia_unica`: `(plantilla_id, usuario_id, (((contenido_mensaje -> 'entrada'::text) ->> 'clave_idempotencia'::text))) WHERE ((contenido_mensaje ->> 'rol'::text) = 'usuario'::text)`
+- CHECK:
+  - `mensajes_ia_plantilla_contenido_check`: `CHECK (((jsonb_typeof(contenido_mensaje) = 'object'::text) AND ((contenido_mensaje ->> 'rol'::text) = ANY (ARRAY['usuario'::text, 'asistente'::text])) AND ((contenido_mensaje ->> 'estado'::text) = ANY (ARRAY['pendiente'::text, 'en_ejecucion'::text, 'completado'::text, 'fallido'::text]))))`
+
 ### `notificaciones`
 
 | Columna | Tipo | Nulo | Por defecto |
@@ -511,6 +531,35 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
   - `definicion_plantilla_objeto`: `CHECK ((json_typeof(definicion_plantilla) = 'object'::text))`
 - Triggers:
   - `marcar_definicion_plantilla_modificada`: BEFORE UPDATE OF definicion_plantilla FOR EACH ROW EXECUTE FUNCTION marcar_definicion_plantilla_modificada()
+
+### `propuestas_ia_plantilla`
+
+| Columna | Tipo | Nulo | Por defecto |
+|---|---|---|---|
+| `propuesta_ia_plantilla_id` | uuid | no |  |
+| `plantilla_id` | uuid | no |  |
+| `mensaje_ia_plantilla_id` | uuid | no |  |
+| `solicitada_por` | uuid | no |  |
+| `estructura_propuesta` | jsonb | no |  |
+| `cambios_propuesta` | jsonb | no |  |
+| `huella_plantilla_base` | character(64) | no |  |
+| `estado_propuesta` | character varying(20) | no | `'pendiente'::character varying` |
+| `decidida_por` | uuid | sí |  |
+| `decidida_en` | timestamp(6) with time zone | sí |  |
+| `creada_en` | timestamp(6) with time zone | no | `clock_timestamp()` |
+
+- PK: `PRIMARY KEY (propuesta_ia_plantilla_id)`
+- FK:
+  - `propuestas_ia_plantilla_decidida_por_foreign`: `FOREIGN KEY (decidida_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
+  - `propuestas_ia_plantilla_mensaje_ia_plantilla_id_foreign`: `FOREIGN KEY (mensaje_ia_plantilla_id) REFERENCES mensajes_ia_plantilla(mensaje_ia_plantilla_id) ON DELETE CASCADE`
+  - `propuestas_ia_plantilla_plantilla_id_foreign`: `FOREIGN KEY (plantilla_id) REFERENCES plantilla_silabo(plantilla_id) ON DELETE CASCADE`
+  - `propuestas_ia_plantilla_solicitada_por_foreign`: `FOREIGN KEY (solicitada_por) REFERENCES usuarios(usuario_id) ON DELETE RESTRICT`
+- Únicos:
+  - `propuestas_ia_plantilla_mensaje_ia_plantilla_id_unique`: `(mensaje_ia_plantilla_id)`
+- CHECK:
+  - `propuestas_ia_plantilla_decision_check`: `CHECK ((((estado_propuesta)::text <> ALL ((ARRAY['aplicada'::character varying, 'descartada'::character varying])::text[])) OR ((decidida_por IS NOT NULL) AND (decidida_en IS NOT NULL))))`
+  - `propuestas_ia_plantilla_estado_check`: `CHECK (((estado_propuesta)::text = ANY ((ARRAY['pendiente'::character varying, 'aplicada'::character varying, 'descartada'::character varying, 'vencida'::character varying, 'reemplazada'::character varying])::text[])))`
+  - `propuestas_ia_plantilla_huella_check`: `CHECK ((huella_plantilla_base ~ '^[0-9a-f]{64}$'::text))`
 
 ### `requisitos_asignatura`
 

@@ -143,29 +143,13 @@ La IA trabaja sobre secciones y campos, no sobre el JSON completo. La propuesta 
 formato que guarda el editor visual (`PUT admin/template/{id}/json`, versión 1), así que pasa
 por la misma validación.
 
-### Rutas para el frontend
+### Rutas y datos (implementado en la fase 2)
 
-| Ruta | Para qué |
-|---|---|
-| `GET admin/template/ai-chat` | Historial y límites |
-| `POST admin/template/ai-chat/messages` | Conversar o pedir un cambio |
-| `DELETE admin/template/ai-chat` | Limpiar la vista (registro de ocultamiento, como el docente) |
-| `GET admin/template/ai-proposals/{id}` | La propuesta con sus cambios |
-| `POST admin/template/ai-proposals/{id}/apply` | Aplicar; reusa las acciones actuales |
-| `POST admin/template/ai-proposals/{id}/discard` | Descartar |
-
-Todas solo para Administración, con `active-role` y su Form Request y Policy.
-
-### Datos
-
-- Conversaciones de la plantilla: o bien `mensajes_ia` admite `silabo_id` nulo con una columna
-  `plantilla_silabo_id` y un `CHECK` que exija uno de los dos, o bien una tabla aparte. Decidir
-  al implementar; leer antes `docs/architecture/database.md`.
-- Tabla nueva `propuestas_ia_plantilla`: id, plantilla, quién la pidió, mensaje de origen,
-  cambios propuestos (`jsonb`), huella de la plantilla base, estado (`pendiente`, `aplicada`,
-  `descartada`, `vencida`), quién decidió y cuándo.
-- Al aplicar: auditoría con la acción de la plantilla y el origen «propuesta de IA», más quién
-  aprobó.
+Rutas y flujo: ver `docs/architecture/ai-service.md`, «Asistente de la plantilla». Tablas
+`mensajes_ia_plantilla` (conversación por persona; «Nuevo chat» marca `ocultado_en`) y
+`propuestas_ia_plantilla` (estructura propuesta, cambios, huella base y estado); detalle en
+`docs/generated/database-schema.md`. Se descartó reusar `mensajes_ia`: está atada al sílabo,
+con su propia idempotencia y un trigger que impide cambiar mensajes terminados.
 
 ### Límites del ciclo
 
@@ -245,8 +229,13 @@ que la IA no usa.
      o `--pedido="…"`): muestra cada paso, el resultado, los cambios, los tokens y el tiempo, sin
      guardar nada. Criterio para seguir: la mayoría termina en una propuesta válida y correcta
      (umbral a acordar, PV-18).
-2. **Chat y propuesta en la pantalla de plantilla.** Rutas, tablas, panel del asistente,
-   vista previa con cambios marcados, «Aplicar» y «Descartar», y auditoría.
+2. **Chat y propuesta en la pantalla de plantilla.** Hecha (2026-10-31): tablas
+   `mensajes_ia_plantilla` y `propuestas_ia_plantilla`, rutas `admin/template/assistant`, panel
+   flotante, «Ver en la hoja» con cambios marcados, «Aplicar» con confirmación, «Descartar» y
+   auditoría. Decisiones tomadas al implementar: un pedido nuevo parte de la propuesta
+   pendiente y la reemplaza; un pedido a la vez por persona (no es un cupo); el asistente solo
+   se muestra en modo lectura; aplicar reusa `ReplaceTemplateStructure`. Falta probarlo en
+   pantalla con DeepSeek y con administradores reales.
 3. **Bloques, diseño y límites de listas.** Si aprieta el tiempo antes de diciembre, queda como
    trabajo futuro.
 

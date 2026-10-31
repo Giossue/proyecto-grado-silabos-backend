@@ -9,6 +9,7 @@ use App\Modules\Academic\Presentation\Http\Controllers\CurriculumImportControlle
 use App\Modules\Academic\Presentation\Http\Controllers\FichaImportsController;
 use App\Modules\Academic\Presentation\Http\Controllers\SubjectProfileController;
 use App\Modules\AiAssistance\Presentation\Http\Controllers\AiChatController;
+use App\Modules\AiAssistance\Presentation\Http\Controllers\TemplateAssistantController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateController;
 use App\Modules\Configuration\Presentation\Http\Controllers\TemplateStructureController;
 use App\Modules\Documents\Presentation\Http\Controllers\DocumentController;
@@ -151,6 +152,18 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.template.store');
             Route::post('admin/template/{template}/format', [TemplateController::class, 'format'])
                 ->middleware('active-role')->name('api.v1.admin.template.format');
+            Route::get('admin/template/assistant', [TemplateAssistantController::class, 'show'])
+                ->middleware('active-role')->name('api.v1.admin.template.assistant.show');
+            Route::post('admin/template/assistant/messages', [TemplateAssistantController::class, 'store'])
+                ->middleware('active-role')->name('api.v1.admin.template.assistant.messages.store');
+            Route::delete('admin/template/assistant', [TemplateAssistantController::class, 'clear'])
+                ->middleware('active-role')->name('api.v1.admin.template.assistant.clear');
+            Route::get('admin/template/assistant/proposals/{proposal}', [TemplateAssistantController::class, 'proposal'])
+                ->middleware('active-role')->name('api.v1.admin.template.assistant.proposals.show');
+            Route::post('admin/template/assistant/proposals/{proposal}/apply', [TemplateAssistantController::class, 'apply'])
+                ->middleware('active-role')->name('api.v1.admin.template.assistant.proposals.apply');
+            Route::post('admin/template/assistant/proposals/{proposal}/discard', [TemplateAssistantController::class, 'discard'])
+                ->middleware('active-role')->name('api.v1.admin.template.assistant.proposals.discard');
             Route::get('admin/template/{template}/json', [TemplateController::class, 'exportJson'])
                 ->middleware('active-role')->name('api.v1.admin.template.json.export');
             Route::put('admin/template/{template}/json', [TemplateController::class, 'importJson'])

@@ -39,20 +39,25 @@ final class TemplateDraft
 
     /**
      * @param  list<DraftSection>  $base
+     * @param  list<DraftSection>  $start
      */
     private function __construct(
         private readonly TemplateDefinition $definition,
         private readonly array $base,
         private readonly string $baseFingerprint,
+        array $start,
     ) {
-        $this->sections = $base;
+        $this->sections = $start;
     }
 
-    public static function fromTemplate(SyllabusTemplate $template): self
+    /**
+     * @param  list<DraftSection>|null  $start
+     */
+    public static function fromTemplate(SyllabusTemplate $template, ?array $start = null): self
     {
         $sections = self::sectionsOf($template);
 
-        return new self($template->definition(), $sections, self::fingerprintOf($template->definition(), $sections));
+        return new self($template->definition(), $sections, self::fingerprintOf($template->definition(), $sections), $start ?? $sections);
     }
 
     public static function fingerprint(SyllabusTemplate $template): string
@@ -342,6 +347,33 @@ final class TemplateDraft
         }
 
         return $changes;
+    }
+
+    /**
+     * @return array{secciones: list<string>, campos: list<string>}
+     */
+    public function changedKeys(): array
+    {
+        $baseSections = $this->keyed($this->base);
+        $baseFields = $this->fieldsByKey($this->base);
+        $sections = [];
+        foreach ($this->sections as $section) {
+            $before = $baseSections[$section['key']] ?? null;
+            if ($before === null || $before['title'] !== $section['title'] || $before['orientation'] !== $section['orientation']) {
+                $sections[] = $section['key'];
+            }
+        }
+        $fields = [];
+        foreach ($this->fieldsByKey($this->sections) as $key => $field) {
+            $before = $baseFields[$key] ?? null;
+            if ($before === null || $before['section']['key'] !== $field['section']['key']
+                || array_diff_key($field['field'], ['content' => true]) !== array_diff_key($before['field'], ['content' => true])
+                || $before['field']['content'] !== $field['field']['content']) {
+                $fields[] = $key;
+            }
+        }
+
+        return ['secciones' => $sections, 'campos' => $fields];
     }
 
     /**

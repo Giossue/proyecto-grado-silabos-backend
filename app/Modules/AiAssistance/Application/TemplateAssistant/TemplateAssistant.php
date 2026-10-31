@@ -57,16 +57,17 @@ final class TemplateAssistant
 
     /**
      * @param  list<array{role: 'user'|'assistant', content: string}>  $history
+     * @param  list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>|null  $pending
      */
-    public function run(SyllabusTemplate $template, string $request, array $history = [], string $userTag = 'consola'): TemplateAssistantOutcome
+    public function run(SyllabusTemplate $template, string $request, array $history = [], string $userTag = 'consola', ?array $pending = null): TemplateAssistantOutcome
     {
         $this->trace = [];
         $this->usage = ['prompt' => 0, 'completion' => 0, 'cached' => 0];
         $this->gatewayVersion = '';
-        $draft = TemplateDraft::fromTemplate($template);
+        $draft = TemplateDraft::fromTemplate($template, $pending);
         $tools = new TemplateTools($draft, $this->validator, $this->processState());
         $system = $this->knowledge->system();
-        $messages = [...$history, ['role' => 'user', 'content' => $this->opening($tools, $request)]];
+        $messages = [...$history, ['role' => 'user', 'content' => $this->opening($tools, $draft, $request)]];
         $deadline = now()->addSeconds((int) config('ai.template.max_seconds'));
         $maxSteps = (int) config('ai.template.max_steps');
         $maxErrors = (int) config('ai.template.max_consecutive_errors');
@@ -140,6 +141,7 @@ final class TemplateAssistant
         return $this->outcome(TemplateAssistantOutcome::PROPOSAL, $message, [
             'payload' => $draft->payload(),
             'changes' => $draft->changes(),
+            'changed' => $draft->changedKeys(),
             'fingerprint' => $draft->baseFingerprint(),
         ], null, $steps);
     }
@@ -150,7 +152,7 @@ final class TemplateAssistant
     }
 
     /**
-     * @param  array{payload: array{version: int, sections: list<array<string, mixed>>}, changes: list<string>, fingerprint: string}|null  $proposal
+     * @param  array{payload: array{version: int, sections: list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>}, changes: list<string>, changed: array{secciones: list<string>, campos: list<string>}, fingerprint: string}|null  $proposal
      */
     private function outcome(string $status, string $message, ?array $proposal, ?string $code, int $steps): TemplateAssistantOutcome
     {
@@ -189,11 +191,14 @@ final class TemplateAssistant
         return is_array($decoded) && is_string($decoded['error'] ?? null) ? $decoded['error'] : 'error';
     }
 
-    private function opening(TemplateTools $tools, string $request): string
+    private function opening(TemplateTools $tools, TemplateDraft $draft, string $request): string
     {
         $state = $tools->locked()
             ? 'La convocatoria está abierta: solo puede consultar y explicar; no proponga cambios.'
             : 'Puede proponer cambios en el borrador. Nada se guarda hasta que el administrador los aplique.';
+        if (! $tools->locked() && $draft->changed()) {
+            $state .= "\n\nEl borrador ya incluye la propuesta anterior, que aún no se aplica. Si el pedido la continúa, agregue los cambios nuevos; si la contradice, ajústela:\n- ".implode("\n- ", $draft->changes());
+        }
 
         return "{$state}\n\nPedido del administrador:\n".trim($request);
     }

@@ -64,9 +64,9 @@ regenerar o eliminar el sílabo.
 
 ## Asistente de la plantilla (POR VALIDAR)
 
-Fase 1 de `docs/plans/active/asistente-ia-plantilla.md`: el código existe, pero aún no tiene
-pantalla ni guarda nada. Administración pide un cambio en lenguaje natural y la IA arma una
-propuesta llamando funciones (*tools*), sin tocar la plantilla real.
+Plan: `docs/plans/active/asistente-ia-plantilla.md`. Administración pide un cambio en
+lenguaje natural y la IA arma una propuesta llamando funciones (*tools*), sin tocar la
+plantilla real. La persona la revisa en la hoja y la aplica o la descarta.
 
 - Contrato `AiAgentGateway` (un paso del ciclo con *tools*), separado de `AiChatGateway`.
   `HostedAiAgentGateway` solo admite DeepSeek (`chat/completions`, `tool_choice: required`,
@@ -86,6 +86,28 @@ propuesta llamando funciones (*tools*), sin tocar la plantilla real.
   sistema (DeepSeek lo cachea).
 - Prueba con pedidos reales, sin guardar: `php artisan template:assistant-trial`
   (`--pedido="…"` para uno suelto).
+
+Rutas (solo Administración, `active-role`, sin cupo de pedidos):
+
+| Ruta | Para qué |
+|---|---|
+| `GET admin/template/assistant` | Conversación visible, disponibilidad y si la convocatoria está abierta |
+| `POST admin/template/assistant/messages` | Pedido (`message`, `idempotency_key`); responde 202 |
+| `DELETE admin/template/assistant` | «Nuevo chat»: oculta los mensajes (`ocultado_en`) |
+| `GET admin/template/assistant/proposals/{id}` | Estructura propuesta y claves que cambian |
+| `POST …/proposals/{id}/apply` | Aplica con `ReplaceTemplateStructure` (misma auditoría que guardar el editor) |
+| `POST …/proposals/{id}/discard` | Descarta |
+
+1. `SendTemplateAssistantMessage` guarda el pedido y una respuesta `pendiente` en
+   `mensajes_ia_plantilla`. Solo hay un pedido en curso por persona.
+2. `AnswerTemplateAssistantJob` (cola `ia`, 180 s, un intento) corre `TemplateAssistant` con
+   los últimos 12 mensajes. Si hay una propuesta pendiente, el borrador parte de ella y la
+   nueva la reemplaza (`reemplazada`).
+3. La propuesta queda en `propuestas_ia_plantilla` con la huella de la plantilla base. Si la
+   plantilla cambia antes de aplicarla, queda `vencida` y «Aplicar» se rechaza.
+4. Aplicar exige la convocatoria cerrada o en pausa (`ProcessLocks`) y vuelve a validar con las
+   reglas de «Guardar». Se audita `plantilla.propuesta_ia_aplicada` además de
+   `plantilla.importada`.
 
 ## Seguridad
 
