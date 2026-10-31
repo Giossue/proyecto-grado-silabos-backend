@@ -56,9 +56,9 @@ y el botón «Documentos» (DOC-10).
 | DOC-02 | Mis sílabos | `/docente/mis-silabos` | Entrada del docente; no tiene Panel ni indicadores. Bajo la barra superior, un aviso ámbar con los días que quedan para enviar sus sílabos a revisión y la fecha límite. Debajo, tarjetas del período vigente, hasta tres por fila: asignatura, paralelo y estado. Botón «Historial». |
 | DOC-04 | Sílabo | `/docente/mis-silabos/:syllabus` | Editor a pantalla completa, sin menú lateral. Detalle abajo. |
 | DOC-05 | Validación | dentro de DOC-04 | Campos faltantes y reglas de bloques; el botón de envío explica qué falta. |
-| DOC-06 | Asistente de unidades | botón flotante en DOC-04 | «Asistente» abre el chat de IA con preguntas sugeridas y «Nuevo chat»; «Cerrar asistente» lo oculta. |
+| DOC-06 | Asistente de unidades | botón flotante en DOC-04 | Solo mientras el sílabo se edita (Borrador o Corrección solicitada). «Asistente» abre el chat de IA con preguntas sugeridas y «Nuevo chat»; «Cerrar asistente» lo oculta. |
 | DOC-07 | Envío | diálogo en DOC-04 | Primer envío: «Firmar y enviar» pide el archivo `.p12`/`.pfx` y la clave. Reenvío tras una corrección: «Enviar», sin firmar. |
-| DOC-08 | Corrección | aviso en DOC-04 | Aviso ámbar «Coordinación pidió correcciones» o «Biblioteca pidió correcciones» con el comentario, autor y fecha; «Comentarios anteriores (N)» plegados. Fuera de corrección, «Último comentario de …» en un aviso neutro. Si la corrección vino de biblioteca, el diálogo de envío dice que va directo a biblioteca. |
+| DOC-08 | Corrección | aviso en DOC-04 | Solo con el sílabo devuelto: aviso ámbar «Coordinación pidió correcciones» o «Biblioteca pidió correcciones» con el último comentario, autor y fecha. El ícono «Comentarios» abre un panel lateral con el historial y los botones «Coordinación» y «Biblioteca» para filtrarlo. En revisión o aprobado no se muestran comentarios. Si la corrección vino de biblioteca, el diálogo de envío dice que va directo a biblioteca. |
 | DOC-09 | Historial | `/docente/historial`, `/docente/historial/:career` | Carreras con sílabos de períodos terminados y, dentro, sus sílabos por período, en solo lectura. |
 | DOC-10 | Documentos | `/docente/revisiones/:revision/documentos`, `/coordinacion/revisiones/:revision/documentos` | Ver y descargar el PDF de la revisión aprobada apenas se genera, con los sellos de las tres firmas. Sin Word. «Reintentar» si falló. |
 
@@ -171,7 +171,7 @@ y el botón «Documentos» (DOC-10).
 ### DOC-04 Sílabo
 
 - Al abrir un sílabo sin iniciar, el borrador empieza solo.
-- Título con la materia, sin ícono; debajo, período y paralelo.
+- Título con la materia, sin ícono; debajo, el período. Con el documento a la vista, el encabezado mide lo mismo que la hoja. Sin «Formación y experiencia» en el perfil, un modal obliga a completarla (o a volver a «Mis sílabos») antes de ver cualquier sílabo.
 - Formulario con los componentes del sistema, generado desde la plantilla: pestañas solo
   para las secciones con campos del docente, un campo con etiqueta por dato y asterisco
   de obligatorio, las unidades en un acordeón, y las semanas y las tablas de respuesta
@@ -185,8 +185,9 @@ y el botón «Documentos» (DOC-10).
 - Bloques: unidades y semanas con contador de horas, y discapacidad (los datos aparecen
   solo si responde Sí).
 - En revisión o aprobado, la pantalla muestra el documento tal como sale.
-- «Vista previa» muestra la hoja del sílabo en la pantalla, como en Plantilla; «Editar»
-  vuelve al formulario. «Copiar desde paralelo X» trae lo escrito en
+- «Vista previa» (un ojo, con tooltip) muestra la hoja del sílabo en la pantalla, como en
+  Plantilla; el lápiz «Editar» vuelve al formulario. Con el sílabo aprobado, «Ver PDF» abre
+  el PDF directamente en otra pestaña. «Copiar desde paralelo X» trae lo escrito en
   otro paralelo propio.
 - «Firmar y enviar» (primer envío) o «Enviar» (reenvío ya firmado) queda deshabilitado
   mientras falten campos («Faltan N campos por completar»).
