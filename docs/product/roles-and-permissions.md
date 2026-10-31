@@ -54,9 +54,8 @@ puede.
 
 ## Ámbito de la sesión
 
-- Con una sola asignación vigente, Administrador, Docente y Bibliotecario entran directo
-  a su Panel.
-- Coordinador siempre elige su carrera en `/rol`, aunque tenga una sola.
+- Con una sola asignación vigente (un solo rol y una sola carrera), la persona entra directo
+  a su Panel, sea cual sea su rol.
 - Con varias asignaciones (por ejemplo, docente en dos carreras, o docente y
   coordinador), la persona elige en `/rol`.
 - Solo hay un rol activo a la vez. Se cambia desde el menú de usuario.

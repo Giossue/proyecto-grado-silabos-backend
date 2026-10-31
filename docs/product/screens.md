@@ -21,27 +21,26 @@ muestra «Página no encontrada».
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| ADM-01 | Antes de empezar | modal en ADM-12 | Pasos previos a abrir la convocatoria (facultades, carreras, cuentas, coordinadores y plantilla), cada uno con «Ir» a su pantalla y un check al completarlo. «Nueva convocatoria» queda deshabilitada hasta completarlos. |
+| ADM-01 | Antes de empezar | checklist flotante en todas las pantallas con menú (Driver.js) | Botón flotante de check, rojo y con un latido suave mientras falten pasos, arriba del de ayuda en la esquina inferior derecha; se abre solo la primera vez y se reabre cuando se quiera. Pasos previos a abrir la convocatoria (facultades, carreras, cuentas, coordinadores y plantilla); al pulsar uno, resalta en el menú lateral el módulo donde se hace, y el resaltado se cierra solo al cambiar de pantalla. Un check al completarlo. «Nueva convocatoria» queda deshabilitada hasta completarlos. |
 | ADM-02 | Usuarios y roles | `/admin/usuarios` | Tabla de cuentas con la columna «Roles» para sus roles vigentes; «Crear cuenta» e «Importar desde Excel». |
 | ADM-03 | Detalle de la cuenta | hoja lateral en ADM-02 | Roles vigentes y finalizados, «Agregar otro rol», «Quitar rol», «Reenviar invitación», «Deshabilitar/Habilitar acceso», «Eliminar cuenta pendiente». |
 | ADM-04 | Facultades y carreras | `/admin/estructura-academica` | Pestañas Facultades (campus y logo PNG) y Carreras (modalidad, ciclos, «Asignar/Reemplazar coordinador», importación desde Excel). |
 | ADM-06 | Plantilla | `/admin/plantilla` | Ver y editar la plantilla única. Detalle abajo. |
 | ADM-10 | Auditoría | `/admin/auditoria` | Registro paginado: fecha, actividad y responsable, todo con el mismo tamaño de letra. Filtros de lista, sin búsqueda de texto: período (por sus fechas), rol, carrera, actividad y resultado. |
-| ADM-12 | Convocatorias | `/admin/convocatorias` | Entrada del Administrador; no tiene Panel. Arriba, avance del proceso, días para la entrega y carreras sin convocar, y el botón «Antes de empezar». Una fila por período. Detalle abajo. |
+| ADM-12 | Convocatorias | `/admin/convocatorias` | Entrada del Administrador; no tiene Panel. Arriba, avance del proceso, días para la entrega y carreras sin convocar, y, flotante, el checklist «Antes de empezar». Una fila por período. Detalle abajo. |
 
 ## Coordinador
 
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
-| COR-01 | Antes de empezar | modal en COR-05 | Pasos previos a abrir la convocatoria de la carrera (malla, materias del período, paralelos y docentes), cada uno con «Ir» y un check al completarlo. «Abrir convocatoria» queda deshabilitado hasta que todo esté listo; su ayuda emergente dice qué falta. |
+| COR-01 | Antes de empezar | checklist flotante en todas las pantallas con menú (Driver.js) | Botón flotante de check, rojo y con un latido suave mientras falten pasos, arriba del de ayuda en la esquina inferior derecha; se abre solo la primera vez y se reabre cuando se quiera. Pasos previos a abrir la convocatoria de la carrera (malla, materias del período, paralelos y docentes); al pulsar uno, resalta en el menú lateral el módulo donde se hace, y el resaltado se cierra solo al cambiar de pantalla. Un check al completarlo. «Abrir convocatoria» queda deshabilitado hasta que todo esté listo; su ayuda emergente dice qué falta. |
 | COR-04 | Seguimiento | pestaña en COR-05 | Todos los sílabos de la convocatoria con paralelos, docentes y estado; en revisión indica la etapa («En coordinación» o «En biblioteca»). La fila de un sílabo ya enviado abre su revisión (COR-06). |
-| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria» y «Antes de empezar». Pestañas «Cola de revisión» (solo lo que espera la decisión de Coordinación: asignatura, docente, número de revisión y fecha de envío; sin filtro de estado) y «Seguimiento» (COR-04), donde está todo lo demás: en biblioteca, devueltos y aprobados. |
-| COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | A pantalla completa, sin menú lateral, con «Volver a la cola». Junto al título, el estado como insignia y notas en texto («En biblioteca», «Devuelto por biblioteca», «Convocatoria cerrada · solo consulta», «Versión N (anterior) · solo consulta»); debajo, el período y el docente. De lo que hace Biblioteca no ve comentarios ni quién verificó. El sílabo se ve como el documento final. Decisiones en la cabecera, con diálogos: «Solicitar corrección» y «Firmar y enviar a biblioteca». Íconos: «Historial» y, mientras el sílabo está en revisión y desde la segunda versión, «Resaltar cambios» (marca con «Cambió» en el documento los campos que cambiaron desde la versión anterior) y «Ver qué cambió» (COR-07 contra la versión anterior). Reiniciar está en «Más». «Historial» abre COR-11. |
-| COR-07 | Comparar revisiones | `/coordinacion/revisiones/:before/comparar/:after` | A pantalla completa. Selectores «Desde» y «Hasta» para comparar dos envíos cualquiera; campos agregados, retirados o modificados, lado a lado. «Volver al expediente» va al envío actual. |
+| COR-05 | Revisión | `/coordinacion/revisiones` | Entrada de Coordinación; no tiene Panel. Aviso del plazo bajo la barra superior. Sin indicadores; arriba, las acciones «Abrir», «Pausar» o «Reanudar convocatoria»; flotante, el checklist «Antes de empezar». Pestañas «Cola de revisión» (solo lo que espera la decisión de Coordinación: asignatura, docente, número de revisión y fecha de envío; sin filtro de estado) y «Seguimiento» (COR-04), donde está todo lo demás: en biblioteca, devueltos y aprobados. |
+| COR-06 | Detalle de revisión | `/coordinacion/revisiones/:revision` | A pantalla completa, sin menú lateral, con «Volver a la cola». Junto al título, el estado como insignia y notas en texto («En biblioteca», «Devuelto por biblioteca», «Convocatoria cerrada · solo consulta», «Versión N (anterior) · solo consulta»); debajo, el período y el docente. De lo que hace Biblioteca no ve comentarios ni quién verificó. El sílabo se ve como el documento final. Decisiones en la cabecera, con diálogos: «Solicitar corrección» y «Firmar y enviar a biblioteca». Íconos: «Historial» y, mientras el sílabo está en revisión y desde la segunda versión, «Comparar con la versión anterior» (muestra la versión anterior al lado, en la misma pantalla, y marca con «Cambió» en ambas los campos que cambiaron). Reiniciar está en «Más». «Historial» abre COR-11. |
 | COR-08 | Solicitar corrección | diálogo en COR-06 | «Comentario para el docente» y «Solicitar corrección»; no se firma. |
 | COR-09 | Firmar y enviar a biblioteca | diálogo en COR-06 | Archivo `.p12`/`.pfx`, clave y confirmar: firma y pasa a Biblioteca. |
 | COR-10 | Reiniciar sílabo | «Más» en COR-06 | Única acción para descartar un sílabo, en rojo y separada de «Historial». El diálogo dice qué se borra con números (firmas y, si está aprobado, revisiones y PDF), pide el motivo (lo ve el docente y queda en la auditoría), un botón con cuenta regresiva y, en un sílabo aprobado, escribir el nombre de la materia. |
-| COR-11 | Historial de versiones | `/coordinacion/revisiones/:revision/historial` | A pantalla completa, como el historial de versiones de Google Docs. A la izquierda, el documento de la versión elegida; a la derecha, el panel «Historial de versiones» con las versiones de la más nueva a la más vieja, cada una con un título que dice qué pasó («Primer envío», «Corregida tras observaciones», «Aprobada»), agrupados por día, con «Versión actual» marcada y, bajo cada versión, sus correcciones y aprobaciones. De Biblioteca solo «lo devolvió al docente». Los campos que cambiaron desde la versión anterior se marcan solos en el documento (la primera versión no marca nada). |
+| COR-11 | Historial de versiones | `/coordinacion/revisiones/:revision/historial` | A pantalla completa, como el historial de versiones de Google Docs. A la izquierda, el documento de la versión elegida; a la derecha, el panel «Historial de versiones» con las versiones de la más nueva a la más vieja, cada una con un título que dice qué pasó («Primer envío», «Corregida tras observaciones», «Aprobada»), agrupados por día, con «Versión actual» marcada y, bajo cada versión, sus correcciones y aprobaciones. De Biblioteca solo «lo devolvió al docente». Los campos que cambiaron desde la versión anterior se marcan solos en el documento (la primera versión no marca nada). Junto a la barra de desplazamiento del documento salen marcas amarillas donde hubo cambios; al pulsar una, el documento baja hasta ese campo. |
 | COR-13 | Malla | `/coordinacion/malla` | Lienzo con ciclos, materias y requisitos; «Editar malla» abre el editor a pantalla completa; «Importar desde Excel». |
 | COR-14 | Materias y asignaciones | `/coordinacion/materias-asignaciones` | Materias con paralelos, jornada y docente; «Acciones masivas»; un clic abre «Paralelos y docentes de la materia». |
 | COR-15 | Docentes | `/coordinacion/docentes` | Docentes de la carrera; «Crear docente», «Importar desde Excel»; la fila abre «Editar docente» con «Reenviar invitación» y «Quitar de la carrera». |
@@ -68,8 +67,8 @@ y el botón «Documentos» (DOC-10).
 | ID | Pantalla | Ruta | Qué hace |
 |---|---|---|---|
 | BIB-02 | Revisiones de biblioteca | `/biblioteca/revisiones` | Entrada de Biblioteca; no tiene Panel. Aviso del plazo para revisar bajo la barra superior. Arriba, tres indicadores: por revisar, firmados y devueltos. Debajo, bandeja de toda la universidad con el período en curso: búsqueda por asignatura, código, carrera o docente, facultad y estado («Por revisar», «Atendidos»). «Atendido» junta los envíos firmados y aprobados por biblioteca, los devueltos al docente y los reemplazados por una revisión nueva; el detalle dice cuál de los tres fue. Columnas: carrera, docente y estado. Los bibliotecarios se reparten el trabajo por facultad: cada uno ve la última facultad que eligió. |
-| BIB-03 | Revisión de bibliografía | `/biblioteca/revisiones/:revision` | Solo asignatura, carrera, docente y la bibliografía; sin número de revisión ni «Enviado por». Botones en la cabecera: «Devolver al docente» (motivos) y «Firmar y aprobar». |
-| BIB-04 | Historial | `/biblioteca/historial` | Sílabos de períodos terminados, en solo lectura; se llega desde «Historial» en BIB-02. Filtros por período, facultad, estado y «Solo los míos» (los que el bibliotecario firmó o devolvió). La fila abre BIB-03. |
+| BIB-03 | Revisión de bibliografía | `/biblioteca/revisiones/:revision` | Solo asignatura, carrera, docente y la bibliografía; sin número de revisión ni «Enviado por». Botones en la cabecera: «Devolver al docente» (motivos) y «Firmar y aprobar». Con el sílabo aprobado, también en el historial, aparece el ícono «Ver PDF» (con ayuda al pasar el cursor) para abrir el sílabo completo en una ventana, desde donde se puede descargar; sirve para las auditorías. |
+| BIB-04 | Historial | `/biblioteca/historial` | Sílabos de períodos terminados, en solo lectura; se llega desde «Historial» en BIB-02 y tiene «Volver a revisiones» arriba; BIB-03 dice «Volver al historial» y regresa ahí si se llegó desde el historial. Columnas: período, carrera, docente y «Firmado por» (quien firmó la bibliografía; «—» si fue devuelto). Filtros por período, facultad y «Solo los míos» (los que el bibliotecario firmó o devolvió). La fila abre BIB-03. |
 
 ## Detalle de pantallas clave
 
@@ -232,9 +231,15 @@ envían. Cada persona firma una sola vez por sílabo.
 - **Accesibilidad.** Botón flotante en escritorio (en móvil, en el menú de usuario):
   tamaño del texto, alto contraste, sin animaciones, subrayar enlaces y texto más
   espaciado. Se guarda en la cuenta.
-- **Ayuda de pantalla.** Botón flotante y arrastrable «Ayuda de esta pantalla» cuando la
-  pantalla tiene texto en `ScreenHelpCatalog` (backend). Los textos no se editan desde el
-  sistema.
+- **Ayuda de pantalla.** Botón flotante fijo «Ayuda de esta pantalla», justo arriba del de
+  accesibilidad (esquina inferior derecha), cuando la pantalla tiene texto en
+  `ScreenHelpCatalog` (backend). Al pulsarlo empieza una guía con Driver.js: un primer cuadro
+  con el texto de la pantalla y después un paso por cada elemento clave, resaltado sobre la
+  pantalla real, con «Anterior», «Siguiente», «Listo» y el avance «2 de 5». Los pasos están en
+  `screenTours.ts` (frontend); si un elemento no está en pantalla en ese momento, se omite. En
+  las pantallas de entrada de cada rol la guía termina con el menú, las notificaciones, la
+  cuenta y la accesibilidad. Sin pasos, muestra solo el texto. Los textos no se editan desde
+  el sistema.
 - **Edición bloqueada.** Una franja a todo el ancho, bajo la barra superior, dice
   «Edición bloqueada · Convocatoria {período}» y qué pausar, con «¿Por qué?» e «Ir a
   Convocatorias» («Ir a Revisión» para Coordinación). Convocatorias usa la misma franja
@@ -265,6 +270,7 @@ envían. Cada persona firma una sola vez por sílabo.
 - ADM-09 (Trabajos fallidos): sin pantalla.
 - ADM-11 (Configuración): es UI-04.
 - COR-02 y COR-03 (Convocatorias de carrera): están en COR-01 y COR-05.
+- COR-07 (Comparar revisiones): la comparación está en COR-06, al lado de la versión anterior.
 - COR-11 (Fuentes académicas): retirada.
 - COR-12 (Informes): el avance está en COR-05.
 - DOC-03 (Resumen del sílabo): la vista previa está en DOC-04.

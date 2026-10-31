@@ -17,8 +17,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   Decanato (I-192).
 - Coordinador y Docente tienen carrera; Administrador y Bibliotecario son globales
   (I-165).
-- Cada carrera tiene una sola coordinación activa. El coordinador elige su carrera al
-  entrar, aunque tenga una sola. Quien tiene un único rol de otro tipo entra directo.
+- Cada carrera tiene una sola coordinación activa. Quien tiene una sola asignación
+  vigente entra directo a su Panel; solo elige en `/rol` quien tiene varios roles o carreras
+  (2026-10-31).
 - Un rol vale mientras esté activo; no tiene fechas de vigencia (I-29, I-51).
 - No hay registro público. Administración crea las cuentas y la persona la activa con
   una invitación por correo.

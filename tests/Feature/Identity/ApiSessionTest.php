@@ -111,7 +111,7 @@ class ApiSessionTest extends TestCase
         }
     }
 
-    public function test_coordinator_must_select_a_career_explicitly(): void
+    public function test_coordinator_with_a_single_career_enters_directly(): void
     {
         $this->seed(DatabaseSeeder::class);
         $coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
@@ -120,12 +120,6 @@ class ApiSessionTest extends TestCase
         $this->actingAs($coordinator)
             ->withHeader('Origin', 'http://localhost:5173')
             ->getJson(route('api.v1.session.show'))
-            ->assertOk()
-            ->assertJsonPath('active_role', null)
-            ->assertJsonPath('available_roles.0.id', $assignment->id);
-
-        $this->withHeader('Origin', 'http://localhost:5173')
-            ->putJson(route('api.v1.active-role.update'), ['role_assignment_id' => $assignment->id])
             ->assertOk()
             ->assertJsonPath('active_role.id', $assignment->id)
             ->assertJsonPath('active_role.code', 'coordinador');

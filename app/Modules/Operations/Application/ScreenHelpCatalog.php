@@ -34,7 +34,7 @@ Desde el menú de la fila puede abrir, pausar, reanudar o cerrar la convocatoria
 
 Mientras la convocatoria esté abierta, la plantilla del sílabo no se puede modificar; para corregirla, pause el proceso.
 
-Arriba están los indicadores de la convocatoria vigente. «Antes de empezar» abre los pasos previos (facultades, carreras, cuentas, coordinadores y plantilla), cada uno con «Ir» a su pantalla y un check al completarlo. «Nueva convocatoria» se habilita cuando están todos.',
+Arriba están los indicadores de la convocatoria vigente. El botón rojo de check, abajo a la derecha, abre «Antes de empezar»: los pasos previos (facultades, carreras, cuentas, coordinadores y plantilla); al pulsar uno le muestra en el menú dónde se hace. «Nueva convocatoria» se habilita cuando están todos.',
         ],
         '/admin/estructura-academica' => [
             'title' => 'Facultades y carreras',
@@ -162,25 +162,19 @@ Con una convocatoria abierta la edición está bloqueada. Si hay sílabos en cur
             'title' => 'Revisión de sílabos',
             'content' => 'Arriba ve el aviso con el plazo de entrega. Desde aquí abre, pausa o reanuda la convocatoria de su carrera.
 
-«Antes de empezar» abre los pasos previos (malla, materias del período, paralelos y docentes), cada uno con «Ir» a su pantalla y un check al completarlo. «Abrir convocatoria» se habilita cuando todo está listo; si no, al pasar el cursor dice qué falta.
+El botón rojo de check, abajo a la derecha, abre «Antes de empezar»: los pasos previos (malla, materias del período, paralelos y docentes); al pulsar uno le muestra en el menú dónde se hace. «Abrir convocatoria» se habilita cuando todo está listo; si no, al pasar el cursor dice qué falta.
 
 «Por revisar» lista los sílabos que los docentes ya enviaron. Coordinación revisa primero el contenido; cuando lo aprueba, el sílabo pasa a Biblioteca para revisar la bibliografía. Abra uno para aprobarlo o pedir correcciones.
 
 «Seguimiento» muestra todos los sílabos de la convocatoria con su estado.',
         ],
-        '/coordinacion/revisiones/:before/comparar/:after' => [
-            'title' => 'Comparar revisiones',
-            'content' => 'Muestra, campo por campo, lo que cambió entre dos revisiones del mismo sílabo.
-
-Úselo para verificar que el docente atendió sus observaciones antes de aprobar.',
-        ],
         '/coordinacion/revisiones/:revision' => [
             'title' => 'Detalle de la revisión',
             'content' => 'Aquí revisa el contenido enviado por el docente, sección por sección.
 
-Puede solicitar una corrección con un comentario para el docente o pulsar «Firmar y enviar a biblioteca» y firmar con su archivo .p12. Una revisión enviada no se modifica: si el docente corrige, se crea una nueva revisión y el historial permite compararlas.
+Puede solicitar una corrección con un comentario para el docente o pulsar «Firmar y enviar a biblioteca» y firmar con su archivo .p12. Una revisión enviada no se modifica: si el docente corrige, se crea una nueva revisión y el historial permite ver y comparar las versiones.
 
-Un sílabo aprobado no se modifica. Si tiene un error, puede eliminarlo con todo su historial y el docente empieza de cero.',
+Un sílabo aprobado no se modifica. Si tiene un error, puede reiniciarlo con un motivo y el docente empieza de cero.',
         ],
         '/coordinacion/revisiones/:revision/documentos' => [
             'title' => 'Documentos aprobados',

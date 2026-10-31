@@ -374,6 +374,17 @@ class ReviewWorkflowTest extends TestCase
         $this->assertDatabaseCount('revisiones_coordinacion', 1);
     }
 
+    public function test_la_biblioteca_abre_el_pdf_de_un_silabo_aprobado_pero_no_el_de_uno_sin_enviar_a_ella(): void
+    {
+        [, $revision] = $this->submitValidDraft();
+
+        $this->actingAsLibrarian()->getJson(route('api.v1.documents.show', $revision))->assertForbidden();
+        $this->approveThroughChain($revision);
+
+        $this->actingAsLibrarian()->getJson(route('api.v1.documents.show', $revision))
+            ->assertOk()->assertJsonPath('revision.id', $revision->id);
+    }
+
     public function test_cp_f_coordinator_deletes_an_approved_syllabus_and_the_teacher_starts_from_scratch(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();

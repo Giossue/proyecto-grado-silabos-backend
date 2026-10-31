@@ -70,7 +70,7 @@ class LibraryReviewController extends Controller
         $faculty = $request->validated('faculty');
         $faculty = is_string($faculty) ? $faculty : null;
         $page = $this->reviews->query(is_string($state) ? $state : null, $search, $faculty, $period, $periodId, $handledBy)
-            ->with('revision.submitter:id,nombre')
+            ->with(['revision.submitter:id,nombre', 'revision.approval.approver:id,nombre'])
             ->paginate(20)
             ->withQueryString();
         $syllabi = $this->syllabi(array_values(collect($page->items())->pluck('silabo_id')->all()));
@@ -84,6 +84,7 @@ class LibraryReviewController extends Controller
                 'revision_id' => $submission->getAttribute('revision_id'),
                 'sent_at' => $submission->revision->enviado_en->toIso8601String(),
                 'sent_by' => $submission->revision->submitter->nombre,
+                'signed_by' => $submission->revision->approval?->approver->nombre,
                 'state' => $submission->getAttribute('estado_envio'),
                 'outcome' => LibraryReviews::outcome((string) $submission->getAttribute('estado_envio'), $submission->getAttribute('resultado_envio')),
             ]),

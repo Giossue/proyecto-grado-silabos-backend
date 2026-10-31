@@ -13,7 +13,7 @@
 | CU-09 | Validar y enviar el sílabo | Docente | RF-043, RF-045, RF-047 | DOC-05, DOC-07 |
 | CU-10 | Revisar y solicitar corrección | Coordinador; Bibliotecario | RF-055 a RF-058 | COR-05, COR-06, COR-08, BIB-02, BIB-03 |
 | CU-11 | Corregir y reenviar | Docente | RF-058 a RF-060 | DOC-08 |
-| CU-12 | Comparar revisiones | Coordinador | RF-061 | COR-07 |
+| CU-12 | Comparar revisiones | Coordinador | RF-061 | COR-06 |
 | CU-13 | Aprobar (Coordinación su etapa; Biblioteca la bibliografía) | Coordinador; Bibliotecario | RF-062, RF-063 | COR-09, BIB-03 |
 | CU-14 | Eliminar un sílabo aprobado | Coordinador | RF-064 | COR-10 |
 | CU-15 | Firmar al decidir y descargar el PDF | Docente; Coordinador; Bibliotecario | RF-066 a RF-069 | DOC-07, COR-09, BIB-03, DOC-10 |

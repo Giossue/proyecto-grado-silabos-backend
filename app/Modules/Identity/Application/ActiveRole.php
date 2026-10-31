@@ -81,19 +81,10 @@ class ActiveRole
         }
 
         $assignment = $eligible->firstOrFail();
-        if ($this->requiresExplicitSelection($assignment)) {
-            return null;
-        }
-
         $request->session()->put('active_role_assignment_id', $assignment->id);
         $request->attributes->set('active_role', $assignment);
 
         return $assignment;
-    }
-
-    public function requiresExplicitSelection(RoleAssignment $assignment): bool
-    {
-        return $assignment->role->codigo_rol === RoleCode::Coordinator->value;
     }
 
     public function isEligible(RoleAssignment $assignment): bool
