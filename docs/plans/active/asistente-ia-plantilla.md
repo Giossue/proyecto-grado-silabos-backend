@@ -232,9 +232,12 @@ que la IA no usa.
 2. **Chat y propuesta en la pantalla de plantilla.** Hecha (2026-10-31): tablas
    `mensajes_ia_plantilla` y `propuestas_ia_plantilla`, rutas `admin/template/assistant`, panel
    flotante, «Ver en la hoja» con cambios marcados, «Aplicar» con confirmación, «Descartar» y
-   auditoría. Decisiones tomadas al implementar: un pedido nuevo parte de la propuesta
-   pendiente y la reemplaza; un pedido a la vez por persona (no es un cupo); el asistente solo
-   se muestra en modo lectura; aplicar reusa `ReplaceTemplateStructure`. Falta probarlo en
+   auditoría. Ajuste pedido por el usuario el mismo día: el asistente vive **solo en el modo
+   edición**. Trabaja sobre el borrador del editor (con lo no guardado), «Aplicar» pone los
+   cambios en el editor marcados «Cambió» y solo «Guardar» cambia la plantilla. Se quitaron la
+   vista de la propuesta en modo lectura, el aplicar que guardaba directo y su confirmación.
+   Una propuesta nueva reemplaza la pendiente; un pedido a la vez por persona (no es un cupo);
+   si el borrador cambió después del pedido, la propuesta queda «Vencida». Falta probarlo en
    pantalla con DeepSeek y con administradores reales.
 3. **Bloques, diseño y límites de listas.** Si aprieta el tiempo antes de diciembre, queda como
    trabajo futuro.

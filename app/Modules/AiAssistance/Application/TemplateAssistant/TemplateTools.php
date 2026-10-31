@@ -16,11 +16,13 @@ final class TemplateTools
 
     /**
      * @param  array{estado: string, aviso: string}  $process
+     * @param  list<string>  $preexisting
      */
     public function __construct(
         private readonly TemplateDraft $draft,
         private readonly TemplateDraftValidator $validator,
         private readonly array $process,
+        private readonly array $preexisting = [],
     ) {}
 
     public function locked(): bool
@@ -113,7 +115,7 @@ final class TemplateTools
      */
     public function validation(): array
     {
-        $errors = $this->draft->changed() ? $this->validator->errors($this->draft) : [];
+        $errors = $this->draft->changed() ? array_values(array_diff($this->validator->errors($this->draft), $this->preexisting)) : [];
 
         return ['valido' => $errors === [], 'errores' => $errors, 'cambios' => $this->draft->changes()];
     }

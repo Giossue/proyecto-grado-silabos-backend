@@ -37,37 +37,38 @@ class TemplateAssistantApiTest extends TestCase
         $this->template = SyllabusTemplate::query()->firstOrFail();
     }
 
-    public function test_a_request_becomes_a_proposal_that_the_administrator_applies(): void
+    public function test_a_request_over_the_editor_draft_marks_only_the_assistant_changes_and_goes_to_the_editor(): void
     {
         $this->script([...$this->addField('Competencias'), ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Propongo **Competencias**.'])]);
+        $draft = $this->draft();
+        $draft[1]['fields'][] = ['key' => 'sin_guardar', 'label' => 'Sin guardar', 'quien_llena' => 'docente', 'content' => ['type' => 'doc', 'content' => [['type' => 'paragraph']]]];
 
-        $this->ask('Agrega Competencias')->assertAccepted();
+        $this->ask('Agrega Competencias', null, $draft, 'sesion-1:7')->assertAccepted();
 
         $chat = $this->getJson(route('api.v1.admin.template.assistant.show'))->assertOk()
             ->assertJsonPath('available', true)
-            ->assertJsonPath('locked', false)
             ->assertJsonCount(2, 'messages')
-            ->assertJsonPath('messages.0.role', 'usuario')
             ->assertJsonPath('messages.0.content', 'Agrega Competencias')
-            ->assertJsonPath('messages.1.status', 'completado')
             ->assertJsonPath('messages.1.result', 'propuesta')
             ->assertJsonPath('messages.1.content', 'Propongo **Competencias**.')
             ->assertJsonPath('messages.1.proposal.status', 'pendiente')
+            ->assertJsonPath('messages.1.proposal.draft_version', 'sesion-1:7')
             ->assertJsonPath('messages.1.proposal.changes', ['Nuevo campo «Competencias» en «4. Resultados de aprendizaje».']);
         $proposalId = (string) $chat->json('messages.1.proposal.id');
 
         $this->getJson(route('api.v1.admin.template.assistant.proposals.show', $proposalId))->assertOk()
+            ->assertJsonPath('draft_version', 'sesion-1:7')
             ->assertJsonPath('changed', ['sections' => [], 'fields' => ['competencias']])
+            ->assertJsonPath('sections.1.fields.1.key', 'sin_guardar')
             ->assertJsonPath('sections.3.fields.1.key', 'competencias');
-        $this->assertNull(collect($this->fields())->firstWhere('clave', 'competencias'));
 
         $this->postJson(route('api.v1.admin.template.assistant.proposals.apply', $proposalId))->assertOk();
 
-        $this->assertSame('docente', collect($this->fields())->firstWhere('clave', 'competencias')['quien_llena'] ?? null);
         $this->assertSame(TemplateAssistantProposal::APPLIED, TemplateAssistantProposal::query()->findOrFail($proposalId)->estado);
+        $this->assertNull(collect($this->fields())->firstWhere('clave', 'competencias'));
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.propuesta_ia_aplicada', 'tipo_recurso' => 'propuesta_ia_plantilla']);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.importada']);
         $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'ia.plantilla_solicitada']);
+        $this->assertDatabaseMissing('eventos_auditoria', ['accion' => 'plantilla.importada']);
         $this->postJson(route('api.v1.admin.template.assistant.proposals.apply', $proposalId))->assertUnprocessable()
             ->assertJsonValidationErrors('proposal');
     }
@@ -81,36 +82,32 @@ class TemplateAssistantApiTest extends TestCase
         $this->postJson(route('api.v1.admin.template.assistant.proposals.discard', $proposal->id))->assertOk();
 
         $this->assertSame(TemplateAssistantProposal::DISCARDED, $proposal->fresh()?->estado);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'plantilla.propuesta_ia_descartada']);
         $this->postJson(route('api.v1.admin.template.assistant.proposals.apply', $proposal->id))->assertUnprocessable();
-        $this->assertNull(collect($this->fields())->firstWhere('clave', 'competencias'));
     }
 
-    public function test_a_proposal_goes_stale_when_the_template_changes_before_applying(): void
+    public function test_problems_already_in_the_draft_do_not_block_the_proposal(): void
     {
-        $this->script([...$this->addField('Competencias'), ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.'])]);
-        $this->ask('Agrega Competencias');
-        $proposal = TemplateAssistantProposal::query()->firstOrFail();
-        $payload = TemplateDraft::fromTemplate($this->template)->payload();
-        $payload['sections'][1]['title'] = '2. Descripción';
-        $this->putJson(route('api.v1.admin.template.json.import', $this->template), $payload)->assertOk();
+        $gateway = $this->script([...$this->addField('Competencias'), ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.'])]);
+        $draft = $this->draft();
+        $draft[] = ['key' => 'a_medias', 'title' => 'A medias', 'orientation' => 'portrait', 'fields' => []];
 
-        $this->getJson(route('api.v1.admin.template.assistant.show'))->assertJsonPath('messages.1.proposal.status', 'vencida');
-        $this->postJson(route('api.v1.admin.template.assistant.proposals.apply', $proposal->id))->assertUnprocessable()
-            ->assertJsonPath('errors.proposal.0', 'La plantilla cambió desde que se armó la propuesta. Pida una nueva al asistente.');
+        $this->ask('Agrega Competencias', null, $draft);
 
-        $this->assertSame(TemplateAssistantProposal::STALE, $proposal->fresh()?->estado);
-        $this->assertNull(collect($this->fields())->firstWhere('clave', 'competencias'));
+        $messages = $gateway->requests[0]->messages;
+        $opening = (string) ($messages[array_key_last($messages)]['content'] ?? '');
+        $this->assertStringContainsString('El borrador ya tenía estos problemas', $opening);
+        $this->assertStringContainsString('«A medias» no tiene campos', $opening);
+        $this->assertSame(['Nuevo campo «Competencias» en «4. Resultados de aprendizaje».'], TemplateAssistantProposal::query()->firstOrFail()->cambios['lista']);
     }
 
-    public function test_an_open_convocation_blocks_applying(): void
+    public function test_an_unreadable_draft_is_rejected(): void
     {
-        $this->script([...$this->addField('Competencias'), ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.'])]);
-        $this->ask('Agrega Competencias');
-        $this->openSyllabusProcess($this->template->id);
+        $draft = $this->draft();
+        $draft[0]['fields'][0]['content'] = ['type' => 'nada'];
 
-        $this->getJson(route('api.v1.admin.template.assistant.show'))->assertJsonPath('locked', true);
-        $this->postJson(route('api.v1.admin.template.assistant.proposals.apply', TemplateAssistantProposal::query()->firstOrFail()->id))
-            ->assertUnprocessable()->assertJsonValidationErrors('process');
+        $this->ask('Hola', null, $draft)->assertUnprocessable()->assertJsonValidationErrors('draft.0.fields.0.content');
+        $this->assertSame(0, TemplateAssistantMessage::query()->count());
     }
 
     public function test_only_one_request_at_a_time_and_repeated_keys_are_ignored(): void
@@ -127,7 +124,7 @@ class TemplateAssistantApiTest extends TestCase
         $this->deleteJson(route('api.v1.admin.template.assistant.clear'))->assertUnprocessable();
     }
 
-    public function test_a_follow_up_builds_on_the_pending_proposal_and_replaces_it(): void
+    public function test_a_new_proposal_replaces_the_pending_one_and_starts_from_the_draft(): void
     {
         $gateway = $this->script([
             ...$this->addField('Competencias'),
@@ -137,19 +134,14 @@ class TemplateAssistantApiTest extends TestCase
         ]);
         $this->ask('Agrega Competencias');
 
-        $this->ask('Ponla también en horizontal');
+        $this->ask('Ponla en horizontal');
 
         $messages = $gateway->requests[2]->messages;
-        $opening = (string) ($messages[array_key_last($messages)]['content'] ?? '');
-        $this->assertStringContainsString('El borrador ya incluye la propuesta anterior', $opening);
-        $this->assertStringContainsString('Nuevo campo «Competencias»', $opening);
-        $this->assertSame(['user', 'assistant', 'user'], array_column($gateway->requests[2]->messages, 'role'));
+        $this->assertStringContainsString('Las propuestas anteriores que no aplicó no están en el borrador', (string) ($messages[array_key_last($messages)]['content'] ?? ''));
+        $this->assertSame(['user', 'assistant', 'user'], array_column($messages, 'role'));
         $proposals = TemplateAssistantProposal::query()->orderBy('creada_en')->get();
         $this->assertSame([TemplateAssistantProposal::REPLACED, TemplateAssistantProposal::PENDING], $proposals->pluck('estado')->all());
-        $this->assertSame([
-            'La sección «4. Resultados de aprendizaje» pasa a horizontal.',
-            'Nuevo campo «Competencias» en «4. Resultados de aprendizaje».',
-        ], $proposals->last()?->cambios['lista']);
+        $this->assertSame(['La sección «4. Resultados de aprendizaje» pasa a horizontal.'], $proposals->last()?->cambios['lista']);
     }
 
     public function test_a_new_chat_hides_the_previous_messages_from_the_screen_and_the_model(): void
@@ -221,9 +213,25 @@ class TemplateAssistantApiTest extends TestCase
         return $gateway;
     }
 
-    private function ask(string $message, ?string $key = null): TestResponse
+    /**
+     * @param  list<array<string, mixed>>|null  $draft
+     */
+    private function ask(string $message, ?string $key = null, ?array $draft = null, string $version = 'sesion-1:1'): TestResponse
     {
-        return $this->postJson(route('api.v1.admin.template.assistant.messages.store'), ['message' => $message, 'idempotency_key' => $key ?? (string) Str::uuid()]);
+        return $this->postJson(route('api.v1.admin.template.assistant.messages.store'), [
+            'message' => $message,
+            'idempotency_key' => $key ?? (string) Str::uuid(),
+            'draft' => $draft ?? $this->draft(),
+            'draft_version' => $version,
+        ]);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function draft(): array
+    {
+        return TemplateDraft::fromTemplate(SyllabusTemplate::query()->firstOrFail())->payload()['sections'];
     }
 
     /**

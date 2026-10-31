@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Modules\AiAssistance\Application\TemplateAssistant\Actions\DecideTemplateAssistantProposal;
 use App\Modules\AiAssistance\Application\TemplateAssistant\Actions\SendTemplateAssistantMessage;
 use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateAssistantAvailability;
-use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateDraft;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\TemplateAssistantMessage;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\TemplateAssistantProposal;
 use App\Modules\AiAssistance\Presentation\Http\Requests\SendTemplateAssistantMessageRequest;
@@ -28,7 +27,6 @@ class TemplateAssistantController extends Controller
     {
         $actor = $this->actor($request);
         $template = SyllabusTemplate::query()->firstOrFail();
-        $fingerprint = TemplateDraft::fingerprint($template);
         $messages = TemplateAssistantMessage::query()
             ->conversation($template->id, $actor->id)
             ->with('proposal')
@@ -49,8 +47,9 @@ class TemplateAssistantController extends Controller
                 'created_at' => $message->enviado_en->toIso8601String(),
                 'proposal' => $message->proposal === null ? null : [
                     'id' => $message->proposal->id,
-                    'status' => $this->status($message->proposal, $fingerprint),
+                    'status' => $message->proposal->estado,
                     'changes' => $message->proposal->cambios['lista'],
+                    'draft_version' => $message->proposal->version_borrador,
                 ],
             ])->values()->all(),
         ]);
@@ -62,6 +61,8 @@ class TemplateAssistantController extends Controller
             $this->actor($request),
             $request->string('message')->toString(),
             $request->string('idempotency_key')->toString(),
+            $request->draft(),
+            $request->string('draft_version')->toString(),
             $request,
         );
 
@@ -85,11 +86,11 @@ class TemplateAssistantController extends Controller
     {
         $actor = $this->actor($request);
         abort_unless($proposal->solicitada_por === $actor->id, 404);
-        $template = SyllabusTemplate::query()->findOrFail($proposal->plantilla_id);
 
         return response()->json([
             'id' => $proposal->id,
-            'status' => $this->status($proposal, TemplateDraft::fingerprint($template)),
+            'status' => $proposal->estado,
+            'draft_version' => $proposal->version_borrador,
             'changes' => $proposal->cambios['lista'],
             'changed' => ['sections' => $proposal->cambios['secciones'], 'fields' => $proposal->cambios['campos']],
             'sections' => $proposal->estructura['sections'],
@@ -100,7 +101,7 @@ class TemplateAssistantController extends Controller
     {
         $action->apply($proposal, $this->actor($request), $request);
 
-        return response()->json(['message' => 'Propuesta aplicada a la plantilla.']);
+        return response()->json(['message' => 'Propuesta aplicada en el editor.']);
     }
 
     public function discard(TemplateAssistantProposal $proposal, ManageTemplatesRequest $request, DecideTemplateAssistantProposal $action): JsonResponse
@@ -116,12 +117,5 @@ class TemplateAssistantController extends Controller
         abort_unless($actor instanceof User, 401);
 
         return $actor;
-    }
-
-    private function status(TemplateAssistantProposal $proposal, string $fingerprint): string
-    {
-        return $proposal->estado === TemplateAssistantProposal::PENDING && $proposal->huella_base !== $fingerprint
-            ? TemplateAssistantProposal::STALE
-            : $proposal->estado;
     }
 }

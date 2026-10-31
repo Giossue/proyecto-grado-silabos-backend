@@ -73,9 +73,11 @@ base; este documento explica las reglas que hay detrás.
   detecta que la plantilla cambió.
 - Las FK compuestas `(…_id, plantilla_id)` impiden que un campo apunte a una sección
   de otra plantilla.
-- Las propuestas del asistente (`propuestas_ia_plantilla`) guardan la estructura propuesta
-  y la huella de la plantilla de la que partieron. Su estado es `pendiente`, `aplicada`,
-  `descartada`, `vencida` o `reemplazada`; aplicada o descartada exige quién y cuándo
+- Las propuestas del asistente (`propuestas_ia_plantilla`) guardan la estructura propuesta,
+  la versión del borrador del editor del que partieron y la huella de la plantilla guardada.
+  Su estado es `pendiente`, `aplicada` (pasó al editor), `descartada` o `reemplazada`;
+  `vencida` queda admitido pero hoy la vigencia la decide la pantalla con la versión del
+  borrador. Aplicada o descartada exige quién y cuándo
   (`propuestas_ia_plantilla_decision_check`).
 - `definiciones_campo.quien_llena_definicion_campo` solo admite `docente`,
   `coordinacion` e `institucional`. El contenido es un documento Tiptap

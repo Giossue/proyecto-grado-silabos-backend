@@ -65,8 +65,9 @@ regenerar o eliminar el sílabo.
 ## Asistente de la plantilla (POR VALIDAR)
 
 Plan: `docs/plans/active/asistente-ia-plantilla.md`. Administración pide un cambio en
-lenguaje natural y la IA arma una propuesta llamando funciones (*tools*), sin tocar la
-plantilla real. La persona la revisa en la hoja y la aplica o la descarta.
+lenguaje natural mientras edita y la IA arma una propuesta llamando funciones (*tools*)
+sobre una copia del borrador del editor. La persona la aplica en el editor (marcada «Cambió»)
+o la descarta; solo «Guardar» cambia la plantilla.
 
 - Contrato `AiAgentGateway` (un paso del ciclo con *tools*), separado de `AiChatGateway`.
   `HostedAiAgentGateway` solo admite DeepSeek (`chat/completions`, `tool_choice: required`,
@@ -92,22 +93,22 @@ Rutas (solo Administración, `active-role`, sin cupo de pedidos):
 | Ruta | Para qué |
 |---|---|
 | `GET admin/template/assistant` | Conversación visible, disponibilidad y si la convocatoria está abierta |
-| `POST admin/template/assistant/messages` | Pedido (`message`, `idempotency_key`); responde 202 |
+| `POST admin/template/assistant/messages` | Pedido (`message`, `idempotency_key`, `draft` con las secciones del editor y `draft_version`); responde 202 |
 | `DELETE admin/template/assistant` | «Nuevo chat»: oculta los mensajes (`ocultado_en`) |
-| `GET admin/template/assistant/proposals/{id}` | Estructura propuesta y claves que cambian |
-| `POST …/proposals/{id}/apply` | Aplica con `ReplaceTemplateStructure` (misma auditoría que guardar el editor) |
-| `POST …/proposals/{id}/discard` | Descarta |
+| `GET admin/template/assistant/proposals/{id}` | Estructura propuesta, claves que cambian y `draft_version` |
+| `POST …/proposals/{id}/apply` | Marca que pasó al editor (`plantilla.propuesta_ia_aplicada`); no guarda la plantilla |
+| `POST …/proposals/{id}/discard` | Descarta (`plantilla.propuesta_ia_descartada`) |
 
 1. `SendTemplateAssistantMessage` guarda el pedido y una respuesta `pendiente` en
-   `mensajes_ia_plantilla`. Solo hay un pedido en curso por persona.
+   `mensajes_ia_plantilla`, con el borrador del editor. El contenido de cada campo se valida
+   como al guardar. Solo hay un pedido en curso por persona.
 2. `AnswerTemplateAssistantJob` (cola `ia`, 180 s, un intento) corre `TemplateAssistant` con
-   los últimos 12 mensajes. Si hay una propuesta pendiente, el borrador parte de ella y la
-   nueva la reemplaza (`reemplazada`).
-3. La propuesta queda en `propuestas_ia_plantilla` con la huella de la plantilla base. Si la
-   plantilla cambia antes de aplicarla, queda `vencida` y «Aplicar» se rechaza.
-4. Aplicar exige la convocatoria cerrada o en pausa (`ProcessLocks`) y vuelve a validar con las
-   reglas de «Guardar». Se audita `plantilla.propuesta_ia_aplicada` además de
-   `plantilla.importada`.
+   los últimos 12 mensajes sobre ese borrador. Los cambios y las marcas se calculan contra el
+   borrador enviado, así que solo aparecen los de la IA. Los errores que el borrador ya tenía
+   no bloquean la propuesta y se le avisan a la IA para que no los toque.
+3. La propuesta queda en `propuestas_ia_plantilla` con la versión del borrador
+   (`sesión de edición:revisión`). La pantalla solo la aplica si el editor sigue en esa
+   versión; si no, la muestra «Vencida». Una propuesta nueva reemplaza la pendiente.
 
 ## Seguridad
 

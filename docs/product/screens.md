@@ -104,13 +104,13 @@ y el botón «Documentos» (DOC-10).
 - Con la convocatoria abierta, todo queda bloqueado y aparece el aviso de edición
   bloqueada. Si la plantilla cambió durante una pausa, se avisa que al reanudar se
   rehacen los sílabos.
-- Asistente (POR VALIDAR): botón flotante «Asistente» junto a los de ayuda, solo en modo
-  lectura. Abre un panel de chat donde se pide un cambio en lenguaje natural; con la
-  convocatoria abierta solo responde consultas. Cada propuesta lista sus cambios y
-  «Ver en la hoja» la muestra sobre las mismas hojas, con lo que cambia marcado «Cambió».
-  Mientras se ve, la barra muestra «Cerrar», «Descartar» y «Aplicar»; «Aplicar» pide
-  confirmar con una cuenta regresiva y la misma lista de efectos que «Editar». Un pedido
-  nuevo parte de la propuesta pendiente y la reemplaza. «Nuevo chat» limpia la conversación.
+- Asistente (POR VALIDAR): solo al editar, botón flotante «Asistente» abajo a la derecha.
+  Abre un panel de chat donde se pide un cambio en lenguaje natural. La IA trabaja sobre lo
+  que hay en el editor, aunque no esté guardado. Cada propuesta lista sus cambios con
+  «Aplicar» y «Descartar». «Aplicar» pone los cambios en el editor y los marca «Cambió»
+  hasta guardar o salir; se guardan con «Guardar», como cualquier cambio. Si el borrador
+  cambió después del pedido, la propuesta queda «Vencida» y no se aplica. Un pedido nuevo
+  reemplaza la propuesta pendiente. «Nuevo chat» limpia la conversación.
 
 ### ADM-12 Convocatorias
 

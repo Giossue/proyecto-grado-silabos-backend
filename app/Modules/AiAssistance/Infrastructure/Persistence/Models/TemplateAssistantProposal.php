@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property array{version: int, sections: list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>} $estructura
  * @property array{lista: list<string>, secciones: list<string>, campos: list<string>} $cambios
  * @property string $huella_base
+ * @property string $version_borrador
  * @property string $estado
  * @property string|null $decidida_por
  * @property CarbonImmutable|null $decidida_en
@@ -40,6 +41,7 @@ class TemplateAssistantProposal extends Model
         'cambios' => 'cambios_propuesta',
         'huella_base' => 'huella_plantilla_base',
         'estado' => 'estado_propuesta',
+        'version_borrador' => 'version_borrador_propuesta',
     ];
 
     public $timestamps = false;
@@ -49,7 +51,7 @@ class TemplateAssistantProposal extends Model
     protected $primaryKey = 'propuesta_ia_plantilla_id';
 
     /** @var list<string> */
-    protected $fillable = ['id', 'plantilla_id', 'mensaje_ia_plantilla_id', 'solicitada_por', 'estructura', 'cambios', 'huella_base', 'estado', 'decidida_por', 'decidida_en'];
+    protected $fillable = ['id', 'plantilla_id', 'mensaje_ia_plantilla_id', 'solicitada_por', 'estructura', 'cambios', 'huella_base', 'version_borrador', 'estado', 'decidida_por', 'decidida_en'];
 
     /** @return array<string, string> */
     protected function casts(): array

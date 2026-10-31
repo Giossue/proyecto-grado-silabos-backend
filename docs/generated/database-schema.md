@@ -543,6 +543,7 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 | `estructura_propuesta` | jsonb | no |  |
 | `cambios_propuesta` | jsonb | no |  |
 | `huella_plantilla_base` | character(64) | no |  |
+| `version_borrador_propuesta` | character varying(100) | no |  |
 | `estado_propuesta` | character varying(20) | no | `'pendiente'::character varying` |
 | `decidida_por` | uuid | sí |  |
 | `decidida_en` | timestamp(6) with time zone | sí |  |

@@ -21,14 +21,17 @@ final class SendTemplateAssistantMessage
         private readonly RecordAuditEvent $audit,
     ) {}
 
-    public function execute(User $actor, string $content, string $idempotencyKey, Request $request): TemplateAssistantMessage
+    /**
+     * @param  list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>  $draft
+     */
+    public function execute(User $actor, string $content, string $idempotencyKey, array $draft, string $draftVersion, Request $request): TemplateAssistantMessage
     {
         if (! TemplateAssistantAvailability::available()) {
             throw ValidationException::withMessages(['message' => 'El asistente no está disponible por ahora.']);
         }
         $activeRole = $this->roles->resolve($request);
 
-        return DB::transaction(function () use ($activeRole, $actor, $content, $idempotencyKey): TemplateAssistantMessage {
+        return DB::transaction(function () use ($activeRole, $actor, $content, $draft, $draftVersion, $idempotencyKey): TemplateAssistantMessage {
             $template = SyllabusTemplate::query()->lockForUpdate()->firstOrFail();
             $existing = TemplateAssistantMessage::query()
                 ->where('plantilla_id', $template->id)
@@ -64,7 +67,7 @@ final class SendTemplateAssistantMessage
                 'contenido_mensaje' => [
                     'rol' => 'asistente',
                     'estado' => 'pendiente',
-                    'entrada' => ['respuesta_a_id' => $question->id],
+                    'entrada' => ['respuesta_a_id' => $question->id, 'borrador' => $draft, 'version_borrador' => $draftVersion],
                     'contenido' => '',
                 ],
             ]);

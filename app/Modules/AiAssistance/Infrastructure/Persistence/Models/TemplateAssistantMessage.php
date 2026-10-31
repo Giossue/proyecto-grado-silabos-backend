@@ -83,6 +83,42 @@ class TemplateAssistantMessage extends Model
         return is_string($value) ? $value : '';
     }
 
+    /**
+     * @return list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>|null
+     */
+    public function draft(): ?array
+    {
+        $raw = data_get($this->contenido_mensaje, 'entrada.borrador');
+        if (! is_array($raw)) {
+            return null;
+        }
+        $sections = [];
+        foreach ($raw as $section) {
+            if (! is_array($section)) {
+                continue;
+            }
+            $fields = [];
+            foreach (is_array($section['fields'] ?? null) ? $section['fields'] : [] as $field) {
+                if (is_array($field) && is_array($field['content'] ?? null)) {
+                    $fields[] = [
+                        'key' => (string) ($field['key'] ?? ''),
+                        'label' => (string) ($field['label'] ?? ''),
+                        'quien_llena' => (string) ($field['quien_llena'] ?? ''),
+                        'content' => array_filter($field['content'], is_string(...), ARRAY_FILTER_USE_KEY),
+                    ];
+                }
+            }
+            $sections[] = [
+                'key' => (string) ($section['key'] ?? ''),
+                'title' => (string) ($section['title'] ?? ''),
+                'orientation' => (string) ($section['orientation'] ?? 'portrait'),
+                'fields' => $fields,
+            ];
+        }
+
+        return $sections;
+    }
+
     /** @param array<string, mixed> $changes */
     public function amend(array $changes): void
     {

@@ -60,6 +60,14 @@ final class TemplateDraft
         return new self($template->definition(), $sections, self::fingerprintOf($template->definition(), $sections), $start ?? $sections);
     }
 
+    /**
+     * @param  list<DraftSection>  $sections
+     */
+    public static function fromDraft(SyllabusTemplate $template, array $sections): self
+    {
+        return new self($template->definition(), $sections, self::fingerprintOf($template->definition(), self::sectionsOf($template)), $sections);
+    }
+
     public static function fingerprint(SyllabusTemplate $template): string
     {
         return self::fingerprintOf($template->definition(), self::sectionsOf($template));

@@ -4,7 +4,6 @@ namespace App\Modules\AiAssistance\Infrastructure\Jobs;
 
 use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateAssistant;
 use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateAssistantOutcome;
-use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateDraft;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\TemplateAssistantMessage;
 use App\Modules\AiAssistance\Infrastructure\Persistence\Models\TemplateAssistantProposal;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
@@ -57,14 +56,12 @@ class AnswerTemplateAssistantJob implements ShouldBeUnique, ShouldQueue
         $template = SyllabusTemplate::query()->findOrFail($message->plantilla_id);
         $questionId = (string) data_get($message->contenido_mensaje, 'entrada.respuesta_a_id');
         $question = TemplateAssistantMessage::query()->findOrFail($questionId);
-        $pending = $this->pendingProposal($template, $message->usuario_id);
-
         $outcome = $assistant->run(
             $template,
             $question->text(),
             $this->history($message, $questionId),
             TemplateAssistant::userTag($message->usuario_id),
-            $pending?->estructura['sections'],
+            $message->draft(),
         );
 
         DB::transaction(function () use ($message, $outcome, $template): void {
@@ -104,6 +101,7 @@ class AnswerTemplateAssistantJob implements ShouldBeUnique, ShouldQueue
                     'campos' => $outcome->proposal['changed']['campos'],
                 ],
                 'huella_base' => $outcome->proposal['fingerprint'],
+                'version_borrador' => (string) data_get($locked->contenido_mensaje, 'entrada.version_borrador', ''),
                 'estado' => TemplateAssistantProposal::PENDING,
             ]);
         });
@@ -124,22 +122,6 @@ class AnswerTemplateAssistantJob implements ShouldBeUnique, ShouldQueue
                 'completado_en' => now()->toIso8601String(),
             ]);
         });
-    }
-
-    private function pendingProposal(SyllabusTemplate $template, string $userId): ?TemplateAssistantProposal
-    {
-        $proposal = TemplateAssistantProposal::query()
-            ->where('plantilla_id', $template->id)
-            ->where('solicitada_por', $userId)
-            ->where('estado', TemplateAssistantProposal::PENDING)
-            ->latest('creada_en')
-            ->first();
-        if ($proposal === null || $proposal->huella_base === TemplateDraft::fingerprint($template)) {
-            return $proposal;
-        }
-        $proposal->update(['estado' => TemplateAssistantProposal::STALE]);
-
-        return null;
     }
 
     /**

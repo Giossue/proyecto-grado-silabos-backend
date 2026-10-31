@@ -33,6 +33,7 @@ return new class extends Migration
             $table->jsonb('estructura_propuesta');
             $table->jsonb('cambios_propuesta');
             $table->char('huella_plantilla_base', 64);
+            $table->string('version_borrador_propuesta', 100);
             $table->string('estado_propuesta', 20)->default('pendiente');
             $table->uuid('decidida_por')->nullable();
             $table->timestampTz('decidida_en', 6)->nullable();

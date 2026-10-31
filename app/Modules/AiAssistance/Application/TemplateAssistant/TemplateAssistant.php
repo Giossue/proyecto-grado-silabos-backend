@@ -44,6 +44,9 @@ final class TemplateAssistant
 
     private string $gatewayVersion = '';
 
+    /** @var list<string> */
+    private array $preexisting = [];
+
     public function __construct(
         private readonly AiAgentGateway $gateway,
         private readonly TemplateAssistantKnowledge $knowledge,
@@ -57,17 +60,18 @@ final class TemplateAssistant
 
     /**
      * @param  list<array{role: 'user'|'assistant', content: string}>  $history
-     * @param  list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>|null  $pending
+     * @param  list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>|null  $editorDraft
      */
-    public function run(SyllabusTemplate $template, string $request, array $history = [], string $userTag = 'consola', ?array $pending = null): TemplateAssistantOutcome
+    public function run(SyllabusTemplate $template, string $request, array $history = [], string $userTag = 'consola', ?array $editorDraft = null): TemplateAssistantOutcome
     {
         $this->trace = [];
         $this->usage = ['prompt' => 0, 'completion' => 0, 'cached' => 0];
         $this->gatewayVersion = '';
-        $draft = TemplateDraft::fromTemplate($template, $pending);
-        $tools = new TemplateTools($draft, $this->validator, $this->processState());
+        $draft = $editorDraft === null ? TemplateDraft::fromTemplate($template) : TemplateDraft::fromDraft($template, $editorDraft);
+        $this->preexisting = $this->validator->errors($draft);
+        $tools = new TemplateTools($draft, $this->validator, $this->processState(), $this->preexisting);
         $system = $this->knowledge->system();
-        $messages = [...$history, ['role' => 'user', 'content' => $this->opening($tools, $draft, $request)]];
+        $messages = [...$history, ['role' => 'user', 'content' => $this->opening($tools, $request, $editorDraft !== null)]];
         $deadline = now()->addSeconds((int) config('ai.template.max_seconds'));
         $maxSteps = (int) config('ai.template.max_steps');
         $maxErrors = (int) config('ai.template.max_consecutive_errors');
@@ -121,7 +125,7 @@ final class TemplateAssistant
         if ($result->terminal !== TemplateToolResult::ANSWER || ! $draft->changed()) {
             return $result;
         }
-        $errors = $this->validator->errors($draft);
+        $errors = array_values(array_diff($this->validator->errors($draft), $this->preexisting));
 
         return $errors === []
             ? $result
@@ -191,13 +195,16 @@ final class TemplateAssistant
         return is_array($decoded) && is_string($decoded['error'] ?? null) ? $decoded['error'] : 'error';
     }
 
-    private function opening(TemplateTools $tools, TemplateDraft $draft, string $request): string
+    private function opening(TemplateTools $tools, string $request, bool $fromEditor): string
     {
         $state = $tools->locked()
             ? 'La convocatoria está abierta: solo puede consultar y explicar; no proponga cambios.'
             : 'Puede proponer cambios en el borrador. Nada se guarda hasta que el administrador los aplique.';
-        if (! $tools->locked() && $draft->changed()) {
-            $state .= "\n\nEl borrador ya incluye la propuesta anterior, que aún no se aplica. Si el pedido la continúa, agregue los cambios nuevos; si la contradice, ajústela:\n- ".implode("\n- ", $draft->changes());
+        if ($fromEditor) {
+            $state .= ' El borrador es lo que el administrador tiene ahora en el editor, con sus cambios sin guardar. Las propuestas anteriores que no aplicó no están en el borrador.';
+        }
+        if ($this->preexisting !== []) {
+            $state .= "\n\nEl borrador ya tenía estos problemas; no los corrija salvo que se lo pidan:\n- ".implode("\n- ", $this->preexisting);
         }
 
         return "{$state}\n\nPedido del administrador:\n".trim($request);

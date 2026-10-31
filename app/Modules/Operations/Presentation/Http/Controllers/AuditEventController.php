@@ -189,7 +189,7 @@ class AuditEventController extends Controller
             'plantilla.formateada' => 'Formato oficial aplicado a la plantilla',
             'plantilla.version_publicada' => 'Plantilla publicada',
             'plantilla.version_clonada' => 'Versión de plantilla clonada',
-            'plantilla.propuesta_ia_aplicada' => 'Propuesta del asistente aplicada a la plantilla',
+            'plantilla.propuesta_ia_aplicada' => 'Propuesta del asistente aplicada en el editor',
             'plantilla.propuesta_ia_descartada' => 'Propuesta del asistente descartada',
             'ia.plantilla_solicitada' => 'Pedido al asistente de la plantilla',
             'usuario.creado' => 'Usuario creado',
