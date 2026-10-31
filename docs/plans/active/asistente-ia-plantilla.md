@@ -159,7 +159,9 @@ Todas solo para Administración, con `active-role` y su Form Request y Policy.
 - Por error de validación: hasta 3 correcciones del mismo error.
 - Si se pasa de un límite: «No pude completar el pedido; intente explicarlo de otra forma».
   No se guarda ninguna propuesta a medias.
-- Por persona: un límite diario de pedidos (valor a definir, como el del docente).
+- Por persona: sin cupo diario ni por minuto para Administración (decisión del usuario,
+  2026-10-31). Los topes de pasos y tiempo de arriba se mantienen: no son un cupo, evitan que
+  un pedido quede dando vueltas.
 
 ### Errores del proveedor
 
@@ -216,7 +218,7 @@ plantilla actual; al final la conversación.
    - Comando de consola que corre 10 pedidos reales y muestra qué hizo la IA. Criterio para
      seguir: la mayoría termina en una propuesta válida y correcta (umbral a acordar, PV-18).
 2. **Chat y propuesta en la pantalla de plantilla.** Rutas, tablas, panel del asistente,
-   vista previa con cambios marcados, «Aplicar» y «Descartar», auditoría y límites.
+   vista previa con cambios marcados, «Aplicar» y «Descartar», y auditoría.
 3. **Bloques, diseño y límites de listas.** Si aprieta el tiempo antes de diciembre, queda como
    trabajo futuro.
 
@@ -241,8 +243,10 @@ plantilla actual; al final la conversación.
   `docs/security/aviso-de-privacidad.md`, `DECISIONS_STATUS.md` y `docs/plans/pendientes.md`.
 - `docs/architecture/openapi.json` con `php artisan openapi:export`.
 
-## Preguntas abiertas
+## Después de este plan
 
-- ¿El chat del docente también pasará a *tools* (por ejemplo `proponer_texto_campo`)? Fuera de
-  este plan por ahora.
-- Límite diario de pedidos por administrador.
+El chat del docente también pasará a *tools* más adelante (confirmado por el usuario el
+2026-10-31), sobre todo para buscar en internet información de los temas de sus unidades.
+DeepSeek abrió el 2026-10-17 sus APIs de búsqueda y lectura de páginas (Search y Fetch, $0.75
+por cada 1 000 solicitudes exitosas); revisarlas entonces. El contrato del ciclo con *tools*
+de este plan debe servir también para ese caso. Va en su propio plan.
