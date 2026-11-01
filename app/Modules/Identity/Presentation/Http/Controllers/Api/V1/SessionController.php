@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\PasswordUpdateRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\User;
+use App\Modules\Identity\Application\Actions\LeaveActiveRole;
 use App\Modules\Identity\Application\Actions\RevokeUserSessions;
 use App\Modules\Identity\Application\Actions\SelectActiveRole;
 use App\Modules\Identity\Application\Actions\UpdateAccessibilityPreferences;
@@ -195,6 +196,14 @@ class SessionController extends Controller
     {
         $user = $this->authenticatedUser($request);
         $action->execute($user, $request->string('role_assignment_id')->toString(), $request);
+
+        return response()->json($this->sessionPayload($user, $request));
+    }
+
+    public function leaveActiveRole(Request $request, LeaveActiveRole $action): JsonResponse
+    {
+        $user = $this->authenticatedUser($request);
+        $action->execute($user, $request);
 
         return response()->json($this->sessionPayload($user, $request));
     }

@@ -5,6 +5,7 @@ namespace Tests\Feature\Identity;
 use App\Models\User;
 use App\Modules\Identity\Infrastructure\Mail\ManagedUserActivationMail;
 use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
+use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -123,6 +124,25 @@ class ApiSessionTest extends TestCase
             ->assertOk()
             ->assertJsonPath('active_role.id', $assignment->id)
             ->assertJsonPath('active_role.code', 'coordinador');
+    }
+
+    public function test_leaving_the_active_role_sends_a_user_with_several_roles_back_to_choose_again(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
+        $assignment = $coordinator->roleAssignments()->firstOrFail();
+        RoleAssignment::query()->create(['usuario_id' => $coordinator->id, 'rol' => 'docente', 'carrera_id' => $assignment->carrera_id, 'activo' => true]);
+        $this->actingAs($coordinator)->withHeader('Origin', 'http://localhost:5173');
+
+        $this->putJson(route('api.v1.active-role.update'), ['role_assignment_id' => $assignment->id])
+            ->assertOk()->assertJsonPath('active_role.id', $assignment->id);
+
+        $this->deleteJson(route('api.v1.active-role.destroy'))
+            ->assertOk()
+            ->assertJsonPath('active_role', null)
+            ->assertJsonCount(2, 'available_roles');
+        $this->getJson(route('api.v1.session.show'))->assertJsonPath('active_role', null);
+        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'rol_activo.cerrado', 'recurso_id' => $assignment->id]);
     }
 
     public function test_administrator_can_update_own_profile_through_the_api(): void

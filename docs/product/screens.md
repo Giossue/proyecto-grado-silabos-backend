@@ -232,7 +232,9 @@ envían. Cada persona firma una sola vez por sílabo.
   (`useShowsSidebar.ts`).
 - **Encabezado.** Campana de avisos, tema claro u oscuro y menú de usuario
   (Configuración, Cerrar sesión). Con más de un rol, el menú de usuario ofrece «Cambiar
-  carrera o rol», con o sin menú lateral. El pie del menú lateral ofrece «Instalar
+  carrera o rol», con o sin menú lateral: cierra el rol activo de la sesión y lleva a `/rol`
+  (UI-02), sin ventana emergente. En `/rol` la opción no aparece, porque ya no hay rol activo;
+  el encabezado muestra el logo horizontal de la UEB, igual que el resto de pantallas. El pie del menú lateral ofrece «Instalar
   aplicación» mientras el sistema no corre instalado; sin menú lateral, esa opción
   también está en el menú de usuario.
 - **Avisos.** Solo llegan cuando hay algo que hacer o cambió el trabajo propio. Abrir un

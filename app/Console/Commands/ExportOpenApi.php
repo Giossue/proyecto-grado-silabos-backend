@@ -248,7 +248,7 @@ class ExportOpenApi extends Command
             'schema' => ['type' => 'string'],
         ], $matches[1]);
         $tag = match (true) {
-            str_contains($name, '.authentication.'), $name === 'api.v1.session.show', $name === 'api.v1.active-role.update' => 'Identidad',
+            str_contains($name, '.authentication.'), $name === 'api.v1.session.show', $name === 'api.v1.active-role.update', $name === 'api.v1.active-role.destroy' => 'Identidad',
             str_contains($name, '.admin.') => 'Administración',
             str_contains($name, '.coordination.') => 'Coordinación',
             str_contains($name, '.teacher.') => 'Docencia',

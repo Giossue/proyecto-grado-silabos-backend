@@ -80,6 +80,8 @@ Route::prefix('v1')->group(function (): void {
         Route::middleware('verified')->group(function (): void {
             Route::put('active-role', [SessionController::class, 'selectActiveRole'])
                 ->name('api.v1.active-role.update');
+            Route::delete('active-role', [SessionController::class, 'leaveActiveRole'])
+                ->name('api.v1.active-role.destroy');
             Route::put('authentication/profile', [SessionController::class, 'updateProfile'])
                 ->middleware('active-role')
                 ->name('api.v1.authentication.profile.update');
