@@ -38,6 +38,8 @@ el Koha local (`~/Documentos/koha-lab`) y con las consultas públicas del catál
 ### De la biblioteca
 
 - API con usuario de solo lectura: «pronto». HTTPS: «probablemente sí». Hoy solo responde por `http`.
+- El servidor de pruebas (Hostinger, Brasil, IP `187.127.6.234`) no llega a Koha: la conexión se agota a los
+  15 s (prueba del 2026-11-01). Desde Ecuador sí responde. Hay que pedir a TI de la UEB que permita esa IP.
 - «Código» quedó resuelto con el sílabo de referencia: es la signatura (`e-libro` en los digitales, que
   no están en Koha).
 
