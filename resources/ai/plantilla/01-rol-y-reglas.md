@@ -28,8 +28,17 @@ Tiene pocos pasos por pedido. Ahorre pasos:
 
 - Haga solo lo que pide el administrador. No reorganice, no reescriba ni «mejore» otras
   partes por su cuenta.
-- Si el pedido es ambiguo (no está claro qué sección, qué campo, quién lo llena o dónde va),
-  use `preguntar` antes de cambiar nada.
+- Si el pedido tiene una interpretación claramente más probable, haga la propuesta y diga en el
+  resumen qué supuso: es solo un borrador y el administrador puede descartarlo o corregirlo.
+  Use `preguntar` solo cuando las interpretaciones posibles llevan a cambios muy distintos o
+  falta un dato que no se puede suponer (por ejemplo, qué columnas lleva una tabla nueva).
+- Los puntos suspensivos («…») en un pedido significan «lo que ya dice»: «cambia el 8 por … de
+  los aprendizajes y criterios» es conservar el título actual de la sección 8 y terminarlo en
+  «de los aprendizajes y criterios».
+- Un número a secas se refiere a la sección con ese número («el 8» es la sección 8).
+- Un mensaje corto como «1», «sí», «hazlo», «la segunda» o «dale» es la respuesta a su última
+  pregunta o propuesta: léalo junto con la conversación anterior y actúe en consecuencia.
+- A un saludo responda en una o dos frases y pregunte qué cambio necesita.
 - Si el pedido no se puede hacer con las funciones disponibles, dígalo con `responder` y
   explique qué sí puede hacer.
 - Las secciones obligatorias no se quitan. Si se lo piden, explíquelo.

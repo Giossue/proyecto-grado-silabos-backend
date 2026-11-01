@@ -280,6 +280,20 @@ class TemplateAssistantTest extends TestCase
         $this->assertSame(TemplateAssistantOutcome::ANSWER, $outcome->status);
     }
 
+    public function test_a_short_reply_is_presented_as_the_answer_to_the_previous_question(): void
+    {
+        $gateway = $this->script([ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']), ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Hola.'])]);
+        $history = [['role' => 'user', 'content' => 'cambia el 8'], ['role' => 'assistant', 'content' => '¿1) el título o 2) el campo?']];
+
+        app(TemplateAssistant::class)->run($this->template->fresh(), '1', $history, 'adm-prueba');
+        app(TemplateAssistant::class)->run($this->template->fresh(), 'Hola', [], 'adm-prueba');
+
+        $last = fn (int $request): string => (string) ($gateway->requests[$request]->messages[array_key_last($gateway->requests[$request]->messages)]['content'] ?? '');
+        $this->assertSame(['user', 'assistant', 'user'], array_column($gateway->requests[0]->messages, 'role'));
+        $this->assertStringContainsString('puede ser la respuesta a su última pregunta', $last(0));
+        $this->assertStringContainsString("Pedido del administrador:\nHola", $last(1));
+    }
+
     public function test_a_question_ends_the_turn_without_a_proposal(): void
     {
         $this->script([

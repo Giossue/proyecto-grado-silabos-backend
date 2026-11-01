@@ -71,7 +71,7 @@ final class TemplateAssistant
         $this->preexisting = $this->validator->errors($draft);
         $tools = new TemplateTools($draft, $this->validator, $this->processState(), $this->preexisting);
         $system = $this->knowledge->system();
-        $messages = [...$history, ['role' => 'user', 'content' => $this->opening($tools, $request, $editorDraft !== null)]];
+        $messages = [...$history, ['role' => 'user', 'content' => $this->opening($tools, $request, $editorDraft !== null, $history !== [])]];
         $deadline = now()->addSeconds((int) config('ai.template.max_seconds'));
         $maxSteps = (int) config('ai.template.max_steps');
         $maxErrors = (int) config('ai.template.max_consecutive_errors');
@@ -195,7 +195,7 @@ final class TemplateAssistant
         return is_array($decoded) && is_string($decoded['error'] ?? null) ? $decoded['error'] : 'error';
     }
 
-    private function opening(TemplateTools $tools, string $request, bool $fromEditor): string
+    private function opening(TemplateTools $tools, string $request, bool $fromEditor, bool $continues): string
     {
         $state = $tools->locked()
             ? 'La convocatoria está abierta: solo puede consultar y explicar; no proponga cambios.'
@@ -207,7 +207,11 @@ final class TemplateAssistant
             $state .= "\n\nEl borrador ya tenía estos problemas; no los corrija salvo que se lo pidan:\n- ".implode("\n- ", $this->preexisting);
         }
 
-        return "{$state}\n\nPedido del administrador:\n".trim($request);
+        $label = $continues
+            ? 'Nuevo mensaje del administrador (puede ser la respuesta a su última pregunta; léalo con la conversación anterior)'
+            : 'Pedido del administrador';
+
+        return "{$state}\n\n{$label}:\n".trim($request);
     }
 
     /**
