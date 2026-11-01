@@ -4,6 +4,7 @@ namespace App\Modules\Academic\Application\Queries;
 
 use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
+use App\Modules\Academic\Application\CatalogDeactivationBlocks;
 use App\Modules\Academic\Application\SubjectProfileFields;
 use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Domain\CurricularUnit;
@@ -33,6 +34,7 @@ class AcademicStructureViewData
         private readonly InstitutionalLogos $logos,
         private readonly AcademicPeriodPlanning $periodPlanning,
         private readonly SubjectProfileFields $profiles,
+        private readonly CatalogDeactivationBlocks $deactivationBlocks,
     ) {}
 
     /** @return array<string, mixed> */
@@ -42,6 +44,8 @@ class AcademicStructureViewData
             ->get(['id', 'periodo_academico_id', 'estado'])
             ->keyBy('periodo_academico_id');
         $lockedPeriods = $this->locks->lockedPeriodReasons();
+        $facultyBlocks = $this->deactivationBlocks->forFaculties(Faculty::query()->where('activo', true)->get(['id'])->map(fn (Faculty $faculty): string => $faculty->id)->values()->all());
+        $careerBlocks = $this->deactivationBlocks->forCareers(Career::query()->where('activo', true)->get(['id'])->map(fn (Career $career): string => $career->id)->values()->all());
 
         return [
             'lock_reason' => $lockedPeriods === [] ? null : reset($lockedPeriods),
@@ -56,6 +60,7 @@ class AcademicStructureViewData
                         'campus' => $faculty->campus->value,
                         'catalog_libraries' => $faculty->koha_libraries,
                         'activo' => $faculty->activo,
+                        'deactivate_block' => $facultyBlocks[$faculty->id] ?? null,
                         'logo_url' => $this->logos->facultyIsConfigured($faculty)
                             ? route('logos.faculty', ['faculty' => $faculty->id, 'v' => $this->logos->version($this->logos->facultyPath($faculty))])
                             : null,
@@ -77,6 +82,7 @@ class AcademicStructureViewData
                         'code' => $career->codigo_carrera,
                         'name' => $career->nombre,
                         'active' => $career->activo,
+                        'deactivate_block' => $careerBlocks[$career->id] ?? null,
                     ]),
                 'periods' => AcademicPeriod::query()
                     ->orderByDesc('fecha_inicio')

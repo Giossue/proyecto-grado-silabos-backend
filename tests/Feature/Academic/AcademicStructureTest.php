@@ -653,6 +653,21 @@ class AcademicStructureTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_the_listing_tells_which_faculties_and_careers_cannot_be_deactivated(): void
+    {
+        $career = $this->createCareer('BLOQUEADA');
+        $user = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
+        $role = RoleAssignment::query()->create(['usuario_id' => $user->id, 'rol' => 'docente', 'carrera_id' => $career->id, 'activo' => true]);
+        $listing = fn (): array => $this->actingAsAdministrator()->getJson(route('api.v1.admin.academic.index'))->json('catalogs');
+        $blockOf = fn (string $catalog, string $id): ?string => collect($listing()[$catalog])->firstWhere('id', $id)['deactivate_block'];
+
+        $this->assertSame('Desactive primero las carreras activas de esta facultad.', $blockOf('faculties', $career->facultad_id));
+        $this->assertSame('Retire primero a los usuarios de la carrera.', $blockOf('careers', $career->id));
+
+        $role->update(['activo' => false]);
+        $this->assertNull($blockOf('careers', $career->id));
+    }
+
     public function test_administrator_deactivates_and_reactivates_a_career_with_audit(): void
     {
         $career = $this->createCareer('PAUSA');

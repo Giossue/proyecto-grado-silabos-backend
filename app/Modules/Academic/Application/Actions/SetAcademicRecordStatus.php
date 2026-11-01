@@ -3,6 +3,7 @@
 namespace App\Modules\Academic\Application\Actions;
 
 use App\Models\User;
+use App\Modules\Academic\Application\CatalogDeactivationBlocks;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
@@ -14,12 +15,9 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\InProgressWork;
 use App\Modules\Syllabus\Application\ProcessLocks;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class SetAcademicRecordStatus
@@ -37,6 +35,7 @@ class SetAcademicRecordStatus
         private readonly RecordAuditEvent $audit,
         private readonly ProcessLocks $locks,
         private readonly InProgressWork $work,
+        private readonly CatalogDeactivationBlocks $blocks,
     ) {}
 
     public function execute(
@@ -120,37 +119,17 @@ class SetAcademicRecordStatus
 
     private function ensureMayDeactivate(string $entity, string $recordId): void
     {
-        if ($entity === 'carrera') {
-            $this->ensureCareerMayDeactivate($recordId);
-
-            return;
-        }
-        $hasActiveDependants = match ($entity) {
-            'facultad' => Career::query()->where('facultad_id', $recordId)->where('activo', true)->exists(),
-            'asignatura' => Parallel::query()->where('asignatura_id', $recordId)->exists(),
-            default => false,
+        $reason = match ($entity) {
+            'facultad' => $this->blocks->forFaculty($recordId),
+            'carrera' => $this->blocks->forCareer($recordId),
+            'asignatura' => Parallel::query()->where('asignatura_id', $recordId)->exists()
+                ? 'Elimine primero los registros activos que dependen de este elemento.'
+                : null,
+            default => null,
         };
 
-        if ($hasActiveDependants) {
-            throw ValidationException::withMessages([
-                'record' => $entity === 'facultad'
-                    ? 'Desactive primero las carreras activas de esta facultad.'
-                    : 'Elimine primero los registros activos que dependen de este elemento.',
-            ]);
-        }
-    }
-
-    private function ensureCareerMayDeactivate(string $careerId): void
-    {
-        if (DB::table('asignaciones_rol')->where('carrera_id', $careerId)->where('asignacion_rol_activa', true)->exists()) {
-            throw ValidationException::withMessages(['record' => 'Retire primero a los usuarios de la carrera.']);
-        }
-        $inProgress = Convocation::query()->where('carrera_id', $careerId)
-            ->where('estado', '!=', Convocation::STATE_CLOSED)
-            ->whereHas('process', fn ($process) => $process->where('estado', '!=', SyllabusProcess::STATE_CLOSED))
-            ->exists();
-        if ($inProgress) {
-            throw ValidationException::withMessages(['record' => 'La carrera participa en una convocatoria en curso. Espere a que se cierre.']);
+        if ($reason !== null) {
+            throw ValidationException::withMessages(['record' => $reason]);
         }
     }
 }
