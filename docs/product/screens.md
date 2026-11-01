@@ -83,7 +83,9 @@ y el botón «Documentos» (DOC-10).
 - «Editar» pasa a pantalla completa, sin menú lateral: arriba, «Volver a la vista», el
   título y el cambio de tema. «Volver a la vista» pide confirmar si hay cambios sin
   guardar. Activa la cinta de edición sobre las mismas hojas:
-  - formato de texto (negrita, cursiva, subrayado, alineación, listas);
+  - formato de texto (negrita, cursiva, subrayado, color del texto, alineación, listas). El
+    color del texto solo ofrece negro, azul (`#365F91`, el de los rótulos de las unidades) y
+    blanco;
   - menú «Tabla» (insertar, filas, columnas, combinar, separar, encabezado, fondo de
     celda, quitar). El fondo de celda solo ofrece los colores de la tabla de
     identificación: «Celeste» (en negrita) y «Azul institucional» (texto blanco y negrita),

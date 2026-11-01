@@ -383,7 +383,7 @@ variables y bloques. Lo que cambia es el responsable (`quien_llena`):
 | Listas | `<ul>`/`<ol>` con `<li>`; una lista dentro de `<li>` es sublista |
 | Tabla | `<table>`, `<tr>`, `<th>`, `<td>`; `colspan`, `rowspan`; `data-width="144,66"`; `data-border="thin\|thick\|none"` |
 | Estilo de celda | `style="background:#C3D4EA;color:#FFFFFF;text-align:center;font-weight:bold;font-style:italic"` |
-| Color o fuente del texto | `<span style="color:#1F3864;font-family:Arial">…</span>` |
+| Color o fuente del texto | `<span style="color:#1F3864;font-family:Arial">…</span>`. El editor visual ofrece solo negro, azul `#365F91` y blanco para el texto, y celeste `#C3D4EA` o azul institucional `#4F81BD` para el fondo de celda; el JSON acepta cualquier `#RRGGBB`. |
 | Variable | `<span data-variable="clave"></span>` (`data-list="bullet\|number"` para listas) |
 | Bloque | `<div data-block="tipo" data-props='{…}' data-value='{…}'></div>` |
 
