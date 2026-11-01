@@ -202,7 +202,7 @@ y el botón «Documentos» (DOC-10).
   solo si responde Sí).
 - En revisión o aprobado, la pantalla muestra el documento tal como sale.
 - «Vista previa» (un ojo, con tooltip) muestra la hoja del sílabo en la pantalla, como en
-  Plantilla; el lápiz «Editar» vuelve al formulario. Con el sílabo aprobado, «Ver PDF» abre
+  Plantilla. Es un solo botón: queda presionado mientras se ve la hoja y, al pulsarlo otra vez, vuelve al formulario. No cambia de ícono ni de lugar. Con el sílabo aprobado, «Ver PDF» abre
   el PDF directamente en otra pestaña. «Copiar desde paralelo X» trae lo escrito en
   otro paralelo propio.
 - «Firmar y enviar» (primer envío) o «Enviar» (reenvío ya firmado) queda deshabilitado
