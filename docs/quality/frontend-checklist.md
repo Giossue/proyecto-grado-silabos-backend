@@ -25,6 +25,9 @@
       los buscadores de tablas usan `Buscar por...` con los datos consultados. Las ayudas
       no exponen claves internas, nombres de columnas ni contratos técnicos.
 - [ ] Error indica campo, causa y corrección.
+- [ ] Ningún texto de la interfaz (avisos, errores, ayudas, estados vacíos, tooltips, banners)
+      termina en punto final. Los puntos entre frases se conservan. Lo que llega del servidor se
+      muestra con `withoutFinalPeriod`.
 - [ ] Valores heredados muestran origen y aspecto de solo lectura.
 - [ ] Pendiente bloquea duplicados sin congelar toda la pantalla.
 - [ ] Guardado/guardado fallido/conflicto/cambios sin guardar son visibles.
