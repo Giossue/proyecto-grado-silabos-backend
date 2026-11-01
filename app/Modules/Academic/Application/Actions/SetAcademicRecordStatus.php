@@ -133,7 +133,9 @@ class SetAcademicRecordStatus
 
         if ($hasActiveDependants) {
             throw ValidationException::withMessages([
-                'record' => 'Elimine primero los registros activos que dependen de este elemento.',
+                'record' => $entity === 'facultad'
+                    ? 'Desactive primero las carreras activas de esta facultad.'
+                    : 'Elimine primero los registros activos que dependen de este elemento.',
             ]);
         }
     }

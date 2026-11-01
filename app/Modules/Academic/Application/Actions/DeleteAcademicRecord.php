@@ -5,9 +5,6 @@ namespace App\Modules\Academic\Application\Actions;
 use App\Models\User;
 use App\Modules\Academic\Domain\AcademicStructurePermissions;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Subject;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
@@ -33,8 +30,9 @@ class DeleteAcademicRecord
         }
 
         if (AcademicStructurePermissions::isGovernanceContext($role)) {
-            if (! in_array($entity, ['facultad', 'carrera', 'periodo'], true)) {
-                throw new AuthorizationException('Este registro no pertenece a la estructura institucional.');
+            // Facultades y carreras no se eliminan: se desactivan y conservan su historial.
+            if ($entity !== 'periodo') {
+                throw new AuthorizationException('Este registro no se elimina: desactívelo.');
             }
         } elseif (AcademicStructurePermissions::isCareerContext($role) && $role->carrera_id !== null) {
             if ($entity !== 'asignacion_docente') {
@@ -47,8 +45,6 @@ class DeleteAcademicRecord
         DB::transaction(function () use ($actor, $entity, $recordId, $role): void {
             $record = AcademicStructurePermissions::isGovernanceContext($role)
                 ? match ($entity) {
-                    'facultad' => Faculty::query()->lockForUpdate()->findOrFail($recordId),
-                    'carrera' => Career::query()->lockForUpdate()->findOrFail($recordId),
                     'periodo' => AcademicPeriod::query()->lockForUpdate()->findOrFail($recordId),
                     default => throw new \LogicException('Entidad institucional no admitida.'),
                 }
@@ -77,10 +73,6 @@ class DeleteAcademicRecord
     private function assertDeletable(string $entity, Model $record): void
     {
         $hasDependencies = match ($entity) {
-            'facultad' => Career::query()->where('facultad_id', $record->getKey())->exists(),
-            'carrera' => Subject::query()->where('carrera_id', $record->getKey())->exists()
-                || DB::table('convocatorias_carreras')->where('carrera_id', $record->getKey())->exists()
-                || self::careerRoleBlock((string) $record->getKey()) !== null,
             'periodo' => DB::table('convocatorias_universidad')->where('periodo_academico_id', $record->getKey())->exists(),
             'asignacion_docente' => false,
             default => true,
@@ -93,8 +85,6 @@ class DeleteAcademicRecord
         throw ValidationException::withMessages([
             'record' => match ($entity) {
                 'periodo' => 'Este período ya tiene una convocatoria con su historial, por eso no se puede eliminar.',
-                'carrera' => 'Esta carrera ya tiene materias, importaciones o usuarios asignados, por eso no se puede eliminar.',
-                'facultad' => 'Esta facultad ya tiene carreras, por eso no se puede eliminar.',
                 default => 'No se puede eliminar porque ya tiene registros dependientes o historia académica. Revise las consecuencias y conserve ese historial.',
             },
         ]);
@@ -104,34 +94,8 @@ class DeleteAcademicRecord
     private function delete(string $entity, Model $record): array
     {
         $name = (string) ($record->getAttribute('nombre') ?? $record->getAttribute('codigo') ?? $record->getKey());
-        $metadata = ['name' => $name];
-        if ($entity === 'carrera') {
-            DB::table('asignaciones_rol')->where('carrera_id', $record->getKey())->delete();
-        }
         $record->delete();
 
-        return $metadata;
-    }
-
-    public static function careerRoleBlock(string $careerId): ?string
-    {
-        $roles = DB::table('asignaciones_rol')->where('carrera_id', $careerId);
-        if ((clone $roles)->where('asignacion_rol_activa', true)->exists()) {
-            return 'No se puede eliminar: tiene usuarios asignados.';
-        }
-        $roleIds = (clone $roles)->pluck('asignacion_rol_id')->all();
-        if ($roleIds === []) {
-            return null;
-        }
-        $references = DB::select("SELECT c.conrelid::regclass::text AS tabla, a.attname AS columna
-            FROM pg_constraint c JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
-            WHERE c.contype = 'f' AND c.confrelid = 'asignaciones_rol'::regclass");
-        foreach ($references as $reference) {
-            if (DB::table($reference->tabla)->whereIn($reference->columna, $roleIds)->exists()) {
-                return 'No se puede eliminar: sus usuarios ya trabajaron en ella y ese historial se conserva.';
-            }
-        }
-
-        return null;
+        return ['name' => $name];
     }
 }

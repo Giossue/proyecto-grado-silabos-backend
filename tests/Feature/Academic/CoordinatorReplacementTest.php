@@ -45,14 +45,6 @@ class CoordinatorReplacementTest extends TestCase
                 ->has('options.coordinatorUsers'));
     }
 
-    public function test_a_career_with_subjects_explains_why_it_cannot_be_deleted(): void
-    {
-        $this->actingAsAdministrator()
-            ->getJson(route('api.v1.admin.academic.index', 'carreras'))
-            ->assertJson(fn (Assert $page) => $page->etc()
-                ->where('catalogs.careers.0.delete_blocked_reason', fn (?string $reason) => is_string($reason) && str_starts_with($reason, 'No se puede eliminar')));
-    }
-
     public function test_replacing_the_coordinator_closes_the_outgoing_mandate_and_role_and_opens_the_incoming_ones(): void
     {
         $incoming = $this->activeTeacher('entrante@silabos.test');

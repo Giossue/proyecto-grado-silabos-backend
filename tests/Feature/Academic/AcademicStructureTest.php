@@ -427,23 +427,22 @@ class AcademicStructureTest extends TestCase
         $this->assertArrayNotHasKey('period_id', $row);
     }
 
-    public function test_a_career_with_only_retired_roles_without_history_can_be_deleted(): void
+    public function test_faculties_and_careers_are_deactivated_not_deleted(): void
     {
         $career = $this->createCareer('RETIRADA');
-        $user = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();
-        $role = RoleAssignment::query()->create(['usuario_id' => $user->id, 'rol' => 'docente', 'carrera_id' => $career->id, 'activo' => true]);
+        $faculty = $career->faculty;
 
-        $this->actingAsAdministrator()
-            ->deleteJson(route('api.v1.admin.academic.destroy', ['carrera', $career->id]))
-            ->assertUnprocessable();
+        $this->actingAsAdministrator()->deleteJson(route('api.v1.admin.academic.destroy', ['carrera', $career->id]))->assertForbidden();
+        $this->actingAsAdministrator()->deleteJson(route('api.v1.admin.academic.destroy', ['facultad', $faculty->id]))->assertForbidden();
 
-        $role->update(['activo' => false]);
-        $this->actingAsAdministrator()
-            ->deleteJson(route('api.v1.admin.academic.destroy', ['carrera', $career->id]))
-            ->assertOk();
+        // La facultad conserva la regla de siempre: primero se desactivan sus carreras.
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.academic.status', ['facultad', $faculty->id]), ['active' => false])
+            ->assertUnprocessable()->assertJsonValidationErrors(['record' => 'Desactive primero las carreras activas de esta facultad.']);
+        Career::query()->where('facultad_id', $faculty->id)->update(['activo' => false]);
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.academic.status', ['facultad', $faculty->id]), ['active' => false])->assertOk();
 
-        $this->assertDatabaseMissing('carreras', ['carrera_id' => $career->id]);
-        $this->assertDatabaseMissing('asignaciones_rol', ['asignacion_rol_id' => $role->id]);
+        $this->assertDatabaseHas('carreras', ['carrera_id' => $career->id, 'carrera_activa' => false]);
+        $this->assertDatabaseHas('facultades', ['facultad_id' => $faculty->id, 'facultad_activa' => false]);
     }
 
     public function test_deleting_a_period_without_convocation_keeps_the_fixed_parallels(): void

@@ -39,6 +39,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Cada facultad elige un campus de una lista fija y tiene un logo PNG con transparencia
   obligatorio. Solo Administración lo carga (I-106, I-123, I-125).
 - El código de carrera es obligatorio y único (I-107).
+- Facultades y carreras no se eliminan: se desactivan y se reactivan, y conservan su historial
+  (2026-11-01). Una facultad se desactiva cuando no le quedan carreras activas; una carrera,
+  cuando no tiene usuarios activos ni una convocatoria en curso. Los períodos sí se eliminan
+  mientras no tengan convocatoria.
 - Cada carrera tiene una sola malla, sin versiones (I-82). Las asignaturas tienen campos
   fijos: código, nombre, ciclo, unidad de organización, modalidad, créditos y horas ACD,
   APE y AA (I-75).
