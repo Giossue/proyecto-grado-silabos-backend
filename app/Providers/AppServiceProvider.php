@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -81,11 +82,23 @@ class AppServiceProvider extends ServiceProvider
         DevCommands::artisan('queue:listen --queue=critica,documentos,ia,general --tries=1 --timeout=0', 'queue');
     }
 
+    /**
+     * Si la API se publica por HTTPS, las direcciones que arma (logos, enlaces) también: el proxy
+     * puede entregar la petición por HTTP y el navegador bloquearía el contenido mixto.
+     */
+    public function secureUrls(): void
+    {
+        if (str_starts_with((string) config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
+    }
+
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
         $proxies = config('app.trusted_proxies');
         TrustProxies::at(array_values(array_filter(array_map('trim', explode(',', is_string($proxies) ? $proxies : '')))));
+        $this->secureUrls();
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Convocation::class, ConvocationPolicy::class);
         Gate::policy(SyllabusProcess::class, SyllabusProcessPolicy::class);

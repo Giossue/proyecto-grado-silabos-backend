@@ -83,6 +83,8 @@ MAIL_MAILER=log
 ```
 
 - `TRUSTED_PROXIES` vale `*` si no se define; fije la IP real del proxy.
+- Con `APP_URL` en `https://`, la API arma todas sus direcciones (logos, enlaces) con HTTPS, aunque
+  el proxy le entregue la petición por HTTP.
 - `SESSION_SECURE_COOKIE=true` exige HTTPS. Sin certificado nadie puede iniciar sesión.
 - `QUEUE_RETRY_AFTER` debe ser mayor que el timeout del trabajo más largo:
   `GenerateSyllabusExportJob`, con 120 s. `.env.example` conserva 960 s.

@@ -8,6 +8,7 @@ use App\Modules\Academic\Domain\CampusLocation;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Faculty;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
+use App\Providers\AppServiceProvider;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -49,6 +50,14 @@ class InstitutionalLogosTest extends TestCase
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.template.logo.store', $template), ['logo' => $this->transparentPng(300, 100)])->assertOk();
 
         Storage::disk('private')->assertExists('logos/institucion.png');
+    }
+
+    public function test_logo_addresses_use_https_when_the_api_is_published_over_https(): void
+    {
+        config(['app.url' => 'https://api.silabos.test']);
+        $this->app->getProvider(AppServiceProvider::class)?->secureUrls();
+
+        $this->assertStringStartsWith('https://', route('logos.institution'));
     }
 
     public function test_administrator_must_create_a_faculty_with_a_transparent_logo(): void
