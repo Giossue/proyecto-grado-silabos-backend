@@ -74,8 +74,8 @@ y el botón «Documentos» (DOC-10).
 
 ### ADM-06 Plantilla
 
-- Abre en modo lectura: las hojas muestran la plantilla con datos de muestra, como
-  quedará el sílabo. Arriba: «Opciones avanzadas» y la acción principal «Editar»,
+- Abre en modo lectura: las hojas muestran la plantilla como quedará el sílabo, con los
+  datos del sistema vacíos (sin valores de muestra). Arriba: «Opciones avanzadas» y la acción principal «Editar»,
   alineadas con el borde derecho de la primera hoja. La barra respeta su papel,
   orientación y el ancho disponible de pantalla, también durante la edición.
 - En las plantillas protegidas, los párrafos y celdas vacíos son espacios de respuesta.
