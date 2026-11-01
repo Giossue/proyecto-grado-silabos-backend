@@ -137,6 +137,7 @@ class ManagedUserController extends Controller
             'correo_electronico' => $request->string('correo_electronico')->toString(),
             'role_code' => $request->string('role_code')->toString(),
             'career_id' => $request->filled('career_id') ? $request->string('career_id')->toString() : null,
+            'replace_coordinator' => $request->boolean('replace_coordinator'),
         ], $actor, $request);
 
         return response()->json([
@@ -234,6 +235,7 @@ class ManagedUserController extends Controller
                 $assignRole->execute($user, [
                     'role_code' => $validated['role_code'],
                     'career_id' => $validated['career_id'] ?? null,
+                    'replace_coordinator' => (bool) ($validated['replace_coordinator'] ?? false),
                 ], $actor, $request);
             }
 

@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Modules\Academic\Application\AcademicPeriodPlanning;
 use App\Modules\Academic\Application\Actions\CreateAcademicRecord;
 use App\Modules\Academic\Application\Actions\CreateParallels;
-use App\Modules\Academic\Application\Actions\ReplaceCoordinator;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
@@ -15,6 +14,7 @@ use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Configuration\Application\TemplateStructureValidator;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Application\Actions\ActivateManagedUser;
+use App\Modules\Identity\Application\Actions\AssignRole;
 use App\Modules\Identity\Application\Actions\CreateCareerTeacher;
 use App\Modules\Identity\Application\Actions\CreateManagedUser;
 use App\Modules\Identity\Application\Actions\IssueActivationInvitation;
@@ -166,7 +166,7 @@ class PrepareTestingEnvironmentCommand extends Command
             ], $admin->user, $request);
         $this->activate($user, $admin, $password);
         if ($this->coordinatorOf($career) === null) {
-            app(ReplaceCoordinator::class)->execute($career, ['incoming_user_id' => $user->id], $admin->user, $this->requestAs($admin));
+            app(AssignRole::class)->execute($user, ['role_code' => RoleCode::Coordinator->value, 'career_id' => $career->id, 'replace_coordinator' => true], $admin->user, $this->requestAs($admin), notify: false);
         }
         $this->line('Coordinación creada: '.self::COORDINATOR_EMAIL);
 

@@ -221,7 +221,7 @@ class ManagedUserTest extends TestCase
                 'role_code' => RoleCode::Coordinator->value,
                 'career_id' => $career->id,
             ])
-            ->assertJsonValidationErrors('role_code');
+            ->assertJsonValidationErrors('replace_coordinator');
 
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.users.update', $this->coordinatorHolder()), [...$this->identityOf($this->coordinatorHolder()), 'active' => false])

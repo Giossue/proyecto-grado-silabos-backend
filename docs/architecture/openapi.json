@@ -281,62 +281,6 @@
                 ]
             }
         },
-        "/api/v1/admin/academic/careers/{career}/coordinator": {
-            "post": {
-                "tags": [
-                    "Administración"
-                ],
-                "operationId": "api_v1_admin_academic_careers_coordinator_replace",
-                "summary": "api.v1.admin.academic.careers.coordinator.replace",
-                "responses": {
-                    "200": {
-                        "description": "Operación completada.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "$ref": "#/components/responses/Unauthorized"
-                    },
-                    "403": {
-                        "$ref": "#/components/responses/Forbidden"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationError"
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "career",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": false,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": true
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctumCookie": []
-                    }
-                ]
-            }
-        },
         "/api/v1/admin/academic/{entity}": {
             "post": {
                 "tags": [

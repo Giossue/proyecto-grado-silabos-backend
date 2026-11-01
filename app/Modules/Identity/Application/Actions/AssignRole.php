@@ -18,7 +18,7 @@ class AssignRole
         private readonly RecordAuditEvent $audit,
     ) {}
 
-    /** @param array{role_code: string, career_id?: string|null} $data */
+    /** @param array{role_code: string, career_id?: string|null, replace_coordinator?: bool} $data */
     public function execute(User $target, array $data, User $actor, Request $request, bool $notify = true): RoleAssignment
     {
         $activeRole = $this->roles->resolve($request);
@@ -50,17 +50,32 @@ class AssignRole
 
             $careerId = $role->hasCareerScope() ? ($data['career_id'] ?? null) : null;
             if ($data['role_code'] === RoleCode::Coordinator->value) {
-                $alreadyCoordinated = RoleAssignment::query()
+                $current = RoleAssignment::query()
                     ->effective()
                     ->where('carrera_id', $careerId)
                     ->where('usuario_id', '!=', $target->id)
                     ->whereHas('user', fn ($query) => $query->where('activo', true))
                     ->where('rol', RoleCode::Coordinator->value)
-                    ->exists();
-                if ($alreadyCoordinated) {
-                    throw ValidationException::withMessages([
-                        'role_code' => 'La carrera ya tiene una coordinación activa. Use el reemplazo de coordinación.',
-                    ]);
+                    ->with('user:id,nombre')
+                    ->lockForUpdate()
+                    ->first();
+                if ($current !== null) {
+                    // Una carrera tiene un solo coordinador: asignar otro es reemplazarlo, y se confirma antes.
+                    if (($data['replace_coordinator'] ?? false) !== true) {
+                        throw ValidationException::withMessages([
+                            'replace_coordinator' => "La carrera ya tiene como coordinador a {$current->user->nombre}.",
+                        ]);
+                    }
+                    $current->update(['activo' => false]);
+                    $this->audit->execute(
+                        actorId: $actor->id,
+                        roleAssignmentId: $activeRole?->id,
+                        action: 'academico.coordinacion.reemplazada',
+                        resourceType: 'carrera',
+                        resourceId: (string) $careerId,
+                        result: 'exito',
+                        metadata: ['previous_user_id' => $current->usuario_id, 'incoming_user_id' => $target->id],
+                    );
                 }
             }
             $assignment = RoleAssignment::query()->firstOrCreate(

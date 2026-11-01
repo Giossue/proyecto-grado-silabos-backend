@@ -107,14 +107,6 @@ class AcademicStructureViewData
                     ->orderBy('nombre')
                     ->get(['id', 'nombre']),
                 'campusOptions' => CampusLocation::options(),
-                'coordinatorUsers' => User::query()
-                    ->where('activo', true)
-                    ->whereNotIn('id', RoleAssignment::query()
-                        ->select('usuario_id')
-                        ->effective()
-                        ->where('rol', RoleCode::Administrator->value))
-                    ->orderBy('nombre')
-                    ->get(['id', 'nombre', 'correo_electronico']),
             ],
         ];
     }
@@ -451,7 +443,6 @@ class AcademicStructureViewData
             'activeSubjects' => [],
             'scheduledSubjects' => [],
             'parallels' => [],
-            'coordinatorUsers' => [],
             'teacherUsers' => [],
         ];
     }

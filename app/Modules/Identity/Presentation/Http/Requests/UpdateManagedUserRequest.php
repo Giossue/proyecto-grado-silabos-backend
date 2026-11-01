@@ -54,6 +54,7 @@ class UpdateManagedUserRequest extends FormRequest
                 'uuid',
                 Rule::exists('carreras', 'carrera_id')->where('carrera_activa', true),
             ],
+            'replace_coordinator' => ['sometimes', 'boolean'],
             'faculty_id' => ['prohibited'],
         ];
     }

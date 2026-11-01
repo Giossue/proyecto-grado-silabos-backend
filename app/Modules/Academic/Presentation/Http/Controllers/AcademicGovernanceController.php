@@ -6,13 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Modules\Academic\Application\Actions\CreateAcademicRecord;
 use App\Modules\Academic\Application\Actions\DeleteAcademicRecord;
-use App\Modules\Academic\Application\Actions\ReplaceCoordinator;
 use App\Modules\Academic\Application\Actions\SetAcademicRecordStatus;
 use App\Modules\Academic\Application\Actions\UpdateAcademicRecord;
 use App\Modules\Academic\Application\Queries\AcademicStructureViewData;
-use App\Modules\Academic\Infrastructure\Persistence\Models\Career;
 use App\Modules\Academic\Presentation\Http\Requests\ManageAcademicGovernanceRequest;
-use App\Modules\Academic\Presentation\Http\Requests\ReplaceCoordinatorRequest;
 use App\Modules\Academic\Presentation\Http\Requests\SetAcademicRecordStatusRequest;
 use App\Modules\Academic\Presentation\Http\Requests\StoreAcademicRecordRequest;
 use App\Modules\Academic\Presentation\Http\Requests\UpdateAcademicRecordRequest;
@@ -53,24 +50,6 @@ class AcademicGovernanceController extends Controller
             'message' => 'Registro institucional creado.',
             'id' => $record->getKey(),
         ], 201);
-    }
-
-    public function replaceCoordinator(
-        Career $career,
-        ReplaceCoordinatorRequest $request,
-        ReplaceCoordinator $action,
-    ): JsonResponse {
-        $actor = $request->user();
-        abort_unless($actor instanceof User, 401);
-        /** @var array{incoming_user_id: string} $data */
-        $data = $request->validated();
-        $result = $action->execute($career, $data, $actor, $request);
-
-        $message = $result['previous_user_id'] === null
-            ? "Coordinación de {$career->nombre} asignada."
-            : "Coordinación de {$career->nombre} reemplazada.";
-
-        return response()->json(['message' => $message]);
     }
 
     public function setStatus(

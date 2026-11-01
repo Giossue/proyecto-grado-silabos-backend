@@ -298,6 +298,7 @@ return [
         'source_ids.*' => 'fuente',
         'career' => 'carrera',
         'career_id' => 'carrera',
+        'replace_coordinator' => 'reemplazo de coordinación',
         'role' => 'rol',
         'role_code' => 'rol',
         'role_assignment_id' => 'rol',

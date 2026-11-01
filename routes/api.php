@@ -132,8 +132,6 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.academic.index');
             Route::post('admin/academic/{entity}', [AcademicGovernanceController::class, 'store'])
                 ->middleware('active-role')->name('api.v1.admin.academic.store');
-            Route::post('admin/academic/careers/{career}/coordinator', [AcademicGovernanceController::class, 'replaceCoordinator'])
-                ->middleware('active-role')->whereUuid('career')->name('api.v1.admin.academic.careers.coordinator.replace');
             Route::get('admin/academic/careers/import-template', [CareerImportController::class, 'template'])
                 ->middleware('active-role')->name('api.v1.admin.academic.careers.import-template');
             Route::post('admin/academic/careers/import', [CareerImportController::class, 'store'])
