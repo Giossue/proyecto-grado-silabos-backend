@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\AcademicPeriod;
 use App\Modules\Academic\Infrastructure\Persistence\Models\Parallel;
 use App\Modules\Configuration\Application\SyllabusTemplateProvisioner;
+use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -146,10 +148,27 @@ class ApiDashboardTest extends TestCase
         $deadline('admin@silabos.test')->assertJsonPath('deadline', null);
     }
 
-    public function test_dashboard_requires_an_active_role(): void
+    public function test_a_sole_role_enters_without_choosing(): void
     {
         $this->seed(DatabaseSeeder::class);
         $coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
+
+        $this->actingAs($coordinator)
+            ->withHeader('Origin', 'http://localhost:5173')
+            ->getJson(route('api.v1.dashboard.show'))
+            ->assertOk();
+    }
+
+    public function test_dashboard_requires_choosing_a_role_when_there_are_several(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $coordinator = User::query()->where('correo_electronico', 'coordinador@silabos.test')->firstOrFail();
+        RoleAssignment::query()->create([
+            'usuario_id' => $coordinator->id,
+            'rol' => RoleCode::Teacher->value,
+            'carrera_id' => $coordinator->roleAssignments()->firstOrFail()->carrera_id,
+            'activo' => true,
+        ]);
 
         $this->actingAs($coordinator)
             ->withHeader('Origin', 'http://localhost:5173')
