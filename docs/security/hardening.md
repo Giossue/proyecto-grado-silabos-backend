@@ -9,7 +9,7 @@
 - Cookies `HttpOnly`, `SameSite=lax` y `Secure` en producción; CSRF y rotación de sesión
   al autenticar, al pasar los dos pasos y al cambiar de rol.
 - Límites por minuto: inicio de sesión (5), dos pasos (10), recuperación (3), importaciones
-  de Excel (10), importación de fichas (20), firmas (20) y chat de IA (6 por persona y
+  de Excel (10), importación de proyectos de carrera (20), firmas (20) y chat de IA (6 por persona y
   sílabo).
 - Una cuenta desactivada pierde la sesión en su siguiente petición (`EnsureActiveUser`).
   Cada persona puede cerrar sus otras sesiones.
@@ -98,11 +98,11 @@ un `POST` a la API con un cuerpo de 16 KB no debe devolver 500.
 ## Archivos
 
 - Disco privado, nombres generados, tipo real, tamaño máximo y huella SHA-256.
-- Tipos aceptados: Excel para importaciones, un Excel estructurado para fichas (20 MB),
+- Tipos aceptados: Excel para importaciones, un Excel estructurado para proyectos de carrera (20 MB),
   PNG para logos y PDF para firmas.
 - Las descargas de sílabos pasan por la API autenticada: cada una se autoriza y se
   audita. No hay enlaces públicos; solo los logos institucionales se sirven sin sesión.
-- El Excel de la ficha se lee desde el temporal de PHP en revisión y aplicación. No
+- El Excel del proyecto de carrera se lee desde el temporal de PHP en revisión y aplicación. No
   se conserva en el disco privado ni se persiste su vista previa en base, caché o sesión.
 - La plantilla es solo datos (JSON); no se ejecuta como código.
 - La conversión a PDF corre en un servicio Gotenberg aparte.

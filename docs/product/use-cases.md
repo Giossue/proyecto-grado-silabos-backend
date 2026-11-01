@@ -6,7 +6,7 @@
 | CU-02 | Gestionar usuarios y roles | Administrador; Coordinador para docentes de su carrera | RF-003 a RF-006 | ADM-02, ADM-03, COR-15 |
 | CU-03 | Gestionar facultades, carreras, malla y paralelos | Administrador; Coordinador en su carrera | RF-008 a RF-016 | ADM-04, COR-13, COR-14 |
 | CU-04 | Configurar la plantilla del sílabo | Administrador | RF-017 a RF-026 | ADM-06 |
-| CU-05 | Mantener el Proyecto de carrera (fichas e importación) | Coordinador | RF-027 a RF-033 en su alcance actual | COR-16 |
+| CU-05 | Mantener el Proyecto de carrera (campos e importación) | Coordinador | RF-027 a RF-033 en su alcance actual | COR-16 |
 | CU-06 | Abrir la convocatoria e iniciar la de la carrera | Administrador; Coordinador | RF-034 a RF-036 | ADM-12, COR-01, COR-04, COR-05 |
 | CU-07 | Elaborar el sílabo | Docente | RF-037 a RF-044 | DOC-02, DOC-04 |
 | CU-08 | Pedir ayuda al chat de IA | Docente | RF-046 a RF-054 en su alcance actual | DOC-06 |

@@ -4,8 +4,8 @@ La IA ayuda al docente sobre su sílabo (`AiAssistance`). Una persona decide qu�
 (ADR-0003). No aprueba, califica, cambia estados ni escribe en el sílabo. Si el
 proveedor falla, todo lo demás sigue funcionando.
 
-La importación de fichas usa exclusivamente [Excel estructurado](ficha-excel.md).
-El flujo de extracción de fichas por IA y OCR fue eliminado.
+La importación de proyectos de carrera usa exclusivamente [Excel estructurado](ficha-excel.md).
+El flujo de extracción de proyectos de carrera por IA y OCR fue eliminado.
 
 ## Proveedor
 

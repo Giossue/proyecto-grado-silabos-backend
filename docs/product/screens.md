@@ -44,7 +44,7 @@ muestra «Página no encontrada».
 | COR-13 | Malla | `/coordinacion/malla` | Lienzo con ciclos, materias y requisitos; «Editar malla» abre el editor a pantalla completa; «Importar desde Excel». |
 | COR-14 | Materias y asignaciones | `/coordinacion/materias-asignaciones` | Materias con paralelos, jornada y docente; «Acciones masivas»; un clic abre «Paralelos y docentes de la materia». |
 | COR-15 | Docentes | `/coordinacion/docentes` | Docentes de la carrera; «Crear docente», «Importar desde Excel»; la fila abre «Editar docente» con «Reenviar invitación» y «Quitar de la carrera». |
-| COR-16 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Fichas de las asignaturas e importación mediante plantilla Excel. Detalle abajo. |
+| COR-16 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Proyectos de carrera de las asignaturas e importación mediante plantilla Excel. Detalle abajo. |
 
 COR-06 también ofrece «Reiniciar sílabo» (COR-10) en borrador, revisión, corrección o aprobado,
 y el botón «Documentos» (DOC-10).
@@ -165,16 +165,16 @@ y el botón «Documentos» (DOC-10).
 
 ### COR-16 Proyecto de carrera
 
-- Materias agrupadas por ciclo, con el estado de su ficha: «Completa», «n de m campos» o
+- Materias agrupadas por ciclo, con su estado: «Completa», «n de m campos» o
   «Incompleta». Filtros por materia, ciclo y estado.
-- Un clic abre «Ficha de {materia}»: pestañas por sección, un editor por campo y
-  «Guardar ficha». Un campo vacío muestra «Sin llenar».
+- Un clic abre «Proyecto de carrera de {materia}»: pestañas por sección, un editor por campo y
+  «Guardar proyecto de carrera». Un campo vacío muestra «Sin llenar».
 - «Importar desde Excel», con la misma variante verde de las otras importaciones,
   abre «Importar el proyecto de carrera»:
   1. «Descargar plantilla Excel» genera las materias y los campos de Coordinación;
   2. completar las celdas de contenido, manteniendo nombres, encabezados y materias;
   3. cargar un `.xlsx` y pulsar «Revisar Excel»;
-  4. revisar «n de m campos con contenido», tablas y comparación con la ficha actual;
+  4. revisar «n de m campos con contenido», tablas y comparación con el proyecto de carrera actual;
   5. seleccionar materias y campos y «Aplicar a N materias», o «Descartar».
   La vista previa solo dura mientras el diálogo esté abierto. Al cerrar o recargar
   hay que volver a subir el archivo; «Descartar» limpia únicamente la pantalla.
@@ -182,7 +182,7 @@ y el botón «Documentos» (DOC-10).
   de los errores; si cambió la estructura, exige descargar una plantilla nueva.
 - El flujo funciona sin IA, OCR ni cola. Solo se ofrecen vistas previas Excel; la carga
   antigua de documentos y su progreso asíncrono fueron retirados.
-- Con la convocatoria de la carrera abierta, la ficha y la importación quedan bloqueadas.
+- Con la convocatoria de la carrera abierta, el proyecto de carrera y la importación quedan bloqueados.
 
 ### DOC-04 Sílabo
 
@@ -195,8 +195,8 @@ y el botón «Documentos» (DOC-10).
   admiten números. «Anterior» y «Siguiente», debajo de la tarjeta, recorren las secciones. Cada campo se guarda solo
   tras una breve pausa; si falla, muestra «Sin guardar» y «Reintentar»; si hay
   conflicto, «Recargar borrador».
-- Campos del docente: editables. Campos de la ficha: solo lectura, salvo los marcados
-  como editables («Viene de la ficha; puede ajustarlo.»). Lo institucional se ve en
+- Campos del docente: editables. Campos del proyecto de carrera: solo lectura, salvo los marcados
+  como editables («Viene del proyecto de carrera; puede ajustarlo.»). Lo institucional se ve en
   «Vista previa».
 - Bloques: unidades y semanas con contador de horas, y discapacidad (los datos aparecen
   solo si responde Sí).

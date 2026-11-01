@@ -40,7 +40,7 @@ Toda la documentación describe cómo funciona el sistema hoy. El historial est�
 - `architecture/queues-and-jobs.md`: colas, trabajos e idempotencia.
 - `architecture/sequences.md`: secuencias de los flujos críticos.
 - `architecture/ai-service.md`: chat de IA del docente.
-- `architecture/ficha-excel.md`: generación, validación e importación de fichas mediante Excel.
+- `architecture/ficha-excel.md`: generación, validación e importación de proyectos de carrera mediante Excel.
 - `architecture/files-and-documents.md`: archivos, PDF y firmas al decidir.
 - `architecture/template-json.md`: manual del JSON de la plantilla.
 - `architecture/openapi.json`: contrato de la API, generado con `php artisan openapi:export`.

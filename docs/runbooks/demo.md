@@ -27,7 +27,7 @@ Opcional en `.env`, antes de levantar los procesos:
 
 - `AI_DRIVER=baseline`: el asistente de unidades usa un simulador que responde con texto
   fijo, sin proveedor externo.
-- La ficha se importa con la plantilla Excel descargada desde el sitio. No requiere
+- El proyecto de carrera se importa con la plantilla Excel descargada desde el sitio. No requiere
   proveedor de IA, OCR ni cola.
 - `GOTENBERG_URL=http://127.0.0.1:3000` con `docker run --rm -p 3000:3000 gotenberg/gotenberg:8`:
   el PDF sale igual al Word. Sin Gotenberg el PDF es de texto simple.
@@ -82,7 +82,7 @@ con Docente Demo asignado.
 2. En **Facultades y carreras**, edite la facultad y cargue su logo (PNG sin fondo). Sin
    logo, Coordinación no puede abrir su convocatoria.
 3. En **Plantilla**, revise las secciones y campos. Cada campo indica **Quién llena**:
-   Docente, Carrera (ficha) o Fijo. Abra **Opciones avanzadas → Editar JSON** para ver la plantilla como dato:
+   Docente, Carrera o Fijo. Abra **Opciones avanzadas → Editar JSON** para ver la plantilla como dato:
    permite **Descargar**, **Cargar archivo** y **Aplicar y reemplazar**. Si la plantilla
    aparece vacía, cargue ahí `resources/templates/silabo-oficial.json`.
 4. En **Convocatorias**, el período `2026-2027` aparece sin convocatoria. En sus acciones
@@ -97,7 +97,7 @@ con Docente Demo asignado.
 2. En **Malla** y **Materias y asignaciones**, compruebe `SW-601`, su paralelo `A` y el
    docente asignado. Para probar la copia entre paralelos, cree el paralelo `B` y asígnele
    también a Docente Demo.
-3. En **Proyecto de carrera**, abra la **Ficha** de `SW-601` y llene todos sus campos.
+3. En **Proyecto de carrera**, abra `SW-601` y llene todos sus campos.
    Con IA configurada, pruebe también **Importar desde Excel**, descargue la plantilla, complete el contenido y revise
    el archivo antes de aplicar.
 4. En el **Panel**, pulse **Abrir convocatoria de la carrera**. Se crea un sílabo por
@@ -106,7 +106,7 @@ con Docente Demo asignado.
 ### Docente: elaborar y enviar
 
 1. Ingrese con `docente@silabos.test` y abra **Mis sílabos** → `SW-601` paralelo `A`.
-2. Llene los campos; se guardan solos. Los campos de la ficha llegan llenos y solo se
+2. Llene los campos; se guardan solos. Los campos del proyecto de carrera llegan llenos y solo se
    editan los marcados por Coordinación. Revise la **Vista previa**.
 3. Opcional: **Asistente de unidades** (requiere `AI_DRIVER`) y, en el paralelo `B`,
    **Copiar desde paralelo**.

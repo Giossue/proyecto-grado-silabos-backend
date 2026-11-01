@@ -74,7 +74,7 @@ Los sílabos de períodos anteriores no se tocan. Si la plantilla está vacía, 
 
 Coordinación y docencia se asignan a una carrera; biblioteca trabaja con toda la universidad. Una persona puede tener más de un rol: el «+1» junto al rol indica que tiene otros.
 
-Pulse una fila para ver la ficha de la cuenta y use «Editar» para corregir sus datos, quitar un rol o agregar otro. Desde el menú de la fila puede desactivar o reactivar la cuenta, y reenviar la invitación si sigue pendiente. Al desactivar una cuenta, su sesión se cierra.',
+Pulse una fila para ver el detalle de la cuenta y use «Editar» para corregir sus datos, quitar un rol o agregar otro. Desde el menú de la fila puede desactivar o reactivar la cuenta, y reenviar la invitación si sigue pendiente. Al desactivar una cuenta, su sesión se cierra.',
         ],
         '/biblioteca/configuracion/perfil' => [
             'title' => 'Perfil',
@@ -152,11 +152,11 @@ Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leíd
         ],
         '/coordinacion/proyecto-carrera' => [
             'title' => 'Proyecto de carrera',
-            'content' => 'Las fichas contienen los campos que Administración asignó a Coordinación en la plantilla del sílabo. Pulse una materia para editar su ficha y elegir qué campos puede modificar el docente.
+            'content' => 'El proyecto de carrera contiene los campos que Administración asignó a Coordinación en la plantilla del sílabo. Pulse una materia para editar sus datos y elegir qué campos puede modificar el docente.
 
 Con «Importar desde Excel», descargue la plantilla de su carrera. Complete las celdas de contenido sin cambiar hojas, encabezados ni materias. Cargue el Excel, revise la vista previa y seleccione qué materias y campos aplicar. Las celdas vacías conservan los valores actuales. Esta carga no necesita IA ni OCR.
 
-Con una convocatoria abierta la edición está bloqueada. Si hay sílabos en curso, cambiar una ficha exige pausar y confirmar su regeneración; los procesos cerrados no se modifican.',
+Con una convocatoria abierta la edición está bloqueada. Si hay sílabos en curso, cambiar un dato exige pausar y confirmar su regeneración; los procesos cerrados no se modifican.',
         ],
         '/coordinacion/revisiones' => [
             'title' => 'Revisión de sílabos',

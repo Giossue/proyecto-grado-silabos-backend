@@ -74,10 +74,10 @@ Una tabla con encabezados y una sola fila de datos totalmente vacía es una list
 permite añadir filas o quitar la última, conservando al menos una fila de datos.
 Las demás tablas conservan filas, columnas, celdas combinadas y estilos. El servidor
 rechaza cualquier modificación de las partes fijas. Los rótulos no cuentan como
-respuesta para completar la ficha o enviar el sílabo.
+respuesta para completar el proyecto de carrera o enviar el sílabo.
 
 La API entrega `template` junto a `value` en campos de sílabo protegidos y junto a
-`content` en campos de ficha protegidos. La SPA usa `FieldResponseEditor`; los campos
+`content` en campos de proyecto de carrera protegidos. La SPA usa `FieldResponseEditor`; los campos
 anteriores sin `template` conservan el editor libre. Los bloques siguen usando sus
 esquemas de valor, propiedades y reglas. Detalle: ADR-0012.
 
@@ -347,7 +347,7 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 | `key` | Minúsculas, números y `_`; empieza con letra; máximo 100. Única entre secciones o entre campos de toda la plantilla. No cambie la clave de un campo en uso. |
 | `title` / `label` | Máximo 180. El título se imprime tal cual. Un `label` vacío no imprime subtítulo. |
 | `orientation` | `portrait` o `landscape`. |
-| `quien_llena` | `docente`, `coordinacion` («Carrera», en la ficha de la asignatura) o `institucional` («Fijo»). |
+| `quien_llena` | `docente`, `coordinacion` («Carrera», en el proyecto de carrera de la asignatura) o `institucional` («Fijo»). |
 | `content` | Lista de líneas HTML, un texto HTML o un documento Tiptap (`{"type":"doc",...}`). |
 
 Límites: 60 secciones, 60 campos por sección, tablas de hasta 24 columnas y 100 filas, documentos de hasta 2 MB.
@@ -360,14 +360,14 @@ variables y bloques. Lo que cambia es el responsable (`quien_llena`):
 | `quien_llena` | Contenido que ve el sílabo | ¿El docente lo edita? |
 |---|---|---|
 | `docente` | Empieza con el `content` de la plantilla; luego lo escribe el docente. | Sí |
-| `coordinacion` | La ficha de la asignatura, que Coordinación llena una vez por materia. Se copia al crear el sílabo. Si la ficha está vacía, se usa el `content` de la plantilla. | No |
+| `coordinacion` | El proyecto de carrera de la asignatura, que Coordinación llena una vez por materia. Se copia al crear el sílabo. Si el proyecto de carrera está vacío, se usa el `content` de la plantilla. | No |
 | `institucional` | El `content` de la plantilla con las variables resueltas. No se guarda por sílabo. | No |
 
-- La ficha (`PUT academic/asignaturas/{id}/ficha`) acepta solo campos `coordinacion`.
-  La petición trae `values`. La ficha está completa solo si todos sus campos tienen texto.
+- El proyecto de carrera (`PUT academic/asignaturas/{id}/ficha`) acepta solo campos `coordinacion`.
+  La petición trae `values`. El proyecto de carrera está completo solo si todos sus campos tienen texto.
 - El guardado del borrador acepta solo campos `docente`. Rechaza los demás con `422`.
 - Al enviar, todo campo que no sea `institucional` debe tener contenido.
-- Cambiar la ficha con sílabos en curso actualiza esos campos en los sílabos de la materia
+- Cambiar el proyecto de carrera con sílabos en curso actualiza esos campos en los sílabos de la materia
   y conserva lo del docente; los enviados o aprobados vuelven a Borrador tras confirmar.
 - Título y logos van en el encabezado fijo (`document.title`, `document.header`); no
   son campos.

@@ -8,7 +8,7 @@ Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_p
 
 2. «Que la descripción de la asignatura la escriba el docente.»
    `ver_plantilla` → `cambiar_responsable_campo` (`descripcion`, `docente`) →
-   `validar_borrador` → `responder` avisando que Coordinación deja de llenarla en la ficha.
+   `validar_borrador` → `responder` avisando que Coordinación deja de llenarla en el proyecto de carrera.
 
 3. «Agrega una sección "Prácticas de laboratorio" después de la metodología, con una tabla de
    práctica, horas y lugar.»

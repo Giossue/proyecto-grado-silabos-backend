@@ -36,9 +36,9 @@
 
 ## IA
 
-- [ ] El chat presenta propuestas. La carga Excel de fichas muestra una vista previa
+- [ ] El chat presenta propuestas. La carga Excel de proyectos de carrera muestra una vista previa
       y exige seleccionar qué aplicar.
-- [ ] Nada se escribe en el sílabo ni en la ficha sin una acción explícita de la persona.
+- [ ] Nada se escribe en el sílabo ni en el proyecto de carrera sin una acción explícita de la persona.
 - [ ] Si la IA está apagada o falla, se explica y el resto de la pantalla sigue usable.
 - [ ] No se muestran nombres de proveedor, modelo ni errores técnicos.
 

@@ -12,7 +12,7 @@
 Ejemplos:
 
 ```text
-feat(ficha): Coordinación decide si el docente puede editar un campo de la ficha
+feat(proyecto-carrera): Coordinación decide si el docente puede editar un campo del proyecto de carrera
 docs(plantilla): el manual indica el botón Editar JSON del admin
 ```
 

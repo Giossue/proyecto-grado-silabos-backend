@@ -19,7 +19,7 @@ sequenceDiagram
     C->>API: POST coordination/convocations
     API->>DB: convocatorias_carreras (preparacion → abierta)
     API->>DB: un sílabo sin_iniciar por paralelo + valores_campo heredados
-    Note over API,DB: campos de Coordinación ← ficha de la asignatura<br/>campos docentes ← contenido inicial de la plantilla
+    Note over API,DB: campos de Coordinación ← proyecto de carrera de la asignatura<br/>campos docentes ← contenido inicial de la plantilla
     D->>API: POST teacher/syllabi/{id}/start
     API->>DB: estado borrador, version_bloqueo = 1
     loop Autoguardado por campo
@@ -38,7 +38,7 @@ sequenceDiagram
   (`CoordinatorConvocationReadiness`) y una plantilla usable.
 - El docente puede copiar el contenido de otro paralelo suyo de la misma asignatura
   hacia un sílabo que aún no envió (`POST …/copy-from/{source}`).
-- El docente edita campos `docente` y los de Coordinación con el permiso de la ficha
+- El docente edita campos `docente` y los de Coordinación con el permiso del proyecto de carrera
   activado.
 
 ## 2. Validar y enviar
@@ -137,7 +137,7 @@ sequenceDiagram
 - Cada persona firma una vez por sílabo. Los reenvíos tras una corrección no se firman.
 - El PDF se descarga (`GET exports/{id}/pdf`) apenas se genera. No hay descarga de Word.
 
-## 6. Importación de fichas
+## 6. Importación de proyectos de carrera
 
 ```mermaid
 sequenceDiagram
@@ -195,9 +195,9 @@ La plantilla no se puede cambiar con un proceso `abierto`.
   final: una cerrada no se elimina (`403`).
 - El período tampoco se elimina si ya tiene una convocatoria.
 
-### Malla, paralelos y ficha
+### Malla, paralelos y proyecto de carrera
 
-- Con la convocatoria de la carrera `abierta`, la malla y la ficha están bloqueadas.
+- Con la convocatoria de la carrera `abierta`, la malla y el proyecto de carrera están bloqueados.
   Coordinación pausa la convocatoria para cambiarlas.
 - Si el cambio afecta sílabos de una convocatoria `abierta` o `pausada`, la API responde
   `422` con `purge_required` y la cantidad. Con `confirm_purge` aplica el cambio y

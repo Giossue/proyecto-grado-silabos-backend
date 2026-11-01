@@ -53,7 +53,7 @@ final class WorkflowNotificationMessages
             ],
             'silabo.devuelto_borrador' => [
                 'Su sílabo volvió a borrador',
-                "Coordinación cambió la malla o la ficha de {$subject}. Lo que escribió se conserva; revíselo, envíelo y fírmelo de nuevo.",
+                "Coordinación cambió la malla o el proyecto de carrera de {$subject}. Lo que escribió se conserva; revíselo, envíelo y fírmelo de nuevo.",
             ],
             'silabo.reiniciado' => [
                 'Su sílabo volvió a empezar',

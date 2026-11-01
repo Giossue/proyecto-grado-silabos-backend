@@ -38,7 +38,7 @@ final class TemplateTools
         $key = ['type' => 'string', 'description' => 'Clave tal como aparece en ver_plantilla.'];
         $after = ['type' => 'string', 'description' => 'Clave tras la cual va, según ver_plantilla. Use «(inicio)» para el principio o «(final)» para el final.'];
         $orientation = ['type' => 'string', 'enum' => ['vertical', 'horizontal']];
-        $responsible = ['type' => 'string', 'enum' => FieldDefinition::RESPONSIBLES, 'description' => 'docente: lo escribe el docente; coordinacion: viene de la ficha de la asignatura (Carrera); institucional: texto fijo de la plantilla.'];
+        $responsible = ['type' => 'string', 'enum' => FieldDefinition::RESPONSIBLES, 'description' => 'docente: lo escribe el docente; coordinacion: viene del proyecto de carrera de la asignatura (Carrera); institucional: texto fijo de la plantilla.'];
         $html = ['type' => 'string', 'description' => 'Contenido en HTML permitido. <p></p> deja un espacio vacío para responder.'];
         $specs = [
             $this->spec('ver_plantilla', 'Muestra las secciones y campos del borrador en orden, con su clave, nombre, quién llena cada campo y un resumen del contenido.', []),

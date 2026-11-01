@@ -23,7 +23,7 @@ Los logos se publican sin sesión en `GET /logos/institucion` y
 
 | Carga | Regla |
 |---|---|
-| Ficha (PDF/Excel) | hasta 6 archivos de 20 MB, `pdf`, `xlsx` o `xls` |
+| Proyecto de carrera (PDF/Excel) | hasta 6 archivos de 20 MB, `pdf`, `xlsx` o `xls` |
 | Planillas de usuarios, docentes, carreras y malla | `xlsx` de hasta 2 MB |
 | Logos | PNG transparente de hasta 4 MB; se ajusta al tamaño del encabezado |
 

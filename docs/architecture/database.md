@@ -87,8 +87,8 @@ base; este documento explica las reglas que hay detrás.
 
 `valores_campo` guarda el contenido de los campos de dos dueños distintos:
 
-- el sílabo (`silabo_id`): lo que escribe el docente y lo heredado de la ficha;
-- la asignatura (`asignatura_id`): la ficha que llena Coordinación una vez por materia.
+- el sílabo (`silabo_id`): lo que escribe el docente y lo heredado del proyecto de carrera;
+- la asignatura (`asignatura_id`): el proyecto de carrera que llena Coordinación una vez por materia.
 
 Reglas:
 
@@ -136,7 +136,7 @@ Las protecciones anteriores ceden solo dentro de una transacción que ejecuta
 `SET LOCAL app.reinicio_institucional = 'on'` (`reinicio_institucional_habilitado()`).
 Lo hacen `InProgressWork` y, para borrar las firmas de un sílabo que se reinicia,
 `ResetSyllabus`. `InProgressWork` lo usa para regenerar sílabos tras un cambio confirmado
-de plantilla, malla, ficha o paralelo, para eliminar un sílabo aprobado y para borrar un
+de plantilla, malla, proyecto de carrera o paralelo, para eliminar un sílabo aprobado y para borrar un
 proceso. Borra el sílabo completo con sus revisiones, aprobación, exportaciones, firmas,
 archivos y mensajes de IA. Fuera de esa transacción, los triggers rechazan el cambio.
 
@@ -144,7 +144,7 @@ archivos y mensajes de IA. Fuera de esa transacción, los triggers rechazan el c
 
 - Por defecto las FK usan `ON DELETE RESTRICT`: lo que tiene historia no se borra.
 - `CASCADE` solo entre padre e hijos sin sentido propio: plantilla → secciones →
-  campos → definiciones; sílabo → valores y mensajes de IA; asignatura → ficha.
+  campos → definiciones; sílabo → valores y mensajes de IA; asignatura → proyecto de carrera.
 - Una cuenta con historia se desactiva (`usuario_activo = false`), no se borra.
   `eventos_auditoria` no tiene FK hacia usuarios y copia el nombre, rol y carrera del
   actor.

@@ -4,7 +4,7 @@
 
 - credenciales, sesiones, 2FA y asignaciones de rol;
 - datos personales de usuarios, incluida la formación del docente;
-- estructura académica, malla, fichas de asignatura y el contenido del Excel de importación;
+- estructura académica, malla, proyectos de carrera de asignatura y el contenido del Excel de importación;
 - borradores, revisiones de Coordinación y Biblioteca, comentarios y aprobaciones;
 - plantilla del sílabo, PDF generado y sus huellas;
 - firmas CMS de las decisiones, datos del certificado de cada firmante y la lista de entidades
@@ -38,7 +38,7 @@
 | Firma suplantada | Alguien firma una decisión con un certificado ajeno | titular del certificado igual a la cuenta, certificado vigente, firma CMS válida, cadena hacia la lista de confianza (DT-16) |
 | Firma sobre otro contenido | La firma corresponde a otro sílabo, otra acción u otra versión | la declaración incluye sílabo, acción y huella del contenido; el servidor la compara con la esperada y verifica la firma sobre esos bytes; solo firma quien tiene la etapa |
 | Robo de la firma | El `.p12` o su clave salen del equipo del firmante | la firma ocurre en el navegador; el archivo y la clave nunca se envían |
-| Revisión manipulada | Un sílabo aprobado se cambia fuera del flujo | aprobaciones y auditoría de solo inserción, huella, regeneración solo por cambios de plantilla, malla o ficha |
+| Revisión manipulada | Un sílabo aprobado se cambia fuera del flujo | aprobaciones y auditoría de solo inserción, huella, regeneración solo por cambios de plantilla, malla o proyecto de carrera |
 | Carrera / reintento | Dos envíos o aprobaciones a la vez | bloqueo de fila, versión, idempotencia, transacción |
 | Trabajo repetido | Un job duplica efectos | `ShouldBeUnique`, `RunsOnce`, estado persistido |
 | Prompt injection | El contenido del sílabo o un mensaje ordena ignorar reglas | evidencia delimitada como datos no confiables, sin herramientas, salida JSON validada |

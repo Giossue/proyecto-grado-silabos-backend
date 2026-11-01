@@ -18,7 +18,7 @@
 | Word (interno, no se descarga) | PHPWord |
 | PDF | Gotenberg (LibreOffice) a partir del Word; sin Gotenberg, PDF de texto simple |
 | Lectura de Excel | PhpSpreadsheet y OpenSpout |
-| Fichas de carrera | Excel estructurado generado y leído con PhpSpreadsheet |
+| Proyectos de carrera de carrera | Excel estructurado generado y leído con PhpSpreadsheet |
 | IA | Proveedor externo configurable por `AI_DRIVER` (ver [ai-service.md](ai-service.md)) |
 | Correo | Resend en el servidor de pruebas hasta la instalación; SMTP institucional en la UEB (`MAIL_MAILER`) |
 | Archivos | Disco `private` en `storage/app/private` |

@@ -213,7 +213,7 @@ final class FichaWorkbook
                 }
             }
             if ($values === []) {
-                $this->fail('Complete al menos un campo antes de cargar el Excel. Las celdas vacías no cambian la ficha actual.');
+                $this->fail('Complete al menos un campo antes de cargar el Excel. Las celdas vacías no cambian el proyecto de carrera actual.');
             }
 
             return array_map(function (array $subject) use ($values): array {

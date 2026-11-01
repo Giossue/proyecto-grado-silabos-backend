@@ -142,8 +142,8 @@ final class CoordinatorConvocationReadiness
         $withoutProfile = $readiness['subjects_without_profile'];
         if ($withoutProfile > 0) {
             $missing[] = $withoutProfile === 1
-                ? 'Falta completar la ficha de 1 materia en Proyecto de carrera.'
-                : "Falta completar la ficha de {$withoutProfile} materias en Proyecto de carrera.";
+                ? 'Falta completar el proyecto de carrera de 1 materia.'
+                : "Falta completar el proyecto de carrera de {$withoutProfile} materias.";
         }
 
         return $missing;

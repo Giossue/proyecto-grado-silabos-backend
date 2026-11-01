@@ -25,7 +25,7 @@ Estas páginas cubren los patrones del sistema; el resto los reutiliza.
 | 3 | Facultades y carreras | `/admin/estructura-academica` | Pestañas, tabla, menú de fila y hoja lateral |
 | 4 | Usuarios y roles | `/admin/usuarios` | Listado con estados, filtros y acciones |
 | 5 | Plantilla | `/admin/plantilla` | Editor sobre la hoja y «Opciones avanzadas → Editar JSON» |
-| 6 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Ficha por asignatura |
+| 6 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Proyecto de carrera por asignatura |
 | 7 | Sílabo | `/docente/mis-silabos` → abrir uno | Editor a pantalla completa y autoguardado |
 | 8 | Revisión | `/coordinacion/revisiones` → abrir una | Lectura densa, decisión y firma |
 | 9 | Revisión de bibliografía | `/biblioteca/revisiones` → abrir una | Motivos, aprobación y firma |
@@ -87,7 +87,7 @@ Sigue `docs/runbooks/demo.md` de principio a fin y comprueba:
 
 - [ ] **Administración** abre la convocatoria con fechas y ve la plantilla como quedará
       el sílabo.
-- [ ] **Coordinación** completa la ficha y abre la convocatoria de la carrera.
+- [ ] **Coordinación** completa el proyecto de carrera y abre la convocatoria de la carrera.
 - [ ] **Docente** llena el sílabo, ve qué falta antes de enviar y lo envía.
 - [ ] **Coordinación** pide corrección, compara revisiones y aprueba.
 - [ ] **Biblioteca** devuelve con motivos y, tras el reenvío, aprueba la bibliografía.

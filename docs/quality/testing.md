@@ -71,7 +71,7 @@ que la conexión use UTC y que el seeder de demostración sea idempotente.
   único y no se solape.
 - No uses `sleep` para esperar trabajos: observa el estado del recurso.
 - `JobDispatchTest` comprueba que `retry_after` supere el timeout de los trabajos de
-  plataforma, exportación, chat, lectura de documentos y extracción de fichas.
+  plataforma, exportación, chat, lectura de documentos y extracción de proyectos de carrera.
 
 ## Documentos y firmas
 
@@ -115,7 +115,7 @@ Excel real y el recorrido de usuario siguen pendientes.
 ## Interfaz
 
 - Vitest cubre páginas y componentes: editor del docente, constructor de plantilla,
-  ficha, revisión, biblioteca, firmas, avisos y ayuda.
+  proyecto de carrera, revisión, biblioteca, firmas, avisos y ayuda.
 - Playwright recorre la navegación por rol, los componentes y la disposición en anchos
   pequeños. `authentication.spec.ts` y `accessibility.spec.ts` necesitan la API local
   con datos sembrados; las demás interceptan las respuestas HTTP.

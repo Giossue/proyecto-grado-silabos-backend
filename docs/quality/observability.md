@@ -37,7 +37,7 @@ Se auditan, entre otros:
 
 - inicio y cierre de sesión, cierre de sesiones remotas y elección de rol;
 - cambios de la plantilla (crear, importar, vaciar, secciones y campos);
-- malla, paralelos, coordinación, ficha e importación de la ficha;
+- malla, paralelos, coordinación, proyecto de carrera e importación desde Excel;
 - convocatoria: crear, abrir, pausar, prorrogar, eliminar y rehacer sílabos;
 - sílabo: inicio, guardado, copia, envío, reenvío, corrección, aprobación, reinicio y
   eliminación;

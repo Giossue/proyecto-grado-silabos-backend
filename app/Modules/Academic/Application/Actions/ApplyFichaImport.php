@@ -86,7 +86,7 @@ final class ApplyFichaImport
                 $applied++;
             }
             if ($applied === 0) {
-                throw ValidationException::withMessages(['subjects' => 'Elija al menos una materia con ficha propuesta.']);
+                throw ValidationException::withMessages(['subjects' => 'Elija al menos una materia con proyecto de carrera propuesto.']);
             }
             $this->audit->execute($actor->id, $role->id, 'academico.ficha_importacion_aplicada', 'carrera', $careerId, 'exito', ['subjects' => $applied]);
 

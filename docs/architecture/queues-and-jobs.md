@@ -13,7 +13,7 @@ Guardar, validar, enviar, revisar, aprobar, firmar y regenerar ocurren en la pet
 web, dentro de una transacción. Las notificaciones internas y la auditoría también se
 guardan ahí; no usan cola.
 
-La carga actual de fichas mediante Excel estructurado también se resuelve en la
+La carga actual de proyectos de carrera mediante Excel estructurado también se resuelve en la
 petición web; no tiene trabajos de cola. Ver [ficha-excel.md](ficha-excel.md).
 
 ## Trabajos

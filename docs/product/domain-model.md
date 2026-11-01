@@ -52,7 +52,7 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
 
 ## Proyecto de carrera (`Academic`)
 
-- **Ficha de la asignatura**: filas de `valores_campo` con `asignatura_id` y sin
+- **Proyecto de carrera de la asignatura**: filas de `valores_campo` con `asignatura_id` y sin
   `silabo_id`, una por campo de la plantilla que llena Coordinación. Solo la edita
   Coordinación.
 - **Vista previa de importación**: objeto en memoria generado al leer el Excel.
@@ -74,7 +74,7 @@ Las filas retiradas se marcan como no vigentes mientras algún valor las use.
   inicio y último guardado, y `datos_academicos_silabo` (copia de malla, período y
   paralelo al crearse).
 - **Valor de campo** (`valores_campo` con `silabo_id`): contenido de cada campo no fijo
-  del sílabo. Al crear el sílabo se copia de la ficha o del contenido inicial, con su
+  del sílabo. Al crear el sílabo se copia del proyecto de carrera o del contenido inicial, con su
   marca de editable.
 - **Docente vigente del sílabo** (`docentes_vigentes_silabo`): vista que da el docente
   activo del paralelo.

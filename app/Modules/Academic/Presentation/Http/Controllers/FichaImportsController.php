@@ -47,7 +47,7 @@ class FichaImportsController extends Controller
         abort_unless($actor instanceof User && $file instanceof UploadedFile, 400);
         $applied = $action->execute($file, $request->validated('fingerprint'), $request->validated('file_hash'), array_values($request->validated('subjects')), $actor, $request, $request->validated('fields'));
 
-        return response()->json(['message' => 'Fichas aplicadas.', 'applied' => $applied]);
+        return response()->json(['message' => 'Proyecto de carrera aplicado.', 'applied' => $applied]);
     }
 
     /** @return array<string, mixed> */

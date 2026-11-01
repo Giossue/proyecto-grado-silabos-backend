@@ -103,7 +103,7 @@ local `pgvector/pgvector:0.8.6-pg18-trixie` ya trae ambas.
 
 La IA parte apagada (`AI_DRIVER=disabled`) y su ausencia no bloquea el flujo del sílabo.
 El **asistente de unidades** del docente admite `openai`, `claude` y `deepseek`.
-La importación de fichas usa Excel estructurado y no utiliza este proveedor.
+La importación de proyectos de carrera usa Excel estructurado y no utiliza este proveedor.
 
 Se configuran cuatro variables. La URL debe ser HTTPS y puede ser la base o el endpoint
 completo.
@@ -128,7 +128,7 @@ autorizado del sílabo. Antes de usarlo con
 información institucional deben acordarse proveedor, región, retención y tratamiento de
 datos (`PV-12`, `PV-14`).
 
-### Importación de fichas
+### Importación de proyectos de carrera
 
 Se genera y lee una plantilla Excel en el servidor, sin proveedor externo ni cola.
 El flujo antiguo de documentos y su configuración fueron retirados.

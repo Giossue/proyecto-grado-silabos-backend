@@ -26,14 +26,14 @@ Cada campo tiene un nombre (subtítulo; puede ir vacío si no lleva subtítulo),
 | quien_llena | En el editor se ve como | Qué significa |
 |---|---|---|
 | `docente` | Docente | Lo escribe el docente en su sílabo. Empieza con el contenido de la plantilla. |
-| `coordinacion` | Carrera | Lo llena Coordinación una vez por asignatura (ficha de la asignatura) y se copia a cada sílabo. El docente no lo edita. |
+| `coordinacion` | Carrera | Lo llena Coordinación una vez por asignatura (proyecto de carrera de la asignatura) y se copia a cada sílabo. El docente no lo edita. |
 | `institucional` | Fijo | Texto fijo de la plantilla, igual para todos. Nadie lo llena. |
 
 - Todo campo que no sea `institucional` es obligatorio: el docente no puede enviar su sílabo
   si está vacío. Tenga esto en cuenta al agregar campos.
 - Las claves de los campos y secciones existentes no cambian nunca. Los campos nuevos reciben
   su clave sola, a partir del nombre.
-- Quitar un campo `coordinacion` hace que se pierda lo que Coordinación escribió en las fichas.
+- Quitar un campo `coordinacion` hace que se pierda lo que Coordinación escribió en el proyecto de carrera.
   Avíselo en el resumen.
 - Cambiar quién llena un campo cambia quién lo escribe en adelante. Avíselo en el resumen.
 

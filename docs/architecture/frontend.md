@@ -93,7 +93,7 @@ comportamiento anterior.
 La SPA no conoce la plantilla de antemano. Cuando la API entrega la definición
 (`definition`) y las variables, `setTemplateRuntime()` las guarda en un `shallowRef`.
 Lo llaman `api/template.ts` (constructor), `api/syllabi.ts` (sílabo) y
-`api/career-academics.ts` (ficha).
+`api/career-academics.ts` (proyecto de carrera).
 
 | Archivo | Qué hace |
 |---|---|
@@ -110,7 +110,7 @@ resultado con `src/test/fixtures/block-conformance.json`, que genera el backend
 ## Editor y documentos
 
 - `components/domain/syllabus/FreeTextEditor.vue`: Tiptap para texto, listas y tablas.
-  Lo usan el constructor de plantilla, la ficha y el editor del docente.
+  Lo usan el constructor de plantilla, el proyecto de carrera y el editor del docente.
 - `fieldDocumentExtensions.ts` agrega los nodos `variable` y `documentBlock`.
 - `components/domain/configuration/TemplateVisualBuilder.vue`: constructor visual.
   `TemplateJsonDialog.vue`: «Opciones avanzadas → Editar JSON».

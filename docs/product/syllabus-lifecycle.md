@@ -24,7 +24,7 @@ Estados guardados (`silabos.estado_silabo`): `sin_iniciar`, `borrador`, `en_revi
 
 | Desde | Acción | Quién | Hacia | Efecto |
 |---|---|---|---|---|
-| — | Abrir la convocatoria de la carrera | Coordinación | Sin iniciar | Un sílabo por paralelo; copia la ficha y el contexto académico; avisa a los docentes. |
+| — | Abrir la convocatoria de la carrera | Coordinación | Sin iniciar | Un sílabo por paralelo; copia el proyecto de carrera y el contexto académico; avisa a los docentes. |
 | Sin iniciar | Abrir el sílabo | Docente | Borrador | El borrador se inicia solo al abrirlo. Hereda los campos del docente de su último sílabo de esa asignatura en una convocatoria cerrada, si la plantilla no cambió desde que lo empezó. |
 | Sin iniciar o Borrador | Copiar desde otro paralelo propio | Docente | Borrador | Copia los campos del docente. |
 | Borrador o Corrección solicitada | Firmar y enviar (primer envío) / Enviar (reenvío) | Docente | En revisión | Valida, crea una revisión inmutable con huella y avisa. En el primer envío exige la firma del docente. |
@@ -32,7 +32,7 @@ Estados guardados (`silabos.estado_silabo`): `sin_iniciar`, `borrador`, `en_revi
 | En revisión · coordinación | Solicitar corrección | Coordinación | Corrección solicitada | Comentario general de 10 a 10 000 caracteres. |
 | En revisión · biblioteca | Firmar y aprobar | Biblioteca | Aprobado | Exige la firma de Biblioteca; crea la aprobación con huella y genera el PDF final; cuando está listo avisa al docente. |
 | En revisión · biblioteca | Devolver al docente | Biblioteca | Corrección solicitada | Uno o más motivos predefinidos, sin texto libre. |
-| Borrador, En revisión o Corrección solicitada | Reiniciar | Coordinación | Sin iniciar | Pide un motivo, que ve el docente. Borra lo escrito y las firmas, vuelve a copiar la ficha y la plantilla y conserva las revisiones. |
+| Borrador, En revisión o Corrección solicitada | Reiniciar | Coordinación | Sin iniciar | Pide un motivo, que ve el docente. Borra lo escrito y las firmas, vuelve a copiar el proyecto de carrera y la plantilla y conserva las revisiones. |
 | Aprobado | Reiniciar | Coordinación | Sin iniciar (sílabo nuevo) | Pide un motivo y el nombre de la materia. Borra el sílabo con revisiones, aprobación, documentos, firmas y chat; crea uno nuevo para el paralelo. |
 
 Reiniciar exige la convocatoria de la carrera abierta o pausada. Lo mismo
@@ -60,8 +60,8 @@ el estado: el sílabo sigue «En revisión».
 
 ## Validación al enviar
 
-- Todo campo del docente y de la ficha debe tener contenido. Si falta la ficha, el aviso
-  es «La asignatura no tiene ficha: pídala al coordinador».
+- Todo campo del docente y del proyecto de carrera debe tener contenido. Si falta el proyecto de carrera, el aviso
+  es «La asignatura no tiene proyecto de carrera: pídalo al coordinador».
 - Las reglas de los bloques deben cumplirse; por ejemplo, el bloque `unidades` exige
   las semanas de clase del período y horas iguales a las de la asignatura.
 - La fecha actual debe estar entre el inicio y la entrega de la convocatoria, y ni la
@@ -102,7 +102,7 @@ el estado: el sílabo sigue «En revisión».
   coordinador.
 - Coordinación abre la de su carrera cuando la convocatoria está abierta, el plazo no
   venció, la malla tiene materias, cada materia tiene paralelos, cada paralelo tiene un
-  docente activo, las fichas están completas y la facultad tiene logo.
+  docente activo, los proyectos de carrera están completos y la facultad tiene logo.
 - Solo Administración prorroga la entrega. La fecha nueva debe ser posterior a la
   actual. Se avisa a los docentes con sílabos sin aprobar.
 - Con la fecha de entrega vencida, el docente queda en solo lectura: no puede iniciar,
@@ -131,7 +131,7 @@ conservan sus propias fotografías. Aplica a cierres realizados desde ADR-0012.
 | Plantilla | Convocatoria pausada o inexistente (Administración) | Al reanudar, si la plantilla cambió, se muestra el conteo por estado y se pide «Reanudar y rehacer sílabos». Se rehacen desde cero todos los sílabos de la convocatoria, incluidos los aprobados y firmados. Sin confirmación, sigue en pausa. |
 | Malla: horas, créditos, modalidad, nombre, código, ciclo, unidad o requisitos | Convocatoria de la carrera pausada o sin abrir (Coordinación) | Actualiza los datos solo en los sílabos que los muestran: los de esa materia y, si cambia su código, los de las materias que la tienen como requisito. Conserva lo escrito. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar. |
 | Malla: orden en el ciclo o número de ciclos | Convocatoria de la carrera pausada o sin abrir | Actualiza los datos sin cambiar el estado. |
-| Ficha de una asignatura | Convocatoria de la carrera pausada o sin abrir | Copia los campos cambiados a los sílabos de esa asignatura y conserva lo del docente. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar. |
+| Proyecto de carrera de una asignatura | Convocatoria de la carrera pausada o sin abrir | Copia los campos cambiados a los sílabos de esa asignatura y conserva lo del docente. Los enviados, en corrección o aprobados vuelven a Borrador tras confirmar. |
 | Docente de un paralelo | Ninguno; se puede con la convocatoria abierta | El sílabo del paralelo en la convocatoria en curso se borra con todo su historial y empieza de cero para el docente nuevo. Los sílabos de convocatorias cerradas no se tocan. |
 | Código o jornada de un paralelo | Ninguno | Sin enviar: se actualiza la identificación. Enviado o aprobado: pide confirmación y lo rehace. |
 
@@ -158,7 +158,7 @@ Prorrogar o reanudar sin cambios no rehace nada.
   editar. Usa los datos académicos del sílabo y el texto de sus campos. Responde sobre
   unidades y planificación. No escribe en el sílabo, no aprueba ni bloquea. Límites: 20
   preguntas por sílabo, 3 conversaciones, 6 por minuto y 4000 caracteres por mensaje.
-- **Importación de ficha**: Coordinación completa el Excel generado con los campos
+- **Importación de proyecto de carrera**: Coordinación completa el Excel generado con los campos
   actuales, revisa la vista previa y elige qué aplicar. La revisión queda solo en el
   navegador mientras el diálogo esté abierto. Al aplicar, el servidor relee el mismo
   Excel y guarda la selección en `valores_campo`. No requiere IA ni OCR.

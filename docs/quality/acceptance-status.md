@@ -39,7 +39,7 @@ Estados:
 | Seguridad HTTP | `HealthAndSecurityTest`, `AuthHardeningTest`, `SecurityHardeningTest` | Verificado automático; pentest manual pendiente |
 | Dependencias | `composer audit` y `npm audit`, a mano. No hay CI | Verificado técnico; hay que repetirlo antes de cada entrega |
 | PostgreSQL | `DatabaseBootstrapTest`, `SpanishSchemaTest`, constraints y triggers en las pruebas de cada módulo | Verificado automático |
-| Colas y caché en PostgreSQL | `QueueAndCacheInPostgresqlTest`, `JobDispatchTest`, `JobIdempotencyTest` | Verificado automático; incluye los trabajos de la ficha y una ventana de reentrega mayor que su timeout; variable remota pendiente de comprobar |
+| Colas y caché en PostgreSQL | `QueueAndCacheInPostgresqlTest`, `JobDispatchTest`, `JobIdempotencyTest` | Verificado automático; incluye los trabajos del proyecto de carrera y una ventana de reentrega mayor que su timeout; variable remota pendiente de comprobar |
 | Recuperación | `composer verify:restore` sobre un dump sintético y un clúster efímero | Verificado técnico; política bloqueada PV-11 |
 | Rendimiento | `composer benchmark:readiness` contra `/health/ready` en loopback | Prueba del script; no acepta RNF-011..015 (PV-05) |
 | Accesibilidad real | Teclado, lector, foco, contraste, 360 px, zoom 200 %, claro y oscuro | Pendiente manual (PV-19) |
@@ -53,7 +53,7 @@ sustituye la revisión con lector de pantalla ni otros navegadores y dispositivo
 
 ## Cambio del 26 de octubre de 2026: respuestas protegidas
 
-Se implementó la separación entre formato y respuestas en API, ficha, Excel y sílabo.
+Se implementó la separación entre formato y respuestas en API, proyecto de carrera, Excel y sílabo.
 La nueva plantilla oficial separa nombres/resultados de unidades y planificación
 semanal. Se adaptaron pruebas y datos existentes sin añadir ni ejecutar casos nuevos;
 PHPStan, TypeScript, estilo y contrato generado se revisan por separado. Las referencias
@@ -61,7 +61,7 @@ Word anteriores siguen cubriendo el formato anterior. La ejecución de pruebas y
 aceptación visual del formato nuevo, sus filas, el Excel y el Word/PDF están pendientes.
 No debe interpretarse la evidencia anterior como verificación automática de este cambio.
 
-La activación en `silabos_ueb_db` conservó los 16 valores de ficha y los IDs de los
+La activación en `silabos_ueb_db` conservó los 16 valores de proyecto de carrera y los IDs de los
 campos anteriores; quedaron 20 campos, siete de Coordinación y 32 tablas. Se verificó
 un respaldo antes de la transacción y los permisos después. La convocatoria sigue
 pausada y no hay sílabos. El detalle de la activación está en ADR-0012.
@@ -74,7 +74,7 @@ frontend sigue señalando las dos rutas dinámicas previas de `spreadsheet-impor
 ### Corrección del mismo día: unidades con el formato oficial
 
 La sección 6 vuelve a una tabla por unidad. El nombre y el resultado vienen de la
-ficha (`from`) y el campo de Carrera no se imprime aparte. Pasan la suite completa del
+proyecto de carrera (`from`) y el campo de Carrera no se imprime aparte. Pasan la suite completa del
 backend (471 pruebas, en paralelo), PHPStan, Pint, y en el frontend TypeScript, ESLint
 y Vitest (416 pruebas, una omitida). El Word oficial coincide de nuevo con las
 referencias del formato original. Se corrigieron siete pruebas que la primera versión

@@ -22,6 +22,6 @@ class SaveSubjectProfileRequest extends FormRequest
 
     public function attributes(): array
     {
-        return ['values' => 'datos de la ficha', 'values.*' => 'dato de la ficha'];
+        return ['values' => 'datos del proyecto de carrera', 'values.*' => 'dato del proyecto de carrera'];
     }
 }

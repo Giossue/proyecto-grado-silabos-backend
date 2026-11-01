@@ -180,7 +180,7 @@ final class FichaFieldValues
                     return $document;
                 }
             }
-            throw ValidationException::withMessages(['file' => 'Este campo debe completarse desde la ficha porque su contenido no es una tabla o un espacio de texto.']);
+            throw ValidationException::withMessages(['file' => 'Este campo debe completarse desde el proyecto de carrera porque su contenido no es una tabla o un espacio de texto.']);
         }
 
         return is_array($value)

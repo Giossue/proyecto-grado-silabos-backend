@@ -354,7 +354,7 @@ class ConvocationAndDraftTest extends TestCase
         $convocation = $this->createPreparedConvocation();
         FieldValue::query()->whereNotNull('asignatura_id')->delete();
 
-        $this->assertOpeningFails($convocation, 'Falta completar la ficha de 1 materia en Proyecto de carrera.');
+        $this->assertOpeningFails($convocation, 'Falta completar el proyecto de carrera de 1 materia.');
         $this->assertSame(0, Syllabus::query()->count());
     }
 
@@ -370,7 +370,7 @@ class ConvocationAndDraftTest extends TestCase
         } catch (ValidationException $exception) {
             $this->assertSame([
                 'El plazo de entrega de la convocatoria institucional ya venció. Administración debe prorrogarlo.',
-                'Falta completar la ficha de 1 materia en Proyecto de carrera.',
+                'Falta completar el proyecto de carrera de 1 materia.',
             ], $exception->errors()['convocation']);
         }
     }
@@ -849,7 +849,7 @@ class ConvocationAndDraftTest extends TestCase
 
         $this->assertArrayNotHasKey($automatic->id, $messages->all());
         $this->assertArrayNotHasKey($locked->id, $messages->all());
-        $this->assertSame('La asignatura no tiene ficha: pídala al coordinador.', $messages[$inherited->id]->first()['message']);
+        $this->assertSame('La asignatura no tiene proyecto de carrera: pídalo al coordinador.', $messages[$inherited->id]->first()['message']);
         $this->assertSame('error', $messages[$inherited->id]->first()['severity']);
     }
 

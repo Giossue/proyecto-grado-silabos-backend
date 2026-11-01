@@ -11,7 +11,7 @@ un cambio y si lo aprobado coincide con lo entregado.
 
 Aplicación web con inicio de sesión. Administración abre una convocatoria por período.
 Cada sílabo nace de una plantilla institucional única y trae ya los datos de la malla,
-del paralelo y de la ficha de la asignatura. El docente completa lo suyo, con ayuda
+del paralelo y del proyecto de carrera de la asignatura. El docente completa lo suyo, con ayuda
 opcional de un chat de IA, y lo envía. Coordinación revisa el contenido y Biblioteca
 verifica la bibliografía. Cada uno firma con su firma electrónica al decidir: el docente
 al enviar, Coordinación y Biblioteca al aprobar. Al aprobarse, el sistema genera el PDF
@@ -20,7 +20,7 @@ con los tres sellos.
 ## Objetivo de valor
 
 - un solo estado visible para cada sílabo;
-- menos transcripción: los datos de malla, paralelo y ficha llegan solos;
+- menos transcripción: los datos de malla, paralelo y proyecto de carrera llegan solos;
 - plantilla configurable sin cambiar código ni esquema de base;
 - devoluciones con comentario, no archivos de ida y vuelta;
 - revisiones enviadas inmutables y comparables;
@@ -43,7 +43,7 @@ está en `roles-and-permissions.md`.
 
 1. Usuarios, roles y estructura académica (facultades, carreras, malla, paralelos).
 2. Plantilla del sílabo como datos (secciones, campos y bloques).
-3. Proyecto de carrera: ficha por asignatura, con importación mediante plantilla Excel.
+3. Proyecto de carrera: datos por asignatura, con importación mediante plantilla Excel.
 4. Convocatoria por período y un sílabo por paralelo.
 5. Elaboración con autoguardado, validación y chat de IA opcional.
 6. Revisión: coordinación y luego biblioteca; corrección y reenvío.

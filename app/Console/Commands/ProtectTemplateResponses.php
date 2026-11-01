@@ -10,12 +10,12 @@ class ProtectTemplateResponses extends Command
 {
     protected $signature = 'template:protect-responses {--apply}';
 
-    protected $description = 'Activa respuestas protegidas y las unidades con datos de la ficha antes de crear sílabos';
+    protected $description = 'Activa respuestas protegidas y las unidades con datos del proyecto de carrera antes de crear sílabos';
 
     public function handle(ProtectResponses $action): int
     {
         if (! $this->option('apply')) {
-            $this->info('Requiere respaldo verificado, convocatoria pausada o inexistente y ningún sílabo. Use --apply para activar sin borrar fichas.');
+            $this->info('Requiere respaldo verificado, convocatoria pausada o inexistente y ningún sílabo. Use --apply para activar sin borrar proyectos de carrera.');
 
             return self::SUCCESS;
         }

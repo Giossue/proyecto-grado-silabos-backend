@@ -7,14 +7,14 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
 | N.º | Sección | Campos | Quién llena | Bloque y reglas |
 |---:|---|---|---|---|
 | 1 | Identificación institucional | Tabla de identificación | Sistema y docente | `identificacion`: datos del sistema; el docente responde la discapacidad (ver `identificacion-institucional.md`). |
-| 2 | Descripción de la asignatura | Descripción | Coordinación (ficha) | — |
-| 3 | Objetivos de la asignatura | Objetivo general; objetivos específicos | Coordinación (ficha) | — |
-| 4 | Resultados de aprendizaje | Resultados de aprendizaje | Coordinación (ficha) | — |
-| 5 | Habilidades blandas | Habilidades blandas | Coordinación (ficha) | — |
+| 2 | Descripción de la asignatura | Descripción | Coordinación (proyecto de carrera) | — |
+| 3 | Objetivos de la asignatura | Objetivo general; objetivos específicos | Coordinación (proyecto de carrera) | — |
+| 4 | Resultados de aprendizaje | Resultados de aprendizaje | Coordinación (proyecto de carrera) | — |
+| 5 | Habilidades blandas | Habilidades blandas | Coordinación (proyecto de carrera) | — |
 | 6 | Distribución y planificación de las unidades curriculares | Unidades | Carrera (nombre y resultado) y Docente (semanas), dentro de la misma tabla | Bloque `unidades`, hoja horizontal. Ver abajo. |
 | 7 | Metodología y ambientes de aprendizaje | 7.1 Métodos; 7.2 Técnicas; 7.3 Recursos; 7.4 Herramientas TIC/TAC e IA; 7.5 Ambientes | Docente | — |
 | 8 | Evaluación de los aprendizajes | Indicadores por parcial; escala de valoración | Fijo | `evaluacion`: tabla de puntos por parcial. Tiene dos variantes, con o sin horas prácticas (APE). |
-| 9 | Perfil de egreso | Resultados de la asignatura frente a los de la carrera | Coordinación (ficha) | — |
+| 9 | Perfil de egreso | Resultados de la asignatura frente a los de la carrera | Coordinación (proyecto de carrera) | — |
 | 10 | Conducta y comportamiento ético | Conducta y comportamiento ético | Fijo | — |
 | 11 | Bibliografía | Básica; complementaria | Docente | Biblioteca la verifica (`library_sections`). |
 | 12 | Revisión y aprobación | Tabla de firmas | Fijo | Variables de firma (docente, coordinación, biblioteca) y fechas de envío y aprobación. |
@@ -22,10 +22,10 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
 ## Quién llena
 
 - **Docente**: escribe en su sílabo. Todo campo del docente es obligatorio para enviar.
-- **Coordinación** («Carrera»): el valor sale de la ficha de la asignatura (COR-16). El
+- **Coordinación** («Carrera»): el valor sale del proyecto de carrera de la asignatura (COR-16). El
   docente lo ve en solo lectura, salvo que Coordinación active «El docente puede
-  editarlo» en ese campo de la ficha. Si la ficha está vacía, el envío se bloquea con el
-  aviso «La asignatura no tiene ficha: pídala al coordinador».
+  editarlo» en ese campo del proyecto de carrera. Si el proyecto de carrera está vacío, el envío se bloquea con el
+  aviso «La asignatura no tiene proyecto de carrera: pídalo al coordinador».
 - **Fijo** (`institucional`): igual para todos los sílabos; nadie lo edita en el sílabo.
 
 ## Unidades (sección 6)
@@ -33,7 +33,7 @@ plantilla oficial tal como se instala. El formato definitivo depende de `PV-07`.
 - El sílabo conserva el formato oficial: una tabla por unidad con «Nombre de la
   unidad» y «Resultados de aprendizaje» arriba y las semanas debajo.
 - El docente escribe el nombre y el resultado de aprendizaje de cada unidad dentro de
-  su tabla y completa las semanas. Desde el 2026-10-27 la ficha ya no los trae.
+  su tabla y completa las semanas. Desde el 2026-10-27 el proyecto de carrera ya no los trae.
 - Cada semana tiene contenidos, horas ACD, APE y AA, actividades de cada componente y
   evaluación.
 - El docente declara sus unidades («Agregar unidad», «Quitar») dentro de los límites que

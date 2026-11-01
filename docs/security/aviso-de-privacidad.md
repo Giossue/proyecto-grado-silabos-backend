@@ -16,7 +16,7 @@ Universidad Estatal de Bolívar, [dirección], [correo del delegado de protecci�
 | Contraseña (cifrada) y datos de verificación en dos pasos | Proteger el acceso a la cuenta. |
 | Formación y experiencia del docente | Completar el sílabo que elabora. |
 | Contenido de sílabos, revisiones, comentarios y documentos generados | Elaborar, revisar, aprobar y conservar el sílabo. |
-| Contenido del Excel de la ficha que sube Coordinación | Revisar y llenar la ficha de la asignatura. El archivo se lee temporalmente; la vista previa solo permanece en el navegador. Se guardan los valores confirmados en la ficha y el registro de la acción. |
+| Contenido del Excel del proyecto de carrera que sube Coordinación | Revisar y llenar el proyecto de carrera de la asignatura. El archivo se lee temporalmente; la vista previa solo permanece en el navegador. Se guardan los valores confirmados en el proyecto de carrera y el registro de la acción. |
 | Preguntas al asistente de IA y sus respuestas | Ayudar al docente a redactar su sílabo. |
 | Nombre del titular, serie, emisor y vigencia del certificado de firma, y hora de la firma | Dejar constancia de quién firmó cada documento. El archivo de firma y su clave nunca llegan al sistema. |
 | Dirección IP, navegador, fecha y acción realizada | Seguridad y trazabilidad de lo que ocurre en el sistema. |
@@ -29,7 +29,7 @@ No se tratan datos sensibles ni se usan los datos para publicidad.
 - **Correo electrónico:** en producción, el servidor de correo institucional de la UEB; envía invitaciones, recuperación de contraseña y avisos. Hasta la instalación en la UEB, el servidor de pruebas usa Resend.
 - **Proveedor de IA (OpenAI, Anthropic o DeepSeek, según configure la UEB):** en el chat
   del docente recibe los datos de la carrera y la asignatura, lo que el docente ya escribió
-  en el sílabo y su pregunta. Está desactivado por defecto. Las fichas se importan
+  en el sílabo y su pregunta. Está desactivado por defecto. Los proyectos de carrera se importan
   por Excel dentro del servidor y no se envían a proveedores de IA ni OCR.
 
 Estos proveedores están fuera de Ecuador: la UEB debe confirmar la base legal de esa

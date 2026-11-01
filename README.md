@@ -4,7 +4,7 @@ Sistema web para elaborar, revisar, aprobar y firmar los sílabos de la Universi
 Estatal de Bolívar. Admite varias facultades y carreras.
 
 - **Docente:** llena el sílabo de cada paralelo, con ayuda opcional de IA, y lo envía.
-- **Coordinación:** prepara la malla, los paralelos, los docentes y la ficha de cada
+- **Coordinación:** prepara la malla, los paralelos, los docentes y el proyecto de carrera de cada
   asignatura; abre la convocatoria de su carrera y revisa los sílabos.
 - **Biblioteca:** revisa la bibliografía.
 - **Administración:** gestiona cuentas, facultades, carreras, períodos, convocatorias y
@@ -41,7 +41,7 @@ php artisan queue:work --queue=critica,documentos,ia,general --tries=3
 
 - `critica`: verificación de plataforma.
 - `documentos`: PDF del sílabo.
-- `ia`: chat del docente. La carga de fichas usa Excel estructurado sin cola.
+- `ia`: chat del docente. La carga de proyectos de carrera usa Excel estructurado sin cola.
 - `general`: correos de activación de cuenta.
 
 Compose publica PostgreSQL en `127.0.0.1:55432`. También

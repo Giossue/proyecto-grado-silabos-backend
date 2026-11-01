@@ -18,7 +18,7 @@ API Laravel 13 (este repositorio, monolito modular)
   ├─ Disco privado: logos y PDF de los sílabos
   ├─ Gotenberg: Word → PDF
   ├─ Proveedor de IA (AI_DRIVER): chat del docente
-  └─ Excel estructurado para fichas
+  └─ Excel estructurado para proyectos de carrera
 ```
 
 Dos artefactos: la SPA y la API (ADR-0008). La API no tiene pantallas. Un contenedor
@@ -29,7 +29,7 @@ corre PHP-FPM, Nginx, el worker de colas y el scheduler.
 | Módulo | Qué hace |
 |---|---|
 | `Identity` | Cuentas, roles, rol activo, sesiones, 2FA, accesibilidad, importación de usuarios y docentes |
-| `Academic` | Facultades, carreras, períodos, malla, paralelos, asignación de docentes, ficha de asignatura e importación de ficha |
+| `Academic` | Facultades, carreras, períodos, malla, paralelos, asignación de docentes, proyecto de carrera de asignatura e importación de proyecto de carrera |
 | `Configuration` | Plantilla del sílabo (definición JSON, secciones y campos) y logos |
 | `Syllabus` | Convocatorias, sílabos, validación, envío, revisión de Coordinación, reinicio y regeneración |
 | `Library` | Revisión de bibliografía |

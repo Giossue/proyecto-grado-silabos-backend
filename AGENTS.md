@@ -24,7 +24,7 @@ Stack:
 - Archivos en un disco privado.
 - Gotenberg convierte el Word del sílabo en PDF.
 - IA con un proveedor externo configurable (`AI_DRIVER`, apagado por defecto) para el
-  chat. La ficha se importa exclusivamente con una plantilla Excel generada desde los
+  chat. El proyecto de carrera se importa exclusivamente con una plantilla Excel generada desde los
   campos actuales de Coordinación, sin OCR ni extracción por IA.
 - Despliegue en Dokploy: un push a `main` despliega y ejecuta las migraciones.
 
@@ -45,7 +45,7 @@ Según la tarea:
 | Plantilla del sílabo | `docs/architecture/template-json.md`, `docs/architecture/adr/0011-template-as-data.md`, `docs/product/syllabus-sections.md` |
 | Base de datos | `docs/architecture/database.md`, `docs/generated/database-schema.md` |
 | Interfaz | `docs/product/screens.md`, `docs/architecture/frontend.md`, `docs/quality/frontend-checklist.md` |
-| IA y ficha | `docs/architecture/ai-service.md`, `docs/architecture/ficha-excel.md` |
+| IA y proyecto de carrera | `docs/architecture/ai-service.md`, `docs/architecture/ficha-excel.md` |
 | Word, PDF y firmas | `docs/architecture/files-and-documents.md`, `docs/runbooks/firma-electronica-entidades.md` |
 | Colas | `docs/architecture/queues-and-jobs.md` |
 | Despliegue | `docs/architecture/deployment.md`, `docs/runbooks/deploy-dokploy.md`, `docs/runbooks/release-verification.md`, `docs/security/hardening.md` |
@@ -122,14 +122,14 @@ pida.
 - La plantilla es una sola, se edita en el sitio y no tiene versiones. Es solo datos
   (ADR-0011): `plantilla_silabo.definicion_plantilla` más secciones y campos. Cada campo
   dice quién lo llena (`docente`, `coordinacion` o `institucional`).
-- La ficha de cada asignatura («Proyecto de carrera») guarda los campos de
+- El proyecto de carrera de cada asignatura guarda los campos de
   Coordinación en `valores_campo`. Solo Coordinación los edita; el sílabo copia el valor
   al crearse.
 - Al abrir su sílabo, el docente hereda sus campos del último sílabo suyo de esa
   asignatura en una convocatoria cerrada, salvo que la plantilla haya cambiado desde
   entonces.
 - Cambiar la plantilla con sílabos existentes exige pausar y confirmar; esos sílabos se
-  rehacen desde cero, incluso los aprobados. Cambiar la malla o una ficha también exige
+  rehacen desde cero, incluso los aprobados. Cambiar la malla o un proyecto de carrera también exige
   pausar, pero conserva lo escrito: solo cambian los sílabos de las materias afectadas y
   los enviados o aprobados vuelven a Borrador tras confirmar. Los procesos cerrados no se
   tocan.

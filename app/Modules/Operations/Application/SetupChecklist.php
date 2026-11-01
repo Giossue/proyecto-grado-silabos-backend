@@ -130,7 +130,7 @@ class SetupChecklist
             ! $readiness['deadline_open'] => 'El plazo institucional venció. Administración debe prorrogarlo antes de abrir la convocatoria.',
             ! $readiness['template_ready'] => 'Administración debe completar la plantilla institucional.',
             ! $readiness['faculty_logo_ready'] => 'Administración debe cargar el logo de la facultad.',
-            $readiness['subjects_without_profile'] > 0 => "Complete la ficha de {$readiness['subjects_without_profile']} materia(s) en Proyecto de carrera.",
+            $readiness['subjects_without_profile'] > 0 => "Complete el proyecto de carrera de {$readiness['subjects_without_profile']} materia(s).",
             $readiness['can_open'] => 'Todo está listo. Puede abrir la convocatoria.',
             default => 'Complete los pasos anteriores para poder abrirla.',
         };
@@ -151,7 +151,7 @@ class SetupChecklist
             $total === 0 ? 'Cuando Coordinación abra la convocatoria, aquí aparecerán sus sílabos.' : 'Cada sílabo se abre, se completa, se firma y se envía; luego lo revisan Coordinación y Biblioteca.',
             [
                 $this->step('assigned', 'Recibir los sílabos asignados', $total > 0 ? "{$total} asignados." : 'Los asigna Coordinación al abrir la convocatoria.', $total > 0),
-                $this->step('started', 'Abrir cada sílabo', $total > 0 ? "{$started} de {$total} abiertos." : 'Al abrirlo, el borrador parte de la ficha de la materia; también puede copiar el de otro de sus paralelos.', $total > 0 && $started === $total),
+                $this->step('started', 'Abrir cada sílabo', $total > 0 ? "{$started} de {$total} abiertos." : 'Al abrirlo, el borrador parte del proyecto de carrera de la materia; también puede copiar el de otro de sus paralelos.', $total > 0 && $started === $total),
                 $this->step('submitted', 'Completar, firmar y enviar', $total > 0 ? "{$submitted} de {$total} enviados." : 'Antes de la fecha de entrega. Al primer envío se firma con su certificado (.p12).', $total > 0 && $submitted === $total),
             ],
         );

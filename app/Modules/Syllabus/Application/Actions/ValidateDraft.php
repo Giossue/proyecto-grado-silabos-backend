@@ -46,7 +46,7 @@ class ValidateDraft
                         'code' => $fromCareer ? 'maestro_obligatorio_faltante' : 'campo_obligatorio_faltante',
                         'severity' => 'error',
                         'message' => $fromCareer
-                            ? 'La asignatura no tiene ficha: pídala al coordinador.'
+                            ? 'La asignatura no tiene proyecto de carrera: pídalo al coordinador.'
                             : "«{$field->displayName()}» está vacío. Complétalo antes de enviar.",
                     ];
                 }

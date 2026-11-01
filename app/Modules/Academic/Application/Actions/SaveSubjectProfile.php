@@ -44,7 +44,7 @@ class SaveSubjectProfile
         $fieldIds = array_map('strval', array_keys($values));
         foreach ($fieldIds as $fieldId) {
             if (! $allowed->has($fieldId)) {
-                throw ValidationException::withMessages(['values' => 'La ficha incluye un campo que ya no existe en la plantilla.']);
+                throw ValidationException::withMessages(['values' => 'El proyecto de carrera incluye un campo que ya no existe en la plantilla.']);
             }
         }
 

@@ -64,7 +64,7 @@ cuando se pueden localizar. La vista previa se crea solo si todo el archivo es v
 y contiene al menos un campo; los campos vacíos se muestran como pendientes.
 
 El archivo subido se lee desde el temporal de PHP y no se copia al disco privado.
-`FichaWorkbookPreview` es un objeto en memoria. Revisar no escribe fichas ni registros
+`FichaWorkbookPreview` es un objeto en memoria. Revisar no escribe proyectos de carrera ni registros
 de importación. La pantalla vuelve a enviar el archivo al confirmar y el servidor
 repite toda la lectura y validación. Compara la huella de estructura y la del archivo
 con la revisión mostrada; también comprueba que todas las materias y campos elegidos
@@ -85,7 +85,7 @@ La reproducción con un libro generado desde los seis campos de la plantilla ofi
 y dos materias de ejemplo recuperó seis campos por materia, incluida una tabla de
 cinco columnas. También rechazó una fórmula, un código de materia alterado, una
 carrera distinta y una huella desactualizada. No utilizó servicios externos ni
-modificó fichas. No sustituye la aceptación funcional con el archivo real de la carrera.
+modificó proyectos de carrera. No sustituye la aceptación funcional con el archivo real de la carrera.
 
 ## Despliegue del 26 de octubre de 2026
 
