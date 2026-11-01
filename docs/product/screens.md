@@ -85,7 +85,9 @@ y el botón «Documentos» (DOC-10).
   guardar. Activa la cinta de edición sobre las mismas hojas:
   - formato de texto (negrita, cursiva, subrayado, alineación, listas);
   - menú «Tabla» (insertar, filas, columnas, combinar, separar, encabezado, fondo de
-    celda, quitar);
+    celda, quitar). El fondo de celda solo ofrece los colores de la tabla de
+    identificación: «Celeste» (en negrita) y «Azul institucional» (texto blanco y negrita),
+    o «Sin fondo»;
   - con un campo elegido: «Quién llena» (Docente, Carrera, Fijo), «Plantilla» (inserta
     Identificación institucional, Distribución y planificación, Bibliografía básica o
     complementaria, o Firmas), nombre, subir, bajar y eliminar;

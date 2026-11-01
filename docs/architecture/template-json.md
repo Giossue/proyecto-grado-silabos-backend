@@ -92,8 +92,8 @@ esquemas de valor, propiedades y reglas. Detalle: ADR-0012.
   "line_height": 1.15,
   "paragraph_spacing_pt": 6,
   "sizes": { "title": 14, "section": 11, "body": 11 },
-  "colors": { "text": "#000000", "title": "#2F5496", "table_header_background": "#4F81BD",
-              "table_header_text": "#FFFFFF", "table_border": "#333333", "empty_text": "#595959" },
+  "colors": { "text": "#000000", "title": "#2F5496", "table_header_background": "#C3D4EA",
+              "table_header_text": "#000000", "table_border": "#333333", "empty_text": "#595959" },
   "title": { "text": "PROGRAMA DE ASIGNATURA (SÍLABO)", "bold": true, "italic": false, "alignment": "center" },
   "section_title": { "bold": true, "italic": false, "alignment": "left" },
   "body": { "alignment": "left" },
@@ -115,7 +115,7 @@ esquemas de valor, propiedades y reglas. Detalle: ADR-0012.
 | `font_family` | Arial, Calibri, Times New Roman, Verdana o Georgia. |
 | `line_height`, `paragraph_spacing_pt` | Interlineado (1 a 3) y espacio después de cada párrafo (0 a 36 pt). |
 | `sizes` | Tamaño del título, de los títulos de sección y del contenido (5 a 72 pt). |
-| `colors` | `#RRGGBB`. `table_header_background` y `table_header_text` se aplican **solo** a los encabezados de tabla (`<th>`) sin fondo propio; pueden ser `null`. |
+| `colors` | `#RRGGBB`. `table_header_background` y `table_header_text` se aplican **solo** a los encabezados de tabla (`<th>`) sin fondo propio; pueden ser `null`. La plantilla oficial usa el celeste `#C3D4EA` con texto negro, como los rótulos de la tabla de identificación. |
 | `title`, `section_title`, `body` | Negrita, cursiva y alineación (`left`, `center`, `right`, `justify`). |
 | `header.logos` | Hasta dos logos: el primero a la izquierda y el segundo a la derecha. `source`: `institution` o `faculty`. |
 | `header.left_share` | Fracción del ancho para el logo izquierdo (0,1 a 0,9). |
