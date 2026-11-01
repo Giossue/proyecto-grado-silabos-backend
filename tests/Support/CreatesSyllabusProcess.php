@@ -29,6 +29,7 @@ trait CreatesSyllabusProcess
                     'identificacion' => ['disability' => ['answer' => 'no', 'type' => '', 'description' => '']],
                     'unidades' => $this->plannedUnits(),
                     'evaluacion' => [],
+                    'bibliografia' => ['libros' => [['autor' => 'Autor de prueba', 'titulo' => $text, 'anio' => '2020', 'ciudad' => 'Guaranda', 'editorial' => 'Editorial de prueba', 'isbn' => '9789563431063', 'codigo' => 'B-1']]],
                     default => [],
                 };
             }

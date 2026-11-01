@@ -246,7 +246,22 @@
                 },
                 "value": { "$ref": "#/$defs/values" },
                 "rules": { "type": "array", "items": { "$ref": "#/$defs/rule" } },
-                "layout": { "$ref": "#/$defs/html" }
+                "layout": { "$ref": "#/$defs/html" },
+                "catalog": {
+                    "type": "object",
+                    "description": "Llena las filas de una lista del bloque con libros del catálogo de la biblioteca: «list» es la lista y «map» dice qué dato del libro va a cada columna de texto.",
+                    "required": ["list", "map"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "list": { "$ref": "#/$defs/key" },
+                        "map": {
+                            "type": "object",
+                            "minProperties": 1,
+                            "propertyNames": { "enum": ["author", "title", "year", "place", "publisher", "isbn", "call_number"] },
+                            "additionalProperties": { "$ref": "#/$defs/key" }
+                        }
+                    }
+                }
             }
         },
         "preset": {

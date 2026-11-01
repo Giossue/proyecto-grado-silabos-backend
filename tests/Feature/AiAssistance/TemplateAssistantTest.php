@@ -162,7 +162,7 @@ class TemplateAssistantTest extends TestCase
 
         $field = $outcome->proposal['payload']['sections'][1]['fields'][0] ?? [];
         $this->assertSame('docente', $field['quien_llena'] ?? null);
-        $this->assertSame('table', $field['content']['content'][0]['type'] ?? null);
+        $this->assertSame(['documentBlock', 'bibliografia'], [$field['content']['content'][0]['type'] ?? null, $field['content']['content'][0]['attrs']['kind'] ?? null]);
     }
 
     public function test_stops_at_the_step_limit(): void

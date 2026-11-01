@@ -22,7 +22,7 @@ final class BlockDefinition
         if (! is_array($raw) || array_is_list($raw)) {
             BlockDefinitionError::fail("{$where}: escriba la definición del bloque como objeto.");
         }
-        $unknown = array_diff(array_keys($raw), ['label', 'props', 'value', 'rules', 'layout']);
+        $unknown = array_diff(array_keys($raw), ['label', 'props', 'value', 'rules', 'layout', 'catalog']);
         if ($unknown !== []) {
             BlockDefinitionError::fail("{$where}: clave desconocida «".implode('», «', $unknown).'».');
         }
@@ -31,6 +31,7 @@ final class BlockDefinition
         }
         $props = ValueSchema::define($raw['props'] ?? null, "{$where}.props", true);
         $value = ValueSchema::define($raw['value'] ?? null, "{$where}.value");
+        $catalog = BlockCatalog::define($raw['catalog'] ?? null, "{$where}.catalog", $value);
 
         return [
             'label' => $raw['label'],
@@ -38,6 +39,7 @@ final class BlockDefinition
             'value' => $value,
             'rules' => BlockRules::define($raw['rules'] ?? null, "{$where}.rules", $value, $variables),
             'layout' => BlockLayout::define($raw['layout'] ?? null, "{$where}.layout", $value, $props, $variables),
+            ...($catalog === null ? [] : ['catalog' => $catalog]),
         ];
     }
 

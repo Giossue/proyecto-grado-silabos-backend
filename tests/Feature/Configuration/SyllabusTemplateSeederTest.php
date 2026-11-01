@@ -81,8 +81,10 @@ class SyllabusTemplateSeederTest extends TestCase
         $weekRows = array_slice($tables[1]['content'], 5, 4);
         $this->assertSame(['5', '6', '7', '8'], array_map(fn (array $row): string => FreeText::plainText($row['content'][1]), $weekRows));
         foreach (['bibliografia', 'bibliografia_complementaria'] as $key) {
-            $headers = $fields[$key]->contenido['content'][0]['content'][0]['content'];
-            $this->assertSame(['Autor', 'Título', 'Año', 'Ciudad', 'Editorial', 'ISBN', 'Código'], array_map(FreeText::plainText(...), $headers));
+            $block = $fields[$key]->contenido['content'][0];
+            $this->assertSame(['documentBlock', 'bibliografia'], [$block['type'], $block['attrs']['kind']]);
+            $table = array_values(array_filter(FieldDocument::resolve($fields[$key]->contenido, [])['content'], fn (array $node): bool => $node['type'] === 'table'))[0];
+            $this->assertSame(['Autor', 'Título', 'Año', 'Ciudad', 'Editorial', 'ISBN', 'Código'], array_map(FreeText::plainText(...), $table['content'][0]['content']));
         }
         $this->assertStringContainsString('Nivel de contribución', FreeText::plainText($fields['contribucion_perfil']->contenido));
         $this->assertSame('Revisión y aprobación', $template->sections->firstWhere('clave', 'revision')->titulo);

@@ -29,7 +29,7 @@ class TemplateWithoutUnusedBlockFeaturesMigrationTest extends TestCase
         $this->migration()->up();
 
         $definition = json_decode((string) DB::table('plantilla_silabo')->value('definicion_plantilla'), true);
-        $this->assertSame(['identificacion', 'unidades', 'evaluacion'], array_keys($definition['blocks']));
+        $this->assertSame(['identificacion', 'unidades', 'evaluacion', 'bibliografia'], array_keys($definition['blocks']));
         $this->assertArrayNotHasKey('from', $definition['blocks']['unidades']['value']['units']['items']['properties']['nombre']);
         $this->assertSame(['variable' => 'horas_practicas', 'zero' => false], $definition['blocks']['evaluacion']['layout'][0]['attrs']['when']);
     }

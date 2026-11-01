@@ -27,6 +27,10 @@ class ExportTemplateConformance extends Command
         $cases = [
             ['kind' => 'unidades', 'props' => [], 'value' => ['units' => array_map(fn (int $unit): array => ['nombre' => "Unidad {$unit}", 'resultado' => "Resultado {$unit}", 'semanas' => array_map(fn (int $number): array => $week($unit, $number), range(1, $unit === 1 ? 5 : 3))], range(1, 4))], 'variables' => []],
             ['kind' => 'identificacion', 'props' => [], 'value' => ['disability' => ['answer' => 'si', 'type' => 'Visual', 'description' => 'Baja visión']], 'variables' => []],
+            ['kind' => 'bibliografia', 'props' => [], 'value' => ['libros' => [
+                ['autor' => 'Sapag Chain, Nassir', 'titulo' => 'Proyectos de inversión', 'anio' => '2011', 'ciudad' => 'Santiago de Chile', 'editorial' => 'Pearson Educación', 'isbn' => '9789563431063', 'codigo' => '658.404 S2411p'],
+                ['autor' => '', 'titulo' => 'Libro sin autor', 'anio' => '', 'ciudad' => '', 'editorial' => '', 'isbn' => '', 'codigo' => ''],
+            ]], 'variables' => []],
             ['kind' => 'evaluacion', 'props' => [], 'value' => [], 'variables' => ['horas_practicas' => '16']],
             ['kind' => 'evaluacion', 'props' => [], 'value' => [], 'variables' => ['horas_practicas' => '0']],
         ];

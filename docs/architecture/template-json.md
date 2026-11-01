@@ -280,6 +280,19 @@ Una condición lleva una fuente (`value`, `prop`, `item` o `variable`) y una pru
 donde `zero` significa que el dato tiene un número igual a 0). Para negar, use `false` en la prueba. No hay
 condiciones compuestas (`all`, `any`, `not`); las revisiones antiguas que guardaron un `not` se siguen mostrando.
 
+### `catalog`: llenar filas con libros de la biblioteca
+
+Un bloque puede declarar que sus filas se llenan con libros del catálogo Koha (`BibliographicCatalog`):
+
+```json
+"catalog": { "list": "libros", "map": { "author": "autor", "title": "titulo", "year": "anio", "place": "ciudad", "publisher": "editorial", "isbn": "isbn" } }
+```
+
+`list` es una lista del bloque y `map` dice qué dato del libro va a cada columna de texto de esa lista. Los datos
+del libro son `author`, `title`, `year`, `place`, `publisher`, `isbn` y `call_number`; el que no se nombre no se llena
+(la plantilla oficial no llena `codigo` hasta saber qué es, PV-22). El docente ve «Buscar en la biblioteca» sobre el
+bloque; el servidor valida que `list` exista y que cada columna sea de texto.
+
 ### Ejemplo completo: un bloque nuevo sin código
 
 ```json
@@ -314,6 +327,7 @@ asignatura. (La prueba `TemplateDefinitionTest` usa este mismo ejemplo.)
 | `identificacion` | Tabla de identificación con datos del sistema; el docente responde la discapacidad (Sí/No, tipo y descripción). |
 | `unidades` | De 1 a 8 unidades (empieza con 4; el administrador lo cambia en «Editar → Listas») con semanas, horas y actividades. El docente escribe el nombre y el resultado de cada unidad. Reglas: al guardar, no más semanas que las del período (`semanas_periodo`); al enviar, cada unidad con nombre y resultado, las semanas del período y horas iguales a las de la asignatura. |
 | `evaluacion` | Tabla de puntos con dos variantes según `horas_practicas` (con o sin práctico-experimental). |
+| `bibliografia` | Tabla de libros (de 1 a 40) con las columnas `autor`, `titulo`, `anio`, `ciudad`, `editorial`, `isbn` y `codigo`; los títulos de columna los cambia Administración sin romper nada. Declara `catalog` para el buscador de la biblioteca. Al enviar, cada libro exige su título. |
 
 ## Secciones y campos
 

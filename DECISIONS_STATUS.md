@@ -207,8 +207,10 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   la fila de la bibliografía. Es solo lectura, solo de datos del libro (nada de préstamos ni
   ejemplares) y el docente nunca llama a Koha: lo hace el servidor. Va detrás de
   `BibliographicCatalog` y `CATALOG_DRIVER` vale `disabled` por defecto; `koha` usa las consultas
-  públicas del catálogo y no necesita usuario. El backend está hecho; falta la pantalla y el acceso
-  de la biblioteca.
+  públicas del catálogo y no necesita usuario. La bibliografía básica y la complementaria son el
+  bloque `bibliografia` de la plantilla: cada columna tiene un nombre interno estable y la plantilla
+  declara con `catalog` qué dato del libro va a cada una, así el buscador no depende del texto de
+  los encabezados. «Código» no se llena hasta saber qué es (PV-22). Falta el acceso de la biblioteca.
 - Cada paralelo tiene su sílabo. Su docente es quien tiene la asignación vigente.
 - Estados: Sin iniciar, Borrador, En revisión, Corrección solicitada y Aprobado.
 - El docente edita en Borrador y en Corrección solicitada solo sus campos. Ve una vista

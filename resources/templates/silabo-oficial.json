@@ -540,6 +540,100 @@
                 "<tr><th>TOTAL</th><td>10 PUNTOS</td><td>5 PUNTOS</td><td>10 PUNTOS</td><td>5 PUNTOS</td></tr>",
                 "</table>"
             ]
+        },
+        "bibliografia": {
+            "label": "Bibliografía",
+            "value": {
+                "libros": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 40,
+                    "initial": 1,
+                    "title": "libro",
+                    "errorMessage": "La bibliografía admite de 1 a 40 libros.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "autor": {
+                                "type": "string",
+                                "maxLength": 1000,
+                                "title": "Autor",
+                                "errorMessage": "El dato «Autor» del libro supera los 1000 caracteres."
+                            },
+                            "titulo": {
+                                "type": "string",
+                                "maxLength": 1000,
+                                "title": "Título",
+                                "errorMessage": "El dato «Título» del libro supera los 1000 caracteres."
+                            },
+                            "anio": {
+                                "type": "string",
+                                "maxLength": 1000,
+                                "title": "Año",
+                                "errorMessage": "El dato «Año» del libro supera los 1000 caracteres."
+                            },
+                            "ciudad": {
+                                "type": "string",
+                                "maxLength": 1000,
+                                "title": "Ciudad",
+                                "errorMessage": "El dato «Ciudad» del libro supera los 1000 caracteres."
+                            },
+                            "editorial": {
+                                "type": "string",
+                                "maxLength": 1000,
+                                "title": "Editorial",
+                                "errorMessage": "El dato «Editorial» del libro supera los 1000 caracteres."
+                            },
+                            "isbn": {
+                                "type": "string",
+                                "maxLength": 1000,
+                                "title": "ISBN",
+                                "errorMessage": "El dato «ISBN» del libro supera los 1000 caracteres."
+                            },
+                            "codigo": {
+                                "type": "string",
+                                "maxLength": 1000,
+                                "title": "Código",
+                                "errorMessage": "El dato «Código» del libro supera los 1000 caracteres."
+                            }
+                        }
+                    }
+                }
+            },
+            "rules": [
+                {
+                    "code": "libros_sin_titulo",
+                    "on": "submit",
+                    "message": "Escriba el título de cada libro: {detail}.",
+                    "hint": "Cada libro necesita su título para poder enviar",
+                    "checks": [
+                        {
+                            "label": "Títulos",
+                            "filled": "libros.*.titulo",
+                            "equals": {
+                                "count": "libros"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "catalog": {
+                "list": "libros",
+                "map": {
+                    "author": "autor",
+                    "title": "titulo",
+                    "year": "anio",
+                    "place": "ciudad",
+                    "publisher": "editorial",
+                    "isbn": "isbn"
+                }
+            },
+            "layout": [
+                "<table>",
+                "<tr><th style=\"background:#C3D4EA;font-weight:bold\">Autor</th><th style=\"background:#C3D4EA;font-weight:bold\">Título</th><th style=\"background:#C3D4EA;font-weight:bold\">Año</th><th style=\"background:#C3D4EA;font-weight:bold\">Ciudad</th><th style=\"background:#C3D4EA;font-weight:bold\">Editorial</th><th style=\"background:#C3D4EA;font-weight:bold\">ISBN</th><th style=\"background:#C3D4EA;font-weight:bold\">Código</th></tr>",
+                "<tr data-repeat='{\"value\":\"libros\"}'><td><span data-slot='{\"value\":\"autor\"}'></span></td><td><span data-slot='{\"value\":\"titulo\"}'></span></td><td><span data-slot='{\"value\":\"anio\"}'></span></td><td><span data-slot='{\"value\":\"ciudad\"}'></span></td><td><span data-slot='{\"value\":\"editorial\"}'></span></td><td><span data-slot='{\"value\":\"isbn\"}'></span></td><td><span data-slot='{\"value\":\"codigo\"}'></span></td></tr>",
+                "</table>"
+            ]
         }
     },
     "required_sections": [
@@ -830,10 +924,7 @@
                     "label": "Básica",
                     "quien_llena": "docente",
                     "content": [
-                        "<table>",
-                        "<tr><th style=\"background:#C3D4EA;font-weight:bold\">Autor</th><th style=\"background:#C3D4EA;font-weight:bold\">Título</th><th style=\"background:#C3D4EA;font-weight:bold\">Año</th><th style=\"background:#C3D4EA;font-weight:bold\">Ciudad</th><th style=\"background:#C3D4EA;font-weight:bold\">Editorial</th><th style=\"background:#C3D4EA;font-weight:bold\">ISBN</th><th style=\"background:#C3D4EA;font-weight:bold\">Código</th></tr>",
-                        "<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>",
-                        "</table>"
+                        "<div data-block=\"bibliografia\"></div>"
                     ]
                 },
                 {
@@ -841,10 +932,7 @@
                     "label": "Complementaria",
                     "quien_llena": "docente",
                     "content": [
-                        "<table>",
-                        "<tr><th style=\"background:#C3D4EA;font-weight:bold\">Autor</th><th style=\"background:#C3D4EA;font-weight:bold\">Título</th><th style=\"background:#C3D4EA;font-weight:bold\">Año</th><th style=\"background:#C3D4EA;font-weight:bold\">Ciudad</th><th style=\"background:#C3D4EA;font-weight:bold\">Editorial</th><th style=\"background:#C3D4EA;font-weight:bold\">ISBN</th><th style=\"background:#C3D4EA;font-weight:bold\">Código</th></tr>",
-                        "<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>",
-                        "</table>"
+                        "<div data-block=\"bibliografia\"></div>"
                     ]
                 }
             ]
@@ -888,7 +976,7 @@
                         "</td>",
                         "<td>",
                         "<p>Nombre:</p>",
-                                "<p><span data-variable=\"nombre_bibliotecario\"></span></p>",
+                        "<p><span data-variable=\"nombre_bibliotecario\"></span></p>",
                         "<p>Bibliotecario</p>",
                         "</td>",
                         "</tr>",
