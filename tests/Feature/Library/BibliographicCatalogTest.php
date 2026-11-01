@@ -53,21 +53,80 @@ class BibliographicCatalogTest extends TestCase
     {
         $this->fakeKoha();
 
-        foreach (['author' => 'au:Sapag', 'title' => 'ti:Sapag', 'any' => 'kw:Sapag'] as $field => $query) {
+        foreach (['author' => 'au,rtrn:Sapag', 'title' => 'ti,rtrn:Sapag', 'any' => 'kw,rtrn:Sapag'] as $field => $query) {
             $this->search($field, 'Sapag')->assertOk();
             Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'opac-search.pl')
                 && ($request['q'] ?? null) === $query && ($request['format'] ?? null) === 'rss2');
         }
     }
 
+    public function test_it_asks_koha_for_one_page_of_twenty_and_reports_the_total(): void
+    {
+        $this->fakeKoha(total: 45);
+
+        $this->search('any', 'inversión', 3)
+            ->assertOk()
+            ->assertJsonPath('meta', ['current_page' => 3, 'last_page' => 3, 'per_page' => 20, 'from' => 41, 'to' => 42, 'total' => 45]);
+
+        Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'opac-search.pl')
+            && (int) $request['count'] === 20 && (int) $request['offset'] === 40);
+    }
+
+    public function test_the_first_page_starts_at_the_beginning(): void
+    {
+        $this->fakeKoha(total: 45);
+
+        $this->search('any', 'inversión')->assertOk()->assertJsonPath('meta.current_page', 1)->assertJsonPath('meta.from', 1);
+
+        Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'opac-search.pl') && (int) $request['offset'] === 0);
+    }
+
+    public function test_no_results_still_describes_one_empty_page(): void
+    {
+        Http::fake(['*' => Http::response('<rss version="2.0" xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/"><channel><opensearch:totalResults>0</opensearch:totalResults></channel></rss>')]);
+
+        $this->search('any', 'nada')->assertOk()->assertJsonPath('meta', ['current_page' => 1, 'last_page' => 1, 'per_page' => 20, 'from' => null, 'to' => null, 'total' => 0]);
+    }
+
+    public function test_the_page_must_be_a_number_between_1_and_100(): void
+    {
+        Http::fake();
+        $this->as('teacher');
+
+        foreach ([0, 101, 'x'] as $page) {
+            $this->getJson(route('api.v1.teacher.library-catalog.search', ['field' => 'any', 'q' => 'inversión', 'page' => $page]))->assertJsonValidationErrors(['page']);
+        }
+
+        Http::assertNothingSent();
+    }
+
+    public function test_every_word_is_searched_as_a_prefix_and_all_must_appear(): void
+    {
+        $this->fakeKoha();
+
+        $this->search('title', 'proyec inver')->assertOk();
+
+        Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'opac-search.pl')
+            && $request['q'] === 'ti,rtrn:proyec AND ti,rtrn:inver');
+    }
+
     public function test_the_term_cannot_inject_search_syntax(): void
     {
         $this->fakeKoha();
 
-        $this->search('title', "inversión\" or au:x\\\n")->assertOk();
+        $this->search('title', "inversión\" or au:x* (y)\\\n AND z")->assertOk();
 
         Http::assertSent(fn (Request $request): bool => str_contains($request->url(), 'opac-search.pl')
-            && $request['q'] === 'ti:inversión or au:x');
+            && $request['q'] === 'ti,rtrn:inversión AND ti,rtrn:au AND ti,rtrn:x AND ti,rtrn:y AND ti,rtrn:z');
+    }
+
+    public function test_a_term_without_letters_or_numbers_is_not_searched(): void
+    {
+        Http::fake();
+
+        $this->search('any', '** ""')->assertOk()->assertJsonPath('data', []);
+
+        Http::assertNothingSent();
     }
 
     public function test_an_isbn_that_is_not_an_isbn_is_not_searched(): void
@@ -145,9 +204,9 @@ class BibliographicCatalogTest extends TestCase
         $this->search('any', 'inversión')->assertStatus(429);
     }
 
-    private function fakeKoha(?string $failing = null): void
+    private function fakeKoha(?string $failing = null, int $total = 2): void
     {
-        $rss = (string) file_get_contents(base_path('tests/Fixtures/koha/search.rss'));
+        $rss = str_replace('<opensearch:totalResults>2<', "<opensearch:totalResults>{$total}<", (string) file_get_contents(base_path('tests/Fixtures/koha/search.rss')));
         $record = (string) file_get_contents(base_path('tests/Fixtures/koha/proyectos-de-inversion.marcxml'));
         Http::fake(function (Request $request) use ($rss, $record, $failing) {
             if (str_contains($request->url(), 'opac-search.pl')) {
@@ -160,11 +219,11 @@ class BibliographicCatalogTest extends TestCase
         });
     }
 
-    private function search(string $field, string $term): TestResponse
+    private function search(string $field, string $term, ?int $page = null): TestResponse
     {
         $this->as('teacher');
 
-        return $this->getJson(route('api.v1.teacher.library-catalog.search', ['field' => $field, 'q' => $term]));
+        return $this->getJson(route('api.v1.teacher.library-catalog.search', ['field' => $field, 'q' => $term, ...($page === null ? [] : ['page' => $page])]));
     }
 
     private function as(string $who): static

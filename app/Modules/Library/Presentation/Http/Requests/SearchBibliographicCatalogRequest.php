@@ -20,12 +20,13 @@ class SearchBibliographicCatalogRequest extends FormRequest
         return [
             'field' => ['required', 'string', Rule::in(BibliographicCatalog::FIELDS)],
             'q' => ['required', 'string', 'min:2', 'max:'.(int) config('catalog.limits.term_characters')],
+            'page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['field' => 'campo de búsqueda', 'q' => 'texto a buscar'];
+        return ['field' => 'campo de búsqueda', 'q' => 'texto a buscar', 'page' => 'página'];
     }
 }

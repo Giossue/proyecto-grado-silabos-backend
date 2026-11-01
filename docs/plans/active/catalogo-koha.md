@@ -20,7 +20,8 @@ el Koha local (`~/Documentos/koha-lab`) y con las consultas públicas del catál
    solo cambia la implementación.
 3. El docente nunca llama a Koha: llama a `GET /api/v1/teacher/library-catalog/search` y el
    servidor consulta. La dirección de Koha sale de la configuración, no de la petición.
-4. Campos de búsqueda: `author`, `title`, `isbn` y `any` (palabra clave).
+4. Campos de búsqueda: `author`, `title`, `isbn` y `any` (palabra clave). Cada palabra es un prefijo y todas deben
+   aparecer. Resultados de 20 en 20 (`page` de 1 a 100) con el total que informa Koha.
 5. El resultado trae autor, título, año, ciudad, editorial, ISBN y signatura. El docente elige
    y la fila de la tabla se llena en la pantalla (repositorio del frontend).
 

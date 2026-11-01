@@ -205,7 +205,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Catálogo de la biblioteca (POR VALIDAR con la biblioteca, 2026-10-31): el docente busca un libro
   por autor, título, ISBN o palabra clave en el catálogo Koha de la UEB y elige uno para llenar
   la fila de la bibliografía. Es solo lectura, solo de datos del libro (nada de préstamos ni
-  ejemplares) y el docente nunca llama a Koha: lo hace el servidor. Va detrás de
+  ejemplares) y el docente nunca llama a Koha: lo hace el servidor. El resultado va en una tabla con
+  paginación de 20 libros por página (hasta 100 páginas); cada palabra se busca como prefijo y todas deben aparecer. Va detrás de
   `BibliographicCatalog` y `CATALOG_DRIVER` vale `disabled` por defecto; `koha` usa las consultas
   públicas del catálogo y no necesita usuario. La bibliografía básica y la complementaria son el
   bloque `bibliografia` de la plantilla: cada columna tiene un nombre interno estable y la plantilla

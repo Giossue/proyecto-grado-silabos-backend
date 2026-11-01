@@ -4,6 +4,7 @@ namespace App\Modules\Library\Infrastructure\Gateways;
 
 use App\Modules\Library\Domain\Contracts\BibliographicCatalog;
 use App\Modules\Library\Domain\Data\CatalogBook;
+use App\Modules\Library\Domain\Data\CatalogPage;
 use App\Modules\Library\Domain\Exceptions\CatalogUnavailable;
 use DOMDocument;
 use Illuminate\Http\Client\ConnectionException;
@@ -21,46 +22,59 @@ class KohaPublicCatalog implements BibliographicCatalog
 {
     private const MARC_NAMESPACE = 'http://www.loc.gov/MARC21/slim';
 
+    private const OPENSEARCH_NAMESPACE = 'http://a9.com/-/spec/opensearch/1.1/';
+
+    private const MAX_WORDS = 6;
+
     private const INDEXES = ['author' => 'au', 'title' => 'ti', 'isbn' => 'isbn', 'any' => 'kw'];
 
-    public function search(string $field, string $term): array
+    public function search(string $field, string $term, int $page = 1): CatalogPage
     {
+        $perPage = max(1, (int) config('catalog.koha.per_page'));
+        $page = max(1, $page);
         $query = $this->query($field, $term);
         if ($query === null) {
-            return [];
+            return new CatalogPage([], 0, $page, $perPage);
         }
-        $ids = $this->ids($query);
-        if ($ids === []) {
-            return [];
-        }
+        [$ids, $total] = $this->ids($query, $page, $perPage);
 
-        return $this->books($ids);
+        return new CatalogPage($ids === [] ? [] : $this->books($ids), $total, $page, $perPage);
     }
 
+    /**
+     * Cada palabra se busca como prefijo («zootec» encuentra «zootecnia») y todas deben aparecer.
+     * Solo se conservan letras y números, así el texto no puede traer sintaxis de búsqueda.
+     */
     private function query(string $field, string $term): ?string
     {
         $index = self::INDEXES[$field] ?? null;
         if ($index === null) {
             return null;
         }
-        $term = trim((string) preg_replace('/[\s"\\\\\x00-\x1F]+/u', ' ', $term));
         if ($field === 'isbn') {
-            $term = strtoupper((string) preg_replace('/[^0-9Xx]/', '', $term));
-            if (! in_array(strlen($term), [10, 13], true)) {
-                return null;
-            }
-        }
+            $isbn = strtoupper((string) preg_replace('/[^0-9Xx]/', '', $term));
 
-        return $term === '' ? null : "{$index}:{$term}";
+            return in_array(strlen($isbn), [10, 13], true) ? "isbn:{$isbn}" : null;
+        }
+        $words = array_values(array_filter(
+            preg_split('/[^\p{L}\p{N}]+/u', $term, -1, PREG_SPLIT_NO_EMPTY) ?: [],
+            fn (string $word): bool => ! in_array(mb_strtolower($word), ['and', 'or', 'not'], true),
+        ));
+
+        return $words === [] ? null : implode(' AND ', array_map(
+            fn (string $word): string => "{$index},rtrn:{$word}",
+            array_slice($words, 0, self::MAX_WORDS),
+        ));
     }
 
-    /** @return list<string> */
-    private function ids(string $query): array
+    /** @return array{list<string>, int} */
+    private function ids(string $query, int $page, int $perPage): array
     {
         $response = $this->get('/cgi-bin/koha/opac-search.pl', [
             'q' => $query,
             'format' => 'rss2',
-            'count' => (int) config('catalog.koha.max_results'),
+            'count' => $perPage,
+            'offset' => ($page - 1) * $perPage,
         ]);
         $xml = $this->xml($response);
         $ids = [];
@@ -70,8 +84,9 @@ class KohaPublicCatalog implements BibliographicCatalog
                 $ids[$match[1]] = $match[1];
             }
         }
+        $total = $xml->getElementsByTagNameNS(self::OPENSEARCH_NAMESPACE, 'totalResults')->item(0)?->textContent;
 
-        return array_slice(array_values($ids), 0, (int) config('catalog.koha.max_results'));
+        return [array_slice(array_values($ids), 0, $perPage), max(is_numeric($total) ? (int) $total : 0, count($ids))];
     }
 
     /**
@@ -86,7 +101,7 @@ class KohaPublicCatalog implements BibliographicCatalog
                     'op' => 'export', 'bib' => $id, 'format' => 'marcxml',
                 ]),
                 $ids,
-            ));
+            ), max(1, (int) config('catalog.koha.concurrent_requests')));
         } catch (Throwable $exception) {
             throw new CatalogUnavailable('No fue posible consultar el catálogo de la biblioteca.', previous: $exception);
         }

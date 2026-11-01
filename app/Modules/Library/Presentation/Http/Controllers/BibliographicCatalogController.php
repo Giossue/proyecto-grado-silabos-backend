@@ -14,7 +14,7 @@ class BibliographicCatalogController extends Controller
     public function search(SearchBibliographicCatalogRequest $request, BibliographicCatalog $catalog): JsonResponse
     {
         try {
-            $books = $catalog->search($request->string('field')->toString(), $request->string('q')->toString());
+            $page = $catalog->search($request->string('field')->toString(), $request->string('q')->toString(), max(1, $request->integer('page', 1)));
         } catch (CatalogUnavailable $exception) {
             return response()->json([
                 'message' => $exception->getMessage(),
@@ -22,6 +22,9 @@ class BibliographicCatalogController extends Controller
             ], 503);
         }
 
-        return response()->json(['data' => array_map(fn (CatalogBook $book): array => $book->toArray(), $books)]);
+        return response()->json([
+            'data' => array_map(fn (CatalogBook $book): array => $book->toArray(), $page->books),
+            'meta' => $page->meta(),
+        ]);
     }
 }
