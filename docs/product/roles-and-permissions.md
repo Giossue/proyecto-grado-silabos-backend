@@ -31,8 +31,8 @@ El menú y los botones reflejan el permiso, pero no lo reemplazan.
 | Facultades, carreras (también por Excel), logos y coordinador de carrera | Sí | No | No | No |
 | Malla: asignaturas, requisitos y ciclos (también por Excel) | No | Sí, en su carrera, con la convocatoria de la carrera pausada o sin abrir | No | No |
 | Paralelos y docente de cada paralelo | No | Sí, en su carrera, también con la convocatoria abierta | No | No |
-| Ficha de la asignatura (Proyecto de carrera) e importación | Solo la ficha, por API; no tiene pantalla | Sí, en su carrera, con la convocatoria de la carrera pausada o sin abrir | No | No |
-| Marcar un campo de la ficha como editable por el docente | No | Sí | Edita ese campo en su sílabo | No |
+| Proyecto de carrera de la asignatura e importación | Solo el proyecto de carrera, por API; no tiene pantalla | Sí, en su carrera, con la convocatoria de la carrera pausada o sin abrir | No | No |
+| Marcar un campo del proyecto de carrera como editable por el docente | No | Sí | Edita ese campo en su sílabo | No |
 | Plantilla | Sí, con la convocatoria pausada o sin convocatoria | No | No | No |
 | Convocatoria: crear, pausar, reanudar, prorrogar, cerrar, eliminar | Sí | No | No | No |
 | Convocatoria de la carrera: iniciar, pausar, reanudar | No | Sí | No | No |
@@ -58,7 +58,8 @@ puede.
   a su Panel, sea cual sea su rol.
 - Con varias asignaciones (por ejemplo, docente en dos carreras, o docente y
   coordinador), la persona elige en `/rol`.
-- Solo hay un rol activo a la vez. Se cambia desde el menú de usuario.
+- Solo hay un rol activo a la vez. «Cambiar carrera o rol», en el menú de usuario, cierra
+  el rol activo (queda en auditoría como `rol_activo.cerrado`) y lleva a `/rol` para elegir otro.
 - Abrir un aviso puede activar otro rol de la misma persona: el servidor elige la
   asignación que corresponde al aviso y lo registra en auditoría.
 

@@ -50,8 +50,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   fijos: código, nombre, ciclo, unidad de organización, modalidad, créditos y horas ACD,
   APE y AA (I-75).
 - Cada asignatura indica si «Puede generar sílabos» (por defecto, sí). Una que no genera
-  no recibe sílabo, no exige paralelos, docente ni ficha para abrir la convocatoria y no
-  aparece en Proyecto de carrera ni en el Excel de fichas. Cambiarlo es un cambio de
+  no recibe sílabo, no exige paralelos, docente ni proyecto de carrera para abrir la convocatoria y no
+  aparece en Proyecto de carrera ni en el Excel de proyectos de carrera. Cambiarlo es un cambio de
   malla: con sílabos en curso exige pausa y confirmación; los sílabos de una materia
   que vuelve a generar se crean al reanudar (2026-10-26).
 - Los paralelos son fijos por asignatura y no dependen del período. Cada uno tiene
@@ -111,11 +111,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   definitivo (I-231).
 - Cada carrera abre su propia convocatoria dentro de la institucional. Coordinación
   solo puede abrirla si hay asignaturas, cada una con paralelo, cada paralelo con
-  docente, la ficha completa, el logo de la facultad y el plazo vigente. El rechazo
+  docente, el proyecto de carrera completo, el logo de la facultad y el plazo vigente. El rechazo
   lista todo lo que falta.
 - Al abrirla se crea un sílabo por paralelo. Coordinación puede pausarla y reanudarla.
 - Con la convocatoria institucional abierta no se cambia la plantilla. Con la de una
-  carrera abierta no se cambian su malla ni sus fichas.
+  carrera abierta no se cambian su malla ni sus proyectos de carrera.
 
 ## Plantilla
 
@@ -148,7 +148,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   visual tipo Word. «Editar» es la acción principal; «Opciones avanzadas» contiene
   «Diseño», «Listas» y «Editar JSON» (este abre el diálogo de edición, exportación e
   importación JSON). Diseño y Listas se abren en diálogos desde ese menú (2026-10-31).
-  Importar reemplaza la plantilla entera, pero las fichas pasan a los campos de
+  Importar reemplaza la plantilla entera, pero los proyectos de carrera pasan a los campos de
   Coordinación con la misma clave (2026-10-27).
   La barra de acciones se alinea con el borde derecho de la primera hoja según
   su papel y orientación, limitada al ancho disponible de pantalla.
@@ -161,11 +161,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   institucional. Al reanudar confirma, y los sílabos afectados se rehacen desde cero,
   incluso los aprobados. Las convocatorias cerradas no se tocan (I-118).
 
-## Proyecto de carrera (ficha)
+## Proyecto de carrera
 
-- La ficha de cada asignatura reúne los campos que llena Coordinación. Sus valores se
+- El proyecto de carrera de cada asignatura reúne los campos que llena Coordinación. Sus valores se
   guardan en `valores_campo` con `asignatura_id` (I-204).
-- Coordinación importa fichas con un Excel generado automáticamente desde las materias
+- Coordinación importa proyectos de carrera con un Excel generado automáticamente desde las materias
   activas de su carrera y todos los campos vigentes asignados a Coordinación. El libro
   protege títulos, códigos y nombres; solo se completa el contenido. Las tablas llevan
   las columnas de la plantilla. No requiere IA, OCR ni cola.
@@ -182,11 +182,11 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   la autorización. No hay versiones de plantilla: se compara una huella de estructura.
 - Se reutilizan la comparación con valores actuales, los permisos, la transacción y
   la confirmación para regenerar sílabos en curso. Se eliminaron la carga antigua de
-  documentos, los lectores OCR, los gateways de extracción de fichas y sus trabajos
+  documentos, los lectores OCR, los gateways de extracción de proyectos de carrera y sus trabajos
   de cola. Se elimina `importaciones_ficha`, incluidos sus registros históricos, con
   una nueva migración y respaldo previo. La aplicación relee el mismo Excel al
   confirmar, compara sus huellas y guarda únicamente la selección en `valores_campo`.
-- Los campos de la ficha son solo de Coordinación: el docente no los edita y la ficha
+- Los campos del proyecto de carrera son solo de Coordinación: el docente no los edita y el proyecto de carrera
   está completa solo si todos tienen texto. Se eliminó el interruptor «El docente puede
   editarlo» (PV-21, 2026-10-30; reemplaza I-230).
 - El docente declara de 1 a 8 unidades (empieza con 4) y escribe el nombre y el
@@ -195,12 +195,12 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   resultado, y las unidades suman las semanas de clase del período (2026-10-27: el
   Reglamento de Régimen Académico del CES no fija unidades ni semanas fuera de Salud,
   arts. 10 y 113; el período guarda sus semanas de clase, calculadas con las fechas y
-  corregibles al crearlo). La ficha ya no tiene «Unidades y resultados de aprendizaje»
+  corregibles al crearlo). El proyecto de carrera ya no tiene «Unidades y resultados de aprendizaje»
   (decisión del responsable del producto del 2026-10-27, como en los antecedentes). Las horas ACD, APE y AA de toda la
   planificación deben sumar las de la asignatura para enviar. Activar el nuevo formato
   en una plantilla existente exige pausa y las confirmaciones de regeneración vigentes;
   el despliegue no modifica por sí solo la plantilla activa.
-- Cambiar la malla o una ficha con sílabos existentes exige pausar la convocatoria de la
+- Cambiar la malla o un proyecto de carrera con sílabos existentes exige pausar la convocatoria de la
   carrera y conserva lo escrito por el docente (PV-21, 2026-10-30). Solo cambian los
   sílabos cuyo documento muestra el dato: horas, créditos, modalidad, nombre, código,
   ciclo y unidad de su materia, y los códigos de sus requisitos. Los enviados, en
@@ -299,7 +299,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   por defecto (I-73). En el piloto se usa DeepSeek (antes PV-14; confirmado el 2026-10-26).
 - El docente tiene un chat que usa los datos de la carrera, de la asignatura y lo que ya
   escribió en el sílabo (contexto `free-text-v3`).
-- La IA se limita al chat del docente. La ficha se importa exclusivamente por Excel
+- La IA se limita al chat del docente. El proyecto de carrera se importa exclusivamente por Excel
   estructurado; se retiró su configuración de OCR y extracción por IA.
 - La IA nunca aprueba, bloquea ni escribe sola. Si falla, solo se pierde la ayuda de IA
   (ADR-0003).
