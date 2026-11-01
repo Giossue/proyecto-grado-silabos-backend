@@ -22,6 +22,9 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Application\Contracts\RoleEligibility;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Domain\Policies\UserPolicy;
+use App\Modules\Library\Domain\Contracts\BibliographicCatalog;
+use App\Modules\Library\Infrastructure\Gateways\DisabledBibliographicCatalog;
+use App\Modules\Library\Infrastructure\Gateways\KohaPublicCatalog;
 use App\Modules\Syllabus\Domain\Policies\ConvocationPolicy;
 use App\Modules\Syllabus\Domain\Policies\SyllabusPolicy;
 use App\Modules\Syllabus\Domain\Policies\SyllabusProcessPolicy;
@@ -62,6 +65,12 @@ class AppServiceProvider extends ServiceProvider
                 'baseline' => app(BaselineAiAgentGateway::class),
                 'openai', 'claude', 'anthropic', 'deepseek' => app(HostedAiAgentGateway::class),
                 default => app(DisabledAiAgentGateway::class),
+            };
+        });
+        $this->app->bind(BibliographicCatalog::class, function (): BibliographicCatalog {
+            return match ((string) config('catalog.driver')) {
+                'koha' => app(KohaPublicCatalog::class),
+                default => app(DisabledBibliographicCatalog::class),
             };
         });
     }
@@ -107,10 +116,21 @@ class AppServiceProvider extends ServiceProvider
                 && app(ActiveRole::class)->hasRole(request(), RoleCode::Librarian),
         );
         Gate::define(
+            'search-library-catalog',
+            fn (User $user): bool => $user->activo
+                && app(ActiveRole::class)->hasRole(request(), RoleCode::Teacher),
+        );
+        Gate::define(
             'view-audit',
             fn (User $user): bool => $user->activo
                 && app(ActiveRole::class)->hasRole(request(), RoleCode::Administrator),
         );
+        RateLimiter::for('library-catalog', function (Request $request): Limit {
+            $user = $request->user();
+
+            return Limit::perMinute((int) config('catalog.limits.requests_per_minute'))
+                ->by('library-catalog:'.($user instanceof User ? $user->id : (string) $request->ip()));
+        });
         RateLimiter::for('ai-analysis', function (Request $request): Limit {
             $user = $request->user();
             $syllabus = $request->route('syllabus');

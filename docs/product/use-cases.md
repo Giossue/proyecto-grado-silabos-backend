@@ -21,7 +21,8 @@
 | CU-17 | Auditar el proceso | Administrador | RF-073, RF-074 | ADM-10 |
 
 CU-18 (sincronizar datos institucionales) está retirado: no hay integración con sistemas
-externos.
+externos. Única excepción: el docente consulta el catálogo Koha de la biblioteca, solo lectura,
+para llenar la bibliografía en CU-07.
 
 ## Antes de implementar un caso
 

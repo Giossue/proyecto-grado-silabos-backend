@@ -21,6 +21,7 @@ use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\SessionManagementC
 use App\Modules\Identity\Presentation\Http\Controllers\Api\V1\TwoFactorController;
 use App\Modules\Identity\Presentation\Http\Controllers\CareerTeacherController;
 use App\Modules\Identity\Presentation\Http\Controllers\ManagedUserController;
+use App\Modules\Library\Presentation\Http\Controllers\BibliographicCatalogController;
 use App\Modules\Library\Presentation\Http\Controllers\LibraryReviewController;
 use App\Modules\Operations\Presentation\Http\Controllers\AuditEventController;
 use App\Modules\Operations\Presentation\Http\Controllers\NotificationController;
@@ -294,6 +295,9 @@ Route::prefix('v1')->group(function (): void {
             Route::post('teacher/syllabi/{syllabus}/submit', [SyllabusController::class, 'submit'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.submit');
+            Route::get('teacher/library-catalog/search', [BibliographicCatalogController::class, 'search'])
+                ->middleware(['active-role', 'throttle:library-catalog'])
+                ->name('api.v1.teacher.library-catalog.search');
             Route::get('teacher/syllabi/{syllabus}/ai-chat', [AiChatController::class, 'show'])
                 ->middleware('active-role')
                 ->name('api.v1.teacher.syllabi.ai-chat.show');

@@ -9,7 +9,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - El sistema cubre el ciclo del sílabo: elaboración, revisión, aprobación, firma y
   descarga. Admite varias facultades y carreras.
 - Fuera de alcance: EVEA, matrículas, notas, horarios, integración con sistemas
-  institucionales y decisiones académicas automáticas.
+  institucionales y decisiones académicas automáticas. Única excepción: la consulta de
+  solo lectura al catálogo Koha de la biblioteca para buscar libros (2026-10-31).
 
 ## Roles y cuentas
 
@@ -201,6 +202,13 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 
 ## Elaboración del sílabo
 
+- Catálogo de la biblioteca (POR VALIDAR con la biblioteca, 2026-10-31): el docente busca un libro
+  por autor, título, ISBN o palabra clave en el catálogo Koha de la UEB y elige uno para llenar
+  la fila de la bibliografía. Es solo lectura, solo de datos del libro (nada de préstamos ni
+  ejemplares) y el docente nunca llama a Koha: lo hace el servidor. Va detrás de
+  `BibliographicCatalog` y `CATALOG_DRIVER` vale `disabled` por defecto; `koha` usa las consultas
+  públicas del catálogo y no necesita usuario. El backend está hecho; falta la pantalla y el acceso
+  de la biblioteca.
 - Cada paralelo tiene su sílabo. Su docente es quien tiene la asignación vigente.
 - Estados: Sin iniciar, Borrador, En revisión, Corrección solicitada y Aprobado.
 - El docente edita en Borrador y en Corrección solicitada solo sus campos. Ve una vista
