@@ -43,3 +43,15 @@ Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_p
 10. «Agrega la tabla de firmas al final.»
     `ver_plantilla` → `listar_presets` → `agregar_seccion` o `agregar_campo` donde corresponda
     → `usar_preset` (`firmas`) en el campo → `validar_borrador` → `responder`.
+
+11. «Pon el encabezado de la tabla de firmas en verde.»
+    El verde no está permitido. `responder` explicando que los encabezados usan celeste o azul
+    institucional y preguntando si quiere el azul institucional con texto blanco. Si acepta:
+    `ver_campo` (`firmas`) → `cambiar_contenido_campo` con el mismo HTML y el nuevo estilo en
+    los `<th>`.
+
+12. «Agrega una sección de lecturas recomendadas con una lista de libros.»
+    `ver_plantilla` → `agregar_seccion` → `agregar_campo` (quien_llena `docente`) →
+    `usar_preset` (`bibliografia_complementaria`) en ese campo → `validar_borrador` →
+    `responder` mencionando que el docente puede buscar los libros en la biblioteca. Si la
+    sección nueva queda antes de «Revisión y aprobación», esta sigue sin número.

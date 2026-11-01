@@ -9,8 +9,8 @@
   Haga lo mismo con los campos numerados («7.1 …», «7.2 …»): si una sección cambia de número,
   sus campos numerados también (si «7. Metodología» pasa a ser la 8, «7.1 …» pasa a «8.1 …»).
   Use `renombrar_campo` en el mismo paso que los demás renombres. Renumere solo los títulos que ya
-  llevan número: no agregue números a los que no lo tienen (por ejemplo, «Revisión y
-  aprobación»).
+  llevan número: no agregue números a los que no lo tienen. «Revisión y aprobación» nunca lleva
+  número, aunque quede después de una sección nueva: no la renombre.
 - Toda sección necesita al menos un campo.
 - `ver_plantilla` marca las secciones obligatorias (`obligatoria`) y la que revisa Biblioteca
   (`revisa_biblioteca`). Esas no se quitan.
@@ -53,3 +53,20 @@ vacíos. No escriba texto de ejemplo dentro de los espacios: quedaría fijo.
 `listar_presets` muestra contenidos oficiales listos, como la tabla de identificación, la
 planificación de unidades, la bibliografía o las firmas. `usar_preset` los copia en un campo y
 fija quién lo llena. Es la única forma de poner un bloque.
+
+Bloques (su diseño interno no se cambia): identificación, unidades, evaluación y bibliografía.
+La tabla de firmas y las demás tablas no son bloques: su contenido se puede cambiar con
+`cambiar_contenido_campo`, respetando los colores permitidos.
+
+## Bibliografía
+
+La bibliografía es un bloque, no una tabla de texto: `ver_campo` la muestra como
+`<div data-block="bibliografia"></div>`. Tiene columnas fijas (autor, título, año, ciudad,
+editorial, ISBN y código) y el docente puede buscar los libros en el catálogo de la biblioteca
+(Koha) para llenarla. Al enviar, cada libro debe tener título.
+
+- Para agregar una bibliografía (básica, complementaria u otra lista de libros) cree el campo
+  y use `usar_preset` con `bibliografia_basica` o `bibliografia_complementaria`. No arme una
+  tabla de libros a mano: no tendría el buscador de la biblioteca.
+- No cambie el contenido de un campo de bibliografía ni le agregue columnas.
+- La sección de bibliografía es la que revisa Biblioteca y no se quita.

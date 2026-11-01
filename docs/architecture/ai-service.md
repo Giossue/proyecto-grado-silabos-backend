@@ -83,6 +83,10 @@ o la descarta; solo «Guardar» cambia la plantilla.
   `TemplateDraftValidator` aplica las mismas reglas que «Guardar»
   (`ImportTemplateStructureRequest`) más secciones obligatorias y secciones sin campos. La
   propuesta tiene el formato que guarda el editor visual.
+- El contenido que propone la IA solo puede usar la paleta del editor: fondo de celda celeste
+  `#C3D4EA` o azul institucional `#4F81BD`, y texto negro, azul `#365F91` o blanco
+  (`TemplateDraft::CELL_COLORS` y `TEXT_COLORS`). Otro color vuelve a la IA como error. Sus reglas
+  (`resources/ai/plantilla/`) explican también que la bibliografía es el bloque enlazado a Koha.
 - El contexto de la IA está en `resources/ai/plantilla/*.md` y va completo como mensaje de
   sistema (DeepSeek lo cachea).
 - Prueba con pedidos reales, sin guardar: `php artisan template:assistant-trial`

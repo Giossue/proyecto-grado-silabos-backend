@@ -95,6 +95,26 @@ class TemplateAssistantTest extends TestCase
         $this->assertStringContainsString('No existe el campo «no_existe»', $missing);
     }
 
+    public function test_only_the_palette_colors_are_accepted(): void
+    {
+        $gateway = $this->script([
+            ScriptedAiAgentGateway::calls(
+                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Verde', 'quien_llena' => 'docente', 'contenido_html' => '<table><tr><th style="background:#00FF00">A</th></tr><tr><td></td></tr></table>', 'posicion' => 0]],
+                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Rojo', 'quien_llena' => 'docente', 'contenido_html' => '<p><span style="color:#C00000">Atención</span></p>', 'posicion' => 0]],
+                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Oficial', 'quien_llena' => 'docente', 'contenido_html' => '<table><tr><th style="background:#4f81bd;color:#FFFFFF;font-weight:bold"><span style="color:#365F91">T</span></th></tr><tr><td></td></tr></table>', 'posicion' => 0]],
+            ),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
+        ]);
+
+        $outcome = $this->run_('Pedido');
+
+        [$green, $red, $official] = $gateway->toolResults(1);
+        $this->assertStringContainsString('Colores no permitidos: #00FF00', $green);
+        $this->assertStringContainsString('Colores no permitidos: #C00000', $red);
+        $this->assertStringContainsString('"ok":true', $official);
+        $this->assertSame(['Nuevo campo «Oficial» en «2. Descripción de la asignatura».'], $outcome->proposal['changes'] ?? null);
+    }
+
     public function test_an_answer_over_an_invalid_draft_is_sent_back_for_correction(): void
     {
         $gateway = $this->script([

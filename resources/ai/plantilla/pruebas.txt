@@ -8,3 +8,6 @@ En conducta ética agrega un punto sobre el uso responsable de la inteligencia a
 Agrega un campo para los datos del docente.
 ¿Qué campos llena Coordinación?
 Cambia el nombre del campo "Métodos de enseñanza – aprendizaje" por "Métodos de enseñanza y aprendizaje", sin perder la numeración.
+Pon el encabezado de la tabla de firmas en verde.
+Agrega una sección de lecturas recomendadas con una lista de libros que llene el docente, al final antes de revisión y aprobación.
+Agrega en la sección de perfil de egreso una tabla de competencias con encabezado azul institucional y una fila para responder.

@@ -28,6 +28,10 @@ final class TemplateDraft
 
     public const MAX_HTML = 100000;
 
+    public const CELL_COLORS = ['#C3D4EA', '#4F81BD'];
+
+    public const TEXT_COLORS = ['#000000', '#365F91', '#FFFFFF'];
+
     public const RESPONSIBLE_LABELS = [
         FieldDefinition::TEACHER => 'Docente',
         FieldDefinition::COORDINATION => 'Carrera',
@@ -495,13 +499,48 @@ final class TemplateDraft
             throw new TemplateDraftError('El contenido es demasiado largo.');
         }
         try {
-            return app(TemplateContext::class)->using(
+            $document = app(TemplateContext::class)->using(
                 $this->definition,
                 fn (): array => FieldDocument::normalize(DocumentHtml::fromHtml($html === '' ? '<p></p>' : $html), 'contenido_html'),
             );
         } catch (ValidationException $exception) {
             throw new TemplateDraftError('El contenido no es válido: '.implode(' ', array_map('strval', collect($exception->errors())->flatten()->all())));
         }
+        $wrong = array_values(array_unique($this->outsidePalette($document)));
+        if ($wrong !== []) {
+            throw new TemplateDraftError('Colores no permitidos: '.implode(', ', $wrong).'. Fondo de celda: celeste #C3D4EA (con negrita) o azul institucional #4F81BD (con texto blanco #FFFFFF y negrita). Texto: negro #000000, azul #365F91 o blanco #FFFFFF.');
+        }
+
+        return $document;
+    }
+
+    /**
+     * @param  array<string, mixed>  $node
+     * @return list<string>
+     */
+    private function outsidePalette(array $node): array
+    {
+        $wrong = [];
+        $attrs = is_array($node['attrs'] ?? null) ? $node['attrs'] : [];
+        $check = function (mixed $color, array $allowed) use (&$wrong): void {
+            if (is_string($color) && ! in_array(strtoupper($color), $allowed, true)) {
+                $wrong[] = strtoupper($color);
+            }
+        };
+        $check($attrs['backgroundColor'] ?? null, self::CELL_COLORS);
+        $check($attrs['textColor'] ?? null, self::TEXT_COLORS);
+        foreach (is_array($node['marks'] ?? null) ? $node['marks'] : [] as $mark) {
+            if (is_array($mark) && ($mark['type'] ?? null) === 'textStyle') {
+                $check(data_get($mark, 'attrs.color'), self::TEXT_COLORS);
+            }
+        }
+        foreach (is_array($node['content'] ?? null) ? $node['content'] : [] as $child) {
+            if (is_array($child)) {
+                array_push($wrong, ...$this->outsidePalette($child));
+            }
+        }
+
+        return $wrong;
     }
 
     /**
