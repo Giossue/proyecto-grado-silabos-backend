@@ -133,7 +133,7 @@ class AnswerTemplateAssistantJob implements ShouldBeUnique, ShouldQueue
         $previous = TemplateAssistantMessage::query()
             ->conversation($message->plantilla_id, $message->usuario_id)
             ->whereNotIn('mensaje_ia_plantilla_id', [$message->id, $questionId])
-            ->where('enviado_en', '<', TemplateAssistantMessage::query()->whereKey($questionId)->value('enviado_en'))
+            ->where('enviado_en', '<', DB::table('mensajes_ia_plantilla')->where('mensaje_ia_plantilla_id', $questionId)->value('enviado_en'))
             ->where('contenido_mensaje->estado', 'completado')
             ->latest('enviado_en')
             ->limit(self::HISTORY)
