@@ -94,11 +94,12 @@ y el botón «Documentos» (DOC-10).
     Identificación institucional, Distribución y planificación, Bibliografía básica o
     complementaria, o Firmas), nombre, subir, bajar y eliminar;
   - con una sección elegida: vertical u horizontal, subir, bajar y eliminar;
-  - íconos con ayuda al pasar el cursor, junto a las demás herramientas: «Opciones
-    avanzadas», «Diseño» y «Listas»;
-  - «Diseño»: márgenes y tamaños de letra;
-  - «Listas»: mínimo, máximo y «Al empezar» de cada lista de los bloques (por ejemplo,
-    «Unidades» y «Semanas por unidad»);
+  - un ícono con ayuda al pasar el cursor, junto a las demás herramientas: «Opciones
+    avanzadas», cuyo menú tiene «Diseño», «Listas» y «Editar JSON»;
+  - «Diseño» (diálogo): márgenes y tamaños de letra;
+  - «Listas» (diálogo): mínimo, máximo y «Empieza con» (cuántos elementos ya aparecen al abrir el sílabo) de
+    cada lista de los bloques, por ejemplo «Unidades» y «Semanas por unidad». La lista de libros de la
+    bibliografía no aparece aquí: es parte del diseño de la plantilla;
   - «Guardar» (también Ctrl+S). Nada se guarda hasta «Guardar».
 - En la hoja se agregan secciones y campos («Nueva sección», «Agregar campo»), se editan
   títulos en línea y se cambia el logo de la universidad.

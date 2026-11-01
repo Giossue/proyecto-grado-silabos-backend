@@ -139,7 +139,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   formato oficial de una tabla por unidad y el docente escribe cada unidad.
 - Administración la crea en blanco o con el formato oficial. La edita en un editor
   visual tipo Word. «Editar» es la acción principal; «Opciones avanzadas» contiene
-  «Editar JSON», que abre el diálogo de edición, exportación e importación JSON.
+  «Diseño», «Listas» y «Editar JSON» (este abre el diálogo de edición, exportación e
+  importación JSON). Diseño y Listas se abren en diálogos desde ese menú (2026-10-31).
   Importar reemplaza la plantilla entera, pero las fichas pasan a los campos de
   Coordinación con la misma clave (2026-10-27).
   La barra de acciones se alinea con el borde derecho de la primera hoja según
