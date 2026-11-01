@@ -119,10 +119,12 @@ class ConvocationAndDraftTest extends TestCase
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'value' => $this->freeTextValue('Cambio no autorizado'),
         ])->assertUnprocessable()->assertJsonValidationErrors('field');
-        $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $bibliography]), [
+        $saved = $this->actingAsTeacher()->patchJson(route('api.v1.teacher.syllabi.fields.update', [$syllabus, $bibliography]), [
             'version_bloqueo' => $syllabus->fresh()->version_bloqueo,
             'value' => $this->answeredValue($bibliography, 'Libro añadido por el docente'),
         ])->assertOk();
+        // La vista previa recibe el campo ya resuelto, con lo que el docente acaba de escribir.
+        $this->assertStringContainsString('Libro añadido por el docente', json_encode($saved->json('document'), JSON_UNESCAPED_UNICODE));
         $this->assertStringContainsString('Libro añadido por el docente', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $bibliography->id)->firstOrFail()->valor));
     }
 

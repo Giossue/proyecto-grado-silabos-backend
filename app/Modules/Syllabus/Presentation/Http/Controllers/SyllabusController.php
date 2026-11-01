@@ -205,11 +205,14 @@ class SyllabusController extends Controller
     ): JsonResponse {
         $actor = $request->user();
         $updated = $action->execute($syllabus, $field, $request->draftData(), $actor, $request);
+        // La vista previa muestra el campo resuelto (variables y bloques); se devuelve el nuevo.
+        $variables = TemplateVariables::resolve(['identification' => IdentificationCard::fromSyllabus($updated)]);
 
         return response()->json([
             'message' => 'Borrador guardado.',
             'version_bloqueo' => $updated->version_bloqueo,
             'guardado_en' => $updated->guardado_en?->toIso8601String(),
+            'document' => FieldDocument::resolve(FieldDocument::normalize($updated->values()->where('definicion_campo_id', $field->id)->first()->valor ?? $field->contenido), $variables),
         ]);
     }
 
