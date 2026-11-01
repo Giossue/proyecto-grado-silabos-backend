@@ -39,6 +39,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
 - Cada facultad elige un campus de una lista fija y tiene un logo PNG con transparencia
   obligatorio. Solo Administración lo carga (I-106, I-123, I-125).
 - El código de carrera es obligatorio y único (I-107).
+- Una carrera tiene un solo coordinador. Se asigna en «Usuarios y roles»; si ya tiene uno, se
+  confirma el reemplazo (2026-11-01). En la convocatoria en curso no queda firma del saliente: lo que
+  aprobó vuelve a «En coordinación» para que el entrante lo firme, y biblioteca verifica de nuevo.
 - Facultades y carreras no se eliminan: se desactivan y se reactivan, y conservan su historial
   (2026-11-01). Una facultad se desactiva cuando no le quedan carreras activas; una carrera,
   cuando no tiene usuarios activos ni una convocatoria en curso. Los períodos sí se eliminan

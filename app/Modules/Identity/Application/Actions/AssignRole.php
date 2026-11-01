@@ -7,6 +7,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\CoordinationHandover;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +17,7 @@ class AssignRole
     public function __construct(
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
+        private readonly CoordinationHandover $handover,
     ) {}
 
     /** @param array{role_code: string, career_id?: string|null, replace_coordinator?: bool} $data */
@@ -67,6 +69,7 @@ class AssignRole
                         ]);
                     }
                     $current->update(['activo' => false]);
+                    $returned = $this->handover->returnApprovals((string) $careerId);
                     $this->audit->execute(
                         actorId: $actor->id,
                         roleAssignmentId: $activeRole?->id,
@@ -74,7 +77,7 @@ class AssignRole
                         resourceType: 'carrera',
                         resourceId: (string) $careerId,
                         result: 'exito',
-                        metadata: ['previous_user_id' => $current->usuario_id, 'incoming_user_id' => $target->id],
+                        metadata: ['previous_user_id' => $current->usuario_id, 'incoming_user_id' => $target->id, 'returned_to_review' => count($returned)],
                     );
                 }
             }

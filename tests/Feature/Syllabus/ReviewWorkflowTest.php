@@ -14,6 +14,7 @@ use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
 use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
+use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\RevisionDiff;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
@@ -383,6 +384,30 @@ class ReviewWorkflowTest extends TestCase
 
         $this->actingAsLibrarian()->getJson(route('api.v1.documents.show', $revision))
             ->assertOk()->assertJsonPath('revision.id', $revision->id);
+    }
+
+    public function test_a_new_coordinator_mid_convocation_receives_what_the_previous_one_approved(): void
+    {
+        [$syllabus, $revision] = $this->submitValidDraft();
+        $this->approveThroughChain($revision);
+        $this->assertSame('aprobado', $syllabus->fresh()->estado);
+        $career = Career::query()->findOrFail($syllabus->convocation->carrera_id);
+        $incoming = User::query()->create(['nombre' => 'COORDINADOR ENTRANTE', 'correo_electronico' => 'entrante@silabos.test', 'contrasena' => 'Temporal-2026!', 'activo' => true]);
+
+        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.users.update', $incoming), [
+            'nombre' => $incoming->nombre, 'correo_electronico' => $incoming->correo_electronico,
+            'role_code' => 'coordinador', 'career_id' => $career->id, 'replace_coordinator' => true,
+        ])->assertOk();
+
+        // Ninguna firma del coordinador anterior queda en la convocatoria: vuelve a «En coordinación».
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertSame(ReviewStage::COORDINATION, ReviewStage::ofRevision($revision->fresh()));
+        $this->assertDatabaseCount('aprobaciones', 0);
+        $this->assertDatabaseCount('exportaciones_silabo', 0);
+        $this->assertDatabaseMissing('firmas_silabo', ['revision_silabo_id' => $revision->id, 'firmado_como' => 'coordinacion']);
+        $this->assertDatabaseMissing('firmas_silabo', ['revision_silabo_id' => $revision->id, 'firmado_como' => 'biblioteca']);
+        $this->assertDatabaseHas('firmas_silabo', ['revision_silabo_id' => $revision->id, 'firmado_como' => 'docente']);
+        $this->assertSame(1, AuditEvent::query()->where('accion', 'academico.coordinacion.reemplazada')->firstOrFail()->metadatos['returned_to_review']);
     }
 
     public function test_cp_f_coordinator_deletes_an_approved_syllabus_and_the_teacher_starts_from_scratch(): void

@@ -19,7 +19,7 @@ El menú y los botones reflejan el permiso, pero no lo reemplazan.
 | Rol | Carrera | Notas |
 |---|---|---|
 | Administrador | No | Exclusivo: no se combina con otro rol activo. |
-| Coordinador | Sí | Una sola coordinación activa por carrera. Se asigna en «Usuarios y roles»; si la carrera ya tiene coordinador, se confirma el reemplazo y el saliente deja de coordinarla en el mismo paso. Los sílabos en curso no cambian: los revisa quien coordina hoy y cada firma conserva el nombre de quien la hizo. |
+| Coordinador | Sí | Una sola coordinación activa por carrera. Se asigna en «Usuarios y roles»; si la carrera ya tiene coordinador, se confirma el reemplazo y el saliente deja de coordinarla en el mismo paso. En la convocatoria en curso no queda ninguna firma del saliente: lo que aprobó vuelve a «En coordinación» para que el entrante lo revise y firme, y biblioteca verifica de nuevo. El contenido y la firma del docente no cambian. |
 | Docente | Sí | Trabaja solo en los sílabos de sus paralelos. |
 | Bibliotecario | No | Revisa toda la universidad. Se combina con Coordinador o Docente. |
 
