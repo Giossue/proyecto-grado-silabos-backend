@@ -37,6 +37,7 @@ class UpdateAcademicRecord
     private const FIELD_LABELS = [
         'facultad_id' => 'Facultad',
         'campus_facultad' => 'Campus',
+        'bibliotecas_koha_facultad' => 'Bibliotecas de Koha',
         'codigo_carrera' => 'Código de carrera',
         'codigo_periodo_academico' => 'Código de período',
         'nombre_facultad' => 'Nombre',
@@ -49,6 +50,7 @@ class UpdateAcademicRecord
     /** @var array<string, string> */
     private const AUDIT_KEYS = [
         'campus_facultad' => 'campus',
+        'bibliotecas_koha_facultad' => 'catalog_libraries',
         'codigo_carrera' => 'code',
         'codigo_periodo_academico' => 'code',
         'nombre_facultad' => 'name',
@@ -152,6 +154,7 @@ class UpdateAcademicRecord
             'facultad' => [
                 'nombre' => $data['nombre'],
                 'campus' => $data['campus'],
+                ...(array_key_exists('catalog_libraries', $data) ? ['koha_libraries' => array_values($data['catalog_libraries'])] : []),
             ],
             'carrera' => [
                 'facultad_id' => $data['faculty_id'],
@@ -207,7 +210,11 @@ class UpdateAcademicRecord
             }
 
             $auditKey = self::AUDIT_KEYS[$field] ?? $field;
-            $activeRole["before_{$auditKey}"] = $this->scalarValue($record->getRawOriginal($field));
+            $before = $record->getRawOriginal($field);
+            if ($field === 'bibliotecas_koha_facultad' && is_string($before)) {
+                $before = json_decode($before, true);
+            }
+            $activeRole["before_{$auditKey}"] = $this->scalarValue($before);
             $activeRole["after_{$auditKey}"] = $this->scalarValue($record->getAttribute($field));
         }
 
@@ -243,6 +250,6 @@ class UpdateAcademicRecord
             return $value;
         }
 
-        return null;
+        return is_array($value) ? implode(',', array_map('strval', $value)) : null;
     }
 }

@@ -74,6 +74,7 @@ class CreateAcademicRecord
         $faculty = Faculty::query()->create([
             'nombre' => $data['nombre'],
             'campus' => CampusLocation::from($data['campus']),
+            'koha_libraries' => array_values($data['catalog_libraries'] ?? []),
             'activo' => true,
         ]);
         if (($data['logo'] ?? null) instanceof UploadedFile) {

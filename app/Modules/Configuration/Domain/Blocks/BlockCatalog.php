@@ -28,7 +28,7 @@ final class BlockCatalog
             BlockDefinitionError::fail("{$where}.list: debe ser una lista de filas del bloque.");
         }
         $map = $raw['map'] ?? null;
-        if (! is_array($map) || array_is_list($map) || $map === []) {
+        if (! is_array($map) || array_is_list($map)) {
             BlockDefinitionError::fail("{$where}.map: indique qué dato del libro va a cada columna.");
         }
         foreach ($map as $field => $column) {
@@ -40,6 +40,7 @@ final class BlockCatalog
                 BlockDefinitionError::fail("{$where}.map.{$field}: debe ser una columna de texto de la lista.");
             }
         }
+
         /** @var array<string, string> $map */
         return ['list' => $list, 'map' => $map];
     }

@@ -3,7 +3,7 @@
 Archivo generado. No lo edite a mano: vuelva a generarlo.
 
 - Fecha: 2026-10-31.
-- Última migración aplicada: `2026_10_31_000251_create_template_assistant_tables`.
+- Última migración aplicada: `2026_10_31_000254_add_catalog_libraries_to_faculties`.
 - Origen: base local de desarrollo (`compose.yaml`, PostgreSQL 18), esquema `public`, 36 tablas.
 - Método: consultas de solo lectura a `pg_catalog` con `psql`:
   `psql --host=127.0.0.1 --port=55432 --dbname=silabos_ueb -X -At -f <consulta>.sql`.
@@ -360,11 +360,13 @@ Funciones PL/pgSQL del esquema y las tablas cuyos triggers las llaman.
 | `facultad_activa` | boolean | no | `true` |
 | `logo_archivo_id` | uuid | sí |  |
 | `campus_facultad` | character varying(255) | no |  |
+| `bibliotecas_koha_facultad` | jsonb | no | `'[]'::jsonb` |
 
 - PK: `PRIMARY KEY (facultad_id)`
 - FK:
   - `facultades_logo_archivo_id_foreign`: `FOREIGN KEY (logo_archivo_id) REFERENCES archivos(archivo_id) ON DELETE RESTRICT`
 - CHECK:
+  - `facultades_bibliotecas_koha_lista_check`: `CHECK ((jsonb_typeof(bibliotecas_koha_facultad) = 'array'::text))`
   - `facultades_campus_facultad_check`: `CHECK (((campus_facultad)::text = ANY ((ARRAY['Campus Matriz Dr. Gabriel Galarza López'::character varying, 'Campus Laguacoto'::character varying, 'Campus CENI (Centro de Eventos Nacionales e Internacionales)'::character varying, 'Extensión San Miguel'::character varying, 'Sede Chimbo'::character varying])::text[])))`
 
 ### `firmas_silabo`

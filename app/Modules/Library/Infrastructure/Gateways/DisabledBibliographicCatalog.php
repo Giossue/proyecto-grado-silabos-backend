@@ -8,7 +8,12 @@ use App\Modules\Library\Domain\Exceptions\CatalogUnavailable;
 
 class DisabledBibliographicCatalog implements BibliographicCatalog
 {
-    public function search(string $field, string $term, int $page = 1): CatalogPage
+    public function search(string $field, string $term, int $page = 1, array $libraries = []): CatalogPage
+    {
+        throw new CatalogUnavailable('La búsqueda en el catálogo de la biblioteca está deshabilitada en este entorno.');
+    }
+
+    public function libraries(): array
     {
         throw new CatalogUnavailable('La búsqueda en el catálogo de la biblioteca está deshabilitada en este entorno.');
     }

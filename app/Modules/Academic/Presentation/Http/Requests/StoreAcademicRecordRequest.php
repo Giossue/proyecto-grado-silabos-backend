@@ -20,6 +20,12 @@ class StoreAcademicRecordRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        $libraries = $this->input('catalog_libraries');
+        if ($this->route('entity') === 'facultad' && is_string($libraries)) {
+            $decoded = json_decode($libraries, true);
+            $this->merge(['catalog_libraries' => is_array($decoded) ? $decoded : $libraries]);
+        }
+
         if ($this->route('entity') !== 'asignatura') {
             return;
         }
@@ -48,6 +54,8 @@ class StoreAcademicRecordRequest extends FormRequest
             'facultad' => [
                 'nombre' => ['required', 'string', 'max:180'],
                 'campus' => ['required', Rule::enum(CampusLocation::class)],
+                'catalog_libraries' => ['sometimes', 'array', 'max:20'],
+                'catalog_libraries.*' => ['string', 'distinct', 'regex:/^[A-Za-z0-9_-]{1,20}$/'],
                 'logo' => ['required', ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY)],
             ],
             'carrera' => [

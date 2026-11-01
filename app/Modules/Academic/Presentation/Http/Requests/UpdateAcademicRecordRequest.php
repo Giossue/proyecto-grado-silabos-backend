@@ -27,6 +27,18 @@ class UpdateAcademicRecordRequest extends FormRequest
             );
     }
 
+    /**
+     * El formulario viaja como FormData; las bibliotecas van como texto JSON. Si no viene, no se cambian.
+     */
+    protected function prepareForValidation(): void
+    {
+        $libraries = $this->input('catalog_libraries');
+        if (is_string($libraries)) {
+            $decoded = json_decode($libraries, true);
+            $this->merge(['catalog_libraries' => is_array($decoded) ? $decoded : $libraries]);
+        }
+    }
+
     /** @return array<string, list<mixed>> */
     public function rules(): array
     {
@@ -34,6 +46,8 @@ class UpdateAcademicRecordRequest extends FormRequest
             'facultad' => [
                 'nombre' => ['required', 'string', 'max:180'],
                 'campus' => ['required', Rule::enum(CampusLocation::class)],
+                'catalog_libraries' => ['sometimes', 'array', 'max:20'],
+                'catalog_libraries.*' => ['string', 'distinct', 'regex:/^[A-Za-z0-9_-]{1,20}$/'],
                 'logo' => [
                     $this->facultyRequiresLogo() ? 'required' : 'nullable',
                     ...InstitutionalLogos::rules(InstitutionalLogos::FACULTY),

@@ -51,11 +51,12 @@ class AcademicStructureViewData
                 'faculties' => Faculty::query()
                     ->with('logoObject')
                     ->orderBy('nombre')
-                    ->get(['id', 'nombre', 'campus_facultad', 'logo_archivo_id', 'activo'])
+                    ->get(['id', 'nombre', 'campus_facultad', 'bibliotecas_koha_facultad', 'logo_archivo_id', 'activo'])
                     ->map(fn (Faculty $faculty): array => [
                         'id' => $faculty->id,
                         'nombre' => $faculty->nombre,
                         'campus' => $faculty->campus->value,
+                        'catalog_libraries' => $faculty->koha_libraries,
                         'activo' => $faculty->activo,
                         'logo_url' => $this->logos->facultyIsConfigured($faculty)
                             ? route('logos.faculty', ['faculty' => $faculty->id, 'v' => $this->logos->version($this->logos->facultyPath($faculty))])

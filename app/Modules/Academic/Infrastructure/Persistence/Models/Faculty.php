@@ -10,7 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/** @property CampusLocation $campus */
+/**
+ * @property CampusLocation $campus
+ * @property list<string> $koha_libraries Códigos de las bibliotecas de Koha donde buscan sus docentes (vacío: todas).
+ */
 class Faculty extends Model
 {
     use HasUuids, MapsLegacyColumnNames;
@@ -20,6 +23,7 @@ class Faculty extends Model
         'nombre' => 'nombre_facultad',
         'activo' => 'facultad_activa',
         'campus' => 'campus_facultad',
+        'koha_libraries' => 'bibliotecas_koha_facultad',
         'logo_objeto_id' => 'logo_archivo_id',
     ];
 
@@ -30,12 +34,12 @@ class Faculty extends Model
     protected $primaryKey = 'facultad_id';
 
     /** @var list<string> */
-    protected $fillable = ['nombre', 'campus', 'logo_objeto_id', 'activo'];
+    protected $fillable = ['nombre', 'campus', 'koha_libraries', 'logo_objeto_id', 'activo'];
 
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['campus' => CampusLocation::class];
+        return ['campus' => CampusLocation::class, 'koha_libraries' => 'array'];
     }
 
     /** @return BelongsTo<StoredObject, $this> */

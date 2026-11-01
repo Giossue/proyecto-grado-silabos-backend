@@ -207,7 +207,14 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   por autor, título, ISBN o palabra clave en el catálogo Koha de la UEB y elige uno para llenar
   la fila de la bibliografía. Es solo lectura, solo de datos del libro (nada de préstamos ni
   ejemplares) y el docente nunca llama a Koha: lo hace el servidor. El resultado va en una tabla con
-  paginación de 20 libros por página (hasta 100 páginas); cada palabra se busca como prefijo y todas deben aparecer. Va detrás de
+  paginación de 20 libros por página (hasta 100 páginas); cada palabra se busca como prefijo y todas deben aparecer.
+  Cada facultad guarda en qué bibliotecas de Koha buscan sus docentes los libros físicos (vacío: todas); Administración
+  las elige por su nombre desde la lista que publica Koha (`/api/v1/public/libraries`), sin escribir códigos, en el
+  formulario de la facultad con casillas que listan las bibliotecas disponibles: pestaña «Bibliotecas» al editar y segundo
+  paso al crear (todas marcadas al empezar). Marcar todas equivale a «todas» (se guarda vacío y entran también las que se
+  agreguen después); al menos una debe quedar marcada. Se guarda con el resto de la facultad, así que sigue el mismo
+  bloqueo de edición. Los libros digitales no
+  están en Koha y los escribe el docente (2026-11-01). Va detrás de
   `BibliographicCatalog` y `CATALOG_DRIVER` vale `disabled` por defecto; `koha` usa las consultas
   públicas del catálogo y no necesita usuario. La bibliografía básica y la complementaria son el
   bloque `bibliografia` de la plantilla: cada columna tiene un nombre interno estable y la plantilla

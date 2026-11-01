@@ -4,6 +4,7 @@ namespace App\Modules\Library\Infrastructure\Gateways;
 
 use App\Modules\Library\Domain\Contracts\BibliographicCatalog;
 use App\Modules\Library\Domain\Data\CatalogBook;
+use App\Modules\Library\Domain\Data\CatalogLibrary;
 use App\Modules\Library\Domain\Data\CatalogPage;
 use App\Modules\Library\Domain\Exceptions\CatalogUnavailable;
 use DOMDocument;
@@ -26,9 +27,11 @@ class KohaPublicCatalog implements BibliographicCatalog
 
     private const MAX_WORDS = 6;
 
+    private const LIBRARY_CODE = '/^[A-Za-z0-9_-]{1,20}$/';
+
     private const INDEXES = ['author' => 'au', 'title' => 'ti', 'isbn' => 'isbn', 'any' => 'kw'];
 
-    public function search(string $field, string $term, int $page = 1): CatalogPage
+    public function search(string $field, string $term, int $page = 1, array $libraries = []): CatalogPage
     {
         $perPage = max(1, (int) config('catalog.koha.per_page'));
         $page = max(1, $page);
@@ -36,9 +39,38 @@ class KohaPublicCatalog implements BibliographicCatalog
         if ($query === null) {
             return new CatalogPage([], 0, $page, $perPage);
         }
+        $libraries = $this->libraryCodes($libraries);
+        if ($libraries !== []) {
+            $query .= ' AND ('.implode(' OR ', array_map(fn (string $code): string => "branch:{$code}", $libraries)).')';
+        }
         [$ids, $total] = $this->ids($query, $page, $perPage);
 
-        return new CatalogPage($ids === [] ? [] : $this->books($ids), $total, $page, $perPage);
+        return new CatalogPage($ids === [] ? [] : $this->books($ids, $libraries), $total, $page, $perPage);
+    }
+
+    public function libraries(): array
+    {
+        $payload = $this->get('/api/v1/public/libraries', [], 'application/json')->json();
+        $libraries = [];
+        foreach (is_array($payload) ? $payload : [] as $library) {
+            $id = is_array($library) ? ($library['library_id'] ?? null) : null;
+            $name = is_array($library) ? ($library['name'] ?? null) : null;
+            if (is_string($id) && preg_match(self::LIBRARY_CODE, $id) === 1) {
+                $libraries[] = new CatalogLibrary($id, is_string($name) && trim($name) !== '' ? trim($name) : $id);
+            }
+        }
+        usort($libraries, fn (CatalogLibrary $a, CatalogLibrary $b): int => strcasecmp($a->name, $b->name));
+
+        return $libraries;
+    }
+
+    /**
+     * @param  list<string>  $libraries
+     * @return list<string>
+     */
+    private function libraryCodes(array $libraries): array
+    {
+        return array_values(array_unique(array_filter($libraries, fn (string $code): bool => preg_match(self::LIBRARY_CODE, $code) === 1)));
     }
 
     /**
@@ -91,9 +123,10 @@ class KohaPublicCatalog implements BibliographicCatalog
 
     /**
      * @param  list<string>  $ids
+     * @param  list<string>  $libraries
      * @return list<CatalogBook>
      */
-    private function books(array $ids): array
+    private function books(array $ids, array $libraries): array
     {
         try {
             $responses = Http::pool(fn (Pool $pool): array => array_map(
@@ -111,7 +144,7 @@ class KohaPublicCatalog implements BibliographicCatalog
             if (! $response instanceof Response || ! $response->successful() || ! $this->withinLimit($response)) {
                 continue;
             }
-            $book = $this->book($id, $response->body());
+            $book = $this->book($id, $response->body(), $libraries);
             if ($book !== null) {
                 $books[] = $book;
             }
@@ -120,7 +153,8 @@ class KohaPublicCatalog implements BibliographicCatalog
         return $books;
     }
 
-    private function book(string $id, string $marcXml): ?CatalogBook
+    /** @param  list<string>  $libraries */
+    private function book(string $id, string $marcXml, array $libraries): ?CatalogBook
     {
         $document = $this->document($marcXml);
         if ($document === null) {
@@ -135,7 +169,7 @@ class KohaPublicCatalog implements BibliographicCatalog
         $author = $first('100', 'a') ?: $first('110', 'a') ?: $first('700', 'a');
         $publication = $first('264', 'c') ?: $first('260', 'c');
         $isbn = strtoupper((string) preg_replace('/[^0-9Xx]/', '', (string) strtok($first('020', 'a'), ' (')));
-        $callNumber = $first('952', 'o') ?: $this->clean($first('082', 'a').' '.$first('082', 'b'));
+        $callNumber = $this->itemCallNumber($document, $libraries) ?: $this->clean($first('082', 'a').' '.$first('082', 'b'));
 
         return new CatalogBook(
             id: $id,
@@ -147,6 +181,35 @@ class KohaPublicCatalog implements BibliographicCatalog
             isbn: $isbn,
             callNumber: $callNumber,
         );
+    }
+
+    /**
+     * Signatura del primer ejemplar que está en alguna de las bibliotecas pedidas; sin pedido, la del primero.
+     *
+     * @param  list<string>  $libraries
+     */
+    private function itemCallNumber(DOMDocument $document, array $libraries): string
+    {
+        $fallback = '';
+        foreach ($document->getElementsByTagNameNS(self::MARC_NAMESPACE, 'datafield') as $field) {
+            if ($field->getAttribute('tag') !== '952') {
+                continue;
+            }
+            $values = [];
+            foreach ($field->getElementsByTagNameNS(self::MARC_NAMESPACE, 'subfield') as $subfield) {
+                $values[$subfield->getAttribute('code')] ??= $subfield->textContent;
+            }
+            $callNumber = $this->clean($values['o'] ?? '');
+            if ($callNumber === '') {
+                continue;
+            }
+            if ($libraries === [] || in_array($values['a'] ?? '', $libraries, true) || in_array($values['b'] ?? '', $libraries, true)) {
+                return $callNumber;
+            }
+            $fallback = $fallback === '' ? $callNumber : $fallback;
+        }
+
+        return $libraries === [] ? '' : $fallback;
     }
 
     /**
@@ -174,10 +237,10 @@ class KohaPublicCatalog implements BibliographicCatalog
     }
 
     /** @param  array<string, scalar>  $query */
-    private function get(string $path, array $query): Response
+    private function get(string $path, array $query, string $accept = 'application/xml, text/xml'): Response
     {
         try {
-            $response = $this->configure(Http::accept('application/xml, text/xml'))->get($this->url($path), $query);
+            $response = $this->configure(Http::accept($accept))->get($this->url($path), $query);
         } catch (ConnectionException $exception) {
             throw new CatalogUnavailable('El catálogo de la biblioteca no está disponible.', previous: $exception);
         } catch (Throwable $exception) {

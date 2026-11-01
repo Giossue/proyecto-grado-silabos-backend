@@ -22,7 +22,10 @@ el Koha local (`~/Documentos/koha-lab`) y con las consultas públicas del catál
    servidor consulta. La dirección de Koha sale de la configuración, no de la petición.
 4. Campos de búsqueda: `author`, `title`, `isbn` y `any` (palabra clave). Cada palabra es un prefijo y todas deben
    aparecer. Resultados de 20 en 20 (`page` de 1 a 100) con el total que informa Koha.
-5. El resultado trae autor, título, año, ciudad, editorial, ISBN y signatura. El docente elige
+5. Cada facultad guarda las bibliotecas de Koha donde buscan sus docentes (`facultades.bibliotecas_koha_facultad`,
+   vacío: todas). Administración las elige con casillas por nombre desde la lista pública de Koha: pestaña «Bibliotecas» al editar y segundo paso al crear (todas marcadas = todas). El filtro es
+   `AND (branch:X OR branch:Y)` y la signatura sale del ejemplar de esa biblioteca.
+6. El resultado trae autor, título, año, ciudad, editorial, ISBN y signatura. El docente elige
    y la fila de la tabla se llena en la pantalla (repositorio del frontend).
 
 ## Pendiente

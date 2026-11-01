@@ -126,6 +126,8 @@ Route::prefix('v1')->group(function (): void {
                 ->middleware('active-role')->name('api.v1.admin.users.destroy');
             Route::get('admin/audit-events', [AuditEventController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.admin.audit-events.index');
+            Route::get('admin/library-catalog/libraries', [BibliographicCatalogController::class, 'libraries'])
+                ->middleware(['active-role', 'throttle:library-catalog'])->name('api.v1.admin.library-catalog.libraries');
             Route::get('admin/academic/{section?}', [AcademicGovernanceController::class, 'index'])
                 ->middleware('active-role')->name('api.v1.admin.academic.index');
             Route::post('admin/academic/{entity}', [AcademicGovernanceController::class, 'store'])
