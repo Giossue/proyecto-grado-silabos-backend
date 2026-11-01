@@ -61,8 +61,9 @@ final class TemplateAssistant
     /**
      * @param  list<array{role: 'user'|'assistant', content: string}>  $history
      * @param  list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>|null  $editorDraft
+     * @param  array{estado: string, cambios: list<string>}|null  $lastProposal
      */
-    public function run(SyllabusTemplate $template, string $request, array $history = [], string $userTag = 'consola', ?array $editorDraft = null): TemplateAssistantOutcome
+    public function run(SyllabusTemplate $template, string $request, array $history = [], string $userTag = 'consola', ?array $editorDraft = null, ?array $lastProposal = null): TemplateAssistantOutcome
     {
         $this->trace = [];
         $this->usage = ['prompt' => 0, 'completion' => 0, 'cached' => 0];
@@ -71,7 +72,7 @@ final class TemplateAssistant
         $this->preexisting = $this->validator->errors($draft);
         $tools = new TemplateTools($draft, $this->validator, $this->processState(), $this->preexisting);
         $system = $this->knowledge->system();
-        $messages = [...$history, ['role' => 'user', 'content' => $this->opening($tools, $request, $editorDraft !== null, $history !== [])]];
+        $messages = [...$history, ['role' => 'user', 'content' => $this->opening($tools, $request, $editorDraft !== null, $history !== [], $lastProposal)]];
         $deadline = now()->addSeconds((int) config('ai.template.max_seconds'));
         $maxSteps = (int) config('ai.template.max_steps');
         $maxErrors = (int) config('ai.template.max_consecutive_errors');
@@ -195,13 +196,19 @@ final class TemplateAssistant
         return is_array($decoded) && is_string($decoded['error'] ?? null) ? $decoded['error'] : 'error';
     }
 
-    private function opening(TemplateTools $tools, string $request, bool $fromEditor, bool $continues): string
+    /**
+     * @param  array{estado: string, cambios: list<string>}|null  $lastProposal
+     */
+    private function opening(TemplateTools $tools, string $request, bool $fromEditor, bool $continues, ?array $lastProposal): string
     {
         $state = $tools->locked()
             ? 'La convocatoria está abierta: solo puede consultar y explicar; no proponga cambios.'
             : 'Puede proponer cambios en el borrador. Nada se guarda hasta que el administrador los aplique.';
         if ($fromEditor) {
             $state .= ' El borrador es lo que el administrador tiene ahora en el editor, con sus cambios sin guardar. Las propuestas anteriores que no aplicó no están en el borrador.';
+        }
+        if ($lastProposal !== null) {
+            $state .= "\n\n".$this->lastProposalNote($lastProposal);
         }
         if ($this->preexisting !== []) {
             $state .= "\n\nEl borrador ya tenía estos problemas; no los corrija salvo que se lo pidan:\n- ".implode("\n- ", $this->preexisting);
@@ -212,6 +219,21 @@ final class TemplateAssistant
             : 'Pedido del administrador';
 
         return "{$state}\n\n{$label}:\n".trim($request);
+    }
+
+    /**
+     * @param  array{estado: string, cambios: list<string>}  $proposal
+     */
+    private function lastProposalNote(array $proposal): string
+    {
+        $changes = $proposal['cambios'] === [] ? '' : "\n- ".implode("\n- ", $proposal['cambios']);
+
+        return match ($proposal['estado']) {
+            'aplicada' => 'Su última propuesta ya está aplicada: sus cambios están en el borrador.',
+            'pendiente' => 'Su última propuesta sigue pendiente: el administrador aún no la aplica y sus cambios NO están en el borrador. Si ahora solo la aprueba («dale», «sí», «perfecto»), pídale que pulse «Aplicar» en esa propuesta y no cambie nada. Si pide algo más, vuelva a incluir esos cambios en la nueva propuesta, porque la nueva reemplaza a la anterior. Cambios de esa propuesta:'.$changes,
+            'descartada' => 'Su última propuesta fue descartada: el administrador no la quiso. No la repita salvo que se la pida.',
+            default => 'Su última propuesta ya no coincide con el borrador, porque el administrador siguió editando. Sus cambios no están en el borrador.',
+        };
     }
 
     /**

@@ -62,6 +62,7 @@ class AnswerTemplateAssistantJob implements ShouldBeUnique, ShouldQueue
             $this->history($message, $questionId),
             TemplateAssistant::userTag($message->usuario_id),
             $message->draft(),
+            $this->lastProposal($message),
         );
 
         DB::transaction(function () use ($message, $outcome, $template): void {
@@ -122,6 +123,30 @@ class AnswerTemplateAssistantJob implements ShouldBeUnique, ShouldQueue
                 'completado_en' => now()->toIso8601String(),
             ]);
         });
+    }
+
+    /**
+     * @return array{estado: string, cambios: list<string>}|null
+     */
+    private function lastProposal(TemplateAssistantMessage $message): ?array
+    {
+        $proposal = TemplateAssistantProposal::query()
+            ->where('plantilla_id', $message->plantilla_id)
+            ->where('solicitada_por', $message->usuario_id)
+            ->latest('creada_en')
+            ->first();
+        if ($proposal === null) {
+            return null;
+        }
+        $version = (string) data_get($message->contenido_mensaje, 'entrada.version_borrador', '');
+        $state = match (true) {
+            $proposal->estado === TemplateAssistantProposal::APPLIED => 'aplicada',
+            $proposal->estado === TemplateAssistantProposal::DISCARDED => 'descartada',
+            $proposal->estado === TemplateAssistantProposal::PENDING && $proposal->version_borrador === $version => 'pendiente',
+            default => 'cambiada',
+        };
+
+        return ['estado' => $state, 'cambios' => $proposal->cambios['lista']];
     }
 
     /**

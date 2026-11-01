@@ -32,6 +32,10 @@ final class TemplateDraft
 
     public const TEXT_COLORS = ['#000000', '#365F91', '#FFFFFF'];
 
+    public const START = '(inicio)';
+
+    public const END = '(final)';
+
     public const RESPONSIBLE_LABELS = [
         FieldDefinition::TEACHER => 'Docente',
         FieldDefinition::COORDINATION => 'Carrera',
@@ -158,6 +162,67 @@ final class TemplateDraft
         ]]);
 
         return $key;
+    }
+
+    public function addSectionAfter(string $title, string $orientation, string $after): string
+    {
+        return $this->addSection($title, $orientation, $this->positionAfter(array_column($this->sections, 'key'), $after, null, 'sección'));
+    }
+
+    public function moveSectionAfter(string $key, string $after): string
+    {
+        $this->locateSection($key);
+
+        return $this->moveSection($key, $this->positionAfter(array_column($this->sections, 'key'), $after, $key, 'sección'));
+    }
+
+    public function addFieldAfter(string $sectionKey, string $label, string $responsible, string $html, string $after): string
+    {
+        $keys = array_column($this->sections[$this->locateSection($sectionKey)]['fields'], 'key');
+
+        return $this->addField($sectionKey, $label, $responsible, $html, $this->positionAfter($keys, $after, null, 'campo'));
+    }
+
+    public function moveFieldAfter(string $key, string $sectionKey, string $after): string
+    {
+        $this->locateField($key);
+        $keys = array_column($this->sections[$this->locateSection($sectionKey)]['fields'], 'key');
+
+        return $this->moveField($key, $sectionKey, $this->positionAfter($keys, $after, $key, 'campo'));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function renumber(): array
+    {
+        $renamed = [];
+        $number = 0;
+        foreach ($this->sections as $index => $section) {
+            if (preg_match('/^\s*\d+\s*\.\s*(.*)$/u', $section['title'], $match) !== 1) {
+                continue;
+            }
+            $number++;
+            $title = "{$number}. {$match[1]}";
+            if ($title !== $section['title']) {
+                $this->changeSection($index, fn (array $item): array => array_replace($item, ['title' => $title]));
+                $renamed[] = "«{$section['title']}» → «{$title}»";
+            }
+            $sub = 0;
+            foreach ($section['fields'] as $fieldIndex => $field) {
+                if (preg_match('/^\s*\d+\s*\.\s*\d+\.?\s+(.*)$/u', $field['label'], $fieldMatch) !== 1) {
+                    continue;
+                }
+                $sub++;
+                $label = "{$number}.{$sub} {$fieldMatch[1]}";
+                if ($label !== $field['label']) {
+                    $this->changeField($index, $fieldIndex, fn (array $item): array => array_replace($item, ['label' => $label]));
+                    $renamed[] = "«{$field['label']}» → «{$label}»";
+                }
+            }
+        }
+
+        return $renamed;
     }
 
     public function renameSection(string $key, string $title): string
@@ -573,6 +638,30 @@ final class TemplateDraft
     private function setFields(int $sectionIndex, array $fields): void
     {
         $this->changeSection($sectionIndex, fn (array $section): array => array_replace($section, ['fields' => array_values($fields)]));
+    }
+
+    /**
+     * @param  list<string>  $keys
+     */
+    private function positionAfter(array $keys, string $after, ?string $moving, string $what): int
+    {
+        $keys = array_values(array_filter($keys, fn (string $key): bool => $key !== $moving));
+        $after = trim($after);
+        if ($after === self::START) {
+            return 1;
+        }
+        if ($after === self::END || $after === '') {
+            return count($keys) + 1;
+        }
+        if ($after === $moving) {
+            throw new TemplateDraftError("No se puede ubicar un {$what} después de sí mismo.");
+        }
+        $index = array_search($after, $keys, true);
+        if ($index === false) {
+            throw new TemplateDraftError("No existe el {$what} «{$after}» en ese lugar. Use una clave de ver_plantilla, «".self::START.'» o «'.self::END.'».');
+        }
+
+        return $index + 2;
     }
 
     private function insertionIndex(int $position, int $count): int

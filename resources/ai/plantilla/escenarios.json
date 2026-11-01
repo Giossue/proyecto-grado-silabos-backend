@@ -1,0 +1,79 @@
+[
+  {
+    "nombre": "Pedido vago que se aclara en la conversación",
+    "turnos": [
+      { "mensaje": "quiero agregar algo de tutorías" },
+      { "mensaje": "que el docente ponga su horario de tutorías y el lugar, en la parte de metodología al final", "aplicar": true },
+      { "mensaje": "ok, y que tenga una tablita con día, hora y lugar mejor" }
+    ]
+  },
+  {
+    "nombre": "Cambios encadenados sobre una sección nueva",
+    "turnos": [
+      { "mensaje": "Agrega una sección de Proyecto integrador después de la planificación de unidades, que la llene el docente", "aplicar": true },
+      { "mensaje": "también ponla en horizontal", "aplicar": true },
+      { "mensaje": "mmm no, mejor muévela al final antes de la bibliografía y déjala vertical" }
+    ]
+  },
+  {
+    "nombre": "Tabla con colores de la institución",
+    "turnos": [
+      { "mensaje": "En evaluación agrega una tabla de rúbrica con columnas Criterio, Excelente, Bueno y Regular, y una fila vacía para llenar", "aplicar": true },
+      { "mensaje": "el encabezado ponlo en el azul institucional", "aplicar": true },
+      { "mensaje": "y la columna de criterio en celeste" }
+    ]
+  },
+  {
+    "nombre": "Sección obligatoria que no se puede quitar",
+    "turnos": [
+      { "mensaje": "Quita la sección de conducta ética, ya no se usa" },
+      { "mensaje": "bueno entonces deja el texto vacío y que lo llene el docente" },
+      { "mensaje": "dale" }
+    ]
+  },
+  {
+    "nombre": "Colores no permitidos y bibliografía",
+    "turnos": [
+      { "mensaje": "pon los títulos de la tabla de bibliografía en rojo para que resalten" },
+      { "mensaje": "entonces en azul" }
+    ]
+  },
+  {
+    "nombre": "Mensajes informales con faltas",
+    "turnos": [
+      { "mensaje": "agregale un campo d competencias en resultados xfa q lo llene el profe", "aplicar": true },
+      { "mensaje": "no mejor q lo llene coordinacion" },
+      { "mensaje": "si eso" }
+    ]
+  },
+  {
+    "nombre": "Reorganizar y mantener la numeración",
+    "turnos": [
+      { "mensaje": "Mueve habilidades blandas después del perfil de egreso", "aplicar": true },
+      { "mensaje": "revisa que la numeración de todo quede bien, incluidos los subtítulos" }
+    ]
+  },
+  {
+    "nombre": "Solo preguntas, sin cambios",
+    "turnos": [
+      { "mensaje": "¿Qué pasa si cambio quién llena la descripción de la asignatura?" },
+      { "mensaje": "¿y qué secciones revisa biblioteca?" },
+      { "mensaje": "¿cuántos campos llena el docente en total?" }
+    ]
+  },
+  {
+    "nombre": "Editar un texto fijo largo",
+    "turnos": [
+      { "mensaje": "En conducta ética quita el punto que habla de la plataforma ZOOM, ya no usamos eso", "aplicar": true },
+      { "mensaje": "y agrega uno que diga que las clases virtuales son por Microsoft Teams con la cámara encendida" }
+    ]
+  },
+  {
+    "nombre": "Sección nueva con varios campos de distinto responsable",
+    "turnos": [
+      { "mensaje": "Crea una sección Prácticas preprofesionales después de evaluación con tres campos: objetivos de la práctica que llena el docente, lugar de prácticas que viene de coordinación, y horas que sea fijo con el texto Según el reglamento de prácticas vigente", "aplicar": true },
+      { "mensaje": "el de horas mejor que diga Según el reglamento de prácticas de la UEB" },
+      { "mensaje": "perfecto, ¿la numeración de las demás secciones quedó bien?" }
+    ]
+  }
+]

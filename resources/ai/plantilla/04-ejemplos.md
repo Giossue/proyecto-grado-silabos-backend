@@ -4,7 +4,7 @@ Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_p
 
 1. «Agrega un campo "Competencias" al final de la sección 4, que lo llene el docente.»
    `ver_plantilla` → `agregar_campo` (seccion `resultados`, nombre «Competencias», quien_llena
-   `docente`, contenido `<p></p>`, posicion 0) → `validar_borrador` → `responder`.
+   `docente`, contenido `<p></p>`, despues_de «(final)») → `validar_borrador` → `responder`.
 
 2. «Que la descripción de la asignatura la escriba el docente.»
    `ver_plantilla` → `cambiar_responsable_campo` (`descripcion`, `docente`) →
@@ -12,18 +12,17 @@ Las claves son de la plantilla oficial; en cada caso use las que devuelva `ver_p
 
 3. «Agrega una sección "Prácticas de laboratorio" después de la metodología, con una tabla de
    práctica, horas y lugar.»
-   `ver_plantilla` → `agregar_seccion` (en la posición siguiente a `metodologia`) →
-   `agregar_campo` con una tabla de encabezados con el estilo oficial y una fila vacía →
-   renombrar las secciones siguientes para mantener la numeración → `validar_borrador` →
-   `responder`.
+   `ver_plantilla` → `agregar_seccion` («1. Prácticas de laboratorio», despues_de
+   `metodologia`) → `agregar_campo` con una tabla de encabezados con el estilo oficial y una fila
+   vacía → `renumerar` → `validar_borrador` → `responder`.
 
 4. «Quita las habilidades blandas.»
    Si la sección es obligatoria: `responder` explicando que no se puede quitar y ofreciendo
    alternativas (por ejemplo, cambiar su contenido).
 
 5. «Mueve la bibliografía antes de la metodología.»
-   `ver_plantilla` → `mover_seccion` → renombrar las secciones cuyo número cambió →
-   `validar_borrador` → `responder`.
+   `ver_plantilla` → `mover_seccion` (despues_de: la sección que hoy está justo antes de la
+   metodología) → `renumerar` → `validar_borrador` → `responder`.
 
 6. «Pon la planificación en vertical.»
    `ver_plantilla` → `cambiar_orientacion_seccion` → `validar_borrador` → `responder`

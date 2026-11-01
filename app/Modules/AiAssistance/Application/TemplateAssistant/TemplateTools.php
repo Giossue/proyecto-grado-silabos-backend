@@ -36,7 +36,7 @@ final class TemplateTools
     public function specs(): array
     {
         $key = ['type' => 'string', 'description' => 'Clave tal como aparece en ver_plantilla.'];
-        $position = ['type' => 'integer', 'description' => 'Posición desde 1. Use 0 para dejarlo al final.'];
+        $after = ['type' => 'string', 'description' => 'Clave tras la cual va, según ver_plantilla. Use «(inicio)» para el principio o «(final)» para el final.'];
         $orientation = ['type' => 'string', 'enum' => ['vertical', 'horizontal']];
         $responsible = ['type' => 'string', 'enum' => FieldDefinition::RESPONSIBLES, 'description' => 'docente: lo escribe el docente; coordinacion: viene de la ficha de la asignatura (Carrera); institucional: texto fijo de la plantilla.'];
         $html = ['type' => 'string', 'description' => 'Contenido en HTML permitido. <p></p> deja un espacio vacío para responder.'];
@@ -46,16 +46,17 @@ final class TemplateTools
             $this->spec('listar_presets', 'Lista los contenidos listos (tablas y bloques oficiales) que se ponen en un campo con usar_preset.', []),
             $this->spec('listar_variables', 'Lista los datos del sistema que se insertan con <span data-variable="clave"></span>.', []),
             $this->spec('ver_estado', 'Indica si la convocatoria está abierta, en pausa o no hay, y qué implica cambiar la plantilla.', []),
-            $this->spec('agregar_seccion', 'Agrega una sección vacía y devuelve su clave. Después agréguele al menos un campo.', ['titulo' => ['type' => 'string'], 'orientacion' => $orientation, 'posicion' => $position]),
+            $this->spec('agregar_seccion', 'Agrega una sección vacía después de otra sección y devuelve su clave. Después agréguele al menos un campo.', ['titulo' => ['type' => 'string'], 'orientacion' => $orientation, 'despues_de' => $after]),
             $this->spec('renombrar_seccion', 'Cambia el título de una sección.', ['clave' => $key, 'titulo' => ['type' => 'string']]),
             $this->spec('cambiar_orientacion_seccion', 'Cambia la orientación de la hoja de una sección.', ['clave' => $key, 'orientacion' => $orientation]),
-            $this->spec('mover_seccion', 'Mueve una sección a otra posición.', ['clave' => $key, 'posicion' => $position]),
+            $this->spec('mover_seccion', 'Mueve una sección para que quede justo después de otra.', ['clave' => $key, 'despues_de' => $after]),
+            $this->spec('renumerar', 'Vuelve a numerar en orden las secciones que llevan número («7. …») y los subtítulos numerados de sus campos («7.1 …»). Úsela después de agregar, mover o quitar secciones numeradas.', []),
             $this->spec('quitar_seccion', 'Quita una sección con todos sus campos. Las secciones obligatorias no se pueden quitar.', ['clave' => $key]),
-            $this->spec('agregar_campo', 'Agrega un campo a una sección y devuelve su clave.', ['seccion' => $key, 'nombre' => ['type' => 'string', 'description' => 'Subtítulo del campo. Vacío si no lleva subtítulo.'], 'quien_llena' => $responsible, 'contenido_html' => $html, 'posicion' => $position]),
+            $this->spec('agregar_campo', 'Agrega un campo a una sección y devuelve su clave.', ['seccion' => $key, 'nombre' => ['type' => 'string', 'description' => 'Subtítulo del campo. Vacío si no lleva subtítulo.'], 'quien_llena' => $responsible, 'contenido_html' => $html, 'despues_de' => $after]),
             $this->spec('renombrar_campo', 'Cambia el nombre (subtítulo) de un campo. Vacío quita el subtítulo.', ['clave' => $key, 'nombre' => ['type' => 'string']]),
             $this->spec('cambiar_responsable_campo', 'Cambia quién llena un campo.', ['clave' => $key, 'quien_llena' => $responsible]),
             $this->spec('cambiar_contenido_campo', 'Reemplaza todo el contenido de un campo. Lea antes el contenido con ver_campo.', ['clave' => $key, 'contenido_html' => $html]),
-            $this->spec('mover_campo', 'Mueve un campo a otra posición, en la misma sección o en otra.', ['clave' => $key, 'seccion' => $key, 'posicion' => $position]),
+            $this->spec('mover_campo', 'Mueve un campo para que quede después de otro campo, en la misma sección o en otra.', ['clave' => $key, 'seccion' => $key, 'despues_de' => $after]),
             $this->spec('quitar_campo', 'Quita un campo.', ['clave' => $key]),
             $this->spec('usar_preset', 'Reemplaza el contenido de un campo por un contenido listo y fija quién lo llena.', ['clave' => $key, 'preset' => ['type' => 'string', 'description' => 'Clave del contenido listo según listar_presets.']]),
             $this->spec('validar_borrador', 'Revisa el borrador con las mismas reglas de guardar y lista los cambios hechos.', []),
@@ -88,16 +89,17 @@ final class TemplateTools
                     'clave' => $variable['key'], 'nombre' => $variable['label'],
                 ], TemplateVariables::catalog())]),
                 'ver_estado' => TemplateToolResult::ok($this->process),
-                'agregar_seccion' => $this->apply('Sección agregada.', fn (): string => $this->draft->addSection($this->string($args, 'titulo'), $this->string($args, 'orientacion'), $this->integer($args, 'posicion'))),
+                'agregar_seccion' => $this->apply('Sección agregada.', fn (): string => $this->draft->addSectionAfter($this->string($args, 'titulo'), $this->string($args, 'orientacion'), $this->string($args, 'despues_de'))),
                 'renombrar_seccion' => $this->apply('Sección renombrada.', fn (): string => $this->draft->renameSection($this->string($args, 'clave'), $this->string($args, 'titulo'))),
                 'cambiar_orientacion_seccion' => $this->apply('Orientación cambiada.', fn (): string => $this->draft->orientSection($this->string($args, 'clave'), $this->string($args, 'orientacion'))),
-                'mover_seccion' => $this->apply('Sección movida.', fn (): string => $this->draft->moveSection($this->string($args, 'clave'), $this->integer($args, 'posicion'))),
+                'mover_seccion' => $this->apply('Sección movida.', fn (): string => $this->draft->moveSectionAfter($this->string($args, 'clave'), $this->string($args, 'despues_de'))),
+                'renumerar' => TemplateToolResult::ok(['ok' => true, 'renombrados' => $this->draft->renumber()]),
                 'quitar_seccion' => $this->apply('Sección quitada.', fn (): string => $this->draft->removeSection($this->string($args, 'clave'))),
-                'agregar_campo' => $this->apply('Campo agregado.', fn (): string => $this->draft->addField($this->string($args, 'seccion'), $this->string($args, 'nombre'), $this->string($args, 'quien_llena'), $this->string($args, 'contenido_html'), $this->integer($args, 'posicion'))),
+                'agregar_campo' => $this->apply('Campo agregado.', fn (): string => $this->draft->addFieldAfter($this->string($args, 'seccion'), $this->string($args, 'nombre'), $this->string($args, 'quien_llena'), $this->string($args, 'contenido_html'), $this->string($args, 'despues_de'))),
                 'renombrar_campo' => $this->apply('Campo renombrado.', fn (): string => $this->draft->renameField($this->string($args, 'clave'), $this->string($args, 'nombre'))),
                 'cambiar_responsable_campo' => $this->apply('Responsable cambiado.', fn (): string => $this->draft->assignField($this->string($args, 'clave'), $this->string($args, 'quien_llena'))),
                 'cambiar_contenido_campo' => $this->apply('Contenido reemplazado.', fn (): string => $this->draft->rewriteField($this->string($args, 'clave'), $this->string($args, 'contenido_html'))),
-                'mover_campo' => $this->apply('Campo movido.', fn (): string => $this->draft->moveField($this->string($args, 'clave'), $this->string($args, 'seccion'), $this->integer($args, 'posicion'))),
+                'mover_campo' => $this->apply('Campo movido.', fn (): string => $this->draft->moveFieldAfter($this->string($args, 'clave'), $this->string($args, 'seccion'), $this->string($args, 'despues_de'))),
                 'quitar_campo' => $this->apply('Campo quitado.', fn (): string => $this->draft->removeField($this->string($args, 'clave'))),
                 'usar_preset' => $this->apply('Contenido listo aplicado.', fn (): string => $this->draft->applyPreset($this->string($args, 'clave'), $this->string($args, 'preset'))),
                 'validar_borrador' => TemplateToolResult::ok($this->validation()),
@@ -149,22 +151,6 @@ final class TemplateTools
         $value = $args[$name] ?? null;
         if (! is_string($value)) {
             throw new TemplateDraftError("Falta el parámetro «{$name}» como texto.");
-        }
-
-        return $value;
-    }
-
-    /**
-     * @param  array<string, mixed>  $args
-     */
-    private function integer(array $args, string $name): int
-    {
-        $value = $args[$name] ?? null;
-        if (is_string($value) && preg_match('/^-?\d+$/', trim($value)) === 1) {
-            $value = (int) trim($value);
-        }
-        if (! is_int($value)) {
-            throw new TemplateDraftError("Falta el parámetro «{$name}» como número entero.");
         }
 
         return $value;

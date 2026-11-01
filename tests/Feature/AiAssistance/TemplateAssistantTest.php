@@ -41,7 +41,7 @@ class TemplateAssistantTest extends TestCase
     {
         $gateway = $this->script([
             ScriptedAiAgentGateway::call('ver_plantilla'),
-            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'resultados', 'nombre' => 'Competencias', 'quien_llena' => 'docente', 'contenido_html' => '<p>Describa las competencias:</p><p></p>', 'posicion' => 0]),
+            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'resultados', 'nombre' => 'Competencias', 'quien_llena' => 'docente', 'contenido_html' => '<p>Describa las competencias:</p><p></p>', 'despues_de' => '(final)']),
             ScriptedAiAgentGateway::call('validar_borrador'),
             ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Propongo el campo Competencias.']),
         ]);
@@ -80,7 +80,7 @@ class TemplateAssistantTest extends TestCase
     {
         $gateway = $this->script([
             ScriptedAiAgentGateway::calls(
-                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Dato', 'quien_llena' => 'institucional', 'contenido_html' => '<p><span data-variable="inventada"></span></p>', 'posicion' => 0]],
+                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Dato', 'quien_llena' => 'institucional', 'contenido_html' => '<p><span data-variable="inventada"></span></p>', 'despues_de' => '(final)']],
                 ['cambiar_responsable_campo', ['clave' => 'descripcion', 'quien_llena' => 'decano']],
                 ['ver_campo', ['clave' => 'no_existe']],
             ),
@@ -99,9 +99,9 @@ class TemplateAssistantTest extends TestCase
     {
         $gateway = $this->script([
             ScriptedAiAgentGateway::calls(
-                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Verde', 'quien_llena' => 'docente', 'contenido_html' => '<table><tr><th style="background:#00FF00">A</th></tr><tr><td></td></tr></table>', 'posicion' => 0]],
-                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Rojo', 'quien_llena' => 'docente', 'contenido_html' => '<p><span style="color:#C00000">Atención</span></p>', 'posicion' => 0]],
-                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Oficial', 'quien_llena' => 'docente', 'contenido_html' => '<table><tr><th style="background:#4f81bd;color:#FFFFFF;font-weight:bold"><span style="color:#365F91">T</span></th></tr><tr><td></td></tr></table>', 'posicion' => 0]],
+                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Verde', 'quien_llena' => 'docente', 'contenido_html' => '<table><tr><th style="background:#00FF00">A</th></tr><tr><td></td></tr></table>', 'despues_de' => '(final)']],
+                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Rojo', 'quien_llena' => 'docente', 'contenido_html' => '<p><span style="color:#C00000">Atención</span></p>', 'despues_de' => '(final)']],
+                ['agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'Oficial', 'quien_llena' => 'docente', 'contenido_html' => '<table><tr><th style="background:#4f81bd;color:#FFFFFF;font-weight:bold"><span style="color:#365F91">T</span></th></tr><tr><td></td></tr></table>', 'despues_de' => '(final)']],
             ),
             ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
         ]);
@@ -118,9 +118,9 @@ class TemplateAssistantTest extends TestCase
     public function test_an_answer_over_an_invalid_draft_is_sent_back_for_correction(): void
     {
         $gateway = $this->script([
-            ScriptedAiAgentGateway::call('agregar_seccion', ['titulo' => 'Prácticas', 'orientacion' => 'vertical', 'posicion' => 8]),
+            ScriptedAiAgentGateway::call('agregar_seccion', ['titulo' => 'Prácticas', 'orientacion' => 'vertical', 'despues_de' => 'metodologia']),
             ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
-            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'practicas', 'nombre' => '', 'quien_llena' => 'docente', 'contenido_html' => '', 'posicion' => 0]),
+            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'practicas', 'nombre' => '', 'quien_llena' => 'docente', 'contenido_html' => '', 'despues_de' => '(final)']),
             ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Agregué la sección Prácticas.']),
         ]);
 
@@ -136,7 +136,7 @@ class TemplateAssistantTest extends TestCase
     {
         $this->script([
             ScriptedAiAgentGateway::calls(
-                ['mover_seccion', ['clave' => 'bibliografia', 'posicion' => 7]],
+                ['mover_seccion', ['clave' => 'bibliografia', 'despues_de' => 'planificacion']],
                 ['renombrar_campo', ['clave' => 'metodologia', 'nombre' => '7.1 Métodos de enseñanza y aprendizaje']],
                 ['cambiar_orientacion_seccion', ['clave' => 'planificacion', 'orientacion' => 'vertical']],
             ),
@@ -155,12 +155,41 @@ class TemplateAssistantTest extends TestCase
         $this->assertSame(array_column(SyllabusTemplate::query()->firstOrFail()->sections->all(), 'clave'), [...array_slice($keys, 0, 6), ...array_slice($keys, 7, 4), 'bibliografia', ...array_slice($keys, 11)]);
     }
 
+    public function test_sections_are_placed_after_a_key_and_renumbered_with_their_fields(): void
+    {
+        $gateway = $this->script([
+            ScriptedAiAgentGateway::calls(
+                ['mover_seccion', ['clave' => 'habilidades', 'despues_de' => 'perfil_egreso']],
+                ['agregar_seccion', ['titulo' => '1. Proyecto integrador', 'orientacion' => 'vertical', 'despues_de' => 'planificacion']],
+                ['mover_seccion', ['clave' => 'etica', 'despues_de' => 'nada']],
+            ),
+            ScriptedAiAgentGateway::calls(
+                ['agregar_campo', ['seccion' => 'proyecto_integrador', 'nombre' => 'Proyecto', 'quien_llena' => 'docente', 'contenido_html' => '', 'despues_de' => '(inicio)']],
+                ['renumerar'],
+            ),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
+        ]);
+
+        $outcome = $this->run_('Pedido');
+
+        $this->assertStringContainsString('«nada»', $gateway->toolResults(1)[2]);
+        $this->assertStringContainsString('«1. Proyecto integrador» → «6. Proyecto integrador»', $gateway->toolResults(2)[4] ?? '');
+        $titles = array_column($outcome->proposal['payload']['sections'] ?? [], 'title');
+        $this->assertSame([
+            '1. Identificación institucional', '2. Descripción de la asignatura', '3. Objetivo(s) de la asignatura', '4. Resultados de aprendizaje',
+            '5. Distribución y planificación de las unidades curriculares', '6. Proyecto integrador', '7. Metodología y ambientes de aprendizaje',
+            '8. Evaluación de los aprendizajes', '9. Relación de la asignatura con los resultados de aprendizaje del perfil de egreso de la carrera',
+            '10. Habilidades blandas de la asignatura', '11. Conducta y comportamiento ético', '12. Bibliografía', 'Revisión y aprobación',
+        ], $titles);
+        $this->assertSame(['7.1', '7.2', '7.3', '7.4', '7.5'], array_map(fn (array $field): string => explode(' ', $field['label'])[0], $outcome->proposal['payload']['sections'][6]['fields'] ?? []));
+    }
+
     public function test_new_fields_never_reuse_the_key_of_a_removed_field(): void
     {
         $this->script([
             ScriptedAiAgentGateway::calls(
                 ['quitar_campo', ['clave' => 'herramientas_tic']],
-                ['agregar_campo', ['seccion' => 'metodologia', 'nombre' => 'Herramientas TIC', 'quien_llena' => 'docente', 'contenido_html' => '<p></p>', 'posicion' => 4]],
+                ['agregar_campo', ['seccion' => 'metodologia', 'nombre' => 'Herramientas TIC', 'quien_llena' => 'docente', 'contenido_html' => '<p></p>', 'despues_de' => 'recursos_medios']],
             ),
             ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Listo.']),
         ]);
@@ -264,7 +293,7 @@ class TemplateAssistantTest extends TestCase
     {
         $this->openSyllabusProcess($this->template->id);
         $gateway = $this->script([
-            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'X', 'quien_llena' => 'docente', 'contenido_html' => '', 'posicion' => 0]),
+            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'descripcion', 'nombre' => 'X', 'quien_llena' => 'docente', 'contenido_html' => '', 'despues_de' => '(final)']),
             ScriptedAiAgentGateway::call('ver_estado'),
             ScriptedAiAgentGateway::call('responder', ['mensaje' => 'La convocatoria está abierta.']),
         ]);
@@ -297,7 +326,7 @@ class TemplateAssistantTest extends TestCase
     public function test_a_question_ends_the_turn_without_a_proposal(): void
     {
         $this->script([
-            ScriptedAiAgentGateway::call('agregar_seccion', ['titulo' => 'Datos', 'orientacion' => 'vertical', 'posicion' => 0]),
+            ScriptedAiAgentGateway::call('agregar_seccion', ['titulo' => 'Datos', 'orientacion' => 'vertical', 'despues_de' => '(final)']),
             ScriptedAiAgentGateway::call('preguntar', ['pregunta' => '¿Qué datos del docente quiere?']),
         ]);
 

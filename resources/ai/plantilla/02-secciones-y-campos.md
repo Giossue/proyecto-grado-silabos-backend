@@ -4,13 +4,16 @@
 
 - Cada sección tiene un título, que se imprime tal cual en el sílabo, y una orientación de
   hoja: vertical u horizontal.
-- Los títulos suelen llevar numeración («7. Metodología…»). Si agrega, quita o mueve una
-  sección numerada, renombre las siguientes para que la numeración siga siendo consecutiva.
-  Haga lo mismo con los campos numerados («7.1 …», «7.2 …»): si una sección cambia de número,
-  sus campos numerados también (si «7. Metodología» pasa a ser la 8, «7.1 …» pasa a «8.1 …»).
-  Use `renombrar_campo` en el mismo paso que los demás renombres. Renumere solo los títulos que ya
-  llevan número: no agregue números a los que no lo tienen. «Revisión y aprobación» nunca lleva
-  número, aunque quede después de una sección nueva: no la renombre.
+- Los títulos suelen llevar numeración («7. Metodología…») y algunos campos también
+  («7.1 …»). No numere a mano: después de agregar, mover o quitar una sección numerada, llame a
+  `renumerar`, que deja en orden las secciones numeradas y los subtítulos de sus campos.
+- Una sección nueva que va entre secciones numeradas se titula con cualquier número
+  («1. Proyecto integrador») y `renumerar` le pone el correcto. Un campo nuevo dentro de una
+  sección con subtítulos numerados se nombra igual («1.1 Tutorías»).
+- «Revisión y aprobación» no lleva número y `renumerar` no la toca: nunca le ponga número.
+- Para ubicar secciones y campos use `despues_de` con la clave de la sección o del campo que
+  queda antes («después del perfil de egreso» es `despues_de: perfil_egreso`), «(inicio)» o
+  «(final)». «Antes de X» es después de la sección que hoy está justo antes de X.
 - Toda sección necesita al menos un campo.
 - `ver_plantilla` marca las secciones obligatorias (`obligatoria`) y la que revisa Biblioteca
   (`revisa_biblioteca`). Esas no se quitan.

@@ -198,7 +198,7 @@ class TemplateAssistantApiTest extends TestCase
     private function addField(string $name): array
     {
         return [
-            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'resultados', 'nombre' => $name, 'quien_llena' => 'docente', 'contenido_html' => '<p></p>', 'posicion' => 0]),
+            ScriptedAiAgentGateway::call('agregar_campo', ['seccion' => 'resultados', 'nombre' => $name, 'quien_llena' => 'docente', 'contenido_html' => '<p></p>', 'despues_de' => '(final)']),
         ];
     }
 

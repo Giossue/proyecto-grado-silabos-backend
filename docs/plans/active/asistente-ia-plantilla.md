@@ -115,16 +115,17 @@ Propuesta (cambian el borrador; no se ofrecen con la convocatoria abierta):
 
 | Tool | Hace |
 |---|---|
-| `agregar_seccion` | Agrega una sección vacía |
+| `agregar_seccion` | Agrega una sección vacía después de otra (`despues_de`) |
 | `renombrar_seccion` | Cambia el título |
 | `cambiar_orientacion_seccion` | Vertical u horizontal |
-| `mover_seccion` | Cambia la posición |
+| `mover_seccion` | La deja después de otra sección (`despues_de`) |
+| `renumerar` | Ordena la numeración de secciones y subtítulos |
 | `quitar_seccion` | Quita la sección; rechaza las obligatorias y la de Biblioteca |
 | `agregar_campo` | Agrega un campo con nombre, responsable y contenido HTML |
 | `renombrar_campo` | Cambia el nombre (subtítulo) |
 | `cambiar_responsable_campo` | Cambia quién lo llena |
 | `cambiar_contenido_campo` | Reemplaza el contenido HTML |
-| `mover_campo` | Lo mueve dentro de la sección o a otra |
+| `mover_campo` | Lo deja después de otro campo, en la misma sección o en otra |
 | `quitar_campo` | Quita el campo |
 | `usar_preset` | Pone un contenido listo (así se insertan los bloques) |
 | `validar_borrador` | Corre la validación de «Guardar» y lista los cambios |
@@ -270,3 +271,16 @@ El chat del docente también pasará a *tools* más adelante (confirmado por el 
 DeepSeek abrió el 2026-10-17 sus APIs de búsqueda y lectura de páginas (Search y Fetch, $0.75
 por cada 1 000 solicitudes exitosas); revisarlas entonces. El contrato del ciclo con *tools*
 de este plan debe servir también para ese caso. Va en su propio plan.
+
+## Evaluación con conversaciones (2026-11-01)
+
+`resources/ai/plantilla/escenarios.json`: 10 conversaciones de 2 o 3 mensajes (pedido vago, cambios
+encadenados, colores, sección obligatoria, color prohibido en la bibliografía, mensajes informales,
+mover y numerar, solo preguntas, editar un texto largo, sección con tres campos). Primera corrida:
+fallos de numeración al mover (el modelo contaba posiciones a mano), cambió la tabla de firmas al
+no poder cambiar la bibliografía, mostró claves internas y no sabía si su propuesta anterior se
+había aplicado. Se agregaron `despues_de`, `renumerar` y el estado de la última propuesta, y reglas
+para no tocar otra parte ni mostrar nombres internos. Segunda corrida: los 27 turnos correctos;
+queda que, si el administrador aprueba («si eso») una propuesta pendiente, a veces la rehace en
+vez de solo pedir «Aplicar» (el resultado es el mismo).
+
