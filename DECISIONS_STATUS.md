@@ -210,7 +210,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   públicas del catálogo y no necesita usuario. La bibliografía básica y la complementaria son el
   bloque `bibliografia` de la plantilla: cada columna tiene un nombre interno estable y la plantilla
   declara con `catalog` qué dato del libro va a cada una, así el buscador no depende del texto de
-  los encabezados. «Código» no se llena hasta saber qué es (PV-22). Falta el acceso de la biblioteca.
+  los encabezados. «Código» lleva la signatura del libro en la biblioteca, como en el sílabo de referencia; los libros
+  digitales («e-libro») no están en Koha y el docente los escribe. Falta el acceso por API y HTTPS (PV-22).
 - Cada paralelo tiene su sílabo. Su docente es quien tiene la asignación vigente.
 - Estados: Sin iniciar, Borrador, En revisión, Corrección solicitada y Aprobado.
 - El docente edita en Borrador y en Corrección solicitada solo sus campos. Ve una vista

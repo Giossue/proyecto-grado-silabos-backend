@@ -18,7 +18,7 @@ Lo único que falta, en un solo lugar. Cuando algo se resuelve, se borra de aqu�
 | PV-18 | Umbrales de utilidad y precisión de la IA | Coordinación y docentes | — |
 | PV-19 | Navegadores y dispositivos reales | Personal técnico y usuarios | Probado solo en Chromium de escritorio |
 | PV-20 | Línea, sublínea, director, pares y fechas académicas | Integración Curricular | — |
-| PV-22 | Catálogo Koha: qué es «Código» en la bibliografía (signatura u otro), si habrá acceso por API con usuario de solo lectura y si el catálogo aceptará HTTPS | Biblioteca | Solo consultas públicas por `http`; el resultado trae `call_number` y la pantalla no llena «Código» |
+| PV-22 | Catálogo Koha: acceso por API con usuario de solo lectura (la biblioteca dijo «pronto») y HTTPS (dijo «probablemente sí») | Biblioteca | Solo consultas públicas por `http`; sin API ni HTTPS el buscador funciona igual |
 
 PV-02 (precedencia entre documentos de la carrera) y PV-13 (equipo para IA local) probablemente ya no aplican:
 no hay comparación automática de documentos y la IA usa proveedores externos. Falta confirmarlo.

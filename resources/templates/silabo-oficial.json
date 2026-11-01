@@ -625,7 +625,8 @@
                     "year": "anio",
                     "place": "ciudad",
                     "publisher": "editorial",
-                    "isbn": "isbn"
+                    "isbn": "isbn",
+                    "call_number": "codigo"
                 }
             },
             "layout": [

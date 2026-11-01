@@ -33,9 +33,9 @@ el Koha local (`~/Documentos/koha-lab`) y con las consultas públicas del catál
 
 ### De la biblioteca
 
-- Qué es «Código» en la tabla de bibliografía: la signatura, el código de barras u otro. Hasta
-  saberlo, el resultado trae `call_number` y la pantalla no debe llenar «Código».
-- Si Koha de la UEB acepta HTTPS (hoy solo responde por `http`) y si habilitarán la API.
+- API con usuario de solo lectura: «pronto». HTTPS: «probablemente sí». Hoy solo responde por `http`.
+- «Código» quedó resuelto con el sílabo de referencia: es la signatura (`e-libro` en los digitales, que
+  no están en Koha).
 
 ## Pasos
 
