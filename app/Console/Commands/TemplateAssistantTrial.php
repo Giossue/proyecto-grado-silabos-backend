@@ -79,7 +79,7 @@ class TemplateAssistantTrial extends Command
                 $this->report($turnIndex + 1, $message, $outcome, $seconds);
                 $applied = $outcome->proposal !== null && ($turn['aplicar'] ?? false) === true;
                 if ($outcome->proposal !== null) {
-                    $last = ['estado' => $applied ? 'aplicada' : 'pendiente', 'cambios' => $outcome->proposal['changes']];
+                    $last = ['estado' => $applied ? 'aplicada' : 'pendiente', 'cambios' => $outcome->proposal['changes'], 'secciones' => $outcome->proposal['payload']['sections']];
                 }
                 if ($applied) {
                     $draft = $outcome->proposal['payload']['sections'];

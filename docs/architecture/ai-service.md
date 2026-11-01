@@ -94,6 +94,8 @@ o la descarta; solo «Guardar» cambia la plantilla.
   subtítulos («7.1 …») sin que el modelo haga la cuenta.
 - Cada turno le dice al modelo qué pasó con su última propuesta (aplicada, pendiente,
   descartada o ya no coincide con el borrador), para que no la repita ni la dé por aplicada.
+  Si aun así arma una propuesta idéntica a la pendiente, no se crea otra: la respuesta pide
+  pulsar «Aplicar» en la anterior.
 - Prueba con pedidos reales, sin guardar: `php artisan template:assistant-trial`
   (`--pedido="…"` para uno suelto, o `--escenarios=resources/ai/plantilla/escenarios.json` para 10
   conversaciones de varios mensajes que simulan «Aplicar»; `--solo=3` corre solo el 3).

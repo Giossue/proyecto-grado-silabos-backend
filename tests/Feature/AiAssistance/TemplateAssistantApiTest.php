@@ -3,6 +3,7 @@
 namespace Tests\Feature\AiAssistance;
 
 use App\Models\User;
+use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateAssistant;
 use App\Modules\AiAssistance\Application\TemplateAssistant\TemplateDraft;
 use App\Modules\AiAssistance\Domain\Contracts\AiAgentGateway;
 use App\Modules\AiAssistance\Domain\Data\AiAgentStep;
@@ -142,6 +143,28 @@ class TemplateAssistantApiTest extends TestCase
         $proposals = TemplateAssistantProposal::query()->orderBy('creada_en')->get();
         $this->assertSame([TemplateAssistantProposal::REPLACED, TemplateAssistantProposal::PENDING], $proposals->pluck('estado')->all());
         $this->assertSame(['La sección «4. Resultados de aprendizaje» pasa a horizontal.'], $proposals->last()?->cambios['lista']);
+    }
+
+    public function test_approving_a_pending_proposal_asks_to_apply_it_instead_of_repeating_it(): void
+    {
+        $gateway = $this->script([
+            ...$this->addField('Competencias'),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Propongo Competencias.']),
+            ...$this->addField('Competencias'),
+            ScriptedAiAgentGateway::call('responder', ['mensaje' => 'Propuesta lista otra vez.']),
+        ]);
+        $this->ask('Agrega Competencias');
+
+        $this->ask('si eso');
+
+        $messages = $gateway->requests[2]->messages;
+        $this->assertStringContainsString('Su última propuesta sigue pendiente', (string) ($messages[array_key_last($messages)]['content'] ?? ''));
+        $this->assertSame([TemplateAssistantProposal::PENDING], TemplateAssistantProposal::query()->pluck('estado_propuesta')->all());
+        $this->getJson(route('api.v1.admin.template.assistant.show'))
+            ->assertJsonPath('messages.3.result', 'respuesta')
+            ->assertJsonPath('messages.3.content', TemplateAssistant::SAME_AS_PENDING)
+            ->assertJsonPath('messages.3.proposal', null)
+            ->assertJsonPath('messages.1.proposal.status', 'pendiente');
     }
 
     public function test_a_new_chat_hides_the_previous_messages_from_the_screen_and_the_model(): void

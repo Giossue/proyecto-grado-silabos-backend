@@ -281,6 +281,7 @@ fallos de numeración al mover (el modelo contaba posiciones a mano), cambió la
 no poder cambiar la bibliografía, mostró claves internas y no sabía si su propuesta anterior se
 había aplicado. Se agregaron `despues_de`, `renumerar` y el estado de la última propuesta, y reglas
 para no tocar otra parte ni mostrar nombres internos. Segunda corrida: los 27 turnos correctos;
-queda que, si el administrador aprueba («si eso») una propuesta pendiente, a veces la rehace en
-vez de solo pedir «Aplicar» (el resultado es el mismo).
+si el administrador aprobaba («si eso») una propuesta pendiente, a veces el modelo la rehacía.
+Se resolvió en el código: si la propuesta nueva es idéntica a la pendiente, no se crea otra y la
+respuesta pide pulsar «Aplicar» en la anterior (`TemplateAssistant::SAME_AS_PENDING`).
 

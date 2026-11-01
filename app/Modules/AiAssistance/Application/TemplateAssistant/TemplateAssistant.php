@@ -25,6 +25,8 @@ final class TemplateAssistant
 
     private const RETRY = 'No pude completar el pedido. Intente explicarlo de otra forma.';
 
+    public const SAME_AS_PENDING = 'Esa propuesta ya está lista en el mensaje anterior: pulse «Aplicar» en ella para pasar los cambios al editor.';
+
     private const MESSAGES = [
         AiProviderError::NO_BALANCE => self::UNAVAILABLE,
         AiProviderError::INVALID_KEY => self::UNAVAILABLE,
@@ -61,7 +63,7 @@ final class TemplateAssistant
     /**
      * @param  list<array{role: 'user'|'assistant', content: string}>  $history
      * @param  list<array{key: string, title: string, orientation: string, fields: list<array{key: string, label: string, quien_llena: string, content: array<string, mixed>}>}>|null  $editorDraft
-     * @param  array{estado: string, cambios: list<string>}|null  $lastProposal
+     * @param  array{estado: string, cambios: list<string>, secciones?: list<array<string, mixed>>}|null  $lastProposal
      */
     public function run(SyllabusTemplate $template, string $request, array $history = [], string $userTag = 'consola', ?array $editorDraft = null, ?array $lastProposal = null): TemplateAssistantOutcome
     {
@@ -109,7 +111,7 @@ final class TemplateAssistant
                 $finish ??= $result->terminal !== null ? $result : null;
             }
             if ($finish !== null && $finish->message !== null) {
-                return $this->finished($finish, $draft, $step);
+                return $this->finished($finish, $draft, $step, $lastProposal);
             }
             $errors = $failed ? $errors + 1 : 0;
             if ($errors > $maxErrors) {
@@ -133,7 +135,10 @@ final class TemplateAssistant
             : TemplateToolResult::error('El borrador tiene errores; corríjalos antes de responder: '.implode(' | ', $errors));
     }
 
-    private function finished(TemplateToolResult $finish, TemplateDraft $draft, int $steps): TemplateAssistantOutcome
+    /**
+     * @param  array{estado: string, cambios: list<string>, secciones?: list<array<string, mixed>>}|null  $lastProposal
+     */
+    private function finished(TemplateToolResult $finish, TemplateDraft $draft, int $steps, ?array $lastProposal): TemplateAssistantOutcome
     {
         $message = (string) $finish->message;
         if ($finish->terminal === TemplateToolResult::QUESTION) {
@@ -142,6 +147,9 @@ final class TemplateAssistant
         if (! $draft->changed()) {
             return $this->outcome(TemplateAssistantOutcome::ANSWER, $message, null, null, $steps);
         }
+        if (($lastProposal['estado'] ?? null) === 'pendiente' && $this->canonical($lastProposal['secciones'] ?? null) === $this->canonical($draft->payload()['sections'])) {
+            return $this->outcome(TemplateAssistantOutcome::ANSWER, self::SAME_AS_PENDING, null, null, $steps);
+        }
 
         return $this->outcome(TemplateAssistantOutcome::PROPOSAL, $message, [
             'payload' => $draft->payload(),
@@ -149,6 +157,19 @@ final class TemplateAssistant
             'changed' => $draft->changedKeys(),
             'fingerprint' => $draft->baseFingerprint(),
         ], null, $steps);
+    }
+
+    private function canonical(mixed $value): mixed
+    {
+        if (! is_array($value)) {
+            return $value;
+        }
+        $value = array_map($this->canonical(...), $value);
+        if (! array_is_list($value)) {
+            ksort($value);
+        }
+
+        return $value;
     }
 
     private function failed(string $code, int $steps): TemplateAssistantOutcome
