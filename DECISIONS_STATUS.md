@@ -246,6 +246,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   destino no se ha enviado (I-167).
 - Cambiar el docente o crear, editar o quitar paralelos no exige pausa. Un docente
   nuevo empieza el sílabo desde cero (I-174, I-224).
+- Cambiar el nombre, campus o logo de una facultad, o el nombre, código, modalidad o facultad de una carrera, con sílabos enviados o aprobados en la convocatoria actual pide confirmación y los devuelve a Borrador conservando lo escrito, como la malla (2026-11-01).
 - Cambiar código o jornada de un paralelo con el sílabo enviado o aprobado pide
   confirmación y lo rehace desde cero (I-224).
 - Coordinación solo reinicia un sílabo aprobado, con la convocatoria abierta o pausada

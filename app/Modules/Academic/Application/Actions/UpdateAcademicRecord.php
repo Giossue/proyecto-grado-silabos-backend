@@ -98,7 +98,7 @@ class UpdateAcademicRecord
                 $periodId,
             );
 
-            $change = function () use ($actor, $activeRole, $data, $entity, $record): Model {
+            $change = function () use ($actor, $activeRole, $data, $entity, $record, $request): Model {
                 $attributes = $this->attributes($entity, $data);
 
                 if ($entity === 'carrera') {
@@ -118,7 +118,9 @@ class UpdateAcademicRecord
                 $auditMetadata = $this->auditContext($record, $dirty, $entity);
                 $record->save();
                 if ($record instanceof Faculty || $record instanceof Career) {
-                    $this->work->refreshIdentification(
+                    // Los borradores toman los datos nuevos; los enviados o aprobados vuelven a borrador tras confirmar.
+                    $this->work->sync(
+                        $request,
                         $record instanceof Faculty
                             ? array_values(Career::query()->where('facultad_id', $record->id)->pluck('id')->map(fn ($id): string => (string) $id)->all())
                             : [$record->id],

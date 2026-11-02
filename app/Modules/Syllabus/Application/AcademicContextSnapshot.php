@@ -12,7 +12,7 @@ class AcademicContextSnapshot
     public function build(Parallel $parallel, AcademicPeriod $period): array
     {
         $parallel->loadMissing([
-            'subject.career.faculty',
+            'subject.career.faculty.logoObject',
             'subject.requirements.requirement',
         ]);
         $subject = $parallel->subject;
@@ -32,6 +32,7 @@ class AcademicContextSnapshot
                 'name' => $career->nombre,
                 'faculty' => $career->faculty?->nombre,
                 'faculty_id' => $career->facultad_id,
+                'faculty_logo' => $career->faculty?->logoObject?->huella_sha256,
             ],
             'curriculum' => [
                 'id' => $career->id,

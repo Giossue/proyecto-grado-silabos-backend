@@ -31,6 +31,7 @@ final class InProgressWork
     public const SENT_STATES = ['en_revision', 'correccion_solicitada', 'aprobado'];
 
     private const DOCUMENT_PATHS = [
+        'career.name', 'career.code', 'career.faculty', 'career.faculty_logo', 'scheduled_subject.campus',
         'subject.name', 'subject.code', 'subject.cycle', 'subject.organization_unit', 'subject.credits',
         'subject.total_hours', 'subject.hours_ac', 'subject.hours_pae', 'subject.hours_aa',
         'subject.prerequisites', 'subject.corequisites', 'scheduled_subject.modality',
@@ -284,23 +285,6 @@ final class InProgressWork
         return $revisionIds;
     }
 
-    /**
-     * @param  list<string>  $careerIds
-     */
-    public function refreshIdentification(array $careerIds): int
-    {
-        if ($careerIds === []) {
-            return 0;
-        }
-
-        $syllabi = $this->inProgress($careerIds)->with('career.faculty')->lockForUpdate()->get();
-        foreach ($syllabi as $syllabus) {
-            $this->applyIdentification($syllabus);
-        }
-
-        return $syllabi->count();
-    }
-
     public function refreshParallel(string $parallelId): int
     {
         $syllabi = $this->inProgress(null)->where('paralelo_id', $parallelId)->with('career.faculty')->lockForUpdate()->get();
@@ -375,10 +359,11 @@ final class InProgressWork
     }
 
     /**
+     * @param  string|list<string>  $careerId
      * @param  list<string>|null  $subjectIds
      * @param  array<string, array<string, array<string, mixed>|null>>  $profilesBefore
      */
-    public function sync(Request $request, string $careerId, ?array $subjectIds = null, array $profilesBefore = []): int
+    public function sync(Request $request, string|array $careerId, ?array $subjectIds = null, array $profilesBefore = []): int
     {
         $syllabi = $this->inProgress($careerId, null, null, $subjectIds)
             ->with('convocation.process.academicPeriod')
@@ -394,6 +379,10 @@ final class InProgressWork
             }
             $context = $this->academicContext->build($parallel, $syllabus->convocation->process->academicPeriod);
             $updated = $syllabus->contexto_academico;
+            // Los sílabos creados antes de guardar la huella del logo no cuentan como cambiados por no tenerla.
+            if (! array_key_exists('faculty_logo', (array) data_get($updated, 'career', []))) {
+                data_set($updated, 'career.faculty_logo', data_get($context, 'career.faculty_logo'));
+            }
             $visible = false;
             $silent = false;
             foreach ([...self::DOCUMENT_PATHS, ...self::SILENT_PATHS] as $path) {

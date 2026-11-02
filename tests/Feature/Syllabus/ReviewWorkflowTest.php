@@ -79,28 +79,54 @@ class ReviewWorkflowTest extends TestCase
         $this->librarianContext = $this->librarian->roleAssignments()->firstOrFail();
     }
 
-    public function test_editing_the_faculty_while_paused_does_not_change_a_syllabus_already_sent(): void
+    public function test_changing_the_faculty_returns_a_sent_syllabus_to_draft_after_confirming(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();
-        $snapshot = $revision->fotografia;
-        $fingerprint = $revision->huella_sha256;
         $faculty = $syllabus->career->faculty;
-        $before = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()->json('syllabus');
-
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$syllabus->convocation, 'pausar']))->assertSuccessful();
-        $this->actingAsAdministrator()->patchJson(route('api.v1.admin.academic.update', ['entity' => 'facultad', 'record' => $faculty]), [
+        $written = $syllabus->values()->get()->mapWithKeys(fn ($value): array => [$value->definicion_campo_id => $value->valor])->all();
+        $payload = [
             'nombre' => 'Facultad con otro nombre',
             'campus' => $faculty->campus->value,
             'logo' => $this->transparentPng(300, 100),
-        ])->assertSuccessful();
+        ];
+
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$syllabus->convocation, 'pausar']))->assertSuccessful();
+        $update = fn (array $extra = []) => $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.academic.update', ['entity' => 'facultad', 'record' => $faculty]), [...$payload, ...$extra]);
+
+        $update()->assertUnprocessable()->assertJsonValidationErrors('purge_required')->assertJsonPath('errors.purge_count.0', '1');
+        $this->assertNotSame('Facultad con otro nombre', $faculty->fresh()->nombre);
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+
+        $update(['confirm_purge' => true])->assertSuccessful();
 
         $this->assertSame('Facultad con otro nombre', $faculty->fresh()->nombre);
-        $this->assertSame($snapshot, $revision->fresh()->fotografia);
-        $this->assertSame($fingerprint, $revision->fresh()->huella_sha256);
+        $fresh = $syllabus->fresh();
+        $this->assertSame('borrador', $fresh->estado);
+        $this->assertSame('Facultad con otro nombre', data_get($fresh->contexto_academico, 'career.faculty'));
+        $this->assertEquals($written, $fresh->values()->get()->mapWithKeys(fn ($value): array => [$value->definicion_campo_id => $value->valor])->all());
+        $this->assertDatabaseMissing('revisiones_silabo', ['revision_silabo_id' => $revision->id]);
+        $this->assertTrue(InternalNotification::query()->where('tipo', 'silabo.devuelto_borrador')->exists());
+        $this->assertSame($faculty->fresh()->logoObject->huella_sha256, data_get($fresh->contexto_academico, 'career.faculty_logo'));
+    }
+
+    public function test_changing_the_career_name_returns_a_sent_syllabus_to_draft_after_confirming(): void
+    {
+        [$syllabus] = $this->submitValidDraft();
+        $career = $syllabus->career;
+        $payload = ['faculty_id' => $career->facultad_id, 'modality' => $career->modalidad->value, 'code' => $career->codigo_carrera, 'nombre' => 'Carrera con otro nombre'];
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.convocations.transition', [$syllabus->convocation, 'pausar']))->assertSuccessful();
+        $update = fn (array $extra = []) => $this->actingAsAdministrator()
+            ->patchJson(route('api.v1.admin.academic.update', ['entity' => 'carrera', 'record' => $career]), [...$payload, ...$extra]);
+
+        $update()->assertUnprocessable()->assertJsonPath('errors.purge_count.0', '1');
         $this->assertSame('en_revision', $syllabus->fresh()->estado);
-        $after = $this->actingAsTeacher()->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertOk()->json('syllabus');
-        $this->assertSame($before['sections'], $after['sections']);
-        $this->assertSame($before['template_variables'], $after['template_variables']);
+
+        $update(['confirm_purge' => true])->assertSuccessful();
+
+        $fresh = $syllabus->fresh();
+        $this->assertSame('borrador', $fresh->estado);
+        $this->assertSame('Carrera con otro nombre', data_get($fresh->contexto_academico, 'career.name'));
     }
 
     public function test_documents_and_variables_are_frozen_with_the_submitted_revision(): void
