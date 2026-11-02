@@ -998,7 +998,7 @@ class SyllabusProcessTest extends TestCase
         $this->assertStringContainsString('Ficha corregida por Coordinación', FreeText::plainText($syllabus->values()->where('definicion_campo_id', $field->id)->firstOrFail()->valor));
     }
 
-    public function test_an_open_cycle_freezes_the_template_and_the_institutional_data_but_not_the_parallels(): void
+    public function test_an_open_cycle_freezes_the_template_but_not_faculties_careers_or_parallels(): void
     {
         $convocation = $this->openedConvocation();
         $scheduledSubject = Parallel::query()->firstOrFail();
@@ -1031,18 +1031,6 @@ class SyllabusProcessTest extends TestCase
             ->assertCreated();
 
         $faculty = Faculty::query()->findOrFail($scheduledSubject->subject->career->facultad_id);
-        $originalScheduledCampus = $scheduledSubject->campus_programacion;
-        $this->actingAsAdministrator()
-            ->patchJson(route('api.v1.admin.academic.update', ['facultad', $faculty->id]), [
-                'nombre' => $faculty->nombre,
-                'campus' => CampusLocation::Chimbo->value,
-            ])
-            ->assertJsonValidationErrors('process');
-        $this->assertSame($originalScheduledCampus, $scheduledSubject->fresh()->campus_programacion);
-
-        $this->actingAsCoordinator()
-            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'pausar']))
-            ->assertSuccessful();
         $syllabusId = Syllabus::query()->firstOrFail()->id;
         $this->actingAsAdministrator()
             ->patchJson(route('api.v1.admin.academic.update', ['facultad', $faculty->id]), [

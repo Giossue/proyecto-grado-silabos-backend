@@ -89,14 +89,9 @@ class UpdateAcademicRecord
 
         return DB::transaction(function () use ($actor, $activeRole, $data, $entity, $modelClass, $recordId, $request): Model {
             $record = $modelClass::query()->lockForUpdate()->findOrFail($recordId);
-            $careerIds = $record instanceof Faculty
-                ? array_values(Career::query()->where('facultad_id', $record->id)->pluck('id')->map(fn ($id): string => (string) $id)->all())
-                : ($record instanceof Career ? $record->id : null);
-            $periodId = $record instanceof AcademicPeriod ? $record->id : null;
-            $this->locks->assertInstitutionalRecordEditable(
-                is_array($careerIds) ? array_map('strval', $careerIds) : (is_string($careerIds) ? [$careerIds] : []),
-                $periodId,
-            );
+            if ($record instanceof AcademicPeriod) {
+                $this->locks->assertInstitutionalRecordEditable([], $record->id);
+            }
 
             $change = function () use ($actor, $activeRole, $data, $entity, $record, $request): Model {
                 $attributes = $this->attributes($entity, $data);
@@ -141,7 +136,7 @@ class UpdateAcademicRecord
             };
 
             return $record instanceof AcademicPeriod
-                ? $this->work->replace($request, $change, null, $periodId)
+                ? $this->work->replace($request, $change, null, $record->id)
                 : $change();
         });
     }

@@ -264,7 +264,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   nuevo empieza el sílabo desde cero (I-174, I-224).
 - Biblioteca (2026-11-02): la bandeja muestra un sílabo por fila, con su envío más reciente, y la columna «Responsable». El bibliotecario que devuelve un sílabo queda como su responsable (reserva blanda): al reenviarse, la pantalla dice quién lo atiende y pide confirmar a cualquier otro bibliotecario antes de devolverlo o firmarlo; no se bloquea nada, y lo que se haga queda en la auditoría con su autor.
 - Estados con un solo vocabulario (2026-11-02): Biblioteca muestra sus envíos con las palabras del sílabo (En revisión, Aprobado, Corrección solicitada; Anterior si hay una versión más nueva) y no con otras. La nota del coordinador dice «Corrección solicitada por biblioteca».
-- Cambiar el nombre, campus o logo de una facultad, o el nombre, código, modalidad o facultad de una carrera, con sílabos enviados o aprobados en la convocatoria actual pide confirmación y los devuelve a Borrador conservando lo escrito, como la malla (2026-11-01).
+- Cambiar el nombre, campus o logo de una facultad, o el nombre, código, modalidad o facultad de una carrera, con sílabos enviados o aprobados en la convocatoria actual pide confirmación y los devuelve a Borrador conservando lo escrito, como la malla (2026-11-01). Administración puede hacerlo siempre, también con la convocatoria de la carrera abierta: no espera a que Coordinación la pause (2026-11-02).
 - Cambiar código o jornada de un paralelo con el sílabo enviado o aprobado pide
   confirmación y lo rehace desde cero (I-224).
 - Coordinación solo reinicia un sílabo aprobado, con la convocatoria abierta o pausada
