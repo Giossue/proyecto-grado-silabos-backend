@@ -40,6 +40,8 @@
       solo si no hay cambios sin guardar. Un `Dialog` no muestra `X`: se cierra con una
       acción explícita. Su acción principal tiene un icono semántico y un indicador de
       carga cuando corresponda.
+- [ ] En una tabla, la columna de acciones mide lo que su contenido necesita (`w-px` en su
+      encabezado), con el margen normal de la celda.
 
 ## IA
 
