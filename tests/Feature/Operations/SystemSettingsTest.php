@@ -47,10 +47,11 @@ class SystemSettingsTest extends TestCase
         $response->assertJsonPath('ai.driver.value', 'deepseek')
             ->assertJsonPath('ai.driver.source', 'entorno')
             ->assertJsonPath('ai.api_key.configured', true)
-            ->assertJsonPath('ai.api_key.last4', '4c2e')
+            ->assertJsonMissingPath('ai.api_key.last4')
             ->assertJsonPath('notifications.digest_time.value', '08:00')
             ->assertJsonPath('library.base_url.value', 'https://biblioteca.ueb.edu.ec');
         $this->assertStringNotContainsString(self::KEY, $response->getContent());
+        $this->assertStringNotContainsString('4c2e', $response->getContent());
 
         $this->as('coordinador@silabos.test')->getJson(route('api.v1.admin.system-settings.show'))->assertForbidden();
     }
@@ -83,7 +84,7 @@ class SystemSettingsTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('current_password');
 
         $saved = $this->as('admin@silabos.test')->putJson(route('api.v1.admin.system-settings.update', 'ia'), [...$ai, 'api_key' => 'sk-nueva-11112222', 'current_password' => 'Demo-2026!'])
-            ->assertOk()->assertJsonPath('ai.api_key.last4', '2222')->assertJsonPath('ai.api_key.source', 'pantalla')->assertJsonPath('ai.model.value', 'deepseek-flash');
+            ->assertOk()->assertJsonPath('ai.api_key.configured', true)->assertJsonPath('ai.api_key.source', 'pantalla')->assertJsonPath('ai.model.value', 'deepseek-flash');
         $this->assertStringNotContainsString('sk-nueva-11112222', $saved->getContent());
         $stored = (string) DB::table('ajustes_sistema')->where('clave_ajuste', 'ai.api_key')->value('valor_ajuste');
         $this->assertStringNotContainsString('sk-nueva-11112222', $stored);
@@ -94,7 +95,7 @@ class SystemSettingsTest extends TestCase
         $this->assertStringNotContainsString('sk-nueva', $audit);
 
         $this->as('admin@silabos.test')->putJson(route('api.v1.admin.system-settings.update', 'ia'), [...$ai, 'model' => 'deepseek-chat', 'current_password' => 'Demo-2026!'])
-            ->assertOk()->assertJsonPath('ai.api_key.last4', '2222');
+            ->assertOk()->assertJsonPath('ai.api_key.configured', true);
         $this->assertSame('sk-nueva-11112222', config('ai.hosted.api_key'));
 
         $this->as('admin@silabos.test')->putJson(route('api.v1.admin.system-settings.update', 'ia'), [...$ai, 'clear_api_key' => true, 'current_password' => 'Demo-2026!'])

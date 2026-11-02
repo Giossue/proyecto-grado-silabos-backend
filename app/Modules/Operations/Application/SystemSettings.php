@@ -13,7 +13,7 @@ use Throwable;
 /**
  * Ajustes que Administración cambia desde «Configuración › Sistema»: se guardan en `ajustes_sistema` y se
  * aplican sobre la configuración. Mientras un ajuste no se guardó, vale la variable de entorno.
- * La clave de la IA se guarda cifrada con APP_KEY y nunca sale del servidor.
+ * La clave de la IA se guarda cifrada con APP_KEY y nunca sale del servidor (ni siquiera una parte).
  *
  * @phpstan-type FieldValue array{value: mixed, source: string}
  */
@@ -76,7 +76,7 @@ final class SystemSettings
             $source = in_array($field, $this->saved, true) ? 'pantalla' : 'entorno';
             $value = config($definition['config']);
             $result[$sections[$definition['section']]][$name] = $field === self::SECRET
-                ? ['configured' => is_string($value) && $value !== '', 'last4' => is_string($value) && strlen($value) >= 8 ? substr($value, -4) : null, 'source' => $source]
+                ? ['configured' => is_string($value) && $value !== '', 'source' => $source]
                 : ['value' => $value, 'source' => $source];
         }
 
