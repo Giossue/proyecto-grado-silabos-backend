@@ -91,6 +91,11 @@ class DocumentSignatureTest extends TestCase
             ->assertJsonPath('syllabus.teacher_signature_required', false)
             ->assertJsonPath('syllabus.signatures.0.role', 'docente')
             ->assertJsonPath('syllabus.signatures.0.name', $this->people['teacher'][0]->nombre);
+        $shown = $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->json('syllabus.template_variables');
+        $this->assertStringContainsString('Firmado electrónicamente por '.$this->people['teacher'][0]->nombre, $shown['firma_docente']);
+        $this->assertSame($revision->enviado_en->setTimezone('America/Guayaquil')->format('d-m-Y'), $shown['fecha_entrega']);
+        $this->assertSame('Firma de coordinación', trim($shown['firma_coordinador']));
+        $this->assertStringContainsString('Firmado electrónicamente por', json_encode($this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->json('syllabus.sections'), JSON_UNESCAPED_UNICODE));
 
         $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.correction.store', $revision), [
             'justification' => 'Ajuste los resultados de aprendizaje.',

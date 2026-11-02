@@ -200,7 +200,9 @@ y el botón «Documentos» (DOC-10).
   «Vista previa».
 - Bloques: unidades y semanas con contador de horas, y discapacidad (los datos aparecen
   solo si responde Sí).
-- En revisión o aprobado, la pantalla muestra el documento tal como sale.
+- En revisión o aprobado, la pantalla muestra el documento tal como sale. La tabla «Revisión y
+  aprobación» ya lleva el sello y la fecha de cada firma que se hizo (docente al enviar,
+  coordinación y biblioteca al decidir); lo que falta sigue con su rótulo.
 - «Vista previa» (un ojo, con tooltip) muestra la hoja del sílabo en la pantalla, como en
   Plantilla. Es un solo botón: queda presionado mientras se ve la hoja y, al pulsarlo otra vez, vuelve al formulario. No cambia de ícono ni de lugar. Con el sílabo aprobado, «Ver PDF» abre
   el PDF directamente en otra pestaña. «Copiar desde paralelo X» trae lo escrito en

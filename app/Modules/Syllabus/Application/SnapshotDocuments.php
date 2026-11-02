@@ -24,7 +24,7 @@ final class SnapshotDocuments
      */
     private static function documents(array $snapshot): array
     {
-        $variables = TemplateVariables::resolve($snapshot);
+        $variables = [...TemplateVariables::resolve($snapshot), ...(is_array($snapshot['template_variables'] ?? null) ? $snapshot['template_variables'] : [])];
         foreach ($snapshot['sections'] ?? [] as $index => $section) {
             $fields = $section['fields'] ?? array_merge(...array_map(fn (array $block): array => $block['fields'] ?? [], $section['blocks'] ?? []));
             $snapshot['sections'][$index]['orientation'] = $section['orientation'] ?? 'portrait';

@@ -14,6 +14,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateBlock;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\TemplateSection;
+use App\Modules\Documents\Application\SignedDocumentVariables;
 use App\Modules\Documents\Application\SyllabusSignatures;
 use App\Modules\Documents\Domain\Data\DecisionSignature;
 use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
@@ -266,6 +267,9 @@ class SyllabusController extends Controller
         $revision = $syllabus->revisions->sortByDesc('numero_revision')->first();
         $snapshot = $revision instanceof SyllabusRevision && in_array($syllabus->estado, ['en_revision', 'aprobado'], true)
             ? $revision->fotografia : null;
+        if ($snapshot !== null) {
+            $snapshot['template_variables'] = app(SignedDocumentVariables::class)->of($snapshot, $revision, $revision->approval);
+        }
         if ($snapshot === null && $syllabus->convocation->estado === Convocation::STATE_CLOSED
             && is_array($syllabus->contexto_academico['closed_document'] ?? null)) {
             $snapshot = $syllabus->contexto_academico['closed_document'];

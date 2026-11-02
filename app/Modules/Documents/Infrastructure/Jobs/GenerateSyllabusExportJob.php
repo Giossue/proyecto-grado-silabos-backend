@@ -2,22 +2,17 @@
 
 namespace App\Modules\Documents\Infrastructure\Jobs;
 
-use App\Modules\Configuration\Application\TemplateContext;
-use App\Modules\Configuration\Application\TemplateVariables;
 use App\Modules\Documents\Application\DocumentBundleValidator;
-use App\Modules\Documents\Application\SyllabusSignatures;
+use App\Modules\Documents\Application\SignedDocumentVariables;
 use App\Modules\Documents\Domain\Contracts\DocumentRenderer;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
 use App\Modules\Documents\Domain\Data\RenderedDocument;
-use App\Modules\Documents\Domain\SignatureAnchor;
 use App\Modules\Documents\Infrastructure\Persistence\Models\ExportArtifact;
 use App\Modules\Documents\Infrastructure\Persistence\Models\StoredObject;
-use App\Modules\Documents\Infrastructure\Persistence\Models\SyllabusSignature;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Operations\Application\Actions\ScheduleWorkflowNotification;
 use App\Modules\Operations\Application\WorkflowNotificationRecipients;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Approval;
-use App\Modules\Syllabus\Infrastructure\Persistence\Models\CoordinationReview;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusRevision;
 use App\Support\Queue\RunsOnce;
 use Illuminate\Bus\Queueable;
@@ -205,41 +200,8 @@ class GenerateSyllabusExportJob implements ShouldBeUnique, ShouldQueue
     private function withSignatures(SyllabusRevision $revision, Approval $approval): array
     {
         $snapshot = $revision->fotografia;
-        $variables = is_array($snapshot['template_variables'] ?? null) ? $snapshot['template_variables'] : [];
-        $review = CoordinationReview::query()
-            ->with('reviewer:id,nombre')
-            ->whereHas('revision', fn ($query) => $query->where('silabo_id', $revision->silabo_id)->where('numero_revision', '<=', $revision->numero_revision))
-            ->latest('revisado_en')
-            ->first();
-        $stamps = [];
-        foreach (app(SyllabusSignatures::class)->of($revision->silabo_id) as $signature) {
-            $stamps[$signature->firmado_como] = $this->stamp($signature);
-        }
-        $snapshot['template_variables'] = app(TemplateContext::class)->forSnapshot($snapshot, fn (): array => [
-            ...$variables,
-            ...TemplateVariables::approval([
-                'submitted_on' => $revision->enviado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
-                'coordinator' => $review?->reviewer->nombre ?? $approval->approver->nombre,
-                'approved_on' => ($review->revisado_en ?? $approval->aprobado_en)->setTimezone('America/Guayaquil')->format('d-m-Y'),
-                'librarian' => $approval->approver->nombre,
-                'verified_on' => $approval->aprobado_en->setTimezone('America/Guayaquil')->format('d-m-Y'),
-            ]),
-            ...TemplateVariables::signatures($stamps),
-        ]);
+        $snapshot['template_variables'] = app(SignedDocumentVariables::class)->of($snapshot, $revision, $approval);
 
         return $snapshot;
-    }
-
-    private function stamp(SyllabusSignature $signature): string
-    {
-        $issuer = preg_match('/(?:^|,\s*)CN=([^,]+)/', $signature->entidad_emisora, $match) === 1 ? trim($match[1]) : $signature->entidad_emisora;
-
-        return SignatureAnchor::stamp(
-            $signature->firmado_como,
-            $signature->nombre_en_certificado,
-            $signature->firmado_en->setTimezone('America/Guayaquil')->format('d-m-Y H:i'),
-            $signature->numero_certificado,
-            $issuer,
-        );
     }
 }
