@@ -85,7 +85,7 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   límites del día en la zona institucional y la API las publica como `YYYY-MM-DD`.
   Un plazo de entrega cierra al final del día local, no a las 19:00.
 - La cola de revisión de Coordinación solo trae lo que espera su decisión (en revisión y todavía sin pasar a Biblioteca); lo demás (en biblioteca, devuelto, aprobado) está en Seguimiento, cuyas filas abren la revisión (2026-10-31). Coordinación no ve el comentario ni quién verificó de Biblioteca: solo que lo devolvió; Biblioteca ve únicamente su bibliografía.
-- Coordinación tiene una sola acción para descartar un sílabo, «Reiniciar sílabo» (2026-10-31), con motivo obligatorio que ve el docente y queda en la auditoría, cuenta regresiva y, si está aprobado (borra todo y no hay reapertura), el nombre de la materia. Se retiró «Eliminar sílabo» (`DELETE /coordination/syllabi/{syllabus}`); `POST .../reset` hace ambas cosas según el estado.
+- Coordinación tiene una sola acción para descartar un sílabo, «Reiniciar sílabo» (2026-10-31), solo con el sílabo aprobado y la convocatoria abierta o pausada (2026-11-01), con motivo obligatorio que ve el docente y queda en la auditoría, cuenta regresiva y, si está aprobado (borra todo y no hay reapertura), el nombre de la materia. Se retiró «Eliminar sílabo» (`DELETE /coordination/syllabi/{syllabus}`); `POST .../reset` borra el sílabo aprobado y crea uno nuevo para el paralelo.
 - El historial de un sílabo para Coordinación es una pantalla de versiones como la de Google Docs (documento a la izquierda, panel de versiones agrupadas por día a la derecha; los cambios respecto a la versión anterior se marcan solos), no una lista de revisiones (2026-10-31): envíos, correcciones de Coordinación con su comentario, aprobación de Coordinación y aprobación final. De lo que hace Biblioteca solo se ve «Biblioteca lo devolvió al docente», sin nombre ni comentario. Cada envío a partir del segundo ofrece «Ver qué cambió», y el detalle puede resaltar en el documento los campos cambiados desde el envío anterior.
 - Con el plazo de entrega vencido (2026-10-31) el docente queda en solo lectura: el servidor
   rechaza iniciar, editar y enviar, y la API explica el motivo en `edit_block_reason`.
@@ -249,9 +249,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   nuevo empieza el sílabo desde cero (I-174, I-224).
 - Cambiar código o jornada de un paralelo con el sílabo enviado o aprobado pide
   confirmación y lo rehace desde cero (I-224).
-- Coordinación puede reiniciar un sílabo en Borrador, En revisión o Corrección
-  solicitada. No hay reapertura: un sílabo aprobado solo se elimina y el docente empieza
-  de nuevo (I-178).
+- Coordinación solo reinicia un sílabo aprobado, con la convocatoria abierta o pausada
+  (2026-11-01; antes también en Borrador, En revisión o Corrección solicitada, I-178). No
+  hay reapertura: el docente empieza de nuevo.
 
 ## Revisión
 

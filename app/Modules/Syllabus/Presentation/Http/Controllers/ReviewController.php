@@ -15,7 +15,6 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Syllabus\Application\Actions\ApproveSyllabus;
 use App\Modules\Syllabus\Application\Actions\DeleteSyllabus;
 use App\Modules\Syllabus\Application\Actions\RequestSyllabusCorrection;
-use App\Modules\Syllabus\Application\Actions\ResetSyllabus;
 use App\Modules\Syllabus\Application\ReviewStage;
 use App\Modules\Syllabus\Application\RevisionDiff;
 use App\Modules\Syllabus\Application\SnapshotDocuments;
@@ -241,7 +240,7 @@ class ReviewController extends Controller
             ],
             'decisions_allowed' => $decisionsAllowed,
             'reset' => [
-                'allowed' => $decisionsAllowed && $myStage === ReviewStage::COORDINATION && in_array($syllabus->estado, [...ResetSyllabus::RESETTABLE_STATES, 'aprobado'], true),
+                'allowed' => $decisionsAllowed && $myStage === ReviewStage::COORDINATION && $syllabus->estado === 'aprobado',
                 'erases_history' => $syllabus->estado === 'aprobado',
                 'revisions' => $syllabus->revisions->count(),
                 'signatures' => SyllabusSignature::query()->where('silabo_id', $syllabus->id)->count(),
@@ -317,20 +316,13 @@ class ReviewController extends Controller
     public function reset(
         Syllabus $syllabus,
         ResetSyllabusRequest $request,
-        ResetSyllabus $reset,
         DeleteSyllabus $delete,
     ): JsonResponse {
         $actor = $request->user();
         abort_unless($actor instanceof User, 401);
         $reason = trim($request->string('reason')->toString());
-        if ($syllabus->estado === 'aprobado') {
-            $delete->execute($syllabus, $actor, $request, $reason);
-            $message = 'Sílabo reiniciado con todo su historial. El docente empieza de cero con la malla y la plantilla actuales.';
-        } else {
-            $reset->execute($syllabus, $actor, $request, $reason);
-            $message = 'Sílabo reiniciado. El docente empieza de cero con la malla y la plantilla actuales; el historial se conserva.';
-        }
+        $delete->execute($syllabus, $actor, $request, $reason);
 
-        return response()->json(['message' => $message]);
+        return response()->json(['message' => 'Sílabo reiniciado con todo su historial. El docente empieza de cero con la malla y la plantilla actuales.']);
     }
 }

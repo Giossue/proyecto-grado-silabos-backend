@@ -63,8 +63,7 @@ class SyllabusPolicy
 
     public function reset(User $user, Syllabus $syllabus): Response
     {
-        if (! in_array($syllabus->estado, ['borrador', 'en_revision', 'correccion_solicitada', 'aprobado'], true)
-            || ! $this->roles->hasRole(request(), RoleCode::Coordinator)) {
+        if ($syllabus->estado !== 'aprobado' || ! $this->roles->hasRole(request(), RoleCode::Coordinator)) {
             return Response::deny();
         }
 

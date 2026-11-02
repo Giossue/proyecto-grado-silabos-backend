@@ -41,7 +41,7 @@ class DeleteSyllabus
 
             if ($locked->estado !== 'aprobado') {
                 throw ValidationException::withMessages([
-                    'syllabus' => 'Solo se elimina un sílabo aprobado; los demás se reinician.',
+                    'syllabus' => 'Solo se reinicia un sílabo aprobado.',
                 ]);
             }
             if (! in_array($locked->convocation->estado, [Convocation::STATE_OPEN, Convocation::STATE_PAUSED], true)) {

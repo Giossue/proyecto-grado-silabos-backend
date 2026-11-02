@@ -46,7 +46,7 @@ muestra «Página no encontrada».
 | COR-15 | Docentes | `/coordinacion/docentes` | Docentes de la carrera; «Crear docente», «Importar desde Excel»; la fila abre «Editar docente» con «Reenviar invitación» y «Quitar de la carrera». |
 | COR-16 | Proyecto de carrera | `/coordinacion/proyecto-carrera` | Proyectos de carrera de las asignaturas e importación mediante plantilla Excel. Detalle abajo. |
 
-COR-06 también ofrece «Reiniciar sílabo» (COR-10) en borrador, revisión, corrección o aprobado,
+COR-06 también ofrece «Reiniciar sílabo» (COR-10) solo con el sílabo aprobado y la convocatoria abierta o pausada,
 y el botón «Documentos» (DOC-10).
 
 ## Docente

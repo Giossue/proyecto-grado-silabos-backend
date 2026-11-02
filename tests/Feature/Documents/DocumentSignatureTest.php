@@ -231,11 +231,8 @@ class DocumentSignatureTest extends TestCase
             $this->assertSame($signature->nombre_en_certificado, $signature->fresh()?->nombre_en_certificado);
         }
 
-        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Se reinicia para firmar de nuevo.'])->assertSuccessful();
-        $this->assertDatabaseCount('firmas_silabo', 0);
-        $fresh = Syllabus::query()->where('paralelo_id', $syllabus->paralelo_id)->firstOrFail();
-        $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $fresh))
-            ->assertJsonPath('syllabus.teacher_signature_required', true)->assertJsonPath('syllabus.signatures', []);
+        $this->as('coordinator')->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Se reinicia para firmar de nuevo.'])->assertForbidden();
+        $this->assertDatabaseCount('firmas_silabo', 1);
     }
 
     public function test_ya_no_existen_la_firma_secuencial_del_pdf_ni_la_descarga_word(): void

@@ -633,33 +633,21 @@ class ReviewWorkflowTest extends TestCase
         return ['version_bloqueo' => $lockVersion, 'value' => $this->answeredValue($field, "Contenido académico {$field->clave}")];
     }
 
-    public function test_coordinator_resets_a_submitted_syllabus_so_the_teacher_starts_over(): void
+    public function test_only_an_approved_syllabus_can_be_restarted(): void
     {
         [$syllabus, $revision] = $this->submitValidDraft();
         $this->assertSame('en_revision', $syllabus->estado);
 
+        $this->actingAsCoordinator()->getJson(route('api.v1.coordination.reviews.show', $revision))
+            ->assertOk()->assertJsonPath('reset.allowed', false);
         $this->actingAsCoordinator()
             ->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Se cambió la ficha y hay que volver a empezar.'])
-            ->assertSuccessful()
-            ->assertSuccessful();
-
-        $fresh = $syllabus->fresh();
-        $this->assertSame('sin_iniciar', $fresh->estado);
-        $this->assertSame(0, $fresh->version_bloqueo);
-        $teacherValues = $fresh->values()->whereHas('field', fn ($field) => $field->where('quien_llena', 'docente'))->with('field')->get();
-        $teacherValues->reject(fn ($value) => $value->field->clave === 'unidades')
-            ->each(fn ($value) => $this->assertEquals($value->field->contenido, $value->valor));
-        $units = $teacherValues->firstOrFail(fn ($value) => $value->field->clave === 'unidades')->valor['content'][0]['attrs']['value']['units'];
-        $this->assertSame('', $units[0]['nombre']);
-        $this->assertSame('', $units[0]['semanas'][0]['contenidos']);
-        $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id]);
-        $this->assertDatabaseHas('eventos_auditoria', ['accion' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
-        $this->assertWorkflowNotification($syllabus->id, 'silabo.reiniciado');
-
-        $this->actingAsTeacher()->postJson(route('api.v1.teacher.syllabi.start', $syllabus))->assertSuccessful();
-        $this->assertSame('borrador', $syllabus->fresh()->estado);
-
+            ->assertForbidden();
         $this->actingAsTeacher()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Motivo de prueba.'])->assertForbidden();
+
+        $this->assertSame('en_revision', $syllabus->fresh()->estado);
+        $this->assertDatabaseHas('revisiones_silabo', ['revision_silabo_id' => $revision->id]);
+        $this->assertDatabaseMissing('eventos_auditoria', ['accion' => 'silabo.reiniciado', 'recurso_id' => $syllabus->id]);
     }
 
     public function test_closed_convocation_keeps_the_review_read_only(): void
@@ -681,7 +669,7 @@ class ReviewWorkflowTest extends TestCase
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.approve', $revision), ['signature' => $this->revisionSignature($revision, 'coordinacion', $this->coordinator),
             'idempotency_key' => (string) Str::uuid(),
         ])->assertForbidden()->assertJsonPath('message', $message);
-        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Motivo de prueba.'])->assertForbidden()->assertJsonPath('message', $message);
+        $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'Motivo de prueba.'])->assertForbidden();
         $this->actingAsCoordinator()->postJson(route('api.v1.coordination.reviews.reset', $syllabus), ['reason' => 'El docente cambió de materia y debe empezar otra vez.'])->assertForbidden();
 
         $this->assertSame('en_revision', $syllabus->fresh()->estado);

@@ -41,7 +41,7 @@ El menú y los botones reflejan el permiso, pero no lo reemplazan.
 | Chat de IA | No | No | Sí, en su sílabo | No |
 | Revisar: aprobar (firmando) o pedir corrección | No | Sí, etapa de coordinación de su carrera | No | Sí, etapa de biblioteca |
 | Comparar revisiones | No | Sí | No | No |
-| Reiniciar un sílabo («Reiniciar sílabo», con motivo; en un sílabo aprobado borra todo) | No | Sí, en su carrera | No | No |
+| Reiniciar un sílabo («Reiniciar sílabo», con motivo; solo con el sílabo aprobado y la convocatoria abierta o pausada; borra todo) | No | Sí, en su carrera | No | No |
 | Firmar con su `.p12` (una vez por sílabo, al decidir) | No | Sí, al aprobar | Sí, al primer envío | Sí, al aprobar |
 | Ver y descargar el PDF (apenas se genera; no hay Word) | No | Sí, en su carrera | Sí, de sus paralelos | Sí, de los sílabos que llegaron a biblioteca |
 | Auditoría | Sí | No | No | No |
