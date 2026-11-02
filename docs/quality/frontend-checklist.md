@@ -26,9 +26,11 @@
       no exponen claves internas, nombres de columnas ni contratos técnicos.
 - [ ] Error indica campo, causa y corrección.
 - [ ] El botón de enviar de un formulario queda deshabilitado mientras falte un campo obligatorio
-      (`required`, marcado con asterisco rojo) y, si edita datos existentes, mientras no haya
-      cambios. Lo hace el componente `Button` solo. Un campo vacío no muestra mensaje ni borde
-      rojo; solo se avisa de un valor mal escrito (correo, longitud, formato).
+      (`aria-required="true"` en el campo y asterisco rojo en la etiqueta) y, si edita datos
+      existentes, mientras no haya cambios. Lo hace el componente `Button` solo. Los campos
+      visibles no llevan `required`: el navegador mostraría «Por favor, llena este campo» al pasar
+      el cursor. Un campo vacío no muestra mensaje ni borde rojo; solo se avisa de un valor mal
+      escrito (correo, longitud, formato).
       Lo que el navegador no valida solo (casillas de «elija al menos una», selectores, archivos y
       claves) también deja el botón deshabilitado hasta completarse, con `:disabled` en el botón.
 - [ ] Ningún texto de la interfaz (avisos, errores, ayudas, estados vacíos, tooltips, banners)
