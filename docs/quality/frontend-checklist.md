@@ -43,6 +43,8 @@
 - [ ] En una tabla, la columna de acciones mide lo que su contenido necesita, con el margen
       normal de la celda. Es automático (`styles.css`): vale para las celdas que solo llevan
       botones, en pantallas desde `sm`.
+- [ ] En las tablas de captura (más anchas que su contenedor), la columna de acciones queda fija al
+      borde derecho: lleva `data-sticky-end` en su encabezado y en sus celdas.
 
 ## IA
 
