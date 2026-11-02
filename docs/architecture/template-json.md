@@ -99,9 +99,6 @@ esquemas de valor, propiedades y reglas. Detalle: ADR-0012.
   "body": { "alignment": "left" },
   "header": { "logos": [ { "source": "institution", "height_pt": 36 }, { "source": "faculty", "height_pt": 36 } ],
               "left_share": 0.638 },
-  "footer": { "text": "Página {page} de {pages}", "size": 8, "color": "#7F7F7F" },
-  "metadata": { "text": "Revisión {revision} · {subject} ({code}) · huella {fingerprint} · generado {generated}",
-                "size": 7, "color": "#7F7F7F" },
   "empty_text": "Sin contenido",
   "choices": { "margin_cm": [1.5, 2.0, 2.5, 3.0], "title": [10, 14, 16, 18], "section": [10, 11, 12, 14], "body": [10, 11, 12] }
 }
@@ -119,7 +116,7 @@ esquemas de valor, propiedades y reglas. Detalle: ADR-0012.
 | `title`, `section_title`, `body` | Negrita, cursiva y alineación (`left`, `center`, `right`, `justify`). |
 | `header.logos` | Hasta dos logos: el primero a la izquierda y el segundo a la derecha. `source`: `institution` o `faculty`. |
 | `header.left_share` | Fracción del ancho para el logo izquierdo (0,1 a 0,9). |
-| `footer`, `metadata` | Texto con marcadores (`{page}`, `{pages}`; `{revision}`, `{subject}`, `{code}`, `{fingerprint}`, `{generated}`, `{period}`) o `null` para quitarlos. `{fingerprint}` muestra los primeros 16 caracteres de la huella y `{generated}`, la fecha y hora de Ecuador. |
+| `footer`, `metadata` | Ya no existen: los documentos no llevan número de página ni línea de revisión, huella y fecha de generación (2026-11-02). Si una definición antigua los trae, se aceptan y se ignoran. |
 | `empty_text` | Texto de un campo vacío en el Word. |
 | `choices` | Valores que ofrece el botón **Diseño** del constructor. |
 

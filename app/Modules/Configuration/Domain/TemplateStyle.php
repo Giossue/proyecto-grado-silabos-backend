@@ -67,8 +67,6 @@ final class TemplateStyle
             ],
             'body' => ['alignment' => self::among($body['alignment'] ?? 'left', self::ALIGNMENTS, 'document.body.alignment')],
             'header' => self::header($raw['header'] ?? null),
-            'footer' => self::line($raw['footer'] ?? null, 'document.footer'),
-            'metadata' => self::line($raw['metadata'] ?? null, 'document.metadata'),
             'empty_text' => self::text($raw['empty_text'] ?? '', 'document.empty_text', 120, true),
             'choices' => [
                 'margin_cm' => self::list($choices['margin_cm'] ?? [], 'document.choices.margin_cm', fn (mixed $value, string $at): float => self::number($value, $at, 0.5, 5)),
@@ -222,20 +220,6 @@ final class TemplateStyle
     /**
      * @return array{text: string, size: int, color: string}|null
      */
-    private static function line(mixed $raw, string $where): ?array
-    {
-        if ($raw === null) {
-            return null;
-        }
-        $raw = self::object($raw, $where, ['text', 'size', 'color']);
-
-        return [
-            'text' => self::text($raw['text'] ?? '', "{$where}.text", 300),
-            'size' => self::size($raw['size'] ?? 8, "{$where}.size"),
-            'color' => self::color($raw['color'] ?? '#7F7F7F', "{$where}.color"),
-        ];
-    }
-
     /**
      * @return list<mixed>
      */

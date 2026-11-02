@@ -6,7 +6,6 @@ use App\Modules\Configuration\Application\InstitutionalLogos;
 use App\Modules\Configuration\Application\TemplateContext;
 use App\Modules\Configuration\Domain\TemplateStyle;
 use App\Modules\Documents\Domain\Data\DocumentRenderInput;
-use Carbon\CarbonImmutable;
 use PhpOffice\PhpWord\Element\Section;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\Settings;
@@ -146,8 +145,6 @@ class SyllabusWordDocument
             }
         }
 
-        $this->metadata($section, $input);
-
         return $word;
     }
 
@@ -169,14 +166,6 @@ class SyllabusWordDocument
             'marginLeft' => $margin,
             'marginRight' => $margin,
         ]);
-        $footer = $this->document['footer'];
-        if ($footer !== null) {
-            $section->addFooter()->addPreserveText(
-                strtr($footer['text'], ['{page}' => '{PAGE}', '{pages}' => '{NUMPAGES}']),
-                ['size' => $footer['size'], 'color' => ltrim($footer['color'], '#')],
-                ['alignment' => Jc::CENTER, 'spaceBefore' => 0, 'spaceAfter' => 0],
-            );
-        }
 
         return $section;
     }
@@ -257,26 +246,5 @@ class SyllabusWordDocument
         }
 
         return is_file($currentPath) ? $currentPath : null;
-    }
-
-    private function metadata(Section $section, DocumentRenderInput $input): void
-    {
-        $metadata = $this->document['metadata'];
-        if ($metadata === null) {
-            return;
-        }
-        $section->addText(
-            strtr($metadata['text'], [
-                '{revision}' => (string) $input->revisionNumber,
-                '{subject}' => $input->subject,
-                '{code}' => $input->subjectCode,
-                // Huella corta y fecha local: la línea completa cabe en un renglón.
-                '{fingerprint}' => substr($input->revisionFingerprint, 0, 16),
-                '{generated}' => CarbonImmutable::parse($input->generatedAt)->setTimezone('America/Guayaquil')->format('d-m-Y H:i'),
-                '{period}' => $input->academicPeriod,
-            ]),
-            ['size' => $metadata['size'], 'color' => ltrim($metadata['color'], '#')],
-            ['spaceBefore' => 360, 'spaceAfter' => 0],
-        );
     }
 }

@@ -195,7 +195,8 @@ class DocumentOperationsTest extends TestCase
         $this->assertSame(hash('sha256', $pdfBytes), $pdf->huella_sha256);
         $this->assertStringStartsWith('%PDF-1.4', $pdfBytes);
         $this->assertStringEndsWith("%%EOF\n", $pdfBytes);
-        $this->assertStringContainsString($revision->huella_sha256, $pdfBytes);
+        $this->assertStringNotContainsString($revision->huella_sha256, $pdfBytes);
+        $this->assertStringNotContainsString('Generado:', $pdfBytes);
         $this->assertStringContainsString('Contenido academico verificable', $pdfBytes);
 
         $path = (string) tempnam(sys_get_temp_dir(), 'silabos-docx-');
@@ -209,7 +210,8 @@ class DocumentOperationsTest extends TestCase
         $zip->close();
         @unlink($path);
         $this->assertIsString($documentXml);
-        $this->assertStringContainsString(substr($revision->huella_sha256, 0, 16), $documentXml);
+        $this->assertStringNotContainsString(substr($revision->huella_sha256, 0, 16), $documentXml);
+        $this->assertStringNotContainsString('Página', $documentXml);
         $this->assertStringContainsString('Contenido academico verificable', $documentXml);
         $this->assertStringContainsString($this->coordinator->nombre, $documentXml);
         $this->assertStringContainsString(now()->setTimezone('America/Guayaquil')->format('d-m-Y'), $documentXml);

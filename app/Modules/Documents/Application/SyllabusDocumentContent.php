@@ -34,9 +34,6 @@ class SyllabusDocumentContent
             (string) $document['title']['text'],
             $input->subject.' ('.$input->subjectCode.')',
             'Periodo: '.$input->academicPeriod,
-            'Revisión: '.$input->revisionNumber,
-            'Huella de revisión: '.$input->revisionFingerprint,
-            'Generado: '.$input->generatedAt,
             '',
         ];
 

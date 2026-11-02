@@ -47,16 +47,6 @@
             ],
             "left_share": 0.638
         },
-        "footer": {
-            "text": "Página {page} de {pages}",
-            "size": 8,
-            "color": "#7F7F7F"
-        },
-        "metadata": {
-            "text": "Revisión {revision} · {subject} ({code}) · huella {fingerprint} · generado {generated}",
-            "size": 7,
-            "color": "#7F7F7F"
-        },
         "empty_text": "Sin contenido",
         "choices": {
             "margin_cm": [

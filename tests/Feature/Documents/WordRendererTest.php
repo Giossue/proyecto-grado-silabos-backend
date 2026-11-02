@@ -220,7 +220,7 @@ class WordRendererTest extends TestCase
         $this->assertSame(0, $xpath->query('./w:tblPr/w:tblBorders/w:top[@w:color="0070C0"]', $identification)->length);
     }
 
-    public function test_docx_honors_paragraph_alignment_layout_and_page_numbers(): void
+    public function test_docx_honors_paragraph_alignment_and_layout_without_page_numbers(): void
     {
         $snapshot = $this->typedSnapshot();
         $snapshot['document_mapping'] = [
@@ -262,9 +262,8 @@ class WordRendererTest extends TestCase
         $title = $xpath->query('//w:p[.//w:t[contains(., "'.self::OFFICIAL_TITLE.'")]]')->item(0);
         $this->assertNotNull($title);
         $this->assertSame(1, $xpath->query('.//w:rPr/w:sz[@w:val="36"]', $title)->length, 'El título va a 18 pt.');
-        $this->assertStringContainsString('Página', $footers);
-        $this->assertStringContainsString('PAGE', $footers);
-        $this->assertStringContainsString('NUMPAGES', $footers);
+        $this->assertStringNotContainsString('Página', $footers);
+        $this->assertStringNotContainsString('NUMPAGES', $footers);
     }
 
     public function test_identification_inputs_print_inside_the_table_and_not_again_below_it(): void

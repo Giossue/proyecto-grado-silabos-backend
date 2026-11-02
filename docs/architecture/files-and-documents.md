@@ -95,8 +95,8 @@ Qué hace el render:
   el tamaño de contenido de la plantilla y una palabra que no cabe se parte dentro de su
   celda: no se achica la letra ni se ponen encabezados en vertical (2026-11-02);
 - bloques (unidades, evaluación, etc.) según su `layout` en la definición;
-- pie y línea de metadatos según `document.footer` y `document.metadata` (la oficial
-  usa «Página {page} de {pages}»);
+- sin pie de página ni línea de metadatos: el PDF no lleva «Página X de Y» ni la línea
+  de revisión, huella y fecha de generación (2026-11-02);
 - no importa HTML ni descarga recursos externos.
 
 ### Variables que se completan al exportar
