@@ -290,7 +290,7 @@ envían. Cada persona firma una sola vez por sílabo.
 - ADM-09 (Trabajos fallidos): sin pantalla.
 - ADM-11 (Configuración): es UI-04.
 - COR-02 y COR-03 (Convocatorias de carrera): están en COR-01 y COR-05.
-- COR-07 (Comparar revisiones): la comparación está en COR-06, al lado de la versión anterior. Los campos que cambiaron se resaltan con «Cambió» solo en la versión actual y, como en el historial, llevan una marca amarilla en el borde derecho de la pantalla, debajo del encabezado; pulsarla lleva al campo.
+- COR-07 (Comparar revisiones): la comparación está en COR-06, al lado de la versión anterior. Los campos que cambiaron se resaltan con «Cambió» solo en la versión actual y, como en el historial, llevan una marca amarilla en el borde derecho de la pantalla, debajo del encabezado; pulsarla lleva al campo. El botón «Resaltar cambios» del encabezado quita o vuelve a poner el resaltado y las marcas; queda deshabilitado, con un tooltip, si no hay cambios. Lo mismo en el historial de versiones.
 - COR-11 (Fuentes académicas): retirada.
 - COR-12 (Informes): el avance está en COR-05.
 - DOC-03 (Resumen del sílabo): la vista previa está en DOC-04.
