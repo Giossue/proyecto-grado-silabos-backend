@@ -100,7 +100,7 @@ Pulse un aviso para ir a la pantalla relacionada; al abrirlo se marca como leíd
         ],
         '/biblioteca/revisiones' => [
             'title' => 'Revisiones de biblioteca',
-            'content' => 'Arriba ve cuántos sílabos esperan su revisión y cuántos ya atendió: firmados, devueltos al docente o reemplazados por una revisión nueva.
+            'content' => 'Arriba ve cuántos sílabos están en revisión y cuántos ya atendió: aprobados, con corrección solicitada al docente o reemplazados por una revisión nueva (anteriores).
 
 Debajo llegan, de todas las carreras, los sílabos del período en curso que Coordinación ya firmó, para que revise su bibliografía. Cuando usted firma y aprueba, el sílabo queda aprobado.
 
@@ -164,7 +164,7 @@ Con una convocatoria abierta la edición está bloqueada. Si hay sílabos en cur
 
 El botón rojo de check, abajo a la derecha, abre «Antes de empezar»: los pasos previos (malla, materias del período, paralelos y docentes); al pulsar uno le muestra en el menú dónde se hace. «Abrir convocatoria» se habilita cuando todo está listo; si no, al pasar el cursor dice qué falta.
 
-«Por revisar» lista los sílabos que los docentes ya enviaron. Coordinación revisa primero el contenido; cuando lo aprueba, el sílabo pasa a Biblioteca para revisar la bibliografía. Abra uno para aprobarlo o pedir correcciones.
+«Cola de revisión» lista los sílabos que los docentes ya enviaron. Coordinación revisa primero el contenido; cuando lo aprueba, el sílabo pasa a Biblioteca para revisar la bibliografía. Abra uno para aprobarlo o pedir correcciones.
 
 «Seguimiento» muestra todos los sílabos de la convocatoria con su estado.',
         ],
