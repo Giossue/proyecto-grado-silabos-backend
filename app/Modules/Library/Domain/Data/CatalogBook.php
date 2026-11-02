@@ -16,6 +16,7 @@ final readonly class CatalogBook
         public string $isbn,
         public string $callNumber,
         public string $format = self::PHYSICAL,
+        public string $kind = 'Libro',
     ) {}
 
     /** @return array<string, string> */
@@ -31,6 +32,7 @@ final readonly class CatalogBook
             'isbn' => $this->isbn,
             'call_number' => $this->callNumber,
             'format' => $this->format,
+            'kind' => $this->kind,
         ];
     }
 }

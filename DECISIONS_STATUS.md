@@ -241,8 +241,9 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   públicas del catálogo y no necesita usuario. La bibliografía básica y la complementaria son el
   bloque `bibliografia` de la plantilla: cada columna tiene un nombre interno estable y la plantilla
   declara con `catalog` qué dato del libro va a cada una, así el buscador no depende del texto de
-  los encabezados. «Código» dice qué tipo de libro es, como en los sílabos de referencia: «Libro físico»
-  al elegirlo de Koha, que solo tiene material físico (libros, referencia, tesis y revistas en estantería); los
+  los encabezados. «Código» dice qué tipo de material es, como en los sílabos de referencia. Koha solo tiene
+  material físico y el tipo sale de su campo 942c: Libros y Referencia → «Libro físico», Tesis → «Tesis física»,
+  Recursos continuos → «Revista física». Los resultados muestran ese tipo en la columna «Tipo»; los
   digitales («e-libro») no están en Koha y el docente los escribe. Al elegir un libro, el dato que Koha no tiene
   (ciudad, editorial, ISBN…) queda en «N/A» (2026-11-02). Falta el acceso por API y HTTPS (PV-22).
 - Cada paralelo tiene su sílabo. Su docente es quien tiene la asignación vigente.

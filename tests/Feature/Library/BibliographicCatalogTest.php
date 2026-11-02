@@ -47,6 +47,7 @@ class BibliographicCatalogTest extends TestCase
                 'isbn' => '9789563431063',
                 'call_number' => '658.404 S2411p',
                 'format' => 'Libro físico',
+                'kind' => 'Libro',
             ]);
     }
 
@@ -205,10 +206,20 @@ class BibliographicCatalogTest extends TestCase
         $this->search('any', 'inversión')->assertStatus(429);
     }
 
-    private function fakeKoha(?string $failing = null, int $total = 2): void
+    public function test_a_thesis_says_so_and_its_code_is_tesis_fisica(): void
+    {
+        $this->fakeKoha(itemType: 'TE');
+
+        $this->search('isbn', '978-956-343-106-3')
+            ->assertOk()
+            ->assertJsonPath('data.0.kind', 'Tesis')
+            ->assertJsonPath('data.0.format', 'Tesis física');
+    }
+
+    private function fakeKoha(?string $failing = null, int $total = 2, string $itemType = 'BK'): void
     {
         $rss = str_replace('<opensearch:totalResults>2<', "<opensearch:totalResults>{$total}<", (string) file_get_contents(base_path('tests/Fixtures/koha/search.rss')));
-        $record = (string) file_get_contents(base_path('tests/Fixtures/koha/proyectos-de-inversion.marcxml'));
+        $record = str_replace('<subfield code="c">BK</subfield>', "<subfield code=\"c\">{$itemType}</subfield>", (string) file_get_contents(base_path('tests/Fixtures/koha/proyectos-de-inversion.marcxml')));
         Http::fake(function (Request $request) use ($rss, $record, $failing) {
             if (str_contains($request->url(), 'opac-search.pl')) {
                 return Http::response($rss);

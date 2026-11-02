@@ -4,6 +4,7 @@ namespace App\Modules\Library\Infrastructure\Gateways;
 
 use App\Modules\Library\Domain\Contracts\BibliographicCatalog;
 use App\Modules\Library\Domain\Data\CatalogBook;
+use App\Modules\Library\Domain\Data\CatalogItemType;
 use App\Modules\Library\Domain\Data\CatalogLibrary;
 use App\Modules\Library\Domain\Data\CatalogPage;
 use App\Modules\Library\Domain\Exceptions\CatalogUnavailable;
@@ -170,6 +171,7 @@ class KohaPublicCatalog implements BibliographicCatalog
         $publication = $first('264', 'c') ?: $first('260', 'c');
         $isbn = strtoupper((string) preg_replace('/[^0-9Xx]/', '', (string) strtok($first('020', 'a'), ' (')));
         $callNumber = $this->itemCallNumber($document, $libraries) ?: $this->clean($first('082', 'a').' '.$first('082', 'b'));
+        $type = CatalogItemType::of($first('942', 'c') ?: $first('952', 'y'));
 
         return new CatalogBook(
             id: $id,
@@ -180,6 +182,8 @@ class KohaPublicCatalog implements BibliographicCatalog
             publisher: $first('264', 'b') ?: $first('260', 'b'),
             isbn: $isbn,
             callNumber: $callNumber,
+            format: $type['format'],
+            kind: $type['kind'],
         );
     }
 
