@@ -84,12 +84,22 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   límites del día en la zona institucional y la API las publica como `YYYY-MM-DD`.
   Un plazo de entrega cierra al final del día local, no a las 19:00.
 - La cola de revisión de Coordinación solo trae lo que espera su decisión (en revisión y todavía sin pasar a Biblioteca); lo demás (en biblioteca, devuelto, aprobado) está en Seguimiento, cuyas filas abren la revisión (2026-10-31). Coordinación no ve el comentario ni quién verificó de Biblioteca: solo que lo devolvió; Biblioteca ve únicamente su bibliografía.
-- Coordinación tiene una sola acción para descartar un sílabo, «Reiniciar sílabo» (2026-10-31), solo con el sílabo aprobado y la convocatoria abierta o pausada (2026-11-01), con motivo obligatorio que ve el docente y queda en la auditoría, cuenta regresiva y, si está aprobado (borra todo y no hay reapertura), el nombre de la materia. Se retiró «Eliminar sílabo» (`DELETE /coordination/syllabi/{syllabus}`); `POST .../reset` borra el sílabo aprobado y crea uno nuevo para el paralelo.
+- Coordinación tiene una sola acción para descartar un sílabo, «Reiniciar sílabo» (2026-10-31), solo con el sílabo aprobado y la convocatoria abierta o pausada (2026-11-01), con motivo obligatorio que ve el docente y queda en la auditoría y, si está aprobado (borra todo y no hay reapertura), el nombre de la materia. Se retiró «Eliminar sílabo» (`DELETE /coordination/syllabi/{syllabus}`); `POST .../reset` borra el sílabo aprobado y crea uno nuevo para el paralelo.
 - El historial de un sílabo para Coordinación es una pantalla de versiones como la de Google Docs (documento a la izquierda, panel de versiones agrupadas por día a la derecha; los cambios respecto a la versión anterior se marcan solos), no una lista de revisiones (2026-10-31): envíos, correcciones de Coordinación con su comentario, aprobación de Coordinación y aprobación final. De lo que hace Biblioteca solo se ve «Biblioteca lo devolvió al docente», sin nombre ni comentario. Cada envío a partir del segundo ofrece «Ver qué cambió», y el detalle puede resaltar en el documento los campos cambiados desde el envío anterior.
 - Con el plazo de entrega vencido (2026-10-31) el docente queda en solo lectura: el servidor
   rechaza iniciar, editar y enviar, y la API explica el motivo en `edit_block_reason`.
   Coordinación y Biblioteca siguen revisando lo ya enviado. Solo Administración prorroga; al
   hacerlo, todo se reabre. El aviso de plazo vencido sale en rojo.
+- Las confirmaciones delicadas piden escribir una frase en vez de esperar una cuenta
+  regresiva (2026-11-02): «devolver a borrador» (cambios que devuelven sílabos a
+  borrador), «abrir convocatoria», «editar plantilla», «cerrar convocatoria», «rehacer
+  sílabos» (reanudar con la plantilla cambiada) y «eliminar convocatoria». Se acepta sin
+  importar mayúsculas, tildes ni espacios de más.
+- Al reanudar una convocatoria (2026-11-02) se avisa a los docentes de cada convocatoria
+  que vuelve a quedar abierta («convocatoria.reanudada», también por correo); si quien
+  reanuda es Administración, Coordinación recibe «proceso.reanudado» en la campana.
+  Pausar y cerrar siguen sin aviso. El plazo informa `paused_by` (Administración o
+  Coordinación), y Administración recibe plazo solo con su convocatoria en pausa.
 - Para abrirla, la plantilla debe tener contenido, cada carrera activa debe tener
   coordinación y el período no debe haber terminado.
 - Estados: abierto ⇄ pausado → cerrado. Administración cierra la convocatoria y con ella
@@ -203,8 +213,8 @@ de cada cambio está en git (etiqueta `docs-antes-de-limpieza` para la versión 
   carrera y conserva lo escrito por el docente (PV-21, 2026-10-30). Solo cambian los
   sílabos cuyo documento muestra el dato: horas, créditos, modalidad, nombre, código,
   ciclo y unidad de su materia, y los códigos de sus requisitos. Los enviados, en
-  corrección o aprobados vuelven a Borrador sin revisiones ni firmas, tras confirmar con
-  una espera de unos segundos, y el docente recibe un aviso por correo. Activar o
+  corrección o aprobados vuelven a Borrador sin revisiones ni firmas, tras confirmar
+  escribiendo «devolver a borrador», y el docente recibe un aviso por correo. Activar o
   desactivar «Puede generar sílabos» rehace solo los de esa materia.
 
 ## Documentos de apoyo

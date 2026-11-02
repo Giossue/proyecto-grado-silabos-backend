@@ -272,6 +272,12 @@ envían. Cada persona firma una sola vez por sílabo.
   institucional. El editor del sílabo, a pantalla completa, no la muestra. Con el plazo
   vencido la franja sale en rojo: al docente le dice que pida una prórroga a Administración
   y a Coordinación y Biblioteca que solo pueden revisar lo ya enviado.
+  En pausa, la franja dice quién pausó solo cuando importa (2026-11-02): al docente,
+  «La convocatoria está en pausa · Le avisaremos cuando se reanude para que siga con sus
+  sílabos»; a Coordinación, si pausó Administración, que fue ella y que le avisaremos al
+  reanudar, y si la pausó Coordinación, «La convocatoria de su carrera está en pausa ·
+  Puede reanudarla desde Revisión». Administración solo ve la franja cuando ella pausó la
+  convocatoria institucional: «Puede reanudarla desde Convocatorias».
 - **Sin Panel.** Cada rol entra a su lista de trabajo y ve ahí sus indicadores:
   «Convocatorias», «Revisión», «Mis sílabos» y «Revisiones de biblioteca». La puesta en
   marcha de Administración y de Coordinación es un modal en su pantalla de entrada.

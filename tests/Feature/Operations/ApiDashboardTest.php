@@ -146,6 +146,32 @@ class ApiDashboardTest extends TestCase
         $deadline('coordinador@silabos.test')->assertJsonPath('deadline.days_until_due', 3)->assertJsonPath('deadline.convocation_id', null)->assertJsonMissingPath('metrics');
         $deadline('bibliotecario@silabos.test')->assertJsonPath('deadline.state', 'active')->assertJsonPath('deadline.days_until_due', 3);
         $deadline('admin@silabos.test')->assertJsonPath('deadline', null);
+        $deadline('coordinador@silabos.test')->assertJsonPath('deadline.paused_by', null);
+    }
+
+    public function test_a_pause_says_who_paused_and_administration_sees_its_own_pause(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        SyllabusProcess::query()->update(['estado' => SyllabusProcess::STATE_CLOSED]);
+        SyllabusProcess::query()->create([
+            'periodo_academico_id' => AcademicPeriod::query()->firstOrFail()->id,
+            'inicia_en' => now()->subDay(),
+            'entrega_en' => now()->addDays(3),
+            'estado' => SyllabusProcess::STATE_PAUSED,
+        ]);
+        $deadline = function (string $email) {
+            $user = User::query()->where('correo_electronico', $email)->firstOrFail();
+
+            return $this->actingAs($user)
+                ->withSession(['active_role_assignment_id' => $user->roleAssignments()->firstOrFail()->id])
+                ->withHeader('Origin', 'http://localhost:5173')
+                ->getJson(route('api.v1.dashboard.deadline'))
+                ->assertOk();
+        };
+
+        foreach (['coordinador@silabos.test', 'bibliotecario@silabos.test', 'admin@silabos.test'] as $email) {
+            $deadline($email)->assertJsonPath('deadline.state', 'paused')->assertJsonPath('deadline.paused_by', 'administracion');
+        }
     }
 
     public function test_a_sole_role_enters_without_choosing(): void

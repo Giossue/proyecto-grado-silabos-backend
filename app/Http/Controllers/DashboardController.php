@@ -23,7 +23,7 @@ use Illuminate\Http\Request;
 /**
  * @phpstan-import-type CoordinatorReadiness from CoordinatorConvocationReadiness
  *
- * @phpstan-type DeadlinePayload array{period: string, starts_at: string, due_at: string, state: string, days_until_start: int, days_until_due: int, convocation_id: string|null}
+ * @phpstan-type DeadlinePayload array{period: string, starts_at: string, due_at: string, state: string, days_until_start: int, days_until_due: int, convocation_id: string|null, paused_by: string|null}
  * @phpstan-type CoordinationConvocationPayload array{process_id: string, period: string, convocation_id: string|null, can_open: bool, state: string|null, process_open: bool}
  */
 class DashboardController extends Controller
@@ -91,6 +91,7 @@ class DashboardController extends Controller
             $activeRole->role->codigo_rol === RoleCode::Coordinator->value => $this->careerDeadline($activeRole->carrera_id, $schedule),
             $activeRole->role->codigo_rol === RoleCode::Teacher->value => $this->teacherDeadline($user, $activeRole->carrera_id, $schedule),
             $activeRole->role->codigo_rol === RoleCode::Librarian->value => $this->librarianDeadline(),
+            $activeRole->role->codigo_rol === RoleCode::Administrator->value => $this->administratorPause(),
             default => null,
         };
 
@@ -256,6 +257,18 @@ class DashboardController extends Controller
         );
     }
 
+    /**
+     * Administración no tiene plazo propio: solo ve el aviso cuando ella pausó la convocatoria, por si lo olvida.
+     *
+     * @return DeadlinePayload|null
+     */
+    private function administratorPause(): ?array
+    {
+        $process = SyllabusProcess::query()->where('estado', SyllabusProcess::STATE_PAUSED)->with('academicPeriod')->first();
+
+        return $process === null ? null : $this->deadlinePayload($process, null, $process->inicia_en, $process->entrega_en);
+    }
+
     /** @return DeadlinePayload|null */
     private function librarianDeadline(): ?array
     {
@@ -290,6 +303,8 @@ class DashboardController extends Controller
             'days_until_start' => max(0, InstitutionDate::daysBetween($today, $start)),
             'days_until_due' => max(0, InstitutionDate::daysBetween($today, $due)),
             'convocation_id' => $convocation?->id,
+            // Quién pausó: Administración (convocatoria institucional) o Coordinación (la de la carrera).
+            'paused_by' => $state !== 'paused' ? null : ($process->estado === SyllabusProcess::STATE_PAUSED ? 'administracion' : 'coordinacion'),
         ];
     }
 

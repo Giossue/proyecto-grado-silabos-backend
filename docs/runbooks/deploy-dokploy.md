@@ -200,14 +200,14 @@ Antes hay que verificar el dominio en el panel de Resend con los registros DNS q
 los mensajes se rechazan o llegan a spam, y el fallo solo se ve en el panel del proveedor.
 
 Además de las invitaciones, llegan por correo pocos avisos del sistema, solo los que piden
-actuar. Hoy son tres, para el docente: convocatoria abierta, corrección solicitada y sílabo
-aprobado. Se manda un correo por aviso y persona, solo a cuentas activas con correo
+actuar. Para el docente: convocatoria abierta, convocatoria reanudada tras una pausa,
+corrección solicitada, sílabo devuelto a borrador y sílabo aprobado. Se manda un correo por aviso y persona, solo a cuentas activas con correo
 verificado; los demás avisos quedan en la campana.
 
 | Variable | Por defecto | Efecto |
 |---|---|---|
 | `NOTIFICATION_EMAILS` | `true` | `false` apaga estos correos; las invitaciones de activación no cambian. |
-| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,silabo.correccion_solicitada,silabo.devuelto_borrador,silabo.aprobado` | Tipos de aviso que se envían por correo, separados por coma. Vacía o con valores que no son tipos de aviso (como `TRUE`) usa la lista por defecto. Normalmente no hace falta definirla. |
+| `NOTIFICATION_EMAIL_EVENTS` | `convocatoria.abierta,convocatoria.reanudada,silabo.correccion_solicitada,silabo.devuelto_borrador,silabo.aprobado` | Tipos de aviso que se envían por correo, separados por coma. Vacía o con valores que no son tipos de aviso (como `TRUE`) usa la lista por defecto. Normalmente no hace falta definirla. |
 | `NOTIFICATION_DIGEST` | `true` | `false` apaga el resumen diario de Coordinación. |
 | `NOTIFICATION_DIGEST_TIME` | `08:00` | Hora del resumen (`HH:MM`), en la hora de la institución. Vacía o con otro formato vale 08:00. |
 

@@ -211,7 +211,7 @@ class ParallelTeacherChangeTest extends TestCase
         $this->assignTeacher($this->replacement, $assignment->paralelo_id)->assertJsonValidationErrors('user_id');
     }
 
-    public function test_pausing_and_resuming_the_convocation_sends_no_notices(): void
+    public function test_pausing_sends_no_notices_and_resuming_tells_the_teacher(): void
     {
         $this->openedSyllabus();
         $convocation = Convocation::query()->with('career')->firstOrFail();
@@ -224,8 +224,9 @@ class ParallelTeacherChangeTest extends TestCase
             ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, 'reanudar']))
             ->assertSuccessful();
         $this->assertNotNotified($this->teacher->id, 'convocatoria.pausada');
-        $this->assertNotNotified($this->teacher->id, 'convocatoria.reanudada');
+        $this->assertNotified($this->teacher->id, 'convocatoria.reanudada');
         $this->assertNotNotified($this->coordinator->id, 'convocatoria.pausada');
+        $this->assertNotNotified($this->coordinator->id, 'convocatoria.reanudada');
     }
 
     public function test_archiving_a_teacher_with_syllabi_in_progress_is_refused_until_the_parallel_changes_hands(): void

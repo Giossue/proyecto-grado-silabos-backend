@@ -8,6 +8,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
+use App\Modules\Syllabus\Application\NotifyConvocationResumed;
 use App\Modules\Syllabus\Application\SyllabusSnapshot;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -38,6 +39,7 @@ class TransitionSyllabusProcess
         private readonly TemplateStructureValidator $templateStructure,
         private readonly RegenerateProcessSyllabi $regenerate,
         private readonly SyllabusSnapshot $snapshots,
+        private readonly NotifyConvocationResumed $resumed,
     ) {}
 
     /** @return array{process: SyllabusProcess, confirmation_required: bool, counts: array<string, int>} */
@@ -133,6 +135,9 @@ class TransitionSyllabusProcess
                 result: 'exito',
                 metadata: ['previous_state' => $previous],
             );
+            if ($previous === SyllabusProcess::STATE_PAUSED && $rule['to'] === SyllabusProcess::STATE_OPEN) {
+                $this->resumed->process($locked);
+            }
 
             return [
                 'process' => $locked,

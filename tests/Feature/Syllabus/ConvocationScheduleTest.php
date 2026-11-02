@@ -8,6 +8,7 @@ use App\Modules\Configuration\Infrastructure\Persistence\Models\FieldDefinition;
 use App\Modules\Configuration\Infrastructure\Persistence\Models\SyllabusTemplate;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Infrastructure\Persistence\Models\AuditEvent;
+use App\Modules\Operations\Infrastructure\Persistence\Models\InternalNotification;
 use App\Modules\Syllabus\Application\ConvocationSchedule;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Syllabus;
@@ -278,20 +279,46 @@ class ConvocationScheduleTest extends TestCase
         $this->assertNotNotified($this->teacher->id, 'proceso.abierto');
     }
 
-    public function test_pausing_resuming_and_closing_the_process_send_no_notices(): void
+    public function test_pausing_and_closing_send_no_notices_but_resuming_tells_teachers_and_coordination(): void
     {
         $syllabus = $this->createValidDraft();
         $process = $syllabus->convocation->process;
 
         $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'pausar']))->assertSuccessful();
-        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']))->assertSuccessful();
-
         foreach ([$this->teacher, $this->coordinator] as $user) {
             $this->assertNotNotified($user->id, 'proceso.pausado');
-            $this->assertNotNotified($user->id, 'proceso.reanudado');
+        }
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'reanudar']))->assertSuccessful();
+
+        $this->assertNotified($this->teacher->id, 'convocatoria.reanudada', 'Ya puede seguir con sus sílabos');
+        $this->assertNotified($this->coordinator->id, 'proceso.reanudado', 'Administración reanudó');
+        $this->assertNotNotified($this->teacher->id, 'proceso.reanudado');
+
+        $this->actingAsAdministrator()->postJson(route('api.v1.admin.processes.transition', [$process, 'cerrar']))->assertSuccessful();
+        foreach ([$this->teacher, $this->coordinator, $this->administrator] as $user) {
             $this->assertNotNotified($user->id, 'proceso.cerrado');
         }
-        $this->assertNotNotified($this->administrator->id, 'proceso.cerrado');
+    }
+
+    public function test_resuming_the_career_convocation_tells_its_teachers_each_time(): void
+    {
+        $syllabus = $this->createValidDraft();
+        $convocation = $syllabus->convocation;
+        $transition = fn (string $action) => $this->actingAsCoordinator()
+            ->postJson(route('api.v1.coordination.convocations.transition', [$convocation, $action]))->assertSuccessful();
+
+        $transition('pausar');
+        $this->assertNotNotified($this->teacher->id, 'convocatoria.reanudada');
+        $this->actingAsTeacher()->getJson(route('api.v1.dashboard.deadline'))
+            ->assertJsonPath('deadline.state', 'paused')->assertJsonPath('deadline.paused_by', 'coordinacion');
+        $transition('reanudar');
+        $this->assertNotified($this->teacher->id, 'convocatoria.reanudada', 'Ya puede seguir con sus sílabos');
+        $this->assertNotNotified($this->coordinator->id, 'proceso.reanudado');
+
+        $this->travel(1)->minutes();
+        $transition('pausar');
+        $transition('reanudar');
+        $this->assertSame(2, InternalNotification::query()->where('usuario_id', $this->teacher->id)->where('tipo', 'convocatoria.reanudada')->count());
     }
 
     private function expireDeadline(Syllabus $syllabus): Convocation

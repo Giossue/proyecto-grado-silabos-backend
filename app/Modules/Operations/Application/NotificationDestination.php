@@ -21,6 +21,7 @@ final class NotificationDestination
 
     public const INFORMATIONAL_EVENTS = [
         'proceso.plazo_extendido',
+        'proceso.reanudado',
     ];
 
     private const LIBRARY_EVENTS = ['coordinacion.aprobado', 'silabo.reenviado_biblioteca'];
@@ -29,6 +30,7 @@ final class NotificationDestination
 
     private const TEACHER_EVENTS = [
         'convocatoria.abierta',
+        'convocatoria.reanudada',
         'silabo.correccion_solicitada',
         'silabo.reiniciado',
         'silabo.devuelto_borrador',

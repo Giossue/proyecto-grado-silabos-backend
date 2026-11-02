@@ -7,6 +7,7 @@ use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\GenerateConvocationSyllabi;
+use App\Modules\Syllabus\Application\NotifyConvocationResumed;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\Convocation;
 use App\Modules\Syllabus\Infrastructure\Persistence\Models\SyllabusProcess;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class TransitionConvocation
         private readonly ActiveRole $roles,
         private readonly RecordAuditEvent $audit,
         private readonly GenerateConvocationSyllabi $generator,
+        private readonly NotifyConvocationResumed $resumed,
     ) {}
 
     public function execute(
@@ -71,6 +73,9 @@ class TransitionConvocation
                 result: 'exito',
                 metadata: $generated > 0 ? ['generated_count' => $generated] : [],
             );
+            if ($to === Convocation::STATE_OPEN) {
+                $this->resumed->convocation($locked);
+            }
 
             return $locked;
         });
