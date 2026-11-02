@@ -172,6 +172,8 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('review.sections.0.key', 'bibliografia')
             ->assertJsonCount(1, 'review.sections');
         $this->assertNotEmpty($detail->json('review.template_variables'));
+        $this->assertNotEmpty($detail->json('review.syllabus_sections'));
+        $this->assertGreaterThan(count($detail->json('review.sections')), count($detail->json('review.syllabus_sections')));
         $this->assertStringContainsString('Contenido bibliografia', json_encode($detail->json('review.sections'), JSON_THROW_ON_ERROR));
         FieldValue::query()->where('asignatura_id', $syllabus->subject->id)
             ->update(['valor' => FreeText::fromText('Referencia posterior')]);
@@ -241,6 +243,9 @@ class LibraryReviewTest extends TestCase
             ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $corrected->id);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'atendido']))
             ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $revision->id)->assertJsonPath('reviews.data.0.outcome', 'devuelto');
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'devuelto']))
+            ->assertJsonPath('reviews.total', 1)->assertJsonPath('reviews.data.0.revision_id', $revision->id);
+        $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'firmado']))->assertJsonPath('reviews.total', 0);
         $this->as('librarian')->getJson(route('api.v1.library.reviews.index', ['state' => 'anulado']))->assertUnprocessable();
         $this->as('teacher')->getJson(route('api.v1.teacher.syllabi.show', $syllabus))->assertJsonPath('syllabus.review_stage', 'biblioteca');
     }

@@ -22,6 +22,8 @@ final class LibraryReviews
 
     public const OUTCOME_REPLACED = 'reemplazado';
 
+    public const OUTCOMES = [self::OUTCOME_SIGNED, self::OUTCOME_RETURNED, self::OUTCOME_REPLACED];
+
     public const PERIOD_ANY = 'cualquiera';
 
     public const PERIOD_CURRENT = 'actual';
@@ -59,7 +61,9 @@ final class LibraryReviews
             ->select('envios_biblioteca.*', 'revision.revision_silabo_id as revision_id', 'revision.silabo_id as silabo_id', 'revision.numero_revision as numero_revision')
             ->selectRaw(self::STATE_SQL.' AS estado_envio')
             ->selectRaw(self::OUTCOME_SQL.' AS resultado_envio')
-            ->when($state !== null, fn (Builder $query) => $query->whereRaw('('.self::STATE_SQL.') = ?', [$state]))
+            ->when($state !== null, fn (Builder $query) => in_array($state, self::OUTCOMES, true)
+                ? $query->whereRaw('('.self::OUTCOME_SQL.') = ?', [$state])
+                : $query->whereRaw('('.self::STATE_SQL.') = ?', [$state]))
             ->when($search !== null && $search !== '', fn (Builder $query) => $query->where(
                 fn (Builder $outer) => $outer
                     ->whereRaw(AccentInsensitive::matches("silabo.datos_academicos_silabo->'subject'->>'name'"), [AccentInsensitive::pattern($search)])
