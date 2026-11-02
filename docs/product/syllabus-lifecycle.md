@@ -149,7 +149,7 @@ Prorrogar o reanudar sin cambios no rehace nada.
   a quien lo envió; si nunca se envió, al docente actual del paralelo.
 - Copiar entre paralelos: el destino debe estar sin iniciar o en borrador; el origen,
   ser suyo, de la misma asignatura y convocatoria, y estar iniciado.
-- «Quitar de la carrera» deja sus paralelos sin docente y retira su rol en esa carrera.
+- «Quitar de la carrera» deja sus paralelos sin docente y retira su rol en esa carrera. Si el docente aún no verificó su correo y no tiene rol en otra carrera, también cancela su invitación pendiente: el enlace deja de servir.
   La cuenta y los sílabos se conservan.
 
 ## IA

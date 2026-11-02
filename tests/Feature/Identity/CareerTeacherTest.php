@@ -294,6 +294,19 @@ class CareerTeacherTest extends TestCase
         $this->deleteJson(route('api.v1.coordination.academic.teachers.destroy', $teacher))->assertForbidden();
     }
 
+    public function test_removing_a_teacher_who_has_not_verified_cancels_the_pending_invitation(): void
+    {
+        $this->postJson(route('api.v1.coordination.academic.teachers.store'), $this->payload())->assertSuccessful();
+        $user = User::query()->where('correo_electronico', 'nuevo@silabos.test')->firstOrFail();
+        $invitation = ActivationInvitation::query()->where('usuario_id', $user->id)->firstOrFail();
+        $this->assertNull($invitation->invalidada_en);
+
+        $this->deleteJson(route('api.v1.coordination.academic.teachers.destroy', $user))->assertSuccessful();
+
+        $this->assertNotNull($invitation->fresh()->invalidada_en);
+        $this->assertNull($user->fresh()->correo_verificado_en);
+    }
+
     public function test_a_teacher_cannot_be_removed_from_the_career_while_its_convocation_is_open(): void
     {
         $teacher = User::query()->where('correo_electronico', 'docente@silabos.test')->firstOrFail();

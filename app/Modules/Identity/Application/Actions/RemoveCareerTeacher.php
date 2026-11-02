@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Modules\Academic\Infrastructure\Persistence\Models\TeacherAssignment;
 use App\Modules\Identity\Application\ActiveRole;
 use App\Modules\Identity\Domain\Enums\RoleCode;
+use App\Modules\Identity\Infrastructure\Persistence\Models\ActivationInvitation;
 use App\Modules\Identity\Infrastructure\Persistence\Models\RoleAssignment;
 use App\Modules\Operations\Application\Actions\RecordAuditEvent;
 use App\Modules\Syllabus\Application\ProcessLocks;
@@ -52,6 +53,12 @@ class RemoveCareerTeacher
             $roleAssignment->update(['activo' => false]);
             if (! RoleAssignment::query()->effective()->where('usuario_id', $target->id)->exists()) {
                 $this->sessions->execute($target);
+                // Sin rol en ninguna carrera, el enlace de activación pendiente ya no debe servir.
+                ActivationInvitation::query()
+                    ->where('usuario_id', $target->id)
+                    ->whereNull('usada_en')
+                    ->whereNull('invalidada_en')
+                    ->update(['invalidada_en' => now()]);
             }
 
             $this->audit->execute(
