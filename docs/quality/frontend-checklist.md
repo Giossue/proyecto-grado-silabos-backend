@@ -25,6 +25,8 @@
       los buscadores de tablas usan `Buscar por...` con los datos consultados. Las ayudas
       no exponen claves internas, nombres de columnas ni contratos técnicos.
 - [ ] Error indica campo, causa y corrección.
+- [ ] Todo botón de solo ícono lleva su ayuda emergente de shadcn con `IconTooltip`;
+      `src/iconButtons.test.ts` lo comprueba.
 - [ ] El botón de enviar de un formulario queda deshabilitado mientras falte un campo obligatorio
       (`aria-required="true"` en el campo y asterisco rojo en la etiqueta) y, si edita datos
       existentes, mientras no haya cambios. Lo hace el componente `Button` solo. Los campos
